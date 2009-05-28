@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I526-007: Aliases and cursor position
+  Problem:    If you create an alias via the /Edit/Aliases menu, and specify
+              "Indent source editor after expansion", then the position you
+              set for the cursor is not taken into account
+  Workaround: Reindent manually instead of via the alias property
+
 - I519-023: Refill duplicate lines on end of buffer
   Problem:    When doing a Refill on the last line of the buffer and if
               this line has no end-of-line character then the content will

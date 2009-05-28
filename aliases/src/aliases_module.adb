@@ -60,6 +60,7 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
@@ -1034,6 +1035,7 @@ package body Aliases_Module is
                                        Cursor'Unchecked_Access,
                                        Must_Reindent'Unchecked_Access,
                                        Column);
+                  Mark          : Gtk_Text_Mark;
                   Result        : Boolean;
                   Event         : Gdk_Event;
                   Args          : Argument_List (1 .. 2);
@@ -1069,6 +1071,8 @@ package body Aliases_Module is
                      --  will have no effect unless this is really an editor.
 
                      if Must_Reindent then
+                        Mark := Create_Mark (Buffer, Where => First_Iter);
+
                         while Index <= Replace'Last loop
                            Index := Next_Line (Replace, Index) + 1;
                            Count := Count + 1;
@@ -1084,6 +1088,10 @@ package body Aliases_Module is
 
                         Execute_GPS_Shell_Command
                           (Command.Kernel, Command => "Editor.indent");
+
+                        Get_Iter_At_Mark (Buffer, First_Iter, Mark);
+                        Place_Cursor (Buffer, First_Iter);
+                        Delete_Mark (Buffer, Mark);
                      end if;
 
                      if not Had_Focus then
