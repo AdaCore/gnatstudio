@@ -928,6 +928,14 @@ package body GPS.Location_View is
          Glib.Main.Remove (V.Idle_Row_Handler);
       end if;
 
+      if V.Idle_Expand_Handler /= No_Source_Id then
+         Glib.Main.Remove (V.Idle_Expand_Handler);
+      end if;
+
+      if V.Expand_Path /= null then
+         Path_Free (V.Expand_Path);
+      end if;
+
       --  Free regular expression
 
       Basic_Types.Unchecked_Free (V.RegExp);
