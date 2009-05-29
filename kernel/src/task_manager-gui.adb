@@ -191,6 +191,7 @@ package body Task_Manager.GUI is
    function Get_Progress_Text
      (Manager                : Task_Manager_Access;
       Index                  : Natural;
+      As_Percent             : Boolean;
       With_Name_And_Fraction : Boolean) return Progress_Data;
    --  Get the text for queue Index
 
@@ -200,7 +201,8 @@ package body Task_Manager.GUI is
    --  Return the fraction for queue Index
 
    function Get_Progress_Text
-     (Manager : Task_Manager_Access) return Progress_Data;
+     (Manager    : Task_Manager_Access;
+      As_Percent : Boolean) return Progress_Data;
    --  Get the text for the global progress bar
 
    function To_Pixbuf
@@ -433,7 +435,8 @@ package body Task_Manager.GUI is
          Hide_All (GUI);
       else
          declare
-            Pd : constant Progress_Data := Get_Progress_Text (GUI.Manager);
+            Pd : constant Progress_Data := Get_Progress_Text
+              (GUI.Manager, False);
             P  : constant Gdk_Pixbuf := To_Pixbuf (GUI, Pd);
          begin
             if Pd = Null_Progress_Data then
@@ -860,7 +863,7 @@ package body Task_Manager.GUI is
                     (To_Pixbuf
                        (Self.GUI,
                         Get_Progress_Text
-                          (Self.GUI.Manager, Integer (Index), True))));
+                          (Self.GUI.Manager, Integer (Index), False, True))));
 
             when Command_Button_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
@@ -1035,6 +1038,7 @@ package body Task_Manager.GUI is
    function Get_Progress_Text
      (Manager                : Task_Manager_Access;
       Index                  : Natural;
+      As_Percent             : Boolean;
       With_Name_And_Fraction : Boolean) return Progress_Data
    is
       Fraction        : constant Gdouble := Get_Fraction (Manager, Index);
@@ -1043,6 +1047,30 @@ package body Task_Manager.GUI is
       Command         : Command_Access;
       Progress        : Progress_Record;
       Progress_String : GNAT.Strings.String_Access;
+
+      function Progress_Indicator return String;
+      pragma Inline (Progress_Indicator);
+      --  Return the progress indicator in xxx/yyy or in xx% format, depending
+      --  on the value of As_Percent.
+
+      ------------------------
+      -- Progress_Indicator --
+      ------------------------
+
+      function Progress_Indicator return String is
+      begin
+         if As_Percent then
+            return "(" & Image (Integer (Fraction * 100.0)) & "%)";
+         else
+            if Progress.Total <= 1 then
+               return "";
+            else
+               return
+                 (Image (Progress.Current) & "/" & Image (Progress.Total));
+            end if;
+         end if;
+      end Progress_Indicator;
+
    begin
       if Manager.Queues = null
         or else Index = 0
@@ -1063,14 +1091,9 @@ package body Task_Manager.GUI is
          if With_Name_And_Fraction then
             Progress_String := new String'
               (Krunch (Commands.Name (Command), Progress_Bar_Length - 4)
-               & " (" & Image (Integer (Fraction * 100.0)) & "%)");
+               & " " & Progress_Indicator);
          else
-            if Progress.Total <= 1 then
-               Progress_String := new String'("");
-            else
-               Progress_String := new String'
-                 (Image (Progress.Current) & "/" & Image (Progress.Total));
-            end if;
+            Progress_String := new String'(Progress_Indicator);
 
             if Length > 1 then
                declare
@@ -1104,7 +1127,8 @@ package body Task_Manager.GUI is
    -----------------------
 
    function Get_Progress_Text
-     (Manager : Task_Manager_Access) return Progress_Data
+     (Manager    : Task_Manager_Access;
+      As_Percent : Boolean) return Progress_Data
    is
       Index    : Natural := 0;
       Count    : Natural := 1;
@@ -1126,7 +1150,7 @@ package body Task_Manager.GUI is
          end loop;
 
          if Count = 1 then
-            return Get_Progress_Text (Manager, Index, True);
+            return Get_Progress_Text (Manager, Index, As_Percent, True);
          else
             declare
                F : constant Gdouble := Fraction / Gdouble (Count);
