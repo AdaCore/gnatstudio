@@ -1191,7 +1191,7 @@ package body GPS.Location_View is
               (Filter_Loc_Iter, Loc_Iter);
 
             if Loc_Iter /= Null_Iter then
-               Path := Get_Path (Model, Filter_Loc_Iter);
+               Path := Get_Path (Locations.Filter, Filter_Loc_Iter);
                Expand_To_Path (Locations.Tree, Path);
                Select_Iter (Get_Selection (Locations.Tree), Filter_Loc_Iter);
                Scroll_To_Cell (Locations.Tree, Path, null, False, 0.1, 0.1);
