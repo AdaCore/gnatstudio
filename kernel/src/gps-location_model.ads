@@ -50,6 +50,7 @@ package GPS.Location_Model is
    Highlight_Category_Column : constant := 11;  --  Get_Highlighting_Style
    Number_Of_Items_Column    : constant := 12;
    Category_Line_Column      : constant := 13;
+   Expanded_State_Column     : constant := 14;
 
    type Location_Model_Record is new Gtk_Tree_Store_Record with private;
    type Location_Model is access all Location_Model_Record'Class;

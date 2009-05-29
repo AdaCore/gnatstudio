@@ -296,7 +296,8 @@ package body GPS.Location_Model is
          Highlight_Column          => Glib.GType_Boolean,
          Highlight_Category_Column => Glib.GType_Pointer,
          Number_Of_Items_Column    => Glib.GType_Int,
-         Category_Line_Column      => Glib.GType_String);
+         Category_Line_Column      => Glib.GType_String,
+         Expanded_State_Column     => Glib.GType_Boolean);
    end Columns_Types;
 
    ---------------

@@ -232,10 +232,20 @@ package body GPS.Location_View is
       Params : Glib.Values.GValues);
    --  Callback for the "row_expanded" signal
 
+   procedure On_Row_Collapsed
+     (Self   : access Location_View_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "row_collapsed" signal
+
    procedure On_Model_Row_Inserted
      (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback for the model's "row_inserted" signal
+
+   procedure On_Filter_Row_Inserted
+     (Self   : access Location_View_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the filter's "row_inserted" signal
 
    function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -1263,6 +1273,16 @@ package body GPS.Location_View is
          Slot_Object => View,
          After       => True);
       Location_View_Callbacks.Object_Connect
+        (View.Tree,
+         Signal_Row_Collapsed,
+         On_Row_Collapsed'Access,
+         View);
+      Location_View_Callbacks.Object_Connect
+        (View.Filter,
+         Signal_Row_Inserted,
+         On_Filter_Row_Inserted'Access,
+         View);
+      Location_View_Callbacks.Object_Connect
         (View.Model,
          Signal_Row_Inserted,
          On_Model_Row_Inserted'Access,
@@ -1288,6 +1308,43 @@ package body GPS.Location_View is
 
       Read_Secondary_Pattern_Preferences (View);
    end Initialize;
+
+   ----------------------------
+   -- On_Filter_Row_Inserted --
+   ----------------------------
+
+   procedure On_Filter_Row_Inserted
+     (Self   : access Location_View_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path;
+      Dummy : Boolean;
+      pragma Warnings (Off, Dummy);
+
+   begin
+      Get_Tree_Iter (Nth (Params, 2), Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Path := Self.Filter.Get_Path (Iter);
+
+      if Get_Depth (Path) > 1 then
+         Dummy := Up (Path);
+         Iter := Self.Filter.Get_Iter (Path);
+
+         if Self.Filter.Get_Boolean (Iter, Expanded_State_Column) then
+            Dummy := Expand_Row (Self.Tree, Path, False);
+
+         else
+            Dummy := Collapse_Row (Self.Tree, Path);
+         end if;
+      end if;
+
+      Path_Free (Path);
+   end On_Filter_Row_Inserted;
 
    ---------------------------
    -- On_Model_Row_Inserted --
@@ -1375,6 +1432,28 @@ package body GPS.Location_View is
       end if;
    end On_Model_Row_Inserted;
 
+   ----------------------
+   -- On_Row_Collapsed --
+   ----------------------
+
+   procedure On_Row_Collapsed
+     (Self   : access Location_View_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Iter       : Gtk_Tree_Iter;
+      Model_Iter : Gtk_Tree_Iter;
+
+   begin
+      Get_Tree_Iter (Nth (Params, 1), Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
+      Self.Model.Set (Model_Iter, Expanded_State_Column, False);
+   end On_Row_Collapsed;
+
    ---------------------
    -- On_Row_Expanded --
    ---------------------
@@ -1383,13 +1462,20 @@ package body GPS.Location_View is
      (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Iter : Gtk_Tree_Iter;
+      Iter       : Gtk_Tree_Iter;
+      Model_Iter : Gtk_Tree_Iter;
 
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
-      if Iter /= Null_Iter
-        and then Self.Idle_Row_Handler = Glib.Main.No_Source_Id
-      then
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
+      Self.Model.Set (Model_Iter, Expanded_State_Column, True);
+
+      if Self.Idle_Row_Handler = Glib.Main.No_Source_Id then
          if Self.Row /= null then
             Path_Free (Self.Row);
          end if;
