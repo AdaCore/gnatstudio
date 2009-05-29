@@ -333,7 +333,6 @@ package body GPS.Location_View is
 
       Down (Self.Expand_Path);
       Select_Path (Get_Selection (Self.Tree), Self.Expand_Path);
-      Scroll_To_Cell (Self.Tree, Self.Expand_Path, null, False, 0.1, 0.1);
 
       --  Cleanup
 
