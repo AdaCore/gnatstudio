@@ -166,10 +166,6 @@ private
 
       Action_Column   : Gtk_Tree_View_Column;
 
-      --  Idle handlers
-
-      Idle_Row_Handler    : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-
       Sort_By_Category : Boolean := False;
       --  Whether the view should be sorted by category
 
@@ -187,8 +183,16 @@ private
       SFL : Natural;
       --  Index of the secondary line
 
+      --  Idle handlers
+
+      Idle_Row_Handler    : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Row : Gtk_Tree_Path;
       --  Used to record the row to make visible, see Idle_Show_Row
+
+      Idle_Expand_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Expand_Path         : Gtk_Tree_Path;
+      --  Category to be expanded.
+      Goto_Expanded       : Boolean := False;
    end record;
 
 end GPS.Location_View;

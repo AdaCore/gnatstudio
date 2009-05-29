@@ -84,6 +84,10 @@ package body GPS.Location_View is
    --  Idle callback used to ensure that the proper path on the location view
    --  is visible.
 
+   function Idle_Expand_Category (Self : Location_View) return Boolean;
+   --  Idle callback used to expand category, its first file and select
+   --  first message and the open first location if requested.
+
    package Query_Tooltip_Callbacks is
      new Gtk.Handlers.User_Return_Callback
            (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Location_View);
@@ -228,6 +232,11 @@ package body GPS.Location_View is
       Params : Glib.Values.GValues);
    --  Callback for the "row_expanded" signal
 
+   procedure On_Model_Row_Inserted
+     (Self   : access Location_View_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the model's "row_inserted" signal
+
    function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True) return MDI_Child;
@@ -280,6 +289,58 @@ package body GPS.Location_View is
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
+
+   --------------------------
+   -- Idle_Expand_Category --
+   --------------------------
+
+   function Idle_Expand_Category (Self : Location_View) return Boolean is
+      Dummy : Boolean;
+      pragma Warnings (Off, Dummy);
+
+   begin
+      --  Raise Locations window
+
+      declare
+         Child : constant MDI_Child :=
+                   Find_MDI_Child_By_Tag
+                     (Get_MDI (Self.Kernel), Location_View_Record'Tag);
+
+      begin
+         if Child /= null then
+            Raise_Child (Child, Give_Focus => False);
+         end if;
+      end;
+
+      --  Expand category and first file items
+
+      Dummy := Expand_Row (Self.Tree, Self.Expand_Path, False);
+
+      Down (Self.Expand_Path);
+      Dummy := Expand_Row (Self.Tree, Self.Expand_Path, False);
+
+      --  Select first message
+
+      Down (Self.Expand_Path);
+      Select_Path (Get_Selection (Self.Tree), Self.Expand_Path);
+      Scroll_To_Cell (Self.Tree, Self.Expand_Path, null, False, 0.1, 0.1);
+
+      --  Cleanup
+
+      Path_Free (Self.Expand_Path);
+      Self.Expand_Path := null;
+      Self.Idle_Expand_Handler := No_Source_Id;
+
+      --  If go to location operation is requested, when go to the location of
+      --  the selected message (it is first message)
+
+      if Self.Goto_Expanded then
+         Self.Goto_Expanded := False;
+         Self.Goto_Location;
+      end if;
+
+      return False;
+   end Idle_Expand_Category;
 
    -------------------
    -- Idle_Show_Row --
@@ -364,6 +425,12 @@ package body GPS.Location_View is
       Path    : Gtk_Tree_Path;
       Success : Boolean := True;
    begin
+      if Self.Idle_Expand_Handler /= No_Source_Id then
+         Self.Goto_Expanded := True;
+
+         return;
+      end if;
+
       Get_Selected (Get_Selection (Self.Tree), Model, Iter);
 
       if Iter = Null_Iter then
@@ -795,34 +862,6 @@ package body GPS.Location_View is
             Parent_Iter := Iter;
          end if;
       end;
-
-      if Category_Created then
-         View.Filter.Convert_Child_Iter_To_Iter (Aux_Iter, Category_Iter);
-         Path := View.Filter.Get_Path (Aux_Iter);
-         Dummy := Expand_Row (View.Tree, Path, False);
-         Path_Free (Path);
-
-         declare
-            MDI   : constant MDI_Window := Get_MDI (View.Kernel);
-            Child : constant MDI_Child :=
-                      Find_MDI_Child_By_Tag (MDI, Location_View_Record'Tag);
-         begin
-            if Child /= null then
-               Raise_Child (Child, Give_Focus => False);
-            end if;
-         end;
-
-         View.Filter.Convert_Child_Iter_To_Iter (Aux_Iter, File_Iter);
-         Path := View.Filter.Get_Path (Aux_Iter);
-         Dummy := Expand_Row (View.Tree, Path, False);
-         Path_Free (Path);
-
-         View.Filter.Convert_Child_Iter_To_Iter (Aux_Iter, Iter);
-         Path := View.Filter.Get_Path (Aux_Iter);
-         Select_Path (Get_Selection (View.Tree), Path);
-         Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
-         Path_Free (Path);
-      end if;
    end Add_Location;
 
    ----------------------
@@ -1223,6 +1262,11 @@ package body GPS.Location_View is
          Signal_Row_Expanded, On_Row_Expanded'Access,
          Slot_Object => View,
          After       => True);
+      Location_View_Callbacks.Object_Connect
+        (View.Model,
+         Signal_Row_Inserted,
+         On_Model_Row_Inserted'Access,
+         View);
 
       Register_Contextual_Menu
         (View.Kernel,
@@ -1244,6 +1288,92 @@ package body GPS.Location_View is
 
       Read_Secondary_Pattern_Preferences (View);
    end Initialize;
+
+   ---------------------------
+   -- On_Model_Row_Inserted --
+   ---------------------------
+
+   procedure On_Model_Row_Inserted
+     (Self   : access Location_View_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Iter                   : Gtk_Tree_Iter;
+      Category_Iter          : Gtk_Tree_Iter;
+      File_Iter              : Gtk_Tree_Iter;
+      Message_Iter           : Gtk_Tree_Iter;
+      Category_View_Iter     : Gtk_Tree_Iter;
+      File_View_Iter         : Gtk_Tree_Iter;
+      File_Next_View_Iter    : Gtk_Tree_Iter;
+      Message_View_Iter      : Gtk_Tree_Iter;
+      Message_Next_View_Iter : Gtk_Tree_Iter;
+      Path                   : Gtk_Tree_Path;
+      Depth                  : Gint;
+      Dummy                  : Boolean;
+      pragma Warnings (Off, Dummy);
+
+   begin
+      Get_Tree_Iter (Nth (Params, 2), Iter);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Path := Self.Model.Get_Path (Iter);
+      Depth := Get_Depth (Path);
+      Path_Free (Path);
+
+      if Depth = 3 then
+         --  Message row
+
+         Message_Iter := Iter;
+         File_Iter := Self.Model.Parent (Message_Iter);
+         Category_Iter := Self.Model.Parent (File_Iter);
+
+         Self.Filter.Convert_Child_Iter_To_Iter
+           (Message_View_Iter, Message_Iter);
+
+         if Message_View_Iter = Null_Iter then
+            --  Message is filtered out
+
+            return;
+         end if;
+
+         Message_Next_View_Iter := Message_View_Iter;
+         Self.Filter.Next (Message_Next_View_Iter);
+
+         Self.Filter.Convert_Child_Iter_To_Iter (File_View_Iter, File_Iter);
+         File_Next_View_Iter := File_View_Iter;
+         Self.Filter.Next (File_Next_View_Iter);
+
+         Self.Filter.Convert_Child_Iter_To_Iter
+           (Category_View_Iter, Category_Iter);
+
+         if Self.Filter.Children (Category_View_Iter) = File_View_Iter
+           and then File_Next_View_Iter = Null_Iter
+           and then Self.Filter.Children (File_View_Iter) = Message_View_Iter
+           and then Message_Next_View_Iter = Null_Iter
+         then
+            --  It is a first visible message for the new category. Thus,
+            --  we need to expand category and file, select first message,
+            --  and go to location of the first message if requested. Because
+            --  user expects the first visible message (not a first inserted
+            --  message) be selected (and its location be opened in source
+            --  editor) the operation is delayed.
+
+            if Self.Expand_Path /= null then
+               Path_Free (Self.Expand_Path);
+            end if;
+
+            Self.Expand_Path := Self.Filter.Get_Path (Category_View_Iter);
+
+            if Self.Idle_Expand_Handler = No_Source_Id then
+               Self.Idle_Expand_Handler :=
+                 View_Idle.Idle_Add
+                   (Idle_Expand_Category'Access, Location_View (Self));
+            end if;
+         end if;
+      end if;
+   end On_Model_Row_Inserted;
 
    ---------------------
    -- On_Row_Expanded --
