@@ -1133,7 +1133,6 @@ package body Browsers.Call_Graph is
             Has_Markups        => True,
             Highlight_Category => Search_Results_Style,
             Remove_Duplicates  => False,
-            Enable_Counter     => False,
             Sort_In_File       => Sort_In_File);
 
       else
@@ -1150,7 +1149,6 @@ package body Browsers.Call_Graph is
             Highlight_Category => Search_Results_Style,
             Has_Markups        => True,
             Remove_Duplicates  => False,
-            Enable_Counter     => False,
             Sort_In_File       => Sort_In_File);
       end if;
    end Print_Ref;
@@ -1188,7 +1186,6 @@ package body Browsers.Call_Graph is
 
       while Count < Locations_At_A_Time loop
          if At_End (Data.Iter.all) then
-            Recount_Category (Data.Kernel, Data.Category.all);
             Result := Success;
             exit;
 
@@ -1874,8 +1871,7 @@ package body Browsers.Call_Graph is
                      Length       => Get_Name (Entity2)'Length,
                      Highlight    => True,
                      Highlight_Category => Search_Results_Style,
-                     Remove_Duplicates  => False,
-                     Enable_Counter     => True);
+                     Remove_Duplicates  => False);
                end if;
             end if;
 
@@ -1883,7 +1879,6 @@ package body Browsers.Call_Graph is
          end loop;
 
          Destroy (Iter2);
-         Recount_Category (Kernel, Title);
 
       elsif Locals_Only then
          --  Print the declaration of the entity, but only if it is in the
@@ -1910,7 +1905,6 @@ package body Browsers.Call_Graph is
             Next (Iter);
          end loop;
 
-         Recount_Category (Kernel, Title);
          Destroy (Iter);
 
       else

@@ -35,7 +35,6 @@ package GPS.Kernel.Locations is
       Highlight_Category : GPS.Kernel.Styles.Style_Access := null;
       Quiet              : Boolean := False;
       Remove_Duplicates  : Boolean := True;
-      Enable_Counter     : Boolean := True;
       Has_Markups        : Boolean := False;
       Sort_In_File       : Boolean := False;
       Look_For_Secondary : Boolean := False);
@@ -46,8 +45,6 @@ package GPS.Kernel.Locations is
    --  cursor will not jump to the first location.
    --  If Remove_Duplicates is True, remove the duplicates while inserting
    --  the items.
-   --  If Enable_Counter is True, enable the counting of the items on-the-fly.
-   --  See Recount_Category below.
    --  If Has_Markups is True, then Text should be in Pango Markup language;
    --  in this case, the markups will be interpreted and displayed in the
    --  Locations view.
@@ -108,11 +105,6 @@ package GPS.Kernel.Locations is
    --  relevant parenthesis pair in the regexp.
    --  Remove_Duplicates indicates whether duplicated entries should be
    --  filtered out.
-
-   procedure Recount_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String);
-   --  Update the counters for Category
 
    procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register hooks.

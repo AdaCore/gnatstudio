@@ -194,7 +194,6 @@ package body GPS.Kernel.Locations is
       Highlight_Category : GPS.Kernel.Styles.Style_Access := null;
       Quiet              : Boolean := False;
       Remove_Duplicates  : Boolean := True;
-      Enable_Counter     : Boolean := True;
       Has_Markups        : Boolean := False;
       Sort_In_File       : Boolean := False;
       Look_For_Secondary : Boolean := False)
@@ -212,7 +211,6 @@ package body GPS.Kernel.Locations is
                File, Line, Column, Length,
                Highlight, Text, Highlight_Category,
                Remove_Duplicates  => Remove_Duplicates,
-               Enable_Counter     => Enable_Counter,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
                Look_For_Secondary => Look_For_Secondary);
@@ -224,7 +222,6 @@ package body GPS.Kernel.Locations is
                File, Line, Column, Length,
                Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
                Remove_Duplicates  => Remove_Duplicates,
-               Enable_Counter     => Enable_Counter,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
                Look_For_Secondary => Look_For_Secondary);
@@ -480,7 +477,6 @@ package body GPS.Kernel.Locations is
                  (Get_Message (Last)),
                Highlight_Category => C,
                Remove_Duplicates  => Remove_Duplicates,
-               Enable_Counter     => False,
                Sort_In_File       => False,
                Parent_Iter        => Iter,
                Look_For_Secondary => True);
@@ -495,29 +491,7 @@ package body GPS.Kernel.Locations is
       then
          Goto_Location (View);
       end if;
-
-      Recount_Category (Kernel, Category);
    end Parse_File_Locations;
-
-   ----------------------
-   -- Recount_Category --
-   ----------------------
-
-   procedure Recount_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String)
-   is
-      View  : constant GPS.Location_View.Location_View :=
-                Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
-
-   begin
-      if View = null then
-         return;
-      end if;
-
-      Recount_Category (View.Model, Category);
-      View.Model.Redraw_Totals;
-   end Recount_Category;
 
    --------------
    -- Register --

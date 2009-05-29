@@ -574,7 +574,6 @@ package body GPS.Location_View is
       Message            : Glib.UTF8_String;
       Highlight_Category : Style_Access;
       Remove_Duplicates  : Boolean;
-      Enable_Counter     : Boolean;
       Sort_In_File       : Boolean;
       Look_For_Secondary : Boolean;
       Parent_Iter        : in out Gtk_Tree_Iter)
@@ -656,12 +655,17 @@ package body GPS.Location_View is
          end loop;
       end if;
 
-      if Enable_Counter then
-         View.Model.Set (File_Iter, Number_Of_Items_Column,
-              View.Model.Get_Int (File_Iter, Number_Of_Items_Column) + 1);
-         View.Model.Set (Category_Iter, Number_Of_Items_Column,
-              View.Model.Get_Int (Category_Iter, Number_Of_Items_Column) + 1);
-      end if;
+      --  Recompute number of items and activate idle redraw of counters
+
+      View.Model.Set
+        (File_Iter,
+         Number_Of_Items_Column,
+         View.Model.Get_Int (File_Iter, Number_Of_Items_Column) + 1);
+      View.Model.Set
+        (Category_Iter,
+         Number_Of_Items_Column,
+         View.Model.Get_Int (Category_Iter, Number_Of_Items_Column) + 1);
+      View.Model.Redraw_Totals;
 
       if Highlight then
          Highlight_Line
@@ -818,10 +822,6 @@ package body GPS.Location_View is
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
          Path_Free (Path);
-      end if;
-
-      if Enable_Counter then
-         View.Model.Redraw_Totals;
       end if;
    end Add_Location;
 
@@ -1515,7 +1515,6 @@ package body GPS.Location_View is
             Highlight_Category => Get_Or_Create_Style
               (Kernel_Handle (Kernel), Loc.Highlight_Category.all, False),
             Remove_Duplicates  => False,
-            Enable_Counter     => True,
             Sort_In_File       => False,
             Parent_Iter        => Parent_Iter,
             Look_For_Secondary => False);

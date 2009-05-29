@@ -91,7 +91,6 @@ package GPS.Location_View is
       Message            : Glib.UTF8_String;
       Highlight_Category : Style_Access;
       Remove_Duplicates  : Boolean;
-      Enable_Counter     : Boolean;
       Sort_In_File       : Boolean;
       Look_For_Secondary : Boolean;
       Parent_Iter        : in out Gtk_Tree_Iter);

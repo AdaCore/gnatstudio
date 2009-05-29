@@ -149,11 +149,6 @@ package GPS.Location_Model is
    --  Clear all the marks and highlightings in file or category
    --  ??? Document parameter Line.
 
-   procedure Recount_Category
-     (Model    : not null access Location_Model_Record'Class;
-      Category : String);
-   --  Update the counters for Category
-
    procedure Add_Action_Item
      (Self       : not null access Location_Model_Record'Class;
       Identifier : String;
