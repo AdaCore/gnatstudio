@@ -272,7 +272,9 @@ package body GPS.Kernel.Timeout is
             --  We could not launch the process: call the Exit_Cb nonetheless,
             --  as it may be used to keep count of executions, or to free
             --  memory, for instance.
-            Command.Data.D.Exit_Cb (Command.Data.D, -1);
+            if Command.Data.D.Exit_Cb /= null then
+               Command.Data.D.Exit_Cb (Command.Data.D, -1);
+            end if;
 
             Free (Command.Data.D.Descriptor);
             Command.Data.Died := True;
