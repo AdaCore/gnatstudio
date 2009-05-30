@@ -6,6 +6,11 @@ Known Problems fixed in GPS 4.4.0
               set for the cursor is not taken into account
   Workaround: Reindent manually instead of via the alias property
 
+- I520-014: Save key bindings from shortest to longest.
+  Problem:    GPS won't allow a binding to be set if its prefix corresponds
+              to a current key binding. This new order avoid that.
+  Workaround: Fix order of key-bindings in .gps/keys.xml.
+
 - I519-023: Refill duplicate lines on end of buffer
   Problem:    When doing a Refill on the last line of the buffer and if
               this line has no end-of-line character then the content will

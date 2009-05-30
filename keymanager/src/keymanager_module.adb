@@ -264,7 +264,11 @@ package body KeyManager_Module is
       File     : Node_Ptr;
       Success  : Boolean;
 
-      procedure Save_Table (Table : in out Key_Htable.HTable; Prefix : String);
+      procedure Save_Table
+        (Table       : in out Key_Htable.HTable;
+         Prefix      : String;
+         N, Level    : Positive;
+         More_Levels : out Boolean);
       --  Save the contents of a specific keymap
 
       ----------------
@@ -272,7 +276,10 @@ package body KeyManager_Module is
       ----------------
 
       procedure Save_Table
-        (Table : in out Key_Htable.HTable; Prefix : String)
+        (Table       : in out Key_Htable.HTable;
+         Prefix      : String;
+         N, Level    : Positive;
+         More_Levels : out Boolean)
       is
          Child   : Node_Ptr;
          Iter    : Key_Htable.Iterator;
@@ -283,9 +290,10 @@ package body KeyManager_Module is
             Binding := Get_Element (Iter);
             exit when Binding = No_Key;
 
-            while Binding /= null loop
+            Save_Binding : while Binding /= null loop
                if Binding.Changed
                  and then Binding.Action /= null
+                 and then N = Level
                then
                   Child := new Node;
                   Child.Tag := new String'("key");
@@ -300,20 +308,26 @@ package body KeyManager_Module is
                         & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
                   end if;
 
-                  Add_Child (File, Child);
+                  Add_Child (File, Child, Append => True);
 
                elsif Binding.Action = null then
                   if Binding.Keymap /= null then
-                     Save_Table (Binding.Keymap.Table,
-                       Prefix
-                       & Image (Get_Key (Iter).Key,
-                         Get_Key (Iter).Modifier)
-                       & ' ');
+                     if N < Level then
+                        Save_Table
+                          (Binding.Keymap.Table,
+                           Prefix & Image
+                             (Get_Key (Iter).Key,
+                              Get_Key (Iter).Modifier) & ' ',
+                           N + 1, Level, More_Levels);
+                     else
+                        More_Levels := True;
+                        exit Save_Binding;
+                     end if;
                   end if;
                end if;
 
                Binding := Binding.Next;
-            end loop;
+            end loop Save_Binding;
 
             Get_Next (Table, Iter);
          end loop;
@@ -323,7 +337,17 @@ package body KeyManager_Module is
       File     := new Node;
       File.Tag := new String'("Keys");
 
-      Save_Table (Keymanager_Module.Table.all, "");
+      declare
+         Level       : Positive := 1;
+         More_Levels : Boolean := False;
+      begin
+         loop
+            Save_Table
+              (Keymanager_Module.Table.all, "", 1, Level, More_Levels);
+            exit when not More_Levels;
+            Level := Level + 1;
+         end loop;
+      end;
 
       Trace (Me, "Saving " & Filename.Display_Full_Name);
       Print (File, Filename, Success);
