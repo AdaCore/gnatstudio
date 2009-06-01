@@ -613,12 +613,16 @@ package body Project_Properties is
                                  Edit_File,
                                  Edit_Properties);
 
-   function Warning_On_View_Incomplete
+   function Warning_Cannot_Edit
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Type)
+      Message : String;
+      Always_Load_Source : Boolean)
       return Project_Edition_Type;
    --  Display a warning dialog to indicate that the current view is
    --  incomplete, and it might be dangereous to edit the properties.
+   --  If Always_Load_Source is True, [Open] will always open the source file,
+   --  not the project properties. Otherwise, the user has a choice between the
+   --  two.
 
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
@@ -4950,13 +4954,14 @@ package body Project_Properties is
       end if;
    end Switch_Page;
 
-   --------------------------------
-   -- Warning_On_View_Incomplete --
-   --------------------------------
+   -------------------------
+   -- Warning_Cannot_Edit --
+   -------------------------
 
-   function Warning_On_View_Incomplete
+   function Warning_Cannot_Edit
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Type) return Project_Edition_Type
+      Message : String;
+      Always_Load_Source : Boolean) return Project_Edition_Type
    is
       D : Gtk_Dialog;
       B : Gtk_Widget;
@@ -4969,30 +4974,29 @@ package body Project_Properties is
                Parent => Get_Main_Window (Kernel),
                Flags  => Modal);
 
-      Gtk_New
-        (L,
-         -"The project """
-         & Project_Name (Project)
-         & (-(""" contained errors, and was incorrectly"
-              & ASCII.LF
-              & "loaded by GPS. Editing it through the project properties"
-              & ASCII.LF
-              & "dialog might result in a loss of data.")));
+      Gtk_New (L, Message);
       Set_Alignment (L, 0.0, 0.5);
       Pack_Start (Get_Vbox (D), L, Expand => True, Fill => True);
 
-      Gtk_New (C, -"Edit the project file");
-      Set_Active (C, True);
-      Pack_End (Get_Vbox (D), C, Expand => False);
+      if not Always_Load_Source then
+         Gtk_New (C, -"Edit the project file");
+         Set_Active (C, True);
+         Pack_End (Get_Vbox (D), C, Expand => False);
+      end if;
 
-      B := Add_Button (D, Stock_Open,   Gtk_Response_OK);
+      if Always_Load_Source then
+         B := Add_Button (D, -"Open Source",   Gtk_Response_OK);
+      else
+         B := Add_Button (D, Stock_Open,   Gtk_Response_OK);
+      end if;
+
       B := Add_Button (D, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (D);
 
       case Run (D) is
          when Gtk_Response_OK =>
-            if Get_Active (C) then
+            if Always_Load_Source or else Get_Active (C) then
                Destroy (D);
                return Edit_File;
             else
@@ -5004,7 +5008,7 @@ package body Project_Properties is
             Destroy (D);
             return Do_Not_Edit;
       end case;
-   end Warning_On_View_Incomplete;
+   end Warning_Cannot_Edit;
 
    ---------------------
    -- Edit_Properties --
@@ -5079,21 +5083,35 @@ package body Project_Properties is
       Response2                : Message_Dialog_Buttons;
       Project_Renamed_Or_Moved : Boolean := False;
 
+      Incomplete : constant String := -"The project """
+        & Project_Name (Project)
+        & (-(""" contained errors, and was incorrectly"
+        & ASCII.LF
+        & "loaded by GPS. Editing it through the project properties"
+        & ASCII.LF
+        & "dialog might result in a loss of data."));
+
+      Had_Errors : constant String := -"The project """
+        & Project_Name (Project)
+        & (-(""" cannot be edited (it might be using statements"
+        & ASCII.LF
+        & "which GPS cannot edit graphically, such as ""Var := ..."""));
+
    begin
       if not Is_Editable (Project) then
-         Response2 := Message_Dialog
-           (Msg         =>
-            -("This project cannot be edited (most likely it uses variables"
-              & " which GPS cannot edit graphically, such as ""Var := ..."""),
-            Buttons     => Button_OK,
-            Dialog_Type => Error,
-            Title       => -"Error",
-            Parent      => Get_Current_Window (Kernel));
+         case Warning_Cannot_Edit (Kernel, Had_Errors, True) is
+            when Do_Not_Edit | Edit_Properties =>
+               null;
+
+            when Edit_File =>
+               Open_File_Editor (Kernel, Project_Path (Project));
+         end case;
+
          return;
       end if;
 
       if not View_Is_Complete (Project) then
-         case Warning_On_View_Incomplete (Kernel, Project) is
+         case Warning_Cannot_Edit (Kernel, Incomplete, False) is
             when Do_Not_Edit =>
                return;
 
