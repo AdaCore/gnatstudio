@@ -499,7 +499,8 @@ package body Coverage_GUI is
                  (Kernel,
                   -"Could not determine directory for GCOV files: make sure" &
                   " that the root project has an object directory, or that" &
-                  " the environment variable GCOV_ROOT is set.");
+                  " the environment variable GCOV_ROOT is set.",
+                 Mode => Error);
             end if;
 
             return Create_From_Dir
