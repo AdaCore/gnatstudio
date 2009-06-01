@@ -398,7 +398,9 @@ package body GPS.Location_View is
       Path_Free (End_Path);
 
       View.Idle_Row_Handler := Glib.Main.No_Source_Id;
+
       return False;
+
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -1469,6 +1471,7 @@ package body GPS.Location_View is
      (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues)
    is
+      Path       : Gtk_Tree_Path;
       Iter       : Gtk_Tree_Iter;
       Model_Iter : Gtk_Tree_Iter;
 
@@ -1482,16 +1485,25 @@ package body GPS.Location_View is
       Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
       Self.Model.Set (Model_Iter, Expanded_State_Column, True);
 
-      if Self.Idle_Row_Handler = Glib.Main.No_Source_Id then
+      Path := Get_Path (Get_Model (Self.Tree), Iter);
+
+      if Get_Depth (Path) = 2
+        and then Self.Idle_Row_Handler = Glib.Main.No_Source_Id
+      then
+         --  Request move of the view to ensure first message is visible to
+         --  the user
+
          if Self.Row /= null then
             Path_Free (Self.Row);
          end if;
 
-         Self.Row := Get_Path (Get_Model (Self.Tree), Iter);
+         Self.Row := Gtk.Tree_Model.Copy (Path);
 
          Self.Idle_Row_Handler := View_Idle.Idle_Add
            (Idle_Show_Row'Access, Location_View (Self));
       end if;
+
+      Path_Free (Path);
 
    exception
       when E : others => Trace (Exception_Handle, E);
