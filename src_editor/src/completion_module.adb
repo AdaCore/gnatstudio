@@ -265,7 +265,7 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Smart_Completion_Pref : constant Smart_Completion_Type :=
-        Smart_Completion.Get_Pref;
+                                Smart_Completion.Get_Pref;
    begin
       Completion_Module.Smart_Completion_Launched :=
         Smart_Completion_Pref /= Disabled;

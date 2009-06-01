@@ -4696,7 +4696,6 @@ package body Src_Editor_Buffer is
          elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
             File_Closed (Buffer.Kernel, Buffer.File_Identifier);
          end if;
-
       end if;
    end Register_View;
 

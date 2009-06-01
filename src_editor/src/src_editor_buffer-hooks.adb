@@ -113,8 +113,8 @@ package body Src_Editor_Buffer.Hooks is
    is
       Data : aliased File_Edition_Hooks_Args :=
         (Hooks_Data
-         with File => Buffer.Filename,
-         Character => Character,
+         with File   => Buffer.Filename,
+         Character   => Character,
          Interactive => Interactive);
    begin
       Run_Hook

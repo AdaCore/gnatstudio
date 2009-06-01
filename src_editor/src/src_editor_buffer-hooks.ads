@@ -38,7 +38,7 @@ package Src_Editor_Buffer.Hooks is
    type File_Edition_Hooks_Args_Access is access all
      File_Edition_Hooks_Args'Class;
 
-   Character_Added_Hook       : constant Hook_Name := "character_added";
+   Character_Added_Hook : constant Hook_Name := "character_added";
 
    procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook
