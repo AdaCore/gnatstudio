@@ -285,6 +285,7 @@ package body KeyManager_Module is
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
       begin
+         More_Levels := False;
          Get_First (Table, Iter);
          loop
             Binding := Get_Element (Iter);
