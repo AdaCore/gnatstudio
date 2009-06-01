@@ -1059,8 +1059,7 @@ package body Code_Peer.Module is
                   File         => File.Name,
                   Text         =>
                     Image (Message.Current_Probability)
-                    & Message.Category.Name.all
-                    & ": "
+                    & Message.Category.Name.all & " "
                     & Message.Text.all,
                   Line         => Message.Line,
                   Column       =>
