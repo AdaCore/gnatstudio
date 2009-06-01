@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
+- I531-003: Disabling auto-casing when using On-The-Fly mode
+  Problem:    The control-q prefix (to disable auto-casing) is not
+              honored when using the on-the-fly casing policy.
+  Workaround: Convert the text using the casing contextual menu.
+
 - I526-007: Aliases and cursor position
   Problem:    If you create an alias via the /Edit/Aliases menu, and specify
               "Indent source editor after expansion", then the position you

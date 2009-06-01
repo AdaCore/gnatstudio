@@ -117,6 +117,7 @@ package body Src_Editor_Module is
    --  dialog.
 
    Underscore : constant Gunichar := UTF8_Get_Char ("_");
+   Space      : constant Gunichar := UTF8_Get_Char (" ");
    Backspace  : constant Gunichar := 8;
 
    fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
@@ -2287,7 +2288,6 @@ package body Src_Editor_Module is
    is
       File_Data : constant File_Edition_Hooks_Args :=
                     File_Edition_Hooks_Args (Data.all);
-      Buffer    : Source_Buffer;
    begin
       if File_Data.File = GNATCOLL.VFS.No_File
         or else not File_Data.Interactive
@@ -2299,9 +2299,22 @@ package body Src_Editor_Module is
         or else File_Data.Character = Underscore
         or else File_Data.Character = Backspace
       then
-         Buffer := Get_Buffer
-           (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
-         Autocase_Text (Buffer, Casing => On_The_Fly);
+         declare
+            Box : constant Source_Editor_Box :=
+                    Get_Source_Box_From_MDI
+                      (Find_Editor (Kernel, File_Data.File));
+         begin
+            if Get_View (Box).As_Is_Mode then
+               Get_View (Box).Reset_As_Is_Mode;
+            else
+               Autocase_Text (Get_Buffer (Box), Casing => On_The_Fly);
+            end if;
+         end;
+
+      elsif File_Data.Character = Space then
+         Get_View
+           (Get_Source_Box_From_MDI
+              (Find_Editor (Kernel, File_Data.File))).Reset_As_Is_Mode;
       end if;
    end User_Character_Added_Hook;
 

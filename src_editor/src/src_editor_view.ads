@@ -153,6 +153,14 @@ package Src_Editor_View is
    procedure Stop_Selection_Drag (View : access Source_View_Record'Class);
    --  Stop the selection drag if it's currently in done
 
+   function As_Is_Mode (View : access Source_View_Record'Class) return Boolean;
+   pragma Inline (As_Is_Mode);
+   --  Return true is the view is currently in as-is mode (no autocasing for
+   --  next character).
+
+   procedure Reset_As_Is_Mode (View : access Source_View_Record'Class);
+   --  Set As_Mode to false
+
 private
 
    type Source_View_Record is new Gtkada_Text_View_Record with record

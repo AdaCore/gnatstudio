@@ -285,6 +285,25 @@ package body Src_Editor_View is
    procedure Register_Idle_Column_Redraw (View : Source_View);
    --  Register an idle redrawing of the side columns
 
+   ----------------
+   -- As_Is_Mode --
+   ----------------
+
+   function As_Is_Mode
+     (View : access Source_View_Record'Class) return Boolean is
+   begin
+      return View.As_Is_Mode;
+   end As_Is_Mode;
+
+   ----------------------
+   -- Reset_As_Is_Mode --
+   ----------------------
+
+   procedure Reset_As_Is_Mode (View : access Source_View_Record'Class) is
+   begin
+      View.As_Is_Mode := False;
+   end Reset_As_Is_Mode;
+
    ---------------------------------
    -- Register_Idle_Column_Redraw --
    ---------------------------------
@@ -2139,8 +2158,6 @@ package body Src_Editor_View is
                end if;
             end;
       end case;
-
-      View.As_Is_Mode := False;
 
       return False;
 
