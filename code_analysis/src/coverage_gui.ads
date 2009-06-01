@@ -143,6 +143,8 @@ package Coverage_GUI is
      (Kernel : Kernel_Handle;
       Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
    --  Return the gcov file associated with Source
+   --  Raise GNATCOLL.VFS.VFS_Invalid_File_Error if GPS cannot find the
+   --  coverage information.
 
    function Have_Gcov_Info
      (Projects : Code_Analysis_Tree;

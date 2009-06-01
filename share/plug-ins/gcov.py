@@ -6,6 +6,11 @@ procedure of obtaining gcov info.
 The output of the gcov process is displayed in a separate console.
 At the end of the processing, the open editors are decorated with coverage
 information.
+
+Note that GPS calls gcov so that the .gcov files are generated
+ - in the directory pointed to by the "GCOV_ROOT" environment variable, or
+ - in the object directory of the root project, if this variable is not set
+
 """
 
 
@@ -87,7 +92,15 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
    GCOV_ROOT = getenv ("GCOV_ROOT")
 
    if GCOV_ROOT == None or GCOV_ROOT == "":
-      gcov_dir = root_project.object_dirs (False)[0]
+      root_object_dirs = root_project.object_dirs (False)
+      if not root_object_dirs:
+          MDI.dialog ("""The root project does not have an object directory.
+ Please add one, or set the enviroment variable GCOV_ROOT to
+ the directory where you would like the gcov files to be
+ generated.""")
+          return
+      else:
+          gcov_dir = root_object_dirs [0]
 
    else:
       gcov_dir = GCOV_ROOT

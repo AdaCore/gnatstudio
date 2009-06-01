@@ -87,6 +87,9 @@ package body Coverage_GUI is
 
       Compute_Project_Coverage (Prj_Node);
    exception
+      when GNATCOLL.VFS.VFS_Invalid_File_Error =>
+         null;
+
       when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info;
 
@@ -477,6 +480,7 @@ package body Coverage_GUI is
                --  If GCOV_ROOT is set but empty, look for files in the object
                --  directory of the root project.
                Free (Gcov_Root_Env);
+               Gcov_Root_Env := null;
             end if;
 
             if Gcov_Root_Env = null then
@@ -488,6 +492,14 @@ package body Coverage_GUI is
                --  Look for the gcov file in the path pointed by GCOV_ROOT
                Gcov_Root := Create (+Gcov_Root_Env.all);
                Free (Gcov_Root_Env);
+            end if;
+
+            if Gcov_Root = No_File then
+               GPS.Kernel.Console.Insert
+                 (Kernel,
+                  -"Could not determine directory for GCOV files: make sure" &
+                  " that the root project has an object directory, or that" &
+                  " the environment variable GCOV_ROOT is set.");
             end if;
 
             return Create_From_Dir

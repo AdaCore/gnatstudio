@@ -5,6 +5,13 @@ Known Problems fixed in GPS 4.4.0
               honored when using the on-the-fly casing policy.
   Workaround: Convert the text using the casing contextual menu.
 
+- I529-020: Using "gcov" plugin on a project with no object directory
+  Problem:    When using the "gcov" plug-in, the root directory needs to have
+              an object directory, since this is where GPS will generate the
+              .gcov files and look for them.
+  Workaround: Use the "GCOV_ROOT" environment variable to a valid directory, if
+              the root project does not have an object dir.
+
 - I526-007: Aliases and cursor position
   Problem:    If you create an alias via the /Edit/Aliases menu, and specify
               "Indent source editor after expansion", then the position you
