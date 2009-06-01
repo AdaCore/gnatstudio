@@ -29,6 +29,7 @@ with Gtk.Enums;
 with Gtk.Object;           use Gtk.Object;
 with Gtk.Widget;
 
+with GNATCOLL.Traces;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;  use GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;   use GPS.Editors.GtkAda;
@@ -39,7 +40,8 @@ with Traces;               use Traces;
 
 package body GPS.Location_Model is
 
-   Me : constant Debug_Handle := Create ("GPS_Location_Model");
+   Me : constant Debug_Handle :=
+          Create ("GPS_Location_Model", GNATCOLL.Traces.Off);
 
    function To_Style is new Ada.Unchecked_Conversion
      (System.Address, GPS.Kernel.Styles.Style_Access);
@@ -164,10 +166,12 @@ package body GPS.Location_Model is
 
       pragma Unreferenced (Identifier);
    begin
-      Trace (Me, "Add_Action_Item: "
-             & File.Display_Full_Name
-             & ' ' & Category & Line'Img & Column'Img
-             & ' ' & Message);
+      if Active (Me) then
+         Trace (Me, "Add_Action_Item: "
+                & File.Display_Full_Name
+                & ' ' & Category & Line'Img & Column'Img
+                & ' ' & Message);
+      end if;
 
       Get_Category_File
         (Self,
