@@ -268,7 +268,7 @@ package body KeyManager_Module is
         (Table       : in out Key_Htable.HTable;
          Prefix      : String;
          N, Level    : Positive;
-         More_Levels : out Boolean);
+         More_Levels : in out Boolean);
       --  Save the contents of a specific keymap
 
       ----------------
@@ -279,13 +279,12 @@ package body KeyManager_Module is
         (Table       : in out Key_Htable.HTable;
          Prefix      : String;
          N, Level    : Positive;
-         More_Levels : out Boolean)
+         More_Levels : in out Boolean)
       is
          Child   : Node_Ptr;
          Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
       begin
-         More_Levels := False;
          Get_First (Table, Iter);
          loop
             Binding := Get_Element (Iter);
