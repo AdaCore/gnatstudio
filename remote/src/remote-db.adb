@@ -867,14 +867,7 @@ package body Remote.Db is
 
    procedure Free (Machines : in out Machine_Db.Map) is
       use Machine_Db;
-      C : Machine_Db.Cursor := First (Machines);
-      A : Machine_Access;
    begin
-      while Has_Element (C) loop
-         A := Element (C);
-         Unref (A);
-         Next (C);
-      end loop;
       Clear (Machines);
    end Free;
 
