@@ -2687,6 +2687,7 @@ package body GPS.Location_View is
          end;
 
       else
+         Unset (Value);
          Self.Model.Get_Value (Aux, Column, Value);
       end if;
    end Modify;
