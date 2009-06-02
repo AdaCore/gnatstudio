@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I601-012: "Remove coverage files" menu not working
+  Problem:    The "Tools->Coverage->Remove coverage files" menu that is created
+              when the gcov.py plug-in is activated does not work if your
+              project tree contains a project that has no object directory.
+  Workaround: Remove the files manually (e.g from the Windows explorer or using
+              command line tools on UNIX-like systems)
+
 - I531-003: Disabling auto-casing when using On-The-Fly mode
   Problem:    The control-q prefix (to disable auto-casing) is not
               honored when using the on-the-fly casing policy.

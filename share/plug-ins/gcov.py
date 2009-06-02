@@ -191,13 +191,16 @@ def remove_gcov(menu):
    # Look in all the projects
 
    for p in Project.root().dependencies(True):
-      object_dir = p.object_dirs(False)[0]
+      object_dirs = p.object_dirs(False)
+ 
+      if len (object_dirs) > 0:
+         object_dir = object_dirs [0]
 
-      # Browse in the object dirs
-      for f in listdir (object_dir):
-         #  if f is a .gcda or a .gcov, remove it
-         if f.find (".gcda") != -1 or f.find (".gcov") != -1:
-            remove (object_dir + sep + f)
+         # Browse in the object dirs
+         for f in listdir (object_dir):
+            #  if f is a .gcda or a .gcov, remove it
+            if f.find (".gcda") != -1 or f.find (".gcov") != -1:
+               remove (object_dir + sep + f)
 
 def on_preferences_changed(name):
    global compute_menu
