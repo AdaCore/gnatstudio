@@ -1090,8 +1090,6 @@ package body GPS.Kernel.Remote is
                if Active (Me) then
                   Trace (Me, Getenv ("PATH").all);
                end if;
-
-               Free (Env);
             end if;
 
             --  Set buffer_size to 0 for dynamically allocated buffer (prevents
@@ -1107,6 +1105,8 @@ package body GPS.Kernel.Remote is
             if Is_Toolchains_Active then
                Setenv ("PATH", +To_Path (Oldpath));
             end if;
+
+            Free (Env);
 
          exception
             when Invalid_Process =>

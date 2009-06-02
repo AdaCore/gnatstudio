@@ -41,7 +41,7 @@ package body Remote_Module is
    Me : constant Debug_Handle := Create ("Remote");
 
    type Remote_Module_Record is new Module_ID_Record with record
-      Database : access Remote.Db.Remote_Db_Type;
+      Database : Remote.Db.Remote_Db_Type_Access;
    end record;
 
    overriding procedure Customize
@@ -136,8 +136,8 @@ package body Remote_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Remote_Module_Record) is
-      pragma Unreferenced (Module);
    begin
+      Remote.Db.Free (Module.Database);
       Remote_Module_Id := null;
    end Destroy;
 

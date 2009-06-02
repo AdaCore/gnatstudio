@@ -452,13 +452,15 @@ package body Task_Manager.GUI is
          declare
             Pd : constant Progress_Data := Get_Progress_Text
               (GUI.Manager, False);
-            P  : constant Gdk_Pixbuf := To_Pixbuf (GUI, Pd);
+            P  : Gdk_Pixbuf;
          begin
             if Pd = Null_Progress_Data then
                Hide_All (GUI);
             else
+               P := To_Pixbuf (GUI, Pd);
                if P /= null then
                   Set (GUI.Progress_Image, P);
+                  Unref (P);
                   Show_All (GUI);
                end if;
 

@@ -1625,7 +1625,9 @@ package body GPS.Kernel is
 
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
-      GNAT.Expect.TTY.Remote.Close_All;
+
+      --  ??? Already done in remote.db.Destroy
+      --  GNAT.Expect.TTY.Remote.Close_All;
 
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);

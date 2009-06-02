@@ -1782,8 +1782,6 @@ procedure GPS.Main is
       Projects.Registry.Finalize;
       GNATCOLL.Traces.Finalize;
 
-      GNAT.Expect.TTY.Remote.Close_All;
-
       --  In case of a normal exit, rename log.<pid> as log to avoid
       --  generating a new log file for each session; this way we still
       --  keep the log file in case of post mortem analysis.

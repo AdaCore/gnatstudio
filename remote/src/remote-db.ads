@@ -66,7 +66,7 @@ package Remote.Db is
 
    type Machine_Type is new Gexpect.Machine_Type
      and GNATCOLL.Remote.Server_Record with private;
-   type Machine_Access is access all Machine_Type;
+   type Machine_Access is access all Machine_Type'Class;
 
    overriding procedure Ref (Machine : in out Machine_Type);
    overriding procedure Unref (Machine : access Machine_Type);
@@ -205,8 +205,11 @@ package Remote.Db is
    type Remote_Db_Type is
      new Gexpect.Db.Machine_Db_Interface
      and GNATCOLL.Remote.Db.Remote_Db_Interface with private;
+   type Remote_Db_Type_Access is access all Remote_Db_Type'Class;
 
-   function Initialize_Database return access Remote_Db_Type;
+   function Initialize_Database return Remote_Db_Type_Access;
+
+   procedure Free (DB : in out Remote_Db_Type_Access);
 
    procedure Read_From_XML
      (Db        : access Remote_Db_Type;
@@ -310,6 +313,10 @@ private
    type Shell_Access is access all Shell_Record;
 
    type Extra_Prompt_Array_Access is access all Extra_Prompt_Array;
+
+   procedure Free (Prompt : in out Extra_Prompt);
+   procedure Free (Prompts : in out Extra_Prompt_Array_Access);
+   --  Free memory used by Prompt
 
    type Access_Tool_Record is record
       Name                   : String_Access             := null;

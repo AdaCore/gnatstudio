@@ -1197,12 +1197,14 @@ package body Help_Module is
    procedure Add_Doc_Path_From_Env
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Path_From_Env : constant File_Array :=
-                        From_Path (+Getenv ("GPS_DOC_PATH").all);
+      Doc_Path      : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Path_From_Env : constant File_Array := From_Path (+Doc_Path.all);
       Custom_Path   : constant File_Array :=
                         Get_Custom_Path;
 
    begin
+      Free (Doc_Path);
+
       for J in Path_From_Env'Range loop
          Add_Doc_Directory (Kernel, Path_From_Env (J));
       end loop;

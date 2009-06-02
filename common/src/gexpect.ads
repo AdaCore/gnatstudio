@@ -56,6 +56,7 @@ package Gexpect is
    --   will then be sent to the remote access tool.
 
    type Extra_Prompt_Array is array (Natural range <>) of Extra_Prompt;
+   --  See Free procedure in remote-db.ads
 
    Null_Extra_Prompt : constant Extra_Prompt :=
                          (Auto_Answer => True,
@@ -156,6 +157,9 @@ package Gexpect is
    type Machine_User_Data_Type is abstract tagged null record;
    type Machine_User_Data_Access is access all
      Machine_User_Data_Type'Class;
+
+   procedure Free (Machine : in out Machine_User_Data_Type) is null;
+   --  Should free memory used by Machine.
 
    procedure Set_Data
      (Machine : in out Machine_Type;

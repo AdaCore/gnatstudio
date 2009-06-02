@@ -29,6 +29,7 @@ with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel.Console;   use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 
+with Basic_Types;          use Basic_Types;
 with Interactive_Consoles; use Interactive_Consoles;
 with Password_Manager;     use Password_Manager;
 with Traces;               use Traces;
@@ -75,6 +76,14 @@ package body Remote.Db is
       Kernel    : access Kernel_Handle_Record'Class;
       Node      : XML_Utils.Node_Ptr);
    --  Parse a remote_connection_config node
+
+   procedure Free (Shell    : in out Shell_Access);
+   procedure Free (Tool     : in out Access_Tool_Access);
+   procedure Free (Shells   : in out Shell_Db.Map);
+   procedure Free (Tools    : in out Access_Tools_Db.Map);
+   procedure Free (Machines : in out Machine_Db.Map);
+   procedure Free (Points   : in out Mount_Points_Db.Map);
+   --  Free the memory used by the parameters
 
    ------------------------
    -- Parse_Machine_Node --
@@ -734,14 +743,168 @@ package body Remote.Db is
    -- Initialize_Database --
    -------------------------
 
-   function Initialize_Database return access Remote_Db_Type is
-      Ret : constant Remote_Db_Access := new Remote_Db_Type;
+   function Initialize_Database return Remote_Db_Type_Access is
+      Ret : constant Remote_Db_Type_Access := new Remote_Db_Type;
    begin
       Gexpect.Db.Define_Machine_Db (Ret);
       GNATCOLL.Remote.Db.Define_Remote_Configuration (Ret);
 
       return Ret;
    end Initialize_Database;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Shell : in out Shell_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Shell_Record, Shell_Access);
+   begin
+      if Shell /= null then
+         Free (Shell.Name);
+         Free (Shell.Start_Cmd);
+         Free (Shell.No_Echo_Cmd);
+         Free (Shell.Init_Cmds);
+         Free (Shell.Exit_Cmds);
+         Free (Shell.Cd_Cmd);
+         Free (Shell.Get_Status_Cmd);
+         Unchecked_Free (Shell.Get_Status_Ptrn);
+         Unchecked_Free (Shell.Generic_Prompt);
+         Unchecked_Free (Shell.Prompt);
+         Unchecked_Free (Shell);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Prompt : in out Extra_Prompt) is
+   begin
+      Unchecked_Free (Prompt.Ptrn);
+
+      case Prompt.Auto_Answer is
+         when True  => Free (Prompt.Answer);
+         when False => Free (Prompt.Question);
+      end case;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Prompts : in out Extra_Prompt_Array_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Extra_Prompt_Array, Extra_Prompt_Array_Access);
+   begin
+      if Prompts /= null then
+         for P in Prompts'Range loop
+            Free (Prompts (P));
+         end loop;
+         Unchecked_Free (Prompts);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Tool : in out Access_Tool_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Access_Tool_Record, Access_Tool_Access);
+   begin
+      if Tool /= null then
+         Free (Tool.Name);
+         Free (Tool.Start_Cmd);
+         Free (Tool.Start_Cmd_Common_Args);
+         Free (Tool.Start_Cmd_User_Args);
+         Free (Tool.Send_Interrupt);
+         Unchecked_Free (Tool.User_Prompt_Ptrn);
+         Unchecked_Free (Tool.Password_Prompt_Ptrn);
+         Unchecked_Free (Tool.Passphrase_Prompt_Ptrn);
+         Free (Tool.Extra_Prompts);
+         Unchecked_Free (Tool);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Shells : in out Shell_Db.Map) is
+      use Shell_Db;
+      C : Shell_Db.Cursor := First (Shells);
+      A : Shell_Access;
+   begin
+      while Has_Element (C) loop
+         A := Element (C);
+         Free (A);
+         Next (C);
+      end loop;
+      Clear (Shells);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Tools : in out Access_Tools_Db.Map) is
+      use Access_Tools_Db;
+      C : Access_Tools_Db.Cursor := First (Tools);
+      A : Access_Tool_Access;
+   begin
+      while Has_Element (C) loop
+         A := Element (C);
+         Free (A);
+         Next (C);
+      end loop;
+      Clear (Tools);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Machines : in out Machine_Db.Map) is
+      use Machine_Db;
+      C : Machine_Db.Cursor := First (Machines);
+      A : Machine_Access;
+   begin
+      while Has_Element (C) loop
+         A := Element (C);
+         Unref (A);
+         Next (C);
+      end loop;
+      Clear (Machines);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Points : in out Mount_Points_Db.Map) is
+      use Mount_Points_Db;
+   begin
+      Clear (Points);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (DB : in out Remote_Db_Type_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Remote_Db_Type'Class, Remote_Db_Type_Access);
+   begin
+      if DB /= null then
+         Free (DB.Shells);
+         Free (DB.Access_Tools);
+         Free (DB.Machines);
+         Free (DB.Sys_Machines);
+         Free (DB.Mount_Points);
+         Unchecked_Free (DB);
+      end if;
+   end Free;
 
    -------------------
    -- Read_From_XML --
@@ -1244,8 +1407,11 @@ package body Remote.Db is
    -----------
 
    overriding procedure Unref (Machine : access Machine_Type) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Machine_Type, Machine_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Machine_Type'Class, Machine_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Machine_User_Data_Type'Class, Machine_User_Data_Access);
+
       The_Machine : Machine_Access := Machine_Access (Machine);
    begin
       Machine.Ref_Counter := Machine.Ref_Counter - 1;
@@ -1254,11 +1420,19 @@ package body Remote.Db is
          Free (Machine.Nickname);
          Free (Machine.Network_Name);
          Free (Machine.Access_Tool_Name);
+         Free (Machine.Access_Tool);
          Free (Machine.Shell_Name);
+         Free (Machine.Shell);
          Free (Machine.Extra_Init_Commands);
          Free (Machine.User_Name);
          Free (Machine.Rsync_Func);
-         Internal_Free (The_Machine);
+
+         if The_Machine.User_Data /= null then
+            Free (The_Machine.User_Data.all);
+            Unchecked_Free (The_Machine.User_Data);
+         end if;
+
+         Unchecked_Free (The_Machine);
       end if;
    end Unref;
 
