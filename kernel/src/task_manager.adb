@@ -777,7 +777,7 @@ package body Task_Manager is
    begin
       if Manager.GUI /= null then
          GUI := Task_Manager_Interface (Manager.GUI);
-         Queue_Changed (GUI, Index);
+         Queue_Changed (GUI, Index, False);
       end if;
    end Queue_Changed;
 

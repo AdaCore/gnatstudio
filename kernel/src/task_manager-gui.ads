@@ -39,6 +39,9 @@ with Gtk.Tree_View; use Gtk.Tree_View;
 
 with GPS.Kernel; use GPS.Kernel;
 
+with Generic_Stack;
+with Glib.Main;
+
 package Task_Manager.GUI is
 
    function Create
@@ -81,14 +84,20 @@ package Task_Manager.GUI is
    procedure Queue_Added
      (GUI   : Task_Manager_Interface;
       Index : Integer);
+   --  Inform the GUI that a queue has been added
 
    procedure Queue_Removed
      (GUI   : Task_Manager_Interface;
       Index : Integer);
+   --  Inform the GUI that a queue has been removed
 
    procedure Queue_Changed
-     (GUI   : Task_Manager_Interface;
-      Index : Integer);
+     (GUI               : Task_Manager_Interface;
+      Index             : Integer;
+      Immediate_Refresh : Boolean);
+   --  Inform the GUI that the progress or running information of a queue has
+   --  been changed. If Immediate_Refresh is True, reflect the changes in the
+   --  GUI immediately, otherwise do it in a timeout callback.
 
 private
 
@@ -104,6 +113,11 @@ private
       Dialog     : Gtk_Widget := null;
       Button_Col : Gtk_Tree_View_Column;
    end record;
+
+   package Integer_Stack is new Generic_Stack (Integer);
+
+   package Task_Manager_Source is new Glib.Main.Generic_Sources
+     (Task_Manager_Interface);
 
    type Task_Manager_Interface_Record is new Gtk_Hbox_Record with record
       Kernel                 : Kernel_Handle;
@@ -130,6 +144,12 @@ private
       --  A reference widget to create the graphical contexts.
 
       Global_Button_Pixbuf     : Gdk_Pixbuf;
+
+      To_Refresh               : Integer_Stack.Simple_Stack;
+
+      Timeout_Cb               : Glib.Main.G_Source_Id :=
+        Glib.Main.No_Source_Id;
+      --  The registered refresh timeout callback.
    end record;
 
    procedure Push_State (Manager : Task_Manager_Access);

@@ -55,6 +55,9 @@ package body Task_Manager.GUI is
    Progress_Bar_Length : constant := 30;
    --  The length of the progress bar, in number of characters
 
+   Refresh_Timeout     : constant := 200;
+   --  The timeout to refresh the GUI, in milliseconds
+
    function Columns_Types return GType_Array;
    --  Returns the types for the columns in the Model.
    --  This is not implemented as
@@ -160,6 +163,11 @@ package body Task_Manager.GUI is
       Event  : Gdk_Event) return Boolean;
    --  Callback for a "button_press_event" on a tree view
 
+   procedure On_GUI_Destroy
+     (Object  : access GObject_Record'Class;
+      Manager : Manager_Index_Record);
+   --  Callback for the destruction of the GUI
+
    procedure On_Progress_Bar_Destroy
      (Object  : access GObject_Record'Class;
       Manager : Manager_Index_Record);
@@ -209,6 +217,17 @@ package body Task_Manager.GUI is
      (GUI      : Task_Manager_Interface;
       Progress : Progress_Data) return Gdk_Pixbuf;
    --  Return a pixbuf representing Progress.
+
+   procedure Refresh_One_Index
+     (GUI   : Task_Manager_Interface;
+      Index : Integer);
+   --  Perform graphical refresh of one command in the GUI
+
+   procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface);
+   --  Process all pending refreshes
+
+   function GUI_Refresh_Cb (GUI : Task_Manager_Interface) return Boolean;
+   --  Timeout callback that refreshes the GUI
 
    -----------------------------
    -- On_Progress_Bar_Destroy --
@@ -581,6 +600,13 @@ package body Task_Manager.GUI is
       View.Reference_Widget := Widget;
 
       View.Manager.GUI := Gtk_Widget (View);
+
+      Task_Manager_Handler.Connect
+        (View,
+         "destroy",
+         Task_Manager_Handler.To_Marshaller (On_GUI_Destroy'Access),
+         User_Data => (Task_Manager_Interface (View), 0),
+         After => False);
    end Initialize;
 
    ---------------
@@ -747,6 +773,26 @@ package body Task_Manager.GUI is
       return T (Guint (Index));
    end Get_Column_Type;
 
+   --------------------
+   -- On_GUI_Destroy --
+   --------------------
+
+   procedure On_GUI_Destroy
+     (Object  : access GObject_Record'Class;
+      Manager : Manager_Index_Record)
+   is
+      pragma Unreferenced (Object);
+      GUI : Task_Manager_Interface renames Manager.D;
+   begin
+      Unref (GUI.Progress_Background_GC);
+      Unref (GUI.Progress_Foreground_GC);
+      Unref (GUI.Progress_Text_GC);
+      Unref (GUI.Global_Button_Pixbuf);
+      Unref (GUI.Progress_Layout);
+
+      Glib.Main.Remove (GUI.Timeout_Cb);
+   end On_GUI_Destroy;
+
    -------------------
    -- Init_Graphics --
    -------------------
@@ -767,8 +813,6 @@ package body Task_Manager.GUI is
          --  Already initialized or cannot initialize now
          return;
       end if;
-
-      --  ??? Where are the graphical elements freed?
 
       Gdk_New (GUI.Progress_Background_GC, Get_Window (Iface));
       Gdk_New (GUI.Progress_Foreground_GC, Get_Window (Iface));
@@ -937,11 +981,17 @@ package body Task_Manager.GUI is
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Iter : constant Gtk_Tree_Iter := Nth_Child
         (M, Null_Iter, Gint (Index - 1));
-      Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
+      Path  : constant Gtk_Tree_Path := Get_Path (M, Iter);
+      use type Glib.Main.G_Source_Id;
    begin
       Row_Inserted (M, Path, Iter);
       Path_Free (Path);
       Refresh (GUI);
+
+      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (GUI.Timeout_Cb);
+         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+      end if;
    end Queue_Added;
 
    -------------------
@@ -955,17 +1005,23 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Index);
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Path : constant Gtk_Tree_Path := Gtk_New_First;
+      use type Glib.Main.G_Source_Id;
    begin
       Row_Deleted (M, Path);
       Path_Free (Path);
       Refresh (GUI);
+
+      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (GUI.Timeout_Cb);
+         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+      end if;
    end Queue_Removed;
 
-   -------------------
-   -- Queue_Changed --
-   -------------------
+   -----------------------
+   -- Refresh_One_Index --
+   -----------------------
 
-   procedure Queue_Changed
+   procedure Refresh_One_Index
      (GUI   : Task_Manager_Interface;
       Index : Integer)
    is
@@ -974,11 +1030,71 @@ package body Task_Manager.GUI is
         (M, Null_Iter, Gint (Index - 1));
       Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
    begin
-      --  ??? Delegate this to an timeout task, so as not to launch the tree
-      --  redraw circuitry for each iteration.
+      Process_Pending_Refreshes (GUI);
       Row_Changed (M, Path, Iter);
       Path_Free (Path);
+   end Refresh_One_Index;
+
+   -------------------------------
+   -- Process_Pending_Refreshes --
+   -------------------------------
+
+   procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface) is
+      Index : Integer;
+      use Integer_Stack;
+   begin
+      while not Is_Empty (GUI.To_Refresh) loop
+         Pop (GUI.To_Refresh, Index);
+         Refresh_One_Index (GUI, Index);
+      end loop;
+   end Process_Pending_Refreshes;
+
+   --------------------
+   -- GUI_Refresh_Cb --
+   --------------------
+
+   function GUI_Refresh_Cb (GUI : Task_Manager_Interface) return Boolean is
+   begin
+      Process_Pending_Refreshes (GUI);
       Refresh (GUI);
+
+      GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+         return False;
+   end GUI_Refresh_Cb;
+
+   -------------------
+   -- Queue_Changed --
+   -------------------
+
+   procedure Queue_Changed
+     (GUI               : Task_Manager_Interface;
+      Index             : Integer;
+      Immediate_Refresh : Boolean)
+   is
+      use type Glib.Main.G_Source_Id;
+   begin
+      if Immediate_Refresh then
+         Refresh_One_Index (GUI, Index);
+         Refresh (GUI);
+      else
+         --  Add the index to the list of indexes to be refreshed.
+
+         Integer_Stack.Push (GUI.To_Refresh, Index);
+
+         --  Register the timeout callback
+
+         if GUI.Timeout_Cb = Glib.Main.No_Source_Id then
+            GUI.Timeout_Cb := Task_Manager_Source.Timeout_Add
+              (Interval => Refresh_Timeout,
+               Func     => GUI_Refresh_Cb'Access,
+               Data     => GUI);
+         end if;
+      end if;
    end Queue_Changed;
 
    ------------------
