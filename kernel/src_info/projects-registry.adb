@@ -626,6 +626,9 @@ package body Projects.Registry is
 
       if Project = Empty_Node then
          New_Project_Loaded := False;
+
+         --  Reset the list of error messages
+         Prj.Err.Initialize;
          Load_Empty_Project (Registry);
          Status := False;
          return;

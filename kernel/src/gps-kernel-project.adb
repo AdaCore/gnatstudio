@@ -691,7 +691,12 @@ package body GPS.Kernel.Project is
                      Status             => Load_Status);
 
             else
-               if Empty_Project_On_Failure then
+               if Empty_Project_On_Failure
+
+               --  Do not try to load the default project if that's already
+               --  what we were loading
+                 or else Base_Name (Local_Project) = "default.gpr"
+               then
                   Report_Error
                     (-"Error while loading project '" &
                      Display_Full_Name (Local_Project, True) &
