@@ -1038,7 +1038,6 @@ package body Task_Manager.GUI is
         (M, Null_Iter, Gint (Index - 1));
       Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
    begin
-      Process_Pending_Refreshes (GUI);
       Row_Changed (M, Path, Iter);
       Path_Free (Path);
    end Refresh_One_Index;
