@@ -1018,30 +1018,42 @@ package body Code_Peer.Module is
             Review  : GPS.Kernel.Standard_Hooks.Action_Item;
 
             function Image
-              (Item : Code_Peer.Message_Probability_Level) return String;
+              (Message : Code_Peer.Message_Access) return String;
+            --  Return an suitable Image correpsonding to Message's probability
 
             -----------
             -- Image --
             -----------
 
             function Image
-              (Item : Code_Peer.Message_Probability_Level) return String is
+              (Message : Code_Peer.Message_Access) return String
+            is
+               Category : String renames Message.Category.Name.all;
             begin
-               case Item is
-               when Code_Peer.High =>
-                  return "high: ";
+               if Category = "dead code"
+                 or else Category = "test predetermined"
+                 or else (Category'Length >= 17
+                          and then Category
+                            (Category'First .. Category'First + 6) = "unused ")
+               then
+                  return "warning: ";
+               end if;
 
-               when Code_Peer.Medium =>
-                  return "medium: ";
+               case Message.Current_Probability is
+                  when Code_Peer.High =>
+                     return "high: ";
 
-               when Code_Peer.Low =>
-                  return "low: ";
+                  when Code_Peer.Medium =>
+                     return "medium: ";
 
-               when Code_Peer.Informational =>
-                  return "info: ";
+                  when Code_Peer.Low =>
+                     return "low: ";
 
-               when Code_Peer.Suppressed =>
-                  return "SUPPRESSED: ";
+                  when Code_Peer.Informational =>
+                     return "info: ";
+
+                  when Code_Peer.Suppressed =>
+                     return "suppressed: ";
                end case;
             end Image;
 
@@ -1058,7 +1070,7 @@ package body Code_Peer.Module is
                   Category     => Code_Peer_Category_Name,
                   File         => File.Name,
                   Text         =>
-                    Image (Message.Current_Probability)
+                    Image (Message)
                     & Message.Category.Name.all & " "
                     & Message.Text.all,
                   Line         => Message.Line,
@@ -1091,8 +1103,7 @@ package body Code_Peer.Module is
                   File       => File.Name,
                   Line       => Message.Line,
                   Column     => Message.Column,
-                  Message    =>
-                    Image (Message.Current_Probability) & Message.Text.all,
+                  Message    => Image (Message) & Message.Text.all,
                   Action     => Review);
             end if;
          end Process_Message;
