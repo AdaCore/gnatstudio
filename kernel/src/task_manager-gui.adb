@@ -373,10 +373,6 @@ package body Task_Manager.GUI is
    -- Refresh --
    -------------
 
-   -------------
-   -- Refresh --
-   -------------
-
    procedure Refresh (GUI   : Task_Manager_Interface) is
       Pixbuf : Gdk_Pixbuf;
       Image  : Gtk_Image;
@@ -1131,7 +1127,7 @@ package body Task_Manager.GUI is
       As_Percent : Boolean) return Progress_Data
    is
       Index    : Natural := 0;
-      Count    : Natural := 1;
+      Count    : Natural := 0;
       Fraction : Gdouble;
    begin
       if Manager.Queues = null then
@@ -1139,17 +1135,20 @@ package body Task_Manager.GUI is
       else
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Show_Bar then
+               Count := Count + 1;
+
                if Index = 0 then
                   Index := J;
                   Fraction := Get_Fraction (Manager, J);
                else
-                  Count := Count + 1;
                   Fraction := Fraction + Get_Fraction (Manager, J);
                end if;
             end if;
          end loop;
 
-         if Count = 1 then
+         if Count = 0 then
+            return Null_Progress_Data;
+         elsif Count = 1 then
             return Get_Progress_Text (Manager, Index, As_Percent, True);
          else
             declare
