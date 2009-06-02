@@ -798,6 +798,11 @@ package body Task_Manager.GUI is
          Unref (GUI.Progress_Layout);
       end if;
 
+      if GUI.Model /= null then
+         Unref (GUI.Model);
+         GUI.Model := null;
+      end if;
+
       if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (GUI.Timeout_Cb);
       end if;

@@ -47,6 +47,7 @@ package Task_Manager.GUI is
    function Create
      (Kernel : Kernel_Handle;
       Widget : Gtk_Widget) return Task_Manager_Access;
+   --  ??? Missing documentation
 
    type Task_Manager_Widget_Record is new Gtk_Hbox_Record with private;
    type Task_Manager_Widget_Access is access all
