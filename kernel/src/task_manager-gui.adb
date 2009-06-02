@@ -782,15 +782,23 @@ package body Task_Manager.GUI is
       Manager : Manager_Index_Record)
    is
       pragma Unreferenced (Object);
+      use Gdk;
+      use type Glib.Main.G_Source_Id;
       GUI : Task_Manager_Interface renames Manager.D;
-   begin
-      Unref (GUI.Progress_Background_GC);
-      Unref (GUI.Progress_Foreground_GC);
-      Unref (GUI.Progress_Text_GC);
-      Unref (GUI.Global_Button_Pixbuf);
-      Unref (GUI.Progress_Layout);
 
-      Glib.Main.Remove (GUI.Timeout_Cb);
+   begin
+      --  If the graphics have been initialized, free them now
+      if GUI.Progress_Template /= null then
+         Unref (GUI.Progress_Background_GC);
+         Unref (GUI.Progress_Foreground_GC);
+         Unref (GUI.Progress_Text_GC);
+         Unref (GUI.Global_Button_Pixbuf);
+         Unref (GUI.Progress_Layout);
+      end if;
+
+      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (GUI.Timeout_Cb);
+      end if;
    end On_GUI_Destroy;
 
    -------------------
