@@ -281,6 +281,15 @@ package body GPS.Location_View is
       Self  : Location_View) return Boolean;
    --  Used by model filter for query item visibility.
 
+   procedure Modify
+     (Model  : access Gtk_Tree_Model_Filter_Record'Class;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Value  : out Glib.Values.GValue;
+      Column : Gint;
+      Self   : Location_View);
+   --  Used by model filter for modify items (to substitute number of child
+   --  items in category and file).
+
    procedure On_Apply_Filter (Self : access Location_View_Record'Class);
    --  Called on "apply-filter" signal from filter panel
 
@@ -299,6 +308,9 @@ package body GPS.Location_View is
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
+
+   package Modify_Funcs is
+     new Gtk.Tree_Model_Filter.Modify_Funcs (Location_View);
 
    --------------------------
    -- Idle_Expand_Category --
@@ -529,7 +541,6 @@ package body GPS.Location_View is
       Get_Selected (Get_Selection (View.Tree), Model, Filter_Iter);
       View.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
       Remove_Category_Or_File_Iter (View.Kernel, View.Model, Store_Iter);
-      View.Model.Redraw_Totals;
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -733,7 +744,7 @@ package body GPS.Location_View is
          end loop;
       end if;
 
-      --  Recompute number of items and activate idle redraw of counters
+      --  Recompute number of items
 
       View.Model.Set
         (File_Iter,
@@ -743,7 +754,6 @@ package body GPS.Location_View is
         (Category_Iter,
          Number_Of_Items_Column,
          View.Model.Get_Int (Category_Iter, Number_Of_Items_Column) + 1);
-      View.Model.Redraw_Totals;
 
       if Highlight then
          Highlight_Line
@@ -1224,6 +1234,8 @@ package body GPS.Location_View is
       Gtk_New (View.Filter, View.Model);
       Visible_Funcs.Set_Visible_Func
         (View.Filter, Is_Visible'Access, Location_View (View));
+      Modify_Funcs.Set_Modify_Func
+        (View.Filter, Columns_Types, Modify'Access, Location_View (View));
 
       Gtk_New (View.Tree, View.Filter);
       View.Tree.Set_Headers_Visible (False);
@@ -2635,5 +2647,48 @@ package body GPS.Location_View is
    begin
       return Self.Model;
    end Model;
+
+   ------------
+   -- Modify --
+   ------------
+
+   procedure Modify
+     (Model  : access Gtk_Tree_Model_Filter_Record'Class;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Value  : out Glib.Values.GValue;
+      Column : Gint;
+      Self   : Location_View)
+   is
+      pragma Unreferenced (Model);
+
+      Aux : Gtk_Tree_Iter;
+
+   begin
+      Self.Filter.Convert_Iter_To_Child_Iter (Aux, Iter);
+
+      if Column = Base_Name_Column then
+         declare
+            Message : constant String :=
+                        Self.Model.Get_String (Aux, Base_Name_Column);
+            Items   : constant Natural :=
+                        Natural
+                          (Self.Model.Get_Int (Aux, Number_Of_Items_Column));
+            Img     : constant String := Image (Items);
+
+         begin
+            if Items = 1 then
+               Init (Value, GType_String);
+               Set_String (Value, Message & " (" & Img & (-" item") & ")");
+
+            else
+               Init (Value, GType_String);
+               Set_String (Value, Message & " (" & Img & (-" items") & ")");
+            end if;
+         end;
+
+      else
+         Self.Model.Get_Value (Aux, Column, Value);
+      end if;
+   end Modify;
 
 end GPS.Location_View;

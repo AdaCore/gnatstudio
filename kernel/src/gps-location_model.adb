@@ -33,9 +33,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;  use GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;   use GPS.Editors.GtkAda;
-with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
-with String_Utils;         use String_Utils;
 with Traces;               use Traces;
 
 package body GPS.Location_Model is
@@ -48,15 +46,6 @@ package body GPS.Location_Model is
    function To_Address is new Ada.Unchecked_Conversion
      (Style_Access, System.Address);
 
-   package Model_Idle is new Glib.Main.Generic_Sources (Location_Model);
-
-   function Columns_Types return Glib.GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
-
    procedure Remove_Line
      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Model      : not null access Gtk_Tree_Model_Record'Class;
@@ -67,9 +56,6 @@ package body GPS.Location_Model is
      (Data   : System.Address;
       Object : System.Address);
    pragma Convention (C, On_Destroy);
-
-   function Idle_Redraw (Model : Location_Model) return Boolean;
-   --  Redraw the "total" items
 
    Messages_Padding : constant Integer := 10;
 
@@ -585,80 +571,6 @@ package body GPS.Location_Model is
       Initialize (Model, Kernel);
    end Gtk_New;
 
-   -----------------
-   -- Idle_Redraw --
-   -----------------
-
-   function Idle_Redraw (Model : Location_Model) return Boolean is
-      Category_Iter : Gtk_Tree_Iter;
-      File_Iter     : Gtk_Tree_Iter;
-
-      procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer);
-      --  Set in View.Tree.Model and Item the Total_Column string
-
-      ---------------
-      -- Set_Total --
-      ---------------
-
-      procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer) is
-         Message : constant String :=
-                     Model.Get_String (Iter, Base_Name_Column);
-         Img     : constant String := Image (Nb_Items);
-         Matches : Match_Array (0 .. 1);
-         Cut     : Integer;
-      begin
-         Match (Items_Count_Matcher, Message, Matches);
-
-         if Matches (0) /= No_Match then
-            Cut := Matches (1).First - 1;
-         else
-            Cut := Message'Last;
-         end if;
-
-         declare
-            Base_Message : constant String := Message (1 .. Cut);
-         begin
-            if Nb_Items = 1 then
-               Set (Model, Iter, Base_Name_Column,
-                    Base_Message & " (" & Img & (-" item") & ")");
-            else
-               Set (Model, Iter, Base_Name_Column,
-                    Base_Message & " (" & Img & (-" items") & ")");
-            end if;
-         end;
-      end Set_Total;
-
-   begin
-      Category_Iter := Model.Get_Iter_First;
-
-      while Category_Iter /= Null_Iter loop
-         File_Iter := Model.Children (Category_Iter);
-
-         while File_Iter /= Null_Iter loop
-            Set_Total
-              (File_Iter,
-               Integer (Model.Get_Int (File_Iter, Number_Of_Items_Column)));
-            Model.Next (File_Iter);
-         end loop;
-
-         Set_Total
-           (Category_Iter,
-            Integer (Model.Get_Int (Category_Iter, Number_Of_Items_Column)));
-         Model.Next (Category_Iter);
-      end loop;
-
-      Model.Idle_Redraw_Handler := Glib.Main.No_Source_Id;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         Model.Idle_Redraw_Handler := Glib.Main.No_Source_Id;
-
-         return False;
-   end Idle_Redraw;
-
    ----------------
    -- Initialize --
    ----------------
@@ -703,12 +615,6 @@ package body GPS.Location_Model is
       Iter : Gtk_Tree_Iter;
 
    begin
-      --  Remove idle handlers
-
-      if Self.Idle_Redraw_Handler /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Self.Idle_Redraw_Handler);
-      end if;
-
       --  Remove all categories
 
       Iter := Self.Get_Iter_First;
@@ -723,19 +629,6 @@ package body GPS.Location_Model is
       Unref (Self.Category_Pixbuf);
       Unref (Self.File_Pixbuf);
    end On_Destroy;
-
-   -------------------
-   -- Redraw_Totals --
-   -------------------
-
-   procedure Redraw_Totals
-     (Model : not null access Location_Model_Record'Class) is
-   begin
-      if Model.Idle_Redraw_Handler = Glib.Main.No_Source_Id then
-         Model.Idle_Redraw_Handler := Model_Idle.Idle_Add
-           (Idle_Redraw'Access, Location_Model (Model));
-      end if;
-   end Redraw_Totals;
 
    ---------------------
    -- Remove_Category --

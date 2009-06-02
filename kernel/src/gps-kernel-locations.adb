@@ -539,7 +539,6 @@ package body GPS.Kernel.Locations is
             Glib.Convert.Escape_Text (Category),
             File,
             Line);
-         View.Model.Redraw_Totals;
       end if;
    end Remove_Location_Category;
 
