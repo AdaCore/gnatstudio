@@ -533,16 +533,6 @@ package body Src_Editor_Module is
       end if;
    end Get_Filename;
 
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (X : in out Location_Marker) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Do_Nothing;
-
    --------------------
    -- File_Edited_Cb --
    --------------------

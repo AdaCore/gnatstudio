@@ -191,7 +191,7 @@ private
    -- Marks --
    -----------
 
-   procedure Do_Nothing (X : in out Location_Marker);
+   procedure Do_Nothing (X : in out Location_Marker) is null;
    --  Free memory associated to X.
 
    package Marker_List is new Generic_List (Location_Marker, Do_Nothing);

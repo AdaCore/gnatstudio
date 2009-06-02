@@ -952,6 +952,8 @@ package body GPS.Location_View is
       Basic_Types.Unchecked_Free (V.RegExp);
       GNAT.Strings.Free (V.Text);
 
+      Clear (V.Model);
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;

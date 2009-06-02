@@ -117,7 +117,9 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  Create mark at Line, Column
+   --  Create mark at Line, Column.
+   --  You need to explicitly Ref it if you want to keep it, since the current
+   --  reference belongs to the buffer
 
    procedure Add_Lines
      (Buffer : access Source_Buffer_Record'Class;

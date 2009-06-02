@@ -259,7 +259,10 @@ package body Src_Editor_Module.Markers is
          Weak_Unref (Marker.Buffer,
                      On_Destroy_Buffer'Access, Convert (M1));
 
-         Unref (Marker.Mark);
+         --  Remove the mark from the buffer, but do not Unref it (since we do
+         --  not own a reference, the buffer does).
+
+         Delete_Mark (Marker.Buffer, Marker.Mark);
 
          Marker.Mark := null;
          Marker.Buffer := null;
@@ -291,6 +294,12 @@ package body Src_Editor_Module.Markers is
       if Marker.Mark = null and then Source /= null then
          Marker.Buffer :=
            Gtk_Text_Buffer (Source_Buffer'(Get_Buffer (Source)));
+
+         --  Creates the mark. Its reference is owned by the buffer, and we do
+         --  not need to have our own, since there would be no point in having
+         --  the mark live longer than the buffer (we are monitoring life
+         --  cycles anyway
+
          Marker.Mark := Create_Mark
            (Get_Buffer (Source), Marker.Line,
             Visible_Column_Type'Max (1, Marker.Column));
@@ -312,7 +321,7 @@ package body Src_Editor_Module.Markers is
 
          Weak_Ref (Marker.Buffer,
                    On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
-         Ref (Marker.Mark);
+
          Marker.Cid := Markers_Callback.Connect
            (Marker.Buffer, Signal_Changed,
             Markers_Callback.To_Marshaller (On_Changed'Access),
@@ -407,7 +416,11 @@ package body Src_Editor_Module.Markers is
         (Marker.Buffer, Signal_Changed,
          Markers_Callback.To_Marshaller (On_Changed'Access), Marker);
       Weak_Ref (Marker.Buffer, On_Destroy_Buffer'Access, Convert (Marker));
-      Ref (Marker.Mark);
+
+      --  No need to add an extra Ref to the mark, its reference already
+      --  belongs to the buffer, and it would make no sense to keep it alive
+      --  longer than the buffer
+      --      Ref (Marker.Mark);
 
       Update_Marker_Location (Marker);
       Register_Persistent_Marker (Marker);
@@ -427,7 +440,6 @@ package body Src_Editor_Module.Markers is
          Weak_Unref
            (Marker.Buffer, On_Destroy_Buffer'Access,
             Convert (File_Marker (Marker)));
-         Unref (Marker.Mark);
       end if;
 
       Marker.Buffer := Get_Buffer (Mark);
@@ -435,7 +447,6 @@ package body Src_Editor_Module.Markers is
       Weak_Ref
         (Marker.Buffer, On_Destroy_Buffer'Access,
          Convert (File_Marker (Marker)));
-      Ref (Marker.Mark);
       Update_Marker_Location (Marker);
    end Move;
 

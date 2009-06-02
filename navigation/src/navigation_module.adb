@@ -268,6 +268,11 @@ package body Navigation_Module is
          Destroy (D.Marker.all);
          Unchecked_Free (D.Marker);
       end if;
+
+      --  In all cases, we should no longer use the marker (which is either
+      --  stored in the history list, and thus should not be freed, or was
+      --  already freed)
+      D.Marker := null;
    end On_Marker_Added_In_History;
 
    --------------------------
