@@ -1032,6 +1032,7 @@ package body Code_Peer.Module is
             begin
                if Category = "dead code"
                  or else Category = "test predetermined"
+                 or else Category = "suspicious precondition"
                  or else (Category'Length >= 17
                           and then Category
                             (Category'First .. Category'First + 6) = "unused ")
