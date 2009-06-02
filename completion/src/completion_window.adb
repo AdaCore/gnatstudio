@@ -43,6 +43,7 @@ with Gtk.Scrollbar;             use Gtk.Scrollbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Image;                 use Gtk.Image;
 
 with Pango.Layout;              use Pango.Layout;
 
@@ -173,7 +174,7 @@ package body Completion_Window is
 
    procedure Fill_Notes_Window
      (Window : access Completion_Window_Record'Class;
-      Notes  : Notes_Array_Access);
+      Item   : Information_Record);
    --  Fill the Notes window and show it.
 
    procedure Empty_Notes_Window
@@ -242,8 +243,9 @@ package body Completion_Window is
 
    procedure Fill_Notes_Window
      (Window : access Completion_Window_Record'Class;
-      Notes  : Notes_Array_Access)
+      Item   : Information_Record)
    is
+      Notes  : Notes_Array_Access renames Item.Notes;
       Frame    : Gtk_Frame;
       VBox,
         VBox2  : Gtk_Vbox;
@@ -252,6 +254,7 @@ package body Completion_Window is
       Button   : Gtk_Button;
       Label    : Gtk_Label;
       Title    : Gtk_Label;
+      Img      : Gtk_Image;
       Button_Label : Gtk_Label;
 
       function Location_To_Label (Loc : File_Location) return String;
@@ -267,6 +270,7 @@ package body Completion_Window is
            & ":" & Image (Loc.Line) & "</u></span>";
       end Location_To_Label;
 
+      use type Gdk.Pixbuf.Gdk_Pixbuf;
    begin
       --  If the notes window is not empty, empty it here.
       Empty_Notes_Window (Window);
@@ -277,6 +281,20 @@ package body Completion_Window is
 
       Gtk_New_Vbox (VBox);
       Add (Window.Notes_Container, VBox);
+
+      --  If we have a completion proposal, display it as head of the
+      --  Notes window.
+      if Item.Text /= null then
+         Gtk_New_Hbox (HBox);
+         if Item.Icon /= null then
+            Gtk.Image.Gtk_New (Img, Item.Icon);
+            Pack_Start (HBox, Img, False, False, 3);
+         end if;
+         Gtk_New (Title, Item.Text.all);
+         Modify_Font (Title, Window.Fixed_Width_Font);
+         Pack_Start (HBox, Title, False, False, 3);
+         Pack_Start (VBox, HBox, False, False, 1);
+      end if;
 
       for N in Notes'Range loop
          Gtk_New (Frame);
@@ -950,7 +968,7 @@ package body Completion_Window is
 
             Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
 
-            Fill_Notes_Window (Window, Window.Info (Index).Notes);
+            Fill_Notes_Window (Window, Window.Info (Index));
          end if;
       end if;
 
