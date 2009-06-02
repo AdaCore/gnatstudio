@@ -204,6 +204,7 @@ package body Code_Coverage.Xcov is
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
       Line_Text   : String_Access;
+      Quiet       : Boolean;
       Added       : in out Boolean)
    is
    begin
@@ -218,7 +219,8 @@ package body Code_Coverage.Xcov is
             Line               => Line_Number,
             Column             => 1,
             Highlight          => True,
-            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style);
+            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style,
+            Quiet              => Quiet);
 
       elsif Coverage.Status in Xcov_Partially_Covered then
          Added := True;
@@ -231,7 +233,8 @@ package body Code_Coverage.Xcov is
             Line               => Line_Number,
             Column             => 1,
             Highlight          => True,
-            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style);
+            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style,
+            Quiet              => Quiet);
       end if;
    end Add_Location_If_Uncovered;
 

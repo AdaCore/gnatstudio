@@ -155,6 +155,7 @@ package Code_Analysis_GUI is
    procedure Open_File_Editor
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
+      Quiet     : Boolean;
       Line      : Natural := 1;
       Column    : Natural := 1);
    --  Factorizes the code of Open_File_Editor_On_File and _On_Subprogram

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -356,10 +356,11 @@ package body Code_Analysis_GUI is
    procedure Open_File_Editor
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
+      Quiet     : Boolean;
       Line      : Natural := 1;
       Column    : Natural := 1) is
    begin
-      List_File_Uncovered_Lines (Kernel, File_Node);
+      List_File_Uncovered_Lines (Kernel, File_Node, Quiet);
       Open_File_Editor
         (Kernel, File_Node.Name, Line,
          Basic_Types.Visible_Column_Type (Column));
@@ -376,7 +377,7 @@ package body Code_Analysis_GUI is
       File_Node : constant File_Access := File_Access
         (File_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
-      Open_File_Editor (Kernel, File_Node);
+      Open_File_Editor (Kernel, File_Node, False);
    end Open_File_Editor_On_File;
 
    ------------------------------------
@@ -391,7 +392,8 @@ package body Code_Analysis_GUI is
       Subp_Node : constant Subprogram_Access := Subprogram_Access
         (Subprogram_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
    begin
-      Open_File_Editor (Kernel, File_Node, Subp_Node.Start, Subp_Node.Column);
+      Open_File_Editor
+        (Kernel, File_Node, True, Subp_Node.Start, Subp_Node.Column);
    end Open_File_Editor_On_Subprogram;
 
    ------------------

@@ -867,7 +867,7 @@ package body Code_Analysis_Module is
          Coverage_GUI.Clear_File_Locations (Kernel, File_Node);
          Coverage_GUI.Remove_File_Coverage_Annotations (Kernel, File_Node);
 
-         Coverage_GUI.List_File_Uncovered_Lines (Kernel, File_Node);
+         Coverage_GUI.List_File_Uncovered_Lines (Kernel, File_Node, False);
          Coverage_GUI.Add_File_Coverage_Annotations (Kernel, File_Node);
 
          Refresh_Analysis_Report (Cont_N_Anal);
@@ -1774,7 +1774,7 @@ package body Code_Analysis_Module is
         (Get_Kernel (Cont_N_Anal.Context), File_Node.Name,
          Line => 0);
       List_File_Uncovered_Lines
-        (Get_Kernel (Cont_N_Anal.Context), File_Node);
+        (Get_Kernel (Cont_N_Anal.Context), File_Node, False);
       Add_File_Coverage_Annotations
         (Get_Kernel (Cont_N_Anal.Context), File_Node);
    exception

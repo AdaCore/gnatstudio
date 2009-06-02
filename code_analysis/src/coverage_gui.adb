@@ -283,7 +283,8 @@ package body Coverage_GUI is
 
    procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access)
+      File_Node : Code_Analysis.File_Access;
+      Quiet     : Boolean)
    is
       File_Added : Boolean := False;
    begin
@@ -298,6 +299,7 @@ package body Coverage_GUI is
                   File_Node.Name,
                   J,
                   File_Node.Lines (J).Contents,
+                  Quiet,
                   File_Added);
             end if;
          end loop;
@@ -336,7 +338,7 @@ package body Coverage_GUI is
 
       for J in Sort_Arr'Range loop
          if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
-            List_File_Uncovered_Lines (Kernel, Sort_Arr (J));
+            List_File_Uncovered_Lines (Kernel, Sort_Arr (J), False);
          end if;
       end loop;
    end List_Project_Uncovered_Lines;
@@ -404,6 +406,7 @@ package body Coverage_GUI is
                     File_Node.Name,
                     J,
                     File_Node.Lines (J).Contents,
+                    False,
                     Added);
             end if;
          end loop;

@@ -59,6 +59,7 @@ package Code_Coverage.Xcov is
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
       Line_Text   : String_Access;
+      Quiet       : Boolean;
       Added       : in out Boolean);
    --  Adds location of the uncovered line to the location window. Set Added to
    --  True if line has been added; otherwise preserve Added value.
