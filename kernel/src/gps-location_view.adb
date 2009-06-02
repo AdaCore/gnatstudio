@@ -2661,12 +2661,16 @@ package body GPS.Location_View is
    is
       pragma Unreferenced (Model);
 
-      Aux : Gtk_Tree_Iter;
+      Aux  : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path;
 
    begin
+      Path := Self.Filter.Get_Path (Iter);
       Self.Filter.Convert_Iter_To_Child_Iter (Aux, Iter);
 
-      if Column = Base_Name_Column then
+      if Column = Base_Name_Column
+        and then Get_Depth (Path) < 3
+      then
          declare
             Message : constant String :=
                         Self.Model.Get_String (Aux, Base_Name_Column);
@@ -2690,6 +2694,8 @@ package body GPS.Location_View is
          Unset (Value);
          Self.Model.Get_Value (Aux, Column, Value);
       end if;
+
+      Path_Free (Path);
    end Modify;
 
 end GPS.Location_View;
