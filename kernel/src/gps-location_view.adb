@@ -1955,6 +1955,8 @@ package body GPS.Location_View is
 
          if Action /= null then
             Set_Attribute (Loc, "has_action", "true");
+            --  This attribute is used by automatic tests to detect that an
+            --  action was correctly associated with a location.
          end if;
 
          Unset (Value);
