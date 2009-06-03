@@ -102,6 +102,22 @@ def get_selection_or_buffer (buffer=None):
    else:
       return (buffer, start, end)
 
+def get_selection_or_line (buffer, location):
+   """If a selection exists, returns its beginning and end. Otherwise
+      return the beginning and end of line.
+      The buffer is returned as the first field of the tuple"""
+
+   if isinstance (location, FileLocation):
+      location = GPS.EditorLocation(buffer, location.line(), location.column())
+
+   buffer = location.buffer ()
+   start  = buffer.selection_start ()
+   end    = buffer.selection_end ()
+   if start == end:
+      return (buffer, location.beginning_of_line (), location.end_of_line ())
+   else:
+      return (buffer, start, end)
+
 @interactive ("Editor", "Source editor", name="Move block right",
               menu="/Edit/Selection/Move right", key="control-alt-greater")
 @with_save_excursion
