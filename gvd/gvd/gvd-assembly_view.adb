@@ -783,11 +783,11 @@ package body GVD.Assembly_View is
    begin
       case Get_Key_Val (Event) is
          when GDK_Page_Down =>
-            Meta_Scroll_Down (Assembly_View (View));
+            Meta_Scroll_Up (Assembly_View (View));
             return True;
 
          when GDK_Page_Up =>
-            Meta_Scroll_Up (Assembly_View (View));
+            Meta_Scroll_Down (Assembly_View (View));
             return True;
 
          when others => null;

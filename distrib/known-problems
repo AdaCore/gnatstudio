@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I602-027: Page up / Page down keys inverted in Assembly View
+  Problem:    The Page Up / Page Down keys are used in the debugger Assembly
+              view to fetch the previous or next lines of the disassembly but
+              the handler were inverted.
+  Workaround: Use Page Up instead of Page Down or vice versa.
+
 - I601-012: "Remove coverage files" menu not working
   Problem:    The "Tools->Coverage->Remove coverage files" menu that is created
               when the gcov.py plug-in is activated does not work if your
