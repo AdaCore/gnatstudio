@@ -130,6 +130,7 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
       <extra-args>
         <arg>-margs</arg>
         <arg>--subdirs=%subdir</arg>
+        <arg>-j1</arg>
         <arg>-k</arg>
         <arg>-c</arg>
         <arg>-gnatcC</arg>
