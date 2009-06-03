@@ -229,6 +229,10 @@ package body Task_Manager.GUI is
    function GUI_Refresh_Cb (GUI : Task_Manager_Interface) return Boolean;
    --  Timeout callback that refreshes the GUI
 
+   procedure Unregister_Timeout (GUI : Task_Manager_Interface);
+   --  Remove the timeout that refreshes the GUI and clear the list of items
+   --  that need to be refreshed.
+
    -----------------------------
    -- On_Progress_Bar_Destroy --
    -----------------------------
@@ -798,13 +802,11 @@ package body Task_Manager.GUI is
          Unref (GUI.Progress_Layout);
       end if;
 
+      Unregister_Timeout (GUI);
+
       if GUI.Model /= null then
          Unref (GUI.Model);
          GUI.Model := null;
-      end if;
-
-      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (GUI.Timeout_Cb);
       end if;
    end On_GUI_Destroy;
 
@@ -985,6 +987,20 @@ package body Task_Manager.GUI is
       return Pix;
    end To_Pixbuf;
 
+   ------------------------
+   -- Unregister_Timeout --
+   ------------------------
+
+   procedure Unregister_Timeout (GUI : Task_Manager_Interface) is
+      use type Glib.Main.G_Source_Id;
+   begin
+      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (GUI.Timeout_Cb);
+         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+      end if;
+      Integer_Stack.Clear (GUI.To_Refresh);
+   end Unregister_Timeout;
+
    -----------------
    -- Queue_Added --
    -----------------
@@ -997,16 +1013,12 @@ package body Task_Manager.GUI is
       Iter : constant Gtk_Tree_Iter := Nth_Child
         (M, Null_Iter, Gint (Index - 1));
       Path  : constant Gtk_Tree_Path := Get_Path (M, Iter);
-      use type Glib.Main.G_Source_Id;
    begin
       Row_Inserted (M, Path, Iter);
       Path_Free (Path);
       Refresh (GUI);
 
-      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (GUI.Timeout_Cb);
-         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
-      end if;
+      Unregister_Timeout (GUI);
    end Queue_Added;
 
    -------------------
@@ -1020,16 +1032,12 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Index);
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Path : constant Gtk_Tree_Path := Gtk_New_First;
-      use type Glib.Main.G_Source_Id;
    begin
       Row_Deleted (M, Path);
       Path_Free (Path);
       Refresh (GUI);
 
-      if GUI.Timeout_Cb /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (GUI.Timeout_Cb);
-         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
-      end if;
+      Unregister_Timeout (GUI);
    end Queue_Removed;
 
    -----------------------
