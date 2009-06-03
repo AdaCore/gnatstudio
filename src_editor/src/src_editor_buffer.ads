@@ -1086,7 +1086,7 @@ private
      Line_Data_Record;
    type Line_Data_Array_Access is access Line_Data_Array;
 
-   procedure Reset_Blocks_Info (Buffer : Source_Buffer);
+   procedure Reset_Blocks_Info (Buffer : access Source_Buffer_Record'Class);
    --  Reset block information used by Data
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation

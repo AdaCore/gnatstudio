@@ -72,9 +72,8 @@ package body Src_Editor_Buffer.Blocks is
          return;
       end if;
 
-      Buffer.Blocks_Exact := True;
-
       Reset_Blocks_Info (Source_Buffer (Buffer));
+      Buffer.Blocks_Exact := True;
 
       if Buffer.Block_Folding then
          Remove_Block_Folding_Commands (Buffer, False);
