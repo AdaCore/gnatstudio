@@ -108,7 +108,7 @@ def check_valid_project():
 #----------------- toolbar menus -----------------------------------
 def on_gps_started (hook_name):
     global regenerate_menu
-    regenerate_menu = GPS.Menu.create ("Tools/CodePeer/Regenerate reports",
+    regenerate_menu = GPS.Menu.create ("/Tools/CodePeer/Regenerate reports",
       on_activate=regenerate_report, ref="Advanced", add_before=1)
 
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
