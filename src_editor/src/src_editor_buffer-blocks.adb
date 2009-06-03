@@ -103,6 +103,12 @@ package body Src_Editor_Buffer.Blocks is
 
             for J in Line_Start + 1 .. Line_End loop
                if Buffer.Editable_Lines (J).Block = null then
+
+                  --  When freeing (Destroy_Buffer)), we assume that the block
+                  --  is always associated with its last line, so make sure
+                  --  this is true here
+                  Block.Last_Line := J;
+
                   Buffer.Editable_Lines (J).Block := Block;
                end if;
             end loop;

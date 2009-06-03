@@ -1305,6 +1305,15 @@ package body Src_Editor_Buffer.Line_Information is
                   Editable_Lines (Line).Buffer_Line
                     := Editable_Lines (Line - EN).Buffer_Line + Number;
                end if;
+
+               if Editable_Lines (Line).Block /= null then
+                  --  Last_Line might increase, not decrease, since we are
+                  --  inserting lines
+
+                  Editable_Lines (Line).Block.Last_Line :=
+                    Editable_Line_Type'Max
+                      (Line, Editable_Lines (Line).Block.Last_Line);
+               end if;
             end loop;
          end if;
 
@@ -1405,11 +1414,22 @@ package body Src_Editor_Buffer.Line_Information is
                   Editable_Lines (J).Buffer_Line :=
                     Editable_Lines (J + EN).Buffer_Line - Number;
                end if;
+
+               if Editable_Lines (J).Block /= null
+                 and then Editable_Lines (J).Block.Last_Line = J + EN
+               then
+                  Editable_Lines (J).Block.Last_Line := J;
+               end if;
             end loop;
 
             Editable_Lines
               (Buffer.Last_Editable_Line - EN + 1 ..
                  Buffer.Last_Editable_Line) := Lines_To_Report;
+            for Line in Buffer.Last_Editable_Line - EN + 1
+              .. Buffer.Last_Editable_Line
+            loop
+               Buffer.Editable_Lines (Line).Block := null;
+            end loop;
          end;
 
          Buffer.Last_Editable_Line := Buffer.Last_Editable_Line - EN;

@@ -605,18 +605,15 @@ package body Src_Editor_Buffer is
             --  Block info is shared among multiple lines, so we need to free
             --  it only once. It is possible that the same block is used on
             --  disjoint blocks as well (for instance if we have a nested block
-            --  in the middle)
-            if Block /= null then
-               for Sub in Line + 1 .. Buffer.Editable_Lines'Last loop
-                  if Buffer.Editable_Lines (Sub).Block = Block then
-                     Buffer.Editable_Lines (Sub).Block := null;
-                  end if;
-               end loop;
+            --  in the middle). We assume, as in Destroy_Buffer, that the
+            --  buffer is always associated with its last line
 
+            if Block.Last_Line = Line then
                GNAT.Strings.Free (Block.Name);
                Unchecked_Free (Block);
-               Buffer.Editable_Lines (Line).Block := null;
             end if;
+
+            Buffer.Editable_Lines (Line).Block := null;
          end if;
       end loop;
    end Reset_Blocks_Info;
