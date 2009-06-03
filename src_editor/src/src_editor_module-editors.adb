@@ -2230,8 +2230,14 @@ package body Src_Editor_Module.Editors is
    overriding procedure Delete (This : Src_Editor_Mark) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (File_Marker_Record'Class, File_Marker);
+      T : Gtk_Text_Mark;
    begin
       if This.Mark /= null then
+         T := Get_Mark (This.Mark.Mark);
+         if T /= null then
+            Delete_Mark (Get_Buffer (T), T);
+         end if;
+
          Destroy (This.Mark.Mark.all);
          Unchecked_Free (This.Mark.Mark);
       end if;

@@ -262,7 +262,29 @@ package body Src_Editor_Module.Markers is
          --  Remove the mark from the buffer, but do not Unref it (since we do
          --  not own a reference, the buffer does).
 
-         Delete_Mark (Marker.Buffer, Marker.Mark);
+         --  What we really want is to destroy the mark in gtk+ if no other
+         --  file_marker or python class instance references it. However, none
+         --  of those is ref'ing it, so we can't know that. If we do delete the
+         --  mark, we end up with the following wrong scenario:
+         --       GPS.EditorBuffer.add_special_line creates a file_marker, and
+         --          a python class. Then the refcount of the file_marker goes
+         --          to 0, and this Destroy is called, thus the mark is deleted
+         --          and python instance no longer references a mark.
+         --  So we cannot remove the mark explicitly from the buffer, and it
+         --  will be destroyed when the buffer is destroyed. This might mean
+         --  extra memory use other time, until the buffer is closed.
+         --
+         --  One solution would be to have a boolean that indicates whether
+         --  there is a python class for the mark (in fact we can check that
+         --  directly), and delete if there is none. That would at least
+         --  remove the cases where we leave the mark
+         --  Scenario:
+         --      a = GPS.EditorBuffer.add_special_line
+         --      # no more file_marker, but a exists, so don't delete mark
+         --      # a then goes out of scope. Destructor of EditorMark deletes
+         --      # the mark
+
+         --  Delete_Mark (Marker.Buffer, Marker.Mark);
 
          Marker.Mark := null;
          Marker.Buffer := null;
@@ -444,6 +466,7 @@ package body Src_Editor_Module.Markers is
 
       Marker.Buffer := Get_Buffer (Mark);
       Marker.Mark   := Mark;
+
       Weak_Ref
         (Marker.Buffer, On_Destroy_Buffer'Access,
          Convert (File_Marker (Marker)));
