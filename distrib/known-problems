@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.3
 
+- I507-015: Problems with completion on illegal Ada files
+  Problem:    Querying the smart completion on an illegal Ada file, in 
+              particular with entities not correctly closed, may give
+              wrong results and log error messages.
+  Workaround: Manually complete the code.
+
 - I501-005: GPS 'show VC' and 'Show Simplified VC' is slighlty off
   Problem:    When selecting 'show VC' and 'Show Simplified VC', the user is
               taken to the VC in the .vcg or .siv file but it has moved
