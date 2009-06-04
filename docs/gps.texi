@@ -9528,7 +9528,7 @@ immediately open.
 @item Wrap around on next/previous
 @cindex location
 Whether using the @code{Next Tag} and @code{Previous Tag} actions/menus
-should wrap around to the beginning when reading the end of the category.
+should wrap around to the beginning when reaching the end of the category.
 The default is to wrap around, as was done in previous GPS versions.
 
 @end table
