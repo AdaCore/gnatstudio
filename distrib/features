@@ -15,6 +15,12 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I602-003 New preference: Wrap around on next/previous (2009-04-06)
+
+   Whether using the 'Next Tag' and 'Previous Tag' actions/menus, this
+   preference determines whether wrap around to the beginning should occur
+   when reaching the end of the category.
+
 NF-44-I513-024 Permanent GPS.EditorMark (2009-05-19)
 
    Marks created through the GPS.EditorMark python API will now stay
