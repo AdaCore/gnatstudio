@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -87,7 +87,8 @@ package Ada_Semantic_Tree.Units is
    function Get_Owning_Unit (Entity : Entity_Access) return Unit_Access;
    --  Return the unit on which this entity is related to - either because
    --  it's within the entity or because it's a clause applying to this
-   --  unit.
+   --  unit. May return null if the unit can't be retreive, for example if
+   --  there are major syntax errors or unclosed blocks.
 
    function Get_Start_Entity (Unit : Unit_Access) return Entity_Access;
    --  Return the first entity related to this unit. It can be either the

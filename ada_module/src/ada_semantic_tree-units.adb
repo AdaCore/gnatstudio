@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2008, AdaCore               --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -952,7 +952,7 @@ package body Ada_Semantic_Tree.Units is
       Db_Assistant : Database_Assistant_Access;
       Unit_Key     : Construct_Annotations_Pckg.Annotation_Key;
    begin
-      if Child = null then
+      if Child = null or else Parent = null then
          return False;
       end if;
 
