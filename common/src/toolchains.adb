@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -179,7 +179,7 @@ package body Toolchains is
       Ret := Locate_Exec (Exec_Name, Extra_Path);
 
       if Ret = null then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name);
       else
          return Ret;
       end if;
@@ -192,7 +192,7 @@ package body Toolchains is
    function Locate_Tool_Executable (Exec_Name : String) return String_Access is
    begin
       if not Property.Active or else Property.Tools_Path = null then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name);
       end if;
 
       return Internal_Locate_Exec (Exec_Name, Property.Tools_Path.all);
@@ -206,7 +206,7 @@ package body Toolchains is
      (Exec_Name : String) return String_Access is
    begin
       if not Property.Active or else Property.Compiler_Path = null then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name);
       end if;
 
       return Internal_Locate_Exec (Exec_Name, Property.Compiler_Path.all);
