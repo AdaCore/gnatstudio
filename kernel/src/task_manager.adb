@@ -514,6 +514,7 @@ package body Task_Manager is
                      Get_Or_Create_Task_Queue
                        (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
    begin
+      Ref (Command);
       Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
 
       Manager.Queues (Task_Queue).Total :=
