@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off);
 with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
+pragma Warnings (On);
 with Gtk.Main;             use Gtk.Main;
 with GPS.Kernel;         use GPS.Kernel;
 with String_List_Utils;    use String_List_Utils;
