@@ -1286,10 +1286,14 @@ package body GPS.Kernel.Scripts is
          Context := Get_Data (Data, 1);
          if Has_Line_Information (Context) then
             L := Line_Information (Context);
+         else
+            L := 1;
          end if;
 
          if Has_Column_Information (Context) then
             C := Integer (Column_Information (Context));
+         else
+            C := 1;
          end if;
 
          if Has_File_Information (Context) then
