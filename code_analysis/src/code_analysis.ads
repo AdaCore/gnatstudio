@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,7 +66,7 @@ package Code_Analysis is
    --  number of not covered lines
 
    type Node_Coverage is new Coverage with record
-      Children : Natural;
+      Children : Natural := 0;
    end record;
    --  Extra node coverage information
    --  Children is the Subprogram, File or Project children count
