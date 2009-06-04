@@ -95,7 +95,7 @@ package Code_Analysis is
    --  True if line has been added; otherwise preserve Added value.
 
    type Node_Coverage is abstract new Coverage with record
-      Children : Natural;
+      Children : Natural := 0;
    end record;
    --  Extra node coverage information
    --  Children is the Subprogram, File or Project children count
