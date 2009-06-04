@@ -837,7 +837,7 @@ package body Default_Preferences is
                   Node := Node.Next;
                end loop;
             else
-               Trace (Me, "Load new style preferences from " & (+File_Name));
+               Trace (Me, "Load new style preferences from " & File_Name);
                while Node /= null loop
                   if Node.Tag.all = "pref" then
                      declare
