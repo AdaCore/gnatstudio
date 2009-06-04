@@ -59,7 +59,10 @@ class OpenFileContextual (GPS.Contextual):
          return False
 
       ed  = GPS.EditorBuffer.get ()
-      (ed, start, end) = get_selection_or_line (ed, context.location ())
+      try:
+         (ed, start, end) = get_selection_or_line (ed, context.location ())
+      except:
+         return False  # No file information in the context
       text = ed.get_chars (start, end)
 
       self.file = ""
