@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2008, AdaCore             --
+--                      Copyright (C) 2007-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -286,8 +286,14 @@ package body Switches_Chooser is
             Line          => Line,
             Column        => Column,
             Add_First     => Add_Before));
-      Add_To_Getopt (Config, Switch_Set, ASCII.LF);
-      Add_To_Getopt (Config, Switch_Unset, ASCII.LF);
+
+      if Switch_Set /= "" then
+         Add_To_Getopt (Config, Switch_Set, ASCII.LF);
+      end if;
+
+      if Switch_Unset /= "" then
+         Add_To_Getopt (Config, Switch_Unset, ASCII.LF);
+      end if;
    end Add_Check;
 
    ---------------
@@ -520,7 +526,10 @@ package body Switches_Chooser is
             Column    => 1,
             Add_First => Add_Before,
             Popup     => Main_Window));
-      Add_To_Getopt (Config, Switch, ASCII.LF);
+
+      if Switch /= "" then
+         Add_To_Getopt (Config, Switch, ASCII.LF);
+      end if;
    end Add_Radio_Entry;
 
    --------------------
