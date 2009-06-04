@@ -41,9 +41,9 @@ package Code_Coverage is
       Prj_Runs      : out Positive;
       Have_Runs     : out Boolean);
    --  Reads and returns in the given .gcov file contents the number of
-   --  execution(s) of the binary file produce by the analyzed sources
-   --  This information is contained in every .gcov files
-   --  Raise Bad_Gcov_File if this information is not found.
+   --  execution(s) of the binary file produced by the analyzed sources.
+   --  This information is contained in every .gcov files.
+   --  Have_Runs is set to False if this information is not found.
 
    procedure Add_Subprogram_Info
      (File_Node : Code_Analysis.File_Access;

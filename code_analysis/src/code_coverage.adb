@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -93,8 +93,15 @@ package body Code_Coverage is
          --  The .gcov have no runs count information
       end if;
 
-      Prj_Runs  := Positive'Value
-        (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
+      begin
+         Prj_Runs  := Positive'Value
+           (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
+      exception
+         when Constraint_Error =>
+            Have_Runs := False;
+            return;
+      end;
+
       Have_Runs := True;
    end Get_Runs_Info_From_File;
 
