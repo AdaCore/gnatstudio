@@ -339,9 +339,10 @@ package body KeyManager_Module is
 
       declare
          Level       : Positive := 1;
-         More_Levels : Boolean := False;
+         More_Levels : Boolean;
       begin
          loop
+            More_Levels := False;
             Save_Table
               (Keymanager_Module.Table.all, "", 1, Level, More_Levels);
             exit when not More_Levels;
