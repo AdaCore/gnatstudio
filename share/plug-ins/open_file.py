@@ -13,7 +13,7 @@ will skip the automatic detection of file name, and take the whole selection
 has a file name if such a file is found on the disk.
 """
 
-file_pattern = u'((?:[/\\]?[\w\d._$:-]+)+)(?::(\d+)(?::(\d+))?)?'
+file_pattern = u'((?:[a-zA-Z]:)?(?:[/\\]?[\w\d._$-]+)+)(?::(\d+)(?::(\d+))?)?'
 # The regexp pattern to search file file:line:column references on the
 # current line.
 
