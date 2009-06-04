@@ -724,7 +724,8 @@ package body Completion_Window is
          if not Window.all.Volatile then
             Select_Iter (Selection, Prev);
          end if;
-      else
+
+      elsif not Window.In_Destruction then
          Prev := Get_Iter_First (Window.Model);
 
          if Prev = Null_Iter then
