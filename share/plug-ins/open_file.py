@@ -85,7 +85,10 @@ class OpenFileContextual (GPS.Contextual):
                if m.group (3):
                   self.column = int (m.group (3))
                break
-            pos = m.end()
+            elif m:
+               pos = m.end()
+            else:
+               return False
 
       if self.file == "":
          return False
