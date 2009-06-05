@@ -15,6 +15,12 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I602-021 New plugin: open_file.py (2009-06-03)
+
+   This plugin creates a contextual menu. If you click on the name of a file
+   in an editor, the new menu gives you the choice of automatically searching
+   and opening this file in a new editor.
+
 NF-44-I602-003 New preference: Wrap around on next/previous (2009-04-06)
 
    Whether using the 'Next Tag' and 'Previous Tag' actions/menus, this
