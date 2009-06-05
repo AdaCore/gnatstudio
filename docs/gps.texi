@@ -3490,6 +3490,9 @@ See @ref{Find All References} for more details.
 @cindex variables used
 Find all variables (local or global) used in @i{entity} and list each first
 reference in the locations window.
+
+@item Non Local variables used in @i{entity}
+Find all non-local variables used in the entity.
 @end table
 
 @item Methods of @i{entity}
@@ -3547,6 +3550,12 @@ Remove expanded code from the current editor.
 
 For Ada files only, this entry will generate, and will open this file at the location
 corresponding to the current source line.
+
+@item Open <filename>
+When you click on a filename (for instance a C' @code{#include}, or an error
+message in a log file), this menu gives you a way to open the corresponding
+file. If the file name was followed by ":" and a line number, the
+corresponding line is activated.
 
 @end table
 
