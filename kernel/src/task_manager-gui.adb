@@ -72,6 +72,7 @@ package body Task_Manager.GUI is
    Command_Name_Column     : constant := 1;
    Command_Progress_Column : constant := 2;
    Command_Button_Column   : constant := 3;
+   Pause_Button_Column     : constant := 4;
 
    -----------------
    -- Local types --
@@ -138,9 +139,6 @@ package body Task_Manager.GUI is
    -- Local subprograms --
    -----------------------
 
-   package Manager_Contextual_Menus is new User_Contextual_Menus
-     (Manager_Index_Record);
-
    package Task_Manager_Handler is new Gtk.Handlers.User_Callback
      (GObject_Record, Manager_Index_Record);
 
@@ -173,13 +171,6 @@ package body Task_Manager.GUI is
       Manager : Manager_Index_Record);
    pragma Unreferenced (On_Progress_Bar_Destroy);
    --  Called when a progress bar is destroyed
-
-   function On_Progress_Bar_Button_Pressed
-     (Object  : access Gtk_Widget_Record'Class;
-      Params  : GValues;
-      Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean;
-   pragma Unreferenced (On_Progress_Bar_Button_Pressed);
-   --  Callback for a "button_press_event" on a progress bar
 
    procedure Refresh (GUI   : Task_Manager_Interface);
    --  Refresh the information in View from the Task_Manager.
@@ -246,27 +237,6 @@ package body Task_Manager.GUI is
       Pop_State (Manager.D.Manager);
    end On_Progress_Bar_Destroy;
 
-   ------------------------------------
-   -- On_Progress_Bar_Button_Pressed --
-   ------------------------------------
-
-   function On_Progress_Bar_Button_Pressed
-     (Object  : access Gtk_Widget_Record'Class;
-      Params  : GValues;
-      Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean
-   is
-      pragma Unreferenced (Object, Params);
-   begin
-      Manager.User.D.Manager.Referenced_Command := Manager.User.Index;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end On_Progress_Bar_Button_Pressed;
-
    -----------------------
    -- Interrupt_Command --
    -----------------------
@@ -283,10 +253,34 @@ package body Task_Manager.GUI is
          Interrupt (Command_Queues.Head (Manager.Queues (Index).Queue).all);
 
          Manager.Queues (Index).Status := Interrupted;
-         Queue_Changed (Manager, Index);
+         Queue_Changed (Manager, Index, True);
          Run (Manager, Active => Index < Manager.Passive_Index);
       end if;
    end Interrupt_Command;
+
+   -------------------
+   -- Pause_Command --
+   -------------------
+
+   procedure Pause_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         if Manager.Queues (Index).Status = Running then
+            Manager.Queues (Index).Status := Paused;
+         elsif Manager.Queues (Index).Status = Paused then
+            Manager.Queues (Index).Status := Running;
+            Run (Manager, Active => Index < Manager.Passive_Index);
+         end if;
+
+         Queue_Changed (Manager, Index, True);
+      end if;
+   end Pause_Command;
 
    ---------------------------
    -- On_Button_Press_Event --
@@ -307,21 +301,19 @@ package body Task_Manager.GUI is
       Model := Get_Model (Iface.Tree);
       Coordinates_For_Event (Iface.Tree, Model, Event, Iter, Col);
 
-      if Iter = Null_Iter then
-         Iface.Model.Manager.Referenced_Command := -1;
-      else
+      if Iter /= Null_Iter then
          Path := Get_Path (Model, Iter);
 
          declare
             A     : constant Gint_Array := Get_Indices (Path);
             Index : constant Natural := Natural (A (A'First)) + 1;
          begin
-            if Get_Button (Event) = 1
-              and then Col = Iface.Button_Col
-            then
-               Interrupt_Command (Iface.Model.Manager, Index);
-            else
-               Iface.Model.Manager.Referenced_Command := Index;
+            if Get_Button (Event) = 1 then
+               if Col = Iface.Quit_Button_Col then
+                  Interrupt_Command (Iface.Model.Manager, Index);
+               elsif Col = Iface.Pause_Button_Col then
+                  Pause_Command (Iface.Model.Manager, Index);
+               end if;
             end if;
          end;
 
@@ -492,12 +484,12 @@ package body Task_Manager.GUI is
    begin
       Set_Rules_Hint (Tree, False);
 
-      Gtk_New (View.Button_Col);
+      Gtk_New (View.Quit_Button_Col);
       Gtk_New (Pixbuf_Rend);
-      Pack_End (View.Button_Col, Pixbuf_Rend, False);
+      Pack_End (View.Quit_Button_Col, Pixbuf_Rend, False);
       Add_Attribute
-        (View.Button_Col, Pixbuf_Rend, "pixbuf", Command_Button_Column);
-      Dummy := Append_Column (Tree, View.Button_Col);
+        (View.Quit_Button_Col, Pixbuf_Rend, "pixbuf", Command_Button_Column);
+      Dummy := Append_Column (Tree, View.Quit_Button_Col);
 
       Gtk_New (Col);
       Set_Expand (Col, False);
@@ -505,6 +497,13 @@ package body Task_Manager.GUI is
       Pack_Start (Col, Pixbuf_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Command_Progress_Column);
       Dummy := Append_Column (Tree, Col);
+
+      Gtk_New (View.Pause_Button_Col);
+      Gtk_New (Pixbuf_Rend);
+      Pack_End (View.Pause_Button_Col, Pixbuf_Rend, False);
+      Add_Attribute
+        (View.Pause_Button_Col, Pixbuf_Rend, "pixbuf", Pause_Button_Column);
+      Dummy := Append_Column (Tree, View.Pause_Button_Col);
    end Set_Column_Types;
 
    -------------------
@@ -517,7 +516,8 @@ package body Task_Manager.GUI is
         (Icon_Column             => Gdk.Pixbuf.Get_Type,
          Command_Name_Column     => GType_String,
          Command_Progress_Column => Gdk.Pixbuf.Get_Type,
-         Command_Button_Column => Gdk.Pixbuf.Get_Type);
+         Command_Button_Column   => Gdk.Pixbuf.Get_Type,
+         Pause_Button_Column     => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
 
    -------------------------
@@ -651,7 +651,8 @@ package body Task_Manager.GUI is
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
-      Index_1 : constant Integer_Address := Integer_Address (Indices'First);
+      Index_1 : constant Integer_Address := Integer_Address
+        (Indices (Indices'First));
    begin
       if Self.GUI.Manager.Queues = null
         or else Index_1 >= Self.GUI.Manager.Queues'Length
@@ -798,7 +799,9 @@ package body Task_Manager.GUI is
          Unref (GUI.Progress_Background_GC);
          Unref (GUI.Progress_Foreground_GC);
          Unref (GUI.Progress_Text_GC);
-         Unref (GUI.Global_Button_Pixbuf);
+         Unref (GUI.Close_Button_Pixbuf);
+         Unref (GUI.Pause_Button_Pixbuf);
+         Unref (GUI.Play_Button_Pixbuf);
          Unref (GUI.Progress_Layout);
       end if;
 
@@ -873,8 +876,12 @@ package body Task_Manager.GUI is
          GUI.Progress_Width,
          GUI.Progress_Height);
 
-      GUI.Global_Button_Pixbuf := Render_Icon
+      GUI.Close_Button_Pixbuf := Render_Icon
         (GUI.Global_Button, Stock_Close, Icon_Size_Menu);
+      GUI.Pause_Button_Pixbuf := Render_Icon
+        (GUI.Global_Button, Stock_Media_Pause, Icon_Size_Menu);
+      GUI.Play_Button_Pixbuf := Render_Icon
+        (GUI.Global_Button, Stock_Media_Play, Icon_Size_Menu);
    end Init_Graphics;
 
    ---------------
@@ -924,7 +931,16 @@ package body Task_Manager.GUI is
 
             when Command_Button_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
-               Set_Object (Value, GObject (Self.GUI.Global_Button_Pixbuf));
+               Set_Object (Value, GObject (Self.GUI.Close_Button_Pixbuf));
+
+            when Pause_Button_Column =>
+               Init (Value, Gdk.Pixbuf.Get_Type);
+
+               if Task_Queue.Status = Paused then
+                  Set_Object (Value, GObject (Self.GUI.Play_Button_Pixbuf));
+               else
+                  Set_Object (Value, GObject (Self.GUI.Pause_Button_Pixbuf));
+               end if;
 
             when others =>
                Init (Value, Gdk.Pixbuf.Get_Type);

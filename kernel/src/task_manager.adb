@@ -179,7 +179,6 @@ package body Task_Manager is
          if Manager.Queues'Length = 1 then
             Unchecked_Free (Queue);
             Unchecked_Free (Manager.Queues);
-            Manager.Referenced_Command := -1;
             Queue_Removed (Manager, 1);
             return False;
 
@@ -206,14 +205,6 @@ package body Task_Manager is
 
                if Active then
                   Manager.Passive_Index := Manager.Passive_Index - 1;
-               end if;
-
-               if Manager.Referenced_Command = Index then
-                  Manager.Referenced_Command := -1;
-
-               elsif Manager.Referenced_Command > Index then
-                  Manager.Referenced_Command :=
-                    Manager.Referenced_Command - 1;
                end if;
 
                Unchecked_Free (Queue);
@@ -377,7 +368,7 @@ package body Task_Manager is
 
          end case;
 
-         Queue_Changed (Manager, Index);
+         Queue_Changed (Manager, Index, False);
 
          return True;
       end if;
@@ -771,14 +762,15 @@ package body Task_Manager is
    -------------------
 
    procedure Queue_Changed
-     (Manager : Task_Manager_Access;
-      Index   : Integer)
+     (Manager           : Task_Manager_Access;
+      Index             : Integer;
+      Immediate_Refresh : Boolean)
    is
       GUI : Task_Manager_Interface;
    begin
       if Manager.GUI /= null then
          GUI := Task_Manager_Interface (Manager.GUI);
-         Queue_Changed (GUI, Index, False);
+         Queue_Changed (GUI, Index, Immediate_Refresh);
       end if;
    end Queue_Changed;
 

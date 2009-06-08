@@ -172,10 +172,6 @@ private
 
       GUI                  : Gtk_Widget       := null;
       Progress_Area        : Gtk.Box.Gtk_Hbox := null;
-      Referenced_Command   : Integer := -1;
-      --  The command currently referenced by the contextual menu.
-      --  This is an index in Queues, set to <0 when the command is not valid
-      --  or the menu not created.
 
       Push_Command, Pop_Command : Command_Access;
       --  Commands used to push/pop the "busy" state
@@ -187,13 +183,18 @@ private
    procedure Queue_Added
      (Manager : Task_Manager_Access;
       Index   : Integer);
+   --  Inform the GUI that a queue has been added
 
    procedure Queue_Removed
      (Manager : Task_Manager_Access;
       Index   : Integer);
+   --  Inform the GUI that a queue has been removed
 
    procedure Queue_Changed
-     (Manager : Task_Manager_Access;
-      Index   : Integer);
+     (Manager           : Task_Manager_Access;
+      Index             : Integer;
+      Immediate_Refresh : Boolean);
+   --  Inform the GUI that a queue has been changed; if Immediate_Refresh is
+   --  True, refresh immediately, otherwise do so in a timeout callback.
 
 end Task_Manager;

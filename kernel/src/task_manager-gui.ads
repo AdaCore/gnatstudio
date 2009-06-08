@@ -82,6 +82,11 @@ package Task_Manager.GUI is
       Index   : Integer);
    --  Interrupt command referenced by Index.
 
+   procedure Pause_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Pause command referenced by Index.
+
    procedure Queue_Added
      (GUI   : Task_Manager_Interface;
       Index : Integer);
@@ -112,7 +117,8 @@ private
       Model      : Task_Manager_Interface;
       Tree       : Gtk_Tree_View;
       Dialog     : Gtk_Widget := null;
-      Button_Col : Gtk_Tree_View_Column;
+      Quit_Button_Col  : Gtk_Tree_View_Column;
+      Pause_Button_Col : Gtk_Tree_View_Column;
    end record;
 
    package Integer_Stack is new Generic_Stack (Integer);
@@ -144,7 +150,9 @@ private
       Reference_Widget       : Gtk_Widget;
       --  A reference widget to create the graphical contexts.
 
-      Global_Button_Pixbuf     : Gdk_Pixbuf;
+      Close_Button_Pixbuf     : Gdk_Pixbuf;
+      Pause_Button_Pixbuf     : Gdk_Pixbuf;
+      Play_Button_Pixbuf      : Gdk_Pixbuf;
 
       To_Refresh               : Integer_Stack.Simple_Stack;
 
