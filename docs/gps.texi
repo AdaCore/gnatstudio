@@ -11463,6 +11463,9 @@ Python equivalent:
 GPS.Project.root().name()
 @end smallexample
 
+@item %Pl
+The name of the root project, all lower case.
+
 @item %pp
 The current project file pathname. If a file is selected, this is the project
 file to which the source file belongs.
