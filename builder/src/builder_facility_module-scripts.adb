@@ -203,6 +203,8 @@ package body Builder_Facility_Module.Scripts is
             Mode        : Dialog_Mode      := Default;
             Build_Mode  : constant String  := Nth_Arg (Data, 6, "");
             Synchronous : constant Boolean := Nth_Arg (Data, 7, True);
+            Directory   : constant Filesystem_String := Nth_Arg (Data, 8, "");
+            Dir         : Virtual_File := No_File;
 
          begin
             Info := Get_Data
@@ -224,6 +226,10 @@ package body Builder_Facility_Module.Scripts is
                Mode := Force_No_Dialog;
             end if;
 
+            if Directory /= "" then
+               Dir := GNATCOLL.VFS.Create (Directory);
+            end if;
+
             Launch_Target (Kernel       => Kernel,
                            Registry     => Registry,
                            Target_Name  => Name,
@@ -233,7 +239,8 @@ package body Builder_Facility_Module.Scripts is
                            Quiet        => False,
                            Synchronous  => Synchronous,
                            Dialog       => Mode,
-                           Main         => Main);
+                           Main         => Main,
+                           Directory    => Dir);
             Free (Extra_Args);
          end;
 
@@ -344,7 +351,7 @@ package body Builder_Facility_Module.Scripts is
       Register_Command
         (Kernel, "execute",
          Minimum_Args => 0,
-         Maximum_Args => 6,
+         Maximum_Args => 8,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 

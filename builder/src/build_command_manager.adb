@@ -478,7 +478,8 @@ package body Build_Command_Manager is
       Quiet       : Boolean;
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
-      Main        : String)
+      Main        : String;
+      Directory   : Virtual_File := No_File)
    is
       Prj            : constant Project_Type := Get_Project (Kernel);
       Old_Dir        : constant Virtual_File := Get_Current_Dir;
@@ -642,7 +643,12 @@ package body Build_Command_Manager is
 
          --  Launch the build command
 
-         Change_Dir (Dir (Project_Path (Prj)));
+         if Directory /= No_File then
+            Change_Dir (Directory);
+         else
+            Change_Dir (Dir (Project_Path (Prj)));
+         end if;
+
          Launch_Build_Command
            (Kernel, Full, Target_Name, Mode, Server, Quiet, Shadow,
             Synchronous, Uses_Shell (T));
