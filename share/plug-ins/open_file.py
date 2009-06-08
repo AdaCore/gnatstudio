@@ -78,8 +78,6 @@ class OpenFileContextual (GPS.Contextual):
          pos = 0
          while pos < len (text):
             m = self.file_pattern.search (text, pos)
-            if m:
-               Console().write ("candidate: " + m.group (1) + "\n")
             if m and m.start() <= cursor_col and m.end() >= cursor_col:
                self.file = m.group (1)
                if m.group (2):
@@ -94,8 +92,6 @@ class OpenFileContextual (GPS.Contextual):
 
       if self.file == "":
          return False
-
-      Console().write ("file=" + self.file + "\n")
 
       if exists (self.file):
          return True
