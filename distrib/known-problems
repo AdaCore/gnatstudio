@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.3
 
+- I608-005: Reformat may lose character constants
+  Problem:    When reformatting an aggregate that contains a character constant
+              as the first non blank token and an arow in the same line, the
+              character cosntant may get erasen.
+  Workaround: Disable the 'Align associations on arrows' preference.
+
 - I507-015: Problems with completion on illegal Ada files
   Problem:    Querying the smart completion on an illegal Ada file, in 
               particular with entities not correctly closed, may give
