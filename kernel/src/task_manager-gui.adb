@@ -52,8 +52,8 @@ package body Task_Manager.GUI is
    -- Local constants --
    ---------------------
 
-   Progress_Bar_Length : constant := 30;
-   --  The length of the progress bar, in number of characters
+   Progress_Bar_Length : constant := 200;
+   --  The length of the progress bar, in number of pixels
 
    Refresh_Timeout     : constant := 200;
    --  The timeout to refresh the GUI, in milliseconds
@@ -863,11 +863,11 @@ package body Task_Manager.GUI is
       GUI.Progress_Layout := Create_Pango_Layout (Iface);
       Set_Font_Description
         (GUI.Progress_Layout,
-         View_Fixed_Font.Get_Pref);
+         Default_Font.Get_Pref);
 
-      Set_Text (GUI.Progress_Layout, (1 .. Progress_Bar_Length => 'm'));
+      Set_Text (GUI.Progress_Layout, "l");
       Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);
-      GUI.Progress_Width := Layout_Width + 4;
+      GUI.Progress_Width := Progress_Bar_Length;
       GUI.Progress_Height := Layout_Height + 2;
 
       Gdk_New
