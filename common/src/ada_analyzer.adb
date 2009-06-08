@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2634,6 +2634,7 @@ package body Ada_Analyzer is
             First_Paren  : Natural;
 
          begin
+            Do_Indent (P, Num_Spaces);
             Prev_Token := Tok_Arrow;
 
             if Top_Token.Token = Tok_When
