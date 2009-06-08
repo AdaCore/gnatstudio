@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with GNATCOLL.VFS;
 with GPS.Kernel;
 
@@ -29,13 +30,14 @@ package Code_Peer.Shell_Commands is
 
    procedure Build_Target_Execute
      (Kernel      : GPS.Kernel.Kernel_Handle;
-      Object      : String;
+      Target_ID   : String;
       Main_Name   : String                    := "";
       File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Force       : Boolean                   := False;
       Extra_Args  : String                    := "";
       Build_Mode  : String                    := "";
-      Synchronous : Boolean                   := True);
+      Synchronous : Boolean                   := True;
+      Dir         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Executes BuildTarget.execute function.
 
    function Get_Build_Mode (Kernel : GPS.Kernel.Kernel_Handle) return String;

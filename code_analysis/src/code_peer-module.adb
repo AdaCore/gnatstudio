@@ -19,6 +19,7 @@
 
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 with Input_Sources.File;
@@ -34,7 +35,8 @@ with Basic_Types;
 with GPS.Editors;
 with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;     use GPS.Kernel;
+with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 with GPS.Kernel.Standard_Hooks;
 
@@ -42,7 +44,6 @@ with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
 with Code_Peer.Message_Review_Dialogs;
 with Code_Peer.Module.Bridge;
-with Code_Peer.Module.Codepeer;
 with Code_Peer.Shell_Commands;
 with Commands.Code_Peer;
 with Code_Analysis_GUI;
@@ -126,11 +127,74 @@ package body Code_Peer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
+   procedure Review (Module : Code_Peer.Module.Code_Peer_Module_Id);
+   --  Launch CodePeer review
+
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
    Module : Code_Peer_Module_Id;
    --  Global variable for store CodePeer plugin module. Used in the main menu
    --  callbacks.
+
+   procedure Create_Library_File (Project : Projects.Project_Type);
+   --  Create CodePeer library file
+
+   -------------------------
+   -- Create_Library_File --
+   -------------------------
+
+   procedure Create_Library_File (Project : Projects.Project_Type) is
+      File : Ada.Text_IO.File_Type;
+
+   begin
+      Ada.Text_IO.Create
+        (File,
+         Ada.Text_IO.Out_File,
+         +Codepeer_Library_File_Name (Project).Full_Name);
+
+      Ada.Text_IO.Put_Line
+        (File,
+         "Output_Dir := """
+         & (+Codepeer_Output_Directory (Project).Full_Name) & """;");
+      Ada.Text_IO.New_Line (File);
+
+      Ada.Text_IO.Put_Line
+        (File,
+         "Database_Dir := """
+         & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
+      Ada.Text_IO.New_Line (File);
+
+      Ada.Text_IO.Put_Line
+        (File, "Source (Directory              => ""SCIL"",");
+      Ada.Text_IO.Put_Line
+        (File, "        Files                  => (""*.scil""),");
+      Ada.Text_IO.Put_Line
+        (File, "        Language               => SCIL);");
+
+      Ada.Text_IO.Close (File);
+   end Create_Library_File;
+
+   ------------
+   -- Review --
+   ------------
+
+   procedure Review (Module : Code_Peer.Module.Code_Peer_Module_Id) is
+      Project          : constant Projects.Project_Type :=
+                           Get_Project (Module.Kernel);
+      Object_Directory : constant Virtual_File :=
+                           Projects.Object_Path (Project);
+
+   begin
+      Create_Library_File (Project);
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel_Handle (Module.Kernel),
+         Code_Peer.Shell_Commands.Build_Target
+           (Module.Get_Kernel, "Run CodePeer"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False,
+         Dir         => Object_Directory);
+   end Review;
 
    --------------------
    -- Append_To_Menu --
@@ -518,7 +582,7 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget, Kernel);
    begin
-      Code_Peer.Module.Codepeer.Review (Module);
+      Review (Module);
    end On_Advanced_Run_Analysis_Manually;
 
    --------------------
@@ -532,8 +596,7 @@ package body Code_Peer.Module is
       pragma Unreferenced (Widget);
 
    begin
-      Module.Autorun_Codepeer := True;
-
+      Module.Action := Run;
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
          Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
@@ -556,23 +619,57 @@ package body Code_Peer.Module is
       Mode      : constant String :=
         Code_Peer.Shell_Commands.Get_Build_Mode
           (GPS.Kernel.Kernel_Handle (Kernel));
+      Action : constant CodePeer_Action := Module.Action;
 
    begin
-      if Hook_Data.Mode_Name = "codepeer" then
-         if Module.Autorun_Codepeer
-           and then Hook_Data.Status = 0
-         then
+      Module.Action := None;
+
+      if Hook_Data.Status /= 0 then
+         return;
+      end if;
+
+      case Action is
+         when Run =>
             Code_Peer.Shell_Commands.Set_Build_Mode
               (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
-
-            Code_Peer.Module.Codepeer.Review (Module);
-
+            Module.Action := Terminated;
+            Review (Module);
             Code_Peer.Shell_Commands.Set_Build_Mode
               (GPS.Kernel.Kernel_Handle (Kernel), Mode);
-         end if;
 
-         Module.Autorun_Codepeer := False;
-      end if;
+         when Terminated =>
+            declare
+               Path            : constant GNATCOLL.VFS.File_Array :=
+                                   Projects.Object_Path
+                                     (Get_Project (GPS.Kernel.Kernel_Handle
+                                        (Kernel)),
+                                      False, False, False);
+               CodePeer_Subdir : constant Boolean :=
+                                   GNATCOLL.VFS.Is_Directory
+                                     (Create
+                                        (Full_Name (Path (Path'First))
+                                         & "/codepeer",
+                                      Get_Host (Path (Path'First))));
+
+            begin
+               --  If a codepeer dir is found in the object dir, then use this
+               --  directory, otherwise use the default object dir (advanced
+               --  mode).
+
+               if CodePeer_Subdir then
+                  Code_Peer.Shell_Commands.Set_Build_Mode
+                    (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
+               end if;
+
+               Code_Peer.Module.Bridge.Inspection (Module);
+
+               if CodePeer_Subdir then
+                  Code_Peer.Shell_Commands.Set_Build_Mode
+                    (GPS.Kernel.Kernel_Handle (Kernel), Mode);
+               end if;
+            end;
+         when None => null;
+      end case;
    end On_Compilation_Finished;
 
    -------------------------
@@ -737,8 +834,6 @@ package body Code_Peer.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      use type GPS.Kernel.Action_Filter;
-
       Submenu_Factory : GPS.Kernel.Modules.Submenu_Factory;
       Str : String_Access := Locate_Exec_On_Path ("codepeer");
 
@@ -816,7 +911,7 @@ package body Code_Peer.Module is
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
-         Name => "codefix.compilation_finished");
+         Name => "codepeer.compilation_finished");
    end Register_Module;
 
    --------------------

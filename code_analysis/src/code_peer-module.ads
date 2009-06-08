@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  ??? missing description of this package
+
 with Glib.Object;
 with Gtk.Menu;
 
@@ -37,6 +39,7 @@ package Code_Peer.Module is
      new GPS.Kernel.Modules.Module_ID_Record with private;
 
    type Code_Peer_Module_Id is access all Module_Id_Record'Class;
+   --  ??? missing comments on all types and procedures of this package
 
    procedure Show_Annotations
      (Self : access Module_Id_Record'Class;
@@ -79,6 +82,9 @@ private
      array (Code_Peer.Message_Probability_Level)
        of GPS.Kernel.Styles.Style_Access;
 
+   type CodePeer_Action is (None, Run, Terminated);
+   --  Various actions related to codepeer handling
+
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
@@ -92,8 +98,9 @@ private
 
       Filter_Criteria  : Code_Peer.Message_Filter_Criteria;
 
-      Autorun_Codepeer : Boolean := False;
-      --  codepeer must be automatically called when compilation is finished.
+      Action           : CodePeer_Action := None;
+      --  Indicate possible action to be performed when a build target is
+      --  finished
    end record;
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class);
