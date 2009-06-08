@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
@@ -272,6 +273,12 @@ package body GPS.Kernel.Macros is
          if Param = "p" or else Param = "P" then
             return String_Utils.Protect
               (Project_Name (Project),
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
+
+         elsif Param = "Pl" then
+            return String_Utils.Protect
+              (To_Lower (Project_Name (Project)),
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
 
