@@ -385,13 +385,15 @@ package body GPS.Location_View is
       Down (Path);
       Iter := Get_Iter (Get_Model (View.Tree), Path);
 
-      if N_Children (Get_Model (View.Tree), Iter) > 1 then
+      if View.Tree.Get_Model.Get_Boolean (Iter, Expanded_State_Column)
+        and then N_Children (Get_Model (View.Tree), Iter) > 1
+      then
          --  More than one child, try to display the first child and the
          --  following one. This is cleaner as a row returned as visible even
          --  if partially on the screen. So if the second child is at least
          --  partly visible we know for sure that the first child is fully
          --  visible.
-         Next (Path);
+         Down (Path);
       end if;
 
       Res := Compare (Path, End_Path);
@@ -1381,6 +1383,8 @@ package body GPS.Location_View is
       Category_Iter          : Gtk_Tree_Iter;
       File_Iter              : Gtk_Tree_Iter;
       Message_Iter           : Gtk_Tree_Iter;
+      Secondary_Iter         : Gtk_Tree_Iter;
+      Secondary_Next_Iter    : Gtk_Tree_Iter;
       Category_View_Iter     : Gtk_Tree_Iter;
       File_View_Iter         : Gtk_Tree_Iter;
       File_Next_View_Iter    : Gtk_Tree_Iter;
@@ -1403,7 +1407,8 @@ package body GPS.Location_View is
       Path_Free (Path);
 
       if Depth = 3 then
-         --  Message row
+         --  Message row inserted, expand category and file rows if it is first
+         --  visible message row.
 
          Message_Iter := Iter;
          File_Iter := Self.Model.Parent (Message_Iter);
@@ -1452,6 +1457,22 @@ package body GPS.Location_View is
                    (Idle_Expand_Category'Access, Location_View (Self));
             end if;
          end if;
+
+      elsif Depth = 4 then
+         --  Secondary message row. Force expand message flag in the model.
+         --  This code can be removed from here into the unredling model.
+
+         Secondary_Iter := Iter;
+
+         Message_Iter := Self.Model.Parent (Secondary_Iter);
+         Secondary_Next_Iter := Secondary_Iter;
+         Self.Model.Next (Secondary_Next_Iter);
+
+         if Self.Model.Children (Message_Iter) = Secondary_Iter
+           and then Secondary_Next_Iter = Null_Iter
+         then
+            Self.Model.Set (Message_Iter, Expanded_State_Column, True);
+         end if;
       end if;
    end On_Model_Row_Inserted;
 
@@ -1488,6 +1509,10 @@ package body GPS.Location_View is
       Path       : Gtk_Tree_Path;
       Iter       : Gtk_Tree_Iter;
       Model_Iter : Gtk_Tree_Iter;
+      Child_Iter : Gtk_Tree_Iter;
+      Child_Path : Gtk_Tree_Path;
+      Dummy      : Boolean;
+      pragma Warnings (Off, Dummy);
 
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
@@ -1516,6 +1541,21 @@ package body GPS.Location_View is
          Self.Idle_Row_Handler := View_Idle.Idle_Add
            (Idle_Show_Row'Access, Location_View (Self));
       end if;
+
+      --  Go throught children and expand them if corresponding flag in the
+      --  model is set.
+
+      Child_Iter := Self.Filter.Children (Iter);
+
+      while Child_Iter /= Null_Iter loop
+         if Self.Filter.Get_Boolean (Child_Iter, Expanded_State_Column) then
+            Child_Path := Self.Filter.Get_Path (Child_Iter);
+            Dummy := Self.Tree.Expand_Row (Child_Path, False);
+            Path_Free (Child_Path);
+         end if;
+
+         Self.Filter.Next (Child_Iter);
+      end loop;
 
       Path_Free (Path);
 
