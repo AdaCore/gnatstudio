@@ -135,4 +135,44 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
         <arg>-c</arg>
         <arg>-gnatcC</arg>
       </extra-args>
-    </builder-mode>""")
+    </builder-mode>
+
+    <target-model name="codepeer" category="">
+       <description>Review code with codepeer</description>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-all</arg>
+          <arg>-global</arg>
+          <arg>-background</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
+          <arg>-lib</arg>
+          <arg>%Pl.library</arg>
+       </command-line>
+       <icon>gps-build-all</icon>
+       <switches command="%(tool_name)s" columns="1" lines="2">
+         <check label="Global analysis" switch="-global"
+                tip="Do not split analysis in partitions" />
+         <spin label="Multiprocessing" switch="-jobs" min="1" max="100"
+               default="1"
+               tip="Use N processes to carry out the analysis." />
+       </switches>
+    </target-model>
+
+    <target model="codepeer" category="CodePeer" name="Run CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-all</arg>
+          <arg>-global</arg>
+          <arg>-background</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
+          <arg>-lib</arg>
+          <arg>%Pl.library</arg>
+       </command-line>
+    </target>""")
