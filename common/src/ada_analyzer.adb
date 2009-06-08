@@ -2635,6 +2635,7 @@ package body Ada_Analyzer is
             First_Paren  : Natural;
 
          begin
+            Do_Indent (P, Num_Spaces);
             Prev_Token := Tok_Arrow;
 
             if Top_Token.Token = Tok_When
