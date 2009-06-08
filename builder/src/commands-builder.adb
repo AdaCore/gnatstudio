@@ -30,7 +30,6 @@ with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNATCOLL.Scripts.Utils;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -409,7 +408,8 @@ package body Commands.Builder is
       Quiet       : Boolean;
       Shadow      : Boolean;
       Synchronous : Boolean;
-      Use_Shell   : Boolean)
+      Use_Shell   : Boolean;
+      Directory   : Virtual_File)
    is
       Console  : constant Interactive_Console :=
                    Get_Build_Console (Kernel, Shadow, False);
@@ -464,6 +464,7 @@ package body Commands.Builder is
                Callback_Data        => Data.all'Access,
                Success              => Success,
                Line_By_Line         => False,
+               Directory            => Directory,
                Callback             => Build_Callback'Access,
                Exit_Cb              => End_Build_Callback'Access,
                Show_In_Task_Manager => True,
@@ -485,6 +486,7 @@ package body Commands.Builder is
                Callback_Data        => Data.all'Access,
                Success              => Success,
                Line_By_Line         => False,
+               Directory            => Directory,
                Callback             => Build_Callback'Access,
                Exit_Cb              => End_Build_Callback'Access,
                Show_In_Task_Manager => True,

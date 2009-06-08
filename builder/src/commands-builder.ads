@@ -21,8 +21,9 @@
 
 with GPS.Kernel;
 with Glib;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Remote;      use Remote;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+with Remote;       use Remote;
 with Interactive_Consoles; use Interactive_Consoles;
 
 package Commands.Builder is
@@ -65,7 +66,8 @@ package Commands.Builder is
       Quiet       : Boolean;
       Shadow      : Boolean;
       Synchronous : Boolean;
-      Use_Shell   : Boolean);
+      Use_Shell   : Boolean;
+      Directory   : Virtual_File);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.

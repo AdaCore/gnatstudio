@@ -482,7 +482,7 @@ package body Build_Command_Manager is
       Directory   : Virtual_File := No_File)
    is
       Prj            : constant Project_Type := Get_Project (Kernel);
-      Old_Dir        : constant Virtual_File := Get_Current_Dir;
+      Dir            : Virtual_File;
       T              : Target_Access;
       Full           : Argument_List_Access;
       Command_Line   : Argument_List_Access;
@@ -644,18 +644,15 @@ package body Build_Command_Manager is
          --  Launch the build command
 
          if Directory /= No_File then
-            Change_Dir (Directory);
+            Dir := Directory;
          else
-            Change_Dir (Dir (Project_Path (Prj)));
+            Dir := GNATCOLL.VFS.Dir (Project_Path (Prj));
          end if;
 
          Launch_Build_Command
            (Kernel, Full, Target_Name, Mode, Server, Quiet, Shadow,
-            Synchronous, Uses_Shell (T));
-         Change_Dir (Old_Dir);
-
+            Synchronous, Uses_Shell (T), Dir);
          Free (Full);
-
          Unchecked_Free (All_Extra_Args);
       end Launch_For_Mode;
 
