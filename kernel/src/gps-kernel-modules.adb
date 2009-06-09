@@ -1279,7 +1279,7 @@ package body GPS.Kernel.Modules is
               (Command.Command,
                (null, Context, False, No_File, null, null, 1, 0)),
             Destroy_On_Exit => False,
-            Active          => True, Show_Bar => True, Queue_Id => "");
+            Active          => True, Show_Bar => False, Queue_Id => "");
 
       elsif Get_Error_Message (Command.Filter) /= "" then
          Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
