@@ -36,17 +36,18 @@ with Traces; use Traces;
 with Basic_Types;
 with GPS.Editors;
 with GPS.Intl;             use GPS.Intl;
-with GPS.Kernel.Contexts;
+with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
+with GPS.Kernel.Console;
 with GPS.Kernel.Hooks;     use GPS.Kernel;
 with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
-with GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
 with Code_Peer.Message_Review_Dialogs;
 with Code_Peer.Module.Bridge;
-with Code_Peer.Shell_Commands;
+with Code_Peer.Shell_Commands; use Code_Peer.Shell_Commands;
 with Commands.Code_Peer;
 with Code_Analysis_GUI;
 
@@ -122,12 +123,26 @@ package body Code_Peer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Advanced->Run CodePeer" menu item is activated
-   --  is activated by the user.
 
    procedure On_Display_Code_Review
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Display code review" menu item is activated
+
+   procedure On_Regenerate_Report
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Regenerate Report" menu item is activated
+
+   procedure On_Edit_Text_Listing
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Edit Text Listing" menu item is activated
+
+   procedure On_Edit_Log
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Edit CodePeer Log" menu item is activated
 
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -138,10 +153,12 @@ package body Code_Peer.Module is
       Context : Module_Context);
 
    procedure Review
-     (Module          : Code_Peer.Module.Code_Peer_Module_Id;
-      Force           : Boolean);
+     (Module      : Code_Peer.Module.Code_Peer_Module_Id;
+      Force       : Boolean;
+      Output_Only : Boolean := False);
    --  Launch CodePeer review.
    --  If Force is True, no dialog is displayed to change codepeer switches.
+   --  If Output_Only is True, run CodePeer in "output only" mode.
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -151,6 +168,20 @@ package body Code_Peer.Module is
 
    procedure Create_Library_File (Project : Projects.Project_Type);
    --  Create CodePeer library file
+
+   function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean;
+
+   -------------------------
+   -- Use_CodePeer_Subdir --
+   -------------------------
+
+   function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean is
+      Object_Directory : constant Virtual_File :=
+                           Projects.Object_Path (Get_Project (Kernel));
+   begin
+      return GNATCOLL.VFS.Is_Directory
+        (Create_From_Dir (Object_Directory, "codepeer"));
+   end Use_CodePeer_Subdir;
 
    -------------------------
    -- Create_Library_File --
@@ -192,22 +223,17 @@ package body Code_Peer.Module is
    ------------
 
    procedure Review
-     (Module : Code_Peer.Module.Code_Peer_Module_Id;
-      Force  : Boolean)
+     (Module      : Code_Peer.Module.Code_Peer_Module_Id;
+      Force       : Boolean;
+      Output_Only : Boolean := False)
    is
       Mode             : constant String :=
                            Code_Peer.Shell_Commands.Get_Build_Mode
                              (Kernel_Handle (Module.Kernel));
       Project          : constant Projects.Project_Type :=
                            Get_Project (Module.Kernel);
-      Object_Directory : constant Virtual_File :=
-                           Projects.Object_Path (Project);
       CodePeer_Subdir  : constant Boolean :=
-                           GNATCOLL.VFS.Is_Directory
-                             (Create
-                                (Full_Name (Object_Directory)
-                                 & "/codepeer",
-                                 Get_Host (Object_Directory)));
+                           Use_CodePeer_Subdir (Kernel_Handle (Module.Kernel));
 
    begin
       if CodePeer_Subdir then
@@ -217,14 +243,26 @@ package body Code_Peer.Module is
 
       Module.Action := Load_UI;
       Create_Library_File (Project);
-      Code_Peer.Shell_Commands.Build_Target_Execute
-        (Kernel_Handle (Module.Kernel),
-         Code_Peer.Shell_Commands.Build_Target
-           (Module.Get_Kernel, "Run CodePeer"),
-         Force       => Force,
-         Build_Mode  => "codepeer",
-         Synchronous => False,
-         Dir         => Projects.Object_Path (Project));
+
+      if Output_Only then
+         Code_Peer.Shell_Commands.Build_Target_Execute
+           (Kernel_Handle (Module.Kernel),
+            Code_Peer.Shell_Commands.Build_Target
+              (Module.Get_Kernel, "Regenerate CodePeer Report"),
+            Force       => Force,
+            Build_Mode  => "codepeer",
+            Synchronous => False,
+            Dir         => Projects.Object_Path (Project));
+      else
+         Code_Peer.Shell_Commands.Build_Target_Execute
+           (Kernel_Handle (Module.Kernel),
+            Code_Peer.Shell_Commands.Build_Target
+              (Module.Get_Kernel, "Run CodePeer"),
+            Force       => Force,
+            Build_Mode  => "codepeer",
+            Synchronous => False,
+            Dir         => Projects.Object_Path (Project));
+      end if;
 
       if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode
@@ -392,10 +430,10 @@ package body Code_Peer.Module is
    function Codepeer_Output_Directory
      (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
    is
-      Name      : constant GNATCOLL.VFS.Filesystem_String :=
-        GNATCOLL.VFS.Filesystem_String
-          (Ada.Characters.Handling.To_Lower
-               (String (Projects.Project_Path (Project).Base_Name)));
+      Name      : constant Filesystem_String :=
+                    Filesystem_String
+                      (Ada.Characters.Handling.To_Lower
+                         (String (Projects.Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
         Projects.Project_Path (Project).File_Extension;
 
@@ -616,6 +654,171 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Display_Code_Review;
 
+   --------------------------
+   -- On_Regenerate_Report --
+   --------------------------
+
+   procedure On_Regenerate_Report
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Mode             : constant String :=
+                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      declare
+         Info_File : constant Virtual_File :=
+                       Create_From_Dir (Codepeer_Output_Directory
+                                        (Get_Project (Kernel)),
+                                        "Inspection_Info.xml");
+
+      begin
+         if not Is_Regular_File (Info_File) then
+            Console.Insert
+              (Kernel,
+               Info_File.Display_Full_Name &
+               (-" does not exist. Please perform a full analysis first"),
+               Mode => Console.Error);
+         else
+            Review (Module, Force => False, Output_Only => True);
+         end if;
+      end;
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_Regenerate_Report;
+
+   --------------------------
+   -- On_Edit_Text_Listing --
+   --------------------------
+
+   procedure On_Edit_Text_Listing
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      Mode             : constant String :=
+                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      declare
+         Text_File : constant Virtual_File :=
+                       Create_From_Dir
+                         (Codepeer_Output_Directory
+                            (Get_Project (Kernel)),
+                          "list/" &
+                          (+File_Information
+                             (Context).Display_Base_Name) & ".txt");
+      begin
+         if Is_Regular_File (Text_File) then
+            Open_File_Editor
+              (Kernel,
+               Text_File,
+               New_File     => False,
+               Force_Reload => True);
+         else
+            Console.Insert
+              (Kernel,
+               -"cannot find text listing: " & Text_File.Display_Full_Name,
+               Mode => Console.Error);
+         end if;
+      end;
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_Edit_Text_Listing;
+
+   -----------------
+   -- On_Edit_Log --
+   -----------------
+
+   procedure On_Edit_Log
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Mode             : constant String :=
+                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      declare
+         Log_File : constant Virtual_File :=
+                      Create_From_Dir (Codepeer_Output_Directory
+                                       (Get_Project (Kernel)),
+                                       "Inspection.log");
+      begin
+         if Is_Regular_File (Log_File) then
+            Open_File_Editor
+              (Kernel,
+               Log_File,
+               New_File     => False,
+               Force_Reload => True);
+         else
+            Console.Insert
+              (Kernel, -"cannot find log file: " & Log_File.Display_Full_Name,
+               Mode => Console.Error);
+         end if;
+      end;
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_Edit_Log;
+
    ------------------------------
    -- On_Run_Analysis_Manually --
    ------------------------------
@@ -707,15 +910,9 @@ package body Code_Peer.Module is
 
          when Load_UI =>
             declare
-               Object_Dir      : constant GNATCOLL.VFS.Virtual_File :=
-                                   Projects.Object_Path
-                                     (Get_Project (GPS.Kernel.Kernel_Handle
-                                      (Kernel)));
-
-               CodePeer_Subdir : constant Boolean := GNATCOLL.VFS.Is_Directory
-                 (Create
-                    (Full_Name (Object_Dir) & "/codepeer",
-                     Get_Host (Object_Dir)));
+               CodePeer_Subdir : constant Boolean :=
+                                   Use_CodePeer_Subdir
+                                     (Kernel_Handle (Kernel));
 
             begin
                --  If a codepeer dir is found in the object dir, then use this
@@ -925,100 +1122,6 @@ package body Code_Peer.Module is
       when E : others =>
          Trace (Me, E);
    end On_Show_Messages;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Submenu_Factory : GPS.Kernel.Modules.Submenu_Factory;
-      Str : String_Access := Locate_Exec_On_Path ("codepeer");
-
-   begin
-      if Str = null then
-         --  Do not register the CodePeer module if the codepeer executable
-         --  cannot be found.
-         return;
-      end if;
-
-      Free (Str);
-      Module          := new Module_Id_Record (Kernel);
-      Submenu_Factory := new Submenu_Factory_Record (Module);
-
-      Module.Register_Module (Kernel, "CodePeer");
-      GPS.Kernel.Modules.Register_Contextual_Submenu
-        (Kernel  => Kernel,
-         Name    => "CodePeer",
-         Label   => -"CodePeer",
-         Filter  => GPS.Kernel.Lookup_Filter (Kernel, "Project only")
-           or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
-         Submenu => Submenu_Factory);
-
-      GPS.Kernel.Modules.Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer",
-         Text        => -"Analyze All",
-         Ref_Item    => "Documentation",
-         Callback    => On_Analyze_All'Access);
-
-      GPS.Kernel.Modules.Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer",
-         Text        => -"Display code review",
-         Add_Before  => True,
-         Callback    => On_Display_Code_Review'Access);
-
-      GPS.Kernel.Modules.Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Generate SCIL",
-         Add_Before  => True,
-         Callback    => On_Generate_SCIL'Access);
-
-      GPS.Kernel.Modules.Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Run CodePeer",
-         Add_Before  => True,
-         Callback    => On_Run_Analysis_Manually'Access);
-
-      Module.Annotation_Style :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), Annotation_Style_Name);
-      GPS.Kernel.Styles.Set_Background (Module.Annotation_Style, "#E9E9E9");
-
-      Module.Message_Styles (Code_Peer.High) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), High_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.High), "#FFCCCC");
-
-      Module.Message_Styles (Code_Peer.Medium) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), Medium_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.Medium), "#FFFFCC");
-
-      Module.Message_Styles (Code_Peer.Low) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), Low_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.Low), "#CCFFFF");
-
-      Module.Message_Styles (Code_Peer.Informational) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel),
-           Informational_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.Informational), "#EFEFEF");
-
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.Compilation_Finished_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
-         Name => "codepeer.compilation_finished");
-   end Register_Module;
 
    --------------------
    -- Review_Message --
@@ -1336,5 +1439,116 @@ package body Code_Peer.Module is
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
    end Update_Location_View;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Submenu_Factory : GPS.Kernel.Modules.Submenu_Factory;
+      Str : String_Access := Locate_Exec_On_Path ("codepeer");
+      Src_Editor_Context : constant Action_Filter :=
+                             Lookup_Filter (Kernel, "Source editor");
+   begin
+      if Str = null then
+         --  Do not register the CodePeer module if the codepeer executable
+         --  cannot be found.
+         return;
+      end if;
+
+      Free (Str);
+      Module          := new Module_Id_Record (Kernel);
+      Submenu_Factory := new Submenu_Factory_Record (Module);
+
+      Module.Register_Module (Kernel, "CodePeer");
+      GPS.Kernel.Modules.Register_Contextual_Submenu
+        (Kernel  => Kernel,
+         Name    => "CodePeer",
+         Label   => -"CodePeer",
+         Filter  => GPS.Kernel.Lookup_Filter (Kernel, "Project only")
+           or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
+         Submenu => Submenu_Factory);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer",
+         Text        => -"Analyze All",
+         Ref_Item    => "Documentation",
+         Callback    => On_Analyze_All'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer",
+         Text        => -"Display Code Review",
+         Callback    => On_Display_Code_Review'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Generate SCIL",
+         Callback    => On_Generate_SCIL'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Run CodePeer",
+         Callback    => On_Run_Analysis_Manually'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Regenerate Report",
+         Callback    => On_Regenerate_Report'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Edit CodePeer Text Listing",
+         Callback    => On_Edit_Text_Listing'Access,
+         Filter      => Src_Editor_Context);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Edit CodePeer Log",
+         Callback    => On_Edit_Log'Access);
+
+      Module.Annotation_Style :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), Annotation_Style_Name);
+      GPS.Kernel.Styles.Set_Background (Module.Annotation_Style, "#E9E9E9");
+
+      Module.Message_Styles (Code_Peer.High) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), High_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.High), "#FFCCCC");
+
+      Module.Message_Styles (Code_Peer.Medium) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), Medium_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.Medium), "#FFFFCC");
+
+      Module.Message_Styles (Code_Peer.Low) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), Low_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.Low), "#CCFFFF");
+
+      Module.Message_Styles (Code_Peer.Informational) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel),
+           Informational_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.Informational), "#EFEFEF");
+
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.Compilation_Finished_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
+         Name => "codepeer.compilation_finished");
+   end Register_Module;
 
 end Code_Peer.Module;
