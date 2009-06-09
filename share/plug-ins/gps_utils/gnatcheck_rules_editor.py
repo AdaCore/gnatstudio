@@ -288,14 +288,13 @@ class rulesEditor(gtk.Dialog):
       content2 = re.sub (r'\-\-.*\n','',content)
       if content2 != content:
         msg = "Warning: the selected file contains comments.\nThese will be removed if the coding standard file is saved from the graphical editor\n"
-        try:
-          dialog = gtk.MessageDialog (self,
-                                      gtk.DIALOG_MODAL,
-                                      gtk.MESSAGE_WARNING,
-                                      gtk.BUTTONS_OK,
-                                      msg)
-          dialog.run()
-          dialog.destroy()
+        dialog = gtk.MessageDialog (self,
+                                    gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_WARNING,
+                                    gtk.BUTTONS_OK,
+                                    msg)
+        dialog.run()
+        dialog.destroy()
       content = re.sub ('\n',' ',content2)
       self.SwitchesChooser.set_cmd_line (content)
 
