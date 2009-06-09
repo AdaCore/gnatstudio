@@ -20,9 +20,10 @@
 with GNAT.OS_Lib;
 
 with GNATCOLL.Utils;
-with GPS.Kernel.Console;
+with GPS.Kernel.Console; use GPS.Kernel;
 with GPS.Kernel.Project;
 with GPS.Kernel.Timeout;
+with GPS.Intl; use GPS.Intl;
 with Projects;
 
 with Code_Peer.Bridge.Commands;
@@ -136,19 +137,27 @@ package body Code_Peer.Module.Bridge is
       Reply_File_Name    : constant Virtual_File :=
                              Create_From_Dir
                                (Object_Directory, "bridge_out.xml");
-      Args               : GNAT.OS_Lib.Argument_List :=
-                             (1 => new String'
-                                (+Command_File_Name.Full_Name));
+      Args               : GNAT.OS_Lib.Argument_List (1 .. 1);
+      Output_Directory   : constant Virtual_File :=
+                             Codepeer_Output_Directory (Project);
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
    begin
+      if not Is_Directory (Output_Directory) then
+         Console.Insert
+           (Module.Kernel,
+            -"cannot find CodePeer output directory: " &
+            Output_Directory.Display_Full_Name,
+            Mode => Console.Error);
+         return;
+      end if;
+
+      Args (1) := new String'(+Command_File_Name.Full_Name);
       --  Generate command file
 
       Code_Peer.Bridge.Commands.Inspection
-        (Command_File_Name,
-         Codepeer_Output_Directory (Project),
-         Reply_File_Name);
+        (Command_File_Name, Output_Directory, Reply_File_Name);
 
       --  Run gps_codepeer_bridge
 
