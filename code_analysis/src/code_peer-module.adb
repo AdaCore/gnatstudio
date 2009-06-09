@@ -648,7 +648,7 @@ package body Code_Peer.Module is
    begin
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => False,
          Build_Mode  => "codepeer",
          Synchronous => False);
