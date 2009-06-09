@@ -928,7 +928,7 @@ package body GPS.Location_View is
    ----------------
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-      V    : constant Location_View := Location_View (View);
+      V : constant Location_View := Location_View (View);
 
    begin
       Basic_Types.Unchecked_Free (V.Secondary_File_Pattern);
@@ -948,6 +948,10 @@ package body GPS.Location_View is
       if V.Expand_Path /= null then
          Path_Free (V.Expand_Path);
       end if;
+
+      --  Cleanup model's data
+
+      V.Model.Remove_All_Categories;
 
       --  Free regular expression
 
@@ -2087,13 +2091,10 @@ package body GPS.Location_View is
       View : constant Location_View :=
                Get_Or_Create_Location_View
                  (Get_Kernel (Context.Context), False);
-      Iter : Gtk_Tree_Iter;
+
    begin
-      loop
-         Iter := View.Model.Get_Iter_First;
-         exit when Iter = Null_Iter;
-         Remove_Category_Or_File_Iter (View.Kernel, View.Model, Iter);
-      end loop;
+      View.Model.Remove_All_Categories;
+
       return Commands.Success;
    end Execute;
 

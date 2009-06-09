@@ -162,6 +162,10 @@ package GPS.Location_Model is
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
 
+   procedure Remove_All_Categories
+     (Self : not null access Location_Model_Record'Class);
+   --  Removes all categories/files/messages from the model.
+
    function Columns_Types return Glib.GType_Array;
    --  Returns the types for the columns in the Model.
    --  This is not implemented as

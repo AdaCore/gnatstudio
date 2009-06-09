@@ -612,23 +612,31 @@ package body GPS.Location_Model is
       pragma Warnings (Off, Stub);
       Self : constant Location_Model :=
                Location_Model (Get_User_Data (Object, Stub));
-      Iter : Gtk_Tree_Iter;
 
    begin
-      --  Remove all categories
-
-      Iter := Self.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         Remove_Category_Or_File_Iter (Self.Kernel, Self, Iter);
-         Iter := Self.Get_Iter_First;
-      end loop;
-
       --  Free pixbufs
 
       Unref (Self.Category_Pixbuf);
       Unref (Self.File_Pixbuf);
    end On_Destroy;
+
+   ---------------------------
+   -- Remove_All_Categories --
+   ---------------------------
+
+   procedure Remove_All_Categories
+     (Self : not null access Location_Model_Record'Class)
+   is
+      Iter : Gtk_Tree_Iter;
+
+   begin
+
+      loop
+         Iter := Self.Get_Iter_First;
+         exit when Iter = Null_Iter;
+         Remove_Category_Or_File_Iter (Self.Kernel, Self, Iter);
+      end loop;
+   end Remove_All_Categories;
 
    ---------------------
    -- Remove_Category --
