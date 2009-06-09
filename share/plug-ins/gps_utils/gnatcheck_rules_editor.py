@@ -1,4 +1,4 @@
-import GPS, os, os.path, re, string, pygtk, traceback, os_utils
+import GPS, os, os.path, re, string, pygtk, traceback, os_utils, sys
 import sys, gps_utils.gnat_rules
 from gps_utils.switches import *
 from gps_utils.gnatcheck_default import *
@@ -266,27 +266,6 @@ class rulesEditor(gtk.Dialog):
    def get_filename (self):
       return GPS.File (self.fileEntry.get_text()).name()
 
-   def on_warnings_toggled (self, *args):
-      """Callback when the compiler warnings switch is toggled"""
-      is_active = self.warnings_check.get_active()
-      for sw in self.warnings_widgets:
-        sw[0].set_sensitive(self.warnings_check.get_active())
-        if not is_active:
-          sw[0].set_active (False)
-        else:
-          # init the default value
-          sw[0].set_active (sw[2])
-
-
-   def on_gnatwa_toggled (self, *args):
-      """Callback when the gnatwa switch is toggled"""
-      for sw in self.warnings_widgets:
-        if sw[1] == "a":
-          if not sw[0].get_active():
-             return
-        elif sw[3]:
-          sw[0].set_active(True)
-
    def on_file_entry_changed (self, *args):
       """Callback when the file entry changed"""
       name = self.fileEntry.get_text()
@@ -306,7 +285,18 @@ class rulesEditor(gtk.Dialog):
 
    def parse (self, content):
       """Parse the content of a coding standard file, and apply the values to the editor"""
-      content = re.sub ('\n',' ',content)
+      content2 = re.sub (r'\-\-.*\n','',content)
+      if content2 != content:
+        msg = "Warning: the selected file contains comments.\nThese will be removed if the coding standard file is saved from the graphical editor\n"
+        try:
+          dialog = gtk.MessageDialog (self,
+                                      gtk.DIALOG_MODAL,
+                                      gtk.MESSAGE_WARNING,
+                                      gtk.BUTTONS_OK,
+                                      msg)
+          dialog.run()
+          dialog.destroy()
+      content = re.sub ('\n',' ',content2)
       self.SwitchesChooser.set_cmd_line (content)
 
    def check_all (self, value):
@@ -319,10 +309,6 @@ class rulesEditor(gtk.Dialog):
                elem[0].set_value(0)
          else:
             elem[0].set_active(value)
-
-   def on_unckeck_all (self, *args):
-      """Uncheck all switches"""
-      self.check_all (False)
 
    def on_coding_standard_file_browse (self, *args):
       """Callback to coding standard 'Browse' button"""
