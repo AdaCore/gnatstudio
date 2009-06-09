@@ -146,11 +146,6 @@ package body Task_Manager.GUI is
      (View : access Task_Manager_Widget_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
 
-   procedure On_Global_Button_Clicked
-     (Object : access GObject_Record'Class;
-      Data   : Manager_Index_Record);
-   --  Callback for a click on the global "x" button
-
    procedure On_Progress_Bar_Button_Clicked
      (Object : access GObject_Record'Class;
       Data   : Manager_Index_Record);
@@ -160,6 +155,11 @@ package body Task_Manager.GUI is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Callback for a "button_press_event" on a tree view
+
+   function On_Main_Progress_Button_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for a "button_press_event" on the main progress bar
 
    procedure On_GUI_Destroy
      (Object  : access GObject_Record'Class;
@@ -282,6 +282,30 @@ package body Task_Manager.GUI is
       end if;
    end Pause_Command;
 
+   -----------------------------------------
+   -- On_Main_Progress_Button_Press_Event --
+   -----------------------------------------
+
+   function On_Main_Progress_Button_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      GUI : constant Task_Manager_Interface :=
+        Task_Manager_Interface (Object);
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         Show_Task_Manager (GUI.Kernel);
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end On_Main_Progress_Button_Press_Event;
+
    ---------------------------
    -- On_Button_Press_Event --
    ---------------------------
@@ -328,27 +352,6 @@ package body Task_Manager.GUI is
          return False;
    end On_Button_Press_Event;
 
-   ------------------------------
-   -- On_Global_Button_Clicked --
-   ------------------------------
-
-   procedure On_Global_Button_Clicked
-     (Object : access GObject_Record'Class;
-      Data   : Manager_Index_Record)
-   is
-      pragma Unreferenced (Object);
-   begin
-      if Data.D.Manager.Queues = null then
-         return;
-      end if;
-
-      Show_Task_Manager (Data.D.Kernel);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-   end On_Global_Button_Clicked;
-
    ------------------------------------
    -- On_Progress_Bar_Button_Clicked --
    ------------------------------------
@@ -392,7 +395,7 @@ package body Task_Manager.GUI is
       Pixbuf : Gdk_Pixbuf;
       Image  : Gtk_Image;
    begin
-      if GUI.Global_Button = null then
+      if GUI.Label = null then
          --  Create the GUI elements
          Gtk_New (GUI.Label, "");
 
@@ -407,19 +410,12 @@ package body Task_Manager.GUI is
          Set_Relief (GUI.Progress_Bar_Button, Relief_None);
          Pack_Start (GUI, GUI.Progress_Bar_Button, Expand => False);
 
-         Gtk_New (GUI.Progress_Image);
+         Gtk_New (GUI.Main_Progress_Bar);
          Pack_Start (GUI,
-                     GUI.Progress_Image,
-                     Expand  => True,
-                     Fill    => True,
-                     Padding => 3);
-
-         Gtk_New (GUI.Global_Button);
-         Pixbuf := Render_Icon (GUI.Global_Button, Stock_Open, Icon_Size_Menu);
-         Gtk_New (GUI.Button_Image, Pixbuf);
-         Add (GUI.Global_Button, GUI.Button_Image);
-         Set_Relief (GUI.Global_Button, Relief_None);
-         Pack_End (GUI, GUI.Global_Button, Expand => False);
+                     GUI.Main_Progress_Bar,
+                     Expand  => False,
+                     Fill    => False,
+                     Padding => 0);
 
          Pack_End
            (GUI.Manager.Progress_Area,
@@ -429,14 +425,20 @@ package body Task_Manager.GUI is
             Padding => 0);
 
          Task_Manager_Handler.Connect
-           (GUI.Global_Button, Gtk.Button.Signal_Clicked,
-            On_Global_Button_Clicked'Access,
-            User_Data => (GUI, 0));
-
-         Task_Manager_Handler.Connect
            (GUI.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
             On_Progress_Bar_Button_Clicked'Access,
             User_Data => (GUI, 0));
+
+         Set_Events (GUI.Main_Progress_Bar,
+                     Get_Events (GUI.Main_Progress_Bar)
+                     or Button_Press_Mask);
+         Return_Callback.Object_Connect
+           (GUI.Main_Progress_Bar,
+            Signal_Button_Press_Event,
+            Return_Callback.To_Marshaller
+              (On_Main_Progress_Button_Press_Event'Access),
+            GUI,
+            After => False);
       end if;
 
       --  Now update the graphical elements with the contents of the task
@@ -448,17 +450,13 @@ package body Task_Manager.GUI is
          declare
             Pd : constant Progress_Data := Get_Progress_Text
               (GUI.Manager, False);
-            P  : Gdk_Pixbuf;
          begin
             if Pd = Null_Progress_Data then
                Hide_All (GUI);
             else
-               P := To_Pixbuf (GUI, Pd);
-               if P /= null then
-                  Set (GUI.Progress_Image, P);
-                  Unref (P);
-                  Show_All (GUI);
-               end if;
+               Set_Fraction (GUI.Main_Progress_Bar, Pd.Fraction);
+               Set_Text (GUI.Main_Progress_Bar, Pd.Text);
+               Show_All (GUI);
 
                if Pd.Multiple_Queues then
                   Hide_All (GUI.Progress_Bar_Button);
@@ -865,10 +863,10 @@ package body Task_Manager.GUI is
         (GUI.Progress_Layout,
          Default_Font.Get_Pref);
 
-      Set_Text (GUI.Progress_Layout, "l");
+      Set_Text (GUI.Progress_Layout, "L");
       Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);
       GUI.Progress_Width := Progress_Bar_Length;
-      GUI.Progress_Height := Layout_Height + 2;
+      GUI.Progress_Height := Layout_Height + 4;
 
       Gdk_New
         (GUI.Progress_Template,
@@ -877,11 +875,11 @@ package body Task_Manager.GUI is
          GUI.Progress_Height);
 
       GUI.Close_Button_Pixbuf := Render_Icon
-        (GUI.Global_Button, Stock_Close, Icon_Size_Menu);
+        (GUI.Main_Progress_Bar, Stock_Close, Icon_Size_Menu);
       GUI.Pause_Button_Pixbuf := Render_Icon
-        (GUI.Global_Button, Stock_Media_Pause, Icon_Size_Menu);
+        (GUI.Main_Progress_Bar, Stock_Media_Pause, Icon_Size_Menu);
       GUI.Play_Button_Pixbuf := Render_Icon
-        (GUI.Global_Button, Stock_Media_Play, Icon_Size_Menu);
+        (GUI.Main_Progress_Bar, Stock_Media_Play, Icon_Size_Menu);
    end Init_Graphics;
 
    ---------------
@@ -991,7 +989,7 @@ package body Task_Manager.GUI is
         (Drawable => GUI.Progress_Template,
          GC       => GUI.Progress_Text_GC,
          X        => (GUI.Progress_Width - Layout_Width) / 2,
-         Y        => 0,
+         Y        => 2,
          Layout   => GUI.Progress_Layout);
 
       Pix := Get_From_Drawable
