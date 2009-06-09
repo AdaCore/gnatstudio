@@ -50,9 +50,12 @@ with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with Language;                use Language;
 with Src_Contexts;            use Src_Contexts;
 with Traces;                  use Traces;
+with GNATCOLL.Traces;
 
 package body Src_Editor_Module.Editors is
-   Me : constant Debug_Handle := Create ("Editor.Buffer");
+
+   Me : constant Debug_Handle :=
+          Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);
 
    type Buffer_Reference is record
       Kernel    : Kernel_Handle;
