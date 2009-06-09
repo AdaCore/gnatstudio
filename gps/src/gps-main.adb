@@ -136,6 +136,7 @@ with Shell_Script;
 with Socket_Module;
 with Src_Editor_Module;
 with Startup_Module;
+with Switches_Chooser.Scripts;
 with Theme_Manager_Module;
 with VCS.ClearCase;
 with VCS_Module;
@@ -1468,6 +1469,8 @@ procedure GPS.Main is
       end if;
 
       Casing_Exceptions.Register_Module (GPS_Main.Kernel);
+
+      Switches_Chooser.Scripts.Register_Module (GPS_Main.Kernel);
 
       --  Load these last, since this requires the collaboration of other
       --  modules
