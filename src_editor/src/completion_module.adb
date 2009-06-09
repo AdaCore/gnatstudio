@@ -1100,7 +1100,7 @@ package body Completion_Module is
       Command            : Interactive_Command_Access;
       Command_Smart      : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
-                             new Src_Editor_Action_Context;
+                             Lookup_Filter (Kernel, "Source editor");
       Action             : Action_Record_Access;
    begin
       Completion_Module := new Completion_Module_Record;
