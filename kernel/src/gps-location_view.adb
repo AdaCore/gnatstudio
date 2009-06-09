@@ -1236,12 +1236,14 @@ package body GPS.Location_View is
 
       Gtk_New (View.Model, Kernel);
       Gtk_New (View.Filter, View.Model);
+      View.Model.Unref;
       Visible_Funcs.Set_Visible_Func
         (View.Filter, Is_Visible'Access, Location_View (View));
       Modify_Funcs.Set_Modify_Func
         (View.Filter, Columns_Types, Modify'Access, Location_View (View));
 
       Gtk_New (View.Tree, View.Filter);
+      View.Filter.Unref;
       View.Tree.Set_Headers_Visible (False);
       View.Tree.Set_Name ("Locations Tree");
 
