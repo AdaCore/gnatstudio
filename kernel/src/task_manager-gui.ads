@@ -31,6 +31,7 @@ with Pango.Layout;             use Pango.Layout;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 
@@ -133,7 +134,6 @@ private
 
       Progress_Bar_Button    : Gtk_Button;
 
-      Global_Button          : Gtk_Button;
       Button_Image           : Gtk_Image;
       Label                  : Gtk_Label;
 
@@ -159,6 +159,8 @@ private
       Timeout_Cb               : Glib.Main.G_Source_Id :=
         Glib.Main.No_Source_Id;
       --  The registered refresh timeout callback.
+
+      Main_Progress_Bar        : Gtk_Progress_Bar;
    end record;
 
    procedure Push_State (Manager : Task_Manager_Access);
