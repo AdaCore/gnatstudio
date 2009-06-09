@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009, AdaCore                       --
+--                    Copyright (C) 2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,15 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GPS.Kernel; use GPS.Kernel;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Task_Manager.GUI; use Task_Manager.GUI;
+with Task_Manager.GUI;        use Task_Manager.GUI;
 
 package body Task_Manager.Shell is
 
-   Class : constant String := "Task";
+   Class      : constant String := "Task";
    Task_Class : Class_Type;
 
    procedure Task_Command_Handler
@@ -39,7 +40,7 @@ package body Task_Manager.Shell is
    procedure Task_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel      : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       Task_Inst : Class_Instance;
       Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
    begin
@@ -62,7 +63,6 @@ package body Task_Manager.Shell is
 
       elsif Command = "interrupt" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
-
          Interrupt_Command (Manager, Get_Data (Task_Inst, Task_Class));
       end if;
    end Task_Command_Handler;
@@ -72,8 +72,7 @@ package body Task_Manager.Shell is
    -----------------------
 
    procedure Register_Commands
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Task_Class := New_Class (Kernel, Class);
 
