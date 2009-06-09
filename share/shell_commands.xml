@@ -4668,6 +4668,33 @@ class Dynamic (GPS.Contextual):
    </shell_doc>
 
   <!--#################################################################
+      ### SwitchesChooser
+      #################################################################-->
+
+  <shell_doc name="GPS.SwitchesChooser">
+     <description>This class represents a gtk widget that can be used to edit a tool's command line.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.SwitchesChooser.__init__">
+     <param name="self">The instance of GPS.SwitchesChooser</param>
+     <param name="name">A string</param>
+     <param name="xml">A string</param>
+     <description>Creates a new SwitchesChooser widget from the tool's name and switch description in xml format.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.SwitchesChooser.set_cmd_line">
+      <param name="self">An instance of GPS.SwitchesChooser</param>
+      <param name="cmd_line">A string</param>
+      <description>Modify the widget's aspect to reflect the command line.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.SwitchesChooser.get_cmd_line">
+      <param name="self">An instance of GPS.SwitchesChooser</param>
+      <return>A string</return>
+      <description>Return the tool's command line parameter</description>
+  </shell_doc>
+
+  <!--#################################################################
       ### EditorOverlay
       #################################################################-->
 
