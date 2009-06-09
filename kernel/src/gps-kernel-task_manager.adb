@@ -34,6 +34,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;           use GPS.Main_Window;
 with Task_Manager.GUI;          use Task_Manager.GUI;
+with Task_Manager.Shell;        use Task_Manager.Shell;
 with Traces;                    use Traces;
 with Commands.Custom;           use Commands.Custom;
 
@@ -611,6 +612,8 @@ package body GPS.Kernel.Task_Manager is
         (Kernel, Before_Exit_Action_Hook,
          Wrapper (On_Exit_Hook'Access),
          Name => "task_manager.on_exit");
+
+      Standard.Task_Manager.Shell.Register_Commands (Kernel);
    end Register_Module;
 
    -------------
