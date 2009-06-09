@@ -55,9 +55,19 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
        <switches command="%(tool_name)s" columns="1" lines="2">
          <check label="Global analysis" switch="-global"
                 tip="Do not split analysis in partitions" />
+         <check label="Baseline run" switch="-baseline"
+                tip="this run is a baseline run and prior run becomes default cutoff" />
+         <spin label="Cutoff" switch="-cutoff" min="1" max="100000"
+               default="1" separator=" "
+               tip="This run should use id as the cutoff for the base column" />
          <spin label="Multiprocessing" switch="-jobs" min="1" max="100"
-               default="1"
+               default="1" separator=" "
                tip="Use N processes to carry out the analysis." />
+         <combo label="Messages" switch="-messages" noswitch="normal" separator=" ">
+            <combo-entry label="Normal" value="normal" />
+            <combo-entry label="Min" value="min" />
+            <combo-entry label="Max" value="max" />
+         </combo>
        </switches>
     </target-model>
 
