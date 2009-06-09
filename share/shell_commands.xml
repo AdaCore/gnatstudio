@@ -5963,4 +5963,26 @@ The package gps_utils.py provides a somewhat more convenient python interface to
        Any graphical element corresponding to this new target is created.</description>
   </shell_doc>
 
+
+  <!--#################################################################
+      ## Task class
+      #################################################################-->
+
+  <shell_doc name="GPS.Task">
+     <description>This class provides an interface to the background tasks being handled by GPS, such as the
+      build commands, the query of cross references, etc. These are the same tasks that are visible through the
+      GPS Task Manager.
+      Note that the classes represented with this class cannot be stored.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Task.list">
+       <description>Return a list of all running tasks</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Task.interrupt">
+       <param name="self">An instance of Task</param>
+       <description>Interrupt the task</description>
+  </shell_doc>
+
 </docs>
