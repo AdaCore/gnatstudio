@@ -159,6 +159,21 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
        </switches>
     </target-model>
 
+    <target model="builder" category="CodePeer" name="Generate SCIL">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>%builder</arg>
+          <arg>-d</arg>
+          <arg>%eL</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+    </target>
+
     <target model="codepeer" category="CodePeer" name="Run CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
