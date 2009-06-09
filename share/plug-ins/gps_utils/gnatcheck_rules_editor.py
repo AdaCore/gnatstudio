@@ -137,9 +137,7 @@ def get_supported_rules (gnatCmd):
 
    # Verify we have the correct gnatcheck executable
    # First get gnatcheck rules
-   #process = GPS.Process (gnatCmd + "check -hx", remote_server = "Tools_Server")
-   # ??? for testing purpose ONLY, REMOVE BEFORE CHECK-IN
-   process = GPS.Process ("cat /Users/lambourg/cygwin/help.txt", remote_server = "Tools_Server")
+   process = GPS.Process (gnatCmd + "check -hx", remote_server = "Tools_Server")
    xmlstring = re.sub ("gnatcheck: No existing file to process.*", "", process.get_result())
    dom = minidom.parseString (xmlstring)
    roots = dom.getElementsByTagName ("gnatcheck")
