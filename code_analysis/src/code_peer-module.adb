@@ -1,4 +1,4 @@
------------------------------------------------------------------------
+------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
 --                  Copyright (C) 2008-2009, AdaCore                 --
@@ -31,6 +31,8 @@ with Gtk.Object;
 with Gtk.Text_Mark;
 with Gtk.Widget;
 
+with Traces; use Traces;
+
 with Basic_Types;
 with GPS.Editors;
 with GPS.Intl;             use GPS.Intl;
@@ -53,6 +55,8 @@ package body Code_Peer.Module is
    use type Gtk.Text_Mark.Gtk_Text_Mark;
    use type GPS.Editors.Editor_Mark'Class;
    use type GPS.Editors.Editor_Buffer'Class;
+
+   Me : constant Debug_Handle := Create ("CodePeer");
 
    type Module_Context is record
       Module  : Code_Peer_Module_Id;
@@ -102,22 +106,28 @@ package body Code_Peer.Module is
    procedure On_Analyze_All
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Analyze All" menu item is activated by the user.
+   --  Called when "Analyze All" menu item is activated
+
+   procedure On_Generate_SCIL
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Generate SCIL" menu item is activated
 
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Callback for the "compilation_finished" hook, to schedule other tasks
 
-   procedure On_Advanced_Run_Analysis_Manually
+   procedure On_Run_Analysis_Manually
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Run analysis manually" menu item in the "Advanced" submenu
+   --  Called when "Advanced->Run CodePeer" menu item is activated
    --  is activated by the user.
 
    procedure On_Display_Code_Review
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Display code review" menu item is activated by the user.
+   --  Called when "Display code review" menu item is activated
 
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -127,8 +137,11 @@ package body Code_Peer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
-   procedure Review (Module : Code_Peer.Module.Code_Peer_Module_Id);
-   --  Launch CodePeer review
+   procedure Review
+     (Module : Code_Peer.Module.Code_Peer_Module_Id;
+      Force  : Boolean);
+   --  Launch CodePeer review.
+   --  If Force is True, no dialog is displayed to change codepeer switches.
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -178,7 +191,10 @@ package body Code_Peer.Module is
    -- Review --
    ------------
 
-   procedure Review (Module : Code_Peer.Module.Code_Peer_Module_Id) is
+   procedure Review
+     (Module : Code_Peer.Module.Code_Peer_Module_Id;
+      Force  : Boolean)
+   is
       Project          : constant Projects.Project_Type :=
                            Get_Project (Module.Kernel);
       Object_Directory : constant Virtual_File :=
@@ -190,7 +206,7 @@ package body Code_Peer.Module is
         (Kernel_Handle (Module.Kernel),
          Code_Peer.Shell_Commands.Build_Target
            (Module.Get_Kernel, "Run CodePeer"),
-         Force       => True,
+         Force       => Force,
          Build_Mode  => "codepeer",
          Synchronous => False,
          Dir         => Object_Directory);
@@ -556,11 +572,15 @@ package body Code_Peer.Module is
 
       Context.Module.Filter_Criteria.Files.Include (File);
       Context.Module.Update_Location_View;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Activate;
 
-   -------------------------------------
-   -- On_Advanced_Display_Code_Review --
-   -------------------------------------
+   ----------------------------
+   -- On_Display_Code_Review --
+   ----------------------------
 
    procedure On_Display_Code_Review
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -570,20 +590,28 @@ package body Code_Peer.Module is
 
    begin
       Code_Peer.Module.Bridge.Inspection (Module);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Display_Code_Review;
 
-   ---------------------------------------
-   -- On_Advanced_Run_Analysis_Manually --
-   ---------------------------------------
+   ------------------------------
+   -- On_Run_Analysis_Manually --
+   ------------------------------
 
-   procedure On_Advanced_Run_Analysis_Manually
+   procedure On_Run_Analysis_Manually
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget, Kernel);
    begin
-      Review (Module);
-   end On_Advanced_Run_Analysis_Manually;
+      Review (Module, Force => False);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Run_Analysis_Manually;
 
    --------------------
    -- On_Analyze_All --
@@ -594,7 +622,6 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
    begin
       Module.Action := Run;
       Code_Peer.Shell_Commands.Build_Target_Execute
@@ -603,7 +630,33 @@ package body Code_Peer.Module is
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Analyze_All;
+
+   ----------------------
+   -- On_Generate_SCIL --
+   ----------------------
+
+   procedure On_Generate_SCIL
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Force       => False,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Generate_SCIL;
 
    -----------------------------
    -- On_Compilation_Finished --
@@ -633,7 +686,7 @@ package body Code_Peer.Module is
             Code_Peer.Shell_Commands.Set_Build_Mode
               (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
             Module.Action := Terminated;
-            Review (Module);
+            Review (Module, Force => True);
             Code_Peer.Shell_Commands.Set_Build_Mode
               (GPS.Kernel.Kernel_Handle (Kernel), Mode);
 
@@ -670,6 +723,10 @@ package body Code_Peer.Module is
             end;
          when None => null;
       end case;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Compilation_Finished;
 
    -------------------------
@@ -685,6 +742,10 @@ package body Code_Peer.Module is
    begin
       Context.Module.Report.Update_Criteria (Context.Module.Filter_Criteria);
       Context.Module.Update_Location_View;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Criteria_Changed;
 
    ----------------
@@ -750,6 +811,10 @@ package body Code_Peer.Module is
       --  Cleanup project tree
 
       Code_Analysis.Free_Code_Analysis (Context.Module.Tree);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Destroy;
 
    -------------------------
@@ -764,6 +829,10 @@ package body Code_Peer.Module is
 
    begin
       Context.Module.Hide_Annotations (Context.File);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Hide_Annotations;
 
    ----------------------
@@ -779,6 +848,10 @@ package body Code_Peer.Module is
    begin
       Context.Module.Filter_Criteria.Files.Delete (Context.File);
       Context.Module.Update_Location_View;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Hide_Messages;
 
    -------------------------
@@ -796,6 +869,10 @@ package body Code_Peer.Module is
         (Context.Module, Context.Message);
       Context.Module.Report.Update;
       Context.Module.Update_Location_View;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Message_Reviewed;
 
    -------------------------
@@ -810,6 +887,10 @@ package body Code_Peer.Module is
 
    begin
       Context.Module.Show_Annotations (Context.File);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Show_Annotations;
 
    ----------------------
@@ -825,6 +906,10 @@ package body Code_Peer.Module is
    begin
       Context.Module.Filter_Criteria.Files.Insert (Context.File);
       Context.Module.Update_Location_View;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Show_Messages;
 
    ---------------------
@@ -874,9 +959,16 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Run analysis manually",
+         Text        => -"Generate SCIL",
          Add_Before  => True,
-         Callback    => On_Advanced_Run_Analysis_Manually'Access);
+         Callback    => On_Generate_SCIL'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Run CodePeer",
+         Add_Before  => True,
+         Callback    => On_Run_Analysis_Manually'Access);
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style
