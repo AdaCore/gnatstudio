@@ -1,6 +1,7 @@
 import GPS, os, os.path, re, string, pygtk, traceback, os_utils
 import sys, gps_utils.gnat_rules
 from gps_utils.switches import *
+from gps_utils.gnatcheck_default import *
 from xml.dom import minidom
 from xml.dom import *
 
@@ -139,7 +140,11 @@ def get_supported_rules (gnatCmd):
    # First get gnatcheck rules
    process = GPS.Process (gnatCmd + "check -hx", remote_server = "Tools_Server")
    xmlstring = re.sub ("gnatcheck: No existing file to process.*", "", process.get_result())
-   dom = minidom.parseString (xmlstring)
+   try:
+      dom = minidom.parseString (xmlstring)
+   except:
+      GPS.Console("Messages").write ("Warning: the gnatcheck module could not retrieve the gnatcheck rules. Using the default ones.\n")
+      dom = minidom.parseString (gnatcheck_default)
    roots = dom.getElementsByTagName ("gnatcheck")
 
    # Build the switches from the dom tree
@@ -241,7 +246,6 @@ class rulesEditor(gtk.Dialog):
       self.tips = gtk.Tooltips()
       xml = self.main_cat.Xml ("")
       xml = str ("""<?xml version="1.0"?><tool name="Coding_Standard" lines="1" columns="1">%s</tool>""" % (xml))
-      GPS.Console("Messages").write (xml+"\n")
       self.SwitchesChooser = GPS.SwitchesChooser ("Gnatcheck", xml);
       self.switchvbox.pack_start (self.SwitchesChooser.pywidget())
       self.show_all()
@@ -334,7 +338,6 @@ class rulesEditor(gtk.Dialog):
       """Callback to 'Save' button"""
       file = GPS.File (self.fileEntry.get_text ())
       f = open (file.name(), "w")
-
       content = self.SwitchesChooser.get_cmd_line ()
       content = re.sub (" +", "\n", content)
       f.write (content)
