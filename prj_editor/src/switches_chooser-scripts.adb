@@ -102,10 +102,10 @@ package body Switches_Chooser.Scripts is
          Editor := Switches_Chooser.Gtkada.Switches_Editor
            (GNATCOLL.Scripts.Gtkada.Get_Data (Inst));
 
-         if Command = "setCmdLine" then
+         if Command = "set_cmd_line" then
             Editor.Set_Command_Line (Nth_Arg (Data, 2));
 
-         elsif Command = "getCmdLine" then
+         elsif Command = "get_cmd_line" then
             declare
                Cmd_Line : constant String_List_Access :=
                             Editor.Get_Command_Line (False);
