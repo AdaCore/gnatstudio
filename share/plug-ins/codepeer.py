@@ -163,7 +163,7 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
