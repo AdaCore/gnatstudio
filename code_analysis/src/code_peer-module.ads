@@ -82,7 +82,7 @@ private
      array (Code_Peer.Message_Probability_Level)
        of GPS.Kernel.Styles.Style_Access;
 
-   type CodePeer_Action is (None, Run, Terminated);
+   type CodePeer_Action is (None, Run, Load_UI);
    --  Various actions related to codepeer handling
 
    type Module_Id_Record

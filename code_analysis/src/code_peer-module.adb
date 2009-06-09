@@ -138,8 +138,8 @@ package body Code_Peer.Module is
       Context : Module_Context);
 
    procedure Review
-     (Module : Code_Peer.Module.Code_Peer_Module_Id;
-      Force  : Boolean);
+     (Module          : Code_Peer.Module.Code_Peer_Module_Id;
+      Force           : Boolean);
    --  Launch CodePeer review.
    --  If Force is True, no dialog is displayed to change codepeer switches.
 
@@ -195,12 +195,27 @@ package body Code_Peer.Module is
      (Module : Code_Peer.Module.Code_Peer_Module_Id;
       Force  : Boolean)
    is
+      Mode             : constant String :=
+                           Code_Peer.Shell_Commands.Get_Build_Mode
+                             (Kernel_Handle (Module.Kernel));
       Project          : constant Projects.Project_Type :=
                            Get_Project (Module.Kernel);
       Object_Directory : constant Virtual_File :=
                            Projects.Object_Path (Project);
+      CodePeer_Subdir  : constant Boolean :=
+                           GNATCOLL.VFS.Is_Directory
+                             (Create
+                                (Full_Name (Object_Directory)
+                                 & "/codepeer",
+                                 Get_Host (Object_Directory)));
 
    begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      Module.Action := Load_UI;
       Create_Library_File (Project);
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel_Handle (Module.Kernel),
@@ -209,7 +224,12 @@ package body Code_Peer.Module is
          Force       => Force,
          Build_Mode  => "codepeer",
          Synchronous => False,
-         Dir         => Object_Directory);
+         Dir         => Projects.Object_Path (Project));
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
    end Review;
 
    --------------------
@@ -677,32 +697,25 @@ package body Code_Peer.Module is
    begin
       Module.Action := None;
 
-      if Hook_Data.Status /= 0 then
+      if Hook_Data.Status /= 0 or else Action = None then
          return;
       end if;
 
       case Action is
          when Run =>
-            Code_Peer.Shell_Commands.Set_Build_Mode
-              (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
-            Module.Action := Terminated;
             Review (Module, Force => True);
-            Code_Peer.Shell_Commands.Set_Build_Mode
-              (GPS.Kernel.Kernel_Handle (Kernel), Mode);
 
-         when Terminated =>
+         when Load_UI =>
             declare
-               Path            : constant GNATCOLL.VFS.File_Array :=
+               Object_Dir      : constant GNATCOLL.VFS.Virtual_File :=
                                    Projects.Object_Path
                                      (Get_Project (GPS.Kernel.Kernel_Handle
-                                        (Kernel)),
-                                      False, False, False);
-               CodePeer_Subdir : constant Boolean :=
-                                   GNATCOLL.VFS.Is_Directory
-                                     (Create
-                                        (Full_Name (Path (Path'First))
-                                         & "/codepeer",
-                                      Get_Host (Path (Path'First))));
+                                      (Kernel)));
+
+               CodePeer_Subdir : constant Boolean := GNATCOLL.VFS.Is_Directory
+                 (Create
+                    (Full_Name (Object_Dir) & "/codepeer",
+                     Get_Host (Object_Dir)));
 
             begin
                --  If a codepeer dir is found in the object dir, then use this
@@ -721,6 +734,7 @@ package body Code_Peer.Module is
                     (GPS.Kernel.Kernel_Handle (Kernel), Mode);
                end if;
             end;
+
          when None => null;
       end case;
 
