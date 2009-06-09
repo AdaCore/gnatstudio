@@ -34,7 +34,7 @@ package XML_Utils is
 
    type Node;
    type Node_Ptr is access all Node;
-   --  Pointer to a node of the XML tree.
+   --  Pointer to a node of the XML tree
 
    type Node is record
       Tag   : String_Ptr;
@@ -47,13 +47,13 @@ package XML_Utils is
       --  The value, or null is not relevant. This is utf8-encoded
 
       Parent : Node_Ptr;
-      --  The parent of this Node.
+      --  The parent of this Node
 
       Child : Node_Ptr;
       --  The first Child of this Node. The next child is Child.Next
 
       Next  : Node_Ptr;
-      --  Next sibling node.
+      --  Next sibling node
 
       Specific_Data : Interfaces.C.int;
       --  Use to store data specific to each implementation (e.g a boolean
@@ -65,7 +65,7 @@ package XML_Utils is
    --  level in the tree and with the same parent).
 
    function Parse (File : Virtual_File) return Node_Ptr;
-   --  Parse File and return the first node representing the XML file.
+   --  Parse File and return the first node representing the XML file
 
    function Parse_Buffer (Buffer : UTF8_String) return Node_Ptr;
    --  Parse a given Buffer in memory and return the first node representing
@@ -78,16 +78,16 @@ package XML_Utils is
    --  standard output
 
    procedure Print
-     (N         : Node_Ptr;
-      File      : Virtual_File;
-      Success   : out Boolean);
-   --  Same as above, with Success reporting the success of the operation.
+     (N       : Node_Ptr;
+      File    : Virtual_File;
+      Success : out Boolean);
+   --  Same as above, with Success reporting the success of the operation
 
    function Protect (S : String) return String;
    --  Return a copy of S modified so that it is a valid XML value
 
    function Find_Tag (N : Node_Ptr; Tag : UTF8_String) return Node_Ptr;
-   --  Find a tag Tag in N and its brothers.
+   --  Find a tag Tag in N and its brothers
 
    function Get_Field (N : Node_Ptr; Field : UTF8_String) return String_Ptr;
    --  Return the value of the field 'Field' if present in the children of N.
@@ -133,9 +133,8 @@ package XML_Utils is
      (N     : Node_Ptr;
       Tag   : UTF8_String;
       Key   : UTF8_String;
-      Value : UTF8_String := "")
-     return Node_Ptr;
-   --  Find a tag Tag in N that has a given key (and value if given).
+      Value : UTF8_String := "") return Node_Ptr;
+   --  Find a tag Tag in N that has a given key (and value if given)
 
    procedure Add_File_Child
      (N              : Node_Ptr;

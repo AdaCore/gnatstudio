@@ -17,17 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 
-with GNAT.Decode_UTF8_String; use GNAT.Decode_UTF8_String;
-with GNAT.Encode_UTF8_String; use GNAT.Encode_UTF8_String;
+with GNAT.Decode_UTF8_String;         use GNAT.Decode_UTF8_String;
+with GNAT.Encode_UTF8_String;         use GNAT.Encode_UTF8_String;
+with GNAT.Strings;                    use GNAT.Strings;
+with GNAT.UTF_32;                     use GNAT.UTF_32;
 
-with GNAT.UTF_32;             use GNAT.UTF_32;
-
-with GNAT.Strings; use GNAT.Strings;
 with Traces;       use Traces;
 
 package body XML_Utils is
@@ -64,9 +62,9 @@ package body XML_Utils is
    --  Empty_Node is set to True.
 
    procedure Get_Next_Word
-     (Buf     : String;
-      Index   : in out Natural;
-      Word    : out String_Ptr);
+     (Buf   : String;
+      Index : in out Natural;
+      Word  : out String_Ptr);
    --  extract the next textual word from Buf and return it.
    --  return null if no word left.
    --  The special XML '&' characters are translated appropriately in S.
@@ -109,9 +107,7 @@ package body XML_Utils is
       Start : constant Natural := Index;
 
    begin
-      while Index <= Buf'Last
-        and then Buf (Index) /= Terminator
-      loop
+      while Index <= Buf'Last and then Buf (Index) /= Terminator loop
          Index := Index + 1;
       end loop;
 
@@ -150,8 +146,8 @@ package body XML_Utils is
          Empty_Node := False;
       end if;
 
-      while Index <= Tag'Last and then
-        not
+      while Index <= Tag'Last
+        and then not
           (Tag (Index) = ' '  or else Tag (Index) = ASCII.LF
            or else Tag (Index) = ASCII.HT
            or else Tag (Index) = ASCII.CR)
@@ -180,9 +176,9 @@ package body XML_Utils is
    -------------------
 
    procedure Get_Next_Word
-     (Buf     : String;
-      Index   : in out Natural;
-      Word    : out String_Ptr)
+     (Buf   : String;
+      Index : in out Natural;
+      Word  : out String_Ptr)
    is
       Terminator : Character := ' ';
    begin
@@ -397,6 +393,7 @@ package body XML_Utils is
             end loop;
             Tmp.Next := Child;
          end if;
+
       else
          Child.Next := N.Child;
          N.Child := Child;
@@ -409,9 +406,9 @@ package body XML_Utils is
    --------------
 
    function Get_Node (Buf : String; Index : access Natural) return Node_Ptr is
-      N : constant Node_Ptr := new Node;
-      Q : Node_Ptr;
-      S : String_Ptr;
+      N          : constant Node_Ptr := new Node;
+      Q          : Node_Ptr;
+      S          : String_Ptr;
       Empty_Node : Boolean;
       Last_Child : Node_Ptr;
 
@@ -547,7 +544,7 @@ package body XML_Utils is
       Writable : Writable_File;
 
       procedure Do_Indent (Indent : Natural);
-      --  Print a string made of Indent blank characters.
+      --  Print a string made of Indent blank characters
 
       procedure Print_String (S : String);
       --  Print S to File, after replacing the special '<', '>',
@@ -656,8 +653,8 @@ package body XML_Utils is
             Put_Line ("</" & N.Tag.all & ">");
          end if;
       end Print_Node;
-   begin
 
+   begin
       if File = GNATCOLL.VFS.No_File then
          Success := False;
          return;
@@ -698,9 +695,9 @@ package body XML_Utils is
    ------------------
 
    function Parse_Buffer (Buffer : UTF8_String) return Node_Ptr is
-      Index       : aliased Natural := 2;
-      XML_Version : String_Ptr;
-      Encoding    : Integer;
+      Index         : aliased Natural := 2;
+      XML_Version   : String_Ptr;
+      Encoding      : Integer;
       Encoding_Last : Integer;
       Result        : Node_Ptr;
    begin
@@ -768,9 +765,9 @@ package body XML_Utils is
    -----------------------------
 
    function Find_Tag_With_Attribute
-     (N : Node_Ptr;
-      Tag : UTF8_String;
-      Key : UTF8_String;
+     (N     : Node_Ptr;
+      Tag   : UTF8_String;
+      Key   : UTF8_String;
       Value : UTF8_String := "") return Node_Ptr
    is
       P : Node_Ptr := N;
@@ -814,12 +811,13 @@ package body XML_Utils is
    -- Free --
    ----------
 
-   procedure Free (N : in out Node_Ptr)
-   is
+   procedure Free (N : in out Node_Ptr) is
+
       procedure Free_Node (N : in out Node_Ptr);
       --  Free the memory for a node, but doesn't remove it from its parent
 
-      procedure Unchecked_Free is new Unchecked_Deallocation (Node, Node_Ptr);
+      procedure Unchecked_Free is
+        new Ada.Unchecked_Deallocation (Node, Node_Ptr);
 
       ---------------
       -- Free_Node --
@@ -879,23 +877,29 @@ package body XML_Utils is
    ---------------
 
    function Deep_Copy (N : Node_Ptr) return Node_Ptr is
+
       function Deep_Copy_Internal
         (N : Node_Ptr; Parent : Node_Ptr := null) return Node_Ptr;
       --  Internal version of Deep_Copy. Returns a deep copy of N, whose
       --  parent should be Parent.
 
+      ------------------------
+      -- Deep_Copy_Internal --
+      ------------------------
+
       function Deep_Copy_Internal
         (N : Node_Ptr; Parent : Node_Ptr := null) return Node_Ptr
       is
-         Attr  : String_Ptr;
-         Value : String_Ptr;
+         Attr    : String_Ptr;
+         Value   : String_Ptr;
 
-         New_N : Node_Ptr;
-         Child : Node_Ptr;
+         New_N   : Node_Ptr;
+         Child   : Node_Ptr;
          N_Child : Node_Ptr;
       begin
          if N = null then
             return null;
+
          else
             if N.Attributes /= null then
                Attr := new String'(N.Attributes.all);
@@ -1020,8 +1024,8 @@ package body XML_Utils is
            or else Character'Pos (S (J)) >= 127
          then
             declare
-               Img : constant String := Natural'Image
-                 (Character'Pos (S (J)));
+               Img : constant String :=
+                       Natural'Image (Character'Pos (S (J)));
             begin
                Append (U, "#" & Img (Img'First + 1 .. Img'Last) & ";");
             end;
@@ -1037,8 +1041,7 @@ package body XML_Utils is
    -- Encoded_ASCII_To_String --
    -----------------------------
 
-   function Encoded_ASCII_To_String (S : String) return String
-   is
+   function Encoded_ASCII_To_String (S : String) return String is
       U     : Unbounded_String;
       Index : Natural := S'First;
       Next  : Natural;
@@ -1137,7 +1140,6 @@ package body XML_Utils is
       end if;
 
       if Child = null then
-
          --  Revert to trying to find in an attribute named Tag: this might
          --  be the case when trying to parse previous XML file formats.
 
@@ -1163,7 +1165,6 @@ package body XML_Utils is
          if Child = null then
             return No_File;
          end if;
-
       end if;
 
       declare
