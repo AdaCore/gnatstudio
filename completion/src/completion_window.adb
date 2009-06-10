@@ -1126,6 +1126,14 @@ package body Completion_Window is
             Move_Mark (Buffer => Window.Buffer,
                        Mark   => Window.Cursor_Mark,
                        Where  => Text_Begin);
+         else
+            --  We could not forward with the given number of characters: this
+            --  means we are hitting the end of the text buffer. In this case
+            --  move the cursor to the end.
+            Get_End_Iter (Window.Buffer, Text_Begin);
+            Move_Mark (Buffer => Window.Buffer,
+                       Mark   => Window.Cursor_Mark,
+                       Where  => Text_Begin);
          end if;
       end if;
 

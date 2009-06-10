@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.4.0
 
+- I610-001: Smart Completion broken when at the end of the editor
+  Problem:    The Smart Completion does not work well when working at the very
+              end of the editor. The results can be wrong completion, bad
+              placement of the cursor after the completion, or insertion of
+              the special character at the wrong location when the completion
+              is ended by a special character.
+  Workaround: Add an extra line in the editor after the point of completion.
+
 - I602-027: Page up / Page down keys inverted in Assembly View
   Problem:    The Page Up / Page Down keys are used in the debugger Assembly
               view to fetch the previous or next lines of the disassembly but
