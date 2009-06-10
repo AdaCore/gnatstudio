@@ -1130,10 +1130,15 @@ package body Completion_Window is
             --  We could not forward with the given number of characters: this
             --  means we are hitting the end of the text buffer. In this case
             --  move the cursor to the end.
-            Get_End_Iter (Window.Buffer, Text_Begin);
-            Move_Mark (Buffer => Window.Buffer,
-                       Mark   => Window.Cursor_Mark,
-                       Where  => Text_Begin);
+
+            --  For safety, verify that we are indeed on the last line.
+            Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
+            if Get_Line_Count (Window.Buffer) = Get_Line (Text_Begin) + 1 then
+               Get_End_Iter (Window.Buffer, Text_Begin);
+               Move_Mark (Buffer => Window.Buffer,
+                          Mark   => Window.Cursor_Mark,
+                          Where  => Text_Begin);
+            end if;
          end if;
       end if;
 
