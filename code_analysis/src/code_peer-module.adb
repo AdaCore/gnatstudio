@@ -320,28 +320,46 @@ package body Code_Peer.Module is
                    (File_Node.Subprograms.First);
 
                if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-                  declare
-                     Mark : constant GPS.Editors.Editor_Mark'Class :=
-                              Buffer.Get_Mark
-                                (Code_Peer_Editor_Mark_Name_Prefix
-                                 & Subprogram_Node.Name.all);
-
                   begin
-                     if Mark /= GPS.Editors.Nil_Editor_Mark then
-                        Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
-                        Menu.Append (Item);
-                        Context_CB.Connect
-                          (Item,
-                           Gtk.Menu_Item.Signal_Activate,
-                           Context_CB.To_Marshaller
-                             (On_Hide_Annotations'Access),
-                           Module_Context'
-                             (Code_Peer_Module_Id (Factory.Module),
-                              Project_Node,
-                              File_Node,
-                              null));
+                     declare
+                        Mark : constant GPS.Editors.Editor_Mark'Class :=
+                                 Buffer.Get_Mark
+                                   (Code_Peer_Editor_Mark_Name_Prefix
+                                    & Subprogram_Node.Name.all);
 
-                     else
+                     begin
+                        if Mark /= GPS.Editors.Nil_Editor_Mark then
+                           Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
+                           Menu.Append (Item);
+                           Context_CB.Connect
+                             (Item,
+                              Gtk.Menu_Item.Signal_Activate,
+                              Context_CB.To_Marshaller
+                                (On_Hide_Annotations'Access),
+                              Module_Context'
+                                (Code_Peer_Module_Id (Factory.Module),
+                                 Project_Node,
+                                 File_Node,
+                                 null));
+
+                        else
+                           Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
+                           Menu.Append (Item);
+                           Context_CB.Connect
+                             (Item,
+                              Gtk.Menu_Item.Signal_Activate,
+                              Context_CB.To_Marshaller
+                                (On_Show_Annotations'Access),
+                              Module_Context'
+                                (Code_Peer_Module_Id (Factory.Module),
+                                 Project_Node,
+                                 File_Node,
+                                 null));
+                        end if;
+                     end;
+
+                  exception
+                     when GPS.Editors.Editor_Exception =>
                         Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
                         Menu.Append (Item);
                         Context_CB.Connect
@@ -354,7 +372,6 @@ package body Code_Peer.Module is
                               Project_Node,
                               File_Node,
                               null));
-                     end if;
                   end;
                end if;
 
