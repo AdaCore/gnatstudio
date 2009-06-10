@@ -361,7 +361,9 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Result := False;
 
-         if Casing = End_Of_Word and then not Is_Start (W_End) then
+         Char := Get_Char (W_End);
+
+         if Char = ASCII.LF and then not Is_Start (W_End) then
             Backward_Char (W_End, Result);
          end if;
 
