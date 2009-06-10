@@ -1559,7 +1559,7 @@ package body Code_Peer.Module is
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Analyze All",
-         Ref_Item    => -"Window",  -- "Documentation",
+         Ref_Item    => -"Documentation",
          Callback    => On_Analyze_All'Access);
 
       GPS.Kernel.Modules.Register_Menu
