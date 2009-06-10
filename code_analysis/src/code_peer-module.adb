@@ -501,7 +501,12 @@ package body Code_Peer.Module is
            and then Mark.Is_Present
          then
             Buffer.Remove_Special_Lines (Mark, Data.Special_Lines);
-            Mark.Delete;
+
+            --  Commented out: see I603-025.
+            --  This mark will be destroyed when the editor is destroyed.
+
+            --  Mark.Delete;
+
             Data.Special_Lines := 0;
          end if;
       end Process;
