@@ -144,6 +144,11 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Advanced->Edit CodePeer Log" menu item is activated
 
+   procedure On_Remove_Lock
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Remove Lock" menu item is activated
+
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
@@ -644,14 +649,32 @@ package body Code_Peer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Widget);
+
+      Mode             : constant String := Get_Build_Mode (Kernel);
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
       Code_Peer.Module.Bridge.Inspection (Module);
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
 
    exception
       when E : others =>
          Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
    end On_Display_Code_Review;
 
    --------------------------
@@ -664,8 +687,7 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode             : constant String :=
-                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode             : constant String := Get_Build_Mode (Kernel);
       CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
 
    begin
@@ -818,6 +840,66 @@ package body Code_Peer.Module is
               (Kernel_Handle (Module.Kernel), Mode);
          end if;
    end On_Edit_Log;
+
+   --------------------
+   -- On_Remove_Lock --
+   --------------------
+
+   procedure On_Remove_Lock
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Mode             : constant String :=
+                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      declare
+         Lock_File : constant Virtual_File :=
+                       Create_From_Dir (Codepeer_Output_Directory
+                                         (Get_Project (Kernel)),
+                                        "inspection.lock");
+         Success   : Boolean;
+
+      begin
+         if Is_Regular_File (Lock_File) then
+            Delete (Lock_File, Success);
+
+            if Success then
+               Console.Insert
+                 (Kernel,
+                  -"deleted lock file: " & Lock_File.Display_Full_Name);
+            else
+               Console.Insert
+                 (Kernel,
+                  -"could not delete lock file: " &
+                  Lock_File.Display_Full_Name);
+            end if;
+         else
+            Console.Insert (Kernel, -"no lock file to delete.");
+         end if;
+      end;
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_Remove_Lock;
 
    ------------------------------
    -- On_Run_Analysis_Manually --
@@ -1447,8 +1529,10 @@ package body Code_Peer.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Submenu_Factory : GPS.Kernel.Modules.Submenu_Factory;
-      Str : String_Access := Locate_Exec_On_Path ("codepeer");
+      Submenu_Factory    : GPS.Kernel.Modules.Submenu_Factory;
+      Menu               : constant String := -"/Tools/Cod_ePeer";
+      Advanced_Menu      : constant String := Menu & (-"/_Advanced");
+      Str                : String_Access := Locate_Exec_On_Path ("codepeer");
       Src_Editor_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
    begin
@@ -1473,47 +1557,53 @@ package body Code_Peer.Module is
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer",
-         Text        => -"Analyze All",
-         Ref_Item    => "Documentation",
+         Parent_Path => Menu,
+         Text        => -"_Analyze All",
+         Ref_Item    => -"Window",  -- "Documentation",
          Callback    => On_Analyze_All'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer",
-         Text        => -"Display Code Review",
+         Parent_Path => Menu,
+         Text        => -"_Display Code Review",
          Callback    => On_Display_Code_Review'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Generate SCIL",
+         Parent_Path => Advanced_Menu,
+         Text        => -"_Generate SCIL",
          Callback    => On_Generate_SCIL'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Run CodePeer",
+         Parent_Path => Advanced_Menu,
+         Text        => -"Run _CodePeer",
          Callback    => On_Run_Analysis_Manually'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Regenerate Report",
+         Parent_Path => Advanced_Menu,
+         Text        => -"_Regenerate Report",
          Callback    => On_Regenerate_Report'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Edit CodePeer Text Listing",
+         Parent_Path => Advanced_Menu,
+         Text        => -"Edit CodePeer _Text Listing",
          Callback    => On_Edit_Text_Listing'Access,
          Filter      => Src_Editor_Context);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => "/Tools/CodePeer/Advanced",
-         Text        => -"Edit CodePeer Log",
+         Parent_Path => Advanced_Menu,
+         Text        => -"Edit CodePeer _Log",
          Callback    => On_Edit_Log'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Advanced_Menu,
+         Text        => -"Remove lock",
+         Callback    => On_Remove_Lock'Access);
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style
