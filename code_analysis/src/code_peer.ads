@@ -23,6 +23,7 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with GNAT.Strings;
 
+with GPS.Editors;
 with Code_Analysis;
 
 package Code_Peer is
@@ -124,19 +125,20 @@ package Code_Peer is
       Lifeage : Lifeage_Kinds;
    end record;
 
+   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
+
    type Subprogram_Data is
      new Code_Analysis.Code_Peer_Data_Root with record
       Lifeage       : Lifeage_Kinds;
       Messages      : Message_Vectors.Vector;
       Annotations   : Annotation_Maps.Map;
+      Mark          : Editor_Mark_Access;
       Special_Lines : Natural := 0;
    end record;
 
    type Subprogram_Data_Access is access all Subprogram_Data'Class;
 
    overriding procedure Finalize (Self : access Subprogram_Data);
-
-   Code_Peer_Editor_Mark_Name_Prefix : constant String := "CodePeer-";
 
    --  Message filter criteria
 

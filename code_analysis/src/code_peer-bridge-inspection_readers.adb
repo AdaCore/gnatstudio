@@ -181,6 +181,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
              (Lifeage,
               Message_Vectors.Empty_Vector,
               Annotation_Maps.Empty_Map,
+              null,
               0);
          Self.Subprogram_Data :=
            Code_Peer.Subprogram_Data_Access

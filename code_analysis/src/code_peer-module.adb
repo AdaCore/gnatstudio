@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 with Input_Sources.File;
@@ -42,6 +43,7 @@ with GPS.Kernel.Hooks;     use GPS.Kernel;
 with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Projects.Registry;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
@@ -156,6 +158,16 @@ package body Code_Peer.Module is
    procedure On_Message_Reviewed
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
+
+   procedure On_File_Closed_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Called when a file has been closed
+
+   procedure On_File_Edited_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Called when a file has been opened
 
    procedure Review
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
@@ -307,72 +319,51 @@ package body Code_Peer.Module is
                 (Project_Node,
                  GPS.Kernel.Contexts.File_Information (Context));
             Subprogram_Node : Code_Analysis.Subprogram_Access;
+            Subprogram_Data : Code_Peer.Subprogram_Data_Access;
             Kernel          : constant GPS.Kernel.Kernel_Handle :=
                                 GPS.Kernel.Get_Kernel (Context);
             Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
                                 Kernel.Get_Buffer_Factory.Get
-                                  (File_Node.Name, False, False);
+                                  (File_Node.Name, False, False, False);
 
          begin
             if not File_Node.Subprograms.Is_Empty then
                Subprogram_Node :=
                  Code_Analysis.Subprogram_Maps.Element
                    (File_Node.Subprograms.First);
+               Subprogram_Data :=
+                 Code_Peer.Subprogram_Data_Access
+                   (Subprogram_Node.Analysis_Data.Code_Peer_Data);
 
                if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-                  begin
-                     declare
-                        Mark : constant GPS.Editors.Editor_Mark'Class :=
-                                 Buffer.Get_Mark
-                                   (Code_Peer_Editor_Mark_Name_Prefix
-                                    & Subprogram_Node.Name.all);
+                  if Subprogram_Data.Mark /= null then
+                     Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
+                     Menu.Append (Item);
+                     Context_CB.Connect
+                       (Item,
+                        Gtk.Menu_Item.Signal_Activate,
+                        Context_CB.To_Marshaller
+                          (On_Hide_Annotations'Access),
+                        Module_Context'
+                          (Code_Peer_Module_Id (Factory.Module),
+                           Project_Node,
+                           File_Node,
+                           null));
 
-                     begin
-                        if Mark /= GPS.Editors.Nil_Editor_Mark then
-                           Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
-                           Menu.Append (Item);
-                           Context_CB.Connect
-                             (Item,
-                              Gtk.Menu_Item.Signal_Activate,
-                              Context_CB.To_Marshaller
-                                (On_Hide_Annotations'Access),
-                              Module_Context'
-                                (Code_Peer_Module_Id (Factory.Module),
-                                 Project_Node,
-                                 File_Node,
-                                 null));
-
-                        else
-                           Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
-                           Menu.Append (Item);
-                           Context_CB.Connect
-                             (Item,
-                              Gtk.Menu_Item.Signal_Activate,
-                              Context_CB.To_Marshaller
-                                (On_Show_Annotations'Access),
-                              Module_Context'
-                                (Code_Peer_Module_Id (Factory.Module),
-                                 Project_Node,
-                                 File_Node,
-                                 null));
-                        end if;
-                     end;
-
-                  exception
-                     when GPS.Editors.Editor_Exception =>
-                        Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
-                        Menu.Append (Item);
-                        Context_CB.Connect
-                          (Item,
-                           Gtk.Menu_Item.Signal_Activate,
-                           Context_CB.To_Marshaller
-                             (On_Show_Annotations'Access),
-                           Module_Context'
-                             (Code_Peer_Module_Id (Factory.Module),
-                              Project_Node,
-                              File_Node,
-                              null));
-                  end;
+                  else
+                     Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
+                     Menu.Append (Item);
+                     Context_CB.Connect
+                       (Item,
+                        Gtk.Menu_Item.Signal_Activate,
+                        Context_CB.To_Marshaller
+                          (On_Show_Annotations'Access),
+                        Module_Context'
+                          (Code_Peer_Module_Id (Factory.Module),
+                           Project_Node,
+                           File_Node,
+                           null));
+                  end if;
                end if;
 
                Gtk.Menu_Item.Gtk_New (Item, -"Show messages");
@@ -486,29 +477,26 @@ package body Code_Peer.Module is
       -------------
 
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
+
+         procedure Free is
+           new Ada.Unchecked_Deallocation
+             (GPS.Editors.Editor_Mark'Class, Editor_Mark_Access);
+
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
                              Code_Analysis.Subprogram_Maps.Element (Position);
          Data            : Code_Peer.Subprogram_Data'Class
          renames Code_Peer.Subprogram_Data'Class
            (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
-         Mark            : constant GPS.Editors.Editor_Mark'Class :=
-                             Buffer.Get_Mark
-                               (Code_Peer_Editor_Mark_Name_Prefix
-                                & Subprogram_Node.Name.all);
 
       begin
-         if Mark /= GPS.Editors.Nil_Editor_Mark
-           and then Mark.Is_Present
+         if Data.Mark /= null
+           and then Data.Mark.Is_Present
          then
-            Buffer.Remove_Special_Lines (Mark, Data.Special_Lines);
-
-            --  Commented out: see I603-025.
-            --  This mark will be destroyed when the editor is destroyed.
-
-            --  Mark.Delete;
-
-            Data.Special_Lines := 0;
+            Buffer.Remove_Special_Lines (Data.Mark.all, Data.Special_Lines);
          end if;
+
+         Free (Data.Mark);
+         Data.Special_Lines := 0;
       end Process;
 
    begin
@@ -639,8 +627,6 @@ package body Code_Peer.Module is
 
    begin
       if Subprogram /= null then
-         Context.Module.Hide_Annotations (File);
-         Context.Module.Show_Annotations (File);
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Context.Module.Kernel,
             File.Name,
@@ -648,8 +634,6 @@ package body Code_Peer.Module is
             Basic_Types.Visible_Column_Type (Subprogram.Column));
 
       elsif File /= null then
-         Context.Module.Hide_Annotations (File);
-         Context.Module.Show_Annotations (File);
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Context.Module.Kernel,
             File.Name);
@@ -862,6 +846,78 @@ package body Code_Peer.Module is
               (Kernel_Handle (Module.Kernel), Mode);
          end if;
    end On_Edit_Log;
+
+   -------------------------
+   -- On_File_Closed_Hook --
+   -------------------------
+
+   procedure On_File_Closed_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+
+      use type Code_Analysis.Code_Analysis_Tree;
+
+      D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Project_Node : Code_Analysis.Project_Access;
+
+   begin
+      if Module.Tree /= null
+        and then Module.Tree.Contains
+          (Projects.Registry.Get_Project_From_File
+               (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
+                D.File,
+                False))
+      then
+         Project_Node :=
+           Module.Tree.Element
+             (Projects.Registry.Get_Project_From_File
+                  (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
+                   D.File,
+                   False));
+
+         if Project_Node.Files.Contains (D.File) then
+            Hide_Annotations (Module, Project_Node.Files.Element (D.File));
+         end if;
+      end if;
+   end On_File_Closed_Hook;
+
+   -------------------------
+   -- On_File_Edited_Hook --
+   -------------------------
+
+   procedure On_File_Edited_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+
+      use type Code_Analysis.Code_Analysis_Tree;
+
+      D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Project_Node : Code_Analysis.Project_Access;
+
+   begin
+      if Module.Tree /= null
+        and then Module.Tree.Contains
+          (Projects.Registry.Get_Project_From_File
+               (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
+                D.File,
+                False))
+      then
+         Project_Node :=
+           Module.Tree.Element
+             (Projects.Registry.Get_Project_From_File
+                  (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
+                   D.File,
+                   False));
+
+         if Project_Node.Files.Contains (D.File) then
+            Show_Annotations (Module, Project_Node.Files.Element (D.File));
+         end if;
+      end if;
+   end On_File_Edited_Hook;
 
    --------------------
    -- On_Remove_Lock --
@@ -1365,11 +1421,12 @@ package body Code_Peer.Module is
          end Process_Annotations;
 
       begin
-         Buffer.Add_Special_Line
-           (Subprogram_Node.Line,
-            Indent & "--",
-            Annotation_Style_Name,
-            Code_Peer_Editor_Mark_Name_Prefix & Subprogram_Node.Name.all);
+         Data.Mark :=
+           new GPS.Editors.Editor_Mark'Class'
+             (Buffer.Add_Special_Line
+                  (Subprogram_Node.Line,
+                   Indent & "--",
+                   Annotation_Style_Name));
          Data.Special_Lines := Data.Special_Lines + 1;
 
          Buffer.Add_Special_Line
@@ -1661,6 +1718,14 @@ package body Code_Peer.Module is
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
          Name => "codepeer.compilation_finished");
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.File_Closed_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_File_Closed_Hook'Access),
+         Name  => "codepeer.file_closed");
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.File_Edited_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_File_Edited_Hook'Access),
+         Name  => "codepeer.file_edited");
    end Register_Module;
 
 end Code_Peer.Module;
