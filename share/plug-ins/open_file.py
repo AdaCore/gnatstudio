@@ -116,6 +116,17 @@ class OpenFileContextual (GPS.Contextual):
                self.file = f
                return True
 
+         # Special case for C files: #include accepts directories that are
+         # not necessarily in the source dirs
+
+         # Handle the case wher the include statement contains a directory.
+         if splitext(self.file)[1] in [".h",".hh",".cfg",".c",".gen"]:
+            for p in GPS.Project.root().source_dirs(True):
+               f=join(p,self.file)
+               if exists (f):
+                  self.file = f
+                  return True
+
       return False
 
    def on_label (self, context):
