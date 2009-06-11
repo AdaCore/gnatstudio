@@ -20,7 +20,7 @@ Known Problems fixed in GPS 4.3.3
               current line.
 
 - I430-008: Error message when GPS us launched with --debug alone
-  Problem:    When launching "gps --debug"with no executable, an error message
+  Problem:    When launching "gps --debug" with no executable, an error message
               is displayed that the executable specified was not found.
   Workaround: Ignore the dialog box (click OK) or specify an executable on
               the command line.
