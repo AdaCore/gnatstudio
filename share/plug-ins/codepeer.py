@@ -52,12 +52,16 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
           <arg>%Pl.library</arg>
        </command-line>
        <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="2" lines="3">
+       <switches command="%(tool_name)s" columns="2" lines="4">
          <check label="Global analysis" switch="-global" column="1"
                 tip="Do not split analysis in partitions" />
          <check label="Baseline run" switch="-baseline" column="2"
           tip="this run is a baseline run and prior run becomes default cutoff"
          />
+         <check label="Re-partition" switch="-repartition"
+                column="1" tip="Recompute partition libraries instead of reusing partitions from previous run (ignored with -global)" />
+         <check label="No race condition" switch="-no-race-conditions"
+                column="2" tip="Do not perform race conditions analysis" />
          <spin label="Cutoff" switch="-cutoff" min="1" max="100000"
                default="1" separator=" " column="1"
                tip="This run should use id as the cutoff for the base column" />
