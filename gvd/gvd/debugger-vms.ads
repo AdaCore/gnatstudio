@@ -133,6 +133,7 @@ package Debugger.VMS is
    overriding procedure Add_Symbols
      (Debugger : access VMS_Debugger;
       Module   : GNATCOLL.VFS.Virtual_File;
+      Address  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Run

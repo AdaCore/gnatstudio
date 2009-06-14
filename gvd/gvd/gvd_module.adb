@@ -694,9 +694,19 @@ package body GVD_Module is
          if Process.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
-            Add_Symbols
-              (Process.Debugger, S,
-               Mode => GVD.Types.Visible);
+            declare
+               Addr : constant String :=
+                        Query_User (Gtk_Window (Top),
+                                    -"Enter starting address of module's text",
+                                    False, False);
+
+            begin
+               Add_Symbols
+                 (Process.Debugger,
+                  Module  => S,
+                  Address => Addr,
+                  Mode    => GVD.Types.Visible);
+            end;
          else
             Console.Insert
               (Kernel, (-"Could not find file: ") & S.Display_Full_Name,

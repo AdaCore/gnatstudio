@@ -141,6 +141,7 @@ package Debugger.Gdb is
    overriding procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
       Module   : GNATCOLL.VFS.Virtual_File;
+      Address  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Run

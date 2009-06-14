@@ -394,6 +394,7 @@ package Debugger is
    procedure Add_Symbols
      (Debugger : access Debugger_Root;
       Module   : GNATCOLL.VFS.Virtual_File;
+      Address  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Load symbols from a specified module into the debugger.
    --  GDB_COMMAND: "add-symbol-file"

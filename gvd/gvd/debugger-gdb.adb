@@ -1291,11 +1291,13 @@ package body Debugger.Gdb is
    overriding procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
       Module   : Virtual_File;
+      Address  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       Symbols : constant String := +Module.Unix_Style_Full_Name;
    begin
-      Send (Debugger, "add-symbol-file " & Symbols, Mode => Mode);
+      Send
+        (Debugger, "add-symbol-file " & Symbols & " " & Address, Mode => Mode);
 
       if Mode in Visible_Command then
          Wait_User_Command (Debugger);
