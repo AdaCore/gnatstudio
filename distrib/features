@@ -27,6 +27,11 @@ NF-44-I602-003 New preference: Wrap around on next/previous (2009-04-06)
    preference determines whether wrap around to the beginning should occur
    when reaching the end of the category.
 
+NF-44-I528-009 Debug->Add Symbols asks for module's address (2009-06-14)
+
+   The Debug->Debug->Add Symbols... menu now also asks for the module's
+   address to be given to gdb.
+
 NF-44-I513-024 Permanent GPS.EditorMark (2009-05-19)
 
    Marks created through the GPS.EditorMark python API will now stay
