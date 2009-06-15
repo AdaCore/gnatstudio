@@ -29,7 +29,6 @@ with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Object;
-with Gtk.Text_Mark;
 with Gtk.Widget;
 
 with Traces; use Traces;
@@ -55,7 +54,6 @@ with Code_Analysis_GUI;
 
 package body Code_Peer.Module is
 
-   use type Gtk.Text_Mark.Gtk_Text_Mark;
    use type GPS.Editors.Editor_Mark'Class;
    use type GPS.Editors.Editor_Buffer'Class;
 
