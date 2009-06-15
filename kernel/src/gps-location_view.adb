@@ -672,12 +672,10 @@ package body GPS.Location_View is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
       Iter, Iter2      : Gtk_Tree_Iter := Null_Iter;
-      Aux_Iter         : Gtk_Tree_Iter;
       Category_Created : Boolean;
       Dummy            : Boolean;
       pragma Unreferenced (Dummy);
 
-      Path                   : Gtk_Tree_Path;
       Added                  : Boolean := False;
       Locs                   : Locations_List.List;
       Loc                    : Location;
@@ -853,12 +851,6 @@ package body GPS.Location_View is
                   Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column),
                   Loc.Line, Loc.Column, Length,
                   Highlight, Highlight_Category);
-
-               View.Filter.Convert_Child_Iter_To_Iter
-                 (Aux_Iter, Potential_Parent);
-               Path := View.Filter.Get_Path (Aux_Iter);
-               Dummy := Expand_Row (View.Tree, Path, False);
-               Path_Free (Path);
 
                Node := Next (Node);
             end loop;
