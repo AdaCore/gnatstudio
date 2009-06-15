@@ -3290,6 +3290,8 @@ package body Src_Editor_Module is
                       & "means the same size as a character"));
 
       Completion_Module.Register_Module (Kernel);
+
+      Register_Hook_No_Return (Kernel, Buffer_Modified_Hook, File_Hook_Type);
    end Register_Module;
 
    -------------------------
