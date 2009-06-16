@@ -519,8 +519,10 @@ package body Code_Peer.Module is
       Reader  : Code_Peer.Bridge.Inspection_Readers.Reader;
 
       procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
+      --  ???
 
       procedure Process_File (Position : Code_Analysis.File_Maps.Cursor);
+      --  ???
 
       ------------------
       -- Process_File --
@@ -1607,11 +1609,13 @@ package body Code_Peer.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Submenu_Factory    : GPS.Kernel.Modules.Submenu_Factory;
-      Menu               : constant String := -"/Tools/Cod_ePeer";
-      Advanced_Menu      : constant String := Menu & (-"/_Advanced");
+      Menu               : constant String := -"/_CodePeer";
+      Advanced_Menu      : constant String := Menu;
       Str                : String_Access := Locate_Exec_On_Path ("codepeer");
       Src_Editor_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
+      Mitem              : Gtk.Menu_Item.Gtk_Menu_Item;
+
    begin
       if Str = null then
          --  Do not register the CodePeer module if the codepeer executable
@@ -1636,7 +1640,7 @@ package body Code_Peer.Module is
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Analyze All",
-         Ref_Item    => -"Documentation",
+         Ref_Item    => -"Window",
          Callback    => On_Analyze_All'Access);
 
       GPS.Kernel.Modules.Register_Menu
@@ -1644,6 +1648,9 @@ package body Code_Peer.Module is
          Parent_Path => Menu,
          Text        => -"_Display Code Review",
          Callback    => On_Display_Code_Review'Access);
+
+      Gtk.Menu_Item.Gtk_New (Mitem);
+      GPS.Kernel.Modules.Register_Menu (Kernel, Menu, Mitem);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
