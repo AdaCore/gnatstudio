@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+with GNAT.Strings; use GNAT.Strings;
 
 package body Code_Peer.Bridge.Audit_Trail_Readers is
 
@@ -30,8 +31,6 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
      (Self : in out Reader;
       Text : Unicode.CES.Byte_Sequence)
    is
-      use type GNAT.Strings.String_Access;
-
       Aux : GNAT.Strings.String_Access;
 
    begin
@@ -61,6 +60,13 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Tag then
+         --  If there are no commect, then create empty string. This simplify
+         --  things all around the code.
+
+         if Self.Audit_Record.Comment = null then
+            Self.Audit_Record.Comment := new String'("");
+         end if;
+
          Self.Audit.Append (Self.Audit_Record);
          Self.Audit_Record := null;
       end if;
