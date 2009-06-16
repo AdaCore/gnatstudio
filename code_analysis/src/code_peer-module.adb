@@ -1610,7 +1610,7 @@ package body Code_Peer.Module is
    is
       Submenu_Factory    : GPS.Kernel.Modules.Submenu_Factory;
       Menu               : constant String := -"/_CodePeer";
-      Advanced_Menu      : constant String := Menu;
+      Advanced_Menu      : constant String := Menu & (-"/Advanced");
       Str                : String_Access := Locate_Exec_On_Path ("codepeer");
       Src_Editor_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
@@ -1654,19 +1654,19 @@ package body Code_Peer.Module is
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => Advanced_Menu,
+         Parent_Path => Menu,
          Text        => -"_Generate SCIL",
          Callback    => On_Generate_SCIL'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => Advanced_Menu,
+         Parent_Path => Menu,
          Text        => -"Run _CodePeer",
          Callback    => On_Run_Analysis_Manually'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => Advanced_Menu,
+         Parent_Path => Menu,
          Text        => -"_Regenerate Report",
          Callback    => On_Regenerate_Report'Access);
 
