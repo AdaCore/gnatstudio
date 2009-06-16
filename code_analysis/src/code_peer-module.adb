@@ -1482,15 +1482,34 @@ package body Code_Peer.Module is
               Code_Peer.Message_Vectors.Element (Position);
             Review  : GPS.Kernel.Standard_Hooks.Action_Item;
 
+            function Probability_Image
+              (Message : Code_Peer.Message_Access) return String;
+            --  Returns an suitable Image correpsonding to Message's
+            --  probability
+
             function Image
               (Message : Code_Peer.Message_Access) return String;
-            --  Return an suitable Image correpsonding to Message's probability
+            --  Returns complete text of the Message
 
             -----------
             -- Image --
             -----------
 
             function Image
+              (Message : Code_Peer.Message_Access) return String
+            is
+            begin
+               return
+                 Probability_Image (Message)
+                 & Message.Category.Name.all & " "
+                 & Message.Text.all;
+            end Image;
+
+            -----------------------
+            -- Probability_Image --
+            -----------------------
+
+            function Probability_Image
               (Message : Code_Peer.Message_Access) return String
             is
                Category : String renames Message.Category.Name.all;
@@ -1521,7 +1540,7 @@ package body Code_Peer.Module is
                   when Code_Peer.Suppressed =>
                      return "suppressed: ";
                end case;
-            end Image;
+            end Probability_Image;
 
          begin
             if Message.Current_Probability /= Code_Peer.Suppressed
@@ -1535,10 +1554,7 @@ package body Code_Peer.Module is
                  (Kernel       => Self.Kernel,
                   Category     => Code_Peer_Category_Name,
                   File         => File.Name,
-                  Text         =>
-                    Image (Message)
-                    & Message.Category.Name.all & " "
-                    & Message.Text.all,
+                  Text         => Image (Message),
                   Line         => Message.Line,
                   Column       =>
                     Basic_Types.Visible_Column_Type (Message.Column),
@@ -1569,7 +1585,7 @@ package body Code_Peer.Module is
                   File       => File.Name,
                   Line       => Message.Line,
                   Column     => Message.Column,
-                  Message    => Image (Message) & Message.Text.all,
+                  Message    => Image (Message),
                   Action     => Review);
             end if;
          end Process_Message;
