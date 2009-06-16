@@ -38,7 +38,7 @@ with GPS.Editors;
 with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;
-with GPS.Kernel.Hooks;     use GPS.Kernel;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -183,8 +183,6 @@ package body Code_Peer.Module is
 
    procedure Create_Library_File (Project : Projects.Project_Type);
    --  Create CodePeer library file
-
-   function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean;
 
    -------------------------
    -- Use_CodePeer_Subdir --

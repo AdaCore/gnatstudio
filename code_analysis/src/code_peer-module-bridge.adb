@@ -20,15 +20,16 @@
 with GNAT.OS_Lib;
 
 with GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+
 with GPS.Kernel.Console; use GPS.Kernel;
 with GPS.Kernel.Project;
 with GPS.Kernel.Timeout;
-with GPS.Intl; use GPS.Intl;
+with GPS.Intl;           use GPS.Intl;
 with Projects;
 
 with Code_Peer.Bridge.Commands;
-
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Code_Peer.Shell_Commands;
 
 package body Code_Peer.Module.Bridge is
 
@@ -73,10 +74,21 @@ package body Code_Peer.Module.Bridge is
       Args              : GNAT.OS_Lib.Argument_List :=
                             (1 => new String'
                                (+Command_File_Name.Full_Name));
+      Mode              : constant String :=
+                            Code_Peer.Shell_Commands.Get_Build_Mode
+                              (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir   : constant Boolean :=
+                            Use_CodePeer_Subdir
+                              (Kernel_Handle (Module.Kernel));
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
    begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
       --  Generate command file
 
       if Message.Audit.First_Element.Probability_Changed then
@@ -111,6 +123,11 @@ package body Code_Peer.Module.Bridge is
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
    end Add_Audit_Record;
 
    -------------
@@ -230,10 +247,21 @@ package body Code_Peer.Module.Bridge is
       Args               : GNAT.OS_Lib.Argument_List :=
                              (1 => new String'
                                 (+Command_File_Name.Full_Name));
+      Mode               : constant String :=
+                             Code_Peer.Shell_Commands.Get_Build_Mode
+                               (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir    : constant Boolean :=
+                             Use_CodePeer_Subdir
+                               (Kernel_Handle (Module.Kernel));
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
    begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
       --  Generate command file
 
       Code_Peer.Bridge.Commands.Audit_Trail
@@ -256,6 +284,11 @@ package body Code_Peer.Module.Bridge is
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
    end Review_Message;
 
 end Code_Peer.Module.Bridge;

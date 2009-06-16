@@ -22,8 +22,9 @@
 with Glib.Object;
 with Gtk.Menu;
 
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
+with GPS.Kernel;   use GPS.Kernel;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Styles;
 with GPS.Kernel.MDI;
@@ -118,5 +119,10 @@ private
    function Codepeer_Library_File_Name
      (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Returns name of the library description file for CodePeer invocation.
+
+   function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean;
+   --  Returns True if 'codepeer' directory is present in the current object
+   --  directory. This means we need to switch build target to 'codepeer'
+   --  before doing any operations.
 
 end Code_Peer.Module;
