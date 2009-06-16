@@ -32,10 +32,14 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
    is
       use type GNAT.Strings.String_Access;
 
+      Aux : GNAT.Strings.String_Access;
+
    begin
       if Self.Audit_Record /= null then
          if Self.Audit_Record.Comment /= null then
-            raise Program_Error;
+            Aux := Self.Audit_Record.Comment;
+            Self.Audit_Record.Comment := new String'(Aux.all & Text);
+            GNAT.Strings.Free (Aux);
 
          else
             Self.Audit_Record.Comment := new String'(Text);
