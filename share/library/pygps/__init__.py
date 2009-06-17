@@ -286,8 +286,10 @@ try:
     event.window = window
     event.keyval = keyval
 
-    if hardware_keycode:
-       event.hardware_keycode = hardware_keycode
+# Disabled for now as this does not work on all platforms. The keycode
+# depends on the OS but also on the keyboard kind.
+#    if hardware_keycode:
+#       event.hardware_keycode = hardware_keycode
 
     event.send_event = 1
     event.time   = int (time.time())

@@ -62,6 +62,7 @@ with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 
+with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -2129,6 +2130,18 @@ package body Src_Editor_View is
          when GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up | GDK_Page_Down |
               GDK_End | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right =>
             External_End_Action (Buffer);
+
+         when GDK_BackSpace =>
+            if Get_Send_Event (Event) then
+               --  Handle BackSpace event mostly for test scripts purpose
+               declare
+                  Line   : Editable_Line_Type;
+                  Column : Character_Offset_Type;
+               begin
+                  Get_Cursor_Position (Buffer, Line, Column);
+                  Delete (Buffer, Line, Column - 1, 1);
+               end;
+            end if;
 
          when GDK_space =>
             --  ??? We need to make a special case here because the call to
