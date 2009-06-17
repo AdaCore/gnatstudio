@@ -251,9 +251,10 @@ try:
   # it is better to directly call the appropriate GPS action or menu
   # rather than rely on these functions
 
-  GDK_TAB    = 65289
-  GDK_RETURN = 65293
-  GDK_ESCAPE = 65307
+  GDK_BACKSPACE = 65288
+  GDK_TAB       = 65289
+  GDK_RETURN    = 65293
+  GDK_ESCAPE    = 65307
 
   def send_key_event (keyval, control=0, alt=0, shift=0, window=None, \
                       process_events=True, key_press=True):
