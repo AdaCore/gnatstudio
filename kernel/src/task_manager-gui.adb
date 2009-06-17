@@ -207,7 +207,8 @@ package body Task_Manager.GUI is
    function To_Pixbuf
      (GUI      : Task_Manager_Interface;
       Progress : Progress_Data) return Gdk_Pixbuf;
-   --  Return a pixbuf representing Progress
+   --  Return a pixbuf representing Progress.
+   --  The result should be freed by the caller.
 
    procedure Refresh_One_Index
      (GUI   : Task_Manager_Interface;
@@ -916,13 +917,15 @@ package body Task_Manager.GUI is
 
             when Command_Progress_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
-               Set_Object
-                 (Value,
-                  GObject
-                    (To_Pixbuf
-                       (Self.GUI,
-                        Get_Progress_Text
-                          (Self.GUI.Manager, Integer (Index), False, True))));
+               declare
+                  Pix : constant Gdk_Pixbuf := To_Pixbuf
+                    (Self.GUI,
+                     Get_Progress_Text
+                       (Self.GUI.Manager, Integer (Index), False, True));
+               begin
+                  Set_Object (Value, GObject (Pix));
+                  Unref (Pix);
+               end;
 
             when Command_Button_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
