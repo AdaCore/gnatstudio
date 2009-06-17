@@ -20,7 +20,7 @@ depends on it should use the statement:
 ## No user customization below this line
 ############################################################################
 
-import GPS, time
+import GPS, time, os
 
 # List of modules to import when user does "from pygps import *"
 # Do not use, since otherwise the functions defined in this module are
@@ -252,10 +252,14 @@ try:
   # rather than rely on these functions
 
   GDK_BACKSPACE = 65288
-  GDK_BACKSPACE_HARDWARE_KEYCODE = 59
   GDK_TAB       = 65289
   GDK_RETURN    = 65293
   GDK_ESCAPE    = 65307
+
+  if os.name == 'nt':
+    GDK_BACKSPACE_HARDWARE_KEYCODE = 8
+  else:
+    GDK_BACKSPACE_HARDWARE_KEYCODE = 59
 
   def send_key_event (keyval, control=0, alt=0, shift=0, window=None, \
                       process_events=True, key_press=True, hardware_keycode=None):
