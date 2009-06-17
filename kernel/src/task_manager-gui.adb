@@ -172,7 +172,7 @@ package body Task_Manager.GUI is
    pragma Unreferenced (On_Progress_Bar_Destroy);
    --  Called when a progress bar is destroyed
 
-   procedure Refresh (GUI   : Task_Manager_Interface);
+   procedure Refresh (GUI : Task_Manager_Interface);
    --  Refresh the information in View from the Task_Manager
 
    procedure Init_Graphics
@@ -180,8 +180,8 @@ package body Task_Manager.GUI is
    --  Initialize the graphic elements needed to render the tree view
 
    type Progress_Data (L : Integer) is record
-      Fraction : Gdouble;
-      Text     : String (1 .. L);
+      Fraction        : Gdouble;
+      Text            : String (1 .. L);
       Multiple_Queues : Boolean;
    end record;
 
@@ -392,7 +392,7 @@ package body Task_Manager.GUI is
    -- Refresh --
    -------------
 
-   procedure Refresh (GUI   : Task_Manager_Interface) is
+   procedure Refresh (GUI : Task_Manager_Interface) is
       Pixbuf : Gdk_Pixbuf;
       Image  : Gtk_Image;
    begin
@@ -400,8 +400,7 @@ package body Task_Manager.GUI is
          --  Create the GUI elements
          Gtk_New (GUI.Label, "");
 
-         Pack_Start
-           (GUI, GUI.Label, Expand => True, Fill => True);
+         Pack_Start (GUI, GUI.Label, Expand => True, Fill => True);
 
          Gtk_New (GUI.Progress_Bar_Button);
          Pixbuf := Render_Icon
@@ -449,11 +448,12 @@ package body Task_Manager.GUI is
          Hide_All (GUI);
       else
          declare
-            Pd : constant Progress_Data := Get_Progress_Text
-              (GUI.Manager, False);
+            Pd : constant Progress_Data :=
+                   Get_Progress_Text (GUI.Manager, False);
          begin
             if Pd = Null_Progress_Data then
                Hide_All (GUI);
+
             else
                Set_Fraction (GUI.Main_Progress_Bar, Pd.Fraction);
                Set_Text (GUI.Main_Progress_Bar, Pd.Text);
@@ -528,7 +528,7 @@ package body Task_Manager.GUI is
       Dialog  : Gtk_Widget := null) return Task_Manager_Widget_Access
    is
       GUI      : constant Task_Manager_Interface :=
-        Task_Manager_Interface (Manager.GUI);
+                   Task_Manager_Interface (Manager.GUI);
       View     : Task_Manager_Widget_Access;
       Scrolled : Gtk_Scrolled_Window;
    begin
@@ -656,6 +656,7 @@ package body Task_Manager.GUI is
         or else Index_1 >= Self.GUI.Manager.Queues'Length
       then
          return Null_Iter;
+
       else
          return Init_Tree_Iter
            (Stamp       => 1,
@@ -697,6 +698,7 @@ package body Task_Manager.GUI is
         or else Old_Index >= Self.GUI.Manager.Queues'Length
       then
          Iter := Null_Iter;
+
       else
          Iter := Init_Tree_Iter
            (Stamp       => 1,
