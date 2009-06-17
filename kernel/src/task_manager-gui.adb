@@ -924,7 +924,9 @@ package body Task_Manager.GUI is
                        (Self.GUI.Manager, Integer (Index), False, True));
                begin
                   Set_Object (Value, GObject (Pix));
-                  Unref (Pix);
+                  if Pix /= Null_Pixbuf then
+                     Unref (Pix);
+                  end if;
                end;
 
             when Command_Button_Column =>
