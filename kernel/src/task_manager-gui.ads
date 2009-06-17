@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package handles the GUI part of the task manager.
+--  This package handles the GUI part of the task manager
 
 with Glib; use Glib;
 
@@ -69,24 +69,24 @@ package Task_Manager.GUI is
       Kernel  : Kernel_Handle;
       Manager : Task_Manager_Access;
       Widget  : Gtk_Widget);
-   --  Create a new Task_Manager_Interface.
+   --  Create a new Task_Manager_Interface
 
    procedure Initialize
      (View    : access Task_Manager_Interface_Record'Class;
       Kernel  : Kernel_Handle;
       Manager : Task_Manager_Access;
       Widget  : Gtk_Widget);
-   --  Internal initialization procedure.
+   --  Internal initialization procedure
 
    procedure Interrupt_Command
      (Manager : Task_Manager_Access;
       Index   : Integer);
-   --  Interrupt command referenced by Index.
+   --  Interrupt command referenced by Index
 
    procedure Pause_Command
      (Manager : Task_Manager_Access;
       Index   : Integer);
-   --  Pause command referenced by Index.
+   --  Pause command referenced by Index
 
    procedure Queue_Added
      (GUI   : Task_Manager_Interface;
@@ -115,9 +115,9 @@ private
      (Iter_Array, Iter_Array_Access);
 
    type Task_Manager_Widget_Record is new Gtk_Hbox_Record with record
-      Model      : Task_Manager_Interface;
-      Tree       : Gtk_Tree_View;
-      Dialog     : Gtk_Widget := null;
+      Model            : Task_Manager_Interface;
+      Tree             : Gtk_Tree_View;
+      Dialog           : Gtk_Widget := null;
       Quit_Button_Col  : Gtk_Tree_View_Column;
       Pause_Button_Col : Gtk_Tree_View_Column;
    end record;
@@ -148,23 +148,22 @@ private
       Progress_Layout        : Pango_Layout;
 
       Reference_Widget       : Gtk_Widget;
-      --  A reference widget to create the graphical contexts.
+      --  A reference widget to create the graphical contexts
 
-      Close_Button_Pixbuf     : Gdk_Pixbuf;
-      Pause_Button_Pixbuf     : Gdk_Pixbuf;
-      Play_Button_Pixbuf      : Gdk_Pixbuf;
+      Close_Button_Pixbuf    : Gdk_Pixbuf;
+      Pause_Button_Pixbuf    : Gdk_Pixbuf;
+      Play_Button_Pixbuf     : Gdk_Pixbuf;
 
-      To_Refresh               : Integer_Stack.Simple_Stack;
+      To_Refresh             : Integer_Stack.Simple_Stack;
 
-      Timeout_Cb               : Glib.Main.G_Source_Id :=
-        Glib.Main.No_Source_Id;
-      --  The registered refresh timeout callback.
+      Timeout_Cb             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      --  The registered refresh timeout callback
 
-      Main_Progress_Bar        : Gtk_Progress_Bar;
+      Main_Progress_Bar      : Gtk_Progress_Bar;
    end record;
 
    procedure Push_State (Manager : Task_Manager_Access);
    procedure Pop_State (Manager : Task_Manager_Access);
-   --  Push and pop the "busy" state of the task manager.
+   --  Push and pop the "busy" state of the task manager
 
 end Task_Manager.GUI;

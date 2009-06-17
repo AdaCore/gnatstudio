@@ -90,7 +90,7 @@ package body Task_Manager.GUI is
    type Task_Manager_Model_Record is new Gtk_Abstract_List_Model_Record with
       record
          GUI : Task_Manager_Interface;
-         --  This can not be null.
+         --  This can not be null
       end record;
 
    type Task_Manager_Model is access all Task_Manager_Model_Record'Class;
@@ -173,7 +173,7 @@ package body Task_Manager.GUI is
    --  Called when a progress bar is destroyed
 
    procedure Refresh (GUI   : Task_Manager_Interface);
-   --  Refresh the information in View from the Task_Manager.
+   --  Refresh the information in View from the Task_Manager
 
    procedure Init_Graphics
      (GUI : access Task_Manager_Interface_Record'Class);
@@ -207,7 +207,7 @@ package body Task_Manager.GUI is
    function To_Pixbuf
      (GUI      : Task_Manager_Interface;
       Progress : Progress_Data) return Gdk_Pixbuf;
-   --  Return a pixbuf representing Progress.
+   --  Return a pixbuf representing Progress
 
    procedure Refresh_One_Index
      (GUI   : Task_Manager_Interface;
@@ -589,7 +589,7 @@ package body Task_Manager.GUI is
       Manager : Task_Manager_Access;
       Widget  : Gtk_Widget)
    is
-      Model    : constant Task_Manager_Model := new Task_Manager_Model_Record;
+      Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
    begin
       --  Initialize the GUI
 
@@ -600,7 +600,7 @@ package body Task_Manager.GUI is
 
       View.Kernel  := Kernel;
       View.Manager := Manager;
-      View.Model  := Gtk_Tree_Model (Model);
+      View.Model   := Gtk_Tree_Model (Model);
       View.Reference_Widget := Widget;
 
       View.Manager.GUI := Gtk_Widget (View);
@@ -645,8 +645,7 @@ package body Task_Manager.GUI is
 
    overriding function Get_Iter
      (Self : access Task_Manager_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
       Index_1 : constant Integer_Address := Integer_Address
@@ -657,10 +656,11 @@ package body Task_Manager.GUI is
       then
          return Null_Iter;
       else
-         return Init_Tree_Iter (Stamp       => 1,
-                                User_Data_1 => To_Address (Index_1 + 1),
-                                User_Data_2 => System.Null_Address,
-                                User_Data_3 => System.Null_Address);
+         return Init_Tree_Iter
+           (Stamp       => 1,
+            User_Data_1 => To_Address (Index_1 + 1),
+            User_Data_2 => System.Null_Address,
+            User_Data_3 => System.Null_Address);
       end if;
    end Get_Iter;
 
@@ -670,8 +670,7 @@ package body Task_Manager.GUI is
 
    overriding function Get_Path
      (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
       pragma Unreferenced (Self);
       Result : Gtk_Tree_Path;
@@ -691,7 +690,7 @@ package body Task_Manager.GUI is
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
       Old_Index : constant Integer_Address :=
-        To_Integer (Get_User_Data_1 (Iter));
+                    To_Integer (Get_User_Data_1 (Iter));
    begin
       if Self.GUI.Manager.Queues = null
         or else Old_Index >= Self.GUI.Manager.Queues'Length
@@ -756,8 +755,7 @@ package body Task_Manager.GUI is
    -------------------
 
    overriding function Get_N_Columns
-     (Self : access Task_Manager_Model_Record)
-      return Glib.Gint
+     (Self : access Task_Manager_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
    begin
@@ -793,6 +791,7 @@ package body Task_Manager.GUI is
 
    begin
       --  If the graphics have been initialized, free them now
+
       if GUI.Progress_Template /= null then
          Unref (GUI.Progress_Background_GC);
          Unref (GUI.Progress_Foreground_GC);
@@ -819,7 +818,7 @@ package body Task_Manager.GUI is
      (GUI : access Task_Manager_Interface_Record'Class)
    is
       Iface                       : constant Gtk_Widget :=
-        GUI.Reference_Widget;
+                                      GUI.Reference_Widget;
       Color                       : Gdk_Color;
       Success                     : Boolean;
       Layout_Width, Layout_Height : Gint;
@@ -859,9 +858,7 @@ package body Task_Manager.GUI is
       end if;
 
       GUI.Progress_Layout := Create_Pango_Layout (Iface);
-      Set_Font_Description
-        (GUI.Progress_Layout,
-         Default_Font.Get_Pref);
+      Set_Font_Description (GUI.Progress_Layout, Default_Font.Get_Pref);
 
       Set_Text (GUI.Progress_Layout, "L");
       Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);
@@ -893,7 +890,7 @@ package body Task_Manager.GUI is
       Value  : out Glib.Values.GValue)
    is
       Index      : constant Integer_Address :=
-        To_Integer (Get_User_Data_1 (Iter));
+                     To_Integer (Get_User_Data_1 (Iter));
       Task_Queue : Task_Queue_Access;
       Length     : Integer;
       Command    : Command_Access;
@@ -1024,9 +1021,9 @@ package body Task_Manager.GUI is
       Index : Integer)
    is
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
-      Iter : constant Gtk_Tree_Iter := Nth_Child
-        (M, Null_Iter, Gint (Index - 1));
-      Path  : constant Gtk_Tree_Path := Get_Path (M, Iter);
+      Iter : constant Gtk_Tree_Iter :=
+               Nth_Child (M, Null_Iter, Gint (Index - 1));
+      Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
    begin
       Row_Inserted (M, Path, Iter);
       Path_Free (Path);
@@ -1063,8 +1060,8 @@ package body Task_Manager.GUI is
       Index : Integer)
    is
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
-      Iter : constant Gtk_Tree_Iter := Nth_Child
-        (M, Null_Iter, Gint (Index - 1));
+      Iter : constant Gtk_Tree_Iter :=
+               Nth_Child (M, Null_Iter, Gint (Index - 1));
       Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
    begin
       Row_Changed (M, Path, Iter);
@@ -1117,8 +1114,9 @@ package body Task_Manager.GUI is
       if Immediate_Refresh then
          Refresh_One_Index (GUI, Index);
          Refresh (GUI);
+
       else
-         --  Add the index to the list of indexes to be refreshed.
+         --  Add the index to the list of indexes to be refreshed
 
          Integer_Stack.Push (GUI.To_Refresh, Index);
 
@@ -1209,6 +1207,7 @@ package body Task_Manager.GUI is
       begin
          if As_Percent then
             return "(" & Image (Integer (Fraction * 100.0)) & "%)";
+
          else
             if Progress.Total <= 1 then
                return "";
@@ -1240,13 +1239,15 @@ package body Task_Manager.GUI is
             Progress_String := new String'
               (Krunch (Commands.Name (Command), Progress_Bar_Length - 4)
                & " " & Progress_Indicator);
+
          else
             Progress_String := new String'(Progress_Indicator);
 
             if Length > 1 then
                declare
-                  New_String : constant String := Progress_String.all
-                    & " (" & Image (Length) & (-" queued)");
+                  New_String : constant String :=
+                                 Progress_String.all
+                                   & " (" & Image (Length) & (-" queued)");
                begin
                   GNAT.Strings.Free (Progress_String);
                   Progress_String := new String'(New_String);
@@ -1265,6 +1266,7 @@ package body Task_Manager.GUI is
             GNAT.Strings.Free (Progress_String);
             return Result;
          end;
+
       else
          return Null_Progress_Data;
       end if;
@@ -1284,6 +1286,7 @@ package body Task_Manager.GUI is
    begin
       if Manager.Queues = null then
          return Null_Progress_Data;
+
       else
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Show_Bar then
@@ -1300,13 +1303,16 @@ package body Task_Manager.GUI is
 
          if Count = 0 then
             return Null_Progress_Data;
+
          elsif Count = 1 then
             return Get_Progress_Text (Manager, Index, As_Percent, True);
+
          else
             declare
                F : constant Gdouble := Fraction / Gdouble (Count);
-               S : constant String := Count'Img & " tasks ("
-                 & Image (Integer (F * 100.0)) & "%)";
+               S : constant String :=
+                     Count'Img & " tasks ("
+                       & Image (Integer (F * 100.0)) & "%)";
             begin
                return (S'Length, F, S, True);
             end;

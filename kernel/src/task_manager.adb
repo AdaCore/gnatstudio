@@ -219,6 +219,7 @@ package body Task_Manager is
       end Free_Queue;
 
       Index : Natural;
+
    begin
       if Manager.Queues = null then
          return False;
@@ -333,8 +334,7 @@ package body Task_Manager is
                         New_Queue : constant Command_Queues.List :=
                                       Get_Alternate_Actions (Command);
                      begin
-                        Queue.Total :=
-                          Queue.Total
+                        Queue.Total := Queue.Total
                           + Command_Queues.Length (New_Queue);
                         Command_Queues.Concat (Queue.Queue, New_Queue);
                      end;
@@ -472,6 +472,7 @@ package body Task_Manager is
                New_Queues
                  (Manager.Queues'First .. Manager.Queues'Last) :=
                  Manager.Queues.all;
+
                New_Queues (New_Queues'Last) := new Task_Queue_Record;
                New_Queues (New_Queues'Last).Id := new String'(Queue_Id);
 
@@ -675,8 +676,7 @@ package body Task_Manager is
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Status in Running .. Paused then
             if Manager.Queues (J).Block_Exit
-              and then (Consider_Silent
-                        or else Manager.Queues (J).Show_Bar)
+              and then (Consider_Silent or else Manager.Queues (J).Show_Bar)
             then
                return True;
             end if;
