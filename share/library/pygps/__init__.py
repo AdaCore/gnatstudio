@@ -252,12 +252,13 @@ try:
   # rather than rely on these functions
 
   GDK_BACKSPACE = 65288
+  GDK_BACKSPACE_HARDWARE_KEYCODE = 59
   GDK_TAB       = 65289
   GDK_RETURN    = 65293
   GDK_ESCAPE    = 65307
 
   def send_key_event (keyval, control=0, alt=0, shift=0, window=None, \
-                      process_events=True, key_press=True):
+                      process_events=True, key_press=True, hardware_keycode=None):
     """Emit a key event on GPS, simulating the given key. This event is sent
        asynchronously.
        Unless process_events is true, this function will return when the
@@ -280,6 +281,10 @@ try:
        window = window.window
     event.window = window
     event.keyval = keyval
+
+    if hardware_keycode:
+       event.hardware_keycode = hardware_keycode
+
     event.send_event = 1
     event.time   = int (time.time())
 
