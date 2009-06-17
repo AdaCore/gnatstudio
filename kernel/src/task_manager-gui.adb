@@ -925,8 +925,8 @@ package body Task_Manager.GUI is
                      Get_Progress_Text
                        (Self.GUI.Manager, Integer (Index), False, True));
                begin
-                  Set_Object (Value, GObject (Pix));
                   if Pix /= Null_Pixbuf then
+                     Set_Object (Value, GObject (Pix));
                      Unref (Pix);
                   end if;
                end;
