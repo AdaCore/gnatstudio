@@ -2132,14 +2132,16 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
 
          when GDK_BackSpace =>
-            --  Handle BackSpace event mostly for test scripts purpose
-            declare
-               Line   : Editable_Line_Type;
-               Column : Character_Offset_Type;
-            begin
-               Get_Cursor_Position (Buffer, Line, Column);
-               Delete (Buffer, Line, Column - 1, 1);
-            end;
+            if Get_Send_Event (Event) then
+               --  Handle BackSpace event mostly for test scripts purpose
+               declare
+                  Line   : Editable_Line_Type;
+                  Column : Character_Offset_Type;
+               begin
+                  Get_Cursor_Position (Buffer, Line, Column);
+                  Delete (Buffer, Line, Column - 1, 1);
+               end;
+            end if;
 
          when GDK_space =>
             --  ??? We need to make a special case here because the call to
