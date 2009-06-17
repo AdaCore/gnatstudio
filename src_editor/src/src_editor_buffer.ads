@@ -348,7 +348,7 @@ package Src_Editor_Buffer is
       Column      : Character_Offset_Type;
       Length      : Natural;
       Enable_Undo : Boolean := True);
-   --  Delete Length caracters after the specified position.
+   --  Delete Length characters after the specified position.
    --
    --  The validity of the given position must be verified before invoking this
    --  procedure. An incorrect position  will cause an Assertion_Failure when
