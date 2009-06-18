@@ -482,7 +482,7 @@ package body Codefix.Formal_Errors is
       Initialize (New_Command, Current_Text, Cursor, Correct_Word, Word_Case);
       Set_Caption
         (New_Command,
-         "Recase bad-cased word");
+         "Recase text");
       Append (Result, New_Command);
 
       return Result;
@@ -1143,7 +1143,7 @@ package body Codefix.Formal_Errors is
          Get_File (Object_Cursor),
          Seek_With);
       Set_Caption
-        (Use_Solution, "Update with and use's clauses to show the object");
+        (Use_Solution, "Update with and use clauses to show the object");
       Prefix_Object
         (Prefix_Solution,
          Current_Text,
