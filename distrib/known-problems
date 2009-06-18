@@ -83,6 +83,11 @@ Known Problems fixed in GPS 4.4.0
               the buffer status line.
   Workaround: Close and re-open the corresponding buffer.
 
+- I328-003: Support for ant not working under Windows
+  Problem:    Support for ant is not working under Windows because the ant
+              tool is not recognized by GPS.
+  Workaround: Edit the Makefile.py plug-in to always enable this plug-in
+
 - I326-017: Cannot build when opening a project using UNC path
   Problem:    When opening a project using UNC path (\\server\share) it is
               not possible to use the GPS builder module.
