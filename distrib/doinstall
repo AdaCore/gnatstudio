@@ -111,7 +111,8 @@ install_binaries() {
 
   for f in $basedir/share/gps/plug-ins/*.xml \
            $basedir/share/gps/plug-ins/*.py; do
-    if ! grep '<documentation_file>' $f >/dev/null 2>&1; then
+    grep '<documentation_file>' $f >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
       rm -f $f
     fi
   done
