@@ -1125,6 +1125,8 @@ package body GPS.Kernel.Remote is
 
          if Directory = No_File then
             Old_Dir := To_Remote (Get_Current_Dir, Get_Nickname (Server));
+         elsif Get_Host (Directory) /= Get_Nickname (Server) then
+            Old_Dir := To_Remote (Directory, Get_Nickname (Server));
          else
             Old_Dir := Directory;
          end if;
