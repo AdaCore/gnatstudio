@@ -617,7 +617,7 @@ package body Help_Module is
          --  ??? We should add directly the Virtual_File, instead of its
          --  full_name
          Add_Doc_Directory
-           (Get_Kernel (Data), Nth_Arg (Data, 1));
+           (Get_Kernel (Data), Create (+Nth_Arg (Data, 1)));
       end if;
    end Command_Handler;
 
