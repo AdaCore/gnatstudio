@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,7 +53,8 @@ package body Language.Icons is
          return
            (Cat_Unknown | Cat_With
             | Cat_Use   | Cat_Include
-            | Construct_Category | Cat_Exception_Handler =>
+            | Construct_Category | Cat_Exception_Handler
+            | Cat_Pragma =>
               R ("gps-entity-generic" & Suffix),
             Cat_Package | Cat_Namespace | Cat_Custom =>
               R ("gps-entity-package" & Suffix),

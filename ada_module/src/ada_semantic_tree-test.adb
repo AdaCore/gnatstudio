@@ -34,6 +34,7 @@ use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Ada_Semantic_Tree.Type_Tree;  use Ada_Semantic_Tree.Type_Tree;
+with Ada_Semantic_Tree.Interfaces;  use Ada_Semantic_Tree.Interfaces;
 with Namet;                          use Namet;
 with Projects;                       use Projects;
 with Projects.Registry;              use Projects.Registry;
@@ -496,6 +497,64 @@ procedure Ada_Semantic_Tree.Test is
             Token_List.Free (Expression.Tokens);
          end;
 
+      elsif Buffer (Word_Begin .. Word_End) = "EXPORT" then
+         Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
+
+         Put_Line ("EXPORT " & Buffer (Word_Begin .. Word_End));
+
+         declare
+            Assistant : constant Database_Assistant_Access :=
+              Ada_Semantic_Tree.Interfaces.Get_Assistant (Construct_Db);
+            Entity    : Entity_Access;
+            Construct : access Simple_Construct_Information;
+         begin
+            Entity := Ada_Semantic_Tree.Interfaces.Get_Exported_Entity
+              (Assistant, Buffer (Word_Begin .. Word_End));
+
+            if Entity = Null_Entity_Access then
+               Put_Line ("---> <not found>");
+            else
+               Construct := Get_Construct (Entity);
+               Put_Line
+                 ("---> " & Construct.Name.all & ":"
+                  & Construct.Sloc_Entity.Line'Img & ":"
+                  & Construct.Sloc_Entity.Column'Img);
+            end if;
+         end;
+
+      elsif Buffer (Word_Begin .. Word_End) = "IMPORT" then
+         Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
+
+         Put_Line ("IMPORT " & Buffer (Word_Begin .. Word_End));
+
+         declare
+            List : Declaration_List;
+            It : Declaration_Iterator;
+         begin
+            List := Find_Declarations
+              ((From_Database, Construct_Db),
+               Expression        =>
+                 Parse_Expression_Backward
+                   (Ada_Lang, Buffer, Word_End, Word_Begin),
+               Is_Partial        => True);
+
+            It := First (List);
+
+            if not At_End (It) then
+               declare
+                  Imported : constant String :=
+                    Get_Imported_Entity (Get_Entity (It));
+               begin
+                  if Imported /= "" then
+                     Put_Line ("---> " & Imported);
+                  else
+                     Put_Line ("---> <no import>");
+                  end if;
+               end;
+            else
+               Put_Line ("---> <entity not found>");
+            end if;
+         end;
       else
          Put_Line ("UNKOWN COMMAND " & Buffer (Word_Begin .. Word_End));
       end if;

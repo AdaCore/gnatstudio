@@ -351,7 +351,12 @@ package body Ada_Analyzer is
          if Is_Control (S (S'First)) then
             return No_Token;
          else
-            return Tok_Identifier;
+            case S (S'First) is
+               when '"' =>
+                  return No_Token;
+               when others =>
+                  return Tok_Identifier;
+            end case;
          end if;
       end if;
 
@@ -1566,6 +1571,8 @@ package body Ada_Analyzer is
 
          Token_Stack.Pop (Stack, Value);
 
+         Top_Token := Token_Stack.Top (Stack);
+
          --  Tok_Record will be taken into account by Tok_Type if needed.
          --  Build next entry of Constructs
 
@@ -1682,6 +1689,8 @@ package body Ada_Analyzer is
 
                   when Tok_Exception =>
                      Constructs.Current.Category := Cat_Exception_Handler;
+                  when Tok_Pragma =>
+                     Constructs.Current.Category := Cat_Pragma;
                   when others =>
                      Constructs.Current.Category := Cat_Unknown;
                end case;
@@ -1969,12 +1978,16 @@ package body Ada_Analyzer is
            or else Reserved = Tok_Task
            or else Reserved = Tok_Protected
            or else Reserved = Tok_Entry
+           or else Reserved = Tok_Pragma
          then
             if Reserved = Tok_Package then
                Temp.Package_Declaration := True;
 
             elsif Reserved = Tok_Protected then
                Temp.Protected_Declaration := True;
+
+            elsif Reserved = Tok_Pragma then
+               Num_Parens := 0;
 
             elsif (Top_Token.Token = Tok_Type
                    and then (Prev_Token /= Tok_Access
@@ -2435,7 +2448,7 @@ package body Ada_Analyzer is
          Insert_Spaces   : Boolean;
          Char            : Character;
          Prev_Prev_Token : Token_Type;
-         Top_Token       : Token_Stack.Generic_Type_Access;
+         Local_Top_Token : Token_Stack.Generic_Type_Access;
          Tmp             : Boolean;
          Token_Found     : Boolean;
 
@@ -2463,6 +2476,10 @@ package body Ada_Analyzer is
 
          procedure Skip_Comments;
          --  Skip comment & blank lines.
+
+         procedure Pop_And_Set_Local (Stack : in out Token_Stack.Simple_Stack);
+         --  Pops the last element of the stack and set Local_Top_Token
+         --  to the top element, null if the stack is empty.
 
          -----------------------
          -- Close_Parenthesis --
@@ -2493,18 +2510,18 @@ package body Ada_Analyzer is
                Pop (Indents);
                Num_Parens := Num_Parens - 1;
 
-               Top_Token := Top (Tokens);
+               Local_Top_Token := Top (Tokens);
 
                if Num_Parens = 0 then
                   Right_Assignment := False;
                   Paren_In_Middle := False;
 
-                  if Top_Token.Token in Token_Class_Declk
-                    and then Top_Token.Profile_End = 0
+                  if Local_Top_Token.Token in Token_Class_Declk
+                    and then Local_Top_Token.Profile_End = 0
                     and then Subprogram_Decl
                   then
-                     Top_Token.Profile_End := P;
-                     Top_Token.Align_Colon := 0;
+                     Local_Top_Token.Profile_End := P;
+                     Local_Top_Token.Align_Colon := 0;
                   end if;
                end if;
             end if;
@@ -2530,11 +2547,10 @@ package body Ada_Analyzer is
                Skip_Blanks (Buffer, Non_Blank);
             end if;
 
-            if Top_Token.Declaration
-              and then Top_Token.Token = Tok_Identifier
+            if Local_Top_Token.Declaration
+              and then Local_Top_Token.Token = Tok_Identifier
             then
-               Pop (Tokens);
-               Top_Token := Top (Tokens);
+               Pop_And_Set_Local (Tokens);
 
                declare
                   Val : Extended_Token;
@@ -2556,13 +2572,13 @@ package body Ada_Analyzer is
 
             --  Auto align colons in declarations (parameters, variables, ...)
 
-            if Top_Token.Align_Colon = 0
+            if Local_Top_Token.Align_Colon = 0
               or else Num_Parens > 1
             then
                return;
             end if;
 
-            Align_Colon := Top_Token.Align_Colon;
+            Align_Colon := Local_Top_Token.Align_Colon;
 
             if Format_Operators then
                if Buffer (Next_Char (P)) = ' '
@@ -2638,13 +2654,12 @@ package body Ada_Analyzer is
             Do_Indent (P, Num_Spaces);
             Prev_Token := Tok_Arrow;
 
-            if Top_Token.Token = Tok_When
+            if Local_Top_Token.Token = Tok_When
               and then (Tokens.Next = null
                         or else
                           Tokens.Next.Val.Token /= Tok_Select)
             then
-               Pop (Tokens);
-               Top_Token := Top (Tokens);
+               Pop_And_Set_Local (Tokens);
             end if;
 
             Handle_Two_Chars ('>');
@@ -2918,6 +2933,23 @@ package body Ada_Analyzer is
             Indent_Done := True;
          end Preprocessor_Directive;
 
+         -----------------------
+         -- Pop_And_Set_Local --
+         -----------------------
+
+         procedure Pop_And_Set_Local
+           (Stack : in out Token_Stack.Simple_Stack)
+         is
+         begin
+            Pop (Stack);
+
+            if not Is_Empty (Stack) then
+               Local_Top_Token := Top (Stack);
+            else
+               Local_Top_Token := null;
+            end if;
+         end Pop_And_Set_Local;
+
       begin  --  Next_Word
          Start_Of_Line := Line_Start (Buffer, P);
          End_Of_Line   := Line_End (Buffer, Start_Of_Line);
@@ -2944,7 +2976,8 @@ package body Ada_Analyzer is
             --  Only if Top_Token is not accessed further down this procedure
             --  can the recomputation be omitted.
 
-            Top_Token := Top (Tokens);
+            Local_Top_Token := Top (Tokens);
+
             Prev_Prev_Token := Prev_Token;
             Token_Found := True;
 
@@ -2970,7 +3003,7 @@ package body Ada_Analyzer is
 
                   if not Is_Empty (Paren_Stack) then
                      Push (Paren_Stack, Top (Paren_Stack).all);
-                  elsif Top_Token.Token = Tok_Type then
+                  elsif Local_Top_Token.Token = Tok_Type then
                      Push (Paren_Stack, Type_Declaration);
                   elsif Prev_Prev_Token = Tok_Return then
                      Push (Paren_Stack, Aggregate);
@@ -3027,7 +3060,7 @@ package body Ada_Analyzer is
                         Do_Indent (P, Num_Spaces);
                      else
                         if Prev_Prev_Token = Tok_Colon_Equal
-                          and then Top_Token.Colon_Col /= 0
+                          and then Local_Top_Token.Colon_Col /= 0
                           and then Continuation_Val = 0
                         then
                            Continuation_Val :=
@@ -3051,15 +3084,15 @@ package body Ada_Analyzer is
                   Align      := 0;
 
                   if Num_Parens = 1
-                    and then Top_Token.Token in Token_Class_Declk
-                    and then Top_Token.Profile_Start = 0
+                    and then Local_Top_Token.Token in Token_Class_Declk
+                    and then Local_Top_Token.Profile_Start = 0
                   then
                      if Subprogram_Decl then
-                        Top_Token.Profile_Start := P;
+                        Local_Top_Token.Profile_Start := P;
                      end if;
 
                      if Align_On_Colons then
-                        Top_Token.Align_Colon := Compute_Alignment
+                        Local_Top_Token.Align_Colon := Compute_Alignment
                           (P + 1, Skip_First_Line => False);
                      end if;
 
@@ -3117,21 +3150,22 @@ package body Ada_Analyzer is
                   end if;
 
                when ')' =>
-                  if (Top_Token.Token = Tok_Colon
-                      or else Top_Token.Token = Tok_Identifier)
+                  if (Local_Top_Token.Token = Tok_Colon
+                      or else Local_Top_Token.Token = Tok_Identifier)
                     and then
-                      (Top_Token.Is_Parameter
+                      (Local_Top_Token.Is_Parameter
                        or else
-                         (Top_Token.Is_In_Type_Definition
+                         (Local_Top_Token.Is_In_Type_Definition
                           and then not
-                            Top_Token.Attributes (Ada_Record_Attribute)
-                          and then not Top_Token.Type_Declaration))
+                            Local_Top_Token.Attributes (Ada_Record_Attribute)
+                          and then not Local_Top_Token.Type_Declaration))
                   then
-                     if Top_Token.Token = Tok_Identifier
-                       and then not (Top_Token.Is_In_Type_Definition
-                                     and then not Top_Token.Attributes
-                                       (Ada_Record_Attribute)
-                                     and then not Top_Token.Type_Declaration)
+                     if Local_Top_Token.Token = Tok_Identifier
+                       and then not
+                         (Local_Top_Token.Is_In_Type_Definition
+                          and then not Local_Top_Token.Attributes
+                            (Ada_Record_Attribute)
+                          and then not Local_Top_Token.Type_Declaration)
                      then
                         --  This handles cases where we have a family entry.
                         --  For example:
@@ -3141,10 +3175,10 @@ package body Ada_Analyzer is
                         --  code below disactivate its addition to the
                         --  constructs
 
-                        Top_Token.Token := Tok_Colon;
+                        Local_Top_Token.Token := Tok_Colon;
                      end if;
 
-                     Pop (Tokens);
+                     Pop_And_Set_Local (Tokens);
                   end if;
 
                   First := P;
@@ -3174,21 +3208,21 @@ package body Ada_Analyzer is
                         end if;
                      end if;
 
-                     if (Top_Token.Token in Token_Class_Declk
-                         and then Top_Token.Ident_Len = 0)
+                     if (Local_Top_Token.Token in Token_Class_Declk
+                         and then Local_Top_Token.Ident_Len = 0)
                        or else Prev_Token = Tok_End
                      then
                         --  This is an operator symbol, e.g function ">=" (...)
 
                         if Prev_Token /= Tok_End then
                            Len := P - First + 1;
-                           Top_Token.Identifier (1 .. Len) :=
+                           Local_Top_Token.Identifier (1 .. Len) :=
                              Buffer (First .. P);
-                           Top_Token.Ident_Len := Len;
-                           Top_Token.Sloc_Name.Line := Line_Count;
-                           Top_Token.Sloc_Name.Column :=
+                           Local_Top_Token.Ident_Len := Len;
+                           Local_Top_Token.Sloc_Name.Line := Line_Count;
+                           Local_Top_Token.Sloc_Name.Column :=
                              First - Start_Of_Line + 1;
-                           Top_Token.Sloc_Name.Index := First;
+                           Local_Top_Token.Sloc_Name.Index := First;
                         end if;
 
                         Prev_Token := Tok_Operator_Symbol;
@@ -3213,6 +3247,8 @@ package body Ada_Analyzer is
                            return;
                         end if;
                      end if;
+
+                     return;
                   end;
 
                when '&' | '+' | '-' | '*' | '/' | ':' | '<' | '>' | '=' |
@@ -3265,14 +3301,14 @@ package body Ada_Analyzer is
                           and then Buffer (P + 1) = '='
                         then
                            if Buffer (P) = ':'
-                             and then Top_Token.Token = Tok_Colon
+                             and then Local_Top_Token.Token = Tok_Colon
                            then
                               Right_Assignment := True;
-                              Top_Token.Attributes
+                              Local_Top_Token.Attributes
                                 (Ada_Assign_Attribute) := True;
 
-                              if Top_Token.Is_Parameter then
-                                 Pop (Tokens);
+                              if Local_Top_Token.Is_Parameter then
+                                 Pop_And_Set_Local (Tokens);
                               end if;
                            end if;
 
@@ -3378,7 +3414,7 @@ package body Ada_Analyzer is
                   end if;
 
                   if Num_Parens = 0
-                    and then Top_Token.Token /= Tok_When
+                    and then Local_Top_Token.Token /= Tok_When
                   then
                      --  If we're not inside parens or a when statement,
                      --  then handle continuation lines here. Otherwise,
@@ -3402,13 +3438,13 @@ package body Ada_Analyzer is
                      Prev_Token := Tok_Semicolon;
                      Right_Assignment := False;
 
-                     if Top_Token.Token = Tok_Colon then
-                        Pop (Tokens);
+                     if Local_Top_Token.Token = Tok_Colon then
+                        Pop_And_Set_Local (Tokens);
 
                      elsif Num_Parens = 0 then
                         if Subprogram_Decl
-                          or else Top_Token.Token = Tok_Subtype
-                          or else Top_Token.Token = Tok_For
+                          or else Local_Top_Token.Token = Tok_Subtype
+                          or else Local_Top_Token.Token = Tok_For
                         then
                            if not In_Generic then
                               --  subprogram spec or type decl or repr. clause,
@@ -3417,19 +3453,21 @@ package body Ada_Analyzer is
                               --  type ... is ...;
                               --  for ... use ...;
 
-                              Pop (Tokens);
+                              Pop_And_Set_Local (Tokens);
                            end if;
 
                            Subprogram_Decl := False;
 
-                        elsif Top_Token.Token = Tok_With
-                          or else Top_Token.Token = Tok_Use
-                          or else Top_Token.Token = Tok_Identifier
-                          or else Top_Token.Token = Tok_Type
-                          or else Top_Token.Token = Tok_Accept
+                        elsif Local_Top_Token.Token = Tok_With
+                          or else Local_Top_Token.Token = Tok_Use
+                          or else Local_Top_Token.Token = Tok_Identifier
+                          or else Local_Top_Token.Token = Tok_Type
+                          or else Local_Top_Token.Token = Tok_Accept
+                          or else Local_Top_Token.Token = Tok_Pragma
                         then
-                           Pop (Tokens);
+                           Pop_And_Set_Local (Tokens);
                         end if;
+
                      end if;
 
                      if Subprogram_Decl then
@@ -3439,13 +3477,13 @@ package body Ada_Analyzer is
                   else
                      Prev_Token := Tok_Comma;
 
-                     if Top_Token.Declaration
-                       and then Top_Token.Token = Tok_Identifier
+                     if Local_Top_Token.Declaration
+                       and then Local_Top_Token.Token = Tok_Identifier
                      then
-                        Pop (Tokens);
+                        Pop_And_Set_Local (Tokens);
 
-                     elsif Top_Token.Token = Tok_With
-                       or else Top_Token.Token = Tok_Use
+                     elsif Local_Top_Token.Token = Tok_With
+                       or else Local_Top_Token.Token = Tok_Use
                      then
                         declare
                            Val : Extended_Token;
@@ -3454,8 +3492,8 @@ package body Ada_Analyzer is
                            --  with a, b;
                            --  will get two entries: one for a, one for b.
 
-                           Val.Token := Top_Token.Token;
-                           Pop (Tokens);
+                           Val.Token := Local_Top_Token.Token;
+                           Pop_And_Set_Local (Tokens);
                            Val.Sloc.Line   := Line_Count;
                            Val.Sloc.Column :=
                              Prec - Line_Start (Buffer, Prec) + 2;
@@ -3652,7 +3690,8 @@ package body Ada_Analyzer is
 
             if Top_Token.Ident_Len = 0
               and then (Top_Token.Token in Token_Class_Declk
-                        or else Top_Token.Token = Tok_With)
+                        or else Top_Token.Token = Tok_With
+                        or else Top_Token.Token = Tok_Pragma)
             then
                --  Store enclosing entity name
 

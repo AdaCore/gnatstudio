@@ -468,6 +468,7 @@ package Language is
       --------------------
 
       Cat_Exception_Handler,
+      Cat_Pragma,
 
       ----------------------
       -- Custom construct --

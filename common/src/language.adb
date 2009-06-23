@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -811,6 +811,7 @@ package body Language is
          when Cat_Include               => return "include";
          when Construct_Category        => return "";
          when Cat_Exception_Handler     => return "";
+         when Cat_Pragma                => return "pragma";
       end case;
    end Category_Name;
 

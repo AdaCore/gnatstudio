@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,7 @@ with Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Dependency_Tree;
 with Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Type_Tree;
+with Ada_Semantic_Tree.Interfaces;
 
 package body Ada_Semantic_Tree.Assistants is
 
@@ -46,6 +47,7 @@ package body Ada_Semantic_Tree.Assistants is
       Ada_Semantic_Tree.Parts.Register_Assistant (Db);
       Ada_Semantic_Tree.Type_Tree.Register_Assistant (Db);
       Ada_Semantic_Tree.Dependency_Tree.Register_Assistant (Db);
+      Ada_Semantic_Tree.Interfaces.Register_Assistant (Db);
    end Register_Ada_Assistants;
 
 end Ada_Semantic_Tree.Assistants;
