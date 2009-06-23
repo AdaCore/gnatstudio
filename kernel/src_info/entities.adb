@@ -1790,7 +1790,12 @@ package body Entities is
    is
       pragma Unreferenced (Is_Subtype);
    begin
-      Assert (Assert_Me, Is_Of_Type /= null, "Invalid type for entity");
+      if Active (Assert_Me) then
+         Assert (Assert_Me, Is_Of_Type /= null, "Invalid type for entity");
+         if Is_Of_Type = Entity then
+            raise Program_Error with "Entity can't be its own parent";
+         end if;
+      end if;
 
       Append (Entity.Parent_Types, Is_Of_Type);
       Ref (Is_Of_Type, "Is_Of_Type");

@@ -296,6 +296,7 @@ package body ALI_Parser is
       Line                  : Nat;
       Column                : Nat;
       First_Sect, Last_Sect : Nat;
+      Find_In_Xref          : Boolean := True;
       Allow_Fuzzy           : Boolean := True) return Entity_Information;
    --  Find or create an entity information based on the information contained
    --  in the current LI. This returns a placeholder for the declaration, but
@@ -845,7 +846,8 @@ package body ALI_Parser is
             LI, Sfiles,
             Xref.Table (Current_Ref).File_Num,
             Xref.Table (Current_Ref).Line,
-            Xref.Table (Current_Ref).Col, First_Sect, Last_Sect);
+            Xref.Table (Current_Ref).Col, First_Sect, Last_Sect,
+            Find_In_Xref => False);  --  Only search declarations
 
          if Primitive = null then
             Trace (Assert_Me, "Couldn't find interface in ALI file: "
@@ -961,6 +963,7 @@ package body ALI_Parser is
       Line                  : Nat;
       Column                : Nat;
       First_Sect, Last_Sect : Nat;
+      Find_In_Xref          : Boolean := True;
       Allow_Fuzzy           : Boolean := True) return Entity_Information
    is
       S      : Source_File;
@@ -992,32 +995,38 @@ package body ALI_Parser is
       --  Do a separate loop for references, in case this was a reference to
       --  the declaration. It will be much faster in that case
 
-      for Sect in First_Sect .. Last_Sect loop
-         --  Check all references in the ALI file, since we can have:
-         --     32i4 X{integer} 33m24 50m4
-         --     33i4 Y=33:24{integer} 51r4
-         for Entity in Xref_Section.Table (Sect).First_Entity ..
-           Xref_Section.Table (Sect).Last_Entity
-         loop
-            for Ref in Xref_Entity.Table (Entity).First_Xref
-              .. Xref_Entity.Table (Entity).Last_Xref
+      if Find_In_Xref then
+         for Sect in First_Sect .. Last_Sect loop
+            --  Check all references in the ALI file, since we can have:
+            --     32i4 X{integer} 33m24 50m4
+            --     33i4 Y=33:24{integer} 51r4
+            for Entity in Xref_Section.Table (Sect).First_Entity ..
+              Xref_Section.Table (Sect).Last_Entity
             loop
-               if Xref.Table (Ref).File_Num = File_Num
-                 and then Xref.Table (Ref).Line = Line
-                 and then (Column = 0
-                           or else Xref.Table (Ref).Col = Column)
-               then
-                  return Get_Or_Create
-                    (Name => Locale_To_UTF8
-                        (Get_String (Xref_Entity.Table (Entity).Entity)),
-                     File => Sfiles (Xref_Section.Table (Sect).File_Num).File,
-                     Line => Integer (Xref_Entity.Table (Entity).Line),
-                     Column => Visible_Column_Type
-                       (Xref_Entity.Table (Entity).Col));
-               end if;
+               for Ref in Xref_Entity.Table (Entity).First_Xref
+                 .. Xref_Entity.Table (Entity).Last_Xref
+               loop
+                  --  Ignore the interface references, since that might be what
+                  --  we are already searching for
+                  if Xref.Table (Ref).File_Num = File_Num
+                    and then Xref.Table (Ref).Line = Line
+                    and then Xref.Table (Ref).Rtype /= Interface_Reference
+                    and then (Column = 0
+                              or else Xref.Table (Ref).Col = Column)
+                  then
+                     return Get_Or_Create
+                       (Name => Locale_To_UTF8
+                          (Get_String (Xref_Entity.Table (Entity).Entity)),
+                        File =>
+                          Sfiles (Xref_Section.Table (Sect).File_Num).File,
+                        Line => Integer (Xref_Entity.Table (Entity).Line),
+                        Column => Visible_Column_Type
+                          (Xref_Entity.Table (Entity).Col));
+                  end if;
+               end loop;
             end loop;
          end loop;
-      end loop;
+      end if;
 
       if Active (Assert_Me) then
          Trace (Assert_Me,

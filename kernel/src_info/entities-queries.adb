@@ -3041,16 +3041,18 @@ package body Entities.Queries is
       procedure Process_Recursive (Entity  : Entity_Information) is
          Members : Entity_Information_List;
       begin
-         if Parents then
-            Members := Entity.Parent_Types;
-         else
-            Members := Entity.Child_Types;
-         end if;
-
          Append (Result, Entity);
 
          if Recursive then
+            --  ??? Not efficient when using interfaces and multiple entities
+            --  are defined in the same file.
             Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+
+            if Parents then
+               Members := Entity.Parent_Types;
+            else
+               Members := Entity.Child_Types;
+            end if;
 
             for P in
               Entity_Information_Arrays.First .. Last (Members)
