@@ -150,6 +150,7 @@ class gnatCheckProc:
 
    def on_exit (self, process, status, remaining_output):
       if self.msg != "":
+         GPS.Console ("Messages").write (self.msg)
          GPS.Locations.parse (self.msg, self.locations_string)
          self.parse_output (self.msg)
          self.msg = ""
