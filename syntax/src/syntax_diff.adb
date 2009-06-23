@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -148,7 +148,7 @@ package body Syntax_Diff is
          when Namespace_Category | Subprogram_Category | Dependency_Category |
               Data_Type_Category | Cat_Representation_Clause |
               Cat_Local_Variable | Cat_Parameter | Cat_Literal | Cat_Field |
-              Cat_Exception_Handler | Construct_Category
+              Cat_Exception_Handler | Construct_Category | Cat_Pragma
          =>
             return True;
 
