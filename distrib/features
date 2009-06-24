@@ -17,10 +17,11 @@ New features on 4.4.0
 
 NF-44-I616-052 New action to toggle auto-casing on/off (2009-06-24)
 
-   The new action "Toggle Auto Casing/indentation" which toggle the
-   auto-casing on/off. When using On-The-Fly casing it is more convenient
-   to use this sticky action instead of the action which disable casing for
-   a single character only.
+   GPS provides a new action called "Toggle Auto Casing/indentation" which
+   toggles the auto-casing. When using On-The-Fly casing it is more convenient
+   to use this sticky action (via its associated key shortcut, alt-q by
+   default) instead of the action which disables casing for a single character
+   only.
 
 NF-44-I602-021 New plugin: open_file.py (2009-06-03)
 
