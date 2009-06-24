@@ -9925,6 +9925,11 @@ For the @code{End_Of_Line}, @code{End_Of_Word} and @code{On_The_Fly} policies
 it is always possible to force the casing of the current line by pressing the
 indentation key (@key{Ctrl-Tab} by default).
 
+It is also possible to disable the casing for a single character
+(action @code{No Casing/indentation on Next Key}, default @key{Ctrl-Q}) or
+temporarily (action @code{Toggle Auto Casing/indentation},
+default @key{Alt-Q}).
+
 @item Reserved word casing
 How the editor should handle reserved words casing.
 @code{Unchanged} will keep the casing as-is;

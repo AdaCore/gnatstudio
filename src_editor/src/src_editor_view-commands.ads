@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2003-2008, AdaCore                --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,7 +66,7 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  This command reindents the current line
 
-   type Control_Type is (As_Is);
+   type Control_Type is (As_Is, Sticky_As_Is);
    --  As_Is: The next key will be interpreted as-is (no casing/indentation)
 
    type Control_Command is new Interactive_Command with record

@@ -2294,7 +2294,7 @@ package body Src_Editor_Module is
                     Get_Source_Box_From_MDI
                       (Find_Editor (Kernel, File_Data.File));
          begin
-            if Get_View (Box).As_Is_Mode then
+            if Get_View (Box).As_Is_Enabled then
                Get_View (Box).Reset_As_Is_Mode;
             else
                Autocase_Text (Get_Buffer (Box), Casing => On_The_Fly);
@@ -2821,6 +2821,19 @@ package body Src_Editor_Module is
         (Kernel      => Kernel,
          Action      => "No casing/indentation on next key",
          Default_Key => "control-q");
+
+      Command := new Control_Command;
+      Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Control_Command (Command.all).Mode := Sticky_As_Is;
+      Register_Action
+        (Kernel, "Toggle auto casing/indentation",
+         Command, -"Disable or enable the casing and indentation",
+         Category => "Editor",
+         Filter   => Src_Action_Context);
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => "Toggle auto casing/indentation",
+         Default_Key => "alt-q");
 
       Command := new Tab_As_Space_Command;
       Tab_As_Space_Command (Command.all).Kernel := Kernel_Handle (Kernel);

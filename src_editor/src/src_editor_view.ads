@@ -153,15 +153,18 @@ package Src_Editor_View is
    procedure Stop_Selection_Drag (View : access Source_View_Record'Class);
    --  Stop the selection drag if it's currently in done
 
-   function As_Is_Mode (View : access Source_View_Record'Class) return Boolean;
-   pragma Inline (As_Is_Mode);
+   function As_Is_Enabled
+     (View : access Source_View_Record'Class) return Boolean;
+   pragma Inline (As_Is_Enabled);
    --  Return true is the view is currently in as-is mode (no autocasing for
-   --  next character).
+   --  next character or stikcy as-is mode).
 
    procedure Reset_As_Is_Mode (View : access Source_View_Record'Class);
    --  Set As_Mode to false
 
 private
+
+   type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
 
    type Source_View_Record is new Gtkada_Text_View_Record with record
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
@@ -243,7 +246,7 @@ private
       Button_Pressed       : Boolean := False;
       --  Whether the button 1 is pressed
 
-      As_Is_Mode           : Boolean := False;
+      As_Is_Mode           : As_Is_Status := Disabled;
       --  Set to True when the as-is-key has been pressed, in this case the
       --  indentation and casing are disabled for the next key.
 

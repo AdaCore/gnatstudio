@@ -286,15 +286,15 @@ package body Src_Editor_View is
    procedure Register_Idle_Column_Redraw (View : Source_View);
    --  Register an idle redrawing of the side columns
 
-   ----------------
-   -- As_Is_Mode --
-   ----------------
+   -------------------
+   -- As_Is_Enabled --
+   -------------------
 
-   function As_Is_Mode
+   function As_Is_Enabled
      (View : access Source_View_Record'Class) return Boolean is
    begin
-      return View.As_Is_Mode;
-   end As_Is_Mode;
+      return View.As_Is_Mode in Enabled .. Sticky_Enabled;
+   end As_Is_Enabled;
 
    ----------------------
    -- Reset_As_Is_Mode --
@@ -302,7 +302,9 @@ package body Src_Editor_View is
 
    procedure Reset_As_Is_Mode (View : access Source_View_Record'Class) is
    begin
-      View.As_Is_Mode := False;
+      if View.As_Is_Mode = Enabled then
+         View.As_Is_Mode := Disabled;
+      end if;
    end Reset_As_Is_Mode;
 
    ---------------------------------
@@ -1158,7 +1160,7 @@ package body Src_Editor_View is
       pragma Unreferenced (Result);
 
    begin
-      View.As_Is_Mode := False;
+      View.As_Is_Mode := Disabled;
 
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
@@ -2087,7 +2089,7 @@ package body Src_Editor_View is
                return False;
             end if;
 
-            if not View.As_Is_Mode then
+            if not View.As_Is_Enabled then
                Word_Added (Buffer);
             end if;
 
@@ -2112,7 +2114,7 @@ package body Src_Editor_View is
                   --  We do not want to get the previous line if we have the
                   --  as-is modifier set.
 
-                  if not View.As_Is_Mode then
+                  if not View.As_Is_Enabled then
                      Backward_Line (Start, Result);
                   end if;
 
@@ -2123,7 +2125,7 @@ package body Src_Editor_View is
                   Result := Do_Indentation (Buffer, Start, Last);
                end if;
 
-               View.As_Is_Mode := False;
+               View.Reset_As_Is_Mode;
                return True;
             end if;
 
@@ -2150,7 +2152,7 @@ package body Src_Editor_View is
             --  the key string is not set in the event object. As a result
             --  the "word_added" whould not be called.
 
-            if not View.As_Is_Mode then
+            if not View.As_Is_Enabled then
                Word_Added (Buffer);
             end if;
 
@@ -2165,7 +2167,7 @@ package body Src_Editor_View is
                  and then
                    not Is_In (Key_Str (Key_Str'First), Constants.Control_Set)
                then
-                  if not View.As_Is_Mode then
+                  if not View.As_Is_Enabled then
                      Word_Added (Buffer);
                   end if;
                end if;

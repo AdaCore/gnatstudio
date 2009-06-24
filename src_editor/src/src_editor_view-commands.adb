@@ -251,7 +251,14 @@ package body Src_Editor_View.Commands is
    begin
       case Command.Mode is
          when As_Is =>
-            View.As_Is_Mode := True;
+            View.As_Is_Mode := Enabled;
+
+         when Sticky_As_Is =>
+            if View.As_Is_Mode = Sticky_Enabled then
+               View.As_Is_Mode := Disabled;
+            else
+               View.As_Is_Mode := Sticky_Enabled;
+            end if;
       end case;
       return Success;
    end Execute;
