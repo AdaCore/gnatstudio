@@ -109,8 +109,7 @@ package body Src_Editor_View.Commands is
 
    overriding function Execute
      (Command : access Move_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
       View     : constant Source_View   :=
