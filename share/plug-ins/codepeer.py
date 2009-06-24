@@ -44,7 +44,6 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
        <command-line>
           <arg>codepeer</arg>
           <arg>-all</arg>
-          <arg>-global</arg>
           <arg>-background</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
@@ -108,8 +107,30 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
           <arg>-all</arg>
           <arg>-global</arg>
           <arg>-background</arg>
+          <arg>-repartition</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
+          <arg>-lib</arg>
+          <arg>%Pl.library</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer" category="CodePeer" name="Run CodePeer Quickly">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-all</arg>
+          <arg>-background</arg>
+          <arg>-repartition</arg>
+          <arg>-no-race-conditions</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
+          <arg>-dbg-partition-limit</arg>
+          <arg>500000</arg>
           <arg>-lib</arg>
           <arg>%Pl.library</arg>
        </command-line>
@@ -125,7 +146,6 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
        <command-line>
           <arg>codepeer</arg>
           <arg>-all</arg>
-          <arg>-global</arg>
           <arg>-background</arg>
           <arg>-output-only</arg>
           <arg>-lib</arg>
