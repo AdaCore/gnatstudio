@@ -109,6 +109,11 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Analyze All" menu item is activated
 
+   procedure On_Quick_Analyze_All
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Quick Analyze All" menu item is activated
+
    procedure On_Generate_SCIL
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
@@ -170,10 +175,13 @@ package body Code_Peer.Module is
    procedure Review
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
       Force       : Boolean;
-      Output_Only : Boolean := False);
+      Output_Only : Boolean := False;
+      Quick       : Boolean := False);
    --  Launch CodePeer review.
    --  If Force is True, no dialog is displayed to change codepeer switches.
    --  If Output_Only is True, run CodePeer in "output only" mode.
+   --  If Quick is True, run "Run CodePeer Quickly" target instead of
+   --  "Run CodePeer"
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -238,7 +246,8 @@ package body Code_Peer.Module is
    procedure Review
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
       Force       : Boolean;
-      Output_Only : Boolean := False)
+      Output_Only : Boolean := False;
+      Quick       : Boolean := False)
    is
       Mode             : constant String :=
                            Code_Peer.Shell_Commands.Get_Build_Mode
@@ -262,6 +271,15 @@ package body Code_Peer.Module is
            (Kernel_Handle (Module.Kernel),
             Code_Peer.Shell_Commands.Build_Target
               (Module.Get_Kernel, "Regenerate CodePeer Report"),
+            Force       => Force,
+            Build_Mode  => "codepeer",
+            Synchronous => False,
+            Dir         => Projects.Object_Path (Project));
+      elsif Quick then
+         Code_Peer.Shell_Commands.Build_Target_Execute
+           (Kernel_Handle (Module.Kernel),
+            Code_Peer.Shell_Commands.Build_Target
+              (Module.Get_Kernel, "Run CodePeer Quickly"),
             Force       => Force,
             Build_Mode  => "codepeer",
             Synchronous => False,
@@ -1017,6 +1035,29 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Analyze_All;
 
+   --------------------------
+   -- On_Quick_Analyze_All --
+   --------------------------
+
+   procedure On_Quick_Analyze_All
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Module.Action := Quick_Run;
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Quick_Analyze_All;
+
    ----------------------
    -- On_Generate_SCIL --
    ----------------------
@@ -1065,6 +1106,9 @@ package body Code_Peer.Module is
       case Action is
          when Run =>
             Review (Module, Force => True);
+
+         when Quick_Run =>
+            Review (Module, Force => True, Quick => True);
 
          when Load_UI =>
             declare
@@ -1569,7 +1613,7 @@ package body Code_Peer.Module is
                     Image              =>
                       Gtk.Widget.Gtk_Widget
                         (Self.Kernel.Get_Main_Window).Render_Icon
-                        (Code_Analysis_GUI.Subp_Pixbuf_Cst,
+                        (Code_Analysis_GUI.Post_Analysis_Cst,
                          Gtk.Enums.Icon_Size_Menu),
                     Associated_Command =>
                     new Commands.Code_Peer.Review_Message_Command'
@@ -1665,6 +1709,12 @@ package body Code_Peer.Module is
 
       Gtk.Menu_Item.Gtk_New (Mitem);
       GPS.Kernel.Modules.Register_Menu (Kernel, Menu, Mitem);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Menu,
+         Text        => -"_Quick Analyze All",
+         Callback    => On_Quick_Analyze_All'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,

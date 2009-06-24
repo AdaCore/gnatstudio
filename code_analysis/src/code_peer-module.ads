@@ -83,8 +83,12 @@ private
      array (Code_Peer.Message_Probability_Level)
        of GPS.Kernel.Styles.Style_Access;
 
-   type CodePeer_Action is (None, Run, Load_UI);
-   --  Various actions related to codepeer handling
+   type CodePeer_Action is (None, Run, Quick_Run, Load_UI);
+   --  Various actions related to codepeer handling:
+   --   - None: no action registered
+   --   - Run: run "Run CodePeer" target
+   --   - Quick_Run: run "Run CodePeer Quickly" target
+   --   - Load_UI: load CodePeer UI
 
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is

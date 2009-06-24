@@ -41,12 +41,14 @@ with Code_Analysis;        use Code_Analysis;
 
 package Code_Analysis_GUI is
 
-   Prj_Pixbuf_Cst  : constant String := "gps-project-closed";
+   Prj_Pixbuf_Cst    : constant String := "gps-project-closed";
    --  Name of the pixbuf used for project node in the analysis report
-   File_Pixbuf_Cst : constant String := "gps-file";
+   File_Pixbuf_Cst   : constant String := "gps-file";
    --  Name of the pixbuf used for file node in the analysis report
-   Subp_Pixbuf_Cst : constant String := "gps-entity-subprogram";
+   Subp_Pixbuf_Cst   : constant String := "gps-entity-subprogram";
    --  Name of the pixbuf used for subprogram node in the analysis report
+   Post_Analysis_Cst : constant String := "gps-file-modified";
+   --  Name of the pixbuf used for posting an analysis
 
    Pix_Col  : constant := 0;
    --  Gtk_Tree_Model column number dedicated to the icons associated with each
