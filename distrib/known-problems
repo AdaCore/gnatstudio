@@ -33,11 +33,10 @@ Known Problems fixed in GPS 4.4.0
   Workaround: Use the "GCOV_ROOT" environment variable to a valid directory, if
               the root project does not have an object dir.
 
-- I526-028: missing_dirs.py plugin clears console
-  Problem:    This plugin is used to create missing directories referenced in
-              the project (object dir, source dir,...). However, it used to
-              clear the console, thus hiding possible other messages
-  Workaround: disable the plugin once the directories have been created
+- I526-028: create_missing_dirs.py plug-in clears console
+  Problem:    This plug-in clears the GPS console at start-up, hiding other
+              messages.
+  Workaround: Disable the plug-in once the directories have been created.
 
 - I526-007: Aliases and cursor position
   Problem:    If you create an alias via the /Edit/Aliases menu, and specify
