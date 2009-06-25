@@ -139,6 +139,11 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Advanced->Regenerate Report" menu item is activated
 
+   procedure On_Edit_Text_Overview
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Edit Text Overview" menu item is activated
+
    procedure On_Edit_Text_Listing
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
@@ -775,8 +780,7 @@ package body Code_Peer.Module is
       declare
          Text_File : constant Virtual_File :=
                        Create_From_Dir
-                         (Codepeer_Output_Directory
-                            (Get_Project (Kernel)),
+                         (Codepeer_Output_Directory (Get_Project (Kernel)),
                           "list/" &
                           (+File_Information
                              (Context).Display_Base_Name) & ".txt");
@@ -809,6 +813,61 @@ package body Code_Peer.Module is
               (Kernel_Handle (Module.Kernel), Mode);
          end if;
    end On_Edit_Text_Listing;
+
+   ---------------------------
+   -- On_Edit_Text_Overview --
+   ---------------------------
+
+   procedure On_Edit_Text_Overview
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Mode             : constant String :=
+                           Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      declare
+         Text_File : constant Virtual_File :=
+                       Create_From_Dir
+                         (Codepeer_Output_Directory (Get_Project (Kernel)),
+                          "list/overview.txt");
+      begin
+         if Is_Regular_File (Text_File) then
+            Open_File_Editor
+              (Kernel,
+               Text_File,
+               New_File     => False,
+               Force_Reload => True);
+         else
+            Console.Insert
+              (Kernel,
+               -"cannot find text overview: " & Text_File.Display_Full_Name,
+               Mode => Console.Error);
+         end if;
+      end;
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_Edit_Text_Overview;
 
    -----------------
    -- On_Edit_Log --
@@ -1733,6 +1792,12 @@ package body Code_Peer.Module is
          Parent_Path => Menu,
          Text        => -"_Regenerate Report",
          Callback    => On_Regenerate_Report'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Advanced_Menu,
+         Text        => -"Edit CodePeer _Text Overview",
+         Callback    => On_Edit_Text_Overview'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
