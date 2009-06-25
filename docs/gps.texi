@@ -5228,6 +5228,13 @@ Tree.
    root project. It does not clean objects from other related projects.
    @end table
 
+@item Makefile
+If you have a file called @file{Makefile} in the same directory as your
+project file is, or if you've set the @code{makefile} property in the
+@code{Make} section of the project properties (see
+@ref{The Project Properties Editor}), this menu will be displayed, giving
+access to all the targets defined in your makefile.
+
 @item Run
    @table @i
    @item main
