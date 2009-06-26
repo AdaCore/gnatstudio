@@ -1336,7 +1336,7 @@ package body Ada_Analyzer is
                Do_Indent (Prec, Num_Spaces);
             end if;
 
-         elsif Prev_Token = Tok_Colon_Equal
+         elsif (Prev_Token = Tok_Colon_Equal or else Prev_Token = Tok_Renames)
            and then Top (Tokens).Colon_Col /= 0
            and then Continuation_Val = 0
          then
