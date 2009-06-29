@@ -195,7 +195,7 @@ package body GPS.Kernel.Task_Manager is
       Allow_Creation : Boolean := True) return MDI_Child
    is
       Child : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Task_Manager_Interface_Record'Tag));
+        (Get_MDI (Kernel), Task_Manager_Widget_Record'Tag));
       Iface : Task_Manager_Widget_Access;
    begin
       if Child = null then
