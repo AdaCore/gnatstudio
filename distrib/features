@@ -29,6 +29,12 @@ NF-44-I602-021 New plugin: open_file.py (2009-06-03)
    in an editor, the new menu gives you the choice of automatically searching
    and opening this file in a new editor.
 
+NF-44-I602-018 Display completion proposal in Completion Window (2009-06-11)
+
+   The auxiliary window in the Smart Completion now shows the full name of
+   the completion proposal. This helps when the completion proposal is too
+   long to be displayed entirely in the list window.
+
 NF-44-I602-003 New preference: Wrap around on next/previous (2009-04-06)
 
    Whether using the 'Next Tag' and 'Previous Tag' actions/menus, this
