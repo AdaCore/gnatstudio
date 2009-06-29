@@ -137,7 +137,7 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-dbg-partition-limit</arg>
-          <arg>500</arg>
+          <arg>1000</arg>
           <arg>-method-timeout</arg>
           <arg>30</arg>
           <arg>%Pl.library</arg>
