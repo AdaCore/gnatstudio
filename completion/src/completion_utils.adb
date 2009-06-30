@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009, AdaCore                       --
+--                    Copyright (C) 2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,13 +28,11 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Label;                 use Gtk.Label;
 
-with Traces;                    use Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
-
-with String_Utils; use String_Utils;
+with Traces;                    use Traces;
+with String_Utils;              use String_Utils;
 
 package body Completion_Utils is
 
@@ -58,7 +56,8 @@ package body Completion_Utils is
 
    procedure On_Location_Button_Clicked
      (Object    : access GObject_Record'Class;
-      User_Data : Kernel_And_Location) is
+      User_Data : Kernel_And_Location)
+   is
       pragma Unreferenced (Object);
    begin
       Open_File_Editor
@@ -79,15 +78,15 @@ package body Completion_Utils is
       Fixed_Width_Font : Pango_Font_Description;
       Proposals        : Proposals_List.List) return Gtk_Widget
    is
-      Frame    : Gtk_Frame;
+      Frame          : Gtk_Frame;
       VBox,
-      VBox2  : Gtk_Vbox;
-      HBox     : Gtk_Hbox;
+      VBox2          : Gtk_Vbox;
+      HBox           : Gtk_Hbox;
 
-      Button   : Gtk_Button;
-      Label    : Gtk_Label;
-      Title    : Gtk_Label;
-      Button_Label : Gtk_Label;
+      Button         : Gtk_Button;
+      Label          : Gtk_Label;
+      Title          : Gtk_Label;
+      Button_Label   : Gtk_Label;
       Multiple_Items : Boolean;
 
       use Proposals_List;
@@ -107,6 +106,7 @@ package body Completion_Utils is
       end Location_To_Label;
 
       use type Ada.Containers.Count_Type;
+
    begin
       if Proposals.Is_Empty then
          return null;
@@ -128,7 +128,7 @@ package body Completion_Utils is
          declare
             Doc      : constant String := Get_Documentation (Element (C).all);
             Location : constant File_Location :=
-              Get_Location (Element (C).all);
+                         Get_Location (Element (C).all);
          begin
             Gtk_New (Frame);
 
@@ -146,6 +146,7 @@ package body Completion_Utils is
             if not Multiple_Items then
                Set_Shadow_Type (Frame, Shadow_None);
             end if;
+
             Gtk_New_Hbox (HBox);
             Pack_Start (HBox, Label, False, False, 3);
 
@@ -153,7 +154,7 @@ package body Completion_Utils is
             Pack_Start (VBox2, HBox, False, False, 3);
             Add (Frame, VBox2);
 
-            --  If there is a file location, create a link to it.
+            --  If there is a file location, create a link to it
 
             if Location /= Null_File_Location then
                Gtk_New_Hbox (HBox);

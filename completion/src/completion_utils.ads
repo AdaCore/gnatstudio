@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009, AdaCore                       --
+--                    Copyright (C) 2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,13 +20,13 @@
 --  This package provides a number of utilities to share functions amongst
 --  users of the completion information.
 
-with Gtk.Widget; use Gtk.Widget;
-with GPS.Kernel; use GPS.Kernel;
+with Ada.Containers.Doubly_Linked_Lists;
 
-with Completion; use Completion;
+with Gtk.Widget; use Gtk.Widget;
 with Pango.Font; use Pango.Font;
 
-with Ada.Containers.Doubly_Linked_Lists;
+with GPS.Kernel; use GPS.Kernel;
+with Completion; use Completion;
 
 package Completion_Utils is
 
