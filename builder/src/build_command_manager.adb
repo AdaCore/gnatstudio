@@ -755,6 +755,19 @@ package body Build_Command_Manager is
          Data'Unchecked_Access);
 
    begin
+      if Mains.T /= List_Type then
+         Insert
+           (Command.Kernel,
+            (-"The command for determining the target type of target " &
+             Target_Type & (-" returned a ") & Mains.T'Img
+               & (-("but should return a LIST_TYPE "
+               & " (containing a pair display_name/full_name)"))),
+             Mode => Error);
+
+         Free (Mains);
+         return Failure;
+      end if;
+
       if Command.Main not in Mains.List'Range then
          Insert (Command.Kernel,
                  (-"This project does not contain") & Command.Main'Img

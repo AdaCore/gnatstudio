@@ -1460,15 +1460,28 @@ package body Builder_Facility_Module is
                   Data'Unchecked_Access);
 
          begin
-            for J in 1 .. Mains.Length loop
-               if Mains.List (J).Length /= 0 then
-                  Menu_For_Action
-                    (Parent_Path => To_String (Cat_Path),
-                     Name        => Get_Name (Target),
-                     Main        => Mains.List (J).Tuple (2).Str,
-                     Menu_Name   => Mains.List (J).Tuple (1).Str);
-               end if;
-            end loop;
+            if Mains.Length > 0
+              and then Mains.T /= List_Type
+            then
+               Insert
+                 (Get_Kernel,
+                  (-"The command for determining the target type of target " &
+                   To_String (Targets) & (-" returned a ") & Mains.T'Img
+                     & (-("but should return a LIST_TYPE "
+                       & " (containing a pair display_name/full_name)"))),
+                  Mode => Error);
+
+            else
+               for J in 1 .. Mains.Length loop
+                  if Mains.List (J).Length /= 0 then
+                     Menu_For_Action
+                       (Parent_Path => To_String (Cat_Path),
+                        Name        => Get_Name (Target),
+                        Main        => Mains.List (J).Tuple (2).Str,
+                        Menu_Name   => Mains.List (J).Tuple (1).Str);
+                  end if;
+               end loop;
+            end if;
 
             Destroy (Data);
             Free (Mains);
