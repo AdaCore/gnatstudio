@@ -15,6 +15,12 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I630-005 Improved error detection in Builder plugins (2009-06-30)
+
+   When writing Python plugins to add support for Build targets (such as the
+   Makefile.py plugin), GPS now detects malformed targets sets and displays a
+   message instead of failing silently.
+
 NF-44-I616-052 New action to toggle auto-casing on/off (2009-06-24)
 
    GPS provides a new action called "Toggle Auto Casing/indentation" which
