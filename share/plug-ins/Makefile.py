@@ -199,6 +199,8 @@ class Makefile (Builder):
           return self.read_targets ()
       return None
 
+ant_targets = []
+
 class Antfile (Builder):
    def __init__ (self):
       self.pkg_name = "ant"
@@ -207,9 +209,11 @@ class Antfile (Builder):
       Builder.__init__ (self)
 
    def read_targets (self):
-      targets = ""
+      global ant_targets
+      ant_targets = []
       class MySaxDocumentHandler (handler.ContentHandler):
          def startElement (self, name, attrs):
+            global ant_targets
             if name == "target":
                target=None
                description=None
@@ -218,14 +222,17 @@ class Antfile (Builder):
                       target=attrs.get(attrName)
                   if attrName=="description":
                       description=attrs.get(attrName)
-               data += " " + str(target)
+               ant_targets += [(str(target), str(target))]
 
       parser = make_parser ()
       parser.setContentHandler (MySaxDocumentHandler ())
       inFile = open (self.buildfile, 'r')
+
       parser.parse (inFile)
+
       inFile.close ()
-      return targets
+
+      return ant_targets
 
    def compute_build_targets (self, name):
       if name == "ant":
@@ -242,6 +249,7 @@ def on_gps_started (hook_name):
       Antfile()
 
 parse_xml (Make_Model)
+parse_xml (Ant_Model_Template)
 parse_xml ("""
   <project_attribute
     name="Makefile"
