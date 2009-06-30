@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,6 +56,8 @@ with Basic_Types;   use Basic_Types;
 with Language;      use Language;
 
 with Completion.History; use Completion.History;
+
+with Completion_Utils; use Completion_Utils;
 
 package Completion_Window is
 
@@ -114,26 +116,15 @@ package Completion_Window is
 
 private
 
-   type Completion_Proposal_Access is access Completion_Proposal'Class;
-
-   type Note_Type is record
-      Markup   : String_Access;
-      Location : File_Location;
-   end record;
-
-   type Notes_Array is array (Positive range <>) of Note_Type;
-   type Notes_Array_Access is access Notes_Array;
-
    type Information_Record is record
       Markup  : String_Access;
       Text    : String_Access;
-      Notes   : Notes_Array_Access;
       Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       --  This can be null, in which case it indicates that it must be computed
       --  from Proposal.
       Offset   : Character_Offset_Type;
       --  The offset at which to place the cursor after completion.
-      Proposal : Completion_Proposal_Access;
+      Proposals : Proposals_List.List;
       Visible  : Boolean := True;
    end record;
 

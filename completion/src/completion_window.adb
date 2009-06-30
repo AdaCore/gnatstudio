@@ -29,7 +29,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
 with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Button;                use Gtk.Button;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -53,13 +52,10 @@ with Ada.Unchecked_Deallocation;
 
 with Traces;                    use Traces;
 
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
-
-with String_Utils; use String_Utils;
 
 package body Completion_Window is
 
@@ -80,9 +76,6 @@ package body Completion_Window is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Completion_Proposal'Class, Completion_Proposal_Access);
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Notes_Array, Notes_Array_Access);
 
    package Return_Cb is new Gtk.Handlers.Return_Callback
      (Completion_Window_Record, Boolean);
@@ -145,11 +138,6 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class);
    --  Callback on a selection change in the tree view.
 
-   procedure On_Location_Button_Clicked
-     (Window    : access Completion_Window_Record'Class;
-      User_Data : File_Location);
-   --  Callback on a click on the location button
-
    procedure Adjust_Selected (Window : access Completion_Window_Record'Class);
    --  Show only the items that begin with the current pattern filter.
    --  Delete the window if there is no item to show.
@@ -198,29 +186,8 @@ package body Completion_Window is
      (Info     : in out Information_Record;
       Proposal : Completion_Proposal'Class)
    is
-      Note : Note_Type;
    begin
-      Note.Markup := new String'(Get_Documentation (Proposal));
-      Note.Location := Get_Location (Proposal);
-
-      if Info.Notes = null then
-         Info.Notes := new Notes_Array'(1 => Note);
-      else
-         declare
-            Old_Notes : Notes_Array_Access := Info.Notes;
-         begin
-            Info.Notes := new Notes_Array (1 .. Old_Notes'Length + 1);
-
-            pragma Assert (Old_Notes'First = 1);
-
-            for J in 1 .. Old_Notes'Length loop
-               Info.Notes (J) := Old_Notes (J);
-            end loop;
-
-            Info.Notes (Info.Notes'Last) := Note;
-            Unchecked_Free (Old_Notes);
-         end;
-      end if;
+      Info.Proposals.Append (new Completion_Proposal'Class'(Proposal));
    end Augment_Notes;
 
    ------------------------
@@ -245,42 +212,22 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Item   : Information_Record)
    is
-      Notes  : Notes_Array_Access renames Item.Notes;
-      Frame    : Gtk_Frame;
-      VBox,
-        VBox2  : Gtk_Vbox;
+      VBox     : Gtk_Vbox;
       HBox     : Gtk_Hbox;
 
-      Button   : Gtk_Button;
-      Label    : Gtk_Label;
       Title    : Gtk_Label;
       Img      : Gtk_Image;
-      Button_Label : Gtk_Label;
-
-      function Location_To_Label (Loc : File_Location) return String;
-      --  Return a pango markup label corresponding to Loc.
-
-      -----------------------
-      -- Location_To_Label --
-      -----------------------
-
-      function Location_To_Label (Loc : File_Location) return String is
-      begin
-         return "<span color=""blue""><u>" & Display_Base_Name (Loc.File_Path)
-           & ":" & Image (Loc.Line) & "</u></span>";
-      end Location_To_Label;
 
       use type Gdk.Pixbuf.Gdk_Pixbuf;
    begin
       --  If the notes window is not empty, empty it here.
       Empty_Notes_Window (Window);
 
-      if Notes = null then
+      if Item.Proposals.Is_Empty then
          return;
       end if;
 
       Gtk_New_Vbox (VBox);
-      Add (Window.Notes_Container, VBox);
 
       --  If we have a completion proposal, display it as head of the
       --  Notes window.
@@ -296,72 +243,13 @@ package body Completion_Window is
          Pack_Start (VBox, HBox, False, False, 1);
       end if;
 
-      for N in Notes'Range loop
-         Gtk_New (Frame);
+      Pack_Start
+        (VBox,
+         Proposal_Widget
+           (Window.Kernel, Window.Fixed_Width_Font, Item.Proposals),
+         False, False, 1);
 
-         --  If there is only one documentation to display, do not draw a
-         --  border around the frame, as this is just graphical noise in this
-         --  case.
-         if Notes'Length = 1 then
-            Set_Shadow_Type (Frame, Shadow_None);
-         end if;
-
-         --  Create the label
-         Gtk_New (Label);
-         Set_Line_Wrap (Label, False);
-         Set_Use_Markup (Label, True);
-         Modify_Font (Label, Window.Fixed_Width_Font);
-
-         if Notes (N).Markup /= null
-           and then Notes (N).Markup.all /= ""
-         then
-            Set_Markup (Label, Notes (N).Markup.all);
-         else
-            Set_Markup
-              (Label, "<span color=""darkgrey"">No documentation</span>");
-         end if;
-
-         Gtk_New_Hbox (HBox);
-         Pack_Start (HBox, Label, False, False, 3);
-
-         Gtk_New_Vbox (VBox2);
-         Pack_Start (VBox2, HBox, False, False, 3);
-         Add (Frame, VBox2);
-
-         --  If there is a file location, create a link to it.
-
-         if Notes (N).Location /= Null_File_Location then
-            Gtk_New_Hbox (HBox);
-            Set_Label_Widget (Frame, HBox);
-
-            --  Create a title
-            Gtk_New (Title);
-            Set_Use_Markup (Title, True);
-            Set_Markup (Title, "<b>Declaration:</b>");
-            Pack_Start (HBox, Title, False, False, 1);
-            Modify_Font (Title, Window.Fixed_Width_Font);
-
-            --  Create a button
-            Gtk_New (Button, "");
-            Gtk_New (Button_Label);
-            Modify_Font (Button_Label, Window.Fixed_Width_Font);
-            Pack_Start (HBox, Button, False, False, 0);
-            Add (Button, Button_Label);
-            Set_Use_Markup (Button_Label, True);
-            Set_Relief (Button, Relief_None);
-            Set_Markup (Button_Label, Location_To_Label (Notes (N).Location));
-
-            Object_Connect
-              (Button, Gtk.Button.Signal_Clicked,
-               To_Marshaller (On_Location_Button_Clicked'Access), Window,
-               After => False,
-               User_Data => Notes (N).Location);
-         end if;
-
-         Gtk_New_Hbox (HBox);
-         Pack_Start (VBox, HBox, False, False, 5);
-         Pack_Start (HBox, Frame, True, True, 3);
-      end loop;
+      Add (Window.Notes_Container, VBox);
 
       Show_All (Window.Notes_Window);
    end Fill_Notes_Window;
@@ -393,20 +281,22 @@ package body Completion_Window is
    ----------
 
    procedure Free (X : in out Information_Record) is
+      use Proposals_List;
+      C : Cursor;
    begin
       Unchecked_Free (X.Markup);
       Unchecked_Free (X.Text);
 
-      if X.Notes /= null then
-         for J in X.Notes'Range loop
-            Unchecked_Free (X.Notes (J).Markup);
-         end loop;
+      C := X.Proposals.First;
 
-         Unchecked_Free (X.Notes);
-      end if;
-
-      Unchecked_Free (X.Proposal);
-      --  ??? Should we free X.Proposal ?
+      while Has_Element (C) loop
+         declare
+            Comp : Completion_Proposal_Access := Element (C);
+         begin
+            Unchecked_Free (Comp);
+         end;
+         Next (C);
+      end loop;
    end Free;
 
    ------------
@@ -543,6 +433,7 @@ package body Completion_Window is
                         Get_Proposal (Window.Iter);
          Showable   : constant String := To_Showable_String (Proposal);
          Completion : constant String := Get_Completion (Proposal);
+         List       : Proposals_List.List;
       begin
          --  Check whether the current iter contains the same completion.
          if Window.Index = 1
@@ -552,11 +443,10 @@ package body Completion_Window is
             Info :=
               (new String'(Showable),
                new String'(Completion),
-               null,
                Entity_Icons (False, Get_Visibility (Proposal))
                (Get_Category (Proposal)),
                Get_Caret_Offset (Proposal),
-               new Completion_Proposal'Class'(Get_Proposal (Window.Iter)),
+               List,
                True);
 
             Augment_Notes (Info, Proposal);
@@ -911,23 +801,6 @@ package body Completion_Window is
          return False;
    end On_Button_Pressed;
 
-   --------------------------------
-   -- On_Location_Button_Clicked --
-   --------------------------------
-
-   procedure On_Location_Button_Clicked
-     (Window    : access Completion_Window_Record'Class;
-      User_Data : File_Location) is
-   begin
-      Open_File_Editor
-        (Window.Kernel,
-         User_Data.File_Path,
-         User_Data.Line,
-         User_Data.Column);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Location_Button_Clicked;
-
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -1092,6 +965,7 @@ package body Completion_Window is
       Text_End   : Gtk_Text_Iter;
 
       Result     : Boolean;
+
    begin
       Get_Selected (Get_Selection (Window.View), Model, Iter);
 
@@ -1112,9 +986,12 @@ package body Completion_Window is
 
          --  If the proposal can be stored, store it in the history.
 
-         if Window.Info (Pos).Proposal.all in Storable_Proposal'Class then
+         if Window.Info (Pos).Proposals.First_Element.all in
+           Storable_Proposal'Class
+         then
             Prepend_Proposal
-              (Window.Completion_History, Window.Info (Pos).Proposal.all);
+              (Window.Completion_History,
+               Window.Info (Pos).Proposals.First_Element.all);
          end if;
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
