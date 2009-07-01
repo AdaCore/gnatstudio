@@ -177,9 +177,9 @@ package body Task_Manager is
          end if;
 
          if Manager.Queues'Length = 1 then
+            Queue_Removed (Manager, 1);
             Unchecked_Free (Queue);
             Unchecked_Free (Manager.Queues);
-            Queue_Removed (Manager, 1);
             return False;
 
          else
@@ -197,6 +197,8 @@ package body Task_Manager is
                   end if;
                end loop;
 
+               Queue_Removed (Manager, Index);
+
                New_Queues (Manager.Queues'First .. Index - 1) :=
                  Manager.Queues (Manager.Queues'First .. Index - 1);
 
@@ -210,8 +212,6 @@ package body Task_Manager is
                Unchecked_Free (Queue);
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
-
-               Queue_Removed (Manager, Index);
             end;
          end if;
 
