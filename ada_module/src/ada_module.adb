@@ -153,7 +153,10 @@ package body Ada_Module is
          Name    => "Ada-Use-Tabs",
          Default => False,
          Doc     =>
-         -"Whether the editor should use tabulations when indenting",
+         -("Whether the editor should use tabulations when indenting. " &
+           "This preference does NOT modify the TAB key which will still " &
+           "insert TAB characters. Consider also the tab_expansion.py " &
+           "plug-in (Tools->Plug-ins menu)"),
          Page     => -"Editor/Ada",
          Label    => -"Use tabulations");
 
