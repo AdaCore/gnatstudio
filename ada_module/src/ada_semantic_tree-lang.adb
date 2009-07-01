@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2006-2009, AdaCore               --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,19 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Convert; use Glib.Convert;
-
-with Ada.Strings.Unbounded; use Ada.Strings;
-
-with Diffing;
-
+with Ada.Strings.Unbounded;   use Ada.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with GNAT.Strings;
 
-with Language.Ada;           use Language.Ada;
-with Language.Documentation; use Language.Documentation;
+with Glib.Convert;            use Glib.Convert;
 
+with Diffing;
+with Language.Ada;            use Language.Ada;
+with Language.Documentation;  use Language.Documentation;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
 package body Ada_Semantic_Tree.Lang is
@@ -91,7 +88,7 @@ package body Ada_Semantic_Tree.Lang is
 
          declare
             Id : constant Composite_Identifier :=
-              To_Composite_Identifier (Construct.Name.all);
+                   To_Composite_Identifier (Construct.Name.all);
          begin
             return To_Lower (Get_Item (Id, Length (Id)));
          end;
@@ -109,11 +106,11 @@ package body Ada_Semantic_Tree.Lang is
       Entity : Entity_Access) return String
    is
       Tree                 : constant Construct_Tree :=
-        Get_Tree (Get_File (Entity));
+                               Get_Tree (Get_File (Entity));
       Buffer               : constant GNAT.Strings.String_Access :=
-        Get_Buffer (Get_File (Entity));
-      Node : constant Construct_Tree_Iterator :=
-        To_Construct_Tree_Iterator (Entity);
+                               Get_Buffer (Get_File (Entity));
+      Node                 : constant Construct_Tree_Iterator :=
+                               To_Construct_Tree_Iterator (Entity);
 
       Beginning, Current   : Natural;
       Result               : Unbounded.Unbounded_String;
@@ -121,7 +118,8 @@ package body Ada_Semantic_Tree.Lang is
       Type_Start, Type_End : Source_Location;
       Success              : Boolean;
       Language             : constant Language_Access :=
-        Get_Language (Tree_Language'Class (Lang.all)'Access);
+                               Get_Language
+                                 (Tree_Language'Class (Lang.all)'Access);
 
       function Attribute_Decoration
         (Construct  : Simple_Construct_Information;
@@ -130,6 +128,10 @@ package body Ada_Semantic_Tree.Lang is
       function Get_Default_Value
         (Construct  : Simple_Construct_Information;
          Max_Length : Integer := 30) return String;
+
+      --------------------------
+      -- Attribute_Decoration --
+      --------------------------
 
       function Attribute_Decoration
         (Construct  : Simple_Construct_Information;
@@ -242,26 +244,26 @@ package body Ada_Semantic_Tree.Lang is
             pragma Unreferenced (Partial_Entity);
 
             Text : constant String :=
-              Buffer (Sloc_Start.Index .. Sloc_End.Index);
+                     Buffer (Sloc_Start.Index .. Sloc_End.Index);
          begin
             if Entity = Operator_Text and then Text = ";" then
                return True;
             end if;
 
             if not Extract_Value  then
-               if Entity = Operator_Text
-                 and then Text = ":="
-               then
+               if Entity = Operator_Text and then Text = ":=" then
                   Extract_Value := True;
                end if;
 
                return False;
+
             else
                if Entity = Operator_Text then
                   if Text = "(" then
                      Parent_Depth := Parent_Depth + 1;
 
                      return Append_Text (" (");
+
                   elsif Text = ")" or else Text = "," then
                      if Text = ")" then
                         if Parent_Depth = 0 then
@@ -272,6 +274,7 @@ package body Ada_Semantic_Tree.Lang is
                      end if;
 
                      return Append_Text (Text);
+
                   else
                      return Append_Text (" " & Text);
                   end if;
@@ -280,6 +283,7 @@ package body Ada_Semantic_Tree.Lang is
                return Append_Text (" " & Text);
             end if;
          end Token_Callback;
+
       begin
          Parse_Entities
            (Ada_Lang, Buffer (Construct.Sloc_Entity.Index .. Buffer'Last),
@@ -312,8 +316,7 @@ package body Ada_Semantic_Tree.Lang is
            (Result,
             Escape_Text
               (Comment_Block
-                 (Language,
-                  Buffer (Beginning .. Current),
+                 (Language, Buffer (Beginning .. Current),
                   Comment => False,
                   Clean   => True)));
 
@@ -322,8 +325,8 @@ package body Ada_Semantic_Tree.Lang is
 
       if Get_Construct (Node).Category in Subprogram_Category then
          declare
-            Sub_Iter                  : Construct_Tree_Iterator :=
-              Next (Tree, Node, Jump_Into);
+            Sub_Iter                     : Construct_Tree_Iterator :=
+                                             Next (Tree, Node, Jump_Into);
             Has_Parameter                : Boolean := False;
             Biggest_Parameter_Name       : Integer := 0;
             Biggest_Decoration_Length    : Integer := 0;
@@ -460,6 +463,7 @@ package body Ada_Semantic_Tree.Lang is
                         Current_Affected_Type_Length :=
                           Current_Affected_Type_Length + 6;
                      end if;
+
                   else
                      Unbounded.Append (Result, " : ???");
                   end if;
@@ -510,6 +514,7 @@ package body Ada_Semantic_Tree.Lang is
                Unbounded.Append (Result, "'Class");
             end if;
          end if;
+
       elsif Get_Construct (Node).Category in Data_Category then
          declare
             Var_Start, Var_End : Source_Location;
@@ -584,9 +589,9 @@ package body Ada_Semantic_Tree.Lang is
         (I_1, I_2 : Construct_Tree_Iterator) return Boolean
       is
          Construct_1 : constant access Simple_Construct_Information :=
-           Get_Construct (I_1);
+                         Get_Construct (I_1);
          Construct_2 : constant access Simple_Construct_Information :=
-           Get_Construct (I_2);
+                         Get_Construct (I_2);
       begin
          if Construct_1.Category /= Construct_2.Category
            or else Construct_1.Is_Declaration /= Construct_2.Is_Declaration
@@ -731,8 +736,8 @@ package body Ada_Semantic_Tree.Lang is
         (Tree : Construct_Tree; Scope : Construct_Tree_Iterator)
          return Container
       is
-         Cont     : Container;
-         Next_It  : Construct_Tree_Iterator;
+         Cont    : Container;
+         Next_It : Construct_Tree_Iterator;
       begin
          Cont.Tree := Tree;
 
@@ -757,7 +762,6 @@ package body Ada_Semantic_Tree.Lang is
            and then Is_Parent_Scope (Scope, Next_It)
          loop
             Cont.Last := Next_It;
-
             Next_It := Next (Tree, Cont.Last, Jump_Over);
          end loop;
 
@@ -846,7 +850,11 @@ package body Ada_Semantic_Tree.Lang is
 
       function Test_Relevant_Attributes
         (Left, Right : Construct_Attribute_Map) return Boolean;
-      --  Test only attributes that are relevant for parameter profiles.
+      --  Test only attributes that are relevant for parameter profiles
+
+      ------------------------------
+      -- Test_Relevant_Attributes --
+      ------------------------------
 
       function Test_Relevant_Attributes
         (Left, Right : Construct_Attribute_Map) return Boolean
@@ -857,6 +865,7 @@ package body Ada_Semantic_Tree.Lang is
            and then Left (Ada_Out_Attribute) = Right (Ada_Out_Attribute)
            and then Left (Ada_Class_Attribute) = Right (Ada_Class_Attribute);
       end Test_Relevant_Attributes;
+
    begin
       Left_Param_It := Next (Left_Tree, Left_Sb, Jump_Into);
       Right_Param_It := Next (Right_Tree, Right_Sb, Jump_Into);
@@ -871,7 +880,7 @@ package body Ada_Semantic_Tree.Lang is
           (Get_Construct (Left_Param_It).Attributes,
            Get_Construct (Right_Param_It).Attributes)
       loop
-         --  Check the type of the two parameters.
+         --  Check the type of the two parameters
 
          if Get_Referenced_Identifiers (Left_Param_It)
            /= Get_Referenced_Identifiers (Right_Param_It)
@@ -924,7 +933,7 @@ package body Ada_Semantic_Tree.Lang is
      (It : Construct_Tree_Iterator) return Boolean
    is
       Construct : constant access Simple_Construct_Information :=
-        Get_Construct (It);
+                    Get_Construct (It);
    begin
       return Get_Parent_Index (It) = 0
         and then
@@ -962,7 +971,7 @@ package body Ada_Semantic_Tree.Lang is
       use Construct_Annotations_Pckg;
 
       Assistant : constant Database_Assistant_Access :=
-        Get_Assistant (Db, Ada_Assistant_Id);
+                    Get_Assistant (Db, Ada_Assistant_Id);
    begin
       return Ada_Assistant (Assistant.all).Ada_Ref_Key;
    end Get_Ref_Key;

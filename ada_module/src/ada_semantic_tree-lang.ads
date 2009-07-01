@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,9 +47,9 @@ package Ada_Semantic_Tree.Lang is
    --  See inherited documentation
 
    overriding procedure Diff
-     (Lang                   : access Ada_Tree_Language;
-      Old_Tree, New_Tree     : Construct_Tree;
-      Callback               : Diff_Callback);
+     (Lang               : access Ada_Tree_Language;
+      Old_Tree, New_Tree : Construct_Tree;
+      Callback           : Diff_Callback);
    --  See inherited documentation
 
    overriding function Get_Declaration
@@ -63,8 +63,7 @@ package Ada_Semantic_Tree.Lang is
      (Left_Tree    : Construct_Tree;
       Left_Sb      : Construct_Tree_Iterator;
       Right_Tree   : Construct_Tree;
-      Right_Sb     : Construct_Tree_Iterator)
-      return Boolean;
+      Right_Sb     : Construct_Tree_Iterator) return Boolean;
    --  Return true if both subprogram have the same profile. This check that
    --  the parameter type have the same name - won't work if one of the two
    --  views is using a fully qualified expression and the other not.
@@ -74,7 +73,7 @@ package Ada_Semantic_Tree.Lang is
    --  Return true if the iterator given in parameter is a compilation unit
 
    procedure Register_Assistant (Db : Construct_Database_Access);
-   --  Register a generic assistant for Ada.
+   --  Register a generic assistant for Ada
 
    function Get_Ref_Key
      (Db : Construct_Database_Access)
