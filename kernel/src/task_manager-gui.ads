@@ -88,6 +88,11 @@ package Task_Manager.GUI is
       Index   : Integer);
    --  Pause command referenced by Index
 
+   procedure Resume_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Resume paused command referenced by Index
+
    procedure Queue_Added
      (GUI   : Task_Manager_Interface;
       Index : Integer);
