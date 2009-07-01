@@ -5985,4 +5985,25 @@ The package gps_utils.py provides a somewhat more convenient python interface to
        <description>Interrupt the task</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Task.pause">
+       <param name="self">An instance of Task</param>
+       <description>Pause the task</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Task.resume">
+       <param name="self">An instance of Task</param>
+       <description>Resume the paused task</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Task.name">
+       <param name="self">An instance of Task</param>
+       <return>A string</return>
+       <description>Return the name of the task</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Task.status">
+       <param name="self">An instance of Task</param>
+       <return>A string</return>
+       <description>Return the status of the task</description>
+  </shell_doc>
 </docs>
