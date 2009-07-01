@@ -43,6 +43,7 @@ package body Task_Manager.Shell is
       Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       Task_Inst : Class_Instance;
       Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      C         : Command_Access;
    begin
       if Manager = null then
          return;
@@ -64,6 +65,26 @@ package body Task_Manager.Shell is
       elsif Command = "interrupt" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
          Interrupt_Command (Manager, Get_Data (Task_Inst, Task_Class));
+
+      elsif Command = "pause" then
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         Pause_Command (Manager, Get_Data (Task_Inst, Task_Class));
+
+      elsif Command = "resume" then
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         Resume_Command (Manager, Get_Data (Task_Inst, Task_Class));
+
+      elsif Command = "status" then
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         Set_Return_Value
+           (Data,
+            Manager.Queues (Get_Data (Task_Inst, Task_Class)).Status'Img);
+
+      elsif Command = "name" then
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         C := Command_Queues.Head
+           (Manager.Queues (Get_Data (Task_Inst, Task_Class)).Queue);
+         Set_Return_Value (Data, Commands.Name (C));
       end if;
    end Task_Command_Handler;
 
@@ -80,6 +101,14 @@ package body Task_Manager.Shell is
         (Kernel, "list", 0, 0, Task_Command_Handler'Access, Task_Class, True);
       Register_Command
         (Kernel, "interrupt", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "pause", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "resume", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "name", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "status", 0, 0, Task_Command_Handler'Access, Task_Class);
    end Register_Commands;
 
 end Task_Manager.Shell;
