@@ -484,7 +484,7 @@ package body GPS.Kernel.Modules is
    begin
       --  Another example would be:
       --    return "<span foreground=""blue"">" & Name & "</span>";
-      return "<b>" & Name & "</b>";
+      return "<b>" & Glib.Convert.Escape_Text (Name) & "</b>";
    end Emphasize;
 
    ---------------
