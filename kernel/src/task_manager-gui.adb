@@ -274,14 +274,33 @@ package body Task_Manager.GUI is
       if Index in Manager.Queues'Range then
          if Manager.Queues (Index).Status = Running then
             Manager.Queues (Index).Status := Paused;
-         elsif Manager.Queues (Index).Status = Paused then
+         end if;
+
+         Queue_Changed (Manager, Index, True);
+      end if;
+   end Pause_Command;
+
+   --------------------
+   -- Resume_Command --
+   --------------------
+
+   procedure Resume_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         if Manager.Queues (Index).Status = Paused then
             Manager.Queues (Index).Status := Running;
             Run (Manager, Active => Index < Manager.Passive_Index);
          end if;
 
          Queue_Changed (Manager, Index, True);
       end if;
-   end Pause_Command;
+   end Resume_Command;
 
    -----------------------------------------
    -- On_Main_Progress_Button_Press_Event --
@@ -337,7 +356,11 @@ package body Task_Manager.GUI is
                if Col = Iface.Quit_Button_Col then
                   Interrupt_Command (Iface.Model.Manager, Index);
                elsif Col = Iface.Pause_Button_Col then
-                  Pause_Command (Iface.Model.Manager, Index);
+                  if Iface.Model.Manager.Queues (Index).Status = Running then
+                     Pause_Command (Iface.Model.Manager, Index);
+                  else
+                     Resume_Command (Iface.Model.Manager, Index);
+                  end if;
                end if;
             end if;
          end;
@@ -1031,10 +1054,16 @@ package body Task_Manager.GUI is
       Iter : constant Gtk_Tree_Iter :=
                Nth_Child (M, Null_Iter, Gint (Index - 1));
       Path : constant Gtk_Tree_Path := Get_Path (M, Iter);
+      Dummy : Command_Return_Type;
+      pragma Unreferenced (Dummy);
    begin
       Row_Inserted (M, Path, Iter);
       Path_Free (Path);
       Refresh (GUI);
+
+      if GUI.Manager.Queues (Index).Show_Bar then
+         Dummy := Execute (GUI.Manager.Push_Command);
+      end if;
 
       Unregister_Timeout (GUI);
    end Queue_Added;
@@ -1047,13 +1076,18 @@ package body Task_Manager.GUI is
      (GUI   : Task_Manager_Interface;
       Index : Integer)
    is
-      pragma Unreferenced (Index);
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Path : constant Gtk_Tree_Path := Gtk_New_First;
+      Dummy : Command_Return_Type;
+      pragma Unreferenced (Dummy);
    begin
       Row_Deleted (M, Path);
       Path_Free (Path);
       Refresh (GUI);
+
+      if GUI.Manager.Queues (Index).Show_Bar then
+         Dummy := Execute (GUI.Manager.Pop_Command);
+      end if;
 
       Unregister_Timeout (GUI);
    end Queue_Removed;
