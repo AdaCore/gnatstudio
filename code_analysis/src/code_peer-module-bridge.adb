@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;       use Ada.Calendar;
 with GNAT.OS_Lib;
 
 with GNATCOLL.Utils;
@@ -51,6 +52,17 @@ package body Code_Peer.Module.Bridge is
 
    overriding procedure Destroy (Data : in out Bridge_Context);
 
+   Audit_Request_File_Name      : constant Filesystem_String :=
+      "audit_trail_request.xml";
+   Audit_Reply_File_Name        : constant Filesystem_String :=
+      "audit_trail_reply.xml";
+   Add_Audit_File_Name          : constant Filesystem_String :=
+      "add_audit_record.xml";
+   Inspection_Request_File_Name : constant Filesystem_String :=
+      "inspection_request.xml";
+   Inspection_Reply_File_Name   : constant Filesystem_String :=
+      "inspection_reply.xml";
+
    procedure On_Bridge_Exit
      (Process : GPS.Kernel.Timeout.Process_Data;
       Status  : Integer);
@@ -70,7 +82,7 @@ package body Code_Peer.Module.Bridge is
                             Projects.Object_Path (Project);
       Command_File_Name : constant Virtual_File :=
                             Create_From_Dir
-                              (Object_Directory, "bridge_in.xml");
+                              (Object_Directory, Add_Audit_File_Name);
       Args              : GNAT.OS_Lib.Argument_List :=
                             (1 => new String'
                                (+Command_File_Name.Full_Name));
@@ -144,20 +156,25 @@ package body Code_Peer.Module.Bridge is
    ----------------
 
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id) is
-      Project            : constant Projects.Project_Type :=
-                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory   : constant Virtual_File :=
-                             Projects.Object_Path (Project);
-      Command_File_Name  : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory, "bridge_in.xml");
-      Reply_File_Name    : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory, "bridge_out.xml");
-      Args               : GNAT.OS_Lib.Argument_List (1 .. 1);
-      Output_Directory   : constant Virtual_File :=
-                             Codepeer_Output_Directory (Project);
-      Success            : Boolean;
+      Project           : constant Projects.Project_Type :=
+                            GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Object_Directory  : constant Virtual_File :=
+                            Projects.Object_Path (Project);
+      Command_File_Name : constant Virtual_File :=
+                            Create_From_Dir
+                              (Object_Directory,
+                               Inspection_Request_File_Name);
+      Reply_File_Name   : constant Virtual_File :=
+                            Create_From_Dir
+                              (Object_Directory, Inspection_Reply_File_Name);
+      DB_File_Name      : constant Virtual_File :=
+                            Create_From_Dir
+                              (Codepeer_Database_Directory (Project),
+                               "Sqlite.db");
+      Args              : GNAT.OS_Lib.Argument_List (1 .. 1);
+      Output_Directory  : constant Virtual_File :=
+                            Codepeer_Output_Directory (Project);
+      Success           : Boolean;
       pragma Warnings (Off, Success);
 
    begin
@@ -170,26 +187,35 @@ package body Code_Peer.Module.Bridge is
          return;
       end if;
 
-      Args (1) := new String'(+Command_File_Name.Full_Name);
-      --  Generate command file
+      if DB_File_Name.Is_Regular_File
+         and then Reply_File_Name.Is_Regular_File
+         and then DB_File_Name.File_Time_Stamp
+            < Reply_File_Name.File_Time_Stamp
+      then
+         Module.Load (Reply_File_Name);
 
-      Code_Peer.Bridge.Commands.Inspection
-        (Command_File_Name, Output_Directory, Reply_File_Name);
+      else
+         Args (1) := new String'(+Command_File_Name.Full_Name);
+         --  Generate command file
 
-      --  Run gps_codepeer_bridge
+         Code_Peer.Bridge.Commands.Inspection
+            (Command_File_Name, Output_Directory, Reply_File_Name);
 
-      GPS.Kernel.Timeout.Launch_Process
-        (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-         Command       => "gps_codepeer_bridge",
-         Arguments     => Args,
-         Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
-         Directory     => Object_Directory,
-         Callback_Data =>
-         new Bridge_Context'
-           (Inspection, Module, Reply_File_Name),
-         Success       => Success,
-         Exit_Cb       => On_Bridge_Exit'Access);
-      GNATCOLL.Utils.Free (Args);
+         --  Run gps_codepeer_bridge
+
+         GPS.Kernel.Timeout.Launch_Process
+            (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
+             Command       => "gps_codepeer_bridge",
+             Arguments     => Args,
+             Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
+             Directory     => Object_Directory,
+             Callback_Data =>
+             new Bridge_Context'
+                (Inspection, Module, Reply_File_Name),
+             Success       => Success,
+             Exit_Cb       => On_Bridge_Exit'Access);
+         GNATCOLL.Utils.Free (Args);
+      end if;
    end Inspection;
 
    --------------------
@@ -226,6 +252,33 @@ package body Code_Peer.Module.Bridge is
       end if;
    end On_Bridge_Exit;
 
+   ----------------------------------
+   -- Remove_Inspection_Cache_File --
+   ----------------------------------
+
+   procedure Remove_Inspection_Cache_File
+      (Module : Code_Peer.Module.Code_Peer_Module_Id)
+   is
+      Project           : constant Projects.Project_Type :=
+                            GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Object_Directory  : constant Virtual_File :=
+                            Projects.Object_Path (Project);
+      Reply_File_Name   : constant Virtual_File :=
+                            Create_From_Dir
+                              (Object_Directory, Inspection_Reply_File_Name);
+      Success           : Boolean;
+
+   begin
+      if Reply_File_Name.Is_Regular_File then
+         Delete (Reply_File_Name, Success);
+
+         if not Success then
+            Console.Insert
+               (Module.Kernel, -"Unable to remove code review file");
+         end if;
+      end if;
+   end Remove_Inspection_Cache_File;
+
    --------------------
    -- Review_Message --
    --------------------
@@ -240,10 +293,10 @@ package body Code_Peer.Module.Bridge is
                              Projects.Object_Path (Project);
       Command_File_Name  : constant Virtual_File :=
                              Create_From_Dir
-                               (Object_Directory, "bridge_in.xml");
+                               (Object_Directory, Audit_Request_File_Name);
       Reply_File_Name    : constant Virtual_File :=
                              Create_From_Dir
-                               (Object_Directory, "bridge_out.xml");
+                               (Object_Directory, Audit_Reply_File_Name);
       Args               : GNAT.OS_Lib.Argument_List :=
                              (1 => new String'
                                 (+Command_File_Name.Full_Name));

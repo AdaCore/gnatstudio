@@ -159,6 +159,11 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Advanced->Remove Lock" menu item is activated
 
+   procedure On_Remove_XML_Review
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Advanced->Remove XML Code Review" menu item is activated
+
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
@@ -1347,6 +1352,42 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Message_Reviewed;
 
+   --------------------------
+   -- On_Remove_XML_Review --
+   --------------------------
+
+   procedure On_Remove_XML_Review
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Mode             : constant String := Get_Build_Mode (Kernel);
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      Bridge.Remove_Inspection_Cache_File (Module);
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_Remove_XML_Review;
+
    -------------------------
    -- On_Show_Annotations --
    -------------------------
@@ -1817,6 +1858,12 @@ package body Code_Peer.Module is
          Parent_Path => Advanced_Menu,
          Text        => -"Remove lock",
          Callback    => On_Remove_Lock'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Advanced_Menu,
+         Text        => -"Remove XML code review",
+         Callback    => On_Remove_XML_Review'Access);
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style

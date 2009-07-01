@@ -22,7 +22,12 @@
 package Code_Peer.Module.Bridge is
 
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id);
-   --  ???
+   --  Runs gps_codepeer_bridge to retrive inspection's information.
+   --  Reuses existent XML file if it is exists and up-to-date.
+
+   procedure Remove_Inspection_Cache_File
+      (Module : Code_Peer.Module.Code_Peer_Module_Id);
+   --  Removes auxiliary inspection's information file, used as cache.
 
    procedure Review_Message
      (Module  : Code_Peer.Module.Code_Peer_Module_Id;
