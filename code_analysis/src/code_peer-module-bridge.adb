@@ -257,7 +257,7 @@ package body Code_Peer.Module.Bridge is
    ----------------------------------
 
    procedure Remove_Inspection_Cache_File
-      (Module : Code_Peer.Module.Code_Peer_Module_Id)
+     (Module : Code_Peer.Module.Code_Peer_Module_Id)
    is
       Project           : constant Projects.Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
@@ -274,7 +274,7 @@ package body Code_Peer.Module.Bridge is
 
          if not Success then
             Console.Insert
-               (Module.Kernel, -"Unable to remove code review file");
+              (Module.Kernel, -"Unable to remove code review file");
          end if;
       end if;
    end Remove_Inspection_Cache_File;
