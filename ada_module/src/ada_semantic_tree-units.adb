@@ -22,7 +22,7 @@ with System; use System;
 with GNAT.Strings; use GNAT.Strings;
 
 with Language;          use Language;
-with Language.Tree.Ada; use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
 
 package body Ada_Semantic_Tree.Units is
 
@@ -57,6 +57,7 @@ package body Ada_Semantic_Tree.Units is
    procedure File_Updated
      (Assistant : access Ada_Unit_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
    function Get_Unit_Info
@@ -338,9 +339,12 @@ package body Ada_Semantic_Tree.Units is
    overriding procedure File_Updated
      (Assistant : access Ada_Unit_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
       use Tree_Annotations_Pckg;
+
+      pragma Unreferenced (Old_Tree);
 
       Tree : constant Construct_Tree := Get_Tree (File);
       Unit_List_Annot : Tree_Annotations_Pckg.Annotation;

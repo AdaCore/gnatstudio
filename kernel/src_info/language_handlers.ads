@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,7 @@ with GNAT.OS_Lib;
 
 with Entities;
 with Language;
-with Language.Tree;
+with Language.Tree.Database;
 with Projects;
 with GNATCOLL.VFS;
 
@@ -109,7 +109,7 @@ package Language_Handlers is
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
-      return Language.Tree.Tree_Language_Access;
+      return Language.Tree.Database.Tree_Language_Access;
    --  Same as above but returns the tree language
 
    function Get_Language_From_File
@@ -136,7 +136,7 @@ package Language_Handlers is
    procedure Register_Language
      (Handler   : access Language_Handler_Record;
       Lang      : access Language.Language_Root'Class;
-      Tree_Lang : access Language.Tree.Tree_Language'Class;
+      Tree_Lang : access Language.Tree.Database.Tree_Language'Class;
       LI        : Entities.LI_Handler);
    --  Register a language and additional information about it.
    --  LI is the parser that should be used for cross references for this
@@ -164,7 +164,7 @@ package Language_Handlers is
 private
    type Language_Info is record
       Lang      : Language.Language_Access;
-      Tree_Lang : Language.Tree.Tree_Language_Access;
+      Tree_Lang : Language.Tree.Database.Tree_Language_Access;
       Handler   : Entities.LI_Handler;
    end record;
 

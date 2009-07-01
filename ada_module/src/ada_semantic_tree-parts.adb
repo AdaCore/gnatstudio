@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2008, AdaCore               --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Language;                use Language;
 with Language.Tree;           use Language.Tree;
-with Language.Tree.Ada;       use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
 
 package body Ada_Semantic_Tree.Parts is
@@ -41,6 +41,7 @@ package body Ada_Semantic_Tree.Parts is
    procedure File_Updated
      (Assistant : access Ada_Part_Db_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
    type Ada_Relation is record
@@ -154,9 +155,10 @@ package body Ada_Semantic_Tree.Parts is
    overriding procedure File_Updated
      (Assistant : access Ada_Part_Db_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
-      pragma Unreferenced (Assistant);
+      pragma Unreferenced (Assistant, Old_Tree);
 
       use Tree_Annotations_Pckg;
       It    : Unit_Iterator;

@@ -52,6 +52,7 @@ package body Ada_Semantic_Tree.Interfaces is
    procedure File_Updated
      (Assistant : access Interfaces_Db_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
    ------------------------
@@ -138,9 +139,10 @@ package body Ada_Semantic_Tree.Interfaces is
    overriding procedure File_Updated
      (Assistant : access Interfaces_Db_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
-      pragma Unreferenced (Kind);
+      pragma Unreferenced (Kind, Old_Tree);
 
       Tree      : constant Construct_Tree := Get_Tree (File);
       It        : Construct_Tree_Iterator := Last (Tree);

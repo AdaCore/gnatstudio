@@ -17,9 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;            use System;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Language.Tree.Ada; use Language.Tree.Ada;
+with Glib.Convert; use Glib.Convert;
+
+with Language.Documentation; use Language.Documentation;
+with Language.Unknown;       use Language.Unknown;
+
+with System;            use System;
 
 package body Language.Tree.Database is
 
@@ -28,13 +33,423 @@ package body Language.Tree.Database is
    --  Same as Update_Contents, but takes into account differences depending on
    --  the fact that the file is a brand new one, or an existing one.
 
+   ------------------------------
+   -- Get_Last_Relevant_Entity --
+   ------------------------------
+
+   function Get_Last_Relevant_Construct
+     (Tree : Construct_Tree; Offset : Natural)
+      return Construct_Tree_Iterator
+   is
+      Last_Relevant_Construct : Construct_Tree_Iterator :=
+        Null_Construct_Tree_Iterator;
+      It                      : Construct_Tree_Iterator;
+   begin
+
+      for J in reverse 1 .. Tree.Contents'Last loop
+         if Tree.Contents (J).Construct.Sloc_Start.Index <= Offset then
+            Last_Relevant_Construct := (Tree.Contents (J)'Access, J);
+            It := Last_Relevant_Construct;
+
+            while It /= Null_Construct_Tree_Iterator loop
+               --  If we found the enclosing construct, nothing more to get.
+
+               if Get_Construct (It).Sloc_End.Index >= Offset then
+                  exit;
+               end if;
+
+               --  If the iterator is not anymore on the same scope, we have
+               --  jumped in an enclosing scope, and therefore the last
+               --  construct found is in fact unreacheable. It is the actual
+               --  one.
+
+               if Get_Parent_Scope (Tree, It)
+                 /= Get_Parent_Scope (Tree, Last_Relevant_Construct)
+               then
+                  Last_Relevant_Construct := It;
+               end if;
+
+               It := Prev (Tree, It, Jump_Over);
+            end loop;
+
+            exit;
+         end if;
+      end loop;
+
+      return Last_Relevant_Construct;
+   end Get_Last_Relevant_Construct;
+
+   --------------------
+   -- Get_Name_Index --
+   --------------------
+
+   overriding function Get_Name_Index
+     (Lang      : access Tree_Language;
+      Construct : Simple_Construct_Information) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Construct.Name.all;
+   end Get_Name_Index;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return String
+   is
+      Tree                 : constant Construct_Tree :=
+        Get_Tree (Get_File (Entity));
+      Buffer               : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Entity));
+      Node : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+
+      Beginning, Current   : Natural;
+      Result               : Unbounded_String;
+
+      Type_Start, Type_End : Source_Location;
+      Success              : Boolean;
+      Language             : constant Language_Access :=
+        Get_Language (Tree_Language'Class (Lang.all)'Access);
+      Add_New_Line         : Boolean := False;
+   begin
+      Get_Documentation_Before
+        (Context       => Get_Language_Context (Language).all,
+         Buffer        => Buffer.all,
+         Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
+         Comment_Start => Beginning,
+         Comment_End   => Current);
+
+      if Beginning = 0 then
+         Get_Documentation_After
+           (Context       => Get_Language_Context (Language).all,
+            Buffer        => Buffer.all,
+            Decl_Index    => Get_Construct (Node).Sloc_End.Index,
+            Comment_Start => Beginning,
+            Comment_End   => Current);
+      end if;
+
+      if Beginning /= 0 then
+         Append
+           (Result,
+            Escape_Text
+              (Comment_Block
+                 (Language,
+                  Buffer (Beginning .. Current),
+                  Comment => False,
+                  Clean   => True)));
+
+         Add_New_Line := True;
+      end if;
+
+      if Get_Construct (Node).Category in Subprogram_Category then
+         declare
+            Sub_Iter               : Construct_Tree_Iterator :=
+              Next (Tree, Node, Jump_Into);
+            Has_Parameter          : Boolean := False;
+            Biggest_Parameter_Name : Integer := 0;
+         begin
+            while Is_Parent_Scope (Node, Sub_Iter) loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  Add_New_Line := True;
+
+                  if Get_Construct (Sub_Iter).Name'Length >
+                    Biggest_Parameter_Name
+                  then
+                     Biggest_Parameter_Name :=
+                       Get_Construct (Sub_Iter).Name'Length;
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+
+            Sub_Iter := Next (Tree, Node, Jump_Into);
+
+            while Is_Parent_Scope (Node, Sub_Iter) loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if not Has_Parameter then
+                     if Add_New_Line then
+                        Append (Result, ASCII.LF & ASCII.LF);
+                     end if;
+
+                     Append
+                       (Result, "<b>Parameters:</b>");
+                     Has_Parameter := True;
+                     Add_New_Line := True;
+                  end if;
+
+                  Append (Result, ASCII.LF);
+
+                  Get_Referenced_Entity
+                    (Language,
+                     Buffer.all,
+                     Get_Construct (Sub_Iter).all,
+                     Type_Start,
+                     Type_End,
+                     Success);
+
+                  Append
+                    (Result, Escape_Text (Get_Construct (Sub_Iter).Name.all));
+
+                  for J in Get_Construct (Sub_Iter).Name'Length + 1
+                    .. Biggest_Parameter_Name
+                  loop
+                     Append (Result, " ");
+                  end loop;
+
+                  if Success then
+                     Append
+                       (Result,
+                        " : " & Escape_Text
+                          (Buffer (Type_Start.Index .. Type_End.Index)));
+                  else
+                     Append (Result, " : ???");
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+         end;
+
+         Get_Referenced_Entity
+           (Language,
+            Buffer.all,
+            Get_Construct (Node).all,
+            Type_Start,
+            Type_End,
+            Success);
+
+         if Success then
+            if Add_New_Line then
+               Append (Result, ASCII.LF & ASCII.LF);
+            end if;
+
+            Append
+              (Result,
+               "<b>Return:</b>"
+               & ASCII.LF
+               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
+         end if;
+
+      elsif Get_Construct (Node).Category in Data_Category then
+         declare
+            Var_Start, Var_End : Source_Location;
+         begin
+            Get_Referenced_Entity
+              (Language,
+               Buffer.all,
+               Get_Construct (Node).all,
+               Var_Start,
+               Var_End,
+               Success);
+
+            if Success then
+               if Add_New_Line then
+                  Append (Result, ASCII.LF & ASCII.LF);
+               end if;
+
+               Append
+                 (Result,
+                  "<b>Type: </b>"
+                  & Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
+            end if;
+         end;
+      end if;
+
+      return To_String (Result);
+   end Get_Documentation;
+
+   -----------------
+   -- Get_Profile --
+   -----------------
+
+   function Get_Profile
+     (Lang     : access Tree_Language;
+      Entity   : Entity_Access;
+      Max_Size : Natural) return String
+   is
+      Tree                 : constant Construct_Tree :=
+        Get_Tree (Get_File (Entity));
+      Buffer               : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Entity));
+      Node : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+
+      Result : String (1 .. Max_Size);
+      Result_Index : Integer := 0;
+      Language             : constant Language_Access :=
+        Get_Language (Tree_Language'Class (Lang.all)'Access);
+      Type_Start, Type_End : Source_Location;
+      Success : Boolean;
+
+      function Append (Str : String) return Boolean;
+
+      function Append (Str : String) return Boolean is
+      begin
+         if Result_Index + Str'Length <= Result'Last then
+            Result
+              (Result_Index + 1 .. Result_Index + Str'Length) := Str;
+
+            Result_Index := Result_Index + Str'Length;
+
+            return True;
+         else
+            if Result_Index + 1 > Result'Last then
+               return False;
+            else
+               Result
+                 (Result_Index + 1 .. Result'Last) := Str
+                 (Str'First .. Str'First + (Result'Last - Result_Index - 1));
+
+               return False;
+            end if;
+         end if;
+      end Append;
+
+   begin
+      if Get_Construct (Node).Category in Subprogram_Category then
+         declare
+            Sub_Iter               : Construct_Tree_Iterator :=
+              Next (Tree, Node, Jump_Into);
+            Has_Parameter          : Boolean := False;
+         begin
+            while Is_Parent_Scope (Node, Sub_Iter) loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  if not Has_Parameter then
+                     if not Append ("(") then
+                        return Result;
+                     end if;
+
+                     Has_Parameter := True;
+                  else
+                     if not Append ("; ") then
+                        return Result;
+                     end if;
+                  end if;
+
+                  Get_Referenced_Entity
+                    (Language,
+                     Buffer.all,
+                     Get_Construct (Sub_Iter).all,
+                     Type_Start,
+                     Type_End,
+                     Success);
+
+                  if not Append
+                    (Escape_Text (Get_Construct (Sub_Iter).Name.all))
+                  then
+                     return Result;
+                  end if;
+
+                  if Success then
+                     if not Append
+                       (" : " & Escape_Text
+                          (Buffer (Type_Start.Index .. Type_End.Index)))
+                     then
+                        return Result;
+                     end if;
+                  else
+                     if not Append (" : ???") then
+                        return Result;
+                     end if;
+                  end if;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
+
+            if Has_Parameter then
+               if not Append (")") then
+                  return Result;
+               end if;
+            end if;
+         end;
+
+         Get_Referenced_Entity
+           (Language,
+            Buffer.all,
+            Get_Construct (Node).all,
+            Type_Start,
+            Type_End,
+            Success);
+
+         if Success then
+            if not Append
+              (" return "
+               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)))
+            then
+               return Result;
+            end if;
+         end if;
+
+         return Result (1 .. Result_Index);
+      else
+         return "";
+      end if;
+   end Get_Profile;
+
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
+
+   function Get_Declaration
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Entity;
+   end Get_Declaration;
+
+   ----------
+   -- Diff --
+   ----------
+
+   overriding procedure Diff
+     (Lang               : access Tree_Language;
+      Old_Tree, New_Tree : Construct_Tree;
+      Callback           : Diff_Callback)
+   is
+      pragma Unreferenced (Lang);
+   begin
+      for J in Old_Tree.Contents'Range loop
+         Callback
+           ((Old_Tree.Contents (J)'Access, J),
+            Null_Construct_Tree_Iterator,
+            Removed);
+      end loop;
+
+      for J in New_Tree.Contents'Range loop
+         Callback
+           (Null_Construct_Tree_Iterator,
+            (New_Tree.Contents (J)'Access, J),
+            Added);
+      end loop;
+   end Diff;
+
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   overriding function Get_Language
+     (Tree : access Unknown_Tree_Language) return Language_Access
+   is
+      pragma Unreferenced (Tree);
+   begin
+      return Unknown_Lang;
+   end Get_Language;
+
    ----------------
    -- Get_Buffer --
    ----------------
 
    overriding function Get_Buffer
      (Provider : access File_Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return String_Access
+      File     : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
    is
       pragma Unreferenced (Provider);
    begin
@@ -118,7 +533,8 @@ package body Language.Tree.Database is
          declare
             Lines       : Line_Start_Indexes_Access :=
               new Line_Start_Indexes (1 .. 1000);
-            Buffer      : constant String_Access := Get_Buffer (File);
+            Buffer      : constant
+              GNAT.Strings.String_Access := Get_Buffer (File);
             Lines_Index : Integer := 2;
             Tmp_Lines   : Line_Start_Indexes_Access;
          begin
@@ -151,11 +567,11 @@ package body Language.Tree.Database is
    -- Get_Language --
    ------------------
 
-   function Get_Language
+   function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access is
    begin
-      return File.Lang;
-   end Get_Language;
+      return File.Tree_Lang;
+   end Get_Tree_Language;
 
    ---------------------
    -- Update_Contents --
@@ -173,14 +589,15 @@ package body Language.Tree.Database is
    procedure Internal_Update_Contents
      (File : Structured_File_Access; Is_New_File : Boolean)
    is
-      Buffer     : GNAT.Strings.String_Access :=
-                     Get_Buffer (File.Db.Provider, File.File);
+      Buffer     : GNAT.Strings.String_Access;
       Constructs : aliased Construct_List;
 
       Current_Update_Kind : Update_Kind;
 
       New_Tree         : Construct_Tree;
       New_Db_Data_Tree : Construct_Db_Data_Access;
+
+      Old_Tree : Construct_Tree := null;
 
       procedure Add_New_Construct_If_Needed (It : Construct_Tree_Iterator);
 
@@ -214,7 +631,7 @@ package body Language.Tree.Database is
            (File.Db.Entities_Db'Access,
             It,
             Data,
-            File.Lang,
+            File.Tree_Lang,
             New_Db_Data_Tree (It.Index));
       end Add_New_Construct_If_Needed;
 
@@ -304,14 +721,24 @@ package body Language.Tree.Database is
       end Diff_Callback;
 
    begin
+      --  If update are temporary disabled, mark it and return.
+
+      if File.Lock_Depth > 0 then
+         File.Update_Locked := True;
+
+         return;
+      end if;
+
       --  Phase 1 : analyze the new tree
 
+      Buffer := Get_Buffer (File.Db.Provider, File.File);
+
       --  ??? We are assuming that Buffer is encoded in UTF8, is this the case?
-      Parse_Constructs (Get_Language (File.Lang), Buffer.all, Constructs);
+      Parse_Constructs (File.Lang, Buffer.all, Constructs);
       New_Tree := To_Construct_Tree (Constructs'Access, True);
 
       Analyze_Referenced_Identifiers
-        (Buffer.all, Get_Language (File.Lang), File.Db, New_Tree);
+        (Buffer.all, File.Lang, File.Db, New_Tree);
       Analyze_Constructs_Identifiers (File.Db, New_Tree);
       New_Db_Data_Tree := new Construct_Db_Data_Array
         (1 .. New_Tree.Contents'Length);
@@ -337,7 +764,7 @@ package body Language.Tree.Database is
          New_Tree.Annotations := File.Tree.Annotations;
 
          Diff
-           (File.Lang,
+           (File.Tree_Lang,
             File.Tree,
             New_Tree,
             Diff_Callback'Unrestricted_Access);
@@ -346,9 +773,10 @@ package body Language.Tree.Database is
            Tree_Annotations_Pckg.Null_Annotation_Container;
 
          Free (File.Cache_Buffer);
-         Free (File.Tree);
          Free (File.Db_Data_Tree);
          Free (File.Line_Starts);
+
+         Old_Tree := File.Tree;
       end if;
 
       Free (Constructs);
@@ -360,22 +788,66 @@ package body Language.Tree.Database is
       --  Notify database assistants
 
       declare
-         Cur : Assistant_List.Cursor;
+         Cur : Database_Listeners.Cursor;
       begin
-         Cur := First (File.Db.Ordered_Assistants);
+         Cur := First (File.Db.Listeners);
 
-         while Cur /= Assistant_List.No_Element loop
-            File_Updated (Element (Cur), File, Current_Update_Kind);
+         while Cur /= Database_Listeners.No_Element loop
+            File_Updated (Element (Cur), File, Old_Tree, Current_Update_Kind);
             Cur := Next (Cur);
          end loop;
       end;
+
+      Free (Old_Tree);
    end Internal_Update_Contents;
+
+   ----------
+   -- Lock --
+   ----------
+
+   function Lock_Updates (File : Structured_File_Access) return Update_Lock is
+   begin
+      if File /= null then
+         File.Lock_Depth := File.Lock_Depth + 1;
+      end if;
+
+      return (Limited_Controlled with File_Locked => File);
+   end Lock_Updates;
+
+   ------------
+   -- Unlock --
+   ------------
+
+   procedure Unlock (This : in out Update_Lock) is
+   begin
+      if This.File_Locked /= null then
+         This.File_Locked.Lock_Depth := This.File_Locked.Lock_Depth - 1;
+
+         if This.File_Locked.Lock_Depth = 0
+           and then This.File_Locked.Update_Locked
+         then
+            Update_Contents (This.File_Locked);
+            This.File_Locked.Update_Locked := False;
+         end if;
+
+         This.File_Locked := null;
+      end if;
+   end Unlock;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Update_Lock) is
+   begin
+      Unlock (This);
+   end Finalize;
 
    ---------
    -- "=" --
    ---------
 
-   function "=" (Left, Right : Structured_File) return Boolean is
+   overriding function "=" (Left, Right : Structured_File) return Boolean is
    begin
       return Left.File = Right.File;
    end "=";
@@ -423,11 +895,12 @@ package body Language.Tree.Database is
    -------------------
 
    function Get_Or_Create
-     (Db   : Construct_Database_Access;
-      File : Virtual_File;
-      Lang : Tree_Language_Access) return Structured_File_Access is
+     (Db        : Construct_Database_Access;
+      File      : Virtual_File;
+      Lang      : Language_Access;
+      Tree_Lang : Tree_Language_Access) return Structured_File_Access is
    begin
-      if Lang /= Ada_Tree_Lang or else not Is_Regular_File (File) then
+      if not Is_Regular_File (File) then
          return null;
       end if;
 
@@ -437,6 +910,7 @@ package body Language.Tree.Database is
          begin
             New_File.File := File;
             New_File.Lang := Lang;
+            New_File.Tree_Lang := Tree_Lang;
             New_File.Db := Db;
 
             Insert (Db.Files_Db, File, New_File);
@@ -471,6 +945,17 @@ package body Language.Tree.Database is
       C : File_Map.Cursor := First (Db.Files_Db);
       Garbage : Structured_File_Access;
    begin
+      declare
+         Cur : Database_Listeners.Cursor;
+      begin
+         Cur := First (Db.Listeners);
+
+         while Cur /= Database_Listeners.No_Element loop
+            Before_Clear_Db (Element (Cur), Db);
+            Cur := Next (Cur);
+         end loop;
+      end;
+
       while C /= File_Map.No_Element loop
          Garbage := Element (C);
          Free (Garbage);
@@ -894,6 +1379,39 @@ package body Language.Tree.Database is
       return Entity.File;
    end Get_File;
 
+   ---------------------------
+   -- Add_Database_Listener --
+   ---------------------------
+
+   procedure Add_Database_Listener
+     (Db       : Construct_Database_Access;
+      Listener : Database_Listener_Access)
+   is
+   begin
+      Db.Listeners.Append (Listener);
+   end Add_Database_Listener;
+
+   ------------------------------
+   -- Remove_Database_Listener --
+   ------------------------------
+
+   procedure Remove_Database_Listener
+     (Db       : Construct_Database_Access;
+      Listener : Database_Listener_Access)
+   is
+      It : Database_Listeners.Cursor := First (Db.Listeners);
+   begin
+      while It /= Database_Listeners.No_Element loop
+         if Element (It) = Listener then
+            Db.Listeners.Delete (It);
+
+            return;
+         end if;
+
+         It := Next (It);
+      end loop;
+   end Remove_Database_Listener;
+
    ------------------------
    -- Register_Assistant --
    ------------------------
@@ -905,7 +1423,7 @@ package body Language.Tree.Database is
    is
    begin
       Insert (Db.Assistants, Name, Assistant);
-      Append (Db.Ordered_Assistants, Assistant);
+      Append (Db.Listeners, Database_Listener_Access (Assistant));
    end Register_Assistant;
 
    -------------------

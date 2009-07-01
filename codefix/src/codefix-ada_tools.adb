@@ -69,6 +69,9 @@ package body Codefix.Ada_Tools is
       Current_Text : Text_Navigator_Abstr'Class;
       Exclusive    : Boolean := False) return Words_Lists.List
    is
+      Lock : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (File_Name));
+
       List_Of_With : With_Lists.List := List_All_With
         (Current_Text, File_Name);
       List_Of_Use  : Use_Lists.List := List_All_Use
@@ -107,11 +110,15 @@ package body Codefix.Ada_Tools is
             Free (List_Of_With);
             Free (List_Of_Use);
 
+            Lock.Unlock;
+
             return Result;
          end if;
 
          Seek_Node := Next (Seek_Node);
       end loop;
+
+      Lock.Unlock;
 
       return Result;
    end Get_Use_Clauses;
@@ -207,12 +214,14 @@ package body Codefix.Ada_Tools is
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File) return With_Lists.List
    is
+      Lock : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (File_Name));
+
       Tree  : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_With;
       Result     : With_Lists.List;
-
    begin
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_With then
@@ -227,6 +236,8 @@ package body Codefix.Ada_Tools is
          Iterator := Next (Tree, Iterator, Jump_Over);
       end loop;
 
+      Lock.Unlock;
+
       return Result;
    end List_All_With;
 
@@ -238,6 +249,9 @@ package body Codefix.Ada_Tools is
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File) return Use_Lists.List
    is
+      Lock : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (File_Name));
+
       Tree  : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
@@ -272,6 +286,8 @@ package body Codefix.Ada_Tools is
 
          Iterator := Next (Tree, Iterator, Jump_Into);
       end loop;
+
+      Lock.Unlock;
 
       return Result;
    end List_All_Use;
@@ -309,6 +325,9 @@ package body Codefix.Ada_Tools is
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File) return File_Cursor'Class
    is
+      Lock : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (File_Name));
+
       Current_Cursor : File_Cursor;
       Current_Info   : Construct_Tree_Iterator;
       Last_Info      : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
@@ -345,6 +364,8 @@ package body Codefix.Ada_Tools is
          Set_Location (Current_Cursor, 0, 1);
       end if;
 
+      Lock.Unlock;
+
       return Current_Cursor;
    end Get_Next_With_Position;
 
@@ -357,6 +378,9 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class
    is
+      Lock : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (File_Name));
+
       Tree  : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
@@ -382,11 +406,15 @@ package body Codefix.Ada_Tools is
                        (Get_Construct (Iterator).Sloc_Start.Column), Line));
             end;
 
+            Lock.Unlock;
+
             return Result;
          end if;
 
          Iterator := Next (Tree, Iterator, Jump_Over);
       end loop;
+
+      Lock.Unlock;
 
       return Null_File_Cursor;
    end Search_With;

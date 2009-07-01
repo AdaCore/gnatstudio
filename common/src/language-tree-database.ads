@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 --  This package provides an efficient database suitable to record the relevant
 --  construct information of an entire project
 
+with Ada.Finalization; use Ada.Finalization;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Multisets;
 with Ada.Containers.Indefinite_Ordered_Maps;
@@ -32,6 +33,66 @@ with Construct_Tries;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
 package Language.Tree.Database is
+
+   type Entity_Access is private;
+   --  This type points to a precise entity in the database. It's not suitable
+   --  for persistent storage: its data are not valid anymore after a refresh
+   --  on the file where the entity is located.
+
+   -------------------
+   -- Tree_Language --
+   -------------------
+
+   type Tree_Language is abstract new Abstract_Tree_Language with private;
+   --  This type represents the language of a given tree. It's used to provide
+   --  various language-specific capabilities on a tree.
+
+   type Tree_Language_Access is access all Tree_Language'Class;
+
+   function Get_Language
+     (Tree : access Tree_Language) return Language_Access is abstract;
+   --  Return the language associated to this tree.
+
+   function Get_Documentation
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return String;
+   --  This function returns the documentation for the entity given in
+   --  parameter, for the given language. By default, it computes a
+   --  documentation from generic knowledge on the constructs.
+   --  Language-specific computation may give more accurate information.
+
+   function Get_Profile
+     (Lang     : access Tree_Language;
+      Entity   : Entity_Access;
+      Max_Size : Natural) return String;
+   --  Return a formatted view of the profile of this construct - if any.
+   --  For example, for subprogram, this would return
+   --  [(parameters)][return type] on one line.
+
+   function Get_Declaration
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return Entity_Access;
+   --  Return the declaration of the entity given in parameter.
+
+   overriding function Get_Name_Index
+     (Lang      : access Tree_Language;
+      Construct : Simple_Construct_Information) return String;
+   --  Return the name that should be used to index the given construct. Takes
+   --  care of e.g. case handling. Default implementation return the actual
+   --  construct name.
+
+   overriding procedure Diff
+     (Lang               : access Tree_Language;
+      Old_Tree, New_Tree : Construct_Tree;
+      Callback           : Diff_Callback);
+
+   type Unknown_Tree_Language is new Tree_Language with private;
+
+   overriding function Get_Language
+     (Tree : access Unknown_Tree_Language) return Language_Access;
+   --  See inherited documentation
+
+   Unknown_Tree_Lang : constant Tree_Language_Access;
 
    ---------------------
    -- Buffer_Provider --
@@ -58,7 +119,7 @@ package Language.Tree.Database is
 
    type File_Buffer_Provider is new Buffer_Provider with private;
 
-   function Get_Buffer
+   overriding function Get_Buffer
      (Provider : access File_Buffer_Provider;
       File     : GNATCOLL.VFS.Virtual_File) return String_Access;
    --  Return the buffer corresponding to the file given in parameter - by
@@ -98,21 +159,35 @@ package Language.Tree.Database is
    --  line offsets of all lines are cached when calling this function,
    --  and freed either when the File is freed or updated.
 
-   function Get_Language
+   function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access;
    --  Return the tree language associated to this file.
 
    procedure Update_Contents (File : Structured_File_Access);
    --  This function will re-analyze the full contents of the file
 
+   type Update_Lock is limited new Limited_Controlled with private;
+   --  This type is used to avoid updates on a given file for a limited amount
+   --  of time. The lock can be release either explicitely, by doing calls to
+   --  Unlock, or implicitely, at object finalization. If two or more locks are
+   --  taken on a given file, then the system will wait for all of them to
+   --  be released before re-allowing updates. If an updated is queried while
+   --  the file is locked, then it will be delayed until the last lock is
+   --  released.
+
+   function Lock_Updates (File : Structured_File_Access) return Update_Lock;
+   --  Locks the file for further updates.
+
+   procedure Unlock (This : in out Update_Lock);
+   --  Unlock the locked file, if any, and release update event if there's no
+   --  more lock.
+
+   overriding procedure Finalize (This : in out Update_Lock);
+   --  Same as before, but done automatically upon object finalization.
+
    -------------------
    -- Entity_Access --
    -------------------
-
-   type Entity_Access is private;
-   --  This type points to a precise entity in the database. It's not suitable
-   --  for persistent storage: its data are not valid anymore after a refresh
-   --  on the file where the entity is located.
 
    Null_Entity_Access : constant Entity_Access;
 
@@ -126,7 +201,7 @@ package Language.Tree.Database is
    function "<" (Left, Right : Entity_Access) return Boolean;
    --  Return a consistent order between the two entities.
 
-   function "=" (Left, Right : Entity_Access) return Boolean;
+   overriding function "=" (Left, Right : Entity_Access) return Boolean;
    --  Return true if the two entities actually point to the same construct
 
    function To_Entity_Access
@@ -166,9 +241,10 @@ package Language.Tree.Database is
    --  Free the data associated to this database.
 
    function Get_Or_Create
-     (Db   : Construct_Database_Access;
-      File : Virtual_File;
-      Lang : Tree_Language_Access) return Structured_File_Access;
+     (Db        : Construct_Database_Access;
+      File      : Virtual_File;
+      Lang      : Language_Access;
+      Tree_Lang : Tree_Language_Access) return Structured_File_Access;
    --  Return the file node corresponding to the given file path, and create
    --  one if needed. The creation of the file implies the addition of all its
    --  contents.
@@ -252,7 +328,7 @@ package Language.Tree.Database is
    function Start_File_Search (Db : Construct_Database) return File_Set.Cursor;
    --  Return a cursor pointing at the first element of the file database.
 
-   function Get_Identifier
+   overriding function Get_Identifier
      (Manager : access Construct_Database; Name : String)
       return Distinct_Identifier;
    --  Return the unique identifier for the name given in parameter.
@@ -312,19 +388,21 @@ package Language.Tree.Database is
    --  Return the file where the entity given in parameter is located.
 
    ------------------------
-   -- Database_Assistant --
+   -- Database_Listener --
    ------------------------
 
-   type Database_Assistant is abstract tagged private;
+   type Database_Listener is abstract tagged null record;
+   --  ??? this should really be an interface.
 
-   type Database_Assistant_Access is access all Database_Assistant'Class;
+   type Database_Listener_Access is access all Database_Listener'Class;
 
    type Update_Kind is (Minor_Change, Structural_Change, Full_Change);
 
    procedure File_Updated
-     (Assistant : access Database_Assistant;
-      File      : Structured_File_Access;
-      Kind      : Update_Kind) is null;
+     (Listener : access Database_Listener;
+      File     : Structured_File_Access;
+      Old_Tree : Construct_Tree;
+      Kind     : Update_Kind) is null;
    --  Called whenever a file is updated. This is called after the changes, so
    --  the state of the file is the result of the update.
    --  There are three kinds of update:
@@ -338,12 +416,38 @@ package Language.Tree.Database is
    --    Full_Change: the file have been completely updated. This occures for
    --     example the first time the file is loaded.
 
+   procedure Before_Clear_Db
+     (Listener : access Database_Listener;
+      Db       : access Construct_Database'Class) is null;
+   --  Called before a clear of the database.
+
+   procedure Add_Database_Listener
+     (Db       : Construct_Database_Access;
+      Listener : Database_Listener_Access);
+   --  Add a listener to the list of objects listenning to database changes
+
+   procedure Remove_Database_Listener
+     (Db       : Construct_Database_Access;
+      Listener : Database_Listener_Access);
+   --  Removes a listener from the list of objects listenning to database
+   --  changes
+
+   ------------------------
+   -- Database_Assistant --
+   ------------------------
+
+   type Database_Assistant is abstract new Database_Listener with private;
+
+   type Database_Assistant_Access is access all Database_Assistant'Class;
+
    procedure Register_Assistant
      (Db        : Construct_Database_Access;
       Name      : String;
       Assistant : Database_Assistant_Access);
    --  Adds the assistant given in parameter under a given name - will raise
    --  an exception is an assistant with the same name is already registered.
+   --  This take care of registering the assistant in the list of listeners,
+   --  which should not be added manually.
 
    function Get_Assistant
      (Db : Construct_Database_Access; Name : String)
@@ -358,6 +462,47 @@ package Language.Tree.Database is
    --  Free the internal data of the database assistant.
 
 private
+
+   type Tree_Language is abstract
+   new Abstract_Tree_Language with null record;
+
+   function Get_Last_Relevant_Construct
+     (Tree   : Construct_Tree;
+      Offset : Natural)
+      return Construct_Tree_Iterator;
+   --  Return the last construct representing the scope where the offset is.
+   --  It can be either the last entity declared in the scope, or the scope
+   --  itself.
+   --
+   --  Example:
+   --
+   --  package A is
+   --
+   --     V : Integer; <- here is the last relevant construct
+   --     <-  here is the offset
+   --
+   --  other example:
+   --
+   --  package A is
+   --
+   --     V : Integer;
+   --
+   --     package B is <- here is the last relevant construct
+   --        V2 : Integer;
+   --     end B;
+   --
+   --     <-  here is the offset
+   --
+   --  last example:
+   --
+   --  package A is <- here is the last relevant construct
+   --
+   --     <-  here is the offset
+
+   type Unknown_Tree_Language is new Tree_Language with null record;
+
+   Unknown_Tree_Lang : constant Tree_Language_Access :=
+     new Unknown_Tree_Language;
 
    type Buffer_Provider is abstract tagged null record;
 
@@ -388,8 +533,9 @@ private
      (Line_Start_Indexes, Line_Start_Indexes_Access);
 
    type Structured_File is record
-      File        : Virtual_File;
-      Lang        : Tree_Language_Access;
+      File      : Virtual_File;
+      Lang      : Language_Access;
+      Tree_Lang : Tree_Language_Access;
 
       Tree         : Construct_Tree;
       Db_Data_Tree : Construct_Db_Data_Access;
@@ -399,6 +545,13 @@ private
       Line_Starts  : Line_Start_Indexes_Access;
 
       Db           : access Construct_Database;
+
+      Lock_Depth    : Natural := 0;
+      Update_Locked : Boolean := False;
+   end record;
+
+   type Update_Lock is limited new Limited_Controlled with record
+      File_Locked : Structured_File_Access;
    end record;
 
    function "=" (Left, Right : Structured_File) return Boolean;
@@ -411,12 +564,12 @@ private
    package Assistant_Map is new Ada.Containers.Indefinite_Ordered_Maps
      (String, Database_Assistant_Access);
 
-   package Assistant_List is new Ada.Containers.Doubly_Linked_Lists
-     (Database_Assistant_Access);
+   package Database_Listeners is new Ada.Containers.Doubly_Linked_Lists
+     (Database_Listener_Access);
 
    use Assistant_Map;
 
-   use Assistant_List;
+   use Database_Listeners;
 
    type Construct_Database is new Identifier_Manager with record
       Files_Db           : File_Map.Map;
@@ -427,7 +580,7 @@ private
       Provider           : Buffer_Provider_Access;
       Entities_Db        : aliased Construct_Db_Trie.Construct_Trie;
       Assistants         : Assistant_Map.Map;
-      Ordered_Assistants : Assistant_List.List;
+      Listeners          : Database_Listeners.List;
       Tree_Registry      : aliased Tree_Annotations_Pckg.
         Annotation_Key_Registry;
       Construct_Registry : aliased Construct_Annotations_Pckg.
@@ -442,7 +595,7 @@ private
    Null_Construct_Db_Iterator : constant Construct_Db_Iterator :=
      (It => Construct_Db_Trie.Null_Construct_Trie_Iterator);
 
-   type Database_Assistant is abstract tagged null record;
+   type Database_Assistant is abstract new Database_Listener with null record;
 
    type Entity_Access is record
       File : Structured_File_Access;

@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Dependency_Tree;
@@ -41,7 +41,7 @@ package body Ada_Semantic_Tree.Assistants is
       --  which puts some constraints on this order - e.g. units has to be
       --  registered very soon.
 
-      Language.Tree.Ada.Register_Assistant (Db);
+      Ada_Semantic_Tree.Lang.Register_Assistant (Db);
       Ada_Semantic_Tree.Visibility.Register_Assistant (Db);
       Ada_Semantic_Tree.Units.Register_Assistant (Db);
       Ada_Semantic_Tree.Parts.Register_Assistant (Db);

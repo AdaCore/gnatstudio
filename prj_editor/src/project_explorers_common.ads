@@ -225,6 +225,10 @@ package Project_Explorers_Common is
      (Construct : Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;
    --  Return the icon associated with Construct
 
+   function Entity_Icon_Of
+     (Construct : Simple_Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;
+   --  Return the icon associated with Construct
+
    function Filter_Category
      (Category : Language.Language_Category) return Language.Language_Category;
    --  Return the category to use when an entity is Category.

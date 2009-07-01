@@ -31,6 +31,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
 with Language.Tree;             use Language.Tree;
+with Language.Tree.Database;    use Language.Tree.Database;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
@@ -137,7 +138,7 @@ package body Language_Handlers is
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
-      return Language.Tree.Tree_Language_Access
+      return Language.Tree.Database.Tree_Language_Access
    is
       Index : Natural;
    begin
@@ -149,7 +150,7 @@ package body Language_Handlers is
          return Handler.Languages (Index).Tree_Lang;
       end if;
 
-      return Unknown_Tree_Lang;
+      return Language.Tree.Database.Unknown_Tree_Lang;
    end Get_Tree_Language_From_File;
 
    ----------------------------
@@ -225,7 +226,7 @@ package body Language_Handlers is
    procedure Register_Language
      (Handler   : access Language_Handler_Record;
       Lang      : access Language.Language_Root'Class;
-      Tree_Lang : access Language.Tree.Tree_Language'Class;
+      Tree_Lang : access Language.Tree.Database.Tree_Language'Class;
       LI        : LI_Handler)
    is
       N     : constant String := To_Lower (Get_Name (Lang));

@@ -313,6 +313,14 @@ package body Project_Explorers_Common is
         (Construct.Is_Declaration, Construct.Visibility) (Construct.Category);
    end Entity_Icon_Of;
 
+   function Entity_Icon_Of
+     (Construct : Simple_Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf
+   is
+   begin
+      return Entity_Icons
+        (Construct.Is_Declaration, Construct.Visibility) (Construct.Category);
+   end Entity_Icon_Of;
+
    ------------------------
    -- Append_Entity_Node --
    ------------------------

@@ -36,7 +36,7 @@ with Language;               use Language;
 with String_Utils;           use String_Utils;
 with Language.Ada;           use Language.Ada;
 with Language.Tree;          use Language.Tree;
-with Language.Tree.Ada;      use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;      use Ada_Semantic_Tree.Lang;
 with Language.Tree.Database; use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;               use Projects;
@@ -332,6 +332,7 @@ procedure Completion.Test is
                   Dummy_File_Node := Get_Or_Create
                     (Construct_Db,
                      Files.all (J),
+                     Ada_Lang,
                      Ada_Tree_Lang);
                end;
             end loop;
@@ -339,7 +340,7 @@ procedure Completion.Test is
       end if;
 
       Current_File := Get_Or_Create
-        (Construct_Db, File, Ada_Tree_Lang);
+        (Construct_Db, File, Ada_Lang, Ada_Tree_Lang);
 
       return New_Construct_Completion_Resolver
         (Construct_Db,

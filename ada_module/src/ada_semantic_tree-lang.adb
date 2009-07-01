@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2006-2008, AdaCore               --
+--                    Copyright (C) 2006-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,10 +25,14 @@ with Diffing;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
+with GNAT.Strings;
+
 with Language.Ada;           use Language.Ada;
 with Language.Documentation; use Language.Documentation;
 
-package body Language.Tree.Ada is
+with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+
+package body Ada_Semantic_Tree.Lang is
 
    Ada_Assistant_Id : constant String := "ADA_ASSISTANT";
 
@@ -102,10 +106,15 @@ package body Language.Tree.Ada is
 
    overriding function Get_Documentation
      (Lang   : access Ada_Tree_Language;
-      Buffer : String;
-      Tree   : Construct_Tree;
-      Node   : Construct_Tree_Iterator) return String
+      Entity : Entity_Access) return String
    is
+      Tree                 : constant Construct_Tree :=
+        Get_Tree (Get_File (Entity));
+      Buffer               : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Entity));
+      Node : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+
       Beginning, Current   : Natural;
       Result               : Unbounded.Unbounded_String;
 
@@ -284,7 +293,7 @@ package body Language.Tree.Ada is
    begin
       Get_Documentation_Before
         (Context       => Get_Language_Context (Language).all,
-         Buffer        => Buffer,
+         Buffer        => Buffer.all,
          Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
          Comment_Start => Beginning,
          Comment_End   => Current);
@@ -292,7 +301,7 @@ package body Language.Tree.Ada is
       if Beginning = 0 then
          Get_Documentation_After
            (Context       => Get_Language_Context (Language).all,
-            Buffer        => Buffer,
+            Buffer        => Buffer.all,
             Decl_Index    => Get_Construct (Node).Sloc_End.Index,
             Comment_Start => Beginning,
             Comment_End   => Current);
@@ -344,7 +353,7 @@ package body Language.Tree.Ada is
                   then
                      Get_Referenced_Entity
                        (Language,
-                        Buffer,
+                        Buffer.all,
                         Get_Construct (Sub_Iter).all,
                         Type_Start,
                         Type_End,
@@ -392,7 +401,7 @@ package body Language.Tree.Ada is
 
                   Get_Referenced_Entity
                     (Language,
-                     Buffer,
+                     Buffer.all,
                      Get_Construct (Sub_Iter).all,
                      Type_Start,
                      Type_End,
@@ -478,7 +487,7 @@ package body Language.Tree.Ada is
 
          Get_Referenced_Entity
            (Language,
-            Buffer,
+            Buffer.all,
             Get_Construct (Node).all,
             Type_Start,
             Type_End,
@@ -507,7 +516,7 @@ package body Language.Tree.Ada is
          begin
             Get_Referenced_Entity
               (Language,
-               Buffer,
+               Buffer.all,
                Get_Construct (Node).all,
                Var_Start,
                Var_End,
@@ -624,8 +633,8 @@ package body Language.Tree.Ada is
          Result : Iterator;
       begin
          Result.It := C.First;
-         Result.First := C.First.Index;
-         Result.Last := C.Last.Index;
+         Result.First := Get_Index (C.First);
+         Result.Last := Get_Index (C.Last);
          Result.Tree := C.Tree;
 
          return Result;
@@ -639,8 +648,8 @@ package body Language.Tree.Ada is
          Result : Iterator;
       begin
          Result.It := C.Last;
-         Result.First := C.First.Index;
-         Result.Last := C.Last.Index;
+         Result.First := Get_Index (C.First);
+         Result.Last := Get_Index (C.Last);
          Result.Tree := C.Tree;
 
          return Result;
@@ -677,7 +686,8 @@ package body Language.Tree.Ada is
       function At_End (I : Iterator) return Boolean is
       begin
          return I.It = Null_Construct_Tree_Iterator
-           or else I.It.Index < I.First or else I.It.Index > I.Last;
+           or else Get_Index (I.It) < I.First
+           or else Get_Index (I.It) > I.Last;
       end At_End;
 
       ---------
@@ -808,6 +818,19 @@ package body Language.Tree.Ada is
          Tree_Callback'Access);
    end Diff;
 
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
+
+   overriding function Get_Declaration
+     (Lang   : access Ada_Tree_Language;
+      Entity : Entity_Access) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Get_First_Occurence (Entity);
+   end Get_Declaration;
+
    ------------------
    -- Same_Profile --
    ------------------
@@ -850,8 +873,8 @@ package body Language.Tree.Ada is
       loop
          --  Check the type of the two parameters.
 
-         if Left_Param_It.Node.Referenced_Ids
-           /= Right_Param_It.Node.Referenced_Ids
+         if Get_Referenced_Identifiers (Left_Param_It)
+           /= Get_Referenced_Identifiers (Right_Param_It)
          then
             return False;
          end if;
@@ -873,7 +896,9 @@ package body Language.Tree.Ada is
             return False;
          end if;
 
-         if Left_Sb.Node.Referenced_Ids /= Right_Sb.Node.Referenced_Ids then
+         if Get_Referenced_Identifiers (Left_Sb)
+           /= Get_Referenced_Identifiers (Right_Sb)
+         then
             return False;
          end if;
       end if;
@@ -901,7 +926,7 @@ package body Language.Tree.Ada is
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (It);
    begin
-      return It.Node.Parent_Index = 0
+      return Get_Parent_Index (It) = 0
         and then
           (Construct.Category = Cat_Package
            or else Construct.Category = Cat_Procedure
@@ -942,4 +967,4 @@ package body Language.Tree.Ada is
       return Ada_Assistant (Assistant.all).Ada_Ref_Key;
    end Get_Ref_Key;
 
-end Language.Tree.Ada;
+end Ada_Semantic_Tree.Lang;

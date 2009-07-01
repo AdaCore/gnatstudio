@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2008, AdaCore                  --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,7 @@ package body Ada_Semantic_Tree.Visibility is
    overriding procedure File_Updated
      (Assistant : access Ada_Visibibility_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
    ------------------------
@@ -76,9 +77,10 @@ package body Ada_Semantic_Tree.Visibility is
    overriding procedure File_Updated
      (Assistant : access Ada_Visibibility_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
-      pragma Unreferenced (Assistant);
+      pragma Unreferenced (Assistant, Old_Tree);
 
       --  We're doing this analyzis right after file update - because it
       --  doesn't seem to be an expensive one and there's no reason to delay

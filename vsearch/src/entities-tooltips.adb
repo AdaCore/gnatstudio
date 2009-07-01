@@ -35,10 +35,9 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
 with Language.Icons;            use Language.Icons;
 with Language.Tree;             use Language.Tree;
-with Language.Tree.Database;    use Language.Tree.Database;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Gdk.Display; use Gdk.Display;
 with Gdk.Screen;  use Gdk.Screen;
 
@@ -107,9 +106,10 @@ package body Entities.Tooltips is
 
    begin
       Data_File := Language.Tree.Database.Get_Or_Create
-        (Db   => Database,
-         File => Decl_File,
-         Lang => Tree_Lang);
+        (Db        => Database,
+         File      => Decl_File,
+         Lang      => Get_Language_From_File (Handler, Decl_File),
+         Tree_Lang => Tree_Lang);
 
       if Data_File = null then
          --  This probably means that this is not a Ada file. Try to get the
@@ -131,11 +131,9 @@ package body Entities.Tooltips is
          return -"<i>No documentation available.</i>";
       end if;
 
-      return Language.Tree.Get_Documentation
+      return Language.Tree.Database.Get_Documentation
         (Lang     => Tree_Lang,
-         Buffer   => Get_Buffer (Data_File).all,
-         Tree     => Tree,
-         Node     => Node);
+         Entity   => To_Entity_Access (Data_File, Node));
    end Get_Documentation;
 
    ------------------
@@ -206,15 +204,62 @@ package body Entities.Tooltips is
 
    function Draw_Tooltip
      (Kernel : access Kernel_Handle_Record'Class;
+      Header : String;
+      Doc    : String;
+      Pixbuf : Gdk_Pixbuf;
+      Guess  : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap;
+   --  Helper function, factorizing the tooltip widget creation
+
+   function Draw_Tooltip
+     (Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information;
       Ref    : Entity_Reference;
       Status : Find_Decl_Or_Body_Query_Status) return Gdk.Pixmap.Gdk_Pixmap
    is
-      Widget : constant Gtk_Widget := Gtk_Widget (Get_Main_Window (Kernel));
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Header : constant String := Get_Header (Entity);
       Doc    : constant String := Get_Instance (Ref)
         & Get_Documentation (Kernel, Entity);
+   begin
+      return Draw_Tooltip
+        (Kernel => Kernel,
+         Guess  =>
+           Status = Overloaded_Entity_Found
+         or else Status = Fuzzy_Match,
+         Header => Get_Header (Entity),
+         Pixbuf => Get_Pixbuf (Entity),
+         Doc    => Doc);
+   end Draw_Tooltip;
+
+   function Draw_Tooltip
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Access;
+      Guess  : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap
+   is
+      pragma Unreferenced (Guess);
+
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (Entity);
+   begin
+      return Draw_Tooltip
+        (Kernel => Kernel,
+         Guess  => False,
+         Header => "<b>" & Get_Construct (Entity).Name.all & "</b>",
+         Doc    => Get_Documentation
+           (Get_Tree_Language (Get_File (Entity)),
+            Entity),
+         Pixbuf => Entity_Icons
+           (Construct.Is_Declaration, Construct.Visibility)
+           (Construct.Category));
+   end Draw_Tooltip;
+
+   function Draw_Tooltip
+     (Kernel : access Kernel_Handle_Record'Class;
+      Header : String;
+      Doc    : String;
+      Pixbuf : Gdk_Pixbuf;
+      Guess  : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap
+   is
+      Widget : constant Gtk_Widget := Gtk_Widget (Get_Main_Window (Kernel));
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
 
       Font   : constant Pango_Font_Description := Default_Font.Get_Pref;
       Fixed  : constant Pango_Font_Description := View_Fixed_Font.Get_Pref;
@@ -223,22 +268,16 @@ package body Entities.Tooltips is
 
       Width, Height, W1, H1, W2, H2 : Gint := 0;
       GC     : Gdk.Gdk_GC;
-      Pixbuf : Gdk_Pixbuf;
       Max_Height, Max_Width : Gint;
 
       H_Pad : constant := 4;
       V_Pad : constant := 3;
-
    begin
       Header_Layout := Create_Pango_Layout (Widget, "");
 
-      Pixbuf := Get_Pixbuf (Entity);
-
-      if Status = Overloaded_Entity_Found
-        or else Status = Fuzzy_Match
-      then
+      if Guess then
          Set_Markup (Header_Layout,
-                     -("<span foreground =""#555555""><i>" &
+           -("<span foreground =""#555555""><i>" &
              "(Cross-references info not up-to-date, this is a guess)"
              & "</i></span>")
            & ASCII.LF & Header);

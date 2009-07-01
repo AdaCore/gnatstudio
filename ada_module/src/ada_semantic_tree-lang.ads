@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,9 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 
-package Language.Tree.Ada is
+package Ada_Semantic_Tree.Lang is
 
    function Is_Enum_Type
      (Tree : Construct_Tree;
@@ -30,30 +32,29 @@ package Language.Tree.Ada is
    --  This type provides an ada implementation to the language-specific tree
    --  functionalitites.
 
-   overriding
-   function Get_Language
+   overriding function Get_Language
      (Tree : access Ada_Tree_Language) return Language_Access;
    --  See inherited documentation
 
-   overriding
-   function Get_Name_Index
+   overriding function Get_Name_Index
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return String;
    --  See inherited documentation
 
-   overriding
-   function Get_Documentation
+   overriding function Get_Documentation
      (Lang   : access Ada_Tree_Language;
-      Buffer : String;
-      Tree   : Construct_Tree;
-      Node   : Construct_Tree_Iterator) return String;
+      Entity : Entity_Access) return String;
    --  See inherited documentation
 
-   overriding
-   procedure Diff
+   overriding procedure Diff
      (Lang                   : access Ada_Tree_Language;
       Old_Tree, New_Tree     : Construct_Tree;
       Callback               : Diff_Callback);
+   --  See inherited documentation
+
+   overriding function Get_Declaration
+     (Lang   : access Ada_Tree_Language;
+      Entity : Entity_Access) return Entity_Access;
    --  See inherited documentation
 
    Ada_Tree_Lang : constant Tree_Language_Access;
@@ -94,4 +95,4 @@ private
 
    Ada_Tree_Lang : constant Tree_Language_Access := new Ada_Tree_Language;
 
-end Language.Tree.Ada;
+end Ada_Semantic_Tree.Lang;

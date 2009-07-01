@@ -92,7 +92,7 @@ package Construct_Tries is
      (Trie         : access Construct_Trie;
       Construct_It : Construct_Tree_Iterator;
       Data         : Additional_Data_Type;
-      Lang         : access Tree_Language'Class;
+      Lang         : access Abstract_Tree_Language'Class;
       Index        : out Construct_Trie_Index);
    --  Insert an object into the trie tree, associated with a given Data. The
    --  returned index can be used to access / replace / remove this object
@@ -103,7 +103,7 @@ package Construct_Tries is
       Construct_It : Construct_Tree_Iterator;
       Name         : String;
       Data         : Additional_Data_Type;
-      Lang         : access Tree_Language'Class;
+      Lang         : access Abstract_Tree_Language'Class;
       Index        : out Construct_Trie_Index);
    --  Same as above, but insert the object with a particular name instead
    --  of using the construct tree name.

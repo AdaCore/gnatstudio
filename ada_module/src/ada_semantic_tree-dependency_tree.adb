@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2008, AdaCore               --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 with Ada.Containers.Ordered_Maps;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Language;                   use Language;
-with Language.Tree.Ada;          use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;          use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
@@ -45,6 +45,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    overriding procedure File_Updated
      (Assistant : access Dependency_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
    function Get_Parents_List (Unit : Unit_Access) return Unit_Array_Access;
@@ -719,9 +720,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    overriding procedure File_Updated
      (Assistant : access Dependency_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
-      pragma Unreferenced (Assistant);
+      pragma Unreferenced (Assistant, Old_Tree);
    begin
       case Kind is
          when Minor_Change =>

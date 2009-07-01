@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with Language;                use Language;
 with Language.Tree;           use Language.Tree;
-with Language.Tree.Ada;       use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Language.Ada;            use Language.Ada;
 with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
@@ -60,6 +60,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    procedure File_Updated
      (Assistant : access Ada_Type_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
    function Get_Type_Info
@@ -168,6 +169,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    overriding procedure File_Updated
      (Assistant : access Ada_Type_Assistant;
       File      : Structured_File_Access;
+      Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
       pragma Unreferenced (File, Assistant, Kind);

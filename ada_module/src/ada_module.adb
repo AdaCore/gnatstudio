@@ -27,7 +27,7 @@ with ALI_Parser;               use ALI_Parser;
 with Entities;                 use Entities;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language.Ada;             use Language.Ada;
-with Language.Tree.Ada;        use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;   use Ada_Semantic_Tree.Lang;
 with Language_Handlers;        use Language_Handlers;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;

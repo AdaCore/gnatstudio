@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                 use GNAT.Strings;
-with Language.Tree.Ada;            use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Language.Ada;                 use Language.Ada;
 with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;

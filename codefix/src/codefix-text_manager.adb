@@ -30,7 +30,7 @@ with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
-with Language.Tree.Ada;       use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 
 package body Codefix.Text_Manager is
 
@@ -1341,6 +1341,7 @@ package body Codefix.Text_Manager is
          This.Construct_File := Get_Or_Create
            (This.Construct_Db,
             This.File_Name,
+            Ada_Lang,
             Ada_Tree_Lang);
 
          This.Structure_Up_To_Date.all := True;

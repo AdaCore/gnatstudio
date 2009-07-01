@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -186,7 +186,7 @@ package body Construct_Tries is
      (Trie         : access Construct_Trie;
       Construct_It : Construct_Tree_Iterator;
       Data         : Additional_Data_Type;
-      Lang         : access Tree_Language'Class;
+      Lang         : access Abstract_Tree_Language'Class;
       Index        : out Construct_Trie_Index) is
    begin
       Insert
@@ -203,7 +203,7 @@ package body Construct_Tries is
       Construct_It : Construct_Tree_Iterator;
       Name         : String;
       Data         : Additional_Data_Type;
-      Lang         : access Tree_Language'Class;
+      Lang         : access Abstract_Tree_Language'Class;
       Index        : out Construct_Trie_Index)
    is
       pragma Unreferenced (Lang);

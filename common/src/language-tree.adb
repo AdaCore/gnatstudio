@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,15 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with String_Utils;           use String_Utils;
-
-with Language.Documentation; use Language.Documentation;
-with Language.Unknown;       use Language.Unknown;
-
-with Glib.Convert; use Glib.Convert;
 
 package body Language.Tree is
 
@@ -710,52 +704,6 @@ package body Language.Tree is
       end if;
    end Is_Same_Entity;
 
-   ------------------------------
-   -- Get_Last_Relevant_Entity --
-   ------------------------------
-
-   function Get_Last_Relevant_Construct
-     (Tree : Construct_Tree; Offset : Natural)
-     return Construct_Tree_Iterator
-   is
-      Last_Relevant_Construct : Construct_Tree_Iterator :=
-        Null_Construct_Tree_Iterator;
-      It                      : Construct_Tree_Iterator;
-   begin
-
-      for J in reverse 1 .. Tree.Contents'Last loop
-         if Tree.Contents (J).Construct.Sloc_Start.Index <= Offset then
-            Last_Relevant_Construct := (Tree.Contents (J)'Access, J);
-            It := Last_Relevant_Construct;
-
-            while It /= Null_Construct_Tree_Iterator loop
-               --  If we found the enclosing construct, nothing more to get.
-
-               if Get_Construct (It).Sloc_End.Index >= Offset then
-                  exit;
-               end if;
-
-               --  If the iterator is not anymore on the same scope, we have
-               --  jumped in an enclosing scope, and therefore the last
-               --  construct found is in fact unreacheable. It is the actual
-               --  one.
-
-               if Get_Parent_Scope (Tree, It)
-                 /= Get_Parent_Scope (Tree, Last_Relevant_Construct)
-               then
-                  Last_Relevant_Construct := It;
-               end if;
-
-               It := Prev (Tree, It, Jump_Over);
-            end loop;
-
-            exit;
-         end if;
-      end loop;
-
-      return Last_Relevant_Construct;
-   end Get_Last_Relevant_Construct;
-
    --------------
    -- Encloses --
    --------------
@@ -899,6 +847,24 @@ package body Language.Tree is
    begin
       return Left.Node.Parent_Index = Right.Node.Parent_Index;
    end Has_Same_Scope;
+
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index (It : Construct_Tree_Iterator) return Integer is
+   begin
+      return It.Index;
+   end Get_Index;
+
+   ----------------------
+   -- Get_Parent_Index --
+   ----------------------
+
+   function Get_Parent_Index (It : Construct_Tree_Iterator) return Integer is
+   begin
+      return It.Node.Parent_Index;
+   end Get_Parent_Index;
 
    ---------
    -- "=" --
@@ -1475,222 +1441,5 @@ package body Language.Tree is
          end if;
       end if;
    end Match;
-
-   --------------------
-   -- Get_Name_Index --
-   --------------------
-
-   function Get_Name_Index
-     (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return String
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return Construct.Name.all;
-   end Get_Name_Index;
-
-   -----------------------
-   -- Get_Documentation --
-   -----------------------
-
-   function Get_Documentation
-     (Lang   : access Tree_Language;
-      Buffer : String;
-      Tree   : Construct_Tree;
-      Node   : Construct_Tree_Iterator) return String
-   is
-      Beginning, Current   : Natural;
-      Result               : Unbounded_String;
-
-      Type_Start, Type_End : Source_Location;
-      Success              : Boolean;
-      Language             : constant Language_Access :=
-        Get_Language (Tree_Language'Class (Lang.all)'Access);
-      Add_New_Line         : Boolean := False;
-   begin
-      Get_Documentation_Before
-        (Context       => Get_Language_Context (Language).all,
-         Buffer        => Buffer,
-         Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
-         Comment_Start => Beginning,
-         Comment_End   => Current);
-
-      if Beginning = 0 then
-         Get_Documentation_After
-           (Context       => Get_Language_Context (Language).all,
-            Buffer        => Buffer,
-            Decl_Index    => Get_Construct (Node).Sloc_End.Index,
-            Comment_Start => Beginning,
-            Comment_End   => Current);
-      end if;
-
-      if Beginning /= 0 then
-         Append
-           (Result,
-            Escape_Text
-              (Comment_Block
-                 (Language,
-                  Buffer (Beginning .. Current),
-                  Comment => False,
-                  Clean   => True)));
-
-         Add_New_Line := True;
-      end if;
-
-      if Get_Construct (Node).Category in Subprogram_Category then
-         declare
-            Sub_Iter               : Construct_Tree_Iterator :=
-                                       Next (Tree, Node, Jump_Into);
-            Has_Parameter          : Boolean := False;
-            Biggest_Parameter_Name : Integer := 0;
-         begin
-            while Is_Parent_Scope (Node, Sub_Iter) loop
-               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  Add_New_Line := True;
-
-                  if Get_Construct (Sub_Iter).Name'Length >
-                    Biggest_Parameter_Name
-                  then
-                     Biggest_Parameter_Name :=
-                       Get_Construct (Sub_Iter).Name'Length;
-                  end if;
-               end if;
-
-               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-            end loop;
-
-            Sub_Iter := Next (Tree, Node, Jump_Into);
-
-            while Is_Parent_Scope (Node, Sub_Iter) loop
-               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  if not Has_Parameter then
-                     if Add_New_Line then
-                        Append (Result, ASCII.LF & ASCII.LF);
-                     end if;
-
-                     Append
-                       (Result, "<b>Parameters:</b>");
-                     Has_Parameter := True;
-                     Add_New_Line := True;
-                  end if;
-
-                  Append (Result, ASCII.LF);
-
-                  Get_Referenced_Entity
-                    (Language,
-                     Buffer,
-                     Get_Construct (Sub_Iter).all,
-                     Type_Start,
-                     Type_End,
-                     Success);
-
-                  Append
-                    (Result, Escape_Text (Get_Construct (Sub_Iter).Name.all));
-
-                  for J in Get_Construct (Sub_Iter).Name'Length + 1
-                    .. Biggest_Parameter_Name
-                  loop
-                     Append (Result, " ");
-                  end loop;
-
-                  if Success then
-                     Append
-                       (Result,
-                        " : " & Escape_Text
-                          (Buffer (Type_Start.Index .. Type_End.Index)));
-                  else
-                     Append (Result, " : ???");
-                  end if;
-               end if;
-
-               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-            end loop;
-         end;
-
-         Get_Referenced_Entity
-           (Language,
-            Buffer,
-            Get_Construct (Node).all,
-            Type_Start,
-            Type_End,
-            Success);
-
-         if Success then
-            if Add_New_Line then
-               Append (Result, ASCII.LF & ASCII.LF);
-            end if;
-
-            Append
-              (Result,
-               "<b>Return:</b>"
-               & ASCII.LF
-               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
-         end if;
-
-      elsif Get_Construct (Node).Category in Data_Category then
-         declare
-            Var_Start, Var_End : Source_Location;
-         begin
-            Get_Referenced_Entity
-              (Language,
-               Buffer,
-               Get_Construct (Node).all,
-               Var_Start,
-               Var_End,
-               Success);
-
-            if Success then
-               if Add_New_Line then
-                  Append (Result, ASCII.LF & ASCII.LF);
-               end if;
-
-               Append
-                 (Result,
-                  "<b>Type: </b>"
-                  & Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
-            end if;
-         end;
-      end if;
-
-      return To_String (Result);
-   end Get_Documentation;
-
-   ----------
-   -- Diff --
-   ----------
-
-   procedure Diff
-     (Lang               : access Tree_Language;
-      Old_Tree, New_Tree : Construct_Tree;
-      Callback           : Diff_Callback)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      for J in Old_Tree.Contents'Range loop
-         Callback
-           ((Old_Tree.Contents (J)'Access, J),
-            Null_Construct_Tree_Iterator,
-            Removed);
-      end loop;
-
-      for J in New_Tree.Contents'Range loop
-         Callback
-           (Null_Construct_Tree_Iterator,
-            (New_Tree.Contents (J)'Access, J),
-            Added);
-      end loop;
-   end Diff;
-
-   ------------------
-   -- Get_Language --
-   ------------------
-
-   overriding function Get_Language
-     (Tree : access Unknown_Tree_Language) return Language_Access
-   is
-      pragma Unreferenced (Tree);
-   begin
-      return Unknown_Lang;
-   end Get_Language;
 
 end Language.Tree;

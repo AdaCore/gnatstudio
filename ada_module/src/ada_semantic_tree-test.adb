@@ -27,7 +27,7 @@ with GNAT.Strings;                   use GNAT.Strings;
 with Language;                       use Language;
 with Language.Ada;                   use Language.Ada;
 with Language.Tree;                  use Language.Tree;
-with Language.Tree.Ada;              use Language.Tree.Ada;
+with Ada_Semantic_Tree.Lang;              use Ada_Semantic_Tree.Lang;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Ada_Semantic_Tree.Declarations;
 use Ada_Semantic_Tree.Declarations;
@@ -306,10 +306,12 @@ procedure Ada_Semantic_Tree.Test is
 
             Left_Tree :=
               Get_Tree
-                (Get_Or_Create (Construct_Db, Left_File, Ada_Tree_Lang));
+                (Get_Or_Create
+                     (Construct_Db, Left_File, Ada_Lang, Ada_Tree_Lang));
             Right_Tree :=
               Get_Tree
-                (Get_Or_Create (Construct_Db, Right_File, Ada_Tree_Lang));
+                (Get_Or_Create
+                     (Construct_Db, Right_File, Ada_Lang, Ada_Tree_Lang));
 
             New_Line;
             Diff
@@ -417,6 +419,7 @@ procedure Ada_Semantic_Tree.Test is
                      Full_File := Get_Or_Create
                        (Construct_Db,
                         Files.all (J),
+                        Ada_Lang,
                         Ada_Tree_Lang);
 
 --                       Set_Profiling (True);
@@ -440,6 +443,7 @@ procedure Ada_Semantic_Tree.Test is
                Full_File := Get_Or_Create
                  (Get_Database (File),
                   Create (+Buffer (Word_Begin .. Word_End), New_Registry),
+                  Ada_Lang,
                   Ada_Tree_Lang);
 
                Put_Line
@@ -600,6 +604,7 @@ procedure Ada_Semantic_Tree.Test is
       File_Node := Get_Or_Create
         (Construct_Db,
          File,
+         Ada_Lang,
          Ada_Tree_Lang);
 
       while Index /= 0 loop
@@ -654,6 +659,7 @@ begin
             File_Node := Get_Or_Create
               (Construct_Db,
                Files.all (J),
+               Ada_Lang,
                Ada_Tree_Lang);
          end loop;
       end loop;

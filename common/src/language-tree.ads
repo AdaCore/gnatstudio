@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -236,6 +236,14 @@ package Language.Tree is
      (Left, Right : Construct_Tree_Iterator) return Boolean;
    --  Return True if Left and Right are on the same scope.
 
+   function Get_Index (It : Construct_Tree_Iterator) return Integer;
+   --  Return the index of this iterator in the list of ordered constructs of
+   --  the tree, 0 if null iterator.
+
+   function Get_Parent_Index (It : Construct_Tree_Iterator) return Integer;
+   --  Return the index of the parent iterator in the list of ordered
+   --  constructs of the tree, 0 if null iterator.
+
    --------------------------
    -- Composite_Identifier --
    --------------------------
@@ -398,36 +406,21 @@ package Language.Tree is
    --  Tested_Name. Otherwise, return true if Seeked_Name is a prefix of
    --  Tested_Name
 
-   -------------------
-   -- Tree_Language --
-   -------------------
+   ----------------------------
+   -- Abstract_Tree_Language --
+   ----------------------------
 
-   type Tree_Language is abstract tagged private;
-   --  This type represents the language of a given tree. It's used to provide
-   --  various language-specific capabilities on a tree.
-
-   type Tree_Language_Access is access all Tree_Language'Class;
-
-   function Get_Language
-     (Tree : access Tree_Language) return Language_Access is abstract;
-   --  Return the language associated to this tree.
+   type Abstract_Tree_Language is abstract tagged null record;
+   --  This type contains basic capabilities to be implemented by a tree
+   --  languages. More advanced capabilities are declared in the database
+   --  package.
 
    function Get_Name_Index
-     (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return String;
+     (Lang      : access Abstract_Tree_Language;
+      Construct : Simple_Construct_Information) return String is abstract;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling. Default implementation return the actual
    --  construct name.
-
-   function Get_Documentation
-     (Lang   : access Tree_Language;
-      Buffer : String;
-      Tree   : Construct_Tree;
-      Node   : Construct_Tree_Iterator) return String;
-   --  This function returns the documentation for the entity given in
-   --  parameter, for the given language. By default, it computes a
-   --  documentation from generic knowledge on the constructs.
-   --  Language-specific computation may give more accurate information.
 
    type Diff_Kind is (Removed, Added, Preserved);
 
@@ -435,22 +428,14 @@ package Language.Tree is
      (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
 
    procedure Diff
-     (Lang               : access Tree_Language;
+     (Lang               : access Abstract_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
-      Callback           : Diff_Callback);
+      Callback           : Diff_Callback) is abstract;
    --  Calls the callback on each construct, showing if it's an added, modified
    --  or unmodified construct. The default implementation calls remove on all
    --  the contents of the old tree, and add to all the contents of the new
    --  tree. The implementer may use the referenced data stored in the
    --  constructs nodes.
-
-   type Unknown_Tree_Language is new Tree_Language with private;
-
-   overriding function Get_Language
-     (Tree : access Unknown_Tree_Language) return Language_Access;
-   --  See inherited documentation
-
-   Unknown_Tree_Lang : constant Tree_Language_Access;
 
 private
 
@@ -535,45 +520,5 @@ private
          Position_Start : Positions_Array (1 .. Number_Of_Elements);
          Position_End   : Positions_Array (1 .. Number_Of_Elements);
       end record;
-
-   type Tree_Language is abstract tagged null record;
-
-   function Get_Last_Relevant_Construct
-     (Tree   : Construct_Tree;
-      Offset : Natural)
-      return Construct_Tree_Iterator;
-   --  Return the last construct representing the scope where the offset is.
-   --  It can be either the last entity declared in the scope, or the scope
-   --  itself.
-   --
-   --  Example:
-   --
-   --  package A is
-   --
-   --     V : Integer; <- here is the last relevant construct
-   --     <-  here is the offset
-   --
-   --  other example:
-   --
-   --  package A is
-   --
-   --     V : Integer;
-   --
-   --     package B is <- here is the last relevant construct
-   --        V2 : Integer;
-   --     end B;
-   --
-   --     <-  here is the offset
-   --
-   --  last example:
-   --
-   --  package A is <- here is the last relevant construct
-   --
-   --     <-  here is the offset
-
-   type Unknown_Tree_Language is new Tree_Language with null record;
-
-   Unknown_Tree_Lang : constant Tree_Language_Access :=
-     new Unknown_Tree_Language;
 
 end Language.Tree;

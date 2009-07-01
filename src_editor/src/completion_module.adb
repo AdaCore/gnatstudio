@@ -71,7 +71,6 @@ use Completion.Ada.Constructs_Extractor;
 
 with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
-with Language.Tree.Ada;         use Language.Tree.Ada;
 
 package body Completion_Module is
 
@@ -324,6 +323,7 @@ package body Completion_Module is
       File      : Structured_File_Access;
       Smart_Completion_Pref : constant Smart_Completion_Type :=
         Smart_Completion.Get_Pref;
+      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
 
    begin
       if Smart_Completion_Pref /= Disabled then
@@ -333,11 +333,11 @@ package body Completion_Module is
          then
             --  ??? This is a temporary kludge in order to avoid considering C
             --  files.
-
             File := Get_Or_Create
               (Get_Construct_Database (Kernel),
                File_Data.File,
-               Ada_Tree_Lang);
+               Get_Language_From_File (Handler, File_Data.File),
+               Get_Tree_Language_From_File (Handler, File_Data.File));
 
             Update_Contents (File);
          end if;
@@ -1073,18 +1073,14 @@ package body Completion_Module is
    is
       Dummy : Structured_File_Access;
       pragma Unreferenced (Dummy);
-   begin
-      if Get_Language_From_File
-        (Get_Language_Handler (Kernel), File)
-        = Ada_Lang
-      then
-         --  ??? This is a temporary kludge in order to avoid parsing C files
 
-         Dummy := Get_Or_Create
-           (Get_Construct_Database (Kernel),
-            File,
-            Ada_Tree_Lang);
-      end if;
+      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
+   begin
+      Dummy := Get_Or_Create
+        (Get_Construct_Database (Kernel),
+         File,
+         Get_Language_From_File (Handler, File),
+         Get_Tree_Language_From_File (Handler, File));
    end Load_One_File_Constructs;
 
    ---------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@ with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 with Basic_Types;                       use Basic_Types;
 with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
-with Language.Tree.Ada;                 use Language.Tree.Ada;
+with Language.Ada;                      use Language.Ada;
+with Ada_Semantic_Tree.Lang;                 use Ada_Semantic_Tree.Lang;
 
 package body Completion.Ada.Constructs_Extractor is
 
@@ -50,7 +51,7 @@ package body Completion.Ada.Constructs_Extractor is
       Resolver.Manager := null;
       Resolver.Construct_Db := Construct_Db;
       Resolver.Current_File := Get_Or_Create
-        (Construct_Db, Current_File, Ada_Tree_Lang);
+        (Construct_Db, Current_File, Ada_Lang, Ada_Tree_Lang);
       Resolver.Current_Buffer := Current_Buffer;
 
       return Resolver_Acc;
@@ -374,9 +375,7 @@ package body Completion.Ada.Constructs_Extractor is
    begin
       return Get_Documentation
         (Ada_Tree_Lang,
-         Get_Buffer (Proposal.File).all,
-         Get_Tree (Proposal.File),
-         Proposal.Tree_Node);
+         To_Entity_Access (Proposal.File, Proposal.Tree_Node));
    end Get_Documentation;
 
    ------------------
