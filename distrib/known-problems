@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.4.0
               "GtkWarning" messages may be displayed.
   Workaround: The warnings and wrong display can be safely ignored.
 
+- I614-004: Tooltip appearing when the mouse pointer is not on text
+  Problem:    Sometimes a tooltip will appear when the mouse pointer is not on
+              top of an entity, for instance when the mouse pointer is in the
+              blank spaces between the beginning of the line and an entity.
+  Workaround: The tooltip that appears in this case can be ignored.
+
 - I610-001: Smart Completion broken when at the end of the editor
   Problem:    The Smart Completion does not work well when working at the very
               end of the editor. The results can be wrong completion, bad
