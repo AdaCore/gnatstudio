@@ -162,12 +162,18 @@ package body Ada_Semantic_Tree.Lang is
       function Attribute_Decoration
         (Construct  : Simple_Construct_Information;
          Default_In : Boolean) return String;
+      --  Return the decoration of the construct given in parameter, i.e.
+      --  parameter mode, constant properties, not null constraints...
 
       function Get_Default_Value
         (Construct  : Simple_Construct_Information;
          Max_Length : Integer := 30) return String;
+      --  Return the default / initializAtion expression for this construct, if
+      --  any. Result will be stripped when bigger than Max_Length characters
 
-      function Remove_Extra_Blanks (Str : String) return String;
+      function Remove_Blanks (Str : String) return String;
+      --  Return a string will all blanks characters removed (including tabs &
+      --  end of line marks)
 
       --------------------------
       -- Attribute_Decoration --
@@ -237,6 +243,8 @@ package body Ada_Semantic_Tree.Lang is
          Parent_Depth  : Integer := 0;
 
          function Append_Text (Str : String) return Boolean;
+         --  Add text in the result, and return True if there is no more space
+         --  left in the buffer.
 
          function Token_Callback
            (Entity         : Language_Entity;
@@ -336,7 +344,7 @@ package body Ada_Semantic_Tree.Lang is
       -- Remove_Extra_Blanks --
       -------------------------
 
-      function Remove_Extra_Blanks (Str : String) return String is
+      function Remove_Blanks (Str : String) return String is
          Result : String := Str;
          Index  : Integer := 0;
       begin
@@ -348,7 +356,7 @@ package body Ada_Semantic_Tree.Lang is
          end loop;
 
          return Result (1 .. Index);
-      end Remove_Extra_Blanks;
+      end Remove_Blanks;
 
       Add_New_Line  : Boolean := False;
       Has_Parameter : Boolean := False;
@@ -531,7 +539,7 @@ package body Ada_Semantic_Tree.Lang is
 
                      Unbounded.Append
                        (Result,
-                        Remove_Extra_Blanks
+                        Remove_Blanks
                           (Escape_Text
                              (Buffer (Type_Start.Index .. Type_End.Index))));
 
@@ -557,10 +565,10 @@ package body Ada_Semantic_Tree.Lang is
                      end loop;
 
                      Unbounded.Append
-                       (Result, " := "
-                        & Remove_Extra_Blanks
+                       (Result, " :="
+                        & Reduce
                           (Escape_Text
-                             (Get_Default_Value
+                             (" " & Get_Default_Value
                                 (Get_Construct (Sub_Iter).all))) & "]");
 
                      if Kind = All_Doc then
@@ -637,7 +645,7 @@ package body Ada_Semantic_Tree.Lang is
                   "<b>Type: "
                   & Attribute_Decoration (Get_Construct (Node).all, False)
                   & "</b>"
-                  & Remove_Extra_Blanks
+                  & Remove_Blanks
                     (Escape_Text (Buffer (Var_Start.Index .. Var_End.Index))));
 
                if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
