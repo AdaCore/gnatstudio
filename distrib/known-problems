@@ -4,6 +4,8 @@ Known Problems fixed in GPS 4.4.0
   Problem:    On some X11 displays, with some fonts, the block highlighting or
               the right margin may be drawn with an incorrect horizontal
               offset.
+  Workaround: Disable the block highlighting or right margin, or ignore this
+              visual artefact.
 
 - I701-011: Display problems in contextual menus for operators
   Problem:    When calling the editor contextual menu on overidden operators
