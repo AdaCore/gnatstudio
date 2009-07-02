@@ -88,7 +88,7 @@ private
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
       Tree                 : Code_Analysis.Code_Analysis_Tree;
       Show_All_Subprograms : Boolean := False;
-      Show_All_Files       : Boolean := True;
+      Show_All_Files       : Boolean := False;
       Show_All_Projects    : Boolean := True;
       Message_Categories   : Code_Peer.Message_Category_Sets.Set;
       --  Set of the message categories, which is showed in the report
