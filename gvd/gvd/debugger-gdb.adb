@@ -3221,6 +3221,9 @@ package body Debugger.Gdb is
 
                Skip_To_Char (S, Index, ASCII.LF);
                Index := Index + 1;
+            else
+               List (J).Scope := No_Scope;
+               List (J).Action := No_Action;
             end if;
          end loop;
       end Fill_Scope_Action;
