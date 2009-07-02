@@ -36,6 +36,14 @@ NF-44-I616-052 New action to toggle auto-casing on/off (2009-06-24)
    default) instead of the action which disables casing for a single character
    only.
 
+NF-44-I610-012 Outline view hierarchy (2009-07-02)
+
+   The outline now represents a hierarchical view of the contents of the file,
+   as opposed to a flat view. Global variables and field information has been
+   added. In addition, the "Dynamic link with editor" feature and the tooltips
+   are now synchronized with the contents of the source file and
+   do not need to have compiled the sources to be accurate.
+
 NF-44-I602-021 New plugin: open_file.py (2009-06-03)
 
    This plugin creates a contextual menu. If you click on the name of a file
