@@ -303,8 +303,7 @@ package body Language.Tree.Database is
             else
                Result
                  (Result_Index + 1 .. Result'Last) := Str
-                 (Str'First .. Str'First + (Result'Last - Result_Index - 4))
-                & "...";
+                 (Str'First .. Str'First + (Result'Last - Result_Index - 1));
 
                return False;
             end if;
