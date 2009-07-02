@@ -186,6 +186,10 @@ package Language.Tree.Database is
    --  Unlock the locked file, if any, and release update event if there's no
    --  more lock.
 
+   overriding procedure Adjust (This : in out Update_Lock);
+   --  ??? This should be removed when the lock is limited again. It currently
+   --  increases the lock depth on object copy.
+
    overriding procedure Finalize (This : in out Update_Lock);
    --  Same as before, but done automatically upon object finalization.
 

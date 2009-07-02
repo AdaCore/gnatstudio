@@ -834,6 +834,17 @@ package body Language.Tree.Database is
       end if;
    end Unlock;
 
+   ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (This : in out Update_Lock) is
+   begin
+      if This.File_Locked /= null then
+         This.File_Locked.Lock_Depth := This.File_Locked.Lock_Depth + 1;
+      end if;
+   end Adjust;
+
    --------------
    -- Finalize --
    --------------
