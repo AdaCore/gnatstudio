@@ -200,7 +200,7 @@ package body Completion_Window is
       Widget : constant Gtk_Widget := Get_Child (Window.Notes_Container);
    begin
       if Widget /= null then
-         Remove (Window.Notes_Container, Widget);
+         Destroy (Widget);
       end if;
    end Empty_Notes_Window;
 
