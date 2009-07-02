@@ -303,7 +303,8 @@ package body Language.Tree.Database is
             else
                Result
                  (Result_Index + 1 .. Result'Last) := Str
-                 (Str'First .. Str'First + (Result'Last - Result_Index - 1));
+                 (Str'First .. Str'First + (Result'Last - Result_Index - 4))
+                & "...";
 
                return False;
             end if;
@@ -811,7 +812,7 @@ package body Language.Tree.Database is
          File.Lock_Depth := File.Lock_Depth + 1;
       end if;
 
-      return (Limited_Controlled with File_Locked => File);
+      return (Controlled with File_Locked => File);
    end Lock_Updates;
 
    ------------
