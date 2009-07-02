@@ -116,20 +116,20 @@ package body Completion_Utils is
 
       Gtk_New_Vbox (VBox);
 
-      --  Create the label
-      Gtk_New (Label);
-      Set_Line_Wrap (Label, False);
-      Set_Use_Markup (Label, True);
-      Modify_Font (Label, Fixed_Width_Font);
-
       C := Proposals.First;
 
       while Has_Element (C) loop
          declare
             Doc      : constant String := Get_Documentation (Element (C).all);
             Location : constant File_Location :=
-                         Get_Location (Element (C).all);
+              Get_Location (Element (C).all);
          begin
+            --  Create the label
+            Gtk_New (Label);
+            Set_Line_Wrap (Label, False);
+            Set_Use_Markup (Label, True);
+            Modify_Font (Label, Fixed_Width_Font);
+
             Gtk_New (Frame);
 
             if Doc /= "" then
