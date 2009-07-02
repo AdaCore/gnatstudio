@@ -296,6 +296,12 @@ package body Src_Editor_Box.Tooltips is
             return;
          end if;
 
+         --  If the mouse is not on top of text, do not display a tooltip
+
+         if Entity_Name_Information (Context) = "" then
+            return;
+         end if;
+
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
