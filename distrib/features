@@ -19,7 +19,7 @@ NF-44-I702-018 Added "eclipse.py" plugin with "delete line" action (2009-07-02)
 
    GPS now contains an "eclipse.py" plugin, deactivated by default, which
    defines an action "delete line" (bound to ctrl-d) to delete the lines
-   that include the selection.
+   that include the selection. This action was contributed by Robert ter Vehn.
 
 NF-44-I630-005 Improved error detection in Builder plugins (2009-06-30)
 
