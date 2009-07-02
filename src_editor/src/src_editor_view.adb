@@ -1016,7 +1016,7 @@ package body Src_Editor_View is
               (View,
                Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-            X := Gint (Offset - 1) * View.Char_Width -
+            X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
               Bracket_Offset - Rect.X + Margin;
 
             if Y > 0 then
@@ -1122,7 +1122,7 @@ package body Src_Editor_View is
          --  Redraw the line showing the nth column if needed
 
          if Column > 0 then
-            X := Column * View.Char_Width - Rect.X + Margin;
+            X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
             Draw_Line
               (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
          end if;
@@ -1571,8 +1571,8 @@ package body Src_Editor_View is
       Source : constant Source_View := Source_View (Hook.View);
       Layout : Pango_Layout;
       Color  : Gdk_Color;
-      Height : Gint;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
+      Ink_Rect, Logical_Rect : Gdk_Rectangle;
    begin
       --  Set the font
 
@@ -1581,9 +1581,11 @@ package body Src_Editor_View is
       --  Recompute the width of one character
 
       Layout := Create_Pango_Layout (Source);
+      Set_Attributes (Layout, null);
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
-      Set_Text (Layout, "m");
-      Get_Pixel_Size (Layout, Source.Char_Width, Height);
+      Set_Text (Layout, (1 .. 256 => '0'));
+      Get_Pixel_Extents (Layout, Ink_Rect, Logical_Rect);
+      Source.Width_Of_256_Chars := Ink_Rect.Width;
       Unref (Layout);
 
       --  Reset the color of the current line.

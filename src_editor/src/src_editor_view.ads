@@ -203,7 +203,7 @@ private
       Idle_Redraw_Registered : Boolean := False;
       --  Whether the Idle_Redraw has been registered
 
-      Char_Width          : Gint;
+      Width_Of_256_Chars  : Gint;
 
       Current_Block_GC    : Gdk.GC.Gdk_GC;
       Highlight_Blocks    : Boolean := False;
