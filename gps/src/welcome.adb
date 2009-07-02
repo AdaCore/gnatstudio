@@ -311,7 +311,9 @@ package body Welcome is
    procedure On_Default_Project (Screen : access Gtk_Widget_Record'Class) is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
    begin
-      Load_Default_Project (S.Kernel, Create (+Get_Text (S.Default_Dir)));
+      Load_Default_Project
+        (S.Kernel, Create (+Get_Text (S.Default_Dir)),
+         Clear => False);
       --  ??? What if the filesystem path is non-UTF8?
       Response (S, Gtk_Response_OK);
 

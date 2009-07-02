@@ -2783,15 +2783,24 @@ package body Projects is
    ------------------
 
    function Create_Flags
-     (On_Error : Prj.Error_Handler) return Processing_Flags is
+     (On_Error        : Prj.Error_Handler;
+      Require_Sources : Boolean := True) return Processing_Flags is
    begin
-      return Create_Flags
-        (Report_Error              => On_Error,
-         When_No_Sources           => Warning,
-         Require_Sources_Other_Lang => True,
-         --  ??? Do we need the warnings about missing sources ?
-         Compiler_Driver_Mandatory => False,
-         Allow_Duplicate_Basenames => True);
+      if Require_Sources then
+         return Create_Flags
+           (Report_Error               => On_Error,
+            When_No_Sources            => Warning,
+            Require_Sources_Other_Lang => True,
+            Compiler_Driver_Mandatory  => False,
+            Allow_Duplicate_Basenames  => True);
+      else
+         return Create_Flags
+           (Report_Error               => On_Error,
+            When_No_Sources            => Silent,
+            Require_Sources_Other_Lang => False,
+            Compiler_Driver_Mandatory  => False,
+            Allow_Duplicate_Basenames  => True);
+      end if;
    end Create_Flags;
 
 end Projects;

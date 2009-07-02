@@ -820,6 +820,7 @@ package body Projects.Registry is
                                   Start (Registry.Data.Root);
       Automatically_Generated : Boolean;
       Config_File_Path        : String_Access;
+      Flags                   : Processing_Flags;
 
    begin
       while Current (Iter) /= No_Project loop
@@ -834,6 +835,10 @@ package body Projects.Registry is
       Create_Environment_Variables (Registry);
 
       begin
+         Flags := Create_Flags
+           (On_Error'Unrestricted_Access,
+            Require_Sources => Status (Registry.Data.Root) = From_File);
+
          Process_Project_And_Apply_Config
            (Main_Project               => View,
             User_Project_Node          => Registry.Data.Root.Node,
@@ -845,8 +850,7 @@ package body Projects.Registry is
             Allow_Automatic_Generation => False,
             Automatically_Generated    => Automatically_Generated,
             Config_File_Path           => Config_File_Path,
-            Flags                      =>
-              Create_Flags (On_Error'Unrestricted_Access),
+            Flags                      => Flags,
             Normalized_Hostname        => "",
             On_Load_Config             =>
               Add_GPS_Naming_Schemes_To_Config_File'Unrestricted_Access);

@@ -732,8 +732,11 @@ private
    --  of Importing. See projects.adb for the definition of these two caches
 
    function Create_Flags
-     (On_Error : Prj.Error_Handler) return Prj.Processing_Flags;
-   --  Return the flags to pass to the project manager in the context of GPS
+     (On_Error        : Prj.Error_Handler;
+      Require_Sources : Boolean := True) return Prj.Processing_Flags;
+   --  Return the flags to pass to the project manager in the context of GPS.
+   --  Require_Sources indicates whether each language must have sources
+   --  attached to it.
 
    No_Variable : constant Scenario_Variable :=
      (Namet.No_Name, Namet.No_Name, Prj.Tree.Empty_Node);
