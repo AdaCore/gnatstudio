@@ -168,7 +168,7 @@ package body Ada_Semantic_Tree.Lang is
       function Get_Default_Value
         (Construct  : Simple_Construct_Information;
          Max_Length : Integer := 30) return String;
-      --  Return the default / initializAtion expression for this construct, if
+      --  Return the default initialization expression for this construct, if
       --  any. Result will be stripped when bigger than Max_Length characters
 
       function Remove_Blanks (Str : String) return String;
