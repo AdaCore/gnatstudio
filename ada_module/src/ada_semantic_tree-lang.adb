@@ -39,6 +39,16 @@ package body Ada_Semantic_Tree.Lang is
 
    use type GNAT.Strings.String_Access;
 
+   type Doc_Kind is (All_Doc, Profile);
+
+   function Format_Documentation
+     (Lang     : access Ada_Tree_Language;
+      Entity   : Entity_Access;
+      Max_Size : Integer;
+      Kind     : Doc_Kind) return String;
+   --  Factorization of the documentation information. If Max_Size is -1, then
+   --  all the documentation is returned, otherwise only the Max_Size first.
+
    ------------------
    -- Is_Enum_Type --
    ------------------
@@ -104,6 +114,32 @@ package body Ada_Semantic_Tree.Lang is
    overriding function Get_Documentation
      (Lang   : access Ada_Tree_Language;
       Entity : Entity_Access) return String
+   is
+   begin
+      return Format_Documentation (Lang, Entity, -1, All_Doc);
+   end Get_Documentation;
+
+   -----------------
+   -- Get_Profile --
+   -----------------
+
+   overriding function Get_Profile
+     (Lang     : access Ada_Tree_Language;
+      Entity   : Entity_Access;
+      Max_Size : Natural) return String is
+   begin
+      return Format_Documentation (Lang, Entity, Max_Size, Profile);
+   end Get_Profile;
+
+   --------------------------
+   -- Format_Documentation --
+   --------------------------
+
+   function Format_Documentation
+     (Lang     : access Ada_Tree_Language;
+      Entity   : Entity_Access;
+      Max_Size : Integer;
+      Kind     : Doc_Kind) return String
    is
       Tree                 : constant Construct_Tree :=
                                Get_Tree (Get_File (Entity));
@@ -292,42 +328,45 @@ package body Ada_Semantic_Tree.Lang is
          return Result (1 .. Current_Ind);
       end Get_Default_Value;
 
-      Add_New_Line : Boolean := False;
+      Add_New_Line  : Boolean := False;
+      Has_Parameter : Boolean := False;
 
    begin
-      Get_Documentation_Before
-        (Context       => Get_Language_Context (Language).all,
-         Buffer        => Buffer.all,
-         Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
-         Comment_Start => Beginning,
-         Comment_End   => Current);
-
-      if Beginning = 0 then
-         Get_Documentation_After
+      if Kind = All_Doc then
+         Get_Documentation_Before
            (Context       => Get_Language_Context (Language).all,
             Buffer        => Buffer.all,
-            Decl_Index    => Get_Construct (Node).Sloc_End.Index,
+            Decl_Index    => Get_Construct (Node).Sloc_Start.Index,
             Comment_Start => Beginning,
             Comment_End   => Current);
-      end if;
 
-      if Beginning /= 0 then
-         Unbounded.Append
-           (Result,
-            Escape_Text
-              (Comment_Block
-                 (Language, Buffer (Beginning .. Current),
-                  Comment => False,
-                  Clean   => True)));
+         if Beginning = 0 then
+            Get_Documentation_After
+              (Context       => Get_Language_Context (Language).all,
+               Buffer        => Buffer.all,
+               Decl_Index    => Get_Construct (Node).Sloc_End.Index,
+               Comment_Start => Beginning,
+               Comment_End   => Current);
+         end if;
 
-         Add_New_Line := True;
+         if Beginning /= 0 then
+            Unbounded.Append
+              (Result,
+               Escape_Text
+                 (Comment_Block
+                    (Language,
+                     Buffer (Beginning .. Current),
+                     Comment => False,
+                     Clean   => True)));
+
+            Add_New_Line := True;
+         end if;
       end if;
 
       if Get_Construct (Node).Category in Subprogram_Category then
          declare
             Sub_Iter                     : Construct_Tree_Iterator :=
                                              Next (Tree, Node, Jump_Into);
-            Has_Parameter                : Boolean := False;
             Biggest_Parameter_Name       : Integer := 0;
             Biggest_Decoration_Length    : Integer := 0;
             Biggest_Affected_Type_Length : Integer := 0;
@@ -395,12 +434,21 @@ package body Ada_Semantic_Tree.Lang is
                         Unbounded.Append (Result, ASCII.LF & ASCII.LF);
                      end if;
 
-                     Unbounded.Append (Result, "<b>Parameters:</b>");
+                     if Kind = All_Doc then
+                        Unbounded.Append (Result, "<b>Parameters:</b>");
+                        Add_New_Line := True;
+                     else
+                        Unbounded.Append (Result, "(");
+                     end if;
+
                      Has_Parameter := True;
-                     Add_New_Line := True;
+                  elsif Kind = Profile then
+                     Unbounded.Append (Result, "; ");
                   end if;
 
-                  Unbounded.Append (Result, ASCII.LF);
+                  if Kind = All_Doc then
+                     Unbounded.Append (Result, ASCII.LF);
+                  end if;
 
                   Get_Referenced_Entity
                     (Language,
@@ -416,7 +464,9 @@ package body Ada_Semantic_Tree.Lang is
                      Unbounded.Append
                        (Result, "<span foreground=""#555555"">[");
                   else
-                     Unbounded.Append (Result, " ");
+                     if Kind = All_Doc then
+                        Unbounded.Append (Result, " ");
+                     end if;
                   end if;
 
                   Current_Affected_Type_Length :=
@@ -429,11 +479,13 @@ package body Ada_Semantic_Tree.Lang is
                   --  ??? These loops are highly inefficient. Consider
                   --  improving these
 
-                  for J in Get_Construct (Sub_Iter).Name'Length + 1
-                    .. Biggest_Parameter_Name
-                  loop
-                     Unbounded.Append (Result, " ");
-                  end loop;
+                  if Kind = All_Doc then
+                     for J in Get_Construct (Sub_Iter).Name'Length + 1
+                       .. Biggest_Parameter_Name
+                     loop
+                        Unbounded.Append (Result, " ");
+                     end loop;
+                  end if;
 
                   if Success then
                      Unbounded.Append
@@ -443,13 +495,15 @@ package body Ada_Semantic_Tree.Lang is
                           (Get_Construct (Sub_Iter).all, True)
                         & "</b>");
 
-                     for J in
-                       Attribute_Decoration
-                         (Get_Construct (Sub_Iter).all, True)'Length + 1
-                       .. Biggest_Decoration_Length
-                     loop
-                        Unbounded.Append (Result, " ");
-                     end loop;
+                     if Kind = All_Doc then
+                        for J in
+                          Attribute_Decoration
+                            (Get_Construct (Sub_Iter).all, True)'Length + 1
+                          .. Biggest_Decoration_Length
+                        loop
+                           Unbounded.Append (Result, " ");
+                        end loop;
+                     end if;
 
                      Unbounded.Append
                        (Result,
@@ -489,6 +543,10 @@ package body Ada_Semantic_Tree.Lang is
             end loop;
          end;
 
+         if Has_Parameter and then Kind = Profile then
+            Unbounded.Append (Result, ")");
+         end if;
+
          Get_Referenced_Entity
            (Language,
             Buffer.all,
@@ -502,13 +560,24 @@ package body Ada_Semantic_Tree.Lang is
                Unbounded.Append (Result, ASCII.LF & ASCII.LF);
             end if;
 
-            Unbounded.Append
-              (Result,
-               "<b>Return:</b>"
-               & ASCII.LF & " <b>"
-               & Attribute_Decoration (Get_Construct (Node).all, False)
-               & "</b>"
-               & Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
+            if Kind = All_Doc then
+               Unbounded.Append
+                 (Result,
+                  "<b>Return:</b>"
+                  & ASCII.LF & " <b>"
+                  & Attribute_Decoration (Get_Construct (Node).all, False)
+                  & "</b>"
+                  & Escape_Text
+                    (Buffer (Type_Start.Index .. Type_End.Index)));
+            else
+               Unbounded.Append
+                 (Result,
+                  " return"
+                  & Attribute_Decoration (Get_Construct (Node).all, False)
+                  & " "
+                  & Escape_Text
+                    (Buffer (Type_Start.Index .. Type_End.Index)));
+            end if;
 
             if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
                Unbounded.Append (Result, "'Class");
@@ -546,8 +615,12 @@ package body Ada_Semantic_Tree.Lang is
          end;
       end if;
 
-      return Unbounded.To_String (Result);
-   end Get_Documentation;
+      if Max_Size = -1 or else Unbounded.Length (Result) <= Max_Size then
+         return Unbounded.To_String (Result);
+      else
+         return Unbounded.Slice (Result, 1, Max_Size - 3) & "...";
+      end if;
+   end Format_Documentation;
 
    ----------
    -- Diff --

@@ -1441,14 +1441,18 @@ package body Outline_View is
          Init (Value, GType_String);
 
          if Get_Construct (It).Name /= null then
-            Set_String
-              (Value, Get_Construct (It).Name.all
-               & " <span foreground=""#A0A0A0"">"
-               & Get_Profile
-                 (Get_Tree_Language (Self.File),
-                  To_Entity_Access (Entity),
-                  500)
-              & "</span>");
+            if Get_Construct (It).Category in Subprogram_Category then
+               Set_String
+                 (Value, Get_Construct (It).Name.all
+                  & " <span foreground=""#A0A0A0"">"
+                  & Get_Profile
+                    (Get_Tree_Language (Self.File),
+                     To_Entity_Access (Entity),
+                     500)
+                  & "</span>");
+            else
+               Set_String (Value, Get_Construct (It).Name.all);
+            end if;
          else
             Set_String (Value, "no name");
          end if;

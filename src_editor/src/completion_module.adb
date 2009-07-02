@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -71,6 +73,7 @@ use Completion.Ada.Constructs_Extractor;
 
 with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
+with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
 
 package body Completion_Module is
 
@@ -171,6 +174,10 @@ package body Completion_Module is
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
+   type Update_Lock_Access is access all Update_Lock;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Update_Lock, Update_Lock_Access);
+
    type Smart_Completion_Data is record
       Manager             : Completion_Manager_Access;
       Constructs_Resolver : Completion_Resolver_Access;
@@ -179,6 +186,10 @@ package body Completion_Module is
       End_Mark            : Gtk_Text_Mark := null;
       Buffer              : Source_Buffer;
       The_Text            : GNAT.Strings.String_Access;
+
+      --  We need to lock the update of the file during the completion process
+      --  in order to keep valid information in the trees.
+      Lock                : Update_Lock_Access;
    end record;
 
    package Smart_Completion_Callback is new
@@ -358,10 +369,13 @@ package body Completion_Module is
       pragma Unreferenced (Dummy);
       Target      : Gtk_Text_Iter;
    begin
+      Unlock (D.Lock.all);
+
       Free (D.Manager);
       Free (D.Constructs_Resolver);
       Free (D.Result);
       Free (D.The_Text);
+      Free (D.Lock);
 
       Completion_Module.Has_Smart_Completion := False;
       Completion_Module.Smart_Completion := null;
@@ -790,7 +804,6 @@ package body Completion_Module is
             renames Completion_Module.Smart_Completion;
             Data : Smart_Completion_Data;
             It   : Gtk_Text_Iter;
-            Constructs : aliased Construct_List;
 
             Smart_Completion_Pref : constant Smart_Completion_Type :=
               Smart_Completion.Get_Pref;
@@ -807,7 +820,15 @@ package body Completion_Module is
 
             Data.Manager := new Ada_Completion_Manager;
             Data.The_Text := Get_String (Buffer);
-            Constructs := Get_Constructs (Buffer, Exact);
+
+            --  ??? This should be made language-independent
+            Data.Lock := new Update_Lock'
+              (Lock_Updates
+                 (Get_Or_Create
+                    (Get_Construct_Database (Kernel),
+                     Get_Filename (Buffer),
+                     Ada_Lang,
+                     Ada_Tree_Lang)));
 
             Data.Constructs_Resolver := New_Construct_Completion_Resolver
                  (Get_Construct_Database (Kernel),
