@@ -15,11 +15,12 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
-NF-44-I702-018 Added "eclipse.py" plugin with "delete line" action (2009-07-02)
+NF-44-I702-018 New plug-in: "eclipse.py" with "delete line" action (2009-07-02)
 
-   GPS now contains an "eclipse.py" plugin, deactivated by default, which
+   GPS now contains an "eclipse.py" plugin, disabled by default, which
    defines an action "delete line" (bound to ctrl-d) to delete the lines
-   that include the selection. This action was contributed by Robert ter Vehn.
+   that include the selection. More actions and key bindings will be added
+   later in this plug-in to ease mixed usage of Eclipse and GPS.
 
 NF-44-I630-005 Improved error detection in Builder plugins (2009-06-30)
 
