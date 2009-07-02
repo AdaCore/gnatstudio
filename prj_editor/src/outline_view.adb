@@ -1242,6 +1242,17 @@ package body Outline_View is
          Gtkada.Abstract_Tree_Model.Initialize (Model);
 
          Set_Model (Outline.Tree, Gtk_Tree_Model (Model));
+
+         declare
+            Path : Gtk_Tree_Path;
+         begin
+            Path := Gtk_New;
+
+            Append_Index (Path, 0);
+
+            Expand_To_Path (Outline.Tree, Path);
+            Path_Free (Path);
+         end;
       else
          Set_Model (Outline.Tree, null);
       end if;

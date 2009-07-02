@@ -29,6 +29,8 @@ with Language.Ada;            use Language.Ada;
 with Language.Documentation;  use Language.Documentation;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
+with String_Utils;            use String_Utils;
+
 package body Ada_Semantic_Tree.Lang is
 
    Ada_Assistant_Id : constant String := "ADA_ASSISTANT";
@@ -164,6 +166,8 @@ package body Ada_Semantic_Tree.Lang is
       function Get_Default_Value
         (Construct  : Simple_Construct_Information;
          Max_Length : Integer := 30) return String;
+
+      function Remove_Extra_Blanks (Str : String) return String;
 
       --------------------------
       -- Attribute_Decoration --
@@ -328,6 +332,24 @@ package body Ada_Semantic_Tree.Lang is
          return Result (1 .. Current_Ind);
       end Get_Default_Value;
 
+      -------------------------
+      -- Remove_Extra_Blanks --
+      -------------------------
+
+      function Remove_Extra_Blanks (Str : String) return String is
+         Result : String := Str;
+         Index  : Integer := 0;
+      begin
+         for J in Result'Range loop
+            if not Is_Blank (Result (J)) then
+               Index := Index + 1;
+               Result (Index) := Result (J);
+            end if;
+         end loop;
+
+         return Result (1 .. Index);
+      end Remove_Extra_Blanks;
+
       Add_New_Line  : Boolean := False;
       Has_Parameter : Boolean := False;
 
@@ -461,8 +483,10 @@ package body Ada_Semantic_Tree.Lang is
                   if Get_Construct (Sub_Iter).Attributes
                     (Ada_Assign_Attribute)
                   then
-                     Unbounded.Append
-                       (Result, "<span foreground=""#555555"">[");
+                     if Kind = All_Doc then
+                        Unbounded.Append
+                          (Result, "<span foreground=""#555555"">[");
+                     end if;
                   else
                      if Kind = All_Doc then
                         Unbounded.Append (Result, " ");
@@ -507,8 +531,9 @@ package body Ada_Semantic_Tree.Lang is
 
                      Unbounded.Append
                        (Result,
-                        Escape_Text
-                          (Buffer (Type_Start.Index .. Type_End.Index)));
+                        Remove_Extra_Blanks
+                          (Escape_Text
+                             (Buffer (Type_Start.Index .. Type_End.Index))));
 
                      if Get_Construct (Sub_Iter).Attributes
                        (Ada_Class_Attribute)
@@ -532,10 +557,16 @@ package body Ada_Semantic_Tree.Lang is
                      end loop;
 
                      Unbounded.Append
-                       (Result, " :="
-                        & Escape_Text
-                          (Get_Default_Value (Get_Construct (Sub_Iter).all))
-                        & "]</span>");
+                       (Result, " := "
+                        & Remove_Extra_Blanks
+                          (Escape_Text
+                             (Get_Default_Value
+                                (Get_Construct (Sub_Iter).all))) & "]");
+
+                     if Kind = All_Doc then
+                        Unbounded.Append
+                          (Result, "</span>");
+                     end if;
                   end if;
                end if;
 
@@ -606,7 +637,8 @@ package body Ada_Semantic_Tree.Lang is
                   "<b>Type: "
                   & Attribute_Decoration (Get_Construct (Node).all, False)
                   & "</b>"
-                  & Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
+                  & Remove_Extra_Blanks
+                    (Escape_Text (Buffer (Var_Start.Index .. Var_End.Index))));
 
                if Get_Construct (Node).Attributes (Ada_Class_Attribute) then
                   Unbounded.Append (Result, "'Class");
