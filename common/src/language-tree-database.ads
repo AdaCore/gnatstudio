@@ -166,7 +166,11 @@ package Language.Tree.Database is
    procedure Update_Contents (File : Structured_File_Access);
    --  This function will re-analyze the full contents of the file
 
-   type Update_Lock is limited new Limited_Controlled with private;
+   --  type Update_Lock is limited new Limited_Controlled with private;
+   --  ??? The above declaration is the actual expected one, but we can't use
+   --  it until the Java code generator is fixed (I702-011)
+
+   type Update_Lock is new Controlled with private;
    --  This type is used to avoid updates on a given file for a limited amount
    --  of time. The lock can be release either explicitely, by doing calls to
    --  Unlock, or implicitely, at object finalization. If two or more locks are
@@ -550,7 +554,7 @@ private
       Update_Locked : Boolean := False;
    end record;
 
-   type Update_Lock is limited new Limited_Controlled with record
+   type Update_Lock is new Controlled with record
       File_Locked : Structured_File_Access;
    end record;
 
