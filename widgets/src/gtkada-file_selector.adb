@@ -549,7 +549,7 @@ package body Gtkada.File_Selector is
          Default_File := Create_From_Dir (Initial_Dir, Default_Name);
          Set_Text
            (File_Selector.Selection_Entry,
-            Display_Full_Name (Default_File));
+            Display_Base_Name (Default_File));
       end if;
 
       if File_Pattern /= "" then
@@ -2105,7 +2105,9 @@ package body Gtkada.File_Selector is
          Hbox5, False, False, 3);
 
       Gtk_New (File_Selector_Window.Selection_Entry);
-      Set_Editable (File_Selector_Window.Selection_Entry, True);
+      Set_Name (File_Selector_Window.Selection_Entry,
+                "file_selector_window.selection_entry");
+      Set_Editable (File_Selector_Window.Selection_Entry, Truse);
       Set_Max_Length (File_Selector_Window.Selection_Entry, 0);
       Set_Visibility (File_Selector_Window.Selection_Entry, True);
       Pack_Start
