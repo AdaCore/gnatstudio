@@ -2107,7 +2107,7 @@ package body Gtkada.File_Selector is
       Gtk_New (File_Selector_Window.Selection_Entry);
       Set_Name (File_Selector_Window.Selection_Entry,
                 "file_selector_window.selection_entry");
-      Set_Editable (File_Selector_Window.Selection_Entry, Truse);
+      Set_Editable (File_Selector_Window.Selection_Entry, True);
       Set_Max_Length (File_Selector_Window.Selection_Entry, 0);
       Set_Visibility (File_Selector_Window.Selection_Entry, True);
       Pack_Start
