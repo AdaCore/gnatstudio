@@ -811,7 +811,7 @@ package body Language.Tree.Database is
          File.Lock_Depth := File.Lock_Depth + 1;
       end if;
 
-      return (Controlled with File_Locked => File);
+      return (Limited_Controlled with File_Locked => File);
    end Lock_Updates;
 
    ------------
@@ -833,17 +833,6 @@ package body Language.Tree.Database is
          This.File_Locked := null;
       end if;
    end Unlock;
-
-   ------------
-   -- Adjust --
-   ------------
-
-   overriding procedure Adjust (This : in out Update_Lock) is
-   begin
-      if This.File_Locked /= null then
-         This.File_Locked.Lock_Depth := This.File_Locked.Lock_Depth + 1;
-      end if;
-   end Adjust;
 
    --------------
    -- Finalize --
