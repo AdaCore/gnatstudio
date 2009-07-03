@@ -530,7 +530,7 @@ procedure Ada_Semantic_Tree.Test is
          declare
             Assistant : constant Database_Assistant_Access :=
                           Ada_Semantic_Tree.Interfaces.Get_Assistant
-                            (Construct_DB);
+                            (Construct_Db);
             Entity    : Entity_Access;
             Construct : access Simple_Construct_Information;
          begin
