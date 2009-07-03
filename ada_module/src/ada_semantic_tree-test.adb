@@ -559,6 +559,49 @@ procedure Ada_Semantic_Tree.Test is
                Put_Line ("---> <entity not found>");
             end if;
          end;
+      elsif Buffer (Word_Begin .. Word_End) = "DUMP_TREE" then
+         Put_Line ("DUMP_TREE");
+
+         declare
+            Tree : constant Construct_Tree := Get_Tree (File);
+
+            procedure Iterate
+              (Indent : String; First : Construct_Tree_Iterator);
+
+            procedure Iterate
+              (Indent : String; First : Construct_Tree_Iterator)
+            is
+               It   : Construct_Tree_Iterator := First;
+            begin
+               while It /= Null_Construct_Tree_Iterator
+                 and then Get_Parent_Scope (Tree, It)
+                 = Get_Parent_Scope (Tree, First)
+               loop
+                  Put (Indent);
+
+                  Put (Get_Construct (It).Category'Img);
+
+                  if Get_Construct (It).Name /= null then
+                     Put (" - " & Get_Construct (It).Name.all);
+                  end if;
+
+                  New_Line;
+
+                  if Has_Children (It) then
+                     Put (Indent & "[");
+                     New_Line;
+                     Iterate (Indent & "   ", Next (Tree, It, Jump_Into));
+                     Put (Indent & "]");
+                     New_Line;
+                  end if;
+
+                  It := Next (Tree, It, Jump_Over);
+               end loop;
+            end Iterate;
+
+         begin
+            Iterate ("", First (Tree));
+         end;
       else
          Put_Line ("UNKOWN COMMAND " & Buffer (Word_Begin .. Word_End));
       end if;
