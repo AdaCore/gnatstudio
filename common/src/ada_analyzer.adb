@@ -351,12 +351,7 @@ package body Ada_Analyzer is
          if Is_Control (S (S'First)) then
             return No_Token;
          else
-            case S (S'First) is
-               when '"' =>
-                  return No_Token;
-               when others =>
-                  return Tok_Identifier;
-            end case;
+            return Tok_Identifier;
          end if;
       end if;
 
@@ -1728,7 +1723,7 @@ package body Ada_Analyzer is
                when Cat_Variable | Cat_Local_Variable | Cat_Field |
                     Cat_Declare_Block | Cat_Simple_Block |
                     Cat_Type | Cat_Subtype | Namespace_Category |
-                    Subprogram_Category
+                    Subprogram_Category | Cat_Pragma
                =>
                   --  Adjust the Sloc_End to the next semicolon for enclosing
                   --  entities and variable declarations.
@@ -1972,22 +1967,22 @@ package body Ada_Analyzer is
                Syntax_Error := True;
             end if;
 
+         elsif Reserved = Tok_Pragma then
+            Num_Parens := 0;
+            Push (Tokens, Temp);
+
          elsif Reserved = Tok_Function
            or else Reserved = Tok_Procedure
            or else Reserved = Tok_Package
            or else Reserved = Tok_Task
            or else Reserved = Tok_Protected
            or else Reserved = Tok_Entry
-           or else Reserved = Tok_Pragma
          then
             if Reserved = Tok_Package then
                Temp.Package_Declaration := True;
 
             elsif Reserved = Tok_Protected then
                Temp.Protected_Declaration := True;
-
-            elsif Reserved = Tok_Pragma then
-               Num_Parens := 0;
 
             elsif (Top_Token.Token = Tok_Type
                    and then (Prev_Token /= Tok_Access
@@ -3247,8 +3242,6 @@ package body Ada_Analyzer is
                            return;
                         end if;
                      end if;
-
-                     return;
                   end;
 
                when '&' | '+' | '-' | '*' | '/' | ':' | '<' | '>' | '=' |
