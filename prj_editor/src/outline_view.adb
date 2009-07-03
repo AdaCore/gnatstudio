@@ -1448,6 +1448,7 @@ package body Outline_View is
          Init (Value, Gdk.Pixbuf.Get_Type);
          Set_Object
            (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
+
       elsif Column = Display_Name_Column then
          Init (Value, GType_String);
 
@@ -1464,6 +1465,7 @@ package body Outline_View is
             else
                Set_String (Value, Get_Construct (It).Name.all);
             end if;
+
          else
             Set_String (Value, "no name");
          end if;
@@ -1512,8 +1514,8 @@ package body Outline_View is
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Tree   : Construct_Tree;
-      Entity : Entity_Persistent_Access;
+      Tree         : Construct_Tree;
+      Entity       : Entity_Persistent_Access;
       It, Child_It : Construct_Tree_Iterator;
    begin
       if Self.File = null then
@@ -1528,6 +1530,7 @@ package body Outline_View is
          if not Construct_Filter (Get_Construct (Child_It)) then
             Child_It := Filtered_Next (Tree, It, Jump_Into);
          end if;
+
       else
          Entity := To_Entity (Get_User_Data_1 (Parent));
          It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
@@ -1558,7 +1561,7 @@ package body Outline_View is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
       Entity   : constant Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Iter));
+                   To_Entity (Get_User_Data_1 (Iter));
       It : Construct_Tree_Iterator;
    begin
       It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
@@ -1601,11 +1604,11 @@ package body Outline_View is
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Tree : Construct_Tree;
-      Iter : Gtk_Tree_Iter;
+      Tree          : Construct_Tree;
+      Iter          : Gtk_Tree_Iter;
       Parent_Entity : Entity_Persistent_Access;
-      Parent_Iter  : Construct_Tree_Iterator;
-      Child_Iter  : Construct_Tree_Iterator;
+      Parent_Iter   : Construct_Tree_Iterator;
+      Child_Iter    : Construct_Tree_Iterator;
    begin
       if Self.File = null then
          return Null_Iter;
@@ -1696,7 +1699,7 @@ package body Outline_View is
       pragma Unreferenced (Tree_Model);
 
       Entity : Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Iter));
+                 To_Entity (Get_User_Data_1 (Iter));
    begin
       Ref (Entity);
    end Ref_Node;
@@ -1712,7 +1715,7 @@ package body Outline_View is
       pragma Unreferenced (Tree_Model);
 
       Entity : Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Iter));
+                 To_Entity (Get_User_Data_1 (Iter));
    begin
       Unref (Entity);
    end Unref_Node;
@@ -1801,7 +1804,7 @@ package body Outline_View is
       It   : Construct_Tree_Iterator) return Gint
    is
       Cur_It : Construct_Tree_Iterator;
-      Total : Gint := 0;
+      Total  : Gint := 0;
    begin
       if It = Null_Construct_Tree_Iterator then
          Cur_It := First (Tree);
@@ -1809,6 +1812,7 @@ package body Outline_View is
          if not Construct_Filter (Get_Construct (Cur_It)) then
             Cur_It := Filtered_Next (Tree, It, Jump_Over);
          end if;
+
       else
          Cur_It := Filtered_Next (Tree, It, Jump_Into);
       end if;

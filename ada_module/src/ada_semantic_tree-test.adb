@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,30 +17,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO; use Ada.Text_IO;
-with Ada.Command_Line; use Ada.Command_Line;
-with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
+with Ada.Command_Line;               use Ada.Command_Line;
+with Ada.Exceptions;                 use Ada.Exceptions;
+with Ada.Text_IO;                    use Ada.Text_IO;
 
 with GNAT.Strings;                   use GNAT.Strings;
 
-with Language;                       use Language;
-with Language.Ada;                   use Language.Ada;
-with Language.Tree;                  use Language.Tree;
-with Ada_Semantic_Tree.Lang;              use Ada_Semantic_Tree.Lang;
-with Language.Tree.Database;         use Language.Tree.Database;
-with Ada_Semantic_Tree.Declarations;
-use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
-with Ada_Semantic_Tree.Type_Tree;  use Ada_Semantic_Tree.Type_Tree;
-with Ada_Semantic_Tree.Interfaces;  use Ada_Semantic_Tree.Interfaces;
-with Namet;                          use Namet;
-with Projects;                       use Projects;
-with Projects.Registry;              use Projects.Registry;
-with String_Utils;                   use String_Utils;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+
+with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Interfaces;   use Ada_Semantic_Tree.Interfaces;
+with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Type_Tree;    use Ada_Semantic_Tree.Type_Tree;
 with Entities;                       use Entities;
-with GNATCOLL.VFS;                            use GNATCOLL.VFS;
+with Language.Ada;                   use Language.Ada;
+with Language.Tree.Database;         use Language.Tree.Database;
+with Language.Tree;                  use Language.Tree;
+with Language;                       use Language;
+with Namet;                          use Namet;
+with Projects.Registry;              use Projects.Registry;
+with Projects;                       use Projects;
+with String_Utils;                   use String_Utils;
 
 procedure Ada_Semantic_Tree.Test is
 
@@ -145,6 +145,7 @@ procedure Ada_Semantic_Tree.Test is
             Free (It);
             Free (List);
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "RELATION" then
          Put_Line ("GET RELATION");
 
@@ -184,6 +185,7 @@ procedure Ada_Semantic_Tree.Test is
                     (Relation_Entity).Sloc_Start.Column'Img);
             end if;
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "TYPE" then
          declare
             It : constant Construct_Tree_Iterator := Get_Iterator_At
@@ -215,11 +217,12 @@ procedure Ada_Semantic_Tree.Test is
                end;
             end if;
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "REPLACE" then
          declare
             File_Modified : Virtual_File;
-            File_W   : Writable_File;
-            Contents : String_Access;
+            File_W        : Writable_File;
+            Contents      : String_Access;
          begin
             Put ("REPLACE ");
 
@@ -248,6 +251,7 @@ procedure Ada_Semantic_Tree.Test is
 
             Update_Contents (Construct_Db, File_Modified);
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "ANALYZE" then
          Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
@@ -255,6 +259,7 @@ procedure Ada_Semantic_Tree.Test is
 
          Analyze_File
            (Create (+Buffer (Word_Begin .. Word_End), New_Registry));
+
       elsif Buffer (Word_Begin .. Word_End) = "DIFF" then
          declare
             Left_Tree, Right_Tree : Construct_Tree;
@@ -265,6 +270,10 @@ procedure Ada_Semantic_Tree.Test is
 
             procedure Put
               (Obj : Construct_Tree_Iterator);
+
+            ---------
+            -- Put --
+            ---------
 
             procedure Put
               (Obj : Construct_Tree_Iterator)
@@ -278,6 +287,10 @@ procedure Ada_Semantic_Tree.Test is
                   Put (" "  & C.Name.all);
                end if;
             end Put;
+
+            -------------------
+            -- Diff_Callback --
+            -------------------
 
             procedure Diff_Callback
               (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind) is
@@ -320,6 +333,7 @@ procedure Ada_Semantic_Tree.Test is
                New_Tree => Right_Tree,
                Callback => Diff_Callback'Unrestricted_Access);
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "ALL_N_DECLARATIONS"
         or else Buffer (Word_Begin .. Word_End) = "ALL_DECLARATIONS"
       then
@@ -335,6 +349,10 @@ procedure Ada_Semantic_Tree.Test is
                Sloc_End       : Source_Location;
                Partial_Entity : Boolean) return Boolean;
 
+            --------------
+            -- Callback --
+            --------------
+
             function Callback
               (Entity         : Language_Entity;
                Sloc_Start     : Source_Location;
@@ -343,9 +361,9 @@ procedure Ada_Semantic_Tree.Test is
             is
                pragma Unreferenced (Entity, Sloc_Start, Partial_Entity);
 
-               List     : Declaration_List;
-               It       : Declaration_Iterator;
-               --  Construct : Simple_Construct_Information;
+               List : Declaration_List;
+               It   : Declaration_Iterator;
+               --  Construct : Simple_Construct_Information
             begin
                if Verbose then
                   Put ("[" & Sloc_End.Line'Img & ":" & Sloc_End.Column'Img);
@@ -382,10 +400,11 @@ procedure Ada_Semantic_Tree.Test is
                return True;
             end Callback;
 
-            Files : constant GNATCOLL.VFS.File_Array_Access :=
-              Get_Source_Files (Get_Root_Project (New_Registry), True);
-
+            Files     : constant GNATCOLL.VFS.File_Array_Access :=
+                          Get_Source_Files
+                            (Get_Root_Project (New_Registry), True);
             Lang_Name : Namet.Name_Id;
+
          begin
             if Buffer (Word_Begin .. Word_End) = "ALL_N_DECLARATIONS" then
                Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
@@ -434,6 +453,7 @@ procedure Ada_Semantic_Tree.Test is
                      Put_Line (" skipped.");
                   end if;
                end loop;
+
             else
                Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
@@ -461,6 +481,7 @@ procedure Ada_Semantic_Tree.Test is
                   Callback => Callback'Unrestricted_Access);
             end if;
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "DATABASE_SEARCH" then
          Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
@@ -508,7 +529,8 @@ procedure Ada_Semantic_Tree.Test is
 
          declare
             Assistant : constant Database_Assistant_Access :=
-              Ada_Semantic_Tree.Interfaces.Get_Assistant (Construct_Db);
+                          Ada_Semantic_Tree.Interfaces.Get_Assistant
+                            (Construct_DB);
             Entity    : Entity_Access;
             Construct : access Simple_Construct_Information;
          begin
@@ -559,6 +581,7 @@ procedure Ada_Semantic_Tree.Test is
                Put_Line ("---> <entity not found>");
             end if;
          end;
+
       elsif Buffer (Word_Begin .. Word_End) = "DUMP_TREE" then
          Put_Line ("DUMP_TREE");
 
@@ -568,10 +591,14 @@ procedure Ada_Semantic_Tree.Test is
             procedure Iterate
               (Indent : String; First : Construct_Tree_Iterator);
 
+            -------------
+            -- Iterate --
+            -------------
+
             procedure Iterate
               (Indent : String; First : Construct_Tree_Iterator)
             is
-               It   : Construct_Tree_Iterator := First;
+               It : Construct_Tree_Iterator := First;
             begin
                while It /= Null_Construct_Tree_Iterator
                  and then Get_Parent_Scope (Tree, It)
@@ -602,6 +629,7 @@ procedure Ada_Semantic_Tree.Test is
          begin
             Iterate ("", First (Tree));
          end;
+
       else
          Put_Line ("UNKOWN COMMAND " & Buffer (Word_Begin .. Word_End));
       end if;
@@ -638,6 +666,10 @@ procedure Ada_Semantic_Tree.Test is
       Index := Word_End + 1;
    end Read_Next_Word;
 
+   ------------------
+   -- Analyze_File --
+   ------------------
+
    procedure Analyze_File (File : GNATCOLL.VFS.Virtual_File) is
       Index : Natural;
       File_Node : Structured_File_Access;
@@ -660,6 +692,10 @@ procedure Ada_Semantic_Tree.Test is
 
    procedure Project_Error (Msg : String);
 
+   -------------------
+   -- Project_Error --
+   -------------------
+
    procedure Project_Error (Msg : String) is
    begin
       Put_Line ("Error loading project: " & Msg);
@@ -669,6 +705,7 @@ procedure Ada_Semantic_Tree.Test is
    pragma Unreferenced (Db);
 
    Loaded, Success : Boolean;
+
 begin
 --     Set_Profiling (False);
    Projects.Registry.Initialize;
@@ -689,8 +726,8 @@ begin
    Ada_Semantic_Tree.Assistants.Register_Ada_Assistants (Construct_Db);
 
    declare
-      Files : constant GNATCOLL.VFS.File_Array_Access :=
-        Get_Source_Files (Get_Root_Project (New_Registry), True);
+      Files     : constant GNATCOLL.VFS.File_Array_Access :=
+                    Get_Source_Files (Get_Root_Project (New_Registry), True);
       File_Node : Structured_File_Access;
 
       pragma Unreferenced (File_Node);
@@ -722,5 +759,4 @@ begin
    Destroy (Construct_Db);
    Destroy (New_Registry);
    Projects.Registry.Finalize;
-
 end Ada_Semantic_Tree.Test;
