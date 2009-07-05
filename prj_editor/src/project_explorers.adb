@@ -30,7 +30,6 @@ with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with XML_Utils;              use XML_Utils;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
@@ -88,6 +87,7 @@ with String_Hash;
 with String_Utils;              use String_Utils;
 with Tooltips;
 with Traces;                    use Traces;
+with XML_Utils;                 use XML_Utils;
 
 package body Project_Explorers is
 
@@ -1141,15 +1141,15 @@ package body Project_Explorers is
       Parent_Node : Gtk_Tree_Iter := Null_Iter;
       Name_Suffix : String := "") return Gtk_Tree_Iter
    is
-      Is_Leaf    : constant Boolean :=
-                     not Has_Imported_Projects (Project)
-                     and then Get_Attribute_Value
-                       (Project, Obj_Dir_Attribute) = ""
-                     and then Source_Dirs (Project)'Length = 0;
-      Node_Text  : constant String := Project_Name (Project);
-      Node_Type  : Node_Types := Project_Node;
-      N          : Gtk_Tree_Iter;
-      Ref        : Gtk_Tree_Iter := Null_Iter;
+      Is_Leaf   : constant Boolean :=
+                    not Has_Imported_Projects (Project)
+                    and then Get_Attribute_Value
+                      (Project, Obj_Dir_Attribute) = ""
+                    and then Source_Dirs (Project)'Length = 0;
+      Node_Text : constant String := Project_Name (Project);
+      Node_Type : Node_Types := Project_Node;
+      N         : Gtk_Tree_Iter;
+      Ref       : Gtk_Tree_Iter := Null_Iter;
 
    begin
       if Project = No_Project then
@@ -1218,8 +1218,8 @@ package body Project_Explorers is
       Project  : Project_Type;
       Node     : Gtk_Tree_Iter)
    is
-      File      : constant Virtual_File :=
-                    Get_File (Explorer.Tree.Model, Node, File_Column);
+      File : constant Virtual_File :=
+               Get_File (Explorer.Tree.Model, Node, File_Column);
    begin
       if Get_History
         (Get_History (Explorer.Kernel).all, Show_Absolute_Paths)
@@ -1341,8 +1341,7 @@ package body Project_Explorers is
       Node_Type : Directory_Node_Types) is
    begin
       Ensure_Directory (Directory);
-      Set_File
-        (Explorer.Tree.Model, Node, File_Column, Directory);
+      Set_File (Explorer.Tree.Model, Node, File_Column, Directory);
 
       Update_Directory_Node_Text (Explorer, Project, Node);
 
@@ -1401,8 +1400,10 @@ package body Project_Explorers is
          Iter := Get_Iter (Tooltip.Explorer.Tree.Model, Path);
 
          declare
-            Str     : constant String := Get_String
-              (Tooltip.Explorer.Tree.Model, Iter, Display_Name_Column);
+            Str     : constant String :=
+                        Get_String
+                          (Tooltip.Explorer.Tree.Model,
+                           Iter, Display_Name_Column);
             S_Icon  : constant Gint := 15; -- size used for the icon
             S_Level : constant Gint := 12; -- size used for each indent level
             --  ??? S_Icon and S_Level have been computed experimentally. It is
@@ -1505,8 +1506,9 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter)
    is
-      Project : constant Project_Type := Get_Project_From_Node
-        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
+      Project : constant Project_Type :=
+                  Get_Project_From_Node
+                    (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Files   : File_Array_Access :=
                   Get_Source_Files (Project, Recursive => False);
    begin
@@ -1606,7 +1608,7 @@ package body Project_Explorers is
       Path      : Gtk_Tree_Path;
       Dummy     : Boolean;
       pragma Unreferenced (Dummy);
-      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
+      Sort_Col  : constant Gint := Freeze_Sort (Explorer.Tree.Model);
 
    begin
       --  If the node is not already up-to-date
@@ -2104,14 +2106,15 @@ package body Project_Explorers is
       Files_In_Project : File_Array_Access;
       Force_Expanded   : Boolean := False)
    is
-      Sort_Col    : constant Gint := Freeze_Sort (Explorer.Tree.Model);
+      Sort_Col  : constant Gint := Freeze_Sort (Explorer.Tree.Model);
 
       N, N2     : Gtk_Tree_Iter;
       Node_Type : constant Node_Types :=
                     Get_Node_Type (Explorer.Tree.Model, Node);
       N_Type    : Node_Types;
-      Prj       : constant Project_Type := Get_Project_From_Node
-        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
+      Prj       : constant Project_Type :=
+                    Get_Project_From_Node
+                      (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Files     : File_Array_Access := Files_In_Project;
       Expanded  : constant Boolean := Get_Expanded (Explorer.Tree, Node);
    begin

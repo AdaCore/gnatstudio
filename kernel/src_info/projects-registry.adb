@@ -1314,14 +1314,14 @@ package body Projects.Registry is
       if Default_Spec_Suffix = "" then
          Spec := new String'(Dummy_Suffix);
       else
-         Osint.Canonical_Case_File_Name (Spec_Suff);
+         Canonical_Case_File_Name (Spec_Suff);
          Spec := new String'(Spec_Suff);
       end if;
 
       if Default_Body_Suffix = "" then
          Impl := new String'(Dummy_Suffix);
       else
-         Osint.Canonical_Case_File_Name (Impl_Suff);
+         Canonical_Case_File_Name (Impl_Suff);
          Impl := new String'(Impl_Suff);
       end if;
 
@@ -1364,6 +1364,7 @@ package body Projects.Registry is
       Count : Natural := 0;
    begin
       Get_First (Registry.Data.Extensions, Iter);
+
       loop
          Name := Get_Element (Iter);
          exit when Name = No_Name;

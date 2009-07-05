@@ -34,7 +34,6 @@ with Gdk.Event;                 use Gdk.Event;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with XML_Utils;              use XML_Utils;
 
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Arrow;                 use Gtk.Arrow;
@@ -94,6 +93,7 @@ with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Namet;
 with Wizards;                   use Wizards;
+with XML_Utils;                 use XML_Utils;
 
 package body Project_Properties is
    use Widget_List;
@@ -147,7 +147,8 @@ package body Project_Properties is
       Typ         : Attribute_Type;
       Index_Value : GNAT.Strings.String_Access;  --  null for the general case
    end record;
-      type Indexed_Attribute_Type_Array
+
+   type Indexed_Attribute_Type_Array
      is array (Natural range <>) of Indexed_Attribute_Type;
    type Indexed_Attribute_Type_List is access Indexed_Attribute_Type_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -240,8 +241,8 @@ package body Project_Properties is
      (Attribute_Page_Array, Attribute_Page_List);
 
    procedure Register_New_Attribute
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Attr      : Attribute_Description_Access);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Attr   : Attribute_Description_Access);
    --  Register a new attribute in the project parser
 
    ------------------
@@ -609,15 +610,12 @@ package body Project_Properties is
    function Paths_Are_Relative (Project : Project_Type) return Boolean;
    --  Return True if the paths in the project should be relative paths
 
-   type Project_Edition_Type is (Do_Not_Edit,
-                                 Edit_File,
-                                 Edit_Properties);
+   type Project_Edition_Type is (Do_Not_Edit, Edit_File, Edit_Properties);
 
    function Warning_Cannot_Edit
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Message : String;
-      Always_Load_Source : Boolean)
-      return Project_Edition_Type;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Message            : String;
+      Always_Load_Source : Boolean) return Project_Edition_Type;
    --  Display a warning dialog to indicate that the current view is
    --  incomplete, and it might be dangereous to edit the properties.
    --  If Always_Load_Source is True, [Open] will always open the source file,
@@ -878,7 +876,7 @@ package body Project_Properties is
      (Editor : access Gtk_Widget_Record'Class)
    is
       Ed : constant Indexed_Attribute_Editor :=
-        Indexed_Attribute_Editor (Editor);
+             Indexed_Attribute_Editor (Editor);
    begin
       if Ed.Current_Values /= null then
          for C in Ed.Current_Values'Range loop
@@ -894,12 +892,12 @@ package body Project_Properties is
    ----------------------
 
    function Attribute_Exists
-     (Attr               : Attribute_Description_Access;
-      Project            : Project_Type;
-      Attribute_Index    : String := "") return Boolean
+     (Attr            : Attribute_Description_Access;
+      Project         : Project_Type;
+      Attribute_Index : String := "") return Boolean
    is
       Lower_Attribute_Index : String := Attribute_Index;
-      Result : Boolean;
+      Result                : Boolean;
    begin
       if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
@@ -941,7 +939,7 @@ package body Project_Properties is
       Attribute_Index    : String := "")
    is
       Attribute             : constant Attribute_Pkg :=
-        Build (Attr.Pkg.all, Attr.Name.all);
+                                Build (Attr.Pkg.all, Attr.Name.all);
       Lower_Attribute_Index : String := Attribute_Index;
    begin
       if not Attr.Case_Sensitive_Index then
@@ -976,7 +974,7 @@ package body Project_Properties is
       Attribute_Index    : String := "")
    is
       Attribute             : constant Attribute_Pkg :=
-        Build (Attr.Pkg.all, Attr.Name.all);
+                                Build (Attr.Pkg.all, Attr.Name.all);
       Lower_Attribute_Index : String := Attribute_Index;
    begin
       if not Attr.Case_Sensitive_Index then
@@ -1179,9 +1177,9 @@ package body Project_Properties is
       Project_Changed    : in out Boolean)
    is
       Relative : constant Boolean :=
-         Get_Paths_Type (Project) = Projects.Relative
-         or else (Get_Paths_Type (Project) = From_Pref
-                  and then Generate_Relative_Paths.Get_Pref);
+                   Get_Paths_Type (Project) = Projects.Relative
+                     or else (Get_Paths_Type (Project) = From_Pref
+                              and then Generate_Relative_Paths.Get_Pref);
       Iter     : Gtk_Tree_Iter;
       F1, F2   : Virtual_File;
    begin
@@ -1228,6 +1226,7 @@ package body Project_Properties is
             Path   : Virtual_File;
          begin
             Iter := Get_Iter_First (Editor.Model);
+
             while Iter /= Null_Iter loop
                if Editor.Attribute.Non_Index_Type.Typ =
                  Attribute_As_String
@@ -1303,6 +1302,7 @@ package body Project_Properties is
             Scenario_Variables => Scenario_Variables,
             Value              => Get_Text (Get_Entry (Editor.Combo)),
             Project_Changed    => Project_Changed);
+
       else
          declare
             Values : GNAT.Strings.String_List := Get_Current_Value
@@ -1343,7 +1343,7 @@ package body Project_Properties is
    begin
       --  Remove all the values that are no longer in the list. We keep those
       --  that are still in the list, so that we can compare them with their
-      --  new value and detect changes (E308-006)
+      --  new value and detect changes (E308-006).
 
       while Iter /= Null_Iter loop
          declare
@@ -1379,7 +1379,9 @@ package body Project_Properties is
       end loop;
 
       --  Now set the proper value
+
       Iter := Get_Iter_First (Editor.Model);
+
       while Iter /= Null_Iter loop
          declare
             Index : String := Get_String (Editor.Model, Iter, 0);
@@ -1406,6 +1408,7 @@ package body Project_Properties is
                      Project_Changed    => Project_Changed);
                   Free (Values);
                end;
+
             else
                Update_Attribute_Value
                  (Attr               => Editor.Attribute,
@@ -1463,10 +1466,10 @@ package body Project_Properties is
          4 => Value_Cst'Unchecked_Access);
 
       procedure Set_Return_Attribute
-        (Project          : Project_Type;
-         Attr, Pkg, Index : String;
+        (Project           : Project_Type;
+         Attr, Pkg, Index  : String;
          Attribute_Is_List : Boolean;
-         As_List          : Boolean);
+         As_List           : Boolean);
       --  Store in Data the value of a specific attribute.
       --  Attribute_Is_List indicates the type of the attribute. This is the
       --  first type that will be tested, although if no match is found the
@@ -1530,7 +1533,7 @@ package body Project_Properties is
          As_List           : Boolean)
       is
          Descr  : constant Attribute_Description_Access :=
-           Get_Attribute_Type_From_Name (Pkg, Attr);
+                    Get_Attribute_Type_From_Name (Pkg, Attr);
       begin
          if Descr = null then
             --  Test whether the attribute is known anyway. Not all attributes
@@ -1553,6 +1556,7 @@ package body Project_Properties is
                      Set_Return_Attribute (List, As_List);
                   end if;
                end;
+
             else
                declare
                   Val : constant String := Get_Attribute_Value
@@ -1800,14 +1804,13 @@ package body Project_Properties is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Properties_Module_ID := new Properties_Module_ID_Record;
       Register_Module
-        (Module                  => Properties_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => "Project_Properties");
+        (Module      => Properties_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => "Project_Properties");
 
       Register_Command
         (Kernel, "properties_editor",
@@ -1865,8 +1868,8 @@ package body Project_Properties is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel, "is_modified",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
+         Minimum_Args  => 0,
+         Maximum_Args  => 1,
          Class         => Get_Project_Class (Kernel),
          Handler       => Create_Project_Command_Handler'Access);
    end Register_Module;
@@ -1876,7 +1879,7 @@ package body Project_Properties is
    ------------------------------
 
    function Find_Editor_Page_By_Name (Name : String) return Natural is
-      Tmp   : Attribute_Page_List;
+      Tmp : Attribute_Page_List;
    begin
       if Properties_Module_ID.Pages /= null then
          for P in Properties_Module_ID.Pages'Range loop
@@ -1944,7 +1947,7 @@ package body Project_Properties is
       Indexed   : Boolean) return Attribute_Description_Access
    is
       S   : Attribute_Page_Section renames
-        Properties_Module_ID.Pages (Page).Sections (Section);
+              Properties_Module_ID.Pages (Page).Sections (Section);
       Tmp : Attribute_Description_List;
    begin
       if S.Attributes /= null then
@@ -1981,7 +1984,7 @@ package body Project_Properties is
       Name   : String;
       A      : in out Attribute_Type)
    is
-      Child2 : Node_Ptr;
+      Child2       : Node_Ptr;
       Choice_Count : Natural;
    begin
       if Child = null then
@@ -1992,16 +1995,20 @@ package body Project_Properties is
 
       elsif Child.Tag.all = "string" then
          declare
-            Typ     : constant String := Get_Attribute (Child, "type");
-            Default : constant String := Get_Attribute (Child, "default");
+            Typ         : constant String :=
+                            Get_Attribute (Child, "type");
+            Default     : constant String :=
+                            Get_Attribute (Child, "default");
             Allow_Empty : constant Boolean :=
-              Boolean'Value (Get_Attribute (Child, "allow_empty", "True"));
-            Filter  : File_Filter := Filter_None;
+                            Boolean'Value
+                              (Get_Attribute (Child, "allow_empty", "True"));
+            Filter      : File_Filter := Filter_None;
          begin
             if Get_Attribute (Child, "filter", "none") = "project" then
                Filter := Filter_From_Project;
-            elsif Get_Attribute (Child, "filter", "none") =
-              "extended_project"
+
+            elsif Get_Attribute
+              (Child, "filter", "none") = "extended_project"
             then
                Filter := Filter_From_Extended;
             end if;
@@ -2010,12 +2017,12 @@ package body Project_Properties is
                A := (Typ          => Attribute_As_Filename,
                      Filter       => Filter,
                      Allow_Empty  => Allow_Empty,
-                     Default => new String'(Default));
+                     Default      => new String'(Default));
             elsif Typ = "directory" then
-               A := (Typ     => Attribute_As_Directory,
-                     Filter  => Filter,
+               A := (Typ          => Attribute_As_Directory,
+                     Filter       => Filter,
                      Allow_Empty  => Allow_Empty,
-                     Default => new String'(Default));
+                     Default      => new String'(Default));
             else
                if Typ /= "" then
                   Insert (Kernel,
@@ -2041,9 +2048,8 @@ package body Project_Properties is
       elsif Child.Tag.all = "choice" then
          Choice_Count := 1;
          Child2 := Child.Next;
-         while Child2 /= null
-           and then Child2.Tag.all = "choice"
-         loop
+
+         while Child2 /= null and then Child2.Tag.all = "choice" loop
             Choice_Count := Choice_Count + 1;
             Child2 := Child2.Next;
          end loop;
@@ -2059,13 +2065,15 @@ package body Project_Properties is
          end if;
 
          A :=
-           (Typ            => Attribute_As_Static_List,
+           (Typ                      => Attribute_As_Static_List,
             Static_Allows_Any_String => Child2 /= null,
-            Static_List    => new GNAT.Strings.String_List (1 .. Choice_Count),
-            Static_Default => new Boolean_Array (1 .. Choice_Count));
+            Static_List              =>
+            new GNAT.Strings.String_List (1 .. Choice_Count),
+            Static_Default           => new Boolean_Array (1 .. Choice_Count));
 
          Child2 := Child;
          Choice_Count := 1;
+
          while Child2 /= null
            and then Child2.Tag.all = "choice"
          loop
@@ -2081,11 +2089,12 @@ package body Project_Properties is
          A :=
            (Typ                       => Attribute_As_Dynamic_List,
             Dynamic_Allows_Any_String => Child.Next /= null
-               and then Child.Next.Tag.all = "string",
-            Dynamic_Default   => new String'(Get_Attribute (Child, "default")),
-            Dynamic_List_Lang => new String'
+              and then Child.Next.Tag.all = "string",
+            Dynamic_Default           =>
+              new String'(Get_Attribute (Child, "default")),
+            Dynamic_List_Lang         => new String'
               (Get_Attribute (Child, "lang", "shell")),
-            Dynamic_List_Cmd  => new String'(Child.Value.all));
+            Dynamic_List_Cmd          => new String'(Child.Value.all));
 
          if Child.Next /= null
            and then (Child.Next.Tag.all /= "string"
@@ -2110,15 +2119,15 @@ package body Project_Properties is
    ----------------------------
 
    procedure Register_New_Attribute
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Attr      : Attribute_Description_Access)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Attr   : Attribute_Description_Access)
    is
-      Pkg_Id    : Package_Node_Id := Empty_Package;
-      Attr_Id   : Attribute_Node_Id;
-      Attr_Kind : Defined_Attribute_Kind;
-      Var_Kind  : Defined_Variable_Kind;
+      Pkg_Id             : Package_Node_Id := Empty_Package;
+      Attr_Id            : Attribute_Node_Id;
+      Attr_Kind          : Defined_Attribute_Kind;
+      Var_Kind           : Defined_Variable_Kind;
       Index_Is_File_Name : Boolean := False;
-      Index_Attr : Attribute_Description_Access;
+      Index_Attr         : Attribute_Description_Access;
    begin
       if Attr.Pkg.all /= "" then
          Pkg_Id := Package_Node_Id_Of (Get_String (Attr.Pkg.all));
@@ -2175,8 +2184,9 @@ package body Project_Properties is
               (Kernel,
                Attr.Name.all & ": "
                & (-("Project attributes cannot be added at the top level of"
-                    & " project files, only in packages")),
+                 & " project files, only in packages")),
                Mode => Error);
+
          else
             if Active (Me) then
                Trace (Me, "Register_New_Attribute (" & Attr.Name.all
@@ -2192,6 +2202,7 @@ package body Project_Properties is
                Index_Is_File_Name => Index_Is_File_Name,
                Opt_Index          => False);
          end if;
+
       else
          if Attribute_Kind_Of (Attr_Id) /= Attr_Kind
            or else Variable_Kind_Of (Attr_Id) /= Var_Kind
@@ -2215,24 +2226,32 @@ package body Project_Properties is
       N      : Node_Ptr;
       A      : Attribute_Description_Access)
    is
-      Descr   : constant String := Get_Attribute (N, "description");
-      Label   : constant String := Get_Attribute (N, "label", A.Name.all);
-      Is_List : constant String := Get_Attribute (N, "list", "false");
-      Ordered : constant String := Get_Attribute (N, "ordered", "false");
+      Descr                : constant String :=
+                               Get_Attribute (N, "description");
+      Label                : constant String :=
+                               Get_Attribute (N, "label", A.Name.all);
+      Is_List              : constant String :=
+                               Get_Attribute (N, "list", "false");
+      Ordered              : constant String :=
+                               Get_Attribute (N, "ordered", "false");
       Case_Sensitive_Index : constant String :=
-        Get_Attribute (N, "case_sensitive_index", "false");
-      Omit    : constant String := Get_Attribute
-        (N, "omit_if_default", "true");
-      Base    : constant String := Get_Attribute
-        (N, "base_name_only", "false");
-      Indexed : constant Boolean := N.Child /= null
-        and then (N.Child.Tag.all = "index"
-                  or else N.Child.Tag.all = "specialized_index");
-      Hide_In : constant String := Get_Attribute (N, "hide_in");
-      Disable_If_Not_Set : constant String :=
-        Get_Attribute (N, "disable_if_not_set", "false");
-      Disable : constant String := Get_Attribute (N, "disable");
-      Child   : Node_Ptr;
+                               Get_Attribute
+                                 (N, "case_sensitive_index", "false");
+      Omit                 : constant String :=
+                               Get_Attribute (N, "omit_if_default", "true");
+      Base                 : constant String :=
+                               Get_Attribute (N, "base_name_only", "false");
+      Indexed              : constant Boolean :=
+                               N.Child /= null
+                               and then (N.Child.Tag.all = "index"
+                                         or else N.Child.Tag.all =
+                                           "specialized_index");
+      Hide_In              : constant String := Get_Attribute (N, "hide_in");
+      Disable_If_Not_Set   : constant String :=
+                               Get_Attribute
+                                 (N, "disable_if_not_set", "false");
+      Disable              : constant String := Get_Attribute (N, "disable");
+      Child                : Node_Ptr;
 
       procedure Parse_Indexed_Type (Value : String);
       --  Parse the type definition for an <index> or <specialized_index> node
@@ -2249,9 +2268,9 @@ package body Project_Properties is
             for T in A.Index_Types'Range loop
                if Value = "" and then A.Index_Types (T).Index_Value = null then
                   Insert (Kernel,
-                          -("General indexed type already defined for"
-                            & " attribute ") & A.Name.all,
-                          Mode => Error);
+                    -("General indexed type already defined for"
+                      & " attribute ") & A.Name.all,
+                    Mode => Error);
                   Found := True;
                   exit;
 
@@ -2352,16 +2371,16 @@ package body Project_Properties is
    begin
       if Node.Tag.all = "project_attribute" then
          declare
-            Editor_Page : constant Natural := Find_Editor_Page_By_Name
+            Editor_Page    : constant Natural := Find_Editor_Page_By_Name
               (Get_Attribute (Node, "editor_page", Default => "General"));
             Editor_Section : constant Natural := Find_Editor_Section_By_Name
               (Editor_Page, Get_Attribute (Node, "editor_section"));
-            Name    : String := Get_Attribute (Node, "name");
-            Pkg     : String := Get_Attribute (Node, "package");
-            Indexed : constant Boolean := Node.Child /= null
+            Name           : String := Get_Attribute (Node, "name");
+            Pkg            : String := Get_Attribute (Node, "package");
+            Indexed        : constant Boolean := Node.Child /= null
               and then (Node.Child.Tag.all = "index"
                         or else Node.Child.Tag.all = "specialized_index");
-            Attribute : Attribute_Description_Access;
+            Attribute      : Attribute_Description_Access;
          begin
             To_Lower (Pkg);
             To_Lower (Name);
@@ -2430,12 +2449,12 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Button2      : Gtk_Button;
-      Label        : Gtk_Label;
-      Frame        : Gtk_Frame;
-      Group        : Gtk_Size_Group;
+      Button2         : Gtk_Button;
+      Label           : Gtk_Label;
+      Frame           : Gtk_Frame;
+      Group           : Gtk_Size_Group;
       Vbox, Box, Hbox : Gtk_Box;
-      Event        : Gtk_Event_Box;
+      Event           : Gtk_Event_Box;
 
       use Gtk.Enums.String_List;
 
@@ -2525,7 +2544,7 @@ package body Project_Properties is
       Index_Value : String;
       Is_Selected : Boolean)
    is
-      New_Iter  : Gtk_Tree_Iter;
+      New_Iter : Gtk_Tree_Iter;
    begin
       --  Find all attributes with this one as an index. Add (or remove) new
       --  entries in their editing widget
@@ -2534,20 +2553,19 @@ package body Project_Properties is
          for S in Properties_Module_ID.Pages (P).Sections'Range loop
             declare
                Sect : Attribute_Page_Section renames
-                 Properties_Module_ID.Pages (P).Sections (S);
+                        Properties_Module_ID.Pages (P).Sections (S);
             begin
                for A in Sect.Attributes'Range loop
                   if Sect.Attributes (A).Indexed
-                    and then Sect.Attributes (A).Index_Package.all =
-                       Index_Pkg
-                    and then Sect.Attributes (A).Index_Attribute.all =
-                       Index_Name
+                    and then Sect.Attributes (A).Index_Package.all = Index_Pkg
+                    and then
+                      Sect.Attributes (A).Index_Attribute.all = Index_Name
                   then
                      declare
                         Att  : constant Attribute_Description_Access :=
-                          Sect.Attributes (A);
+                                 Sect.Attributes (A);
                         Ed   : constant Indexed_Attribute_Editor :=
-                          Indexed_Attribute_Editor (Att.Editor);
+                                 Indexed_Attribute_Editor (Att.Editor);
                      begin
                         if Ed /= null
                           and then Ed.Model /= null
@@ -2595,10 +2613,11 @@ package body Project_Properties is
      (Editor  : access Gtk_Widget_Record'Class;
       Params  : Glib.Values.GValues)
    is
-      Ed   : constant List_Attribute_Editor := List_Attribute_Editor (Editor);
-      Path : constant String := Get_String (Nth (Params, 1));
-      Iter : constant Gtk_Tree_Iter :=
-        Get_Iter_From_String (Ed.Model, Path);
+      Ed       : constant List_Attribute_Editor :=
+                   List_Attribute_Editor (Editor);
+      Path     : constant String := Get_String (Nth (Params, 1));
+      Iter     : constant Gtk_Tree_Iter :=
+                   Get_Iter_From_String (Ed.Model, Path);
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
       Set (Ed.Model, Iter, 1, Selected);
@@ -2618,13 +2637,14 @@ package body Project_Properties is
       Attr     : Attribute_Type;
       Callback : List_Attribute_Callback)
    is
-      Errors : aliased Boolean;
-      Script : Scripting_Language;
+      Errors       : aliased Boolean;
+      Script       : Scripting_Language;
       Start, Index : Natural;
    begin
       if Attr.Typ = Attribute_As_Dynamic_List then
          Script := Lookup_Scripting_Language
            (Get_Scripts (Kernel), Attr.Dynamic_List_Lang.all);
+
          if Script = null then
             Insert (Kernel,
                     -"Unknown scripting language "
@@ -2650,11 +2670,11 @@ package body Project_Properties is
             end if;
 
             Start := List'First;
+
             while Start <= List'Last loop
                Index := Start + 1;
-               while Index <= List'Last
-                 and then List (Index) /= ASCII.LF
-               loop
+
+               while Index <= List'Last and then List (Index) /= ASCII.LF loop
                   Index := Index + 1;
                end loop;
 
@@ -2730,8 +2750,9 @@ package body Project_Properties is
          end if;
       end Value_Cb;
 
-      Attr : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Description, Attribute_Index);
+      Attr : constant Attribute_Type :=
+               Get_Attribute_Type_From_Description
+                 (Description, Attribute_Index);
    begin
       Editor := new List_Attribute_Editor_Record;
       Initialize_Vbox (Editor, Homogeneous => False);
@@ -2742,8 +2763,8 @@ package body Project_Properties is
 
       if Is_List then
          Gtk_New (Editor.Model,
-                  (0  => GType_String,    --  Attribute value
-                   1  => GType_Boolean)); --  Selected ?
+                  (0 => GType_String,    --  Attribute value
+                   1 => GType_Boolean)); --  Selected ?
       else
          Gtk_New (Editor.Combo);
          Set_Activates_Default (Get_Entry (Editor.Combo), True);
@@ -2790,6 +2811,7 @@ package body Project_Properties is
          else
             Set_Reorderable (Col, False);
          end if;
+
       else
          For_Each_Item_In_List (Kernel, Attr, Value_Cb'Unrestricted_Access);
 
@@ -2844,11 +2866,13 @@ package body Project_Properties is
          File := Select_Directory
            (Parent            => Gtk_Window (Toplevel),
             Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+
          if File = GNATCOLL.VFS.No_File then
             return (1 .. 0 => GNATCOLL.VFS.No_File);
          else
             return (1 => File);
          end if;
+
       else
          --  Ignore the case where we don't know the list of sources yet
          if Filter /= Filter_None
@@ -2866,10 +2890,10 @@ package body Project_Properties is
             Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True);
 
             Tree := Create_Tree_View
-              (Column_Types => (0 => GType_Boolean,
-                                1 => GType_String,
-                                2 => GType_String),
-               Column_Names => (null, null),
+              (Column_Types       => (0 => GType_Boolean,
+                                      1 => GType_String,
+                                      2 => GType_String),
+               Column_Names       => (null, null),
                Show_Column_Titles => False,
                Initial_Sort_On    => 2);
             Add (Scrolled, Tree);
@@ -3008,10 +3032,14 @@ package body Project_Properties is
 
    procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Value : GNAT.Strings.String_List := Create_Attribute_Dialog
-        (Ed.Kernel, Gtk_Window (Get_Toplevel (Editor)),
-         Ed.Project, Ed.Attribute, Attribute_Index => "",
-         Project_Path => +Get_Text (Ed.Path_Widget));
+      Value : GNAT.Strings.String_List :=
+                Create_Attribute_Dialog
+                  (Ed.Kernel,
+                   Gtk_Window (Get_Toplevel (Editor)),
+                   Ed.Project,
+                   Ed.Attribute,
+                   Attribute_Index => "",
+                   Project_Path    => +Get_Text (Ed.Path_Widget));
       --  ??? What if the filesystem path is non-UTF8?
       Iter  : Gtk_Tree_Iter;
    begin
@@ -3019,14 +3047,17 @@ package body Project_Properties is
          Append (Ed.Model, Iter, Null_Iter);
          if Ed.As_Directory then
             Set (Ed.Model, Iter, 0, Normalize_Pathname
-                   (Value (V).all,
-                    Directory     => Get_Text (Ed.Path_Widget),
-                    Resolve_Links => False));
+              (Value (V).all,
+                 Directory     => Get_Text (Ed.Path_Widget),
+                 Resolve_Links => False));
+
          elsif Ed.Attribute.Base_Name_Only then
             Set (Ed.Model, Iter, 0, Base_Name (Value (V).all));
+
          else
             Set (Ed.Model, Iter, 0, Value (V).all);
          end if;
+
          Set (Ed.Model, Iter, 1, False);
          Set (Ed.Model, Iter, 2, Value (V).all);
 
@@ -3056,9 +3087,9 @@ package body Project_Properties is
    procedure Remove_String_From_List
      (Editor : access Gtk_Widget_Record'Class)
    is
-      Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      M     : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+      Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
+      M    : Gtk_Tree_Model;
+      Iter : Gtk_Tree_Iter;
    begin
       Get_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
@@ -3087,18 +3118,19 @@ package body Project_Properties is
    --------------------
 
    procedure Move_String_Up (Editor : access Gtk_Widget_Record'Class) is
-      Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      M     : Gtk_Tree_Model;
-      Iter, Iter2  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
+      Ed          : constant File_Attribute_Editor :=
+                      File_Attribute_Editor (Editor);
+      M           : Gtk_Tree_Model;
+      Iter, Iter2 : Gtk_Tree_Iter;
+      Path        : Gtk_Tree_Path;
    begin
       Get_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
          Path := Get_Path (Ed.Model, Iter);
 
          declare
-            Value : constant String := Get_String (Ed.Model, Iter, 0);
-            Recurse : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
+            Value    : constant String := Get_String (Ed.Model, Iter, 0);
+            Recurse  : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
             Relative : constant String := Get_String (Ed.Model, Iter, 2);
          begin
             if Prev (Path) then
@@ -3106,7 +3138,7 @@ package body Project_Properties is
                Iter := Get_Iter (Ed.Model, Path);
                Insert_Before
                  (Ed.Model, Iter2, Parent => Parent (Ed.Model, Iter),
-                  Sibling => Iter);
+                  Sibling                 => Iter);
                Set (Ed.Model, Iter2, 0, Value);
                Set (Ed.Model, Iter2, 1, Recurse);
                Set (Ed.Model, Iter2, 2, Relative);
@@ -3123,24 +3155,26 @@ package body Project_Properties is
    ----------------------
 
    procedure Move_String_Down (Editor : access Gtk_Widget_Record'Class) is
-      Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      M     : Gtk_Tree_Model;
-      Iter, Iter2  : Gtk_Tree_Iter;
+      Ed          : constant File_Attribute_Editor :=
+                      File_Attribute_Editor (Editor);
+      M           : Gtk_Tree_Model;
+      Iter, Iter2 : Gtk_Tree_Iter;
    begin
       Get_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
          declare
-            Value : constant String := Get_String (Ed.Model, Iter, 0);
-            Recurse : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
+            Value    : constant String := Get_String (Ed.Model, Iter, 0);
+            Recurse  : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
             Relative : constant String := Get_String (Ed.Model, Iter, 2);
          begin
             Iter_Copy (Iter, Dest => Iter2);
             Next (Ed.Model, Iter);
+
             if Iter /= Null_Iter then
                Remove (Ed.Model, Iter2);
                Insert_After
                  (Ed.Model, Iter2, Parent => Parent (Ed.Model, Iter),
-                  Sibling => Iter);
+                  Sibling                 => Iter);
                Select_Iter (Get_Selection (Ed.View), Iter2);
                Set (Ed.Model, Iter2, 0, Value);
                Set (Ed.Model, Iter2, 1, Recurse);
@@ -3183,10 +3217,10 @@ package body Project_Properties is
       Iter := Get_Iter_First (Ed.Model);
       while Iter /= Null_Iter loop
          Set (Ed.Model, Iter, 0,
-              Normalize_Pathname
-                (Get_String (Ed.Model, Iter, 2),
-                 Directory => Directory,
-                 Resolve_Links => False));
+           Normalize_Pathname
+             (Get_String (Ed.Model, Iter, 2),
+              Directory     => Directory,
+              Resolve_Links => False));
          Next (Ed.Model, Iter);
       end loop;
    end Project_Path_Changed;
@@ -3216,8 +3250,9 @@ package body Project_Properties is
       Col_Number : Gint;
       pragma Unreferenced (Col_Number);
 
-      Attr : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Description, Attribute_Index);
+      Attr       : constant Attribute_Type :=
+                     Get_Attribute_Type_From_Description
+                       (Description, Attribute_Index);
    begin
       Editor := new File_Attribute_Editor_Record;
       Initialize_Hbox (Editor, Homogeneous => False);
@@ -3268,9 +3303,9 @@ package body Project_Properties is
                Slot_Object => Editor);
          end if;
 
-         Gtk_New (Editor.Model, (0  => GType_String,   --  display name
-                                 1  => GType_Boolean,  --  recursive ?
-                                 2  => GType_String)); --  relative name
+         Gtk_New (Editor.Model, (0 => GType_String,   --  display name
+                                 1 => GType_Boolean,  --  recursive ?
+                                 2 => GType_String)); --  relative name
 
          Gtk_New (Editor.View, Editor.Model);
          Set_Headers_Visible (Editor.View, Editor.As_Directory);
@@ -3302,29 +3337,34 @@ package body Project_Properties is
          end if;
 
          declare
-            Value : GNAT.Strings.String_List := Get_Current_Value
-              (Kernel  => Kernel,
-               Project => Project,
-               Attr    => Description,
-               Index   => Attribute_Index);
+            Value : GNAT.Strings.String_List :=
+                      Get_Current_Value
+                        (Kernel  => Kernel,
+                         Project => Project,
+                         Attr    => Description,
+                         Index   => Attribute_Index);
          begin
             for V in Value'Range loop
                Append (Editor.Model, Iter, Null_Iter);
-               if Value (V)'Length > 3 and then
-                 Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**"
+               if Value (V)'Length > 3
+                 and then
+                   Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**"
                then
                   Set (Editor.Model, Iter, 0,
-                       Normalize_Pathname
-                         (Value (V) (Value (V)'First .. Value (V)'Last - 3),
-                          Directory     => Get_Text (Path_Widget),
-                          Resolve_Links => False));
+                    Normalize_Pathname
+                      (Value (V) (Value (V)'First .. Value (V)'Last - 3),
+                       Directory     => Get_Text (Path_Widget),
+                       Resolve_Links => False));
                   Set (Editor.Model, Iter, 1, True);
+
                elsif Attr.Typ = Attribute_As_String then
                   Set (Editor.Model, Iter, 0, Value (V).all);
                   Set (Editor.Model, Iter, 1, False);
+
                elsif Description.Base_Name_Only then
                   Set (Editor.Model, Iter, 0, Base_Name (Value (V).all));
                   Set (Editor.Model, Iter, 1, False);
+
                else
                   Set (Editor.Model, Iter, 0,
                        Normalize_Pathname
@@ -3357,15 +3397,18 @@ package body Project_Properties is
          begin
             if Attr.Typ = Attribute_As_String or else Current = "" then
                Set_Text (Editor.Ent, Current);
+
             elsif Description.Base_Name_Only then
                Set_Text (Editor.Ent, Base_Name (Current));
+
             elsif Current (Current'First) = '(' then
                Set_Text (Editor.Ent, Current);
+
             else
                Set_Text (Editor.Ent,
                          Normalize_Pathname
                            (Current,
-                            Directory => Get_Text (Path_Widget),
+                            Directory     => Get_Text (Path_Widget),
                             Resolve_Links => False));
             end if;
          end;
@@ -3396,8 +3439,9 @@ package body Project_Properties is
       Attribute_Index : String;
       Project_Path    : Filesystem_String) return GNAT.Strings.String_List
    is
-      Attr   : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Description, Attribute_Index);
+      Attr   : constant Attribute_Type :=
+                 Get_Attribute_Type_From_Description
+                   (Description, Attribute_Index);
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Ent    : Gtk_Entry;
@@ -3411,7 +3455,7 @@ package body Project_Properties is
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Ent);
             Set_Text (Ent, Get_Current_Value
-                        (Project, Description, Index => Attribute_Index));
+                      (Project, Description, Index => Attribute_Index));
             Set_Activates_Default (Ent, True);
             Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
@@ -3446,7 +3490,7 @@ package body Project_Properties is
                   As_Directory      => Attr.Typ = Attribute_As_Directory,
                   Filter            => Attr.Filter,
                   Allow_Multiple    => False);
-               Result : GNAT.Strings.String_List (Files'Range);
+               Result  : GNAT.Strings.String_List (Files'Range);
             begin
                for F in Files'Range loop
                   Result (F) :=
@@ -3515,7 +3559,7 @@ package body Project_Properties is
                   Path_Widget, Is_List));
 
          when Attribute_As_Static_List
-              | Attribute_As_Dynamic_List =>
+            | Attribute_As_Dynamic_List =>
             return Attribute_Editor
               (Create_List_Attribute_Editor
                  (Kernel, Project, Description, Attribute_Index, Is_List));
@@ -3534,7 +3578,7 @@ package body Project_Properties is
             for S in Properties_Module_ID.Pages (P).Sections'Range loop
                declare
                   Sect : Attribute_Page_Section renames
-                    Properties_Module_ID.Pages (P).Sections (S);
+                           Properties_Module_ID.Pages (P).Sections (S);
                begin
                   for A in Sect.Attributes'Range loop
                      if Sect.Attributes (A).Pkg.all = Pkg
@@ -3937,8 +3981,8 @@ package body Project_Properties is
                   return GNAT.Strings.String_List'(1 .. 0 => null);
                else
                   declare
-                     Files : File_Array_Access :=
-                               Get_Source_Files (Project, Recursive => False);
+                     Files  : File_Array_Access :=
+                                Get_Source_Files (Project, Recursive => False);
                      Result : GNAT.Strings.String_List (Files'Range);
                   begin
                      for R in Result'Range loop
@@ -3961,7 +4005,7 @@ package body Project_Properties is
             end if;
 
          when Attribute_As_Static_List
-              | Attribute_As_Dynamic_List =>
+            | Attribute_As_Dynamic_List =>
             For_Each_Item_In_List
               (Kernel, Attr_Type, Save_Value'Unrestricted_Access);
 
@@ -4001,15 +4045,16 @@ package body Project_Properties is
       if Row_Found
         and then Get_Button (Event) = 1
         and then (Get_Event_Type (Event) = Gdk_2button_Press or else
-            (Get_Event_Type (Event) = Button_Press
-             and then Path_Is_Selected (Get_Selection (Ed.View), Path)))
+                    (Get_Event_Type (Event) = Button_Press
+                     and then Path_Is_Selected
+                       (Get_Selection (Ed.View), Path)))
       then
          if Row_Found then
             Iter := Get_Iter (Ed.Model, Path);
 
             declare
                Attribute_Index : constant String :=
-                 Get_String (Ed.Model, Iter, 0);
+                                   Get_String (Ed.Model, Iter, 0);
             begin
                Typ := Get_Attribute_Type_From_Description
                  (Ed.Attribute, Index => Attribute_Index);
@@ -4062,13 +4107,15 @@ package body Project_Properties is
                   if Typ.Typ /= Attribute_As_String then
                      declare
                         Value : GNAT.Strings.String_List :=
-                          Create_Attribute_Dialog
-                            (Kernel          => Ed.Kernel,
-                             Toplevel        => Gtk_Window (Get_Toplevel (Ed)),
-                             Project         => Ed.Project,
-                             Description     => Ed.Attribute,
-                             Attribute_Index => Attribute_Index,
-                             Project_Path    => +Get_Text (Ed.Path_Widget));
+                                  Create_Attribute_Dialog
+                                    (Kernel          => Ed.Kernel,
+                                     Toplevel        =>
+                                       Gtk_Window (Get_Toplevel (Ed)),
+                                     Project         => Ed.Project,
+                                     Description     => Ed.Attribute,
+                                     Attribute_Index => Attribute_Index,
+                                     Project_Path    =>
+                                     +Get_Text (Ed.Path_Widget));
                         --  ??? What if the filesystem path is non-UTF8?
                      begin
                         if Value'Length /= 0 then
@@ -4158,12 +4205,12 @@ package body Project_Properties is
                if Attr.Is_List then
                   declare
                      Current : constant GNAT.Strings.String_List :=
-                       Get_Current_Value
-                         (Kernel   => Kernel,
-                          Project  => Project,
-                          Attr     => Attr,
-                          Index    => Value);
-                     Tmp : Indexed_Values_Array_Access;
+                                 Get_Current_Value
+                                   (Kernel   => Kernel,
+                                    Project  => Project,
+                                    Attr     => Attr,
+                                    Index    => Value);
+                     Tmp     : Indexed_Values_Array_Access;
                   begin
                      Set (Ed.Model, Iter, Attribute_Col, To_String (Current));
 
@@ -4212,13 +4259,13 @@ package body Project_Properties is
       Ed.Path_Widget := Path_Widget;
 
       Gtk_New (Ed.Model,
-               (Index_Col      => GType_String,
-                Attribute_Col  => GType_String,
-                Editable_Col   => GType_Boolean));
+        (Index_Col      => GType_String,
+         Attribute_Col  => GType_String,
+         Editable_Col   => GType_Boolean));
 
       declare
          Current_Value : aliased GNAT.Strings.String_List :=
-           Get_Current_Value (Kernel, Project, Index);
+                           Get_Current_Value (Kernel, Project, Index);
       begin
          Current_Index := Current_Value'Unchecked_Access;
 
@@ -4321,6 +4368,7 @@ package body Project_Properties is
       --  Should the page be displayed ?
       if Attr.Hide_In /= null then
          First := Attr.Hide_In'First;
+
          loop
             while First <= Attr.Hide_In'Last
               and then Attr.Hide_In (First) = ' '
@@ -4373,7 +4421,7 @@ package body Project_Properties is
          Exists := Attribute_Exists (Attr, Project, Attribute_Index => "");
 
          Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
-                  Xscale => 0.0, Yscale => 0.0);
+                  Xscale        => 0.0, Yscale => 0.0);
          Set_Border_Width (Align, 0);
          Pack_Start (Vbox, Align, Expand => False, Fill => False);
          Gtk_New (Check, "");
@@ -4390,7 +4438,7 @@ package body Project_Properties is
          --  doesn't appear far from the label
 
          Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
-                  Xscale => 0.0, Yscale => 0.0);
+                  Xscale        => 0.0, Yscale => 0.0);
          Set_Border_Width (Align, 0);
          Pack_Start (Vbox, Align, Expand => False, Fill => False);
          Gtk_New (Event);
@@ -4417,8 +4465,13 @@ package body Project_Properties is
               (Kernel, Project, Attr, Path_Widget => Path_Widget));
       else
          Attr.Editor := Create_Widget_Attribute
-           (Kernel, Wiz, Project, Attr, Attribute_Index => "",
-            Path_Widget => Path_Widget, Is_List => Attr.Is_List);
+           (Kernel,
+            Wiz,
+            Project,
+            Attr,
+            Attribute_Index => "",
+            Path_Widget     => Path_Widget,
+            Is_List         => Attr.Is_List);
       end if;
 
       Attr.Editor.Wiz := Wiz;
@@ -4450,9 +4503,11 @@ package body Project_Properties is
      (Check : access Gtk_Widget_Record'Class;
       Attr  : Attribute_Description_Access)
    is
-      Active : constant Boolean := Get_Active (Gtk_Check_Button (Check));
-      Attr2  : Attribute_Description_Access;
-      Page   : Attribute_Page;
+      Active                                : constant Boolean :=
+                                                Get_Active
+                                                  (Gtk_Check_Button (Check));
+      Attr2                                 : Attribute_Description_Access;
+      Page                                  : Attribute_Page;
       Pkg_Start, Pkg_End, Name_Start, Index : Natural;
    begin
       if Attr.Editor /= null
@@ -4731,9 +4786,11 @@ package body Project_Properties is
             if Attr.Editor = null then
                Trace (Me, "No editor created for "
                       & Attr.Pkg.all & "'" & Attr.Name.all);
+
             elsif Is_Sensitive (Attr.Editor) then
                Generate_Project
                  (Attr.Editor, Project, Scenario_Variables, Changed);
+
             else
                --  The editor is insensitive, which means the user doesn't
                --  want to use that attribute
@@ -4959,8 +5016,8 @@ package body Project_Properties is
    -------------------------
 
    function Warning_Cannot_Edit
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Message : String;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Message            : String;
       Always_Load_Source : Boolean) return Project_Edition_Type
    is
       D : Gtk_Dialog;
@@ -5146,7 +5203,7 @@ package body Project_Properties is
          then
             Response2 := Message_Dialog
               (Msg         => Get_Text (Editor.Path)
-                                & (-" is not a valid directory"),
+                                        & (-" is not a valid directory"),
                Buttons     => Button_OK,
                Dialog_Type => Error,
                Title       => -"Error",
@@ -5213,18 +5270,20 @@ package body Project_Properties is
                         Set_Environment (Vars, Curr);
 
                         for V in Vars'Range loop
-                           Is_Env := Is_Env and then Curr (V).all =
-                             Saved_Values (V).all;
+                           Is_Env := Is_Env
+                             and then Curr (V).all = Saved_Values (V).all;
                         end loop;
 
                         Free (Curr);
                      end;
 
                      --  First generate for the global page, so that the
-                     --  relative paths option is updated appropriately
+                     --  relative paths option is updated appropriately.
+
                      Changed := Changed
-                       or Process_General_Page
-                        (Editor, Current (Prj_Iter), Project_Renamed_Or_Moved);
+                       or else Process_General_Page
+                         (Editor, Current (Prj_Iter),
+                          Project_Renamed_Or_Moved);
 
                      if Editor.XML_Pages /= null then
                         for X in Editor.XML_Pages'Range loop
@@ -5236,6 +5295,7 @@ package body Project_Properties is
                               Scenario_Variables => Vars,
                               Project            => Tmp_Project,
                               Changed            => Changed);
+
                            if Tmp_Project = Projects.No_Project then
                               Report_Error ("Project not modified");
                               return; --  Give up on modifications
@@ -5249,7 +5309,8 @@ package body Project_Properties is
                         Ed := Get_Nth_Project_Editor_Page (Kernel, P);
 
                         --  If the project is either the one the user clicked
-                        --  on or the page might apply to multiple projects
+                        --  on or the page might apply to multiple projects.
+
                         if (Get_Flags (Ed) and Multiple_Projects) /= 0
                           or else Current (Prj_Iter) = Project
                         then

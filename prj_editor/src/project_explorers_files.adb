@@ -25,7 +25,6 @@ with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
-with XML_Utils;               use XML_Utils;
 with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Event;                  use Gdk.Event;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
@@ -61,6 +60,7 @@ with GUI_Utils;                  use GUI_Utils;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
+with XML_Utils;                  use XML_Utils;
 
 package body Project_Explorers_Files is
 
@@ -88,9 +88,8 @@ package body Project_Explorers_Files is
       Physical_Read : Boolean := True;
    end record;
 
-   procedure Free is
-     new Unchecked_Deallocation (Append_Directory_Idle_Data,
-                                 Append_Directory_Idle_Data_Access);
+   procedure Free is new Unchecked_Deallocation
+     (Append_Directory_Idle_Data, Append_Directory_Idle_Data_Access);
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view
@@ -332,7 +331,7 @@ package body Project_Explorers_Files is
                   D.Files (D.File_Index).Full_Name,
                   Direct_Only => False)
                then
-                  --  Remove from the list.
+                  --  Remove from the list
                   D.Files (D.File_Index) := No_File;
                end if;
 
@@ -353,7 +352,7 @@ package body Project_Explorers_Files is
                      Project         => P,
                      File            => File);
 
-                  --  If not part of a project, then we remove the file.
+                  --  If not part of a project, then we remove the file
                   if P = No_Project
                     or else File /= D.Files (D.File_Index)
                   then
@@ -792,8 +791,7 @@ package body Project_Explorers_Files is
       Params   : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
-      E : constant Project_Explorer_Files :=
-            Project_Explorer_Files (Explorer);
+      E : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
       File_Remove_Idle_Calls (E);
    end On_File_Destroy;
@@ -1102,6 +1100,7 @@ package body Project_Explorers_Files is
          --  then parent's next item.
          if Has_Child (View.File_Model, Iter) then
             Iter := Children (View.File_Model, Iter);
+
          else
             loop
                Next_Iter := Iter;
@@ -1148,8 +1147,10 @@ package body Project_Explorers_Files is
             --  We found the file's directory
 
             Path := Get_Path (View.File_Model, Iter);
+
             if not Row_Expanded (View.File_Tree, Path)
-              and then Children (View.File_Model, Iter) /= Null_Iter then
+              and then Children (View.File_Model, Iter) /= Null_Iter
+            then
                --  File's directory is not expanded. Return now
 
                --  Note that we need to test if dir node has children: in the
@@ -1239,6 +1240,7 @@ package body Project_Explorers_Files is
          --  then parent's next item.
          if Has_Child (View.File_Model, Iter) then
             Iter := Children (View.File_Model, Iter);
+
          else
             loop
                Next_Iter := Iter;

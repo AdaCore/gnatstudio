@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2008, AdaCore               --
+--                 Copyright (C) 2004-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,11 +33,11 @@ package Creation_Wizard is
    type Project_Wizard_Page is access all Project_Wizard_Page_Record'Class;
 
    procedure Generate_Project
-     (Page    : access Project_Wizard_Page_Record;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Project_Wizard_Page_Record;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean) is abstract;
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean) is abstract;
    --  This function is called when the user has pressed Finish in the wizard.
    --  It should update the project's attributes as per the settings in the
    --  page.
@@ -143,10 +143,9 @@ private
       Force_Relative_Dirs : Boolean;
    end record;
 
-   type Project_Wizard_Record is new Wizards.Wizard_Record with
-      record
-         Project : Projects.Project_Type;
-         Auto_Save_On_Exit : Boolean;
-      end record;
+   type Project_Wizard_Record is new Wizards.Wizard_Record with record
+      Project : Projects.Project_Type;
+      Auto_Save_On_Exit : Boolean;
+   end record;
 
 end Creation_Wizard;

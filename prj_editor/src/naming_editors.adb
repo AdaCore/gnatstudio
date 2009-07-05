@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2008, AdaCore             --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -69,8 +69,8 @@ package body Naming_Editors is
       Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages : String_List)
    is
-      Supported : String_List := Known_Languages
-        (Get_Language_Handler (Kernel));
+      Supported : String_List :=
+                    Known_Languages (Get_Language_Handler (Kernel));
       Naming    : Language_Naming_Editor;
       Old       : Language_Naming_Array_Access;
       Last      : Natural;
@@ -130,9 +130,9 @@ package body Naming_Editors is
    -------------
 
    procedure Gtk_New
-     (Editor       : out Naming_Editor;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project      : Project_Type)
+     (Editor  : out Naming_Editor;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project : Project_Type)
    is
       Languages : String_List := Get_Languages (Project);
    begin
@@ -146,10 +146,10 @@ package body Naming_Editors is
    -----------------------
 
    procedure Set_Visible_Pages
-     (Editor       : access Naming_Editor_Record;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Languages    : String_List;
-      Project      : Projects.Project_Type)
+     (Editor    : access Naming_Editor_Record;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Languages : String_List;
+      Project   : Projects.Project_Type)
    is
       Current : constant Gint := Get_Current_Page (Editor);
       Exists  : Boolean;
@@ -225,9 +225,9 @@ package body Naming_Editors is
    ---------------------------
 
    procedure Show_Project_Settings
-     (Editor       : access Naming_Editor_Record;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project      : Projects.Project_Type;
+     (Editor             : access Naming_Editor_Record;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
       Languages : String_List := Get_Languages (Project);

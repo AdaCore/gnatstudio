@@ -272,10 +272,11 @@ package body Ada_Naming_Editors is
 
          else
             declare
-               Old : constant String := Get_Attribute_Value
-                 (Project        => Project,
-                  Attribute      => Name,
-                  Index          => Index);
+               Old : constant String :=
+                       Get_Attribute_Value
+                         (Project   => Project,
+                          Attribute => Name,
+                          Index     => Index);
             begin
                Modified := Value /= Old
                  and then (Old /= "" or else not Ada_Scheme);
@@ -314,6 +315,7 @@ package body Ada_Naming_Editors is
          loop
             Data := Get_Element (Iter);
             exit when Data = No_Data;
+
             if (Column = 1 and then Data.Spec_Name /= null)
               or else (Column = 2 and then Data.Body_Name /= null)
             then
@@ -344,7 +346,7 @@ package body Ada_Naming_Editors is
             declare
                U     : constant String := Get_String (List (Elem).Index);
                Value : constant String :=
-                 To_String (Get_Tree (Project), List (Elem).Value);
+                         To_String (Get_Tree (Project), List (Elem).Value);
             begin
                Data := Get (Cache, U);
                if Data = No_Data
@@ -381,15 +383,17 @@ package body Ada_Naming_Editors is
         (Dot_Replacement_Attribute, Get_Text (Editor.GUI.Dot_Replacement), "");
 
       --  Fill the hash table
+
       Iter := Get_Iter_First (Editor.GUI.Exception_List_Model);
+
       while Iter /= Null_Iter loop
          declare
             U : constant String :=
-              Get_String (Editor.GUI.Exception_List_Model, Iter, 0);
+                  Get_String (Editor.GUI.Exception_List_Model, Iter, 0);
             Spec : constant String :=
-              Get_String (Editor.GUI.Exception_List_Model, Iter, 1);
+                     Get_String (Editor.GUI.Exception_List_Model, Iter, 1);
             Bod : constant String :=
-              Get_String (Editor.GUI.Exception_List_Model, Iter, 2);
+                     Get_String (Editor.GUI.Exception_List_Model, Iter, 2);
          begin
             if Spec /= "" then
                Data.Spec_Name := new String'(Spec);
@@ -411,8 +415,7 @@ package body Ada_Naming_Editors is
 
       --  Update the project if needed
 
-      Changed := Changed
-        or else Project = No_Project;
+      Changed := Changed or else Project = No_Project;
 
       --  Computing whether a list has changed is extremely fast now that the
       --  hash table has been created. Much faster than updating the attributes
@@ -435,25 +438,23 @@ package body Ada_Naming_Editors is
 
             begin
                Get_First (Cache, Cache_Iter);
+
                loop
                   Data := Get_Element (Cache_Iter);
                   exit when Data = No_Data;
 
                   Val := null;
 
-                  if L = 1
-                    and then Data.Spec_Name /= null
-                  then
+                  if L = 1 and then Data.Spec_Name /= null then
                      Val := Data.Spec_Name;
 
-                  elsif L = 2
-                    and then Data.Body_Name /= null
-                  then
+                  elsif L = 2 and then Data.Body_Name /= null then
                      Val := Data.Body_Name;
                   end if;
 
                   if Val /= null then
                      Last := Ada.Strings.Fixed.Index (Val.all, " at ");
+
                      if Last < Val'First then
                         Last := Val'Last + 1;
                         Idx  := 0;
@@ -512,22 +513,29 @@ package body Ada_Naming_Editors is
       pragma Import (C, Set_Unit_Spec, "ada_gtk_tree_store_set_ptr_ptr_int");
 
       pragma Unreferenced (Kernel);
-      Dot_Replacement : constant String := Get_Attribute_Value
-        (Project, Dot_Replacement_Attribute,
-         Default => Default_Gnat_Dot_Replacement);
-      Casing : constant String := Get_Attribute_Value
-        (Project, Casing_Attribute,
-         Default => -Prj.Image (All_Lower_Case));
-      Separate_Suffix : constant String := Get_Attribute_Value
-        (Project, Separate_Suffix_Attribute,
-         Default => Default_Gnat_Separate_Suffix);
-      Body_Suffix : constant String := Get_Attribute_Value
-        (Project, Impl_Suffix_Attribute,
-         Index => Ada_String, Default => Default_Gnat_Body_Suffix);
-      Spec_Suffix : constant String := Get_Attribute_Value
-        (Project, Spec_Suffix_Attribute,
-         Index => Ada_String, Default => Default_Gnat_Spec_Suffix);
-      Id : Gint;
+      Dot_Replacement : constant String :=
+                          Get_Attribute_Value
+                            (Project, Dot_Replacement_Attribute,
+                             Default => Default_Gnat_Dot_Replacement);
+      Casing          : constant String :=
+                          Get_Attribute_Value
+                            (Project, Casing_Attribute,
+                             Default => -Prj.Image (All_Lower_Case));
+      Separate_Suffix : constant String :=
+                          Get_Attribute_Value
+                            (Project, Separate_Suffix_Attribute,
+                             Default => Default_Gnat_Separate_Suffix);
+      Body_Suffix     : constant String :=
+                          Get_Attribute_Value
+                            (Project, Impl_Suffix_Attribute,
+                             Index   => Ada_String,
+                             Default => Default_Gnat_Body_Suffix);
+      Spec_Suffix     : constant String :=
+                          Get_Attribute_Value
+                            (Project, Spec_Suffix_Attribute,
+                             Index   => Ada_String,
+                             Default => Default_Gnat_Spec_Suffix);
+      Id              : Gint;
 
    begin
       Set_Text (Editor.GUI.Dot_Replacement,                Dot_Replacement);
@@ -541,11 +549,13 @@ package body Ada_Naming_Editors is
 
       if Display_Exceptions then
          declare
-            Specs  : constant Associative_Array := Get_Attribute_Value
-              (Project, Specification_Attribute);
-            Bodies : constant Associative_Array := Get_Attribute_Value
-              (Project, Implementation_Attribute);
-            Iter : Gtk_Tree_Iter;
+            Specs  : constant Associative_Array :=
+                       Get_Attribute_Value
+                         (Project, Specification_Attribute);
+            Bodies : constant Associative_Array :=
+                       Get_Attribute_Value
+                         (Project, Implementation_Attribute);
+            Iter   : Gtk_Tree_Iter;
          begin
             for S in Specs'Range loop
                Append (Editor.GUI.Exception_List_Model, Iter, Null_Iter);

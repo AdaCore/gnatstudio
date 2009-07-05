@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,16 +43,16 @@ package Naming_Editors is
    --  It is the responsability of the caller to free Languages.
 
    procedure Gtk_New
-     (Editor       : out Naming_Editor;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project      : Projects.Project_Type);
+     (Editor  : out Naming_Editor;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project : Projects.Project_Type);
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
 
    function Create_Project_Entry
-     (Editor          : access Naming_Editor_Record;
-      Project         : Projects.Project_Type;
-      Languages       : GNAT.Strings.String_List;
+     (Editor             : access Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
@@ -76,10 +75,10 @@ package Naming_Editors is
    --  used when creating new projects based on an existing one.
 
    procedure Set_Visible_Pages
-     (Editor       : access Naming_Editor_Record;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Languages    : GNAT.Strings.String_List;
-      Project      : Projects.Project_Type);
+     (Editor    : access Naming_Editor_Record;
+      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Languages : GNAT.Strings.String_List;
+      Project   : Projects.Project_Type);
    --  Change the visible pages in editor, based on languages
 
    ----------------------------
@@ -124,10 +123,11 @@ package Naming_Editors is
    --  If Project is No_Project, then the default settings are displayed.
 
 private
+
    type Language_Naming is record
-      Language       : GNAT.Strings.String_Access;
-      Naming         : Language_Naming_Editor;
-      Is_Visible     : Boolean;
+      Language   : GNAT.Strings.String_Access;
+      Naming     : Language_Naming_Editor;
+      Is_Visible : Boolean;
    end record;
 
    type Language_Naming_Editor_Record is abstract tagged null record;
@@ -135,8 +135,10 @@ private
    type Language_Naming_Array is array (Natural range <>) of Language_Naming;
    type Language_Naming_Array_Access is access Language_Naming_Array;
 
-   type Naming_Editor_Record is new Gtk.Notebook.Gtk_Notebook_Record
-     with record
-        Pages : Language_Naming_Array_Access;
-     end record;
+   type Naming_Editor_Record is
+     new Gtk.Notebook.Gtk_Notebook_Record
+   with record
+      Pages : Language_Naming_Array_Access;
+   end record;
+
 end Naming_Editors;

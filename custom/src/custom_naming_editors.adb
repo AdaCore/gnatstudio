@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,23 +17,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;          use Ada.Characters.Handling;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
-with GNAT.Strings;                     use GNAT.Strings;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+--  with Osint;                   use Osint;
 
-with Gtk.Box;                          use Gtk.Box;
-with Gtk.Frame;                        use Gtk.Frame;
-with Gtk.GEntry;                       use Gtk.GEntry;
-with Gtk.Label;                        use Gtk.Label;
-with Gtk.Size_Group;                   use Gtk.Size_Group;
-with Gtk.Tooltips;                     use Gtk.Tooltips;
-with Gtk.Widget;                       use Gtk.Widget;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Frame;               use Gtk.Frame;
+with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.Size_Group;          use Gtk.Size_Group;
+with Gtk.Tooltips;            use Gtk.Tooltips;
+with Gtk.Widget;              use Gtk.Widget;
 
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Project;               use GPS.Kernel, GPS.Kernel.Project;
-with Projects.Editor;                  use Projects, Projects.Editor;
-with Projects.Registry;                use Projects.Registry;
-with Naming_Exceptions;                use Naming_Exceptions;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
+with Naming_Exceptions;       use Naming_Exceptions;
+with Projects.Editor;         use Projects, Projects.Editor;
+with Projects.Registry;       use Projects.Registry;
 
 package body Custom_Naming_Editors is
 
@@ -46,8 +47,9 @@ package body Custom_Naming_Editors is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String)
    is
-      Extensions : String_List := Get_Registered_Extensions
-        (Get_Registry (Kernel).all, Language);
+      Extensions : String_List :=
+                     Get_Registered_Extensions
+                       (Get_Registry (Kernel).all, Language);
       Label      : Gtk_Label;
       Box        : Gtk_Box;
       Vbox       : Gtk_Box;
@@ -168,7 +170,7 @@ package body Custom_Naming_Editors is
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Languages);
-      Changed  : Boolean := False;
+      Changed : Boolean := False;
    begin
       if Project = No_Project
         or else Get_Attribute_Value
