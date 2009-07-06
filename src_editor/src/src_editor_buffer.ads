@@ -24,12 +24,14 @@
 --  reference support, etc.
 --  </description>
 
-with Ada.Unchecked_Deallocation;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;
+with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.Strings;
+with GNATCOLL.Utils;
+with GNATCOLL.VFS;
 
 with Gdk.GC;                    use Gdk.GC;
 with Glib;                      use Glib;
@@ -48,8 +50,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with Language;
 with Src_Highlighting;
-with GNATCOLL.Utils;
-with GNATCOLL.VFS;
 
 package Src_Editor_Buffer is
 
@@ -953,6 +953,28 @@ package Src_Editor_Buffer is
    function In_Completion (Buffer : Source_Buffer) return Boolean;
    --  Get/set the flag that indicates whether we are currently in a completion
 
+   --------------------
+   -- Casing support --
+   --------------------
+
+   procedure Add_Typed_Char
+     (Buffer : access Source_Buffer_Record'Class;
+      C      : Gunichar);
+   --  Add a character into the as-typed buffer
+
+   procedure Delete_Last_Typed_Char
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Delete last typed character
+
+   procedure Clear_Typed_Chars (Buffer : access Source_Buffer_Record'Class);
+   pragma Inline (Clear_Typed_Chars);
+   --  Clear the whole buffer
+
+   function Get_Typed_Chars
+     (Buffer : access Source_Buffer_Record'Class;
+      N      : Positive) return UTF8_String;
+   --  Returns the N last typed characters
+
 private
 
    procedure Set_Cursor_Position
@@ -1166,6 +1188,15 @@ private
    type Columns_Config_Access is access Line_Info_Display_Array_Access;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Info_Display_Array_Access, Columns_Config_Access);
+
+   Max_Typed_Chars : constant := 100;
+   --  100 is the maximum length of the identifier that will be handled by the
+   --  conservative casing circuitry. Past this length the casing (as-typed)
+   --  won't be kept. Note that this needs to be long enough as we do not want
+   --  to cover only the keywords but also identifier casing exceptions.
+
+   type Last_Typed_Chars is array (1 .. Max_Typed_Chars) of Gunichar;
+   --  The array to store the last typed characters in a buffer
 
    --------------------------
    -- Source_Buffer_Record --
@@ -1395,6 +1426,11 @@ private
       --  Whether we are in an autocompletion loop
 
       Last_User_Action     : Action_Type := No_Action;
+
+      Typed_Chars          : Last_Typed_Chars;
+      Index                : Natural := 0;
+      --  Records last typed chars to help auto-casing restore as much as
+      --  possible the user's original casing.
    end record;
 
    procedure Emit_By_Name

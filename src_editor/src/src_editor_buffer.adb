@@ -23,11 +23,12 @@ with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
+with Interfaces.C.Strings;                use Interfaces.C.Strings;
+with System.Address_Image;
+
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
-with Interfaces.C.Strings;                use Interfaces.C.Strings;
-with System.Address_Image;
 
 with Gdk.Color;                           use Gdk.Color;
 
@@ -6631,5 +6632,68 @@ package body Src_Editor_Buffer is
          return Buffers (Buffers'First .. Index);
       end;
    end Buffer_List;
+
+   --------------------
+   -- Add_Typed_Char --
+   --------------------
+
+   procedure Add_Typed_Char
+     (Buffer : access Source_Buffer_Record'Class;
+      C      : Gunichar) is
+   begin
+      if Buffer.Index < Buffer.Typed_Chars'Last then
+         Buffer.Index := Buffer.Index + 1;
+         Buffer.Typed_Chars (Buffer.Index) := C;
+      end if;
+   end Add_Typed_Char;
+
+   ----------------------------
+   -- Delete_Last_Typed_Char --
+   ----------------------------
+
+   procedure Delete_Last_Typed_Char
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      if Buffer.Index >= Buffer.Typed_Chars'First then
+         Buffer.Index := Buffer.Index - 1;
+      end if;
+   end Delete_Last_Typed_Char;
+
+   -----------------------
+   -- Clear_Typed_Chars --
+   -----------------------
+
+   procedure Clear_Typed_Chars (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Index := 0;
+   end Clear_Typed_Chars;
+
+   ---------------------
+   -- Get_Typed_Chars --
+   ---------------------
+
+   function Get_Typed_Chars
+     (Buffer : access Source_Buffer_Record'Class;
+      N      : Positive) return UTF8_String is
+   begin
+      if N > Buffer.Index then
+         --  No enough characters in buffer, we cannot support conservative
+         --  casing.
+         return "";
+
+      else
+         declare
+            S    : UTF8_String (1 .. N * 6);
+            --  An UTF-8 character expand of max 6 bytes
+            Last : Natural := 0;
+         begin
+            for K in Buffer.Index - N + 1 .. Buffer.Index loop
+               Unichar_To_UTF8
+                 (Buffer.Typed_Chars (K), S (Last + 1 .. S'Last), Last);
+            end loop;
+            return S (1 .. Last);
+         end;
+      end if;
+   end Get_Typed_Chars;
 
 end Src_Editor_Buffer;

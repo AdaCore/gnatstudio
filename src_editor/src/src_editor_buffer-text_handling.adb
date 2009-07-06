@@ -460,12 +460,29 @@ package body Src_Editor_Buffer.Text_Handling is
 
       if First /= Column then
          --  We have a word, set casing
-         Format_Buffer
-           (Lang,
-            Get_Slice (W_Start, W_End),
-            Replace         => Replace_Text'Unrestricted_Access,
-            Indent_Params   => Indent_Params,
-            Case_Exceptions => Get_Case_Exceptions);
+         declare
+            W : constant UTF8_String := Get_Slice (W_Start, W_End);
+            B : constant UTF8_String :=
+                  Get_Typed_Chars (Buffer, Integer (Column - First));
+         begin
+            if UTF8_Strdown (W) = UTF8_Strdown (B) then
+               --  If typed chars and current buffer differ only on the casing
+               --  use the recorded typed chars to have a conservative casing.
+               Format_Buffer
+                 (Lang,
+                  B,
+                  Replace         => Replace_Text'Unrestricted_Access,
+                  Indent_Params   => Indent_Params,
+                  Case_Exceptions => Get_Case_Exceptions);
+            else
+               Format_Buffer
+                 (Lang,
+                  W,
+                  Replace         => Replace_Text'Unrestricted_Access,
+                  Indent_Params   => Indent_Params,
+                  Case_Exceptions => Get_Case_Exceptions);
+            end if;
+         end;
 
          if Casing = On_The_Fly and then Text_Replaced then
             Get_Cursor_Position (Buffer, W_End);

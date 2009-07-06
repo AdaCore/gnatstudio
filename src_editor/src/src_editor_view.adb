@@ -2084,6 +2084,8 @@ package body Src_Editor_View is
 
       case Get_Key_Val (Event) is
          when GDK_Return =>
+            Clear_Typed_Chars (Buffer);
+
             --  If we are in a smart completion, let the Return character be
             --  caught by the completion window.
 
@@ -2132,7 +2134,9 @@ package body Src_Editor_View is
             end if;
 
          when GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up | GDK_Page_Down |
-              GDK_End | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right =>
+              GDK_End | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right
+            =>
+            Clear_Typed_Chars (Buffer);
             External_End_Action (Buffer);
 
          when GDK_BackSpace =>
@@ -2153,6 +2157,8 @@ package body Src_Editor_View is
             --  particular when using PyGTK to simulate a key press event
             --  the key string is not set in the event object. As a result
             --  the "word_added" whould not be called.
+
+            Clear_Typed_Chars (Buffer);
 
             if not View.As_Is_Enabled then
                Word_Added (Buffer);

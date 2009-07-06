@@ -36,6 +36,12 @@ NF-44-I616-052 New action to toggle auto-casing on/off (2009-06-24)
    default) instead of the action which disables casing for a single character
    only.
 
+NF-44-I616-051 On-The-Fly casing is conservative (2009-07-06)
+
+   GPS On-The-Fly casing mode is now more conservative and will do the
+   casing based on the actual characters typed by the user instead of
+   the current buffer content when possible.
+
 NF-44-I610-012 Outline view hierarchy (2009-07-02)
 
    The outline now represents a hierarchical view of the contents of the file,
