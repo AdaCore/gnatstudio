@@ -106,7 +106,11 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
   if not ctx:
      ctx = GPS.current_context()
 
-  sw = ctx.project().get_tool_switches_as_string (prj_attr)
+  try:
+     sw = ctx.project().get_tool_switches_as_string (prj_attr)
+  except:
+     sw = GPS.Project.root().get_tool_switches_as_string (prj_attr)
+
   cmd = cmd_name + " " + sw
 
   if input == None:
