@@ -618,8 +618,7 @@ package Language is
    --  Free the contents of List.
 
    function Word_Character_Set
-     (Lang : access Language_Root)
-      return Character_Set;
+     (Lang : access Language_Root) return Character_Set;
    --  Returns the character set used for the language identifiers
 
    function Comment_Block
