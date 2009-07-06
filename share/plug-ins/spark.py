@@ -149,14 +149,14 @@ def do_pogs_xref (context, simplified):
   vc = re.search ("^\s*(\d+)", line).group (1)  # VC rule number
 
   (frm,to) = curs.search ("^File (.*)$", backward=True, regexp=True)
-  vc_file=editor.get_chars (frm+5, to)
+  vc_file=editor.get_chars (frm+5, to-1)
 
   if simplified:
      vc_file = vc_file.replace (".vcg", ".siv")
 
   f = GPS.EditorBuffer.get (GPS.File (vc_file))
   loc = GPS.EditorLocation (f, 1, 1)
-  (frm, to) = loc.search ("^(procedure|function)_\S+_" + vc + "\.$", regexp=True)
+  (frm,to) = loc.search ("^(procedure|function)_\S+_" + vc + "\.$", regexp=True)
   GPS.MDI.get_by_child (f.current_view()).raise_window()
 
   # Goto the VC and then scroll the window down so the selected VC is not at the
