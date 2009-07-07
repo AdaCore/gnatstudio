@@ -104,22 +104,32 @@ package body Code_Peer.Summary_Models is
          when Entity_Name_Column
             | Entity_Lifeage_Column
             | Informational_Base_Count_Column
+            | Informational_Added_Count_Column
             | Informational_Deltas_Count_Column
+            | Informational_Removed_Count_Column
             | Informational_Current_Count_Column
             | Low_Base_Count_Column
+            | Low_Added_Count_Column
             | Low_Deltas_Count_Column
+            | Low_Removed_Count_Column
             | Low_Current_Count_Column
             | Low_Current_Color_Column
             | Medium_Base_Count_Column
+            | Medium_Added_Count_Column
             | Medium_Deltas_Count_Column
+            | Medium_Removed_Count_Column
             | Medium_Current_Count_Column
             | Medium_Current_Color_Column
             | High_Base_Count_Column
+            | High_Added_Count_Column
             | High_Deltas_Count_Column
+            | High_Removed_Count_Column
             | High_Current_Count_Column
             | High_Current_Color_Column
             | Suppressed_Base_Count_Column
+            | Suppressed_Added_Count_Column
             | Suppressed_Deltas_Count_Column
+            | Suppressed_Removed_Count_Column
             | Suppressed_Current_Count_Column
               =>
             return Glib.GType_String;
@@ -155,6 +165,8 @@ package body Code_Peer.Summary_Models is
       use type Code_Analysis.Tree_Models.Subprogram_Item_Access;
       use type Projects.Project_Type;
 
+      type Count_Kinds is (Base, Added, Removed, Current);
+
       Project_Node    : constant Project_Item_Access :=
                           Project_Item_Access (Self.Project (Iter));
       File_Node       : constant File_Item_Access :=
@@ -167,8 +179,8 @@ package body Code_Peer.Summary_Models is
       procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean);
 
       procedure Set_Count_Image
-        (Level   : Code_Peer.Message_Probability_Level;
-         Current : Boolean);
+        (Level : Code_Peer.Message_Probability_Level;
+         Kind  : Count_Kinds);
 
       procedure Set_Deltas_Image
         (Level : Code_Peer.Message_Probability_Level);
@@ -180,39 +192,66 @@ package body Code_Peer.Summary_Models is
       ---------------------
 
       procedure Set_Count_Image
-        (Level   : Code_Peer.Message_Probability_Level;
-         Current : Boolean)
+        (Level : Code_Peer.Message_Probability_Level;
+         Kind  : Count_Kinds)
       is
       begin
          if Subprogram_Node /= null then
-            if Current then
-               Set_Integer_Image
-                 (Subprogram_Node.Messages_Counts (Level).Current, True);
+            case Kind is
+               when Base =>
+                  Set_Integer_Image
+                    (Subprogram_Node.Messages_Counts (Level).Base, True);
 
-            else
-               Set_Integer_Image
-                 (Subprogram_Node.Messages_Counts (Level).Base, True);
-            end if;
+               when Added =>
+                  Set_Integer_Image
+                    (Subprogram_Node.Messages_Counts (Level).Added, True);
+
+               when Removed =>
+                  Set_Integer_Image
+                    (Subprogram_Node.Messages_Counts (Level).Removed, True);
+
+               when Current =>
+                  Set_Integer_Image
+                    (Subprogram_Node.Messages_Counts (Level).Current, True);
+            end case;
 
          elsif File_Node /= null then
-            if Current then
-               Set_Integer_Image
-                 (File_Node.Messages_Counts (Level).Current, True);
+            case Kind is
+               when Base =>
+                  Set_Integer_Image
+                    (File_Node.Messages_Counts (Level).Base, True);
 
-            else
-               Set_Integer_Image
-                 (File_Node.Messages_Counts (Level).Base, True);
-            end if;
+               when Added =>
+                  Set_Integer_Image
+                    (File_Node.Messages_Counts (Level).Added, True);
+
+               when Removed =>
+                  Set_Integer_Image
+                    (File_Node.Messages_Counts (Level).Removed, True);
+
+               when Current =>
+                  Set_Integer_Image
+                    (File_Node.Messages_Counts (Level).Current, True);
+            end case;
 
          elsif Project_Node /= null then
-            if Current then
-               Set_Integer_Image
-                 (Project_Node.Messages_Counts (Level).Current, True);
+            case Kind is
+               when Base =>
+                  Set_Integer_Image
+                    (Project_Node.Messages_Counts (Level).Base, True);
 
-            else
-               Set_Integer_Image
-                 (Project_Node.Messages_Counts (Level).Base, True);
-            end if;
+               when Added =>
+                  Set_Integer_Image
+                    (Project_Node.Messages_Counts (Level).Added, True);
+
+               when Removed =>
+                  Set_Integer_Image
+                    (Project_Node.Messages_Counts (Level).Removed, True);
+
+               when Current =>
+                  Set_Integer_Image
+                    (Project_Node.Messages_Counts (Level).Current, True);
+            end case;
 
          else
             --  "Total" line
@@ -224,12 +263,19 @@ package body Code_Peer.Summary_Models is
                Code_Peer.Utilities.Compute_Messages_Count
                  (Self.Tree, Self.Message_Categories, Counts);
 
-               if Current then
-                  Set_Integer_Image (Counts (Level).Current, False);
+               case Kind is
+                  when Base =>
+                     Set_Integer_Image (Counts (Level).Base, True);
 
-               else
-                  Set_Integer_Image (Counts (Level).Base, True);
-               end if;
+                  when Added =>
+                     Set_Integer_Image (Counts (Level).Added, True);
+
+                  when Removed =>
+                     Set_Integer_Image (Counts (Level).Removed, True);
+
+                  when Current =>
+                     Set_Integer_Image (Counts (Level).Current, True);
+               end case;
             end;
          end if;
       end Set_Count_Image;
@@ -404,61 +450,91 @@ package body Code_Peer.Summary_Models is
             end if;
 
          when Informational_Base_Count_Column =>
-            Set_Count_Image (Code_Peer.Informational, False);
+            Set_Count_Image (Code_Peer.Informational, Base);
+
+         when Informational_Added_Count_Column =>
+            Set_Count_Image (Code_Peer.Informational, Added);
 
          when Informational_Deltas_Count_Column =>
             Set_Deltas_Image (Code_Peer.Informational);
 
+         when Informational_Removed_Count_Column =>
+            Set_Count_Image (Code_Peer.Informational, Removed);
+
          when Informational_Current_Count_Column =>
-            Set_Count_Image (Code_Peer.Informational, True);
+            Set_Count_Image (Code_Peer.Informational, Current);
 
          when Low_Base_Count_Column =>
-            Set_Count_Image (Code_Peer.Low, False);
+            Set_Count_Image (Code_Peer.Low, Base);
+
+         when Low_Added_Count_Column =>
+            Set_Count_Image (Code_Peer.Low, Added);
 
          when Low_Deltas_Count_Column =>
             Set_Deltas_Image (Code_Peer.Low);
 
+         when Low_Removed_Count_Column =>
+            Set_Count_Image (Code_Peer.Low, Removed);
+
          when Low_Current_Count_Column =>
-            Set_Count_Image (Code_Peer.Low, True);
+            Set_Count_Image (Code_Peer.Low, Current);
 
          when Low_Current_Color_Column =>
             Glib.Values.Init (Value, Glib.GType_String);
             Glib.Values.Set_String (Value, "#CCFFFF");
 
          when Medium_Base_Count_Column =>
-            Set_Count_Image (Code_Peer.Medium, False);
+            Set_Count_Image (Code_Peer.Medium, Base);
+
+         when Medium_Added_Count_Column =>
+            Set_Count_Image (Code_Peer.Medium, Added);
 
          when Medium_Deltas_Count_Column =>
             Set_Deltas_Image (Code_Peer.Medium);
 
+         when Medium_Removed_Count_Column =>
+            Set_Count_Image (Code_Peer.Medium, Removed);
+
          when Medium_Current_Count_Column =>
-            Set_Count_Image (Code_Peer.Medium, True);
+            Set_Count_Image (Code_Peer.Medium, Current);
 
          when Medium_Current_Color_Column =>
             Glib.Values.Init (Value, Glib.GType_String);
             Glib.Values.Set_String (Value, "#FFFFCC");
 
          when High_Base_Count_Column =>
-            Set_Count_Image (Code_Peer.High, False);
+            Set_Count_Image (Code_Peer.High, Base);
+
+         when High_Added_Count_Column =>
+            Set_Count_Image (Code_Peer.High, Added);
 
          when High_Deltas_Count_Column =>
             Set_Deltas_Image (Code_Peer.High);
 
+         when High_Removed_Count_Column =>
+            Set_Count_Image (Code_Peer.High, Removed);
+
          when High_Current_Count_Column =>
-            Set_Count_Image (Code_Peer.High, True);
+            Set_Count_Image (Code_Peer.High, Current);
 
          when High_Current_Color_Column =>
             Glib.Values.Init (Value, Glib.GType_String);
             Glib.Values.Set_String (Value, "#FFCCCC");
 
          when Suppressed_Base_Count_Column =>
-            Set_Count_Image (Code_Peer.Suppressed, False);
+            Set_Count_Image (Code_Peer.Suppressed, Base);
+
+         when Suppressed_Added_Count_Column =>
+            Set_Count_Image (Code_Peer.Suppressed, Added);
 
          when Suppressed_Deltas_Count_Column =>
             Set_Deltas_Image (Code_Peer.Suppressed);
 
+         when Suppressed_Removed_Count_Column =>
+            Set_Count_Image (Code_Peer.Suppressed, Removed);
+
          when Suppressed_Current_Count_Column =>
-            Set_Count_Image (Code_Peer.Suppressed, True);
+            Set_Count_Image (Code_Peer.Suppressed, Current);
 
          when others =>
             null;

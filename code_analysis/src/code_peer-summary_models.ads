@@ -30,24 +30,36 @@ package Code_Peer.Summary_Models is
    Entity_Name_Column                 : constant :=  1;
    Entity_Lifeage_Column              : constant :=  2;
    Informational_Base_Count_Column    : constant :=  3;
-   Informational_Deltas_Count_Column  : constant :=  4;
-   Informational_Current_Count_Column : constant :=  5;
-   Low_Base_Count_Column              : constant :=  6;
-   Low_Deltas_Count_Column            : constant :=  7;
-   Low_Current_Count_Column           : constant :=  8;
-   Low_Current_Color_Column           : constant :=  9;
-   Medium_Base_Count_Column           : constant := 10;
-   Medium_Deltas_Count_Column         : constant := 11;
-   Medium_Current_Count_Column        : constant := 12;
-   Medium_Current_Color_Column        : constant := 13;
-   High_Base_Count_Column             : constant := 14;
-   High_Deltas_Count_Column           : constant := 15;
-   High_Current_Count_Column          : constant := 16;
-   High_Current_Color_Column          : constant := 17;
-   Suppressed_Base_Count_Column       : constant := 18;
-   Suppressed_Deltas_Count_Column     : constant := 19;
-   Suppressed_Current_Count_Column    : constant := 20;
-   Number_Of_Columns                  : constant := 21;
+   Informational_Added_Count_Column   : constant :=  4;
+   Informational_Deltas_Count_Column  : constant :=  5;
+   Informational_Removed_Count_Column : constant :=  6;
+   Informational_Current_Count_Column : constant :=  7;
+   Low_Base_Count_Column              : constant :=  8;
+   Low_Added_Count_Column             : constant :=  9;
+   Low_Deltas_Count_Column            : constant := 10;
+   Low_Removed_Count_Column           : constant := 11;
+   Low_Current_Count_Column           : constant := 12;
+   Low_Current_Color_Column           : constant := 13;
+   Medium_Base_Count_Column           : constant := 14;
+   Medium_Added_Count_Column          : constant := 15;
+   Medium_Deltas_Count_Column         : constant := 16;
+   Medium_Removed_Count_Column        : constant := 17;
+   Medium_Current_Count_Column        : constant := 18;
+   Medium_Current_Color_Column        : constant := 19;
+   High_Base_Count_Column             : constant := 20;
+   High_Added_Count_Column            : constant := 21;
+   High_Deltas_Count_Column           : constant := 22;
+   High_Removed_Count_Column          : constant := 23;
+   High_Current_Count_Column          : constant := 24;
+   High_Current_Color_Column          : constant := 25;
+   Suppressed_Base_Count_Column       : constant := 26;
+   Suppressed_Added_Count_Column      : constant := 27;
+   Suppressed_Deltas_Count_Column     : constant := 28;
+   Suppressed_Removed_Count_Column    : constant := 29;
+   Suppressed_Current_Count_Column    : constant := 30;
+   Number_Of_Columns                  : constant := 31;
+   --  *_Added_* and *_Removed_* are used for sorting by the intermediate
+   --  GtkTreeModelSort model.
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;

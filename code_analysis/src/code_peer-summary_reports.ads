@@ -19,6 +19,7 @@
 
 with Glib;
 with Gtk.Paned;
+private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
 
 with GPS.Kernel.Modules;
@@ -70,26 +71,27 @@ package Code_Peer.Summary_Reports is
 private
 
    type Summary_Report_Record is new Gtk.Paned.Gtk_Hpaned_Record with record
-      Kernel             : GPS.Kernel.Kernel_Handle;
-      Tree               : Code_Analysis.Code_Analysis_Tree;
-      Analysis_Model     : Code_Peer.Summary_Models.Summary_Model;
-      Analysis_View      : Gtk.Tree_View.Gtk_Tree_View;
-      Messages_Model     :
+      Kernel              : GPS.Kernel.Kernel_Handle;
+      Tree                : Code_Analysis.Code_Analysis_Tree;
+      Analysis_Model      : Code_Peer.Summary_Models.Summary_Model;
+      Analysis_Sort_Model : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
+      Analysis_View       : Gtk.Tree_View.Gtk_Tree_View;
+      Messages_Model      :
         Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
-      Messages_View      : Gtk.Tree_View.Gtk_Tree_View;
-      Categories_Editor  :
+      Messages_View       : Gtk.Tree_View.Gtk_Tree_View;
+      Categories_Editor   :
         Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
 
-      Show_Lifeage       : Lifeage_Kinds_Flags :=
-                             (Added     => True,
-                              Unchanged => True,
-                              Removed   => False);
-      Show_Probabilities : Message_Probability_Level_Flags :=
-                             (Informational => False,
-                              Suppressed    => False,
-                              Low           => False,
-                              Medium        => True,
-                              High          => True);
+      Show_Lifeage        : Lifeage_Kinds_Flags :=
+                              (Added     => True,
+                               Unchanged => True,
+                               Removed   => False);
+      Show_Probabilities  : Message_Probability_Level_Flags :=
+                              (Informational => False,
+                               Suppressed    => False,
+                               Low           => False,
+                               Medium        => True,
+                               High          => True);
    end record;
 
    Signal_Activated        : constant Glib.Signal_Name := "activated";

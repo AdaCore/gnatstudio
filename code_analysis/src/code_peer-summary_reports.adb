@@ -22,6 +22,7 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;
+with Glib.Values;
 with Gdk.Event;
 with Gdk.Pixbuf;
 with Gtk.Box;
@@ -38,6 +39,7 @@ with Gtk.Separator;
 with Gtk.Toggle_Button;
 with Gtk.Tree_Model.Utils;
 with Gtk.Tree_Selection;
+with Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
@@ -71,6 +73,9 @@ package body Code_Peer.Summary_Reports is
           (Code_Peer.Categories_Criteria_Editors.
              Categories_Criteria_Editor_Record,
            Summary_Report);
+
+   package Compare_Functions is
+     new Gtk.Tree_Sortable.Compare_Funcs (Summary_Report);
 
    procedure On_Destroy (Self : access Summary_Report_Record'Class);
 
@@ -129,6 +134,13 @@ package body Code_Peer.Summary_Reports is
       Event : Gdk.Event.Gdk_Event;
       Self  : Summary_Report) return Boolean;
 
+   function Compare
+     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self      : Summary_Report) return Glib.Gint;
+   --  Compare two rows in the model.
+
    procedure Emit_By_Name
      (Object : System.Address;
       Name   : Glib.Signal_Name);
@@ -143,6 +155,112 @@ package body Code_Peer.Summary_Reports is
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (1 => Glib.GType_None),
       2 => (1 => Glib.GType_None));
+
+   -------------
+   -- Compare --
+   -------------
+
+   function Compare
+     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self      : Summary_Report) return Glib.Gint
+   is
+      pragma Unreferenced (Self);
+
+      use type Glib.Gint;
+      use type Gtk.Tree_Model.Gtk_Tree_Iter;
+
+      type Column_Sort_Order is
+        (High_Added,   Medium_Added,   Low_Added,
+         High_Current, Medium_Current, Low_Current);
+      --  Literals in this type are in the comparison order. To change
+      --  comparison order just reorder literals.
+
+      type Counts is array (Column_Sort_Order) of Glib.Gint;
+
+      A_Counts : Counts;
+      B_Counts : Counts;
+
+      function Get
+        (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Column : Glib.Gint) return Glib.Gint;
+      --  Returns value at the specified row and column in the model.
+
+      function Get (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Counts;
+      --  Returns counts values for the specified row.
+
+      ---------
+      -- Get --
+      ---------
+
+      function Get
+        (Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Column : Glib.Gint) return Glib.Gint
+      is
+         Aux   : Glib.Gint;
+         Value : Glib.Values.GValue;
+
+      begin
+         Model.Get_Value (Iter, Column, Value);
+
+         declare
+            Image : constant String := Glib.Values.Get_String (Value);
+
+         begin
+            if Image'Length = 0 then
+               Aux := 0;
+
+            else
+               Aux := Glib.Gint'Value (Image);
+            end if;
+         end;
+
+         Glib.Values.Unset (Value);
+
+         return Aux;
+      end Get;
+
+      ---------
+      -- Get --
+      ---------
+
+      function Get (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Counts is
+      begin
+         return
+           (High_Added =>
+              Get (Iter, Code_Peer.Summary_Models.High_Added_Count_Column),
+            Medium_Added =>
+              Get (Iter, Code_Peer.Summary_Models.Medium_Added_Count_Column),
+            Low_Added =>
+              Get (Iter, Code_Peer.Summary_Models.Low_Added_Count_Column),
+            High_Current =>
+              Get (Iter, Code_Peer.Summary_Models.High_Current_Count_Column),
+            Medium_Current =>
+              Get (Iter, Code_Peer.Summary_Models.Medium_Current_Count_Column),
+            Low_Current =>
+              Get (Iter, Code_Peer.Summary_Models.Low_Current_Count_Column));
+      end Get;
+
+   begin
+      if Model.Parent (A) = Gtk.Tree_Model.Null_Iter then
+         return 0;
+      end if;
+
+      A_Counts := Get (A);
+      B_Counts := Get (B);
+
+      for J in A_Counts'Range loop
+         if A_Counts (J) < B_Counts (J) then
+            return 1;
+
+         elsif A_Counts (J) > B_Counts (J) then
+            return -1;
+         end if;
+      end loop;
+
+      return 0;
+   end Compare;
 
    ------------------
    -- Context_Func --
@@ -162,6 +280,7 @@ package body Code_Peer.Summary_Reports is
       X          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
       Y          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
       Path       : Gtk.Tree_Model.Gtk_Tree_Path;
+      Model_Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Cell_X     : Glib.Gint;
       Cell_Y     : Glib.Gint;
       Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -177,7 +296,9 @@ package body Code_Peer.Summary_Reports is
 
       if Path /= null then
          Self.Analysis_View.Get_Selection.Select_Path (Path);
-         Iter       := Self.Analysis_Model.Get_Iter (Path);
+         Model_Path :=
+           Self.Analysis_Sort_Model.Convert_Path_To_Child_Path (Path);
+         Iter       := Self.Analysis_Model.Get_Iter (Model_Path);
          Project    := Self.Analysis_Model.Project_At (Iter);
          File       := Self.Analysis_Model.File_At (Iter);
          Subprogram := Self.Analysis_Model.Subprogram_At (Iter);
@@ -201,6 +322,9 @@ package body Code_Peer.Summary_Reports is
             GPS.Kernel.Contexts.Set_File_Information
               (Context => Context, Project => Project.Name);
          end if;
+
+         Gtk.Tree_Model.Path_Free (Model_Path);
+         Gtk.Tree_Model.Path_Free (Path);
       end if;
    end Context_Func;
 
@@ -212,14 +336,16 @@ package body Code_Peer.Summary_Reports is
      (Self : access Summary_Report_Record'Class)
       return Code_Analysis.File_Access
    is
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model      : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       Gtk.Tree_Selection.Get_Selected
         (Self.Analysis_View.Get_Selection, Model, Iter);
+      Self.Analysis_Sort_Model.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
 
-      return Self.Analysis_Model.File_At (Iter);
+      return Self.Analysis_Model.File_At (Model_Iter);
    end Get_Selected_File;
 
    --------------------------
@@ -230,14 +356,16 @@ package body Code_Peer.Summary_Reports is
      (Self : access Summary_Report_Record'Class)
       return Code_Analysis.Project_Access
    is
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model      : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       Gtk.Tree_Selection.Get_Selected
         (Self.Analysis_View.Get_Selection, Model, Iter);
+      Self.Analysis_Sort_Model.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
 
-      return Self.Analysis_Model.Project_At (Iter);
+      return Self.Analysis_Model.Project_At (Model_Iter);
    end Get_Selected_Project;
 
    -----------------------------
@@ -248,14 +376,16 @@ package body Code_Peer.Summary_Reports is
      (Self : access Summary_Report_Record'Class)
       return Code_Analysis.Subprogram_Access
    is
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model      : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       Gtk.Tree_Selection.Get_Selected
         (Self.Analysis_View.Get_Selection, Model, Iter);
+      Self.Analysis_Sort_Model.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
 
-      return Self.Analysis_Model.Subprogram_At (Iter);
+      return Self.Analysis_Model.Subprogram_At (Model_Iter);
    end Get_Selected_Subprogram;
 
    -------------
@@ -282,6 +412,8 @@ package body Code_Peer.Summary_Reports is
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree)
    is
+      use Gtk.Tree_Model_Sort;
+
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
@@ -346,9 +478,13 @@ package body Code_Peer.Summary_Reports is
          Project_Icon,
          File_Icon,
          Subprogram_Icon);
+      Gtk.Tree_Model_Sort.Gtk_New_With_Model
+        (Self.Analysis_Sort_Model, Self.Analysis_Model);
+      Compare_Functions.Set_Default_Sort_Func
+        (+Self.Analysis_Sort_Model, Compare'Access, Summary_Report (Self));
       Gtk.Tree_View.Gtk_New
         (Self.Analysis_View,
-         Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Model));
+         Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Sort_Model));
       Scrolled.Add (Self.Analysis_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -704,15 +840,15 @@ package body Code_Peer.Summary_Reports is
       use type Glib.Guint;
       use type Gdk.Event.Gdk_Event_Type;
 
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-
-      X      : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y      : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
-      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Cell_X : Glib.Gint;
-      Cell_Y : Glib.Gint;
-      Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Found  : Boolean;
+      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      X         : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
+      Y         : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      Cell_X    : Glib.Gint;
+      Cell_Y    : Glib.Gint;
+      Column    : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Found     : Boolean;
 
    begin
       if Gdk.Event.Get_Button (Event) = 1
@@ -726,7 +862,9 @@ package body Code_Peer.Summary_Reports is
 
          if Path /= null then
             Self.Analysis_View.Get_Selection.Select_Path (Path);
-            Iter := Self.Analysis_Model.Get_Iter (Path);
+            Sort_Iter := Self.Analysis_Sort_Model.Get_Iter (Path);
+            Self.Analysis_Sort_Model.Convert_Iter_To_Child_Iter
+              (Iter, Sort_Iter);
 
             declare
                Project_Node    : constant Code_Analysis.Project_Access :=
