@@ -140,6 +140,8 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
           <arg>1000</arg>
           <arg>-method-timeout</arg>
           <arg>30</arg>
+          <arg>-no-html-output</arg>
+          <arg>-lib</arg>
           <arg>%Pl.library</arg>
        </command-line>
     </target>
