@@ -47,6 +47,8 @@ package body ALI_Parser is
    Me        : constant Trace_Handle := Create ("ALI", Off);
    Assert_Me : constant Trace_Handle := Create ("ALI.Assert", Off);
 
+   SLI_Support : constant Trace_Handle := Create ("SPARK.SLI", Off);
+
    type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
    overriding procedure Continue
      (Iterator : in out ALI_Handler_Iterator;
@@ -128,6 +130,7 @@ package body ALI_Parser is
       'k'    => Parent_Package,
       'l'    => Label,
       'm'    => Modification,
+      'o'    => Own_Reference,
       'p'    => Primitive_Operation,
       'P'    => Overriding_Primitive_Operation,
       'r'    => Reference,
@@ -155,6 +158,12 @@ package body ALI_Parser is
       New_ALI               : ALIs_Record;
       First_Sect, Last_Sect : Nat);
    --  Parse an ALI file and adds its information into the structure
+
+   function Get_SLI_From_ALI (LI : LI_File) return LI_File;
+   --  Return the SLI file corresponding to LI
+
+   function Is_ALI_File (LI : LI_File) return Boolean;
+   --  Return True is LI represents an ALI file (as opposed to e.g. a .sli)
 
    procedure Process_Units
      (Handler : access LI_Handler_Record'Class;
@@ -398,6 +407,30 @@ package body ALI_Parser is
          return Reference;
       end if;
    end Char_To_R_Kind;
+
+   ----------------------
+   -- Get_SLI_From_ALI --
+   ----------------------
+
+   function Get_SLI_From_ALI (LI : LI_File) return LI_File is
+      File : constant Virtual_File := Get_LI_Filename (LI);
+   begin
+      return Get_Or_Create
+        (Get_Database (LI),
+         Create
+           (Dir_Name (File) & Base_Name (File, ".ali") & ".sli",
+            Get_Host (File)),
+         Get_Project (LI));
+   end Get_SLI_From_ALI;
+
+   -----------------
+   -- Is_ALI_File --
+   -----------------
+
+   function Is_ALI_File (LI : LI_File) return Boolean is
+   begin
+      return File_Extension (Get_LI_Filename (LI)) = ".ali";
+   end Is_ALI_File;
 
    ------------------
    -- Process_Unit --
@@ -1342,6 +1375,9 @@ package body ALI_Parser is
       New_ALI_Id            : ALI_Id := No_ALI_Id;
       New_Timestamp         : Time;
       First_Sect, Last_Sect : Nat;
+      Dummy                 : Boolean;
+      pragma Unreferenced (Dummy);
+
    begin
       Assert (Assert_Me, LI /= null, "No LI to update");
 
@@ -1382,6 +1418,14 @@ package body ALI_Parser is
 
          Create_New_ALI (Handler, LI, ALIs.Table (New_ALI_Id),
                          First_Sect, Last_Sect);
+
+         if Active (SLI_Support) and then Is_ALI_File (LI) then
+            Dummy := Update_ALI
+              (Handler, Get_SLI_From_ALI (LI), Reset_ALI => False);
+         end if;
+
+      elsif Active (SLI_Support) and then Is_ALI_File (LI) then
+         return Update_ALI (Handler, Get_SLI_From_ALI (LI), Reset_ALI);
       end if;
 
       return True;
@@ -1509,7 +1553,23 @@ package body ALI_Parser is
          end;
       end if;
 
-      if LI_Filename /= GNATCOLL.VFS.No_File then
+      if LI_Filename = GNATCOLL.VFS.No_File then
+         if Active (SLI_Support)
+           and then Short_ALI_Filename
+                      (Short_ALI_Filename'Last - 3 .. Short_ALI_Filename'Last)
+             = ".ali"
+         then
+            Locate_ALI
+              (Handler,
+               Short_ALI_Filename
+                 (Short_ALI_Filename'First .. Short_ALI_Filename'Last - 3)
+                 & "sli",
+               Source_Filename,
+               Project,
+               LI_Filename,
+               Predefined);
+         end if;
+      else
          declare
             LI : LI_File;
          begin
@@ -1852,7 +1912,7 @@ package body ALI_Parser is
         and then Get_LI (Source) /= null
       then
          --  If we have a file outside of the project hierarchy, its location
-         --  can't have changed when a scenario has changed, so not need to
+         --  can't have changed when a scenario has changed, so no need to
          --  check directories
 
          Is_Up_To_Date := Get_Project (Get_LI (Source)) = No_Project;
@@ -2110,4 +2170,17 @@ package body ALI_Parser is
       return ".ali";
    end Get_ALI_Ext;
 
+begin
+   --  Enable support for ".sli" files if spark toolset is available
+
+   if not Active (SLI_Support) then
+      declare
+         S : String_Access := Locate_Exec_On_Path ("spark");
+      begin
+         if S /= null then
+            Set_Active (SLI_Support, True);
+            Free (S);
+         end if;
+      end;
+   end if;
 end ALI_Parser;
