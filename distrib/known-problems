@@ -46,6 +46,14 @@ Known Problems fixed in GPS 4.4.0
               honored when using the on-the-fly casing policy.
   Workaround: Convert the text using the casing contextual menu.
 
+- I529-026: Source files not found when debugging
+  Problem:    When using a recent gdb, and debugging an executable built on
+              another machine (or if sources have been moved between the build
+              and the debug), GPS will not always be able to find the source
+              file from the project file.
+  Workaround: Use the "set substitute-path" or "dir" command in .gdbinit or
+              in the debugger console.
+
 - I529-020: Using "gcov" plugin on a project with no object directory
   Problem:    When using the "gcov" plug-in, the root directory needs to have
               an object directory, since this is where GPS will generate the
