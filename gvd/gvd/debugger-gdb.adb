@@ -94,6 +94,12 @@ package body Debugger.Gdb is
    --  Note that this pattern should work even when LANG isn't english because
    --  gdb does not seem to take into account this variable at all.
 
+   File_Name_Pattern3        : constant Pattern_Matcher :=
+     Compile ("^(\d+)" & ASCII.HT &
+              "(in )?([^:\n]+)(: No such file or directory.)?",
+              Multiple_Lines);
+   --  Variant of File_Name_Pattern2 used in recent versions of gdb
+
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)("".)?\n", Multiple_Lines);
@@ -2520,9 +2526,12 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Debugger);
 
-      Start    : Natural := Str'First;
-      Matched  : Match_Array (0 .. 3);
-      Matched2 : Match_Array (0 .. 3);
+      Start      : Natural := Str'First;
+      Matched    : Match_Array (0 .. 4);
+      Matched2   : Match_Array (0 .. 4);
+      Name_Index : Natural := 1;
+      Line_Index : Natural := 2;
+      Addr_Index : Natural := 3;
 
    begin
       --  Search for the last file reference in the output. There might be
@@ -2547,15 +2556,25 @@ package body Debugger.Gdb is
          --  lines. There wouldn't be any need to test that if we knew what
          --  is the debugger output and what is the user's program output???
 
-         Match (File_Name_Pattern2, Str, Matched);
+         Match (File_Name_Pattern3, Str, Matched);
 
          if Matched (0) = No_Match then
-            Name_First := 0;
-            Name_Last  := 1;
+            Match (File_Name_Pattern2, Str, Matched);
+
+            if Matched (0) = No_Match then
+               Name_First := 0;
+               Name_Last  := 1;
+               Addr_First := 0;
+               Addr_Last  := 0;
+               Line       := 0;
+               return;
+            end if;
+         else
+            Name_Index := 3;
+            Line_Index := 1;
+            Addr_Index := 0;
             Addr_First := 0;
             Addr_Last  := 0;
-            Line       := 0;
-            return;
          end if;
 
          First := Matched (0).First;
@@ -2566,12 +2585,16 @@ package body Debugger.Gdb is
          Last := Last + 1;
       end if;
 
-      Name_First := Matched (1).First;
-      Name_Last  := Matched (1).Last;
-      Addr_First := Matched (3).First;
-      Addr_Last  := Matched (3).Last;
-      Line       := Natural'Value
-        (Str (Matched (2).First .. Matched (2).Last));
+      Name_First := Matched (Name_Index).First;
+      Name_Last  := Matched (Name_Index).Last;
+
+      if Addr_Index /= 0 then
+         Addr_First := Matched (Addr_Index).First;
+         Addr_Last  := Matched (Addr_Index).Last;
+      end if;
+
+      Line := Natural'Value
+        (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
    end Found_File_Name;
 
    ----------------------
