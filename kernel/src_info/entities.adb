@@ -2480,6 +2480,7 @@ package body Entities is
    begin
       case Kind is
          when Reference               => return -"reference";
+         when Own_Reference           => return -"own reference";
          when Dispatching_Call        => return -"dispatching call";
          when Modification            => return -"write reference";
          when Instantiation_Reference => return -"instantiation";

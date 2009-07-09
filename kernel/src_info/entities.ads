@@ -236,6 +236,7 @@ package Entities is
       Declaration,
       Type_Extension,
       Implicit,
+      Own_Reference,
       Primitive_Operation,
       Overriding_Primitive_Operation,
       With_Line,
@@ -262,6 +263,8 @@ package Entities is
    --      which a tagged type is extended.
    --    - Implicit: Used to identify a reference to the entity in a generic
    --      actual or in a default in a call.
+   --    - Own_Reference: Used to identify a reference to a variable in a
+   --      SPARK 'own' construct.
    --    - Label: Used for cases where the name of the entity appears in
    --      syntactic constructs only, but doesn't impact the code, for instance
    --      in "end Foo;" constructs in Ada.
@@ -1381,6 +1384,7 @@ private
 
    Real_References_Filter : constant Reference_Kind_Filter :=
      (Reference                                => True,
+      Own_Reference                            => True,
       Dispatching_Call                         => True,
       Declaration                              => True,
       Instantiation_Reference                  => True,
@@ -1395,6 +1399,7 @@ private
 
    Read_Reference_Filter  : constant Reference_Kind_Filter :=
      (Reference                                => True,
+      Own_Reference                            => True,
       Dispatching_Call                         => True,
       Instantiation_Reference                  => True,
       Body_Entity                              => True,
