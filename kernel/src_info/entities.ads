@@ -994,6 +994,7 @@ private
    subtype Entity_Reference_List is Entity_File_Maps.Map;
    --  This is an optimized list of reference, ordered by two level, first by
    --  file and then by line / column. Add, remove and search operations need
+   --  to be as fast as possible.
 
    type Entity_Reference_Cursor is record
       Entity_Cursor : Entities_In_File_Sets.Cursor;
