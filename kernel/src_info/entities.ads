@@ -960,6 +960,9 @@ private
 
    package Entities_In_File_Sets is new Ada.Containers.Ordered_Sets
      (E_Reference, "<" => Lt_No_File);
+   --  Set of references, ordered by line / column. These references are
+   --  assumed to come from the same file, which is why the < operation doesn't
+   --  take files into account.
 
    type File_With_Refs is record
       Refs : Entities_In_File_Sets.Set;
@@ -984,8 +987,13 @@ private
        (Virtual_File_Indexes.VF_Key,
         File_With_Refs_Access,
         "<" => Virtual_File_Indexes."<");
+   --  Map of references sets, ordered by file. Since the ordering by file is
+   --  done at that level, it's not needed to take it into account in the
+   --  contained object.
 
    subtype Entity_Reference_List is Entity_File_Maps.Map;
+   --  This is an optimized list of reference, ordered by two level, first by
+   --  file and then by line / column. Add, remove and search operations need
 
    type Entity_Reference_Cursor is record
       Entity_Cursor : Entities_In_File_Sets.Cursor;
