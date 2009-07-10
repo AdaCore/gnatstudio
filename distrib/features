@@ -45,10 +45,10 @@ NF-44-I616-051 On-The-Fly casing is conservative (2009-07-06)
 NF-44-I610-012 Outline view hierarchy (2009-07-02)
 
    The outline now represents a hierarchical view of the contents of the file,
-   as opposed to a flat view. Global variables and field information has been
+   as opposed to a flat view. Global variables and field information have been
    added. In addition, the "Dynamic link with editor" feature and the tooltips
-   are now synchronized with the contents of the source file and
-   do not need to have compiled the sources to be accurate.
+   are now synchronized with the contents of the source file without having
+   to compile sources anymore.
 
 NF-44-I602-021 New plugin: open_file.py (2009-06-03)
 
