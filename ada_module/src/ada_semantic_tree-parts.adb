@@ -549,6 +549,10 @@ package body Ada_Semantic_Tree.Parts is
       Spec_Entity      : Entity_Access;
       Body_Entity      : Entity_Access;
    begin
+      if Unit = Null_Unit_Access then
+         return;
+      end if;
+
       --  Analyze this spec
 
       Spec_Unit := Get_Unit_Spec (Unit);
