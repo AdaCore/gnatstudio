@@ -27,6 +27,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
@@ -74,6 +75,10 @@ use Completion.Ada.Constructs_Extractor;
 with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
+
+with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
+with Engine_Wrappers;           use Engine_Wrappers;
+with XML_Utils; use XML_Utils;
 
 package body Completion_Module is
 
@@ -266,6 +271,104 @@ package body Completion_Module is
    --  Execute Smart completion at the current location.
    --  Complete indicates whether we should automatically complete to the
    --  biggest common prefix.
+
+   function Entity_View (Kernel : Kernel_Handle) return MDI_Child;
+   --  Create an entity view
+
+   procedure On_Entity_View
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Menu callback to display the Entity View.
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr;
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Desktop handling
+
+   -----------------
+   -- Entity_View --
+   -----------------
+
+   function Entity_View (Kernel : Kernel_Handle) return MDI_Child is
+      Child    : GPS_MDI_Child;
+      Explorer : Entity_View_Access;
+   begin
+      Gtk_New (Explorer, Kernel, "");
+      Gtk_New (Child, Explorer,
+               Default_Width => 600,
+               Default_Height => 400,
+               Group => Group_Consoles,
+               Module => Completion_Module);
+      Set_Title (Child, -"Entity View", -"Entity View");
+      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+
+      return MDI_Child (Child);
+   end Entity_View;
+
+   --------------------
+   -- On_Entity_View --
+   --------------------
+
+   procedure On_Entity_View
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Child    : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Entity_View_Record'Tag);
+
+      if Child = null then
+         Child := Entity_View (Kernel);
+      end if;
+
+      Raise_Child (Child);
+      Set_Focus_Child (Get_MDI (Kernel), Child);
+
+   exception
+      when E : others => Trace (Traces.Exception_Handle, E);
+   end On_Entity_View;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
+   is
+      pragma Unreferenced (User);
+      N : Node_Ptr;
+   begin
+      if Widget.all in Entity_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Entity_View");
+         return N;
+      end if;
+      return null;
+   end Save_Desktop;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+   begin
+      if Node.Tag.all = "Entity_View" then
+         return Entity_View (User);
+      end if;
+      return null;
+   end Load_Desktop;
 
    -------------------------
    -- Preferences_Changed --
@@ -904,7 +1007,8 @@ package body Completion_Module is
                To_Marshaller (On_Completion_Destroy'Access),
                View, Data, After => True);
 
-            Set_Completion_Iterator (Win, First (Data.Result));
+            Set_Iterator (Win, new Comp_Iterator'
+                            (Comp_Iterator'(I => First (Data.Result))));
 
             Set_History (Win, Completion_Module.Completion_History);
 
@@ -1126,6 +1230,9 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
+      GPS.Kernel.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+
       Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Action := Register_Action
@@ -1174,6 +1281,12 @@ package body Completion_Module is
          Wrapper (File_Saved'Access),
          Name => "completion_module.file_saved");
 
+      Register_Menu
+        (Kernel, "/_Tools/_Views/", -"_Entities",
+         Ref_Item   => -"_Remote",
+         Add_Before => False,
+         Callback   => On_Entity_View'Access);
+
       Register_Preferences (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
@@ -1213,7 +1326,7 @@ package body Completion_Module is
       pragma Unreferenced (Kernel);
       Edition_Data : constant File_Edition_Hooks_Args :=
                        File_Edition_Hooks_Args (Data.all);
-      Buffer       : UTF8_String (1 .. 6);
+      Buffer       : Glib.UTF8_String (1 .. 6);
       Last         : Natural;
       Dummy        : Boolean;
       pragma Unreferenced (Dummy);

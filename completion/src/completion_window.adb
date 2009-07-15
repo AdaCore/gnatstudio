@@ -29,7 +29,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
 with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -59,10 +58,6 @@ with Language.Icons;            use Language.Icons;
 
 package body Completion_Window is
 
-   Markup_Column : constant := 0;
-   Index_Column  : constant := 1;
-   Icon_Column   : constant := 2;
-
    Minimal_Items_To_Show : constant := 50;
 
    Max_Window_Width : constant := 300;
@@ -73,9 +68,6 @@ package body Completion_Window is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Information_Array, Information_Array_Access);
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Completion_Proposal'Class, Completion_Proposal_Access);
 
    package Return_Cb is new Gtk.Handlers.Return_Callback
      (Completion_Window_Record, Boolean);
@@ -88,6 +80,14 @@ package body Completion_Window is
    package Simple_Cb is new Gtk.Handlers.Callback
      (Completion_Window_Record);
    use Simple_Cb;
+
+   package Simple_Explorer_Cb is new Gtk.Handlers.Callback
+     (Completion_Explorer_Record);
+   use Simple_Explorer_Cb;
+
+   package Return_Explorer_Cb is new Gtk.Handlers.Return_Callback
+     (Completion_Explorer_Record, Boolean);
+   use Return_Explorer_Cb;
 
    function Column_Types return GType_Array;
    --  Return the types of the columns to use in the model.
@@ -134,19 +134,22 @@ package body Completion_Window is
       Event  : Gdk_Event) return Boolean;
    --  Callback on a button press in the tree view.
 
-   procedure On_Selection_Changed
+   procedure On_Window_Selection_Changed
      (Window : access Completion_Window_Record'Class);
    --  Callback on a selection change in the tree view.
+
+   procedure On_Explorer_Selection_Changed
+     (Explorer : access Completion_Explorer_Record'Class);
+   --  Callback on a selection change in the tree view.
+
+   function On_Explorer_Destroyed
+     (Explorer : access Completion_Explorer_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  Callback on a destruction of the Explorer
 
    procedure Adjust_Selected (Window : access Completion_Window_Record'Class);
    --  Show only the items that begin with the current pattern filter.
    --  Delete the window if there is no item to show.
-
-   procedure Expand_Selection
-     (Window : access Completion_Window_Record'Class;
-      Number : Natural);
-   --  Expand the current selection until Number entries have been added or
-   --  the completion iter has reach the end.
 
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X.
@@ -157,26 +160,29 @@ package body Completion_Window is
    --  Return True if completion actually occurred.
 
    function To_Showable_String
-     (P : Completion_Proposal'Class) return String;
+     (P : Root_Proposal'Class) return String;
    --  Return the string to display in the main window.
 
-   procedure Fill_Notes_Window
-     (Window : access Completion_Window_Record'Class;
-      Item   : Information_Record);
+   procedure Fill_Notes_Container
+     (Explorer : access Completion_Explorer_Record'Class;
+      Item     : Information_Record);
    --  Fill the Notes window and show it.
 
-   procedure Empty_Notes_Window
-     (Window : access Completion_Window_Record'Class);
+   procedure Empty_Notes_Container
+     (Explorer : access Completion_Explorer_Record'Class);
    --  Empty the Notes window.
 
    procedure Augment_Notes
      (Info     : in out Information_Record;
-      Proposal : Completion_Proposal'Class);
+      Proposal : Root_Proposal'Class);
    --  Add Note to the notes stored in Info.
 
    function Idle_Expand
-     (Window : Completion_Window_Access) return Boolean;
-   --  Expand the tree in the completion window.
+     (Explorer : Completion_Explorer_Access) return Boolean;
+   --  Expand the tree in the completion explorer
+
+   procedure Free_Info (Explorer : access Completion_Explorer_Record'Class);
+   --  Free memory associated to the stored proposals information
 
    -------------------
    -- Augment_Notes --
@@ -184,33 +190,34 @@ package body Completion_Window is
 
    procedure Augment_Notes
      (Info     : in out Information_Record;
-      Proposal : Completion_Proposal'Class)
+      Proposal : Root_Proposal'Class)
    is
    begin
-      Info.Proposals.Append (new Completion_Proposal'Class'(Proposal));
+      Info.Proposals.Append (new Root_Proposal'Class'(Proposal));
    end Augment_Notes;
 
    ------------------------
    -- Empty_Notes_Window --
    ------------------------
 
-   procedure Empty_Notes_Window
-     (Window : access Completion_Window_Record'Class)
+   procedure Empty_Notes_Container
+     (Explorer : access Completion_Explorer_Record'Class)
    is
-      Widget : constant Gtk_Widget := Get_Child (Window.Notes_Container);
+      Widget : constant Gtk_Widget := Get_Child
+        (Explorer.Notes_Container);
    begin
       if Widget /= null then
          Destroy (Widget);
       end if;
-   end Empty_Notes_Window;
+   end Empty_Notes_Container;
 
-   -----------------------
-   -- Fill_Notes_Window --
-   -----------------------
+   --------------------------
+   -- Fill_Notes_Container --
+   --------------------------
 
-   procedure Fill_Notes_Window
-     (Window : access Completion_Window_Record'Class;
-      Item   : Information_Record)
+   procedure Fill_Notes_Container
+     (Explorer : access Completion_Explorer_Record'Class;
+      Item     : Information_Record)
    is
       VBox     : Gtk_Vbox;
       HBox     : Gtk_Hbox;
@@ -221,7 +228,7 @@ package body Completion_Window is
       use type Gdk.Pixbuf.Gdk_Pixbuf;
    begin
       --  If the notes window is not empty, empty it here.
-      Empty_Notes_Window (Window);
+      Empty_Notes_Container (Explorer);
 
       if Item.Proposals.Is_Empty then
          return;
@@ -238,7 +245,7 @@ package body Completion_Window is
             Pack_Start (HBox, Img, False, False, 3);
          end if;
          Gtk_New (Title, Item.Text.all);
-         Modify_Font (Title, Window.Fixed_Width_Font);
+         Modify_Font (Title, Explorer.Fixed_Width_Font);
          Pack_Start (HBox, Title, False, False, 3);
          Pack_Start (VBox, HBox, False, False, 1);
       end if;
@@ -246,20 +253,19 @@ package body Completion_Window is
       Pack_Start
         (VBox,
          Proposal_Widget
-           (Window.Kernel, Window.Fixed_Width_Font, Item.Proposals),
+           (Explorer.Kernel, Explorer.Fixed_Width_Font, Item.Proposals),
          False, False, 1);
 
-      Add (Window.Notes_Container, VBox);
-
-      Show_All (Window.Notes_Window);
-   end Fill_Notes_Window;
+      Add (Explorer.Notes_Container, VBox);
+      Show_All (VBox);
+   end Fill_Notes_Container;
 
    ------------------------
    -- To_Showable_String --
    ------------------------
 
    function To_Showable_String
-     (P : Completion_Proposal'Class) return String is
+     (P : Root_Proposal'Class) return String is
    begin
       return Escape_Text (Get_Label (P));
    end To_Showable_String;
@@ -291,13 +297,41 @@ package body Completion_Window is
 
       while Has_Element (C) loop
          declare
-            Comp : Completion_Proposal_Access := Element (C);
+            Comp : Root_Proposal_Access := Element (C);
          begin
+            Free (Comp.all);
             Unchecked_Free (Comp);
          end;
          Next (C);
       end loop;
    end Free;
+
+   ---------------
+   -- Free_Info --
+   ---------------
+
+   procedure Free_Info (Explorer : access Completion_Explorer_Record'Class) is
+   begin
+      for J in 1 .. Explorer.Index - 1 loop
+         Free (Explorer.Info (J));
+      end loop;
+      Unchecked_Free (Explorer.Info);
+   end Free_Info;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Explorer : access Completion_Explorer_Record'Class) is
+   begin
+      Empty_Notes_Container (Explorer);
+      Clear (Explorer.Model);
+      Explorer.Shown := 0;
+      Explorer.More_Iter := Null_Iter;
+      Free_Info (Explorer);
+      Explorer.Info := new Information_Array (1 .. 1024);
+      Explorer.Index := 1;
+   end Clear;
 
    ------------
    -- Delete --
@@ -311,19 +345,16 @@ package body Completion_Window is
 
       Window.In_Destruction := True;
 
-      if Window.Has_Idle_Expansion then
-         Remove (Window.Idle_Expansion);
+      if Window.Explorer.Has_Idle_Expansion then
+         Remove (Window.Explorer.Idle_Expansion);
       end if;
 
-      for J in 1 .. Window.Index - 1 loop
-         Free (Window.Info (J));
-      end loop;
+      Free_Info (Window.Explorer);
 
       if Window.Mark /= null then
          Delete_Mark (Window.Buffer, Window.Mark);
       end if;
 
-      Unchecked_Free (Window.Info);
       Destroy (Window.Notes_Window);
       Destroy (Window);
    end Delete;
@@ -333,17 +364,17 @@ package body Completion_Window is
    ----------------------
 
    procedure Expand_Selection
-     (Window : access Completion_Window_Record'Class;
-      Number : Natural)
+     (Explorer : access Completion_Explorer_Record'Class;
+      Number   : Natural)
    is
-      First_Shown : constant Natural := Window.Shown;
+      First_Shown : constant Natural := Explorer.Shown;
       Count       : Natural := 0;
    begin
       --  If the idle function is running, unregister it.
 
-      if Window.Has_Idle_Expansion then
-         Remove (Window.Idle_Expansion);
-         Window.Has_Idle_Expansion := False;
+      if Explorer.Has_Idle_Expansion then
+         Remove (Explorer.Idle_Expansion);
+         Explorer.Has_Idle_Expansion := False;
       end if;
 
       --  Give ourselves Number * 2 chances to get Number items without having
@@ -352,11 +383,12 @@ package body Completion_Window is
       loop
          --  Call Idle_Expand, and exit the loop if the function returns False
 
-         if (Idle_Expand (Completion_Window_Access (Window)) = False)
-           or else Window.Shown - First_Shown >= Number
+         if (Idle_Expand (Completion_Explorer_Access (Explorer)) = False)
+           or else Explorer.Shown - First_Shown >= Number
          then
-            if Window.More_Iter /= Null_Iter then
-               Set (Window.Model, Window.More_Iter, Markup_Column,
+            if Explorer.More_Iter /= Null_Iter then
+               Set (Explorer.Model, Explorer.More_Iter,
+                    Markup_Column,
                     "<span color=""grey""><i> (more...) </i></span>");
             end if;
             return;
@@ -372,9 +404,9 @@ package body Completion_Window is
       --  If we failed to get Number items, register an idle computation to
       --  fill the data.
 
-      Window.Has_Idle_Expansion := True;
-      Window.Idle_Expansion := Completion_Window_Idle.Idle_Add
-        (Idle_Expand'Access, Completion_Window_Access (Window));
+      Explorer.Has_Idle_Expansion := True;
+      Explorer.Idle_Expansion := Completion_Explorer_Idle.Idle_Add
+        (Idle_Expand'Access, Completion_Explorer_Access (Explorer));
    exception
       when E : others => Trace (Exception_Handle, E);
    end Expand_Selection;
@@ -384,7 +416,7 @@ package body Completion_Window is
    -----------------
 
    function Idle_Expand
-     (Window : Completion_Window_Access) return Boolean
+     (Explorer : Completion_Explorer_Access) return Boolean
    is
       function Is_Prefix (S1, S2 : String) return Boolean;
       --  Return True if S1 is a prefix of S2, case-sensitivity taken into
@@ -401,7 +433,7 @@ package body Completion_Window is
          end if;
 
          if S1'Length <= S2'Length then
-            if Window.Case_Sensitive then
+            if Explorer.Case_Sensitive then
                return S2 (S2'First .. S2'First + S1'Length - 1) = S1;
             else
                return To_Lower (S2 (S2'First .. S2'First + S1'Length - 1))
@@ -417,28 +449,29 @@ package body Completion_Window is
 
    begin
 
-      if At_End (Window.Iter) then
+      if At_End (Explorer.Iter.all) then
          return False;
       end if;
 
-      if not Is_Valid (Window.Iter) then
+      if not Is_Valid (Explorer.Iter.all) then
          --  Since we don't know what happened before, we have to assume that
          --  the current iterator does not have a valid proposal anymore. In
          --  that case, we have to get the next element.
-         Next  (Window.Iter);
+         Next  (Explorer.Iter.all);
       end if;
 
       declare
-         Proposal   : constant Completion_Proposal'Class :=
-                        Get_Proposal (Window.Iter);
+         Proposal   : constant Root_Proposal'Class :=
+           Get_Proposal (Explorer.Iter.all);
          Showable   : constant String := To_Showable_String (Proposal);
          Completion : constant String := Get_Completion (Proposal);
          List       : Proposals_List.List;
       begin
          --  Check whether the current iter contains the same completion.
-         if Window.Index = 1
-           or else Window.Info (Window.Index - 1).Text = null
-           or else Window.Info (Window.Index - 1).Text.all /= Completion
+         if Explorer.Index = 1
+           or else Explorer.Info (Explorer.Index - 1).Text = null
+           or else Explorer.Info
+             (Explorer.Index - 1).Text.all /= Completion
          then
             Info :=
               (new String'(Showable),
@@ -451,67 +484,73 @@ package body Completion_Window is
 
             Augment_Notes (Info, Proposal);
 
-            Window.Info (Window.Index) := Info;
+            Explorer.Info (Explorer.Index) := Info;
 
-            if Is_Prefix (Window.Pattern.all, Info.Text.all) then
-               if Window.More_Iter /= Null_Iter then
-                  Insert_Before (Window.Model, Iter, Window.More_Iter);
+            if Explorer.Pattern = null
+              or else Is_Prefix (Explorer.Pattern.all, Info.Text.all)
+            then
+               if Explorer.More_Iter /= Null_Iter then
+                  Insert_Before
+                    (Explorer.Model, Iter, Explorer.More_Iter);
                else
-                  Append (Window.Model, Iter);
+                  Append (Explorer.Model, Iter);
                end if;
 
-               Set (Window.Model, Iter,
+               Set (Explorer.Model, Iter,
                     Markup_Column, Info.Markup.all);
-               Set (Window.Model, Iter,
+               Set (Explorer.Model, Iter,
                     Icon_Column, Info.Icon);
-               Set (Window.Model, Iter,
-                    Index_Column, Gint (Window.Index));
+               Set (Explorer.Model, Iter,
+                    Index_Column, Gint (Explorer.Index));
 
-               Window.Shown := Window.Shown + 1;
+               Explorer.Shown := Explorer.Shown + 1;
             end if;
 
-            Window.Index := Window.Index + 1;
+            Explorer.Index := Explorer.Index + 1;
 
-            if Window.Index > Window.Info'Last then
+            if Explorer.Index > Explorer.Info'Last then
                declare
-                  A : Information_Array (1 .. Window.Info'Last * 2);
+                  A : Information_Array (1 .. Explorer.Info'Last * 2);
                begin
-                  A (1 .. Window.Index - 1) :=
-                    Window.Info (1 .. Window.Index - 1);
-                  Unchecked_Free (Window.Info);
-                  Window.Info := new Information_Array'(A);
+                  A (1 .. Explorer.Index - 1) :=
+                    Explorer.Info (1 .. Explorer.Index - 1);
+                  Unchecked_Free (Explorer.Info);
+                  Explorer.Info := new Information_Array'(A);
                end;
             end if;
          else
-            Augment_Notes (Window.Info (Window.Index - 1), Proposal);
+            Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
          end if;
       end;
 
-      Next (Window.Iter);
+      Next (Explorer.Iter.all);
 
-      if At_End (Window.Iter) then
+      if At_End (Explorer.Iter.all) then
          --  We have reached the end. We can remove the "more" iter, since we
          --  will no longer be computing.
 
-         if Window.More_Iter /= Null_Iter then
-            Remove (Window.Model, Window.More_Iter);
-            Window.More_Iter := Null_Iter;
+         if Explorer.More_Iter /= Null_Iter then
+            Remove (Explorer.Model, Explorer.More_Iter);
+            Explorer.More_Iter := Null_Iter;
          end if;
 
-         --  If the model is empty, this means we have not found any suitable
-         --  completion. In this case, delete the window.
-
-         if Get_Iter_First (Window.Model) = Null_Iter then
-            Delete (Window);
-         end if;
+         --  ??? Is this still needed
+--         --  If the model is empty, this means we have not found any suitable
+--           --  completion. In this case, delete the window.
+--
+--           if Get_Iter_First (Explorer.Model) = Null_Iter then
+--              Delete (Window);
+--           end if;
 
          return False;
       else
          --  If ther is no "more" iter displayed, create one now since we are
          --  still computing.
-         if Window.More_Iter = Null_Iter then
-            Append (Window.Model, Window.More_Iter);
-            Set (Window.Model, Window.More_Iter, Markup_Column,
+         if Explorer.More_Iter = Null_Iter then
+            Append (Explorer.Model, Explorer.More_Iter);
+            Set (Explorer.Model,
+                 Explorer.More_Iter,
+                 Markup_Column,
                  "<span color=""grey""><i> (computing...) </i></span>");
          end if;
 
@@ -547,33 +586,33 @@ package body Completion_Window is
 
       function Equals (A, B : String) return Boolean is
       begin
-         if Window.Case_Sensitive then
+         if Window.Explorer.Case_Sensitive then
             return A = B;
          else
             return To_Lower (A) = To_Lower (B);
          end if;
       end Equals;
 
-      UTF8 : constant String := Window.Pattern.all;
+      UTF8 : constant String := Window.Explorer.Pattern.all;
    begin
-      Selection := Get_Selection (Window.View);
+      Selection := Get_Selection (Window.Explorer.View);
 
       --  Find the entry currently being selected
       Get_Selected (Selection, Model, Curr);
 
       if Curr /= Null_Iter then
          Previously_Selected :=
-           Natural (Get_Int (Window.Model, Curr, Index_Column));
+           Natural (Get_Int (Window.Explorer.Model, Curr, Index_Column));
       end if;
 
       --  Clear the model
 
-      Clear (Window.Model);
-      Window.Shown := 0;
-      Window.More_Iter := Null_Iter;
+      Clear (Window.Explorer.Model);
+      Window.Explorer.Shown := 0;
+      Window.Explorer.More_Iter := Null_Iter;
 
-      if Window.Has_Idle_Expansion then
-         Remove (Window.Idle_Expansion);
+      if Window.Explorer.Has_Idle_Expansion then
+         Remove (Window.Explorer.Idle_Expansion);
       end if;
 
       --  Browse through the completion possibilities and filter out the
@@ -581,20 +620,22 @@ package body Completion_Window is
 
       Prev := Null_Iter;
 
-      for J in 1 .. Window.Index - 1 loop
-         if Window.Info (J).Text'Length >= UTF8'Length
+      for J in 1 .. Window.Explorer.Index - 1 loop
+         if Window.Explorer.Info (J).Text'Length >= UTF8'Length
            and then Equals
-             (Window.Info (J).Text
-              (Window.Info (J).Text'First
-                 .. Window.Info (J).Text'First - 1 + UTF8'Length), UTF8)
+             (Window.Explorer.Info (J).Text
+              (Window.Explorer.Info (J).Text'First
+                 .. Window.Explorer.Info
+                   (J).Text'First - 1 + UTF8'Length), UTF8)
          then
-            Append (Window.Model, Curr);
-            Window.Shown := Window.Shown + 1;
+            Append (Window.Explorer.Model, Curr);
+            Window.Explorer.Shown := Window.Explorer.Shown + 1;
 
-            Set (Window.Model, Curr, Markup_Column,
-                 Window.Info (J).Markup.all);
-            Set (Window.Model, Curr, Icon_Column, Window.Info (J).Icon);
-            Set (Window.Model, Curr, Index_Column, Gint (J));
+            Set (Window.Explorer.Model, Curr, Markup_Column,
+                 Window.Explorer.Info (J).Markup.all);
+            Set (Window.Explorer.Model, Curr, Icon_Column,
+                 Window.Explorer.Info (J).Icon);
+            Set (Window.Explorer.Model, Curr, Index_Column, Gint (J));
 
             if J = Previously_Selected then
                Iter_Copy (Curr, Prev);
@@ -603,8 +644,9 @@ package body Completion_Window is
       end loop;
 
       --  Expand the selection to show more items, if needed.
-      if Window.Shown < Minimal_Items_To_Show then
-         Expand_Selection (Window, Minimal_Items_To_Show - Window.Shown);
+      if Window.Explorer.Shown < Minimal_Items_To_Show then
+         Expand_Selection
+           (Window.Explorer, Minimal_Items_To_Show - Window.Explorer.Shown);
       end if;
 
       --  Re-select the item previously selected, or, if there was none,
@@ -616,7 +658,7 @@ package body Completion_Window is
          end if;
 
       elsif not Window.In_Destruction then
-         Prev := Get_Iter_First (Window.Model);
+         Prev := Get_Iter_First (Window.Explorer.Model);
 
          if Prev = Null_Iter then
             --  If there is no entry in the tree, hide the window.
@@ -635,7 +677,7 @@ package body Completion_Window is
                   Show_All (Window);
 
                   if Previously_Volatile then
-                     Unselect_All (Get_Selection (Window.View));
+                     Unselect_All (Get_Selection (Window.Explorer.View));
                      Window.all.Volatile := True;
                   end if;
                end;
@@ -706,14 +748,15 @@ package body Completion_Window is
       Move_Mark (Window.Buffer, Window.Cursor_Mark, Iter);
 
       Get_Iter_At_Mark (Window.Buffer, Beg, Window.Mark);
-      Free (Window.Pattern);
-      Window.Pattern := new String'(Get_Text (Window.Buffer, Beg, Iter));
+      Free (Window.Explorer.Pattern);
+      Window.Explorer.Pattern := new String'
+        (Get_Text (Window.Buffer, Beg, Iter));
 
       --  If the character we just inserted is not in the set of identifier
       --  characters, we know that we won't find the result in the list of
       --  stored items, so return immediately.
 
-      if not Is_In (Window.Pattern (Window.Pattern'Last),
+      if not Is_In (Window.Explorer.Pattern (Window.Explorer.Pattern'Last),
                     Word_Character_Set (Window.Lang))
       then
          Delete (Window);
@@ -774,8 +817,9 @@ package body Completion_Window is
       if Get_Offset (Iter) < Window.Initial_Offset then
          Delete (Window);
       else
-         Free (Window.Pattern);
-         Window.Pattern := new String'(Get_Text (Window.Buffer, Beg, Iter));
+         Free (Window.Explorer.Pattern);
+         Window.Explorer.Pattern := new
+           String'(Get_Text (Window.Buffer, Beg, Iter));
          Adjust_Selected (Window);
       end if;
 
@@ -801,21 +845,19 @@ package body Completion_Window is
          return False;
    end On_Button_Pressed;
 
-   --------------------------
-   -- On_Selection_Changed --
-   --------------------------
+   ---------------------------------
+   -- On_Window_Selection_Changed --
+   ---------------------------------
 
-   procedure On_Selection_Changed
+   procedure On_Window_Selection_Changed
      (Window : access Completion_Window_Record'Class)
    is
       Sel   : Gtk_Tree_Selection;
       Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
       Model : Gtk_Tree_Model;
-      Index : Natural;
 
    begin
-      Sel := Get_Selection (Window.View);
+      Sel := Get_Selection (Window.Explorer.View);
       Get_Selected (Sel, Model, Iter);
 
       if Iter = Null_Iter then
@@ -826,29 +868,75 @@ package body Completion_Window is
          --  Something is selected: the window is no longer Volatile.
          Window.Volatile := False;
 
-         if Iter = Window.More_Iter then
-            Path := Get_Path (Window.Model, Iter);
+         Show_All (Window.Notes_Window);
+      end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Window_Selection_Changed;
+
+   ---------------------------
+   -- On_Explorer_Destroyed --
+   ---------------------------
+
+   function On_Explorer_Destroyed
+     (Explorer : access Completion_Explorer_Record'Class;
+      Event    : Gdk_Event) return Boolean is
+      pragma Unreferenced (Event);
+   begin
+      if Explorer.Iter /= null then
+         Unchecked_Free (Explorer.Iter);
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end On_Explorer_Destroyed;
+
+   -----------------------------------
+   -- On_Explorer_Selection_Changed --
+   -----------------------------------
+
+   procedure On_Explorer_Selection_Changed
+     (Explorer : access Completion_Explorer_Record'Class)
+   is
+      Sel   : Gtk_Tree_Selection;
+      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
+      Model : Gtk_Tree_Model;
+      Index : Natural;
+
+   begin
+      Sel := Get_Selection (Explorer.View);
+      Get_Selected (Sel, Model, Iter);
+
+      if Iter /= Null_Iter then
+         if Iter = Explorer.More_Iter then
+            Path := Get_Path (Explorer.Model, Iter);
 
             if Prev (Path) then
-               Iter := Get_Iter (Window.Model, Path);
-               Expand_Selection (Window, Minimal_Items_To_Show);
+               Iter := Get_Iter (Explorer.Model, Path);
+               Expand_Selection (Explorer, Minimal_Items_To_Show);
                Select_Iter (Sel, Iter);
             end if;
 
          else
             Path := Get_Path (Model, Iter);
-            Scroll_To_Cell (Window.View, Path, null, False, 0.1, 0.1);
+            Scroll_To_Cell (Explorer.View, Path, null, False, 0.1, 0.1);
             Path_Free (Path);
 
-            Index := Natural (Get_Int (Window.Model, Iter, Index_Column));
+            Index := Natural (Get_Int (Explorer.Model, Iter, Index_Column));
 
-            Fill_Notes_Window (Window, Window.Info (Index));
+            Fill_Notes_Container (Explorer, Explorer.Info (Index));
          end if;
       end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);
-   end On_Selection_Changed;
+   end On_Explorer_Selection_Changed;
 
    ------------------
    -- On_Focus_Out --
@@ -881,45 +969,46 @@ package body Completion_Window is
       J    : Natural;
    begin
       --  Compute the common prefix
-      Iter := Get_Iter_First (Window.Model);
+      Iter := Get_Iter_First (Window.Explorer.Model);
 
       if Iter = Null_Iter then
          return False;
       end if;
 
-      J := Natural (Get_Int (Window.Model, Iter, Index_Column));
+      J := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
 
-      Next (Window.Model, Iter);
+      Next (Window.Explorer.Model, Iter);
 
       declare
-         Prefix : constant String := Window.Info (J).Text.all;
+         Prefix : constant String := Window.Explorer.Info (J).Text.all;
          Last   : Natural := Prefix'Last;
          First  : Natural := Prefix'First;
       begin
          while Iter /= Null_Iter
-           and then Iter /= Window.More_Iter
+           and then Iter /= Window.Explorer.More_Iter
          loop
-            J := Natural (Get_Int (Window.Model, Iter, Index_Column));
+            J := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
 
-            for K in Window.Info (J).Text'First .. Natural'Min
-              (Window.Info (J).Text'Last,
-               Last - First + Window.Info (J).Text'First)
+            for K in Window.Explorer.Info (J).Text'First .. Natural'Min
+              (Window.Explorer.Info (J).Text'Last,
+               Last - First + Window.Explorer.Info (J).Text'First)
             loop
-               if (Window.Case_Sensitive
-                   and then Window.Info (J).Text (K) /= Prefix
-                   (K - Window.Info (J).Text'First + First))
+               if (Window.Explorer.Case_Sensitive
+                   and then Window.Explorer.Info (J).Text (K) /= Prefix
+                   (K - Window.Explorer.Info (J).Text'First + First))
                  or else
-                   To_Lower (Window.Info (J).Text (K)) /=
-                 To_Lower (Prefix (K - Window.Info (J).Text'First + First))
+                   To_Lower (Window.Explorer.Info (J).Text (K)) /=
+                 To_Lower (Prefix
+                           (K - Window.Explorer.Info (J).Text'First + First))
                then
-                  Last := K - Window.Info (J).Text'First + First - 1;
+                  Last := K - Window.Explorer.Info (J).Text'First + First - 1;
                   exit;
                end if;
 
-               Last := K - Window.Info (J).Text'First + First;
+               Last := K - Window.Explorer.Info (J).Text'First + First;
             end loop;
 
-            Next (Window.Model, Iter);
+            Next (Window.Explorer.Model, Iter);
          end loop;
 
          --  Complete up to the common prefix
@@ -967,12 +1056,12 @@ package body Completion_Window is
       Result     : Boolean;
 
    begin
-      Get_Selected (Get_Selection (Window.View), Model, Iter);
+      Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
       if Iter /= Null_Iter
-        and then Iter /= Window.More_Iter
+        and then Iter /= Window.Explorer.More_Iter
       then
-         Pos := Natural (Get_Int (Window.Model, Iter, Index_Column));
+         Pos := Natural (Get_Int (Window.Explorer.Model, Iter, Index_Column));
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Get_Iter_At_Mark
@@ -982,21 +1071,32 @@ package body Completion_Window is
          Delete (Window.Buffer, Text_Begin, Text_End);
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
-         Insert (Window.Buffer, Text_Begin, Window.Info (Pos).Text.all);
+         Insert (Window.Buffer, Text_Begin,
+                 Window.Explorer.Info (Pos).Text.all);
 
          --  If the proposal can be stored, store it in the history.
 
-         if Window.Info (Pos).Proposals.First_Element.all in
-           Storable_Proposal'Class
+         if Window.Explorer.Info (Pos).Proposals.First_Element.all in
+           Comp_Proposal'Class
          then
-            Prepend_Proposal
-              (Window.Completion_History,
-               Window.Info (Pos).Proposals.First_Element.all);
+            declare
+               E : constant Completion_Proposal_Access :=
+                 Get_Underlying_Proposal
+                   (Comp_Proposal
+                    (Window.Explorer.Info (Pos).Proposals.First_Element.all));
+            begin
+               if E /= null
+                 and then E.all in Storable_Proposal'Class
+               then
+                  Prepend_Proposal
+                    (Window.Explorer.Completion_History, E.all);
+               end if;
+            end;
          end if;
 
          Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
          Forward_Chars (Iter   => Text_Begin,
-                        Count  => Gint (Window.Info (Pos).Offset),
+                        Count  => Gint (Window.Explorer.Info (Pos).Offset),
                         Result => Result);
 
          if Result then
@@ -1057,11 +1157,11 @@ package body Completion_Window is
       begin
          if Where = Down then
             Expand_Selection
-              (Window => Window,
+              (Explorer => Window.Explorer,
                Number => Minimal_Items_To_Show);
          end if;
 
-         Adj := Get_Vadjustment (Window.View);
+         Adj := Get_Vadjustment (Window.Explorer.View);
          Page_Increment := Get_Page_Increment (Adj);
          Page_Size := Get_Page_Size (Adj);
 
@@ -1075,19 +1175,19 @@ package body Completion_Window is
                   Get_Value (Adj) + Page_Increment));
          end if;
 
-         Set_Vadjustment (Window.View, Adj);
+         Set_Vadjustment (Window.Explorer.View, Adj);
 
-         Get_Visible_Range (Window.View, Path, End_Path, Success);
+         Get_Visible_Range (Window.Explorer.View, Path, End_Path, Success);
 
          if Success then
             if Where = Up then
-               Iter := Get_Iter (Window.Model, Path);
+               Iter := Get_Iter (Window.Explorer.Model, Path);
             else
-               Iter := Get_Iter (Window.Model, End_Path);
+               Iter := Get_Iter (Window.Explorer.Model, End_Path);
             end if;
 
             if Iter /= Null_Iter then
-               Sel := Get_Selection (Window.View);
+               Sel := Get_Selection (Window.Explorer.View);
                Select_Iter (Sel, Iter);
             end if;
 
@@ -1102,7 +1202,7 @@ package body Completion_Window is
 
       function Complete return Boolean is
       begin
-         Sel := Get_Selection (Window.View);
+         Sel := Get_Selection (Window.Explorer.View);
          Get_Selected (Sel, Model, Iter);
 
          if Iter = Null_Iter then
@@ -1139,7 +1239,7 @@ package body Completion_Window is
                --  have found the completion that we want and can complete.
 
                if Window.Volatile then
-                  if N_Children (Window.Model) = 1 then
+                  if N_Children (Window.Explorer.Model) = 1 then
                      Select_Next (Completion_Window_Access (Window));
                      Dummy := Complete;
                   end if;
@@ -1161,7 +1261,7 @@ package body Completion_Window is
          when GDK_Return =>
             if Window.Volatile then
                if Window.Mode = Normal
-                 and then N_Children (Window.Model) = 1
+                 and then N_Children (Window.Explorer.Model) = 1
                then
                   Select_Next (Completion_Window_Access (Window));
                   return Complete;
@@ -1197,18 +1297,18 @@ package body Completion_Window is
                return False;
             end if;
 
-            Sel := Get_Selection (Window.View);
+            Sel := Get_Selection (Window.Explorer.View);
             Get_Selected (Sel, Model, Iter);
 
             if Iter = Null_Iter then
-               Iter := Get_Iter_First (Window.Model);
+               Iter := Get_Iter_First (Window.Explorer.Model);
             end if;
 
             if Iter /= Null_Iter then
-               Path := Get_Path (Window.Model, Iter);
+               Path := Get_Path (Window.Explorer.Model, Iter);
 
                if Prev (Path) then
-                  Iter := Get_Iter (Window.Model, Path);
+                  Iter := Get_Iter (Window.Explorer.Model, Path);
                   Select_Iter (Sel, Iter);
                end if;
 
@@ -1240,62 +1340,118 @@ package body Completion_Window is
    -------------
 
    procedure Gtk_New
-     (Window : out Completion_Window_Access;
-      Kernel : Kernel_Handle) is
+     (Explorer : out Completion_Explorer_Access;
+      Kernel   : Kernel_Handle)
+   is
    begin
-      Window := new Completion_Window_Record;
-      Completion_Window.Initialize (Window);
-      Window.Kernel := Kernel;
+      Explorer := new Completion_Explorer_Record;
+      Completion_Window.Initialize (Explorer, Kernel);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Window : access Completion_Window_Record'Class) is
+   procedure Initialize
+     (Explorer : access Completion_Explorer_Record'Class;
+      Kernel   : Kernel_Handle)
+   is
       Col      : Gtk_Tree_View_Column;
       Text     : Gtk_Cell_Renderer_Text;
       Pix      : Gtk_Cell_Renderer_Pixbuf;
       Dummy    : Gint;
       Frame    : Gtk_Frame;
-      Scroll   : Gtk_Scrolled_Window;
       Viewport : Gtk_Viewport;
 
       pragma Unreferenced (Dummy);
    begin
-      Gtk.Window.Initialize (Window, Window_Popup);
-      Set_Decorated (Window, False);
+      Explorer.Kernel := Kernel;
 
-      Gtk_New (Window.Model, Column_Types);
-      Gtk_New (Window.View, Window.Model);
+      Initialize_Hbox (Explorer);
 
-      Set_Headers_Visible (Window.View, False);
+      Gtk_New (Explorer.Model, Column_Types);
+      Gtk_New (Explorer.View, Explorer.Model);
+
+      Set_Headers_Visible (Explorer.View, False);
 
       Gtk_New (Col);
-      Dummy := Append_Column (Window.View, Col);
+      Dummy := Append_Column (Explorer.View, Col);
 
       Gtk_New (Pix);
       Pack_Start (Col, Pix, False);
       Add_Attribute (Col, Pix, "pixbuf", Icon_Column);
 
       Gtk_New (Col);
-      Dummy := Append_Column (Window.View, Col);
+      Dummy := Append_Column (Explorer.View, Col);
 
       Gtk_New (Text);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "markup", Markup_Column);
 
+      Gtk_New (Explorer.Tree_Scroll);
+      Set_Shadow_Type (Explorer.Tree_Scroll, Shadow_None);
+      Set_Policy (Explorer.Tree_Scroll, Policy_Never, Policy_Automatic);
+      Add (Explorer.Tree_Scroll, Explorer.View);
+
       Gtk_New (Frame);
-      Add (Window, Frame);
+      Add (Frame, Explorer.Tree_Scroll);
 
-      Gtk_New (Window.Tree_Scroll);
-      Set_Shadow_Type (Window.Tree_Scroll, Shadow_None);
-      Set_Policy (Window.Tree_Scroll, Policy_Never, Policy_Automatic);
-      Add (Window.Tree_Scroll, Window.View);
-      Add (Frame, Window.Tree_Scroll);
+      Pack_Start (Explorer, Frame, True, True, 0);
 
-      Window.Info := new Information_Array (1 .. 1024);
-      Window.Index := 1;
+      Explorer.Info := new Information_Array (1 .. 1024);
+      Explorer.Index := 1;
+
+      Gtk_New (Viewport);
+      Modify_Bg (Viewport, State_Normal, Tooltip_Color.Get_Pref);
+
+      Set_Shadow_Type (Viewport, Shadow_None);
+      Explorer.Notes_Container := Gtk_Bin (Viewport);
+
+      Object_Connect
+        (Get_Selection (Explorer.View),
+         Gtk.Tree_Selection.Signal_Changed,
+         To_Marshaller (On_Explorer_Selection_Changed'Access), Explorer,
+         After => True);
+
+      Object_Connect
+        (Explorer,
+         Gtk.Widget.Signal_Destroy_Event,
+         To_Marshaller (On_Explorer_Destroyed'Access), Explorer);
+   end Initialize;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Window : out Completion_Window_Access;
+      Kernel : Kernel_Handle) is
+   begin
+      Window := new Completion_Window_Record;
+      Completion_Window.Initialize (Window, Kernel);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Window : access Completion_Window_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Dummy   : Gint;
+      Frame   : Gtk_Frame;
+      Scroll  : Gtk_Scrolled_Window;
+
+      pragma Unreferenced (Dummy);
+   begin
+      Gtk_New (Window.Explorer, Kernel);
+
+      Gtk.Window.Initialize (Window, Window_Popup);
+
+      Add (Window, Window.Explorer);
+
+      Set_Decorated (Window, False);
 
       --  Create the Notes window
 
@@ -1308,13 +1464,8 @@ package body Completion_Window is
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
       Add (Frame, Scroll);
       Add (Window.Notes_Window, Frame);
-      Gtk_New (Viewport);
-      Modify_Bg (Viewport, State_Normal, Tooltip_Color.Get_Pref);
 
-      Set_Shadow_Type (Viewport, Shadow_None);
-      Add (Scroll, Viewport);
-
-      Window.Notes_Container := Gtk_Bin (Viewport);
+      Add (Scroll, Window.Explorer.Notes_Container);
    end Initialize;
 
    ----------
@@ -1363,7 +1514,8 @@ package body Completion_Window is
       Window.Initial_Offset := Get_Offset (Cursor);
       Window.Initial_Line   := Get_Line (Cursor);
 
-      Window.Case_Sensitive := Get_Language_Context (Lang).Case_Sensitive;
+      Window.Explorer.Case_Sensitive :=
+        Get_Language_Context (Lang).Case_Sensitive;
       Window.Lang := Lang;
 
       --  Set the position.
@@ -1382,21 +1534,22 @@ package body Completion_Window is
 
       --  Compute the placement of the window.
 
-      Size_Request (Window.View, Requisition);
-      Requisition := Get_Child_Requisition (Window.View);
+      Size_Request (Window.Explorer.View, Requisition);
+      Requisition := Get_Child_Requisition (Window.Explorer.View);
 
       --  ??? Uposition should take into account the current desktop.
 
-      Window.Fixed_Width_Font := Get_Font_Description (Get_Style (View));
+      Window.Explorer.Fixed_Width_Font :=
+        Get_Font_Description (Get_Style (View));
 
       declare
          Char_Width, Char_Height : Gint;
          Layout : Pango_Layout;
       begin
-         Modify_Font (Window.View, Window.Fixed_Width_Font);
+         Modify_Font (Window.Explorer.View, Window.Explorer.Fixed_Width_Font);
 
-         Layout := Create_Pango_Layout (Window.View);
-         Set_Font_Description (Layout, Window.Fixed_Width_Font);
+         Layout := Create_Pango_Layout (Window.Explorer.View);
+         Set_Font_Description (Layout, Window.Explorer.Fixed_Width_Font);
          Set_Text (Layout, "0m");
          Get_Pixel_Size (Layout, Char_Width, Char_Height);
          Unref (Layout);
@@ -1412,8 +1565,10 @@ package body Completion_Window is
 
       if Requisition.Height > Max_Height then
          --  Display an integer number of lines in the tree view.
-         Rows := (Gint (Window.Index - 1) * (Max_Height)) / Requisition.Height;
-         Height := Rows * (Requisition.Height / Gint (Window.Index - 1)) + 5;
+         Rows := (Gint (Window.Explorer.Index - 1) *
+                  (Max_Height)) / Requisition.Height;
+         Height := Rows * (Requisition.Height /
+                             Gint (Window.Explorer.Index - 1)) + 5;
       else
          Height := Max_Height + 5;
       end if;
@@ -1447,7 +1602,8 @@ package body Completion_Window is
 
       --  Compute the size and position of the Notes window.
 
-      Set_Default_Size (Window.Notes_Window, Notes_Window_Width, Height);
+      Set_Default_Size
+        (Window.Notes_Window, Notes_Window_Width, Height);
 
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
          Set_UPosition (Window.Notes_Window, X + Width, Y);
@@ -1455,16 +1611,21 @@ package body Completion_Window is
          --  Make sure the Notes window doesn't overlap the tree view.
          if X <= Notes_Window_Width then
             Notes_Window_Width := X - 2;
-            Set_Default_Size (Window.Notes_Window, Notes_Window_Width, Height);
+            Set_Default_Size
+              (Window.Notes_Window, Notes_Window_Width, Height);
          end if;
 
-         Set_UPosition (Window.Notes_Window, X - Notes_Window_Width, Y);
+         Set_UPosition
+           (Window.Notes_Window, X - Notes_Window_Width, Y);
       end if;
 
       Show_All (Window);
-      Hide_All (Get_Vscrollbar (Window.Tree_Scroll));
+
+      Hide_All (Get_Vscrollbar (Window.Explorer.Tree_Scroll));
 
       Grab_Focus (Window.Text);
+
+      --  Callbacks needed in window mode
 
       Object_Connect
         (Window.Text, Signal_Focus_Out_Event,
@@ -1505,19 +1666,20 @@ package body Completion_Window is
          After => False);
 
       Object_Connect
-        (Window.View, Signal_Button_Press_Event,
+        (Window.Explorer.View, Signal_Button_Press_Event,
          To_Marshaller (On_Button_Pressed'Access), Window,
          After => False);
 
       Object_Connect
-        (Get_Selection (Window.View), Gtk.Tree_Selection.Signal_Changed,
-         To_Marshaller (On_Selection_Changed'Access), Window,
+        (Get_Selection (Window.Explorer.View),
+         Gtk.Tree_Selection.Signal_Changed,
+         To_Marshaller (On_Window_Selection_Changed'Access), Window,
          After => True);
 
-      Window.Pattern := new String'("");
-      Expand_Selection (Window, Minimal_Items_To_Show);
+      Window.Explorer.Pattern := new String'("");
+      Expand_Selection (Window.Explorer, Minimal_Items_To_Show);
 
-      Tree_Iter := Get_Iter_First (Window.Model);
+      Tree_Iter := Get_Iter_First (Window.Explorer.Model);
 
       Window.Volatile := Volatile;
 
@@ -1526,11 +1688,11 @@ package body Completion_Window is
          return;
       else
          if not Volatile then
-            Select_Iter (Get_Selection (Window.View), Tree_Iter);
+            Select_Iter (Get_Selection (Window.Explorer.View), Tree_Iter);
          end if;
       end if;
 
-      On_Selection_Changed (Window);
+      On_Window_Selection_Changed (Window);
 
       if Complete then
          Dummy2 := Complete_Common_Prefix (Window);
@@ -1541,22 +1703,41 @@ package body Completion_Window is
    -- Select_Next --
    -----------------
 
+   procedure Select_Next (Explorer : Completion_Explorer_Access) is
+      Sel   : Gtk_Tree_Selection;
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+   begin
+      Sel := Get_Selection (Explorer.View);
+      Get_Selected (Sel, Model, Iter);
+
+      if Iter = Null_Iter then
+         Iter := Get_Iter_First (Explorer.Model);
+      else
+         Next (Explorer.Model, Iter);
+      end if;
+
+      if Iter /= Null_Iter then
+         Select_Iter (Sel, Iter);
+         --  We have selected an iter: the window is no longer volatile
+      end if;
+   end Select_Next;
+
+   -----------------
+   -- Select_Next --
+   -----------------
+
    procedure Select_Next (Window : Completion_Window_Access) is
       Sel   : Gtk_Tree_Selection;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
    begin
-      Sel := Get_Selection (Window.View);
+      Select_Next (Window.Explorer);
+
+      Sel := Get_Selection (Window.Explorer.View);
       Get_Selected (Sel, Model, Iter);
 
-      if Iter = Null_Iter then
-         Iter := Get_Iter_First (Window.Model);
-      else
-         Next (Window.Model, Iter);
-      end if;
-
       if Iter /= Null_Iter then
-         Select_Iter (Sel, Iter);
          --  We have selected an iter: the window is no longer volatile
          Window.Volatile := False;
       end if;
@@ -1570,18 +1751,29 @@ package body Completion_Window is
      (Window : Completion_Window_Access; History : Completion_History_Access)
    is
    begin
-      Window.Completion_History := History;
+      Window.Explorer.Completion_History := History;
    end Set_History;
 
-   -----------------------------
-   -- Set_Completion_Iterator --
-   -----------------------------
+   ------------------
+   -- Set_Iterator --
+   ------------------
 
-   procedure Set_Completion_Iterator
-     (Window : Completion_Window_Access;
-      Iter   : Completion_Iterator) is
+   procedure Set_Iterator
+     (Explorer : Completion_Explorer_Access;
+      Iter     : Root_Iterator_Access) is
    begin
-      Window.Iter := Iter;
-   end Set_Completion_Iterator;
+      Explorer.Iter := Iter;
+   end Set_Iterator;
+
+   ------------------
+   -- Set_Iterator --
+   ------------------
+
+   procedure Set_Iterator
+     (Window : Completion_Window_Access;
+      Iter   : Root_Iterator_Access) is
+   begin
+      Set_Iterator (Window.Explorer, Iter);
+   end Set_Iterator;
 
 end Completion_Window;

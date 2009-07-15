@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009, AdaCore                       --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -12,33 +12,37 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides a number of utilities to share functions amongst
---  users of the completion information.
+--  This package provides an Entity View widget
 
-with Ada.Containers.Doubly_Linked_Lists;
+with Gtk.GEntry; use Gtk.GEntry;
 
-with Gtk.Widget; use Gtk.Widget;
-with Pango.Font; use Pango.Font;
+package Completion_Window.Entity_Views is
 
-with GPS.Kernel; use GPS.Kernel;
-with Completion; use Completion;
+   type Entity_View_Record is new Gtk_Vbox_Record with private;
+   type Entity_View_Access is access all Entity_View_Record'Class;
 
-with Engine_Wrappers; use Engine_Wrappers;
+   procedure Gtk_New
+     (View     : out Entity_View_Access;
+      Kernel   : Kernel_Handle;
+      Initial  : UTF8_String);
+   --  Create a new Completion_Explorer
 
-package Completion_Utils is
+   procedure Initialize
+     (View     : access Entity_View_Record'Class;
+      Kernel   : Kernel_Handle;
+      Initial  : UTF8_String);
+   --  Internal initialization procedure
 
-   package Proposals_List is new Ada.Containers.Doubly_Linked_Lists
-     (Root_Proposal_Access);
+private
 
-   function Proposal_Widget
-     (Kernel           : Kernel_Handle;
-      Fixed_Width_Font : Pango_Font_Description;
-      Proposals        : Proposals_List.List) return Gtk_Widget;
-   --  Return a widget representing Proposal
+   type Entity_View_Record is new Gtk_Vbox_Record with record
+      Explorer : Completion_Explorer_Access;
+      Ent      : Gtk_Entry;
+   end record;
 
-end Completion_Utils;
+end Completion_Window.Entity_Views;
