@@ -61,6 +61,10 @@ package body Completion_Window.Entity_Views is
      (View : access Entity_View_Record'Class);
    --  Called when the size has been allocated
 
+   function On_Pane_Button_Release
+     (View : access Entity_View_Record'Class) return Boolean;
+   --  Called on a resize of the Pane
+
    function On_Entry_Key_Press
      (View  : access Entity_View_Record'Class;
       Event : Gdk_Event) return Boolean;
@@ -335,12 +339,38 @@ package body Completion_Window.Entity_Views is
         (View, Signal_Size_Allocate,
          To_Marshaller (On_Size_Allocated'Access), View, After => True);
 
+      Set_Events (View.Pane, Get_Events (View.Pane) or Button_Release_Mask);
+
+      Object_Connect
+        (View.Pane, Signal_Button_Release_Event,
+         To_Marshaller (On_Pane_Button_Release'Access),
+         View, After => False);
+
       Insert_Text (View.Ent, Initial, Position);
 
       View.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
       Modify_Font (View.Explorer.View, View.Explorer.Fixed_Width_Font);
       Modify_Font (View.Ent, View.Explorer.Fixed_Width_Font);
    end Initialize;
+
+   ------------------------------
+   -- On_Size_Allocated_Before --
+   ------------------------------
+
+   function On_Pane_Button_Release
+     (View : access Entity_View_Record'Class) return Boolean is
+   begin
+      if View.Is_Horizontal then
+         View.Horizontal_Position := Get_Position (View.Pane);
+      else
+         View.Vertical_Position := Get_Position (View.Pane);
+      end if;
+
+      return False;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+         return False;
+   end On_Pane_Button_Release;
 
    -----------------------
    -- On_Size_Allocated --
@@ -369,11 +399,28 @@ package body Completion_Window.Entity_Views is
 
          if View.Is_Horizontal then
             Gtk_New_Hpaned (View.Pane);
-            Set_Position (View.Pane, Initial_Tree_Size);
+
+            if View.Horizontal_Position = -1 then
+               Set_Position (View.Pane, Initial_Tree_Size);
+            else
+               Set_Position (View.Pane, View.Horizontal_Position);
+            end if;
          else
             Gtk_New_Vpaned (View.Pane);
-            Set_Position (View.Pane, Height * 2 / 3);
+
+            if View.Vertical_Position = -1 then
+               Set_Position (View.Pane, Height * 2 / 3);
+            else
+               Set_Position (View.Pane, View.Vertical_Position);
+            end if;
          end if;
+
+         Set_Events (View.Pane, Get_Events (View.Pane) or Button_Release_Mask);
+
+         Object_Connect
+           (View.Pane, Signal_Button_Release_Event,
+            To_Marshaller (On_Pane_Button_Release'Access),
+            View, After => False);
 
          Pack_Start (View, View.Pane, True, True, 0);
          Add1 (View.Pane, View.Explorer);
@@ -397,7 +444,18 @@ package body Completion_Window.Entity_Views is
    begin
       N := new Node;
       N.Tag := new String'("Entity_View");
-      Set_Attribute (N, "position", Get_Position (View.Pane)'Img);
+
+      if View.Is_Horizontal then
+         Set_Attribute
+           (N, "position_horizontal", Get_Position (View.Pane)'Img);
+         Set_Attribute
+           (N, "position_vertical", View.Vertical_Position'Img);
+      else
+         Set_Attribute
+           (N, "position_horizontal", View.Horizontal_Position'Img);
+         Set_Attribute
+           (N, "position_vertical", Get_Position (View.Pane)'Img);
+      end if;
       return N;
    end Save_Desktop;
 
@@ -418,12 +476,13 @@ package body Completion_Window.Entity_Views is
                Group => Group_Consoles,
                Module => Module);
       Set_Title (Child, -"Entity View", -"Entity View");
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 
       declare
       begin
-         Set_Position (Explorer.Pane, Gint'Value
-           (Get_Attribute (Node, "position", Initial_Tree_Size'Img)));
+         Explorer.Horizontal_Position :=
+           Gint'Value (Get_Attribute (Node, "position_horizontal", "-1"));
+         Explorer.Vertical_Position :=
+           Gint'Value (Get_Attribute (Node, "position_vertical", "-1"));
       exception
          when Constraint_Error =>
             Insert
@@ -431,6 +490,8 @@ package body Completion_Window.Entity_Views is
                "Wrong value for attribute position in entity view",
                Mode => Error);
       end;
+
+      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 
       return MDI_Child (Child);
    end Load_Desktop;

@@ -61,6 +61,11 @@ private
       Notes_Scroll : Gtk_Scrolled_Window;
 
       Is_Horizontal : Boolean := True;
+
+      Vertical_Position   : Gint := -1;
+      Horizontal_Position : Gint := -1;
+      --  Record the horizontal and vertical positions of the paned.
+      --  -1 indicates that there is no recorded value.
    end record;
 
 end Completion_Window.Entity_Views;
