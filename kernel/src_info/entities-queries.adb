@@ -729,15 +729,37 @@ package body Entities.Queries is
 
       Iter.Entity        := Entity;
 
-      --  Iter.It            := First (Entity.References);
       Iter.Files_It := Entity.References.First;
 
       Iter.Files_Analyzed.Clear;
 
       if Iter.Files_It /= Entity_File_Maps.No_Element then
-         Update_Xref (Element (Iter.Files_It).File);
-         Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
-         Iter.Entity_It := Element (Iter.Files_It).Refs.First;
+         declare
+            Prev_Timestamp : Integer;
+         begin
+            loop
+               Prev_Timestamp := Entity.File_Timestamp_In_References;
+
+               Update_Xref (Element (Iter.Files_It).File);
+
+               if Prev_Timestamp = Entity.File_Timestamp_In_References then
+                  --  If we didn't add any file, then we can start extracting
+                  --  references.
+
+                  Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+                  Iter.Entity_It := Element (Iter.Files_It).Refs.First;
+
+                  exit;
+               else
+                  --  Otherwise, we need to retreive the first file because
+                  --  the list has changed and the iterator is no longer valid,
+                  --  and redo the xrefs update on that new first entry if
+                  --  it's not the same.
+
+                  Iter.Files_It := Entity.References.First;
+               end if;
+            end loop;
+         end;
       end if;
 
       Iter.Decl_Returned := not Iter.Filter (Declaration)
@@ -1081,6 +1103,35 @@ package body Entities.Queries is
 
    procedure Next (Iter : in out Entity_Reference_Iterator) is
       Repeat : Boolean := True;
+
+      procedure Safe_Update_Xref (File : Source_File);
+      --  Update the file given in parameter, and reset the file iterator if
+      --  needed, in order to keep consistent data structures. If the update
+      --  didn't corrupt and iterator, then Iter is placed at the beginning
+      --  of that file.
+
+      procedure Safe_Update_Xref (File : Source_File) is
+         Prev_Timestamp : constant Integer :=
+           Iter.Entity.File_Timestamp_In_References;
+      begin
+         Update_Xref (File);
+
+         if Prev_Timestamp
+           = Iter.Entity.File_Timestamp_In_References
+         then
+            --  If we didn't load any new file, then we can analyze
+            --  that file
+
+            Iter.Entity_It := Element (Iter.Files_It).Refs.First;
+            Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+         else
+            --  Otherwise, the File_It iterator is corrupted, reset
+            --  it an look for new files
+
+            Iter.Files_It := First (Iter.Entity.References);
+         end if;
+      end Safe_Update_Xref;
+
    begin
       --  We always return the declaration first
       if not Iter.Decl_Returned then
@@ -1101,9 +1152,7 @@ package body Entities.Queries is
                  and then not
                    Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
                then
-                  Update_Xref (Element (Iter.Files_It).File);
-                  Iter.Entity_It := Element (Iter.Files_It).Refs.First;
-                  Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+                  Safe_Update_Xref (Element (Iter.Files_It).File);
                end if;
             end loop;
          end if;
@@ -1152,9 +1201,7 @@ package body Entities.Queries is
                  and then not Iter.Files_Analyzed.Contains
                    (Key (Iter.Files_It))
                then
-                  Update_Xref (Element (Iter.Files_It).File);
-                  Iter.Entity_It := Element (Iter.Files_It).Refs.First;
-                  Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+                  Safe_Update_Xref (Element (Iter.Files_It).File);
                end if;
             end loop;
          end loop;

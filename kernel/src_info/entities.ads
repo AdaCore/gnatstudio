@@ -1137,6 +1137,11 @@ private
       References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
 
+      File_Timestamp_In_References : Integer := 0;
+      --  This timestamp is incremented each time files are added or removed
+      --  from the reference list - this is used by the iterators to know if
+      --  they need to update their file iterators.
+
       Called_Entities       : Entity_Information_List;
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.

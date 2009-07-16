@@ -517,6 +517,8 @@ package body Entities is
                   Free (Refs);
 
                   Entity.References.Delete (File.Ordered_Index);
+                  Entity.File_Timestamp_In_References :=
+                    Entity.File_Timestamp_In_References + 1;
                end;
             end if;
 
@@ -1747,6 +1749,9 @@ package body Entities is
          Refs.File := Location.File;
 
          Entity.References.Insert (Location.File.Ordered_Index, Refs);
+
+         Entity.File_Timestamp_In_References :=
+           Entity.File_Timestamp_In_References + 1;
       else
          Refs := Entity.References.Element (Location.File.Ordered_Index);
       end if;
@@ -1920,25 +1925,26 @@ package body Entities is
 
       if E = null and then Allow_Create then
          E := new Entity_Information_Record'
-           (Name                  => new String'(Name),
-            Kind                  => Unresolved_Entity_Kind,
-            Attributes            => (others => False),
-            Declaration           => (File, Line, Column),
-            Caller_At_Declaration => null,
-            End_Of_Scope          => No_E_Reference,
-            Parent_Types          => Null_Entity_Information_List,
-            Pointed_Type          => null,
-            Returned_Type         => null,
-            Primitive_Op_Of       => null,
-            Rename                => null,
-            Instantiation_Of      => null,
-            Called_Entities       => Null_Entity_Information_List,
-            Primitive_Subprograms => Null_Entity_Information_List,
-            Child_Types           => Null_Entity_Information_List,
-            References            => Entity_File_Maps.Empty_Map,
-            Is_Valid              => True,
-            Ref_Count             => 1,
-            Trie_Tree_Index       => 0);
+           (Name                         => new String'(Name),
+            Kind                         => Unresolved_Entity_Kind,
+            Attributes                   => (others => False),
+            Declaration                  => (File, Line, Column),
+            Caller_At_Declaration        => null,
+            End_Of_Scope                 => No_E_Reference,
+            Parent_Types                 => Null_Entity_Information_List,
+            Pointed_Type                 => null,
+            Returned_Type                => null,
+            Primitive_Op_Of              => null,
+            Rename                       => null,
+            Instantiation_Of             => null,
+            Called_Entities              => Null_Entity_Information_List,
+            Primitive_Subprograms        => Null_Entity_Information_List,
+            Child_Types                  => Null_Entity_Information_List,
+            References                   => Entity_File_Maps.Empty_Map,
+            File_Timestamp_In_References => 0,
+            Is_Valid                     => True,
+            Ref_Count                    => 1,
+            Trie_Tree_Index              => 0);
          Ref (File);  --  Used in declaration
          Append (UEI.List.all, E);
 
