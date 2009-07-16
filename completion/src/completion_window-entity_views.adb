@@ -36,6 +36,8 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+
 with Traces; use Traces;
 
 package body Completion_Window.Entity_Views is
@@ -327,6 +329,10 @@ package body Completion_Window.Entity_Views is
          To_Marshaller (On_Button_Press'Access), View, After => False);
 
       Insert_Text (View.Ent, Initial, Position);
+
+      View.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
+      Modify_Font (View.Explorer.View, View.Explorer.Fixed_Width_Font);
+      Modify_Font (View.Ent, View.Explorer.Fixed_Width_Font);
    end Initialize;
 
    ------------------
