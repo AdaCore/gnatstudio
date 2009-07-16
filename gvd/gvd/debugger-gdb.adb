@@ -89,16 +89,12 @@ package body Debugger.Gdb is
    --  Matches a file name/line indication in gdb's output
 
    File_Name_Pattern2        : constant Pattern_Matcher :=
-     Compile ("^([^:\n]+):(\d+): No such file or directory.", Multiple_Lines);
+     Compile ("^(\d+)" & ASCII.HT &
+              "(in (.+)|(.+): No such file or directory.)",
+              Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
    --  Note that this pattern should work even when LANG isn't english because
    --  gdb does not seem to take into account this variable at all.
-
-   File_Name_Pattern3        : constant Pattern_Matcher :=
-     Compile ("^(\d+)" & ASCII.HT &
-              "(in )?([^:\n]+)(: No such file or directory.)?",
-              Multiple_Lines);
-   --  Variant of File_Name_Pattern2 used in recent versions of gdb
 
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
@@ -2556,26 +2552,26 @@ package body Debugger.Gdb is
          --  lines. There wouldn't be any need to test that if we knew what
          --  is the debugger output and what is the user's program output???
 
-         Match (File_Name_Pattern3, Str, Matched);
+         Match (File_Name_Pattern2, Str, Matched);
+
+         Addr_First := 0;
+         Addr_Last  := 0;
 
          if Matched (0) = No_Match then
-            Match (File_Name_Pattern2, Str, Matched);
+            Name_First := 0;
+            Name_Last  := 1;
+            Line       := 0;
+            return;
+         end if;
 
-            if Matched (0) = No_Match then
-               Name_First := 0;
-               Name_Last  := 1;
-               Addr_First := 0;
-               Addr_Last  := 0;
-               Line       := 0;
-               return;
-            end if;
+         if Matched (3) = No_Match then
+            Name_Index := 4;
          else
             Name_Index := 3;
-            Line_Index := 1;
-            Addr_Index := 0;
-            Addr_First := 0;
-            Addr_Last  := 0;
          end if;
+
+         Line_Index := 1;
+         Addr_Index := 0;
 
          First := Matched (0).First;
          Last  := Matched (0).Last;
