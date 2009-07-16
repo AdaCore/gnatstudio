@@ -245,6 +245,7 @@ package body Completion_Window is
             Pack_Start (HBox, Img, False, False, 3);
          end if;
          Gtk_New (Title, Item.Text.all);
+         Set_Selectable (Title, True);
          Modify_Font (Title, Explorer.Fixed_Width_Font);
          Pack_Start (HBox, Title, False, False, 3);
          Pack_Start (VBox, HBox, False, False, 1);
