@@ -17,12 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with System;                    use System;
-
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -31,7 +26,6 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
 with XML_Utils;                 use XML_Utils;
 
 with Gtk.Box;                   use Gtk.Box;
@@ -42,7 +36,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Model.Utils;      use Gtk.Tree_Model.Utils;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -53,7 +46,6 @@ with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Abstract_Tree_Model; use Gtkada.Abstract_Tree_Model;
 
 with Language;                  use Language;
 with Basic_Types;               use Basic_Types;
@@ -80,9 +72,14 @@ with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with Language_Handlers;      use Language_Handlers;
 
+with Outline_View.Model; use Outline_View.Model;
+
 package body Outline_View is
 
-   type Outline_View_Module_Record is new Module_ID_Record with null record;
+   type Outline_View_Module_Record is new Module_ID_Record with record
+      Construct_Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
+   end record;
+
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
 
@@ -91,9 +88,6 @@ package body Outline_View is
    Hist_Editor_Link       : constant History_Key := "outline-editor-link";
    Hist_Show_Decls        : constant History_Key := "outline-show-decls";
    Hist_Show_Types        : constant History_Key := "outline-show-types";
-
-   Pixbuf_Column       : constant := 0;
-   Display_Name_Column : constant := 1;
 
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
@@ -182,9 +176,10 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class);
    --  React to changes in the preferences
 
-   function Construct_Filter
-     (Construct : access Simple_Construct_Information) return Boolean;
-   --  Return False if the construct should be filtered out
+   function Get_Filter_Record
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Tree_Filter;
+   --  Return the filters properties extracted from the kernel.
 
    procedure Outline_Context_Factory
      (Context      : in out Selection_Context;
@@ -237,110 +232,17 @@ package body Outline_View is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
 
-   ----------------
-   -- Tree Model --
-   ----------------
+   ------------------------
+   -- Outline_Tree Model --
+   ------------------------
 
-   type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with
-      record
-         File : Structured_File_Access;
-      end record;
-   --  This model represents a structured tree. It contains instances of
-   --  Entity_Persisent_Access. Using the update listener callback, we ensure
-   --  that these entities are never referenced if they don't exist - so we
-   --  don't have to manage their references, they'll get deleted
-   --  automatically when irrelevant. We only do that for object that are
-   --  explicitelly referenced in the graphical outline, as a defensive code
-   --  for the case where they'd stay there longer because of a bug.
+   function Get_Outline_Model
+     (View : Outline_View_Access) return Outline_Model;
+   --  Return the outline model stored in this view
 
-   type Outline_Model is access all Outline_Model_Record'Class;
-
-   --  GtkTreeModel subprograms
-
-   overriding function Get_N_Columns
-     (Self : access Outline_Model_Record)
-      return Glib.Gint;
-
-   overriding function Get_Column_Type
-     (Self  : access Outline_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
-
-   overriding function Get_Iter
-     (Self : access Outline_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   function Get_Path
-     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
-      return Gtk_Tree_Path;
-
-   overriding function Get_Path
-     (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path;
-
-   overriding procedure Get_Value
-     (Self   : access Outline_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue);
-
-   overriding procedure Next
-     (Self : access Outline_Model_Record;
-      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
-
-   overriding function Children
-     (Self   : access Outline_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   overriding function Has_Child
-     (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
-
-   overriding function N_Children
-     (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
-      return Glib.Gint;
-
-   overriding function Nth_Child
-     (Self   : access Outline_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
-      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   overriding function Parent
-     (Self  : access Outline_Model_Record;
-      Child : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   overriding procedure Ref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter);
-
-   overriding procedure Unref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter);
-
-   procedure Clear (Model : access Outline_Model_Record'Class);
-
-   function To_Entity is new Ada.Unchecked_Conversion
-     (System.Address, Entity_Persistent_Access);
-   function To_Address is new Ada.Unchecked_Conversion
-     (Entity_Persistent_Access, System.Address);
-
-   function Filtered_Next
-     (Tree         : Construct_Tree;
-      It           : Construct_Tree_Iterator;
-      Scope_Policy : Scope_Navigation) return Construct_Tree_Iterator;
-
-   function Filtered_Prev
-     (Tree         : Construct_Tree;
-      It           : Construct_Tree_Iterator;
-      Scope_Policy : Scope_Navigation) return Construct_Tree_Iterator;
-
-   function Filtered_N_Children
-     (Tree : Construct_Tree;
-      It   : Construct_Tree_Iterator) return Gint;
+   procedure Set_Outline_Model
+     (View : access Outline_View_Record'Class; Model : Outline_Model);
+   --  Set the outline model to the tree of this view
 
    ----------
    -- Draw --
@@ -359,7 +261,7 @@ package body Outline_View is
       Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
 
       if Iter /= Null_Iter then
-         P_Entity := To_Entity (Get_User_Data_1 (Iter));
+         P_Entity := Get_Entity (Iter);
 
          if Exists (P_Entity) then
             Entity := To_Entity_Access (P_Entity);
@@ -386,39 +288,25 @@ package body Outline_View is
       Outline     : Outline_View_Access;
       Model       : Outline_Model;
       Path        : Gtk_Tree_Path;
-      Entity      : Construct_Tree_Iterator;
-
       Loc         : File_Location_Hooks_Args_Access;
    begin
+      null;
       if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
         and then Child /= null
       then
          Outline := Outline_View_Access (Get_Widget (Child));
-         Model   := Outline_Model (Get_Model (Outline.Tree));
+         Model   := Get_Outline_Model (Outline);
          Unselect_All (Get_Selection (Outline.Tree));
 
-         if Model = null or else Model.File = null then
+         if Model = null then
             return;
          end if;
 
          Loc := File_Location_Hooks_Args_Access (Data);
-         Entity := Get_Iterator_At
-           (Get_Tree (Model.File),
-            To_Location (Loc.Line, Loc.Column),
-            Position => Enclosing);
 
-         --  Place the iterator on an entity present in the outline.
+         Path := Get_Path_Enclosing_Location (Model, Loc.Line, Loc.Column);
 
-         while Entity /= Null_Construct_Tree_Iterator
-           and then not Construct_Filter (Get_Construct (Entity))
-         loop
-            Entity :=
-              Get_Parent_Scope (Get_Tree (Model.File), Entity);
-         end loop;
-
-         if Entity /= Null_Construct_Tree_Iterator then
-            Path := Get_Path (Get_Tree (Model.File), Entity);
-
+         if Get_Depth (Path) > 1 then
             declare
                Indices     : constant Glib.Gint_Array := Get_Indices (Path);
                Parent_Path : constant Gtk_Tree_Path := Gtk_New;
@@ -430,10 +318,10 @@ package body Outline_View is
                Expand_To_Path (Outline.Tree, Parent_Path);
                Path_Free (Parent_Path);
             end;
-
-            Set_Cursor (Outline.Tree, Path, null, False);
-            Path_Free (Path);
          end if;
+
+         Set_Cursor (Outline.Tree, Path, null, False);
+         Path_Free (Path);
       end if;
    end Location_Changed;
 
@@ -508,7 +396,7 @@ package body Outline_View is
          end if;
          Path_Free (Path);
 
-         P_Entity := To_Entity (Get_User_Data_1 (Iter));
+         P_Entity := Get_Entity (Iter);
 
          Set_Entity_Information
            (Context       => Context,
@@ -567,29 +455,26 @@ package body Outline_View is
       end if;
    end Outline_Context_Factory;
 
-   ---------------------
-   -- Category_Filter --
-   ---------------------
+   -----------------------
+   -- Get_Filter_Record --
+   -----------------------
 
-   function Construct_Filter
-     (Construct : access Simple_Construct_Information) return Boolean is
+   function Get_Filter_Record
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Tree_Filter
+   is
    begin
-      --  No "with", "use", "#include"
-      --  No constructs ("loop", "if", ...)
-
-      case Construct.Category is
-         when Subprogram_Explorer_Category |
-              Cat_Package .. Cat_Task |
-              Cat_Field | Cat_Variable |
-              Type_Category =>
-            null;
-
-         when others =>
-            return False;
-      end case;
-
-      return Construct.Name /= null;
-   end Construct_Filter;
+      return
+        (Hide_Types        => not Get_History
+           (Get_History (Kernel).all,
+            Hist_Show_Types),
+         Hide_Declarations => not Get_History
+           (Get_History (Kernel).all,
+            Hist_Show_Decls),
+         Show_Profile => Get_History
+           (Get_History (Kernel).all,
+            Hist_Show_Profile));
+   end Get_Filter_Record;
 
    ------------------
    -- Save_Desktop --
@@ -637,8 +522,11 @@ package body Outline_View is
    is
       View  : constant Outline_View_Access := Outline_View_Access (Outline);
       Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Entity : Entity_Persistent_Access;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
+      Line, Column, End_Column  : Integer;
+      Construct : access Simple_Construct_Information;
    begin
       if Get_Button (Event) = 1 then
          if View.File = No_File then
@@ -652,30 +540,31 @@ package body Outline_View is
             Set_Cursor (View.Tree, Path, null, False);
             Path_Free (Path);
 
+            Entity := Get_Entity (Iter);
+
+            Construct  := Get_Construct
+              (To_Construct_Tree_Iterator (To_Entity_Access (Entity)));
+
+            if Construct.Sloc_Entity.Index /= 0 then
+               Line := Construct.Sloc_Entity.Line;
+               Column := Construct.Sloc_Entity.Column;
+               End_Column := Column + Construct.Name'Length;
+            else
+               Line := Construct.Sloc_Start.Line;
+               Column := Construct.Sloc_Start.Column;
+               End_Column := Column;
+            end if;
+
             declare
                Buffer   : constant Editor_Buffer'Class :=
                  Get (Get_Buffer_Factory (View.Kernel).all,
                       View.File, False, False, False);
-               Entity : constant Entity_Persistent_Access :=
-                 To_Entity (Get_User_Data_1 (Iter));
-               Construct : constant access Simple_Construct_Information :=
-                 Get_Construct
-                   (To_Construct_Tree_Iterator (To_Entity_Access (Entity)));
-
-               Line     : constant Integer := Construct.Sloc_Entity.Line;
-               Column   : constant Integer := Construct.Sloc_Entity.Column;
-
                Location : constant Editor_Location'Class :=
                  New_Location (Buffer, Line, Column);
-               P_Entity : constant Entity_Persistent_Access :=
-                 To_Entity (Get_User_Data_1 (Iter));
                End_Location : constant Editor_Location'Class :=
-                 New_Location
-                   (Buffer, Line,
-                    Column + Get_Construct (P_Entity).Name'Length);
+                 New_Location (Buffer, Line, End_Column);
 
-               View     : constant Editor_View'Class :=
-                 Current_View (Buffer);
+               View : constant Editor_View'Class := Current_View (Buffer);
             begin
                Cursor_Goto (View, Location);
                Select_Text (Buffer, Location, End_Location);
@@ -694,91 +583,17 @@ package body Outline_View is
    -- File_Updated --
    ------------------
 
-   package Path_Lists is new
-     Ada.Containers.Doubly_Linked_Lists (Gtk_Tree_Path);
-
    overriding procedure File_Updated
      (Listener : access Outline_Db_Listener;
       File     : Structured_File_Access;
       Old_Tree : Construct_Tree;
       Kind     : Update_Kind)
    is
-      use Path_Lists;
-      pragma Unreferenced (Kind);
-
-      To_Delete : Path_Lists.List;
-      To_Insert : Path_Lists.List;
-
-      procedure Diff_Callback
-        (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
-
-      procedure Diff_Callback
-        (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind)
-      is
-         Path : Gtk_Tree_Path;
-      begin
-         case Kind is
-            when Removed =>
-               if Construct_Filter (Get_Construct (Old_Obj)) then
-                  Path := Get_Path (Old_Tree, Old_Obj);
-
-                  if Get_Depth (Path) > 0 then
-                     To_Delete.Append (Path);
-                  end if;
-               end if;
-
-            when Added =>
-               if Construct_Filter (Get_Construct (New_Obj)) then
-                  Path := Get_Path (Get_Tree (File), New_Obj);
-
-                  if Get_Depth (Path) > 0 then
-                     To_Insert.Append (Path);
-                  end if;
-               end if;
-
-            when Preserved =>
-               null;
-
-         end case;
-      end Diff_Callback;
-
+      Model : constant Outline_Model := Get_Outline_Model (Listener.Outline);
    begin
-      if Get_File_Path (File) = Listener.Outline.File
-        and then Old_Tree /= Null_Construct_Tree
-      then
-         Diff
-           (Lang     => Get_Tree_Language (File),
-            Old_Tree => Old_Tree,
-            New_Tree => Get_Tree (File),
-            Callback => Diff_Callback'Unrestricted_Access);
+      if Model /= null then
+         File_Updated (Model, File, Old_Tree, Kind);
       end if;
-
-      declare
-         It : Path_Lists.Cursor := To_Delete.Last;
-
-      begin
-         while It /= Path_Lists.No_Element loop
-            Row_Deleted (Get_Model (Listener.Outline.Tree), Element (It));
-            Path_Free (Element (It));
-
-            It := Previous (It);
-         end loop;
-      end;
-
-      declare
-         It : Path_Lists.Cursor := To_Insert.First;
-         Tree_Iter : Gtk_Tree_Iter;
-      begin
-         while It /= Path_Lists.No_Element loop
-            Tree_Iter :=
-              Get_Iter (Get_Model (Listener.Outline.Tree), Element (It));
-            Row_Inserted
-              (Get_Model (Listener.Outline.Tree), Element (It), Tree_Iter);
-
-            Path_Free (Element (It));
-            It := Next (It);
-         end loop;
-      end;
    end File_Updated;
 
    ---------------------
@@ -791,14 +606,14 @@ package body Outline_View is
    is
       pragma Unreferenced (Db);
 
-      Model : Gtk_Tree_Model;
+      Model : Outline_Model;
    begin
       Listener.Outline.File := No_File;
 
-      Model := Get_Model (Listener.Outline.Tree);
+      Model := Get_Outline_Model (Listener.Outline);
 
       if Model /= null then
-         Clear (Outline_Model (Model));
+         Free (Model);
       end if;
    end Before_Clear_Db;
 
@@ -859,7 +674,8 @@ package body Outline_View is
 
       Gtk_New (Text_Render);
       Pack_Start (Col, Text_Render, False);
-      Add_Attribute (Col, Text_Render, "markup", Display_Name_Column);
+      Add_Attribute
+        (Col, Text_Render, "markup", Outline_View.Model.Display_Name_Column);
       Clicked (Col);
 
       Add (Scrolled, Outline.Tree);
@@ -892,11 +708,9 @@ package body Outline_View is
       Tooltip.Outline := Outline;
       Set_Tooltip (Tooltip, Outline.Tree);
 
-      Model := new Outline_Model_Record'
-        (Gtk_Abstract_Tree_Model_Record with File => null);
-      Gtkada.Abstract_Tree_Model.Initialize (Model);
-      Set_Model
-        (Gtk_Tree_View (Outline.Tree), Gtk_Tree_Model (Model));
+      Model := null;
+
+      Set_Outline_Model (Outline, Model);
    end Gtk_New;
 
    ----------------
@@ -907,12 +721,18 @@ package body Outline_View is
      (Outline : access Gtk_Widget_Record'Class)
    is
       O : constant Outline_View_Access := Outline_View_Access (Outline);
+      Model : constant Outline_Model := Get_Outline_Model (O);
    begin
       Remove_Database_Listener
         (Get_Construct_Database (O.Kernel),
          Database_Listener_Access (O.Db_Listener));
 
       Free (O.Db_Listener);
+
+      if Model /= null then
+         Model.Free;
+      end if;
+
       Unref (O.Icon);
       Unref (O.File_Icon);
    end On_Destroy;
@@ -938,10 +758,6 @@ package body Outline_View is
       return Failure;
    end Execute;
 
-   -----------
-   -- Clear --
-   -----------
-
    -------------
    -- Refresh --
    -------------
@@ -963,8 +779,7 @@ package body Outline_View is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
       if Outline.File /= No_File then
-         Update_Contents
-           (Get_Construct_Database (Outline.Kernel), Outline.File);
+         Set_File (Outline, Outline.File);
       end if;
    end Force_Refresh;
 
@@ -1204,9 +1019,13 @@ package body Outline_View is
         (Get_History (Kernel).all, Hist_Show_Decls, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Types, True);
-   end Register_Module;
 
-   --   ??? add management of iter ref / unref
+      Construct_Annotations_Pckg.Get_Annotation_Key
+        (Get_Construct_Annotation_Key_Registry
+           (Get_Construct_Database (Kernel)).all,
+         Outline_View_Module_Record (Outline_View_Module.all).
+           Construct_Annotation_Key);
+   end Register_Module;
 
    --------------
    -- Set_File --
@@ -1230,18 +1049,23 @@ package body Outline_View is
          Get_Tree_Language_From_File
            (Get_Language_Handler (Outline.Kernel), Outline.File, True));
 
-      Model := Outline_Model (Get_Model (Outline.Tree));
+      Model := Get_Outline_Model (Outline_View_Access (Outline));
 
       if Model /= null then
-         Clear (Model);
+         Model.Free;
       end if;
 
       if Struct_File /= null then
-         Model := new Outline_Model_Record;
-         Model.File := Struct_File;
-         Gtkada.Abstract_Tree_Model.Initialize (Model);
+         Model := New_Model
+           (Outline_View_Module_Record
+              (Outline_View_Module.all).Construct_Annotation_Key,
+            Struct_File,
+            Get_Filter_Record (Outline.Kernel),
+            Get_History
+              (Get_History (Outline.Kernel).all,
+               Hist_Sort_Alphabetical));
 
-         Set_Model (Outline.Tree, Gtk_Tree_Model (Model));
+         Set_Outline_Model (Outline, Model);
 
          declare
             Path : Gtk_Tree_Path;
@@ -1258,573 +1082,35 @@ package body Outline_View is
       end if;
    end Set_File;
 
-   -------------------
-   -- Get_N_Columns --
-   -------------------
+   -----------------------
+   -- Get_Outline_Model --
+   -----------------------
 
-   overriding function Get_N_Columns
-     (Self : access Outline_Model_Record)
-      return Glib.Gint
+   function Get_Outline_Model
+     (View : Outline_View_Access) return Outline_Model
    is
-      pragma Unreferenced (Self);
+      Model : Gtk_Tree_Model;
    begin
-      return 2;
-   end Get_N_Columns;
+      Model := Get_Model (View.Tree);
 
-   ---------------------
-   -- Get_Column_Type --
-   ---------------------
-
-   overriding function Get_Column_Type
-     (Self  : access Outline_Model_Record;
-      Index : Glib.Gint) return Glib.GType
-   is
-      pragma Unreferenced (Self);
-   begin
-      if Index = Pixbuf_Column then
-         return Gdk.Pixbuf.Get_Type;
-      elsif Index = Display_Name_Column then
-         return GType_String;
-      end if;
-
-      return GType_String;
-   end Get_Column_Type;
-
-   --------------
-   -- Get_Iter --
-   --------------
-
-   overriding function Get_Iter
-     (Self : access Outline_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      Tree     : Construct_Tree;
-      It       : Construct_Tree_Iterator;
-      First_It : Construct_Tree_Iterator;
-   begin
-      if Self.File = null or else Get_Depth (Path) = 0 then
-         return Null_Iter;
-      end if;
-
-      Tree := Get_Tree (Self.File);
-
-      if Tree = Null_Construct_Tree then
-         return Null_Iter;
-      end if;
-
-      declare
-         Indices : constant Glib.Gint_Array := Get_Indices (Path);
-      begin
-         for J in Indices'Range loop
-            if J = Indices'First then
-               First_It := First (Tree);
-
-               if not Construct_Filter (Get_Construct (First_It)) then
-                  First_It := Filtered_Next (Tree, First_It, Jump_Over);
-               end if;
-            else
-               First_It := Filtered_Next (Tree, It, Jump_Into);
-            end if;
-
-            if First_It = Null_Construct_Tree_Iterator
-              or else Get_Parent_Scope (Tree, First_It) /= It
-            then
-               return Null_Iter;
-            end if;
-
-            It := First_It;
-
-            for K in 1 .. Indices (J) loop
-               --  We skip the element 0 - we're already on it - and then jump
-               --  over as many elements as needed.
-
-               if It = Null_Construct_Tree_Iterator
-                 or else Get_Parent_Scope (Tree, First_It)
-                 /= Get_Parent_Scope (Tree, It)
-               then
-                  return Null_Iter;
-               end if;
-
-               It := Filtered_Next (Tree, It, Jump_Over);
-            end loop;
-         end loop;
-      end;
-
-      if It /= Null_Construct_Tree_Iterator then
-         return Init_Tree_Iter
-           (Stamp       => 1,
-            User_Data_1 => To_Address
-              (To_Entity_Persistent_Access
-                 (To_Entity_Access (Self.File, It))),
-            User_Data_2 => System.Null_Address,
-            User_Data_3 => System.Null_Address);
+      if Model = null then
+         return null;
+      elsif Model.all in Outline_Model_Record'Class then
+         return Outline_Model (Model);
       else
-         return Null_Iter;
+         return null;
       end if;
-   end Get_Iter;
+   end Get_Outline_Model;
 
-   --------------
-   -- Get_Path --
-   --------------
+   -----------------------
+   -- Set_Outline_Model --
+   -----------------------
 
-   function Get_Path
-     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
-      return Gtk_Tree_Path
+   procedure Set_Outline_Model
+     (View : access Outline_View_Record'Class; Model : Outline_Model)
    is
-      Result : constant Gtk_Tree_Path := Gtk_New;
-      Cur_It, Prev_It : Construct_Tree_Iterator;
-      Current_Index : Gint := 0;
-      Cur_It_Parent : Construct_Tree_Iterator;
    begin
-      Cur_It := Iter;
-
-      while Cur_It /= Null_Construct_Tree_Iterator loop
-         Prev_It := Cur_It;
-         Cur_It := Filtered_Prev (Tree, Cur_It, Jump_Over);
-
-         Cur_It_Parent := Get_Parent_Scope (Tree, Cur_It);
-
-         if Cur_It_Parent /= Null_Construct_Tree_Iterator
-           and then
-             not Construct_Filter (Get_Construct (Cur_It_Parent))
-         then
-            --  If there's a parent that should be filtered out, then there's
-            --  no path for this entity.
-
-            Path_Free (Result);
-            return Gtk_New;
-         end if;
-
-         if Cur_It_Parent = Get_Parent_Scope (Tree, Prev_It) then
-            if Cur_It /= Null_Construct_Tree_Iterator then
-               Current_Index := Current_Index + 1;
-            end if;
-         else
-            Prepend_Index (Result, Current_Index);
-            Current_Index := 0;
-         end if;
-      end loop;
-
-      Prepend_Index (Result, Current_Index);
-
-      return Result;
-   end Get_Path;
-
-   overriding function Get_Path
-     (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
-   is
-      Tree   : constant Construct_Tree := Get_Tree (Self.File);
-      Entity : constant Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Iter));
-   begin
-      if not Exists (Entity) then
-         return Gtk_New;
-      end if;
-
-      return Get_Path
-        (Tree, To_Construct_Tree_Iterator (To_Entity_Access (Entity)));
-   end Get_Path;
-
-   ---------------
-   -- Get_Value --
-   ---------------
-
-   overriding procedure Get_Value
-     (Self   : access Outline_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue)
-   is
-      Entity   : constant Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Iter));
-      It : Construct_Tree_Iterator;
-   begin
-      It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-
-      if Column = Pixbuf_Column then
-         Init (Value, Gdk.Pixbuf.Get_Type);
-         Set_Object
-           (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
-
-      elsif Column = Display_Name_Column then
-         Init (Value, GType_String);
-
-         if Get_Construct (It).Name /= null then
-            if Get_Construct (It).Category in Subprogram_Category then
-               Set_String
-                 (Value, Get_Construct (It).Name.all
-                  & " <span foreground=""#A0A0A0"">"
-                  & Get_Profile
-                    (Get_Tree_Language (Self.File),
-                     To_Entity_Access (Entity),
-                     500)
-                  & "</span>");
-            else
-               Set_String (Value, Get_Construct (It).Name.all);
-            end if;
-
-         else
-            Set_String (Value, "no name");
-         end if;
-      end if;
-   end Get_Value;
-
-   ----------
-   -- Next --
-   ----------
-
-   overriding procedure Next
-     (Self : access Outline_Model_Record;
-      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
-      Tree   : constant Construct_Tree := Get_Tree (Self.File);
-      Entity : constant Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Iter));
-      It, Next_It : Construct_Tree_Iterator;
-   begin
-      It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-      Next_It := Filtered_Next (Tree, It, Jump_Over);
-
-      if Next_It = Null_Construct_Tree_Iterator
-        or else Get_Parent_Scope (Tree, It)
-        /= Get_Parent_Scope (Tree, Next_It)
-      then
-         Iter := Null_Iter;
-      else
-         --   ??? unref iter
-         Iter := Init_Tree_Iter
-           (Stamp       => 1,
-            User_Data_1 => To_Address
-              (To_Entity_Persistent_Access
-                 (To_Entity_Access (Self.File, Next_It))),
-            User_Data_2 => System.Null_Address,
-            User_Data_3 => System.Null_Address);
-      end if;
-   end Next;
-
-   --------------
-   -- Children --
-   --------------
-
-   overriding function Children
-     (Self   : access Outline_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      Tree         : Construct_Tree;
-      Entity       : Entity_Persistent_Access;
-      It, Child_It : Construct_Tree_Iterator;
-   begin
-      if Self.File = null then
-         return Null_Iter;
-      end if;
-
-      Tree := Get_Tree (Self.File);
-
-      if Parent = Null_Iter then
-         Child_It := First (Tree);
-
-         if not Construct_Filter (Get_Construct (Child_It)) then
-            Child_It := Filtered_Next (Tree, It, Jump_Into);
-         end if;
-
-      else
-         Entity := To_Entity (Get_User_Data_1 (Parent));
-         It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-         Child_It := Filtered_Next (Tree, It, Jump_Into);
-
-         if Child_It = Null_Construct_Tree_Iterator
-           or else It /= Get_Parent_Scope (Tree, Child_It)
-         then
-            return Null_Iter;
-         end if;
-      end if;
-
-      return Init_Tree_Iter
-        (Stamp       => 1,
-         User_Data_1 => To_Address
-           (To_Entity_Persistent_Access
-              (To_Entity_Access (Self.File, Child_It))),
-         User_Data_2 => System.Null_Address,
-         User_Data_3 => System.Null_Address);
-   end Children;
-
-   ---------------
-   -- Has_Child --
-   ---------------
-
-   overriding function Has_Child
-     (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
-   is
-      Entity   : constant Entity_Persistent_Access :=
-                   To_Entity (Get_User_Data_1 (Iter));
-      It : Construct_Tree_Iterator;
-   begin
-      It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-
-      return Filtered_N_Children (Get_Tree (Self.File), It) /= 0;
-   end Has_Child;
-
-   ----------------
-   -- N_Children --
-   ----------------
-
-   overriding function N_Children
-     (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
-      return Glib.Gint
-   is
-      Entity : Entity_Persistent_Access;
-      It     : Construct_Tree_Iterator;
-   begin
-      if Self.File = null then
-         return 0;
-      end if;
-
-      if Iter = Null_Iter then
-         It := Null_Construct_Tree_Iterator;
-      else
-         Entity := To_Entity (Get_User_Data_1 (Iter));
-         It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-      end if;
-
-      return Filtered_N_Children (Get_Tree (Self.File), It);
-   end N_Children;
-
-   ---------------
-   -- Nth_Child --
-   ---------------
-
-   overriding function Nth_Child
-     (Self   : access Outline_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
-      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      Tree          : Construct_Tree;
-      Iter          : Gtk_Tree_Iter;
-      Parent_Entity : Entity_Persistent_Access;
-      Parent_Iter   : Construct_Tree_Iterator;
-      Child_Iter    : Construct_Tree_Iterator;
-   begin
-      if Self.File = null then
-         return Null_Iter;
-      end if;
-
-      Tree := Get_Tree (Self.File);
-
-      if Parent = Null_Iter then
-         Parent_Iter := Null_Construct_Tree_Iterator;
-         Child_Iter := First (Tree);
-      else
-         if not Exists (Parent_Entity) then
-            return Null_Iter;
-         end if;
-
-         Parent_Entity := To_Entity (Get_User_Data_1 (Parent));
-         Parent_Iter := To_Construct_Tree_Iterator
-           (To_Entity_Access (Parent_Entity));
-         Child_Iter := Filtered_Next (Tree, Parent_Iter, Jump_Into);
-      end if;
-
-      for J in 2 .. N loop
-         if Child_Iter = Null_Construct_Tree_Iterator
-           or else Get_Parent_Scope (Tree, Child_Iter) /= Parent_Iter
-         then
-            return Null_Iter;
-         end if;
-
-         Child_Iter := Filtered_Next (Tree, Child_Iter, Jump_Over);
-      end loop;
-
-      if Child_Iter = Null_Construct_Tree_Iterator
-        or else Get_Parent_Scope (Tree, Child_Iter) /= Parent_Iter
-      then
-         return Null_Iter;
-      end if;
-
-      Iter := Init_Tree_Iter
-        (Stamp       => 1,
-         User_Data_1 => To_Address
-           (To_Entity_Persistent_Access
-              (To_Entity_Access (Self.File, Child_Iter))),
-         User_Data_2 => System.Null_Address,
-         User_Data_3 => System.Null_Address);
-
-      return Iter;
-   end Nth_Child;
-
-   ------------
-   -- Parent --
-   ------------
-
-   overriding function Parent
-     (Self  : access Outline_Model_Record;
-      Child : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      Tree   : constant Construct_Tree := Get_Tree (Self.File);
-      Entity : constant Entity_Persistent_Access :=
-        To_Entity (Get_User_Data_1 (Child));
-      It, Parent_It : Construct_Tree_Iterator;
-   begin
-      It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
-
-      Parent_It := Get_Parent_Scope (Tree, It);
-
-      if Parent_It = Null_Construct_Tree_Iterator then
-         return Null_Iter;
-      else
-         return Init_Tree_Iter
-           (Stamp       => 1,
-            User_Data_1 => To_Address
-              (To_Entity_Persistent_Access
-                 (To_Entity_Access (Self.File, Parent_It))),
-            User_Data_2 => System.Null_Address,
-            User_Data_3 => System.Null_Address);
-      end if;
-   end Parent;
-
-   --------------
-   -- Ref_Node --
-   --------------
-
-   overriding procedure Ref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter)
-   is
-      pragma Unreferenced (Tree_Model);
-
-      Entity : Entity_Persistent_Access :=
-                 To_Entity (Get_User_Data_1 (Iter));
-   begin
-      Ref (Entity);
-   end Ref_Node;
-
-   ----------------
-   -- Unref_Node --
-   ----------------
-
-   overriding procedure Unref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter)
-   is
-      pragma Unreferenced (Tree_Model);
-
-      Entity : Entity_Persistent_Access :=
-                 To_Entity (Get_User_Data_1 (Iter));
-   begin
-      Unref (Entity);
-   end Unref_Node;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Model : access Outline_Model_Record'Class) is
-      Path : Gtk_Tree_Path;
-      Iter : Gtk_Tree_Iter;
-   begin
-      if Model.File = null then
-         return;
-      end if;
-
-      for J in 1 .. N_Children (Model) loop
-         Path := Gtk_New;
-         Append_Index (Path, J - 1);
-
-         if J = 1 then
-            Iter := Get_Iter (Model, Path);
-         else
-            Next (Model, Iter);
-         end if;
-
-         if Iter /= Null_Iter then
-            Row_Deleted (Model, Path);
-         end if;
-
-         Path_Free (Path);
-      end loop;
-
-      Model.File := null;
-   end Clear;
-
-   -------------------
-   -- Filtered_Next --
-   -------------------
-
-   function Filtered_Next
-     (Tree         : Construct_Tree;
-      It           : Construct_Tree_Iterator;
-      Scope_Policy : Scope_Navigation) return Construct_Tree_Iterator
-   is
-      Cur_It : Construct_Tree_Iterator := It;
-   begin
-      loop
-         Cur_It := Next (Tree, Cur_It, Scope_Policy);
-
-         exit when Cur_It = Null_Construct_Tree_Iterator
-           or else Construct_Filter (Get_Construct (Cur_It));
-      end loop;
-
-      return Cur_It;
-   end Filtered_Next;
-
-   -------------------
-   -- Filtered_Prev --
-   -------------------
-
-   function Filtered_Prev
-     (Tree         : Construct_Tree;
-      It           : Construct_Tree_Iterator;
-      Scope_Policy : Scope_Navigation) return Construct_Tree_Iterator
-   is
-      Cur_It : Construct_Tree_Iterator := It;
-   begin
-      loop
-         Cur_It := Prev (Tree, Cur_It, Scope_Policy);
-
-         exit when Cur_It = Null_Construct_Tree_Iterator
-           or else
-             Construct_Filter (Get_Construct (Cur_It));
-      end loop;
-
-      return Cur_It;
-   end Filtered_Prev;
-
-   -------------------------
-   -- Filtered_N_Children --
-   -------------------------
-
-   function Filtered_N_Children
-     (Tree : Construct_Tree;
-      It   : Construct_Tree_Iterator) return Gint
-   is
-      Cur_It : Construct_Tree_Iterator;
-      Total  : Gint := 0;
-   begin
-      if It = Null_Construct_Tree_Iterator then
-         Cur_It := First (Tree);
-
-         if not Construct_Filter (Get_Construct (Cur_It)) then
-            Cur_It := Filtered_Next (Tree, It, Jump_Over);
-         end if;
-
-      else
-         Cur_It := Filtered_Next (Tree, It, Jump_Into);
-      end if;
-
-      while Cur_It /= Null_Construct_Tree_Iterator
-        and then Get_Parent_Scope (Tree, Cur_It) = It
-      loop
-         Total := Total + 1;
-         Cur_It := Filtered_Next (Tree, Cur_It, Jump_Over);
-      end loop;
-
-      return Total;
-   end Filtered_N_Children;
+      Set_Model (View.Tree, Gtk_Tree_Model (Model));
+   end Set_Outline_Model;
 
 end Outline_View;

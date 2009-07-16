@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
+--                     Copyright (C) 2004-2009, AdaCore              --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,8 @@
 with GPS.Kernel;
 
 package Outline_View is
+
+   Outline_Error : exception;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
