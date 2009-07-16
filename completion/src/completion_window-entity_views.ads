@@ -57,7 +57,10 @@ private
    type Entity_View_Record is new Gtk_Vbox_Record with record
       Explorer : Completion_Explorer_Access;
       Ent      : Gtk_Entry;
-      Pane     : Gtk_Hpaned;
+      Pane     : Gtk_Paned;
+      Notes_Scroll : Gtk_Scrolled_Window;
+
+      Is_Horizontal : Boolean := True;
    end record;
 
 end Completion_Window.Entity_Views;
