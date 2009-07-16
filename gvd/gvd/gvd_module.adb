@@ -698,7 +698,7 @@ package body GVD_Module is
                Addr : constant String :=
                         Query_User (Gtk_Window (Top),
                                     -"Enter starting address of module's text",
-                                    False, False);
+                                    False, False, "0");
 
             begin
                Add_Symbols
