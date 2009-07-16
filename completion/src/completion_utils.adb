@@ -126,6 +126,7 @@ package body Completion_Utils is
          begin
             --  Create the label
             Gtk_New (Label);
+            Set_Selectable (Label, True);
             Set_Line_Wrap (Label, False);
             Set_Use_Markup (Label, True);
             Modify_Font (Label, Fixed_Width_Font);
