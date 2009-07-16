@@ -21,6 +21,12 @@
 
 with Gtk.GEntry; use Gtk.GEntry;
 
+with XML_Utils;  use XML_Utils;
+with Gtkada.MDI; use Gtkada.MDI;
+with Gtk.Paned;  use Gtk.Paned;
+
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+
 package Completion_Window.Entity_Views is
 
    type Entity_View_Record is new Gtk_Vbox_Record with private;
@@ -29,20 +35,29 @@ package Completion_Window.Entity_Views is
    procedure Gtk_New
      (View     : out Entity_View_Access;
       Kernel   : Kernel_Handle;
-      Initial  : UTF8_String);
+      Initial  : Glib.UTF8_String);
    --  Create a new Completion_Explorer
 
    procedure Initialize
      (View     : access Entity_View_Record'Class;
       Kernel   : Kernel_Handle;
-      Initial  : UTF8_String);
+      Initial  : Glib.UTF8_String);
    --  Internal initialization procedure
+
+   function Save_Desktop
+     (View : access Entity_View_Record'Class) return Node_Ptr;
+   function Load_Desktop
+     (Kernel : Kernel_Handle;
+      Node   : Node_Ptr;
+      Module : Module_ID) return MDI_Child;
+   --  Desktop functions
 
 private
 
    type Entity_View_Record is new Gtk_Vbox_Record with record
       Explorer : Completion_Explorer_Access;
       Ent      : Gtk_Entry;
+      Pane     : Gtk_Hpaned;
    end record;
 
 end Completion_Window.Entity_Views;

@@ -343,12 +343,9 @@ package body Completion_Module is
       User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
-      N : Node_Ptr;
    begin
       if Widget.all in Entity_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Entity_View");
-         return N;
+         return Save_Desktop (Entity_View_Access (Widget));
       end if;
       return null;
    end Save_Desktop;
@@ -365,7 +362,8 @@ package body Completion_Module is
       pragma Unreferenced (MDI);
    begin
       if Node.Tag.all = "Entity_View" then
-         return Entity_View (User);
+         return Completion_Window.Entity_Views.Load_Desktop
+           (User, Node, Module_ID (Completion_Module));
       end if;
       return null;
    end Load_Desktop;

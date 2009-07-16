@@ -33,12 +33,15 @@ with Language.Ada;                   use Language.Ada;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Intl;                  use GPS.Intl;
 with Traces; use Traces;
 
 package body Completion_Window.Entity_Views is
 
    Minimal_Items_To_Show : constant := 50;
+   Initial_Tree_Size     : constant := 300; --  Width of the tree, in pixel
 
    package Simple_Cb is new Gtk.Handlers.Callback
      (Entity_View_Record);
@@ -77,7 +80,7 @@ package body Completion_Window.Entity_Views is
    procedure Gtk_New
      (View     : out Entity_View_Access;
       Kernel   : Kernel_Handle;
-      Initial  : UTF8_String)
+      Initial  : Glib.UTF8_String)
    is
    begin
       View := new Entity_View_Record;
@@ -265,7 +268,7 @@ package body Completion_Window.Entity_Views is
    procedure Initialize
      (View     : access Entity_View_Record'Class;
       Kernel   : Kernel_Handle;
-      Initial  : UTF8_String)
+      Initial  : Glib.UTF8_String)
    is
       Hbox     : Gtk_Hbox;
       Label    : Gtk_Label;
@@ -276,7 +279,7 @@ package body Completion_Window.Entity_Views is
 
       Gtk_New_Hbox (Hbox);
 
-      Gtk_New (Label, "Pattern: ");
+      Gtk_New (Label, -"Pattern: ");
       Pack_Start (Hbox, Label, False, False, 3);
 
       Gtk_New (View.Ent);
@@ -287,14 +290,17 @@ package body Completion_Window.Entity_Views is
 
       Gtk_New (View.Explorer, Kernel);
 
-      Gtk_New_Hbox (Hbox, Homogeneous => True);
-      Pack_Start (Hbox, View.Explorer, False, True, 3);
-
       Gtk_New (Scroll);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
       Add_With_Viewport (Scroll, View.Explorer.Notes_Container);
-      Pack_Start (Hbox, Scroll, True, True, 3);
-      Pack_Start (View, Hbox, True, True, 0);
+
+      Gtk_New_Hpaned (View.Pane);
+      Add1 (View.Pane, View.Explorer);
+      Add2 (View.Pane, Scroll);
+
+      Pack_Start (View, View.Pane, True, True, 0);
+
+      Set_Position (View.Pane, Initial_Tree_Size);
 
       --  Callbacks
 
@@ -322,5 +328,54 @@ package body Completion_Window.Entity_Views is
 
       Insert_Text (View.Ent, Initial, Position);
    end Initialize;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (View : access Entity_View_Record'Class) return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      N := new Node;
+      N.Tag := new String'("Entity_View");
+      Set_Attribute (N, "position", Get_Position (View.Pane)'Img);
+      return N;
+   end Save_Desktop;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Kernel : Kernel_Handle;
+      Node   : Node_Ptr;
+      Module : Module_ID) return MDI_Child
+   is
+      Explorer : Entity_View_Access;
+      Child    : GPS_MDI_Child;
+   begin
+      Gtk_New (Explorer, Kernel, "");
+      Gtk_New (Child, Explorer,
+               Group => Group_Consoles,
+               Module => Module);
+      Set_Title (Child, -"Entity View", -"Entity View");
+      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
+
+      declare
+      begin
+         Set_Position (Explorer.Pane, Gint'Value
+           (Get_Attribute (Node, "position", Initial_Tree_Size'Img)));
+      exception
+         when Constraint_Error =>
+            Insert
+              (Kernel,
+               "Wrong value for attribute position in entity view",
+               Mode => Error);
+      end;
+
+      return MDI_Child (Child);
+   end Load_Desktop;
 
 end Completion_Window.Entity_Views;
