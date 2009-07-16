@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
 with Glib.Object;          use Glib.Object;
+with Glib.Convert;         use Glib.Convert;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gtk.Tree_Model.Utils; use Gtk.Tree_Model.Utils;
 
@@ -591,7 +592,7 @@ package body Outline_View.Model is
               and then Get_Construct (It).Category in Subprogram_Category
             then
                Set_String
-                 (Value, Get_Construct (It).Name.all
+                 (Value, Escape_Text (Get_Construct (It).Name.all)
                   & " <span foreground=""#A0A0A0"">"
                   & Get_Profile
                     (Get_Tree_Language (Self.File),
@@ -599,7 +600,7 @@ package body Outline_View.Model is
                      500)
                   & "</span>");
             else
-               Set_String (Value, Get_Construct (It).Name.all);
+               Set_String (Value, Escape_Text (Get_Construct (It).Name.all));
             end if;
 
          else
