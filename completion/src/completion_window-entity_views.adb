@@ -57,6 +57,10 @@ package body Completion_Window.Entity_Views is
      (View : access Entity_View_Record'Class);
    --  Called when the text in the entry is changed
 
+   procedure On_Size_Allocated
+     (View : access Entity_View_Record'Class);
+   --  Called when the size has been allocated
+
    function On_Entry_Key_Press
      (View  : access Entity_View_Record'Class;
       Event : Gdk_Event) return Boolean;
@@ -274,7 +278,6 @@ package body Completion_Window.Entity_Views is
    is
       Hbox     : Gtk_Hbox;
       Label    : Gtk_Label;
-      Scroll   : Gtk_Scrolled_Window;
       Position : Gint := -1;
    begin
       Initialize_Vbox (View);
@@ -292,13 +295,13 @@ package body Completion_Window.Entity_Views is
 
       Gtk_New (View.Explorer, Kernel);
 
-      Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add_With_Viewport (Scroll, View.Explorer.Notes_Container);
+      Gtk_New (View.Notes_Scroll);
+      Set_Policy (View.Notes_Scroll, Policy_Automatic, Policy_Automatic);
+      Add_With_Viewport (View.Notes_Scroll, View.Explorer.Notes_Container);
 
       Gtk_New_Hpaned (View.Pane);
       Add1 (View.Pane, View.Explorer);
-      Add2 (View.Pane, Scroll);
+      Add2 (View.Pane, View.Notes_Scroll);
 
       Pack_Start (View, View.Pane, True, True, 0);
 
@@ -328,12 +331,60 @@ package body Completion_Window.Entity_Views is
         (View.Explorer.View, Signal_Button_Press_Event,
          To_Marshaller (On_Button_Press'Access), View, After => False);
 
+      Object_Connect
+        (View, Signal_Size_Allocate,
+         To_Marshaller (On_Size_Allocated'Access), View, After => True);
+
       Insert_Text (View.Ent, Initial, Position);
 
       View.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
       Modify_Font (View.Explorer.View, View.Explorer.Fixed_Width_Font);
       Modify_Font (View.Ent, View.Explorer.Fixed_Width_Font);
    end Initialize;
+
+   -----------------------
+   -- On_Size_Allocated --
+   -----------------------
+
+   procedure On_Size_Allocated
+     (View : access Entity_View_Record'Class)
+   is
+      Width, Height : Allocation_Int;
+   begin
+      Width := Get_Allocation_Width (View);
+      Height := Get_Allocation_Height (View);
+
+      if (Width > Height and then not View.Is_Horizontal)
+        or else (Width < Height and then View.Is_Horizontal)
+      then
+         --  We need to switch the orientation
+
+         View.Is_Horizontal := not View.Is_Horizontal;
+
+         Ref (View.Explorer);
+         Ref (View.Notes_Scroll);
+         Remove (View.Pane, View.Explorer);
+         Remove (View.Pane, View.Notes_Scroll);
+         Remove (View, View.Pane);
+
+         if View.Is_Horizontal then
+            Gtk_New_Hpaned (View.Pane);
+            Set_Position (View.Pane, Initial_Tree_Size);
+         else
+            Gtk_New_Vpaned (View.Pane);
+            Set_Position (View.Pane, Height * 2 / 3);
+         end if;
+
+         Pack_Start (View, View.Pane, True, True, 0);
+         Add1 (View.Pane, View.Explorer);
+         Add2 (View.Pane, View.Notes_Scroll);
+
+         Show_All (View);
+      end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Size_Allocated;
 
    ------------------
    -- Save_Desktop --
