@@ -180,6 +180,9 @@ def parse_tips ():
            if len (l) > 1:
               current_tip_text += l + '\n'
 
+    if len (current_tip_text) > 0:
+        result += [(current_tip_title, current_tip_text)]
+
     return result
 
 def display_tip (title, doc):
