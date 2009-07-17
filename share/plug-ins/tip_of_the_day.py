@@ -15,103 +15,109 @@ import re
 
 tips = """
 
-Tip 1
+Tip 1: Insert spaces with TAB key
 
 You'd like the TAB key to insert spaces? Go to Edit->Key shortcuts,
 then select the Editor->Insert Tab With Spaces action, then click on
 'Grab' and hit the 'TAB' key.
 
-Tip 2
+Tip 2: Multiple views of the same file
 
 Need to view multiple parts of the same file? Use the menu File->New View,
 or hold the shift key, click on the Editor's title bar and drag it to a
 place where you'd like the new view to be created
 
-Tip 3
+Tip 3: How to gain space on your workspace
 
 In order to gain room in your workspace, you can go to Edit->Preferences,
 then Windows and disable the 'Show title bars' option: this will remove
 the title bars on each window.
 
-Tip 4
+Tip 4: Move the position of notebook tabs
 
 Did you know that you can move the position of the notebook tabs?
 To do so, you can right click on any tab and select the Tabs location menu.
 Alternatively, you can also go to Edit->Preferences and then Windows.
 
-Tip 5
+Tip 5: Add subprogram box
 
-Edit->Key shortcuts Editor->Subprogram Box then glick 'Grab' and
-type a key short cut (e.g. "control-b control-b")
+Ever wanted to ask GPS to automatically add a box containing the current
+subprogram name just before this subprogram?
+Go to Edit->Key shortcuts, select Editor->Subprogram Box then glick 'Grab'
+and type a key short cut (e.g. "control-b control-b"). You can then use this
+key shortcut in the middle of a subprogram.
 
-Tip 6
+Tip 6: Highlight all occurrences of a word
 
-To temporarily disable auto casing, you can use the alt-q key
+You'd like to highlight all occurrences of the current word in the editor?
+Enable the 'occurrences.py' plug-in in Tools->Plug-ins and then set a key
+short cut for the 'Mark Occurrences' action via the Edit->Shortcuts editor.
 
-Tip 7
+Tip 7: Disable indentation temporarily
 
 To disable casing and indentation on the next key (e.g. Enter key), you
 can use the control-q key and then press e.g. Enter.
 
-Tip 8
+Tip 8: How to <i>unfloat</i> a window
 
 To unfloat a window, you can simply click on the close button and it will
 automatically go back to its original location in the GPS main window.
 Alternatively, you can also select the window, and then use the Window->Float
 menu in the main window.
 
-Tip 9
+Tip 9: OS shell
 
-Need to have a quick access to an OS shell? Go to Tools->Consoles->OS Shell
+Need to have a quick access to an OS shell?
+Go to Tools->Consoles->OS Shell
 
-Tip 10
+Tip 10: Build menu configuration
 
 You would like to configure the Build menu items (either modify the commands
 launched, or add/remove menu items)? Go to Build->Settings->Targets
 
-Tip 11
+Tip 11: Makefile support
 
 If you have a Makefile in the same directory where you project file is located,
 GPS will automatically parse it and create a Build->Makefile menu with
 all the targets defined in your Makefile
 
-Tip 12
+Tip 12: Keyboard macro
 
 You always perform the same sequence of keys? You can record it as a macro
 and replay it automatically using the Tools->Macro menu
 
-Tip 13
+Tip 13: Entities View
 
 Need to find an entity in your project and its associated
 profile/documentation? Use Tools->Views->Entities
 
-Tip 14
+Tip 14: Entities View and drag'n'drop
 
 Did you know that you can drag-n-drop the Entities View
 (Tools->Views->Entities) to e.g. the left part of the main window, and it will
 automatically switch to a vertical display to fit the space available?
 
-Tip 15
+Tip 15: Sorting in Outline View
 
 The Outline View (Tools->Views->Outline) by default displays entities in
 alphabetical order. You can instead get entities sorted by order of appearance
 in the file by right clicking in the Outline View and unselect
 Outline->Sort alphabetically
 
-Tip 16
+Tip 16: Build modes
 
 To rebuild your project with different switches, you can use the Build mode
 combo selector in the main toolbar: by default it provides predefined
 modes (debug, optimize, gprof, ...). You can also create your own build
 modes via simple xml files.
 
-Tip 17
+Tip 17: Temporarily add a build switch
 
 Need to temporarily and quickly add a switch for your build? Use the
 Build->Project menu and you'll get access to the command line launched by GPS
 to perform the build action, with the ability to modify it.
 
-Tip 18
+Tip 18: Smart completion
 
 If you need GPS to automatically complete the name of an entity, or fill
 a subprogram profile, simply pressing ctrl-space in a source editor will
@@ -119,19 +125,19 @@ display a completion list with possible completion for the current word.
 Automatic completion is also displayed automatically when you type special
 characters such as '.' or '('
 
-Tip 19
+Tip 19: Dynamic smart completion
 
 You'd like GPS to make more suggestions automatically to complete identifiers
 while you're typing without having to press control-space? Go to
-Edit->Preferences, Editor and then set the 'Smart competion' preference to
+Edit->Preferences, Editor and then set the 'Smart completion' preference to
 'Dynamic'. You might also want to tune the default timeout.
 
-Tip 20
+Tip 20: Highlight dispatching calls
 
 Did you know that GPS can highlight all dispatching calls in your source?
 To do so, go to Tools->Plug-ins and enable the 'dispatching.py' plug-in.
 
-Tip 21
+Tip 21: Source navigation through dispatching calls
 
 Did you know that when opening a contextual menu on a dispatching call,
 GPS is able to list all the possible targets for this call? By default, GPS
@@ -140,18 +146,23 @@ computed in memory, and you can get more accurate and complete results
 by going to Edit->Preferences and change the
 Editor->Submenu for dispatching calls preference to 'Accurate'.
 
-Tip 22
+Tip 22: Ada constructs menu
 
 Need to have GPS insert automatically text of Ada constructs? Go to
 Tools->Plug-ins and enable the predef_ada_entity_insertions.py plug-in which
 will add contextual menus in the source editor.
 
-Tip 23
+Tip 23: On the fly auto casing 
 
-You'd like to highlight all occurrences of the current word in the editor?
-Enable the 'occurrences.py' plug-in in Tools->Plug-ins and then set a key
-short cut for the 'Mark Occurrences' action via the Edit->Shortcuts editor.
+To enable on the fly automatic casing of your identifiers, go to
+Edit->Preferences, then select Editor->Ada and set 'Casing policy' to
+'On_The_Fly', or if you find that too intrusive, 'End_Of_Line'.
 
+Tip 24: Disable temporarily auto casing
+
+To temporarily disable auto casing, you can use the alt-q key.
+This can be particularly useful when you've set the casing policy to
+'On The Fly' (see previous tip). You can re-enable it using the same key.
 
 """
 
