@@ -760,7 +760,7 @@ package body Entities.Queries is
 
                   if Iter.Files_It = Entity_File_Maps.No_Element then
                      --  All files may have been removed at this stage, so exit
-                     --  the loop.
+                     --  the loop if that's the case.
 
                      exit;
                   end if;
