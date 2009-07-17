@@ -20,8 +20,6 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNAT.Strings; use GNAT.Strings;
-
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 with Language.Ada; use Language.Ada;
@@ -42,7 +40,8 @@ package body Ada_Semantic_Tree.Interfaces is
 
    type Interface_Annotation_Record is new General_Annotation_Record
    with record
-      Name : String_Access;
+      Name       : String_Access;
+      Convention : String_Access;
    end record;
 
    overriding procedure Free
@@ -124,9 +123,13 @@ package body Ada_Semantic_Tree.Interfaces is
 
    type Interface_Kind is (Import, Export);
 
-   type Interface_Pragma (Length : Integer) is record
-      Name : String (1 .. Length);
-      Kind : Interface_Kind;
+   type Interface_Pragma
+     (Name_Length : Integer; Conv_Length : Integer)
+      is record
+
+         Name       : String (1 .. Name_Length);
+         Convention : String (1 .. Conv_Length);
+         Kind       : Interface_Kind;
    end record;
 
    package Name_Association is new Ada.Containers.Indefinite_Ordered_Maps
@@ -269,6 +272,10 @@ package body Ada_Semantic_Tree.Interfaces is
                           Buffer
                             (Parsed_Info (Entity).Sloc_Start.Index ..
                                Parsed_Info (Entity).Sloc_End.Index);
+                        Conv_Name : constant String :=
+                          Buffer
+                            (Parsed_Info (Convention).Sloc_Start.Index ..
+                               Parsed_Info (Convention).Sloc_End.Index);
                      begin
                         if Ext_Name'Length >= 2
                           and then Ext_Name (Ext_Name'First) = '"'
@@ -279,8 +286,10 @@ package body Ada_Semantic_Tree.Interfaces is
                            Current_Associations.Insert
                              (Ent_Name,
                               (Ext_Name'Length - 2,
+                               Conv_Name'Length,
                                Ext_Name
                                  (Ext_Name'First + 1 .. Ext_Name'Last - 1),
+                               Conv_Name,
                                Current_Interface_Kind));
                         end if;
                      end;
@@ -290,12 +299,18 @@ package body Ada_Semantic_Tree.Interfaces is
                           Buffer
                             (Parsed_Info (Entity).Sloc_Start.Index ..
                                Parsed_Info (Entity).Sloc_End.Index);
+                        Conv_Name : constant String :=
+                          Buffer
+                            (Parsed_Info (Convention).Sloc_Start.Index ..
+                               Parsed_Info (Convention).Sloc_End.Index);
                      begin
                         if not Current_Associations.Contains (Ent_Name) then
                            Current_Associations.Insert
                              (Ent_Name,
                               (Ent_Name'Length,
+                               Conv_Name'Length,
                                Ent_Name,
+                               Conv_Name,
                                Current_Interface_Kind));
                         end if;
                      end;
@@ -323,7 +338,9 @@ package body Ada_Semantic_Tree.Interfaces is
                        (Other_Kind,
                         new Interface_Annotation_Record'
                           (General_Annotation_Record
-                           with Name => new String'(P.Name)));
+                           with
+                           Name       => new String'(P.Name),
+                           Convention => new String'(P.Convention)));
 
                      Set_Annotation
                        (Get_Annotation_Container (Tree, It).all,
@@ -389,7 +406,9 @@ package body Ada_Semantic_Tree.Interfaces is
    -- Get_Imported_Entity --
    -------------------------
 
-   function Get_Imported_Entity (Entity : Entity_Access) return String is
+   function Get_Imported_Entity
+     (Entity : Entity_Access) return Imported_Entity
+   is
       Assistant : constant Database_Assistant_Access :=
         Get_Assistant (Get_Database (Get_File (Entity)));
 
@@ -405,10 +424,32 @@ package body Ada_Semantic_Tree.Interfaces is
          Annot);
 
       if Annot /= Null_Annotation then
-         return Interface_Annotation_Record (Annot.Other_Val.all).Name.all;
+         return
+           (Name       =>
+              Interface_Annotation_Record (Annot.Other_Val.all).Name,
+            Convention =>
+              Interface_Annotation_Record (Annot.Other_Val.all).Convention);
       else
-         return "";
+         return Null_Imported_Entity;
       end if;
    end Get_Imported_Entity;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Entity : Imported_Entity) return String is
+   begin
+      return Entity.Name.all;
+   end Get_Name;
+
+   --------------------
+   -- Get_Convention --
+   --------------------
+
+   function Get_Convention (Entity : Imported_Entity) return String is
+   begin
+      return Entity.Convention.all;
+   end Get_Convention;
 
 end Ada_Semantic_Tree.Interfaces;

@@ -568,11 +568,13 @@ procedure Ada_Semantic_Tree.Test is
 
             if not At_End (It) then
                declare
-                  Imported : constant String :=
+                  Imported : constant Imported_Entity :=
                     Get_Imported_Entity (Get_Entity (It));
                begin
-                  if Imported /= "" then
-                     Put_Line ("---> " & Imported);
+                  if Imported /= Null_Imported_Entity then
+                     Put_Line
+                       ("---> " & Get_Name (Imported)
+                        & " [" & Get_Convention (Imported) & "]");
                   else
                      Put_Line ("---> <no import>");
                   end if;

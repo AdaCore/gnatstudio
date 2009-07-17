@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;           use GNAT.Strings;
+
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -36,7 +38,30 @@ package Ada_Semantic_Tree.Interfaces is
       return Entity_Access;
    --  Return the entity exported to this name, Null_Entity_Access if none.
 
-   function Get_Imported_Entity (Entity : Entity_Access) return String;
-   --  Return the name imported by this entity, if any.
+   type Imported_Entity is private;
+   --  Type representing this entity imported data. This should not be stored
+   --  for a long time, as its contents will be invalidated at each construct
+   --  file update.
+
+   Null_Imported_Entity : constant Imported_Entity;
+
+   function Get_Imported_Entity
+     (Entity : Entity_Access) return Imported_Entity;
+   --  Return the imported entity by this entity, Null_Imported_Entity if none.
+
+   function Get_Name (Entity : Imported_Entity) return String;
+   --  Return the imported name of the entity.
+
+   function Get_Convention (Entity : Imported_Entity) return String;
+   --  Return the convention from which the entity is imported
+
+private
+
+   type Imported_Entity is record
+      Name       : String_Access;
+      Convention : String_Access;
+   end record;
+
+   Null_Imported_Entity : constant Imported_Entity := (null, null);
 
 end Ada_Semantic_Tree.Interfaces;
