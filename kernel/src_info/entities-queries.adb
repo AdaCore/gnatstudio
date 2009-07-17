@@ -757,6 +757,13 @@ package body Entities.Queries is
                   --  it's not the same.
 
                   Iter.Files_It := Entity.References.First;
+
+                  if Iter.Files_It = Entity_File_Maps.No_Element then
+                     --  All files may have been removed at this stage, so exit
+                     --  the loop.
+
+                     exit;
+                  end if;
                end if;
             end loop;
          end;
