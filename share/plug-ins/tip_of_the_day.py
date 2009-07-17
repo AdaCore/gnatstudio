@@ -391,7 +391,6 @@ def on_gps_started (hook):
      # Get the main window
      messages = GPS.MDI.get ("Messages").pywidget()
      top = messages.get_toplevel()
-     print (str (top))
      t = Tip (results, top, GPS.Preference ("tip-of-the-day-number").get ())
      t.on_next_button (None)
 
