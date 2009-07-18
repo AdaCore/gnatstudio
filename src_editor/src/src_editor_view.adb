@@ -1936,13 +1936,24 @@ package body Src_Editor_View is
       if Get_Event_Type (Event) = Button_Release
         and then Get_Button (Event) = 1
         and then Get_Window (Event) /= Left_Window
-        and then View.Button_Pressed
       then
-         View.Button_Pressed := False;
-         Free (View.Button_Event);
+         if View.Button_Pressed then
+            View.Button_Pressed := False;
+            Free (View.Button_Event);
+         end if;
+
+         if View.Double_Click then
+            View.Double_Click := False;
+            Select_Current_Word (Source_Buffer (Get_Buffer (View)));
+         end if;
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end Button_Release_Event_Cb;
 
    ---------------------------
@@ -2018,26 +2029,15 @@ package body Src_Editor_View is
             end if;
 
          when Gdk_2button_Press =>
-            if Window /= Left_Window
-              and then Get_Button (Event) = 1
-            then
+            if Window /= Left_Window and then Get_Button (Event) = 1 then
+               View.Double_Click := True;
                --  ??? This is a tweak necessary to implement the feature
                --  "select an entire word containing '_' when double-clicking".
+               --  See corresponding code in Button_Release_Event_Cb.
                --  Might be worth investigating whether it could be implemented
                --  at the gtk+ level (the proper fix would be to change the
                --  Pango word break algorithms probably in break.c ?) and to
                --  redefine the "is_word_break" behaviour of the underscore.
-
-               --  Here we send a button_release_event before selecting the
-               --  word, so that we can stop propagating the
-               --  "button_press_event" without entering the selection-drag
-               --  mode.
-
-               Result := Return_Callback.Emit_By_Name
-                 (Widget, Signal_Button_Release_Event, Event);
-
-               Select_Current_Word (Buffer);
-               return True;
             end if;
 
          when others =>

@@ -3823,32 +3823,51 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Select_Current_Word (Buffer : access Source_Buffer_Record) is
-      Success : Boolean := True;
+      Success : Boolean;
       Start_Iter, End_Iter, Iter : Gtk_Text_Iter;
 
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Success);
 
-      if not (Inside_Word (Iter) or else Get_Char (Iter) = '_') then
+      if Success then
+         --  Check the current selection: if more than a single word is
+         --  selected then return.
+
+         Copy (Start_Iter, Iter);
+         Forward_Char (Iter, Success);
+
+         loop
+            exit when Equal (Iter, End_Iter);
+
+            if not Inside_Word (Iter) then
+               return;
+            end if;
+
+            Forward_Char (Iter, Success);
+            exit when not Success;
+         end loop;
+
+         Backward_Char (End_Iter, Success);
+
+      elsif not Inside_Word (Start_Iter)
+        and then Get_Char (Start_Iter) /= '_'
+      then
          return;
       end if;
 
-      Copy (Iter, End_Iter);
-
-      while Success and then not Ends_Word (End_Iter) loop
+      Success := True;
+      while not Ends_Word (End_Iter) loop
          Forward_Char (End_Iter, Success);
+         exit when not Success;
       end loop;
 
       if Success then
          Forward_Char (End_Iter, Success);
       end if;
 
-      Copy (Iter, Start_Iter);
-
-      Success := True;
-
-      while Success and then not Starts_Word (Start_Iter) loop
+      while not Starts_Word (Start_Iter) loop
          Backward_Char (Start_Iter, Success);
+         exit when not Success;
       end loop;
 
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);

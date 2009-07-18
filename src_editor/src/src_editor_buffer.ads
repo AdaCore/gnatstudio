@@ -382,6 +382,8 @@ package Src_Editor_Buffer is
    procedure Select_Current_Word (Buffer : access Source_Buffer_Record);
    --  Select the word the cursor is on. The insert mark is placed at the end
    --  of the selection.
+   --  If there is a selection of more than a single Word, keep the current
+   --  selection.
 
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
