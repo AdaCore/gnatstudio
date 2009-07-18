@@ -22,6 +22,11 @@ NF-44-I717-007 Tip of the Day dialog (2009-07-17)
    close it. To re-activate it, enable the preference "Tip of the Day" in the
    General section of the preferences.
 
+NF-44-I713-007 Improved mouse selection in editor (2009-07-18)
+
+   It is now possible to hold the mouse button after a double-click to extend
+   the selection word by word.
+
 NF-44-I702-018 New plug-in: "eclipse.py" with "delete line" action (2009-07-02)
 
    GPS now contains an "eclipse.py" plugin, disabled by default, which
