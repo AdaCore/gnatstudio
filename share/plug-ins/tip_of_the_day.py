@@ -62,12 +62,15 @@ Tip 7: Disable indentation temporarily
 To disable casing and indentation on the next key (e.g. Enter key), you
 can use the control-q key and then press e.g. Enter.
 
-Tip 8: How to <i>unfloat</i> a window
+Tip 8: Task Manager
 
-To unfloat a window, you can simply click on the close button and it will
-automatically go back to its original location in the GPS main window.
-Alternatively, you can also select the window, and then use the Window->Float
-menu in the main window.
+When a task is on going in background (e.g. build, search), GPS displays
+a progress bar summarizing the current state of the running task(s).
+To get more details, you can double-click on the progress bar, which will
+open a <i>Task Manager</i> where you can see each separate task, suspend
+them, interrupt them, etc.
+You can also display the task manager at any time using the Tools->Views->Task
+menu.
 
 Tip 9: OS shell
 
@@ -223,6 +226,55 @@ Go to Edit->Key shortcuts, select Editor->Subprogram Box then glick <i>Grab</i>
 and type a key short cut (e.g. <i>control-b control-b</i>). You can then use
 this key shortcut in the middle of a subprogram.
 
+Tip 32: How to <i>float</i> a window
+
+To make a window floating (i.e. outside the main GPS window), simply click
+on the title bar of the window and, while holding the mouse button, drag
+the mouse outside the main window, and release the mouse button: this will
+<i>float</i> the selected window.
+
+Tip 33: How to <i>unfloat</i> a window
+
+To unfloat a window, you can simply click on the close button and it will
+automatically go back to its original location in the GPS main window.
+Alternatively, you can also select the window, and then use the Window->Float
+menu in the main window.
+
+Tip 34: Direct access to predefined packages
+
+If you go to Help->GNAT Runtime, you'll get access to all the predefined
+Ada and GNAT packages and access their spec/documentation directly.
+
+Tip 35: Display <i>Standard</i> package
+
+You'd like to display the contents of the Ada package <i>Standard</i>
+corresponding to your compiler? Go to Help->GNAT Runtime->Standard.
+
+Tip 36: Open from project
+
+Did you know that you can quickly open any file defined in your project or
+part of the GNAT run-time by using the File->Open From Project... menu,
+or using the <i>shift-F3</i> key: this will open a dialog where you can type the
+beginning of any file and get automatic completion using the <i>TAB</i> key.
+
+Tip 37: Support for multiple toolchains
+
+Using the Build->Settings->Toolchains menu, you can enable support for multiple
+toolchains, which means that GPS will use one toolchain for building, and
+another toolchain (typically more recent) for other tools (source navigation,
+coding standard checker, pretty printer, etc).
+
+Tip 38: Support for old compilers
+
+Did you know that GPS is independent of the underlying compiler toolchain
+and can be upgraded without installation e.g. a new GNAT version?
+GPS supports GNAT versions as far back as 3.16 up to today's version.
+
+Tip 39: Your tip here
+
+Have your own idea for a nice tip and would like to share it with other GPS
+users? Please send us your suggestion at report@adacore.com.
+
 """
 
 def parse_tips ():
@@ -290,7 +342,7 @@ class Tip:
 
         # save the current tip number
 
-        GPS.Preference ("tip-of-the-day-number").set (self.tip_number)
+        GPS.Preference ("General/tip-of-the-day-number").set (self.tip_number)
 
         # take into account the checkbox
 
@@ -443,15 +495,15 @@ class Tip:
 
 # Register preferences
 
-GPS.Preference ("tip-of-the-day-number").create (
-  "last-tip-of-the-day",
-  "integer",
-  "The number of the last tip of the day",
-  0)
-
 GPS.Preference ("General/Display-Tip-Of-The-Day").create (
  "Tip of the Day", "boolean",
  "Whether GPS should display the Tip of the Day dialog", True)
+
+GPS.Preference ("General/tip-of-the-day-number").create (
+  "Tip of the day #",
+  "integer",
+  "The last tip of the day displayed",
+  0)
 
 def on_gps_started (hook):
      if not GPS.Preference ("General/Display-Tip-Of-The-Day").get():
@@ -464,7 +516,7 @@ def on_gps_started (hook):
      # Get the main window
      messages = GPS.MDI.get ("Messages").pywidget()
      top = messages.get_toplevel()
-     t = Tip (results, top, GPS.Preference ("tip-of-the-day-number").get ())
+     t = Tip (results, top, GPS.Preference ("General/tip-of-the-day-number").get ())
      t.on_next_button (None)
 
 GPS.Hook ("gps_started").add (on_gps_started)
