@@ -80,7 +80,8 @@ package body Refactoring is
 
          Show_All (Dialog);
          Result := Run (Dialog) = Gtk_Response_OK;
-         --  No need to Destroy(Dialog), this is already taken care of by Run
+
+         Destroy (Dialog);
 
          return Result;
       end if;
