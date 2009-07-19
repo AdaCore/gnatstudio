@@ -35,6 +35,7 @@ with Entities.Queries;       use Entities.Queries;
 with Entities;               use Entities;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Locations;   use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
@@ -251,11 +252,33 @@ package body Refactoring.Rename is
             Replaced_Length   => Name'Length,
             Only_If_Replacing => Factory.Old_Name)
          then
+            Insert_Location
+              (Kernel,
+               -("Refactoring - rename "
+                 & Factory.Old_Name & " to " & Factory.New_Name),
+               Get_Filename (Refs.Table (L).File),
+               "error, failed to rename entity",
+               Refs.Table (L).Line,
+               Refs.Table (L).Column,
+               Sort_In_File => True);
+
             if Length (Errors) = 0
               or else Refs.Table (L).File /= Errors.Table (Last (Errors))
             then
                Append (Errors, Refs.Table (L).File);
             end if;
+
+         else
+            --  Renaming done, insert entry into locations view
+            Insert_Location
+              (Kernel,
+               -("Refactoring - rename "
+                 & Factory.Old_Name & " to " & Factory.New_Name),
+               Get_Filename (Refs.Table (L).File),
+               "entity renamed",
+               Refs.Table (L).Line,
+               Refs.Table (L).Column,
+               Sort_In_File => True);
          end if;
       end loop;
 
