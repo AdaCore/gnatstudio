@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,10 +49,10 @@ package body Refactoring is
    ------------
 
    function Dialog
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title  : String;
-      Msg    : String;
-      Files  : File_Arrays.Instance;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title         : String;
+      Msg           : String;
+      Files         : File_Arrays.Instance;
       Execute_Label : String := Stock_Execute;
       Cancel_Label  : String := Stock_Cancel) return Boolean
    is

@@ -88,9 +88,9 @@ package body Completion_Window.Entity_Views is
    -------------
 
    procedure Gtk_New
-     (View     : out Entity_View_Access;
-      Kernel   : Kernel_Handle;
-      Initial  : Glib.UTF8_String)
+     (View    : out Entity_View_Access;
+      Kernel  : Kernel_Handle;
+      Initial : Glib.UTF8_String)
    is
    begin
       View := new Entity_View_Record;
@@ -164,7 +164,7 @@ package body Completion_Window.Entity_Views is
      (View  : access Entity_View_Record'Class;
       Event : Gdk_Event) return Boolean
    is
-      Key   : constant Gdk_Key_Type := Get_Key_Val (Event);
+      Key : constant Gdk_Key_Type := Get_Key_Val (Event);
    begin
       if Key = GDK_Return then
          Jump_To_Selected (View);
@@ -240,9 +240,9 @@ package body Completion_Window.Entity_Views is
    procedure On_Entry_Changed
      (View : access Entity_View_Record'Class)
    is
-      List : Declaration_List;
+      List       : Declaration_List;
       Expression : Parsed_Expression;
-      Text : String_Access;
+      Text       : String_Access;
    begin
       Text := new String'(Get_Text (View.Ent));
 
@@ -405,6 +405,7 @@ package body Completion_Window.Entity_Views is
             else
                Set_Position (View.Pane, View.Horizontal_Position);
             end if;
+
          else
             Gtk_New_Vpaned (View.Pane);
 

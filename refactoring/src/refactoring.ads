@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,10 +57,10 @@ package Refactoring is
    --  some errors in the LI files.
 
    function Dialog
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title  : String;
-      Msg    : String;
-      Files  : File_Arrays.Instance;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title         : String;
+      Msg           : String;
+      Files         : File_Arrays.Instance;
       Execute_Label : String := Gtk.Stock.Stock_Execute;
       Cancel_Label  : String := Gtk.Stock.Stock_Cancel) return Boolean;
    --  Display a dialog to the user, with two buttons: OK and Cancel.
@@ -71,6 +71,6 @@ package Refactoring is
    function Create_File_List
      (List : File_Arrays.Instance)
       return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-   --  Create a list showing all the files in List.
+   --  Create a list showing all the files in List
 
 end Refactoring;

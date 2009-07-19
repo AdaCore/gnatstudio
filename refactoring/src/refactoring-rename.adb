@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2009, AdaCore              --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,20 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Intl;               use GPS.Intl;
-with Entities;               use Entities;
-with Entities.Queries;       use Entities.Queries;
-with Traces;                 use Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with Refactoring.Performers; use Refactoring.Performers;
-with Histories;              use Histories;
-with Commands.Interactive;   use Commands, Commands.Interactive;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib;                   use Glib;
 with Gtk.Box;                use Gtk.Box;
@@ -41,6 +29,19 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Tooltips;           use Gtk.Tooltips;
 with Gtk.Widget;             use Gtk.Widget;
+
+with Commands.Interactive;   use Commands, Commands.Interactive;
+with Entities.Queries;       use Entities.Queries;
+with Entities;               use Entities;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with Histories;              use Histories;
+with Refactoring.Performers; use Refactoring.Performers;
+with Traces;                 use Traces;
 
 package body Refactoring.Rename is
 
@@ -76,7 +77,7 @@ package body Refactoring.Rename is
       Refs          : Location_Arrays.Instance;
       No_LI_List    : File_Arrays.Instance;
       Stale_LI_List : File_Arrays.Instance);
-   --  Implements the "Renaming entity" refactoring.
+   --  Implements the "Renaming entity" refactoring
 
    type Entity_Renaming_Dialog_Record is new Gtk_Dialog_Record with record
       New_Name          : Gtk_GEntry;
@@ -206,11 +207,16 @@ package body Refactoring.Rename is
       Stale_LI_List : File_Arrays.Instance)
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
-      Name : constant String := Get_Name (Entity).all;
+
+      Name   : constant String := Get_Name (Entity).all;
       Errors : File_Arrays.Instance := File_Arrays.Empty_Instance;
 
       procedure Terminate_File (File : Virtual_File);
       --  Finish the processing for a given file
+
+      --------------------
+      -- Terminate_File --
+      --------------------
 
       procedure Terminate_File (File : Virtual_File) is
       begin
@@ -222,7 +228,8 @@ package body Refactoring.Rename is
 
    begin
       --  Replace first the last occurrences since we are about to modify
-      --  the file, and the locations would become invalid
+      --  the file, and the locations would become invalid.
+
       for L in reverse Location_Arrays.First .. Last (Refs) loop
          if L = Last (Refs)
            or else Refs.Table (L).File /= Refs.Table (L + 1).File
@@ -240,8 +247,8 @@ package body Refactoring.Rename is
             Refs.Table (L).Line,
             Refs.Table (L).Column,
             Factory.New_Name,
-            Indent          => False,
-            Replaced_Length => Name'Length,
+            Indent            => False,
+            Replaced_Length   => Name'Length,
             Only_If_Replacing => Factory.Old_Name)
          then
             if Length (Errors) = 0
@@ -260,11 +267,11 @@ package body Refactoring.Rename is
       if Length (Errors) > 0 then
          if not Dialog
            (Kernel,
-            Title => -"References not replaced",
-            Msg   =>
+            Title         => -"References not replaced",
+            Msg           =>
             -("Some references could not be replaced because one or more files"
               & " were already modified"),
-            Files => Errors,
+            Files         => Errors,
             Execute_Label => Gtk.Stock.Stock_Ok,
             Cancel_Label  => Gtk.Stock.Stock_Undo)
          then
@@ -291,7 +298,7 @@ package body Refactoring.Rename is
       pragma Unreferenced (Command);
       Dialog  : Entity_Renaming_Dialog;
       Entity  : constant Entity_Information :=
-        Get_Entity (Context.Context, Ask_If_Overloaded => True);
+                  Get_Entity (Context.Context, Ask_If_Overloaded => True);
    begin
       if Entity /= null then
          Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
@@ -307,13 +314,14 @@ package body Refactoring.Rename is
             declare
                New_Name : constant String := Get_Text (Dialog.New_Name);
                Refactor : constant Renaming_Performer :=
-                 new Renaming_Performer_Record'
-                   (Refactor_Performer_Record with
-                    Old_Name_Length => Get_Name (Entity)'Length,
-                    Old_Name        => Get_Name (Entity).all,
-                    New_Name_Length => New_Name'Length,
-                    New_Name        => New_Name,
-                    Auto_Save       => Get_Active (Dialog.Auto_Save));
+                            new Renaming_Performer_Record'
+                              (Refactor_Performer_Record with
+                               Old_Name_Length => Get_Name (Entity)'Length,
+                               Old_Name        => Get_Name (Entity).all,
+                               New_Name_Length => New_Name'Length,
+                               New_Name        => New_Name,
+                               Auto_Save       =>
+                                 Get_Active (Dialog.Auto_Save));
             begin
                Get_All_Locations
                  (Kernel        => Get_Kernel (Context.Context),
@@ -341,26 +349,31 @@ package body Refactoring.Rename is
    ----------------------------
 
    procedure Entity_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "rename" then
          Name_Parameters (Data, (1 => Name_Cst'Access,
                                  2 => Include_Overriding_Cst'Access,
                                  3 => Make_Writable_Cst'Access));
          declare
-            Entity   : constant Entity_Information := Get_Data (Data, 1);
-            New_Name : constant String := Nth_Arg (Data, 2);
-            Include_Overridding : constant Boolean := Nth_Arg (Data, 3, True);
-            Make_Writable : constant Boolean := Nth_Arg (Data, 4, False);
-            Refactor : constant Renaming_Performer :=
-              new Renaming_Performer_Record'
-                (Refactor_Performer_Record with
-                 New_Name_Length => New_Name'Length,
-                 New_Name        => New_Name,
-                 Old_Name_Length => Get_Name (Entity)'Length,
-                 Old_Name        => Get_Name (Entity).all,
-                 Auto_Save       => False);
+            Entity              : constant Entity_Information :=
+                                    Get_Data (Data, 1);
+            New_Name            : constant String :=
+                                    Nth_Arg (Data, 2);
+            Include_Overridding : constant Boolean :=
+                                    Nth_Arg (Data, 3, True);
+            Make_Writable       : constant Boolean :=
+                                    Nth_Arg (Data, 4, False);
+            Refactor            : constant Renaming_Performer :=
+                                    new Renaming_Performer_Record'
+                                      (Refactor_Performer_Record with
+                                       New_Name_Length => New_Name'Length,
+                                       New_Name        => New_Name,
+                                       Old_Name_Length =>
+                                         Get_Name (Entity)'Length,
+                                       Old_Name        =>
+                                         Get_Name (Entity).all,
+                                       Auto_Save       => False);
          begin
             Get_All_Locations
               (Get_Kernel (Data),
