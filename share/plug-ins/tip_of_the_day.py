@@ -34,13 +34,6 @@ Tip: ESC to close a dialog
 Did you know that you can close dialogs in GPS using the <i>ESC</i> key?
 This also applies to this <i>Tip of the Day</i> dialog!
 
-Tip: Move the position of notebook tabs
-
-Did you know that you can move the position of the notebook tabs?
-To do so, you can right click on any tab and select the <i>Tabs location</i>
-menu. Alternatively, you can also go to Edit->Preferences and select the
-Windows page.
-
 Tip: Multi language builder
 
 GPS will automatically try to detect whether your project should be built
@@ -48,6 +41,13 @@ using <i>gnatmake</i> (Ada language used only) or <i>gprbuild</i> (other
 languages used).
 If you want to force a specific builder, go to Edit->Preferences, then
 in the General section, set the <i>Multi language builder</i> preference.
+
+Tip: Move the position of notebook tabs
+
+Did you know that you can move the position of the notebook tabs?
+To do so, you can right click on any tab and select the <i>Tabs location</i>
+menu. Alternatively, you can also go to Edit->Preferences and select the
+Windows page.
 
 Tip: Jump to first location
 
