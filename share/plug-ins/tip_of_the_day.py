@@ -337,6 +337,15 @@ def display_tip (title, doc):
 
 class Tip:
 
+    def on_key_press (self, widget, event):
+        """ Callback on a key press event"""
+
+        if event.keyval == gtk.keysyms.Escape:
+           self.on_close_button (widget)
+           return True
+
+        return False
+
     def on_close_button (self, widget):
         """ Callback on a click on the close button """
 
@@ -488,6 +497,7 @@ class Tip:
 
         # callbacks
 
+        window.connect ("key_press_event", self.on_key_press)
         close_button.connect ("clicked", self.on_close_button)
         next_button.connect ("clicked", self.on_next_button)
         prev_button.connect ("clicked", self.on_prev_button)
