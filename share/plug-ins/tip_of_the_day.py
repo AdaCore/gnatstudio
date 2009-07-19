@@ -15,7 +15,7 @@ import re
 
 tips = """
 
-Tip 1: Insert spaces with TAB key
+Tip: Insert spaces with TAB key
 
 You'd like the TAB key to insert spaces? Go to Edit->Key shortcuts,
 Editor page, select the <i>Insert Tab With Spaces</i> action, then click on
@@ -23,20 +23,25 @@ Editor page, select the <i>Insert Tab With Spaces</i> action, then click on
 The number of spaces inserted will depend on the indentation level set
 in the preferences dialog (Edit->Preferences).
 
-Tip 2: Multiple views of the same file
+Tip: Multiple views of the same file
 
 Need to view multiple parts of the same file? Use the menu File->New View,
 or hold the shift key, click on the Editor's title bar and drag it to a
 place where you'd like the new view to be created
 
-Tip 3: Move the position of notebook tabs
+Tip: ESC to close a dialog
+
+Did you know that you can close dialogs in GPS using the <i>ESC</i> key?
+This also applies to this <i>Tip of the Day</i> dialog!
+
+Tip: Move the position of notebook tabs
 
 Did you know that you can move the position of the notebook tabs?
 To do so, you can right click on any tab and select the <i>Tabs location</i>
 menu. Alternatively, you can also go to Edit->Preferences and select the
 Windows page.
 
-Tip 4: Multi language builder
+Tip: Multi language builder
 
 GPS will automatically try to detect whether your project should be built
 using <i>gnatmake</i> (Ada language used only) or <i>gprbuild</i> (other
@@ -44,25 +49,25 @@ languages used).
 If you want to force a specific builder, go to Edit->Preferences, then
 in the General section, set the <i>Multi language builder</i> preference.
 
-Tip 5: Jump to first location
+Tip: Jump to first location
 
 By default GPS will jump to the first location loaded in the <i>Locations</i>
 window (e.g. first build message, or first search result). If you do not
 like this behavior, you can go to Edit->Preferences, select the General
 page and then disable the <i>Jump to first location</i> preference.
 
-Tip 6: Highlight all occurrences of a word
+Tip: Highlight all occurrences of a word
 
 You'd like to highlight all occurrences of the current word in the editor?
 Enable the 'occurrences.py' plug-in in Tools->Plug-ins and then set a key
 short cut for the 'Mark Occurrences' action via the Edit->Shortcuts editor.
 
-Tip 7: Disable indentation temporarily
+Tip: Disable indentation temporarily
 
 To disable casing and indentation on the next key (e.g. Enter key), you
 can use the control-q key and then press e.g. Enter.
 
-Tip 8: Task Manager
+Tip: Task Manager
 
 When a task is on going in background (e.g. build, search), GPS displays
 a progress bar summarizing the current state of the running task(s).
@@ -72,59 +77,59 @@ them, interrupt them, etc.
 You can also display the task manager at any time using the Tools->Views->Task
 menu.
 
-Tip 9: OS shell
+Tip: OS shell
 
 Need to have a quick access to an OS shell?
 Go to Tools->Consoles->OS Shell
 
-Tip 10: Build menu configuration
+Tip: Build menu configuration
 
 You would like to configure the Build menu items (e.g. modify the commands
 launched, or add/remove menu items)? Go to Build->Settings->Targets.
 
-Tip 11: Makefile support
+Tip: Makefile support
 
 If you have a Makefile in the same directory where you project file is located,
 GPS will automatically parse it and create a Build->Makefile menu with
 all the targets defined in your Makefile.
 
-Tip 12: Keyboard macro
+Tip: Keyboard macro
 
 You always perform the same sequence of keys? You can record it as a macro
 and replay it automatically using the Tools->Macro menu.
 
-Tip 13: Entities View
+Tip: Entities View
 
 Need to find an entity in your project and its associated
 profile/documentation? Use Tools->Views->Entities.
 
-Tip 14: Entities View and drag'n'drop
+Tip: Entities View and drag'n'drop
 
 Did you know that you can drag-n-drop the Entities View
 (Tools->Views->Entities) to e.g. the left part of the main window, and it will
 automatically switch to a vertical display to fit the space available?
 
-Tip 15: Sorting in Outline View
+Tip: Sorting in Outline View
 
 The Outline View (Tools->Views->Outline) by default displays entities in
 alphabetical order. You can instead get entities sorted by order of appearance
 in the file by right clicking in the Outline View and unselect
 <i>Outline->Sort alphabetically</i>.
 
-Tip 16: Build modes
+Tip: Build modes
 
 To rebuild your project with different switches, you can use the Build mode
 combo selector in the main toolbar: by default it provides predefined
 modes (debug, optimize, gprof, ...). You can also create your own build
 modes via simple xml files.
 
-Tip 17: Temporarily add a build switch
+Tip: Temporarily add a build switch
 
 Need to temporarily and quickly add a switch for your build? Use the
 Build->Project menu and you'll get access to the command line launched by GPS
 to perform the build action, with the ability to modify it.
 
-Tip 18: Smart completion
+Tip: Smart completion
 
 If you need GPS to automatically complete the name of an entity, or fill
 a subprogram profile, simply pressing ctrl-space in a source editor will
@@ -132,19 +137,19 @@ display a completion list with possible completion for the current word.
 Automatic completion is also displayed automatically when you type special
 characters such as '<b>.</b>' or '<b>(</b>'.
 
-Tip 19: Dynamic smart completion
+Tip: Dynamic smart completion
 
 You'd like GPS to make more suggestions automatically to complete identifiers
 while you're typing without having to press control-space? Go to
 Edit->Preferences, Editor and then set the <i>Smart completion</i> preference to
 <i>Dynamic</i>. You might also want to tune the default timeout.
 
-Tip 20: Highlight dispatching calls
+Tip: Highlight dispatching calls
 
 Did you know that GPS can highlight all dispatching calls in your source?
 To do so, go to Tools->Plug-ins and enable the <i>dispatching.py</i> plug-in.
 
-Tip 21: Source navigation through dispatching calls
+Tip: Source navigation through dispatching calls
 
 Did you know that when opening a contextual menu on a dispatching call,
 GPS is able to list all the possible targets for this call? By default, GPS
@@ -153,37 +158,37 @@ computed in memory, and you can get more accurate and complete results
 by going to Edit->Preferences, select the Editor page and set the
 <i>Submenu for dispatching calls</i> preference to <i>Accurate</i>.
 
-Tip 22: Ada constructs menu
+Tip: Ada constructs menu
 
 Need to have GPS insert automatically text of Ada constructs? Go to
 Tools->Plug-ins and enable the <i>predef_ada_entity_insertions.py</i> plug-in
 which will add contextual menus in the source editor.
 
-Tip 23: On the fly auto casing 
+Tip: On the fly auto casing 
 
 To enable on the fly automatic casing of your identifiers, go to
 Edit->Preferences, then select Editor->Ada and set <i>Casing policy</i> to
 <i>On_The_Fly</i> or if you find that too intrusive, <i>End_Of_Line</i>.
 
-Tip 24: Disable temporarily auto casing
+Tip: Disable temporarily auto casing
 
 To temporarily disable auto casing, you can use the <i>alt-q</i> key.
 This can be particularly useful when you've set the casing policy to
 <i>On The Fly</i> (see previous tip). You can re-enable it using the same key.
 
-Tip 25: How to gain space on your workspace
+Tip: How to gain space on your workspace
 
 In order to gain room in your workspace, you can go to Edit->Preferences,
 then Windows and disable the <i>Show title bars</i> option: this will remove
 the title bars on each window.
 
-Tip 26: How to hide the toolbar
+Tip: How to hide the toolbar
 
 Did you know that the GPS tool bar (below the menu bar) can be hidden?
 To do so, go to Edit->Preferences, select the General page and set
 <i>Tool bar style</i> to <i>Hide_Toolbar</i>.
 
-Tip 27: Automatic code fixing
+Tip: Automatic code fixing
 
 In many cases, the warning and error messages generated by GNAT are so
 precise, that it is possible for GPS to automatically fix the code for you.
@@ -194,13 +199,13 @@ of the message in the Locations view which you can click on.
 If multiple fixes are possible, GPS will display a menu with the possible
 choices.
 
-Tip 28: Splash screen
+Tip: Splash screen
 
 Tired of getting the splash screen at start up?
 Go to Edit->Preferences, select the General page and disable the
 <i>Display splash screen</i> preference.
 
-Tip 29: Welcome dialog
+Tip: Welcome dialog
 
 When you start GPS in a directory which contains a single project file,
 GPS will automatically use this project. Otherwise, GPS will open the
@@ -211,14 +216,14 @@ If you prefer to always start with the default project instead of getting
 the <i>Welcome Dialog</i>, go to Edit->Preferences, select the General
 page and disable the <i>Display welcome window</i> preference.
 
-Tip 30: Multiple key shortcut
+Tip: Multiple key shortcut
 
 Did you know that you can associate a multiple key shortcut to any action in
 GPS? To do so, go to Edit->Key shortcuts, select the action or menu you'd
 like to associate or change a key binding, click <i>Grab</i> and then
 type the two keys (e.g. <i>control-x a</i>) for your key binding.
 
-Tip 31: Add subprogram box
+Tip: Add subprogram box
 
 Ever wanted to ask GPS to automatically add a box containing the current
 subprogram name just before this subprogram?
@@ -226,51 +231,51 @@ Go to Edit->Key shortcuts, select Editor->Subprogram Box then glick <i>Grab</i>
 and type a key short cut (e.g. <i>control-b control-b</i>). You can then use
 this key shortcut in the middle of a subprogram.
 
-Tip 32: How to <i>float</i> a window
+Tip: How to <i>float</i> a window
 
 To make a window floating (i.e. outside the main GPS window), simply click
 on the title bar of the window and, while holding the mouse button, drag
 the mouse outside the main window, and release the mouse button: this will
 <i>float</i> the selected window.
 
-Tip 33: How to <i>unfloat</i> a window
+Tip: How to <i>unfloat</i> a window
 
 To unfloat a window, you can simply click on the close button and it will
 automatically go back to its original location in the GPS main window.
 Alternatively, you can also select the window, and then use the Window->Float
 menu in the main window.
 
-Tip 34: Direct access to predefined packages
+Tip: Direct access to predefined packages
 
 If you go to Help->GNAT Runtime, you'll get access to all the predefined
 Ada and GNAT packages and access their spec/documentation directly.
 
-Tip 35: Display <i>Standard</i> package
+Tip: Display <i>Standard</i> package
 
 You'd like to display the contents of the Ada package <i>Standard</i>
 corresponding to your compiler? Go to Help->GNAT Runtime->Standard.
 
-Tip 36: Open from project
+Tip: Open from project
 
 Did you know that you can quickly open any file defined in your project or
 part of the GNAT run-time by using the File->Open From Project... menu,
 or using the <i>shift-F3</i> key: this will open a dialog where you can type the
 beginning of any file and get automatic completion using the <i>TAB</i> key.
 
-Tip 37: Support for multiple toolchains
+Tip: Support for multiple toolchains
 
 Using the Build->Settings->Toolchains menu, you can enable support for multiple
 toolchains, which means that GPS will use one toolchain for building, and
 another toolchain (typically more recent) for other tools (source navigation,
 coding standard checker, pretty printer, etc).
 
-Tip 38: Support for old compilers
+Tip: Support for old compilers
 
 Did you know that GPS is independent of the underlying compiler toolchain
 and can be upgraded without installation e.g. a new GNAT version?
 GPS supports GNAT versions as far back as 3.16 up to today's version.
 
-Tip 39: Your tip here
+Tip: Your tip here
 
 Have your own idea for a nice tip and would like to share it with other GPS
 users? Please send us your suggestion at report@adacore.com.
@@ -287,7 +292,7 @@ def parse_tips ():
     current_tip_title = ""
     current_tip_text  = ""
 
-    title_re = re.compile ("Tip [0-9]+:?( .*)?")
+    title_re = re.compile ("^Tip:?( .*)?")
 
     for l in tips.split('\n'):
        m = title_re.match(l)
