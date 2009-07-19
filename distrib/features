@@ -232,7 +232,7 @@ NF-44-HC08-012 Support for SPARK Toolset 7.6.2 (2008-12-10)
 
 NF-44-HA29-024 Renamed entities added into locations view (2009-07-18)
 
-   Entries are added into the location view for entities renamed using GPS
+   Entries are added into the locations view for entities renamed using GPS
    code refactoring. It is then easier to review all the renamed entities.
 
 NF-44-HA23-007 New menus in Edit->Selection (2008-10-23)
