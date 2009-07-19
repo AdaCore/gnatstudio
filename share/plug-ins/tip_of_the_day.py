@@ -275,6 +275,14 @@ Did you know that GPS is independent of the underlying compiler toolchain
 and can be upgraded without installation e.g. a new GNAT version?
 GPS supports GNAT versions as far back as 3.16 up to today's version.
 
+Tip: Remote Programming
+
+Tired of launching GPS on a slow remote machine and display it on your
+local, fast desktop computer via an X connection? The <i>Remote Programming</i>
+capability of GPS is made for you. This mode allows you to run GPS locally
+and drive your remote toolchain automatically via <i>ssh</i>, <i>rsh</i> or <i>telnet</i>.
+See Tools->Views->Remote menu to create your remote configuration.
+
 Tip: Your tip here
 
 Have your own idea for a nice tip and would like to share it with other GPS
