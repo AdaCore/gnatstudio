@@ -98,7 +98,7 @@ Tip: Keyboard macro
 You always perform the same sequence of keys? You can record it as a macro
 and replay it automatically using the Tools->Macro menu.
 
-Tip: Entities View
+Tip: Entity View
 
 Need to find an entity in your project and its associated
 profile/documentation? Use Tools->Views->Entities.
