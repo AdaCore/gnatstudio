@@ -2993,7 +2993,7 @@ package body Code_Analysis_Module is
          Register_Menu
            (Kernel      => Kernel,
             Parent_Path => Tools & '/' & Views,
-            Text        => -"Cover_age Report",
+            Text        => -"Coverage Repor_t",
             Ref_Item    => -"Clipboard",
             Add_Before  => False,
             Callback    => On_Single_View_Menu'Access);
