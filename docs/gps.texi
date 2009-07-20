@@ -8170,6 +8170,13 @@ Open a tree view of function callers and callees. See also @ref{Call Graph}.
 @item Clipboard
 @xref{The Clipboard View}.
 
+@item Coverage Report
+@xref{Coverage Report}.
+
+@item Entities
+@c ??? missing xref:
+@c xref{The Entity View}.
+
 @item Files
 Open a file system explorer on the left area.
 @xref{The File View}.
@@ -8728,6 +8735,7 @@ Report.)
 @end table
 
 @item The Coverage Report
+@anchor{Coverage Report}
 
 When coverage information are loaded into GPS, a graphical report of coverage
 is displayed.
