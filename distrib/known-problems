@@ -1,8 +1,9 @@
 Known Problems fixed in GPS 4.4.0
 
-- I707-012: GPS may hangs when doing long compilation and xrefs computation
+- I707-012: GPS may hang when doing long compilation and xrefs computation
   Problem:    When doing long compilation associated with xrefs computations,
-              GPS may hang.
+              GPS may hang in some rare cases, depending on the order and
+              number of files recompiled or analyzed.
   Workaround: Do the compilation externally, or don't browse sources when
               compiling.
 
