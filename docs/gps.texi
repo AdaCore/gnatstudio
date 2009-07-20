@@ -8200,11 +8200,11 @@ Open a view of the current source editor.
 @item Tasks
 @xref{The Task Manager}.
 
-@item VCS Explorer
-@xref{The VCS Explorer}.
-
 @item VCS Activities
 @xref{The VCS Activities}.
+
+@item VCS Explorer
+@xref{The VCS Explorer}.
 
 @item Windows
 Open a view containing all currently opened files.
