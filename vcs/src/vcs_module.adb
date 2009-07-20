@@ -1219,15 +1219,15 @@ package body VCS_Module is
          Ref_Item   => -"Navigate",
          Add_Before => False);
       Register_Menu
-        (Kernel, Tools_Menu, -"_VCS Explorer", "",
-         On_Open_Interface'Access);
-
-      Register_Menu
         (Kernel, VCS_Menu, -"_Activities", "",
          On_Open_Activities_Interface'Access);
+
       Register_Menu
         (Kernel, Tools_Menu, -"VCS _Activities", "",
          On_Open_Activities_Interface'Access);
+      Register_Menu
+        (Kernel, Tools_Menu, -"_VCS Explorer", "",
+         On_Open_Interface'Access);
 
       --  The creation of VCS menu is defferred after GPS is fully started.
       --  This is needed as we want to display in this menu only the items that

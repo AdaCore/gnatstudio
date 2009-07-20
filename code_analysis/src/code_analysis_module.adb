@@ -2985,7 +2985,7 @@ package body Code_Analysis_Module is
          Register_Dynamic_Menu
            (Kernel      => Kernel,
             Parent_Path => Tools & '/' & Views,
-            Text        => -"Covera_ge",
+            Text        => -"Cover_age",
             Ref_Item    => -"Clipboard",
             Add_Before  => False,
             Factory     => Dynamic_Views_Menu_Factory'Access);
@@ -2993,7 +2993,9 @@ package body Code_Analysis_Module is
          Register_Menu
            (Kernel      => Kernel,
             Parent_Path => Tools & '/' & Views,
-            Text        => -"Covera_ge Report",
+            Text        => -"Cover_age Report",
+            Ref_Item    => -"Clipboard",
+            Add_Before  => False,
             Callback    => On_Single_View_Menu'Access);
       end if;
 

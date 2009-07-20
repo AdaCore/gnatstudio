@@ -1398,7 +1398,7 @@ package body Project_Explorers_Files is
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
         (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access,
-         Ref_Item => -"Remote");
+         Ref_Item => -"Entities", Add_Before => False);
       Register_Filter
         (Kernel,
          Filter => File_View_Filter,

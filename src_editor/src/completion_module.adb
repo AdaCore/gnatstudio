@@ -1281,8 +1281,7 @@ package body Completion_Module is
 
       Register_Menu
         (Kernel, "/_Tools/_Views/", -"_Entities",
-         Ref_Item   => -"_Remote",
-         Add_Before => False,
+         Ref_Item => -"Remote",
          Callback   => On_Entity_View'Access);
 
       Register_Preferences (Kernel);
