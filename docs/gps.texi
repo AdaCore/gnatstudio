@@ -103,6 +103,7 @@ A copy of the license is included in the section entitled
 
 Description of the main windows
 * The Welcome Dialog::
+* The Tip of the Day::
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
@@ -338,6 +339,7 @@ gcc, gdb, gnatmake, gcov, etc@dots{}.
 
 @menu
 * The Welcome Dialog::
+* The Tip of the Day::
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
@@ -449,6 +451,26 @@ By default, files specified on the command line are taken as is and can
 be absolute or relative pathnames. In addition, if you prepend a filename
 with the @code{=} character, then GPS will look for the file in the source
 search path of the project.
+
+@c --------------------------------------------------------------------
+@node The Tip of the Day
+@section The Tip of the Day
+@cindex tip of the day
+@c --------------------------------------------------------------------
+
+@noindent
+This dialog displays short tips on how to make the most efficient use of
+GPS. You can click on the @code{Previous} and @code{Next} buttons to access
+all tips, and close the dialog by either clicking on the @code{Close} button
+or pressing the @key{ESC} key.
+
+You can also disable this dialog by unchecking the @code{Display Tip of the
+Day on startup} check box. If you would like to reenable this dialog, you
+can go to the @code{Edit->Preferences} dialog.
+@cindex preferences
+@xref{The Preferences Dialog}.
+
+@c ??? add screenshot
 
 @c --------------------------------------------------------------------
 @node The Menu Bar
@@ -9475,25 +9497,6 @@ Whether a splash screen should be displayed when starting GPS.
 Whether GPS should display the welcome window for the selection of the project
 to use.
 
-@item Tool bar style
-@cindex tool bar
-How the tool bar should be displayed: not at all, with small icons or with
-large icons
-
-@item Show status bar
-@cindex status bar
-Whether the status bar at the bottom of the GPS window should be displayed.
-This status bar contains one or more progress bars while GPS is executing long
-actions like a build or a search. These progress bars can be used to monitor
-the progress of those actions.
-
-If you wish to save vertical screen space, you can hide this status
-bar. The progress bars will no longer be visible. Instead, you can
-display the Task Manager through the @code{Tools->Views->Tasks} menu,
-to get similar information.  This manager can then be put on the right
-or left side of the GPS window, for instance just below the Project
-View.
-
 @item Show text in tool bar
 @cindex tool bar
 Whether the tool bar should show both text and icons, or only icons.
@@ -9515,13 +9518,6 @@ a project created automatically by GPS, the desktop will not be saved.
 Determines when source editors should be saved in the desktop: @code{Never},
 @code{Always}, or when a source file is associated with the current project
 (@code{From_Project}).
-
-@item Clipboard size
-@cindex clipboard
-This controls the size of the list where all the entries copied into the
-clipboard through @code{Edit->Copy} and @code{Edit->Cut} are saved. This list
-is navigated through the menu @code{Edit->Paste} and
-@code{Edit->Paste Previous}, as described earlier in this guide.
 
 @item Multi language builder
 The multi-language builder to be used in case a multi-language or non Ada
@@ -9546,6 +9542,47 @@ immediately open.
 Whether using the @code{Next Tag} and @code{Previous Tag} actions/menus
 should wrap around to the beginning when reaching the end of the category.
 The default is to wrap around, as was done in previous GPS versions.
+
+@item Clipboard size
+@cindex clipboard
+This controls the size of the list where all the entries copied into the
+clipboard through @code{Edit->Copy} and @code{Edit->Cut} are saved. This list
+is navigated through the menu @code{Edit->Paste} and
+@code{Edit->Paste Previous}, as described earlier in this guide.
+
+@item Tool bar style
+@cindex tool bar
+How the tool bar should be displayed: not at all, with small icons or with
+large icons
+
+@item Show status bar
+@cindex status bar
+Whether the status bar at the bottom of the GPS window should be displayed.
+This status bar contains one or more progress bars while GPS is executing long
+actions like a build or a search. These progress bars can be used to monitor
+the progress of those actions.
+
+If you wish to save vertical screen space, you can hide this status
+bar. The progress bars will no longer be visible. Instead, you can
+display the Task Manager through the @code{Tools->Views->Tasks} menu,
+to get similar information.  This manager can then be put on the right
+or left side of the GPS window, for instance just below the Project
+View.
+
+@item Remove policy when fixing code
+@cindex code fix
+Prefered way to fix code when parts have to be removed.
+@code{Always_Remove} means that the code will be removed by GPS.
+@code{Always_Comment} means that the code will always be commented out.
+@code{Propose_Both_Choices} will propose a menu with both choices.
+
+@item Tip of the Day
+@cindex tip of the day
+Whether GPS will display a @i{Tip of the Day} dialog at start up.
+
+@item Tip of the Day #
+The last tip of the day display. this is used by GPS to show the next tip
+at each start up.
 
 @end table
 
