@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I707-012: GPS may hangs when doing long compilation and xrefs computation
+  Problem:    When doing long compilation associated with xrefs computations,
+              GPS may hang.
+  Workaround: Do the compilation externally, or don't browse sources when
+              compiling.
+
 - I702-019: Display problem for block highlighting or right margin (2009-07-02)
   Problem:    On some X11 displays, with some fonts, the block highlighting or
               the right margin may be drawn with an incorrect horizontal
