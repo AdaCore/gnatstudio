@@ -470,7 +470,15 @@ can go to the @code{Edit->Preferences} dialog.
 @cindex preferences
 @xref{The Preferences Dialog}.
 
-@c ??? add screenshot
+@iftex
+@cindex screen shot
+@image{tip-of-the-day, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{tip-of-the-day}
+@end ifhtml
 
 @c --------------------------------------------------------------------
 @node The Menu Bar
