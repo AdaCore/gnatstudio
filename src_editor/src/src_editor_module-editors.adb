@@ -2081,6 +2081,7 @@ package body Src_Editor_Module.Editors is
       if This.Contents.Buffer /= null then
          End_Action (This.Contents.Buffer);
          Start_Group (Get_Command_Queue (This.Contents.Buffer));
+         Enter_Current_Group (This.Contents.Buffer);
       end if;
    end Start_Undo_Group;
 
@@ -2093,6 +2094,7 @@ package body Src_Editor_Module.Editors is
       if This.Contents.Buffer /= null then
          End_Action (This.Contents.Buffer);
          End_Group (Get_Command_Queue (This.Contents.Buffer));
+         Leave_Current_Group (This.Contents.Buffer);
       end if;
    end Finish_Undo_Group;
 

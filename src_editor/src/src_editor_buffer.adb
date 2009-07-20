@@ -1470,7 +1470,9 @@ package body Src_Editor_Buffer is
       --  corresponding signal.
 
       if Mark = Buffer.Insert_Mark then
-         if not Buffer.Inserting then
+         if Buffer.Insert_In_Current_Group = 0
+           and then not Buffer.Inserting
+         then
             End_Group (Buffer.Queue);
             Start_Group (Buffer.Queue);
          end if;
@@ -4471,6 +4473,9 @@ package body Src_Editor_Buffer is
 
       --  Undo and Redo clear the current group: start a new group
 
+      --  Reset all high-level grouping when doing undo/redo
+      Buffer.Insert_In_Current_Group := 0;
+
       Start_Group (Buffer.Queue);
    end Redo;
 
@@ -4489,6 +4494,9 @@ package body Src_Editor_Buffer is
       Undo (Buffer.Queue);
 
       --  Undo and Redo clear the current group: start a new group
+
+      --  Reset all high-level grouping when doing undo/redo
+      Buffer.Insert_In_Current_Group := 0;
 
       Start_Group (Buffer.Queue);
    end Undo;
@@ -5388,7 +5396,10 @@ package body Src_Editor_Buffer is
       end if;
 
       End_Action (Buffer);
-      Start_Group (Buffer.Queue);
+
+      if Buffer.Insert_In_Current_Group = 0 then
+         Start_Group (Buffer.Queue);
+      end if;
 
       if Lines_Are_Real (Buffer) then
          if Offset_Line /= 0 then

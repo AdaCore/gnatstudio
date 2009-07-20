@@ -977,6 +977,16 @@ package Src_Editor_Buffer is
       N      : Positive) return UTF8_String;
    --  Returns the N last typed characters
 
+   procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
+   --  Enter the current undo-redo group. This means that all subsequent
+   --  actions will be placed in the same undo-redo group as the current
+   --  edition. This call must always be followed by a call to
+   --  Leave_Current_Group, see below.
+
+   procedure Leave_Current_Group (Buffer : access Source_Buffer_Record'Class);
+   --  Leave the current undo-redo group. This needs to be called once for each
+   --  call to Enter_Current_Group.
+
 private
 
    procedure Set_Cursor_Position
@@ -1033,16 +1043,6 @@ private
      (Buffer : access Source_Buffer_Record'Class);
    --  Signal the new cursor position by emitting the "cursor_position_changed"
    --  signal.
-
-   procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
-   --  Enter the current undo-redo group. This means that all subsequent
-   --  actions will be placed in the same undo-redo group as the current
-   --  edition. This call must always be followed by a call to
-   --  Leave_Current_Group, see below.
-
-   procedure Leave_Current_Group (Buffer : access Source_Buffer_Record'Class);
-   --  Leave the current undo-redo group. This needs to be called once for each
-   --  call to Enter_Current_Group.
 
    ---------------
    -- Line data --
