@@ -238,6 +238,16 @@ package body Build_Command_Manager is
             return Res;
          end;
 
+      --  ??? Ditto for %switches
+      elsif Arg'Length > 10
+        and then Arg (Arg'First .. Arg'First + 9) = "%switches("
+        and then Arg (Arg'Last) = ')'
+      then
+         return Get_Attribute_Value
+           (Get_Project (Get_Kernel (Context)),
+            Build ("IDE", "Default_Switches"),
+            Arg (Arg'First + 10 .. Arg'Last - 1));
+
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
         or else Arg = "%gprbuild"
