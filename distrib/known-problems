@@ -178,7 +178,7 @@ Known Problems fixed in GPS 4.4.0
               incorrect, resulting in truncated columns
   Workaround: Most of the time the name of the type is still readable, and
               otherwise you can click on the link to expand a new box for
-              the type itself
+              the type itself.
 
 - I205-006: Problems when manipulating non-utf8 paths
   Problem:    Parts of GPS (like the Project View) do not fully support
@@ -235,15 +235,15 @@ Known Problems fixed in GPS 4.4.0
               Showed that a good chunk of it was from loading the
               $HOME/.gps/properties.xml file in memory in an inefficient
               datastructure
-  Workaround: remove or cleanup this file once in a whiile. It will not get
-              very big unless you are using the filepos.py plugin
+  Workaround: Remove or cleanup this file once in a whiile. It will not get
+              very big unless you are using the filepos.py plugin.
 
 - I113-033: Unexpected scrolling when switching between views of same file
   Problem:    If you have two views of the same file side by side, and scroll
               one of them so that its cursor is no longer visible, then click
               inside the other one, the latter gets scrolled randomly and the
               cursor is not moved to the line you clicked on
-  Workaround: scroll back to that line
+  Workaround: Scroll back to that line.
 
 - HC10-015: Wrong text replacement with auto-casing
   Problem:    When auto-casing is enabled in the preferences, the wrong
@@ -275,7 +275,7 @@ Known Problems fixed in GPS 4.4.0
               --debug, it no longer shows the runtime files in the Project
               View, nor the binder files (b~*.adb)
   Workaround: You can in fact open any file in GPS through /File/Open, so
-              this issue is not blocking
+              this issue is not blocking.
 
 - H624-007: Outline View slow on huge files
   Problem:    When displaying huge files (10000 significant lines of code or
@@ -306,3 +306,4 @@ Known Problems fixed in GPS 4.4.0
               removed, some line breaks might be left read-only, making it
               impossible to remove it using the backspace/delete keys.
   Workaround: Close the editor and reopen it.
+
