@@ -299,8 +299,7 @@ a = """<?xml version="1.0"?>
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="~vcg" />
       <check column="2" line="2" label="Syntax check only" switch="~syntax_check" />
-      <title line="3" column="1">General</title>
-      <title line="3" column="2"/>
+      <title line="3" column-span="2">General</title>
       <combo label="Replacement Rules" switch="~rules" separator="="
              noswitch="none" column="1" line="3"
              tip="Replacement rules for composite constants">
@@ -317,11 +316,10 @@ a = """<?xml version="1.0"?>
       </combo>
       <field column="2" line="3" label="Annotation Character" switch="~annotation_character" separator="=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
       <title line="5" column-span="2">Output</title>
-      <check line="5" label="Plain Output" switch="~plain" />
-      <check line="5" label="HTML Output" switch="~html" />
-      <field line="5" label="Listing File Extension" as-file="true" switch="~listing" separator="="/>
-      <field line="5" label="Report File Name" as-file="true" switch="~report" separator="="/>
-      <title line="5" column="2" column-span="0" />
+      <check line="5" column="1" label="Plain Output" switch="~plain" />
+      <check line="5" column="2" label="HTML Output" switch="~html" />
+      <field line="5" column="1" label="Listing File Extension" as-file="true" switch="~listing" separator="="/>
+      <field line="5" column="1" label="Report File Name" as-file="true" switch="~report" separator="="/>
     </switches>
   </tool>
 
@@ -392,17 +390,38 @@ a = """<?xml version="1.0"?>
 
       <title line="3" column="1">Default Switch File</title>
       <check line="3" column="1" label="Ignore spark.sw" switch="~noswitch" />
-      <title line="4" column="1" column-span="2">Indentation</title>
-      <field line="4" column="1" label="Globals indentation" switch="~global_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the global variables, or state 'inline' (default 'inline')" />
-      <field line="4" label="Exports indentation" switch="~export_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the export variables, or state 'inline' (default 'inline')" />
-      <field line="4" label="Imports indentation" switch="~import_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the import variables, or state 'inline' (default 'inline')" />
-      <field line="4" label="Seperators indentation" switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the separators ('from' and ampersand), or state 'inline' (default 'inline')" />
-      <field line="4" label="Inherits indentation" switch="~inherit_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the package names, or state 'inline' (default 'inline')" />
-      <field line="4" label="Own indentation" switch="~own_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
-      <field line="4" label="Refinement indentation" switch="~refinement_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
-      <field line="4" label="Constituent indentation" switch="~constituent_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for constituents, or state 'inline' (default 'inline')" />
-      <field line="4" label="Initialization indentation" switch="~initialization_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
-      <field line="4" label="Properties indentation" switch="~properties_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+
+      <title line="4" column="1" column-span="3">Indentation</title>
+      <spin line="4" column="1" label="Globals"
+         switch="~global_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for the global variables (or 0 for default)" />
+      <spin line="4" column="2" label="Exports"
+         switch="~export_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for the export variables (or 0 for default)" />
+      <spin line="4" column="3" label="Imports"
+         switch="~import_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for the import variables (or 0 for default)" />
+      <spin line="4" column="1" label="Separators"
+         switch="~separator_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for the separators ('from' and ampersand) (or 0 for default)" />
+      <spin line="4" column="2" label="Inherits"
+         switch="~inherit_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for the package names (or 0 for default)" />
+      <spin line="4" column="3" label="Own"
+         switch="~own_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
+      <spin line="4" column="1" label="Refinement"
+         switch="~refinement_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
+      <spin line="4" column="2" label="Constituent"
+         switch="~constituent_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for constituents (or 0 for default)" />
+      <spin line="4" column="3" label="Initialization"
+         switch="~initialization_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
+      <spin line="4" column="1" label="Properties"
+         switch="~properties_indent" separator="=" min="0" max="256" default="0"
+         tip="Amount of indentation from '--#' for own variables (or 0 for default)" />
     </switches>
   </tool>
 
