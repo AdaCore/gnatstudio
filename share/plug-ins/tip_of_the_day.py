@@ -103,9 +103,9 @@ Tip: Entity View
 Need to find an entity in your project and its associated
 profile/documentation? Use Tools->Views->Entities.
 
-Tip: Entities View and drag'n'drop
+Tip: Entity View and drag'n'drop
 
-Did you know that you can drag-n-drop the Entities View
+Did you know that you can drag-n-drop the Entity View
 (Tools->Views->Entities) to e.g. the left part of the main window, and it will
 automatically switch to a vertical display to fit the space available?
 
