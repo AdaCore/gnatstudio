@@ -280,11 +280,18 @@ a = """<?xml version="1.0"?>
       <check column="1" line="1" label="Ignore spark.sw" switch="~noswitch" />
       <title line="1" column="2" column-span="0" />
       <title column="1" line="2">Language</title>
-      <radio column="1" line="2" >
-        <radio-entry label="SPARK95" switch="~profile=sequential" />
-        <radio-entry label="RavenSPARK" switch="~profile=ravenscar" />
-        <radio-entry label="SPARK83" switch="~ada83" />
-      </radio>
+      <combo label="Language" switch="~language" separator="="
+             noswitch="95" column="1" line="2" >
+        <combo-entry label="Ada 83" value="83" />
+        <combo-entry label="Ada 95" value="95" />
+        <combo-entry label="Ada 2005" value="2005" />
+      </combo>
+      <combo label="Profile" switch="~profile" separator="="
+             noswitch="sequential" column="1" line="2" >
+        <combo-entry label="Sequential" value="sequential" />
+        <combo-entry label="Ravenscar" value="ravenscar" />
+      </combo>
+
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
         <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
@@ -292,27 +299,28 @@ a = """<?xml version="1.0"?>
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="~vcg" />
       <check column="2" line="2" label="Syntax check only" switch="~syntax_check" />
-      <title line="3" line-span="2">Replacement rules for composite constants</title>
-      <radio line="3">
-        <radio-entry label="None" switch="~rules=none" />
-        <radio-entry label="Lazy" switch="~rules=lazy" />
-		<radio-entry label="Keen" switch="~rules=keen" />
-        <radio-entry label="All" switch="~rules=all" />
-      </radio>
-      <title column="2" line="3">Error Explanations</title>
-      <radio column="2" line="3">
-        <radio-entry label="Off" switch="" />
-        <radio-entry label="First Occurrence" switch="~error_explanations=first" />
-	<radio-entry label="Every Occurrence" switch="~error_explanations=every" />
-      </radio>
-      <title line="4" column="1" line-span="0" />
-      <title column="2" line="4">General</title>
-      <field column="2" line="4" label=" Annotation Character " switch="~annotation_character" separator="=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <title line="3" column="1">General</title>
+      <title line="3" column="2"/>
+      <combo label="Replacement Rules" switch="~rules" separator="="
+             noswitch="none" column="1" line="3"
+             tip="Replacement rules for composite constants">
+        <combo-entry label="None" value="none" />
+        <combo-entry label="Lazy" value="lazy" />
+	<combo-entry label="Keen" value="keen" />
+        <combo-entry label="All" value="all" />
+      </combo>
+      <combo label="Error Explanations" switch="~error_explanations"
+             separator="=" noswitch="off" column="1" line="3">
+        <combo-entry label="Off" value="off" />
+        <combo-entry label="First Occurrence" value="first" />
+	<combo-entry label="Every Occurrence" value="every" />
+      </combo>
+      <field column="2" line="3" label="Annotation Character" switch="~annotation_character" separator="=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
       <title line="5" column-span="2">Output</title>
-      <check line="5" label=" Plain Output " switch="~plain" />
-      <check line="5" label=" HTML Output " switch="~html" />
-      <field line="5" label=" Listing File Extension " as-file="true" switch="~listing" separator="="/>
-      <field line="5" label=" Report File Name " as-file="true" switch="~report" separator="="/>
+      <check line="5" label="Plain Output" switch="~plain" />
+      <check line="5" label="HTML Output" switch="~html" />
+      <field line="5" label="Listing File Extension" as-file="true" switch="~listing" separator="="/>
+      <field line="5" label="Report File Name" as-file="true" switch="~report" separator="="/>
       <title line="5" column="2" column-span="0" />
     </switches>
   </tool>
