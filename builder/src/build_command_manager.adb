@@ -239,7 +239,7 @@ package body Build_Command_Manager is
          end;
 
       --  ??? Ditto for %switches
-      elsif Arg'Length > 10
+      elsif Arg'Length > 12
         and then Arg (Arg'First .. Arg'First + 9) = "%switches("
         and then Arg (Arg'Last) = ')'
       then
