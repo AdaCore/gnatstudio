@@ -11624,6 +11624,16 @@ defined in the current project tree will be listed.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
+@item %switches(tool)
+Replaced by @code{IDE'Default_Switches (tool)}, in other words, if you
+have a tool whose switches are defined via an xml file in GPS, they
+are stored as @code{Default_Switches (xxx)} in the @code{IDE} package
+and can be retrieved using this macro. The value returned is a list of
+switches, or an empty list if not set.
+
+Note: This macro is only available in the commands defined in the Build
+Manager and Build Launcher dialogs.
+
 @item %vars
 Replaced by a list of switches of the form @code{<variable>=<value>}, where
 <variable> is the name of a scenario variable and <value> its current
