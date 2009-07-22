@@ -24,6 +24,7 @@ The number of spaces inserted will depend on the indentation level set
 in the preferences dialog (Edit->Preferences).
 
 Tip: Multiple views of the same file
+Img: tip_multiple_views.png
 
 Need to view multiple parts of the same file? Use the menu File->New View,
 or hold the shift key, click on the Editor's title bar and drag it to a
@@ -311,35 +312,48 @@ users? Please send us your suggestion at report@adacore.com.
 
 def parse_tips ():
     """ Parse the tips string and return a list of the form
-        [ (tip_title_1, tip_text_1), (tip_title_2, tip_text_2) ... ]
+        [ (tip_title_1, tip_text_1, tip_img_1),
+          (tip_title_2, tip_text_2, tip_img_2) ... ]
     """
 
     result = []
 
     current_tip_title = ""
     current_tip_text  = ""
+    current_tip_img   = ""
 
-    title_re = re.compile ("^Tip:?( .*)?")
+    title_re = re.compile ("^Tip: (.*)")
+    img_re   = re.compile ("^Img: (.*)")
 
     for l in tips.split('\n'):
-       m = title_re.match(l)
+       title = title_re.match(l)
+       img   = img_re.match(l)
 
-       if m:
+       if title:
            if len (current_tip_text) > 0:
-               result += [(current_tip_title, current_tip_text)]
+               result += [(current_tip_title,
+                           current_tip_text,
+                           current_tip_img)]
+               current_tip_img = ""
                current_tip_text = ""
-           current_tip_title = m.group(1) or ""
+           current_tip_title = title.group(1) or ""
+
+       elif img:
+           current_tip_img = os.path.join (GPS.get_system_dir(),
+                                           "share", "gps", "plug-ins",
+                                           "images",
+                                           img.group(1)) or ""
 
        else:
            if len (l) > 1:
               current_tip_text += l + '\n'
 
     if len (current_tip_text) > 0:
-        result += [(current_tip_title, current_tip_text)]
+        result += [(current_tip_title, current_tip_text, current_tip_img)]
 
     return result
 
-def display_tip (title, doc):
+def display_tip (title, doc, img):
     """ Display the tip. Return a widget containing the tip. """
 
     vbox = gtk.VBox()
@@ -354,6 +368,19 @@ def display_tip (title, doc):
     hbox.pack_start (title_label, False, False, 10)
 
     vbox.pack_start (hbox, False, False, 10);
+
+    # display the image if any
+    
+    if img != "":
+       hbox = gtk.HBox()
+
+       image = gtk.Image()
+       image.set_from_file (img)
+       image.show()
+
+       hbox.pack_start (image, False, False, 10) 
+
+       vbox.pack_start (hbox, False, False, 10)
 
     # display the documentation
     hbox = gtk.HBox()
@@ -417,7 +444,8 @@ class Tip:
 
         self.tip_container.add (display_tip
                          (self.results[self.tip_number][0],
-                          self.results[self.tip_number][1]))
+                          self.results[self.tip_number][1],
+                          self.results[self.tip_number][2]))
 
         self.window.show_all()
 
@@ -558,7 +586,8 @@ def on_gps_started (hook):
      # Get the main window
      messages = GPS.MDI.get ("Messages").pywidget()
      top = messages.get_toplevel()
-     t = Tip (results, top, GPS.Preference ("General/tip-of-the-day-number").get ())
+     t = Tip (results, top,
+              GPS.Preference ("General/tip-of-the-day-number").get ())
      t.on_next_button (None)
 
 GPS.Hook ("gps_started").add (on_gps_started)
