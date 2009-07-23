@@ -9596,10 +9596,6 @@ Prefered way to fix code when parts have to be removed.
 @cindex tip of the day
 Whether GPS will display a @i{Tip of the Day} dialog at start up.
 
-@item Tip of the Day #
-The last tip of the day display. this is used by GPS to show the next tip
-at each start up.
-
 @end table
 
 @item @b{Windows}
