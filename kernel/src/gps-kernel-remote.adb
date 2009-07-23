@@ -609,6 +609,10 @@ package body GPS.Kernel.Remote is
       Load_Project (Data.Kernel, Project_Path (Get_Project (Data.Kernel)));
       Remote_Module.Project_Reloading := False;
       return False;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+         return False;
    end Reload_Prj_Cb;
 
    -------------------------------
