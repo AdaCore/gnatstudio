@@ -303,6 +303,15 @@ To performe a global renaming, select any reference to the entity you'd like
 to rename in a source editor, then right click and select
 Refactoring->Rename <b>entity</b>.
 
+Tip: Break on exception in debugger
+
+You need to break on any exception raised in the debugger?
+You can have GPS set this special breakpoint each time you start the debugger
+automatically by going to Edit->Preferences, seelect Debugger page and enable
+the <i>Break on exceptions</i> preference.
+Alternatively you can also type the <i>break exception</i> command directly
+in the debugger console.
+
 Tip: Your tip here
 
 Have your own idea for a nice tip and would like to share it with other GPS
