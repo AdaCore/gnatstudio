@@ -16,6 +16,7 @@ import re
 tips = """
 
 Tip: Insert spaces with TAB key
+Img: tip_insert_spaces_with_tab.png
 
 You'd like the TAB key to insert spaces? Go to Edit->Key shortcuts,
 Editor page, select the <i>Insert Tab With Spaces</i> action, then click on
@@ -36,6 +37,7 @@ Did you know that you can close dialogs in GPS using the <i>ESC</i> key?
 This also applies to this <i>Tip of the Day</i> dialog!
 
 Tip: Multi language builder
+Img: tip_multi_language_builder.png
 
 GPS will automatically try to detect whether your project should be built
 using <i>gnatmake</i> (Ada language used only) or <i>gprbuild</i> (other
@@ -44,6 +46,7 @@ If you want to force a specific builder, go to Edit->Preferences, then
 in the General section, set the <i>Multi language builder</i> preference.
 
 Tip: Move the position of notebook tabs
+Img: tip_notebook_tabs_position.png
 
 Did you know that you can move the position of the notebook tabs?
 To do so, you can right click on any tab and select the <i>Tabs location</i>
@@ -51,6 +54,7 @@ menu. Alternatively, you can also go to Edit->Preferences and select the
 Windows page.
 
 Tip: Jump to first location
+Img: tip_jump_to_first_location.png
 
 By default GPS will jump to the first location loaded in the <i>Locations</i>
 window (e.g. first build message, or first search result). If you do not
@@ -58,10 +62,11 @@ like this behavior, you can go to Edit->Preferences, select the General
 page and then disable the <i>Jump to first location</i> preference.
 
 Tip: Highlight all occurrences of a word
+Img: tip_all_occurrences.png
 
 You'd like to highlight all occurrences of the current word in the editor?
 Enable the 'occurrences.py' plug-in in Tools->Plug-ins and then set a key
-short cut for the 'Mark Occurrences' action via the Edit->Shortcuts editor.
+short cut for the 'Mark Occurrences' action via the Edit->Key Shortcuts editor.
 
 Tip: Disable indentation temporarily
 
@@ -69,6 +74,7 @@ To disable casing and indentation on the next key (e.g. Enter key), you
 can use the control-q key and then press e.g. Enter.
 
 Tip: Task Manager
+Img: tip_task_manager.png
 
 When a task is on going in background (e.g. build, search), GPS displays
 a progress bar summarizing the current state of the running task(s).
@@ -79,32 +85,38 @@ You can also display the task manager at any time using the Tools->Views->Task
 menu.
 
 Tip: OS shell
+Img: tip_os_shell.png
 
 Need to have a quick access to an OS shell?
 Go to Tools->Consoles->OS Shell
 
 Tip: Build menu configuration
+Img: tip_build_menu.png
 
 You would like to configure the Build menu items (e.g. modify the commands
 launched, or add/remove menu items)? Go to Build->Settings->Targets.
 
 Tip: Makefile support
+Img: tip_makefile_support.png
 
 If you have a Makefile in the same directory where you project file is located,
 GPS will automatically parse it and create a Build->Makefile menu with
 all the targets defined in your Makefile.
 
 Tip: Keyboard macro
+Img: tip_keyboard_macro.png
 
 You always perform the same sequence of keys? You can record it as a macro
 and replay it automatically using the Tools->Macro menu.
 
 Tip: Entity View
+Img: tip_entity_view.png
 
 Need to find an entity in your project and its associated
 profile/documentation? Use Tools->Views->Entities.
 
 Tip: Entity View and drag'n'drop
+Img: tip_entity_view_dnd.png
 
 Did you know that you can drag-n-drop the Entity View
 (Tools->Views->Entities) to e.g. the left part of the main window, and it will
