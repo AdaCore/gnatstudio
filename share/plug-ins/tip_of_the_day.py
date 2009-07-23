@@ -165,7 +165,7 @@ Need to have GPS insert automatically text of Ada constructs? Go to
 Tools->Plug-ins and enable the <i>predef_ada_entity_insertions.py</i> plug-in
 which will add contextual menus in the source editor.
 
-Tip: On the fly auto casing 
+Tip: On the fly auto casing
 
 To enable on the fly automatic casing of your identifiers, go to
 Edit->Preferences, then select Editor->Ada and set <i>Casing policy</i> to
@@ -379,7 +379,7 @@ def display_tip (title, doc, img):
     vbox.pack_start (hbox, False, False, 10);
 
     # display the image if any
-    
+
     if img != "":
        hbox = gtk.HBox()
 
@@ -387,7 +387,7 @@ def display_tip (title, doc, img):
        image.set_from_file (img)
        image.show()
 
-       hbox.pack_start (image, False, False, 10) 
+       hbox.pack_start (image, False, False, 10)
 
        vbox.pack_start (hbox, False, False, 10)
 
@@ -419,7 +419,7 @@ class Tip:
 
         # save the current tip number
 
-        GPS.Preference ("General/tip-of-the-day-number").set (self.tip_number)
+        GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").set (self.tip_number)
 
         # take into account the checkbox
 
@@ -578,7 +578,7 @@ GPS.Preference ("General/Display-Tip-Of-The-Day").create (
  "Tip of the Day", "boolean",
  "Whether GPS should display the Tip of the Day dialog", True)
 
-GPS.Preference ("General/tip-of-the-day-number").create (
+GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").create (
   "Tip of the day #",
   "integer",
   "The last tip of the day displayed",
@@ -596,7 +596,7 @@ def on_gps_started (hook):
      messages = GPS.MDI.get ("Messages").pywidget()
      top = messages.get_toplevel()
      t = Tip (results, top,
-              GPS.Preference ("General/tip-of-the-day-number").get ())
+              GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").get ())
      t.on_next_button (None)
 
 GPS.Hook ("gps_started").add (on_gps_started)
