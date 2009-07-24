@@ -282,9 +282,9 @@ a = """<?xml version="1.0"?>
       <title column="1" line="2">Language</title>
       <combo label="Language" switch="~language" separator="="
              noswitch="95" column="1" line="2" >
-        <combo-entry label="Ada 83" value="83" />
-        <combo-entry label="Ada 95" value="95" />
-        <combo-entry label="Ada 2005" value="2005" />
+        <combo-entry label="SPARK83" value="83" />
+        <combo-entry label="SPARK95" value="95" />
+        <combo-entry label="SPARK2005" value="2005" />
       </combo>
       <combo label="Profile" switch="~profile" separator="="
              noswitch="sequential" column="1" line="2" >
