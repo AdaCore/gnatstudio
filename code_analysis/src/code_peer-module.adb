@@ -1641,10 +1641,17 @@ package body Code_Peer.Module is
               (Message : Code_Peer.Message_Access) return String
             is
             begin
-               return
-                 Probability_Image (Message)
-                 & Message.Category.Name.all & " "
-                 & Message.Text.all;
+               if Message.Text (Message.Text'First) = ':' then
+                  return
+                    Probability_Image (Message)
+                    & Message.Category.Name.all
+                    & Message.Text.all;
+               else
+                  return
+                    Probability_Image (Message)
+                    & Message.Category.Name.all & " "
+                    & Message.Text.all;
+               end if;
             end Image;
 
             -----------------------
