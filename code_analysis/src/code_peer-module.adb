@@ -1641,7 +1641,9 @@ package body Code_Peer.Module is
               (Message : Code_Peer.Message_Access) return String
             is
             begin
-               if Message.Text (Message.Text'First) = ':' then
+               if Message.Text'Length = 0
+                 or else Message.Text (Message.Text'First) = ':'
+               then
                   return
                     Probability_Image (Message)
                     & Message.Category.Name.all
