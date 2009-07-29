@@ -170,6 +170,11 @@ package body Code_Peer.Entity_Messages_Models is
          when Suppressed_Count_Column =>
             Set_Count_Image (Code_Peer.Suppressed);
 
+         when Message_Category_Column =>
+            Glib.Values.Init (Value, Glib.GType_Pointer);
+            Glib.Values.Set_Address
+              (Value, Self.Category_At (Iter).all'Address);
+
          when others =>
             null;
       end case;

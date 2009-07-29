@@ -19,7 +19,7 @@
 
 with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
-with System;
+with System.Address_To_Access_Conversions;
 
 with Glib.Object;
 with Glib.Values;
@@ -143,10 +143,17 @@ package body Code_Peer.Summary_Reports is
 
    function Is_Messages_Category_Visible
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self  : Summary_Report) return Boolean;
    --  Returns True when specified item in the Entity's Messages Summary
    --  view must be visible. Model must have the same column's layout as
    --  Entity_Messages_Model has.
+
+   package Summary_Report_Visible_Funcs is
+     new Gtk.Tree_Model_Filter.Visible_Funcs (Summary_Report);
+
+   package Message_Category_Conversions is
+     new System.Address_To_Access_Conversions (Message_Category);
 
    procedure Emit_By_Name
      (Object : System.Address;
@@ -643,8 +650,10 @@ package body Code_Peer.Summary_Reports is
                     Message_Categories);
       Gtk.Tree_Model_Filter.Gtk_New
         (Self.Messages_Filter, Self.Messages_Model);
-      Self.Messages_Filter.Set_Visible_Func
-        (Is_Messages_Category_Visible'Access);
+      Summary_Report_Visible_Funcs.Set_Visible_Func
+        (Self.Messages_Filter,
+         Is_Messages_Category_Visible'Access,
+         Summary_Report (Self));
       Gtk.Tree_View.Gtk_New (Self.Messages_View, Self.Messages_Filter);
       Scrolled.Add (Self.Messages_View);
 
@@ -843,16 +852,38 @@ package body Code_Peer.Summary_Reports is
 
    function Is_Messages_Category_Visible
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self  : Summary_Report) return Boolean
    is
+      use Code_Peer.Categories_Criteria_Editors;
+
+      Value    : Glib.Values.GValue;
+      Category : Message_Category_Access;
+
    begin
+      Model.Get_Value
+        (Iter,
+         Code_Peer.Entity_Messages_Models.Message_Category_Column,
+         Value);
+      Category :=
+        Message_Category_Access
+          (Message_Category_Conversions.To_Pointer
+               (Glib.Values.Get_Address (Value)));
+      Glib.Values.Unset (Value);
+
       return
-        Model.Get_String
-          (Iter, Code_Peer.Entity_Messages_Models.Low_Count_Column) /= ""
-        or else Model.Get_String
-          (Iter, Code_Peer.Entity_Messages_Models.Medium_Count_Column) /= ""
-        or else Model.Get_String
-          (Iter, Code_Peer.Entity_Messages_Models.High_Count_Column) /= "";
+        Self.Categories_Editor /= null
+        --  Is_Messages_Category_Visible is called during initialization,
+        --  thus this member can be null, just because editor is not created.
+        and then Self.Categories_Editor.Get_Visible_Categories.Contains
+          (Category)
+        and then
+          (Model.Get_String
+               (Iter, Code_Peer.Entity_Messages_Models.Low_Count_Column) /= ""
+           or else Model.Get_String
+             (Iter, Code_Peer.Entity_Messages_Models.Medium_Count_Column) /= ""
+           or else Model.Get_String
+             (Iter, Code_Peer.Entity_Messages_Models.High_Count_Column) /= "");
    end Is_Messages_Category_Visible;
 
    -----------------------
@@ -941,6 +972,7 @@ package body Code_Peer.Summary_Reports is
    begin
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Object.Get_Visible_Categories);
+      Self.Messages_Filter.Refilter;
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Categories_Criteria_Changed;

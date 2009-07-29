@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +31,8 @@ package Code_Peer.Entity_Messages_Models is
    Medium_Count_Column        : constant := 3;
    High_Count_Column          : constant := 4;
    Suppressed_Count_Column    : constant := 5;
-   Number_Of_Columns          : constant := 6;
+   Message_Category_Column    : constant := 6;
+   Number_Of_Columns          : constant := 7;
 
    type Entity_Messages_Model_Record is
      new Code_Peer.Message_Categories_Models.Message_Categories_Model_Record
