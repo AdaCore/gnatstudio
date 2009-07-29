@@ -141,6 +141,13 @@ package body Code_Peer.Summary_Reports is
       Self      : Summary_Report) return Glib.Gint;
    --  Compare two rows in the model.
 
+   function Is_Messages_Category_Visible
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
+   --  Returns True when specified item in the Entity's Messages Summary
+   --  view must be visible. Model must have the same column's layout as
+   --  Entity_Messages_Model has.
+
    procedure Emit_By_Name
      (Object : System.Address;
       Name   : Glib.Signal_Name);
@@ -634,7 +641,11 @@ package body Code_Peer.Summary_Reports is
                GPS.Kernel.Project.Get_Project
                  (Kernel)).Analysis_Data.Code_Peer_Data.all).
                     Message_Categories);
-      Gtk.Tree_View.Gtk_New (Self.Messages_View, Self.Messages_Model);
+      Gtk.Tree_Model_Filter.Gtk_New
+        (Self.Messages_Filter, Self.Messages_Model);
+      Self.Messages_Filter.Set_Visible_Func
+        (Is_Messages_Category_Visible'Access);
+      Gtk.Tree_View.Gtk_New (Self.Messages_View, Self.Messages_Filter);
       Scrolled.Add (Self.Messages_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -825,6 +836,24 @@ package body Code_Peer.Summary_Reports is
          ID              => Module,
          Context_Func    => Context_Func'Access);
    end Initialize;
+
+   ----------------------------------
+   -- Is_Messages_Category_Visible --
+   ----------------------------------
+
+   function Is_Messages_Category_Visible
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   is
+   begin
+      return
+        Model.Get_String
+          (Iter, Code_Peer.Entity_Messages_Models.Low_Count_Column) /= ""
+        or else Model.Get_String
+          (Iter, Code_Peer.Entity_Messages_Models.Medium_Count_Column) /= ""
+        or else Model.Get_String
+          (Iter, Code_Peer.Entity_Messages_Models.High_Count_Column) /= "";
+   end Is_Messages_Category_Visible;
 
    -----------------------
    -- On_Analysis_Click --

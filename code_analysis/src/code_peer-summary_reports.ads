@@ -19,6 +19,7 @@
 
 with Glib;
 with Gtk.Paned;
+private with Gtk.Tree_Model_Filter;
 private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
 
@@ -78,6 +79,7 @@ private
       Analysis_View       : Gtk.Tree_View.Gtk_Tree_View;
       Messages_Model      :
         Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
+      Messages_Filter     : Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
       Messages_View       : Gtk.Tree_View.Gtk_Tree_View;
       Categories_Editor   :
         Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
