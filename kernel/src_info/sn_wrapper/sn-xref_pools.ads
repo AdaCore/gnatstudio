@@ -125,7 +125,7 @@ private
       Free_Elmt_Ptr => Free);
 
    type Xref_Pool_Record is record
-      HTable  : STable.HTable;
+      HTable  : STable.Instance;
       Changed : Boolean := False;
       --  set by Xref_Filename_For, Save to detect whether saving is
       --  necessary or not

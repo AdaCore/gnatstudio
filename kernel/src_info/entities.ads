@@ -1254,7 +1254,7 @@ private
 
       Name        : GNATCOLL.VFS.Virtual_File;
 
-      Entities    : Entities_Hash.HTable;
+      Entities    : Entities_Hash.Instance;
       --  All the entities defined in the source file. This list also contains
       --  the entities that used to be defined in this file, but no longer are,
       --  and that are kept because they are still referenced in some files.
@@ -1274,7 +1274,7 @@ private
       --  The LI file used to parse the file. This might be left to null if
       --  the file was created appart from parsing a LI file.
 
-      All_Entities : Entities_Hash.HTable;
+      All_Entities : Entities_Hash.Instance;
       --  The list of all entities referenced by entities in the file, and that
       --  are defined in other files.
       --  This list is no longer used for reference counting, and really only
@@ -1381,8 +1381,8 @@ private
    -----------------------
 
    type Entities_Database_Record is record
-      Files           : Files_HTable.HTable;
-      LIs             : LI_HTable.HTable;
+      Files           : Files_HTable.Instance;
+      LIs             : LI_HTable.Instance;
 
       Predefined_File : Source_File;
       Lang            : Abstract_Language_Handler;

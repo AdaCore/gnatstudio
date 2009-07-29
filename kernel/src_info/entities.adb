@@ -105,13 +105,13 @@ package body Entities is
    --  The references are cleared only if Clear_References is True.
 
    procedure Remove
-     (D : in out Entities_Hash.HTable;
+     (D : in out Entities_Hash.Instance;
       E : Entity_Information);
    --  Remove the information for E in the table. The entity is not Unrefed
    --  explicitly, since this call should only happen as a result of Unref
 
    procedure Add
-     (Entities         : in out Entities_Hash.HTable;
+     (Entities         : in out Entities_Hash.Instance;
       Entity           : Entity_Information;
       Check_Duplicates : Boolean);
    --  Add a new entity, if not already there, to D.
@@ -783,7 +783,7 @@ package body Entities is
    ------------
 
    procedure Remove
-     (D : in out Entities_Hash.HTable;
+     (D : in out Entities_Hash.Instance;
       E : Entity_Information)
    is
       Str : constant Cased_String :=
@@ -1526,7 +1526,7 @@ package body Entities is
    ---------
 
    procedure Add
-     (Entities         : in out Entities_Hash.HTable;
+     (Entities         : in out Entities_Hash.Instance;
       Entity           : Entity_Information;
       Check_Duplicates : Boolean)
    is

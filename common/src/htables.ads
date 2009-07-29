@@ -56,6 +56,10 @@ pragma Preelaborate (HTables);
       type Header_Num is range <>;
       --  An integer type indicating the number and range of hash headers.
 
+      type Element (<>) is limited private;
+      --  The type of element to be stored. This type is unused in this
+      --  package, and kept for backward compatibility only.
+
       type Elmt_Ptr is private;
       --  The type used to reference an element (will usually be an access
       --  type, but could be some other form of type such as an integer type).
@@ -78,9 +82,10 @@ pragma Preelaborate (HTables);
 
    package Static_HTable is
 
-      type HTable is private;
+      type Instance is private;
+      Nil : constant Instance;
 
-      procedure Reset (Hash_Table : in out HTable);
+      procedure Reset (T : in out Instance);
       --  Resets the hash table by setting all its elements to Null_Ptr. The
       --  effect is to clear the hash table so that it can be reused. For the
       --  most common case where Elmt_Ptr is an access type, and Null_Ptr is
@@ -89,38 +94,42 @@ pragma Preelaborate (HTables);
       --  other than null, then Reset must be called before the first use
       --  of the hash table.
 
-      procedure Set (Hash_Table : in out HTable; E : Elmt_Ptr);
+      procedure Set (T : in out Instance; E : Elmt_Ptr);
       --  Insert the element pointer in the HTable
 
-      function Get (Hash_Table : HTable; K : Key) return Elmt_Ptr;
+      function Get (T : Instance; K : Key) return Elmt_Ptr;
       --  Returns the latest inserted element pointer with the given Key
       --  or null if none.
 
-      procedure Remove (Hash_Table : in out HTable; K : Key);
+      procedure Remove (T : in out Instance; K : Key);
       --  Removes the latest inserted element pointer associated with the
       --  given key if any, does nothing if none.
 
-      type Iterator is private;
+      type Cursor is private;
 
-      procedure Get_First (Hash_Table : HTable; Iter : out Iterator);
-      --  Returns Null_Ptr if the Htable is empty, otherwise returns one
-      --  non specified element. There is no guarantee that 2 calls to this
-      --  function will return the same element.
+      procedure Get_First (T : Instance; Iter : out Cursor);
+      --  Points to the first element in the table.
+      --  There is no guarantee that 2 calls to this function will point to the
+      --  same element.
 
-      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator);
-      --  Returns a non-specified element that has not been returned by the
-      --  same function since the last call to Get_First or Null_Ptr if
-      --  there is no such element or Get_First has bever been called. If
-      --  there is no call to 'Set' in between Get_Next calls, all the
-      --  elements of the Htable will be traversed.
+      procedure Get_Next (T : Instance; Iter : in out Cursor);
+      --  Move to the next element in the table.
+      --  If there is no call to Set or Remove between Get_Next calls, all the
+      --  elements of the htable will be traversed
 
       procedure Remove_And_Get_Next
-        (Hash_Table : in out HTable; Iter : in out Iterator);
+        (T : in out Instance; Iter : in out Cursor);
       --  Remove the current element from the table, and moves to the next
       --  element. This is the only safe way to alter the table while iterating
 
-      function Get_Element (Iter : Iterator) return Elmt_Ptr;
+      function Get_Element (Iter : Cursor) return Elmt_Ptr;
       --  Return the current element
+
+      function Get_First (T : Instance) return Elmt_Ptr;
+      function Get_Next (T : Instance) return Elmt_Ptr;
+      --  These two subprograms are provided for backward compatibility, and
+      --  have the same semantic has the ones above. They use a hidden iterator
+      --  associated with the table.
 
    private
 
@@ -132,9 +141,12 @@ pragma Preelaborate (HTables);
          Iterator_Started : Boolean := False;
       end record;
 
-      type HTable is record
-         Table            : HTable_Array;
+      type Instance is record
+         Table        : HTable_Array;
+         Default_Iter : Cursor;
       end record;
+
+      Nil : constant Instance := ();
 
    end Static_HTable;
 

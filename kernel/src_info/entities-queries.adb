@@ -109,7 +109,7 @@ package body Entities.Queries is
    --  Find the entity in File which is referenced at the given location
 
    procedure Find_Any_Entity
-     (Trie            : Entities_Hash.HTable;
+     (Trie            : Entities_Hash.Instance;
       File            : Source_File;
       Line            : Integer;
       Column          : Basic_Types.Visible_Column_Type;
@@ -293,7 +293,7 @@ package body Entities.Queries is
    ---------------------
 
    procedure Find_Any_Entity
-     (Trie            : Entities_Hash.HTable;
+     (Trie            : Entities_Hash.Instance;
       File            : Source_File;
       Line            : Integer;
       Column          : Basic_Types.Visible_Column_Type;
