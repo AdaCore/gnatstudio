@@ -271,7 +271,7 @@ package body Case_Handling is
 
    procedure Destroy (C : in out Casing_Exceptions) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_Hash_Table.HTable, Exceptions_Table);
+        (String_Hash_Table.Instance, Exceptions_Table);
    begin
       --  Word exceptions
 

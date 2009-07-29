@@ -239,9 +239,9 @@ package body Ada_Naming_Editors is
       Iter       : Gtk_Tree_Iter;
       Ada_Scheme : constant Boolean :=
                      Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
-      Cache      : Naming_Hash.String_Hash_Table.HTable;
+      Cache      : Naming_Hash.String_Hash_Table.Instance;
       Data       : Naming_Data;
-      Cache_Iter : Naming_Hash.String_Hash_Table.Iterator;
+      Cache_Iter : Naming_Hash.String_Hash_Table.Cursor;
 
       type Array2 is array (Gint'(1) .. 2) of Integer;
       Lengths : Array2 := (others => -1);
@@ -308,7 +308,7 @@ package body Ada_Naming_Editors is
 
       function Rows_Count (Column : Gint) return Natural is
          Length : Natural := 0;
-         Iter   : Naming_Hash.String_Hash_Table.Iterator;
+         Iter   : Naming_Hash.String_Hash_Table.Cursor;
          Data   : Naming_Data;
       begin
          Get_First (Cache, Iter);

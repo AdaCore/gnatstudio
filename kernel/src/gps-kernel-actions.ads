@@ -119,7 +119,7 @@ private
      (Action_Record_Access, Free, null, Case_Sensitive => False);
 
    type Actions_Htable_Record is new Root_Table with record
-      Table : Actions_Htable.String_Hash_Table.HTable;
+      Table : Actions_Htable.String_Hash_Table.Instance;
    end record;
    type Actions_Htable_Access is access all Actions_Htable_Record'Class;
 
@@ -127,7 +127,7 @@ private
    --  Reset the table.
 
    type Action_Iterator is record
-      Iterator : Actions_Htable.String_Hash_Table.Iterator;
+      Iterator : Actions_Htable.String_Hash_Table.Cursor;
    end record;
 
 end GPS.Kernel.Actions;

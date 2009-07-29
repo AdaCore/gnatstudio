@@ -39,16 +39,16 @@ package body Ignore_Db is
      (GNAT.Strings.String_Access, No_Free, null);
    use Files_Table;
 
-   type File_Table_Access is access String_Hash_Table.HTable;
+   type File_Table_Access is access String_Hash_Table.Instance;
 
    --  Table of directory containing ignore file
 
    procedure Free is new Ada.Unchecked_Deallocation
-     (String_Hash_Table.HTable, File_Table_Access);
+     (String_Hash_Table.Instance, File_Table_Access);
 
    package Dir_Table is new String_Hash (File_Table_Access, Free, null);
 
-   DB : Dir_Table.String_Hash_Table.HTable;
+   DB : Dir_Table.String_Hash_Table.Instance;
 
    function Load (Ignore_File : Virtual_File) return File_Table_Access;
    --  Load Ignore_File and store the values into DB. Returns the new table
@@ -88,7 +88,7 @@ package body Ignore_Db is
    ----------
 
    function Load (Ignore_File : Virtual_File) return File_Table_Access is
-      Files  : constant File_Table_Access := new String_Hash_Table.HTable;
+      Files  : constant File_Table_Access := new String_Hash_Table.Instance;
       File   : File_Type;
       Buffer : String (1 .. 256);
       Last   : Natural;

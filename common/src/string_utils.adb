@@ -18,6 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Containers;             use Ada.Containers;
+with Ada.Strings.Hash;
+with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;               use GNAT.Strings;
@@ -1453,5 +1456,28 @@ package body String_Utils is
          return 0;
       end if;
    end Compare;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Key : String) return Header_Num is
+      Tmp : constant Ada.Containers.Hash_Type := Ada.Strings.Hash (Key);
+   begin
+      return Header_Num'First +
+               Header_Num'Base (Tmp mod Header_Num'Range_Length);
+   end Hash;
+
+   ---------------------------
+   -- Case_Insensitive_Hash --
+   ---------------------------
+
+   function Case_Insensitive_Hash (Key : String) return Header_Num is
+      Tmp : constant Ada.Containers.Hash_Type :=
+        Ada.Strings.Hash_Case_Insensitive (Key);
+   begin
+      return Header_Num'First +
+               Header_Num'Base (Tmp mod Header_Num'Range_Length);
+   end Case_Insensitive_Hash;
 
 end String_Utils;

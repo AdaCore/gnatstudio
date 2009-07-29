@@ -20,6 +20,7 @@
 with Ada.Containers;            use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Strings.Hash;
 
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -40,7 +41,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
-with HTables;
 with Language.Unknown;          use Language.Unknown;
 with Language.Icons;            use Language.Icons;
 with Language_Handlers;         use Language_Handlers;
@@ -389,7 +389,7 @@ package body Project_Explorers_Common is
       package Iter_Map is new Ada.Containers.Indefinite_Hashed_Maps
         (Key_Type        => String,
          Element_Type    => Gtk_Tree_Iter,
-         Hash            => HTables.String_Hash,
+         Hash            => Ada.Strings.Hash,
          Equivalent_Keys => "=");
       use Iter_Map;
 

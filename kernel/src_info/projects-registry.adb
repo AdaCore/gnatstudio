@@ -149,13 +149,13 @@ package body Projects.Registry is
       Root    : Project_Type := No_Project;
       --  The root of the project hierarchy
 
-      Sources : Source_Htable.String_Hash_Table.HTable;
+      Sources : Source_Htable.String_Hash_Table.Instance;
       --  Index on base source file names, return the managing project
 
-      Directories : Directory_Htable.String_Hash_Table.HTable;
+      Directories : Directory_Htable.String_Hash_Table.Instance;
       --  Index on directory name
 
-      Projects : Project_Htable.String_Hash_Table.HTable;
+      Projects : Project_Htable.String_Hash_Table.Instance;
       --  Index on project names. Some project of the hierarchy might not
       --  exist, since the Project_Type are created lazily the first time they
       --  are needed.
@@ -180,7 +180,7 @@ package body Projects.Registry is
       Xrefs_Subdir : GNAT.Strings.String_Access;
       --  Object dirs subdirectory containing the cross-refs
 
-      Extensions : Languages_Htable.String_Hash_Table.HTable;
+      Extensions : Languages_Htable.String_Hash_Table.Instance;
       --  The extensions registered for each language
 
       Timestamp : Ada.Calendar.Time;
@@ -380,7 +380,7 @@ package body Projects.Registry is
      (Registry : Project_Registry; View_Only : Boolean := False)
    is
       Project : Project_Type;
-      Iter    : Project_Htable.String_Hash_Table.Iterator;
+      Iter    : Project_Htable.String_Hash_Table.Cursor;
    begin
       if Registry.Data /= null then
          --  Free all projects
@@ -1008,7 +1008,7 @@ package body Projects.Registry is
                         Virtual_File_List.Length (Source_File_List);
             Files   : constant File_Array_Access :=
                         new File_Array (1 .. Natural (Count));
-            Current : Cursor := First (Source_File_List);
+            Current : Virtual_File_List.Cursor := First (Source_File_List);
             J       : Natural := Files'First;
          begin
             while Has_Element (Current) loop
@@ -1359,7 +1359,7 @@ package body Projects.Registry is
       Language_Name : String) return GNAT.OS_Lib.Argument_List
    is
       Lang  : constant Name_Id := Get_String (To_Lower (Language_Name));
-      Iter  : Languages_Htable.String_Hash_Table.Iterator;
+      Iter  : Languages_Htable.String_Hash_Table.Cursor;
       Name  : Name_Id;
       Count : Natural := 0;
    begin

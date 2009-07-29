@@ -130,7 +130,7 @@ package body Projects.Graphs is
       Add_Limited_Withs : Boolean)
       return Glib.Graphs.Graph
    is
-      Table : Vertex_Htable.HTable;
+      Table : Vertex_Htable.Instance;
       G : Graph;
 
       function Create_Project_Vertex (Name    : Name_Id)

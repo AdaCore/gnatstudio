@@ -93,6 +93,7 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
+with String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
@@ -182,7 +183,7 @@ package body GPS.Kernel is
    ----------
 
    function Hash (Hook : Hook_Name) return Hook_Htable_Num is
-      function Internal is new HTables.Hash (Hook_Htable_Num);
+      function Internal is new String_Utils.Hash (Hook_Htable_Num);
    begin
       return Internal (String (Hook));
    end Hash;

@@ -102,10 +102,10 @@ private
       Hash         => Hash,
       Equal        => "=");
 
-   type HTable_Access is access Key_Htable.HTable;
+   type HTable_Access is access Key_Htable.Instance;
 
    type Keymap_Record is record
-      Table : Key_Htable.HTable;
+      Table : Key_Htable.Instance;
    end record;
    for Keymap_Record'Alignment use
      Integer'Min (16, Standard'Maximum_Alignment);
@@ -117,7 +117,7 @@ private
    --  Displayed for the shortcut of unassigned actions
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Key_Htable.HTable, HTable_Access);
+     (Key_Htable.Instance, HTable_Access);
 
    function Lookup_Key_From_Action
      (Table             : HTable_Access;
@@ -146,7 +146,7 @@ private
 
    procedure Bind_Default_Key_Internal
      (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Table                                : in out Key_Htable.HTable;
+      Table                                : in out Key_Htable.Instance;
       Action                               : String;
       Key                                  : String;
       Save_In_Keys_XML                     : Boolean;
@@ -192,7 +192,7 @@ private
       return HTable_Access;
    --  Return the list of all key shortcuts
 
-   procedure Clone (From : Key_Htable.HTable; To : out Key_Htable.HTable);
+   procedure Clone (From : Key_Htable.Instance; To : out Key_Htable.Instance);
    --  Deep copy of From
 
    procedure Save_Custom_Keys

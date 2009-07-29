@@ -545,8 +545,8 @@ private
 
    type Entity_Iterator is record
       Name                : GNAT.Strings.String_Access;
-      SIter               : Entities_Hash.Iterator;
-      Iter                : Entities_Hash.Iterator;
+      SIter               : Entities_Hash.Cursor;
+      Iter                : Entities_Hash.Cursor;
       File                : Source_File;
       EL                  : Entity_Information_List_Access;
       Index_In_EL         : Entity_Information_Arrays.Index_Type;

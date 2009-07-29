@@ -42,7 +42,6 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
 with Histories;                  use Histories;
-with HTables;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Projects;                   use Projects;
 with String_Utils;               use String_Utils;
@@ -55,7 +54,7 @@ package body Python_Module is
    Me  : constant Debug_Handle := Create ("Python_Module");
 
    type Hash_Index is range 0 .. 100000;
-   function Hash is new HTables.Hash (Hash_Index);
+   function Hash is new String_Utils.Hash (Hash_Index);
 
    type Python_Module_Record is new Module_ID_Record with null record;
    overriding procedure Destroy (Module : in out Python_Module_Record);

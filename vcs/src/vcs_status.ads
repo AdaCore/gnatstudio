@@ -92,14 +92,20 @@ private
    function Hash (F : Virtual_File) return Header_Num;
 
    package Status_Hash is new HTables.Simple_HTable
-     (Header_Num, Internal_Record, Free, No_I_Data, Virtual_File, Hash, "=");
+     (Header_Num   => Header_Num,
+      Element      => Internal_Record,
+      Free_Element => Free,
+      No_Element   => No_I_Data,
+      Key          => Virtual_File,
+      Hash         => Hash,
+      Equal        => "=");
    --  Store for each file the current status. This is a cache to avoid sending
    --  requests to the VCS.
 
-   type HTable_Access is access Status_Hash.HTable;
+   type HTable_Access is access Status_Hash.Instance;
 
    type Table is record
-      T : HTable_Access := new Status_Hash.HTable;
+      T : HTable_Access := new Status_Hash.Instance;
    end record;
 
    type Status_Cache is new Table;

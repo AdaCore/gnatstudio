@@ -77,8 +77,8 @@ private
      new String_Hash (String_Access, False_Free, No_Element);
 
    type File_Mapper is limited record
-      Table_1 : Double_String_Table.String_Hash_Table.HTable;
-      Table_2 : Double_String_Table.String_Hash_Table.HTable;
+      Table_1 : Double_String_Table.String_Hash_Table.Instance;
+      Table_2 : Double_String_Table.String_Hash_Table.Instance;
    end record;
 
 end Basic_Mapper;

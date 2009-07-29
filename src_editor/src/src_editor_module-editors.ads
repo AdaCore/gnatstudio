@@ -139,11 +139,17 @@ private
    No_Element : constant Element := (Box => null);
 
    package Pure_Editors_Hash is new HTables.Simple_HTable
-     (Header_Num, Element, Free, No_Element, Virtual_File, Hash, Equal);
+     (Header_Num   => Header_Num,
+      Element      => Element,
+      Free_Element => Free,
+      No_Element   => No_Element,
+      Key          => Virtual_File,
+      Hash         => Hash,
+      Equal        => Equal);
    --  ??? This is only updated for views created through this package, not
    --  any other mean
 
-   type Table_Access is access Pure_Editors_Hash.HTable;
+   type Table_Access is access Pure_Editors_Hash.Instance;
 
    type Src_Editor_Buffer_Factory is new GPS.Editors.Editor_Buffer_Factory
    with record

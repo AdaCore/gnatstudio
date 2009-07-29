@@ -167,7 +167,7 @@ package body Project_Explorers is
       Include_Directories : Boolean;
       Include_Files       : Boolean;
 
-      Matches             : String_Status_Hash.String_Hash_Table.HTable;
+      Matches             : String_Status_Hash.String_Hash_Table.Instance;
       --  The search is performed on the internal Ada structures first, and for
       --  each matching project, directory or file, an entry is made in this
       --  table (set to true). This then speeds up the traversing of the tree

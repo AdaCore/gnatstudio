@@ -54,7 +54,7 @@ package body VCS_Status is
      (Cache : in out Status_Cache; Free_Memory : Boolean := False)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Status_Hash.HTable, HTable_Access);
+        (Status_Hash.Instance, HTable_Access);
    begin
       Status_Hash.Reset (Cache.T.all);
       if Free_Memory then
@@ -96,7 +96,7 @@ package body VCS_Status is
    ----------
 
    function Hash (F : Virtual_File) return Header_Num is
-      function Hash is new HTables.Hash (Header_Num);
+      function Hash is new String_Utils.Hash (Header_Num);
    begin
       return Hash (File_Key (F));
    end Hash;
@@ -148,7 +148,7 @@ package body VCS_Status is
                    Create_From_Dir (Get_Home_Dir (Kernel), VCS_Cache_Filename);
       File     : Node_Ptr;
       F_Child  : Node_Ptr;
-      Iter     : Status_Hash.Iterator;
+      Iter     : Status_Hash.Cursor;
       Item     : Internal_Record;
       Status   : Status_Id;
       Success  : Boolean;

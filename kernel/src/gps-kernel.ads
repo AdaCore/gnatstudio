@@ -991,7 +991,7 @@ private
    package Action_Filters_List is new Generic_List (Action_Filter, Free);
 
    type Action_Filter_Iterator is record
-      Iterator : Action_Filters_Htable.String_Hash_Table.Iterator;
+      Iterator : Action_Filters_Htable.String_Hash_Table.Cursor;
    end record;
 
    ----------
@@ -1014,8 +1014,13 @@ private
 
    procedure Free (L : in out Hook_Description_Base_Access);
    package Hooks_Hash is new HTables.Simple_HTable
-     (Hook_Htable_Num, Hook_Description_Base_Access, Free, null,
-      Hook_Name, Hash, "=");
+     (Header_Num   => Hook_Htable_Num,
+      Element      => Hook_Description_Base_Access,
+      No_Element   => null,
+      Key          => Hook_Name,
+      Hash         => Hash,
+      Equal        => "=",
+      Free_Element => Free);
 
    type Location_Marker_Record is abstract tagged null record;
 
@@ -1053,10 +1058,10 @@ private
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
 
-      Hooks : Hooks_Hash.HTable;
+      Hooks : Hooks_Hash.Instance;
       --  The hooks registered in the kernel
 
-      Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;
+      Action_Filters : Action_Filters_Htable.String_Hash_Table.Instance;
       All_Action_Filters : Action_Filters_List.List;
       --  The action contexts registered in the kernel
 

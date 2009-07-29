@@ -25,6 +25,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
+with String_Utils;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body GPR_Creation is
@@ -47,7 +48,7 @@ package body GPR_Creation is
 
    type Header_Num is range 1 .. 5000;
 
-   function Hash is new HTables.Hash (Header_Num);
+   function Hash is new String_Utils.Hash (Header_Num);
    --  Subprograms used for the hash table
 
    package File_Htables is new HTables.Simple_HTable
@@ -99,7 +100,7 @@ package body GPR_Creation is
 
    procedure Parse_Source_Dirs
      (Source_Dirs : GNAT.Strings.String_List;
-      Files       : in out File_Htables.HTable);
+      Files       : in out File_Htables.Instance);
    --  Process all source directories, and find the list of source files.
    --  Result is stored in the Directories/Files parameters
 
@@ -107,7 +108,7 @@ package body GPR_Creation is
      (Object_Dirs     : GNAT.Strings.String_List;
       Related_To      : in out Is_Related_To;
       Directories     : in out Object_Directory_Info_Array;
-      Src_Files       : in out File_Htables.HTable;
+      Src_Files       : in out File_Htables.Instance;
       Obj_Files_Count : out Natural;
       Spec_Extension  : String;
       Body_Extension  : String);
@@ -118,7 +119,7 @@ package body GPR_Creation is
      (Obj_Dir_Index  : Integer;
       Obj_Filename   : String;
       Related_To     : in out Is_Related_To;
-      Src_Files      : in out File_Htables.HTable;
+      Src_Files      : in out File_Htables.Instance;
       Spec_Extension : String;
       Body_Extension : String);
    --  Process the object file, linking the object directory and source
@@ -149,7 +150,7 @@ package body GPR_Creation is
       Related_To      : Is_Related_To;
       Source_Dirs     : String_List;
       Obj_Dirs        : String_List;
-      Src_Files       : File_Htables.HTable;
+      Src_Files       : File_Htables.Instance;
       Object_Dirs     : in out Object_Directory_Info_Array;
       Current_Project : Integer;
       All_Source_Dirs : Boolean := False);
@@ -163,7 +164,7 @@ package body GPR_Creation is
 
    procedure Generate_Source_Files_List
      (Project       : Project_Type;
-      Src_Files     : File_Htables.HTable;
+      Src_Files     : File_Htables.Instance;
       Obj_Dir_Index : Integer);
    --  Generate the list of source files for the given Obj_Dir
 
@@ -210,7 +211,7 @@ package body GPR_Creation is
 
    procedure Parse_Source_Dirs
      (Source_Dirs : GNAT.Strings.String_List;
-      Files       : in out File_Htables.HTable)
+      Files       : in out File_Htables.Instance)
    is
       Dir  : Dir_Type;
       File : String (1 .. 1024);
@@ -250,7 +251,7 @@ package body GPR_Creation is
      (Obj_Dir_Index  : Integer;
       Obj_Filename   : String;
       Related_To     : in out Is_Related_To;
-      Src_Files      : in out File_Htables.HTable;
+      Src_Files      : in out File_Htables.Instance;
       Spec_Extension : String;
       Body_Extension : String)
    is
@@ -309,7 +310,7 @@ package body GPR_Creation is
      (Object_Dirs     : GNAT.Strings.String_List;
       Related_To      : in out Is_Related_To;
       Directories     : in out Object_Directory_Info_Array;
-      Src_Files       : in out File_Htables.HTable;
+      Src_Files       : in out File_Htables.Instance;
       Obj_Files_Count : out Natural;
       Spec_Extension  : String;
       Body_Extension  : String)
@@ -380,10 +381,10 @@ package body GPR_Creation is
 
    procedure Generate_Source_Files_List
      (Project       : Project_Type;
-      Src_Files     : File_Htables.HTable;
+      Src_Files     : File_Htables.Instance;
       Obj_Dir_Index : Integer)
    is
-      Iter  : File_Htables.Iterator;
+      Iter  : File_Htables.Cursor;
       Info  : File_Info;
       Count : Natural := 0;
    begin
@@ -579,7 +580,7 @@ package body GPR_Creation is
       Related_To      : Is_Related_To;
       Source_Dirs     : String_List;
       Obj_Dirs        : String_List;
-      Src_Files       : File_Htables.HTable;
+      Src_Files       : File_Htables.Instance;
       Object_Dirs     : in out Object_Directory_Info_Array;
       Current_Project : Integer;
       All_Source_Dirs : Boolean := False)
@@ -663,7 +664,7 @@ package body GPR_Creation is
       Dot             : aliased String := ".";
       Project         : Project_Type;
       Obj_Dirs        : Object_Directory_Info_Array (Object_Dirs'Range);
-      Src_Files       : File_Htables.HTable;
+      Src_Files       : File_Htables.Instance;
       Obj_Files_Count : Natural;
       Dir             : String_Access;
       Single_Obj_Dir  : Boolean;

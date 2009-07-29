@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
 
 package body HTables is
 
@@ -28,25 +27,36 @@ package body HTables is
 
    package body Static_HTable is
 
-      procedure Get_Non_Null (Hash_Table : HTable; Iter : in out Iterator);
+      type HTable_Array is array (Header_Num) of Elmt_Ptr;
+
+      type Instance_Data is record
+         Table        : HTable_Array;
+         Default_Iter : Cursor;
+      end record;
+
+      procedure Get_Non_Null (T : Instance; Iter : in out Cursor);
       --  Returns Null_Ptr if Iterator_Started is false of the Table is
       --  empty. Returns Iterator_Ptr if non null, or the next non null
       --  element in table if any.
 
       procedure Remove
-        (Hash_Table : in out HTable;
-         Index      : Header_Num;
-         K          : Key);
+        (T      : Instance;
+         Index  : Header_Num;
+         K      : Key);
       --  Low-level implementation for Remove
 
       ---------
       -- Get --
       ---------
 
-      function Get (Hash_Table : HTable; K : Key) return Elmt_Ptr is
+      function Get (T : Instance; K : Key) return Elmt_Ptr is
          Elmt  : Elmt_Ptr;
       begin
-         Elmt := Hash_Table.Table (Hash (K));
+         if T = null then
+            return Null_Ptr;
+         end if;
+
+         Elmt := T.Table (Hash (K));
 
          loop
             if Elmt = Null_Ptr then
@@ -65,7 +75,7 @@ package body HTables is
       -- Get_Element --
       -----------------
 
-      function Get_Element (Iter : Iterator) return Elmt_Ptr is
+      function Get_Element (Iter : Cursor) return Elmt_Ptr is
       begin
          if not Iter.Iterator_Started then
             return Null_Ptr;
@@ -78,26 +88,58 @@ package body HTables is
       -- Get_First --
       ---------------
 
-      procedure Get_First (Hash_Table : HTable; Iter : out Iterator) is
+      procedure Get_First (T : Instance; Iter : out Cursor) is
       begin
-         Iter.Iterator_Started := True;
-         Iter.Iterator_Index   := Hash_Table.Table'First;
-         Iter.Iterator_Ptr     := Hash_Table.Table (Iter.Iterator_Index);
-         Get_Non_Null (Hash_Table, Iter);
+         if T = null then
+            Iter.Iterator_Started := False;
+         else
+            Iter.Iterator_Started := True;
+            Iter.Iterator_Index   := T.Table'First;
+            Iter.Iterator_Ptr     := T.Table (Iter.Iterator_Index);
+            Get_Non_Null (T, Iter);
+         end if;
       end Get_First;
 
       --------------
       -- Get_Next --
       --------------
 
-      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator) is
+      procedure Get_Next (T : Instance; Iter : in out Cursor) is
       begin
          if not Iter.Iterator_Started then
             return;
          end if;
 
          Iter.Iterator_Ptr := Next (Iter.Iterator_Ptr);
-         Get_Non_Null (Hash_Table, Iter);
+         Get_Non_Null (T, Iter);
+      end Get_Next;
+
+      ---------------
+      -- Get_First --
+      ---------------
+
+      function Get_First (T : Instance) return Elmt_Ptr is
+      begin
+         if T = null then
+            return Null_Ptr;
+         end if;
+
+         Get_First (T, T.Default_Iter);
+         return Get_Element (T.Default_Iter);
+      end Get_First;
+
+      --------------
+      -- Get_Next --
+      --------------
+
+      function Get_Next (T : Instance) return Elmt_Ptr is
+      begin
+         if T = null then
+            return Null_Ptr;
+         end if;
+
+         Get_Next (T, T.Default_Iter);
+         return Get_Element (T.Default_Iter);
       end Get_Next;
 
       -------------------------
@@ -105,12 +147,13 @@ package body HTables is
       -------------------------
 
       procedure Remove_And_Get_Next
-        (Hash_Table : in out HTable; Iter : in out Iterator)
+        (T : in out Instance; Iter : in out Cursor)
       is
          Tmp : Elmt_Ptr;
          Index : Header_Num;
       begin
-         if not Iter.Iterator_Started then
+         if T = null or else not Iter.Iterator_Started then
+            Iter.Iterator_Started := False;
             return;
          end if;
 
@@ -120,37 +163,41 @@ package body HTables is
 
          --  Move to next element
          Iter.Iterator_Ptr := Next (Iter.Iterator_Ptr);
-         Get_Non_Null (Hash_Table, Iter);
+         Get_Non_Null (T, Iter);
 
          --  Remove old one
-         Remove (Hash_Table, Index, Get_Key (Tmp));
+         Remove (T, Index, Get_Key (Tmp));
       end Remove_And_Get_Next;
 
       ------------------
       -- Get_Non_Null --
       ------------------
 
-      procedure Get_Non_Null (Hash_Table : HTable; Iter : in out Iterator) is
+      procedure Get_Non_Null (T : Instance; Iter : in out Cursor) is
       begin
-         while Iter.Iterator_Ptr = Null_Ptr  loop
-            if Iter.Iterator_Index = Hash_Table.Table'Last then
-               Iter.Iterator_Started := False;
-               return;
-            end if;
+         if T = null then
+            Iter.Iterator_Started := False;
+         else
+            while Iter.Iterator_Ptr = Null_Ptr  loop
+               if Iter.Iterator_Index = T.Table'Last then
+                  Iter.Iterator_Started := False;
+                  return;
+               end if;
 
-            Iter.Iterator_Index := Iter.Iterator_Index + 1;
-            Iter.Iterator_Ptr   := Hash_Table.Table (Iter.Iterator_Index);
-         end loop;
+               Iter.Iterator_Index := Iter.Iterator_Index + 1;
+               Iter.Iterator_Ptr   := T.Table (Iter.Iterator_Index);
+            end loop;
+         end if;
       end Get_Non_Null;
 
       ------------
       -- Remove --
       ------------
 
-      procedure Remove (Hash_Table : in out HTable; K : Key) is
+      procedure Remove (T : Instance; K : Key) is
          Index     : constant Header_Num := Hash (K);
       begin
-         Remove (Hash_Table, Index, K);
+         Remove (T, Index, K);
       end Remove;
 
       ------------
@@ -158,18 +205,25 @@ package body HTables is
       ------------
 
       procedure Remove
-        (Hash_Table : in out HTable;
-         Index      : Header_Num;
-         K          : Key)
+        (T     : Instance;
+         Index : Header_Num;
+         K     : Key)
       is
          Next_Elmt : Elmt_Ptr;
-         Elmt      : Elmt_Ptr := Hash_Table.Table (Index);
+         Elmt      : Elmt_Ptr;
       begin
+         if T = null then
+            return;
+         end if;
+
+         Elmt := T.Table (Index);
+
          if Elmt = Null_Ptr then
             return;
+         end if;
 
-         elsif Equal (Get_Key (Elmt), K) then
-            Hash_Table.Table (Index) := Next (Elmt);
+         if Equal (Get_Key (Elmt), K) then
+            T.Table (Index) := Next (Elmt);
             Free_Elmt_Ptr (Elmt);
 
          else
@@ -195,28 +249,41 @@ package body HTables is
       -- Reset --
       -----------
 
-      procedure Reset (Hash_Table : in out HTable) is
+      procedure Reset (T : in out Instance) is
+         procedure Unchecked_Free is
+           new Ada.Unchecked_Deallocation (Instance_Data, Instance);
+
          Tmp : Elmt_Ptr;
       begin
-         for J in Hash_Table.Table'Range loop
-            while Hash_Table.Table (J) /= Null_Ptr loop
-               Tmp := Next (Hash_Table.Table (J));
-               Free_Elmt_Ptr (Hash_Table.Table (J));
-               Hash_Table.Table (J) := Tmp;
+         if T = null then
+            return;
+         end if;
+
+         for J in T.Table'Range loop
+            while T.Table (J) /= Null_Ptr loop
+               Tmp := Next (T.Table (J));
+               Free_Elmt_Ptr (T.Table (J));
+               T.Table (J) := Tmp;
             end loop;
          end loop;
+
+         Unchecked_Free (T);
       end Reset;
 
       ---------
       -- Set --
       ---------
 
-      procedure Set (Hash_Table : in out HTable; E : Elmt_Ptr) is
+      procedure Set (T : in out Instance; E : Elmt_Ptr) is
          Index : Header_Num;
       begin
+         if T = null then
+            T := new Instance_Data;
+         end if;
+
          Index := Hash (Get_Key (E));
-         Set_Next (E, Hash_Table.Table (Index));
-         Hash_Table.Table (Index) := E;
+         Set_Next (E, T.Table (Index));
+         T.Table (Index) := E;
       end Set;
 
    end Static_HTable;
@@ -249,8 +316,8 @@ package body HTables is
       -- Get --
       ---------
 
-      function Get (Hash_Table : HTable; K : Key) return Element is
-         Tmp : constant Elmt_Ptr := Get (Hash_Table.Table, K);
+      function Get (T : Instance; K : Key) return Element is
+         Tmp : constant Elmt_Ptr := Get (T.Table, K);
       begin
          if Tmp = null then
             return No_Element;
@@ -263,9 +330,9 @@ package body HTables is
       -- Get_First --
       ---------------
 
-      procedure Get_First (Hash_Table : HTable; Iter : out Iterator) is
+      procedure Get_First (T : Instance; Iter : out Cursor) is
       begin
-         Get_First (Hash_Table.Table, Iter.Iter);
+         Get_First (T.Table, Iter.Iter);
       end Get_First;
 
       -------------
@@ -281,9 +348,37 @@ package body HTables is
       -- Get_Next --
       --------------
 
-      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator) is
+      procedure Get_Next (T : Instance; Iter : in out Cursor) is
       begin
-         Get_Next (Hash_Table.Table, Iter.Iter);
+         Get_Next (T.Table, Iter.Iter);
+      end Get_Next;
+
+      ---------------
+      -- Get_First --
+      ---------------
+
+      function Get_First (T : Instance) return Element is
+         Tmp : constant Elmt_Ptr := Get_First (T.Table);
+      begin
+         if Tmp = null then
+            return No_Element;
+         else
+            return Tmp.E;
+         end if;
+      end Get_First;
+
+      --------------
+      -- Get_Next --
+      --------------
+
+      function Get_Next (T : Instance) return Element is
+         Tmp : constant Elmt_Ptr := Get_Next (T.Table);
+      begin
+         if Tmp = null then
+            return No_Element;
+         else
+            return Tmp.E;
+         end if;
       end Get_Next;
 
       -------------------------
@@ -291,16 +386,16 @@ package body HTables is
       -------------------------
 
       procedure Remove_And_Get_Next
-        (Hash_Table : in out HTable; Iter : in out Iterator) is
+        (T : in out Instance; Iter : in out Cursor) is
       begin
-         Remove_And_Get_Next (Hash_Table.Table, Iter.Iter);
+         Remove_And_Get_Next (T.Table, Iter.Iter);
       end Remove_And_Get_Next;
 
       -------------
       -- Get_Key --
       -------------
 
-      function Get_Key (Iter : Iterator) return Key is
+      function Get_Key (Iter : Cursor) return Key is
       begin
          return Get_Element (Iter.Iter).K.all;
       end Get_Key;
@@ -309,7 +404,7 @@ package body HTables is
       -- Get_Element --
       -----------------
 
-      function Get_Element (Iter : Iterator) return Element is
+      function Get_Element (Iter : Cursor) return Element is
          Ptr : constant Elmt_Ptr := Get_Element (Iter.Iter);
       begin
          if Ptr = null then
@@ -332,29 +427,29 @@ package body HTables is
       -- Remove --
       ------------
 
-      procedure Remove (Hash_Table : in out HTable; K : Key) is
+      procedure Remove (T : Instance; K : Key) is
       begin
-         Remove (Hash_Table.Table, K);
+         Remove (T.Table, K);
       end Remove;
 
       -----------
       -- Reset --
       -----------
 
-      procedure Reset (Hash_Table : in out HTable) is
+      procedure Reset (T : in out Instance) is
       begin
-         Reset (Hash_Table.Table);
+         Reset (T.Table);
       end Reset;
 
       ---------
       -- Set --
       ---------
 
-      procedure Set (Hash_Table : in out HTable; K : Key; E : Element) is
-         Tmp : constant Elmt_Ptr := Get (Hash_Table.Table, K);
+      procedure Set (T : in out Instance; K : Key; E : Element) is
+         Tmp : constant Elmt_Ptr := Get (T.Table, K);
       begin
          if Tmp = null then
-            Set (Hash_Table.Table, new Element_Wrapper'(new Key'(K), E, null));
+            Set (T.Table, new Element_Wrapper'(new Key'(K), E, null));
          else
             Free_Element (Tmp.E);
             Tmp.E := E;
@@ -371,62 +466,5 @@ package body HTables is
       end Set_Next;
 
    end Simple_HTable;
-
-   -----------------
-   -- String_Hash --
-   -----------------
-
-   use Ada.Containers;
-
-   function String_Hash (Key : String) return Hash_Type is
-      function Shift_Left
-        (Value : Hash_Type; Amount : Natural) return Hash_Type;
-      pragma Import (Intrinsic, Shift_Left);
-
-      Tmp : Hash_Type := 0;
-
-   begin
-      --  ??? Algorithm is copied from s-strhas.adb, consider reusing directly
-      for J in Key'Range loop
-         Tmp := Character'Pos (Key (J))
-                  + Shift_Left (Tmp, 6) + Shift_Left (Tmp, 16) - Tmp;
-      end loop;
-
-      return Tmp;
-   end String_Hash;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Key : String) return Header_Num is
-      Tmp : constant Hash_Type := String_Hash (Key);
-   begin
-      return Header_Num'First +
-               Header_Num'Base (Tmp mod Header_Num'Range_Length);
-   end Hash;
-
-   ---------------------------
-   -- Case_Insensitive_Hash --
-   ---------------------------
-
-   function Case_Insensitive_Hash (Key : String) return Header_Num is
-      type Uns is mod 2 ** 32;
-
-      function Shift_Left (Value : Uns; Amount : Natural) return Uns;
-      pragma Import (Intrinsic, Shift_Left);
-
-      Tmp : Uns := 0;
-
-   begin
-      --  ??? Algorithm is copied from s-strhas.adb, consider reusing directly
-      for J in Key'Range loop
-         Tmp := Character'Pos (To_Lower (Key (J)))
-                  + Shift_Left (Tmp, 6) + Shift_Left (Tmp, 16) - Tmp;
-      end loop;
-
-      return Header_Num'First +
-               Header_Num'Base (Tmp mod Header_Num'Range_Length);
-   end Case_Insensitive_Hash;
 
 end HTables;

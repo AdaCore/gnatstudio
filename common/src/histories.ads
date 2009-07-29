@@ -219,11 +219,11 @@ private
      (Data_Type    => History_Key_Access,
       Free_Data    => No_Free,
       Null_Ptr     => Null_History);
-   type HTable_Access is access History_Hash.String_Hash_Table.HTable;
+   type HTable_Access is access History_Hash.String_Hash_Table.Instance;
 
    type History_Record is record
       Max_Length : Positive := Positive'Last;
-      Table      : HTable_Access := new History_Hash.String_Hash_Table.HTable;
+      Table     : HTable_Access := new History_Hash.String_Hash_Table.Instance;
    end record;
 
    No_History : constant History_Record :=

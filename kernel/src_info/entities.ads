@@ -1203,6 +1203,7 @@ private
 
    package Entities_Hash is new HTables.Static_HTable
      (Header_Num    => Header_Num,
+      Element       => Entity_Informations,  --  unused
       Elmt_Ptr      => Entity_Informations,
       Null_Ptr      => null,
       Set_Next      => Set_Next,
@@ -1318,6 +1319,7 @@ private
 
    package Files_HTable is new HTables.Static_HTable
      (Header_Num    => HTable_Header,
+      Element       => Source_File_Item,  --  Unused
       Elmt_Ptr      => Source_File_Item,
       Null_Ptr      => null,
       Set_Next      => Set_Next,
@@ -1366,6 +1368,7 @@ private
 
    package LI_HTable is new HTables.Static_HTable
      (Header_Num    => HTable_Header,
+      Element       => LI_File_Item,  --  Unused
       Elmt_Ptr      => LI_File_Item,
       Null_Ptr      => null,
       Set_Next      => Set_Next,

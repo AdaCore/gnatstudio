@@ -95,7 +95,7 @@ package body Revision_Views is
       Prev1, Prev2 : Unbounded_String;
       Parent       : Gtk_Tree_Iter := Null_Iter;
       Mode         : Mode_Kind := Link;
-      Syms         : String_Hash_Table.HTable;
+      Syms         : String_Hash_Table.Instance;
       File         : Virtual_File;
       Root_Color   : Gdk_Color;
       Child        : MDI_Child;
@@ -119,7 +119,7 @@ package body Revision_Views is
    package BT renames View_Table.String_Hash_Table;
 
    type Revision_View_Module is new Module_ID_Record with record
-      Table : BT.HTable;
+      Table : BT.Instance;
    end record;
 
    Revision_View_Module_ID : Module_ID;

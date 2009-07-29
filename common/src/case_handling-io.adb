@@ -103,7 +103,7 @@ package body Case_Handling.IO is
    is
       File, Ada_Child : Node_Ptr;
       Child           : Node_Ptr;
-      Iter            : String_Hash_Table.Iterator;
+      Iter            : String_Hash_Table.Cursor;
       N               : W_Node;
 
    begin

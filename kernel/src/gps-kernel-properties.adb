@@ -62,7 +62,7 @@ package body GPS.Kernel.Properties is
       Case_Sensitive => True);
    use Properties_Hash.String_Hash_Table;
 
-   All_Properties : Properties_Hash.String_Hash_Table.HTable;
+   All_Properties : Properties_Hash.String_Hash_Table.Instance;
    --  Global variable storing all the current properties for the current
    --  project.
    --  Indexes a made of both the Resource_Key (ie the file or project name for
@@ -490,7 +490,7 @@ package body GPS.Kernel.Properties is
    is
       Filename : constant Virtual_File :=
                    Get_Properties_Filename (Kernel);
-      Iter     : Properties_Hash.String_Hash_Table.Iterator;
+      Iter     : Properties_Hash.String_Hash_Table.Cursor;
       Root     : Node_Ptr;
       Descr    : Property_Description_Access;
       Val      : XML_Utils.String_Ptr;

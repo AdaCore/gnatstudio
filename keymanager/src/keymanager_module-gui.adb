@@ -353,7 +353,7 @@ package body KeyManager_Module.GUI is
          Changed    : Boolean)
       is
          First   : Natural := Accel_Path'First + 1;
-         Iter    : Key_Htable.Iterator;
+         Iter    : Key_Htable.Cursor;
          Binding : Key_Description_List;
          Found   : Boolean := False;
          Success : Boolean;
@@ -834,7 +834,7 @@ package body KeyManager_Module.GUI is
 
    begin
       Editor := new Keys_Editor_Record;
-      Editor.Bindings := new Key_Htable.HTable;
+      Editor.Bindings := new Key_Htable.Instance;
 
       Initialize
         (Editor,

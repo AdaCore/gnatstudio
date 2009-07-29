@@ -213,7 +213,7 @@ package body KeyManager_Module is
    --  disable all actions currently associated with the same shortcut)
 
    procedure Get_Secondary_Keymap
-     (Table  : in out Key_Htable.HTable;
+     (Table  : in out Key_Htable.Instance;
       Key    : Gdk_Key_Type;
       Modif  : Gdk_Modifier_Type;
       Keymap : out Keymap_Access);
@@ -265,7 +265,7 @@ package body KeyManager_Module is
       Success  : Boolean;
 
       procedure Save_Table
-        (Table       : in out Key_Htable.HTable;
+        (Table       : in out Key_Htable.Instance;
          Prefix      : String;
          N, Level    : Positive;
          More_Levels : in out Boolean);
@@ -276,13 +276,13 @@ package body KeyManager_Module is
       ----------------
 
       procedure Save_Table
-        (Table       : in out Key_Htable.HTable;
+        (Table       : in out Key_Htable.Instance;
          Prefix      : String;
          N, Level    : Positive;
          More_Levels : in out Boolean)
       is
          Child   : Node_Ptr;
-         Iter    : Key_Htable.Iterator;
+         Iter    : Key_Htable.Cursor;
          Binding : Key_Description_List;
       begin
          Get_First (Table, Iter);
@@ -606,9 +606,9 @@ package body KeyManager_Module is
    -----------
 
    procedure Clone
-     (From : Key_Htable.HTable; To : out Key_Htable.HTable)
+     (From : Key_Htable.Instance; To : out Key_Htable.Instance)
    is
-      Iter : Key_Htable.Iterator;
+      Iter : Key_Htable.Cursor;
       List : Key_Description_List;
    begin
       Reset (To);
@@ -626,7 +626,7 @@ package body KeyManager_Module is
 
    procedure Bind_Default_Key_Internal
      (Kernel                               : access Kernel_Handle_Record'Class;
-      Table                                : in out Key_Htable.HTable;
+      Table                                : in out Key_Htable.Instance;
       Action                               : String;
       Key                                  : String;
       Save_In_Keys_XML                     : Boolean;
@@ -635,12 +635,12 @@ package body KeyManager_Module is
       Update_Menus                         : Boolean)
   is
       procedure Bind_Internal
-        (Table       : in out Key_Htable.HTable;
+        (Table       : in out Key_Htable.Instance;
          Default_Key : Gdk.Types.Gdk_Key_Type;
          Default_Mod : Gdk.Types.Gdk_Modifier_Type);
       --  Internal version that allows setting the Changed attribute
 
-      procedure Remove_In_Keymap (Table : in out Key_Htable.HTable);
+      procedure Remove_In_Keymap (Table : in out Key_Htable.Instance);
       --  Remove all bindings to Action in Table and its secondary keymaps
 
       -------------------
@@ -648,7 +648,7 @@ package body KeyManager_Module is
       -------------------
 
       procedure Bind_Internal
-        (Table       : in out Key_Htable.HTable;
+        (Table       : in out Key_Htable.Instance;
          Default_Key : Gdk.Types.Gdk_Key_Type;
          Default_Mod : Gdk.Types.Gdk_Modifier_Type)
       is
@@ -722,10 +722,8 @@ package body KeyManager_Module is
       -- Remove_In_Keymap --
       ----------------------
 
-      procedure Remove_In_Keymap
-        (Table : in out Key_Htable.HTable)
-      is
-         Iter : Key_Htable.Iterator;
+      procedure Remove_In_Keymap (Table : in out Key_Htable.Instance) is
+         Iter : Key_Htable.Cursor;
          List, Previous, Tmp : Key_Description_List;
          Move_To_Next : Boolean;
       begin
@@ -948,7 +946,7 @@ package body KeyManager_Module is
    --------------------------
 
    procedure Get_Secondary_Keymap
-     (Table  : in out Key_Htable.HTable;
+     (Table  : in out Key_Htable.Instance;
       Key    : Gdk_Key_Type;
       Modif  : Gdk_Modifier_Type;
       Keymap : out Keymap_Access)
@@ -1366,15 +1364,15 @@ package body KeyManager_Module is
       use Ada.Strings.Unbounded;
       Result : Ada.Strings.Unbounded.Unbounded_String;
 
-      procedure Process_Table (Table : Key_Htable.HTable; Prefix : String);
+      procedure Process_Table (Table : Key_Htable.Instance; Prefix : String);
       --  Process a specific binding table
 
       -------------------
       -- Process_Table --
       -------------------
 
-      procedure Process_Table (Table : Key_Htable.HTable; Prefix : String) is
-         Iter    : Key_Htable.Iterator;
+      procedure Process_Table (Table : Key_Htable.Instance; Prefix : String) is
+         Iter    : Key_Htable.Cursor;
          Binding : Key_Description_List;
       begin
          Get_First (Table, Iter);
@@ -1857,7 +1855,7 @@ package body KeyManager_Module is
 
    begin
       Keymanager_Module := new Keymanager_Module_Record;
-      Keymanager_Module.Table := new Key_Htable.HTable;
+      Keymanager_Module.Table := new Key_Htable.Instance;
 
       Register_Module
         (Keymanager_Module, Kernel, "keymanager");

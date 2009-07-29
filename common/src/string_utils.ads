@@ -382,6 +382,20 @@ package String_Utils is
    --  integers. Even if not using string, it is better to keep this routine
    --  next to the compare based on strings.
 
+   ----------
+   -- Hash --
+   ----------
+
+   generic
+      type Header_Num is range <>;
+   function Hash (Key : String) return Header_Num;
+   --  A generic hashing function working on String keys
+
+   generic
+      type Header_Num is range <>;
+   function Case_Insensitive_Hash (Key : String) return Header_Num;
+   --  A generic hashing function working on case insensitive String keys
+
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);

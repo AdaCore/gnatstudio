@@ -114,6 +114,7 @@ private
 
    package STable is new HTables.Static_HTable
      (Header_Num  => Hash_Range,
+      Element     => Xref_Elmt_Ptr,  --  Unused
       Elmt_Ptr    => Xref_Elmt_Ptr,
       Null_Ptr    => Null_Xref_Elmt,
       Set_Next    => Set_Next,

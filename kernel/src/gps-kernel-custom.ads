@@ -218,7 +218,7 @@ private
 
    type Script_Iterator is record
       Kernel : Kernel_Handle;
-      Iter   : Scripts_Hash.String_Hash_Table.Iterator;
+      Iter   : Scripts_Hash.String_Hash_Table.Cursor;
    end record;
 
 end GPS.Kernel.Custom;

@@ -161,9 +161,9 @@ package body Aliases_Module is
    package Boolean_Hash is new String_Hash (Boolean, Do_Nothing, False);
 
    type Aliases_Module_Id_Record is new Module_ID_Record with record
-      Aliases      : Aliases_Hash.String_Hash_Table.HTable;
+      Aliases      : Aliases_Hash.String_Hash_Table.Instance;
       Module_Funcs : Expansion_Function_Array;
-      Expanded     : Boolean_Hash.String_Hash_Table.HTable;
+      Expanded     : Boolean_Hash.String_Hash_Table.Instance;
    end record;
    type Aliases_Module_Id_Access is access all Aliases_Module_Id_Record'Class;
 
@@ -178,7 +178,7 @@ package body Aliases_Module is
    Aliases_Module_Id : Aliases_Module_Id_Access;
 
    type Alias_Editor_Record is new Gtk_Dialog_Record with record
-      Local_Aliases   : Aliases_Hash.String_Hash_Table.HTable;
+      Local_Aliases   : Aliases_Hash.String_Hash_Table.Instance;
       Aliases         : Gtk_Tree_View;
       Aliases_Model   : Gtk_Tree_Store;
       Current_Alias   : Gtk_Label;
@@ -530,7 +530,7 @@ package body Aliases_Module is
       Filename          : constant Virtual_File :=
                             Create_From_Dir (Get_Home_Dir (Kernel), "aliases");
       File, Key, Child  : Node_Ptr;
-      Iter              : Iterator;
+      Iter              : Cursor;
       Value             : Alias_Record;
       P                 : Param_Access;
       Success           : Boolean;
@@ -1954,7 +1954,7 @@ package body Aliases_Module is
    ---------------------
 
    procedure Update_Contents (Editor : access Alias_Editor_Record'Class) is
-      Iter  : Iterator;
+      Iter  : Cursor;
       Value : Alias_Record;
       It    : Gtk_Tree_Iter;
 
@@ -1987,7 +1987,7 @@ package body Aliases_Module is
    --------------------
 
    procedure Update_Aliases (Editor : access Alias_Editor_Record'Class) is
-      Iter  : Iterator;
+      Iter  : Cursor;
       Value : Alias_Record;
    begin
       Get_First (Editor.Local_Aliases, Iter);

@@ -110,14 +110,14 @@ private
    package Casing_Exception_Table is new String_Hash (W_Node, Free, Null_Node);
    use Casing_Exception_Table;
 
-   type Exceptions_Table is access String_Hash_Table.HTable;
+   type Exceptions_Table is access String_Hash_Table.Instance;
    --  Exception Word handler, each exception is inserted into this hash
    --  table. The key is the word in lower-case, the associated
    --  value is the word with the right casing.
 
    type Casing_Exceptions is record
-      E : Exceptions_Table := new String_Hash_Table.HTable;
-      S : Exceptions_Table := new String_Hash_Table.HTable;
+      E : Exceptions_Table := new String_Hash_Table.Instance;
+      S : Exceptions_Table := new String_Hash_Table.Instance;
    end record;
 
    No_Casing_Exception : constant Casing_Exceptions := (E => null, S => null);

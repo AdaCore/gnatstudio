@@ -2427,7 +2427,7 @@ package body Src_Editor_Module.Editors is
       R : Src_Editor_Buffer_Factory;
    begin
       R.Kernel := Kernel;
-      R.Pure_Buffers := new Pure_Editors_Hash.HTable;
+      R.Pure_Buffers := new Pure_Editors_Hash.Instance;
       return R;
    end Create;
 
@@ -2437,7 +2437,7 @@ package body Src_Editor_Module.Editors is
 
    procedure Destroy (X : in out Src_Editor_Buffer_Factory) is
       procedure Free is new Ada.Unchecked_Deallocation
-        (Pure_Editors_Hash.HTable, Table_Access);
+        (Pure_Editors_Hash.Instance, Table_Access);
    begin
       Free (X.Pure_Buffers);
    end Destroy;

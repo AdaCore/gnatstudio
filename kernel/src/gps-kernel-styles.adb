@@ -237,7 +237,7 @@ package body GPS.Kernel.Styles is
       File   : Virtual_File)
    is
       Main, Node, Child : Node_Ptr;
-      Iter    : Iterator;
+      Iter    : Style_Htable.String_Hash_Table.Cursor;
       Info    : Style_Access;
       Success : Boolean;
 

@@ -336,7 +336,7 @@ package body Entities.Debug is
    ----------
 
    procedure Dump (LIs : in out LI_HTable.Instance) is
-      Iter : LI_HTable.Iterator;
+      Iter : LI_HTable.Cursor;
       Count : Natural := 0;
    begin
       Get_First (LIs, Iter);
@@ -490,7 +490,7 @@ package body Entities.Debug is
    function Get_Sorted_List_Of_Files
      (Files : access Files_HTable.Instance) return Source_File_Array
    is
-      Iter  : Files_HTable.Iterator;
+      Iter  : Files_HTable.Cursor;
       Count : Natural := 0;
       File  : Source_File_Item;
    begin
@@ -568,7 +568,7 @@ package body Entities.Debug is
       Full     : Boolean;
       Name     : String)
    is
-      Iter : Entities_Hash.Iterator;
+      Iter : Entities_Hash.Cursor;
       Is_Empty : Boolean;
       Count : Natural := 0;
    begin

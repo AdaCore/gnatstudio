@@ -302,7 +302,7 @@ package body Entities.Queries is
       Closest         : in out Entity_Information;
       Closest_Ref     : in out Entity_Reference)
    is
-      Iter : Entities_Hash.Iterator;
+      Iter : Entities_Hash.Cursor;
       UEI  : Entity_Informations;
    begin
       Get_First (Trie, Iter);
@@ -2083,7 +2083,7 @@ package body Entities.Queries is
 
    procedure Compute_All_Call_Graphs (Db : Entities_Database) is
       use Files_HTable;
-      Iter : Files_HTable.Iterator;
+      Iter : Files_HTable.Cursor;
       File : Source_File_Item;
    begin
       Get_First (Db.Files, Iter);
@@ -2368,7 +2368,7 @@ package body Entities.Queries is
       Update_Xref (File);
 
       declare
-         Iter : Entities_Hash.Iterator;
+         Iter : Entities_Hash.Cursor;
          UEI  : Entity_Informations;
       begin
          Get_First (File.Entities, Iter);
@@ -2382,7 +2382,7 @@ package body Entities.Queries is
       end;
 
       declare
-         Iter : Entities_Hash.Iterator;
+         Iter : Entities_Hash.Cursor;
          UEI  : Entity_Informations;
       begin
          Get_First (File.All_Entities, Iter);
@@ -2450,7 +2450,7 @@ package body Entities.Queries is
             end if;
 
             declare
-               Iter : Entities_Hash.Iterator;
+               Iter : Entities_Hash.Cursor;
                UEI  : Entity_Informations;
             begin
                Get_First (File.Entities, Iter);
@@ -2466,7 +2466,7 @@ package body Entities.Queries is
             end;
 
             declare
-               Iter : Entities_Hash.Iterator;
+               Iter : Entities_Hash.Cursor;
                UEI  : Entity_Informations;
             begin
                Get_First (File.All_Entities, Iter);

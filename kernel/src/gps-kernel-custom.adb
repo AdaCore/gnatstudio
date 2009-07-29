@@ -44,7 +44,7 @@ package body GPS.Kernel.Custom is
    use Scripts_Hash.String_Hash_Table;
 
    type Scripts_Htable_Record is new Root_Table with record
-      Table : Scripts_Hash.String_Hash_Table.HTable;
+      Table : Scripts_Hash.String_Hash_Table.Instance;
    end record;
    type Scripts_Htable_Access is access all Scripts_Htable_Record'Class;
 
@@ -478,7 +478,7 @@ package body GPS.Kernel.Custom is
       Startup : constant Virtual_File :=
                   Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
       File, Child : Node_Ptr;
-      Iter        : Scripts_Hash.String_Hash_Table.Iterator;
+      Iter        : Scripts_Hash.String_Hash_Table.Cursor;
       Script      : Script_Description_Access;
       Success     : Boolean;
 

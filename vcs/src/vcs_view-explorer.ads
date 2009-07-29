@@ -95,10 +95,10 @@ private
       VCS    : VCS_Access;
       --  Current VCS handled
 
-      Status : Status_Hash.String_Hash_Table.HTable;
+      Status : Status_Hash.String_Hash_Table.Instance;
       --  Recorded status for each VCS
 
-      Hidden : File_Hash.String_Hash_Table.HTable;
+      Hidden : File_Hash.String_Hash_Table.Instance;
       --  ??? A table to record all files that does not match the current
       --  filter. This table is parsed every time the filter is changed. This
       --  will be replaced when the Gtk_Tree_View will support invisible line.

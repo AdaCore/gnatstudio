@@ -106,7 +106,7 @@ package body Basic_Mapper is
       File_Name : Virtual_File)
    is
       File    : Ada.Text_IO.File_Type;
-      Element : Iterator;
+      Element : Cursor;
    begin
       if Mapper = null then
          return;

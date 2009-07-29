@@ -54,7 +54,7 @@ package body VCS_Activities is
 
    package Key_Hash is new String_Hash (String_Access, Unchecked_Free, null);
    use Key_Hash;
-   type Key_Hash_Access is access String_Hash_Table.HTable;
+   type Key_Hash_Access is access String_Hash_Table.Instance;
 
    type Activity_Record is record
       Project      : Virtual_File;
@@ -169,7 +169,7 @@ package body VCS_Activities is
                   new String'(Name), No_Class_Instance, Activity_Id (Id),
                   null, Group_Commit,
                   Committed or Closed,
-                  new String_Hash_Table.HTable, null, False);
+                  new String_Hash_Table.Instance, null, False);
 
          while Child /= null loop
             if Child.Tag.all = "file" then
@@ -321,7 +321,7 @@ package body VCS_Activities is
                   UID,
                   null,
                   False, False,
-                  new String_Hash_Table.HTable,
+                  new String_Hash_Table.Instance,
                   null, False));
 
                Save_Activities (Kernel);
@@ -391,7 +391,7 @@ package body VCS_Activities is
      (Kernel : access Kernel_Handle_Record'Class; Activity : Activity_Id)
    is
       procedure Free is new Ada.Unchecked_Deallocation
-        (String_Hash_Table.HTable, Key_Hash_Access);
+        (String_Hash_Table.Instance, Key_Hash_Access);
 
       File_Name : constant Virtual_File :=
                     Create_From_Dir

@@ -255,7 +255,7 @@ package body VCS_View.Explorer is
       declare
          Status    : File_Status_Record;
          Displayed : Boolean;
-         Iter      : File_Hash.String_Hash_Table.Iterator;
+         Iter      : File_Hash.String_Hash_Table.Cursor;
       begin
          Get_First (Explorer.Hidden, Iter);
 

@@ -35,6 +35,7 @@ with Language_Handlers;          use Language_Handlers;
 with Language_Utils;             use Language_Utils;
 with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
+with String_Utils;
 with Remote;                     use Remote;
 
 package body Entities is
@@ -80,10 +81,10 @@ package body Entities is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (E_Instantiation_Record, Entity_Instantiation);
 
-   function String_Hash is new HTables.Hash (HTable_Header);
-   function Hash is new HTables.Hash (Header_Num);
+   function String_Hash is new String_Utils.Hash (HTable_Header);
+   function Hash is new String_Utils.Hash (Header_Num);
    function Case_Insensitive_Hash
-      is new HTables.Case_Insensitive_Hash (Header_Num);
+      is new String_Utils.Case_Insensitive_Hash (Header_Num);
 
    function Find
      (E : Dependency_List; File : Source_File)
@@ -528,8 +529,8 @@ package body Entities is
          end loop;
       end Clean_References;
 
-      Iter   : Entities_Hash.Iterator;
-      Iter2  : Entities_Hash.Iterator;
+      Iter   : Entities_Hash.Cursor;
+      Iter2  : Entities_Hash.Cursor;
       UEI    : Entity_Informations;
    begin
       Get_First (File.Entities, Iter);
@@ -605,7 +606,7 @@ package body Entities is
       --  Reset the All_Entities list, since this file is no longer referencing
       --  any of the entity
       declare
-         Iter   : Entities_Hash.Iterator;
+         Iter   : Entities_Hash.Cursor;
          EL     : Entity_Information_List_Access;
          UEI    : Entity_Informations;
       begin
@@ -630,7 +631,7 @@ package body Entities is
       --  Clean up .Entities field
 
       declare
-         Iter   : Entities_Hash.Iterator;
+         Iter   : Entities_Hash.Cursor;
          UEI    : Entity_Informations;
          Entity : Entity_Information;
       begin
@@ -1165,7 +1166,7 @@ package body Entities is
      (Db     : Entities_Database;
       Action : access procedure (F : in out Source_File))
    is
-      Iter : Files_HTable.Iterator;
+      Iter : Files_HTable.Cursor;
       File : Source_File_Item;
    begin
       Get_First (Db.Files, Iter);

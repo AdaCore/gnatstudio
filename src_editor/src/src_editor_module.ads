@@ -185,7 +185,13 @@ private
    function Equal (F1, F2 : Virtual_File) return Boolean;
 
    package Editors_Hash is new HTables.Simple_HTable
-     (Header_Num, Element, Free, No_Element, Virtual_File, Hash, Equal);
+     (Header_Num   => Header_Num,
+      Element      => Element,
+      Free_Element => Free,
+      No_Element   => No_Element,
+      Key          => Virtual_File,
+      Hash         => Hash,
+      Equal        => Equal);
 
    -----------
    -- Marks --
@@ -251,7 +257,7 @@ private
       Blank_Lines_GC        : Gdk.GC.Gdk_GC := null;
       Post_It_Note_GC       : Gdk.GC.Gdk_GC := null;
 
-      Editors               : Editors_Hash.HTable;
+      Editors               : Editors_Hash.Instance;
 
       --  The following fields are related to the current search.
 

@@ -392,7 +392,7 @@ package body Src_Editor_Module is
       Id : constant Source_Editor_Module :=
              Source_Editor_Module (Src_Editor_Module_Id);
       Child : constant MDI_Child := MDI_Child (Widget);
-      I  : Editors_Hash.Iterator;
+      I  : Editors_Hash.Cursor;
       E  : Element;
    begin
       if Id /= null then
@@ -620,7 +620,7 @@ package body Src_Editor_Module is
       Child : MDI_Child;
       Box    : Source_Editor_Box;
 
-      I      : Editors_Hash.Iterator;
+      I      : Editors_Hash.Cursor;
       E      : Element;
    begin
       --  Insert the saved file in the Recent menu
@@ -3632,7 +3632,7 @@ package body Src_Editor_Module is
    -- Hash --
    ----------
 
-   function Hash is new HTables.Hash (Header_Num);
+   function Hash is new String_Utils.Hash (Header_Num);
 
    function Hash (F : Virtual_File) return Header_Num is
    begin

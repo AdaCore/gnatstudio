@@ -1680,7 +1680,7 @@ package body GPS.Kernel.Hooks is
 
       elsif Command = "list" then
          declare
-            Iter : Iterator;
+            Iter : Cursor;
             Info : Hook_Description_Access;
          begin
             Set_Return_Value_As_List (Data);
@@ -1723,7 +1723,7 @@ package body GPS.Kernel.Hooks is
 
       elsif Command = "list_types" then
          declare
-            Iter : Iterator;
+            Iter : Cursor;
             Info : Hook_Description_Access;
          begin
             Get_First (Get_Kernel (Data).Hooks, Iter);

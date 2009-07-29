@@ -41,7 +41,7 @@ package body SN.Xref_Pools is
    -- Str_Hash --
    --------------
 
-   function Str_Hash is new HTables.Hash (Header_Num => Hash_Range);
+   function Str_Hash is new String_Utils.Hash (Header_Num => Hash_Range);
    pragma Inline (Str_Hash);
    --  Standard hash function for strings
 
@@ -188,7 +188,7 @@ package body SN.Xref_Pools is
 
    procedure Save (Pool : Xref_Pool; Filename : GNATCOLL.VFS.Virtual_File) is
       FD : File_Type;
-      Iter : STable.Iterator;
+      Iter : STable.Cursor;
       E  : Xref_Elmt_Ptr;
    begin
       if not Pool.Changed then

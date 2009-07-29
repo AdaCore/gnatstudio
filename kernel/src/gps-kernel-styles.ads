@@ -105,7 +105,7 @@ private
    package Style_Htable is new String_Hash (Style_Access, Free, null);
 
    type Style_Htable_Record is new Root_Table with record
-      Table : Style_Htable.String_Hash_Table.HTable;
+      Table : Style_Htable.String_Hash_Table.Instance;
    end record;
    type Style_Htable_Access is access all Style_Htable_Record'Class;
 

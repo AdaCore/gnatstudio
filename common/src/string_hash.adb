@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 
 with GNAT.Case_Util; use GNAT.Case_Util;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with String_Utils;
 
 package body String_Hash is
 
@@ -36,7 +37,7 @@ package body String_Hash is
    ----------
 
    function Hash (Key : String) return Name_Htable_Num is
-      function Internal is new HTables.Hash (Name_Htable_Num);
+      function Internal is new String_Utils.Hash (Name_Htable_Num);
    begin
       if Case_Sensitive then
          return Internal (Key);

@@ -55,7 +55,7 @@ package body Histories is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Menu_Callback_Record'Class, Menu_Callback);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (History_Hash.String_Hash_Table.HTable, HTable_Access);
+     (History_Hash.String_Hash_Table.Instance, HTable_Access);
 
    package Value_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, History_Key_Access);
@@ -318,7 +318,7 @@ package body Histories is
       Success   : out Boolean)
    is
       File, Key, N : Node_Ptr;
-      Iter         : Iterator;
+      Iter         : Cursor;
       Value        : History_Key_Access;
 
    begin
@@ -376,7 +376,7 @@ package body Histories is
    ----------
 
    procedure Free (Hist : in out History_Record) is
-      Iter  : Iterator;
+      Iter  : Cursor;
       Value : History_Key_Access;
    begin
       Get_First (Hist.Table.all, Iter);
