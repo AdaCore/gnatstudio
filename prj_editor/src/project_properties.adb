@@ -1248,7 +1248,8 @@ package body Project_Properties is
                      --  ??? What if the Build server needs unix paths, and
                      --  we are on Windows ?
                      Values (N) := new String'
-                       (+Relative_Path (File, Path) & "**");
+                       (+Name_As_Directory (Relative_Path (File, Path))
+                        & "**");
                   else
                      Values (N) := new String'(+Full_Name (File) & "**");
                   end if;
