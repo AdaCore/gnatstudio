@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,7 @@ package body String_Diff is
 
    Null_Object : constant Character := ASCII.NUL;
 
-   overriding function "=" (Left, Right : Character) return Boolean;
+   function "=" (Left, Right : Character) return Boolean;
    function Length (C : String_Access) return Natural;
    function First (C : String_Access) return Iter;
    function Last (C : String_Access) return Iter;
@@ -43,7 +43,7 @@ package body String_Diff is
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : Character) return Boolean is
+   function "=" (Left, Right : Character) return Boolean is
    begin
       return Standard."=" (Left, Right);
    end "=";
