@@ -318,9 +318,10 @@ package body Outline_View is
                Expand_To_Path (Outline.Tree, Parent_Path);
                Path_Free (Parent_Path);
             end;
+
+            Set_Cursor (Outline.Tree, Path, null, False);
          end if;
 
-         Set_Cursor (Outline.Tree, Path, null, False);
          Path_Free (Path);
       end if;
    end Location_Changed;
