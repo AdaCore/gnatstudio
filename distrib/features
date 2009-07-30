@@ -86,7 +86,7 @@ NF-44-I602-018 Display completion proposal in Completion Window (2009-06-11)
 
 NF-44-I602-003 New preference: Wrap around on next/previous (2009-04-06)
 
-   Whether using the 'Next Tag' and 'Previous Tag' actions/menus, this
+   When using the 'Next Tag' and 'Previous Tag' actions/menus, this
    preference determines whether wrap around to the beginning should occur
    when reaching the end of the category.
 
