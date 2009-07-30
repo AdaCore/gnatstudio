@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I729-013: Cannot insert a character before the first character
+  Problem:    When the Casing Policy is set to "On_The_Fly", inserting
+              a new line before the very first character in an editor
+              might cause GPS to split the line right after the first 
+              character instead.
+  Workaround: Fix the line manually.
+
 - I707-012: GPS may hang when doing long compilation and xrefs computation
   Problem:    When doing long compilation associated with xrefs computations,
               GPS may hang in some rare cases, depending on the order and
