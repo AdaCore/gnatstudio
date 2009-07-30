@@ -38,6 +38,7 @@
           <choice>powerpc-elf-gnatmake</choice>
           <choice>powerpc-eabispe-gnatmake</choice>
           <choice>i586-wrs-vxworks-gnatmake</choice>
+          <choice>e500v2-wrs-vxworks-gnatmake</choice>
           <choice>powerpc-elf-lynxos-gnatmake</choice>
           <choice>powerpc-xcoff-lynxos-gnatmake</choice>
           <choice>erc32-elf-gnatmake</choice>
@@ -74,6 +75,7 @@
        <choice>powerpc-elf-gnatls</choice>
        <choice>powerpc-eabispe-gnatls</choice>
        <choice>i586-wrs-vxworks-gnatls</choice>
+       <choice>e500v2-wrs-vxworks-gnatls</choice>
        <choice>powerpc-elf-lynxos-gnatls</choice>
        <choice>powerpc-xcoff-lynxos-gnatls</choice>
        <choice>erc32-elf-gnatls</choice>
@@ -100,6 +102,7 @@
        <choice>powerpc-elf-gnat</choice>
        <choice>powerpc-eabispe-gnat</choice>
        <choice>i586-wrs-vxworks-gnat</choice>
+       <choice>e500v2-wrs-vxworks-gnat</choice>
        <choice>powerpc-elf-lynxos-gnat</choice>
        <choice>powerpc-xcoff-lynxos-gnat</choice>
        <choice>erc32-elf-gnat</choice>
@@ -129,6 +132,7 @@
        <choice>powerpc-eabispe-gdb</choice>
        <choice>i586-wrs-vxworks-gdb</choice>
        <choice>i586-wrs-vxworks6-gdb</choice>
+       <choice>e500v2-wrs-vxworks6-gdb</choice>
        <choice>powerpc-elf-lynxos-gdb</choice>
        <choice>powerpc-xcoff-lynxos-gdb</choice>
        <choice>erc32-elf-gdb</choice>
