@@ -15,6 +15,11 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I729-038 Support for e500v2-wrs-vxworks toolchain (2009-07-30)
+
+   The project properties editor now offers the e500v2-wrs-vxworks toolchain
+   as a predefined choice of compiler and debugger tools.
+
 NF-44-I721-010 Support for -language examiner switch (2009-07-21)
 
    GPS now supports the new SPARK Examiner switch -language which also
