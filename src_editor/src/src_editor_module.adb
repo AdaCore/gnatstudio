@@ -2607,6 +2607,8 @@ package body Src_Editor_Module is
       Submenu                  : Submenu_Factory;
 
       Has_Type                 : constant Action_Filter := new Has_Type_Filter;
+      Is_Access                : constant Action_Filter :=
+                                   new Is_Access_Type_Filter;
       Is_Dispatching           : constant Action_Filter :=
                                    new Is_Dispatching_Filter;
       Src_Action_Context       : constant Action_Filter :=
@@ -2792,6 +2794,13 @@ package body Src_Editor_Module is
          Action     => Command,
          Label      => -"Goto type declaration of %e",
          Filter     => Has_Type);
+
+      Command := new Type_Hierarchy_Command;
+      Register_Contextual_Menu
+        (Kernel, "Display type hierarchy of entity",
+         Action     => Command,
+         Label      => -"Display type hierarchy for %e",
+         Filter     => Has_Type or Is_Access);
 
       Command := new Goto_Other_File_Command;
       Filter  := new Has_Other_File_Filter;

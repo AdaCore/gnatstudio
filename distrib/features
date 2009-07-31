@@ -331,6 +331,11 @@ NF-44-G510-012 Auto-fix for "use explicit pragma Pack" (2009-02-24)
   An auto-fix is now offered for message like "size for T is too small,
   use explicit pragma Pack", automatically adding a pragma Pack for the entity.
 
+NF-44-F819-004 New action to display derivied types hierarchy (2009-07-31)
+
+   A new action which displays the derived types hierarchy, is available on
+   the contextual menu for entities.
+
 NF-44-F327-008 Auto-fix for "suggested replacement" (2009-02-24)
 
   An auto fix is now offered for messages like "suggested replacement",

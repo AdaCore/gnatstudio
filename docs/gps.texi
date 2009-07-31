@@ -3436,6 +3436,14 @@ determined by the word located around the cursor or by the current selection
 if any.
 This capability requires support for cross-references.
 
+@item Display type hierarchy for @i{entity}
+@cindex display type hierarchy
+This contextual menu appears for derived or access types. Output the
+type hierarchy for @i{entity} into the location view. The current
+entity is determined by the word located around the cursor or by the
+current selection if any.
+This capability requires support for cross-references.
+
 @item Goto body of @i{entity}
 @cindex goto body
 Go to the body/implementation of @i{entity}.

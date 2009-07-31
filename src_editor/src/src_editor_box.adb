@@ -72,6 +72,7 @@ with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -1729,6 +1730,23 @@ package body Src_Editor_Box is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Access_Type_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Entity : Entity_Information;
+   begin
+      Entity := Get_Entity (Context);
+      return Entity /= null
+        and then Get_Category (Entity) = Type_Or_Subtype
+        and then Get_Kind (Entity).Kind = Access_Kind;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -2021,6 +2039,127 @@ package body Src_Editor_Box is
                  (Get_Line (Get_Declaration_Of (Entity_Type))),
                Column   => Get_Column (Get_Declaration_Of (Entity_Type)),
                Entity   => Entity_Type);
+            return Commands.Success;
+         end if;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Type_Hierarchy_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+
+      procedure Insert (Name : String; Entity : Entity_Information);
+      --  Add entry for Entity into the location view
+
+      function Get_Type_Or_Ref
+        (Entity : Entity_Information) return Entity_Information;
+      pragma Inline (Get_Type_Or_Ref);
+      --  Retruns the type of Entity (handle case where entity is an access
+      --  type, in this case we returned the pointed entity).
+
+      ---------------------
+      -- Get_Type_Or_Ref --
+      ---------------------
+
+      function Get_Type_Or_Ref
+        (Entity : Entity_Information) return Entity_Information
+      is
+         E : Entity_Information;
+      begin
+         if Get_Category (Entity) = Type_Or_Subtype
+           and then Get_Kind (Entity).Kind = Access_Kind
+         then
+            E := Pointed_Type (Entity);
+         else
+            E := Get_Type_Of (Entity);
+         end if;
+
+         --  Update Xrefs if needed
+
+         if E /= null then
+            declare
+               S_File : constant Source_File :=
+                          Get_File (Get_Declaration_Of (E));
+            begin
+               if not Is_Up_To_Date (S_File) then
+                  Update_Xref (S_File);
+               end if;
+            end;
+         end if;
+
+         return E;
+      end Get_Type_Or_Ref;
+
+      ------------
+      -- Insert --
+      ------------
+
+      procedure Insert (Name : String; Entity : Entity_Information) is
+         Kind : constant String := Kind_To_String (Get_Kind (Entity));
+         Loc  : constant File_Location := Get_Declaration_Of (Entity);
+      begin
+         Insert_Location
+           (Kernel,
+            Category => -"Type Hierarchy for " & Name,
+            File     => Get_Filename (Get_File (Loc)),
+            Text     => Get_Name (Entity).all & " (" & Kind & ')',
+            Line     => Get_Line (Loc),
+            Column   => Get_Column (Loc));
+      end Insert;
+
+      Editor      : constant Source_Editor_Box :=
+                      Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Entity      : constant Entity_Information :=
+                      Get_Entity (Context.Context, Ask_If_Overloaded => True);
+      Entity_Type : Entity_Information;
+
+   begin
+      if Entity = null then
+         --  Probably means that we either could not locate the ALI file,
+         --  or it could also be that we failed to parse it. Either way,
+         --  a message should have already been printed. So, just abort.
+
+         Console.Insert
+           (Kernel,
+            -"No cross-reference information found for "
+            & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
+            & (-("Recompile your file or select Build->Recompute Xref"
+                 & " Information, depending on the language")),
+            Mode           => Error);
+         return Commands.Failure;
+
+      else
+         Entity_Type := Get_Type_Or_Ref (Entity);
+
+         if Is_Predefined_Entity (Entity_Type) then
+            Console.Insert
+              (Kernel,
+               -Get_Name (Entity).all & " is of predefined type "
+               & Get_Name (Entity_Type).all);
+            return Commands.Failure;
+
+         else
+            if Get_Category (Entity) = Type_Or_Subtype then
+               Insert (Get_Name (Entity).all, Entity);
+            end if;
+
+            loop
+               exit when Entity_Type = null
+                 or else Is_Predefined_Entity (Entity_Type);
+
+               Insert (Get_Name (Entity).all, Entity_Type);
+
+               Entity_Type := Get_Type_Or_Ref (Entity_Type);
+            end loop;
+
             return Commands.Success;
          end if;
       end if;

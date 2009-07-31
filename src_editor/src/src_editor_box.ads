@@ -301,6 +301,13 @@ package Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity has a type
 
+   type Is_Access_Type_Filter is new GPS.Kernel.Action_Filter_Record
+     with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Access_Type_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  True if the current entity has a type
+
    type Is_Dispatching_Filter is new GPS.Kernel.Action_Filter_Record
      with null record;
    overriding function Filter_Matches_Primitive
@@ -372,6 +379,12 @@ package Src_Editor_Box is
      (Command : access Goto_Type_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the type declaration of the entity in the context
+
+   type Type_Hierarchy_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Type_Hierarchy_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Output type hierarchy into the location view
 
    type Location_Type is (Location_Mouse, Location_Cursor, Location_Event);
    procedure Get_Contextual_Menu
