@@ -3436,6 +3436,21 @@ determined by the word located around the cursor or by the current selection
 if any.
 This capability requires support for cross-references.
 
+@item Goto full declaration of @i{entity}
+@cindex goto declaration
+This contextual menu appears for a private or limited private types. Go
+to the full declaration/spec of @i{entity}. The current entity is
+determined by the word located around the cursor or by the current
+selection if any.
+This capability requires support for cross-references.
+
+@item Goto type declaration of @i{entity}
+@cindex goto type declaration
+Go to the type declaration of @i{entity}. The current entity is
+determined by the word located around the cursor or by the current selection
+if any.
+This capability requires support for cross-references.
+
 @item Display type hierarchy for @i{entity}
 @cindex display type hierarchy
 This contextual menu appears for derived or access types. Output the
