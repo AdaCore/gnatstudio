@@ -85,7 +85,7 @@ package Entities is
    --  will speed-up processing of entities cross-ref.
 
    procedure Thaw (Db : Entities_Database);
-   --  Unset the freeze state of the database.
+   --  Unset the freeze state of the database
 
    function Frozen (Db : Entities_Database) return Boolean;
    --  Return the frozen state of the database
@@ -344,9 +344,9 @@ package Entities is
    --  associated cross-references are removed from the table.
 
    function Get_Or_Create
-     (Db        : Entities_Database;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Project   : Projects.Project_Type) return LI_File;
+     (Db      : Entities_Database;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : Projects.Project_Type) return LI_File;
    --  Get (or create) a new entry for File in the database. If an entry
    --  already exists, it is returned.
    --  You need to Ref the entry if you intend to keep it in a separate
@@ -606,10 +606,10 @@ package Entities is
    --  Return the location of the declaration for the entity
 
    function Get_Kind (Entity : Entity_Information) return E_Kind;
-   --  Return the kind of the entity.
+   --  Return the kind of the entity
 
    function Get_Category (Entity : Entity_Information) return Entity_Category;
-   --  Compute the category of the entity.
+   --  Compute the category of the entity
 
    function Get_Attributes
      (Entity : Entity_Information) return Entity_Attributes;
@@ -836,17 +836,17 @@ package Entities is
    --  prefix.
 
    function Get (It : LI_Entities_Iterator) return Entity_Information;
-   --  Return the Entity_Information pointed by the given iterator.
+   --  Return the Entity_Information pointed by the given iterator
 
    procedure Next (It : in out LI_Entities_Iterator);
-   --  Move the iterator to the next element.
+   --  Move the iterator to the next element
 
    function At_End (It : LI_Entities_Iterator) return Boolean;
    --  Return true if the iterator is at the end of the analyzed elements, wich
    --  means after the last one.
 
    procedure Free (It : in out LI_Entities_Iterator);
-   --  Free the memory associated to the iterator.
+   --  Free the memory associated to the iterator
 
    Null_LI_Entities_Iterator : constant LI_Entities_Iterator;
 
@@ -867,7 +867,7 @@ private
       --  The entity addressed by this node
 
       Contents : Scope_Tree;
-      --  The first entity referenced under that node.
+      --  The first entity referenced under that node
 
       Location : File_Location;
       --  The precise location we are talking about. If
@@ -1018,17 +1018,17 @@ private
    function Contains
      (Element : Entity_Reference_List; Key : Entity_Reference_Index)
       return Boolean;
-   --  Return true if the key given in parameter is contained in the list.
+   --  Return true if the key given in parameter is contained in the list
 
    procedure Replace
      (List   : Entity_Reference_List;
       Key    : Entity_Reference_Index;
       Val    : E_Reference);
-   --  Replace the element at the given index by val.
+   --  Replace the element at the given index by val
 
    function Index
      (Cursor : Entity_Reference_Cursor) return Entity_Reference_Index;
-   --  Return the index of the element.
+   --  Return the index of the element
 
    Null_Entity_Reference_Cursor : Entity_Reference_Cursor :=
      (Entities_In_File_Sets.No_Element,
@@ -1072,12 +1072,12 @@ private
    procedure Insert
      (Handler : access LI_Handler_Record'Class;
       Entity  : Entity_Information);
-   --  Insert an entity in an entity trie tree.
+   --  Insert an entity in an entity trie tree
 
    procedure Remove
      (Handler : access LI_Handler_Record'Class;
       Entity  : Entity_Information);
-   --  Removes an entity from an entity trie tree.
+   --  Removes an entity from an entity trie tree
 
    Null_LI_Entities_Iterator : constant LI_Entities_Iterator :=
      (Entities_Search_Tries.Null_Iterator, 0);
@@ -1093,7 +1093,7 @@ private
 
       Declaration           : File_Location;
       Caller_At_Declaration : Entity_Information;
-      --  The location of the declaration for this entity.
+      --  The location of the declaration for this entity
 
       End_Of_Scope          : E_Reference;
       --  The location at which the declaration of this entity ends. This is
@@ -1124,13 +1124,13 @@ private
       --  as well.
 
       Rename                : Entity_Information;
-      --  The entity that this one renames.
+      --  The entity that this one renames
 
       Primitive_Subprograms : Entity_Information_List;
-      --  For an array, this is the list of index types.
+      --  For an array, this is the list of index types
 
       Child_Types           : Entity_Information_List;
-      --  All the types derived from this one.
+      --  All the types derived from this one
 
       References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
@@ -1290,7 +1290,7 @@ private
       --  The reference counter
 
       Ordered_Index : Virtual_File_Indexes.VF_Key;
-      --  The ordered index, used to optimize file comparisons.
+      --  The ordered index, used to optimize file comparisons
    end record;
 
    -----------------
@@ -1341,7 +1341,7 @@ private
       Project   : Projects.Project_Type;
 
       Files     : Source_File_List;
-      --  All the files for which xref is provided by this LI_File.
+      --  All the files for which xref is provided by this LI_File
 
       Ref_Count : Natural := 1;
       --  The reference counter

@@ -17,12 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
-with Glib;        use Glib;
+with GNAT.Strings;
+
+with Glib;                     use Glib;
 with Glib.Convert;
-with Glib.Object; use Glib.Object;
+with Glib.Object;              use Glib.Object;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -50,7 +52,6 @@ with Traces;                   use Traces;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
-with GNAT.Strings;
 
 package body Build_Configurations.Gtkada is
 
@@ -84,15 +85,15 @@ package body Build_Configurations.Gtkada is
    -----------------
 
    type Mode_UI_Record is new Gtk_Hbox_Record with record
-      Registry  : Build_Config_Registry_Access;
+      Registry : Build_Config_Registry_Access;
 
-      Notebook  : Gtk_Notebook;
+      Notebook : Gtk_Notebook;
       --  The main notebook
 
-      Tooltips  : Gtk_Tooltips;
+      Tooltips : Gtk_Tooltips;
       --  The tooltips used in the dialog
 
-      View      : Tree_View;
+      View     : Tree_View;
       --  The tree
    end record;
    type Mode_UI_Access is access all Mode_UI_Record'Class;
@@ -109,7 +110,7 @@ package body Build_Configurations.Gtkada is
    procedure On_Icon_Selected
      (Button : access Gtkada_Combo_Tool_Button_Record'Class;
       UI     : Target_UI_Access);
-   --  Used to control whether the icon_entry should be editable.
+   --  Used to control whether the icon_entry should be editable
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function
@@ -182,7 +183,7 @@ package body Build_Configurations.Gtkada is
    --  Inverse operation to Beautify
 
    function Target_To_Key (T : Target_Access) return History_Key;
-   --  Return a History_Key for storing command line for T.
+   --  Return a History_Key for storing command line for T
 
    -------------------
    -- Target_To_Key --
@@ -1420,7 +1421,7 @@ package body Build_Configurations.Gtkada is
       pragma Unreferenced (Dummy);
 
    begin
-      --  Return immediately if the target does not exist.
+      --  Return immediately if the target does not exist
 
       if not Contains (Registry.Targets, To_Unbounded_String (Target)) then
          return;
@@ -1476,7 +1477,7 @@ package body Build_Configurations.Gtkada is
 
       Ent := Get_Entry (UI.Target_UI.Editor);
 
-      --  Set the entry to the latest history.
+      --  Set the entry to the latest history
 
       if History /= null then
          declare

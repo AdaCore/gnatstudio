@@ -18,9 +18,12 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;
@@ -77,7 +80,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
-with Language_Handlers;          use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with Pango.Layout;              use Pango.Layout;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
@@ -91,7 +94,6 @@ with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Src_Editor_Box is
 
@@ -1221,26 +1223,27 @@ package body Src_Editor_Box is
       Event    : Gdk.Event.Gdk_Event := null;
       Menu     : Gtk.Menu.Gtk_Menu := null)
    is
-      Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
-      V             : constant Source_View := Editor.Source_View;
-      Filename      : constant GNATCOLL.VFS.Virtual_File :=
-        Get_Filename (Editor.Source_Buffer);
-      Loc           : Location_Type := Location;
-      Line          : Gint := 0;
-      Column        : Gint := 0;
-      X, Y          : Gint;
-      Start_Iter    : Gtk_Text_Iter;
-      End_Iter      : Gtk_Text_Iter;
-      Entity_Start  : Gtk_Text_Iter;
-      Entity_End    : Gtk_Text_Iter;
-      Has_Selection : Boolean;
-      Out_Of_Bounds : Boolean := False;
-      Start_Line, End_Line : Integer;
+      Editor                     : constant Source_Editor_Box :=
+                                     Source_Editor_Box (Object);
+      V                          : constant Source_View := Editor.Source_View;
+      Filename                   : constant GNATCOLL.VFS.Virtual_File :=
+                                     Get_Filename (Editor.Source_Buffer);
+      Loc                        : Location_Type := Location;
+      Line                       : Gint := 0;
+      Column                     : Gint := 0;
+      X, Y                       : Gint;
+      Start_Iter                 : Gtk_Text_Iter;
+      End_Iter                   : Gtk_Text_Iter;
+      Entity_Start               : Gtk_Text_Iter;
+      Entity_End                 : Gtk_Text_Iter;
+      Has_Selection              : Boolean;
+      Out_Of_Bounds              : Boolean := False;
+      Start_Line, End_Line       : Integer;
       Selection_Is_Single_Entity : Boolean;
       Click_In_Selection         : Boolean;
-      Mouse_X, Mouse_Y     : Gint;
-      Mask                 : Gdk.Types.Gdk_Modifier_Type;
-      Win                  : Gdk.Gdk_Window;
+      Mouse_X, Mouse_Y           : Gint;
+      Mask                       : Gdk.Types.Gdk_Modifier_Type;
+      Win                        : Gdk.Gdk_Window;
 
       function In_Selection
         (L, C : Gint; First, Last : Gtk_Text_Iter) return Boolean;
@@ -1290,7 +1293,7 @@ package body Src_Editor_Box is
          Creator => Abstract_Module_ID (Src_Editor_Module_Id));
 
       --  Compute the location for which we should compute the context.
-      --  Output of this block is (Line, Column) within the editor
+      --  Output of this block is (Line, Column) within the editor.
 
       case Loc is
          when Location_Event =>
@@ -1551,8 +1554,8 @@ package body Src_Editor_Box is
       Location : File_Location;
    begin
       Find_Next_Body
-        (Entity               => Entity,
-         Location             => Location);
+        (Entity   => Entity,
+         Location => Location);
       Go_To_Closest_Match
         (Kernel_Handle (Kernel),
          Filename => Get_Filename (Location.File),
@@ -1577,14 +1580,18 @@ package body Src_Editor_Box is
       Item  : Gtk_Menu_Item;
       Label : Gtk_Label;
       Pref  : constant Dispatching_Menu_Policy :=
-        Submenu_For_Dispatching_Calls.Get_Pref;
+                Submenu_For_Dispatching_Calls.Get_Pref;
       Count : Natural := 0;
 
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean;
+
+      ---------------
+      -- On_Callee --
+      ---------------
+
       function On_Callee
-        (Callee, Primitive_Of : Entity_Information) return Boolean
-      is
+        (Callee, Primitive_Of : Entity_Information) return Boolean is
       begin
          Gtk_New (Label,
                   "Primitive of: " & Emphasize (Get_Name (Primitive_Of).all));
@@ -1730,14 +1737,16 @@ package body Src_Editor_Box is
    begin
       if Has_File_Information (Context) then
          declare
-            File    : constant Virtual_File := File_Information (Context);
-            Project    : constant Project_Type := Get_Project_From_File
-              (Get_Registry (Kernel).all, File);
-            Other_File : constant Filesystem_String := Other_File_Base_Name
-              (Project, File);
+            File       : constant Virtual_File := File_Information (Context);
+            Project    : constant Project_Type :=
+                           Get_Project_From_File
+                             (Get_Registry (Kernel).all, File);
+            Other_File : constant Filesystem_String :=
+                           Other_File_Base_Name (Project, File);
          begin
             if not Equal (Other_File, "")
-              and then not Equal (Other_File, Base_Name (File)) then
+              and then not Equal (Other_File, Base_Name (File))
+            then
                return True;
             end if;
          end;
@@ -1801,6 +1810,11 @@ package body Src_Editor_Box is
 
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean;
+
+      ---------------
+      -- On_Callee --
+      ---------------
+
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean
       is
@@ -1833,16 +1847,19 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Command);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File  : constant Virtual_File := File_Information (Context.Context);
-      Project    : constant Project_Type := Get_Project_From_File
-        (Get_Registry (Kernel).all, File);
-      Other_File : constant Virtual_File := Create
-        (Other_File_Base_Name (Project, File), Project);
+      File       : constant Virtual_File := File_Information (Context.Context);
+      Project    : constant Project_Type :=
+                     Get_Project_From_File
+                       (Get_Registry (Kernel).all, File);
+      Other_File : constant Virtual_File :=
+                     Create
+                       (Other_File_Base_Name (Project, File), Project);
    begin
       Trace (Me, "Goto_Other_File_Command File="
              & Display_Full_Name (File)
              & " Project=" & Project_Name (Project)
              & " Other_File=" & Display_Full_Name (Other_File));
+
       if Other_File /= GNATCOLL.VFS.No_File then
          Open_File_Editor (Kernel, Other_File, Line => 0);
          return Commands.Success;
@@ -1860,8 +1877,8 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      Box    : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
+      Box : constant Source_Editor_Box :=
+              Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
    begin
       On_Goto_Line (Box, Command.Kernel);
       return Commands.Success;
@@ -1982,7 +1999,7 @@ package body Src_Editor_Box is
             & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
-            Mode           => Error);
+            Mode => Error);
          return Commands.Failure;
 
       else
@@ -2488,10 +2505,7 @@ package body Src_Editor_Box is
       Identifier : String;
       Info       : GPS.Editors.Line_Information_Data) is
    begin
-      Add_File_Information
-        (Editor.Source_Buffer,
-         Identifier,
-         Info);
+      Add_File_Information (Editor.Source_Buffer, Identifier, Info);
    end Add_File_Information;
 
    ------------------------------------
@@ -2583,7 +2597,7 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block  : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
    begin
       return Natural (Block.First_Line);
    end Get_Block_Start;
@@ -2596,7 +2610,7 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block  : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
    begin
       return Natural (Block.Last_Line);
    end Get_Block_End;
@@ -2609,7 +2623,7 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Block  : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
    begin
       if Block.Name = null then
          return "";
@@ -2626,7 +2640,7 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Block  : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
    begin
       return Language_Category'Image (Block.Block_Type);
    end Get_Block_Type;
@@ -2639,7 +2653,7 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block  : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
    begin
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;
@@ -2812,6 +2826,7 @@ package body Src_Editor_Box is
       begin
          Count := 1;
          Iter  := First_Child (Get_MDI (Get_Kernel (Buffer)));
+
          while Get (Iter) /= null loop
             if Get_Widget (Get (Iter)).all in
               Source_Editor_Box_Record'Class

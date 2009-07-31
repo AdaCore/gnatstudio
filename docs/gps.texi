@@ -3578,8 +3578,8 @@ Display expanded code for the current file in a new editor.
 Remove expanded code from the current editor.
 @end table
 
-For Ada files only, this entry will generate, and will open this file at the location
-corresponding to the current source line.
+For Ada files only, this entry will generate, and will open this file
+at the location corresponding to the current source line.
 
 @item Open <filename>
 When you click on a filename (for instance a C' @code{#include}, or an error

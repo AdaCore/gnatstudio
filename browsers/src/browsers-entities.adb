@@ -707,9 +707,8 @@ package body Browsers.Entities is
 
          elsif Command = "derived_types" then
             declare
-               Children : Children_Iterator :=
-                            Get_Child_Types (Entity);
-               Child : Entity_Information;
+               Children : Children_Iterator := Get_Child_Types (Entity);
+               Child    : Entity_Information;
             begin
                Set_Return_Value_As_List (Data);
 

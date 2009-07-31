@@ -2588,28 +2588,31 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File               : constant String := '/' & (-"File") & '/';
-      Edit               : constant String := '/' & (-"Edit") & '/';
-      Selection          : constant String := Edit & (-"S_election") & '/';
-      Navigate           : constant String := '/' & (-"Navigate") & '/';
-      Mitem              : Gtk_Menu_Item;
-      Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      UR                 : constant Undo_Redo := new Undo_Redo_Information;
-      Selector           : Scope_Selector;
-      Extra              : Files_Extra_Scope;
-      Recent_Menu_Item   : Gtk_Menu_Item;
-      Command            : Interactive_Command_Access;
-      Filter             : Action_Filter;
-      Label              : Contextual_Menu_Label_Creator;
+      File                     : constant String := '/' & (-"File") & '/';
+      Edit                     : constant String := '/' & (-"Edit") & '/';
+      Selection                : constant String :=
+                                   Edit & (-"S_election") & '/';
+      Navigate                 : constant String := '/' & (-"Navigate") & '/';
+      Mitem                    : Gtk_Menu_Item;
+      Toolbar                  : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      UR                       : constant Undo_Redo :=
+                                   new Undo_Redo_Information;
+      Selector                 : Scope_Selector;
+      Extra                    : Files_Extra_Scope;
+      Recent_Menu_Item         : Gtk_Menu_Item;
+      Command                  : Interactive_Command_Access;
+      Filter                   : Action_Filter;
+      Label                    : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
-      Submenu            : Submenu_Factory;
+      Submenu                  : Submenu_Factory;
 
-      Has_Type           : constant Action_Filter := new Has_Type_Filter;
-      Is_Dispatching     : constant Action_Filter := new Is_Dispatching_Filter;
-      Src_Action_Context : constant Action_Filter :=
-                             new Src_Editor_Action_Context;
+      Has_Type                 : constant Action_Filter := new Has_Type_Filter;
+      Is_Dispatching           : constant Action_Filter :=
+                                   new Is_Dispatching_Filter;
+      Src_Action_Context       : constant Action_Filter :=
+                                   new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
-      --  the application
+      --  the application.
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
