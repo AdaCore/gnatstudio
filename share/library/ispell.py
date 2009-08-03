@@ -381,6 +381,11 @@ class SpellCheckBuffer (GPS.CommandWindow):
       self.local_dict = dict()
       self.next_with_error_or_destroy()
 
+   def do_replace (self, buffer, start, stop, old, new):
+      self.index_adjust = len (new) - len (old) + self.index_adjust
+      buffer.delete (start, stop)
+      buffer.insert (start, new)
+
    def create_window (self):
       """Create the command window if necessary. This is only created when
          needed, to avoid a flicker if the buffer contains no mispelled word.
@@ -470,9 +475,8 @@ class SpellCheckBuffer (GPS.CommandWindow):
          start  = self.current_line_start + index + self.index_adjust
          stop   = start + len (word) - 1
 
-         buffer.delete (start, stop)
-         self.index_adjust = len (input) - len (word) + self.index_adjust
-         buffer.insert (start, input)
+         self.do_replace (buffer, start, stop, word, input)
+
          self.replace_mode = False
          self.next_with_error_or_destroy()
 
@@ -514,9 +518,7 @@ class SpellCheckBuffer (GPS.CommandWindow):
             return True
 
          if repl:
-            buffer.delete (start, stop)
-            self.index_adjust = len (repl) - len (word) + self.index_adjust
-            buffer.insert (start, repl)
+            self.do_replace (buffer, start, stop, word, repl)
 
          # Move to next word
          self.next_with_error_or_destroy()
