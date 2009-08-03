@@ -109,6 +109,7 @@ Description of the main windows
 * The Work Space::
 * The Project View::
 * The File View::
+* The Entity View::
 * The Window View::
 * The Outline View::
 * The Clipboard View::
@@ -345,6 +346,7 @@ gcc, gdb, gnatmake, gcov, etc@dots{}.
 * The Work Space::
 * The Project View::
 * The File View::
+* The Entity View::
 * The Window View::
 * The Outline View::
 * The Clipboard View::
@@ -820,6 +822,44 @@ files view, to conveniently open a file.
 
 The contextual menu also allow you to create, rename and delete files and
 directories. Some of those operations are also available from the Project View.
+
+@c --------------------------------------------------------------------
+@node The Entity View
+@section The Entity View
+@cindex Entity View
+@c --------------------------------------------------------------------
+
+@noindent
+GPS provides an @code{Entity View} which allows you to browse and quickly find
+ all Ada entities referenced in the currently loaded project hierarchy. This
+ view can be accessed through the @code{Tools->Views->Entities} menu.
+
+@iftex
+@cindex screen shot
+@image{entity-view, 6.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{entity-view}
+@end ifhtml
+
+This view is divided in three parts: a @code{Pattern} entry, a tree view, and
+ a documentation view.
+
+To query an entity, enter a search pattern in the @code{Pattern} entry. The
+tree view then shows a list of all known entities which start with this
+pattern. When an entry is selected in the tree, the documentation view displays
+the documentation corresponding to the selected entity.
+
+When the @code{File View} has the focus, using the up/down arrow keys changes
+the selection in the tree, and pressing the Enter key opens an editor to the
+declaration of the selected entity. It is also possible to jump to this
+location by double-clicking on the line in the tree, or by clicking on the
+hyperlink in the documentation view.
+
+Note that the view shows the entities that are currently loaded in memory, see
+  @ref{Support for Cross-References}.
 
 @c --------------------------------------------------------------------
 @node The Window View
@@ -5340,7 +5380,7 @@ access to all the targets defined in your makefile.
 Recompute the cross-reference information for Ada, C and C++ source files.
 @xref{Support for Cross-References}.
 
-@item Load xref info in meomry
+@item Load xref info in memory
 @cindex C
 @cindex C++
 Load all the cross-reference information in memory. This menu is generally
@@ -8197,8 +8237,8 @@ Open a tree view of function callers and callees. See also @ref{Call Graph}.
 @xref{Coverage Report}.
 
 @item Entities
-@c ??? missing xref:
-@c xref{The Entity View}.
+Open the Entity View in the bottom area
+@xref{The Entity View}.
 
 @item Files
 Open a file system explorer on the left area.
