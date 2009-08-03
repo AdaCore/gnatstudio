@@ -354,6 +354,7 @@ class Dynamic_Contextual (GPS.Contextual):
       else:
          return []
 
+   @with_save_excursion
    def on_activate (self, context, choice, choice_index):
       context.ispell_module_start.buffer().delete (
          context.ispell_module_start, context.ispell_module_end)
@@ -381,6 +382,7 @@ class SpellCheckBuffer (GPS.CommandWindow):
       self.local_dict = dict()
       self.next_with_error_or_destroy()
 
+   @with_save_excursion
    def do_replace (self, buffer, start, stop, old, new):
       self.index_adjust = len (new) - len (old) + self.index_adjust
       buffer.delete (start, stop)
