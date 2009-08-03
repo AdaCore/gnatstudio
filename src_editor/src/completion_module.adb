@@ -50,7 +50,6 @@ with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
@@ -384,7 +383,6 @@ package body Completion_Module is
 
       if Smart_Completion_Pref /= Disabled
         and then Completion_Module.Previous_Smart_Completion_State /= Disabled
-          and then not Automatic_Xrefs_Load.Get_Pref
       then
          Load_Construct_Database (Kernel);
       end if;
@@ -1168,13 +1166,7 @@ package body Completion_Module is
    begin
       Clear (Get_Construct_Database (Kernel));
 
-      --  If the smart completion is enabled, we want to recompute the Xref
-      --  info when the project view changes.
-      --  If the preference Automatic_Xrefs_Load is set, this will be done in
-      --  the Builder_Module.On_View_Changed. Otherwise, do this now.
-      if Smart_Completion.Get_Pref /= Disabled
-        and then not Automatic_Xrefs_Load.Get_Pref
-      then
+      if Smart_Completion.Get_Pref /= Disabled then
          Load_Construct_Database (Kernel);
       end if;
    end On_View_Changed;
