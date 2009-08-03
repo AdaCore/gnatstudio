@@ -355,8 +355,10 @@ class Dynamic_Contextual (GPS.Contextual):
          return []
 
    def on_activate (self, context, choice, choice_index):
-      context.ispell_module_start.buffer().delete (context.ispell_module_start, context.ispell_module_end)
-      context.ispell_module_start.buffer().insert (context.ispell_module_start, choice)
+      context.ispell_module_start.buffer().delete (
+         context.ispell_module_start, context.ispell_module_end)
+      context.ispell_module_start.buffer().insert (
+         context.ispell_module_start, choice)
 
 ####################################
 ### Spell check paragraphs and buffers
