@@ -1,9 +1,15 @@
 Known Problems fixed in GPS 4.4.0
 
+- I804-022: reformat_project.py example not working
+  Problem:    The GPS example reformat_project.py fails with an "Unknown
+              preference" error message.
+  Workaround: Edit the reformat_project.py file, and replace
+              "Ada-Align-Decl-On-Colon" with "Ada-Align-Decl-On_Colon"
+
 - I729-013: Cannot insert a character before the first character
   Problem:    When the Casing Policy is set to "On_The_Fly", inserting
               a new line before the very first character in an editor
-              might cause GPS to split the line right after the first 
+              might cause GPS to split the line right after the first
               character instead.
   Workaround: Fix the line manually.
 
