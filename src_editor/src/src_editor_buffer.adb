@@ -91,13 +91,16 @@ package body Src_Editor_Buffer is
    use Src_Editor_Buffer.Blocks;
    use Src_Editor_Module.Line_Highlighting;
    use Src_Editor_Buffer.Line_Information;
+
    use type System.Address;
    use type GNAT.Strings.String_Access;
 
-   Me                        : constant Trace_Handle :=
-     Create ("Source_Editor_Buffer");
-   Indent_On_Block_Info      : constant Trace_Handle :=
-     Create ("Source_Editor_Buffer.Indent_On_Block_Info", Default => Off);
+   Me                   : constant Trace_Handle :=
+                            Create ("Source_Editor_Buffer");
+   Indent_On_Block_Info : constant Trace_Handle :=
+                            Create
+                              ("Source_Editor_Buffer.Indent_On_Block_Info",
+                               Default => Off);
 
    Buffer_Recompute_Interval : constant Guint32 := 200;
    --  The interval at which to check whether the buffer should be reparsed,
@@ -146,13 +149,13 @@ package body Src_Editor_Buffer is
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-     (1 => (GType_Int, GType_Int),
-      2 => (GType_None, GType_None),
-      3 => (GType_None, GType_None),
-      4 => (GType_None, GType_None),
-      5 => (GType_None, GType_None),
-      6 => (GType_None, GType_None),
-      7 => (GType_None, GType_None));
+                         (1 => (GType_Int, GType_Int),
+                          2 => (GType_None, GType_None),
+                          3 => (GType_None, GType_None),
+                          4 => (GType_None, GType_None),
+                          5 => (GType_None, GType_None),
+                          6 => (GType_None, GType_None),
+                          7 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -494,11 +497,8 @@ package body Src_Editor_Buffer is
       Edited      : constant GNATCOLL.VFS.Virtual_File := Hook.Buffer.Filename;
       Need_Action : Boolean := False;
    begin
-
       if Edited /= GNATCOLL.VFS.No_File then
-         if Is_Directory (File)
-           and then Is_Parent (File, Edited)
-         then
+         if Is_Directory (File) and then Is_Parent (File, Edited) then
             Need_Action := True;
          elsif not Is_Directory (File) and then File = Edited then
             Need_Action := True;
@@ -529,20 +529,15 @@ package body Src_Editor_Buffer is
       Edited : constant Virtual_File := Hook.Buffer.Filename;
       Dest   : GNATCOLL.VFS.Virtual_File;
    begin
-
       if Edited /= GNATCOLL.VFS.No_File then
-         if Is_Directory (File)
-           and then Is_Parent (File, Edited)
-         then
+         if Is_Directory (File) and then Is_Parent (File, Edited) then
             Dest := Create_From_Dir
               (Files_2_Hooks_Args (Data.all).Renamed,
                Relative_Path (Edited, File));
             Hook.Buffer.Filename := Dest;
             Hook.Buffer.Filename_Changed;
 
-         elsif not Is_Directory (File)
-           and then Edited = File
-         then
+         elsif not Is_Directory (File) and then Edited = File then
             Hook.Buffer.Filename := Files_2_Hooks_Args (Data.all).Renamed;
             Hook.Buffer.Filename_Changed;
          end if;
@@ -762,8 +757,8 @@ package body Src_Editor_Buffer is
          --  Gtk lines are 0-based, Editable_Lines 1-based, hence the J + 1
 
          declare
-            Str : Src_String := Get_String
-              (Source_Buffer (Get_Buffer (Iter)), J + 1);
+            Str : Src_String :=
+                    Get_String (Source_Buffer (Get_Buffer (Iter)), J + 1);
          begin
             Index := Index + Str.Length;
             Index := Index + 1;
@@ -1232,8 +1227,7 @@ package body Src_Editor_Buffer is
 
    function Get_Buffer_Line
      (Buffer : access Source_Buffer_Record;
-      Line   : File_Line_Type) return Buffer_Line_Type
-   is
+      Line   : File_Line_Type) return Buffer_Line_Type is
    begin
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).File_Line = Line then
@@ -1338,13 +1332,6 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Buffer_Destroy (Data : System.Address; Buf : System.Address) is
-      Stub    : Source_Buffer_Record;
-      Success : Boolean;
-      pragma Unreferenced (Data);
-      pragma Warnings (Off, Stub);
-
-      Buffer : constant Source_Buffer := Source_Buffer
-        (Get_User_Data (Buf, Stub));
 
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X
@@ -1363,6 +1350,14 @@ package body Src_Editor_Buffer is
             Unchecked_Free (X (J).Info);
          end loop;
       end Free;
+
+      Stub    : Source_Buffer_Record;
+      Success : Boolean;
+      pragma Unreferenced (Data);
+      pragma Warnings (Off, Stub);
+
+      Buffer  : constant Source_Buffer :=
+                  Source_Buffer (Get_User_Data (Buf, Stub));
 
    begin
       Trace (Me, "Destroying Buffer buffer="
@@ -1586,13 +1581,12 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Text    : constant Unchecked_String_Access :=
-                  To_Unchecked_String (Get_Chars (Nth (Params, 2)));
-      Length  : constant Integer := Integer (Get_Int (Nth (Params, 3)));
-      Pos     : Gtk_Text_Iter;
-      Command : Editor_Command := Editor_Command (Buffer.Current_Command);
-      Line    : Editable_Line_Type;
-
+      Text        : constant Unchecked_String_Access :=
+                      To_Unchecked_String (Get_Chars (Nth (Params, 2)));
+      Length      : constant Integer := Integer (Get_Int (Nth (Params, 3)));
+      Pos         : Gtk_Text_Iter;
+      Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
+      Line        : Editable_Line_Type;
       User_Action : Action_Type;
    begin
       if Buffer.Prevent_CR_Insertion then
@@ -1792,15 +1786,16 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Start_Iter   : Gtk_Text_Iter;
-      End_Iter     : Gtk_Text_Iter;
-      Command      : Editor_Command := Editor_Command (Buffer.Current_Command);
-      Direction    : Direction_Type := Extended;
-      Line, Column : Gint;
-      Line_Start   : Gint;
-      Column_Start : Gint;
-      Line_End     : Gint;
-      Column_End   : Gint;
+      Start_Iter          : Gtk_Text_Iter;
+      End_Iter            : Gtk_Text_Iter;
+      Command             : Editor_Command :=
+                              Editor_Command (Buffer.Current_Command);
+      Direction           : Direction_Type := Extended;
+      Line, Column        : Gint;
+      Line_Start          : Gint;
+      Column_Start        : Gint;
+      Line_End            : Gint;
+      Column_End          : Gint;
       Editable_Line_Start : Editable_Line_Type;
       Editable_Line_End   : Editable_Line_Type;
 
@@ -1817,15 +1812,11 @@ package body Src_Editor_Buffer is
       Line_End     := Get_Line (End_Iter);
       Column_End   := Get_Line_Offset (End_Iter);
 
-      if Line = Line_Start
-        and then Column = Column_Start
-      then
+      if Line = Line_Start and then Column = Column_Start then
          Direction := Backward;
       end if;
 
-      if Line = Line_End
-        and then Column = Column_End
-      then
+      if Line = Line_End and then Column = Column_End then
          Direction := Forward;
       end if;
 
@@ -1838,12 +1829,8 @@ package body Src_Editor_Buffer is
       --  If we are removing lines in a non-editable block, stop propagation
       --  of the handler.
 
-      if not Lines_Are_Real (Buffer)
-        and then not Buffer.Inserting
-      then
-         if Editable_Line_Start = 0
-           or else Editable_Line_End = 0
-         then
+      if not Lines_Are_Real (Buffer) and then not Buffer.Inserting then
+         if Editable_Line_Start = 0 or else Editable_Line_End = 0 then
             Insert
               (Buffer.Kernel,
                -"Trying to delete a blank line",
@@ -2305,6 +2292,7 @@ package body Src_Editor_Buffer is
          Line := Gint (Buffer_Line - 1);
          Is_Valid_Index
            (Source_Buffer (Buffer), Entity_Start, Success, Line, Col);
+
          if not Success then
             Trace (Me, "invalid position");
             return False;
@@ -2315,6 +2303,7 @@ package body Src_Editor_Buffer is
          if Sloc_End.Column = 0 then
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
             Backward_Char (Entity_End, Success);
+
          else
             if Gint (Sloc_End.Line) = 1 then
                Offset := Slice_Offset_Column;
@@ -2327,6 +2316,7 @@ package body Src_Editor_Buffer is
 
                Is_Valid_Index
                  (Source_Buffer (Buffer), Entity_End, Success, Line, Col);
+
                if not Success then
                   Trace (Me, "invalid position """
                          & Buffer.Filename.Display_Full_Name & """"
@@ -3825,7 +3815,7 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Select_Current_Word (Buffer : access Source_Buffer_Record) is
-      Success : Boolean;
+      Success                    : Boolean;
       Start_Iter, End_Iter, Iter : Gtk_Text_Iter;
 
    begin
@@ -4093,6 +4083,7 @@ package body Src_Editor_Buffer is
 
       if Buffer.Blank_Lines = 0 then
          Forward_Chars (End_Iter, Length, Result);
+
       else
          declare
             Remaining : Gint := Length;
@@ -4434,7 +4425,6 @@ package body Src_Editor_Buffer is
    procedure End_Action (Buffer : access Source_Buffer_Record'Class) is
       Command : constant Editor_Command :=
                   Editor_Command (Buffer.Current_Command);
-
    begin
       End_Action_Hook (Buffer);
 
@@ -4826,7 +4816,6 @@ package body Src_Editor_Buffer is
       then
          return Unmodified;
 
-      --  Else
       elsif Buffer.Saved_Position = Get_Position (Buffer.Queue) then
          return Saved;
 
@@ -5999,8 +5988,8 @@ package body Src_Editor_Buffer is
       End_Line     : out Editable_Line_Type;
       End_Column   : out Character_Offset_Type)
    is
-      Iter      : Gtk_Text_Iter;
-      Success   : Boolean;
+      Iter    : Gtk_Text_Iter;
+      Success : Boolean;
    begin
       Get_Iter_At_Line_Offset
         (Buffer,
@@ -6432,8 +6421,8 @@ package body Src_Editor_Buffer is
       Current : Visible_Column_Type := 1;
       Count   : Character_Offset_Type := 1;
       Result  : Boolean := True;
-      Tab_Len : constant Visible_Column_Type := Visible_Column_Type
-        (Buffer.Tab_Width);
+      Tab_Len : constant Visible_Column_Type :=
+                  Visible_Column_Type (Buffer.Tab_Width);
       J       : Natural;
 
    begin

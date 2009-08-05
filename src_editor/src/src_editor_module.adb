@@ -2628,7 +2628,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to next word", Command,
            -"Move to the next word in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2638,7 +2638,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to previous word", Command,
            -"Move to the previous word in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2648,7 +2648,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to next line", Command,
            -"Move to the next line in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2658,7 +2658,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to previous line", Command,
            -"Move to the previous line in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2668,7 +2668,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to next character", Command,
            -"Move to the next character in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2678,7 +2678,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to previous character", Command,
            -"Move to the previous character in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2688,7 +2688,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to previous sentence", Command,
            -"Move to the previous sentence in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2698,7 +2698,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to next sentence", Command,
            -"Move to the next sentence in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2708,7 +2708,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to previous page", Command,
            -"Move to the previous page in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2718,7 +2718,7 @@ package body Src_Editor_Module is
         (Kernel, "Move to next page", Command,
            -"Move to the next page in the current source editor",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Scroll_Command;
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2726,7 +2726,7 @@ package body Src_Editor_Module is
         (Kernel, "Center cursor on screen", Command,
            -"Scroll the current source editor so that the cursor is centered",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2736,7 +2736,7 @@ package body Src_Editor_Module is
         (Kernel, "Delete word forward", Command,
            -"Delete the word following the current cursor position",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2746,16 +2746,16 @@ package body Src_Editor_Module is
         (Kernel, "Delete word backward", Command,
            -"Delete the word preceding the current cursor position",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
       Command := new Goto_Declaration_Command;
       Register_Contextual_Menu
         (Kernel, "Goto declaration of entity",
-         Action     => Command,
-         Label      => -"Goto declaration of %e",
-         Filter     => Action_Filter
+         Action => Command,
+         Label  => -"Goto declaration of %e",
+         Filter => Action_Filter
            ((not Is_Dispatching)
             and ((not Line_Numbers_Area_Filter
               and Create (Module => Src_Editor_Module_Name))
@@ -2764,9 +2764,9 @@ package body Src_Editor_Module is
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu
         (Kernel, "Goto dispatching declaration of entity",
-         Label      => -"Goto declarations of %e",
-         Submenu    => Submenu,
-         Filter     => Action_Filter
+         Label   => -"Goto declarations of %e",
+         Submenu => Submenu,
+         Filter  => Action_Filter
            (Is_Dispatching
             and ((not Line_Numbers_Area_Filter
               and Create (Module => Src_Editor_Module_Name))
@@ -2777,23 +2777,23 @@ package body Src_Editor_Module is
       Label   := new Goto_Body_Menu_Label;
       Register_Contextual_Menu
         (Kernel, "Goto body of entity",
-         Action     => Command,
-         Label      => Label,
-         Filter     => (not Is_Dispatching) and Filter);
+         Action => Command,
+         Label  => Label,
+         Filter => (not Is_Dispatching) and Filter);
 
       Submenu := new Goto_Dispatch_Body_Submenu;
       Register_Contextual_Submenu
         (Kernel, "Goto dispatching bodies of entity",
-         Label      => "Goto bodies of %e",
-         Submenu    => Submenu,
-         Filter     => Is_Dispatching);
+         Label   => "Goto bodies of %e",
+         Submenu => Submenu,
+         Filter  => Is_Dispatching);
 
       Command := new Goto_Type_Command;
       Register_Contextual_Menu
         (Kernel, "Goto type of entity",
-         Action     => Command,
-         Label      => -"Goto type declaration of %e",
-         Filter     => Has_Type);
+         Action => Command,
+         Label  => -"Goto type declaration of %e",
+         Filter => Has_Type);
 
       Command := new Type_Hierarchy_Command;
       Register_Contextual_Menu

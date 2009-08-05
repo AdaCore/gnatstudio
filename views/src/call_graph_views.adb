@@ -17,6 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with System;
+
 with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
@@ -59,11 +62,9 @@ with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
-with XML_Utils;                use XML_Utils;
+with XML_Utils;                   use XML_Utils;
 
 with Generic_List;
-with System;
-with Ada.Unchecked_Conversion;
 
 package body Call_Graph_Views is
 
@@ -255,8 +256,7 @@ package body Call_Graph_Views is
 
    function To_Record
      (Ref                 : Entity_Reference;
-      Through_Dispatching : Boolean) return Reference_Record
-   is
+      Through_Dispatching : Boolean) return Reference_Record is
    begin
       return (Get_Line (Get_Location (Ref)),
               Get_Column (Get_Location (Ref)),
@@ -583,7 +583,7 @@ package body Call_Graph_Views is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View  : Callgraph_View_Access;
+      View : Callgraph_View_Access;
    begin
       View := Callgraph_View_Access (Widget);
 
@@ -606,8 +606,8 @@ package body Call_Graph_Views is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View  : Callgraph_View_Access;
-      Iter  : Gtk_Tree_Iter;
+      View : Callgraph_View_Access;
+      Iter : Gtk_Tree_Iter;
    begin
       View := Callgraph_View_Access (Widget);
 
@@ -634,19 +634,20 @@ package body Call_Graph_Views is
 
    procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class)
    is
-      V : constant Callgraph_View_Access := Callgraph_View_Access (View);
-      L : List_Access;
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-      Entity : Entity_Information;
-      Decl   : File_Location;
+      V             : constant Callgraph_View_Access :=
+                        Callgraph_View_Access (View);
+      L             : List_Access;
+      Iter          : Gtk_Tree_Iter;
+      Model         : Gtk_Tree_Model;
+      Entity        : Entity_Information;
+      Decl          : File_Location;
 
       Value, Value2 : GValue;
-      N     : List_Node;
-      R     : Reference_Record;
-      T     : Gtk_Tree_Iter;
-      Address : System.Address;
-      Appended : Boolean := False;
+      N             : List_Node;
+      R             : Reference_Record;
+      T             : Gtk_Tree_Iter;
+      Address       : System.Address;
+      Appended      : Boolean := False;
       use type System.Address;
    begin
       Get_Selected (Get_Selection (V.Tree), Model, Iter);
@@ -735,14 +736,16 @@ package body Call_Graph_Views is
      (View : access Gtk_Widget_Record'Class;
       Args : GValues)
    is
-      V      : constant Callgraph_View_Access := Callgraph_View_Access (View);
-      M      : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      V           : constant Callgraph_View_Access :=
+                      Callgraph_View_Access (View);
+      M           : constant Gtk_Tree_Store :=
+                      Gtk_Tree_Store (Get_Model (V.Tree));
       Iter, Child : Gtk_Tree_Iter := Null_Iter;
-      Dummy  : Gtk_Tree_Iter;
-      Value  : GValue;
-      Entity : Entity_Information;
-      Column : Gint;
-      Data   : Ancestors_User_Data_Access;
+      Dummy       : Gtk_Tree_Iter;
+      Value       : GValue;
+      Entity      : Entity_Information;
+      Column      : Gint;
+      Data        : Ancestors_User_Data_Access;
    begin
       if V.Block_On_Expanded then
          return;
@@ -1041,7 +1044,7 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
+                Gtk_Tree_Store (Get_Model (View.Tree));
 
       procedure Recursive_Load
         (Parent_Iter   : Gtk_Tree_Iter;
@@ -1052,7 +1055,7 @@ package body Call_Graph_Views is
       --  expanded after a first child has been added to it. We unfortunately
       --  need this parameter, since otherwise a child node cannot be expanded
       --  before its parent has been expanded, and a parent cannot be expanded
-      --  before it has at least one child
+      --  before it has at least one child.
 
       --------------------
       -- Recursive_Load --
@@ -1093,13 +1096,14 @@ package body Call_Graph_Views is
                File := Create
                  (Full_Filename => +Get_Attribute (N, "entity_decl"));
                Source := Get_Or_Create
-                 (Db            => Get_Database (View.Kernel),
-                  File          => File);
+                 (Db   => Get_Database (View.Kernel),
+                  File => File);
+
                if Source /= null then
                   Entity := Get_Or_Create
-                    (Name => Get_Attribute (N, "entity_name"),
-                     File => Source,
-                     Line => Safe_Value (Get_Attribute (N, "entity_line")),
+                    (Name   => Get_Attribute (N, "entity_name"),
+                     File   => Source,
+                     Line   => Safe_Value (Get_Attribute (N, "entity_line")),
                      Column => Basic_Types.Visible_Column_Type
                        (Safe_Value (Get_Attribute (N, "entity_column"))));
                else
@@ -1341,7 +1345,7 @@ package body Call_Graph_Views is
 
       if Ref /= No_Entity_Reference then
          declare
-            L : List_Access;
+            L       : List_Access;
             Value   : GValue;
             Address : System.Address;
             use type System.Address;
@@ -1434,11 +1438,12 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : Callgraph_View_Access;
-      Entity : constant Entity_Information := Get_Entity
-        (Context.Context, Ask_If_Overloaded => True);
+      Entity : constant Entity_Information :=
+                 Get_Entity
+                   (Context.Context, Ask_If_Overloaded => True);
       pragma Unreferenced (Command);
 
+      View   : Callgraph_View_Access;
       R      : Gtk_Requisition;
    begin
       if Entity /= null then
@@ -1466,11 +1471,12 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : Callgraph_View_Access;
-      Entity : constant Entity_Information := Get_Entity
-        (Context.Context, Ask_If_Overloaded => True);
+      Entity : constant Entity_Information :=
+                 Get_Entity
+                   (Context.Context, Ask_If_Overloaded => True);
       pragma Unreferenced (Command);
 
+      View   : Callgraph_View_Access;
       R      : Gtk_Requisition;
    begin
       if Entity /= null then

@@ -1018,7 +1018,7 @@ procedure GPS.Main is
 
       procedure Setup_Debug;
       --  Load appropriate debugger project and set up debugger-related
-      --  properties
+      --  properties.
 
       function Setup_Project return Boolean;
       --  When no project has been specified explicitely by the user,
