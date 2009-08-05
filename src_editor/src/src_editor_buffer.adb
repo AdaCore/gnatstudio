@@ -119,12 +119,19 @@ package body Src_Editor_Buffer is
 
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
+   function Strlen
+     (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
+   pragma Import (C, Strlen);
+   --  Import Strlen directly, for efficiency
+
    type Delimiter_Type is (Opening, Closing);
+   --  ??? missing doc
 
    Delimiters : constant array (1 .. 3, Delimiter_Type'Range) of Character
      := (('(', ')'),
          ('[', ']'),
          ('{', '}'));
+   --  ??? missing doc
    --  ??? Should we get that from the language ?
 
    --------------------
