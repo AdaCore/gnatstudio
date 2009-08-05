@@ -14,7 +14,7 @@ GPS.Preference ("Ada-Align-On-Colons").set (True)
 GPS.Preference ("Ada-Align-On-Arrows").set (True)
 GPS.Preference ("Ada-Format-Operators").set (True)
 GPS.Preference ("Ada-Format-Operators").set (True)
-GPS.Preference ("Ada-Align-Decl-On-Colon").set (True)
+GPS.Preference ("Ada-Align-Decl-On_Colon").set (True)
 GPS.Preference ("Ada-Stick-Comments").set (False)
 GPS.Preference ("Ada-Reserved-Casing").set ("Lower")
 
