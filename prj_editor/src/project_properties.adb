@@ -3347,34 +3347,42 @@ package body Project_Properties is
          begin
             for V in Value'Range loop
                Append (Editor.Model, Iter, Null_Iter);
-               if Value (V)'Length > 3
-                 and then
-                   Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**"
-               then
-                  Set (Editor.Model, Iter, 0,
-                    Normalize_Pathname
-                      (Value (V) (Value (V)'First .. Value (V)'Last - 3),
-                       Directory     => Get_Text (Path_Widget),
-                       Resolve_Links => False));
-                  Set (Editor.Model, Iter, 1, True);
 
-               elsif Attr.Typ = Attribute_As_String then
-                  Set (Editor.Model, Iter, 0, Value (V).all);
-                  Set (Editor.Model, Iter, 1, False);
-
-               elsif Description.Base_Name_Only then
-                  Set (Editor.Model, Iter, 0, Base_Name (Value (V).all));
-                  Set (Editor.Model, Iter, 1, False);
-
-               else
-                  Set (Editor.Model, Iter, 0,
-                       Normalize_Pathname
-                         (Value (V).all,
+               declare
+                  Val : String renames Value (V).all;
+               begin
+                  if Val'Length > 3
+                    and then
+                      (Val (Val'Last - 2 .. Val'Last) = "/**"
+                         or else Val (Val'Last - 2 .. Val'Last) = "\**")
+                  then
+                     Set (Editor.Model, Iter, 0,
+                          Normalize_Pathname
+                            (Val (Val'First .. Val'Last - 3),
                           Directory     => Get_Text (Path_Widget),
                           Resolve_Links => False));
-                  Set (Editor.Model, Iter, 1, False);
-               end if;
-               Set (Editor.Model, Iter, 2, Value (V).all);
+                     Set (Editor.Model, Iter, 1, True);
+
+                  elsif Attr.Typ = Attribute_As_String then
+                     Set (Editor.Model, Iter, 0, Val);
+                     Set (Editor.Model, Iter, 1, False);
+
+                  elsif Description.Base_Name_Only then
+                     Set (Editor.Model, Iter, 0, Base_Name (Val));
+                     Set (Editor.Model, Iter, 1, False);
+
+                  else
+                     Set
+                       (Editor.Model, Iter, 0,
+                        Normalize_Pathname
+                          (Val,
+                           Directory     => Get_Text (Path_Widget),
+                           Resolve_Links => False));
+                     Set (Editor.Model, Iter, 1, False);
+                  end if;
+
+                  Set (Editor.Model, Iter, 2, Val);
+               end;
             end loop;
             Free (Value);
          end;
