@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007, AdaCore             --
+--                      Copyright (C) 2005-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -283,7 +283,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Box, False, False, 3);
       Connect
-        (Box, Signal_Button_Press_Event,
+        (Box, Signal_Button_Release_Event,
          To_Marshaller (On_Overview'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
@@ -292,7 +292,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Box, False, False, 3);
       Connect
-        (Box, Signal_Button_Press_Event,
+        (Box, Signal_Button_Release_Event,
          To_Marshaller (On_UG'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
@@ -301,7 +301,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Box, False, False, 3);
       Connect
-        (Box, Signal_Button_Press_Event,
+        (Box, Signal_Button_Release_Event,
          To_Marshaller (On_Tutorial'Access), Kernel);
       Pack_Start (Hbox, Vbox, False, False, 3);
 
