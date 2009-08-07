@@ -1744,8 +1744,6 @@ package body Project_Explorers is
          end if;
       end if;
 
-      --  Set back the cursor to the parent node
-      Set_Cursor (T.Tree, Path, null, False);
       T.Expanding := False;
 
    exception
