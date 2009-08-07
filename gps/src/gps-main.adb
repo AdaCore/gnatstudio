@@ -609,10 +609,23 @@ procedure GPS.Main is
 
       --  Initialize the traces
 
-      GNATCOLL.Traces.Parse_Config_File
-        (Filename     => No_File,
-         Default      => Create_From_Dir (GPS_Home_Dir, "traces.cfg"),
-         On_Exception => GNATCOLL.Traces.Deactivate);
+      declare
+         File : constant Virtual_File :=
+                  Create_From_Dir (GPS_Home_Dir, "traces.cfg");
+      begin
+         GNATCOLL.Traces.Parse_Config_File
+           (Filename     => No_File,
+            Default      => File,
+            On_Exception => GNATCOLL.Traces.Deactivate);
+      exception
+         when others =>
+            Button := Message_Dialog
+              ((-"Cannot access file ") & File.Display_Full_Name & ASCII.LF &
+               (-"Exiting..."),
+               Error, Button_OK, Justification => Justify_Left);
+            OS_Exit (1);
+      end;
+
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
       Trace (Me, "Gtk+ static version: "
