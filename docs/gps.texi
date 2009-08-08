@@ -8550,7 +8550,7 @@ The following sample shows how those tags are translated:
 @smallexample
 --  <description>
 --    This is the main description for this package. It can contain a complete
---    desciription with some xml characters as < or >.
+--    description with some xml characters as < or >.
 --  </description>
 --  <group>Group1</group>
 --  <c_version>1.0.0</c_version>
