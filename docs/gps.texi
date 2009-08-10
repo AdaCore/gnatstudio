@@ -9340,12 +9340,13 @@ connection configuration is set (@xref{Connection settings}.) Clicking
 on @code{Apply} will apply your connection configuration and allow you
 to browse the remote host to select the remote paths.
 
-Four kind of paths synchronisation can be set for each defined path:
+Four kind of paths synchronization can be set for each defined path:
 @itemize
 @item @code{None}: no synchronisation is required from GPS, the paths
 are shared using an OS mechanism like NFS.
 @item @code{Always}: source path of your project. They are kept
-synchronised by GPS before and after every remote action.
+synchronised by GPS before and after every remote action (such as performing
+a build or run).
 @item @code{Once to local}/@code{Once to remote}: project's
 dependencies. They are synchronized once when a remote project is
 loaded or when a local project is set remote. They can be still
@@ -9453,12 +9454,6 @@ automatically loaded each time the project is loaded.
 The two buttons on the right of each server can be used to manually perform
 a synchronization from the remote host to your local machine (left
 button) or from your local machine to the remote host (right button).
-
-Clicking on the @code{Servers assignment} button will toggle between a
-simple view (default) and an extended view (as shown in the screenshot
-above) where you can select either a single remote server to perform
-all remote operations, or separate servers for performing builds,
-debugging and running.
 
 @c -----------------------------------------------------------------------
 @node Loading a remote project
