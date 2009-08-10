@@ -59,7 +59,7 @@ package body Aunit_Filters is
       end if;
 
       Projects.Get_Unit_Part_And_Name_From_Filename
-        (Filename  => File_Name.Full_Name,
+        (Filename  => File_Name.Base_Name,
          Project   => Get_Project (Kernel),
          Part      => Part,
          Unit_Name => Unit_Name,
