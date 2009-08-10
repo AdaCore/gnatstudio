@@ -38,6 +38,8 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Templates_Parser;        use Templates_Parser;
 with AUnit_Templates;         use AUnit_Templates;
 
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+
 package body Make_Suite_Window_Pkg.Callbacks is
 
    --------------------
@@ -287,6 +289,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Success);
 
       if Success then
+         Recompute_View (Window.Kernel);
          Hide (Window);
       end if;
    end On_Ok_Clicked;

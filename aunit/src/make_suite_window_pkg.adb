@@ -71,8 +71,8 @@ package body Make_Suite_Window_Pkg is
 
       Vbuttonbox1     : Gtk_Vbutton_Box;
       Scrolledwindow2 : Gtk_Scrolled_Window;
-      Button : Gtk_Button;
-      pragma Unreferenced (Button);
+      Button, Cancel_Button : Gtk_Button;
+      pragma Unreferenced (Cancel_Button);
 
    begin
       Make_Suite_Window.Kernel := Handle;
@@ -178,6 +178,8 @@ package body Make_Suite_Window_Pkg is
       Pack_Start (Hbox2, Vbuttonbox1, False, True, 3);
 
       Gtk_New_From_Stock (Make_Suite_Window.Add, Stock_Add);
+      Set_Name (Make_Suite_Window.Add,
+                "aunit_make_new_test_suite_browse_button");
       Set_Relief (Make_Suite_Window.Add, Relief_Normal);
       Set_Flags (Make_Suite_Window.Add, Can_Default);
       Button_Callback.Connect
@@ -214,7 +216,9 @@ package body Make_Suite_Window_Pkg is
 
       Button := Gtk_Button
         (Add_Button (Make_Suite_Window, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
+      Set_Name (Button,
+                "aunit_make_new_test_suite_ok_button");
+      Cancel_Button := Gtk_Button
         (Add_Button (Make_Suite_Window, Stock_Cancel, Gtk_Response_Cancel));
 
       Check_Validity (Make_Suite_Window);

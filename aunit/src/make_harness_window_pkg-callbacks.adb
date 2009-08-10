@@ -33,6 +33,8 @@ with Templates_Parser;        use Templates_Parser;
 
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
 
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+
 package body Make_Harness_Window_Pkg.Callbacks is
    --  Callbacks for main "AUnit_Make_Harness" window.
 
@@ -217,7 +219,6 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Procedure_Name : String := Get_Text (Win.Procedure_Entry);
       Translation    : Translate_Set;
       Success        : Boolean;
-      pragma Unreferenced (Success);
 
    begin
       if Win.Suite_Name = null then
@@ -242,6 +243,10 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Directory_Name,
          Procedure_Name,
          Success);
+
+      if Success then
+         Recompute_View (Win.Kernel);
+      end if;
    end On_Ok_Clicked;
 
 end Make_Harness_Window_Pkg.Callbacks;

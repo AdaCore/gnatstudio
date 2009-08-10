@@ -60,8 +60,8 @@ package body Make_Harness_Window_Pkg is
       Hbox   : Gtk_Hbox;
 
       Label  : Gtk_Label;
-      Button : Gtk_Button;
-      pragma Unreferenced (Button);
+      Button, Cancel_Button : Gtk_Button;
+      pragma Unreferenced (Cancel_Button);
 
    begin
       Make_Harness_Window.Kernel := Handle;
@@ -150,6 +150,8 @@ package body Make_Harness_Window_Pkg is
          Check_Validity'Access);
 
       Gtk_New (Make_Harness_Window.Browse, -"Browse...");
+      Set_Name (Make_Harness_Window.Browse,
+                "aunit_make_new_harness_browse_button");
       Set_Relief (Make_Harness_Window.Browse, Relief_Normal);
       Pack_Start (Hbox, Make_Harness_Window.Browse, False, False, 3);
       Button_Callback.Connect
@@ -166,7 +168,9 @@ package body Make_Harness_Window_Pkg is
 
       Button := Gtk_Button
         (Add_Button (Make_Harness_Window, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
+      Set_Name (Button,
+                "aunit_make_new_harness_ok_button");
+      Cancel_Button := Gtk_Button
         (Add_Button (Make_Harness_Window, Stock_Cancel, Gtk_Response_Cancel));
 
       Check_Validity (Make_Harness_Window);
