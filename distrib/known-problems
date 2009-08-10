@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
+- I807-014: Unwanted scrolling when expanding nodes in the Project View
+  Problem:    When the Project View contains a lot of entries, expanding one
+              entry might cause the window to scroll to another entry.
+  Workaround: Scroll manually to the proper entry.
+
 - I804-022: reformat_project.py example not working
   Problem:    The GPS example reformat_project.py fails with an "Unknown
               preference" error message.
