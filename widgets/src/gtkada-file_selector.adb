@@ -2051,6 +2051,9 @@ package body Gtkada.File_Selector is
             File_Selector_Window.File_Model);
          --  ??? File_Model should be Unref when File_Selector is destroyed
 
+         Set_Name (File_Selector_Window.File_Tree,
+                "file_selector_window.file_tree");
+
          Set_Headers_Visible (File_Selector_Window.File_Tree, True);
          Set_Column_Types (File_Selector_Window.File_Tree);
 
@@ -2132,6 +2135,10 @@ package body Gtkada.File_Selector is
         Gtk_Button
           (Add_Button
                (File_Selector_Window, Stock_Ok, Gtk_Response_OK));
+
+      Set_Name (File_Selector_Window.OK_Button,
+                "file_selector_window.ok_button");
+
       Button := Add_Button
         (File_Selector_Window, Stock_Cancel, Gtk_Response_Cancel);
       Set_Default_Response (File_Selector_Window, Gtk_Response_OK);
