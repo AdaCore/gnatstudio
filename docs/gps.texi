@@ -8320,14 +8320,14 @@ Open an OS (Windows or Unix) console, using the environment variables
 
 On Unix, this terminal behaves a lot like a standard Unix terminal. In
 particular, you need to make sure that your shell will output all the
-information.  In some cases, the configuration of your shell (@file{.bashrc}
+information. In some cases, the configuration of your shell (@file{.bashrc}
 if you are running bash for instance) will deactivate the echo of what you
 type to the terminal. Since GPS is not outputing anything on its own, just
 showing what the shell is outputing, you need to somehow ensure that your
 shell always echos what you type. This is done by running the command
 
 @smallexample
-    stty echo
+stty echo
 @end smallexample
 
 in such cases. In general, this can be safely done in your @file{.bashrc}
