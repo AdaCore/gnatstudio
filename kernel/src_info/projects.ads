@@ -272,6 +272,7 @@ package Projects is
    --  This procedure doesn't fully handle krunched file name.
    --  Project can be No_Project, in which case the default naming scheme is
    --  used.
+   --  Filename must be a base filename.
 
    function Delete_File_Suffix
      (Filename : GNATCOLL.VFS.Filesystem_String;
