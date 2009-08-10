@@ -9450,6 +9450,16 @@ If one of the above operations fail, then errors are reported in the
 Once a remote server is assigned, this remote configuration will be
 automatically loaded each time the project is loaded.
 
+The two buttons on the right of each server can be used to manually perform
+a synchronization from the remote host to your local machine (left
+button) or from your local machine to the remote host (right button).
+
+Clicking on the @code{Servers assignment} button will toggle between a
+simple view (default) and an extended view (as shown in the screenshot
+above) where you can select either a single remote server to perform
+all remote operations, or separate servers for performing builds,
+debugging and running.
+
 @c -----------------------------------------------------------------------
 @node Loading a remote project
 @subsection Loading a remote project
