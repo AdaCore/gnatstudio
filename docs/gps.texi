@@ -3178,17 +3178,18 @@ than ssh if the file contains 8 bit characters.
 To use it, substitute the word "scp" to "protocol" in the example above.
 
 @item rsync
-Just like scp is based on ssh, this protocol is based on rsh. It depends on
-the external tool rsync, and uses a mixture of a rsh connection for commands
-like querying the time stamp of a file, and one-time connections with rsync
-to transfer the files.
+Just like scp is based on ssh, this protocol is based on either rsh or ssh.
+It depends on the external tool rsync, and uses a mixture of a rsh/ssh
+connection for commands like querying the time stamp of a file, and one-time
+connections with rsync to transfer the files.
 
 Rsync is specially optimized to transfer only the parts of a file that are
 different from the one already on the remote host. Therefore, it will generally
 provide the best performance when writing the file back to the remote host.
 
 If you set up the environment variable RSYNC_RSH to ssh before starting gps,
-the connection will then be encrypted when transferring the files.
+the connection will then be encrypted when transferring the files, and the
+connection will be performed using ssh instead of rsh.
 
 To use this protocol, substitute the word "rsync" to "protocol" in the
 example above.
@@ -5616,7 +5617,7 @@ is activated:
 @item The tools path is however taken into account, and all related actions
  are performed on the local machine using this path.
 @item The cross-reference files are taken care of by the rsync mechanism
- so that they don't get overrwritten during local and remote host
+ so that they don't get overwritten during local and remote host
  synchronisations, as build and cross-reference generation actions occur at
  the same time, on the local machine and on the distant server.
 @end itemize
@@ -9156,7 +9157,9 @@ GPS can now handle passwords for such connections.
 @item
 Either have a Network Filesystem (i.e. NFS, SMB or equivalent) sharing the
 project files between the host and the target, or having rsync installled on
-both client and server.
+both client and server. rsync can be found at @url{http://www.samba.org/rsync/}
+for unix, and comes as part of cygwin under windows:
+@url{http://www.cygwin.com}.
 
 @item
 Subprojects must be withed by the main project using relative paths, or the
