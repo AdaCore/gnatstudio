@@ -39,7 +39,7 @@ def create_default_shell (menu):
   if os.getenv ("SHELL"):
     Unix_Shell (os.getenv ("SHELL"), "-i")
   elif os.getenv ("COMSPEC"):
-    Win32_Shell (os.getenv ("COMSPEC"))
+    Win32_Shell (os.getenv ("COMSPEC"), "/Q")
 
 GPS.Menu.create ("/Tools/Consoles/_OS Shell", create_default_shell, ref="Auxiliary Builds", add_before=1)
 
