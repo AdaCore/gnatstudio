@@ -15,9 +15,9 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
-NF-44-I807-021 New plugin: createfile.py (2009-08-10)
+NF-44-I807-021 New plug-in: createfile.py (2009-08-10)
 
-   This plugins provides a contextual menu that allows you to create new
+   This plug-in provides a contextual menu that allows you to create new
    file in the selected directory, rather than use /File/New and then
    navigate to the directory in which the file should be saved.
 
