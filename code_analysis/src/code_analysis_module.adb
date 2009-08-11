@@ -2970,9 +2970,6 @@ package body Code_Analysis_Module is
          Ref_Item    => -"Documentation",
          Add_Before  => False);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Tools & '/' & Coverage, Mitem);
-
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Tools & '/' & Coverage,
