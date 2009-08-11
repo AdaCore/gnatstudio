@@ -17,8 +17,8 @@ New features on 4.4.0
 
 NF-44-I807-021 New plug-in: createfile.py (2009-08-10)
 
-   This plug-in provides a contextual menu that allows you to create new
-   file in the selected directory, rather than use /File/New and then
+   This optional plug-in provides a contextual menu that allows you to create
+   new file in the selected directory, rather than use /File/New and then
    navigate to the directory in which the file should be saved.
 
 NF-44-I729-038 Support for e500v2-wrs-vxworks toolchain (2009-07-30)
@@ -185,6 +185,11 @@ NF-44-I217-007 Entities browser preserves source order (2009-02-17)
 
    When a record is analyzed in the entities browser, its fields are now
    displayed in the same order as in the source code
+
+NF-44-I210-006 New plug-in: gnatpp_switches.py (2009-08-11)
+
+   This optional plug-in will automatically scan gnatpp switches in your
+   project, and set the corresponding GPS reformatting preferences accordingly.
 
 NF-44-I205-024 Outline view updated in real-time (2009-04-10)
 
