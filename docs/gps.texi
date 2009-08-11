@@ -2160,6 +2160,17 @@ the overridden files of the extended project. Of course, you can still
 use the project view or the standard @code{File->Open} menu to
 open these files.
 
+@item Open From Host...
+@anchor{Open From Host}
+@cindex open
+Open a file selector dialog where you can specify a remote host, as
+defined in @ref{The remote configuration dialog}. You have access to a remote
+host file system, can specify a file which can be edited in GPS. When you
+hit the save button or menu, the file will be saved on the remote host.
+
+See also @ref{Using GPS for Remote Development} for a more efficient
+way to work locally on remote files.
+
 @item Recent
 @cindex recent
 Open a sub menu containing a list of the ten most recent files opened in GPS,
