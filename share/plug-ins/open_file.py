@@ -58,7 +58,10 @@ class OpenFileContextual (GPS.Contextual):
       if not isinstance (context, GPS.FileContext):
          return False
 
-      ed  = GPS.EditorBuffer.get ()
+      ed  = GPS.EditorBuffer.get (open=False)
+      if not ed:
+         return False
+
       try:
          (ed, start, end) = get_selection_or_line (ed, context.location ())
       except:
