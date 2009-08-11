@@ -55,6 +55,8 @@ def project_recomputed (hook_name):
       set_pref(f, "Ada-Indent-Comments", False)
     elif f == "-c4":
       set_pref(f, "Ada-Ident-Comments", True)
+    elif f[0:2] == "-M":
+      set_pref(f, "Src-Editor-Highlight-Column", int(f[2:]))
     else:
       GPS.Logger("gnatpp").log ("ignore switch " + f)
 
