@@ -511,9 +511,7 @@ package body Coverage_GUI is
                Base_Name (Source) & Gcov_Extension_Cst);
 
          when Xcov =>
-            return Create_From_Dir
-              (Object_Path (Get_Root_Project (Get_Registry (Kernel).all)),
-               Base_Name (Source) & Xcov_Extension_Cst);
+            return Create (Base_Name (Source) & Xcov_Extension_Cst);
       end case;
    end Find_Gcov_File;
 
