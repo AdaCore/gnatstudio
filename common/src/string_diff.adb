@@ -29,7 +29,6 @@ package body String_Diff is
 
    Null_Object : constant Character := ASCII.NUL;
 
-   function "=" (Left, Right : Character) return Boolean;
    function Length (C : String_Access) return Natural;
    function First (C : String_Access) return Iter;
    function Last (C : String_Access) return Iter;
@@ -38,15 +37,6 @@ package body String_Diff is
    function Prev (I : Iter) return Iter;
    function At_End (I : Iter) return Boolean;
    --  See documentation in Diffing
-
-   ---------
-   -- "=" --
-   ---------
-
-   function "=" (Left, Right : Character) return Boolean is
-   begin
-      return Standard."=" (Left, Right);
-   end "=";
 
    ------------
    -- Length --
