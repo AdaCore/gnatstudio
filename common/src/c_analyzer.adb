@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -517,6 +517,7 @@ package body C_Analyzer is
       Paren_Index       : Natural;
       Indent            : Natural := 0;
       Indent_Done       : Boolean := False;
+      Indentation       : Natural := 0;
       Token             : Token_Type := No_Token;
       Prev_Token        : Token_Type := No_Token;
       Curly_Level       : Integer := 0;
@@ -550,6 +551,10 @@ package body C_Analyzer is
       --  Assume that Buffer (Index) is an identifier character.
       --  Return whether processing should be stopped.
 
+      procedure Pop_Constructs_And_Indent;
+      --  Pop non construct items in the stack and indent current line.
+      --  This procedure will tpyically be called after a ';' or '='.
+
       function Preprocessor_Directive return Boolean;
       --  Handle preprocessor directive.
       --  Assume that Buffer (Index) = '#'
@@ -562,6 +567,10 @@ package body C_Analyzer is
          Last  : Natural;
          Str   : String);
       --  Wrapper for Replace.all, taking (From, To) into account.
+
+      procedure Set_Paren_Index;
+      --  Set Paren_Index according to the current indentation level and
+      --  Idents.
 
       function Skip_Character return Boolean;
       --  Skip character starting at Buffer (Index)
@@ -597,10 +606,8 @@ package body C_Analyzer is
          Num_Spaces   : Integer;
          Continuation : Boolean := False)
       is
-         Start       : Natural;
-         Indentation : Integer;
-         Index       : Natural;
-
+         Start : Natural;
+         Index : Natural;
       begin
          if Indent_Done or not Format then
             return;
@@ -671,9 +678,7 @@ package body C_Analyzer is
 
          --  Build next entry of Constructs if needed.
 
-         if Constructs /= null
-           and then Value.Token /= Tok_Assign
-         then
+         if Constructs /= null then
             Column             := Char_In_Line;
             Info               := Constructs.Current;
             Constructs.Current := new Construct_Information;
@@ -1204,6 +1209,55 @@ package body C_Analyzer is
          return False;
       end Identifier_Keyword;
 
+      ----------------------
+      -- Set_Parent_Index --
+      ----------------------
+
+      procedure Set_Paren_Index is
+         First_Non_Blank : Natural := Line_Start (Buffer, Index);
+         Local_Indent    : Natural;
+         Indents_Level   : constant Integer := Top (Indents).Level;
+      begin
+         if Indents_Level = None
+           or else Top (Indents).Line = Line
+         then
+            Local_Indent := Indentation;
+         else
+            Local_Indent := Indents_Level;
+         end if;
+
+         Skip_Blanks (Buffer, First_Non_Blank);
+         Paren_Index := Index - First_Non_Blank + Local_Indent + 1;
+      end Set_Paren_Index;
+
+      -------------------------------
+      -- Pop_Constructs_And_Indent --
+      -------------------------------
+
+      procedure Pop_Constructs_And_Indent is
+      begin
+         loop
+            Pop_To_Construct (Tokens, Top_Token);
+
+            exit when Top_Token.Token = No_Token
+              or else Top_Token.Curly_Level /= Curly_Level
+              or else Top_Token.Paren_Level /= Paren_Level;
+
+            if Top_Token.Token = Tok_Do then
+               Do_Indent (Index, Indent);
+            else
+               Indent := Indent - Indent_Level;
+               Do_Indent (Index, Indent);
+
+               if Top_Token.Start_New_Line then
+                  Indent := Indent - Indent_Level;
+               end if;
+            end if;
+
+            Pop (Tokens);
+         end loop;
+      end Pop_Constructs_And_Indent;
+
    begin  -- Analyze_C_Source
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
@@ -1235,42 +1289,51 @@ package body C_Analyzer is
                then
                   --  Record a simple block or assignment.
 
-                  declare
-                     Val : Extended_Token;
-                  begin
-                     if Prev_Token = Tok_Assign then
-                        --  An assignment statement, e.g. int x [] = {1,2}
+                  if Prev_Token = Tok_Assign
+                    or else Top (Indents).Level /= None
+                  then
+                     --  An assignment statement, e.g. int x [] = {1,2}
 
-                        Val.Token := Tok_Assign;
+                     if Indent_Done then
+                        Set_Paren_Index;
                      else
-                        --  A simple block, e.g: { foo (); }
+                        Paren_Index := Indent + Indent_Continue;
+                     end if;
 
+                     Push (Indents, (Paren_Index, 0, Line));
+                     Do_Indent (Index, Indent);
+
+                  else
+                     --  A simple block, e.g: { foo (); }
+
+                     declare
+                        Val : Extended_Token;
+                     begin
                         Val.Token := Tok_Void;
-                     end if;
 
-                     if Curly_Level = 0 then
-                        --  This is a top level curly brace, it defines a
-                        --  function, use Tok_Ident as the function name.
-                        --  Tok_Ident has been set while parsing a '('
-                        --  see below.
+                        if Curly_Level = 0 then
+                           --  This is a top level curly brace, it defines a
+                           --  function, use Tok_Ident as the function name.
+                           --  Tok_Ident has been set while parsing a '('
+                           --  see below.
 
-                        if Tok_Ident.Token = Tok_Identifier then
-                           Val.Name_Start  := Tok_Ident.Name_Start;
-                           Val.Name_End    := Tok_Ident.Name_End;
-                           --  We do not want to reuse this value
-                           Tok_Ident.Token := Tok_Void;
+                           if Tok_Ident.Token = Tok_Identifier then
+                              Val.Name_Start  := Tok_Ident.Name_Start;
+                              Val.Name_End    := Tok_Ident.Name_End;
+                              --  We do not want to reuse this value
+                              Tok_Ident.Token := Tok_Void;
+                           end if;
                         end if;
-                     end if;
 
-                     Val.Curly_Level := Curly_Level;
-                     Val.Paren_Level := Paren_Level;
-                     Val.Sloc.Line   := Line;
-                     Val.Sloc.Column :=
-                       Index - Line_Start (Buffer, Index);
-                     Val.Sloc.Index  := Index;
-                     Indent := Indent + Indent_Level;
-                     Push (Tokens, Val);
-                  end;
+                        Val.Curly_Level := Curly_Level;
+                        Val.Paren_Level := Paren_Level;
+                        Val.Sloc.Line   := Line;
+                        Val.Sloc.Column := Index - Line_Start (Buffer, Index);
+                        Val.Sloc.Index  := Index;
+                        Indent := Indent + Indent_Level;
+                        Push (Tokens, Val);
+                     end;
+                  end if;
 
                elsif not Indent_Separate_Line (Enclosing.Token) then
                   Indent := Indent + Indent_Level;
@@ -1286,64 +1349,48 @@ package body C_Analyzer is
                Token := Tok_Right_Bracket;
                Curly_Level := Curly_Level - 1;
 
-               Pop_To_Construct (Tokens, Top_Token);
-               Indent := Indent - Indent_Level;
-
-               if Top_Token.Token = Tok_Switch
-                 and then not Top_Token.First
-               then
+               if Top (Indents).Level /= None then
+                  Pop (Indents);
+               else
+                  Pop_To_Construct (Tokens, Top_Token);
                   Indent := Indent - Indent_Level;
+
+                  if Top_Token.Token = Tok_Switch
+                    and then not Top_Token.First
+                  then
+                     Indent := Indent - Indent_Level;
+                  end if;
+
+                  Do_Indent (Index, Indent);
+
+                  declare
+                     First : Boolean := True;
+                  begin
+                     while Top_Token.Token /= No_Token
+                       and then Top_Token.Curly_Level = Curly_Level
+                       and then Top_Token.Paren_Level = Paren_Level
+                     loop
+                        if First then
+                           First := False;
+                        else
+                           Indent := Indent - Indent_Level;
+                        end if;
+
+                        if Top_Token.Start_New_Line then
+                           Indent := Indent - Indent_Level;
+                        end if;
+
+                        exit when Top_Token.Token = Tok_Do;
+
+                        Pop (Tokens);
+                        Pop_To_Construct (Tokens, Top_Token);
+                     end loop;
+                  end;
                end if;
-
-               Do_Indent (Index, Indent);
-
-               declare
-                  First : Boolean := True;
-               begin
-                  while Top_Token.Token /= No_Token
-                    and then Top_Token.Curly_Level = Curly_Level
-                    and then Top_Token.Paren_Level = Paren_Level
-                  loop
-                     if First then
-                        First := False;
-                     else
-                        Indent := Indent - Indent_Level;
-                     end if;
-
-                     if Top_Token.Start_New_Line then
-                        Indent := Indent - Indent_Level;
-                     end if;
-
-                     exit when Top_Token.Token = Tok_Do;
-
-                     Pop (Tokens);
-                     Pop_To_Construct (Tokens, Top_Token);
-                  end loop;
-               end;
 
             when ';' =>
                Token := Tok_Semicolon;
-
-               loop
-                  Pop_To_Construct (Tokens, Top_Token);
-
-                  exit when Top_Token.Token = No_Token
-                    or else Top_Token.Curly_Level /= Curly_Level
-                    or else Top_Token.Paren_Level /= Paren_Level;
-
-                  if Top_Token.Token = Tok_Do then
-                     Do_Indent (Index, Indent);
-                  else
-                     Indent := Indent - Indent_Level;
-                     Do_Indent (Index, Indent);
-
-                     if Top_Token.Start_New_Line then
-                        Indent := Indent - Indent_Level;
-                     end if;
-                  end if;
-
-                  Pop (Tokens);
-               end loop;
+               Pop_Constructs_And_Indent;
 
             when '(' =>
                Token := Tok_Left_Paren;
@@ -1370,16 +1417,19 @@ package body C_Analyzer is
                   Indent := Indent - Indent_Level;
                end if;
 
+               if Top (Indents).Level /= None then
+                  Do_Indent (Index, Indent);
+               end if;
+
                if Indent_Done then
-                  Paren_Index :=
-                    Index - Line_Start (Buffer, Index) + Padding + 1;
+                  Set_Paren_Index;
                else
                   if Prev_Token = Tok_Identifier then
                      --  Open parenthesis on start of line, e.g:
                      --  foo
                      --    (bar);
 
-                     Paren_Index := Indent + 2;
+                     Paren_Index := Indent + Indent_Continue;
                   else
                      Paren_Index := Indent;
                   end if;
@@ -1406,6 +1456,13 @@ package body C_Analyzer is
                   end case;
                else
                   Token := Tok_Assign;
+               end if;
+
+               if Token = Tok_Assign
+                 and then Curly_Level = 0
+                 and then Top (Tokens).Token = Tok_Identifier
+               then
+                  Pop_Constructs_And_Indent;
                end if;
 
             when ':' =>
