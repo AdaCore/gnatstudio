@@ -12,7 +12,7 @@
 ## No user customization below this line
 ############################################################################
 
-import GPS, os.path, os_utils
+import GPS, os_utils
 
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
 
