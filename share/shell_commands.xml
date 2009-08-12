@@ -2077,6 +2077,13 @@ This is different than setting instance properties through Python's standard mec
      <see_also name="GPS.File.generate_doc"/>
   </shell_doc>
 
+  <shell_doc name="GPS.Project.get_executable_name">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="main">GPS.File</param>
+     <return>A string</return>
+     <description>Return the name of the executable, either read from the project or computed from main</description>
+  </shell_doc>
+
   <!--#################################################################
     ####  Editor class
     ###################################################################-->

@@ -1253,6 +1253,15 @@ package body Project_Viewers is
             end if;
          end;
 
+      elsif Command = "get_executable_name" then
+         declare
+            Main : constant Virtual_File := Nth_Arg (Data, 2);
+
+         begin
+            Set_Return_Value
+              (Data, Get_Executable_Name (Project, Main.Full_Name.all));
+         end;
+
       elsif Command = "rename" then
          Name_Parameters (Data, Rename_Cmd_Parameters);
          declare
@@ -1815,6 +1824,12 @@ package body Project_Viewers is
         (Kernel, "source_dirs",
          Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
          Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_executable_name",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
