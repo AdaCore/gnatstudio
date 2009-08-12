@@ -27,7 +27,7 @@ def project_recomputed (hook_name):
   compact_layout = True
   indent_level = 3
   GPS.Preference ("Ada-Auto-Indentation").set ("Extended")
-  GPS.Preference ("Ada-Casing-Policy").set ("End_Of_Line")
+  GPS.Preference ("Ada-Casing-Policy").set ("On_The_Fly")
   GPS.Preference ("Ada-Format-Operators").set (True)
 
   for f in s:
@@ -57,7 +57,7 @@ def project_recomputed (hook_name):
     elif f == "-c0":
       set_pref(f, "Ada-Indent-Comments", False)
     elif f == "-c4":
-      set_pref(f, "Ada-Ident-Comments", True)
+      set_pref(f, "Ada-Indent-Comments", True)
     elif f == "-l3":
       compact_layout = False
     elif f[0:2] == "-M":
