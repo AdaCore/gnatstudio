@@ -112,7 +112,7 @@ package String_Utils is
    --  Return a string representing count blanks.
    --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
    --  otherwise use only spaces.
-   --  Return a null string is Count is negative.
+   --  Return a null string if Count is negative.
 
    function Is_Blank (C : Character) return Boolean;
    --  Return True if C is a blank character: CR, LF, HT or ' '
