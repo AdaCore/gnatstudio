@@ -472,17 +472,19 @@ package body Remote.Config_Dialog is
               0, 0, 0, 2);
       Set_Tip
         (Tips, Get_Entry (Row.Sync_Combo),
-         -("Four kind of paths synchronisation can be set for each defined " &
+         -("Five kinds of path synchronization can be set for each defined " &
            "path:" & ASCII.LF &
-           "* None: no synchronisation is required from GPS, the paths " &
+           "* Never: no synchronization is required from GPS, the paths " &
            "are shared using an OS mechanism like NFS." & ASCII.LF &
+           "* Manually: synchronization is needed, but will only be " &
+           "performed manually using the remote view buttons." & ASCII.LF &
            "* Always: the paths are kept synchronised by GPS before and " &
-           "after every remote action." &
+           "after every remote action (e.g. build)." &
            ASCII.LF &
-           "* Once to local/Once to remote: project's dependencies. They are" &
+           "* To local/remote: The project's dependencies are" &
            " synchronized once when a remote project is loaded or when a " &
            "local project is set remote. They can be still manually " &
-           "synchronized using the Remote View"));
+           "synchronized using the Remote View."));
 
       Gtk_New (Row.Remove_Button);
       Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);

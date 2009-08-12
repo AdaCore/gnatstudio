@@ -308,7 +308,7 @@ package body Remote.View is
          Unset_Flags (View.To_Local_Buttons (S), Can_Focus or Can_Default);
          Set_Tip
            (Tooltips, View.To_Local_Buttons (S),
-            -("Synchronise all directories from the remote" &
+            -("Synchronize all directories from the remote" &
               " server to the local machine"));
 
          Gtk_New
@@ -323,7 +323,7 @@ package body Remote.View is
          Unset_Flags (View.To_Remote_Buttons (S), Can_Focus or Can_Default);
          Set_Tip
            (Tooltips, View.To_Remote_Buttons (S),
-            -("Synchronise all directories from the local" &
+            -("Synchronize all directories from the local" &
               " machine to the remote server"));
 
          if S /= GPS_Server then
