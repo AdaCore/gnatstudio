@@ -40,9 +40,6 @@ def project_recomputed (hook_name):
     elif f[0:2] == "-i":
       indent_level = int(f[2:])
       set_pref(f, "Ada-Indent-Level", indent_level)
-      if not compact_layout:
-        set_pref(f, "Ada-Record-Level", indent_level)
-
     elif f[0:3] == "-cl":
       set_pref(f, "Ada-Continuation-Level", int(f[3:]))
     elif f == "-kL":
@@ -62,12 +59,13 @@ def project_recomputed (hook_name):
     elif f == "-c4":
       set_pref(f, "Ada-Ident-Comments", True)
     elif f == "-l3":
-      set_pref(f, "Ada-Record-Level", indent_level)
       compact_layout = False
-
     elif f[0:2] == "-M":
       set_pref(f, "Src-Editor-Highlight-Column", int(f[2:]))
     else:
       GPS.Logger("gnatpp").log ("ignore switch " + f)
+
+  if not compact_layout:
+    set_pref("-l3", "Ada-Record-Level", indent_level)
 
 GPS.Hook ("project_view_changed").add (project_recomputed)
