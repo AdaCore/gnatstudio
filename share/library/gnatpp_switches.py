@@ -24,6 +24,8 @@ def project_recomputed (hook_name):
     GPS.Logger("gnatpp").log ("no gnatpp switches, exit")
     return
 
+  compact_layout = True
+  indent_level = 3
   GPS.Preference ("Ada-Auto-Indentation").set ("Extended")
   GPS.Preference ("Ada-Casing-Policy").set ("End_Of_Line")
   GPS.Preference ("Ada-Format-Operators").set (True)
@@ -36,7 +38,11 @@ def project_recomputed (hook_name):
     elif f == "-A4":
       set_pref(f, "Ada-Align-On-Arrows", True)
     elif f[0:2] == "-i":
-      set_pref(f, "Ada-Indent-Level", int(f[2:]))
+      indent_level = int(f[2:])
+      set_pref(f, "Ada-Indent-Level", indent_level)
+      if not compact_layout:
+        set_pref(f, "Ada-Record-Level", indent_level)
+
     elif f[0:3] == "-cl":
       set_pref(f, "Ada-Continuation-Level", int(f[3:]))
     elif f == "-kL":
@@ -55,6 +61,10 @@ def project_recomputed (hook_name):
       set_pref(f, "Ada-Indent-Comments", False)
     elif f == "-c4":
       set_pref(f, "Ada-Ident-Comments", True)
+    elif f == "-l3":
+      set_pref(f, "Ada-Record-Level", indent_level)
+      compact_layout = False
+
     elif f[0:2] == "-M":
       set_pref(f, "Src-Editor-Highlight-Column", int(f[2:]))
     else:
