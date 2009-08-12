@@ -337,6 +337,12 @@ NF-44-G903-006 Report all style errors at once (2008-12-11)
   now report errors from all files and will not stop checking
   on the first file violating some styles.
 
+NF-44-G611-027 Improvements in the C indentation engine (2009-08-12)
+
+  Various improvements have been made to better indent C and C++ code
+  automatically. In particular, expressions inside parentheses and curly
+  brackets are better aligned.
+
 NF-44-G510-012 Auto-fix for "use explicit pragma Pack" (2009-02-24)
 
   An auto-fix is now offered for message like "size for T is too small,
