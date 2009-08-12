@@ -636,6 +636,7 @@ package body Outline_View is
       Model         : Outline_Model;
 
       pragma Unreferenced (Col_Number);
+      Out_Model : Outline_Model;
    begin
       Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
@@ -650,7 +651,10 @@ package body Outline_View is
 
       --  Create the tree view using the sorting model
 
-      Gtk_New (Outline.Tree, new Outline_Model_Record);
+      Out_Model := new Outline_Model_Record;
+      Initialize (Out_Model);
+      Gtk_New (Outline.Tree, Out_Model);
+      Unref (Out_Model);
       Set_Name (Outline.Tree, "Outline View Tree");  --  For testsuite
 
       Set_Headers_Visible (Outline.Tree, False);

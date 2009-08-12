@@ -3495,6 +3495,8 @@ package body Src_Editor_Module is
          Unchecked_Free (Id.Categories);
       end if;
 
+      Editors_Hash.Reset (Id.Editors);
+
       Destroy (Src_Editor_Buffer_Factory
                (Get_Buffer_Factory (Get_Kernel (Id)).all));
 
