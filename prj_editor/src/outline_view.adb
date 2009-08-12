@@ -44,6 +44,7 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
+with Gtkada.Abstract_Tree_Model;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
@@ -652,7 +653,7 @@ package body Outline_View is
       --  Create the tree view using the sorting model
 
       Out_Model := new Outline_Model_Record;
-      Initialize (Out_Model);
+      Gtkada.Abstract_Tree_Model.Initialize (Out_Model);
       Gtk_New (Outline.Tree, Out_Model);
       Unref (Out_Model);
       Set_Name (Outline.Tree, "Outline View Tree");  --  For testsuite
