@@ -4111,14 +4111,6 @@
    fun:ada_initialize_class_record
 }
 {
-   When creating new gobject classes, we create a once-in-a-lifetime record
-   Memcheck:Leak
-   fun:malloc
-   fun:g_malloc
-   fun:g_strdup
-   fun:ada_initialize_class_record
-}
-{
    Leaks because python is not killed
    Memcheck:Leak
    fun:malloc
