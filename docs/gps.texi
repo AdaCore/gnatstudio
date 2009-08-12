@@ -9351,14 +9351,16 @@ connection configuration is set (@xref{Connection settings}.) Clicking
 on @code{Apply} will apply your connection configuration and allow you
 to browse the remote host to select the remote paths.
 
-Four kind of paths synchronization can be set for each defined path:
+Five kinds of path synchronization can be set for each defined path:
 @itemize
-@item @code{None}: no synchronisation is required from GPS, the paths
+@item @code{Never}: no synchronization is required from GPS, the paths
 are shared using an OS mechanism like NFS.
-@item @code{Always}: source path of your project. They are kept
-synchronised by GPS before and after every remote action (such as performing
-a build or run).
-@item @code{Once to local}/@code{Once to remote}: project's
+@item @code{Manually}: synchronization is needed, but will only be performed
+manually using the remote view buttons.
+@item @code{Always}: Relevant to source and object paths of your project.
+They are kept synchronised by GPS before and after every remote action (such
+as performing a build or run).
+@item @code{Once to local}/@code{Once to remote}: Relevant to project's
 dependencies. They are synchronized once when a remote project is
 loaded or when a local project is set remote. They can be still
 manually synchronized using the Remote View (@xref{The remote view}.)
