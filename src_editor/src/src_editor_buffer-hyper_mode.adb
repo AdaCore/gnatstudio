@@ -29,13 +29,6 @@ with Src_Editor_Box;   use Src_Editor_Box;
 
 package body Src_Editor_Buffer.Hyper_Mode is
 
-   ------------------------
-   -- Local declarations --
-   ------------------------
-
-   procedure Remove_Highlight (Buffer : Source_Buffer);
-   --  Remove highlighting left by the hyper mode, if any
-
    -----------------------------
    -- Hyper_Mode_Highlight_On --
    -----------------------------
