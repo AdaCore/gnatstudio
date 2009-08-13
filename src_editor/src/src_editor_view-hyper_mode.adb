@@ -296,11 +296,16 @@ package body Src_Editor_View.Hyper_Mode is
       Out_Of_Bounds : Boolean := False;
    begin
       Window_To_Buffer_Coords
-        (View, X, Y, Line, Column, Out_Of_Bounds);
+        (View,
+         X - Get_Border_Window_Size (View, Text_Window_Left),
+         Y - Get_Border_Window_Size (View, Text_Window_Top),
+         Line, Column, Out_Of_Bounds);
       Get_Iter_At_Line_Offset
         (Source_Buffer (Get_Buffer (View)), Iter, Line, Column);
 
-      if not Out_Of_Bounds then
+      if Out_Of_Bounds then
+         Remove_Highlight (Source_Buffer (Get_Buffer (View)));
+      else
          Hyper_Mode_Highlight_On (Source_Buffer (Get_Buffer (View)), Iter);
       end if;
    end Highlight_On;
