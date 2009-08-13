@@ -106,7 +106,9 @@ package body Src_Editor_View.Hyper_Mode is
 
       View.Hyper_Mode := True;
 
-      Trace (Me, "HYPER MODE ENTER " & Name (View));
+      if Active (Me) then
+         Trace (Me, "HYPER MODE ENTER " & Name (View));
+      end if;
 
       Set_Cursor (Get_Window (View, Text_Window_Text), null);
 
@@ -155,13 +157,17 @@ package body Src_Editor_View.Hyper_Mode is
 
       View.Hyper_Mode := False;
 
-      Trace (Me, "HYPER MODE LEAVE " & Name (View));
+      if Active (Me) then
+         Trace (Me, "HYPER MODE LEAVE " & Name (View));
+      end if;
 
       if Text_View_Cursor = null then
          Gdk_New (Text_View_Cursor, Xterm);
       end if;
 
-      Set_Cursor (Get_Window (View, Text_Window_Text), Text_View_Cursor);
+      if not In_Destruction_Is_Set (View) then
+         Set_Cursor (Get_Window (View, Text_Window_Text), Text_View_Cursor);
+      end if;
 
       Hyper_Mode_Leave (Source_Buffer (Get_Buffer (View)));
 
