@@ -2026,7 +2026,13 @@ package body Src_Editor_View is
                --  on this platform, and it causes unwanted paste operations
                --  with some mouse wheels.
 
-               if Host = Windows then
+               --  In hyper mode, we know that this won't cause a paste
+               --  operation, since this will be interrupted by
+               --  Src_Editor_View.Hyper_Mode.Button_Press_Event_Cb.
+
+               if Host = Windows
+                 and then not View.Hyper_Mode
+               then
                   return True;
                end if;
             end if;
