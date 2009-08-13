@@ -34,9 +34,11 @@ package Src_Editor_Buffer.Hyper_Mode is
    --  Remove highlighting left by the hyper mode, if any
 
    procedure Hyper_Mode_Click_On
-     (Buffer       : Source_Buffer;
-      Double_Click : Boolean := False);
-   --  React to a click on Iter while in hyper Mode
+     (Buffer    : Source_Buffer;
+      Alternate : Boolean := False);
+   --  React to a click on Iter while in hyper Mode.
+   --  If Alternate is False, do the default behavior, otherwise do the
+   --  alternate behavior.
 
    procedure Hyper_Mode_Enter (Buffer : Source_Buffer);
    --  Tell the source buffer that Hyper Mode is being activated

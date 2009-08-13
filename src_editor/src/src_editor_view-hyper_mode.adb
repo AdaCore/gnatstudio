@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Values; use Glib.Values;
-
 with Gdk.Cursor;        use Gdk.Cursor;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Window;        use Gdk.Window;
@@ -26,8 +24,6 @@ with Gdk.Window;        use Gdk.Window;
 with Gtk.Handlers;
 with Gtk.Enums;  use Gtk.Enums;
 with Gtk.Object; use Gtk.Object;
-with Gtk.Settings;
-with Gdk.Screen; use Gdk.Screen;
 with Gtk.Widget; use Gtk.Widget;
 
 with Gtkada.Handlers; use Gtkada.Handlers;
@@ -53,9 +49,6 @@ package body Src_Editor_View.Hyper_Mode is
    -- Callbacks --
    ---------------
 
-   package Source_View_Timeout is new Gtk.Main.Timeout
-     (Source_View);
-
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -63,10 +56,6 @@ package body Src_Editor_View.Hyper_Mode is
    function Motion_Notify_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-
-   function Single_Click_Timeout (View : Source_View) return Boolean;
-   --  Called after a single click, to detect whether we are actually doing
-   --  a single click, or doing a double click
 
    -----------------------
    -- Local subprograms --
@@ -180,12 +169,6 @@ package body Src_Editor_View.Hyper_Mode is
       Gtk.Handlers.Disconnect (View, View.Hyper_Mode_Button_Handler);
       View.Hyper_Mode_Button_Handler :=
         (Gtk.Handlers.Null_Handler_Id, null);
-
-      --  Disconnect the button timeout
-      if View.Hyper_Mode_Button_Timeout /= 0 then
-         Gtk.Main.Timeout_Remove (View.Hyper_Mode_Button_Timeout);
-         View.Hyper_Mode_Button_Timeout := 0;
-      end if;
    end Hyper_Mode_Leave;
 
    -------------------------
@@ -200,90 +183,34 @@ package body Src_Editor_View.Hyper_Mode is
                          On_Hyper_Mode_Leave => Hyper_Mode_Leave'Access);
    end Activate_Hyper_Mode;
 
-   --------------------------
-   -- Single_Click_Timeout --
-   --------------------------
-
-   function Single_Click_Timeout (View : Source_View) return Boolean is
-   begin
-      --  We reach the timeout: this means that we did not do a double click,
-      --  therefore process a single click.
-
-      Hyper_Mode_Click_On
-        (Source_Buffer (Get_Buffer (View)),
-         Double_Click => False);
-
-      View.Hyper_Mode_Button_Timeout := 0;
-      return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end Single_Click_Timeout;
-
    ---------------------------
    -- Button_Press_Event_Cb --
    ---------------------------
-
-   Double_Click_Threshold : Guint32 := 0;
-   --  It is expensive to get the double click time, and we do not expect it to
-   --  change during the lifetime of the application, so we cache it in this
-   --  global variable.
 
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View   := Source_View (Widget);
-      Double : Boolean;
+      View      : constant Source_View   := Source_View (Widget);
+      Button    : Guint;
    begin
       if not View.Hyper_Mode then
          return False;
       end if;
 
-      if Get_Button (Event) /= 1 then
+      if Get_Event_Type (Event) /= Button_Press then
          return False;
       end if;
 
-      Double := Get_Event_Type (Event) = Gdk_2button_Press;
+      Button := Get_Button (Event);
 
-      if not Double then
-         --  We have received a single click: register a timeout to process it
-
-         if Double_Click_Threshold = 0 then
-            declare
-               Value : GValue;
-               Found : Boolean;
-            begin
-               Init (Value, GType_Int);
-               Get_Setting (Get_Default,
-                            Gtk.Settings.Gtk_Double_Click_Time,
-                            Value,
-                            Found);
-
-               if Found then
-                  Double_Click_Threshold := Guint32 (Get_Int (Value));
-               else
-                  Double_Click_Threshold := 150;
-               end if;
-            end;
-         end if;
-
-         View.Hyper_Mode_Button_Timeout := Source_View_Timeout.Add
-           (Double_Click_Threshold,
-            Single_Click_Timeout'Access,
-            View);
-      else
-         --  We have received a double click: cancel the timeout registerd for
-         --  the single-click and process the double-click immediately.
-
-         if View.Hyper_Mode_Button_Timeout /= 0 then
-            Gtk.Main.Timeout_Remove (View.Hyper_Mode_Button_Timeout);
-            View.Hyper_Mode_Button_Timeout := 0;
-         end if;
-
-         Hyper_Mode_Click_On (Source_Buffer (Get_Buffer (View)), Double);
+      if not (Button = 1 or else Button = 2) then
+         return False;
       end if;
+
+      Hyper_Mode_Click_On
+        (Source_Buffer (Get_Buffer (View)),
+         Alternate => Button = 2);
 
       return True;
    exception

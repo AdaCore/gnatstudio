@@ -75,8 +75,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
    -------------------------
 
    procedure Hyper_Mode_Click_On
-     (Buffer       : Source_Buffer;
-      Double_Click : Boolean := False)
+     (Buffer    : Source_Buffer;
+      Alternate : Boolean := False)
    is
       Entity_Start,
       Entity_End     : Gtk_Text_Iter;
@@ -127,14 +127,14 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
             Location := Get_Declaration_Of (Entity);
 
-            if Double_Click
+            if Alternate
               or else
                 (Get_Line (Location) = Natural (Line)
                  and then Get_Column (Location) = Column
                  and then Get_Filename (Get_File (Location)) = Buffer.Filename)
             then
-               --  We have double-clicked, or we are already on the spec:
-               --  in this case go to the body
+               --  We asked for the alternate behavior, or we are already on
+               --  the spec: in this case, go to the body
                Current := Location;
                Find_Next_Body (Entity, Current, Location);
                if Location = No_File_Location then

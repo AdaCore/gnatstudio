@@ -283,9 +283,6 @@ private
       Hyper_Mode_Button_Handler    : Gtk.Handlers.Handler_Id :=
                                        (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to mouse button presses
-
-      Hyper_Mode_Button_Timeout    : Gtk.Main.Timeout_Handler_Id := 0;
-      --  The handler id for the callback that checks for double-clicks
    end record;
 
 end Src_Editor_View;
