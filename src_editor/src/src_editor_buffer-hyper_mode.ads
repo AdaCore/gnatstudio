@@ -30,6 +30,9 @@ package Src_Editor_Buffer.Hyper_Mode is
    --  Tell the source buffer that the hyper mode is being requested at the
    --  coordinates given by Iter.
 
+   procedure Remove_Highlight (Buffer : Source_Buffer);
+   --  Remove highlighting left by the hyper mode, if any
+
    procedure Hyper_Mode_Click_On
      (Buffer       : Source_Buffer;
       Double_Click : Boolean := False);
