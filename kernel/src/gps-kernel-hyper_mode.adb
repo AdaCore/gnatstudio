@@ -87,6 +87,16 @@ package body GPS.Kernel.Hyper_Mode is
       Event  : Gdk_Event;
       Data   : Hyper_Mode_Data) return Boolean;
 
+   function Button_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event;
+      Data   : Hyper_Mode_Data) return Boolean;
+
+   function Button_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event;
+      Data   : Hyper_Mode_Data) return Boolean;
+
    function Watch_Timeout_Cb (Data : Hyper_Mode_Data) return Boolean;
 
    -----------------------
@@ -259,6 +269,18 @@ package body GPS.Kernel.Hyper_Mode is
          User_Data => Data,
          After     => False);
 
+      Connect
+        (Widget, Signal_Button_Press_Event,
+         Marsh     => To_Marshaller (Button_Press_Event_Cb'Access),
+         User_Data => Data,
+         After     => False);
+
+      Connect
+        (Widget, Signal_Button_Release_Event,
+         Marsh     => To_Marshaller (Button_Release_Event_Cb'Access),
+         User_Data => Data,
+         After     => False);
+
       --  Lifecycle management
 
       Widget_Callback.Connect
@@ -318,6 +340,56 @@ package body GPS.Kernel.Hyper_Mode is
          Trace (Exception_Handle, E);
          return False;
    end Key_Release_Event_Cb;
+
+   ---------------------------
+   -- Button_Press_Event_Cb --
+   ---------------------------
+
+   function Button_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event;
+      Data   : Hyper_Mode_Data) return Boolean
+   is
+      pragma Unreferenced (Widget);
+   begin
+      if Get_Button (Event) = 3 then
+         --  We are potentially bringing up a contextual menu: deactivate
+         --  hyper mode.
+         Hyper_Mode_Leave (Data);
+      end if;
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Button_Press_Event_Cb;
+
+   -----------------------------
+   -- Button_Release_Event_Cb --
+   -----------------------------
+
+   function Button_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event;
+      Data   : Hyper_Mode_Data) return Boolean
+   is
+      pragma Unreferenced (Widget);
+   begin
+      if Get_Button (Event) = 3 then
+         --  Leaving from contextual menu: reactivate hyper mode if it is still
+         --  relevant
+
+         if (Get_State (Event) and Control_Mask) /= 0 then
+            Hyper_Mode_Enter (Data);
+         end if;
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Button_Release_Event_Cb;
 
    ----------------
    -- On_Destroy --
