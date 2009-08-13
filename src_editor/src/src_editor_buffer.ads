@@ -1433,6 +1433,19 @@ private
       Index                : Natural := 0;
       --  Records last typed chars to help auto-casing restore as much as
       --  possible the user's original casing.
+
+      Hyper_Mode                            : Boolean := False;
+      --  Whether we are currently in Hyper mode
+
+      Hyper_Mode_Tag                        : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  The tag used for highlighting hyper mode items
+
+      Hyper_Mode_Has_Highlight              : Boolean := False;
+      --  Whether Hyper Mode is currently highlighting a section of the text
+
+      Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
+      Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The begin and end of the highlighted section
    end record;
 
    procedure Emit_By_Name

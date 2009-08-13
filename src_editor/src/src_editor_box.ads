@@ -436,6 +436,15 @@ package Src_Editor_Box is
    --  either only one view or Single is False and the box is the last that had
    --  the focus. False is returned otherwise.
 
+   procedure Go_To_Closest_Match
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type;
+      Entity   : Entities.Entity_Information);
+   --  Open an editor for Filename. Go to Line, Column, or the nearest
+   --  occurrence of Entity close by.
+
 private
 
    function To_Box_Line

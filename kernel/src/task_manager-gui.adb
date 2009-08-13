@@ -564,6 +564,7 @@ package body Task_Manager.GUI is
       View.Model := GUI;
 
       Gtk_New (View.Tree, GUI.Model);
+      Set_Enable_Search (View.Tree, False);
 
       Set_Name (View.Tree, "Task Manager Tree");  --  For testsuite
 

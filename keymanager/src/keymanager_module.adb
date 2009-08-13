@@ -1071,6 +1071,14 @@ package body KeyManager_Module is
 
          Trace (Me, "Key=" & Key'Img & " Modif=" & Modif'Img);
 
+         --  If we are pressing down CTRL, enter Hyper Mode
+
+         if Key = GDK_Control_L
+           or Key = GDK_Control_R
+         then
+            Enter_Hyper_Mode (Kernel);
+         end if;
+
          --  Are we reading arguments for a command ?
 
          if Keymanager_Module.Argument_Validator /= null then
@@ -1270,6 +1278,17 @@ package body KeyManager_Module is
                end;
             end loop;
             Keymanager_Module.Repeat_Count := 1;
+         end if;
+
+      elsif Get_Event_Type (Event) = Key_Release then
+         Key   := Get_Key_Val (Event);
+
+         --  If we are releasing CTRL, enter Hyper Mode
+
+         if Key = GDK_Control_L
+           or Key = GDK_Control_R
+         then
+            Leave_Hyper_Mode (Kernel);
          end if;
 
       end if;

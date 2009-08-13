@@ -682,6 +682,16 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
+      Hyper_Links_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Hyper-Links-Style",
+         Label        => -"Hyper links",
+         Doc          => -"Style to use when displaying hyper-links",
+         Default_Font => "Courier Medium Oblique 10",
+         Default_Fg   => "blue",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
+
       Current_Line_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Color",

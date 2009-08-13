@@ -207,15 +207,6 @@ package body Src_Editor_Box is
    function Check_Timestamp_Idle (Box : GObject) return Boolean;
    --  Idle callback to check that the timestamp of a file hasn't changed
 
-   procedure Go_To_Closest_Match
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : Virtual_File;
-      Line     : Editable_Line_Type;
-      Column   : Visible_Column_Type;
-      Entity   : Entity_Information);
-   --  Open an editor for Filename. Go to Line, Column, or the nearest
-   --  occurrence of Entity close by.
-
    procedure Set_Writable (Views : Views_Array; Writable : Boolean);
    --  Make the views editable and update their read-only label according to
    --  Writable.

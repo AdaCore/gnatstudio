@@ -235,7 +235,9 @@ package body Src_Editor_View.Hyper_Mode is
          return False;
       end if;
 
-      --  ??? if the button /= 1, return
+      if Get_Button (Event) /= 1 then
+         return False;
+      end if;
 
       Double := Get_Event_Type (Event) = Gdk_2button_Press;
 

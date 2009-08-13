@@ -20,6 +20,7 @@
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
+
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
@@ -54,6 +55,7 @@ with Gtkada.MDI;                          use Gtkada.MDI;
 with Gtkada.Types;                        use Gtkada.Types;
 
 with Pango.Font;                          use Pango.Font;
+with Pango.Enums;                         use Pango.Enums;
 
 with Casing_Exceptions;                   use Casing_Exceptions;
 with Case_Handling;                       use Case_Handling;
@@ -2499,6 +2501,8 @@ package body Src_Editor_Buffer is
       P_Hook       : Preferences_Hook;
       Deleted_Hook : File_Deleted_Hook;
       Renamed_Hook : File_Renamed_Hook;
+
+      use Pango.Enums.Underline_Properties;
    begin
       Gtkada.Text_Buffer.Initialize (Buffer);
 
@@ -2547,6 +2551,19 @@ package body Src_Editor_Buffer is
       Create_Highlight_Line_Tag
         (Buffer.Delimiter_Tag, Delimiter_Color.Get_Pref);
       Text_Tag_Table.Add (Tags, Buffer.Delimiter_Tag);
+
+      --  Create the Hyper Mode Tag
+
+      Gtk_New (Buffer.Hyper_Mode_Tag);
+      Set_Property
+        (Buffer.Hyper_Mode_Tag,
+         Gtk.Text_Tag.Underline_Property,
+         Pango_Underline_Single);
+      Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Gdk_Property,
+                    Hyper_Links_Style.Get_Pref_Fg);
+      Set_Property (Buffer.Hyper_Mode_Tag, Background_Gdk_Property,
+                    Hyper_Links_Style.Get_Pref_Bg);
+      Add (Tags, Buffer.Hyper_Mode_Tag);
 
       Gtk_New (Buffer.Non_Editable_Tag);
       Set_Property (Buffer.Non_Editable_Tag, Editable_Property, False);

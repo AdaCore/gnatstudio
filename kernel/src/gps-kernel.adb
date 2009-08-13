@@ -2496,4 +2496,32 @@ package body GPS.Kernel is
       Kernel_Desktop.Register_Desktop_Functions (Unch (Save), Unch (Load));
    end Register_Desktop_Functions;
 
+   ----------------------
+   -- Enter_Hyper_Mode --
+   ----------------------
+
+   procedure Enter_Hyper_Mode (Kernel : access Kernel_Handle_Record) is
+   begin
+      Kernel.Hyper_Mode := True;
+   end Enter_Hyper_Mode;
+
+   ----------------------
+   -- Leave_Hyper_Mode --
+   ----------------------
+
+   procedure Leave_Hyper_Mode (Kernel : access Kernel_Handle_Record) is
+   begin
+      Kernel.Hyper_Mode := False;
+   end Leave_Hyper_Mode;
+
+   -------------------
+   -- In_Hyper_Mode --
+   -------------------
+
+   function In_Hyper_Mode
+     (Kernel : access Kernel_Handle_Record) return Boolean is
+   begin
+      return Kernel.Hyper_Mode;
+   end In_Hyper_Mode;
+
 end GPS.Kernel;

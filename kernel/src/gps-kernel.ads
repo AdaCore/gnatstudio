@@ -698,6 +698,22 @@ package GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record;
       Factory : Editor_Buffer_Factory_Access);
 
+   ----------------
+   -- Hyper_Mode --
+   ----------------
+
+   --  Handle the global state of the Hyper Mode
+
+   procedure Enter_Hyper_Mode (Kernel : access Kernel_Handle_Record);
+   --  Enter hyper mode
+
+   procedure Leave_Hyper_Mode (Kernel : access Kernel_Handle_Record);
+   --  Leave hyper mode
+
+   function In_Hyper_Mode
+     (Kernel : access Kernel_Handle_Record) return Boolean;
+   --  Return True if we are in Hyper mode
+
    -----------
    -- Hooks --
    -----------
@@ -1158,7 +1174,11 @@ private
 
       Hidden_File_Matcher : Pattern_Matcher_Access;
 
-      Editor_Factory : Editor_Buffer_Factory_Access;
+      Editor_Factory               : Editor_Buffer_Factory_Access;
+
+      Hyper_Mode                   : Boolean := False;
+      --  Whether we are in hyper mode
+
    end record;
 
 end GPS.Kernel;

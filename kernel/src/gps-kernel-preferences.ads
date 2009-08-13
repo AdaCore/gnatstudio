@@ -167,6 +167,7 @@ package GPS.Kernel.Preferences is
    Comments_Style            : Style_Preference;
    Annotated_Comments_Style  : Style_Preference;
    Strings_Style             : Style_Preference;
+   Hyper_Links_Style         : Style_Preference;
 
    Delimiter_Color           : Color_Preference;
    Block_Folding             : Boolean_Preference;

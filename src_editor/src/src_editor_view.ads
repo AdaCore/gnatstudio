@@ -32,6 +32,7 @@ with Gtk.Main;
 with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
+with Gtk.Handlers;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 
 with GPS.Editors;            use GPS.Editors;
@@ -270,6 +271,21 @@ private
 
       Redraw_Idle_Handler : Gtk.Main.Idle_Handler_Id;
       --  The idle handler corresponding to Redraw_Registered
+
+      --  Handling of hyper mode
+
+      Hyper_Mode                   : Boolean := False;
+
+      Hyper_Mode_Motion_Handler    : Gtk.Handlers.Handler_Id :=
+                                       (Gtk.Handlers.Null_Handler_Id, null);
+      --  The handler id for the callback that reacts to the motion
+
+      Hyper_Mode_Button_Handler    : Gtk.Handlers.Handler_Id :=
+                                       (Gtk.Handlers.Null_Handler_Id, null);
+      --  The handler id for the callback that reacts to mouse button presses
+
+      Hyper_Mode_Button_Timeout    : Gtk.Main.Timeout_Handler_Id := 0;
+      --  The handler id for the callback that checks for double-clicks
    end record;
 
 end Src_Editor_View;

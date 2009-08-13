@@ -40,7 +40,6 @@ with Gtk;                        use Gtk;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Handlers;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Object;                 use Gtk.Object;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
@@ -72,6 +71,8 @@ with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
+
+with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 
 package body Src_Editor_View is
 
@@ -1480,6 +1481,8 @@ package body Src_Editor_View is
       Invalidate_Window (Source_View (View));
 
       Push_Current_Editor_Location_In_History (Kernel);
+
+      Activate_Hyper_Mode (View);
    end Initialize;
 
    --------------------
@@ -2066,6 +2069,7 @@ package body Src_Editor_View is
       Start, Last : Gtk_Text_Iter;
       Result      : Boolean;
 
+      Key         : Gdk_Key_Type;
    begin
       if Realized_Is_Set (View)
         and then not Get_Property
@@ -2075,14 +2079,20 @@ package body Src_Editor_View is
       end if;
 
       --  As soon as a key is pressed on an editor, reset the flag
-      --  position_set_explicitely, so that scrolling does not occur.
-      Result := Position_Set_Explicitely (Buffer, True);
+      --  position_set_explicitely, so that scrolling does not occur, unless
+      --  this is the Hyper Mode key
+
+      Key := Get_Key_Val (Event);
+
+      if Key /= GDK_Control_L and then Key /= GDK_Control_R then
+         Result := Position_Set_Explicitely (Buffer, True);
+      end if;
 
       if not Get_Editable (View) then
          return False;
       end if;
 
-      case Get_Key_Val (Event) is
+      case Key is
          when GDK_Return =>
             Clear_Typed_Chars (Buffer);
 
