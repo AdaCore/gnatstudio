@@ -204,7 +204,7 @@ package body Src_Editor_View.Hyper_Mode is
 
       Button := Get_Button (Event);
 
-      if not (Button = 1 or else Button = 2) then
+      if Button not in 1 .. 2 then
          return False;
       end if;
 
