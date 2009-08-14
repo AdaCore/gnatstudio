@@ -124,7 +124,7 @@ automatically switch to a vertical display to fit the space available?
 
 Tip: Hyper mode
 
-If you hold the <i>Ctrl</i> key in a source editor, GPS enters the
+If you hold the <i>Ctrl</i> key in a source editor, GPS will enter the
 <i>Hyper Mode</i> where each source entity under the mouse becomes a hyperlink
 like in a web browser. Clicking on an underlined entity will go immediately to
 its declaration (or body if you use the middle button, or are already on a
