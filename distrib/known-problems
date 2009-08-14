@@ -225,6 +225,13 @@ Known Problems fixed in GPS 4.4.0
   Workaround: This can be safely ignored, and goes away when the search matches
               (or other extra highlighting) are removed.
 
+- I121-049: Missing choices for "goto spec/bodies"
+  Problem:    When you use mixin inheritance (extending tagged objects through
+              generics), GNAT does not generate complete cross-reference
+              information, and as a result GPS is missing some possible specs
+              or bodies in the contextual menu
+  Workaround: Use the standard search function
+
 - I120-033: && should be "and then" not correctly auto-fixed
   Problem:    The auto-fix made for messages such as "&& should be "and then""
               is incorrect, it adds an unexpected quote at the location of the
