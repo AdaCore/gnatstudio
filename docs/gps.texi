@@ -117,7 +117,7 @@ Description of the main windows
 * Bookmarks::
 * The Messages Window::
 * The Shell and Python Windows::
-* The Locations Tree::
+* The Locations View::
 * The Status Line::
 * The Task Manager::
 
@@ -354,7 +354,7 @@ gcc, gdb, gnatmake, gcov, etc@dots{}.
 * Bookmarks::
 * The Messages Window::
 * The Shell and Python Windows::
-* The Locations Tree::
+* The Locations View::
 * The Execution Window::
 * The Status Line::
 * The Task Manager::
@@ -1150,10 +1150,10 @@ You can use the @key{up} and @key{down} keys to navigate through the
 history of commands.
 
 @c --------------------------------------------------------------------
-@node The Locations Tree
-@section The Locations Tree
+@node The Locations View
+@section The Locations View
 @cindex location
-@cindex locations tree
+@cindex locations view
 @c --------------------------------------------------------------------
 
 @cindex search
@@ -1176,7 +1176,7 @@ search, compilation results, and so on).
 
 @cindex category
 @cindex file
-The Location Tree shows a hierarchy of categories, which contain
+The Locations View shows a hierarchy of categories, which contain
 files, which contain locations. Clicking on a location item will bring
 up a file editor at the requested place. Right-clicking on file or
 category items brings up a contextual menu allowing you to remove the
@@ -1185,9 +1185,16 @@ automatically pop up a tooltip window with full text of the item if this
 text can't be completely shown in the window.
 
 Every time a new category is created, as a result of a compilation or a
-search operation for instance, the first entry of that category is
+search operation for example, the first entry of that category is
 automatically selected, and the corresponding editor opened. This behavior
 can be controlled through a preference @code{Jump To First Location}.
+
+Closing the Locations View will also remove all locations from GPS and the
+corresponding editors.
+
+If the Locations View is present when exiting GPS and the desktop is saved,
+the locations will be saved as part of the desktop for the current project,
+and will be loaded the next time GPS is started on the same project.
 
 @cindex key
 @cindex menu
@@ -1199,19 +1206,22 @@ Left-clicking on a line in the Location Tree brings up a contextual
 menu with the following entries:
 
 @table @b
+@item Filter panel
+Controls availability of the filter panel at the bottom of the window.
+
 @item Sort by subcategory
 Toggle the sorting of the entries by sub-categories. This is useful,
 for example, for separating the warnings from the errors in the build
 results.
-
-@item Filter panel
-Controls availability of the filter panel at the bottom of the window.
 
 @item Expand category
 Expand all the files in the current categories.
 
 @item Collapse all
 Collapse all the categories in the Locations View
+
+@item Remove category/file
+Remove the selected category or file from the Locations View.
 
 @item Jump to location
 Open the location contained in the message, if any.
@@ -1225,10 +1235,10 @@ In some cases, a wrench icon will be associated on the left of a compilation
 message. See @ref{Code Fixing} for more information on how to make advantage
 of this icon.
 
-Filter panel can be used to filter out messages which match (or do not match)
-a text pattern or regular expression. The @code{Close} button on the filter
-panel hides it and cancels the filter. You can press @key{Enter} to enable the
-current pattern. The @code{Regexp} check button specifies how
+The filter panel can be used to filter out messages which match (or do not
+match) a text pattern or regular expression. The @code{Close} button on the
+filter panel hides it and cancels the filter. You can press @key{Enter} to
+enable the current pattern. The @code{Regexp} check button specifies how
 to use the filter text entry: as plain text or regular expression.
 The @code{Apply} button enables the current filter.
 The @code{Cancel} button cancels the current filter.
@@ -2241,8 +2251,7 @@ displayed to choose the name and location of the file.
 @item Load Contents...
 @cindex load
 Open a file selector to load the contents of a file in the Messages
-window. Source locations are identified and loaded in the Locations Tree.
-@xref{The Locations Tree}.
+window. Source locations are identified and loaded in @ref{The Locations View}.
 
 @end table
 
@@ -3384,7 +3393,7 @@ Find previous occurrence of the current search.
 Find all the references to the current entity in the project. The search
 is based on the semantic information extracted from the sources, this is not
 a simple text search. The result of the search is displayed in the location
-window, see @ref{The Locations Tree}.
+window, see @ref{The Locations View}.
 
 @item Goto Declaration
 @cindex goto declaration
@@ -3450,14 +3459,14 @@ function, task, protected record or entry.
 @item Previous Tag
 @cindex tag
 @cindex previous tag
-@cindex locations tree
-Go to previous tag/location. @xref{The Locations Tree}.
+@cindex locations view
+Go to previous tag/location. @xref{The Locations View}.
 
 @item Next Tag
 @cindex tag
 @cindex next tag
-@cindex locations tree
-Go to next tag/location. @xref{The Locations Tree}.
+@cindex locations view
+Go to next tag/location. @xref{The Locations View}.
 
 @item Back
 @cindex Back
@@ -5203,7 +5212,7 @@ You then have to press the @code{Next} button (or the equivalent shortcut
 
 If you use the @code{Find all} button, the search widget will start
 searching for all occurrences right away, and put the results in a new
-window called @code{Locations}, @xref{The Locations Tree}.
+window called @code{Locations}, @xref{The Locations View}.
 
 The @code{Replace} and @code{Replace & Find} buttons are grayed out as long as
 no occurence of the pattern is found. In order to enable them, you have to
@@ -5248,8 +5257,8 @@ or through the @code{Build} and @code{Run} contextual menu items, as
 described in the following section.
 
 When compiler messages are detected by GPS, an entry is added in the
-@i{Locations tree}, allowing you to easily navigate through the compiler
-messages (see @ref{The Locations Tree}), or even to automatically correct some
+@i{Locations View}, allowing you to easily navigate through the compiler
+messages (see @ref{The Locations View}), or even to automatically correct some
 errors or warnings (see @ref{Code Fixing}).
 
 @menu
@@ -5286,11 +5295,12 @@ switches.
 Display an error message in the @i{Messages} window if no file is selected.
 
 If errors or warnings occur during the compilation, the corresponding locations
-will appear in the Locations Tree. If the corresponding Preference is set, the
+will appear in the Locations View. If the corresponding Preference is set, the
 source lines will be highlighted in the editors (see
 @ref{The Preferences Dialog}).
 To remove the highlighting on these lines, remove the files from the Locations
-Tree.
+View using either the contextual menu (@code{Remove category}) or by closing
+the Locations View.
 
 @item Project
    @table @i
@@ -8482,12 +8492,12 @@ GPS provides an interactive way to fix or improve your source code, based on
 messages (errors and warnings) generated by the GNAT compiler.
 
 @c There are two ways to access this capability: the first (and preferred) one
-@c is integrated with the @i{Locations tree} (see @ref{The Locations Tree});
+@c is integrated with the @i{Locations View} (see @ref{The Locations View});
 @c the other provides a separate dialog accessible through the menu
 @c @code{Tools->Code Fixing}.
 
-This capability is integrated with the @i{Locations tree} (see
-@ref{The Locations Tree}): when GPS can take advantage of a compiler message,
+This capability is integrated with the @i{Locations View} (see
+@ref{The Locations View}): when GPS can take advantage of a compiler message,
 an icon is added on the left side of the line.
 
 For a simple fix, a wrench icon is displayed. If you click with
@@ -8802,11 +8812,11 @@ element. For instance, if you click on a file, you will have:
 @item Coverage->Show coverage information
 Append an annotation column to the left side of the current source editor.
 This column indicates which lines are covered and which aren't. Unexecuted lines
-are also listed in the @ref{The Locations Tree}.
+are also listed in the @ref{The Locations View}.
 
 @item Coverage->Hide coverage information
 Withdraw from the current source editor a previously set coverage annotation
-column and clear @ref{The Locations Tree} from the eventually listed uncovered
+column and clear @ref{The Locations View} from the eventually listed uncovered
 lines.
 
 @item Coverage->Load data for @file{xxxxxxxx.xxx}
