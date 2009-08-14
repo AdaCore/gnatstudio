@@ -24,8 +24,9 @@ with Entities.Queries; use Entities.Queries;
 
 with GPS.Kernel;       use GPS.Kernel;
 
-with GUI_Utils;       use GUI_Utils;
+with GUI_Utils;        use GUI_Utils;
 with Src_Editor_Box;   use Src_Editor_Box;
+with Language;         use Language;
 
 package body Src_Editor_Buffer.Hyper_Mode is
 
@@ -49,6 +50,52 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Copy (Iter, Entity_Start);
 
       Search_Entity_Bounds (Entity_Start, Entity_End);
+
+      declare
+         Slice : constant String := Get_Slice (Entity_Start, Entity_End);
+
+         function Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+         --  Auxiliary parsing function
+
+         Highlight : Boolean := False;
+
+         function Callback
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Sloc_Start, Sloc_End, Partial_Entity);
+         begin
+            case Entity is
+               when Normal_Text
+                  | Identifier_Text
+                  | Partial_Identifier_Text
+                  | Operator_Text
+                  => Highlight := True;
+               when Keyword_Text
+                  | Comment_Text
+                  | Annotated_Comment_Text
+                  | Character_Text
+                  | String_Text
+                  => Highlight := False;
+            end case;
+            return True;
+         end Callback;
+
+      begin
+         Parse_Entities (Lang     => Buffer.Lang,
+                         Buffer   => Slice,
+                         Callback => Callback'Unrestricted_Access);
+
+         if not Highlight then
+            return;
+         end if;
+      end;
 
       if Buffer.Hyper_Mode_Highlight_Begin = null then
          Buffer.Hyper_Mode_Highlight_Begin :=
