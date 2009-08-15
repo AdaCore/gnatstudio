@@ -164,7 +164,7 @@ package body Debugger.Gdb is
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
 
-   Continuation_Line_Pattern : constant Pattern_Matcher := Compile ("^>");
+   Continuation_Line_Pattern : constant Pattern_Matcher := Compile ("^ ?>");
 
    Address_Range_Pattern     : constant Pattern_Matcher := Compile
      ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
