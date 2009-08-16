@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
+- I814-017: Hang when typing a 'while' command in gdb console
+  Problem:    When typing a 'while' command in the gdb console, GPS will not
+              recognize the continuation line and the debugger will hang.
+  Workaround: Define your command in a file, and load this file directly.
+
 - I807-014: Unwanted scrolling when expanding nodes in the Project View
   Problem:    When the Project View contains a lot of entries, expanding one
               entry might cause the window to scroll to another entry.
