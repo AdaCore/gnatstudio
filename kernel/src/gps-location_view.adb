@@ -43,6 +43,7 @@ with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tooltips;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -1113,17 +1114,20 @@ package body GPS.Location_View is
    procedure Toggle_Sort
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Explorer : constant Location_View := Location_View (Widget);
-   begin
-      Explorer.Sort_By_Category := not Explorer.Sort_By_Category;
+      Self : constant Location_View := Location_View (Widget);
 
-      if Explorer.Sort_By_Category then
-         Set_Sort_Column_Id (Explorer.Sorting_Column, Category_Line_Column);
+   begin
+      Self.Sort_By_Category := not Self.Sort_By_Category;
+
+      if Self.Sort_By_Category then
+         Set_Sort_Column_Id
+           (+Self.Sort, Category_Line_Column, Gtk.Enums.Sort_Ascending);
+
       else
-         Set_Sort_Column_Id (Explorer.Sorting_Column, Line_Column);
+         Set_Sort_Column_Id
+           (+Self.Sort, Line_Column, Gtk.Enums.Sort_Ascending);
       end if;
 
-      Clicked (Explorer.Sorting_Column);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Toggle_Sort;
