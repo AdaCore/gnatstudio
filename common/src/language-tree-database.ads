@@ -135,8 +135,17 @@ package Language.Tree.Database is
 
    type Structured_File_Access is access all Structured_File;
 
-   procedure Free (File : in out Structured_File_Access);
-   --  Free the data associated to File.
+   procedure Ref (File : Structured_File_Access);
+   --  Increment reference counting. When there are references to a file,
+   --  deletion is cancelled.
+
+   procedure Unref (File : Structured_File_Access);
+   --  Decrement reference counting on the file.
+
+   function Is_Externally_Referenced
+     (File : Structured_File_Access) return Boolean;
+   --  Return true if the file is known to be referenced. Such files should
+   --  not be deleted.
 
    function Get_Tree
      (File : Structured_File_Access) return Construct_Tree;
@@ -249,6 +258,13 @@ package Language.Tree.Database is
    --  one if needed. The creation of the file implies the addition of all its
    --  contents.
 
+   procedure Remove_File
+     (Db        : Construct_Database_Access;
+      File      : Virtual_File);
+   --  Remove the file from the database if is exist. If the file has external
+   --  references, as set through the Ref primitive of Structured_File, then
+   --  the removal will be aborted.
+
    procedure Update_Contents
      (Db : access Construct_Database; File : Virtual_File);
    --  Reload the file and its constructs. Previous constructs are removed from
@@ -336,6 +352,14 @@ package Language.Tree.Database is
    function Get_Identifier (Entity : Entity_Access) return Distinct_Identifier;
    --  Return the identifier of this entity.
 
+   procedure Analyze_File_Differences
+     (Db                         : Construct_Database_Access;
+      New_Set                    : File_Array;
+      Removed_Files, Added_Files : out File_Array_Access);
+   --  Return the differences between the file set given in parameter and the
+   --  current contents of the database. The caller is expected to free
+   --  Removed_Files and Added_Files.
+
    ------------------------------
    -- Entity_Persistent_Access --
    ------------------------------
@@ -396,7 +420,8 @@ package Language.Tree.Database is
 
    type Database_Listener_Access is access all Database_Listener'Class;
 
-   type Update_Kind is (Minor_Change, Structural_Change, Full_Change);
+   type Update_Kind is
+     (Minor_Change, Structural_Change, Full_Change, Removed);
 
    procedure File_Updated
      (Listener : access Database_Listener;
@@ -524,8 +549,6 @@ private
 
    type Construct_Db_Data_Access is access all Construct_Db_Data_Array;
 
-   procedure Free (This : in out  Construct_Db_Data_Access);
-
    type Line_Start_Indexes is array (Natural range <>) of Natural;
    type Line_Start_Indexes_Access is access all Line_Start_Indexes;
 
@@ -548,6 +571,8 @@ private
 
       Lock_Depth    : Natural := 0;
       Update_Locked : Boolean := False;
+
+      Ref           : Natural := 0;
    end record;
 
    type Update_Lock is limited new Limited_Controlled with record

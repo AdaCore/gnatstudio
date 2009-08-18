@@ -462,6 +462,7 @@ package body Outline_View.Model is
          others         => <>);
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Model);
+      Ref (File);
 
       return Model;
    end New_Model;
@@ -867,6 +868,7 @@ package body Outline_View.Model is
    procedure Free (Model : access Outline_Model_Record) is
    begin
       Clear_Nodes (Model, Model.Phantom_Root'Access);
+      Unref (Model.File);
       Model.File := null;
    end Free;
 

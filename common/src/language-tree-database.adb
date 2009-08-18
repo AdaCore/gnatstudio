@@ -33,6 +33,17 @@ package body Language.Tree.Database is
    --  Same as Update_Contents, but takes into account differences depending on
    --  the fact that the file is a brand new one, or an existing one.
 
+   procedure Free
+     (This : in out Construct_Db_Data_Access;
+      Db   : access Construct_Database);
+   --  Removes all indexes contained in This from the database, and the
+   --  deallocates it.
+
+   procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+     (Construct_Db_Data_Array, Construct_Db_Data_Access);
+
+   procedure Free (File : in out Structured_File_Access);
+
    ------------------------------
    -- Get_Last_Relevant_Entity --
    ------------------------------
@@ -467,19 +478,48 @@ package body Language.Tree.Database is
       Internal (This);
    end Free;
 
-   ----------
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (File : Structured_File_Access) is
+   begin
+      File.Ref := File.Ref + 1;
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (File : Structured_File_Access) is
+   begin
+      File.Ref := File.Ref + 1;
+   end Unref;
+
+   ------------------------------
+   -- Is_Externally_Referenced --
+   ------------------------------
+
+   function Is_Externally_Referenced
+     (File : Structured_File_Access) return Boolean
+   is
+   begin
+      return File.Ref > 0;
+   end Is_Externally_Referenced;
+
+   -----------
    -- Free --
-   ----------
+   -----------
 
    procedure Free (File : in out Structured_File_Access) is
       procedure Internal is new Standard.Ada.Unchecked_Deallocation
         (Structured_File, Structured_File_Access);
    begin
-      Free (File.Cache_Buffer);
       Free_Annotations (File.Tree);
       Free (File.Tree);
-      Free (File.Db_Data_Tree);
+      Free (File.Db_Data_Tree, File.Db);
       Free (File.Line_Starts);
+      Free (File.Cache_Buffer);
 
       Internal (File);
    end Free;
@@ -773,7 +813,7 @@ package body Language.Tree.Database is
            Tree_Annotations_Pckg.Null_Annotation_Container;
 
          Free (File.Cache_Buffer);
-         Free (File.Db_Data_Tree);
+         Unchecked_Free (File.Db_Data_Tree);
          Free (File.Line_Starts);
 
          Old_Tree := File.Tree;
@@ -925,6 +965,49 @@ package body Language.Tree.Database is
       end if;
    end Get_Or_Create;
 
+   -----------------
+   -- Remove_File --
+   -----------------
+
+   procedure Remove_File
+     (Db        : Construct_Database_Access;
+      File      : Virtual_File)
+   is
+      S_File : Structured_File_Access;
+   begin
+      if Contains (Db.Files_Db, File) then
+         S_File := Element (Db.Files_Db, File);
+
+         if Is_Externally_Referenced (S_File) then
+            --  In this case, the file is still used somewhere else so we can't
+            --  remove it. Typically, it's used by the outline.
+
+            return;
+         end if;
+
+         --  Notify database assistants
+
+         declare
+            Cur : Database_Listeners.Cursor;
+         begin
+            Cur := First (Db.Listeners);
+
+            while Cur /= Database_Listeners.No_Element loop
+               File_Updated
+                 (Element (Cur), S_File, Get_Tree (S_File), Removed);
+               Cur := Next (Cur);
+            end loop;
+         end;
+
+         --  Perform the actual deletion
+
+         Db.Files_Db.Delete (File);
+         Db.Sorted_Files_Db.Delete (S_File);
+
+         Free (S_File);
+      end if;
+   end Remove_File;
+
    ---------------------
    -- Update_Contents --
    ---------------------
@@ -1004,11 +1087,16 @@ package body Language.Tree.Database is
    -- Free --
    ----------
 
-   procedure Free (This : in out Construct_Db_Data_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (Construct_Db_Data_Array, Construct_Db_Data_Access);
+   procedure Free
+     (This : in out Construct_Db_Data_Access;
+      Db    : access Construct_Database)
+   is
    begin
-      Internal (This);
+      for J in This'Range loop
+         Delete (Db.Entities_Db'Access, This (J));
+      end loop;
+
+      Unchecked_Free (This);
    end Free;
 
    -----------
@@ -1488,5 +1576,62 @@ package body Language.Tree.Database is
    begin
       return Entity.It.Node.Id;
    end Get_Identifier;
+
+   ------------------------------
+   -- Analyze_File_Differences --
+   ------------------------------
+
+   procedure Analyze_File_Differences
+     (Db                         : Construct_Database_Access;
+      New_Set                    : File_Array;
+      Removed_Files, Added_Files : out File_Array_Access)
+   is
+      Local_Removed : File_Array (1 .. Integer (Db.Files_Db.Length));
+      Local_Added : File_Array (1 .. New_Set'Length);
+
+      Removed_Index : Integer := 1;
+      Added_Index   : Integer := 1;
+
+      Cur : File_Map.Cursor;
+
+      Contained    : Virtual_File;
+
+      New_File_Map : File_Map.Map;
+   begin
+      --  Computes files removed in the new set
+
+      for J in New_Set'Range loop
+         New_File_Map.Insert (New_Set (J), null);
+      end loop;
+
+      Cur := Db.Files_Db.First;
+
+      while Cur /= File_Map.No_Element loop
+         Contained := File_Map.Key (Cur);
+
+         if not New_File_Map.Contains (Contained) then
+            Local_Removed (Removed_Index) := Contained;
+            Removed_Index := Removed_Index + 1;
+         end if;
+
+         Cur := File_Map.Next (Cur);
+      end loop;
+
+      --  Computes files added in the new set
+
+      for J in New_Set'Range loop
+         if not Db.Files_Db.Contains (New_Set (J)) then
+            Local_Added (Added_Index) := New_Set (J);
+            Added_Index := Added_Index + 1;
+         end if;
+      end loop;
+
+      --  Build the result
+
+      Removed_Files := new File_Array'
+        (Local_Removed (1 .. Removed_Index - 1));
+      Added_Files := new File_Array'
+        (Local_Added (1 .. Added_Index - 1));
+   end Analyze_File_Differences;
 
 end Language.Tree.Database;

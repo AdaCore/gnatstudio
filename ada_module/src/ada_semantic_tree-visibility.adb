@@ -181,7 +181,7 @@ package body Ada_Semantic_Tree.Visibility is
 
    begin
       case Kind is
-         when Minor_Change =>
+         when Minor_Change | Removed =>
             null;
 
          when Full_Change | Structural_Change =>

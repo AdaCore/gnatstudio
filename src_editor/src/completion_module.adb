@@ -51,6 +51,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
 with Language.Icons;
@@ -77,8 +78,10 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
 
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
-with Engine_Wrappers;           use Engine_Wrappers;
-with XML_Utils; use XML_Utils;
+with Engine_Wrappers;                 use Engine_Wrappers;
+with Projects;                        use Projects;
+with Projects.Registry;               use Projects.Registry;
+with XML_Utils;                       use XML_Utils;
 
 package body Completion_Module is
 
@@ -248,9 +251,9 @@ package body Completion_Module is
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view is changed
 
-   procedure Load_Construct_Database
+   procedure Update_Construct_Database
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Load a whole new construct database
+   --  Update contents of the construct database
 
    procedure Load_One_File_Constructs
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
@@ -384,7 +387,7 @@ package body Completion_Module is
       if Smart_Completion_Pref /= Disabled
         and then Completion_Module.Previous_Smart_Completion_State /= Disabled
       then
-         Load_Construct_Database (Kernel);
+         Update_Construct_Database (Kernel);
       end if;
 
       if Smart_Completion_Pref
@@ -1164,28 +1167,53 @@ package body Completion_Module is
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Clear (Get_Construct_Database (Kernel));
-
-      if Smart_Completion.Get_Pref /= Disabled then
-         Load_Construct_Database (Kernel);
-      end if;
+      Update_Construct_Database (Kernel);
    end On_View_Changed;
 
-   -----------------------------
-   -- Load_Construct_Database --
-   -----------------------------
+   -------------------------------
+   -- Update_Construct_Database --
+   -------------------------------
 
-   procedure Load_Construct_Database
+   procedure Update_Construct_Database
      (Kernel : access Kernel_Handle_Record'Class)
    is
    begin
-      Do_On_Each_File
-        (Handle              => Kernel,
-         Callback            => Load_One_File_Constructs'Access,
-         Chunk_Size          => 1,
-         Queue_Name          => Db_Loading_Queue,
-         Operation_Name      => "load entity db");
-   end Load_Construct_Database;
+      if Smart_Completion.Get_Pref /= Disabled then
+         declare
+            Project_Files : File_Array_Access := Get_Source_Files
+              (Get_Root_Project (Get_Registry (Kernel).all), True);
+
+            All_Files : constant File_Array :=
+              Get_Predefined_Source_Files (Get_Registry (Kernel).all)
+              & Project_Files.all;
+
+            Removed_Files, Added_Files : File_Array_Access;
+         begin
+            Analyze_File_Differences
+              (Get_Construct_Database (Kernel),
+               New_Set       => All_Files,
+               Removed_Files => Removed_Files,
+               Added_Files   => Added_Files);
+
+            for J in Removed_Files'Range loop
+               Remove_File
+                 (Get_Construct_Database (Kernel), Removed_Files (J));
+            end loop;
+
+            Unchecked_Free (Removed_Files);
+
+            Do_On_Each_File
+              (Handle         => Kernel,
+               Callback       => Load_One_File_Constructs'Access,
+               Chunk_Size     => 1,
+               Queue_Name     => Db_Loading_Queue,
+               Operation_Name => "load entity db",
+               Files          => Added_Files);
+
+            Unchecked_Free (Project_Files);
+         end;
+      end if;
+   end Update_Construct_Database;
 
    ------------------------------
    -- Load_One_File_Constructs --

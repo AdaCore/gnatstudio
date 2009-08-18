@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,6 +66,11 @@ package Completion.History is
    --  Recreates a completion proposal out of a stored proposal. If the
    --  proposal cannot be retreived anymore, the implementer may return a null
    --  value.
+
+   function Is_Valid (Stored : Stored_Proposal) return Boolean is abstract;
+   --  The proposals stored in the history may be no longer valid after a
+   --  while - in which case, False should be return by this subprogram, True
+   --  otherwise.
 
    procedure Free (Stored : in out Stored_Proposal) is abstract;
    --  Free the data associated to this stored proposal;

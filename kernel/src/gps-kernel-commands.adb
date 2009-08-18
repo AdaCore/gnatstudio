@@ -37,10 +37,8 @@ package body GPS.Kernel.Commands is
       Kernel           : Kernel_Handle;
       Current_Progress : Natural;
       Total_Progress   : Natural;
-      Std_Files        : File_Array_Access;
-      Project_Files    : File_Array_Access;
-      Index_In_Std     : Natural;
-      Index_In_Project : Natural;
+      Files            : File_Array_Access;
+      Index            : Integer;
       Stop             : Boolean := False;
 
       Chunk_Size       : Integer := 1;
@@ -92,7 +90,7 @@ package body GPS.Kernel.Commands is
          Start, Stop : Integer;
       begin
          Start := Index;
-         Stop := Index + D.Chunk_Size;
+         Stop := Index + D.Chunk_Size - 1;
 
          if Stop > Files'Last then
             Stop := Files'Last;
@@ -102,7 +100,7 @@ package body GPS.Kernel.Commands is
             D.Callback (D.Kernel, Files (J));
          end loop;
 
-         Index := Stop;
+         Index := Stop + 1;
          D.Current_Progress := D.Current_Progress + 1;
          Set_Progress
            (Command,
@@ -112,20 +110,16 @@ package body GPS.Kernel.Commands is
       end Iter_From_File_Array;
 
    begin
-      if D.Stop then
+      if D.Stop or else D.Files = null then
          Result := Success;
          return;
       end if;
 
-      if D.Std_Files /= null
-        and then D.Index_In_Std < D.Std_Files'Last
-      then
-         Iter_From_File_Array (D.Std_Files, D.Index_In_Std);
-         Result := Execute_Again;
-      elsif D.Project_Files /= null
-        and then D.Index_In_Project < D.Project_Files'Last
-      then
-         Iter_From_File_Array (D.Project_Files, D.Index_In_Project);
+      if D.Index <= D.Files'Last then
+         Iter_From_File_Array (D.Files, D.Index);
+      end if;
+
+      if D.Index <= D.Files'Last then
          Result := Execute_Again;
       else
          Result := Success;
@@ -173,7 +167,8 @@ package body GPS.Kernel.Commands is
       Callback       : File_Callback;
       Chunk_Size     : Positive := 1;
       Queue_Name     : String := "";
-      Operation_Name : String := "")
+      Operation_Name : String := "";
+      Files          : File_Array_Access := null)
    is
       use File_Iterate_Commands;
 
@@ -182,8 +177,8 @@ package body GPS.Kernel.Commands is
       Iter           : Imported_Project_Iterator :=
         Start (Get_Project (Handle));
 
-      Std_Files      : File_Array_Access;
       Project_Files  : File_Array_Access;
+      All_Files      : File_Array_Access;
       Total_Progress : Natural;
 
       Old_Command  : Scheduled_Command_Access;
@@ -194,19 +189,21 @@ package body GPS.Kernel.Commands is
          Next (Iter);
       end loop;
 
-      Std_Files := new File_Array'
-        (Get_Predefined_Source_Files (Get_Registry (Handle).all));
-      Project_Files := Get_Source_Files
-        (Get_Root_Project (Get_Registry (Handle).all), True);
+      if Files = null then
+         Project_Files := Get_Source_Files
+           (Get_Root_Project (Get_Registry (Handle).all), True);
 
-      Total_Progress := Std_Files'Length / Chunk_Size +
-        Project_Files'Length / Chunk_Size;
-
-      if Std_Files'Length mod Chunk_Size /= 0 then
-         Total_Progress := Total_Progress + 1;
+         All_Files := new File_Array'
+           (Get_Predefined_Source_Files (Get_Registry (Handle).all)
+            & Project_Files.all);
+         Unchecked_Free (Project_Files);
+      else
+         All_Files := Files;
       end if;
 
-      if Project_Files'Length mod Chunk_Size /= 0 then
+      Total_Progress := All_Files'Length / Chunk_Size;
+
+      if All_Files'Length mod Chunk_Size /= 0 then
          Total_Progress := Total_Progress + 1;
       end if;
 
@@ -217,10 +214,8 @@ package body GPS.Kernel.Commands is
         (Kernel_Handle (Handle),
          Current_Progress => 0,
          Total_Progress   => Total_Progress,
-         Std_Files        => Std_Files,
-         Project_Files    => Project_Files,
-         Index_In_Std     => 1,
-         Index_In_Project => 1,
+         Files            => All_Files,
+         Index            => All_Files'First,
          Stop             => False,
          Chunk_Size       => Chunk_Size,
          Callback         => Callback);
@@ -257,8 +252,7 @@ package body GPS.Kernel.Commands is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (File_Iterate_Data, File_Iterate_Data_Access);
    begin
-      Unchecked_Free (D.Std_Files);
-      Unchecked_Free (D.Project_Files);
+      Unchecked_Free (D.Files);
       Unchecked_Free (D);
    end Free;
 

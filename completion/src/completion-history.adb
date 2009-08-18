@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2008, AdaCore               --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,28 +34,43 @@ package body Completion.History is
       Result     : in out Completion_List)
    is
       It : Proposal_Stack.Cursor := First (Resolver.Stack);
+      It_Garbage : Proposal_Stack.Cursor := First (Resolver.Stack);
 
       List : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
+      Garbage_Element : Stored_Proposal_Access;
+
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Stored_Proposal'Class, Stored_Proposal_Access);
    begin
       It := First (Resolver.Stack);
 
       while It /= Proposal_Stack.No_Element loop
-         declare
-            Proposal : Completion_Proposal_Access :=
-              From_Stored_Proposal
-                (Element (It).all, Resolver.Manager, Context);
-         begin
-            if Proposal /= null
-              and then Match (Proposal.all, Context, Offset)
-            then
-               Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
-                 (List, Proposal.all);
-            end if;
+         if Is_Valid (Element (It).all) then
+            declare
+               Proposal : Completion_Proposal_Access :=
+                 From_Stored_Proposal
+                   (Element (It).all, Resolver.Manager, Context);
+            begin
+               if Proposal /= null
+                 and then Match (Proposal.all, Context, Offset)
+               then
+                  Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
+                    (List, Proposal.all);
+               end if;
 
-            Free (Proposal);
-         end;
+               Free (Proposal);
+            end;
 
-         It := Next (It);
+            It := Next (It);
+         else
+            Garbage_Element := Element (It);
+            It_Garbage := It;
+            It := Next (It);
+
+            Delete (Resolver.Stack, It_Garbage);
+            Free (Garbage_Element.all);
+            Free (Garbage_Element);
+         end if;
       end loop;
 
       Completion_List_Pckg.Append

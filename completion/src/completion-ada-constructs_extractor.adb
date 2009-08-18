@@ -113,6 +113,18 @@ package body Completion.Ada.Constructs_Extractor is
       return Result;
    end From_Stored_Proposal;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   overriding
+   function Is_Valid
+     (Stored : Stored_Construct_Completion_Proposal) return Boolean
+   is
+   begin
+      return Exists (Stored.Persistent_Entity);
+   end Is_Valid;
+
    ----------
    -- Free --
    ----------

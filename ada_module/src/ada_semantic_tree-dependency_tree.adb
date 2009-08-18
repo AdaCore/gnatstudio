@@ -726,7 +726,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       pragma Unreferenced (Assistant, Old_Tree);
    begin
       case Kind is
-         when Minor_Change =>
+         when Minor_Change | Removed =>
             null;
 
          when Full_Change | Structural_Change =>

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -94,6 +94,10 @@ private
       Manager : Completion_Manager_Access;
       Context : Completion_Context)
       return Completion_Proposal_Access;
+
+   overriding
+   function Is_Valid
+     (Stored : Stored_Construct_Completion_Proposal) return Boolean;
 
    overriding
    procedure Free

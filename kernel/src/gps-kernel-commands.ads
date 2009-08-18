@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,18 +26,19 @@ package GPS.Kernel.Commands is
       File   : GNATCOLL.VFS.Virtual_File);
 
    procedure Do_On_Each_File
-     (Handle         : access Kernel_Handle_Record'Class;
-      Callback       : File_Callback;
-      Chunk_Size     : Positive := 1;
-      Queue_Name     : String := "";
-      Operation_Name : String := "");
+     (Handle            : access Kernel_Handle_Record'Class;
+      Callback          : File_Callback;
+      Chunk_Size        : Positive := 1;
+      Queue_Name        : String := "";
+      Operation_Name    : String := "";
+      Files             : File_Array_Access := null);
    --  This procedure will launch a GPS command wich will call the given
-   --  callback sequentially on each file of the project, including the files
-   --  found from the ada library. It's possible to change the number of files
-   --  analyzed per iteration by modifiying the Chunk_Size parameter.
-   --  Queue_Base_Name is used to give the basename of the queue. The actual
-   --  queues will be suffixed with _0 or _1, in order to allow the destruction
-   --  of a previous queue if Kill_Existing_Queue is true.
+   --  callback sequentially on each file given in parameter It's possible to
+   --  change the number of files analyzed per iteration by modifiying the
+   --  Chunk_Size parameter. Queue_Base_Name is used to give the basename of
+   --  the queue. If Files is null, then all files of the registry will be
+   --  used, otherwise, only the argument given in parameter will be. The file
+   --  array will be freed by the command at the end of the process.
 
    procedure Kill_File_Iteration
      (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String);
