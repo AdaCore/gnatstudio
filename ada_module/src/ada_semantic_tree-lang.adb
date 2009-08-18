@@ -187,11 +187,15 @@ package body Ada_Semantic_Tree.Lang is
 
       procedure Append (Str : String) is
       begin
-         if not Overflow then
-            if Unbounded.Length (Result) + Str'Length <= Max_Size - 3 then
-               Unbounded.Append (Result, Str);
-            else
-               Overflow := True;
+         if Max_Size = -1 then
+            Unbounded.Append (Result, Str);
+         else
+            if not Overflow then
+               if Unbounded.Length (Result) + Str'Length <= Max_Size - 3 then
+                  Unbounded.Append (Result, Str);
+               else
+                  Overflow := True;
+               end if;
             end if;
          end if;
       end Append;
