@@ -553,7 +553,7 @@ package body C_Analyzer is
 
       procedure Pop_Constructs_And_Indent;
       --  Pop non construct items in the stack and indent current line.
-      --  This procedure will tpyically be called after a ';' or '='.
+      --  This procedure will typically be called after a ';' or '='.
 
       function Preprocessor_Directive return Boolean;
       --  Handle preprocessor directive.
