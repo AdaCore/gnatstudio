@@ -34,9 +34,9 @@ NF-44-I721-010 Support for -language examiner switch (2009-07-21)
 NF-44-I717-022 Improved construct database reload (2009-08-18)
 
    Completion database reload is now much faster, only taking care of the
-   files added / removed, instead of recomputing the whole database. This
+   files added/removed, instead of recomputing the whole database. This
    is visible when e.g. reloading a project, changing the scenario values,
-   adding / removing a file.
+   adding or removing a file.
 
 NF-44-I717-007 Tip of the Day dialog (2009-07-17)
 
