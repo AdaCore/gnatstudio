@@ -10,10 +10,10 @@ automatically.
 import GPS, os.path, os_utils;
 
 def on_xcov_run (menu):
-    GPS.BuildTarget ("Run program under Xcov").execute (menu.data)
+    GPS.BuildTarget ("Run under Xcov").execute (menu.data)
 
 def on_xcov_report (menu):
-    GPS.BuildTarget ("Generate Xcov coverage report").execute ()
+    GPS.BuildTarget ("Generate Xcov report").execute ()
 
 def update_xcov_run_menu ():
     global xcov_run_menu
@@ -118,7 +118,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     </switches>
   </target-model>
 
-  <target model="xcov-run" category="Run program under Xcov" name="Run program under Xcov">
+  <target model="xcov-run" category="Xcov" name="Run under Xcov">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
@@ -163,7 +163,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     </switches>
   </target-model>
 
-  <target model="xcov-coverage" category="Generate Xcov coverage report" name="Generate Xcov coverage report">
+  <target model="xcov-coverage" category="Xcov" name="Generate Xcov report">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
