@@ -163,7 +163,7 @@ package body Ada_Semantic_Tree.Lang is
 
       procedure Append (Str : String);
       --  Add the string to the result. The global Overflow is modified to true
-      --  if the addition can't be done because Max_Size would be passed.
+      --  if the addition can't be done because Max_Size would be exceeded.
 
       function Attribute_Decoration
         (Construct  : Simple_Construct_Information;
