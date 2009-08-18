@@ -1,7 +1,7 @@
 """Display Ada standard package
 
 This script adds a new menu in /Help/GNAT Runtime/Standard to display the
-standard.ads package. This package contains the definition of basic types
+Standard package. This package contains the definition of basic types
 for the Ada runtime, but doesn't exist as a file on the disk since it can't
 be described in pure Ada.
 It properly handles older versions of GNAT, which came with a gnatpsta
@@ -25,7 +25,8 @@ def on_exit (process, exit_status, output):
       f.close ()
       buffer = EditorBuffer.get (File (process.standard))
       buffer.current_view().set_read_only (True)
-      Editor.set_title (process.standard, "standard.ads", "standard.ads")
+      Editor.set_title (process.standard,
+                        "package Standard", "package Standard")
       os.unlink (process.standard)
 
 @interactive (name="Display standard.ads", menu="/Help/GNAT Runtime/Standard")
@@ -48,7 +49,7 @@ def display():
         (Project.root().get_attribute_as_string("gnat", "ide") +
          " compile -q -gnatc -gnatS " + path, on_exit=on_exit)
 
-   proc.standard = dir + "/standard.ads"
+   proc.standard = dir + "/_standard.ads"
    proc.wait()
 
    if path: os.unlink (path)
