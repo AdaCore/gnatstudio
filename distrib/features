@@ -18,7 +18,7 @@ New features on 4.4.0
 NF-44-I807-021 New plug-in: createfile.py (2009-08-10)
 
    This optional plug-in provides a contextual menu that allows you to create
-   new file in the selected directory, rather than use /File/New and then
+   new files in the selected directory, rather than use /File/New and then
    navigate to the directory in which the file should be saved.
 
 NF-44-I729-038 Support for e500v2-wrs-vxworks toolchain (2009-07-30)
