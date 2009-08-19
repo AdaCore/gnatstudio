@@ -18,29 +18,31 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with ALI_Parser;               use ALI_Parser;
-with CPP_Parser;               use CPP_Parser;
-with Case_Handling;            use Case_Handling;
-with Default_Preferences;      use Default_Preferences;
-with Entities;                 use Entities;
-with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
+
 with GNATCOLL.Traces;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Kernel;               use GPS.Kernel;
-with Language.C;               use Language.C;
-with Language.Cpp;             use Language.Cpp;
-with Language;                 use Language;
-with Language_Handlers;        use Language_Handlers;
-with Naming_Editors;           use Naming_Editors;
-with Project_Viewers;          use Project_Viewers;
-with Projects.Registry;        use Projects.Registry;
-with Projects;                 use Projects;
-with Traces;                   use Traces;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
+with ALI_Parser;                 use ALI_Parser;
+with CPP_Parser;                 use CPP_Parser;
+with Case_Handling;              use Case_Handling;
+with Default_Preferences;        use Default_Preferences;
+with Entities;                   use Entities;
+with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel;                 use GPS.Kernel;
+with Language.C;                 use Language.C;
+with Language.Cpp;               use Language.Cpp;
+with Language;                   use Language;
+with Language_Handlers;          use Language_Handlers;
+with Naming_Editors;             use Naming_Editors;
+with Project_Viewers;            use Project_Viewers;
+with Projects.Registry;          use Projects.Registry;
+with Projects;                   use Projects;
+with Traces;                     use Traces;
 
 package body Cpp_Module is
 
@@ -53,7 +55,7 @@ package body Cpp_Module is
 
    type GLI_Handler_Record is new ALI_Handler_Record with null record;
    type GLI_Handler is access all GLI_Handler_Record'Class;
-   --  GCC LI Handler.
+   --  GCC LI Handler
 
    overriding function Get_Name (LI : access GLI_Handler_Record) return String;
    overriding function Case_Insensitive_Identifiers
@@ -131,8 +133,7 @@ package body Cpp_Module is
 
    overriding function Get_ALI_Filename
      (Handler   : access GLI_Handler_Record;
-      Base_Name : Filesystem_String) return Filesystem_String
-   is
+      Base_Name : Filesystem_String) return Filesystem_String is
    begin
       return Base_Name & Get_ALI_Ext (Handler);
    end Get_ALI_Filename;
@@ -211,8 +212,8 @@ package body Cpp_Module is
    procedure Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Handler : constant Language_Handler := Language_Handler
-        (Get_Language_Handler (Kernel));
+      Handler : constant Language_Handler :=
+                  Language_Handler (Get_Language_Handler (Kernel));
    begin
       CPP_Parser.On_Project_View_Changed
         (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name));
@@ -231,8 +232,8 @@ package body Cpp_Module is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (LI_Handler_Record'Class, LI_Handler);
 
-      Handler : constant Language_Handler := Language_Handler
-        (Get_Language_Handler (Kernel));
+      Handler : constant Language_Handler :=
+                  Language_Handler (Get_Language_Handler (Kernel));
       LI      : LI_Handler;
 
    begin
