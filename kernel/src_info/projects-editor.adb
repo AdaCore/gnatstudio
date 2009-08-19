@@ -3488,6 +3488,7 @@ package body Projects.Editor is
          Prj.Tree.Name_Of (Project.Node, Tree),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name           => Old_Name,
+          Display_Name   => Old_Name,
           Node           => Empty_Node,
           Canonical_Path => Path_Name_Type (Old_Name),
           Extended       => False,
@@ -3499,6 +3500,7 @@ package body Projects.Editor is
          Prj.Tree.Name_Of (Project.Node, Tree),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name           => Name,
+          Display_Name   => Name,
           Canonical_Path => Get_String (+D),
           Node           => Project.Node,
           Extended       => False,
