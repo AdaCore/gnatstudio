@@ -78,7 +78,7 @@ package Projects is
    --  failure, instead of raising Assert_Failure.
 
    function Get_Registry (Project : Project_Type)
-      return Abstract_Registry'Class;
+      return Abstract_Registry_Access;
    --  Return the registry that Project belongs to
 
    -----------
@@ -537,6 +537,8 @@ package Projects is
    ---------------
    -- Scenarios --
    ---------------
+   --  ??? This should be moved to projects-registry instead, since that
+   --  impacts the whole tree
 
    type Scenario_Variable is private;
    type Scenario_Variable_Array is array (Natural range <>)
@@ -563,11 +565,8 @@ package Projects is
    --  Returns the name of the external variable referenced by Var.
    --  Empty string is returned if Var doesn't reference an external variable.
 
-   function Value_Of (Var : Scenario_Variable) return String;
-   --  Return the current value of the external variable
-
    function Enum_Values_Of
-     (Var : Scenario_Variable; Registery : Abstract_Registry'Class)
+     (Var : Scenario_Variable; Registry : Abstract_Registry'Class)
       return String_List_Utils.String_List.List;
    --  Return all the possible values for the variable given in parameter
 
@@ -577,17 +576,13 @@ package Projects is
    --  Same as above. Used by GNATbench, since we can't currently bind generic
    --  instances.
 
-   procedure Set_Value (Var : Scenario_Variable; Value : String);
-   --  Set the value of the external variable. You need to call Recompute_View
-   --  to refresh the project
-
    function External_Default (Var : Scenario_Variable) return String;
    --  Return the default value for the external variable, computed for the
    --  current view of the project.
 
    procedure Ensure_External_Value
-     (Var  : Scenario_Variable;
-      Tree : Prj.Tree.Project_Node_Tree_Ref);
+     (Var      : Scenario_Variable;
+      Tree     : Prj.Tree.Project_Node_Tree_Ref);
    --  Make sure that an external value is defined for the variable Var. If
    --  none exists, the default value defined in the project hierarchy is used.
    --  This function can be called before a view has been computed for the

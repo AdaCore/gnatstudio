@@ -216,17 +216,6 @@ package Projects.Registry is
    --  Indicate to Register that the value for the environment values has
    --  changed, and that the project views need to be recomputed.
 
-   function Scenario_Variables
-     (Registry : Project_Registry) return Projects.Scenario_Variable_Array;
-   --  Return the list of scenario variables used in the whole project
-   --  hierarchy. The result is cached for efficiency
-
-   procedure Reset_Scenario_Variables_Cache (Registry : Project_Registry);
-   --  Reset the internal cache for all the scenario variables. This will force
-   --  a (possibly long) recomputation the next time Scenario_Variables is
-   --  called.
-   --  This function is only needed for internal use in the projects hierarchy.
-
    function Get_Root_Project
      (Registry : Project_Registry) return Projects.Project_Type;
    --  Return the root project of the hierarchy
@@ -239,6 +228,37 @@ package Projects.Registry is
       W_Eol                : Prj.PP.Write_Eol_Ap  := null;
       W_Str                : Prj.PP.Write_Str_Ap  := null);
    --  See Prj.PP.Pretty_Print
+
+   ------------------------
+   -- Scenario Variables --
+   ------------------------
+
+   function Scenario_Variables
+     (Registry : Project_Registry) return Projects.Scenario_Variable_Array;
+   --  Return the list of scenario variables used in the whole project
+   --  hierarchy. The result is cached for efficiency
+
+   procedure Reset_Scenario_Variables_Cache (Registry : Project_Registry);
+   --  Reset the internal cache for all the scenario variables. This will force
+   --  a (possibly long) recomputation the next time Scenario_Variables is
+   --  called.
+   --  This function is only needed for internal use in the projects hierarchy.
+
+   procedure Set_Value
+     (Registry : access Project_Registry;
+      Var      : Scenario_Variable;
+      Value    : String);
+   procedure Set_Value
+     (Registry : access Project_Registry;
+      Var      : String;
+      Value    : String);
+   --  Set the value of the external variable. You need to call Recompute_View
+   --  to refresh the project
+
+   function Value_Of
+     (Registry : Project_Registry;
+      Var      : Scenario_Variable) return String;
+   --  Return the current value of the external variable
 
    -------------------------
    -- Retrieving projects --

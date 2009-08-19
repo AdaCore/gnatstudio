@@ -532,7 +532,7 @@ package body Switches_Editors is
       Scenario     : access Scenario_Selector_Record'Class) return Boolean
    is
       Saved     : GNAT.Strings.String_List := Get_Current_Scenario
-        (Scenario_Variables (Switches.Kernel));
+        (Switches.Kernel);
       Scenar    : Scenario_Iterator := Start (Scenario);
       Modified  : Boolean := False;
       Languages : GNAT.Strings.String_List := Get_Languages (Project);
@@ -543,7 +543,7 @@ package body Switches_Editors is
          declare
             Cur : GNAT.Strings.String_List := Current (Scenar);
          begin
-            Set_Environment (Scenario_Variables (Switches.Kernel), Cur);
+            Set_Environment (Switches.Kernel, Cur);
             Modified := Modified or Generate_Project
               (Switches           => Switches,
                Languages          => Languages,
@@ -558,7 +558,7 @@ package body Switches_Editors is
 
       Free (Languages);
 
-      Set_Environment (Scenario_Variables (Switches.Kernel), Saved);
+      Set_Environment (Switches.Kernel, Saved);
       Free (Saved);
 
       --  ??? Need this to update the icon in the project explorer

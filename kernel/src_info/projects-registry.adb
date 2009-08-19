@@ -400,7 +400,11 @@ package body Projects.Registry is
 
          if not View_Only then
             Reset (Registry.Data.Projects);
-            Prj.Ext.Reset;
+
+            --  We should not reset the environment variables, which might have
+            --  been set by the user already.
+            --  Prj.Ext.Reset (Registry.Data.Tree);
+
             Reset (Registry.Data.View_Tree);
             Prj.Tree.Tree_Private_Part.Projects_Htable.Reset
               (Registry.Data.Tree.Projects_HT);
@@ -1089,10 +1093,9 @@ package body Projects.Registry is
    procedure Reset_Environment_Variables (Registry : Project_Registry) is
    begin
       if Registry.Data.Scenario_Variables = null then
-         Trace (Me, "Reset_Environment_Variables");
          Registry.Data.Scenario_Variables := new Scenario_Variable_Array'
            (Find_Scenario_Variables
-            (Registry.Data.Root, Parse_Imported => True));
+              (Registry.Data.Root, Parse_Imported => True));
       end if;
    end Reset_Environment_Variables;
 
@@ -1444,7 +1447,7 @@ package body Projects.Registry is
    begin
       Pretty_Print
         (Project.Node,
-         Project_Registry (Get_Registry (Project)).Data.Tree,
+         Project_Registry (Get_Registry (Project).all).Data.Tree,
          Increment,
          False,
          Minimize_Empty_Lines,
@@ -1476,7 +1479,6 @@ package body Projects.Registry is
 
    procedure Finalize is
    begin
-      Prj.Ext.Reset;
       Namet.Finalize;
       Stringt.Initialize;
 
@@ -1983,5 +1985,49 @@ package body Projects.Registry is
    begin
       return Registry.Data.Tree;
    end Get_Tree;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value
+     (Registry : access Project_Registry;
+      Var      : String;
+      Value    : String) is
+   begin
+      if Registry.Data = null then
+         --  We might be trying to set the environment before loading the
+         --  project, which should be legal
+
+         Reset (Registry.all, View_Only => False);
+      end if;
+
+      Prj.Ext.Add (Registry.Data.Tree, Var, Value);
+   end Set_Value;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value
+     (Registry : access Project_Registry;
+      Var      : Scenario_Variable;
+      Value    : String) is
+   begin
+      Set_Value (Registry, External_Reference_Of (Var), Value);
+   end Set_Value;
+
+   --------------
+   -- Value_Of --
+   --------------
+
+   function Value_Of
+     (Registry : Project_Registry;
+      Var      : Scenario_Variable) return String is
+   begin
+      return Get_String
+        (Prj.Ext.Value_Of
+           (Registry.Data.Tree, Var.Name, With_Default => Var.Default));
+   end Value_Of;
 
 end Projects.Registry;

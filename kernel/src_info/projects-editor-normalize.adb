@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                             G P S                                 --
 --                                                                   --
---                    Copyright (C) 2001-2008, AdaCore               --
+--                    Copyright (C) 2001-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -465,12 +465,12 @@ package body Projects.Editor.Normalize is
          end loop;
       end Process_Declarative_List;
 
-      Registry : constant Project_Registry := Project_Registry
+      Registry : constant Project_Registry_Access := Project_Registry_Access
         (Get_Registry (Root_Project));
    begin
       --  This is null when the default project is loaded at startup time.o
-      if Get_Root_Project (Registry) /= No_Project then
-         Max_Scenario_Variables := Scenario_Variables (Registry)'Length;
+      if Get_Root_Project (Registry.all) /= No_Project then
+         Max_Scenario_Variables := Scenario_Variables (Registry.all)'Length;
       else
          Max_Scenario_Variables := 50;  --  Random
       end if;
@@ -597,7 +597,8 @@ package body Projects.Editor.Normalize is
          Values (Last_Values) := External_Variable_Value'
            (Variable_Type  => Scenario_Variables (J).String_Type,
             Variable_Name  => Scenario_Variables (J).Name,
-            Variable_Value => Prj.Ext.Value_Of (Scenario_Variables (J).Name),
+            Variable_Value => Prj.Ext.Value_Of
+               (Tree, Scenario_Variables (J).Name),
             Negated        => False);
       end loop;
       For_Each_Matching_Case_Item

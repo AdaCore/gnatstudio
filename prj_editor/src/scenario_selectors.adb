@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -503,7 +502,8 @@ package body Scenario_Selectors is
               Value  => External_Reference_Of (Vars (V)));
 
          declare
-            Current : constant String := Value_Of (Vars (V));
+            Current : constant String :=
+               Value_Of (Get_Registry (Selector.Kernel).all, Vars (V));
          begin
             Value := Value_Of (Tree, Vars (V));
             while not Done (Value) loop
@@ -874,13 +874,17 @@ package body Scenario_Selectors is
    -- Get_Current_Scenario --
    --------------------------
 
-   function Get_Current_Scenario (Variables : Scenario_Variable_Array)
+   function Get_Current_Scenario
+      (Kernel    : access Kernel_Handle_Record'Class)
       return GNAT.OS_Lib.Argument_List
    is
+      Variables : constant Scenario_Variable_Array :=
+         Scenario_Variables (Kernel);
       Values : Argument_List (Variables'Range);
    begin
       for V in Values'Range loop
-         Values (V) := new String'(Value_Of (Variables (V)));
+         Values (V) := new String'
+            (Value_Of (Get_Registry (Kernel).all, Variables (V)));
       end loop;
       return Values;
    end Get_Current_Scenario;
@@ -890,11 +894,14 @@ package body Scenario_Selectors is
    ---------------------
 
    procedure Set_Environment
-     (Variables : Scenario_Variable_Array;
-      Values    : GNAT.OS_Lib.Argument_List) is
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Values    : GNAT.OS_Lib.Argument_List)
+   is
+      Variables : constant Scenario_Variable_Array :=
+         Scenario_Variables (Kernel);
    begin
       for V in Variables'Range loop
-         Set_Value (Variables (V), Values (V).all);
+         Set_Value (Get_Registry (Kernel), Variables (V), Values (V).all);
       end loop;
    end Set_Environment;
 

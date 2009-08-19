@@ -539,7 +539,7 @@ package body Projects is
          Path : constant Filesystem_String :=
                   Name_As_Directory (+Get_String (Id));
          Reg  : constant Project_Registry :=
-                  Project_Registry (Get_Registry (Project));
+                  Project_Registry (Get_Registry (Project).all);
 
       begin
          if not Xrefs_Dirs
@@ -614,7 +614,7 @@ package body Projects is
       File : Virtual_File;
    begin
       Get_Full_Path_From_File
-        (Project_Registry (Get_Registry (Project)), Base_Name,
+        (Project_Registry (Get_Registry (Project).all), Base_Name,
          Use_Source_Path, Use_Object_Path, Project,
          File => File);
       return File;
@@ -1699,7 +1699,7 @@ package body Projects is
       Direct_Only  : Boolean := False) return Imported_Project_Iterator
    is
       Root_Project : constant Project_Type := Get_Root_Project
-        (Project_Registry (Get_Registry (Project)));
+        (Project_Registry (Get_Registry (Project).all));
       Iter         : Imported_Project_Iterator;
    begin
       if Project = No_Project then
@@ -1932,7 +1932,7 @@ package body Projects is
                         --  This variable is defined in another project, get
                         --  project reference.
                         Proj := Get_Project_From_Name
-                          (Project_Registry (Get_Registry (Project)),
+                          (Project_Registry (Get_Registry (Project).all),
                            Prj.Tree.Name_Of (In_Prj, Proj.Tree));
                      end if;
 
@@ -2069,19 +2069,19 @@ package body Projects is
    ---------------------------
 
    procedure Ensure_External_Value
-     (Var  : Scenario_Variable;
-      Tree : Project_Node_Tree_Ref)
+     (Var      : Scenario_Variable;
+      Tree     : Project_Node_Tree_Ref)
    is
       N : constant String := External_Reference_Of (Var);
    begin
-      if Prj.Ext.Value_Of (Var.Name) = No_Name then
+      if Prj.Ext.Value_Of (Tree, Var.Name) = No_Name then
          if Var.Default /= No_Name then
-            Prj.Ext.Add (N, External_Default (Var));
+            Prj.Ext.Add (Tree, N, External_Default (Var));
          else
             Get_Name_String
               (String_Value_Of
                  (First_Literal_String (Var.String_Type, Tree), Tree));
-            Prj.Ext.Add (N, Name_Buffer (Name_Buffer'First .. Name_Len));
+            Prj.Ext.Add (Tree, N, Name_Buffer (Name_Buffer'First .. Name_Len));
          end if;
       end if;
    end Ensure_External_Value;
@@ -2339,9 +2339,9 @@ package body Projects is
    ------------------
 
    function Get_Registry (Project : Project_Type)
-      return Abstract_Registry'Class is
+      return Abstract_Registry_Access is
    begin
-      return Abstract_Registry'Class (Project.Data.Registry.all);
+      return Abstract_Registry_Access (Project.Data.Registry);
    end Get_Registry;
 
    ------------------
@@ -2434,27 +2434,17 @@ package body Projects is
       Project.Data.Status := Status;
    end Set_Status;
 
-   --------------
-   -- Value_Of --
-   --------------
-
-   function Value_Of (Var : Scenario_Variable) return String is
-   begin
-      return Get_String
-        (Prj.Ext.Value_Of (Var.Name, With_Default => Var.Default));
-   end Value_Of;
-
    --------------------
    -- Enum_Values_Of --
    --------------------
 
    function Enum_Values_Of
-     (Var : Scenario_Variable; Registery : Abstract_Registry'Class)
+     (Var : Scenario_Variable; Registry : Abstract_Registry'Class)
       return String_List_Utils.String_List.List
    is
       Values : String_List_Utils.String_List.List;
       Tree   : constant Prj.Tree.Project_Node_Tree_Ref :=
-                 Get_Tree (Project_Registry (Registery));
+                 Get_Tree (Project_Registry (Registry));
       Iter   : String_List_Iterator := Value_Of (Tree, Var);
    begin
       while not Done (Iter) loop
@@ -2592,15 +2582,6 @@ package body Projects is
          Unchecked_Free (Project.Data.Imported_Projects);
       end if;
    end Reset_Cache;
-
-   ---------------
-   -- Set_Value --
-   ---------------
-
-   procedure Set_Value (Var : Scenario_Variable; Value : String) is
-   begin
-      Prj.Ext.Add (External_Reference_Of (Var), Value);
-   end Set_Value;
 
    ----------------------
    -- Extended_Project --

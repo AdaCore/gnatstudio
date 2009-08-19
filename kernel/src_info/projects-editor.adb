@@ -21,7 +21,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with Namet;                     use Namet;
@@ -1582,14 +1581,15 @@ package body Projects.Editor is
 
       --  Reset the value of the external variable if needed
 
-      if Value_Of (Ext_Var) = V_Name then
+      if Value_Of (Root_Project.Tree, Ext_Var) = V_Name then
          if Type_Decl /= Empty_Node then
-            Add (Ext_Variable_Name,
+            Add (Root_Project.Tree,
+                 Ext_Variable_Name,
                  Get_String (String_Value_Of
                                (First_Literal_String (Type_Decl, Tree),
                                 Tree)));
          else
-            Add (Ext_Variable_Name, "");
+            Add (Root_Project.Tree, Ext_Variable_Name, "");
          end if;
       end if;
 
@@ -1707,10 +1707,11 @@ package body Projects.Editor is
         (Root_Project, N, Get_String (Old_Value_Name),
          Callback'Unrestricted_Access);
 
-      if Value_Of (N) /= No_Name
-        and then Value_Of (N) = Old_V_Name
+      if Value_Of (Root_Project.Tree, N) /= No_Name
+        and then Value_Of (Root_Project.Tree, N) = Old_V_Name
       then
-         Add (Ext_Variable_Name, Get_String (New_Value_Name));
+         Add (Root_Project.Tree,
+              Ext_Variable_Name, Get_String (New_Value_Name));
       end if;
 
       Set_Project_Modified (Root_Project, True);
@@ -2152,8 +2153,10 @@ package body Projects.Editor is
       --  the project.
       Variable.Name := New_Name;
 
-      if Value_Of (Ext_Ref) /= No_Name then
-         Set_Value (Variable, Get_String (Value_Of (Ext_Ref)));
+      if Value_Of (Root_Project.Tree, Ext_Ref) /= No_Name then
+         Set_Value (Project_Registry_Access (Get_Registry (Root_Project)),
+                    Variable,
+                    Get_String (Value_Of (Root_Project.Tree, Ext_Ref)));
       end if;
    end Rename_External_Variable;
 
@@ -2875,7 +2878,7 @@ package body Projects.Editor is
       then
          Pkg := Project_Of_Renamed_Package_Of (Pkg, Project.Tree);
          P := Get_Project_From_Name
-           (Project_Registry'Class (Get_Registry (Project)),
+           (Project_Registry (Get_Registry (Project).all),
             Prj.Tree.Name_Of (Pkg, Project.Tree));
       end if;
 
@@ -2891,7 +2894,7 @@ package body Projects.Editor is
 
    procedure Reset_All_Caches (Project : Project_Type) is
       Root  : constant Project_Type := Get_Root_Project
-        (Project_Registry (Get_Registry (Project)));
+        (Project_Registry (Get_Registry (Project).all));
       Iter  : Imported_Project_Iterator := Start (Root, Recursive => True);
       Count : Natural := 0;
    begin
@@ -3115,7 +3118,7 @@ package body Projects.Editor is
 
       Reset_Cache
         (Get_Project_From_Name
-           (Project_Registry'Class (Get_Registry (Project)),
+           (Project_Registry'Class (Get_Registry (Project).all),
             Get_String
               (To_Lower
                  (+Base_Name
@@ -3507,7 +3510,7 @@ package body Projects.Editor is
           Proj_Qualifier => Unspecified));
 
       Reset_Name_Table
-        (Project_Registry (Get_Registry (Project)),
+        (Project_Registry (Get_Registry (Project).all),
          Project, Get_String (+Old_Name), New_Name);
 
       Set_Project_Modified (Project, True);
@@ -3658,7 +3661,7 @@ package body Projects.Editor is
       Set_Project_Modified (Project, True);
 
       Reset_Scenario_Variables_Cache
-        (Project_Registry'Class (Get_Registry (Project)));
+        (Project_Registry'Class (Get_Registry (Project).all));
 
       return (Name        => Get_String (Env_Name),
               Default     => No_Name,

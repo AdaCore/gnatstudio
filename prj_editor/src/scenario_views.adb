@@ -39,10 +39,11 @@ with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Combo;        use Gtkada.Combo;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with XML_Utils;        use XML_Utils;
+with XML_Utils;           use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
 
 with Projects.Editor;     use Projects, Projects.Editor;
+with Projects.Registry;   use Projects.Registry;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
@@ -242,7 +243,7 @@ package body Scenario_Views is
       Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
    begin
       if Value /= "" then
-         Set_Value (User.Var, Value);
+         Set_Value (Get_Registry (User.View.Kernel), User.Var, Value);
          User.View.Combo_Is_Open := True;
          Recompute_View (User.View.Kernel);
          User.View.Combo_Is_Open := False;
@@ -324,7 +325,8 @@ package body Scenario_Views is
          Delete_External_Variable
            (Root_Project             => Get_Project (Data.View.Kernel),
             Ext_Variable_Name        => External_Reference_Of (Data.Var),
-            Keep_Choice              => Value_Of (Data.Var),
+            Keep_Choice              =>
+               Value_Of (Get_Registry (Data.View.Kernel).all, Data.Var),
             Delete_Direct_References => False);
          Run_Hook (Data.View.Kernel, Variable_Changed_Hook);
 
@@ -439,7 +441,10 @@ package body Scenario_Views is
 
                   Add_Possible_Values
                     (Kernel, Get_List (Combo), Scenar_Var (J));
-                  Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
+                  Set_Text
+                    (Get_Entry (Combo),
+                     Value_Of (Get_Registry (Kernel).all,
+                               Scenar_Var (J)));
 
                   View_Callback.Connect
                     (Combo, Signal_Changed, Variable_Value_Changed'Access,

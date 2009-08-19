@@ -855,7 +855,8 @@ package body GPS.Kernel.Project is
          return Concat
            (Current
             & Set_Var & External_Reference_Of (Scenario_Vars (Index))
-            & "=" & Value_Of (Scenario_Vars (Index)) & " ",
+            & "=" & Value_Of (Handle.Registry.all, Scenario_Vars (Index))
+            & " ",
             Index + 1,
             Set_Var);
       end Concat;

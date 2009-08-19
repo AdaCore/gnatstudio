@@ -5261,7 +5261,7 @@ package body Project_Properties is
          declare
             Vars         : constant Scenario_Variable_Array :=
                              Scenario_Variables (Kernel);
-            Saved_Values : Argument_List := Get_Current_Scenario (Vars);
+            Saved_Values : Argument_List := Get_Current_Scenario (Kernel);
             Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
             Tmp_Project  : Project_Type;
@@ -5276,7 +5276,7 @@ package body Project_Properties is
                         Curr   : Argument_List := Current (Scenar_Iter);
                         Is_Env : Boolean := True;
                      begin
-                        Set_Environment (Vars, Curr);
+                        Set_Environment (Kernel, Curr);
 
                         for V in Vars'Range loop
                            Is_Env := Is_Env
@@ -5345,7 +5345,7 @@ package body Project_Properties is
             end loop;
 
             --  Restore the scenario
-            Set_Environment (Vars, Saved_Values);
+            Set_Environment (Kernel, Saved_Values);
             Free (Saved_Values);
          end;
 

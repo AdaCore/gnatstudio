@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -109,13 +109,14 @@ package Scenario_Selectors is
    --  in GPS.Kernel.Scenario_Variables.
    --  The returned value must be freed by the caller.
 
-   function Get_Current_Scenario (Variables : Projects.Scenario_Variable_Array)
+   function Get_Current_Scenario
+      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class)
       return GNAT.OS_Lib.Argument_List;
    --  Return the current values of the environment variables in Variables.
    --  The returned array must be freed by the caller.
 
    procedure Set_Environment
-     (Variables : Projects.Scenario_Variable_Array;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Values    : GNAT.OS_Lib.Argument_List);
    --  Set the value of each variable described in Variables to the value at
    --  the matching index in Values. This directly modifies the environment

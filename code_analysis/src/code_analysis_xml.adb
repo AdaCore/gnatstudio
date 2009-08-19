@@ -63,16 +63,16 @@ package body Code_Analysis_XML is
       Child    : in out Node_Ptr)
    is
       Prj_Node  : Project_Access;
-      Registry  : Project_Registry;
+      Registry  : Project_Registry_Access;
    begin
-      Registry := Project_Registry (Get_Registry (Project));
+      Registry := Project_Registry_Access (Get_Registry (Project));
 
       while Child /= null loop
          if Child.Tag.all = "Project" then
             Prj_Node := Get_Or_Create
               (Projects,
                Load_Or_Find
-                 (Registry, Get_Attribute (Child, "name"),
+                 (Registry.all, Get_Attribute (Child, "name"),
                   Errors => null));
             Parse_Project (Prj_Node, Child);
          end if;

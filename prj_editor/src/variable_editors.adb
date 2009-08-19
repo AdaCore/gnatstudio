@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -588,11 +588,13 @@ package body Variable_Editors is
 
       if Editor.Var = No_Variable then
          if External_Default (Editor.Var) /= "" then
-            Set_Value (Editor.Var, External_Default (Editor.Var));
+            Set_Value (Get_Registry (Editor.Kernel),
+                       Editor.Var, External_Default (Editor.Var));
          else
             Iter := Get_Iter_First (Editor.Model);
             Set_Value
-              (Editor.Var, Get_String (Editor.Model, Iter, Value_Column));
+              (Get_Registry (Editor.Kernel),
+               Editor.Var, Get_String (Editor.Model, Iter, Value_Column));
          end if;
       end if;
 

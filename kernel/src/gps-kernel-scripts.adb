@@ -59,7 +59,6 @@ with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
-with Prj.Ext;                 use Prj.Ext;
 with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
@@ -654,7 +653,8 @@ package body GPS.Kernel.Scripts is
                      Scenario_Variables (Kernel);
          begin
             for V in Vars'Range loop
-               Set_Return_Value (Data, Value_Of (Vars (V)));
+               Set_Return_Value
+                 (Data, Value_Of (Get_Registry (Kernel).all, Vars (V)));
                Set_Return_Value_Key
                  (Data, External_Reference_Of (Vars (V)));
             end loop;
@@ -666,7 +666,7 @@ package body GPS.Kernel.Scripts is
             Name  : constant String := Nth_Arg (Data, 1);
             Value : constant String := Nth_Arg (Data, 2);
          begin
-            Prj.Ext.Add (Name, Value);
+            Set_Value (Get_Registry (Kernel), Name, Value);
             Run_Hook (Kernel, Variable_Changed_Hook);
          end;
 
