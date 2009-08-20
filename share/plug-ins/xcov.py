@@ -99,6 +99,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>xcov</arg>
       <arg>--coverage=insn</arg>
       <arg>--annotate=xcov</arg>
+      <arg>--output-dir=%O</arg>
       <arg>%TT.trace</arg>
     </command-line>
   </target>
@@ -114,6 +115,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>xcov</arg>
       <arg>--coverage=insn</arg>
       <arg>--annotate=xcov</arg>
+      <arg>--output-dir=%O</arg>
       <arg>--input=</arg>
     </command-line>
   </target>
