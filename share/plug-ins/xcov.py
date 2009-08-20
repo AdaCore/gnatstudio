@@ -37,7 +37,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
   </target-model>
 
   <target model="xcov-run" category="Xcov Run" name="Run under Xcov"
-          menu="/Tools/Cov_erage/">
+          menu="/Tools/Coverage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -88,7 +88,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
   </target-model>
 
   <target model="xcov-coverage" category="Xcov Report"
-          name="Xcov Main Report" menu="/Tools/Cov_erage/">
+          name="Generate Xcov Main Report" menu="/Tools/Coverage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -105,7 +105,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
   </target>
 
   <target model="xcov-coverage" category="Xcov Report"
-          name="Xcov Custom Report" menu="/Tools/Cov_erage/">
+          name="Generate Xcov Report" menu="/Tools/Coverage/">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
