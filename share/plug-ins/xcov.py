@@ -9,87 +9,34 @@ automatically.
 
 import GPS, os.path, os_utils;
 
-def on_xcov_run (menu):
-    GPS.BuildTarget ("Run under Xcov").execute (menu.data)
-
 def on_xcov_report (menu):
     GPS.BuildTarget ("Generate Xcov report").execute ()
 
-def update_xcov_run_menu ():
-    global xcov_run_menu
-    global xcov_mode
-
-    project = GPS.Project.root ();
-
-    if xcov_run_menu:
-        xcov_run_menu.destroy ()
-        xcov_run_menu = None
-
-    xcov_run_menu = \
-        GPS.Menu.create ("/Tools/Covera_ge/Run program under Xcov",
-                        ref="Generate coverage report",
-                        add_before=True)
-
-    if not xcov_mode:
-        xcov_run_menu.hide ()
-
-    def add_programs (project):
-        for main in project.get_attribute_as_list ("main"):
-            exec_name = project.get_executable_name (GPS.File (main))
-            exec_dir = project.get_attribute_as_string ("exec_dir")
-
-            if exec_dir [0] == '.':
-                exec_dir = os.path.join (project.file ().directory (),
-                                         exec_dir);
-
-            exec_file = os.path.join (exec_dir, exec_name)
-
-            menu = \
-                GPS.Menu.create \
-                   ("/Tools/Covera_ge/Run program under Xcov/" + main,
-                    on_activate=on_xcov_run)
-            menu.data = exec_file
-
-    for p in project.dependencies (True):
-        add_programs (p)
-
-def on_project_view_changed (hook):
-    update_xcov_run_menu ()
-
 def on_preferences_changed (hook):
-    global xcov_run_menu
     global xcov_report_menu
     global xcov_mode
 
     xcov_mode = GPS.Preference("coverage-toolchain").get() == "Xcov"
 
     if xcov_mode:
-        if xcov_run_menu:
-            xcov_run_menu.show ();
         xcov_report_menu.show ()
 
     else:
-        if xcov_run_menu:
-            xcov_run_menu.hide ();
         xcov_report_menu.hide ()
 
 def on_gps_started (hook_name):
-    global xcov_run_menu
     global xcov_mode
     global xcov_report_menu
 
-    xcov_run_menu = None
     xcov_report_menu = \
         GPS.Menu.create ("/Tools/Covera_ge/Generate coverage report",
                          on_activate=on_xcov_report,
                          ref="Show report",
                          add_before=True)
+
     xcov_mode = GPS.Preference("coverage-toolchain").get() == "Xcov"
 
-    update_xcov_run_menu ()
-
     GPS.Hook ("preferences_changed").add (on_preferences_changed)
-    GPS.Hook ("project_view_changed").add (on_project_view_changed)
 
 #  Check for Xcov
 
@@ -118,10 +65,10 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     </switches>
   </target-model>
 
-  <target model="xcov-run" category="Xcov" name="Run under Xcov">
+  <target model="xcov-run" category="Run under Xcov" name="Run under Xcov" menu="/_Tools/Cov_erage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
-    <in-menu>FALSE</in-menu>
+    <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
