@@ -247,6 +247,13 @@ package body GPS.Kernel.Macros is
                    Default => "gnatmake",
                    Index   => "Ada");
 
+      elsif Param = "o" or else Param = "O" then
+         return String_Utils.Protect
+           (String (Full_Name (Object_Path
+              (Project_From_Param (Param, Context))).all),
+            Protect_Quotes      => Quoted,
+            Protect_Backslashes => For_Shell);
+
       elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
          Project := Project_From_Param (Param, Context);
 
@@ -422,7 +429,7 @@ package body GPS.Kernel.Macros is
    is
       Project : Project_Type := No_Project;
    begin
-      if Param (Param'First) = 'P' then
+      if Param (Param'First) in 'O' .. 'P' then
          Project := Get_Project (Get_Kernel (Context));
 
       elsif Has_Project_Information (Context) then
