@@ -71,7 +71,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
     <icon>gps-build-all</icon>
-    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <launch-mode>MANUALLY</launch-mode>
     <command-line>
       <arg>xcov</arg>
       <arg>--run</arg>
@@ -92,7 +92,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="3" lines="5">
       <combo label="Coverage" switch="--coverage" separator="=" column="1">
-        <combo-entry label="Intruction" value="insn" title="Object Instruction Coverage"/>
+        <combo-entry label="Instruction" value="insn" title="Object Instruction Coverage"/>
         <combo-entry label="Branch" value="branch" title="Object Branch Coverage"/>
       </combo>
       <combo label="Annotate" switch="--annotate" separator="=" column="1">
