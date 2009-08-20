@@ -99,7 +99,7 @@ package body Builder_Facility_Module is
                         To_Unbounded_String ("Build All");
    --  These target names must be kept in sync with build_targets.xml
 
-   Main_Menu : constant String := '/' & ("_Build") & '/';
+   Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
 
    Mode_Property : constant String := "Build-Mode";
@@ -1413,7 +1413,8 @@ package body Builder_Facility_Module is
 
    procedure Add_Menu_For_Target (Target : Target_Access) is
       Category : constant String := Get_Category (Target);
-      Cat_Path : Unbounded_String := To_Unbounded_String (Main_Menu);
+      Cat_Path : Unbounded_String :=
+        To_Unbounded_String (Get_Parent_Menu_Name (Target));
 
       Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
         and then Category (Category'Last) = '_';

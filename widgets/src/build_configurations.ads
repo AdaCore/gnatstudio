@@ -261,6 +261,9 @@ package Build_Configurations is
       Icon     : Unbounded_String;
       --  The string contains a stock identifier
 
+      Parent_Menu_Name : Unbounded_String;
+      --  The name of the parent menu.
+
       Menu_Name : Unbounded_String;
       --  The name of the menu to display target
 
@@ -304,6 +307,9 @@ package Build_Configurations is
 
    function Get_Name (Target : Target_Access) return String;
    --  Return the name of Target
+
+   function Get_Parent_Menu_Name (Target : Target_Access) return String;
+   --  Returns the name of the parent menu.
 
    function Get_Menu_Name (Target : Target_Access) return String;
    --  Return the menu name of Target, ie a name where an underscore indicates

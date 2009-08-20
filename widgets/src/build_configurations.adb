@@ -66,6 +66,9 @@ package body Build_Configurations is
    procedure Free (Modes : in out Mode_Map.Map);
    --  Free memory
 
+   Build_Menu : constant String := '/' & ("_Build") & '/';
+   --  -"Build"
+
    ---------------
    -- Deep_Copy --
    ---------------
@@ -336,6 +339,7 @@ package body Build_Configurations is
 
       Target := new Target_Type;
       Target.Name := To_Unbounded_String (Strip_Single_Underscores (Name));
+      Target.Properties.Parent_Menu_Name := To_Unbounded_String (Build_Menu);
       Target.Properties.Menu_Name := To_Unbounded_String (Name);
       Target.Properties.Category := To_Unbounded_String (Category);
       Target.Model := The_Model;
@@ -461,6 +465,7 @@ package body Build_Configurations is
       end if;
 
       Dest.Properties := Src.Properties;
+      Dest.Properties.Parent_Menu_Name := To_Unbounded_String (Build_Menu);
       Dest.Properties.Menu_Name := To_Unbounded_String (New_Name);
       Dest.Properties.Category  := To_Unbounded_String (New_Category);
 
@@ -808,6 +813,8 @@ package body Build_Configurations is
          & XML_Utils.Protect (To_String (Target.Model.Name))
          & """ category="""
          & XML_Utils.Protect (To_String (Target.Properties.Category))
+         & """ menu="""
+         & XML_Utils.Protect (To_String (Target.Properties.Parent_Menu_Name))
          & """ name="""
          & XML_Utils.Protect  (To_String (Target.Properties.Menu_Name))
          & """");
@@ -893,10 +900,12 @@ package body Build_Configurations is
       --  Main node
 
       declare
-         Menu_Name : constant String := (Get_Attribute (XML, "name", ""));
+         Parent_Menu : constant String :=
+           Get_Attribute (XML, "menu", Build_Menu);
+         Menu_Name   : constant String := Get_Attribute (XML, "name", "");
          Target_Name : constant String := Strip_Single_Underscores (Menu_Name);
-         Category  : constant String := (Get_Attribute (XML, "category", ""));
-         Model     : constant String := (Get_Attribute (XML, "model", ""));
+         Category    : constant String := Get_Attribute (XML, "category", "");
+         Model       : constant String := Get_Attribute (XML, "model", "");
       begin
          if Menu_Name = "" then
             Log (Registry,
@@ -934,6 +943,8 @@ package body Build_Configurations is
          else
             Target := new Target_Type;
             Target.Name  := To_Unbounded_String (Target_Name);
+            Target.Properties.Parent_Menu_Name :=
+              To_Unbounded_String (Parent_Menu);
             Target.Properties.Menu_Name := To_Unbounded_String (Menu_Name);
             Target.Properties.Category := To_Unbounded_String (Category);
             Target.Model := Registry.Models.Element
@@ -1136,6 +1147,15 @@ package body Build_Configurations is
    begin
       return To_String (Target.Properties.Menu_Name);
    end Get_Menu_Name;
+
+   --------------------------
+   -- Get_Parent_Menu_Name --
+   --------------------------
+
+   function Get_Parent_Menu_Name (Target : Target_Access) return String is
+   begin
+      return To_String (Target.Properties.Parent_Menu_Name);
+   end Get_Parent_Menu_Name;
 
    ------------------
    -- Get_Category --
