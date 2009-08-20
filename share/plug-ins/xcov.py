@@ -66,21 +66,23 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="3" lines="5">
       <combo label="Coverage" switch="--coverage" separator="=" column="1">
-        <combo-entry label="Instruction" value="insn" title="Object Instruction Coverage"/>
-        <combo-entry label="Branch" value="branch" title="Object Branch Coverage"/>
+        <combo-entry label="Instruction" value="insn"
+                     title="Object Instruction Coverage"/>
+        <combo-entry label="Branch" value="branch"
+                     title="Object Branch Coverage"/>
+        <combo-entry label="Statement" value="stmt"
+                     title="Source Statement Coverage"/>
+        <combo-entry label="Decision" value="decision"
+                     title="Source Decision Coverage"/>
+        <combo-entry label="MCDC" value="mcdc"
+                     title="Source MCDC Coverage"/>
       </combo>
       <combo label="Annotate" switch="--annotate" separator="=" column="1">
-<!--        <combo-entry label="Assembler" value="asm"/>  -->
         <combo-entry label="Xcov" value="xcov"/>
-<!--        <combo-entry label="HTML Report" value="html"/>  -->
         <combo-entry label="Xcov + Assembler" value="xcov+asm"/>
-<!--        <combo-entry label="HTML Report + Assembler" value="html+asm"/>  -->
-<!--        <combo-entry label="Report" value="report"/>  -->
       </combo>
-      <field label="Routine list" switch="--routine-list" separator="=" as-file="true"/>
-<!--
-      <field label="Trace file" switch=" " separator="" as-file="true"/>
--->
+      <field label="Routine list" switch="--routine-list" separator="="
+             as-file="true"/>
     </switches>
   </target-model>
 
