@@ -64,7 +64,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>--annotate=xcov</arg>
     </command-line>
     <icon>gps-build-all</icon>
-    <switches command="%(tool_name)s" columns="3" lines="5">
+    <switches command="%(tool_name)s" columns="1" lines="4">
       <combo label="Coverage" switch="--coverage" separator="=" column="1">
         <combo-entry label="Instruction" value="insn"
                      title="Object Instruction Coverage"/>
@@ -83,11 +83,12 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       </combo>
       <field label="Routine list" switch="--routine-list" separator="="
              as-file="true"/>
+      <field label="Trace file" switch="--input" separator="=" as-file="true"/>
     </switches>
   </target-model>
 
   <target model="xcov-coverage" category="Xcov Report"
-          name="Generate Xcov report" menu="/Tools/Cov_erage/">
+          name="Xcov Main Report" menu="/Tools/Cov_erage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -99,6 +100,21 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>--coverage=insn</arg>
       <arg>--annotate=xcov</arg>
       <arg>%TT.trace</arg>
+    </command-line>
+  </target>
+
+  <target model="xcov-coverage" category="Xcov Report"
+          name="Xcov Custom Report" menu="/Tools/Cov_erage/">
+    <in-toolbar>FALSE</in-toolbar>
+    <in-menu>TRUE</in-menu>
+    <read-only>TRUE</read-only>
+    <icon>gps-build-all</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <command-line>
+      <arg>xcov</arg>
+      <arg>--coverage=insn</arg>
+      <arg>--annotate=xcov</arg>
+      <arg>--input=</arg>
     </command-line>
   </target>
 """)
