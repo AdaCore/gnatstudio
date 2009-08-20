@@ -2707,7 +2707,7 @@ package body Projects is
          declare
             From_Project : constant String := Get_Attribute_Value
               (Project, Executable_Attribute,
-               Index => +File, Default => "");
+               Index => String (Base), Default => "");
          begin
             if From_Project = "" then
                --  Check whether the file is a special naming scheme for an
