@@ -221,7 +221,8 @@ package body Projects.Registry.Queries is
                   Trace (Me, "  " & Current (J).Display_Full_Name);
                end loop;
             end if;
-            Prj.Ext.Set_Project_Path (+To_Path (Current.all));
+            Prj.Ext.Set_Project_Path
+               (Get_Tree (Registry.all), +To_Path (Current.all));
 
          else
             if Active (Me) then

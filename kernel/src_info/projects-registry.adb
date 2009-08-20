@@ -542,7 +542,7 @@ package body Projects.Registry is
                           +To_Path (Get_Predefined_Project_Path (Registry));
    begin
       Trace (Me, "Set project path to " & Predefined_Path);
-      Prj.Ext.Set_Project_Path (Predefined_Path);
+      Prj.Ext.Set_Project_Path (Registry.Data.Tree, Predefined_Path);
 
       Project := Empty_Node;
 
@@ -1597,9 +1597,8 @@ package body Projects.Registry is
 
    procedure Set_Predefined_Project_Path
      (Registry : in out Project_Registry; Path : File_Array) is
-      pragma Unreferenced (Registry);
    begin
-      Prj.Ext.Set_Project_Path (+To_Path (Path));
+      Prj.Ext.Set_Project_Path (Registry.Data.Tree, +To_Path (Path));
    end Set_Predefined_Project_Path;
 
    -----------------------------
@@ -1843,11 +1842,9 @@ package body Projects.Registry is
    ---------------------------------
 
    function Get_Predefined_Project_Path
-     (Registry : Project_Registry) return File_Array
-   is
-      pragma Unreferenced (Registry);
+     (Registry : Project_Registry) return File_Array is
    begin
-      return From_Path (+Prj.Ext.Project_Path);
+      return From_Path (+Prj.Ext.Project_Path (Registry.Data.Tree));
    end Get_Predefined_Project_Path;
 
    ----------------------
