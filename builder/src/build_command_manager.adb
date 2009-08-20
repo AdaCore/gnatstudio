@@ -370,9 +370,11 @@ package body Build_Command_Manager is
             end if;
          end;
 
-      elsif Arg = "%TT" then
+      elsif Arg'Length > 2
+        and then Arg (Arg'First .. Arg'First + 2) = "%TT"
+      then
          if Main /= "" then
-            return (1 => new String'(Main));
+            return (1 => new String'(Main & Arg (Arg'First + 3 .. Arg'Last)));
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
@@ -380,10 +382,13 @@ package body Build_Command_Manager is
             raise Invalid_Argument;
          end if;
 
-      elsif Arg = "%T" then
+      elsif Arg'Length > 1
+        and then Arg (Arg'First .. Arg'First + 1) = "%T"
+      then
          if Main /= "" then
             return (1 => new String'
-                      (GNAT.Directory_Operations.Base_Name (Main)));
+                      (GNAT.Directory_Operations.Base_Name (Main)
+                       & Arg (Arg'First + 2 .. Arg'Last)));
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
