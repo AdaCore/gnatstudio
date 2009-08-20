@@ -9,35 +9,6 @@ automatically.
 
 import GPS, os.path, os_utils;
 
-def on_xcov_report (menu):
-    GPS.BuildTarget ("Generate Xcov report").execute ()
-
-def on_preferences_changed (hook):
-    global xcov_report_menu
-    global xcov_mode
-
-    xcov_mode = GPS.Preference("coverage-toolchain").get() == "Xcov"
-
-    if xcov_mode:
-        xcov_report_menu.show ()
-
-    else:
-        xcov_report_menu.hide ()
-
-def on_gps_started (hook_name):
-    global xcov_mode
-    global xcov_report_menu
-
-    xcov_report_menu = \
-        GPS.Menu.create ("/Tools/Covera_ge/Generate coverage report",
-                         on_activate=on_xcov_report,
-                         ref="Show report",
-                         add_before=True)
-
-    xcov_mode = GPS.Preference("coverage-toolchain").get() == "Xcov"
-
-    GPS.Hook ("preferences_changed").add (on_preferences_changed)
-
 #  Check for Xcov
 
 if os_utils.locate_exec_on_path ("xcov") != "":
@@ -52,20 +23,21 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     </command-line>
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="2" lines="2">
-      <combo label="Target" switch="--target" separator="=" column="1" line="1">
+      <combo label="Target" switch="--target" separator="=" column="1">
         <combo-entry label="powerpc-elf" value="powerpc-elf"/>
         <combo-entry label="leon-elf" value="leon-elf"/>
         <combo-entry label="i386-pok" value="i386-pok"/>
         <combo-entry label="i386-linux" value="i386-linux"/>
         <combo-entry label="prepare" value="prepare"/>
       </combo>
-      <field label="Traces file" switch="--output" separator="=" as-file="true" column="1" line="2"/>
-      <field label="Tag" switch="--tag" separator="=" column="2" line="1"/>
-      <check label="Verbose" switch="--verbose" column="2" line="2"/>
+      <field label="Tag" switch="--tag" separator="=" column="2"/>
+      <field label="Trace file" switch="-o" separator=" " as-file="true" column="1"/>
+      <check label="Verbose" switch="--verbose" column="2"/>
     </switches>
   </target-model>
 
-  <target model="xcov-run" category="Run under Xcov" name="Run under Xcov" menu="/_Tools/Cov_erage/">
+  <target model="xcov-run" category="Xcov Run" name="Run under Xcov"
+          menu="/Tools/Cov_erage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
@@ -77,6 +49,8 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>--run</arg>
       <arg>--target=powerpc-elf</arg>
       <arg>%TT</arg>
+      <arg>-o</arg>
+      <arg>%TT.trace</arg>
     </command-line>
   </target>
 
@@ -110,18 +84,19 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     </switches>
   </target-model>
 
-  <target model="xcov-coverage" category="Xcov" name="Generate Xcov report">
+  <target model="xcov-coverage" category="Xcov Report"
+          name="Generate Xcov report" menu="/Tools/Cov_erage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
-    <in-menu>FALSE</in-menu>
+    <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
     <icon>gps-build-all</icon>
-    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <launch-mode>MANUALLY</launch-mode>
     <command-line>
       <arg>xcov</arg>
       <arg>--coverage=insn</arg>
       <arg>--annotate=xcov</arg>
+      <arg>%TT.trace</arg>
     </command-line>
   </target>
 """)
-    GPS.Hook ("gps_started").add (on_gps_started)
