@@ -671,12 +671,12 @@ package body GPS.Location_View is
       Remove_Duplicates  : Boolean;
       Sort_In_File       : Boolean;
       Look_For_Secondary : Boolean;
-      Parent_Iter        : in out Gtk_Tree_Iter)
+      Parent_Iter        : in out Gtk_Tree_Iter;
+      Category_Created   : out Boolean)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
       Iter, Iter2      : Gtk_Tree_Iter := Null_Iter;
-      Category_Created : Boolean;
       Dummy            : Boolean;
       pragma Unreferenced (Dummy);
 
@@ -703,6 +703,8 @@ package body GPS.Location_View is
 
    begin
       if not Is_Absolute_Path (File) then
+         Category_Created := False;
+
          return;
       end if;
 
@@ -1802,6 +1804,7 @@ package body GPS.Location_View is
       Filter_Iter       : Gtk_Tree_Iter;
       Appended          : Boolean;
       Path              : Gtk_Tree_Path;
+      Created           : Boolean;
 
    begin
       Child := Get_Or_Create_Location_View_MDI
@@ -1833,7 +1836,8 @@ package body GPS.Location_View is
             Remove_Duplicates  => False,
             Sort_In_File       => False,
             Parent_Iter        => Parent_Iter,
-            Look_For_Secondary => False);
+            Look_For_Secondary => False,
+            Category_Created   => Created);
 
          Sub := First (Loc.Children);
 

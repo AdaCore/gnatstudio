@@ -94,7 +94,8 @@ package GPS.Location_View is
       Remove_Duplicates  : Boolean;
       Sort_In_File       : Boolean;
       Look_For_Secondary : Boolean;
-      Parent_Iter        : in out Gtk_Tree_Iter);
+      Parent_Iter        : in out Gtk_Tree_Iter;
+      Category_Created   : out Boolean);
    --  Add a file locaton in Category (the name of the node in the location
    --  window).
    --  File is an absolute file name. If File is not currently open, do not

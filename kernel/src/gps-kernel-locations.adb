@@ -198,9 +198,10 @@ package body GPS.Kernel.Locations is
       Sort_In_File       : Boolean := False;
       Look_For_Secondary : Boolean := False)
    is
-      View : constant GPS.Location_View.Location_View :=
-               GPS.Location_View.Get_Or_Create_Location_View (Kernel);
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
+      View    : constant GPS.Location_View.Location_View :=
+                  GPS.Location_View.Get_Or_Create_Location_View (Kernel);
+      Iter    : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
+      Created : Boolean;
 
    begin
       if View /= null then
@@ -213,7 +214,8 @@ package body GPS.Kernel.Locations is
                Remove_Duplicates  => Remove_Duplicates,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
-               Look_For_Secondary => Look_For_Secondary);
+               Look_For_Secondary => Look_For_Secondary,
+               Category_Created   => Created);
 
          else
             GPS.Location_View.Add_Location
@@ -224,10 +226,12 @@ package body GPS.Kernel.Locations is
                Remove_Duplicates  => Remove_Duplicates,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
-               Look_For_Secondary => Look_For_Secondary);
+               Look_For_Secondary => Look_For_Secondary,
+               Category_Created   => Created);
          end if;
 
          if not Quiet
+           and then Created
            and then Auto_Jump_To_First.Get_Pref
          then
             Goto_Location (View);
@@ -388,6 +392,8 @@ package body GPS.Kernel.Locations is
       C             : GPS.Kernel.Styles.Style_Access;
       View          : GPS.Location_View.Location_View := null;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
+      Created       : Boolean := False;
+      Created_Aux   : Boolean;
 
       -----------------
       -- Get_Message --
@@ -479,7 +485,10 @@ package body GPS.Kernel.Locations is
                Remove_Duplicates  => Remove_Duplicates,
                Sort_In_File       => False,
                Parent_Iter        => Iter,
-               Look_For_Secondary => True);
+               Look_For_Secondary => True,
+               Category_Created   => Created_Aux);
+
+            Created := Created or Created_Aux;
          end if;
 
          Start := Real_Last + 1;
@@ -487,6 +496,7 @@ package body GPS.Kernel.Locations is
 
       if View /= null
         and then not Quiet
+        and then Created
         and then Auto_Jump_To_First.Get_Pref
       then
          Goto_Location (View);
