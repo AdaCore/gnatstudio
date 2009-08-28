@@ -150,6 +150,7 @@ Source Navigation
 * Support for Cross-References::
 * The Navigate Menu::
 * Contextual Menus for Source Navigation::
+* Navigating with hyperlinks::
 
 Project Handling
 * Description of the Projects::
@@ -3239,6 +3240,7 @@ particular useful for documentation
 * Support for Cross-References::
 * The Navigate Menu::
 * Contextual Menus for Source Navigation::
+* Navigating with hyperlinks::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -3672,6 +3674,22 @@ file. If the file name was followed by ":" and a line number, the
 corresponding line is activated.
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Navigating with hyperlinks
+@section Navigating with hyperlinks
+@cindex hyperlinks
+@c --------------------------------------------------------------------
+
+When the Control key is pressed, entities in the editors become hyper-links.
+
+Left-clicking on a reference to an entity will open a source editor on the
+declaration of this entity, and left-clicking on an entity declaration will
+open an editor on the implementation of this entity.
+
+Clicking with the middle button on either a reference to an entity or the
+declaration of an entity will jump directly to the implementation of this
+entity.
 
 @c --------------------------------------------------------------------
 @node Project Handling
