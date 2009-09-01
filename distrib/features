@@ -288,6 +288,14 @@ NF-44-HA03-015 Double-clicking in breakpoint window (2008-10-03)
   It is now possible to double-click in the list of breakpoints in
   the breakpoints editor window to jump to any of these locations.
 
+NF-44-HA02-006 Hyper-links in the editors (2009-09-01)
+
+  Pressing the ctrl key turns entities in the editors into hyperlinks:
+  clicking on an entity reference jumps to the declaration, and clicking on
+  a declaration jumps to the implementation.
+  Clicking with the middle button on a reference jumps directly to the
+  implementation.
+
 NF-44-H927-002 Speed up update VCS action (2008-10-29)
 
   It is now possible to disable status operation after an update.
