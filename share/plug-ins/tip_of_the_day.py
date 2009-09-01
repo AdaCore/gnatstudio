@@ -122,13 +122,12 @@ Did you know that you can drag-n-drop the Entity View
 (Tools->Views->Entities) to e.g. the left part of the main window, and it will
 automatically switch to a vertical display to fit the space available?
 
-Tip: Hyper mode
+Tip: Navigating with hyperlinks
 
-If you hold the <i>Ctrl</i> key in a source editor, GPS will enter the
-<i>Hyper Mode</i> where each source entity under the mouse becomes a hyperlink
-like in a web browser. Clicking on an underlined entity will go immediately to
-its declaration (or body if you use the middle button, or are already on a
-declaration). Give it a try!
+If you hold the <i>Ctrl</i> key in a source editor, each source entity under
+the mouse becomes a hyperlink like in a web browser. Clicking on an underlined
+entity will go immediately to its declaration (or body if you use the middle
+button, or are already on a declaration). Give it a try!
 
 Tip: Sorting in Outline View
 
