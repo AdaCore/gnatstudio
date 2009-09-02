@@ -40,6 +40,10 @@ def on_exit (process, status, remaining_output):
        (" Warning:"," Warning,"),
      category=spark_category)
 
+  # Take into account new files and directories created by the Examiner,
+  # in particular in the project view.
+  GPS.Project.recompute ()
+
 @with_save_excursion
 def examine_file (file):
   """Examine current file through the SPARK examiner. file is an instance
