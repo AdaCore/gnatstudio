@@ -1890,7 +1890,10 @@ package body Project_Explorers is
                N3 := Children (Explorer.Tree.Model, N);
                while N3 /= Null_Iter loop
                   Include
-                    (S_Files, Get_Base_Name (Explorer.Tree.Model, N3), N3);
+                    (S_Files,
+                     Full_Name
+                       (Get_Absolute_Name (Explorer.Tree.Model, N3)).all,
+                     N3);
                   Next (Explorer.Tree.Model, N3);
                end loop;
 
@@ -1946,7 +1949,6 @@ package body Project_Explorers is
          declare
             Dir : constant Virtual_File := Get_Parent (Files (F));
          begin
-
             D_Cursor := Find (S_Dirs, Dir);
 
             if D_Cursor = File_Node_Hash.No_Element then
@@ -1979,7 +1981,7 @@ package body Project_Explorers is
 
                else
                   --  Consider the directory as new, ie we need to keep it for
-                  --  the new representation of three
+                  --  the new representation of tree
                   N := Element (D_Cursor);
                   Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
                   Include (S_Dirs, Dir, N);
@@ -1991,7 +1993,7 @@ package body Project_Explorers is
             end if;
          end;
 
-         S_Cursor := Find (S_Files, Base_Name (Files (F)));
+         S_Cursor := Find (S_Files, Full_Name (Files (F)).all);
 
          if S_Cursor /= Filename_Node_Hash.No_Element then
             --  The file was already present in the tree, preserve it if it has
@@ -2113,13 +2115,8 @@ package body Project_Explorers is
       Prj       : constant Project_Type :=
                     Get_Project_From_Node
                       (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Files     : File_Array_Access := Files_In_Project;
       Expanded  : constant Boolean := Get_Expanded (Explorer.Tree, Node);
    begin
-      if Files = null then
-         Files := Get_Source_Files (Prj, Recursive => False);
-      end if;
-
       --  If the information about the node hasn't been computed before,
       --  then we don't need to do anything. This will be done when the
       --  node is actually expanded by the user.
@@ -2136,7 +2133,20 @@ package body Project_Explorers is
          then
             case Node_Type is
                when Project_Node | Modified_Project_Node =>
-                  Update_Project_Node (Explorer, Files.all, Node);
+                  declare
+                     Files : File_Array_Access := Files_In_Project;
+                  begin
+                     if Files = null then
+                        Files := Get_Source_Files (Prj, Recursive => False);
+                     end if;
+
+                     Update_Project_Node (Explorer, Files.all, Node);
+
+                     if Files_In_Project = null then
+                        Unchecked_Free (Files);
+                     end if;
+                  end;
+
                when others => null;
             end case;
 
@@ -2171,10 +2181,6 @@ package body Project_Explorers is
          end if;
 
          Set_Node_Type (Explorer.Tree.Model, Node, N_Type, Expanded);
-      end if;
-
-      if Files_In_Project = null then
-         Unchecked_Free (Files);
       end if;
 
       Thaw_Sort (Explorer.Tree.Model, Sort_Col);
