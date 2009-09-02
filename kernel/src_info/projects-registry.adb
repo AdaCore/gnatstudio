@@ -1183,22 +1183,29 @@ package body Projects.Registry is
       Root_If_Not_Found : Boolean := True)
       return Project_Type
    is
-      S : constant Source_File_Data :=
-            Get (Registry.Data.Sources, +Base_Name (Source_Filename));
-      P : Project_Type := S.Project;
+      Id   : Source_Id;
+      Path : Path_Name_Type;
+      Prj  : Project_Id;
    begin
-      --  Make sure the file we found has the same full name, since it might
-      --  match a file from the project that has the same base name, but not
-      --  belong to the project (FB03-003).
+      --  Lookup in the project's Source_Paths_HT, rather than in
+      --  Registry.Data.Sources, since the latter does not support duplicate
+      --  base names.
 
-      if S.File /= Source_Filename then
-         P := No_Project;
+      Path := Path_Name_Type
+        (Name_Id'(Get_String (+Full_Name (Source_Filename).all)));
+      Id := Source_Paths_Htable.Get
+        (Registry.Data.View_Tree.Source_Paths_HT, Path);
+
+      if Id = No_Source then
+         if Root_If_Not_Found then
+            return Registry.Data.Root;
+         else
+            return No_Project;
+         end if;
       end if;
 
-      if P = No_Project and then Root_If_Not_Found then
-         return Registry.Data.Root;
-      end if;
-      return P;
+      Prj := Id.Project;
+      return Get_Project_From_Name (Registry, Prj.Name);
    end Get_Project_From_File;
 
    ---------------------------
