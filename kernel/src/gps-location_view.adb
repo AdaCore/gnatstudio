@@ -701,17 +701,21 @@ package body GPS.Location_View is
            and then Get_File (View.Model, Iter) = File;
       end Matches_Location;
 
-      Highlight_Style : constant Style_Access :=
-        Get_Or_Create_Style_Copy
-          (View.Kernel,
-           Get_Name (Highlight_Category) & '/' & Category,
-           Highlight_Category);
+      Highlight_Style : Style_Access;
 
    begin
       if not Is_Absolute_Path (File) then
          Category_Created := False;
 
          return;
+      end if;
+
+      if Highlight_Category /= null then
+         Highlight_Style :=
+           Get_Or_Create_Style_Copy
+             (View.Kernel,
+              Get_Name (Highlight_Category) & '/' & Category,
+              Highlight_Category);
       end if;
 
       Get_Category_File
