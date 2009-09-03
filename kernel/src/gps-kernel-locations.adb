@@ -157,8 +157,8 @@ package body GPS.Kernel.Locations is
             Get_Buffer_Factory (Kernel)
               .Get (Filename, Open_View => False)
               .Apply_Style
-                (Style => Highlight_Category,
-                 Line  => Line,
+                (Style       => Highlight_Category,
+                 Line        => Line,
                  From_Column => Integer (Column),
                  To_Column   => Integer (Column) + Length);
 
