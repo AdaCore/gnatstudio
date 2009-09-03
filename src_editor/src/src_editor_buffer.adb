@@ -2748,6 +2748,13 @@ package body Src_Editor_Buffer is
          String_Color_Bg             => Strings_Style.Get_Pref_Bg,
          String_Font_Desc            => String_Font);
 
+      if B.Delimiter_Tag /= null then
+         Set_Property
+           (B.Delimiter_Tag,
+            Background_Gdk_Property,
+            Delimiter_Color.Get_Pref);
+      end if;
+
       --  Connect timeout, to handle automatic saving of buffer
 
       if B.Timeout_Registered then
