@@ -2236,7 +2236,9 @@ package body Src_Editor_Module.Shell is
            (Data, Get_View (Data, 1).Title (Short => Nth_Arg (Data, 2, True)));
 
       elsif Command = "goto" then
-         Get_View (Data, 1).Cursor_Goto (Get_Location (Data, 2));
+         Get_View (Data, 1).Cursor_Goto
+           (Get_Location (Data, 2),
+            Centering => Minimal);
 
       elsif Command = "cursor" then
          Set_Return_Value
