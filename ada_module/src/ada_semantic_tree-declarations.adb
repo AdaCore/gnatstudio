@@ -438,7 +438,6 @@ package body Ada_Semantic_Tree.Declarations is
 
          if Stack.Refs = 0 then
             Clear (Stack.Entities);
-            Free (Stack.Entities);
             Free (Stack);
          end if;
       end if;

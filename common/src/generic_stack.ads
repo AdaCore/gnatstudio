@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 generic
    type Generic_Type is private;
 package Generic_Stack is
@@ -34,9 +31,6 @@ package Generic_Stack is
 
    Stack_Empty : exception;
    --  Raised by the functions below when stack is empty.
-
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Stack_Record, Simple_Stack);
 
    procedure Push (Stack : in out Simple_Stack; Value : Generic_Type);
    --  Push Value on top of Stack.
@@ -56,7 +50,8 @@ package Generic_Stack is
    --  Raise Stack_Empty if Stack is empty.
 
    procedure Clear (Stack : in out Simple_Stack);
-   --  Clear the contents of stack.
+   --  Clear the contents of stack. This automatically frees memory for Stack
+   --  as well.
 
    function Is_Empty (Stack : Simple_Stack) return Boolean;
    --  Returns True if the stack is empty.

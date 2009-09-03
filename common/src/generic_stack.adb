@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2005                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 package body Generic_Stack is
+
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Stack_Record, Simple_Stack);
 
    -----------
    -- Clear --
@@ -27,11 +31,10 @@ package body Generic_Stack is
    procedure Clear (Stack : in out Simple_Stack) is
       P : Simple_Stack;
    begin
-      loop
-         exit when Stack = null;
+      while Stack /= null loop
          P := Stack;
          Stack := Stack.Next;
-         Free (P);
+         Unchecked_Free (P);
       end loop;
    end Clear;
 
@@ -57,7 +60,7 @@ package body Generic_Stack is
          Value := Stack.Val;
          P     := Stack;
          Stack := Stack.Next;
-         Free (P);
+         Unchecked_Free (P);
       end if;
    end Pop;
 
