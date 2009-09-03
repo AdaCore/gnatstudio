@@ -42,6 +42,7 @@ export VALGRIND=yes
 case $mode in
    leaks2)   args="--tool=memcheck --leak-check=full --gen-suppressions=all" ;;
    leaks)    args="--tool=memcheck --leak-check=full" ;;
+   leaks3)   args="--tool=memcheck --leak-check=full --show-reachable=yes" ;;
    memcheck) args="--tool=memcheck";;
    massif)   args="--tool=massif --depth=5 --format=html --alloc-fn=__gnat_malloc \
                    --alloc-fn=PyObject_Malloc --alloc-fn=g_malloc --alloc-fn=__gnat_realloc \
