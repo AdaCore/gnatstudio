@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Gdk;                    use Gdk;
@@ -402,13 +403,27 @@ package body GPS.Kernel.Styles is
       Name   : String;
       Create : Boolean := True) return Style_Access
    is
-      Style : Style_Access;
+      Separator : constant Natural := Index (Name, "/");
+      Style     : Style_Access;
+
    begin
       Style := Get (Style_Htable_Access (Kernel.Styles).Table, Name);
 
       if Style = null
         and then Create
       then
+         if Separator /= 0 then
+            --  Looking for base style first
+
+            Style :=
+              Get_Or_Create_Style
+                (Kernel, Name (Name'First .. Separator - 1), False);
+
+            if Style /= null then
+               return Get_Or_Create_Style_Copy (Kernel, Name, Style);
+            end if;
+         end if;
+
          Style := new Style_Record;
          Style.Name := new String'(Name);
          Set (Style_Htable_Access (Kernel.Styles).Table, Name, Style);
@@ -416,6 +431,30 @@ package body GPS.Kernel.Styles is
 
       return Style;
    end Get_Or_Create_Style;
+
+   ------------------------------
+   -- Get_Or_Create_Style_Copy --
+   ------------------------------
+
+   function Get_Or_Create_Style_Copy
+     (Kernel     : Kernel_Handle;
+      Name       : String;
+      From_Style : Style_Access) return Style_Access
+   is
+      Style : Style_Access :=
+        Get (Style_Htable_Access (Kernel.Styles).Table, Name);
+
+   begin
+      if Style = null then
+         Style := new Style_Record;
+         Style.Name := new String'(Name);
+         Set_Background (Style, Get_Background (From_Style));
+         Set_Foreground (Style, Get_Foreground (From_Style));
+         Set (Style_Htable_Access (Kernel.Styles).Table, Name, Style);
+      end if;
+
+      return Style;
+   end Get_Or_Create_Style_Copy;
 
    --------------------
    -- Set_Foreground --

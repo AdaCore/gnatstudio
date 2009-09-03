@@ -34,6 +34,7 @@ with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;  use GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;   use GPS.Editors.GtkAda;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
+with String_List_Utils;    use String_List_Utils;
 with Traces;               use Traces;
 
 package body GPS.Location_Model is
@@ -49,8 +50,11 @@ package body GPS.Location_Model is
    procedure Remove_Line
      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Model      : not null access Gtk_Tree_Model_Record'Class;
-      Loc_Iter   : Gtk_Tree_Iter);
-   --  Clear the marks and highlightings of one specific line
+      Loc_Iter   : Gtk_Tree_Iter;
+      Styles     : in out String_List.List);
+   --  Clear the marks and highlightings of one specific line.
+   --  I826-008: Add used style to the list of style, they are used outside
+   --  to do complete remove of all highlighted segments.
 
    procedure On_Destroy
      (Data   : System.Address;
@@ -680,6 +684,8 @@ package body GPS.Location_Model is
       Iter   : in out Gtk_Tree_Iter;
       Line   : Natural := 0)
    is
+      use String_List;
+
       File_Iter : Gtk_Tree_Iter;
       Parent    : Gtk_Tree_Iter;
       File_Path : Gtk_Tree_Path;
@@ -687,6 +693,8 @@ package body GPS.Location_Model is
 
       Removing_Category : Boolean := False;
       --  Indicates whether we are removing a whole category or just a file
+
+      Styles    : String_List.List;
 
    begin
       --  Unhighlight all the lines and remove all marks in children of the
@@ -720,7 +728,7 @@ package body GPS.Location_Model is
             while Loc_Iter /= Null_Iter loop
                if Model.Get_Int (Loc_Iter, Line_Column)
                  = Gint (Line) then
-                  Remove_Line (Kernel, Model, Loc_Iter);
+                  Remove_Line (Kernel, Model, Loc_Iter, Styles);
                   Model.Remove (Loc_Iter);
 
                else
@@ -730,10 +738,26 @@ package body GPS.Location_Model is
 
          else
             while Loc_Iter /= Null_Iter loop
-               Remove_Line (Kernel, Model, Loc_Iter);
+               Remove_Line (Kernel, Model, Loc_Iter, Styles);
                Model.Next (Loc_Iter);
             end loop;
          end if;
+
+         --  I826-008 workaround: remove all highlightings by used styles for
+         --  avoid occasionally highlighted segments.
+
+         while not Is_Empty (Styles) loop
+            Highlight_Line
+              (Kernel,
+               Get_File (Model, File_Iter),
+               0,
+               0,
+               0,
+               Get_Or_Create_Style
+                 (Kernel_Handle (Kernel), Head (Styles), False),
+               False);
+            Next (Styles, True);
+         end loop;
 
          if Line /= 0 then
             if Model.Children (File_Iter) = Null_Iter then
@@ -768,21 +792,29 @@ package body GPS.Location_Model is
    procedure Remove_Line
      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Model      : not null access Gtk_Tree_Model_Record'Class;
-      Loc_Iter   : Gtk_Tree_Iter)
+      Loc_Iter   : Gtk_Tree_Iter;
+      Styles     : in out String_List.List)
    is
       File_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                     Model.Parent (Loc_Iter);
       Mark      : constant Editor_Mark'Class :=
                     Get_Mark (Model, Loc_Iter, Mark_Column);
+      Style     : Style_Access;
 
    begin
+      Style := Get_Highlighting_Style (Model, Loc_Iter);
+
+      if Style /= null then
+         Add_Unique_Sorted (Styles, Get_Name (Style));
+      end if;
+
       Highlight_Line
         (Kernel,
          Get_File (Model, File_Iter),
          Mark.Line,
          Visible_Column_Type (Mark.Column),
          Integer (Get_Int (Model, Loc_Iter, Length_Column)),
-         Get_Highlighting_Style (Model, Loc_Iter),
+         Style,
          False);
 
       if Mark /= Nil_Editor_Mark then

@@ -85,6 +85,13 @@ package GPS.Kernel.Styles is
    --  Lookup the style Name.
    --  If it doesn't exist and Create = True, then create it.
 
+   function Get_Or_Create_Style_Copy
+     (Kernel     : Kernel_Handle;
+      Name       : String;
+      From_Style : Style_Access) return Style_Access;
+   --  Lookups the style Name. Creates new style as copy of Style when it
+   --  doesn't exists.
+
 private
 
    type Style_Record is new GPS.Editors.Simple_Style_Record with record

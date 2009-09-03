@@ -701,6 +701,12 @@ package body GPS.Location_View is
            and then Get_File (View.Model, Iter) = File;
       end Matches_Location;
 
+      Highlight_Style : constant Style_Access :=
+        Get_Or_Create_Style_Copy
+          (View.Kernel,
+           Get_Name (Highlight_Category) & '/' & Category,
+           Highlight_Category);
+
    begin
       if not Is_Absolute_Path (File) then
          Category_Created := False;
@@ -763,7 +769,7 @@ package body GPS.Location_View is
 
       if Highlight then
          Highlight_Line
-           (View.Kernel, File, Line, Column, Length, Highlight_Category);
+           (View.Kernel, File, Line, Column, Length, Highlight_Style);
       end if;
 
       --  Look for secondary file information and loop on information found
@@ -820,7 +826,7 @@ package body GPS.Location_View is
                   File, Message,
                   Create_Mark (View.Kernel, File, Line, Column),
                   Line, Column, Length, Highlight,
-                  Highlight_Category);
+                  Highlight_Style);
 
                Potential_Parent := Iter;
             else
@@ -856,7 +862,7 @@ package body GPS.Location_View is
                  (View.Model, Iter, " ", Loc.File, Loc.Message.all,
                   Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column),
                   Loc.Line, Loc.Column, Length,
-                  Highlight, Highlight_Category);
+                  Highlight, Highlight_Style);
 
                Node := Next (Node);
             end loop;
@@ -878,7 +884,7 @@ package body GPS.Location_View is
                File, Message,
                Create_Mark (View.Kernel, File, Line, Column),
                Line, Column, Length, Highlight,
-               Highlight_Category);
+               Highlight_Style);
 
             Parent_Iter := Iter;
          end if;
