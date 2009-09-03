@@ -22,6 +22,7 @@ with GNAT.Regpat;
 with Glib.Convert;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -154,27 +155,29 @@ package body GPS.Kernel.Locations is
 
       if Highlight then
          if Length /= 0 then
-            Get_Buffer_Factory (Kernel)
-              .Get (Filename, Open_View => False)
-              .Apply_Style
-                (Style       => Highlight_Category,
-                 Line        => Line,
-                 From_Column => Integer (Column),
-                 To_Column   => Integer (Column) + Length);
+            Apply_Style
+              (Get (Get_Buffer_Factory (Kernel).all,
+                    Filename, Open_View => False),
+               Style       => Highlight_Category,
+               Line        => Line,
+               From_Column => Integer (Column),
+               To_Column   => Integer (Column) + Length);
 
          else
-            Get_Buffer_Factory (Kernel)
-              .Get (Filename, Open_View => False)
-              .Apply_Style (Style => Highlight_Category, Line  => Line);
+            Apply_Style
+              (Get (Get_Buffer_Factory (Kernel).all,
+                    Filename, Open_View => False),
+               Style => Highlight_Category, Line => Line);
          end if;
 
       else
-         Get_Buffer_Factory (Kernel)
-           .Get (Filename, Open_View => False)
-           .Remove_Style (Style       => Highlight_Category,
-                          Line        => Line,
-                          From_Column => Integer (Column),
-                          To_Column   => Integer (Column) + Length);
+         Remove_Style
+           (Get (Get_Buffer_Factory (Kernel).all,
+                 Filename, Open_View => False),
+            Style       => Highlight_Category,
+            Line        => Line,
+            From_Column => Integer (Column),
+            To_Column   => Integer (Column) + Length);
       end if;
    end Highlight_Line;
 
