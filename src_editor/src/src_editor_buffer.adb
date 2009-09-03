@@ -1428,6 +1428,7 @@ package body Src_Editor_Buffer is
       Unref (Buffer.Delimiter_Tag);
       Unref (Buffer.Non_Editable_Tag);
       Unref (Buffer.Syntax_Tags);
+      Unref (Buffer.Hyper_Mode_Tag);
 
       Reset_Completion_Data;
    end Buffer_Destroy;
