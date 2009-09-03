@@ -476,7 +476,7 @@ package body GPS.Main_Window is
       end case;
 
       if Pref_Show_Statusbar.Get_Pref then
-         Show_All (Win.Statusbar);
+         Show (Win.Statusbar);
          Set_Child_Visible (Win.Statusbar, True);
          Set_Size_Request (Win.Statusbar, 0, -1);
       else
