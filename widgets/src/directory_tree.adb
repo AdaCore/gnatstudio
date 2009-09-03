@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
-
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -409,6 +408,7 @@ package body Directory_Tree is
             Parent := Get_Iter_First (Tree.File_Model);
          end if;
       end if;
+
       Iter := Parent;
 
       while Iter /= Null_Iter loop
@@ -1172,6 +1172,10 @@ package body Directory_Tree is
 
                      Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
+                     if D.Explorer.Path /= null then
+                        Path_Free (D.Explorer.Path);
+                     end if;
+
                      D.Explorer.Path := Get_Path (D.Explorer.File_Model, Iter);
 
                      File_Append_Directory
@@ -1205,6 +1209,7 @@ package body Directory_Tree is
                     GObject (Close_Pixbufs (Directory_Node)));
             end if;
 
+            --  Frees first element in the list
             Next (D.Dirs);
          end;
       end loop;
@@ -1413,8 +1418,13 @@ package body Directory_Tree is
       pragma Unreferenced (Params);
       E : constant Dir_Tree := Dir_Tree (Explorer);
    begin
-      Clear (E.File_Model);
+      if E.Path /= null then
+         Path_Free (E.Path);
+      end if;
+
       File_Remove_Idle_Calls (E);
+
+      Clear (E.File_Model);
    end On_File_Destroy;
 
    -------------------------------
@@ -1635,8 +1645,9 @@ package body Directory_Tree is
                        Get_Logical_Drives (Dir.Get_Host);
 
    begin
-      Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
+
+      Clear (Explorer.File_Model);
 
       if Drives'Length = 0 then
          File_Append_Directory

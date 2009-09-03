@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -103,7 +102,7 @@ package Generic_List is
       Reversed  : Boolean := False);
    --  Free memory associated to L.
    --  If Free_Data is true, then the data associated with each node is also
-   --  freed through a called to the formal parameter Free.
+   --  freed through a call to the formal parameter Free.
    --  If Reversed is True, Free the items in reverse order (from last to
    --  first). Otherwise, free from First to Last.
 

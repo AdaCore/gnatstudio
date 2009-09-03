@@ -1406,6 +1406,9 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
               File_Selector_Window_Access (Get_Toplevel (Object));
    begin
+      Clear (Win.Past_History);
+      Clear (Win.Future_History);
+
       Free (Win.Files);
       Free (Win.Filters);
 
