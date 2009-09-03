@@ -102,7 +102,7 @@ package GPS.Editors is
    ------------
    --  See description for Editor_Overlay
 
-   type Simple_Style_Record is tagged private;
+   type Simple_Style_Record is tagged limited private;
    type Simple_Style_Access is access all Simple_Style_Record'Class;
    pragma No_Strict_Aliasing (Simple_Style_Access);
 
@@ -728,7 +728,7 @@ private
    Empty_Line_Information : constant Line_Information_Record :=
                               (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
 
-   type Simple_Style_Record is tagged record
+   type Simple_Style_Record is tagged limited record
       Foreground : GNAT.Strings.String_Access;
       Background : GNAT.Strings.String_Access;
       Speedbar   : Boolean := False;
