@@ -137,10 +137,10 @@ package Src_Editor_Module is
 
    function Autosaved_File
      (File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
-   --  Return the autosaved file corresponding to File.
+   --  Return the autosaved file corresponding to File
 
    function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean;
-   --  Return True if File is an autosave file.
+   --  Return True if File is an autosave file
 
    --------------------------------
    -- Data common to all editors --
@@ -179,9 +179,9 @@ package Src_Editor_Module is
       Pattern_String : GNAT.Strings.String_Access;
       Pattern        : Pattern_Matcher_Access;
       Paren_Count    : Natural := 0;
-      Action    : Subprogram_Type;
-      Alternate : Subprogram_Type;
-      Index     : Integer;
+      Action         : Subprogram_Type;
+      Alternate      : Subprogram_Type;
+      Index          : Integer;
    end record;
 
    Null_Highlighter : constant Highlighter_Record :=
@@ -239,7 +239,7 @@ private
    -----------
 
    procedure Do_Nothing (X : in out Location_Marker) is null;
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    package Marker_List is new Generic_List (Location_Marker, Do_Nothing);
 
@@ -279,7 +279,7 @@ private
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
-   --  Hook called when the "source_lines_revealed" hook is run.
+   --  Hook called when the "source_lines_revealed" hook is run
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Lines_Hook            : Lines_Revealed_Hook;
@@ -293,14 +293,14 @@ private
       Next_Mark_Id          : Natural := 0;
 
       Categories            : Highlighting_Category_Array_Access;
-      --  Contains a list of registered categories.
+      --  Contains a list of registered categories
 
       Blank_Lines_GC        : Gdk.GC.Gdk_GC := null;
       Post_It_Note_GC       : Gdk.GC.Gdk_GC := null;
 
       Editors               : Editors_Hash.Instance;
 
-      --  The following fields are related to the current search.
+      --  The following fields are related to the current search
 
       Search_Context        : Src_Contexts.Files_Project_Context_Access;
       Search_File           : GNATCOLL.VFS.Virtual_File;

@@ -23,7 +23,6 @@ with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with GNAT.Strings;
 
 with Glib.Convert;              use Glib.Convert;
@@ -2316,13 +2315,17 @@ package body Src_Editor_Module.Shell is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel            : constant Kernel_Handle := Get_Kernel (Data);
-      EditorHighlighter : constant Class_Type := New_Class
-        (Kernel, "EditorHighlighter");
-      H : Highlighter_Record;
+      EditorHighlighter : constant Class_Type :=
+                            New_Class (Kernel, "EditorHighlighter");
+      H                 : Highlighter_Record;
 
       function Get_Data
         (Data : Callback_Data'Class; N : Positive) return Highlighter_Record;
       --  Retrieve an instance from a class
+
+      --------------
+      -- Get_Data --
+      --------------
 
       function Get_Data
         (Data : Callback_Data'Class; N : Positive) return Highlighter_Record is
@@ -2373,7 +2376,7 @@ package body Src_Editor_Module.Shell is
             end;
 
             --  ??? Verify that no pattern matcher with the same string has
-            --  been registered
+            --  been registered.
 
             H.Pattern_String := new String'(Pattern);
             H.Paren_Count := Paren_Count (H.Pattern.all);

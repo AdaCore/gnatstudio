@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2009, AdaCore                        --
+--                    Copyright (C) 2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,19 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;     use GNAT.Regpat;
+with GNAT.Regpat;       use GNAT.Regpat;
 
-with Gtk.Text_Mark;   use Gtk.Text_Mark;
+with Gtk.Text_Mark;     use Gtk.Text_Mark;
 
-with Entities;         use Entities;
-with Entities.Queries; use Entities.Queries;
-
-with GPS.Kernel;       use GPS.Kernel;
-
-with GUI_Utils;        use GUI_Utils;
-with Src_Editor_Box;   use Src_Editor_Box;
-with Language;         use Language;
-
+with Entities;          use Entities;
+with Entities.Queries;  use Entities.Queries;
+with GPS.Kernel;        use GPS.Kernel;
+with GUI_Utils;         use GUI_Utils;
+with Src_Editor_Box;    use Src_Editor_Box;
+with Language;          use Language;
 with Src_Editor_Module; use Src_Editor_Module;
 
 package body Src_Editor_Buffer.Hyper_Mode is
@@ -51,12 +48,14 @@ package body Src_Editor_Buffer.Hyper_Mode is
       L : List_Of_Highlighters.List;
    begin
       --  Remove the previous highlight
+
       Remove_Highlight (Buffer);
 
       L := Get_Highlighters;
 
       --  If we have registered custom highlighters, try to apply them in
-      --  priority
+      --  priority.
+
       if not L.Is_Empty then
          --  Get the line
 
@@ -138,6 +137,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       --  If we did not find a highlighter in the custom highlighters, display
       --  hyperlinks on entities.
+
       if not Found_Highlighter then
          --  Get the current word / entity
 
@@ -156,6 +156,10 @@ package body Src_Editor_Buffer.Hyper_Mode is
             --  Auxiliary parsing function
 
             Highlight : Boolean := False;
+
+            --------------
+            -- Callback --
+            --------------
 
             function Callback
               (Entity         : Language_Entity;
@@ -302,6 +306,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
       case Status is
          when Entity_Not_Found | Internal_Error =>
             return;
+
          when Fuzzy_Match
             | Success
             | No_Body_Entity_Found

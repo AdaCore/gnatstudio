@@ -3753,8 +3753,8 @@ package body Src_Editor_Module is
    ----------------------------
 
    procedure Unregister_Highlighter (Highlighter : Highlighter_Record) is
-      Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+      Id     : constant Source_Editor_Module :=
+                 Source_Editor_Module (Src_Editor_Module_Id);
       Cursor : List_Of_Highlighters.Cursor;
       use List_Of_Highlighters;
    begin
