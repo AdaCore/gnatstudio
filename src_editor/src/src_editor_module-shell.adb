@@ -25,7 +25,6 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with GNAT.Strings;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -117,6 +116,10 @@ package body Src_Editor_Module.Shell is
    Title_Cst             : aliased constant String := "title";
    Short_Cst             : aliased constant String := "short";
 
+   Action_Cst            : aliased constant String := "action";
+   Secondary_Action_Cst  : aliased constant String := "secondary_action";
+   Index_Cst             : aliased constant String := "index";
+
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
@@ -159,6 +162,17 @@ package body Src_Editor_Module.Shell is
      (1 => File_Cst'Access,
       2 => Title_Cst'Access,
       3 => Filename_Cst'Access);
+
+   Highlighter_Constructor_Args : constant Cst_Argument_List :=
+     (Pattern_Cst'Access,
+      Action_Cst'Access,
+      Index_Cst'Access,
+      Secondary_Action_Cst'Access);
+
+   type Highlighter_Property is new Instance_Property_Record with record
+      Highlighter : Highlighter_Record;
+   end record;
+   type Highlighter_Property_Access is access all Highlighter_Property;
 
    type Child_Triplet is array (1 .. 3) of Gtkada.MDI.MDI_Child;
    type Child_Triplet_Access is access Child_Triplet;
@@ -274,6 +288,10 @@ package body Src_Editor_Module.Shell is
      (Data   : Callback_Data'Class;
       Arg    : Positive) return Editor_View'Class;
    --  Return the view stored in Data
+
+   procedure Hyper_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands related to hyper mode
 
    --------------
    -- Get_View --
@@ -2288,6 +2306,100 @@ package body Src_Editor_Module.Shell is
       end if;
    end Overlay_Cmds;
 
+   ---------------------------
+   -- Hyper_Command_Handler --
+   ---------------------------
+
+   procedure Hyper_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel            : constant Kernel_Handle := Get_Kernel (Data);
+      EditorHighlighter : constant Class_Type := New_Class
+        (Kernel, "EditorHighlighter");
+      H : Highlighter_Record;
+
+      function Get_Data
+        (Data : Callback_Data'Class; N : Positive) return Highlighter_Record;
+      --  Retrieve an instance from a class
+
+      function Get_Data
+        (Data : Callback_Data'Class; N : Positive) return Highlighter_Record is
+         Inst : constant Class_Instance :=
+                  Nth_Arg (Data, N, EditorHighlighter);
+      begin
+         return Highlighter_Property_Access
+           (Instance_Property'
+              (Get_Data (Inst, "EditorHighlighter"))).Highlighter;
+      end Get_Data;
+
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Highlighter_Constructor_Args);
+
+         declare
+            Inst    : constant Class_Instance :=
+                        Nth_Arg (Data, 1, EditorHighlighter);
+            Pattern : constant String := Nth_Arg (Data, 2);
+            Action  : constant Subprogram_Type := Nth_Arg (Data, 3);
+            Index   : constant Integer := Nth_Arg (Data, 4, 0);
+            Altern  : constant Subprogram_Type := Nth_Arg (Data, 5, null);
+         begin
+            if Action = null then
+               Set_Error_Msg
+                 (Data,
+                  -"Could not find action """ & Nth_Arg (Data, 3) & """");
+               return;
+            end if;
+
+            if Pattern = "" then
+               Set_Error_Msg
+                 (Data,
+                  -"Cannot register a highlighter for an empty pattern");
+               return;
+            end if;
+
+            declare
+            begin
+               H.Pattern := new Pattern_Matcher'(Compile (Pattern));
+            exception
+               when Expression_Error =>
+                  Set_Error_Msg
+                    (Data,
+                     -"Cannot register highlighter: invalid pattern "
+                     & Pattern);
+                  return;
+            end;
+
+            --  ??? Verify that no pattern matcher with the same string has
+            --  been registered
+
+            H.Pattern_String := new String'(Pattern);
+            H.Paren_Count := Paren_Count (H.Pattern.all);
+            H.Index := Index;
+            H.Action := Action;
+            H.Alternate := Altern;
+
+            Set_Data
+              (Inst, "EditorHighlighter",
+               Highlighter_Property'(Highlighter => H));
+
+            Register_Highlighter (H);
+         end;
+
+      elsif Command = "remove" then
+         if Kernel.In_Hyper_Mode then
+            Set_Error_Msg
+              (Data,
+               -"Cannot remove a highlighter while the hyper mode is enabled");
+            return;
+         end if;
+
+         H := Get_Data (Data, 1);
+
+         Unregister_Highlighter (H);
+      end if;
+   end Hyper_Command_Handler;
+
    -----------------------
    -- Register_Commands --
    -----------------------
@@ -2305,6 +2417,9 @@ package body Src_Editor_Module.Shell is
                          (Kernel, "EditorView", Get_GUI_Class (Kernel));
       EditorOverlay : constant Class_Type :=
                         New_Class (Kernel, "EditorOverlay");
+
+      EditorHighlighter : constant Class_Type := New_Class
+        (Kernel, "EditorHighlighter");
    begin
       --  EditorOverlay
 
@@ -2678,6 +2793,20 @@ package body Src_Editor_Module.Shell is
 
       --  Register the debug commands
       Src_Editor_Buffer.Debug.Register (Kernel);
+
+      --  Register the commands related to hyper mode
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Handler      => Hyper_Command_Handler'Access,
+         Class        => EditorHighlighter);
+
+      Register_Command
+        (Kernel, "remove",
+         Handler      => Hyper_Command_Handler'Access,
+         Class        => EditorHighlighter);
    end Register_Commands;
 
 end Src_Editor_Module.Shell;

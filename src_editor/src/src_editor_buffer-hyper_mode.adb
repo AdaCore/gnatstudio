@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Regpat;     use GNAT.Regpat;
+
 with Gtk.Text_Mark;   use Gtk.Text_Mark;
 
 with Entities;         use Entities;
@@ -27,6 +29,8 @@ with GPS.Kernel;       use GPS.Kernel;
 with GUI_Utils;        use GUI_Utils;
 with Src_Editor_Box;   use Src_Editor_Box;
 with Language;         use Language;
+
+with Src_Editor_Module; use Src_Editor_Module;
 
 package body Src_Editor_Buffer.Hyper_Mode is
 
@@ -39,39 +43,129 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Iter   : Gtk_Text_Iter)
    is
       Entity_Start, Entity_End : Gtk_Text_Iter;
+      Line_Start, Line_End     : Gtk_Text_Iter;
+      use List_Of_Highlighters;
+
+      Found_Highlighter        : Boolean := False;
+      Result                   : Boolean;
+      L : List_Of_Highlighters.List;
    begin
       --  Remove the previous highlight
       Remove_Highlight (Buffer);
 
-      --  Get the current word / entity
+      L := Get_Highlighters;
 
-      --  ??? if we need to support special regexps, add support here
+      --  If we have registered custom highlighters, try to apply them in
+      --  priority
+      if not L.Is_Empty then
+         --  Get the line
 
-      Copy (Iter, Entity_Start);
+         Copy (Iter, Line_Start);
+         Copy (Iter, Line_End);
 
-      Search_Entity_Bounds (Entity_Start, Entity_End);
+         Set_Line_Offset (Line_Start, 0);
+         Forward_To_Line_End (Line_End, Result);
 
-      declare
-         Slice : constant String := Get_Slice (Entity_Start, Entity_End);
+         if Result then
+            declare
+               C           : List_Of_Highlighters.Cursor;
+               Highlighter : Highlighter_Record;
+               Line        : constant String := Get_Slice
+                 (Line_Start, Line_End);
+               First       : Integer := Line'First;
+               Iter_Is_At  : constant Integer := Integer
+                 (Get_Offset (Iter) - Get_Offset (Line_Start)) + First;
+            begin
+               C := L.First;
 
-         function Callback
-           (Entity         : Language_Entity;
-            Sloc_Start     : Source_Location;
-            Sloc_End       : Source_Location;
-            Partial_Entity : Boolean) return Boolean;
-         --  Auxiliary parsing function
+               while Has_Element (C)
+                 and then not Found_Highlighter
+               loop
+                  Highlighter := List_Of_Highlighters.Element (C);
 
-         Highlight : Boolean := False;
+                  Subloop :
+                  while First < Line'Last loop
+                     --  Attempt to match this highlighter against the line
+                     declare
+                        Matches : Match_Array (0 .. Highlighter.Paren_Count);
+                     begin
+                        Match
+                          (Highlighter.Pattern.all,
+                           Line,
+                           Matches,
+                           First);
 
-         function Callback
-           (Entity         : Language_Entity;
-            Sloc_Start     : Source_Location;
-            Sloc_End       : Source_Location;
-            Partial_Entity : Boolean) return Boolean
-         is
-            pragma Unreferenced (Sloc_Start, Sloc_End, Partial_Entity);
-         begin
-            case Entity is
+                        exit Subloop when Matches (0) = No_Match;
+
+                        First := Matches (0).Last;
+
+                        if Matches (Highlighter.Index).First <= Iter_Is_At
+                          and then
+                            Matches (Highlighter.Index).Last >= Iter_Is_At
+                        then
+                           --  We have a match, and the iter is within the
+                           --  proper parenthesis: we have found a valid match!
+
+                           Buffer.Hyper_Mode_Current_Action :=
+                             Highlighter.Action;
+                           Buffer.Hyper_Mode_Current_Alternate :=
+                             Highlighter.Alternate;
+                           Found_Highlighter := True;
+
+                           Copy (Iter, Entity_Start);
+                           Copy (Iter, Entity_End);
+
+                           Set_Offset
+                             (Entity_Start,
+                              Get_Offset (Iter) -
+                                Gint (Iter_Is_At -
+                                    Matches (Highlighter.Index).First));
+
+                           Set_Offset
+                             (Entity_End,
+                              Get_Offset (Iter) +
+                                Gint (Matches (Highlighter.Index).Last -
+                                    Iter_Is_At + 1));
+                        end if;
+                     end;
+                  end loop Subloop;
+
+                  C := Next (C);
+               end loop;
+            end;
+         end if;
+      end if;
+
+      --  If we did not find a highlighter in the custom highlighters, display
+      --  hyperlinks on entities.
+      if not Found_Highlighter then
+         --  Get the current word / entity
+
+         Copy (Iter, Entity_Start);
+
+         Search_Entity_Bounds (Entity_Start, Entity_End);
+
+         declare
+            Slice : constant String := Get_Slice (Entity_Start, Entity_End);
+
+            function Callback
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean;
+            --  Auxiliary parsing function
+
+            Highlight : Boolean := False;
+
+            function Callback
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean
+            is
+               pragma Unreferenced (Sloc_Start, Sloc_End, Partial_Entity);
+            begin
+               case Entity is
                when Normal_Text
                   | Identifier_Text
                   | Partial_Identifier_Text
@@ -83,19 +177,23 @@ package body Src_Editor_Buffer.Hyper_Mode is
                   | Character_Text
                   | String_Text
                   => Highlight := False;
-            end case;
-            return True;
-         end Callback;
+               end case;
+               return True;
+            end Callback;
 
-      begin
-         Parse_Entities (Lang     => Buffer.Lang,
-                         Buffer   => Slice,
-                         Callback => Callback'Unrestricted_Access);
+         begin
+            Parse_Entities (Lang     => Buffer.Lang,
+                            Buffer   => Slice,
+                            Callback => Callback'Unrestricted_Access);
 
-         if not Highlight then
-            return;
-         end if;
-      end;
+            if not Highlight then
+               return;
+            end if;
+         end;
+      end if;
+
+      --  At this point, Entity_Start and Entity_End should be set to the
+      --  bounds of the region to highlight
 
       if Buffer.Hyper_Mode_Highlight_Begin = null then
          Buffer.Hyper_Mode_Highlight_Begin :=
@@ -138,6 +236,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Current        : File_Location;
 
       use type GNATCOLL.VFS.Virtual_File;
+      use List_Of_Highlighters;
+
    begin
       if not Buffer.Hyper_Mode_Has_Highlight then
          --  If we are not highlighting anything, clicking should do nothing
@@ -148,6 +248,41 @@ package body Src_Editor_Buffer.Hyper_Mode is
         (Buffer, Entity_Start, Buffer.Hyper_Mode_Highlight_Begin);
       Get_Iter_At_Mark
         (Buffer, Entity_End, Buffer.Hyper_Mode_Highlight_End);
+
+      --  First, check whether we are reacting to a custom highlighter
+      if Buffer.Hyper_Mode_Current_Action /= null then
+         declare
+            The_Action : Subprogram_Type;
+            Text       : constant String := Get_Slice
+              (Entity_Start, Entity_End);
+         begin
+            if Alternate then
+               The_Action := Buffer.Hyper_Mode_Current_Alternate;
+            else
+               The_Action := Buffer.Hyper_Mode_Current_Action;
+            end if;
+
+            if The_Action = null then
+               return;
+            end if;
+
+            declare
+               C   : Callback_Data'Class :=
+                       Create (Get_Script (The_Action.all),
+                               Arguments_Count => 1);
+               Dummy : Boolean;
+               pragma Unreferenced (Dummy);
+            begin
+               Set_Nth_Arg (C, 1, Text);
+               Dummy := Execute (The_Action, C);
+               Free (C);
+            end;
+         end;
+
+         return;
+      end if;
+
+      --  Fallback on jumping to entity spec/implementation
 
       Get_Iter_Position (Buffer, Entity_Start, Line, Column);
 
@@ -231,6 +366,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
       end if;
 
       Buffer.Hyper_Mode_Has_Highlight := False;
+      Buffer.Hyper_Mode_Current_Action := null;
+      Buffer.Hyper_Mode_Current_Alternate := null;
    end Remove_Highlight;
 
    ----------------------

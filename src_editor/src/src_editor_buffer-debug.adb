@@ -25,7 +25,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Glib.Object; use Glib.Object;
 with Gdk.Pixbuf;  use Gdk.Pixbuf;
 
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
 with GPS.Kernel;         use GPS.Kernel;

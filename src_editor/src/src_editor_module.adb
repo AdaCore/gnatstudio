@@ -3737,4 +3737,57 @@ package body Src_Editor_Module is
       return Get_Command_Queue (Get_Buffer (Box));
    end Get_Command_Queue;
 
+   --------------------------
+   -- Register_Highlighter --
+   --------------------------
+
+   procedure Register_Highlighter (Highlighter : Highlighter_Record) is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Id.Highlighters.Append (Highlighter);
+   end Register_Highlighter;
+
+   ----------------------------
+   -- Unregister_Highlighter --
+   ----------------------------
+
+   procedure Unregister_Highlighter (Highlighter : Highlighter_Record) is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+      Cursor : List_Of_Highlighters.Cursor;
+      use List_Of_Highlighters;
+   begin
+      Cursor := Id.Highlighters.First;
+
+      while Has_Element (Cursor) loop
+         if List_Of_Highlighters.Element (Cursor).Pattern_String.all =
+           Highlighter.Pattern_String.all
+         then
+            declare
+               H : Highlighter_Record;
+            begin
+               H := List_Of_Highlighters.Element (Cursor);
+               Free (H.Pattern_String);
+            end;
+
+            Id.Highlighters.Delete (Cursor);
+            return;
+         end if;
+
+         Cursor := Next (Cursor);
+      end loop;
+   end Unregister_Highlighter;
+
+   ----------------------
+   -- Get_Highlighters --
+   ----------------------
+
+   function Get_Highlighters return List_Of_Highlighters.List is
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      return Id.Highlighters;
+   end Get_Highlighters;
+
 end Src_Editor_Module;

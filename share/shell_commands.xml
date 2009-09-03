@@ -6013,4 +6013,65 @@ The package gps_utils.py provides a somewhat more convenient python interface to
        <return>A string</return>
        <description>Return the status of the task</description>
   </shell_doc>
+
+
+  <!--#################################################################
+      ## EditorHighlighter class
+      #################################################################-->
+
+  <shell_doc name="GPS.EditorHighlighter">
+     <description>This class can be used to transform source editor text into
+     hyperlinks when the Control key is pressed.
+     Two actions can then be associated with this hyperlink: clicking with
+     the left mouse button on the hyperlink triggers the primary action, and
+     clicking with the middle mouse button on the hyperlink triggers the
+     alternate action.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorHighlighter.__init__">
+     <param name="self">An instance of EditorHighlighter</param>
+     <param name="pattern">A regular expression representing the patterns on
+     which we want to create hyperlinks.</param>
+     <param name="action">The primary action for this hyperlink</param>
+     <param name="index" default="0">This indicate the number of the
+     parenthesized group in pattern that needs to be highlighted.</param>
+     <param name="secondary_action" default="null">The alternate action for this hyperlink</param>
+
+     <description>Register a highlighter. The action is a Python function that
+     takes a string as a parameter: the string being passed is the section of
+     text which is highlighted.
+     </description>
+
+     <example lang="python">http://www.google.com
+     # Define an action
+     def view_html(url):
+         GPS.HTML.browse (url)
+
+     def wget_url(url):
+         def on_exit_cb(self, code, output):
+             GPS.Editor.edit (GPS.dump (output))
+         p=GPS.Process("wget %s -O -" % url, on_exit=on_exit_cb)
+
+     # Register a highlighter to launch a browser on any URL
+     #  left-clicking on an URL will open the default browser to this URL
+     #  middle-clicking will call "wget" to get the source of this URL and
+     #    open the output in a new editor
+
+     h=GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html, 0, wget_url)
+
+     # Remove the highlighter
+     h.remove()
+
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorHighlighter.remove">
+     <param name="self">An instance of EditorHighlighter</param>
+     <description>Unregister the highlighter. This cannot be called while the
+      hyper-mode is active.
+     </description>
+  </shell_doc>
+
+
 </docs>

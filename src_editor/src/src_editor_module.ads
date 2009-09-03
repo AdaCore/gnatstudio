@@ -17,8 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
+
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
+with GNAT.Regpat; use GNAT.Regpat;
 
 with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
@@ -42,6 +45,7 @@ with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 
 with Basic_Types;        use Basic_Types;
 with Src_Editor_Buffer;  use Src_Editor_Buffer;
@@ -162,6 +166,43 @@ package Src_Editor_Module is
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
 
+   ------------------
+   -- Highlighters --
+   ------------------
+
+   --  A highlighter is the association of a regular expression with actions,
+   --  which allows specifying custom hyperlinks in hyper mode.
+
+   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
+
+   type Highlighter_Record is record
+      Pattern_String : GNAT.Strings.String_Access;
+      Pattern        : Pattern_Matcher_Access;
+      Paren_Count    : Natural := 0;
+      Action    : Subprogram_Type;
+      Alternate : Subprogram_Type;
+      Index     : Integer;
+   end record;
+
+   Null_Highlighter : constant Highlighter_Record :=
+                        (null, null, 0, null, null, 0);
+
+   package List_Of_Highlighters is new Ada.Containers.Doubly_Linked_Lists
+     (Highlighter_Record);
+
+   ----------------
+   -- Hyper_Mode --
+   ----------------
+
+   procedure Register_Highlighter (Highlighter : Highlighter_Record);
+   --  Register a highlighter in the source editor module
+
+   procedure Unregister_Highlighter (Highlighter : Highlighter_Record);
+   --  Unregister a highlighter
+
+   function Get_Highlighters return List_Of_Highlighters.List;
+   --  Return the list of registered highlighters
+
 private
 
    ------------------------
@@ -264,6 +305,10 @@ private
       Search_Context        : Src_Contexts.Files_Project_Context_Access;
       Search_File           : GNATCOLL.VFS.Virtual_File;
       Search_Pattern        : GNAT.Strings.String_Access;
+
+      --  The following fields are related to hyper mode
+
+      Highlighters          : List_Of_Highlighters.List;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

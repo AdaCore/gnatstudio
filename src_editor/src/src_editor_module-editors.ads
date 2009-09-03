@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GPS.Editors;      use GPS.Editors;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package Src_Editor_Module.Editors is
 

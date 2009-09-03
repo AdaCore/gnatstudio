@@ -328,6 +328,11 @@ NF-44-H223-004 Auto fixes for "missing string quote" (2009-02-24)
   An auto-fix is now offered for message like "missing string quote", adding
   the missing quote.
 
+NF-44-GC11-019 Custom hyperlinks in source editors (2009-09-03)
+
+  It is now possible in GPS to create hyperlinks in the editor, through Python
+  customization.
+
 NF-44-GB03-007 Export debugger data window to png (2008-10-01)
 
   The debugger Data window can now be exported to png like all

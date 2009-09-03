@@ -32,6 +32,7 @@ with System;
 with GNAT.Strings;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Gdk.GC;                    use Gdk.GC;
 with Glib;                      use Glib;
@@ -1442,6 +1443,12 @@ private
 
       Hyper_Mode_Has_Highlight              : Boolean := False;
       --  Whether Hyper Mode is currently highlighting a section of the text
+
+      Hyper_Mode_Current_Action             : Subprogram_Type := null;
+      --  Indicates the current primary action for the highlighted text
+
+      Hyper_Mode_Current_Alternate          : Subprogram_Type := null;
+      --  Indicates the current alternate action for the highlighted text
 
       Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
       Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
