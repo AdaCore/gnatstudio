@@ -968,6 +968,7 @@ package body GPS.Kernel.Modules is
       Item        : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
+      List        : Gtk.Widget.Widget_List.Glist;
 
    begin
       Run_Hook (Kernel, Contextual_Menu_Open_Hook);
@@ -1041,10 +1042,13 @@ package body GPS.Kernel.Modules is
 
       --  If the menu is empty, destroy it
 
-      if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
+      List := Get_Children (Menu);
+      if List = Gtk.Widget.Widget_List.Null_List then
          Destroy (Menu);
          Menu := null;
       end if;
+
+      Widget_List.Free (List);
 
       if Menu /= null then
          Weak_Ref (Menu, Contextual_Menu_Destroyed'Access,
