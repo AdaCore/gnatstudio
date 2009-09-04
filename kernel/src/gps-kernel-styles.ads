@@ -79,7 +79,7 @@ package GPS.Kernel.Styles is
    --  Load the currently registered Styles from File.
 
    function Get_Or_Create_Style
-     (Kernel : Kernel_Handle;
+     (Kernel : access Kernel_Handle_Record'Class;
       Name   : String;
       Create : Boolean := True) return Style_Access;
    --  Lookup the style Name.

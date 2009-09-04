@@ -19,6 +19,7 @@
 
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;              use System;
 
 with GNAT.Expect;         use GNAT.Expect;
@@ -55,6 +56,7 @@ with Gtk.Arguments;       use Gtk.Arguments;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.Terminal;     use Gtkada.Terminal;
 with Gtkada.MDI;          use Gtkada.MDI;
+with Gtkada.Types;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
@@ -211,6 +213,18 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False);
    --  Same as Insert_UTF8, but the tag to use for highlighting is specified
+
+   procedure Insert_UTF8_With_Tag
+     (Console        : access Interactive_Console_Record;
+      UTF8           : Gtkada.Types.Chars_Ptr;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Highlight_Tag  : Gtk_Text_Tag;
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False);
+   --  Same as Insert_UTF8_With_Tag, but handles directly a C string,
+   --  presumably coming from a file.
 
    procedure Prepare_For_Output
      (Console        : access Interactive_Console_Record'Class;
@@ -510,7 +524,12 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      UTF8 : constant String := Glib.Convert.Locale_To_UTF8 (Text);
+      Bytes_Read    : aliased Natural;
+      Bytes_Written : aliased Natural;
+      UTF8 : constant Interfaces.C.Strings.chars_ptr :=
+        Glib.Convert.Locale_To_UTF8
+          (Text, Bytes_Read'Access, Bytes_Written'Access);
+
    begin
       Insert_UTF8_With_Tag
         (Console, UTF8,
@@ -645,6 +664,58 @@ package body Interactive_Consoles is
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
    end Terminate_Output;
+
+   --------------------------
+   -- Insert_UTF8_With_Tag --
+   --------------------------
+
+   procedure Insert_UTF8_With_Tag
+     (Console        : access Interactive_Console_Record;
+      UTF8           : Gtkada.Types.Chars_Ptr;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Highlight_Tag  : Gtk_Text_Tag;
+      Add_To_History : Boolean := False;
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False)
+   is
+      Last_Iter : Gtk_Text_Iter;
+      Internal  : Boolean;
+   begin
+      Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
+
+      if Highlight then
+         Insert_With_Tags (Console.Buffer, Last_Iter, UTF8, Highlight_Tag);
+      else
+         Insert (Console.Buffer, Last_Iter, UTF8);
+      end if;
+
+      if Add_LF then
+         Insert (Console.Buffer, Last_Iter, "" & ASCII.LF);
+      end if;
+
+      if not Text_Is_Input then
+         if Add_To_History and then Console.History /= null then
+            declare
+               --  We have to use the secondary stack here to convert to an Ada
+               --  string;
+               Ada_UTF8 : constant String := Value (UTF8);
+            begin
+               if Ada_UTF8 (Ada_UTF8'Last) = ASCII.LF then
+                  Histories.Add_To_History
+                    (Console.History.all, History_Key (Console.Key.all),
+                     Ada_UTF8 (Ada_UTF8'First .. Ada_UTF8'Last - 1));
+               else
+                  Histories.Add_To_History
+                    (Console.History.all, History_Key (Console.Key.all),
+                     Ada_UTF8);
+               end if;
+            end;
+         end if;
+
+         Terminate_Output (Console, Internal, Show_Prompt);
+      end if;
+   end Insert_UTF8_With_Tag;
 
    --------------------------
    -- Insert_UTF8_With_Tag --

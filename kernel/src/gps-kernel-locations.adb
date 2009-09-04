@@ -22,15 +22,19 @@ with GNAT.Regpat;
 with Glib.Convert;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 
+with Basic_Types;               use Basic_Types;
 with GPS.Editors;               use GPS.Editors;
+with GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Location_Model;        use GPS.Location_Model;
 with GPS.Location_View;         use GPS.Location_View;
 with Traces;                    use Traces;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Locations is
 
@@ -283,13 +287,94 @@ package body GPS.Kernel.Locations is
       end if;
    end Next_Item;
 
+   -------------------------------------------
+   -- Parse_File_Locations_Unknown_Encoding --
+   -------------------------------------------
+
+   procedure Parse_File_Locations_Unknown_Encoding
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Text                    : String;
+      Category                : Glib.UTF8_String;
+      Highlight               : Boolean := False;
+      Highlight_Category      : String := "Builder results";
+      Style_Category          : String := "Style errors";
+      Warning_Category        : String := "Builder warnings";
+      File_Location_Regexp    : String := "";
+      File_Index_In_Regexp    : Integer := -1;
+      Line_Index_In_Regexp    : Integer := -1;
+      Col_Index_In_Regexp     : Integer := -1;
+      Msg_Index_In_Regexp     : Integer := -1;
+      Style_Index_In_Regexp   : Integer := -1;
+      Warning_Index_In_Regexp : Integer := -1;
+      Quiet                   : Boolean := False;
+      Remove_Duplicates       : Boolean := False)
+   is
+      Output             : Unchecked_String_Access;
+      Len                : Natural;
+      Valid              : Boolean;
+   begin
+      Unknown_To_UTF8 (Text, Output, Len, Valid);
+      if not Valid then
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            -"Locations.parse: could not convert input to UTF8",
+            Mode => Console.Error);
+
+      else
+         if Output = null then
+            Parse_File_Locations
+              (Kernel                  => Kernel,
+               Text                    => Text,
+               Category                => Category,
+               Highlight               => Highlight,
+               Highlight_Category      =>
+                 Get_Or_Create_Style (Kernel, Highlight_Category, False),
+               Style_Category          =>
+                 Get_Or_Create_Style (Kernel, Style_Category, False),
+               Warning_Category        =>
+                 Get_Or_Create_Style (Kernel, Warning_Category, False),
+               File_Location_Regexp    => File_Location_Regexp,
+               File_Index_In_Regexp    => File_Index_In_Regexp,
+               Line_Index_In_Regexp    => Line_Index_In_Regexp,
+               Col_Index_In_Regexp     => Col_Index_In_Regexp,
+               Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
+               Style_Index_In_Regexp   => Style_Index_In_Regexp,
+               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Quiet                   => Quiet,
+               Remove_Duplicates       => Remove_Duplicates);
+         else
+            Parse_File_Locations
+              (Kernel                  => Kernel,
+               Text                    => Output (1 .. Len),
+               Category                => Category,
+               Highlight               => Highlight,
+               Highlight_Category      =>
+                 Get_Or_Create_Style (Kernel, Highlight_Category, False),
+               Style_Category          =>
+                 Get_Or_Create_Style (Kernel, Style_Category, False),
+               Warning_Category        =>
+                 Get_Or_Create_Style (Kernel, Warning_Category, False),
+               File_Location_Regexp    => File_Location_Regexp,
+               File_Index_In_Regexp    => File_Index_In_Regexp,
+               Line_Index_In_Regexp    => Line_Index_In_Regexp,
+               Col_Index_In_Regexp     => Col_Index_In_Regexp,
+               Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
+               Style_Index_In_Regexp   => Style_Index_In_Regexp,
+               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Quiet                   => Quiet,
+               Remove_Duplicates       => Remove_Duplicates);
+            Free (Output);
+         end if;
+      end if;
+   end Parse_File_Locations_Unknown_Encoding;
+
    --------------------------
    -- Parse_File_Locations --
    --------------------------
 
    procedure Parse_File_Locations
      (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
+      Text                    : UTF8_String;
       Category                : String;
       Highlight               : Boolean := False;
       Highlight_Category      : GPS.Kernel.Styles.Style_Access := null;
@@ -306,7 +391,6 @@ package body GPS.Kernel.Locations is
       Remove_Duplicates       : Boolean := False)
    is
       use type GNAT.Regpat.Match_Location;
-      use type Basic_Types.Visible_Column_Type;
 
       function Get_File_Location return GNAT.Regpat.Pattern_Matcher;
       --  Return the pattern matcher for the file location

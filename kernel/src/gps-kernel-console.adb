@@ -23,7 +23,6 @@ with GNAT.Calendar;          use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
 with GNAT.IO;                use GNAT.IO;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;            use Glib.Object;
@@ -40,10 +39,10 @@ with Gtkada.MDI;             use Gtkada.MDI;
 
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;   use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
@@ -315,11 +314,9 @@ package body GPS.Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Console  : constant Interactive_Console := Get_Console (Kernel);
       Contents : String_Access;
       Last     : Natural;
       CR_Found : Boolean;
-      Args     : Argument_List (1 .. 2);
       File     : Virtual_File;
 
    begin
@@ -338,17 +335,23 @@ package body GPS.Kernel.Console is
       Strip_CR (Contents.all, Last, CR_Found);
 
       if CR_Found then
-         Args (1) := new String'(Contents (Contents'First .. Last));
+         Insert (Get_Console (Kernel), Contents (Contents'First .. Last));
+         Parse_File_Locations_Unknown_Encoding
+           (Kernel            => Kernel,
+            Text              => Contents (Contents'First .. Last),
+            Category          => -"Loaded contents",
+            Highlight         => True,
+            Remove_Duplicates => True);
       else
-         Args (1) := Contents;
-         Contents := null;
+         Insert (Get_Console (Kernel), Contents.all);
+         Parse_File_Locations_Unknown_Encoding
+           (Kernel            => Kernel,
+            Text              => Contents.all,
+            Category          => -"Loaded contents",
+            Highlight         => True,
+            Remove_Duplicates => True);
       end if;
 
-      Args (2) := new String'(-"Loaded contents");
-      Insert (Console, Args (1).all);
-      Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
-      Execute_GPS_Shell_Command (Kernel, "Locations.parse", Args);
-      Free (Args);
       Free (Contents);
 
    exception

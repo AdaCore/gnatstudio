@@ -55,7 +55,6 @@ with Commands;                  use Commands;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Editors.GtkAda;        use GPS.Editors, GPS.Editors.GtkAda;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
@@ -65,7 +64,6 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with String_Utils;              use String_Utils;
-with UTF8_Utils;                use UTF8_Utils;
 with XML_Utils;                 use XML_Utils;
 with Traces;                    use Traces;
 
@@ -2222,79 +2220,31 @@ package body GPS.Location_View is
       if Command = "parse" then
          Name_Parameters (Data, Parse_Location_Parameters);
          declare
-            Kernel             : constant Kernel_Handle := Get_Kernel (Data);
             Highlight_Category : constant String :=
                                    Nth_Arg (Data, 10, "Builder results");
             Style_Category     : constant String :=
                                    Nth_Arg (Data, 11, "Style errors");
             Warning_Category   : constant String :=
                                    Nth_Arg (Data, 12, "Builder warnings");
-            S                  : GNAT.Strings.String_Access;
-            Output             : Unchecked_String_Access;
-            Len                : Natural;
-            Valid              : Boolean;
-
          begin
-            S := new String'(Nth_Arg (Data, 1));
-            Unknown_To_UTF8 (S.all, Output, Len, Valid);
-
-            if not Valid then
-               Console.Insert
-                 (Kernel,
-                  -"Locations.parse: could not convert input to UTF8",
-                  Mode => Console.Error);
-
-            else
-               if Output = null then
-                  Parse_File_Locations
-                    (Get_Kernel (Data),
-                     Highlight               => Highlight_Category /= ""
-                        or else Style_Category /= ""
-                        or else Warning_Category /= "",
-                     Text                    => S.all,
-                     Category                => Nth_Arg (Data, 2),
-                     Highlight_Category      =>
-                       Get_Or_Create_Style (Kernel, Highlight_Category, False),
-                     Style_Category          =>
-                       Get_Or_Create_Style (Kernel, Style_Category, False),
-                     Warning_Category        =>
-                       Get_Or_Create_Style (Kernel, Warning_Category, False),
-                     File_Location_Regexp    => Nth_Arg (Data, 3, ""),
-                     File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
-                     Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
-                     Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
-                     Msg_Index_In_Regexp     => Nth_Arg (Data, 7, -1),
-                     Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
-                     Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1),
-                     Remove_Duplicates       => True);
-
-               else
-                  Parse_File_Locations
-                    (Get_Kernel (Data),
-                     Highlight               => Highlight_Category /= ""
-                        or else Style_Category /= ""
-                        or else Warning_Category /= "",
-                     Text                    => Output (1 .. Len),
-                     Category                => Nth_Arg (Data, 2),
-                     Highlight_Category      =>
-                       Get_Or_Create_Style (Kernel, Highlight_Category, False),
-                     Style_Category          =>
-                       Get_Or_Create_Style (Kernel, Style_Category, False),
-                     Warning_Category        =>
-                       Get_Or_Create_Style (Kernel, Warning_Category, False),
-                     File_Location_Regexp    => Nth_Arg (Data, 3, ""),
-                     File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
-                     Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
-                     Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
-                     Msg_Index_In_Regexp     => Nth_Arg (Data, 7, -1),
-                     Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
-                     Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1),
-                     Remove_Duplicates       => True);
-                  Free (Output);
-               end if;
-            end if;
-
-            GNAT.Strings.Free (S);
+            Parse_File_Locations_Unknown_Encoding
+              (Get_Kernel (Data),
+               Highlight               => Highlight_Category /= ""
+               or else Style_Category /= ""
+               or else Warning_Category /= "",
+               Text                    => Nth_Arg (Data, 1),
+               Category                => Nth_Arg (Data, 2),
+               Highlight_Category      => Highlight_Category,
+               Style_Category          => Style_Category,
+               Warning_Category        => Warning_Category,
+               File_Location_Regexp    => Nth_Arg (Data, 3, ""),
+               File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
+               Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
+               Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
+               Msg_Index_In_Regexp     => Nth_Arg (Data, 7, -1),
+               Style_Index_In_Regexp   => Nth_Arg (Data, 8, -1),
+               Warning_Index_In_Regexp => Nth_Arg (Data, 9, -1),
+               Remove_Duplicates       => True);
          end;
 
       elsif Command = "remove_category" then

@@ -79,7 +79,7 @@ package GPS.Kernel.Locations is
 
    procedure Parse_File_Locations
      (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
+      Text                    : UTF8_String;
       Category                : Glib.UTF8_String;
       Highlight               : Boolean := False;
       Highlight_Category      : GPS.Kernel.Styles.Style_Access := null;
@@ -105,6 +105,26 @@ package GPS.Kernel.Locations is
    --  relevant parenthesis pair in the regexp.
    --  Remove_Duplicates indicates whether duplicated entries should be
    --  filtered out.
+
+   procedure Parse_File_Locations_Unknown_Encoding
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Text                    : String;
+      Category                : Glib.UTF8_String;
+      Highlight               : Boolean := False;
+      Highlight_Category      : String := "Builder results";
+      Style_Category          : String := "Style errors";
+      Warning_Category        : String := "Builder warnings";
+      File_Location_Regexp    : String := "";
+      File_Index_In_Regexp    : Integer := -1;
+      Line_Index_In_Regexp    : Integer := -1;
+      Col_Index_In_Regexp     : Integer := -1;
+      Msg_Index_In_Regexp     : Integer := -1;
+      Style_Index_In_Regexp   : Integer := -1;
+      Warning_Index_In_Regexp : Integer := -1;
+      Quiet                   : Boolean := False;
+      Remove_Duplicates       : Boolean := False);
+   --  Same as above, but the encoding for Text is unknown so we first try to
+   --  convert it to UTF8
 
    procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register hooks.

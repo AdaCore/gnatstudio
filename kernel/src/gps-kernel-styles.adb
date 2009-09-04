@@ -399,7 +399,7 @@ package body GPS.Kernel.Styles is
    -------------------------
 
    function Get_Or_Create_Style
-     (Kernel : Kernel_Handle;
+     (Kernel : access Kernel_Handle_Record'Class;
       Name   : String;
       Create : Boolean := True) return Style_Access
    is
@@ -420,7 +420,8 @@ package body GPS.Kernel.Styles is
                 (Kernel, Name (Name'First .. Separator - 1), False);
 
             if Style /= null then
-               return Get_Or_Create_Style_Copy (Kernel, Name, Style);
+               return Get_Or_Create_Style_Copy
+                 (Kernel_Handle (Kernel), Name, Style);
             end if;
          end if;
 
