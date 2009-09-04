@@ -6043,7 +6043,7 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      text which is highlighted.
      </description>
 
-     <example lang="python">http://www.google.com
+     <example lang="python">
      # Define an action
      def view_html(url):
          GPS.HTML.browse (url)
