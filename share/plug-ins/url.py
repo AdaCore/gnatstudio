@@ -10,15 +10,13 @@
 import GPS
 
 # Define an action
-def view_html(url):
-    GPS.HTML.browse (url)
-
-def view_file(url):
+def view_url(url):
+  if url[0:4] == "file":
     GPS.MDI.get_by_child (
       GPS.EditorBuffer.get (GPS.File (url[7:])).current_view()).raise_window()
+  else:
+    GPS.HTML.browse (url)
 
-# Register a highlighter to launch a browser on http(s):// URLs
-GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html, 0, view_html)
-
-# Register a highlighter to open a file on file:// URLs
-GPS.EditorHighlighter (r'file:[\\/][\\/][^\s]*', view_file, 0, view_file)
+# Register a highlighter to URLs
+GPS.EditorHighlighter (
+  r'(file:[\\/][\\/][^\s]*|http(s)?://[^\s:,]*)', view_url, 0, view_url)
