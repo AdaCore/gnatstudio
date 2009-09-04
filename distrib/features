@@ -134,7 +134,7 @@ NF-44-I424-009 Editing unsupported projects (2009-06-01)
 NF-44-I417-023 New On-the-fly casing policy handling (2009-05-06)
 
    The On_The_Fly casing policy is now activated character-by-character.
-   The previous bahavior (activated after each word) has been renamed
+   The previous behavior (activated after each word) has been renamed
    End_Of_Word.
 
 NF-44-I406-008 Support for source navigation in SPARK annotations (2009-07-09)
@@ -174,6 +174,13 @@ NF-44-I323-007 New plugin: first_subtype.py (2009-03-23)
 
    Adds a new contextual menu entry to jump to the first subtype of an
    Ada type
+
+NF-44-I320-013 SPARK plug-in enhancements (2009-09-04)
+
+  The project is reloaded/recomputer after Examining SPARK source code and
+  simplifying a vcg file, to take into account new created files and
+  directories.
+  Other SPARK file extensions are also registered.
 
 NF-44-I304-017 Tooltip in locations window (2009-03-13)
 

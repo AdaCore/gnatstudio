@@ -257,6 +257,48 @@ a = """<?xml version="1.0"?>
     <Spec_Suffix>.vcg</Spec_Suffix>
   </Language>
 
+  <!-- Define other SPARK languages -->
+  
+  <Language>
+    <Name>RLU</Name>
+    <Spec_Suffix>.rlu</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>PRV</Name>
+    <Spec_Suffix>.prv</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>PLG</Name>
+    <Spec_Suffix>.plg</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>RUL</Name>
+    <Spec_Suffix>.rul</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>RLS</Name>
+    <Spec_Suffix>.rls</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>FDL</Name>
+    <Spec_Suffix>.fdl</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>SLG</Name>
+    <Spec_Suffix>.slg</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>CMD</Name>
+    <Spec_Suffix>.cmd</Spec_Suffix>
+  </Language>
+
   <!-- Index and Listing are just set up so that GPS can recognise them -->
 
   <Language>
@@ -508,7 +550,10 @@ a = """<?xml version="1.0"?>
     <filter language="VCG" />
     <shell>Project %p</shell>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <external server="build_server" output="Simplifier Output">spadesimp %F %1</external>
+    <external server="build_server" output="Simplifier Output">spadesimp "%F" %1</external>
+    <shell>MDI.get "Simplifier Output"</shell>
+    <shell>MDIWindow.raise_window %1</shell>
+    <shell lang="python">GPS.Project.recompute()</shell>
   </action>
 
   <action name="Simplify all" category="Spark" output="none">
