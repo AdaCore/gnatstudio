@@ -3411,7 +3411,7 @@ package body CPP_Parser is
       Set_Cursor
         (Handler.SN_Table (FIL),
          Position    => By_Key,
-         Key         => +Full_Name (File_Name) & Field_Sep,
+         Key         => +Full_Name (File_Name, Normalize => True) & Field_Sep,
          Exact_Match => False);
 
       loop
