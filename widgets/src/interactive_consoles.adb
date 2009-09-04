@@ -27,6 +27,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNAT.Regpat;         use GNAT.Regpat;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 
+with Basic_Types;         use Basic_Types;
 with Config;              use Config;
 
 with Glib;                use Glib;
@@ -682,6 +683,12 @@ package body Interactive_Consoles is
    is
       Last_Iter : Gtk_Text_Iter;
       Internal  : Boolean;
+
+      function Strlen
+        (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
+      pragma Import (C, Strlen);
+      --  Import Strlen directly, for efficiency
+
    begin
       Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
 
@@ -698,18 +705,21 @@ package body Interactive_Consoles is
       if not Text_Is_Input then
          if Add_To_History and then Console.History /= null then
             declare
-               --  We have to use the secondary stack here to convert to an Ada
-               --  string;
-               Ada_UTF8 : constant String := Value (UTF8);
+               --  Avoid using primary and secondary stack by converting
+               --  the C char* into an unchecked string.
+               Ada_UTF8 : constant Unchecked_String_Access :=
+                            To_Unchecked_String (UTF8);
+               Last     : constant Integer := Integer (Strlen (UTF8));
+
             begin
-               if Ada_UTF8 (Ada_UTF8'Last) = ASCII.LF then
+               if Ada_UTF8 (Last) = ASCII.LF then
                   Histories.Add_To_History
                     (Console.History.all, History_Key (Console.Key.all),
-                     Ada_UTF8 (Ada_UTF8'First .. Ada_UTF8'Last - 1));
+                     Ada_UTF8 (1 .. Last - 1));
                else
                   Histories.Add_To_History
                     (Console.History.all, History_Key (Console.Key.all),
-                     Ada_UTF8);
+                     Ada_UTF8 (1 .. Last));
                end if;
             end;
          end if;
