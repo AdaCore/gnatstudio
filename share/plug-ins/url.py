@@ -11,7 +11,7 @@ import GPS
 
 # Define an action
 def view_url(url):
-  if url[0:4] == "file":
+  if url.startswith ("file"):
     GPS.MDI.get_by_child (
       GPS.EditorBuffer.get (GPS.File (url[7:])).current_view()).raise_window()
   else:
