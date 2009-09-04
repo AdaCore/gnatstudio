@@ -21,4 +21,4 @@ def view_file(url):
 GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html, 0, view_html)
 
 # Register a highlighter to open a file on file:// URLs
-GPS.EditorHighlighter (r'file:[\\/][\\/][^\s:,]*', view_file, 0, view_file)
+GPS.EditorHighlighter (r'file:[\\/][\\/][^\s]*', view_file, 0, view_file)
