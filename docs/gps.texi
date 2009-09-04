@@ -3326,6 +3326,15 @@ from a macro use to its definition, but the macro content is ignored,
 which means for example that function calls made through macros
 won't be detected.
 
+@item SPARK
+@cindex SPARK
+@cindex SLI
+To generate all the cross-referencing information relevant to SPARK annotations
+in your project, it is necessary to Examine all SPARK source files - e.g.
+using the project's metafile.
+The information will be stored in @file{SLI files}, which are similar to
+@file{ALI files}. GPS will load both ali and sli files when available to
+perform source navigation.
 @end table
 
 @subsection Loading xref info in memory
@@ -9009,6 +9018,11 @@ It will reformat the file in-place with SPARKFormat, using any switches set
 under Project Properties. Note that this command can also be invoked by
 right-clicking anywhere in a SPARK source file in the editing window and
 selecting @code{SPARK->SPARKFormat File} or via the @key{F12} key.
+
+@item SPARKFormat Selection
+This command is enabled if a SPARK source file is selected in the editor window.
+It applies SPARKFormat to the selected text only so, for example, an
+individual annotation can be selected and reformatted.
 
 @item Simplify File
 This command is enabled if a .VCG file is open in the editing window. It will
