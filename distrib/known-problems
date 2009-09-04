@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.4.0
 
+- I826-006: Loading huge files in Messages could crash GPS
+  Problem:    If you use /File/Messages/Load Contents to load a huge file
+              into the Messages window, GPS might have logged the full
+              contents of the file, which in some cases could result in no
+              more free disk space and ultimately a crash.
+              The loading of such big files was also optimized to use less
+              memory
+  Workaround: To avoid the crash, add the following to HOME/.gps/traces.cfg:
+              GPS.KERNEL.SCRIPTS=no
+
 - I814-017: Hang when typing a 'while' command in gdb console
   Problem:    When typing a 'while' command in the gdb console, GPS will not
               recognize the continuation line and the debugger will hang.
