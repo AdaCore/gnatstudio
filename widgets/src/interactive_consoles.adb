@@ -526,7 +526,7 @@ package body Interactive_Consoles is
    is
       Bytes_Read    : aliased Natural;
       Bytes_Written : aliased Natural;
-      UTF8 : constant Interfaces.C.Strings.chars_ptr :=
+      UTF8 : Interfaces.C.Strings.chars_ptr :=
         Glib.Convert.Locale_To_UTF8
           (Text, Bytes_Read'Access, Bytes_Written'Access);
 
@@ -539,6 +539,7 @@ package body Interactive_Consoles is
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
+      Free (UTF8);
    end Insert;
 
    -----------------
