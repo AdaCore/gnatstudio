@@ -19,6 +19,15 @@ import GPS, os_utils
 if os_utils.locate_exec_on_path("codepeer") != "" \
   and os_utils.locate_exec_on_path("gps_codepeer_bridge") != "":
   GPS.parse_xml ("""
+    <doc_path>share/doc/codepeer</doc_path>
+
+    <documentation_file>
+      <name>codepeer_ug.html</name>
+      <descr>CodePeer User's Guide</descr>
+      <category>CodePeer</category>
+      <menu before="About">/Help/CodePeer/CodePeer User's Guide</menu>
+    </documentation_file>
+
     <builder-mode name="codepeer">
       <description>Build SCIL for code review</description>
       <subdir>codepeer</subdir>
