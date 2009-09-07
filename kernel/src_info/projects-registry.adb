@@ -1186,13 +1186,25 @@ package body Projects.Registry is
       Id   : Source_Id;
       Path : Path_Name_Type;
       Prj  : Project_Id;
+      Full : String := +Full_Name
+        (Source_Filename,
+         Normalize     => True,
+         Resolve_Links => Opt.Follow_Links_For_Files).all;
    begin
       --  Lookup in the project's Source_Paths_HT, rather than in
       --  Registry.Data.Sources, since the latter does not support duplicate
-      --  base names.
+      --  base names. In Prj.Nmsc, names have been converted to lower case on
+      --  case-insensitive file systems, so we need to do the same here.
+      --  (Insertion is done in Check_File, where the Path passed in parameter
+      --  comes from a call to Normalize_Pathname with the following args:
+      --      Resolve_Links  => Opt.Follow_Links_For_Files
+      --      Case_Sensitive => True
+      --  So we use the normalized name in the above call to Full_Name for
+      --  full compatibility between GPS and the project manager
 
-      Path := Path_Name_Type
-        (Name_Id'(Get_String (+Full_Name (Source_Filename).all)));
+      Osint.Canonical_Case_File_Name (Full);
+      Path := Path_Name_Type (Name_Id'(Get_String (Full)));
+
       Id := Source_Paths_Htable.Get
         (Registry.Data.View_Tree.Source_Paths_HT, Path);
 
