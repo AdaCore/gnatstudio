@@ -19,6 +19,7 @@
 
 with Gdk.Cursor;        use Gdk.Cursor;
 with Gdk.Event;         use Gdk.Event;
+with Gdk.Types;         use Gdk.Types;
 with Gdk.Window;        use Gdk.Window;
 
 with Gtk.Handlers;
@@ -251,14 +252,19 @@ package body Src_Editor_View.Hyper_Mode is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Event);
-
       View  : constant Source_View   := Source_View (Widget);
 
       X, Y         : Gint;
    begin
       if Active (Me) then
          Trace (Me, "motion_notify " & Name (View));
+      end if;
+
+      --  Safety check, just in case we left hyper mode while GPS did not have
+      --  the focus
+      if (Get_State (Event) and Control_Mask) = 0 then
+         Hyper_Mode_Leave (Widget);
+         return False;
       end if;
 
       --  Call Get_Pointer first, since Gtk+ is waiting for this call in order
