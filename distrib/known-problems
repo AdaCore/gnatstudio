@@ -20,6 +20,12 @@ Known Problems fixed in GPS 4.4.0
               recognize the continuation line and the debugger will hang.
   Workaround: Define your command in a file, and load this file directly.
 
+- I818-010: Code coverage: project totals and subprogram information wrong
+  Problem:    When working on a project that makes use of Ada separates, the
+              code coverage report might display wrong totals for the project,
+              and might not be able to parse correctly some files.
+  Workaround: Use the information from the .gcov files
+
 - I807-014: Unwanted scrolling when expanding nodes in the Project View
   Problem:    When the Project View contains a lot of entries, expanding one
               entry might cause the window to scroll to another entry.
