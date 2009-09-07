@@ -1258,6 +1258,7 @@ package body GPS.Location_View is
         (View.Filter, Columns_Types, Modify'Access, Location_View (View));
 
       Gtk_New (View.Tree, View.Filter);
+      Set_Enable_Search (View.Tree, False);
       View.Filter.Unref;
       View.Tree.Set_Headers_Visible (False);
       View.Tree.Set_Name ("Locations Tree");
