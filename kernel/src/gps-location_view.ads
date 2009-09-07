@@ -31,7 +31,6 @@ with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Model_Sort;            use Gtk.Tree_Model_Sort;
 with Glib;
 with Glib.Main;
 
@@ -152,9 +151,6 @@ private
 
       Tree          : Gtk_Tree_View;
       --  Tree view
-
-      Sort          : Gtk_Tree_Model_Sort;
-      --  Tree sort model
 
       Filter        : Gtk_Tree_Model_Filter;
       --  Tree filter model

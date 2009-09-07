@@ -44,6 +44,7 @@ with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tooltips;
 with Gtk.Tree_Model.Utils;      use Gtk.Tree_Model.Utils;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -535,15 +536,13 @@ package body GPS.Location_View is
 
    procedure Remove_Category (Object : access Gtk_Widget_Record'Class) is
       View        : constant Location_View := Location_View (Object);
-      Sort_Iter   : Gtk_Tree_Iter;
       Filter_Iter : Gtk_Tree_Iter;
       Store_Iter  : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
 
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Filter_Iter);
-      View.Filter.Convert_Iter_To_Child_Iter (Sort_Iter, Filter_Iter);
-      View.Sort.Convert_Iter_To_Child_Iter (Store_Iter, Sort_Iter);
+      View.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
       Remove_Category_Or_File_Iter (View.Kernel, View.Model, Store_Iter);
 
    exception
@@ -1132,11 +1131,11 @@ package body GPS.Location_View is
 
       if Self.Sort_By_Category then
          Set_Sort_Column_Id
-           (+Self.Sort, Category_Line_Column, Gtk.Enums.Sort_Ascending);
+           (+Self.Model, Category_Line_Column, Gtk.Enums.Sort_Ascending);
 
       else
          Set_Sort_Column_Id
-           (+Self.Sort, Line_Column, Gtk.Enums.Sort_Ascending);
+           (+Self.Model, Line_Column, Gtk.Enums.Sort_Ascending);
       end if;
 
    exception
@@ -1151,13 +1150,15 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D           : constant File_Location_Hooks_Args_Access :=
-                      File_Location_Hooks_Args_Access (Data);
-      Child       : MDI_Child;
-      Locations   : Location_View;
-      Category_Iter, File_Iter, Loc_Iter, Current : Gtk_Tree_Iter;
+      D                : constant File_Location_Hooks_Args_Access :=
+                           File_Location_Hooks_Args_Access (Data);
+      Child            : MDI_Child;
+      Locations        : Location_View;
+      Category_Iter    : Gtk_Tree_Iter;
+      File_Iter        : Gtk_Tree_Iter;
+      Loc_Iter         : Gtk_Tree_Iter;
+      Current          : Gtk_Tree_Iter;
       Filter_Loc_Iter  : Gtk_Tree_Iter;
-      Sort_Loc_Iter    : Gtk_Tree_Iter;
       Category_Created : Boolean;
       Model            : Gtk_Tree_Model;
       Path             : Gtk_Tree_Path;
@@ -1216,10 +1217,8 @@ package body GPS.Location_View is
             Loc_Iter  => Loc_Iter);
 
          if Loc_Iter /= Null_Iter then
-            Locations.Sort.Convert_Child_Iter_To_Iter
-              (Sort_Loc_Iter, Loc_Iter);
             Locations.Filter.Convert_Child_Iter_To_Iter
-              (Filter_Loc_Iter, Sort_Loc_Iter);
+              (Filter_Loc_Iter, Loc_Iter);
 
             if Loc_Iter /= Null_Iter then
                Path := Get_Path (Locations.Filter, Filter_Loc_Iter);
@@ -1251,11 +1250,8 @@ package body GPS.Location_View is
       --  Initialize the tree
 
       Gtk_New (View.Model, Kernel);
-      Gtk_New_With_Model (View.Sort, View.Model);
+      Gtk_New (View.Filter, View.Model);
       View.Model.Unref;
-
-      Gtk_New (View.Filter, View.Sort);
-      View.Sort.Unref;
       Visible_Funcs.Set_Visible_Func
         (View.Filter, Is_Visible'Access, Location_View (View));
       Modify_Funcs.Set_Modify_Func
@@ -1406,12 +1402,9 @@ package body GPS.Location_View is
       Secondary_Iter         : Gtk_Tree_Iter;
       Secondary_Next_Iter    : Gtk_Tree_Iter;
       Category_View_Iter     : Gtk_Tree_Iter;
-      Category_Filter_Iter   : Gtk_Tree_Iter;
       File_View_Iter         : Gtk_Tree_Iter;
-      File_Filter_Iter       : Gtk_Tree_Iter;
       File_Next_View_Iter    : Gtk_Tree_Iter;
       Message_View_Iter      : Gtk_Tree_Iter;
-      Message_Filter_Iter    : Gtk_Tree_Iter;
       Message_Next_View_Iter : Gtk_Tree_Iter;
       Path                   : Gtk_Tree_Path;
       Depth                  : Gint;
@@ -1437,10 +1430,8 @@ package body GPS.Location_View is
          File_Iter := Self.Model.Parent (Message_Iter);
          Category_Iter := Self.Model.Parent (File_Iter);
 
-         Self.Sort.Convert_Child_Iter_To_Iter
-           (Message_Filter_Iter, Message_Iter);
          Self.Filter.Convert_Child_Iter_To_Iter
-           (Message_View_Iter, Message_Filter_Iter);
+           (Message_View_Iter, Message_Iter);
 
          if Is_Null (Message_View_Iter) then
             --  Message is filtered out
@@ -1451,16 +1442,13 @@ package body GPS.Location_View is
          Message_Next_View_Iter := Message_View_Iter;
          Self.Filter.Next (Message_Next_View_Iter);
 
-         Self.Sort.Convert_Child_Iter_To_Iter (File_Filter_Iter, File_Iter);
          Self.Filter.Convert_Child_Iter_To_Iter
-           (File_View_Iter, File_Filter_Iter);
+           (File_View_Iter, File_Iter);
          File_Next_View_Iter := File_View_Iter;
          Self.Filter.Next (File_Next_View_Iter);
 
-         Self.Sort.Convert_Child_Iter_To_Iter
-           (Category_Filter_Iter, Category_Iter);
          Self.Filter.Convert_Child_Iter_To_Iter
-           (Category_View_Iter, Category_Filter_Iter);
+           (Category_View_Iter, Category_Iter);
 
          if Self.Filter.Children (Category_View_Iter) = File_View_Iter
            and then Is_Null (File_Next_View_Iter)
@@ -1513,9 +1501,8 @@ package body GPS.Location_View is
      (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Iter        : Gtk_Tree_Iter;
-      Model_Iter  : Gtk_Tree_Iter;
-      Filter_Iter : Gtk_Tree_Iter;
+      Iter       : Gtk_Tree_Iter;
+      Model_Iter : Gtk_Tree_Iter;
 
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
@@ -1524,8 +1511,7 @@ package body GPS.Location_View is
          return;
       end if;
 
-      Self.Filter.Convert_Iter_To_Child_Iter (Filter_Iter, Iter);
-      Self.Sort.Convert_Iter_To_Child_Iter (Model_Iter, Filter_Iter);
+      Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
       Self.Model.Set (Model_Iter, Expanded_State_Column, False);
    end On_Row_Collapsed;
 
@@ -1537,13 +1523,12 @@ package body GPS.Location_View is
      (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Path        : Gtk_Tree_Path;
-      Iter        : Gtk_Tree_Iter;
-      Filter_Iter : Gtk_Tree_Iter;
-      Model_Iter  : Gtk_Tree_Iter;
-      Child_Iter  : Gtk_Tree_Iter;
-      Child_Path  : Gtk_Tree_Path;
-      Dummy       : Boolean;
+      Path       : Gtk_Tree_Path;
+      Iter       : Gtk_Tree_Iter;
+      Model_Iter : Gtk_Tree_Iter;
+      Child_Iter : Gtk_Tree_Iter;
+      Child_Path : Gtk_Tree_Path;
+      Dummy      : Boolean;
       pragma Warnings (Off, Dummy);
 
    begin
@@ -1553,8 +1538,7 @@ package body GPS.Location_View is
          return;
       end if;
 
-      Self.Filter.Convert_Iter_To_Child_Iter (Filter_Iter, Iter);
-      Self.Sort.Convert_Iter_To_Child_Iter (Model_Iter, Filter_Iter);
+      Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
       Self.Model.Set (Model_Iter, Expanded_State_Column, True);
 
       Path := Get_Path (Get_Model (Self.Tree), Iter);
@@ -1652,18 +1636,15 @@ package body GPS.Location_View is
             else
                if Column = Explorer.Action_Column then
                   declare
-                     Value       : GValue;
-                     Iter        : Gtk_Tree_Iter;
-                     Aux_Iter    : Gtk_Tree_Iter;
-                     Filter_Iter : Gtk_Tree_Iter;
-                     Action      : Action_Item;
+                     Value    : GValue;
+                     Iter     : Gtk_Tree_Iter;
+                     Aux_Iter : Gtk_Tree_Iter;
+                     Action   : Action_Item;
 
                   begin
                      Aux_Iter := Explorer.Filter.Get_Iter (Path);
                      Explorer.Filter.Convert_Iter_To_Child_Iter
-                       (Filter_Iter, Aux_Iter);
-                     Explorer.Sort.Convert_Iter_To_Child_Iter
-                       (Iter, Filter_Iter);
+                       (Iter, Aux_Iter);
 
                      Explorer.Model.Get_Value (Iter, Action_Column, Value);
                      Action := To_Action_Item (Get_Address (Value));
@@ -1809,7 +1790,6 @@ package body GPS.Location_View is
       Loc               : Location_Record;
       Iter, Parent_Iter : Gtk_Tree_Iter := Null_Iter;
       Aux_Iter          : Gtk_Tree_Iter;
-      Filter_Iter       : Gtk_Tree_Iter;
       Appended          : Boolean;
       Path              : Gtk_Tree_Path;
       Created           : Boolean;
@@ -1868,8 +1848,7 @@ package body GPS.Location_View is
          end loop;
 
          if Appended then
-            View.Sort.Convert_Child_Iter_To_Iter (Filter_Iter, Parent_Iter);
-            View.Filter.Convert_Child_Iter_To_Iter (Aux_Iter, Filter_Iter);
+            View.Filter.Convert_Child_Iter_To_Iter (Aux_Iter, Parent_Iter);
             Path := View.Filter.Get_Path (Aux_Iter);
             Appended := Expand_Row (View.Tree, Path, False);
             Path_Free (Path);
@@ -2704,10 +2683,10 @@ package body GPS.Location_View is
       then
          declare
             Message : constant String :=
-                        Self.Sort.Get_String (Aux, Base_Name_Column);
+                        Self.Model.Get_String (Aux, Base_Name_Column);
             Items   : constant Natural :=
                         Natural
-                          (Self.Sort.Get_Int (Aux, Number_Of_Items_Column));
+                          (Self.Model.Get_Int (Aux, Number_Of_Items_Column));
             Img     : constant String := Image (Items);
 
          begin
@@ -2723,7 +2702,7 @@ package body GPS.Location_View is
 
       else
          Unset (Value);
-         Self.Sort.Get_Value (Aux, Column, Value);
+         Self.Model.Get_Value (Aux, Column, Value);
       end if;
 
       Path_Free (Path);
