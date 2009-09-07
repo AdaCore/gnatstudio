@@ -67,6 +67,7 @@ package body GPS.Kernel.Hyper_Mode is
 
    function Enter_Notify_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event;
       Data   : Hyper_Mode_Data) return Boolean;
 
    function Leave_Notify_Event_Cb
@@ -165,12 +166,23 @@ package body GPS.Kernel.Hyper_Mode is
 
    function Enter_Notify_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
-      Data   : Hyper_Mode_Data) return Boolean is
+      Event  : Gdk_Event;
+      Data   : Hyper_Mode_Data) return Boolean
+   is
       pragma Unreferenced (Widget);
    begin
       Trace (Me, "enter_notify");
 
       if Data.Kernel.In_Hyper_Mode then
+         --  Safety check: it might happen that we leave GPS without receiving
+         --  a Leave_Notify event. In this case, we could enter the window with
+         --  the Ctrl key released but GPS still in hyper mode.
+
+         if (Get_State (Event) and Control_Mask) = 0 then
+            Hyper_Mode_Leave (Data);
+            return False;
+         end if;
+
          Hyper_Mode_Enter (Data);
       end if;
 
