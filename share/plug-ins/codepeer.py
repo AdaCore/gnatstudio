@@ -12,12 +12,15 @@
 ## No user customization below this line
 ############################################################################
 
-import GPS, os_utils
+import GPS, os_utils, os.path
 
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
 
-if os_utils.locate_exec_on_path("codepeer") != "" \
-  and os_utils.locate_exec_on_path("gps_codepeer_bridge") != "":
+codepeer = os_utils.locate_exec_on_path("codepeer")
+
+if codepeer != "":
+  example_root=os.path.dirname (os.path.dirname(codepeer)).replace('\\', '/')+\
+    '/share/examples/codepeer'
   GPS.parse_xml ("""
     <doc_path>share/doc/codepeer</doc_path>
 
@@ -27,6 +30,38 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
       <category>CodePeer</category>
       <menu before="About">/Help/CodePeer/CodePeer User's Guide</menu>
     </documentation_file>
+
+    <action name="codepeer_example_false_tests" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/false_tests/example.gpr"</shell>
+      <shell>Editor.edit "false_tests.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_false_tests">
+        <title>False Tests</title>
+      </menu>
+    </submenu>
+
+    <action name="codepeer_example_uninitialized" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/uninitialized/uninitialized.gpr"</shell>
+      <shell>Editor.edit "adt.ads"</shell>
+      <shell>Editor.edit "adt.adb"</shell>
+      <shell>Editor.edit "uninit.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_uninitialized">
+        <title>Uninitialized</title>
+      </menu>
+    </submenu>
 
     <builder-mode name="codepeer">
       <description>Build SCIL for code review</description>
