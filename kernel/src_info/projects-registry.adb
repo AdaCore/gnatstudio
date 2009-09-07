@@ -1186,10 +1186,12 @@ package body Projects.Registry is
       Id   : Source_Id;
       Path : Path_Name_Type;
       Prj  : Project_Id;
-      Full : String := +Full_Name
-        (Source_Filename,
-         Normalize     => True,
-         Resolve_Links => Opt.Follow_Links_For_Files).all;
+      Full : String := String
+              (Full_Name
+                (Source_Filename,
+                 Normalize     => True,
+                 Resolve_Links => Opt.Follow_Links_For_Files).all);
+
    begin
       --  Lookup in the project's Source_Paths_HT, rather than in
       --  Registry.Data.Sources, since the latter does not support duplicate
