@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
+- I826-009: No entities displayed for C/C++ files in Project View
+  Problem:    Under Windows, expanding C/C++ files might display "no entity"
+              instead of displaying the entities in this file.
+  Workaround: Use the Outline View to browse through entities in C/C++ files
+
 - I826-006: Loading huge files in Messages could crash GPS
   Problem:    If you use /File/Messages/Load Contents to load a huge file
               into the Messages window, GPS might have logged the full
