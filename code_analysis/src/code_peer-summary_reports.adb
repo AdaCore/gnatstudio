@@ -761,7 +761,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
-      Gtk.Label.Gtk_New (Label, -"Message criticality");
+      Gtk.Label.Gtk_New (Label, -"Message ranking");
       Filter_Box.Pack_Start (Label, False);
 
       Gtk.Check_Button.Gtk_New (Check, -"suppressed");
