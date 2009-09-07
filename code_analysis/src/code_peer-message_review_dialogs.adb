@@ -202,7 +202,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Gtk.Table.Gtk_New (Table, 2, 3, False);
       Self.Get_Vbox.Pack_Start (Table, False, False);
 
-      Gtk.Label.Gtk_New (Label, "Original probability");
+      Gtk.Label.Gtk_New (Label, "Original ranking");
       Table.Attach (Label, 0, 1, 0, 1);
 
       Gtk.GEntry.Gtk_New (Text_Entry);
@@ -210,7 +210,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Text_Entry.Set_Text (Probability_Image (Message.Computed_Probability));
       Table.Attach (Text_Entry, 1, 2, 0, 1);
 
-      Gtk.Label.Gtk_New (Label, "Current probability");
+      Gtk.Label.Gtk_New (Label, "Current ranking");
       Table.Attach (Label, 0, 1, 1, 2);
 
       Gtk.GEntry.Gtk_New (Text_Entry);
@@ -220,7 +220,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       --  New probability combobox and underling model
 
-      Gtk.Label.Gtk_New (Label, "New probability:");
+      Gtk.Label.Gtk_New (Label, "New ranking:");
       Table.Attach (Label, 0, 1, 2, 3);
 
       Gtk.Tree_Store.Gtk_New (Store, Probability_Model_Types);
@@ -316,7 +316,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Dummy_I := Tree_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Probability");
+      Column.Set_Title (-"Ranking");
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
