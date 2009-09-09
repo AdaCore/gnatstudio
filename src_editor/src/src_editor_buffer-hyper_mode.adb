@@ -170,17 +170,18 @@ package body Src_Editor_Buffer.Hyper_Mode is
                pragma Unreferenced (Sloc_Start, Sloc_End, Partial_Entity);
             begin
                case Entity is
-               when Normal_Text
-                  | Identifier_Text
-                  | Partial_Identifier_Text
-                  | Operator_Text
-                  => Highlight := True;
-               when Keyword_Text
-                  | Comment_Text
-                  | Annotated_Comment_Text
-                  | Character_Text
-                  | String_Text
-                  => Highlight := False;
+                  when Normal_Text
+                     | Identifier_Text
+                     | Partial_Identifier_Text
+                     | Operator_Text
+                     => Highlight := True;
+                  when Keyword_Text
+                     | Annotated_Keyword_Text
+                     | Comment_Text
+                     | Annotated_Comment_Text
+                     | Character_Text
+                     | String_Text
+                     => Highlight := False;
                end case;
                return True;
             end Callback;

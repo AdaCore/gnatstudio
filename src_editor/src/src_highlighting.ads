@@ -37,6 +37,7 @@ package Src_Highlighting is
    --  Kind that needs to be highlighted in the source editor.
 
    Keyword_Color_Tag_Name           : constant String := "keyword";
+   Annotated_Keyword_Color_Tag_Name : constant String := "annotated-keyword";
    Comment_Color_Tag_Name           : constant String := "comment";
    Annotated_Comment_Color_Tag_Name : constant String := "annotated-comment";
    String_Color_Tag_Name            : constant String := "string";

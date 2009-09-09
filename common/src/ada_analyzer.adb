@@ -20,6 +20,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib.Unicode;            use Glib.Unicode;
+with GNAT.Regpat;             use GNAT.Regpat;
 
 with Generic_Stack;
 with Indent_Stack;
@@ -629,6 +630,20 @@ package body Ada_Analyzer is
    -- Analyze_Ada_Source --
    ------------------------
 
+   SPARK_Keywords : constant Pattern_Matcher := Compile
+                     ("assert|check|derives|from|global|" &
+                      "h(ide|old)|in(herit|itializes|variant)|" &
+                      "main_program|own|post|pre|some|" &
+                      "a(re_interchangeable|s|ssume)|const|div|" &
+                      "element|fi(nish|rst)|for_(all|some)|goal|" &
+                      "last|may_be_(deduced|deduced_from|" &
+                      "replaced_by)|no(n(first|last)|t_in)|odd|" &
+                      "p(ending|red|roof)|re(al|quires)|s(ave|" &
+                      "e(quence|t)|qr|t(art|rict_subset_of)|" &
+                      "u(bset_of|cc))|update|var|where|fld_.*|" &
+                      "upf_.*");
+   --  Regular expression for SPARK keywords
+
    procedure Analyze_Ada_Source
      (Buffer              : Glib.UTF8_String;
       Indent_Params       : Indent_Parameters;
@@ -678,7 +693,6 @@ package body Ada_Analyzer is
       Align_Decl_On_Colon : constant Boolean :=
                               Format
                                 and then Indent_Params.Align_Decl_On_Colon;
-
       Buffer_Last         : constant Natural := Buffer'Last;
 
       ---------------
@@ -2884,14 +2898,131 @@ package body Ada_Analyzer is
                      Entity := Comment_Text;
                   end if;
 
-                  if Callback
-                    (Entity,
-                       (Prev_Line, First - Prev_Start_Line + 1, First),
-                       (Prev_Line, Last - Prev_Start_Line + 1, Last),
-                     False)
+                  if Entity = Annotated_Comment_Text
+                    and then Replace = null
                   then
-                     Terminated := True;
-                     return;
+                     --  Recognize and handle SPARK reserved words when parsing
+                     --  constructs.
+
+                     declare
+                        Prev_Sloc : Source_Location;
+                        Line      : constant Natural := Prev_Line - 1;
+                        Col       : constant Natural :=
+                                     First + 2 - Prev_Start_Line + 1;
+
+                        function Is_SPARK_Keyword (S : String) return Boolean;
+                        --  Callback for Analyze_Ada_Source to recognize SPARK
+                        --  keywords.
+
+                        function Local_Callback
+                          (Entity         : Language_Entity;
+                           Sloc_Start     : Source_Location;
+                           Sloc_End       : Source_Location;
+                           Partial_Entity : Boolean) return Boolean;
+                        --  Wrapper around Callback
+
+                        function Adjust
+                          (Loc : Source_Location) return Source_Location;
+                        --  Adjust Loc taking Line, Col and Offset into account
+
+                        ----------------------
+                        -- Is_SPARK_Keyword --
+                        ----------------------
+
+                        function Is_SPARK_Keyword
+                          (S : String) return Boolean is
+                        begin
+                           return Match (SPARK_Keywords, S);
+                        end Is_SPARK_Keyword;
+
+                        ------------
+                        -- Adjust --
+                        ------------
+
+                        function Adjust
+                          (Loc : Source_Location) return Source_Location is
+                        begin
+                           return
+                             (Loc.Line + Line, Loc.Column + Col, Loc.Index);
+                        end Adjust;
+
+                        --------------------
+                        -- Local_Callback --
+                        --------------------
+
+                        function Local_Callback
+                          (Entity         : Language_Entity;
+                           Sloc_Start     : Source_Location;
+                           Sloc_End       : Source_Location;
+                           Partial_Entity : Boolean) return Boolean
+                        is
+                           Ignore : Boolean;
+                           pragma Unreferenced (Ignore);
+                           Sloc1 : constant Source_Location :=
+                                    Adjust (Sloc_Start);
+                           Sloc2 : constant Source_Location :=
+                                    Adjust (Sloc_End);
+
+                        begin
+                           if Entity = Keyword_Text then
+                              Ignore := Callback
+                                (Annotated_Comment_Text,
+                                 Prev_Sloc,
+                                 (Sloc1.Line,
+                                  Sloc1.Column - 1,
+                                  Sloc1.Index - 1),
+                                 Partial_Entity);
+                              Prev_Sloc := (Sloc2.Line, Sloc2.Column + 1,
+                                            Sloc2.Index + 1);
+
+                              return Callback
+                                (Annotated_Keyword_Text,
+                                 Sloc1, Sloc2, Partial_Entity);
+                           else
+                              return False;
+                           end if;
+                        end Local_Callback;
+
+                     begin
+                        Prev_Sloc :=
+                          (Prev_Line, First - Prev_Start_Line + 1, First);
+
+                        --  Call Analyze_Ada_Source recursively on the SPARK
+                        --  annotations to highlight keywords.
+
+                        Analyze_Ada_Source
+                          (Buffer (First + 3 .. Last - 1),
+                           Indent_Params => Indent_Params,
+                           Format        => Format,
+                           Replace       => null,
+                           Constructs    => null,
+                           Callback      => Local_Callback'Unrestricted_Access,
+                           Indent_Offset => Indent_Offset,
+                           Case_Exceptions => Case_Exceptions,
+                           Is_Optional_Keyword => Is_SPARK_Keyword'Access);
+
+                        if Prev_Sloc.Index <= Last then
+                           if Callback
+                                (Entity,
+                                 Prev_Sloc,
+                                 (Prev_Line, Last - Prev_Start_Line + 1, Last),
+                                 False)
+                           then
+                              Terminated := True;
+                              return;
+                           end if;
+                        end if;
+                     end;
+                  else
+                     if Callback
+                         (Entity,
+                          (Prev_Line, First - Prev_Start_Line + 1, First),
+                          (Prev_Line, Last - Prev_Start_Line + 1, Last),
+                          False)
+                     then
+                        Terminated := True;
+                        return;
+                     end if;
                   end if;
                end if;
 

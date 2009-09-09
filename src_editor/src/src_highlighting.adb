@@ -128,6 +128,12 @@ package body Src_Highlighting is
          Back_Color => Annotated_Comment_Color_Bg,
          Font_Desc  => Annotated_Comment_Font_Desc);
       New_Tag
+        (Result (Annotated_Keyword_Text),
+         Annotated_Keyword_Color_Tag_Name,
+         Fore_Color => Annotated_Comment_Color,
+         Back_Color => Annotated_Comment_Color_Bg,
+         Font_Desc  => Keyword_Font_Desc);
+      New_Tag
         (Result (String_Text),
          String_Color_Tag_Name,
          Fore_Color => String_Color,

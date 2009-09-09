@@ -202,7 +202,8 @@ package body Docgen2_Backend.HTML is
             end if;
          when Keyword_Text =>
             return "<span class=""keyword"">" & Value & "</span>";
-         when Comment_Text | Annotated_Comment_Text =>
+         when Comment_Text | Annotated_Comment_Text
+           | Annotated_Keyword_Text =>
             return "<span class=""comment"">" & Value & "</span>";
          when Character_Text | String_Text =>
             return "<span class=""string"">" & Value & "</span>";
