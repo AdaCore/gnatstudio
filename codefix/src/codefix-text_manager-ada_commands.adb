@@ -1260,7 +1260,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          else
             Current_Text.Add_Line
               (With_Cursor,
-               "with " & Pkg_Name & ";");
+               "use " & Pkg_Name & ";");
          end if;
       elsif This.Mode = Prefix then
          if This.With_Could_Miss and then With_Cursor = Null_File_Cursor then
