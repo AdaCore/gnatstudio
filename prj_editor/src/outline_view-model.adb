@@ -746,36 +746,6 @@ package body Outline_View.Model is
       end if;
    end Parent;
 
-   --------------
-   -- Ref_Node --
-   --------------
-
-   overriding procedure Ref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter)
-   is
-      pragma Unreferenced (Tree_Model);
-
-      Entity : Entity_Persistent_Access := Get_Entity (Iter);
-   begin
-      Ref (Entity);
-   end Ref_Node;
-
-   ----------------
-   -- Unref_Node --
-   ----------------
-
-   overriding procedure Unref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter)
-   is
-      pragma Unreferenced (Tree_Model);
-
-      Entity : Entity_Persistent_Access := Get_Entity (Iter);
-   begin
-      Unref (Entity);
-   end Unref_Node;
-
    ----------------
    -- Get_Entity --
    ----------------
@@ -839,25 +809,17 @@ package body Outline_View.Model is
       It := Root.First_Child;
 
       while It /= null loop
-         Clear_Nodes (Model, It);
+         Construct := To_Construct_Tree_Iterator
+           (To_Entity_Access (It.Entity));
 
-         if Exists (It.Entity) then
-            Construct := To_Construct_Tree_Iterator
-              (To_Entity_Access (It.Entity));
+         --  Deleting the annotation will have as effect the destruction of
+         --  the node, which is why we need to iterate before.
+         It := It.Next;
 
-            --  Deleting the annotation will have as effect the destruction of
-            --  the node, which is why we need to iterate before.
-            It := It.Next;
-
-            Construct_Annotations_Pckg.Free_Annotation
-              (Get_Annotation_Container
-                 (Get_Tree (Model.File), Construct).all,
-               Model.Annotation_Key);
-         else
-            Free (It.Name);
-            Unref (It.Entity);
-            It := It.Next;
-         end if;
+         Construct_Annotations_Pckg.Free_Annotation
+           (Get_Annotation_Container
+              (Get_Tree (Model.File), Construct).all,
+            Model.Annotation_Key);
       end loop;
    end Clear_Nodes;
 

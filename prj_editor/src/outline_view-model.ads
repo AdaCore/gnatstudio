@@ -141,16 +141,6 @@ private package Outline_View.Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  See inherited documentation
 
-   overriding procedure Ref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter);
-   --  See inherited documentation
-
-   overriding procedure Unref_Node
-     (Tree_Model : access Outline_Model_Record;
-      Iter       : Gtk_Tree_Iter);
-   --  See inherited documentation
-
    function Get_Entity (Iter : Gtk_Tree_Iter) return Entity_Persistent_Access;
    --  Return the entity designed by this iterator
 
