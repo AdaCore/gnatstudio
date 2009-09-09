@@ -243,11 +243,11 @@ def align_arrows ():
                level = level + 1
             elif chars[k] == ')':
                level = level - 1
-            elif (k + 4 < len(chars)) and (chars[k:k+4] == "case"):
+            elif k + 4 < len(chars) and chars[k:k+4] == "case":
                level = level + 1
-            elif (k + 8 < len(chars)) and (chars[k:k+8] == "end case"):
+            elif k + 8 < len(chars) and chars[k:k+8] == "end case":
                level = level - 1
-            elif (level == lr) and (k + 2 < len(chars)) and (chars[k:k+2] == "=>"):
+            elif level == lr and k + 2 < len(chars) and chars[k:k+2] == "=>":
                chars = chars[:k] + "@>" + chars[k+2:]
          buffer.delete (top, bottom)
          buffer.insert (top, chars)
@@ -256,6 +256,8 @@ def align_arrows ():
          top = buffer.get_mark ("top").location()
          bottom = buffer.get_mark ("bottom").location()
          range_align_on (top, bottom, sep="@>", replace_with=" => ")
+   except:
+      GPS.Console ().write (str (sys.exc_info ()) + "\n")
    finally:
       top.buffer().finish_undo_group()
 
