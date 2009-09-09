@@ -883,9 +883,15 @@ package body Outline_View.Model is
       Kind     : Update_Kind)
    is
       procedure Add_In_Model (New_Obj : Construct_Tree_Iterator);
+      --  Adds the iterator in the internal model
 
       procedure Diff_Callback
         (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
+      --  Analyses differences between the two objects and perform object
+      --  addition & deletion from the model.
+
+      procedure Update_Node (Node : Sorted_Node_Access);
+      --  Update buffered data of the node & children recursively if it exists.
 
       ------------------
       -- Add_In_Model --
@@ -998,6 +1004,29 @@ package body Outline_View.Model is
 
          end case;
       end Diff_Callback;
+
+      -----------------
+      -- Update_Node --
+      -----------------
+
+      procedure Update_Node (Node : Sorted_Node_Access) is
+         Cur : Sorted_Node_Access;
+      begin
+         if Exists (Node.Entity) then
+            Node.Sloc := Get_Construct (Node.Entity).Sloc_Start;
+         end if;
+
+         if Node = Model.Phantom_Root'Access or else Exists (Node.Entity) then
+            Cur := Node.First_Child;
+
+            while Cur /= null loop
+               Update_Node (Cur);
+
+               Cur := Cur.Next;
+            end loop;
+         end if;
+      end Update_Node;
+
    begin
       if File /= Model.File
         or else Old_Tree = Null_Construct_Tree
@@ -1005,6 +1034,14 @@ package body Outline_View.Model is
       then
          return;
       end if;
+
+      --  First, update all the source locations for all the nodes of the
+      --  model. This is needed in order to have proper ordering while
+      --  adding and removing ndoes
+
+      Update_Node (Model.Phantom_Root'Access);
+
+      --  Then, run a diff in order to add / remove nodes
 
       Diff
         (Lang     => Get_Tree_Language (File),
