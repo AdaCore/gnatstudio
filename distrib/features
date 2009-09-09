@@ -170,7 +170,7 @@ NF-44-I325-023 Support for multi-unit files in project properties (2009-04-02)
    It is now possible to manipulate multi-unit source files in the naming
    tab of the project properties editor
 
-NF-44-I323-007 New plugin: first_subtype.py (2009-03-23)
+NF-44-I323-007 New plug-in: first_subtype.py (2009-03-23)
 
    Adds a new contextual menu entry to jump to the first subtype of an
    Ada type
@@ -255,6 +255,11 @@ NF-44-I109-036 Complete gnatpp switches in the project editor (2009-01-20)
 
    GPS now handles the newer gnatpp switches in the 'Pretty Print' page of the
    project editor.
+
+NF-44-HC10-025 SPARK keywords highlighting (2009-09-09)
+
+  SPARK keywords (such as assert, check, ...) are now higlighted in source
+  editors using the keyword font when found in SPARK annotations.
 
 NF-44-HC08-012 Support for SPARK Toolset 7.6.2 (2008-12-10)
 
