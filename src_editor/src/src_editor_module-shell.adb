@@ -23,6 +23,7 @@ with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
 
 with Glib.Convert;              use Glib.Convert;

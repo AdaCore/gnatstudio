@@ -20,8 +20,8 @@
 with Ada.Containers.Doubly_Linked_Lists;
 
 with Ada.Unchecked_Deallocation;
+with GNAT.Expect;
 with GNAT.Strings;
-with GNAT.Regpat; use GNAT.Regpat;
 
 with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
@@ -173,16 +173,17 @@ package Src_Editor_Module is
    --  A highlighter is the association of a regular expression with actions,
    --  which allows specifying custom hyperlinks in hyper mode.
 
-   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
-
    type Highlighter_Record is record
       Pattern_String : GNAT.Strings.String_Access;
-      Pattern        : Pattern_Matcher_Access;
+      Pattern        : GNAT.Expect.Pattern_Matcher_Access;
       Paren_Count    : Natural := 0;
       Action         : Subprogram_Type;
       Alternate      : Subprogram_Type;
       Index          : Integer;
    end record;
+
+   procedure Free (Self : in out Highlighter_Record);
+   --  Free memory allocated for Self
 
    Null_Highlighter : constant Highlighter_Record :=
                         (null, null, 0, null, null, 0);

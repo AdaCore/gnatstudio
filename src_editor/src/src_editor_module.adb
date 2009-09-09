@@ -22,6 +22,7 @@ with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
 with Gdk.Color;                         use Gdk.Color;
@@ -3448,6 +3449,8 @@ package body Src_Editor_Module is
    -------------
 
    overriding procedure Destroy (Id : in out Source_Editor_Module_Record) is
+      High_Iter : List_Of_Highlighters.Cursor;
+      H         : Highlighter_Record;
    begin
       Marker_List.Free (Id.Stored_Marks);
 
@@ -3494,6 +3497,13 @@ package body Src_Editor_Module is
          Free (Id.Categories.all);
          Unchecked_Free (Id.Categories);
       end if;
+
+      High_Iter := Id.Highlighters.First;
+      while List_Of_Highlighters.Has_Element (High_Iter) loop
+         H := List_Of_Highlighters.Element (High_Iter);
+         Free (H);
+         List_Of_Highlighters.Next (High_Iter);
+      end loop;
 
       Editors_Hash.Reset (Id.Editors);
 
@@ -3757,9 +3767,6 @@ package body Src_Editor_Module is
                  Source_Editor_Module (Src_Editor_Module_Id);
       Cursor : List_Of_Highlighters.Cursor;
       use List_Of_Highlighters;
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
    begin
       Cursor := Id.Highlighters.First;
 
@@ -3771,8 +3778,7 @@ package body Src_Editor_Module is
                H : Highlighter_Record;
             begin
                H := List_Of_Highlighters.Element (Cursor);
-               Free (H.Pattern_String);
-               Unchecked_Free (H.Pattern);
+               Free (H);
             end;
 
             Id.Highlighters.Delete (Cursor);
@@ -3793,5 +3799,19 @@ package body Src_Editor_Module is
    begin
       return Id.Highlighters;
    end Get_Highlighters;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Highlighter_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+   begin
+      Free (Self.Pattern_String);
+      Free (Self.Action);
+      Free (Self.Alternate);
+      Unchecked_Free (Self.Pattern);
+   end Free;
 
 end Src_Editor_Module;
