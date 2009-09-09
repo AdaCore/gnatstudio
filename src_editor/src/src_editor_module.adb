@@ -3757,6 +3757,9 @@ package body Src_Editor_Module is
                  Source_Editor_Module (Src_Editor_Module_Id);
       Cursor : List_Of_Highlighters.Cursor;
       use List_Of_Highlighters;
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Pattern_Matcher, Pattern_Matcher_Access);
    begin
       Cursor := Id.Highlighters.First;
 
@@ -3769,6 +3772,7 @@ package body Src_Editor_Module is
             begin
                H := List_Of_Highlighters.Element (Cursor);
                Free (H.Pattern_String);
+               Unchecked_Free (H.Pattern);
             end;
 
             Id.Highlighters.Delete (Cursor);
