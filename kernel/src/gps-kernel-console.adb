@@ -427,6 +427,7 @@ package body GPS.Kernel.Console is
          View_Fixed_Font.Get_Pref,
          Highlight    => Message_Highlight.Get_Pref,
          History_List => null,
+         ANSI_Support => True,
          Key          => "",
          Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
