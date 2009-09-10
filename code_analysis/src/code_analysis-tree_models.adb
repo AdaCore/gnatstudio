@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -133,12 +133,23 @@ package body Code_Analysis.Tree_Models is
          return Gtk.Tree_Model.Null_Iter;
 
       elsif File /= null then
-         return
-           Self.Create_Tree_Iter
-             (Project, File, File.Subprograms.First_Element);
+         if not File.Subprograms.Is_Empty then
+            return
+              Self.Create_Tree_Iter
+                (Project, File, File.Subprograms.First_Element);
+
+         else
+            return Gtk.Tree_Model.Null_Iter;
+         end if;
 
       elsif Project /= null then
-         return Self.Create_Tree_Iter (Project, Project.Files.First_Element);
+         if not Project.Files.Is_Empty then
+            return
+              Self.Create_Tree_Iter (Project, Project.Files.First_Element);
+
+         else
+            return Gtk.Tree_Model.Null_Iter;
+         end if;
 
       elsif Gtk.Tree_Model.Utils.Is_Null (Parent) then
          return Self.Create_Tree_Iter (Self.Projects.First_Element);
