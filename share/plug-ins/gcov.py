@@ -1,5 +1,5 @@
-""" Provides the "Tools/Compute coverage files" and "Tools/Remove coverage files"
-menu, which executes gcov automatically.
+""" Provides the "Tools/Gcov/Compute coverage files" and "Remove coverage files"
+menus, which executes gcov automatically.
 
 This script will also perform checks along the way to guide through the
 procedure of obtaining gcov info.
@@ -192,7 +192,7 @@ def remove_gcov(menu):
 
    for p in Project.root().dependencies(True):
       object_dirs = p.object_dirs(False)
- 
+
       if len (object_dirs) > 0:
          object_dir = object_dirs [0]
 
@@ -222,18 +222,18 @@ def on_gps_started (hook):
 
    #  Create menu items
 
-   compute_menu = Menu.create ("/Tools/Covera_ge/Compute coverage files",
+   compute_menu = Menu.create ("/Tools/Covera_ge/_Gcov/Compute coverage files",
                 on_activate=run_gcov,
                 ref="Show report",
                 add_before=True)
 
-   cleanup_menu = Menu.create ("/Tools/Covera_ge/Remove coverage files",
+   cleanup_menu = Menu.create ("/Tools/Covera_ge/_Gcov/Remove coverage files",
                 on_activate=remove_gcov,
                 ref="Show report",
                 add_before=True)
 
    Menu.create ("/Tools/Covera_ge/-",
-                ref="Remove coverage files",
+                ref="Gcov",
                 add_before=False)
 
    #  Register preference change hook and run it for setup menu items' names.
