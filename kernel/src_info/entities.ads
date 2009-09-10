@@ -571,7 +571,7 @@ package Entities is
    procedure Unref (Entity : in out Entity_Information);
    procedure Ref   (Entity : Entity_Information);
    pragma Inline (Ref);
-   --  Change reference counting for the file. When it reaches 0, the memory
+   --  Change reference counting for the entity. When it reaches 0, the memory
    --  is freed.
 
    Predefined_Line   : constant Natural := 0;
@@ -962,10 +962,17 @@ private
    --  assumed to come from the same file, which is why the < operation doesn't
    --  take files into account.
 
+   procedure Clear_File_Sets (Set : in out Entities_In_File_Sets.Set);
+   --  Clear set, properly freeing all elements
+
    type File_With_Refs is record
       Refs : Entities_In_File_Sets.Set;
       File : Source_File;
    end record;
+   type File_With_Refs_Access is access all File_With_Refs;
+
+   procedure Free (Refs : in out File_With_Refs_Access);
+   --  Free memory associated with Refs
 
    type Entity_Reference_Index is record
       Loc            : File_Location;
@@ -974,11 +981,6 @@ private
 
    Null_Entity_Reference_Index : Entity_Reference_Index :=
      (No_File_Location, False);
-
-   type File_With_Refs_Access is access all File_With_Refs;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (File_With_Refs, File_With_Refs_Access);
 
    package Entity_File_Maps is new
      Ada.Containers.Ordered_Maps
@@ -993,6 +995,9 @@ private
    --  This is an optimized list of reference, ordered by two level, first by
    --  file and then by line / column. Add, remove and search operations need
    --  to be as fast as possible.
+
+   procedure Clear_Ref_List (List : in out Entity_Reference_List);
+   --  Free memory used by List
 
    type Entity_Reference_Cursor is record
       Entity_Cursor : Entities_In_File_Sets.Cursor;

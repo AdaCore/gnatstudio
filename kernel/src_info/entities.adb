@@ -26,7 +26,6 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
-
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
 with GPS.Intl;                   use GPS.Intl;
@@ -372,7 +371,10 @@ package body Entities is
 
    procedure Destroy (D : in out Entity_Informations) is
    begin
-      Unchecked_Free (D.List);
+      if D.List /= null then
+         Free (D.List.all);
+         Unchecked_Free (D.List);
+      end if;
       Unchecked_Free (D);
    end Destroy;
 
@@ -400,10 +402,13 @@ package body Entities is
 
          F.Ref_Count := F.Ref_Count - 1;
          if F.Ref_Count = 0 then
-            --  File not removed from htable explicitely. Unref is already
-            --  called internally when the file is removed from the htable,
-            --  and the user is not supposed to call Unref more often than Ref
-            Reset (F);
+            --  Do not free the contents of the file though (in fact, since
+            --  DB.Files owns a reference to the file, the only way we can
+            --  reach 0 here is when going through Free (Source_File_Item),
+            --  and in that case we have already reset the contents.
+            --  If we were trying to do it here, we would in fact never reach
+            --  0, since the entities of the file still own a reference to the
+            --  file.
 
             if Active (Debug_Me) then
                F := null;
@@ -471,6 +476,52 @@ package body Entities is
       return Dependency_Arrays.First - 1;
    end Find;
 
+   ---------------------
+   -- Clear_File_Sets --
+   ---------------------
+
+   procedure Clear_File_Sets (Set : in out Entities_In_File_Sets.Set) is
+      It   : Entities_In_File_Sets.Cursor := First (Set);
+      Copy : E_Reference;
+   begin
+      while Has_Element (It) loop
+         Copy := Element (It);
+         Unref (Copy.Caller, "reference.caller");
+         Next (It);
+      end loop;
+
+      Entities_In_File_Sets.Clear (Set);
+   end Clear_File_Sets;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Refs : in out File_With_Refs_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (File_With_Refs, File_With_Refs_Access);
+   begin
+      Clear_File_Sets (Refs.Refs);
+      Unchecked_Free (Refs);
+   end Free;
+
+   --------------------
+   -- Clear_Ref_List --
+   --------------------
+
+   procedure Clear_Ref_List (List : in out Entity_Reference_List) is
+      It  : Entity_File_Maps.Cursor := Entity_File_Maps.First (List);
+      Tmp : File_With_Refs_Access;
+   begin
+      while Has_Element (It) loop
+         Tmp := Element (It);
+         Free (Tmp);
+         Next (It);
+      end loop;
+
+      Clear (List);
+   end Clear_Ref_List;
+
    -------------------------------
    -- Mark_And_Isolate_Entities --
    -------------------------------
@@ -490,6 +541,7 @@ package body Entities is
          Mark_Valid : Boolean)
       is
          Entity : Entity_Information;
+         Cursor : Entity_File_Maps.Cursor;
       begin
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
@@ -500,24 +552,13 @@ package body Entities is
                   & Display_Base_Name (Get_Filename (File)));
             end if;
 
-            if Entity.References.Contains (File.Ordered_Index) then
+            Cursor := Entity.References.Find (File.Ordered_Index);
+            if Has_Element (Cursor) then
                declare
-                  Refs : File_With_Refs_Access :=
-                    Entity.References.Element (File.Ordered_Index);
-                  It   : Entities_In_File_Sets.Cursor := Refs.Refs.First;
-                  Copy : E_Reference;
+                  Refs : File_With_Refs_Access := Element (Cursor);
                begin
-                  while It /= Entities_In_File_Sets.No_Element loop
-                     Copy := Element (It);
-                     Unref (Copy.Caller, "reference.caller");
-
-                     It := Next (It);
-                  end loop;
-
-                  Entities_In_File_Sets.Clear (Refs.Refs);
                   Free (Refs);
-
-                  Entity.References.Delete (File.Ordered_Index);
+                  Entity.References.Delete (Cursor);
                   Entity.File_Timestamp_In_References :=
                     Entity.File_Timestamp_In_References + 1;
                end;
@@ -623,6 +664,7 @@ package body Entities is
                Unref (EL.Table (E), "all_entities");
             end loop;
 
+            Entity_Information_Arrays.Free (UEI.List.all);
             Unchecked_Free (UEI.List);
          end loop;
          Reset (File.All_Entities);
@@ -654,6 +696,8 @@ package body Entities is
                end if;
             end loop;
          end loop;
+
+         Entities_Hash.Reset (File.Entities);
       end;
 
       --  Clean up the list of instantiations
@@ -748,19 +792,7 @@ package body Entities is
       Unref_All_Entities_In_List (Entity.Child_Types, "child_types");
 
       if Clear_References then
-         declare
-            It   : Entity_Reference_Cursor := First (Entity.References);
-            Copy : E_Reference;
-         begin
-            while It /= Null_Entity_Reference_Cursor loop
-               Copy := Element (It);
-               Unref (Copy.Caller, "reference.caller");
-
-               It := Next (It);
-            end loop;
-
-            Clear (Entity.References);
-         end;
+         Clear_Ref_List (Entity.References);
       end if;
    end Isolate;
 
@@ -842,6 +874,7 @@ package body Entities is
       if LI /= null then
          Assert (Assert_Me, LI.Ref_Count > 0, "Too many calls to unref");
          LI.Ref_Count := LI.Ref_Count - 1;
+
          if LI.Ref_Count = 0 then
             --  Do not remove the file from the htable, since Unref is
             --  called after a removal, and the user shouldn't call Unref
@@ -1093,6 +1126,15 @@ package body Entities is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Source_File_Item_Record, Source_File_Item);
    begin
+      --  Reset the contents of the file (entities declared or referenced,
+      --  file dependencies,...), so that we break reference cycles (the file
+      --  owns a ref to its entities, which in turn (through their
+      --  declaration's file own a reference to the file).
+
+      Reset (E.File);
+
+      --  We might also be able to free the file itself
+
       Unref (E.File);
       if Active (Debug_Me) then
          E := null;
@@ -1755,10 +1797,12 @@ package body Entities is
            Entity.File_Timestamp_In_References + 1;
       else
          Refs := Entity.References.Element (Location.File.Ordered_Index);
-      end if;
 
-      if Active (Add_Reference_Force_Unique) then
-         if Refs.Refs.Contains ((Location => Location, others => <>)) then
+         --  We might have a change that the reference already existed
+
+         if Active (Add_Reference_Force_Unique)
+           and then Refs.Refs.Contains ((Location => Location, others => <>))
+         then
             return;
          end if;
       end if;
@@ -1946,14 +1990,9 @@ package body Entities is
             Is_Valid                     => True,
             Ref_Count                    => 1,
             Trie_Tree_Index              => 0);
+
          Ref (File);  --  Used in declaration
          Append (UEI.List.all, E);
-
-         --  ??? Trie trees are not used for completion, and potentially
-         --  dangerous
---           if File.Handler /= null then
---              Insert (File.Handler, E);
---           end if;
 
          if Must_Add_To_File then
             Entities_Hash.Set (File.Entities, UEI);

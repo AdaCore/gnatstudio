@@ -432,6 +432,8 @@ package body Entities.Queries is
             Status := Fuzzy_Match;
          end if;
 
+         Destroy (Iter);
+
          Entity := Closest;
       end if;
    end Find;
