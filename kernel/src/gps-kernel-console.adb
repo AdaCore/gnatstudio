@@ -37,6 +37,7 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
+with Config;                 use Config;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;   use GPS.Kernel.Locations;
@@ -427,7 +428,8 @@ package body GPS.Kernel.Console is
          View_Fixed_Font.Get_Pref,
          Highlight    => Message_Highlight.Get_Pref,
          History_List => null,
-         ANSI_Support => Directory_Separator = '/',  --  Not on Windows
+         ANSI_Support => Host /= Windows, --  ANSI_Support does not work
+                                          --  well under Windows ???
          Key          => "",
          Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
