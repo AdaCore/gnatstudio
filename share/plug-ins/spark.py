@@ -41,15 +41,17 @@ def on_match (process, match, since_last):
 
 def on_exit (process, status, remaining_output):
   # Protect e.g. "Flow Error:123:" from being detected as a file reference
-  GPS.Locations.parse (
-     process.output.replace (" Error:"," Error,").replace \
-       (" Warning:"," Warning,"),
-     category=spark_category)
+  try:
+    output = process.output.replace (" Error:"," Error,").replace \
+               (" Warning:"," Warning,")
+    GPS.Locations.parse (output, category=spark_category)
+    GPS.Console (spark_console).write (focus_file + "\n")
+  except:
+    pass
 
   # Take into account new files and directories created by the Examiner,
   # in particular in the project view.
   global focus_file
-  GPS.Console (spark_console).write (focus_file + "\n")
   
   if focus_file != "":
     buf = GPS.EditorBuffer.get (GPS.File (focus_file))
