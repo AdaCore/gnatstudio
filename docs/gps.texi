@@ -8931,9 +8931,11 @@ specific to SPARK. For details of the Project menu in general,
 @itemize
 @item Select @code{Edit Project Properties} from the Project menu.
 
-@item If you want to access SPARK generated files from the GPS project explorer, click the Languages tab and ensure that the following items are ticked:
- Ada, Index, Listing, Metafile, Siv, Vcg. Otherwise, you only need the Ada
- language selected.
+@item If you want to access SPARK generated files from the GPS project explorer, 
+ click the Languages tab and ensure that the following items are ticked:
+ Ada, Cmd, Fdl, Index, Listing, Metafile, Plg, Pogs Summary, Prv,
+ Rls, Rlu, Rul, Siv, Slg, Vcg, 
+ Otherwise, you only need the Ada language selected.
  You may also want to add in your project file the following line for
  each of the languages in the @code{Compiler} package:
 
@@ -8951,7 +8953,7 @@ package Compiler is
 
 @item Similarly, you may want to optionally click the Source Dirs tab and
 enable @code{Include Subdirectories} so that VCG and SIV files are displayed in
-e.g. the project explorer.
+the project explorer.
 
 @item Click the Switches tab and select the Examiner tab.
 This allows you to control the following settings:
@@ -9028,6 +9030,7 @@ individual annotation can be selected and reformatted.
 This command is enabled if a .VCG file is open in the editing window. It will
 invoke the SPARK Simplifier on the VCG file, using any switches set under
 Project Properties. Output is sent to the Simplifier Output window.
+The siv file is displayed in the editing window. 
 
 @item Simplify All
 Search under the project directory for all VCG files that require
@@ -9036,13 +9039,18 @@ SPARKSimp tool, with any switches supplied under the SPARKSimp tab in Project
 Properties. Output is displayed in the SPARKSimp Output window.
 
 @item POGS
-Invokes POGS (Proof ObliGation Summariser). This will scan for proof files and
-report the current proof status of your project. The summary output file is
-displayed in the editing window. Right-clicking on a VC in the summary file
+Invokes POGS (Proof ObliGation Summariser). This will scan for proof files 
+in the project's root directory and report the proof status in a file.
+The file name is the project's name with a ".sum" suffix. 
+The default behaviour can be overwritten 
+through @code{Project -> Edit Project Properties -> Switches -> POGS} 
+by specifying the @code{Input Directory} from which POGS scans for proof
+files and the @code{Output File} where it saves the summary file.
+The summary output file is displayed in the editing window. 
+Right-clicking on a VC in the summary file
 invokes a pop-up menu. From this menu you can select @code{SPARK->Show VC} or
 @code{SPARK->Show Simplified VC} to jump directly to the VCG or SIV file
-concerned. Note that by default POGS will be invoked at the top-level of the
-current project. POGS can also be invoked via the @key{F11} key.
+concerned. POGS can also be invoked via the @key{F11} key.
 
 @item SPARKMake
 This command is enabled if a SPARK source file is selected in the editing

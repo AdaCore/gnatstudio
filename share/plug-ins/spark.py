@@ -12,6 +12,7 @@ See the GPS documentation for more details.
 
 import os, os.path, re, string, tempfile
 import os_utils, text_utils
+import re
 import GPS
 from gps_utils import *
 
@@ -21,10 +22,16 @@ from gps_utils import *
 # Nice-to-haves include:
 #   - Context sensitive navigation in annotations
 
+ 
 spark_console="SPARK Output"
 spark_category="Examiner"
 
 spark_separator='-'
+
+# Global variable to pass filename to on_exit which will then raise a 
+# window containing the file.
+
+focus_file = "" 
 
 def on_match (process, match, since_last):
   try:
@@ -42,6 +49,14 @@ def on_exit (process, status, remaining_output):
 
   # Take into account new files and directories created by the Examiner,
   # in particular in the project view.
+  global focus_file
+  GPS.Console (spark_console).write (focus_file + "\n")
+  
+  if focus_file != "":
+    buf = GPS.EditorBuffer.get (GPS.File (focus_file))
+    GPS.MDI.get_by_child (buf.current_view()).raise_window()
+    focus_file = ""
+
   GPS.Project.recompute ()
 
 @with_save_excursion
@@ -56,30 +71,6 @@ def examine_file (file):
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
-
-def pogs_directory():
-  """Return the directory in which pogs should be run. This directory
-     never contains a trailing directory separator"""
-  # If the -output_directory switch is specified, use that directory
-
-  dir = None
-  sw = GPS.Project.root().get_tool_switches_as_list ("Examiner")
-  for s in sw:
-    if s.find (spark_separator + "output_directory=") == 0:
-       dir=s[18:]
-
-  # Else take the common parent for all sources dirs
-  if not dir:
-     src = GPS.Project.root().source_dirs (recursive=True)
-     dir = os.path.commonprefix (src)
-
-  # Else take the project's root directory
-  if not dir:
-     dir = os.path.dirname (GPS.Project.root().file().name())
-
-  dir = dir.rstrip ("/\\")
-
-  return dir
 
 def _spawn_cmd (cmd_name, prj_attr, input=None):
   """
@@ -138,16 +129,33 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
 @save_dir
 def show_pogs_file():
   """Show the pogs file of the current project"""
-  # Pogs looks for .vcg files in current dir and all subdirs. For now,
-  # we'll start it in the root project's directory, but we should be
-  # smarter
-  dir = pogs_directory()
-  GPS.cd (dir)
-  _spawn_cmd (cmd_name="pogs", prj_attr="POGS", input="")
+  global focus_file
 
-  dir_name = os.path.basename (dir)
-  buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
-  GPS.MDI.get_by_child (buf.current_view()).raise_window()
+  sw = GPS.Project.root().get_tool_switches_as_string ("pogs")
+
+  cmd = "pogs "+ sw 
+
+  if not re.search("-d=", cmd):
+    # The default directory from where POGS will be run is the directory
+    # of the project file.
+    cmd = cmd + " -d=" + os.path.dirname (GPS.Project.root().file().name())
+
+  summary_file_option = re.search("-o=[^ ]+", cmd)
+  if not summary_file_option: 
+    # If the user has not specified an output file then the summary file
+    # is set to <project_name>.sum
+    summary_file = re.sub("gpr$", "sum", GPS.Project.root().file().name()) 
+    cmd = cmd + " -o=" + summary_file
+  else:
+    summary_file = \
+        summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
+    
+  GPS.Console (spark_console, accept_input=False).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  # Pass the summary_file to on_exit which raise a window with the file open.
+  focus_file = summary_file
+  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.MDI.get (spark_console).raise_window ()
 
 def do_pogs_xref (context, simplified):
   """Jump to the VC referenced in the current line of the POGS output"""
@@ -234,6 +242,37 @@ def format_selection ():
   buffer.finish_undo_group ()
   os.unlink (name)
 
+def simplify_file (file):
+  """Simplify current file through the SPARK simplifier. file is an instance
+     of GPS.File"""
+  global focus_file
+
+  GPS.MDI.save_all (False)
+  GPS.Locations.remove_category (spark_category)
+  sw = file.project().get_tool_switches_as_string ("Simplifier")
+  relative_filename = file.name().replace(file.project().file().directory(), "")
+  siv_filename = relative_filename.replace(".vcg", ".siv")
+
+  cmd = "spadesimp "+sw + " " + relative_filename 
+  GPS.Console (spark_console, accept_input=False).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  # Pass the summary_file to on_exit which raise a window with the file open.
+  focus_file = siv_filename
+  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.MDI.get (spark_console).raise_window ()
+
+def simplify_all ():
+  """Simplify all files in the project"""
+  GPS.MDI.save_all (False)
+  simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
+  sparksimp_sw = GPS.Project.root().get_tool_switches_as_string ("SPARKSimp")
+   
+  cmd = "sparksimp "+ sparksimp_sw + " -sargs " + simplifier_sw 
+  GPS.Console (spark_console, accept_input=False).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.MDI.get (spark_console).raise_window ()
+
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
 
@@ -258,7 +297,12 @@ a = """<?xml version="1.0"?>
   </Language>
 
   <!-- Define other SPARK languages -->
-  
+
+  <Language>
+    <Name>POGS Summary</Name>
+    <Spec_Suffix>.sum</Spec_Suffix>
+  </Language>
+
   <Language>
     <Name>RLU</Name>
     <Spec_Suffix>.rlu</Spec_Suffix>
@@ -322,7 +366,7 @@ a = """<?xml version="1.0"?>
       <field line="1" label="Index File " as-file="true" switch="~index_file" separator="="/>
       <field line="1" label="Warning File " as-file="true" switch="~warning_file" separator="="/>
       <field line="1" label="Configuration File " as-file="true" switch="~config" separator="="/>
-      <field line="1" label="Output directory" as-dir="true" switch="~output_directory" separator="="/>
+      <field line="1" label="Output directory" as-directory="true" switch="~output_directory" separator="="/>
       <check column="1" line="1" label="Ignore spark.sw" switch="~noswitch" />
       <title line="1" column="2" column-span="0" />
       <title column="1" line="2">Language</title>
@@ -473,17 +517,21 @@ a = """<?xml version="1.0"?>
 
   <tool name="POGS">
     <language>Ada</language>
-    <switches lines="2" switch_char="~">
-      <title line="1">Options</title>
-      <check line="1" label="Plain Output"
+    <switches lines="3" switch_char="~">
+      <title line="1">POGS Configuration </title>
+      <field line="1" label="Input Directory " as-directory="true" switch="~d" separator="="/>
+      <field line="1" label="Output File" as-file="true" switch="~o" separator="="/>
+
+      <title line="2">Options</title>
+      <check line="2" label="Plain Output"
        tip="Prevent release information and file paths being output to .sum file"
        switch="~p" />
-      <check line="1" label="Ignore Dates"
+      <check line="2" label="Ignore Dates"
        tip="Prevent checking of date and time stamps of VCs and Proof Log files"
        switch="~i" />
 
-      <title line="2">Output</title>
-      <radio line="2">
+      <title line="3">Output</title>
+      <radio line="3">
         <radio-entry label="Default" tip="Default output" switch="" />
         <radio-entry label="Short summary"
          tip="Prevent per-subprogram analysis section being output to .sum file"
@@ -522,6 +570,11 @@ a = """<?xml version="1.0"?>
      <shell lang="python">spark.examine_file (GPS.File ("%F"))</shell>
   </action>
 
+  <action name="Simplify file" category="Spark" output="none">
+    <filter language="VCG" />
+     <shell lang="python">spark.simplify_file (GPS.File("%F"))</shell>
+  </action>
+
   <action name="SPARKFormat file" category="Spark" output="none">
      <filter language="Ada" />
      <shell lang="python">spark.format_file ()</shell>
@@ -544,24 +597,11 @@ a = """<?xml version="1.0"?>
           <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
      </on-failure>
      <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
-  </action>
-
-  <action name="Simplify file" category="Spark" output="none">
-    <filter language="VCG" />
-    <shell>Project %p</shell>
-    <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <external server="build_server" output="Simplifier Output">spadesimp "%F" %1</external>
-    <shell>MDI.get "Simplifier Output"</shell>
-    <shell>MDIWindow.raise_window %1</shell>
-    <shell lang="python">GPS.Project.recompute()</shell>
+     <shell lang="python">GPS.Project.recompute()</shell>
   </action>
 
   <action name="Simplify all" category="Spark" output="none">
-    <shell>Project %P</shell>
-    <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <shell>Project %P</shell>
-    <shell>Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
-    <external server="build_server" output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
+    <shell lang="python">spark.simplify_all ()</shell>
   </action>
 
   <action name="POGS" category="Spark" output="none">
@@ -621,6 +661,10 @@ a = """<?xml version="1.0"?>
 
   <contextual action="Simplify file" >
     <Title>SPARK/Simplify File</Title>
+  </contextual>
+
+  <contextual action="Simplify All" >
+    <Title>SPARK/Simplify All</Title>
   </contextual>
 
   <contextual action="SPARKMake" >

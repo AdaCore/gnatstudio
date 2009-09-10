@@ -15,6 +15,29 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I909-020 Reload project after POGS (2009-09-10)
+
+   The project is recomputed after POGS to refresh the project view and take
+   into account possible new directories.
+
+NF-44-I909-011 Open siv file after running the Simplifier (2009-09-10)
+
+   GPS opens the updated/generated siv file after running the Simplifier.
+
+NF-44-I908-023 Support for specifying POGS options in project (2009-09-10)
+
+   Added support in "Edit Project Properties -> POGS" for user to specify
+   an input directory and an output file.
+
+NF-44-I907-012 Open SPARK Output window after "Simplify All" (2009-09-10)
+
+   GPS now raises the SPARK Output window after the user selects
+   "Simplify All".
+
+NF-44-I904-005 Added "Simplify All" to SPARK contextual menu (2009-09-10)
+
+   A new "Simplify All" item is available in the SPARK contextual menu.
+
 NF-44-I807-021 New plug-in: createfile.py (2009-08-10)
 
    This optional plug-in provides a contextual menu that allows you to create
@@ -103,6 +126,11 @@ NF-44-I602-003 New preference: Wrap around on next/previous (2009-04-06)
    preference determines whether wrap around to the beginning should occur
    when reaching the end of the category.
 
+NF-44-I529-007 Browsing output directory for SPARK Examiner (2009-09-10)
+
+   Users can now browse SPARK Examiner output directories via
+   Project Properties -> Switches -> Examiner -> Output Directory
+
 NF-44-I528-009 Debug->Add Symbols asks for module's address (2009-06-14)
 
    The Debug->Debug->Add Symbols... menu now also asks for the module's
@@ -177,10 +205,11 @@ NF-44-I323-007 New plug-in: first_subtype.py (2009-03-23)
 
 NF-44-I320-013 SPARK plug-in enhancements (2009-09-04)
 
-  The project is reloaded/recomputer after Examining SPARK source code and
+  The project is reloaded/recomputed after Examining SPARK source code and
   simplifying a vcg file, to take into account new created files and
   directories.
   Other SPARK file extensions are also registered.
+  The Simplifier Output window is raised after Simplifying a vcg file.
 
 NF-44-I304-017 Tooltip in locations window (2009-03-13)
 
