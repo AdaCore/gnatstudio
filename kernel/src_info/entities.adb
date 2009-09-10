@@ -413,6 +413,7 @@ package body Entities is
             if Active (Debug_Me) then
                F := null;
             else
+               Entities_Hash.Reset (F.Entities);
                Unchecked_Free (F);
             end if;
          end if;
@@ -697,7 +698,12 @@ package body Entities is
             end loop;
          end loop;
 
-         Entities_Hash.Reset (File.Entities);
+         --  File.Entities might still contain references to entities (the one
+         --  for which ref_count/=0). They are marked as invalid, but we need
+         --  to keep them so that we properly reuse them in case, when we
+         --  parse the file again, they still exist. Otherwise, all their
+         --  references in other files will be lost
+         --  Do not call Entities_Hash.Reset (File.Entities);
       end;
 
       --  Clean up the list of instantiations
