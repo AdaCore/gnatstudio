@@ -21,7 +21,6 @@ from gps_utils import *
 
 # Nice-to-haves include:
 #   - Context sensitive navigation in annotations
-
  
 spark_console="SPARK Output"
 spark_category="Examiner"
