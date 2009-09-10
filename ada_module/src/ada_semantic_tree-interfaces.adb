@@ -96,6 +96,7 @@ package body Ada_Semantic_Tree.Interfaces is
    is
    begin
       Free (Obj.Name);
+      Free (Obj.Convention);
    end Free;
 
    ------------------
