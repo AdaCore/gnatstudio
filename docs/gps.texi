@@ -8778,8 +8778,8 @@ All the coverage related operations are reachable via the
 @command{Tools->Coverage} menu.
 
 In order to be loaded in GPS, the coverage information need to be computed
-before, using the @command{Tools->Coverage->Compute coverage files} menu for
-instance.
+before, using the @command{Tools->Coverage->Gcov->Compute coverage files} menu
+for instance.
 
 At each attempt, GPS automatically tries to load the needed information and
 reports errors for missing or corrupted @command{.gcov} files.
@@ -8797,11 +8797,11 @@ depending on the context.
 
 @table @command
 
-@item Coverage->Compute coverage files
+@item Coverage->Gcov->Compute coverage files
 Generates the @command{.gcov} files of current and properly compiled and run
 projects.
 
-@item Coverage->Remove coverage files
+@item Coverage->Gcov->Remove coverage files
 Deletes all the @command{.gcov} of current projects.
 
 @c \hline
