@@ -1,5 +1,4 @@
-""" Provides the "Tools/Run program under Xcov" menu, which executes xcov
-automatically.
+""" Provides Xcov related menus under Tools->Coverage.
 """
 
 
@@ -19,7 +18,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <description>Code coverage with Xcov</description>
     <command-line>
       <arg>xcov</arg>
-      <arg>--run</arg>
+      <arg>run</arg>
     </command-line>
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="2" lines="2">
@@ -36,7 +35,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     </switches>
   </target-model>
 
-  <target model="xcov-run" category="Xcov Run" name="Run under Xcov"
+  <target model="xcov-run" category="Run with Xcov" name="Run under Xcov"
           menu="/Tools/Coverage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
@@ -46,7 +45,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <launch-mode>MANUALLY</launch-mode>
     <command-line>
       <arg>xcov</arg>
-      <arg>--run</arg>
+      <arg>run</arg>
       <arg>--target=powerpc-elf</arg>
       <arg>%TT</arg>
       <arg>-o</arg>
@@ -60,12 +59,13 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <description>Code coverage with Xcov</description>
     <command-line>
       <arg>xcov</arg>
-      <arg>--coverage=insn</arg>
+      <arg>coverage</arg>
+      <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
     </command-line>
     <icon>gps-build-all</icon>
     <switches command="%(tool_name)s" columns="1" lines="4">
-      <combo label="Coverage" switch="--coverage" separator="=" column="1">
+      <combo label="Coverage Level" switch="--level" separator="=" column="1">
         <combo-entry label="Instruction" value="insn"
                      title="Object Instruction Coverage"/>
         <combo-entry label="Branch" value="branch"
@@ -83,11 +83,11 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       </combo>
       <field label="Routine list" switch="--routine-list" separator="="
              as-file="true"/>
-      <field label="Trace file" switch="--input" separator="=" as-file="true"/>
+      <field label="Trace file" switch="--trace" separator="=" as-file="true"/>
     </switches>
   </target-model>
 
-  <target model="xcov-coverage" category="Xcov Report"
+  <target model="xcov-coverage" category="Coverage with Xcov"
           name="Generate Xcov Main Report" menu="/Tools/Coverage/">
     <target-type>executable</target-type>
     <in-toolbar>FALSE</in-toolbar>
@@ -97,15 +97,16 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <launch-mode>MANUALLY</launch-mode>
     <command-line>
       <arg>xcov</arg>
-      <arg>--coverage=insn</arg>
+      <arg>coverage</arg>
+      <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
       <arg>--output-dir=%O</arg>
-      <arg>%TT.trace</arg>
+      <arg>--trace=%TT.trace</arg>
     </command-line>
   </target>
 
-  <target model="xcov-coverage" category="Xcov Report"
-          name="Generate Xcov Report" menu="/Tools/Coverage/">
+  <target model="xcov-coverage" category="Coverage with Xcov"
+          name="Custom Xcov Report..." menu="/Tools/Coverage/">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>TRUE</in-menu>
     <read-only>TRUE</read-only>
@@ -113,10 +114,11 @@ if os_utils.locate_exec_on_path ("xcov") != "":
     <launch-mode>MANUALLY</launch-mode>
     <command-line>
       <arg>xcov</arg>
-      <arg>--coverage=insn</arg>
+      <arg>coverage</arg>
+      <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
       <arg>--output-dir=%O</arg>
-      <arg>--input=</arg>
+      <arg>--trace=&lt;unknown&gt;</arg>
     </command-line>
   </target>
 """)
