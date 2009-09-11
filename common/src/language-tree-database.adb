@@ -1601,7 +1601,13 @@ package body Language.Tree.Database is
       --  Computes files removed in the new set
 
       for J in New_Set'Range loop
-         New_File_Map.Insert (New_Set (J), null);
+         if not New_File_Map.Contains (New_Set (J)) then
+            --  It's possible to see duplicate files in the input list, in
+            --  particular in case of links. In this case, we just ignore
+            --  these duplicate. Otherwise, the file is inserted in the map.
+
+            New_File_Map.Insert (New_Set (J), null);
+         end if;
       end loop;
 
       Cur := Db.Files_Db.First;
