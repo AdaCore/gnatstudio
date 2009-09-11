@@ -1007,7 +1007,7 @@ package body GUI_Utils is
       then
          X := Get_X (Event);
          Y := Get_Y (Event);
-         Path := Gtk_New;
+         --  Path := Gtk_New;
          Get_Path_At_Pos
            (Tree,
             Gint (X),
