@@ -684,7 +684,7 @@ package body Docgen2 is
       --  Ignoring unnamed entities.
       if not Ignore (Construct.Sloc_Start, Context.Comments)
         and then Construct.Category not in Dependency_Category
-        and then Construct.Category not in Subconstruct_Category
+        and then Construct.Category not in Cat_Exception_Handler .. Cat_Pragma
         and then Construct.Category /= Cat_Representation_Clause
         and then Construct.Category /= Cat_Namespace
         and then Category_Name (Construct.Category) /= ""
