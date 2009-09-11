@@ -838,6 +838,7 @@ package body GPS.Kernel.Modules is
          Image : Gtk_Image_Menu_Item;
          Pix   : Gtk_Image;
          Menu  : Gtk_Menu;
+         Children : Widget_List.Glist;
       begin
          Full_Name := new String'(Label_Name (C, Context));
 
@@ -874,13 +875,16 @@ package body GPS.Kernel.Modules is
                   end loop;
                end;
 
-               if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
+               Children := Get_Children (Menu);
+               if Children = Gtk.Widget.Widget_List.Null_List then
                   Destroy (Menu);
                   Item := null;
                else
                   Gtk_New (Item, Base_Menu_Name (Full_Name.all));
                   Set_Submenu (Item, Menu);
                end if;
+
+               Widget_List.Free (Children);
 
             when Type_Separator =>
                Gtk_New (Item, "");
