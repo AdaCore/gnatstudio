@@ -80,9 +80,7 @@ package body GPS.Kernel.Task_Manager is
    function Create_Wrapper
      (Command         : access Root_Command'Class;
       Destroy_On_Exit : Boolean) return Scheduled_Command_Access;
-   --  Create a new wrapper. This doesn't not increase the refcounting on the
-   --  command, but will decrement it if Destroy_On_Exit is true (in which case
-   --  the reference is adopted).
+   --  Create a new wrapper
 
    function On_Exit_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -496,16 +494,13 @@ package body GPS.Kernel.Task_Manager is
       Block_Exit      : Boolean := True) return Scheduled_Command_Access
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
-      Wrapper : Scheduled_Command_Access :=
+      Wrapper : constant Scheduled_Command_Access :=
                   Create_Wrapper (Command, Destroy_On_Exit);
    begin
       Add_Command
         (Manager,
          Command_Access (Wrapper),
          Active, Show_Bar, Queue_Id, Block_Exit);
-
-      --  Add_Command created a new ref
-      Unref (Command_Access (Wrapper));
 
       return Wrapper;
    end Launch_Background_Command;
