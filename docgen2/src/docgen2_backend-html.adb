@@ -19,6 +19,7 @@
 
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Maps;      use Ada.Strings.Maps;
+with String_Utils;          use String_Utils;
 with UTF8_Utils;            use UTF8_Utils;
 with XML_Utils;             use XML_Utils;
 
@@ -111,6 +112,20 @@ package body Docgen2_Backend.HTML is
       end if;
    end To_Destination_Name;
 
+   ----------------
+   -- Line_Image --
+   ----------------
+
+   overriding function Line_Image
+     (Backend  : access HTML_Backend_Record;
+      Line     : Integer)
+      return String
+   is
+      pragma Unreferenced (Backend);
+   begin
+      return "l" & String_Utils.Image (Line);
+   end Line_Image;
+
    -------------
    -- To_Href --
    -------------
@@ -157,15 +172,54 @@ package body Docgen2_Backend.HTML is
    --------------
 
    overriding function Gen_Href
-     (Backend                : access HTML_Backend_Record;
+     (Backend           : access HTML_Backend_Record;
       Name, Href, Title : String)
       return String
    is
       pragma Unreferenced (Backend);
+
    begin
       return "<a href=""" & Href & """ title=""" & Title &
         """>" & Name & "</a>";
    end Gen_Href;
+
+   ----------------------
+   -- Multi_Href_Start --
+   ----------------------
+
+   overriding function Multi_Href_Start
+     (Backend : access HTML_Backend_Record;
+      Name    : String) return String
+   is
+      pragma Unreferenced (Backend);
+
+   begin
+      return "<span class=""droplink"">" & Name & "<ul>";
+   end Multi_Href_Start;
+
+   ---------------------
+   -- Multi_Href_Item --
+   ---------------------
+
+   overriding function Multi_Href_Item
+     (Backend : access HTML_Backend_Record;
+      Name, Href : String) return String
+   is
+   begin
+      return "<li>" & Backend.Gen_Href (Name, Href, Name) & "</li>";
+   end Multi_Href_Item;
+
+   --------------------
+   -- Multi_Href_End --
+   --------------------
+
+   overriding function Multi_Href_End
+     (Backend : access HTML_Backend_Record) return String
+   is
+      pragma Unreferenced (Backend);
+   begin
+      return "</ul></span>";
+   end Multi_Href_End;
 
    ------------
    -- Filter --
@@ -274,7 +328,6 @@ package body Docgen2_Backend.HTML is
       Line    : in out Natural;
       Cb      : access function (S : String) return String)
    is
-      pragma Unreferenced (Backend);
       Idx  : Natural;
       Prev : Natural := Text'First;
 
@@ -298,15 +351,10 @@ package body Docgen2_Backend.HTML is
             exit;
          end if;
 
-         declare
-            Line_Str : constant String := Natural'Image (Line);
-         begin
-            Append
-              (Buffer,
-               "<li><pre><a name=""" &
-               Line_Str (Line_Str'First + 1 .. Line_Str'Last) &
-               """></a>" & To_String (Current) & " </pre></li>" & ASCII.LF);
-         end;
+         Append
+           (Buffer,
+            "<li id=""" & Backend.Line_Image (Line) & """><pre>" &
+            To_String (Current) & " </pre></li>" & ASCII.LF);
 
          Line := Line + 1;
          Current := Null_Unbounded_String;

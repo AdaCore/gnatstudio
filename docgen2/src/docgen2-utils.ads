@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,10 +40,9 @@ package Docgen2.Utils is
      (Construct : String;
       Loc       : Source_Location;
       File      : Source_File;
-      Db        : Entities_Database;
       Lang      : Language.Language_Access)
       return Entity_Information;
-   --  Retrieve the entity corresponding to construct, or create a new one.
+   --  Retrieve the entity corresponding to construct at location Loc/File.
 
    function Get_Declaration_Entity
      (Construct : String;

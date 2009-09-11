@@ -71,12 +71,10 @@ package body Docgen2.Utils is
      (Construct : String;
       Loc       : Source_Location;
       File      : Source_File;
-      Db        : Entities_Database;
       Lang      : Language_Access) return Entity_Information
    is
       Entity        : Entity_Information;
       Current_Loc   : File_Location;
-      pragma Unreferenced (Db);
 
    begin
       Current_Loc :=
@@ -91,8 +89,16 @@ package body Docgen2.Utils is
          Current_Loc.Column,
          Allow_Create => False);
 
+      if Entity = null and then Construct (Construct'First) = '"' then
+         --  Handle "="-like subprograms, that are stored whithout the '"' in
+         --  the entities database
+         Entity := Get_Entity
+           (Construct (Construct'First + 1 .. Construct'Last - 1),
+            Loc, File, Lang);
+      end if;
+
       if Entity = null and then Get_Name (Lang) = "Ada" then
-         for J in Construct'Range loop
+         for J in reverse Construct'Range loop
             --  ??? Ada Specific ... should use language service
             --  Need to define it !
             if Construct (J) = '.' then
@@ -107,23 +113,9 @@ package body Docgen2.Utils is
                   Current_Loc.Column,
                   Allow_Create => False);
 
-               exit when Entity /= null;
+               exit;
             end if;
          end loop;
-      end if;
-
-      --  Last chance, force creation of entity
-      if Entity = null then
-         Current_Loc :=
-           (File   => File,
-            Line   => Loc.Line,
-            Column => Basic_Types.Visible_Column_Type (Loc.Column));
-
-         Entity := Get_Or_Create
-           (Construct,
-            File,
-            Current_Loc.Line,
-            Current_Loc.Column);
       end if;
 
       return Entity;
@@ -143,6 +135,7 @@ package body Docgen2.Utils is
       Entity        : Entity_Information;
       Entity_Status : Find_Decl_Or_Body_Query_Status;
       Current_Loc   : File_Location;
+
    begin
       Current_Loc :=
         (File   => File,
@@ -158,6 +151,14 @@ package body Docgen2.Utils is
          Entity          => Entity,
          Status          => Entity_Status,
          Check_Decl_Only => False);
+
+      if Entity = null and then Construct (Construct'First) = '"' then
+         --  Handle "="-like subprograms, that are stored whithout the '"' in
+         --  the entities database
+         Entity := Get_Declaration_Entity
+           (Construct (Construct'First + 1 .. Construct'Last - 1),
+            Loc, File, Db, Lang);
+      end if;
 
       if Entity = null and then Get_Name (Lang) = "Ada" then
          for J in Construct'Range loop

@@ -1,0 +1,16 @@
+@@SET@@ LINKTXT = $1
+@@SET@@ LINK1 = $2
+@@SET@@ LINK1TXT = $3
+@@SET@@ LINK2 = $4
+@@SET@@ LINK2TXT = $5
+@@SET@@ LINK3 = $6
+@@SET@@ LINK3TXT = $7
+<span class="droplink">@_LINKTXT_@<ul>
+  <li><a href="@_LINK1_@">@_LINK1TXT_@</a></li>
+@@IF@@ @_LINK2_@ /= ""
+  <li><a href="@_LINK2_@">@_LINK2TXT_@</a></li>
+@@END_IF@@
+@@IF@@ @_LINK3_@ /= ""
+  <li><a href="@_LINK3_@">@_LINK3TXT_@</a></li>
+@@END_IF@@
+</ul></span>

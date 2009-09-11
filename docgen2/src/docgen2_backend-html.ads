@@ -47,6 +47,12 @@ package Docgen2_Backend.HTML is
       return Filesystem_String;
    --  See inherited doc.
 
+   overriding function Line_Image
+     (Backend  : access HTML_Backend_Record;
+      Line     : Integer)
+      return String;
+   --  See inherited doc.
+
    overriding function To_Href
      (Backend  : access HTML_Backend_Record;
       Location : String;
@@ -66,10 +72,25 @@ package Docgen2_Backend.HTML is
    --  See inherited doc.
 
    overriding function Gen_Href
-     (Backend                : access HTML_Backend_Record;
+     (Backend           : access HTML_Backend_Record;
       Name, Href, Title : String)
       return String;
    --  See inherited doc.
+
+   overriding function Multi_Href_Start
+     (Backend : access HTML_Backend_Record;
+      Name    : String) return String;
+   --  When a link has multiple choices, use Multi_Href_Start first, then
+   --  generate the hrefs using Multi_Href_Item, finish by Multi_Href_End
+
+   overriding function Multi_Href_Item
+     (Backend : access HTML_Backend_Record;
+      Name, Href : String) return String;
+   --  See Multi_Href_Start for documentation
+
+   overriding function Multi_Href_End
+     (Backend : access HTML_Backend_Record) return String;
+   --  See Multi_Href_Start for documentation
 
    overriding function Gen_Tag
      (Backend : access HTML_Backend_Record;

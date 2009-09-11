@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,7 +97,7 @@ private
       Block      : Ada.Strings.Unbounded.Unbounded_String;
       Sloc_Start : Source_Location;
       Sloc_Stop  : Source_Location;
-      Analysed   : Boolean;
+      Analysed   : Boolean := False;
    end record;
 
    No_Comment : constant Comment_Type :=

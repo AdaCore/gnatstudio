@@ -43,6 +43,11 @@ a.hide:visited
    margin-right: 5px;
 }
 
+*:target
+{
+   background: #E4E4F4;
+}
+
 pre
 {
    margin: 0px;
@@ -393,6 +398,45 @@ div.classtree h3
    z-index: 5;
 }
 
+.droplink
+{
+  text-align:left;
+  position:relative;
+  height:2.5em;
+  margin:0;
+  list-style-type:none;
+  padding-right:12px;
+  background: transparent url(../support/images/link.png) no-repeat center right;
+  text-decoration: underline;
+}
+.droplink ul
+{
+  visibility:hidden;
+  position:absolute;
+  top:1.2em;
+  left:0;
+  height:0;
+  overflow:hidden;
+  list-style-type:none;
+  margin:0;
+  padding:0;
+  z-index:10;
+}
+.droplink:hover ul
+{
+  visibility:visible;
+  height:auto;
+  width:10em;
+  background:#eee;
+  border:1px solid #ddd;
+  overflow:visible;
+}
+.droplink li
+{
+  font-size: 12px;
+  padding-left: 5px;
+}
+
 /* For printing we do not want the table of contents nor the index */
 
 @media print {
@@ -404,5 +448,7 @@ body { margin: 10px; }
 #leftSide { display: none; }
 
 #documentation { margin: 10px; }
+
+#droplink ul { display: none; }
 
 }

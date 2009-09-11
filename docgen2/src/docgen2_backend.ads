@@ -77,6 +77,12 @@ package Docgen2_Backend is
    --  for example: "gps-kernel.ads:5:4" and "2" will return
    --  gps-kernel.ads-2.html
 
+   function Line_Image
+     (Backend  : access Backend_Record;
+      Line     : Integer)
+      return String is abstract;
+   --  Return the identifier used when bookmarking a line number
+
    function To_Href
      (Backend  : access Backend_Record;
       Location : String;
@@ -109,6 +115,21 @@ package Docgen2_Backend is
    --  Generate the actual code used by the backend to navigate to xref.
    --  for example: html backend will return
    --  <a href="Href" title="Title">Name</a>
+
+   function Multi_Href_Start
+     (Backend : access Backend_Record;
+      Name    : String) return String is abstract;
+   --  When a link has multiple choices, use Multi_Href_Start first, then
+   --  generate the hrefs using Multi_Href_Item, finish by Multi_Href_End
+
+   function Multi_Href_Item
+     (Backend : access Backend_Record;
+      Name, Href : String) return String is abstract;
+   --  See Multi_Href_Start for documentation
+
+   function Multi_Href_End
+     (Backend : access Backend_Record) return String is abstract;
+   --  See Multi_Href_Start for documentation
 
    function Gen_Tag
      (Backend  : access Backend_Record;

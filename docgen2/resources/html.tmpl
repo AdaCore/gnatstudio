@@ -109,14 +109,11 @@
 <div class='default' id='documentation'>
   <div class='title'>
     @@IF@@ @_EXIST:SOURCE_FILE_@
-    File: <i>@_SOURCE_FILE_@</i>
+    File:
+    @@INCLUDE@@ multilink.tmpl "<i>@_SOURCE_FILE_@</i>" "@_SOURCE_@" "Goto spec source" "@_BODY_SOURCE_@" "Goto body source"
     @@ELSE@@
-    Package: <i>@_PACKAGE_NAME_@</i>
-    @@END_IF@@
-    @@IF@@ @_EXIST:BODY_SOURCE_@
-      (<a href="@_SOURCE_@">Spec</a> / <a href="@_BODY_SOURCE_@">Body</a>)
-    @@ELSE@@
-      (<a href="@_SOURCE_@">Source File</a>)
+    Package:
+    @@INCLUDE@@ multilink.tmpl "<i>@_PACKAGE_NAME_@</i>" "@_SOURCE_@" "Goto spec source" "@_BODY_SOURCE_@" "Goto body source"
     @@END_IF@@
   </div>
   <div class='subprograms'>
@@ -176,12 +173,8 @@
     <h1><a name='Classes' id='Classes'></a>Classes</h1>
     @@TABLE@@
     <div class="class">
-      <h3>
-        <a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>@_CLASS_@
-        - <a href="@_CLASS_SRC_@" title="Goto spec">Spec</a>
-        @@IF@@  @_EXIST:CLASS_BODY_SRC_@
-         / <a href="@_CLASS_BODY_SRC_@" title="Goto body">Body</a>
-        @@END_IF@@
+      <h3><a name='@_CLASS_LOC_@' id='@_CLASS_LOC_@'></a>
+        @@INCLUDE@@ multilink.tmpl "@_CLASS_@" "@_CLASS_SRC_@" "Goto declaration in source" "@_CLASS_BODY_SRC_@" "Goto full declaration in source"
       </h3>
       <div class='details'><pre>@_CLASS_PRINTOUT_@</pre></div>
       @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_CHILDREN_@) or (@_EXIST:CLASS_PRIMITIVES_@)
@@ -237,125 +230,116 @@
   @@END_IF@@
 
   @@IF@@ @_EXIST:TASK_@
-    <div class='subprograms'>
-      <h1><a name='Tasks' id='Tasks'></a>Tasks &amp; Protected</h1>
-      @@TABLE@@
-      <div class="class">
-        <h3>
-          <a name='@_TASK_LOC_@' id='@_TASK_LOC_@'></a>@_TASK_@
-          @@IF@@ @_TASK_IS_TYPE_@
-           (@_TASK_TYPE_@ type)
-          @@ELSE@@
-           (@_TASK_TYPE_@)
+  <div class='subprograms'>
+    <h1><a name='Tasks' id='Tasks'></a>Tasks &amp; Protected</h1>
+    @@TABLE@@
+    <div class="class">
+      <h3>
+        <a name='@_TASK_LOC_@' id='@_TASK_LOC_@'></a>
+        @@INCLUDE@@ multilink.tmpl "@_TASK_@" "@_TASK_SRC_@" "Goto spec in source" "@_TASK_BODY_SRC_@" "Goto body in source"
+        @@IF@@ @_TASK_IS_TYPE_@
+         (@_TASK_TYPE_@ type)
+        @@ELSE@@
+         (@_TASK_TYPE_@)
+        @@END_IF@@
+      </h3>
+      @@IF@@ @_EXIST:TASK_ENTRIES_HREF_@
+      <div class="details"><b>Entries:</b>@_TASK_ENTRIES_HREF_@</div>
+      @@END_IF@@
+      @@IF@@ @_EXIST:TASK_REFERENCES_@
+      <div class='profile'>
+          <h4>References:</h4>
+          @@TABLE@@
+          @@IF@@ @_NO_SPACE:TASK_REFERENCES_@ /= ""
+          <div><i>@_TASK_REFERENCES_@</i></div>
           @@END_IF@@
-          - <a href="@_CLASS_SRC_@" title="Goto spec">Spec</a>
-          @@IF@@  @_EXIST:TASK_BODY_SRC_@
-           / <a href="@_TASK_BODY_SRC_@" title="Goto body">Body</a>
-          @@END_IF@@
-        </h3>
-        @@IF@@ @_EXIST:TASK_ENTRIES_HREF_@
-        <div class="details"><b>Entries:</b>@_TASK_ENTRIES_HREF_@</div>
-        @@END_IF@@
-        @@IF@@ @_EXIST:TASK_REFERENCES_@
-        <div class='profile'>
-            <h4>References:</h4>
-            @@TABLE@@
-            @@IF@@ @_NO_SPACE:TASK_REFERENCES_@ /= ""
-            <div><i>@_TASK_REFERENCES_@</i></div>
-            @@END_IF@@
-            @@END_TABLE@@
-        </div>
-        @@END_IF@@
-        @@IF@@ @_EXIST:TASK_CALLED_@
-        <div class='profile'>
-            <h4>Called by:</h4>
-            @@TABLE@@
-            @@IF@@ @_NO_SPACE:TASK_CALLED_@ /= ""
-            <div><i>@_TASK_CALLED_@</i></div>
-            @@END_IF@@
-            @@END_TABLE@@
-        </div>
-        @@END_IF@@
-        @@IF@@ @_EXIST:TASK_CALLS_@
-        <div class='profile'>
-            <h4>Calls:</h4>
-            @@TABLE@@
-            @@IF@@ @_NO_SPACE:TASK_CALLS_@ /= ""
-            <div><i>@_TASK_CALLS_@</i></div>
-            @@END_IF@@
-            @@END_TABLE@@
-        </div>
-        @@END_IF@@
-        @@IF@@ @_NO_SPACE:TASK_DESCRIPTION_@ /= ""
-        <div class='comment'>@_TASK_DESCRIPTION_@</div>
-        @@END_IF@@
+          @@END_TABLE@@
       </div>
-      @@END_TABLE@@
+      @@END_IF@@
+      @@IF@@ @_EXIST:TASK_CALLED_@
+      <div class='profile'>
+          <h4>Called by:</h4>
+          @@TABLE@@
+          @@IF@@ @_NO_SPACE:TASK_CALLED_@ /= ""
+          <div><i>@_TASK_CALLED_@</i></div>
+          @@END_IF@@
+          @@END_TABLE@@
+      </div>
+      @@END_IF@@
+      @@IF@@ @_EXIST:TASK_CALLS_@
+      <div class='profile'>
+          <h4>Calls:</h4>
+          @@TABLE@@
+          @@IF@@ @_NO_SPACE:TASK_CALLS_@ /= ""
+          <div><i>@_TASK_CALLS_@</i></div>
+          @@END_IF@@
+          @@END_TABLE@@
+      </div>
+      @@END_IF@@
+      @@IF@@ @_NO_SPACE:TASK_DESCRIPTION_@ /= ""
+      <div class='comment'>@_TASK_DESCRIPTION_@</div>
+      @@END_IF@@
     </div>
+    @@END_TABLE@@
+  </div>
   @@END_IF@@
 
   @@IF@@ @_EXIST:TYPE_@
-    <div class='subprograms'>
-      <h1><a name='Types' id='Types'></a>Types</h1>
-      @@TABLE@@
-      <div class="class">
-        <h3>
-          <a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>@_TYPE_@
-          - <a href="@_TYPE_SRC_@" title="Goto spec">Spec</a>
-          @@IF@@  @_EXIST:TYPE_BODY_SRC_@
-           / <a href="@_TYPE_BODY_SRC_@" title="Goto body">Body</a>
+  <div class='subprograms'>
+    <h1><a name='Types' id='Types'></a>Types</h1>
+    @@TABLE@@
+    <div class="class">
+      <h3>
+        <a name='@_TYPE_LOC_@' id='@_TYPE_LOC_@'></a>
+        @@INCLUDE@@ multilink.tmpl "@_TYPE_@" "@_TYPE_SRC_@" "Goto declaration in source" "@_TYPE_BODY_SRC_@" "Goto full declaration in source"
+      </h3>
+      <div class='details'><pre>@_TYPE_PRINTOUT_@</pre></div>
+      @@IF@@ @_EXIST:TYPE_REFERENCES_@
+      <div class='profile'>
+          <h4>References:</h4>
+          @@TABLE@@
+          @@IF@@ @_NO_SPACE:TYPE_REFERENCES_@ /= ""
+          <div><i>@_TYPE_REFERENCES_@</i></div>
           @@END_IF@@
-        </h3>
-        <div class='details'><pre>@_TYPE_PRINTOUT_@</pre></div>
-        @@IF@@ @_EXIST:TYPE_REFERENCES_@
-        <div class='profile'>
-            <h4>References:</h4>
-            @@TABLE@@
-            @@IF@@ @_NO_SPACE:TYPE_REFERENCES_@ /= ""
-            <div><i>@_TYPE_REFERENCES_@</i></div>
-            @@END_IF@@
-            @@END_TABLE@@
-        </div>
-        @@END_IF@@
-        @@IF@@ @_NO_SPACE:TYPE_DESCRIPTION_@ /= ""
-        <div class='comment'>@_TYPE_DESCRIPTION_@</div>
-        @@END_IF@@
+          @@END_TABLE@@
       </div>
-      @@END_TABLE@@
+      @@END_IF@@
+      @@IF@@ @_NO_SPACE:TYPE_DESCRIPTION_@ /= ""
+      <div class='comment'>@_TYPE_DESCRIPTION_@</div>
+      @@END_IF@@
     </div>
+    @@END_TABLE@@
+  </div>
   @@END_IF@@
 
   @@IF@@ @_EXIST:CST_@
-    <div class='subprograms'>
-      <h1><a name='Constants' id='Constants'></a>Constants &amp; Global variables</h1>
-      @@TABLE@@
-      <div class="class">
-        <h3><a name='@_CST_LOC_@' id='@_CST_LOC_@'></a>@_CST_@
-          @@IF@@ @_CST_TYPE_@ /= ""
-          <span class="type">(@_CST_TYPE_@)</span>
-          @@END_IF@@
-          - <a href="@_CST_SRC_@" title="Goto spec">Spec</a>
-          @@IF@@  @_EXIST:CST_BODY_SRC_@
-           / <a href="@_CST_BODY_SRC_@" title="Goto body">Body</a>
-          @@END_IF@@
-        </h3>
-        <div class='details'><pre>@_CST_PRINTOUT_@</pre></div>
-        @@IF@@ @_EXIST:CST_REFERENCES_@
-        <div class='profile'>
-          <h4>References:</h4>
-          @@TABLE@@
-            @@IF@@ @_NO_SPACE:CST_REFERENCES_@ /= ""
-            <div><i>@_CST_REFERENCES_@</i></div>
-            @@END_IF@@
-          @@END_TABLE@@
-        </div>
+  <div class='subprograms'>
+    <h1><a name='Constants' id='Constants'></a>Constants &amp; Global variables</h1>
+    @@TABLE@@
+    <div class="class">
+      <h3><a name='@_CST_LOC_@' id='@_CST_LOC_@'></a>
+        @@INCLUDE@@ multilink.tmpl "@_CST_@" "@_CST_SRC_@" "Goto declaration in source" "@_CST_BODY_SRC_@" "Goto full declaration in source"
+        @@IF@@ @_CST_TYPE_@ /= ""
+        <span class="type">(@_CST_TYPE_@)</span>
         @@END_IF@@
-        @@IF@@ @_NO_SPACE:CST_DESCRIPTION_@ /= ""
-        <div class='comment'>@_CST_DESCRIPTION_@</div>
-        @@END_IF@@
+      </h3>
+      <div class='details'><pre>@_CST_PRINTOUT_@</pre></div>
+      @@IF@@ @_EXIST:CST_REFERENCES_@
+      <div class='profile'>
+        <h4>References:</h4>
+        @@TABLE@@
+          @@IF@@ @_NO_SPACE:CST_REFERENCES_@ /= ""
+          <div><i>@_CST_REFERENCES_@</i></div>
+          @@END_IF@@
+        @@END_TABLE@@
       </div>
-      @@END_TABLE@@
+      @@END_IF@@
+      @@IF@@ @_NO_SPACE:CST_DESCRIPTION_@ /= ""
+      <div class='comment'>@_CST_DESCRIPTION_@</div>
+      @@END_IF@@
     </div>
+    @@END_TABLE@@
+  </div>
   @@END_IF@@
 
   @@IF@@ @_EXIST:SUBP_@ OR @_EXIST:TASK_ENTRY_@
@@ -366,11 +350,8 @@
           <div>
             <h3>
               <a name='@_TASK_ENTRY_LOC_@' id='@_TASK_ENTRY_LOC_@'></a>
-              <span class="type"><a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a></span>.@_TASK_ENTRY_@
-              - <a href="@_TASK_ENTRY_SRC_@" title="Goto spec">Spec</a>
-              @@IF@@  @_EXIST:TASK_ENTRY_BODY_SRC_@
-               / <a href="@_TASK_ENTRY_BODY_SRC_@" title="Goto body">Body</a>
-              @@END_IF@@
+              <span class="type"><a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a></span>.
+              @@INCLUDE@@ multilink.tmpl "@_TASK_ENTRY_@" "@_TASK_ENTRY_SRC_@" "Goto spec in source" "@_TASK_ENTRY_BODY_SRC_@" "Goto body in source"
             </h3>
             <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</pre></div>
             @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
@@ -402,11 +383,8 @@
       @@TABLE@@
       <div class="class">
         <h3>
-          <a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>@_SUBP_@
-          - <a href="@_SUBP_SRC_@" title="Goto spec">Spec</a>
-          @@IF@@  @_EXIST:SUBP_BODY_SRC_@
-           / <a href="@_SUBP_BODY_SRC_@" title="Goto body">Body</a>
-          @@END_IF@@
+          <a name='@_SUBP_LOC_@' id='@_SUBP_LOC_@'></a>
+          @@INCLUDE@@ multilink.tmpl "@_SUBP_@" "@_SUBP_SRC_@" "Goto spec in source" "@_SUBP_BODY_SRC_@" "Goto body in source"
         </h3>
         @@IF@@ @_EXIST:SUBP_GENERIC_PARAMETERS_@
         <div class='parameters'>

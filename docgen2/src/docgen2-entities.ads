@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,12 +52,14 @@ package Docgen2.Entities is
    --  is filled during analysis, then used to generate the documentation.
 
    type Location_Type is record
-      File_Loc : File_Location;
+      Spec_Loc : File_Location;
+      Body_Loc : File_Location;
       Pkg_Nb   : Natural;
    end record;
 
    Null_Location : constant Location_Type :=
-                     (File_Loc => No_File_Location,
+                     (Spec_Loc => No_File_Location,
+                      Body_Loc => No_File_Location,
                       Pkg_Nb   => 0);
 
    type Cross_Ref_Record;
@@ -119,17 +121,15 @@ package Docgen2.Entities is
          --  Code display
 
          Entity_Loc           : Source_Location;
-         --  Location of the entity in line/column/index format
+         --  Location of the entity
 
          Location             : Location_Type;
+         Other_Location       : Location_Type;
          --  Location of the entity in line/column/file/package number format
 
          Printout_Loc         : Source_Location;
          --  Printout location (includes preceding keywords as 'package',
          --  'procedure' and so on)
-
-         Body_Location        : File_Location := No_File_Location;
-         --  Entity's body location in line/column/file format
 
          Is_Abstract          : Boolean := False;
          Is_Private           : Boolean := False;
@@ -137,6 +137,7 @@ package Docgen2.Entities is
          Is_Renaming          : Boolean := False;
          Is_Instantiation     : Boolean := False;
          Is_Partial           : Boolean := False;
+         Is_Visible           : Boolean := False;
          --  Entity flags.
 
          Generic_Params       : Entity_Info_List.Vector;
@@ -169,11 +170,11 @@ package Docgen2.Entities is
                Language       : Language_Access;
                --  File language
 
-               File           : Source_File;
-               --  The file
-
                Pkg_Nb         : Natural;
                --  Package id in this file
+
+               Is_Body        : Boolean := False;
+               --  Whether the package or file represents a body file.
 
             when Cat_Task | Cat_Protected =>
                Is_Type        : Boolean;
