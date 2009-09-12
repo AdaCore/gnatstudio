@@ -8,6 +8,7 @@
    Memcheck:Leak
    fun:malloc
    fun:gnatcoll__memory__alloc
+   fun:__gnat_malloc
    fun:gnatcoll__python__py_setprogramname
 }
 {
@@ -41,6 +42,15 @@
    writev(vector[...])
    fun:__write_nocancel
    fun:_X11TransWrite
+}
+{
+   Elaboration in GNAT
+   Memcheck:Leak
+   fun:malloc
+   fun:gnatcoll__memory__alloc
+   fun:__gnat_malloc
+   fun:osint___elabb
+   fun:adainit
 }
 {
    Elaboration in GNAT
@@ -4240,5 +4250,6 @@
   Memcheck:Leak
   fun:malloc
   fun:gnatcoll__memory__alloc
+  fun:__gnat_malloc
   fun:gps__kernel__contexts__set_file_information
 }
