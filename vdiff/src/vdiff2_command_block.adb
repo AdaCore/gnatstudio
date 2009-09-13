@@ -200,7 +200,7 @@ package body Vdiff2_Command_Block is
 
    procedure Unhighlight_Difference
      (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head)is
+      Diff   : access Diff_Head) is
    begin
       Hide_Differences (Kernel, Diff);
    end Unhighlight_Difference;
