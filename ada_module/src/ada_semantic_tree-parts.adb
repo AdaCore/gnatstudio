@@ -571,7 +571,16 @@ package body Ada_Semantic_Tree.Parts is
       end if;
 
       Spec_Entity := Get_Entity (Spec_Unit);
-      Body_Entity := Get_Entity (Body_Unit);
+
+      if Spec_Entity = Null_Entity_Access then
+         --  If no spec can be found, then the body acts as a spec
+         Spec_Entity := Get_Entity (Body_Unit);
+         Spec_Unit := Body_Unit;
+         Body_Unit := Null_Unit_Access;
+      else
+         --  Otherwise, threat the body as his own.
+         Body_Entity := Get_Entity (Body_Unit);
+      end if;
 
       Relation := new Ada_Relation'
         (First_Occurence  =>
