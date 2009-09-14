@@ -4044,29 +4044,32 @@ case "${host}" in
   powerpc-ibm-aix5.*  ) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-Wl,-bbigtoc")' ;;
 
   ## PowerPC
-  powerpc-*-linux-gnu ) PRINT_CMD="a2ps" ;;
+  powerpc-*-linux-gnu )
+    PRINT_CMD="a2ps"
+    EXEC_COMMAND="xterm -hold -e"
+    ;;
 
   powerpc-*-darwin* ) STRIP_CR=True ;;
 
   ## Suns
-  *-sun-solaris* \
-    | i[3456]86-*-solaris2* | i345686-*-sunos5* | sparc*-linux*-gnu )
-    case "${host}" in
-      *-sunos5* | *-solaris* ) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lXrender")' ;;
-      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
-    esac;;
+  *-sun-solaris* | i[3456]86-*-solaris2* | i345686-*-sunos5*)
+    TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lXrender")' ;;
 
   # IA64 processors
   ia64-*-* )
     case "${host}" in
-      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
+      *-linux-gnu* )
+        EXEC_COMMAND="xterm -hold -e"
+        PRINT_CMD="a2ps" ;;
     esac
   ;;
 
   # AMD64 processors
   x86_64-*-* )
     case "${host}" in
-      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
+      *-linux-gnu* )
+        EXEC_COMMAND="xterm -hold -e"
+        PRINT_CMD="a2ps" ;;
     esac
   ;;
 
@@ -4074,7 +4077,10 @@ case "${host}" in
   i[3456]86-*-* )
     machine=intel386
     case "${host}" in
-      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
+      *-linux-gnu* )
+        EXEC_COMMAND="xterm -hold -e"
+        PRINT_CMD="a2ps"
+        ;;
       *win32* | *mingw32* | *cygwin* )
 	STRIP_CR=True
 	CAN_OUTPUT=False
