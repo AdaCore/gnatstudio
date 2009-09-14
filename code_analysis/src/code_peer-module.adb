@@ -1846,32 +1846,32 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Edit CodePeer _Text Overview",
+         Text        => -"_Text Overview",
          Callback    => On_Edit_Text_Overview'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Edit CodePeer _Text Listing",
+         Text        => -"_Text Listing",
          Callback    => On_Edit_Text_Listing'Access,
          Filter      => Src_Editor_Context);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Edit CodePeer _Log",
+         Text        => -"CodePeer _Log",
          Callback    => On_Edit_Log'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Remove lock",
+         Text        => -"Remove Lock",
          Callback    => On_Remove_Lock'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Remove XML code review",
+         Text        => -"Remove XML Code Review",
          Callback    => On_Remove_XML_Review'Access);
 
       Module.Annotation_Style :=
