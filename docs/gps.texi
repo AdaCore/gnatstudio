@@ -527,7 +527,12 @@ The menu bar gives access to the following items:
 @xref{The Tools Menu}.
 
 @item SPARK
-@xref{The SPARK Menu}.
+If the SPARK toolset is installed on your system and available on your PATH,
+then this menu is available. See @ref{The SPARK Menu} for more details.
+
+@item CodePeer
+If the CodePeer toolset is installed on your system and available on your PATH,
+then this menu is available. See your CodePeer documentation for more details.
 
 @item Window
 @xref{Multiple Document Interface}.
