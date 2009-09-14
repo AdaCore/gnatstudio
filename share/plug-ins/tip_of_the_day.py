@@ -367,10 +367,12 @@ def parse_tips ():
            current_tip_title = title.group(1) or ""
 
        elif img:
-           current_tip_img = os.path.join (GPS.get_system_dir(),
-                                           "share", "gps", "plug-ins",
-                                           "images",
-                                           img.group(1)) or ""
+           # commented for now, see I903-007
+           #     current_tip_img = os.path.join (GPS.get_system_dir(),
+           #                                     "share", "gps", "plug-ins",
+           #                                     "images",
+           #                                     img.group(1)) or ""
+           pass
 
        else:
            if len (l) > 1:
