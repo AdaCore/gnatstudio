@@ -65,9 +65,9 @@
 +   }
 +}
 +
-+const int size_of_file_attributes = 0;
++const int __gnat_size_of_file_attributes = 0;
 +
-+void reset_attributes (void* attr) {
++void __gnat_reset_attributes (void* attr) {
 +   /* nothing to do */
 +}
 +
