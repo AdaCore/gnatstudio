@@ -10,7 +10,11 @@ import GPS, os.path, os_utils;
 
 #  Check for Xcov
 
-if os_utils.locate_exec_on_path ("xcov") != "":
+if os_utils.locate_exec_on_path ("xcov") == "":
+    GPS.Preference ("Coverage-Toolchain").set ("Gcov")
+else:
+    GPS.Preference ("Coverage-Toolchain").set ("Xcov")
+
     GPS.parse_xml ("""
   <!--  Program execution under instrumented execution environment  -->
 
@@ -83,7 +87,7 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       </combo>
       <field label="Routine list" switch="--routine-list" separator="="
              as-file="true"/>
-      <field label="Trace file" switch="--trace" separator="=" as-file="true"/>
+      <field label="Trace file" switch="-T" separator=" " as-file="true"/>
     </switches>
   </target-model>
 
@@ -101,7 +105,8 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
       <arg>--output-dir=%O</arg>
-      <arg>--trace=%TT.trace</arg>
+      <arg>-T</arg>
+      <arg>%TT.trace</arg>
     </command-line>
   </target>
 
@@ -118,7 +123,8 @@ if os_utils.locate_exec_on_path ("xcov") != "":
       <arg>--level=insn</arg>
       <arg>--annotate=xcov</arg>
       <arg>--output-dir=%O</arg>
-      <arg>--trace=&lt;unknown&gt;</arg>
+      <arg>-T</arg>
+      <arg>&lt;unknown&gt;</arg>
     </command-line>
   </target>
 """)
