@@ -574,7 +574,7 @@ package body Coverage_GUI is
       Coverage_Toolchain_Preference :=
         Coverage_Toolchain_Preferences.Create
           (Kernel.Get_Preferences,
-           "coverage-toolchain",
+           "Coverage-Toolchain",
            "Coverage toolchain",
            "Coverage Analysis",
            "",
