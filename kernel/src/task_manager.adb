@@ -604,6 +604,7 @@ package body Task_Manager is
       if Manager.Queues /= null then
          for J in Manager.Queues'Range loop
             Command_Queues.Free (Manager.Queues (J).Queue);
+            GNAT.Strings.Free (Manager.Queues (J).Id);
             Unchecked_Free (Manager.Queues (J));
          end loop;
 
