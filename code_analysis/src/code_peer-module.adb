@@ -137,7 +137,12 @@ package body Code_Peer.Module is
    procedure On_Regenerate_Report
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Advanced->Regenerate Report" menu item is activated
+   --  Called when "Regenerate Report" menu item is activated
+
+   procedure On_HTML_Report
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "HTML Report" menu item is activated
 
    procedure On_Edit_Text_Overview
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -760,6 +765,58 @@ package body Code_Peer.Module is
               (Kernel_Handle (Module.Kernel), Mode);
          end if;
    end On_Regenerate_Report;
+
+   --------------------------
+   -- On_Regenerate_Report --
+   --------------------------
+
+   procedure On_HTML_Report
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Mode             : constant String := Get_Build_Mode (Kernel);
+      CodePeer_Subdir  : constant Boolean := Use_CodePeer_Subdir (Kernel);
+
+   begin
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), "codepeer");
+      end if;
+
+      declare
+         HTML_File : constant Virtual_File :=
+                       Create_From_Dir (Codepeer_Output_Directory
+                                        (Get_Project (Kernel)),
+                                        "/html/index.html");
+
+      begin
+         if not Is_Regular_File (HTML_File) then
+            Console.Insert
+              (Kernel,
+               HTML_File.Display_Full_Name &
+               (-" does not exist. Please perform a full analysis first"),
+               Mode => Console.Error);
+         else
+            Open_Html (Kernel, String (Full_Name (HTML_File).all));
+         end if;
+      end;
+
+      if CodePeer_Subdir then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (Kernel_Handle (Module.Kernel), Mode);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+
+         if CodePeer_Subdir then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (Kernel_Handle (Module.Kernel), Mode);
+         end if;
+   end On_HTML_Report;
 
    --------------------------
    -- On_Edit_Text_Listing --
@@ -1842,6 +1899,12 @@ package body Code_Peer.Module is
          Parent_Path => Menu,
          Text        => -"_Regenerate Report",
          Callback    => On_Regenerate_Report'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Menu,
+         Text        => -"Display _HTML Report",
+         Callback    => On_HTML_Report'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
