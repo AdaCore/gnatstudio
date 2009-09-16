@@ -12,6 +12,13 @@
    fun:gnatcoll__python__py_setprogramname
 }
 {
+   Python requires a static string for the program name
+   Memcheck:Leak
+   fun:malloc
+   fun:gnatcoll__memory__alloc
+   fun:gnatcoll__python__py_setprogramname
+}
+{
    GNAT's Setenv implementation leaks memory on some system, since it doesn't free the previous value
    Memcheck:Leak
    fun:malloc
@@ -4251,5 +4258,12 @@
   fun:malloc
   fun:gnatcoll__memory__alloc
   fun:__gnat_malloc
+  fun:gps__kernel__contexts__set_file_information
+}
+{
+  Real memory leak
+  Memcheck:Leak
+  fun:malloc
+  fun:gnatcoll__memory__alloc
   fun:gps__kernel__contexts__set_file_information
 }
