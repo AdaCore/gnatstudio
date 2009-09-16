@@ -10,10 +10,15 @@ import GPS, os.path, os_utils;
 
 #  Check for Xcov
 
-if os_utils.locate_exec_on_path ("xcov") == "":
-    GPS.Preference ("Coverage-Toolchain").set ("Gcov")
-else:
-    GPS.Preference ("Coverage-Toolchain").set ("Xcov")
+def on_gps_started (hook_name):
+  pref = GPS.Preference ("Coverage-Toolchain")
+
+  if os_utils.locate_exec_on_path ("xcov") == "":
+    if pref.get() != "Gcov":
+      pref.set ("Gcov")
+  else:
+    if pref.get() != "Xcov":
+      pref.set ("Xcov")
 
     GPS.parse_xml ("""
   <!--  Program execution under instrumented execution environment  -->
@@ -126,5 +131,6 @@ else:
       <arg>-T</arg>
       <arg>&lt;unknown&gt;</arg>
     </command-line>
-  </target>
-""")
+  </target>""")
+
+GPS.Hook ("gps_started").add (on_gps_started)
