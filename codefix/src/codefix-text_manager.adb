@@ -1523,7 +1523,7 @@ package body Codefix.Text_Manager is
       Line       : constant String := This.Get_Line (Position, 1);
    begin
       Dest_Stop.Col := To_Column_Index
-        (To_Char_Index (Dest_Start.Col, Line) + Char_Index (Len), Line);
+        (To_Char_Index (Dest_Start.Col, Line) + Char_Index (Len) - 1, Line);
 
       Replace
         (This          => This,
