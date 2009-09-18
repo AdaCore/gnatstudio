@@ -56,12 +56,13 @@ private package Outline_View.Model is
       Show_Profile      : Boolean := False;
    end record;
 
-   function New_Model
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      File   : Structured_File_Access;
-      Filter : Tree_Filter;
-      Sort   : Boolean) return Outline_Model;
-   --  Create a new model for the file given in parameter.
+   procedure Init_Model
+     (Model     : access Outline_Model_Record'Class;
+      Key       : Construct_Annotations_Pckg.Annotation_Key;
+      File      : Structured_File_Access;
+      Filter    : Tree_Filter;
+      Sort      : Boolean;
+      Add_Roots : Boolean := False);
 
    function Get_File (Model : Outline_Model) return Structured_File_Access;
    --  Return the file modelized by this model

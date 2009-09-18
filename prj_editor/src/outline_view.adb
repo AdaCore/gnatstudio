@@ -1041,8 +1041,8 @@ package body Outline_View is
      (Outline : access Outline_View_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File)
    is
-      Model       : Outline_Model;
-      Struct_File : Structured_File_Access;
+      Model          : Outline_Model;
+      Struct_File    : Structured_File_Access;
    begin
       Outline.File := File;
 
@@ -1062,16 +1062,24 @@ package body Outline_View is
       end if;
 
       if Struct_File /= null then
-         Model := New_Model
-           (Outline_View_Module_Record
-              (Outline_View_Module.all).Construct_Annotation_Key,
-            Struct_File,
-            Get_Filter_Record (Outline.Kernel),
-            Get_History
-              (Get_History (Outline.Kernel).all,
-               Hist_Sort_Alphabetical));
+         if Model = null then
+            Model := new Outline_Model_Record;
 
-         Set_Outline_Model (Outline, Model);
+            Gtkada.Abstract_Tree_Model.Initialize (Model);
+
+            Set_Outline_Model (Outline, Model);
+         end if;
+
+         Init_Model
+           (Model,
+             Outline_View_Module_Record
+               (Outline_View_Module.all).Construct_Annotation_Key,
+             Struct_File,
+             Get_Filter_Record (Outline.Kernel),
+             Get_History
+              (Get_History (Outline.Kernel).all,
+               Hist_Sort_Alphabetical),
+            True);
 
          declare
             Path : Gtk_Tree_Path;
@@ -1113,8 +1121,7 @@ package body Outline_View is
    -----------------------
 
    procedure Set_Outline_Model
-     (View : access Outline_View_Record'Class; Model : Outline_Model)
-   is
+     (View : access Outline_View_Record'Class; Model : Outline_Model) is
    begin
       Set_Model (View.Tree, Gtk_Tree_Model (Model));
    end Set_Outline_Model;
