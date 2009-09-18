@@ -11,7 +11,7 @@
 <GPS>
   <Language>
     <Name>Changelog</Name>
-    <Spec_Suffix>changelog</Spec_Suffix>
+    <Spec_Suffix>.changelog</Spec_Suffix>
     <Keywords>[0-9]+|</Keywords>
     <Keywords>\(.*\).*:</Keywords>
     <Context>
