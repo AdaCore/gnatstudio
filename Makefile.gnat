@@ -133,8 +133,6 @@ GNAT_SOURCES= \
   xsnamest.adb \
   xutil.ads \
   xutil.adb \
-  g-comlin.ads \
-  g-comlin.adb \
   gnat_style.css
 
 list-sources:

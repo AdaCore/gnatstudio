@@ -24,8 +24,8 @@
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
-with GComLin;   use GComLin;
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Command_Line; use GNAT.Command_Line;
+with GNAT.Strings;      use GNAT.Strings;
 
 package Switches_Chooser is
 

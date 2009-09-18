@@ -38,8 +38,6 @@ endif
 do_links:
 	-@$(foreach f,$(GNAT_SOURCES), \
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
-	@sed -e 's/GNAT.Command_Line/GComLin/g' ../gnat_src/g-comlin.ads > ../gnat/gcomlin.ads
-	@sed -e 's/GNAT.Command_Line/GComLin/g' ../gnat_src/g-comlin.adb > ../gnat/gcomlin.adb
 	@(cd ../gnat && gnatmake -q xsnamest && ./xsnamest && mv snames.ns snames.ads && mv snames.nb snames.adb)
 
 clean:
