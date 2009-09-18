@@ -493,7 +493,9 @@ package body Language.Tree.Database is
 
    procedure Unref (File : Structured_File_Access) is
    begin
-      File.Ref := File.Ref + 1;
+      if File /= null then
+         File.Ref := File.Ref + 1;
+      end if;
    end Unref;
 
    ------------------------------
