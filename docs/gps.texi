@@ -1287,20 +1287,16 @@ or to cancel the close operation.
 
 @noindent
 The status line is composed of two areas: on the left a status bar and
-on the right one or several progress bars.
-
-@cindex messages
-The status bar is used to display temporary information about GPS
-operations. Note that most of the information GPS displays can be found
-in the @code{Messages} window.
+on the right a progress bar (displayed only when background tasks are
+running).
 
 @cindex build
-The progress bars are used to display information about on going
+The progress bar is used to display information about on going
 operations such as builds, searches, or VCS commands. These tasks
-operate in the background, and can be paused/resumed via a contextual
-menu. This contextual menu is available by right-clicking on the
-progress bars themselves or on the corresponding lines in the Task
-Manager. See @ref{The Task Manager}
+operate in the background, and can be paused/resumed by double clicking
+on the progress bar: this will open @ref{The Task Manager}.
+In addition, you can click on the @i{close} icon on the left of the
+progress bar to interrupt the running task.
 
 @c --------------------------------------------------------------------
 @node The Task Manager
@@ -1313,6 +1309,10 @@ Manager. See @ref{The Task Manager}
 @noindent
 The Task Manager window lists all the currently running GPS operations
 that run in the background, such as builds, searches or VCS commands.
+
+The Task Manager is opened by double clicking on the progress bar or
+using the @code{Tools->Views->Tasks} menu, and can be put anywhere in
+your desktop.
 
 For each of these tasks, the Task Manager shows the status of the
 task, and the current progress. The execution of theses tasks can be
