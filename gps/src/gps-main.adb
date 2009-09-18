@@ -151,7 +151,7 @@ procedure GPS.Main is
    Me        : constant Debug_Handle := Create ("GPS");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
-   Docgen2_Trace           : constant Debug_Handle :=
+   Docgen2_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Docgen2", GNATCOLL.Traces.On);
    Refactor_Trace         : constant Debug_Handle :=
                               Create ("MODULE.Refactor", GNATCOLL.Traces.On);
