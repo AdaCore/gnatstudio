@@ -1701,7 +1701,7 @@ package body Builder_Facility_Module is
             Builder_Module_ID.Browsing_For_Mode := Null_Unbounded_String;
          end;
 
-      else
+      elsif Builder_Module_ID.Modes_Combo /= null then
          Builder_Module_ID.Modes_Combo.Set_Active (0);
       end if;
    end On_Project_Changed_Hook;
