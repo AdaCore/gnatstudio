@@ -2592,9 +2592,7 @@ package body CPP_Parser is
       P      : Pair;
       Sym    : FIL_Table;
       Entity : Entity_Information;
-      TO_File_Name     : constant Virtual_File :=
-                           Create_From_Dir (Get_DB_Dir (Project),
-                                            SN.Browse.DB_File_Name & ".to");
+      TO_File_Name     : Virtual_File;
       S      : Source_File;
    begin
       if Is_Open (Handler.SN_Table (FIL)) then
@@ -2675,6 +2673,9 @@ package body CPP_Parser is
 
          Release_Cursor (Handler.SN_Table (FIL));
 
+         TO_File_Name := Create_From_Dir
+           (Get_DB_Dir (Project), SN.Browse.DB_File_Name & ".to");
+
          --  Assign a new LI to the source, so that we know when the database
          --  was generated
          S := Get_Or_Create
@@ -2685,6 +2686,10 @@ package body CPP_Parser is
          Set_Time_Stamp (Get_LI (S), File_Time_Stamp (TO_File_Name));
          Set_Time_Stamp (S, Time_Stamp_From_DB (Project, Get_Filename (S)));
       end if;
+
+   exception
+      when GNATCOLL.VFS.VFS_Invalid_File_Error =>
+         null;
    end Parse_FIL_Table;
 
    ----------------
