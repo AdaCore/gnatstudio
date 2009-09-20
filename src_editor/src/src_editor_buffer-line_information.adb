@@ -1257,7 +1257,7 @@ package body Src_Editor_Buffer.Line_Information is
             Expand_Lines (Number);
          end if;
 
-         for J in 0 .. Number loop
+         for J in 1 .. Number loop
             Buffer_Lines (Start + J) := New_Line_Data;
             Buffer_Lines (Start + J).Editable_Line := Editable_Line_Type
               (Start + J);
