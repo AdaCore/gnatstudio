@@ -727,14 +727,16 @@ package body GPS.Kernel.Project is
             return;
          end if;
 
-         Run_Hook (Kernel, Project_Changed_Hook);
-         Recompute_View (Kernel);
-
          --  Reload the desktop, in case there is a project-specific setup
-         --  already.
+         --  already. We need to do this before running the hooks, in case some
+         --  python script needs to open or refresh windows as a result
+
          if not Same_Project then
             Had_Project_Desktop := Load_Desktop (Kernel);
          end if;
+
+         Run_Hook (Kernel, Project_Changed_Hook);
+         Recompute_View (Kernel);
 
          Pop_State (Kernel_Handle (Kernel));
 
