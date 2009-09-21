@@ -840,8 +840,7 @@ package body Projects.Registry is
 
       begin
          Flags := Create_Flags
-           (On_Error'Unrestricted_Access,
-            Require_Sources => Status (Registry.Data.Root) = From_File);
+           (On_Error'Unrestricted_Access, Require_Sources => False);
 
          Process_Project_And_Apply_Config
            (Main_Project               => View,
