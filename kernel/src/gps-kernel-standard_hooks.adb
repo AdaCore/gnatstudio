@@ -737,7 +737,15 @@ package body GPS.Kernel.Standard_Hooks is
             new Callback_Data'Class'(Create (Script, 2));
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
+
+      --  At this point, Print_Refcount (Get_CIR (C)) returns refcount=2:
+      --  one hold by local var C, the other as the parameter to Get_CIR
       Set_Nth_Arg (D.all, 2, C);
+
+      --  At this point, Print_Refcount (Get_CIR (C)) returns refcount=3:
+      --  one hold by local var C, the other as the parameter to Get_CIR, and
+      --  the last one now hold in the instance list of the context.
+
       return D;
    end Create_Callback_Data;
 

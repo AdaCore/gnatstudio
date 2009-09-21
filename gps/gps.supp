@@ -4252,18 +4252,18 @@
 #### is stored in the contextual menu's context, this information is not
 #### freed. This is very complex to analyze, since that involves automatic
 #### finalization when Ada terminates and references kept by python objects
-{
-  Real memory leak
-  Memcheck:Leak
-  fun:malloc
-  fun:gnatcoll__memory__alloc
-  fun:__gnat_malloc
-  fun:gps__kernel__contexts__set_file_information
-}
-{
-  Real memory leak
-  Memcheck:Leak
-  fun:malloc
-  fun:gnatcoll__memory__alloc
-  fun:gps__kernel__contexts__set_file_information
-}
+#{
+#  Real memory leak
+#  Memcheck:Leak
+#  fun:malloc
+#  fun:gnatcoll__memory__alloc
+#  fun:__gnat_malloc
+#  fun:gps__kernel__contexts__set_file_information
+#}
+#{
+#  Real memory leak
+#  Memcheck:Leak
+#  fun:malloc
+#  fun:gnatcoll__memory__alloc
+#  fun:gps__kernel__contexts__set_file_information
+#}

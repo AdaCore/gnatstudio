@@ -675,13 +675,6 @@ package body GPS.Kernel is
       C    : constant Selection_Context := Get_Current_Context (Handle);
       Data : aliased Context_Hooks_Args := (Hooks_Data with Context => C);
    begin
-      --  ??? running the hook results in a memory leak for the open_project
-      --  test, since file_information is never freed. Ultimately, this is
-      --  because Finalize is called when the program itself finalizes, and
-      --  therefore we do not try to free the list of files. But in fact C
-      --  should be finalized on exit of this function, since there should be
-      --  no reason for anyone to keep a handle on the context). Apparently,
-      --  some python object is created that keeps a ref to the context
       Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
    end Context_Changed;
 
@@ -1068,12 +1061,23 @@ package body GPS.Kernel is
       end Free;
 
       Garbage : Selection_Context_Data;
+      Tmp     : Instance_List_Access;
+
    begin
       if Context.Data /= null then
          if Active (Ref_Me) then
             Trace (Ref_Me, "Before decref context: ("
                    & System.Address_Image (To_Address (Context.Data))
                    & " " & Context.Data.Ref_Count'Img & ")");
+         end if;
+
+         --  Some references to the selection are hold by the instance list
+         --  stored in the selection, so we need to break the cycle here
+
+         if Context.Data.Ref_Count = Length (Context.Data.Instances) + 1 then
+            Tmp := Context.Data.Instances;
+            Context.Data.Instances := null;
+            Free (Tmp);
          end if;
 
          Context.Data.Ref_Count := Context.Data.Ref_Count - 1;
