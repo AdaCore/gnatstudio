@@ -45,9 +45,9 @@ package Commands.VCS is
    type Check_Activity_Command_Access is access Check_Activity_Command_Type;
 
    procedure Create
-     (Item      : out Generic_Kernel_Command_Access;
-      Kernel    : not null access Kernel_Handle_Record'Class;
-      Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler);
+     (Item     : out Generic_Kernel_Command_Access;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback : Context_Callback.Marshallers.Void_Marshaller.Handler);
    --  Create a new Generic_Kernel_Command
 
    procedure Create
