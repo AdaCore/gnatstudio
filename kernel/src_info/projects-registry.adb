@@ -1272,6 +1272,27 @@ package body Projects.Registry is
      (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Namet.Name_Id
    is
+      function Get_File_Extension (Filename : String) return String;
+      --  Returns the file extension removing any trailing version information
+
+      ------------------------
+      -- Get_File_Extension --
+      ------------------------
+
+      function Get_File_Extension (Filename : String) return String is
+         Ext : constant String := File_Extension (Filename);
+      begin
+         if Ext'Length > 3
+           and then Ext (Ext'Last) = ']'
+           and then Ext (Ext'First .. Ext'First + 1) = ".["
+         then
+            return File_Extension
+              (Filename (Filename'First .. Filename'Last - Ext'Length));
+         else
+            return Ext;
+         end if;
+      end Get_File_Extension;
+
       Base_Name : constant String := +GNATCOLL.VFS.Base_Name (Source_Filename);
       S         : constant Source_File_Data :=
                     Get (Registry.Data.Sources, Base_Name);
@@ -1284,7 +1305,7 @@ package body Projects.Registry is
          --  (language_handlers-gps)
 
          declare
-            Ext : constant String := File_Extension (Base_Name);
+            Ext : constant String := Get_File_Extension (Base_Name);
          begin
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
@@ -1307,7 +1328,9 @@ package body Projects.Registry is
                --  naming scheme
 
                return Languages_Htable.String_Hash_Table.Get
-                 (Registry.Data.Extensions, +File_Extension (Source_Filename));
+                 (Registry.Data.Extensions,
+                  +Filesystem_String
+                    (Get_File_Extension (Base_Name)));
             end if;
          end;
 

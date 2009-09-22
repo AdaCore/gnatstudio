@@ -332,7 +332,7 @@
          <shell output="">Locations.parse "%3" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$3"</shell>
-      <shell>dump_file "%2" "$2_%1" TRUE</shell>
+      <shell>dump_file "%2" "%1.[r$2]" TRUE</shell>
       <shell>File "%1"</shell>
       <shell>Editor.edit "%2"</shell>
       <shell>Editor.set_title %3 "%4 [r$2]" "%4 [r$2]"</shell>
