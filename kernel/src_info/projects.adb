@@ -877,7 +877,7 @@ package body Projects is
       function Has_Predefined_Prefix (S : String) return Boolean is
          C : constant Character := S (S'First);
       begin
-         return S (S'First + 1) = '.'
+         return S (S'First + 1) = '-'
            and then (C = 'a' or else C = 'g' or else C = 'i' or else C = 's');
       end Has_Predefined_Prefix;
 
