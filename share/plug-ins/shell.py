@@ -36,7 +36,7 @@ class Win32_Shell (Console_Process):
 
 def create_default_shell (menu):
   """Spawns the user's shell as read from the environment variable SHELL"""
-  if os.getenv ("SHELL"):
+  if os.getenv ("SHELL") and os.getenv ("TERM"):
     Unix_Shell (os.getenv ("SHELL"), "-i")
   elif os.getenv ("COMSPEC"):
     Win32_Shell (os.getenv ("COMSPEC"), "/Q")
