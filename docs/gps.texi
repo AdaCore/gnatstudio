@@ -18107,9 +18107,21 @@ copy of the code on your local machine).
 
 @item GPS is very slow compared to previous versions under unix (GPS < 4.0.0)
 
-GPS 4.0.0 and above need the X RENDER extension when running under unix
-systems to perform at a reasonable speed, so you need to make sure you X
+GPS versions 4.x need the X RENDER extension when running under unix
+systems to perform at a reasonable speed, so you need to make sure your X
 server properly supports this extension.
+
+@item Using the space key brings the smart completion window under Ubuntu
+
+This is specific to the way GNOME is configured on Ubuntu distributions.
+To address this incompatibility, close GPS, then go to the GNOME menu
+@i{System->Preferences->Keyboard} (or launch
+@command{gnome-keyboard-properties}).
+
+Select the @i{Layouts} tab, click on @i{Other options}. Then click twice
+on @i{Using space key to input non-breakable space character} and then
+select @i{Space key outputs usual space at any level} and then close the
+dialogs.
 
 @end table
 
