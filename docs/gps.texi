@@ -18118,10 +18118,9 @@ To address this incompatibility, close GPS, then go to the GNOME menu
 @i{System->Preferences->Keyboard} (or launch
 @command{gnome-keyboard-properties}).
 
-Select the @i{Layouts} tab, click on @i{Other options}. Then click twice
+Select the @i{Layout} tab, click on @i{Layout Options}. Then click twice
 on @i{Using space key to input non-breakable space character} and then
-select @i{Space key outputs usual space at any level} and then close the
-dialogs.
+select @i{Usual space at any level} and then close the dialogs.
 
 @end table
 
