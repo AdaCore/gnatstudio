@@ -368,10 +368,10 @@ def parse_tips ():
 
        elif img:
            # commented for now, see I903-007
-           #     current_tip_img = os.path.join (GPS.get_system_dir(),
-           #                                     "share", "gps", "plug-ins",
-           #                                     "images",
-           #                                     img.group(1)) or ""
+           # current_tip_img = os.path.join (GPS.get_system_dir(),
+           #                                 "share", "gps", "plug-ins",
+           #                                 "images",
+           #                                 img.group(1)) or ""
            pass
 
        else:
@@ -492,7 +492,7 @@ class Tip:
         window.set_default_size (550, 350)
         window.set_decorated (False)
 
-        if parent:
+        if isinstance (parent, gtk.Window):
             window.set_transient_for (parent)
 
         window.set_position (gtk.WIN_POS_CENTER_ON_PARENT)
