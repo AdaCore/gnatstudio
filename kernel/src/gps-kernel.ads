@@ -142,7 +142,10 @@ package GPS.Kernel is
    --  If As_Default_Desktop is true, then this desktop will be loaded any time
    --  no other valid desktop is found in the future.
 
-   function Load_Desktop (Handle : access Kernel_Handle_Record) return Boolean;
+   function Load_Desktop
+     (Handle      : access Kernel_Handle_Record;
+      For_Project : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      return Boolean;
    --  Reload a saved desktop.
    --  Calls "Show_All" on Handle.Main_Window before loading the desktop.
    --  Return False if no desktop could be loaded (in which case the default
