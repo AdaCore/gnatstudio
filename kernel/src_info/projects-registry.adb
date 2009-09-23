@@ -1754,6 +1754,13 @@ package body Projects.Registry is
                      Include_Path (Get_Root_Project (Registry), True)
                      & Get_Predefined_Source_Path (Registry));
 
+                  if Path = GNATCOLL.VFS.No_File then
+                     --  Check in current dir. We do it only later, so that we
+                     --  do not have to use getcwd() when not needed
+                     Path := Locate_Regular_File
+                       (Locale, (1 => Get_Current_Dir));
+                  end if;
+
                   if Path /= GNATCOLL.VFS.No_File then
                      In_Predefined := True;
                   end if;
