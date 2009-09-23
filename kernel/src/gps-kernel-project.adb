@@ -635,7 +635,8 @@ package body GPS.Kernel.Project is
          --  anyway (corresponding to the default or empty project).
 
          if not Same_Project then
-            Had_Project_Desktop := Load_Desktop (Kernel);
+            Had_Project_Desktop := Load_Desktop
+              (Kernel, For_Project => Local_Project);
          end if;
 
          --  Always call Compute_Predefined_Paths who detects if recomputation

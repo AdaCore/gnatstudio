@@ -888,7 +888,8 @@ package body GPS.Kernel is
    ------------------
 
    function Load_Desktop
-     (Handle : access Kernel_Handle_Record) return Boolean
+     (Handle      : access Kernel_Handle_Record;
+      For_Project : Virtual_File := GNATCOLL.VFS.No_File) return Boolean
    is
       MDI                     : constant MDI_Window := Get_MDI (Handle);
       File                    : constant Virtual_File :=
@@ -902,7 +903,7 @@ package body GPS.Kernel is
                                     (Get_System_Dir (Handle),
                                      "share/gps/desktop.xml");
       Node                    : Node_Ptr;
-      Project_Name            : Virtual_File := GNATCOLL.VFS.No_File;
+      Project_Name            : Virtual_File := For_Project;
       Child                   : Node_Ptr;
       Desktop_Node            : Node_Ptr;
       Default_Desktop_Node    : Node_Ptr;
@@ -914,7 +915,9 @@ package body GPS.Kernel is
    begin
       Main_Window.Desktop_Loaded := True;
 
-      if Status (Project) = From_File then
+      if For_Project = GNATCOLL.VFS.No_File
+        and then Status (Project) = From_File
+      then
          Project_Name := Project_Path (Project);
       end if;
 
