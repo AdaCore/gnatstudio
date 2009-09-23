@@ -444,12 +444,15 @@ package body GPS.Kernel.Project is
       Had_Project_Desktop : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
    begin
-      Entities.Reset (Get_Database (Kernel));
-      Load_Empty_Project (Kernel.Registry.all);
-      Run_Hook (Kernel, Project_Changed_Hook);
-      Recompute_View (Kernel);
       Close_All_Children (Kernel);
       Had_Project_Desktop := Load_Desktop (Kernel);
+
+      Entities.Reset (Get_Database (Kernel));
+
+      Load_Empty_Project (Kernel.Registry.all);
+
+      Run_Hook (Kernel, Project_Changed_Hook);
+      Recompute_View (Kernel);
    end Load_Empty_Project;
 
    ------------------------------
@@ -623,6 +626,18 @@ package body GPS.Kernel.Project is
 
          Entities.Reset (Get_Database (Kernel));
 
+         --  Reload the desktop, in case there is a project-specific setup
+         --  already. We need to do this before doing the actual loading (in
+         --  case errors result in the opening of the Locations window), and
+         --  before running the hooks, in case some python script needs to open
+         --  or refresh windows as a result.
+         --  If we fail to load the project, we will reload another project
+         --  anyway (corresponding to the default or empty project).
+
+         if not Same_Project then
+            Had_Project_Desktop := Load_Desktop (Kernel);
+         end if;
+
          --  Always call Compute_Predefined_Paths who detects if recomputation
          --  is really needed. This is also used to get the value of
          --  ADA_PROJECT_PATH. and the default search path.
@@ -725,14 +740,6 @@ package body GPS.Kernel.Project is
             Had_Project_Desktop := Load_Desktop (Kernel);
             Pop_State (Kernel_Handle (Kernel));
             return;
-         end if;
-
-         --  Reload the desktop, in case there is a project-specific setup
-         --  already. We need to do this before running the hooks, in case some
-         --  python script needs to open or refresh windows as a result
-
-         if not Same_Project then
-            Had_Project_Desktop := Load_Desktop (Kernel);
          end if;
 
          Run_Hook (Kernel, Project_Changed_Hook);
