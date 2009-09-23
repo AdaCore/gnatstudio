@@ -1532,12 +1532,13 @@ package body ALI_Parser is
       end if;
 
       --  Still not found ? Check in the predefined object path
+      --  We used to search in the current directory as well, but for ALI files
+      --  that is irrelevant: they must be in one of the projects' object_dir
 
       if LI_Filename = GNATCOLL.VFS.No_File then
          declare
             Predefined_Object_Path : constant File_Array :=
-              Get_Predefined_Object_Path (Handler.Registry)
-              & (1 => Get_Current_Dir);
+              Get_Predefined_Object_Path (Handler.Registry);
             Last : Integer := Short_ALI_Filename'Last - Extension'Length;
          begin
             Predefined := True;
@@ -1667,7 +1668,7 @@ package body ALI_Parser is
          begin
             if Paths'Length > 0 then
                Path := Paths (Paths'First);
-               Files := Read_Dir (Path, Files_Only);
+               Files := Read_Dir (Path);
 
                for J in Files'Range loop
                   declare
@@ -2040,6 +2041,8 @@ package body ALI_Parser is
          LI      : LI_File;
          Files   : File_Array_Access;
       begin
+         Trace (Me, "Parse all LI information from "
+                & (Display_Full_Name (Directory)));
          Files := Read_Dir (Directory, Files_Only);
 
          for J in Files'Range loop

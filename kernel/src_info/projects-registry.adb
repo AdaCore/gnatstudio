@@ -27,7 +27,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-
 with ALI;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
@@ -1744,11 +1743,16 @@ package body Projects.Registry is
                if Path = GNATCOLL.VFS.No_File and then Use_Source_Path then
                   --  ??? Should not search again in the directories from
                   --  Project2
+
+                  --  In general, we end up here when looking for runtime files
+                  --  (since Use_Source_Path is specified, we are looking for
+                  --  a source, and all those from the project are already
+                  --  known). No need to search in current directory
+
                   Path := Locate_Regular_File
                     (Locale,
                      Include_Path (Get_Root_Project (Registry), True)
-                     & Get_Predefined_Source_Path (Registry)
-                     & (1 => Get_Current_Dir));
+                     & Get_Predefined_Source_Path (Registry));
 
                   if Path /= GNATCOLL.VFS.No_File then
                      In_Predefined := True;
