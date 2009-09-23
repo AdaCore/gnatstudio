@@ -797,6 +797,7 @@ package body Projects.Editor is
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id) is
          Previous_Decl, Decl, Expr : Project_Node_Id;
+         pragma Unreferenced (Decl);
       begin
          Previous_Decl := Find_Last_Declaration_Of
            (Tree, Case_Item, Attribute_N, Index);
@@ -827,7 +828,6 @@ package body Projects.Editor is
          --  Else create the new instruction to be added to the project
 
          else
-            Decl := Create_Attribute (Tree, Case_Item, Attribute_N, Index);
             Expr := Enclose_In_Expression (List, Tree);
 
             if Prepend then
@@ -846,7 +846,8 @@ package body Projects.Editor is
                Set_Project_Node_Of (Term, Tree, Rename_Prj);
             end if;
 
-            Set_Expression_Of (Decl, Tree, Expr);
+            Decl := Create_Attribute
+              (Tree, Case_Item, Attribute_N, Index, Value => Expr);
          end if;
       end Add_Or_Replace;
 
@@ -936,6 +937,7 @@ package body Projects.Editor is
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id) is
          Previous_Decl, Decl : Project_Node_Id;
+         pragma Unreferenced (Decl);
       begin
          Previous_Decl := Find_Last_Declaration_Of
            (Tree, Case_Item, Attribute_N, Index);
@@ -950,8 +952,7 @@ package body Projects.Editor is
 
          else
             Decl := Create_Attribute
-              (Tree, Case_Item, Attribute_N, Index, Prj.Single);
-            Set_Expression_Of (Decl, Tree, Enclose_In_Expression (Val, Tree));
+              (Tree, Case_Item, Attribute_N, Index, Prj.Single, Value => Val);
          end if;
       end Add_Or_Replace;
 
@@ -1076,15 +1077,14 @@ package body Projects.Editor is
 
          Set_Current_Item_Node
            (N, Tree,
-            Create_Attribute (Tree       => Tree,
-                              Prj_Or_Pkg => Empty_Node,
-                              Name       => Attr_Name,
-                              Index_Name => Attr_Index,
-                              Kind       => Prj.Single,
-                              At_Index   => Values (V).At_Index));
-         Set_Expression_Of
-           (Current_Item_Node (N, Tree), Tree,
-            Enclose_In_Expression (Val, Tree));
+            Create_Attribute
+              (Tree       => Tree,
+               Prj_Or_Pkg => Empty_Node,
+               Name       => Attr_Name,
+               Index_Name => Attr_Index,
+               Kind       => Prj.Single,
+               At_Index   => Values (V).At_Index,
+               Value      => Val));
       end loop;
 
       For_Each_Scenario_Case_Item
