@@ -157,8 +157,7 @@ package body CPP_Parser is
      (Handler         : access CPP_Handler_Record) return Boolean;
    overriding function Parse_All_LI_Information
      (Handler   : access CPP_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer;
+      Project   : Projects.Project_Type) return LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler      : access CPP_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
@@ -171,6 +170,21 @@ package body CPP_Parser is
       File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Language.Construct_List);
    overriding procedure Destroy (Handler : in out CPP_Handler_Record);
+   --  See doc for inherited subprograms
+
+   type CLI_Information_Iterator is new LI_Information_Iterator with record
+      Handler : CPP_Handler;
+      Table   : DB_File;
+      Total   : Natural;
+      Count   : Natural;
+   end record;
+
+   overriding procedure Next
+     (Iter  : in out CLI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural);
+   overriding procedure Free (Iter : in out CLI_Information_Iterator);
    --  See doc for inherited subprograms
 
    type Iterator_State_Type is
@@ -2840,58 +2854,101 @@ package body CPP_Parser is
 
    overriding function Parse_All_LI_Information
      (Handler   : access CPP_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer
+      Project   : Projects.Project_Type) return LI_Information_Iterator'Class
    is
-      Iter    : Imported_Project_Iterator :=
-                  Start (Project, Recursive => Recursive);
-      P       : Project_Type;
-      Count   : Natural := 0;
+      Iter    : CLI_Information_Iterator;
       Files   : chars_ptr_array (1 .. 1);
-      Table   : DB_File;
+      Success : Boolean;
+      F_Pair  : Pair;
+   begin
+      Trace (Me, "Parse_All_LI_Information in project "
+             & Project_Name (Project));
+      Files (1) := New_String
+        (+(Get_DB_Dir (Project).Full_Name
+         & SN.Browse.DB_File_Name & Table_Extension (F)));
+      DB_API.Open (Iter.Table, Files, Success);
+      Free (Files (1));
+
+      Iter.Total := 0;
+      Iter.Count := 0;
+      Iter.Handler := CPP_Handler (Handler);
+
+      if Success then
+         Set_Cursor_At (Iter.Table, Filename => Invalid_String);
+
+         --  A first traversal just to count. This is not very efficient, but
+         --  provides better feedback to the user
+
+         loop
+            Get_Pair (Iter.Table, Next_By_Key, Result => F_Pair);
+            exit when F_Pair = No_Pair;
+            Iter.Total := Iter.Total + 1;
+         end loop;
+
+         --  Reset the search
+         Set_Cursor_At (Iter.Table, Filename => Invalid_String);
+      end if;
+
+      return Iter;
+   end Parse_All_LI_Information;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Iter  : in out CLI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural)
+   is
       F_Pair  : Pair;
       F_Data  : F_Table;
-      Success : Boolean;
       Source  : Source_File;
       pragma Unreferenced (Source);
-
+      Done_Steps : Natural := 0;
    begin
-      loop
-         P := Current (Iter);
-         exit when P = No_Project;
+      if Iter.Total = 0 then
+         Count := 0;
+         Total := 0;
+         return;
+      end if;
 
-         Files (1) := New_String
-           (+(Get_DB_Dir (P).Full_Name
-            & SN.Browse.DB_File_Name & Table_Extension (F)));
-         DB_API.Open (Table, Files, Success);
-         Free (Files (1));
+      while Done_Steps <= Steps loop
+         Get_Pair (Iter.Table, Next_By_Key, Result => F_Pair);
 
-         if Success then
-            Set_Cursor_At (Table, Filename => Invalid_String);
-            loop
-               Get_Pair (Table, Next_By_Key, Result => F_Pair);
-               exit when F_Pair = No_Pair;
-
-               Parse_Pair (F_Pair, F_Data);
-
-               Source := Get_Source_Info
-                 (Handler,
-                  Create
-                    (Full_Filename => +F_Data.Key
-                       (F_Data.File_Name.First .. F_Data.File_Name.Last)));
-               Count := Count + 1;
-            end loop;
-
-            Release_Cursor (Table);
+         if F_Pair = No_Pair then
+            Iter.Total := Iter.Count; --  Just to make sure iteration will stop
+            exit;
          end if;
 
-         Next (Iter);
+         Parse_Pair (F_Pair, F_Data);
 
-         DB_API.Close (Table, Success);
+         Source := Get_Source_Info
+           (Iter.Handler,
+            Create
+              (Full_Filename => +F_Data.Key
+                 (F_Data.File_Name.First .. F_Data.File_Name.Last)));
+
+         Iter.Count := Iter.Count + 1;
+         Done_Steps := Done_Steps + 1;
       end loop;
 
-      return Count;
-   end Parse_All_LI_Information;
+      Total := Iter.Total;
+      Count := Iter.Count;
+   end Next;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Iter : in out CLI_Information_Iterator) is
+      Success : Boolean;
+      pragma Unreferenced (Success);
+   begin
+      Release_Cursor (Iter.Table);
+      DB_API.Close (Iter.Table, Success);
+   end Free;
 
    ------------------------
    -- Create_CPP_Handler --

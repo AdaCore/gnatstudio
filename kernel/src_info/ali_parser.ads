@@ -46,8 +46,8 @@ package ALI_Parser is
      (Handler : access ALI_Handler_Record) return Boolean;
    overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer;
+      Project   : Projects.Project_Type)
+      return Entities.LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access Entities.Abstract_Language_Handler_Record'Class;
@@ -55,6 +55,16 @@ package ALI_Parser is
       Errors       : Projects.Error_Report;
       Recursive    : Boolean := False)
       return Entities.LI_Handler_Iterator'Class;
+   --  See doc for inherited subprograms
+
+   type ALI_Information_Iterator
+     is new Entities.LI_Information_Iterator with private;
+   overriding procedure Free (Iter : in out ALI_Information_Iterator);
+   overriding procedure Next
+     (Iter  : in out ALI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural);
    --  See doc for inherited subprograms
 
    function Get_ALI_Ext
@@ -68,4 +78,13 @@ package ALI_Parser is
       return GNATCOLL.VFS.Filesystem_String;
    --  Return the most likely candidate for an ALI file, given a source name
 
+private
+   type ALI_Information_Iterator
+     is new Entities.LI_Information_Iterator with
+      record
+         Handler : ALI_Handler;
+         Files   : GNATCOLL.VFS.File_Array_Access;  --  in current dir
+         Current : Natural;            --  current file
+         Project : Projects.Project_Type;
+      end record;
 end ALI_Parser;

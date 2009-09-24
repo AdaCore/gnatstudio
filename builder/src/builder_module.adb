@@ -29,7 +29,6 @@ with GNAT.OS_Lib;                use GNAT; use GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNAT.Strings;
-
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gdk.Types;                  use Gdk.Types;
@@ -99,10 +98,6 @@ package body Builder_Module is
 
    Custom_Make_Suffix  : constant String := "Custom...";
 
-   Sources_Load_Chunk : constant Integer := 1;
-   --  The size of the chunk of files loaded by the xrefs loader.
-   --  ??? This should be configurable
-
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Run_Description is record
@@ -162,6 +157,21 @@ package body Builder_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Interrupts all xrefs loading
 
+   -------------------------
+   -- Load_Xref_In_Memory --
+   -------------------------
+
+   type All_LI_Information_Command is new Root_Command with record
+      Iter : Recursive_LI_Information_Iterator;
+      Count, Total : Natural;
+      Chunk_Size   : Natural := 10;  --  ??? Should be configurable
+   end record;
+
+   overriding function Progress
+     (Command : access All_LI_Information_Command) return Progress_Record;
+   overriding function Execute
+     (Command : access All_LI_Information_Command) return Command_Return_Type;
+
    --------------------------------
    -- Computing cross-references --
    --------------------------------
@@ -191,13 +201,6 @@ package body Builder_Module is
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Data_Type => Compute_Xref_Data_Access,
       Free      => Deep_Free);
-
-   ------------------------------
-   -- Loading cross-references --
-   ------------------------------
-
-   procedure Loads_Xrefs_From_File
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
 
    ----------
    -- Misc --
@@ -467,16 +470,6 @@ package body Builder_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Compute_Xref;
 
-   -------------------------
-   -- Load_Xref_From_File --
-   -------------------------
-
-   procedure Loads_Xrefs_From_File
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
-   begin
-      Update_Xref (Get_Or_Create (Get_Database (Kernel), File));
-   end Loads_Xrefs_From_File;
-
    ----------------------------
    -- On_Load_Xref_In_Memory --
    ----------------------------
@@ -538,19 +531,57 @@ package body Builder_Module is
       Kill_File_Iteration (Kernel, Xrefs_Loading_Queue);
    end Interrupt_Xrefs_Loading;
 
+   --------------
+   -- Progress --
+   --------------
+
+   overriding function Progress
+     (Command : access All_LI_Information_Command) return Progress_Record is
+   begin
+      return Progress_Record'
+        (Activity => Running,
+         Current  => Command.Count,
+         Total    => Command.Total);
+   end Progress;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access All_LI_Information_Command) return Command_Return_Type
+   is
+   begin
+      Next (Command.Iter, Steps => Command.Chunk_Size,
+            Count => Command.Count, Total => Command.Total);
+
+      if Command.Count >= Command.Total then
+         Free (Command.Iter);
+         return Success;
+      else
+         return Execute_Again;
+      end if;
+   end Execute;
+
    -------------------------
    -- Load_Xref_In_Memory --
    -------------------------
 
    procedure Load_Xref_In_Memory
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      C : constant Command_Access := new All_LI_Information_Command;
+
    begin
-      Do_On_Each_File
+      Start (All_LI_Information_Command (C.all).Iter,
+             Kernel, Get_Project (Kernel), Recursive => True);
+      Launch_Background_Command
         (Kernel,
-         Loads_Xrefs_From_File'Access,
-         Sources_Load_Chunk,
-         Xrefs_Loading_Queue,
-         "load xrefs info");
+         C,
+         Active     => True,
+         Show_Bar   => True,
+         Queue_Id   => "load xrefs info",
+         Block_Exit => False);
    end Load_Xref_In_Memory;
 
    ----------

@@ -3030,4 +3030,20 @@ package body Entities is
             Lt'Unrestricted_Access);
    end Sort;
 
+   ------------------------------
+   -- Parse_All_LI_Information --
+   ------------------------------
+
+   procedure Parse_All_LI_Information
+     (Handler          : access LI_Handler_Record'Class;
+      Project          : Projects.Project_Type)
+   is
+      Iter : LI_Information_Iterator'Class :=
+        Parse_All_LI_Information (Handler, Project);
+      Count, Total : Natural;
+   begin
+      Next (Iter, Natural'Last, Count, Total); --  All steps
+      Free (Iter);
+   end Parse_All_LI_Information;
+
 end Entities;

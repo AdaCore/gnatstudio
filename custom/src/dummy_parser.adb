@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2008, AdaCore               --
+--                    Copyright (C) 2004-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,8 +36,7 @@ package body Dummy_Parser is
       return Source_File;
    overriding function Parse_All_LI_Information
      (Handler   : access Dummy_LI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer;
+      Project   : Projects.Project_Type) return LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
@@ -53,6 +52,15 @@ package body Dummy_Parser is
      (Iterator : in out Dummy_LI_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean);
+   --  See doc for inherited subprograms
+
+   type Dummy_LI_Information_Iterator
+     is new LI_Information_Iterator with null record;
+   overriding procedure Next
+     (Iter  : in out Dummy_LI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural);
    --  See doc for inherited subprograms
 
    -------------
@@ -114,12 +122,12 @@ package body Dummy_Parser is
 
    overriding function Parse_All_LI_Information
      (Handler   : access Dummy_LI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer
+      Project   : Projects.Project_Type) return LI_Information_Iterator'Class
    is
-      pragma Unreferenced (Handler, Project, Recursive);
+      pragma Unreferenced (Handler, Project);
+      Iter : Dummy_LI_Information_Iterator;
    begin
-      return 0;
+      return Iter;
    end Parse_All_LI_Information;
 
    -----------------------------
@@ -160,5 +168,21 @@ package body Dummy_Parser is
    begin
       return "";
    end Get_Name;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Iter  : in out Dummy_LI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural)
+   is
+      pragma Unreferenced (Iter, Steps);
+   begin
+      Count := 0;
+      Total := 0;
+   end Next;
 
 end Dummy_Parser;

@@ -791,13 +791,34 @@ package Entities is
    --  Note that for case insensitive languages, the identifier names must be
    --  storer in lower cases in the LI structure.
 
+   type LI_Information_Iterator is abstract tagged null record;
+
    function Parse_All_LI_Information
-     (Handler   : access LI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer is abstract;
-   --  Parse all the existing LI information for all the files in Project.
-   --  This should be called only after Generate_LI_For_Project.
-   --  Return the number of files parsed.
+     (Handler          : access LI_Handler_Record;
+      Project          : Projects.Project_Type)
+      return LI_Information_Iterator'Class is abstract;
+   --  Prepare the parsing of all the existing LI information for all the files
+   --  in Project. This should be called only after Generate_LI_For_Project.
+
+   procedure Parse_All_LI_Information
+     (Handler          : access LI_Handler_Record'Class;
+      Project          : Projects.Project_Type);
+   --  A version that does all the iteration automatically
+
+   procedure Next
+     (Iter  : in out LI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural) is abstract;
+   --  Parse the next Steps LI files.
+   --  Return the number of files to be parsed (although none might have been
+   --  parsed yet), and the number of files parsed so far. These counts are
+   --  purely informative, and should only be used for display, not as an index
+   --  in a loop
+   --  Iteration should stop when Count >= Total
+
+   procedure Free (Iter : in out LI_Information_Iterator) is null;
+   --  Free memory used by iterator
 
    function Generate_LI_For_Project
      (Handler      : access LI_Handler_Record;

@@ -1432,10 +1432,9 @@ package body Entities.Queries is
 
          if Iter.Handler /= null then
             if not Active (Find_Deps_File_Granularity) then
-               Count := Parse_All_LI_Information
+               Parse_All_LI_Information
                  (Handler   => Iter.Handler,
-                  Project   => Current (Iter.Importing),
-                  Recursive => False);
+                  Project   => Current (Iter.Importing));
             end if;
          end if;
       end if;
@@ -1502,10 +1501,9 @@ package body Entities.Queries is
             else
                if not Active (Find_Deps_File_Granularity) then
                   Iter.Current_Progress := Iter.Current_Progress + 1;
-                  Count := Parse_All_LI_Information
+                  Parse_All_LI_Information
                     (Handler   => Iter.Handler,
-                     Project   => Current (Iter.Importing),
-                     Recursive => False);
+                     Project   => Current (Iter.Importing));
                else
                   Iter.Source_File_Index := 0;
                end if;

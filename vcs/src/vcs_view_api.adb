@@ -1654,7 +1654,7 @@ package body VCS_View_API is
             end if;
 
          else
-            Append (List, File_Information (Context));
+            Append (List, File_Array'(File_Information (Context)));
          end if;
       end if;
 

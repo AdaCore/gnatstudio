@@ -2022,77 +2022,111 @@ package body ALI_Parser is
 
    overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer
+      Project   : Projects.Project_Type) return LI_Information_Iterator'Class
    is
-      Count : Natural := 0;
-
-      procedure Parse_Directory
-        (Project : Project_Type; Directory : Virtual_File);
-      --  Parses a specific directory
-
-      ---------------------
-      -- Parse_Directory --
-      ---------------------
-
-      procedure Parse_Directory
-        (Project : Project_Type; Directory : Virtual_File)
-      is
-         LI      : LI_File;
-         Files   : File_Array_Access;
-      begin
-         Trace (Me, "Parse all LI information from "
-                & (Display_Full_Name (Directory)));
-         Files := Read_Dir (Directory, Files_Only);
-
-         for J in Files'Range loop
-            if Files (J).Has_Suffix (Get_ALI_Ext (Handler)) then
-               LI := Get_Or_Create
-                 (Db      => Handler.Db,
-                  File    => Files (J),
-                  Project => Project);
-               if not Update_ALI (Handler, LI, Reset_ALI => True) then
-                  Trace
-                    (Me,
-                     "Couldn't parse " &
-                     Files (J).Display_Full_Name);
-               end if;
-
-               Count := Count + 1;
-            end if;
-         end loop;
-
-         Unchecked_Free (Files);
-
-      exception
-         when VFS_Directory_Error =>
-            Trace (Me, "Couldn't open the directory " &
-                   Directory.Display_Full_Name);
-      end Parse_Directory;
-
-      P       : Project_Type;
-      Iter    : Imported_Project_Iterator := Start
-        (Root_Project => Project,
-         Recursive    => Recursive);
+      Iter     : ALI_Information_Iterator;
+      Tmp      : File_Array_Access;
+      Objects  : constant File_Array :=
+        Object_Path (Project, False, True, True);
    begin
-      loop
-         P := Current (Iter);
-         exit when P = No_Project;
+      Trace (Me, "Parse_All_LI_Information in project "
+             & Project_Name (Project));
 
-         declare
-            Objects  : constant File_Array :=
-                         Object_Path (P, False, True, True);
+      --  Find all the files to parse immediately. This provides an accurate
+      --  count of the total number of files to process, which is useful for
+      --  display purposes, and does not require more system calls
+
+      for Dir in Objects'Range loop
          begin
-            for J in Objects'Range loop
-               Parse_Directory (P, Objects (J));
-            end loop;
-         end;
+            --  Get the whole content, including subdirs (to avoid system calls
+            --  to stat()). Since we will be checking extensions anyway, this
+            --  is fine
+            --  ??? An issue might exist if we have a subdir with extension
+            --  ".ali", but that's unlikely and not worth paying an extra cost
+            --  systematically
 
-         Next (Iter);
+            Tmp := Read_Dir (Objects (Dir));
+            Append (Iter.Files, Tmp.all);
+            Unchecked_Free (Tmp);
+         exception
+            when VFS_Directory_Error =>
+               Trace (Me, "Couldn't open the directory " &
+                      Objects (Dir).Display_Full_Name);
+         end;
       end loop;
 
-      return Count;
+      if Iter.Files /= null then
+         Iter.Current := Iter.Files'First;
+      else
+         Iter.Current := 0;
+      end if;
+
+      Iter.Handler := ALI_Handler (Handler);
+      Iter.Project := Project;
+
+      return Iter;
    end Parse_All_LI_Information;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Iter : in out ALI_Information_Iterator) is
+   begin
+      Unchecked_Free (Iter.Files);
+   end Free;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Iter  : in out ALI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural)
+   is
+      LI      : LI_File;
+      Steps_Done : Natural := 0;
+
+   begin
+      if Iter.Files = null then
+         Count := 0;
+         Total := 0;
+         return;
+      end if;
+
+      while Iter.Current <= Iter.Files'Last
+        and then Steps_Done <= Steps
+      loop
+         if Iter.Files
+           (Iter.Current).Has_Suffix (Get_ALI_Ext (Iter.Handler))
+         then
+            LI := Get_Or_Create
+              (Db      => Iter.Handler.Db,
+               File    => Iter.Files (Iter.Current),
+               Project => Iter.Project);
+
+            if not Update_ALI (Iter.Handler, LI, Reset_ALI => True) then
+               Trace
+                 (Me,
+                  "Couldn't parse " &
+                  Iter.Files (Iter.Current).Display_Full_Name);
+            end if;
+         end if;
+
+         Steps_Done   := Steps_Done + 1;
+         Iter.Current := Iter.Current + 1;
+      end loop;
+
+      Count := Iter.Current;
+
+      if Iter.Files = null then
+         Total := 0;
+      else
+         Total := Iter.Files'Length;
+      end if;
+   end Next;
 
    -----------------------------
    -- Generate_LI_For_Project --
