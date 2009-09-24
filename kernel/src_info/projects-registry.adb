@@ -16,7 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
+with GNAT.IO; use GNAT.IO;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -335,6 +335,8 @@ package body Projects.Registry is
       Registry.Data.Trusted_Mode := Trusted_Mode;
       Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
       Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
+      GNATCOLL.VFS.Symbolic_Links_Support
+        (Active => Opt.Follow_Links_For_Files);
    end Set_Trusted_Mode;
 
    ----------------------
