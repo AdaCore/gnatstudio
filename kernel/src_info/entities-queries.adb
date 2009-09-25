@@ -481,7 +481,16 @@ package body Entities.Queries is
       Entity := null;
 
       if Handler /= null then
-         Source := Get_Source_Info (Handler, File_Name);
+         --  Get a Source_File, but do not update its LI information, since
+         --  that will be done in the call to Find_Declaration below. Therefore
+         --  use Get_Or_Create instead of Get_Source_Info
+
+         Source := Get_Or_Create
+           (Db           => Db,
+            File         => File_Name,
+            LI           => null,
+            Handler      => Handler,
+            Allow_Create => False);
 
          if Source /= null then
             Find_Declaration
@@ -554,6 +563,7 @@ package body Entities.Queries is
       Entity := null;
 
       if H /= null then
+         --  Updates LI information
          Updated := Get_Source_Info (H, Get_Filename (Source));
 
          if Updated /= null then
