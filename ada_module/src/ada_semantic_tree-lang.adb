@@ -371,7 +371,7 @@ package body Ada_Semantic_Tree.Lang is
 
       function Remove_Blanks (Str : String) return String is
          Result : String := Str;
-         Index  : Integer := 0;
+         Index  : Integer := Str'First - 1;
       begin
          for J in Result'Range loop
             if not Is_Blank (Result (J)) then
@@ -380,7 +380,7 @@ package body Ada_Semantic_Tree.Lang is
             end if;
          end loop;
 
-         return Result (1 .. Index);
+         return Result (Str'First .. Index);
       end Remove_Blanks;
 
       Add_New_Line  : Boolean := False;
