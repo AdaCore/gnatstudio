@@ -1879,7 +1879,7 @@ package body Vsearch is
                   Flags => All_Buttons or Float_As_Transient
                   or Always_Destroy_Float,
                   Focus_Widget =>
-                    Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
+                    Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Entry),
                   Group    => Group_View,
                   Module => Vsearch_Module_Id,
                   Desktop_Independent => True);
