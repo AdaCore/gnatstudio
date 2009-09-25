@@ -423,6 +423,10 @@ package Projects is
    --  The list might be empty, if all language attributes in all projects
    --  were defined to the empty list by the user.
 
+   function Has_Language
+     (Project : Project_Type; Language : String) return Boolean;
+   --  Whether the specified language is used by that project
+
    function Get_Executable_Name
      (Project : Project_Type;
       File    : GNATCOLL.VFS.Filesystem_String)

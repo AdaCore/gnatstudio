@@ -1468,18 +1468,22 @@ package body GPS.Kernel is
 
       while P /= No_Project loop
          while Iter.Current_Lang <= Iter.Lang_Count loop
-            LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
-            if LI /= null then
-               --  ??? We could do this only if the language is supported in
-               --  that project, but that would in fact only save a few calls
-               --  to stat()
+            --  Nothing to do if the language is not used for the project
+            if Has_Language
+              (P,
+               Language => Get_Nth_Language (Iter.Handler, Iter.Current_Lang))
+            then
+               LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
+               if LI /= null then
+                  Iter.LI := new LI_Information_Iterator'Class'
+                    (Parse_All_LI_Information (LI, P));
 
-               Iter.LI := new LI_Information_Iterator'Class'
-                 (Parse_All_LI_Information (LI, P));
-
-               if Process then
-                  return;
+                  if Process then
+                     return;
+                  end if;
                end if;
+            else
+               Iter.Current_Lang := Iter.Current_Lang + 1;
             end if;
          end loop;
 
@@ -1488,6 +1492,11 @@ package body GPS.Kernel is
          Iter.Current_Lang := 1;
          Next (Iter.Project);
          P := Current (Iter.Project);
+
+         if P /= No_Project then
+            Trace (Me, "Parse all LI information: switching to project "
+                   & Project_Name (P));
+         end if;
       end loop;
 
       --  Nothing else to process

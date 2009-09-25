@@ -1373,6 +1373,31 @@ package body Projects is
    end Get_Languages;
 
    ------------------
+   -- Has_Language --
+   ------------------
+
+   function Has_Language
+     (Project : Project_Type; Language : String) return Boolean
+   is
+      Normalized_Lang : constant Name_Id := Get_String (To_Lower (Language));
+      P               : constant Project_Id := Get_View (Project);
+      Lang            : Language_Ptr;
+   begin
+      if P /= Prj.No_Project then
+         Lang := P.Languages;
+         while Lang /= null loop
+            if Lang.Name = Normalized_Lang then
+               return True;
+            end if;
+
+            Lang := Lang.Next;
+         end loop;
+
+      end if;
+      return False;
+   end Has_Language;
+
+   ------------------
    -- Is_Main_File --
    ------------------
 
