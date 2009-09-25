@@ -240,6 +240,13 @@ NF-44-I205-024 Outline view updated in real-time (2009-04-10)
    longer required to save the buffer in order for the Outline View to reflect
    the changes in the file.
 
+NF-44-I205-022 Enhance the documentation generation of sourcecode (2009-09-25)
+
+   The GPS documentation generator has been enhanced to provide full source
+   code browsing capabilities in html format. In particular, it is now
+   possible to navigate to/from specs/bodies of entities in the 'htmlized'
+   sources.s
+
 NF-44-I205-020 Add Unified visual comparison mode (2009-03-04)
 
    A new "Mode" preference in the "Visual diff" section allows displaying of
