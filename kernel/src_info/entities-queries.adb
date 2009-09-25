@@ -490,7 +490,7 @@ package body Entities.Queries is
             File         => File_Name,
             LI           => null,
             Handler      => Handler,
-            Allow_Create => False);
+            Allow_Create => True);
 
          if Source /= null then
             Find_Declaration
