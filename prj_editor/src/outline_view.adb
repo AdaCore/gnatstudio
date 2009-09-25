@@ -825,6 +825,7 @@ package body Outline_View is
          Gtk_New (Child, Outline,
                   Default_Width  => 215,
                   Default_Height => 600,
+                  Focus_Widget   => Gtk_Widget (Outline.Tree),
                   Group          => Group_View,
                   Module         => Outline_View_Module);
          Set_Title (Child, -"Outline View", -"Outline View");

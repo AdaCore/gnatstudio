@@ -2333,6 +2333,7 @@ package body Project_Explorers is
          Initialize (C2, Explorer,
                      Default_Width  => 215,
                      Default_Height => 600,
+                     Focus_Widget   => Gtk_Widget (Explorer.Tree),
                      Group          => Group_View,
                      Module         => Explorer_Module_ID);
          Set_Title (C2, -"Project View",  -"Project View");
