@@ -427,6 +427,11 @@ package Projects is
      (Project : Project_Type; Language : String) return Boolean;
    --  Whether the specified language is used by that project
 
+   function Has_Multi_Unit_Sources (Project : Project_Type) return Boolean;
+   --  Whether at least one source file from the project contains multiple
+   --  units (language is unspecified, but will in general be Ada since that's
+   --  currently the only unit-based language supported by project files).
+
    function Get_Executable_Name
      (Project : Project_Type;
       File    : GNATCOLL.VFS.Filesystem_String)

@@ -2809,4 +2809,17 @@ package body Projects is
       end if;
    end Create_Flags;
 
+   ----------------------------
+   -- Has_Multi_Unit_Sources --
+   ----------------------------
+
+   function Has_Multi_Unit_Sources (Project : Project_Type) return Boolean is
+      View : constant Project_Id := Get_View (Project);
+   begin
+      if View /= Prj.No_Project then
+         return View.Has_Multi_Unit_Sources;
+      end if;
+      return False;
+   end Has_Multi_Unit_Sources;
+
 end Projects;

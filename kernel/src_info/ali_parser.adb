@@ -1073,6 +1073,7 @@ package body ALI_Parser is
          Source_Filename       => Get_Filename (Sfiles (File_Num).File),
          File_Has_No_LI_Report => null,
          Reset_ALI             => False);
+
       Find_Declaration
         (Db              => Get_Database (LI),
          File_Name       => Get_Filename (S),
@@ -1369,7 +1370,8 @@ package body ALI_Parser is
    ----------------
 
    function Update_ALI
-     (Handler   : access ALI_Handler_Record'Class; LI : LI_File;
+     (Handler   : access ALI_Handler_Record'Class;
+      LI        : LI_File;
       Reset_ALI : Boolean) return Boolean
    is
       New_ALI_Id            : ALI_Id := No_ALI_Id;
@@ -1643,15 +1645,26 @@ package body ALI_Parser is
       P        : Project_Type := Project;
       Index    : Natural;
       LI       : LI_File;
+      Has_Multi_Unit_Src : Boolean := False;
 
    begin
       --  Start searching in the extending projects, in case the file was
       --  recompiled in their context
 
       if Project /= No_Project then
+         Has_Multi_Unit_Src := Has_Multi_Unit_Sources (P);
          while Extending_Project (P) /= No_Project loop
             P := Extending_Project (P);
+            Has_Multi_Unit_Src :=
+              Has_Multi_Unit_Src or else Has_Multi_Unit_Sources (P);
          end loop;
+      end if;
+
+      if not Has_Multi_Unit_Src then
+         Trace (Me, "Project does not have multi-unit sources: "
+                & Project_Name (Project));
+         --  No need to do any work here, since there are no multi unit sources
+         return GNATCOLL.VFS.No_File;
       end if;
 
       --  Search for all candidate ALI files. We might end up parsing too many,
@@ -1939,6 +1952,9 @@ package body ALI_Parser is
                end loop;
             end;
          end if;
+
+         --  If we are still using the same LI file, update its contents now.
+         --  Otherwise, we'll have to find the new LI file
 
          if Is_Up_To_Date then
             if not Update_ALI
