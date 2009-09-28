@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -595,6 +595,30 @@ package body GVD.Memory_View is
             Insert_At_Cursor (Buffer, End_Of_Line);
          end if;
       end loop;
+
+      --  This manual refresh worksaround a problem seen on the win32 back-end
+      --  of Gtk 2.14.7. If the format is changed through the combo pulldown
+      --  menu, then only the pulldown area gets refreshed instead of the
+      --  whole view.
+      --  ??? Revisit with newest Gtk+ versions
+      declare
+         X_Box      : Gint;
+         Y_Box      : Gint;
+         Width_Box  : Gint;
+         Height_Box : Gint;
+         Depth_Box  : Gint;
+      begin
+         Gdk.Window.Get_Geometry
+           (View.Get_Window, X_Box, Y_Box, Width_Box, Height_Box, Depth_Box);
+
+         Gdk.Window.Invalidate_Rect
+           (View.Get_Window,
+            (X      => 0,
+             Y      => 0,
+             Width  => Width_Box,
+             Height => Height_Box),
+            True);
+      end;
 
       End_User_Action (Buffer);
    end Update_Display;
