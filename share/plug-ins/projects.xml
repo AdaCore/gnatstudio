@@ -35,6 +35,7 @@
           <choice default="true" >gnatmake</choice>
           <choice>powerpc-wrs-vxworks-gnatmake</choice>
           <choice>powerpc-wrs-vxworksae-gnatmake</choice>
+          <choice>powerpc-wrs-vxworksmils-gnatmake</choice>
           <choice>powerpc-elf-gnatmake</choice>
           <choice>powerpc-eabispe-gnatmake</choice>
           <choice>i586-wrs-vxworks-gnatmake</choice>
@@ -72,6 +73,7 @@
        <choice default="true" >gnatls</choice>
        <choice>powerpc-wrs-vxworks-gnatls</choice>
        <choice>powerpc-wrs-vxworksae-gnatls</choice>
+       <choice>powerpc-wrs-vxworksmils-gnatls</choice>
        <choice>powerpc-elf-gnatls</choice>
        <choice>powerpc-eabispe-gnatls</choice>
        <choice>i586-wrs-vxworks-gnatls</choice>
@@ -99,6 +101,7 @@
        <choice default="true" >gnat</choice>
        <choice>powerpc-wrs-vxworks-gnat</choice>
        <choice>powerpc-wrs-vxworksae-gnat</choice>
+       <choice>powerpc-wrs-vxworksmils-gnat</choice>
        <choice>powerpc-elf-gnat</choice>
        <choice>powerpc-eabispe-gnat</choice>
        <choice>i586-wrs-vxworks-gnat</choice>
@@ -128,6 +131,7 @@
        <choice>powerpc-wrs-vxworksae-gdb</choice>
        <choice>powerpc-wrs-vxworksae_wtx4-gdb</choice>
        <choice>powerpc-wrs-vxworks6-gdb</choice>
+       <choice>powerpc-wrs-vxworksmils-gdb</choice>
        <choice>powerpc-elf-gdb</choice>
        <choice>powerpc-eabispe-gdb</choice>
        <choice>i586-wrs-vxworks-gdb</choice>
