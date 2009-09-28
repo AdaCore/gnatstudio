@@ -161,6 +161,7 @@ package body Generic_Views is
             Gtk_New (Child, View,
                      Default_Width  => 215,
                      Default_Height => 600,
+                     Focus_Widget   => Get_Child (View),
                      Group          => Group,
                      Module         => Module);
             Set_Title (Child, View_Name, View_Name);
