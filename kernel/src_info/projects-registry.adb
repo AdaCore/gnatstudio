@@ -1730,12 +1730,7 @@ package body Projects.Registry is
 
          if Locale'Length > 0 then
             if Get_View (Project2) /= Prj.No_Project then
-               if Use_Source_Path then
-                  Path := Locate_Regular_File
-                    (Locale, Include_Path (Project2, False));
-               end if;
-
-               if Path = GNATCOLL.VFS.No_File and then Use_Object_Path then
+               if Use_Object_Path then
                   Path := Locate_Regular_File
                     (Locale, Object_Path (Project2, False, True));
                end if;
@@ -1753,8 +1748,7 @@ package body Projects.Registry is
 
                   Path := Locate_Regular_File
                     (Locale,
-                     Include_Path (Get_Root_Project (Registry), True)
-                     & Get_Predefined_Source_Path (Registry));
+                     Get_Predefined_Source_Path (Registry));
 
                   if Path = GNATCOLL.VFS.No_File then
                      --  Check in current dir. We do it only later, so that we
