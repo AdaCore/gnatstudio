@@ -596,10 +596,11 @@ package body GVD.Memory_View is
          end if;
       end loop;
 
-      --  This manual refresh worksaround a problem seen on the win32 binding
+      --  This manual refresh worksaround a problem seen on the win32 back-end
       --  of Gtk 2.14.7. If the format is changed through the combo pulldown
       --  menu, then only the pulldown area gets refreshed instead of the
       --  whole view.
+      --  ??? Revisit with newest Gtk+ versions
       declare
          X_Box      : Gint;
          Y_Box      : Gint;
