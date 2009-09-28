@@ -1381,4 +1381,14 @@ package body Task_Manager.GUI is
       return R;
    end Create;
 
+   ----------------------
+   -- Get_Focus_Widget --
+   ----------------------
+
+   function Get_Focus_Widget
+     (GUI : Task_Manager_Widget_Access) return Gtk_Widget is
+   begin
+      return Gtk_Widget (GUI.Tree);
+   end Get_Focus_Widget;
+
 end Task_Manager.GUI;

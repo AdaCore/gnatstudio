@@ -1749,6 +1749,7 @@ package body GPS.Location_View is
                   Module              => Location_View_Module_Id,
                   Default_Width       => Gint (Default_Widget_Width.Get_Pref),
                   Default_Height      => Gint (Default_Widget_Height.Get_Pref),
+                  Focus_Widget        => Gtk_Widget (Locations.Tree),
                   Group               => Group_Consoles,
                   Desktop_Independent => True);
          Set_Title (Child, -"Locations");

@@ -205,6 +205,7 @@ package body GPS.Kernel.Task_Manager is
          Gtk_New (Child, Iface,
                   Group               => Group_Consoles,
                   Module              => Task_Manager_Module_Id,
+                  Focus_Widget        => Get_Focus_Widget (Iface),
                   Desktop_Independent => True);
          Set_Title (Child, -"Task Manager");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
