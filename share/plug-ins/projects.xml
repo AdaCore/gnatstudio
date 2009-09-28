@@ -131,7 +131,6 @@
        <choice>powerpc-wrs-vxworksae-gdb</choice>
        <choice>powerpc-wrs-vxworksae_wtx4-gdb</choice>
        <choice>powerpc-wrs-vxworks6-gdb</choice>
-       <choice>powerpc-wrs-vxworksmils-gdb</choice>
        <choice>powerpc-elf-gdb</choice>
        <choice>powerpc-eabispe-gdb</choice>
        <choice>i586-wrs-vxworks-gdb</choice>
