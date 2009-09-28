@@ -44,6 +44,10 @@ package Completion_Window.Entity_Views is
       Initial  : Glib.UTF8_String);
    --  Internal initialization procedure
 
+   function Get_Entry
+     (View : access Entity_View_Record'Class) return Gtk_Entry;
+   --  Return the entry
+
    function Save_Desktop
      (View : access Entity_View_Record'Class) return Node_Ptr;
    function Load_Desktop

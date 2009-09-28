@@ -497,4 +497,14 @@ package body Completion_Window.Entity_Views is
       return MDI_Child (Child);
    end Load_Desktop;
 
+   ---------------
+   -- Get_Entry --
+   ---------------
+
+   function Get_Entry
+     (View : access Entity_View_Record'Class) return Gtk_Entry is
+   begin
+      return View.Ent;
+   end Get_Entry;
+
 end Completion_Window.Entity_Views;

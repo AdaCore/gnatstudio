@@ -305,6 +305,7 @@ package body Completion_Module is
                Default_Width => 600,
                Default_Height => 400,
                Group => Group_Consoles,
+               Focus_Widget => Gtk_Widget (Get_Entry (Explorer)),
                Module => Completion_Module);
       Set_Title (Child, -"Entity View", -"Entity View");
       Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
