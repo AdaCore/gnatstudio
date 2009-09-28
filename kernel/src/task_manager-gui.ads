@@ -111,6 +111,10 @@ package Task_Manager.GUI is
    --  been changed. If Immediate_Refresh is True, reflect the changes in the
    --  GUI immediately, otherwise do it in a timeout callback.
 
+   function Get_Focus_Widget
+     (GUI : Task_Manager_Widget_Access) return Gtk_Widget;
+   --  Return the widget that should get the focus by default
+
 private
 
    type Iter_Array is array (Natural range <>) of Gtk_Tree_Iter;
