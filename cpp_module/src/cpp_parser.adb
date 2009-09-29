@@ -499,6 +499,7 @@ package body CPP_Parser is
    function Time_Stamp_From_DB
      (Project   : Project_Type;
       File_Name : GNATCOLL.VFS.Virtual_File) return Time;
+   pragma Unreferenced (Time_Stamp_From_DB);
    --  Return the timestamp of File_Name when the database was last created.
    --  This is a GMT time
 
@@ -2698,7 +2699,16 @@ package body CPP_Parser is
             LI   => Get_Or_Create (Handler.Db, TO_File_Name, Project),
             Handler => LI_Handler (Handler));
          Set_Time_Stamp (Get_LI (S), File_Time_Stamp (TO_File_Name));
-         Set_Time_Stamp (S, Time_Stamp_From_DB (Project, Get_Filename (S)));
+
+         --  We no longer store the timestamp of the file as it was when
+         --  creating the source navigator database. We in fact had a mix where
+         --  we would check the timestamp on the disk, not necessarily the
+         --  same. If we ever need to know whether the source navigator db is
+         --  up-to-date (to automatically recompute it), we will need to C/C++
+         --  specific approach using Time_Stamp_From_DB.
+         --  Code is kept for reference only
+
+         --  Set_Time_Stamp (S, Time_Stamp_From_DB (Project, Get_Filename (S)))
       end if;
 
    exception
@@ -2781,8 +2791,7 @@ package body CPP_Parser is
             Project := File_Project;
          end if;
 
-         if Get_Time_Stamp (Source) = GNATCOLL.Utils.No_Time
-           or else Get_LI (Source) = null
+         if Get_LI (Source) = null
            or else Database_Timestamp (Project) /=
              Get_Timestamp (Get_LI (Source))
            or else Get_DB_Dir (Get_Project (Get_LI (Source)))

@@ -146,7 +146,6 @@ package body Entities is
       File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File;
    --  Internal version for Get_Or_Create
 
@@ -1257,7 +1256,6 @@ package body Entities is
       File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File
    is
       S : Source_File_Item := Get (Db.Files, Full_Filename);
@@ -1269,7 +1267,6 @@ package body Entities is
       elsif S = null then
          F := new Source_File_Record;
          F.Db           := Db;
-         F.Timestamp    := Timestamp;
          F.Depends_On   := Null_Dependency_List;
          F.Depended_On  := Null_Dependency_List;
          F.Scope_Tree_Computed := False;
@@ -1294,10 +1291,6 @@ package body Entities is
          end if;
 
       else
-         if Timestamp /= No_Time then
-            S.File.Timestamp := Timestamp;
-         end if;
-
          if LI /= null and then S.File.LI /= LI then
             if S.File.LI /= null then
                Remove (S.File.LI.Files, S.File);
@@ -1326,7 +1319,6 @@ package body Entities is
       File         : GNATCOLL.VFS.Virtual_File;
       Handler      : LI_Handler := null;
       LI           : LI_File := null;
-      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create : Boolean := True) return Source_File
    is
       H : LI_Handler := Handler;
@@ -1338,8 +1330,7 @@ package body Entities is
       if H = null then
          return null;
       else
-         return Internal_Get_Or_Create
-           (Db, File, File, H, LI, Timestamp, Allow_Create);
+         return Internal_Get_Or_Create (Db, File, File, H, LI, Allow_Create);
       end if;
    end Get_Or_Create;
 
@@ -1352,7 +1343,6 @@ package body Entities is
       Base_Name    : Filesystem_String;
       Handler      : access LI_Handler_Record'Class;
       LI           : LI_File := null;
-      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create : Boolean := True) return Source_File
    is
       File : Virtual_File;
@@ -1360,7 +1350,7 @@ package body Entities is
       if Is_Absolute_Path (Base_Name) then
          return Internal_Get_Or_Create
            (Db, Create (Base_Name),
-            GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
+            GNATCOLL.VFS.No_File, Handler, LI, Allow_Create);
 
       else
          Get_Full_Path_From_File
@@ -1372,8 +1362,7 @@ package body Entities is
             File            => File);
 
          return Internal_Get_Or_Create
-           (Db, File,
-            File, Handler, LI, Timestamp, Allow_Create);
+           (Db, File, File, Handler, LI, Allow_Create);
       end if;
    end Get_Or_Create;
 
@@ -2170,15 +2159,20 @@ package body Entities is
    -------------------
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
-      From_Disk : constant Time := File_Time_Stamp (File.Name);
-      Result    : constant Boolean := From_Disk = File.Timestamp;
+      From_Disk : Time;
+      Result    : Boolean := True;
    begin
-      if Active (Assert_Me) then
-         Trace (Assert_Me, "Is_Up_To_Date: "
-                & (+Base_Name (Get_Filename (File)))
-                & " file time:" & Image (From_Disk, "%D-%T")
-                & " memory: " & Image (File.Timestamp, "%D-%T")
-                & " => " & Result'Img);
+      if File.LI /= null then
+         From_Disk := File_Time_Stamp (File.LI.Name);
+         Result    := From_Disk = File.LI.Timestamp;
+
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "Is_Up_To_Date: "
+                   & (+Base_Name (Get_Filename (File)))
+                   & " file time:" & Image (From_Disk, "%D-%T")
+                   & " memory: " & Image (File.LI.Timestamp, "%D-%T")
+                   & " => " & Result'Img);
+         end if;
       end if;
       return Result;
    end Is_Up_To_Date;
@@ -2249,29 +2243,6 @@ package body Entities is
          Unchecked_Free (LI);
       end if;
    end Free;
-
-   --------------------
-   -- Get_Time_Stamp --
-   --------------------
-
-   function Get_Time_Stamp (File : Source_File) return Ada.Calendar.Time is
-   begin
-      return File.Timestamp;
-   end Get_Time_Stamp;
-
-   --------------------
-   -- Set_Time_Stamp --
-   --------------------
-
-   procedure Set_Time_Stamp
-     (File : Source_File; Timestamp : Ada.Calendar.Time) is
-   begin
-      if Timestamp = No_Time then
-         File.Timestamp := File_Time_Stamp (File.Name);
-      else
-         File.Timestamp := Timestamp;
-      end if;
-   end Set_Time_Stamp;
 
    ------------------
    -- Get_Category --

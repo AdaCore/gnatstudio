@@ -400,8 +400,6 @@ package body Entities.Debug is
      (File : Source_File; Show_Entities : Boolean; Full : Boolean) is
    begin
       Dump (Get_Filename (File), Full);
-      Output (" ");
-      Dump (File.Timestamp);
       Output_Line
         (" ref_count=" & Image (File.Ref_Count)
          & " has_scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));

@@ -420,12 +420,10 @@ package Entities is
       File         : GNATCOLL.VFS.Virtual_File;
       Handler      : LI_Handler := null;
       LI           : LI_File := null;
-      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create : Boolean := True) return Source_File;
    --  Get or create a Source_File corresponding to File.
    --  If there is already an entry for it in the database, the corresponding
-   --  Source_File is returned, and the timestamp is adjusted if the
-   --  parameter is not No_Time. Otherwise, a new entry is added.
+   --  Source_File is returned. Otherwise, a new entry is added.
    --  You need to Ref the entry if you intend to keep it in a separate
    --  structure.
    --  The cross-references for this file are not updated. You need to call
@@ -439,7 +437,6 @@ package Entities is
       Base_Name    : GNATCOLL.VFS.Filesystem_String;
       Handler      : access LI_Handler_Record'Class;
       LI           : LI_File := null;
-      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create : Boolean := True) return Source_File;
    --  Same as above, but the file name is specified through a string
 
@@ -476,15 +473,6 @@ package Entities is
       Handler : access LI_Handler_Record'Class) return Source_File;
    --  Returns a special source file, which should be used for all
    --  predefined entities of the languages handled by Handler.
-
-   function Get_Time_Stamp (File : Source_File) return Ada.Calendar.Time;
-   procedure Set_Time_Stamp
-     (File : Source_File; Timestamp : Ada.Calendar.Time);
-   pragma Inline (Get_Time_Stamp);
-   pragma Inline (Set_Time_Stamp);
-   --  Return the timestamp last set through Update_Timestamp.
-   --  If the timestamp is st to VFS.No_Time, then the timestamp is computed
-   --  by reading it from the physical source file itself
 
    package Source_File_Arrays is new Dynamic_Arrays
      (Data                    => Source_File,
@@ -1282,10 +1270,6 @@ private
 
    type Source_File_Record is tagged record
       Db           : Entities_Database;
-
-      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
-      --  The timestamp of the file at the time it was parsed. This is left
-      --  to No_Time if the file has never been parsed.
 
       Name        : GNATCOLL.VFS.Virtual_File;
 

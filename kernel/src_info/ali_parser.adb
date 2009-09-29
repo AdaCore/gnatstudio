@@ -456,7 +456,6 @@ package body ALI_Parser is
          Base_Name => +Base_Name,
          Handler   => Handler,
          LI        => LI);
-      Set_Time_Stamp (File, GNATCOLL.Utils.No_Time);
 
       return File;
    end Process_Unit;
@@ -526,11 +525,6 @@ package body ALI_Parser is
                    LI        => L),
                 Is_Separate => Is_Separate,
                 Is_Unit     => False);
-
-      if Is_Separate then
-         --  Will compute the timestamp automatically, thus one system call
-         Set_Time_Stamp (Sfile.File, GNATCOLL.Utils.No_Time);
-      end if;
    end Process_Sdep;
 
    -------------------
