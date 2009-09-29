@@ -1396,10 +1396,8 @@ package body GPS.Kernel is
       Project   : Projects.Project_Type;
       Recursive : Boolean) is
    begin
-      Freeze (Get_Database (Kernel), Mode => Create_Only);
       Iter.Project := Projects.Start
         (Root_Project => Project, Recursive => Recursive);
-      Iter.Kernel       := Kernel_Handle (Kernel);
       Iter.Handler      := Language_Handler (Get_Language_Handler (Kernel));
       Iter.Lang_Count   := LI_Handlers_Count (Iter.Handler);
       Iter.Current_Lang := 1;
@@ -1517,7 +1515,6 @@ package body GPS.Kernel is
      (Iter : in out Recursive_LI_Information_Iterator) is
    begin
       Unchecked_Free (Iter.LI);
-      Thaw (Get_Database (Iter.Kernel));
    end Free;
 
    ------------------------------

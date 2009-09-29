@@ -2065,6 +2065,8 @@ package body ALI_Parser is
       Objects  : constant File_Array :=
         Object_Path (Project, False, True, True);
    begin
+      Freeze (Handler.Db, Mode => Create_Only);
+
       Trace (Me, "Parse_All_LI_Information in project "
              & Project_Name (Project));
 
@@ -2110,6 +2112,7 @@ package body ALI_Parser is
    overriding procedure Free (Iter : in out ALI_Information_Iterator) is
    begin
       Unchecked_Free (Iter.Files);
+      Thaw (Iter.Handler.Db);
    end Free;
 
    ----------

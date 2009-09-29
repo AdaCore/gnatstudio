@@ -1211,7 +1211,6 @@ private
    type Recursive_LI_Information_Iterator
      is new Entities.LI_Information_Iterator with
       record
-         Kernel       : Kernel_Handle;
          Handler      : Language_Handlers.Language_Handler;
          Project      : Projects.Imported_Project_Iterator; --  current project
          Current_Lang : Natural;  --  Current lang in current project

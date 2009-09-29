@@ -2870,6 +2870,8 @@ package body CPP_Parser is
       Success : Boolean;
       F_Pair  : Pair;
    begin
+      Freeze (Handler.Db, Mode => Create_Only);
+
       Trace (Me, "Parse_All_LI_Information in project "
              & Project_Name (Project));
       Files (1) := New_String
@@ -2957,6 +2959,7 @@ package body CPP_Parser is
    begin
       Release_Cursor (Iter.Table);
       DB_API.Close (Iter.Table, Success);
+      Thaw (Iter.Handler.Db);
    end Free;
 
    ------------------------
