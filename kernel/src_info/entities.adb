@@ -1022,7 +1022,7 @@ package body Entities is
    begin
       Db          := new Entities_Database_Record;
       Db.Registry := Registry;
-      Db.Frozen   := False;
+      Db.Frozen   := Create_And_Update;
       Db.FS_Optimizer := Create;
       return Db;
    end Create;
@@ -1031,9 +1031,10 @@ package body Entities is
    -- Freeze --
    ------------
 
-   procedure Freeze (Db : Entities_Database) is
+   procedure Freeze
+     (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update) is
    begin
-      Db.Frozen := True;
+      Db.Frozen := Mode;
    end Freeze;
 
    -------------
@@ -1042,14 +1043,14 @@ package body Entities is
 
    procedure Thaw (Db : Entities_Database) is
    begin
-      Db.Frozen := False;
+      Db.Frozen := Create_And_Update;
    end Thaw;
 
    ------------
    -- Frozen --
    ------------
 
-   function Frozen (Db : Entities_Database) return Boolean is
+   function Frozen (Db : Entities_Database) return Freeze_Type is
    begin
       return Db.Frozen;
    end Frozen;

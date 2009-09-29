@@ -265,9 +265,13 @@ package body ALI_Parser is
 
    function Update_ALI
      (Handler   : access ALI_Handler_Record'Class; LI : LI_File;
-      Reset_ALI : Boolean) return Boolean;
+      Reset_ALI : Boolean;
+      Force_Update : Boolean := False) return Boolean;
    --  Re-parse the contents of the ALI file, and return True in case of
    --  success.
+   --  By default, nothing is updated if the database is frozen (see Freeze for
+   --  the various freeze modes). However, you can force the check on whether
+   --  the file is up-to-date by passing Force_Update to True
 
    function Char_To_E_Kind (C : Character) return E_Kind;
    pragma Inline (Char_To_E_Kind);
@@ -524,6 +528,7 @@ package body ALI_Parser is
                 Is_Unit     => False);
 
       if Is_Separate then
+         --  Will compute the timestamp automatically, thus one system call
          Set_Time_Stamp (Sfile.File, GNATCOLL.Utils.No_Time);
       end if;
    end Process_Sdep;
@@ -1372,24 +1377,36 @@ package body ALI_Parser is
    function Update_ALI
      (Handler   : access ALI_Handler_Record'Class;
       LI        : LI_File;
-      Reset_ALI : Boolean) return Boolean
+      Reset_ALI : Boolean;
+      Force_Update : Boolean := False) return Boolean
    is
       New_ALI_Id            : ALI_Id := No_ALI_Id;
-      New_Timestamp         : Time;
+      New_Timestamp         : Time := No_Time;
       First_Sect, Last_Sect : Nat;
+      Do_Update             : Boolean;
       Dummy                 : Boolean;
       pragma Unreferenced (Dummy);
 
    begin
       Assert (Assert_Me, LI /= null, "No LI to update");
 
-      if Frozen (Handler.Db) then
-         return True;
+      case Frozen (Handler.Db) is
+         when No_Create_Or_Update =>
+            Do_Update := Force_Update;
+
+         when Create_Only =>
+            Do_Update := Force_Update or Get_Timestamp (LI) = No_Time;
+
+         when Create_And_Update =>
+            Do_Update := True;
+      end case;
+
+      if Do_Update then
+         New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
+         Do_Update := Get_Timestamp (LI) /= New_Timestamp;
       end if;
 
-      New_Timestamp := File_Time_Stamp (Get_LI_Filename (LI));
-
-      if New_Timestamp /= Get_Timestamp (LI) then
+      if Do_Update then
          if Active (Assert_Me) then
             Trace (Assert_Me, "Load_And_Scan_ALI: "
                    & Display_Full_Name (Get_LI_Filename (LI))
@@ -1918,9 +1935,18 @@ package body ALI_Parser is
          Handler      => LI_Handler (Handler),
          Allow_Create => False);
 
-      if Frozen (Handler.Db) then
-         return Source;
-      end if;
+      case Frozen (Handler.Db) is
+         when No_Create_Or_Update =>
+            return Source;
+
+         when Create_Only =>
+            if Source /= null then
+               return Source;
+            end if;
+
+         when Create_And_Update =>
+            null;
+      end case;
 
       if Source /= null
         and then Get_LI (Source) /= null
@@ -2123,7 +2149,13 @@ package body ALI_Parser is
                File    => Iter.Files (Iter.Current),
                Project => Iter.Project);
 
-            if not Update_ALI (Iter.Handler, LI, Reset_ALI => True) then
+            --  We force the update of this ALI, but if the database has been
+            --  frozen this will not force the update of dependent ALIs (which
+            --  will be parsed later anyway)
+
+            if not Update_ALI
+              (Iter.Handler, LI, Reset_ALI => True, Force_Update => True)
+            then
                Trace
                  (Me,
                   "Couldn't parse " &

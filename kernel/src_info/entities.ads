@@ -80,14 +80,24 @@ package Entities is
    procedure Destroy (Db : in out Entities_Database);
    --  Free the memory occupied by Db
 
-   procedure Freeze (Db : Entities_Database);
+   type Freeze_Type is (Create_And_Update, Create_Only, No_Create_Or_Update);
+   --  The various ways to freeze the database:
+   --  - Create_And_Update: default mode
+   --  - Create_Only: an LI structure is created for a file if none exists, and
+   --    the file on the disk parsed as appropriate. If the structure already
+   --    exists, though, there is no call to stat() to make sure it is
+   --    up-to-date.
+   --  - No_Create_Or_Update: no new LI file is created or updated
+
+   procedure Freeze
+     (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update);
    --  Set the Database as read-only: this won't check for updates, and thus
    --  will speed-up processing of entities cross-ref.
 
    procedure Thaw (Db : Entities_Database);
    --  Unset the freeze state of the database
 
-   function Frozen (Db : Entities_Database) return Boolean;
+   function Frozen (Db : Entities_Database) return Freeze_Type;
    --  Return the frozen state of the database
 
    function Get_LI_Handler
@@ -1414,7 +1424,7 @@ private
       Predefined_File : Source_File;
       Lang            : Abstract_Language_Handler;
       Registry        : Projects.Registry.Project_Registry_Access;
-      Frozen          : Boolean := False;
+      Frozen          : Freeze_Type := Create_And_Update;
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
    end record;
    type Entities_Database is access Entities_Database_Record;

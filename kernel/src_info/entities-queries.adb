@@ -1055,7 +1055,7 @@ package body Entities.Queries is
          --  database to speed things up. This saves a lot of system calls, and
          --  speeds up the search
 
-         if not Frozen (Iter.Deps.Db) then
+         if Frozen (Iter.Deps.Db) = Create_And_Update then
             --  ??? This should be done in the background, since it can freeze
             --  the GPS API for a while.
             Find_Ancestor_Dependencies
@@ -3216,10 +3216,9 @@ package body Entities.Queries is
    is
       Deps : Dependency_Iterator;
       Iter : Children_Iterator;
-      Update : constant Boolean :=
-                 Update_Xref
-                 and then not
-                   Frozen (Get_File (Get_Declaration_Of (Entity)).Db);
+      Update : constant Boolean := Update_Xref
+        and then Frozen (Get_File (Get_Declaration_Of (Entity)).Db) =
+           Create_And_Update;
    begin
       --  Algorithm is the following:
       --  - Find all child types for Entity:
