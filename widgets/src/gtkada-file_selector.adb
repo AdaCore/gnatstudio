@@ -857,10 +857,11 @@ package body Gtkada.File_Selector is
       end if;
 
       declare
-         Files : File_Array_Access :=
-                   Read_Dir (Win.Current_Directory, Files_Only);
+         Files    : File_Array_Access;
          Inserted : Boolean;
       begin
+         Files := Read_Dir (Win.Current_Directory, Files_Only);
+
          for F in Files'Range loop
             if Is_Directory (Files (F)) then
                null;
@@ -905,10 +906,14 @@ package body Gtkada.File_Selector is
 
          return False;
 
+      exception
+         when GNATCOLL.VFS.VFS_Directory_Error =>
+            --  Cannot read the selected directory. Exiting.
+            Clear (Win.File_Model);
+            return False;
       end;
 
    exception
-      --  ??? should catch VFS_Directory_Error
       when E : others =>
          Trace (Me, E);
          return False;
