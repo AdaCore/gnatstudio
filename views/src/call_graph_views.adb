@@ -159,9 +159,9 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr;
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
-   procedure Initialize
+   function Initialize
      (View   : access Callgraph_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create a new view
 
    package Generic_View is new Generic_Views.Simple_Views
@@ -1152,9 +1152,9 @@ package body Call_Graph_Views is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (View   : access Callgraph_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Names  : GNAT.Strings.String_List := (1 => new String'(-"Name"));
       Scroll : Gtk_Scrolled_Window;
@@ -1280,6 +1280,8 @@ package body Call_Graph_Views is
          Slot_Object => View);
 
       Free (Names);
+
+      return Gtk_Widget (View.Tree);
    end Initialize;
 
    -------------------

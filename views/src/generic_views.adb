@@ -82,17 +82,23 @@ package body Generic_Views is
          pragma Unreferenced (MDI);
          View  : View_Access;
          Child : GPS_MDI_Child;
+         Focus_Widget : Gtk_Widget;
       begin
          if Node.Tag.all = Module_Name then
             View := new Formal_View_Record;
-            Initialize (View, User);
+            Focus_Widget := Initialize (View, User);
             if Node.Child /= null then
                Load_From_XML (View, Node.Child);
+            end if;
+
+            if Focus_Widget = null then
+               Focus_Widget := Get_Child (View);
             end if;
 
             Gtk_New (Child, View,
                      Default_Width  => 215,
                      Default_Height => 600,
+                     Focus_Widget   => Focus_Widget,
                      Module         => Module,
                      Group          => Group_View);
             Set_Title (Child, View_Name, View_Name);
@@ -149,6 +155,7 @@ package body Generic_Views is
       is
          Child : GPS_MDI_Child;
          View  : View_Access;
+         Focus_Widget : Gtk_Widget;
       begin
          if Reuse_If_Exist then
             Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
@@ -157,11 +164,18 @@ package body Generic_Views is
 
          if Child = null then
             View := new Formal_View_Record;
-            Initialize (View, Kernel);
+            Focus_Widget := Initialize (View, Kernel);
+
+            if Focus_Widget = null then
+               --  Fallback on using the child of the scrolled window, better
+               --  than not providing any Focus_Widget.
+               Focus_Widget := Get_Child (View);
+            end if;
+
             Gtk_New (Child, View,
                      Default_Width  => 215,
                      Default_Height => 600,
-                     Focus_Widget   => Get_Child (View),
+                     Focus_Widget   => Focus_Widget,
                      Group          => Group,
                      Module         => Module);
             Set_Title (Child, View_Name, View_Name);

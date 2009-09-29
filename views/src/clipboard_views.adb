@@ -61,9 +61,9 @@ package body Clipboard_Views is
       Current : Gdk_Pixbuf;
    end record;
 
-   procedure Initialize
+   function Initialize
      (View   : access Clipboard_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create a new clipboard view
 
    package Generic_View is new Generic_Views.Simple_Views
@@ -404,9 +404,9 @@ package body Clipboard_Views is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (View   : access Clipboard_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Tooltip : Clipboard_View_Tooltips_Access;
    begin
@@ -458,6 +458,8 @@ package body Clipboard_Views is
       Tooltip := new Clipboard_View_Tooltips;
       Tooltip.Clipboard_View := Clipboard_View_Access (View);
       Set_Tooltip (Tooltip, View.Tree, 250);
+
+      return Gtk_Widget (View.Tree);
    end Initialize;
 
    ---------------------

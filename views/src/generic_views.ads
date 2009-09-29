@@ -66,10 +66,13 @@ package Generic_Views is
       type Formal_View_Record is new View_Record with private;
       --  Type of the widget representing the view
 
-      with procedure Initialize
+      with function Initialize
         (View   : access Formal_View_Record'Class;
-         Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is <>;
-      --  Function used to create the view itself
+         Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+         return Gtk.Widget.Gtk_Widget is <>;
+      --  Function used to create the view itself.
+      --  The Gtk_Widget returned, if non-null, is the Focus Widget to pass
+      --  to the MDI.
 
    package Simple_Views is
 

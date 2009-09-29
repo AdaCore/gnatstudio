@@ -110,9 +110,9 @@ package body Bookmark_Views is
      Selection_Foreach (Bookmark_View_Record);
    use Bookmarks_Selection_Foreach;
 
-   procedure Initialize
+   function Initialize
      (View   : access Bookmark_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create a new Bookmark view
 
    package Generic_View is new Generic_Views.Simple_Views
@@ -681,9 +681,9 @@ package body Bookmark_Views is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (View   : access Bookmark_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Tooltip   : Bookmark_View_Tooltips_Access;
       Refresh_H : Refresh_Hook_Access;
@@ -757,6 +757,8 @@ package body Bookmark_Views is
       Tooltip := new Bookmark_View_Tooltips;
       Tooltip.Bookmark_View := Bookmark_View_Access (View);
       Set_Tooltip (Tooltip, View.Tree, 250);
+
+      return Gtk_Widget (View.Tree);
    end Initialize;
 
    -------------

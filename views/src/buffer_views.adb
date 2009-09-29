@@ -75,9 +75,9 @@ package body Buffer_Views is
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
 
-   procedure Initialize
+   function Initialize
      (View   : access Buffer_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create a new Buffer view
 
    Module_Name : constant String := "Windows_View";
@@ -518,9 +518,9 @@ package body Buffer_Views is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (View   : access Buffer_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -579,6 +579,8 @@ package body Buffer_Views is
                 Watch => GObject (View));
 
       Refresh (View);
+
+      return Gtk_Widget (View.Tree);
    end Initialize;
 
    -------------------------
