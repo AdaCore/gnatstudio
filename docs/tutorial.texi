@@ -292,10 +292,18 @@ in the source editor.
 
 @noindent
 
-Using the contextual menu, select @code{Goto body of Next};
+Move the mouse over the @code{Next} identifier in @file{tokens.ads} editor,
+and then hold the @key{Control} key: while you're holding the key, mouse the
+mouse over entities: these entities now become clickable hyperlinks. Clicking
+on the first mouse button will go to the declaration of the entity highlighted
+(or the body if you are already on the declaration), and clicking on the
+middle mouse button will go to the body directly: move
+the mouse back to @code{Next} and click. Alternatively, you can use the
+the contextual menu and select @code{Goto body of Next}; then
 scroll through the procedure @code{Next}, move the mouse on
-@code{Instructions.Read} at line 46 and from the contextual menu, select
-@code{Goto body of Read}.
+@code{Instructions.Read} at line 46, hold @key{control} again and
+click with the middle mouse button (or from the contextual menu, select
+@code{Goto body of Read}).
 
 We've now navigated quite a bit through the application source code,
 which you can verify by clicking on the left arrow in the tool bar, to go
@@ -403,8 +411,8 @@ Special colors are used in the data display: blue for pointers that can be
 dereferenced by a double-click (double click on @code{T.val}); red for fields
 that have been modified since last step.
 
-In the contextual menu that pops up when you right-click on @code{T},
-select @code{Debug->View memory at address of T}: a memory view is opened.
+From the T box, right-click to display the contextual menu and
+select @code{View memory at address of T}: a memory view is opened.
 Use the @code{up} and @code{down} arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the
