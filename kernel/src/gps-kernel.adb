@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 
@@ -122,8 +121,6 @@ package body GPS.Kernel is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (LI_Information_Iterator'Class, LI_Information_Iterator_Access);
 
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations
@@ -1386,137 +1383,6 @@ package body GPS.Kernel is
       Handle.Logs_Mapper := Mapper;
    end Set_Logs_Mapper;
 
-   -----------
-   -- Start --
-   -----------
-
-   procedure Start
-     (Iter      : out Recursive_LI_Information_Iterator;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean) is
-   begin
-      Iter.Project := Projects.Start
-        (Root_Project => Project, Recursive => Recursive);
-      Iter.Handler      := Language_Handler (Get_Language_Handler (Kernel));
-      Iter.Lang_Count   := LI_Handlers_Count (Iter.Handler);
-      Iter.Current_Lang := 1;
-      Iter.Count        := 0;
-      Iter.Total        := 0;
-      Iter.LI_Count     := 0;
-      Iter.LI_Total     := 0;
-      Iter.Start        := Ada.Calendar.Clock;
-   end Start;
-
-   ----------
-   -- Next --
-   ----------
-
-   overriding procedure Next
-     (Iter  : in out Recursive_LI_Information_Iterator;
-      Steps : Natural := Natural'Last;
-      Count : out Natural;
-      Total : out Natural)
-   is
-      function Process return Boolean;
-      --  parse the next LI files, and return True if we should exit
-
-      function Process return Boolean is
-         Tmp : Natural;
-      begin
-         if Iter.LI /= null then
-            Next (Iter.LI.all, Steps => Steps,
-                      Count => Iter.LI_Count,
-                      Total => Iter.LI_Total);
-            if Iter.LI_Count < Iter.LI_Total then
-               --  Will keep processing next time
-               Count := Iter.Count + Iter.LI_Count;
-               Total := Iter.Total + Iter.LI_Total;
-               return True;
-            end if;
-
-            --  We know the total for LI will not change anymore
-            --  In case the iter did not correctly predict the total,
-            --  we now assume that all files have been parsed
-
-            Tmp := Natural'Max (Iter.LI_Count, Iter.LI_Total);
-            Iter.Count := Iter.Count + Tmp;
-            Iter.LI_Count := 0;
-            Iter.Total := Iter.Total + Tmp;
-            Iter.LI_Total := 0;
-
-            Unchecked_Free (Iter.LI);
-
-            --  We finished iterating for this project and language.
-            --  Move to next language
-
-            Iter.Current_Lang := Iter.Current_Lang + 1;
-         end if;
-         return False;
-      end Process;
-
-      P  : Project_Type := Current (Iter.Project);
-      LI : LI_Handler;
-   begin
-      --  If we are already processing a list of files, continue
-
-      if Process then
-         return;
-      end if;
-
-      --  Move to next project or language
-
-      while P /= No_Project loop
-         while Iter.Current_Lang <= Iter.Lang_Count loop
-            --  Nothing to do if the language is not used for the project
-            if Has_Language
-              (P,
-               Language => Get_Nth_Language (Iter.Handler, Iter.Current_Lang))
-            then
-               LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
-               if LI /= null then
-                  Iter.LI := new LI_Information_Iterator'Class'
-                    (Parse_All_LI_Information (LI, P));
-
-                  if Process then
-                     return;
-                  end if;
-               end if;
-            else
-               Iter.Current_Lang := Iter.Current_Lang + 1;
-            end if;
-         end loop;
-
-         --  We finished all languages for this project, move to next project
-
-         Iter.Current_Lang := 1;
-         Next (Iter.Project);
-         P := Current (Iter.Project);
-
-         if P /= No_Project then
-            Trace (Me, "Parse all LI information: switching to project "
-                   & Project_Name (P));
-         end if;
-      end loop;
-
-      --  Nothing else to process
-      Trace (Me, "Parsed" & Iter.Count'Img & " LI files in "
-             & Duration'Image (Ada.Calendar.Clock - Iter.Start) & " seconds");
-
-      Count := Iter.Count + Iter.LI_Count;
-      Total := Iter.Total + Iter.LI_Total;
-   end Next;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free
-     (Iter : in out Recursive_LI_Information_Iterator) is
-   begin
-      Unchecked_Free (Iter.LI);
-   end Free;
-
    ------------------------------
    -- Parse_All_LI_Information --
    ------------------------------
@@ -1529,7 +1395,9 @@ package body GPS.Kernel is
       Iter : Recursive_LI_Information_Iterator;
       Count, Total : Natural;
    begin
-      Start (Iter, Kernel, Project, Recursive);
+      Start (Iter, Get_Language_Handler (Kernel),
+             Project => Projects.Start
+               (Root_Project => Project, Recursive => Recursive));
 
       loop
          Next (Iter, Steps => Natural'Last,  --  As much as possible

@@ -21,8 +21,35 @@ with GNATCOLL.VFS;
 with GNAT.Strings;
 with Interfaces.C;
 with Ada.Containers.Ordered_Sets;
+with Language_Handlers;
+with Projects;
 
 package Entities.Queries is
+
+   -----------------------------
+   --  Parsing LI information --
+   -----------------------------
+
+   type Recursive_LI_Information_Iterator
+     is new Entities.LI_Information_Iterator with private;
+   --  will recursively load all xref information from projects. This is more
+   --  efficient than iterating over source files and updating their xref info.
+
+   procedure Start
+     (Iter      : out Recursive_LI_Information_Iterator;
+      Handler   : access Language_Handlers.Language_Handler_Record'Class;
+      Project   : Projects.Imported_Project_Iterator);
+   --  Start parsing all LI information, for all projects returned by Project.
+   --  The parsing can be split into small chunks so that the interface can be
+   --  refreshed during the processing.
+
+   overriding procedure Next
+     (Iter  : in out Recursive_LI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural);
+   overriding procedure Free (Iter : in out Recursive_LI_Information_Iterator);
+   --  See inherited documentation
 
    --------------------------------------
    -- Goto Declaration<->Body requests --
@@ -556,21 +583,24 @@ private
    end record;
 
    type Dependency_Iterator is record
-      Importing             : Projects.Imported_Project_Iterator;
-      --  List of projects to check
+      LI_Iter               : Recursive_LI_Information_Iterator;
+      --  Iterator used while parsing the LI info from the disk
 
       Db                    : Entities_Database;
 
       Handler               : LI_Handler;
       --  The handler used to parse all LI information.
-      --  Set to null when we have finished parsing all projects' LI files
+      --  Set to null when we have finished parsing all projects' LI files, ie
+      --  we are now traversing File.Depended_On
 
       Total_Progress        : Natural;
       Current_Progress      : Natural;
 
       Include_Self          : Boolean;
       File_Has_No_LI_Report : File_Error_Reporter := null;
+
       Single_Source_File    : Boolean;
+      --  If True, we only return File itself
 
       Source_File_Index     : Natural;
       --  Index of current source in the current project. This is only used if
@@ -579,7 +609,10 @@ private
       --  (See constant Find_Deps_File_Granularity in the body)
 
       File                  : Source_File;
+      --  Current source file
+
       Dep_Index             : Dependency_Arrays.Index_Type;
+      --  Index in File.Depended_On
    end record;
 
    type File_Dependency_Iterator is record
@@ -650,5 +683,26 @@ private
       Entity  : Entity_Information;
       Index   : Entity_Information_Arrays.Index_Type;
    end record;
+
+   type LI_Information_Iterator_Access
+     is access all Entities.LI_Information_Iterator'Class;
+
+   type Recursive_LI_Information_Iterator
+     is new Entities.LI_Information_Iterator with
+      record
+         Handler      : Language_Handlers.Language_Handler;
+         Project      : Projects.Imported_Project_Iterator; --  current project
+         Current_Lang : Natural;  --  Current lang in current project
+         LI           : LI_Information_Iterator_Access;
+         Lang_Count   : Natural;
+
+         Count        : Natural; --  total processed so far, not including LI
+         Total        : Natural; --  total to process, not including LI
+
+         LI_Count     : Natural; --  total processed in LI
+         LI_Total     : Natural; --  total to process in LI
+
+         Start        : Ada.Calendar.Time;
+      end record;
 
 end Entities.Queries;

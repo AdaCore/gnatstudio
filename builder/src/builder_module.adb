@@ -59,6 +59,7 @@ with Projects;                   use Projects;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Language_Handlers;          use Language_Handlers;
 with Entities;                   use Entities;
+with Entities.Queries;           use Entities.Queries;
 with Histories;                  use Histories;
 with Remote;                     use Remote;
 with Build_Command_Manager;
@@ -587,7 +588,8 @@ package body Builder_Module is
 
    begin
       Start (All_LI_Information_Command (C.all).Iter,
-             Kernel, Get_Project (Kernel), Recursive => True);
+             Get_Language_Handler (Kernel),
+             Projects.Start (Get_Project (Kernel), Recursive => True));
       Launch_Background_Command
         (Kernel,
          C,

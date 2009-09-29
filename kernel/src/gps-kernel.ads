@@ -19,7 +19,6 @@
 
 --  This package is the root of the GPS' kernel API
 
-with Ada.Calendar;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
 with Ada.Unchecked_Deallocation;
@@ -320,27 +319,6 @@ package GPS.Kernel is
    --  languages. This can be used in cases where there is no obvious way to
    --  find the LI file matching a given source file (for instance, with a
    --  separate krunched file in Ada).
-
-   type Recursive_LI_Information_Iterator
-     is new Entities.LI_Information_Iterator with private;
-   --  will recursively load all xref information from all projects
-
-   procedure Start
-     (Iter      : out Recursive_LI_Information_Iterator;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean);
-   --  Start parsing all LI information. As opposed to Parse_All_LI_Information
-   --  the parsing can be split into small chunks so that the interface can be
-   --  refreshed during the processing.
-
-   overriding procedure Next
-     (Iter  : in out Recursive_LI_Information_Iterator;
-      Steps : Natural := Natural'Last;
-      Count : out Natural;
-      Total : out Natural);
-   overriding procedure Free (Iter : in out Recursive_LI_Information_Iterator);
-   --  See inherited documentation
 
    function Get_Database
      (Kernel : access Kernel_Handle_Record) return Entities.Entities_Database;
@@ -1204,26 +1182,5 @@ private
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode
    end record;
-
-   type LI_Information_Iterator_Access
-     is access all Entities.LI_Information_Iterator'Class;
-
-   type Recursive_LI_Information_Iterator
-     is new Entities.LI_Information_Iterator with
-      record
-         Handler      : Language_Handlers.Language_Handler;
-         Project      : Projects.Imported_Project_Iterator; --  current project
-         Current_Lang : Natural;  --  Current lang in current project
-         LI           : LI_Information_Iterator_Access;
-         Lang_Count   : Natural;
-
-         Count        : Natural; --  total processed so far, not including LI
-         Total        : Natural; --  total to process, not including LI
-
-         LI_Count     : Natural; --  total processed in LI
-         LI_Total     : Natural; --  total to process in LI
-
-         Start        : Ada.Calendar.Time;
-      end record;
 
 end GPS.Kernel;

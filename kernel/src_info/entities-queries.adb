@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 pragma Warnings (Off);
@@ -41,13 +42,6 @@ package body Entities.Queries is
    Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
    Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
 
-   Find_Deps_File_Granularity : constant Trace_Handle :=
-     Create ("Entities.Queries_File_Granularity", On);
-   --  Whether the search for dependencies parses all the files from a project
-   --  at one time, or one file at a time.
-   --  The latter provides more accuracy for the progress bar, but takes
-   --  slightly more time.
-
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
    --  match. This is an approximate number, for efficiency. Big values mean
@@ -70,6 +64,9 @@ package body Entities.Queries is
    use Entities_In_File_Sets;
    use Source_File_Arrays;
    use Dependency_Arrays;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (LI_Information_Iterator'Class, LI_Information_Iterator_Access);
 
    procedure Find
      (EL              : Entity_Information_List_Access;
@@ -1381,46 +1378,55 @@ package body Entities.Queries is
                 & " Single=" & Boolean'Image (Single_Source_File));
       end if;
 
-      Update_Xref (File, File_Has_No_LI_Report);
-
-      Project := Get_Project_From_File
-        (File.Db.Registry.all, Get_Filename (File),
-         Root_If_Not_Found => False);
+      --  Algorithm:
+      --  For each project importing File's project:
+      --     Parse_All_LI_Information from disk
+      --  Then return all files found on File.Depended_On
+      --
+      --  Unfortunately, we cannot do
+      --  For each project importing File's project:
+      --     while parse_all_li_information:
+      --         if there are new entries on File.Depended_On, return them
+      --  because the files already on File.Depended_On at startup might no
+      --  longer be valid, and the only way to check is to parse their ALI
+      --  file.
+      --
+      --  This means that nothing will happen while we parse all LI information
+      --  whereas it would be nice to return results as soon as possible.
 
       if Single_Source_File then
-         if Project = No_Project then
-            Project := Get_Root_Project (File.Db.Registry.all);
-         end if;
-
-         Iter := (Importing             => Start (Project, Recursive => False),
+         Iter := (LI_Iter               => <>,  --  unused because Handler=null
                   Db                    => File.Db,
                   Include_Self          => Include_Self,
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
-                  Single_Source_File    => Single_Source_File,
+                  Single_Source_File    => True,
                   Handler               => null,
                   Total_Progress        => 1,
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   Source_File_Index     => 0,
                   File                  => File);
-         Next (Iter);
 
       else
+         Project := Get_Project_From_File
+           (File.Db.Registry.all, Get_Filename (File),
+            Root_If_Not_Found => False);
+
          if Project = No_Project then
             --  Project not found ? We'll have to parse all projects, since
             --  it might be from the GNAT runtime.
-            Importing := Start
-              (Get_Root_Project (File.Db.Registry.all), Recursive => True);
+            Project := Get_Root_Project (File.Db.Registry.all);
+            Importing := Start (Project, Recursive => True);
          else
             Importing := Find_All_Projects_Importing
               (Project, Include_Self => True);
          end if;
 
-         Iter := (Importing             => Importing,
+         Iter := (LI_Iter               => <>,
                   Db                    => File.Db,
                   Include_Self          => Include_Self,
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
-                  Single_Source_File    => Single_Source_File,
+                  Single_Source_File    => False,
                   Handler               => Get_LI_Handler_From_File
                     (Language_Handler (File.Db.Lang),
                      Get_Filename (File)),
@@ -1430,23 +1436,9 @@ package body Entities.Queries is
                   Source_File_Index     => 0,
                   File                  => File);
 
-         while Current (Importing) /= No_Project loop
-            if Active (Find_Deps_File_Granularity) then
-               Iter.Total_Progress := Iter.Total_Progress
-                 + Direct_Sources_Count (Current (Importing));
-            else
-               Iter.Total_Progress := Iter.Total_Progress + 1;
-            end if;
-            Next (Importing);
-         end loop;
-
-         if Iter.Handler /= null then
-            if not Active (Find_Deps_File_Granularity) then
-               Parse_All_LI_Information
-                 (Handler   => Iter.Handler,
-                  Project   => Current (Iter.Importing));
-            end if;
-         end if;
+         Start (Iter.LI_Iter,
+                Handler   => Language_Handler (File.Db.Lang),
+                Project   => Importing);
       end if;
    end Find_Ancestor_Dependencies;
 
@@ -1474,10 +1466,14 @@ package body Entities.Queries is
 
    function At_End (Iter : Dependency_Iterator) return Boolean is
    begin
-      return Iter.Handler = null
-        and then Iter.Dep_Index > Last (Iter.File.Depended_On)
-        and then (Iter.Single_Source_File
-                  or else Current (Iter.Importing) = No_Project);
+      if Iter.Single_Source_File then
+         --  We only have one item to return, File itself
+         return Iter.Dep_Index > Dependency_Arrays.First;
+
+      else
+         return Iter.Handler = null
+           and then Iter.Dep_Index > Last (Iter.File.Depended_On);
+      end if;
    end At_End;
 
    ----------
@@ -1485,39 +1481,26 @@ package body Entities.Queries is
    ----------
 
    procedure Next (Iter : in out Dependency_Iterator) is
-      Source : Source_File;
-      Count  : Natural;
-      VF     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      pragma Unreferenced (Source, Count);
    begin
       if Iter.Handler = null then
+         --  Iterate over File.Depended_On
          Iter.Dep_Index := Iter.Dep_Index + 1;
 
       else
-         if Active (Find_Deps_File_Granularity) then
-            Iter.Source_File_Index := Iter.Source_File_Index + 1;
-            VF := Get_Source_File
-              (Current (Iter.Importing), Iter.Source_File_Index);
-            if VF /= GNATCOLL.VFS.No_File then
-               Iter.Current_Progress := Iter.Current_Progress + 1;
-               Source := Get_Source_Info (Iter.Handler, VF);
-            end if;
-         end if;
+         --  Keep parsing all LI information from disk.
+         --  We never enter here if Iter.Single_Source_File
 
-         if VF = GNATCOLL.VFS.No_File then
-            Next (Iter.Importing);
-            if Current (Iter.Importing) = No_Project then
-               Iter.Handler := null;
-            else
-               if not Active (Find_Deps_File_Granularity) then
-                  Iter.Current_Progress := Iter.Current_Progress + 1;
-                  Parse_All_LI_Information
-                    (Handler   => Iter.Handler,
-                     Project   => Current (Iter.Importing));
-               else
-                  Iter.Source_File_Index := 0;
-               end if;
-            end if;
+         Next (Iter.LI_Iter,
+               Steps => 20,   --  ??? hard-coded for now
+               Count => Iter.Current_Progress,
+               Total => Iter.Total_Progress);
+
+         if Iter.Current_Progress >= Iter.Total_Progress then
+            --  We have finished parsing for all needed projects. We will now
+            --  start returning the files stored in File.Depended_On
+
+            Free (Iter.LI_Iter);
+            Iter.Handler := null;
          end if;
       end if;
    end Next;
@@ -1531,6 +1514,10 @@ package body Entities.Queries is
       if Iter.Handler /= null then
          --  Not available yet
          return null;
+
+      elsif Iter.Single_Source_File then
+         return Iter.File;
+
       else
          return Iter.File.Depended_On.Table (Iter.Dep_Index).File;
       end if;
@@ -3372,5 +3359,134 @@ package body Entities.Queries is
 
       return null;
    end Is_Parameter_Of;
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start
+     (Iter      : out Recursive_LI_Information_Iterator;
+      Handler   : access Language_Handlers.Language_Handler_Record'Class;
+      Project   : Projects.Imported_Project_Iterator) is
+   begin
+      Iter.Project := Project;
+      Iter.Handler      := Language_Handler (Handler);
+      Iter.Lang_Count   := LI_Handlers_Count (Iter.Handler);
+      Iter.Current_Lang := 1;
+      Iter.Count        := 0;
+      Iter.Total        := 0;
+      Iter.LI_Count     := 0;
+      Iter.LI_Total     := 0;
+      Iter.Start        := Ada.Calendar.Clock;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Iter  : in out Recursive_LI_Information_Iterator;
+      Steps : Natural := Natural'Last;
+      Count : out Natural;
+      Total : out Natural)
+   is
+      function Process return Boolean;
+      --  parse the next LI files, and return True if we should exit
+
+      function Process return Boolean is
+         Tmp : Natural;
+      begin
+         if Iter.LI /= null then
+            Next (Iter.LI.all, Steps => Steps,
+                      Count => Iter.LI_Count,
+                      Total => Iter.LI_Total);
+            if Iter.LI_Count < Iter.LI_Total then
+               --  Will keep processing next time
+               Count := Iter.Count + Iter.LI_Count;
+               Total := Iter.Total + Iter.LI_Total;
+               return True;
+            end if;
+
+            --  We know the total for LI will not change anymore
+            --  In case the iter did not correctly predict the total,
+            --  we now assume that all files have been parsed
+
+            Tmp := Natural'Max (Iter.LI_Count, Iter.LI_Total);
+            Iter.Count := Iter.Count + Tmp;
+            Iter.LI_Count := 0;
+            Iter.Total := Iter.Total + Tmp;
+            Iter.LI_Total := 0;
+
+            Unchecked_Free (Iter.LI);
+
+            --  We finished iterating for this project and language.
+            --  Move to next language
+
+            Iter.Current_Lang := Iter.Current_Lang + 1;
+         end if;
+         return False;
+      end Process;
+
+      P  : Project_Type := Current (Iter.Project);
+      LI : LI_Handler;
+   begin
+      --  If we are already processing a list of files, continue
+
+      if Process then
+         return;
+      end if;
+
+      --  Move to next project or language
+
+      while P /= No_Project loop
+         while Iter.Current_Lang <= Iter.Lang_Count loop
+            --  Nothing to do if the language is not used for the project
+            if Has_Language
+              (P,
+               Language => Get_Nth_Language (Iter.Handler, Iter.Current_Lang))
+            then
+               LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
+               if LI /= null then
+                  Iter.LI := new LI_Information_Iterator'Class'
+                    (Parse_All_LI_Information (LI, P));
+
+                  if Process then
+                     return;
+                  end if;
+               end if;
+            else
+               Iter.Current_Lang := Iter.Current_Lang + 1;
+            end if;
+         end loop;
+
+         --  We finished all languages for this project, move to next project
+
+         Iter.Current_Lang := 1;
+         Next (Iter.Project);
+         P := Current (Iter.Project);
+
+         if P /= No_Project then
+            Trace (Me, "Parse all LI information: switching to project "
+                   & Project_Name (P));
+         end if;
+      end loop;
+
+      --  Nothing else to process
+      Trace (Me, "Parsed" & Iter.Count'Img & " LI files in "
+             & Duration'Image (Ada.Calendar.Clock - Iter.Start) & " seconds");
+
+      Count := Iter.Count + Iter.LI_Count;
+      Total := Iter.Total + Iter.LI_Total;
+   end Next;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free
+     (Iter : in out Recursive_LI_Information_Iterator) is
+   begin
+      Unchecked_Free (Iter.LI);
+   end Free;
 
 end Entities.Queries;
