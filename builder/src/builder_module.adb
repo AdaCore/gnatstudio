@@ -171,6 +171,8 @@ package body Builder_Module is
      (Command : access All_LI_Information_Command) return Progress_Record;
    overriding function Execute
      (Command : access All_LI_Information_Command) return Command_Return_Type;
+   overriding function Name
+     (Command : access All_LI_Information_Command) return String;
 
    --------------------------------
    -- Computing cross-references --
@@ -530,6 +532,17 @@ package body Builder_Module is
    begin
       Kill_File_Iteration (Kernel, Xrefs_Loading_Queue);
    end Interrupt_Xrefs_Loading;
+
+   ----------
+   -- Name --
+   ----------
+
+   overriding function Name
+     (Command : access All_LI_Information_Command) return String is
+      pragma Unreferenced (Command);
+   begin
+      return -"load xref info";
+   end Name;
 
    --------------
    -- Progress --
