@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I922-020: Cannot "Open from host" on Windows under some circumstances
+  Problem:    Under Windows, using the actions "File->Open From Host" or
+              "Project->Open From Host" may not work, if your system has all
+              drive letters used.
+  Workaround: Unassign one of the drives, then retry.
+
 - I826-009: No entities displayed for C/C++ files in Project View
   Problem:    Under Windows, expanding C/C++ files might display "no entity"
               instead of displaying the entities in this file.
