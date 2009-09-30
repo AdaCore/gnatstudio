@@ -1033,6 +1033,7 @@ package body Entities is
    procedure Freeze
      (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update) is
    begin
+      Trace (Assert_Me, "Freeze database " & Mode'Img);
       Db.Frozen := Mode;
    end Freeze;
 
@@ -1042,6 +1043,7 @@ package body Entities is
 
    procedure Thaw (Db : Entities_Database) is
    begin
+      Trace (Assert_Me, "Thaw database " & Create_And_Update'Img);
       Db.Frozen := Create_And_Update;
    end Thaw;
 

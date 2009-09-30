@@ -612,7 +612,7 @@ private
       --  Current source file
 
       Dep_Index             : Dependency_Arrays.Index_Type;
-      --  Index in File.Depended_On
+      --  Index in File.Depended_On.
    end record;
 
    type File_Dependency_Iterator is record

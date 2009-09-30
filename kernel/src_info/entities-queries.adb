@@ -748,6 +748,13 @@ package body Entities.Queries is
 
       Iter.Files_Analyzed.Clear;
 
+      --  ??? We are looking at potentially outdated references. Therefore we
+      --  need to refresh the corresponding ALI files, but that will also be
+      --  done later on when looking for the ancestor dependencies. Shouldn't
+      --  we simply start by updating all LI files, and then return the
+      --  references ?
+      --  However, disabling this code breaks refactoring (refactoring.1)
+
       if Iter.Files_It /= Entity_File_Maps.No_Element then
          declare
             Prev_Timestamp : Integer;
@@ -755,6 +762,8 @@ package body Entities.Queries is
             loop
                Prev_Timestamp := Entity.File_Timestamp_In_References;
 
+               --  ??? We might update the same file multiple times if there
+               --  are multiple references ?
                Update_Xref (Element (Iter.Files_It).File);
 
                if Prev_Timestamp = Entity.File_Timestamp_In_References then
@@ -791,6 +800,10 @@ package body Entities.Queries is
            and then not In_Range
              (Iter.Entity.Declaration,
               Iter.In_File, Iter.Start_Line, Iter.Last_Line));
+
+      if not Iter.Decl_Returned then
+         Update_Xref (Iter.Entity.Declaration.File);
+      end if;
 
       Iter.Deps := Deps;
 
@@ -3417,7 +3430,10 @@ package body Entities.Queries is
             Iter.Total := Iter.Total + Tmp;
             Iter.LI_Total := 0;
 
-            Unchecked_Free (Iter.LI);
+            if Iter.LI /= null then
+               Free (Iter.LI.all);
+               Unchecked_Free (Iter.LI);
+            end if;
 
             --  We finished iterating for this project and language.
             --  Move to next language
@@ -3486,7 +3502,10 @@ package body Entities.Queries is
    overriding procedure Free
      (Iter : in out Recursive_LI_Information_Iterator) is
    begin
-      Unchecked_Free (Iter.LI);
+      if Iter.LI /= null then
+         Free (Iter.LI.all);
+         Unchecked_Free (Iter.LI);
+      end if;
    end Free;
 
 end Entities.Queries;
