@@ -72,9 +72,11 @@ endif
 	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
 
 install: install-common
-	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 ifeq ($(OS),Windows_NT)
+	$(INSTALL_PROGRAM) gps/obj/gps.exe $(bindir)
 	$(MAKE) -C common/expect install
+else
+	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 endif
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 
