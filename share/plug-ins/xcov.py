@@ -24,7 +24,7 @@ def on_gps_started (hook_name):
   <!--  Program execution under instrumented execution environment  -->
 
   <target-model name="xcov-run" category="">
-    <description>Code coverage with Xcov</description>
+    <description>Run under Xcov for code coverage</description>
     <command-line>
       <arg>xcov</arg>
       <arg>run</arg>
