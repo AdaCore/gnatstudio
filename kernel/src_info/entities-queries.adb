@@ -1152,6 +1152,10 @@ package body Entities.Queries is
       --  didn't corrupt and iterator, then Iter is placed at the beginning
       --  of that file.
 
+      procedure Move_To_Next_Entity;
+      --  Move the iterator to the next entity in the entity list, moving
+      --  the file cursor as well if needed.
+
       ----------------------
       -- Safe_Update_Xref --
       ----------------------
@@ -1175,35 +1179,56 @@ package body Entities.Queries is
             --  it an look for new files.
 
             Iter.Files_It := First (Iter.Entity.References);
+
+            --  If the first file has not already been analysed, then we need
+            --  to perform the analysis
+
+            if not Iter.Files_Analyzed.Contains (Key (Iter.Files_It)) then
+               Safe_Update_Xref (Element (Iter.Files_It).File);
+            end if;
          end if;
       end Safe_Update_Xref;
+
+      -------------------------
+      -- Move_To_Next_Entity --
+      -------------------------
+
+      procedure Move_To_Next_Entity is
+      begin
+         if Iter.Entity_It /= Entities_In_File_Sets.No_Element then
+            Iter.Entity_It := Next (Iter.Entity_It);
+         end if;
+
+         if Iter.Entity_It = Entities_In_File_Sets.No_Element
+           and then Iter.Files_It /= Entity_File_Maps.No_Element
+         then
+            if Iter.Entity_It = Entities_In_File_Sets.No_Element
+              and then Iter.Files_It /= Entity_File_Maps.No_Element
+            then
+               while Iter.Entity_It = Entities_In_File_Sets.No_Element
+                 and then Iter.Files_It /= Entity_File_Maps.No_Element
+                 and then Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
+               loop
+                  Iter.Files_It := Next (Iter.Files_It);
+
+                  if Iter.Files_It /= Entity_File_Maps.No_Element
+                    and then not
+                      Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
+                  then
+                     Safe_Update_Xref (Element (Iter.Files_It).File);
+                  end if;
+               end loop;
+            end if;
+         end if;
+      end Move_To_Next_Entity;
 
    begin
       --  We always return the declaration first
 
       if not Iter.Decl_Returned then
          Iter.Decl_Returned := True;
-
-      elsif Iter.Entity_It /= Entities_In_File_Sets.No_Element then
-         Iter.Entity_It := Next (Iter.Entity_It);
-
-         if Iter.Entity_It = Entities_In_File_Sets.No_Element
-           and then Iter.Files_It /= Entity_File_Maps.No_Element
-         then
-            while Iter.Entity_It = Entities_In_File_Sets.No_Element
-              and then Iter.Files_It /= Entity_File_Maps.No_Element
-              and then Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
-            loop
-               Iter.Files_It := Next (Iter.Files_It);
-
-               if Iter.Files_It /= Entity_File_Maps.No_Element
-                 and then not
-                   Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
-               then
-                  Safe_Update_Xref (Element (Iter.Files_It).File);
-               end if;
-            end loop;
-         end if;
+      else
+         Move_To_Next_Entity;
       end if;
 
       while Repeat loop
@@ -1234,24 +1259,12 @@ package body Entities.Queries is
                   Next (Iter);
                end if;
 
+               --  We found an entity to return, exit from the subprogram.
+
                return;
             end if;
 
-            Iter.Entity_It := Next (Iter.Entity_It);
-
-            while Iter.Entity_It = Entities_In_File_Sets.No_Element
-              and then Iter.Files_It /= Entity_File_Maps.No_Element
-              and then Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
-            loop
-               Iter.Files_It := Next (Iter.Files_It);
-
-               if Iter.Files_It /= Entity_File_Maps.No_Element
-                 and then not Iter.Files_Analyzed.Contains
-                   (Key (Iter.Files_It))
-               then
-                  Safe_Update_Xref (Element (Iter.Files_It).File);
-               end if;
-            end loop;
+            Move_To_Next_Entity;
          end loop;
 
          --  Parse the current file on the list
