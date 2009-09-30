@@ -411,10 +411,16 @@ gvd_setup_child_communication (pty_desc *desc, char **new_argv,
   /* open the slave side of the terminal if necessary */
   if (desc->slave_fd == -1)
 #if defined (_AIX)
-    /* On AIX, if the slave process is not opened with O_NONBLOCK then we
-       might have some processes hanging on I/O system calls. Not sure
-       we can do that for all platforms so do it only on AIX for the 
-       moment. */
+    /* On AIX, if the slave process is not opened with O_NDELAY or O_NONBLOCK
+       then we might have some processes hanging on I/O system calls. Not sure
+       we can do that for all platforms so do it only on AIX for the moment.
+       On AIX O_NONBLOCK and O_NDELAY have slightly different meanings. When
+       reading on the slave fd, in case there is no data available, if O_NDELAY
+       is set then 0 is returned. If O_NON_BLOCK is -1 is returned. It seems
+       that interactive programs such as GDB prefer the O_NDELAY behavior.
+       We chose O_NONBLOCK because it allows us to make the distinction
+       between a true EOF and an EOF returned because there is no data
+       available to be read.  */
     desc->slave_fd = open (desc->slave_name, O_RDWR | O_NONBLOCK, 0);
 #else
     desc->slave_fd = open (desc->slave_name, O_RDWR, 0);
