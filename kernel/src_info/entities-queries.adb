@@ -40,6 +40,7 @@ with Ada.Containers; use Ada.Containers;
 package body Entities.Queries is
 
    Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
+   Callers_Me : constant Trace_Handle := Create ("Entities.Callers", Off);
    Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
 
    Num_Columns_Per_Line : constant := 250;
@@ -2405,7 +2406,7 @@ package body Entities.Queries is
          end loop;
       end;
 
-      if Active (Me) then
+      if Active (Callers_Me) then
          Dump (Tree, "");
       end if;
 
@@ -2446,12 +2447,12 @@ package body Entities.Queries is
                for L in Line_Info'Range loop
                   if Line_Info (L) /= null then
                      if Info_For_Decl (L) /= null then
-                        Trace (Me, "Line" & L'Img & " "
+                        Trace (Callers_Me, "Line" & L'Img & " "
                                & Get_Name (Line_Info (L)).all
                                & " Decl="
                                & Get_Name (Info_For_Decl (L)).all);
                      else
-                        Trace (Me, "Line" & L'Img & " "
+                        Trace (Callers_Me, "Line" & L'Img & " "
                                & Get_Name (Line_Info (L)).all
                                & " Decl=<null>");
                      end if;
