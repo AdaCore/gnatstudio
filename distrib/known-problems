@@ -308,6 +308,13 @@ Known Problems fixed in GPS 4.4.0
               being considered.
   Workaround: Edit the wrong replacement manually.
 
+- HC09-028: Debugger: printing from named parameters call
+  Problem:    If a procedure call uses named notation, trying to print an
+              element (like the Msg_Status portion of "Rcv_Status=>Msg_Status")
+              will yield "print Rcv_Status=Msg_Status"
+  Workaround: type the correct "print Msg_Status" directly in the debugger
+              console
+
 - HC09-008: Bad handling of --display
   Problem:    The command line switch --display is not handled correctly by GPS
   Workaround: Set the environment variable DISPLAY instead. If you need to
