@@ -775,10 +775,8 @@ package body VCS_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      M          : constant VCS_Module_ID_Access := VCS_Module_ID;
-      A_Explorer : VCS_Activities_View_Access;
-      Explorer   : VCS_Explorer_View_Access;
-      pragma Unreferenced (A_Explorer);
+      M        : constant VCS_Module_ID_Access := VCS_Module_ID;
+      Explorer : VCS_Explorer_View_Access;
    begin
       if Node.Tag.all = "VCS_View_Record" then
          --  First we want to clear the current content of the VCS Explorer
@@ -788,8 +786,7 @@ package body VCS_Module is
          return M.Explorer_Child;
 
       elsif Node.Tag.all = "VCS_Activities_View_Record" then
-         A_Explorer := Get_Activities_Explorer (User, True, True);
-         Query_Activities_Files (User, Real_Query => False);
+         Open_Activities_Explorer (User, No_Context);
          return M.Activities_Child;
       end if;
 
