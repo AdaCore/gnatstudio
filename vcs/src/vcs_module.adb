@@ -147,6 +147,10 @@ package body VCS_Module is
       Data   : access Hooks_Data'Class);
    --  Called when project is about to change
 
+   procedure On_Project_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when project has been changed and is fully loaded
+
    procedure On_GPS_Started
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when GPS is starting
@@ -986,6 +990,10 @@ package body VCS_Module is
         (Kernel, Project_Changing_Hook,
          Wrapper (On_Project_Changing'Access), "vcs.project_changing");
 
+      Add_Hook
+        (Kernel, Project_Changed_Hook,
+         Wrapper (On_Project_Changed'Access), "vcs.project_changed");
+
       Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
 
       Register_Hook_No_Args (Kernel, Commit_Done_Hook);
@@ -1673,6 +1681,18 @@ package body VCS_Module is
    begin
       return M.Cached_Status;
    end Get_Status_Cache;
+
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      if Activities_Explorer_Is_Open then
+         --  The VCS Activities window is opened, refresh it
+         Open_Activities_Explorer (Kernel, No_Context);
+      end if;
+   end On_Project_Changed;
 
    -------------------------
    -- On_Project_Changing --
