@@ -18,12 +18,16 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers;
+
+with Namet;
+
 with GNAT.Strings;
 with GNAT.OS_Lib;
+
+with GNATCOLL.VFS;
+
 with Prj.Tree;
 with String_List_Utils;
-with Namet;
-with GNATCOLL.VFS;
 
 package Projects is
 

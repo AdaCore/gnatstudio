@@ -1585,9 +1585,7 @@ package body VCS_Module is
    procedure Hide_VCS_Explorer is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
-      if M.Explorer = null
-        or else M.Explorer_Child = null
-      then
+      if M.Explorer = null or else M.Explorer_Child = null then
          return;
       else
          Ref (M.Explorer);
@@ -1650,9 +1648,7 @@ package body VCS_Module is
    procedure Hide_VCS_Activities_Explorer is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
-      if M.Activities = null
-        or else M.Activities_Child = null
-      then
+      if M.Activities = null or else M.Activities_Child = null then
          return;
       else
          Ref (M.Activities);
@@ -1668,8 +1664,7 @@ package body VCS_Module is
    function Activities_Explorer_Is_Open return Boolean is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
-      return M.Activities /= null
-        and then M.Activities_Child /= null;
+      return M.Activities /= null and then M.Activities_Child /= null;
    end Activities_Explorer_Is_Open;
 
    ---------------

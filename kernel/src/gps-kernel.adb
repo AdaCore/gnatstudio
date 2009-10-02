@@ -950,7 +950,7 @@ package body GPS.Kernel is
                if Child.Tag.all = "MDI" then
                   declare
                      F : constant Virtual_File :=
-                       Get_File_Child (Child, "project");
+                           Get_File_Child (Child, "project");
                   begin
                      if F = GNATCOLL.VFS.No_File then
                         Default_Desktop_Node := Child;
@@ -1005,8 +1005,7 @@ package body GPS.Kernel is
       if Is_Default_Desktop then
          return False;
       else
-         return Desktop_Node /= null
-           or else Default_Desktop_Node /= null;
+         return Desktop_Node /= null or else Default_Desktop_Node /= null;
       end if;
 
    exception

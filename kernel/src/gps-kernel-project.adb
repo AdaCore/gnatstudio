@@ -465,6 +465,10 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console
 
+      ------------------
+      -- Report_Error --
+      ------------------
+
       procedure Report_Error (S : String) is
          Old_Pref : constant Boolean := Auto_Jump_To_First.Get_Pref;
       begin
@@ -485,6 +489,7 @@ package body GPS.Kernel.Project is
         (Kernel.Registry.all,
          Report_Error'Unrestricted_Access,
          Reloaded);
+
       if Reloaded then
          Run_Hook (Kernel, Project_Changed_Hook);
       end if;
@@ -659,9 +664,7 @@ package body GPS.Kernel.Project is
                New_Project_Loaded => New_Project_Loaded,
                Status             => Load_Status);
 
-         if not Load_Status
-           and then not Is_Default
-         then
+         if not Load_Status and then not Is_Default then
             --  Check if a remote configuration was applied and failure occured
             if not Is_Local (Build_Server) then
                Report_Error

@@ -842,7 +842,6 @@ package body VCS_Activities_View_API is
 
       Launch_Background_Command
         (Kernel, Edit_File, True, True, Name (VCS));
-
    end On_Build_Patch_File;
 
    ------------------------------
@@ -895,8 +894,7 @@ package body VCS_Activities_View_API is
 
       while Activity /= No_Activity loop
          declare
-            Files : constant File_Array :=
-                      Get_Files_In_Activity (Activity);
+            Files : constant File_Array := Get_Files_In_Activity (Activity);
          begin
             VCS := Get_VCS_For_Activity (Kernel, Activity);
 

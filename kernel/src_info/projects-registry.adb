@@ -262,7 +262,7 @@ package body Projects.Registry is
             if Registry.Data.Root /= No_Project then
                declare
                   Iter : Imported_Project_Iterator :=
-                    Start (Registry.Data.Root);
+                           Start (Registry.Data.Root);
                begin
                   while Current (Iter) /= No_Project loop
                      Set_View_Is_Complete (Current (Iter), False);
