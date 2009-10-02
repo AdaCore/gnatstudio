@@ -165,6 +165,12 @@ Known Problems fixed in GPS 4.3.1
   Workaround: Set 'set editing off' in the debug window to improve things,
               or use a local GPS.
 
+- HC04-002: Missing libexpat.so.1 under some Linux distributions
+  Problem:    Under some Linux distributions, GPS 4.3.0 won't start due to
+              a missing libexpat.so.1
+  Workaround: Create a symblic link <gps-root>/lib/gps/libexpat.so.1
+              pointing to /lib/libexpat.so.0 to
+
 - HC02-018: Debug->Display does not always work correctly
   Problem:    In some cases, for example in a code like "A => B", doing a
               Debug->Display on B will query the value of "A=B" instead of B.
