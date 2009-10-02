@@ -9222,7 +9222,7 @@ GPS can now handle passwords for such connections.
 
 @item
 Either have a Network Filesystem (i.e. NFS, SMB or equivalent) sharing the
-project files between the host and the target, or having rsync installled on
+project files between the host and the target, or having rsync installed on
 both client and server. rsync can be found at @url{http://www.samba.org/rsync/}
 for unix, and comes as part of cygwin under windows:
 @url{http://www.cygwin.com}.
