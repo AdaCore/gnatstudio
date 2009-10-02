@@ -45,6 +45,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with UTF8_Utils;                use UTF8_Utils;
@@ -886,9 +887,13 @@ package body VCS_Activities_View_API is
    is
       pragma Unreferenced (Explorer);
 
-      VCS      : VCS_Access;
-      Activity : Activity_Id;
-      Status   : File_Status_List.List;
+      Root_Project : constant Virtual_File :=
+                       Project_Path
+                         (Get_Root_Project (Get_Registry (Kernel).all));
+      VCS          : VCS_Access;
+      Activity     : Activity_Id;
+      Status       : File_Status_List.List;
+
    begin
       Activity := First;
 
@@ -896,21 +901,23 @@ package body VCS_Activities_View_API is
          declare
             Files : constant File_Array := Get_Files_In_Activity (Activity);
          begin
-            VCS := Get_VCS_For_Activity (Kernel, Activity);
+            if Get_Project_Path (Activity) = Root_Project then
+               VCS := Get_VCS_For_Activity (Kernel, Activity);
 
-            if Files'Length = 0 or else VCS = null then
-               Display_File_Status
-                 (Kernel, Activity, File_Status_List.Null_List, VCS, True);
-
-            else
-               if Real_Query then
-                  Get_Status (VCS, Files);
+               if Files'Length = 0 or else VCS = null then
+                  Display_File_Status
+                    (Kernel, Activity, File_Status_List.Null_List, VCS, True);
 
                else
-                  Status := Local_Get_Status (VCS, Files);
-                  Display_File_Status
-                    (Kernel, Activity, Status, VCS, False, True);
-                  File_Status_List.Free (Status);
+                  if Real_Query then
+                     Get_Status (VCS, Files);
+
+                  else
+                     Status := Local_Get_Status (VCS, Files);
+                     Display_File_Status
+                       (Kernel, Activity, Status, VCS, False, True);
+                     File_Status_List.Free (Status);
+                  end if;
                end if;
             end if;
          end;
