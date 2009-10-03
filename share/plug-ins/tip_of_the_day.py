@@ -292,7 +292,7 @@ coding standard checker, pretty printer, etc).
 Tip: Support for old compilers
 
 Did you know that GPS is independent of the underlying compiler toolchain
-and can be upgraded without installation e.g. a new GNAT version?
+and can be upgraded without installing e.g. a new GNAT version?
 GPS supports GNAT versions as far back as 3.16 up to today's version.
 
 Tip: Remote Programming
