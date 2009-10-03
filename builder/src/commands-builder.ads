@@ -58,20 +58,22 @@ package Commands.Builder is
    --  Target indicates the name of the target being built.
 
    procedure Launch_Build_Command
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      CL          : GNAT.OS_Lib.String_List_Access;
-      Target_Name : String;
-      Mode_Name   : String;
-      Server      : Server_Type;
-      Quiet       : Boolean;
-      Shadow      : Boolean;
-      Synchronous : Boolean;
-      Use_Shell   : Boolean;
-      Directory   : Virtual_File);
+     (Kernel        : GPS.Kernel.Kernel_Handle;
+      CL            : GNAT.OS_Lib.String_List_Access;
+      Target_Name   : String;
+      Mode_Name     : String;
+      Category_Name : String := Error_Category;
+      Server        : Server_Type;
+      Quiet         : Boolean;
+      Shadow        : Boolean;
+      Synchronous   : Boolean;
+      Use_Shell     : Boolean;
+      Directory     : Virtual_File);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
    --  Target_Name is the name of the target being launched.
+   --  Category_Name is the name of the target category being launched.
    --  If Use_Shell, and if the SHELL environment variable is defined,
    --  then call the command through $SHELL -c "command line".
    --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and

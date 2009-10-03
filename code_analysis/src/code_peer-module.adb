@@ -32,6 +32,7 @@ with Gtk.Object;
 with Gtk.Widget;
 
 with Traces; use Traces;
+with GNATCOLL.Traces;
 
 with Basic_Types;
 with GPS.Editors;
@@ -58,6 +59,8 @@ package body Code_Peer.Module is
    use type GPS.Editors.Editor_Buffer'Class;
 
    Me : constant Debug_Handle := Create ("CodePeer");
+   Support_Multiple_Dirs : constant Debug_Handle :=
+     Create ("CodePeer.Multiple_Dirs", GNATCOLL.Traces.Off);
 
    type Module_Context is record
       Module  : Code_Peer_Module_Id;
@@ -225,12 +228,14 @@ package body Code_Peer.Module is
 
    procedure Create_Library_File (Project : Projects.Project_Type) is
       File : Ada.Text_IO.File_Type;
+      Objs : constant GNATCOLL.VFS.File_Array :=
+              Projects.Object_Path (Project, True, True);
 
    begin
       Ada.Text_IO.Create
         (File,
          Ada.Text_IO.Out_File,
-         +Codepeer_Library_File_Name (Project).Full_Name);
+         String (Codepeer_Library_File_Name (Project).Full_Name.all));
 
       Ada.Text_IO.Put_Line
         (File,
@@ -244,12 +249,25 @@ package body Code_Peer.Module is
          & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
       Ada.Text_IO.New_Line (File);
 
-      Ada.Text_IO.Put_Line
-        (File, "Source (Directory              => ""SCIL"",");
-      Ada.Text_IO.Put_Line
-        (File, "        Files                  => (""*.scil""),");
-      Ada.Text_IO.Put_Line
-        (File, "        Language               => SCIL);");
+      if Active (Support_Multiple_Dirs) then
+         for J in Objs'Range loop
+            Ada.Text_IO.Put_Line
+              (File,
+               "Source (Directory => """ &
+               String (Objs (J).Full_Name.all) & "SCIL"",");
+            Ada.Text_IO.Put_Line
+              (File, "        Files     => (""*.scil""),");
+            Ada.Text_IO.Put_Line
+              (File, "        Language  => SCIL);");
+         end loop;
+      else
+         Ada.Text_IO.Put_Line
+           (File, "Source (Directory => ""SCIL"",");
+         Ada.Text_IO.Put_Line
+           (File, "        Files     => (""*.scil""),");
+         Ada.Text_IO.Put_Line
+           (File, "        Language  => SCIL);");
+      end if;
 
       Ada.Text_IO.Close (File);
    end Create_Library_File;
@@ -1146,7 +1164,7 @@ package body Code_Peer.Module is
       Module.Action := Run;
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
@@ -1169,7 +1187,7 @@ package body Code_Peer.Module is
       Module.Action := Quick_Run;
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
@@ -1220,7 +1238,10 @@ package body Code_Peer.Module is
    begin
       Module.Action := None;
 
-      if Hook_Data.Status /= 0 or else Action = None then
+      if Hook_Data.Status /= 0
+        or else Action = None
+        or else Hook_Data.Category /= "CodePeer"
+      then
          return;
       end if;
 

@@ -49,11 +49,14 @@ package body Commands.Builder is
    Shell_Env : constant String := Getenv ("SHELL").all;
 
    type Build_Callback_Data is new Callback_Data_Record with record
-      Target_Name : Unbounded_String;
+      Target_Name   : Unbounded_String;
       --  The name of the target being built
 
-      Mode_Name   : Unbounded_String;
+      Mode_Name     : Unbounded_String;
       --  The name of the mode being built
+
+      Category_Name : Unbounded_String;
+      --  The name of the category for the target
 
       Quiet : Boolean := False;
       --  Whether the target should be Quiet.
@@ -183,7 +186,7 @@ package body Commands.Builder is
 
       Compilation_Finished
         (Data.Kernel,
-         Error_Category,
+         To_String (Build_Data.Category_Name),
          To_String (Build_Data.Target_Name),
          To_String (Build_Data.Mode_Name),
          Status);
@@ -198,7 +201,7 @@ package body Commands.Builder is
       Str      : GNAT.OS_Lib.String_Access;
 
       Build_Data : Build_Callback_Data
-      renames Build_Callback_Data (Data.Callback_Data.all);
+        renames Build_Callback_Data (Data.Callback_Data.all);
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -295,7 +298,6 @@ package body Commands.Builder is
       Shadow           : Boolean;
       Quiet            : Boolean)
    is
-      pragma Unreferenced (Category);
       Last  : Natural;
       Lines : Slice_Set;
    begin
@@ -400,16 +402,17 @@ package body Commands.Builder is
    --------------------------
 
    procedure Launch_Build_Command
-     (Kernel      : Kernel_Handle;
-      CL          : GNAT.OS_Lib.String_List_Access;
-      Target_Name : String;
-      Mode_Name   : String;
-      Server      : Server_Type;
-      Quiet       : Boolean;
-      Shadow      : Boolean;
-      Synchronous : Boolean;
-      Use_Shell   : Boolean;
-      Directory   : Virtual_File)
+     (Kernel        : Kernel_Handle;
+      CL            : GNAT.OS_Lib.String_List_Access;
+      Target_Name   : String;
+      Mode_Name     : String;
+      Category_Name : String := Error_Category;
+      Server        : Server_Type;
+      Quiet         : Boolean;
+      Shadow        : Boolean;
+      Synchronous   : Boolean;
+      Use_Shell     : Boolean;
+      Directory     : Virtual_File)
    is
       Console  : constant Interactive_Console :=
                    Get_Build_Console (Kernel, Shadow, False);
@@ -422,6 +425,7 @@ package body Commands.Builder is
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
       Data.Mode_Name := To_Unbounded_String (Mode_Name);
+      Data.Category_Name := To_Unbounded_String (Category_Name);
       Data.Quiet := Quiet;
       Data.Shadow := Shadow;
 
