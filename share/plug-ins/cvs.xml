@@ -258,9 +258,10 @@
         <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>File "$1" TRUE</shell>
+        <shell>File.name %1</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 "$1" null %2 %3 "%5 [HEAD]"</shell>
-        <shell>delete "%5"</shell>
+        <shell>Hook.run %1 "%2" null %3 %4 "%6 [HEAD]"</shell>
+        <shell>delete "%6"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
    </action>
