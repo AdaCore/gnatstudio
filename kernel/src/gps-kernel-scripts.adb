@@ -967,7 +967,7 @@ package body GPS.Kernel.Scripts is
                   if From_Current then
                      Set_Data
                        (Instance,
-                        Create_From_Dir (Get_Current_Dir, Nth_Arg (Data, 2)));
+                        Create_From_Dir (Get_Current_Dir, Name));
                      return;
                   end if;
                end;
@@ -975,7 +975,7 @@ package body GPS.Kernel.Scripts is
 
             --  Kernel's Create_From_Base will override File if needed
 
-            File := Create_From_Base (Nth_Arg (Data, 2));
+            File := Create_From_Base (Name);
             Set_Data
               (Instance, Create_From_Base (Full_Name (File), Kernel));
          end;
