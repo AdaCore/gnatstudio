@@ -664,10 +664,22 @@ package body Build_Command_Manager is
             Dir := GNATCOLL.VFS.Dir (Project_Path (Prj));
          end if;
 
-         Launch_Build_Command
-           (Kernel, Full, Target_Name, Get_Category (T),
-            Mode, Server, Quiet, Shadow,
-            Synchronous, Uses_Shell (T), Dir);
+         --  Apparently codefix depends on Error_Category to work properly,
+         --  but we need to set the category properly, at least for CodePeer
+         --  targets???
+
+         if Get_Category (T) = "codepeer" then
+            Launch_Build_Command
+              (Kernel, Full, Target_Name, Mode, "codepeer",
+               Server, Quiet, Shadow,
+               Synchronous, Uses_Shell (T), Dir);
+         else
+            Launch_Build_Command
+              (Kernel, Full, Target_Name, Mode, Error_Category,
+               Server, Quiet, Shadow,
+               Synchronous, Uses_Shell (T), Dir);
+         end if;
+
          Free (Full);
          Unchecked_Free (All_Extra_Args);
       end Launch_For_Mode;
