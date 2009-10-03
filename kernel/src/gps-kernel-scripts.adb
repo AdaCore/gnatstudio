@@ -18,13 +18,19 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
+with System;                  use System;
+with System.Address_Image;
+with System.Assertions;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
+
+with GNATCOLL.Memory;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
 with Gdk.Types;               use Gdk.Types;
@@ -64,12 +70,7 @@ with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
 with Remote;                  use Remote;
 with String_List_Utils;
-with System;                  use System;
-with System.Address_Image;
-with System.Assertions;
-with GNATCOLL.Memory;
 with Traces;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with OS_Utils;                use OS_Utils;
 
 package body GPS.Kernel.Scripts is
@@ -958,6 +959,7 @@ package body GPS.Kernel.Scripts is
             --  3) Create from current dir
 
             --  If we really want to create from current directory
+
             if Number_Of_Arguments (Data) > 2 then
                declare
                   From_Current : constant Boolean := Nth_Arg (Data, 3);
@@ -971,10 +973,11 @@ package body GPS.Kernel.Scripts is
                end;
             end if;
 
-            --  Kernel's Create_Form_Base will override File if needed
+            --  Kernel's Create_From_Base will override File if needed
+
             File := Create_From_Base (Nth_Arg (Data, 2));
-            Set_Data (Instance,
-                      Create_From_Base (Full_Name (File), Kernel));
+            Set_Data
+              (Instance, Create_From_Base (Full_Name (File), Kernel));
          end;
 
       elsif Command = "name" then
