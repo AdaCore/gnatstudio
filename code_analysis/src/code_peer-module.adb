@@ -1240,7 +1240,7 @@ package body Code_Peer.Module is
 
       if Hook_Data.Status /= 0
         or else Action = None
-        or else Hook_Data.Category /= "codepeer"
+        or else Hook_Data.Category /= "CodePeer"
       then
          return;
       end if;
