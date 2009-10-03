@@ -668,9 +668,9 @@ package body Build_Command_Manager is
          --  but we need to set the category properly, at least for CodePeer
          --  targets???
 
-         if Get_Category (T) = "codepeer" then
+         if Get_Category (T) = "CodePeer" then
             Launch_Build_Command
-              (Kernel, Full, Target_Name, Mode, "codepeer",
+              (Kernel, Full, Target_Name, Mode, "CodePeer",
                Server, Quiet, Shadow,
                Synchronous, Uses_Shell (T), Dir);
          else
