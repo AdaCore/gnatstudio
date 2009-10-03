@@ -17,11 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;
-
 with Glib;
 with Gtk.Check_Button;
-with Gtk.Combo;
+with Gtk.GEntry;
 with Gtk.Tool_Button;
 with Gtk.Toolbar;
 
@@ -48,7 +46,7 @@ package GPS.Location_View_Filter_Panel is
       return String;
    --  Returns current filter text or regular expression
 
-   function Get_Is_Reg_Exp
+   function Get_Is_Regexp
      (Self : not null access Locations_Filter_Panel_Record'Class)
       return Boolean;
    --  Returns True if current filter is a regular expression
@@ -73,20 +71,10 @@ private
      new Gtk.Toolbar.Gtk_Toolbar_Record with record
       Kernel       : GPS.Kernel.Kernel_Handle;
 
-      Pattern      : Gtk.Combo.Gtk_Combo;
-      Reg_Exp      : Gtk.Check_Button.Gtk_Check_Button;
+      Pattern      : Gtk.GEntry.Gtk_Entry;
+      Regexp       : Gtk.Check_Button.Gtk_Check_Button;
       Hide_Matched : Gtk.Check_Button.Gtk_Check_Button;
-      Apply        : Gtk.Tool_Button.Gtk_Tool_Button;
       Cancel       : Gtk.Tool_Button.Gtk_Tool_Button;
-
-      Old_Pattern  : GNAT.Strings.String_Access;
-      Old_Reg_Exp  : Boolean := False;
-      --  Old parameters of the filter
-
-      Applied      : Boolean := False;
-      --  Filter has been applied
-      Modified     : Boolean := False;
-      --  Filter parameters have been modified
    end record;
 
    Signal_Apply_Filter       : constant Glib.Signal_Name := "apply-filter";
@@ -95,9 +83,6 @@ private
      "visibility_toggled";
 
    procedure Apply_Filter
-     (Self : not null access Locations_Filter_Panel_Record'Class);
-
-   procedure Change_Pattern
      (Self : not null access Locations_Filter_Panel_Record'Class);
 
 end GPS.Location_View_Filter_Panel;

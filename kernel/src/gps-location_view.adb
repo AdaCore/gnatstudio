@@ -960,7 +960,7 @@ package body GPS.Location_View is
 
       --  Free regular expression
 
-      Basic_Types.Unchecked_Free (V.RegExp);
+      Basic_Types.Unchecked_Free (V.Regexp);
       GNAT.Strings.Free (V.Text);
 
       Clear (V.Model);
@@ -2451,24 +2451,30 @@ package body GPS.Location_View is
 
    procedure On_Apply_Filter (Self : access Location_View_Record'Class) is
       Pattern     : constant String := Self.Filter_Panel.Get_Pattern;
-      New_Reg_Exp : GNAT.Expect.Pattern_Matcher_Access;
+      New_Regexp  : GNAT.Expect.Pattern_Matcher_Access;
       New_Text    : GNAT.Strings.String_Access;
 
    begin
       if Pattern /= "" then
-         if Self.Filter_Panel.Get_Is_Reg_Exp then
-            New_Reg_Exp :=
-              new GNAT.Regpat.Pattern_Matcher'(GNAT.Regpat.Compile (Pattern));
+         if Self.Filter_Panel.Get_Is_Regexp then
+            begin
+               New_Regexp := new GNAT.Regpat.Pattern_Matcher'
+                 (GNAT.Regpat.Compile (Pattern));
+            exception
+               when GNAT.Regpat.Expression_Error =>
+                  New_Regexp := null;
+                  New_Text := new String'(Pattern);
+            end;
 
          else
             New_Text := new String'(Pattern);
          end if;
       end if;
 
-      Basic_Types.Unchecked_Free (Self.RegExp);
+      Basic_Types.Unchecked_Free (Self.Regexp);
       GNAT.Strings.Free (Self.Text);
 
-      Self.RegExp := New_Reg_Exp;
+      Self.Regexp := New_Regexp;
       Self.Text := New_Text;
       Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
 
@@ -2484,7 +2490,7 @@ package body GPS.Location_View is
 
    procedure On_Cancel_Filter (Self : access Location_View_Record'Class) is
    begin
-      Basic_Types.Unchecked_Free (Self.RegExp);
+      Basic_Types.Unchecked_Free (Self.Regexp);
       GNAT.Strings.Free (Self.Text);
 
       Self.Filter.Refilter;
@@ -2631,8 +2637,8 @@ package body GPS.Location_View is
          return True;
 
       else
-         if Self.RegExp /= null then
-            Found := GNAT.Regpat.Match (Self.RegExp.all, Message);
+         if Self.Regexp /= null then
+            Found := GNAT.Regpat.Match (Self.Regexp.all, Message);
 
          elsif Self.Text /= null then
             Found := Ada.Strings.Fixed.Index (Message, Self.Text.all) /= 0;
