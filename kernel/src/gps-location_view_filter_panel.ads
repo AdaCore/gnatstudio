@@ -64,9 +64,6 @@ package GPS.Location_View_Filter_Panel is
    Signal_Cancel_Filter      : constant Glib.Signal_Name;
    --  Emitted then user cancel any filtering
 
-   Signal_Visibility_Toggled : constant Glib.Signal_Name;
-   --  Emitted when user toggle matched items visibility
-
 private
 
    type Locations_Filter_Panel_Record is
@@ -75,27 +72,28 @@ private
 
       Pattern      : Gtk.Combo.Gtk_Combo;
       Reg_Exp      : Gtk.Check_Button.Gtk_Check_Button;
-      Hide_Matched : Gtk.Check_Button.Gtk_Check_Button;
-      Apply        : Gtk.Tool_Button.Gtk_Tool_Button;
+      Show_Matched : Gtk.Tool_Button.Gtk_Tool_Button;
+      Hide_Matched : Gtk.Tool_Button.Gtk_Tool_Button;
       Cancel       : Gtk.Tool_Button.Gtk_Tool_Button;
 
       Old_Pattern  : GNAT.Strings.String_Access;
       Old_Reg_Exp  : Boolean := False;
       --  Old parameters of the filter
 
-      Applied      : Boolean := False;
+      Show_Matched_Applied : Boolean := False;
       --  Filter has been applied
-      Modified     : Boolean := False;
+      Hide_Matched_Applied : Boolean := False;
+      --  Reverse filter has been applied
+      Modified             : Boolean := False;
       --  Filter parameters have been modified
    end record;
 
    Signal_Apply_Filter       : constant Glib.Signal_Name := "apply-filter";
    Signal_Cancel_Filter      : constant Glib.Signal_Name := "cancel-filter";
-   Signal_Visibility_Toggled : constant Glib.Signal_Name :=
-     "visibility_toggled";
 
    procedure Apply_Filter
-     (Self : not null access Locations_Filter_Panel_Record'Class);
+     (Self   : not null access Locations_Filter_Panel_Record'Class;
+      Revert : Boolean);
 
    procedure Change_Pattern
      (Self : not null access Locations_Filter_Panel_Record'Class);

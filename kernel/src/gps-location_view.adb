@@ -297,9 +297,6 @@ package body GPS.Location_View is
    procedure On_Cancel_Filter (Self : access Location_View_Record'Class);
    --  Called on "cancel-filter" signal from filter panel
 
-   procedure On_Visibility_Toggled (Self : access Location_View_Record'Class);
-   --  Called on "visibility-toggled" signal from filter panel
-
    procedure On_Filter_Panel_Activated
      (Widget : access Gtk_Widget_Record'Class);
    --  Called when filter panel item in the context menu is activated
@@ -1284,11 +1281,6 @@ package body GPS.Location_View is
         (View.Filter_Panel,
          Signal_Cancel_Filter,
          Location_View_Callbacks.To_Marshaller (On_Cancel_Filter'Access),
-         Location_View (View));
-      Location_View_Callbacks.Object_Connect
-        (View.Filter_Panel,
-         Signal_Visibility_Toggled,
-         Location_View_Callbacks.To_Marshaller (On_Visibility_Toggled'Access),
          Location_View (View));
       View.Pack_Start (View.Filter_Panel, False, False);
 
@@ -2593,18 +2585,6 @@ package body GPS.Location_View is
 
       return True;
    end On_Query_Tooltip;
-
-   ---------------------------
-   -- On_Visibility_Toggled --
-   ---------------------------
-
-   procedure On_Visibility_Toggled
-     (Self : access Location_View_Record'Class) is
-   begin
-      Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
-
-      Self.Filter.Refilter;
-   end On_Visibility_Toggled;
 
    ----------------
    -- Is_Visible --

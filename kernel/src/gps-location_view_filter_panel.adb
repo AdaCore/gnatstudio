@@ -41,17 +41,14 @@ package body GPS.Location_View_Filter_Panel is
 
    Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
 
-   Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 3) :=
+   Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 2) :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Apply_Filter)),
-      2 => Interfaces.C.Strings.New_String (String (Signal_Cancel_Filter)),
-      3 => Interfaces.C.Strings.New_String
-            (String (Signal_Visibility_Toggled)));
+      2 => Interfaces.C.Strings.New_String (String (Signal_Cancel_Filter)));
 
    Signals_Parameters : constant
-     Glib.Object.Signal_Parameter_Types (1 .. 3, 1 .. 1) :=
+     Glib.Object.Signal_Parameter_Types (1 .. 2, 1 .. 1) :=
      (1 => (others => Glib.GType_None),
-      2 => (others => Glib.GType_None),
-      3 => (others => Glib.GType_None));
+      2 => (others => Glib.GType_None));
 
    Pattern_Key : constant Histories.History_Key := "locations_pattern";
 
@@ -60,10 +57,15 @@ package body GPS.Location_View_Filter_Panel is
       Self   : Locations_Filter_Panel);
    --  Called on close button click
 
-   procedure On_Apply
+   procedure On_Show_Matched
      (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
       Self   : Locations_Filter_Panel);
    --  Called on apply button click
+
+   procedure On_Hide_Matched
+     (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
+      Self   : Locations_Filter_Panel);
+   --  Called on apply reverse button click
 
    procedure On_Cancel
      (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
@@ -85,11 +87,6 @@ package body GPS.Location_View_Filter_Panel is
       Self   : Locations_Filter_Panel);
    --  Called on regexp check button toggle
 
-   procedure On_Hide_Matched_Toggle
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Locations_Filter_Panel);
-   --  Called on hide matched toggle
-
    package Gtk_Entry_Callbacks is
      new Gtk.Handlers.User_Callback
           (Gtk.GEntry.Gtk_Entry_Record, Locations_Filter_Panel);
@@ -110,9 +107,15 @@ package body GPS.Location_View_Filter_Panel is
    ------------------
 
    procedure Apply_Filter
-     (Self : not null access Locations_Filter_Panel_Record'Class)
+     (Self   : not null access Locations_Filter_Panel_Record'Class;
+      Revert : Boolean)
    is
    begin
+      Self.Modified :=
+        Self.Modified
+        or (Self.Show_Matched_Applied and then Revert)
+        or (Self.Hide_Matched_Applied and then not Revert);
+
       if Self.Modified then
          GNAT.Strings.Free (Self.Old_Pattern);
 
@@ -124,12 +127,13 @@ package body GPS.Location_View_Filter_Panel is
          Histories.Add_To_History
            (Self.Kernel.Get_History.all, Pattern_Key, Self.Old_Pattern.all);
 
-         Self.Applied := True;
+         Self.Show_Matched_Applied := not Revert;
+         Self.Hide_Matched_Applied := Revert;
          Self.Modified := False;
 
-         Self.Apply.Set_Sensitive (Self.Modified);
-         Self.Cancel.Set_Sensitive (Self.Applied);
-         Self.Hide_Matched.Set_Sensitive (Self.Applied);
+         Self.Show_Matched.Set_Sensitive (Self.Hide_Matched_Applied);
+         Self.Hide_Matched.Set_Sensitive (Self.Show_Matched_Applied);
+         Self.Cancel.Set_Sensitive (True);
 
          Locations_Filter_Panel_Callbacks.Emit_By_Name
            (Self, Signal_Apply_Filter);
@@ -171,7 +175,10 @@ package body GPS.Location_View_Filter_Panel is
                      or else Self.Old_Pattern.all /= Text
                      or else Self.Old_Reg_Exp /= Self.Reg_Exp.Get_Active);
 
-      Self.Apply.Set_Sensitive (Self.Modified);
+      Self.Show_Matched.Set_Sensitive
+        (Self.Modified or Self.Hide_Matched_Applied);
+      Self.Hide_Matched.Set_Sensitive
+        (Self.Modified or Self.Show_Matched_Applied);
    end Change_Pattern;
 
    ----------------------
@@ -182,7 +189,7 @@ package body GPS.Location_View_Filter_Panel is
      (Self : not null access Locations_Filter_Panel_Record'Class)
       return Boolean is
    begin
-      return Self.Hide_Matched.Get_Active;
+      return Self.Hide_Matched_Applied;
    end Get_Hide_Matched;
 
    --------------------
@@ -307,15 +314,29 @@ package body GPS.Location_View_Filter_Panel is
 
       --  Apply filter button
 
-      Gtk.Tool_Button.Gtk_New_From_Stock (Self.Apply, Gtk.Stock.Stock_Apply);
-      Self.Apply.Set_Tooltip_Text (-"Apply filter");
+      Gtk.Tool_Button.Gtk_New_From_Stock
+        (Self.Show_Matched, Gtk.Stock.Stock_Apply);
+      Self.Show_Matched.Set_Tooltip_Text (-"Show matched");
       Gtk_Tool_Button_Callbacks.Connect
-        (Self.Apply,
+        (Self.Show_Matched,
          Gtk.Tool_Button.Signal_Clicked,
-         Gtk_Tool_Button_Callbacks.To_Marshaller (On_Apply'Access),
+         Gtk_Tool_Button_Callbacks.To_Marshaller (On_Show_Matched'Access),
          Locations_Filter_Panel (Self));
-      Self.Apply.Set_Sensitive (Self.Modified);
-      Self.Insert (Self.Apply);
+      Self.Show_Matched.Set_Sensitive (Self.Modified);
+      Self.Insert (Self.Show_Matched);
+
+      --  Apply reverse filter button
+
+      Gtk.Tool_Button.Gtk_New_From_Stock
+        (Self.Hide_Matched, Gtk.Stock.Stock_Clear);
+      Self.Hide_Matched.Set_Tooltip_Text (-"Hide matched");
+      Gtk_Tool_Button_Callbacks.Connect
+        (Self.Hide_Matched,
+         Gtk.Tool_Button.Signal_Clicked,
+         Gtk_Tool_Button_Callbacks.To_Marshaller (On_Hide_Matched'Access),
+         Locations_Filter_Panel (Self));
+      Self.Hide_Matched.Set_Sensitive (Self.Modified);
+      Self.Insert (Self.Hide_Matched);
 
       --  Cancel filter button
 
@@ -326,30 +347,14 @@ package body GPS.Location_View_Filter_Panel is
          Gtk.Tool_Button.Signal_Clicked,
          Gtk_Tool_Button_Callbacks.To_Marshaller (On_Cancel'Access),
          Locations_Filter_Panel (Self));
-      Self.Cancel.Set_Sensitive (Self.Applied);
+      Self.Cancel.Set_Sensitive
+        (Self.Show_Matched_Applied or Self.Hide_Matched_Applied);
       Self.Insert (Self.Cancel);
 
       --  Separator
 
       Gtk.Separator_Tool_Item.Gtk_New (Separator);
       Self.Insert (Separator);
-
-      --  Hide matched check button
-
-      Gtk.Check_Button.Gtk_New (Self.Hide_Matched, "Hide matched");
-      Self.Hide_Matched.Set_Tooltip_Text
-        (-"Inverse filter: hide matched items");
-      Gtk_Check_Button_Callbacks.Connect
-        (Self.Hide_Matched,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Gtk_Check_Button_Callbacks.To_Marshaller
-           (On_Hide_Matched_Toggle'Access),
-         Locations_Filter_Panel (Self));
-      Self.Hide_Matched.Set_Sensitive (Self.Applied);
-
-      Gtk.Tool_Item.Gtk_New (Item);
-      Item.Add (Self.Hide_Matched);
-      Self.Insert (Item);
 
       --  Initialize history
 
@@ -361,15 +366,29 @@ package body GPS.Location_View_Filter_Panel is
    -- On_Apply --
    --------------
 
-   procedure On_Apply
+   procedure On_Show_Matched
      (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
       Self   : Locations_Filter_Panel)
    is
       pragma Unreferenced (Object);
 
    begin
-      Self.Apply_Filter;
-   end On_Apply;
+      Self.Apply_Filter (False);
+   end On_Show_Matched;
+
+   ----------------------
+   -- On_Apply_Reverse --
+   ----------------------
+
+   procedure On_Hide_Matched
+     (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
+      Self   : Locations_Filter_Panel)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      Self.Apply_Filter (True);
+   end On_Hide_Matched;
 
    ---------------
    -- On_Cancel --
@@ -382,14 +401,14 @@ package body GPS.Location_View_Filter_Panel is
       pragma Unreferenced (Object);
 
    begin
-      if Self.Applied then
-         Self.Applied := False;
+      if Self.Show_Matched_Applied or else Self.Hide_Matched_Applied then
+         Self.Show_Matched_Applied := False;
+         Self.Hide_Matched_Applied := False;
 
          GNAT.Strings.Free (Self.Old_Pattern);
          Self.Change_Pattern;
 
-         Self.Cancel.Set_Sensitive (Self.Applied);
-         Self.Hide_Matched.Set_Sensitive (Self.Applied);
+         Self.Cancel.Set_Sensitive (False);
 
          Locations_Filter_Panel_Callbacks.Emit_By_Name
            (Self, Signal_Cancel_Filter);
@@ -410,23 +429,6 @@ package body GPS.Location_View_Filter_Panel is
       Self.Hide;
    end On_Close;
 
-   ----------------------------
-   -- On_Hide_Matched_Toggle --
-   ----------------------------
-
-   procedure On_Hide_Matched_Toggle
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Locations_Filter_Panel)
-   is
-      pragma Unreferenced (Object);
-
-   begin
-      if Self.Applied then
-         Locations_Filter_Panel_Callbacks.Emit_By_Name
-           (Self, Signal_Visibility_Toggled);
-      end if;
-   end On_Hide_Matched_Toggle;
-
    -------------------------
    -- On_Pattern_Activate --
    -------------------------
@@ -438,7 +440,7 @@ package body GPS.Location_View_Filter_Panel is
       pragma Unreferenced (Object);
 
    begin
-      Self.Apply_Filter;
+      Self.Apply_Filter (False);
    end On_Pattern_Activate;
 
    ------------------------

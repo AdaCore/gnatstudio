@@ -1246,10 +1246,11 @@ match) a text pattern or regular expression. The @code{Close} button on the
 filter panel hides it and cancels the filter. You can press @key{Enter} to
 enable the current pattern. The @code{Regexp} check button specifies how
 to use the filter text entry: as plain text or regular expression.
-The @code{Apply} button enables the current filter.
+The @code{Show matched} button enables the current filter and show all matched
+items.
+The @code{Hide matched} button enables the current filter but hide all matched
+items.
 The @code{Cancel} button cancels the current filter.
-The @code{Hide matched} check button allows to revert the filter,
-e.g. switch between matched and unmatched items.
 
 @c --------------------------------------------------------------------
 @node The Execution Window
