@@ -61,7 +61,6 @@ package Build_Command_Manager is
    --  Launch a build of target named Target_Name
    --  If Mode_Name is not the empty string, then the Mode Mode_Name will be
    --  used.
-   --  If Force_Dialog, always popup the single target dialog.
    --  If Force_File is not set to No_File, then force the command to work
    --  on this file. (This is needed to support GPS scripting).
    --  Extra_Args may point to a list of unexpanded args.
@@ -70,6 +69,7 @@ package Build_Command_Manager is
    --    - the console is not raised when launching the build
    --    - the console is not cleared when launching the build
    --  If Synchronous is True, GPS will block until the command is terminated.
+   --  See document of Dialog_Mode for details on Dialog values.
    --  Main, if not empty, indicates the main to build.
    --  If Directory is not empty, indicates which directory the target should
    --  be run under. Default is the project's directory.

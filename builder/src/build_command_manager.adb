@@ -665,7 +665,8 @@ package body Build_Command_Manager is
          end if;
 
          Launch_Build_Command
-           (Kernel, Full, Target_Name, Mode, Server, Quiet, Shadow,
+           (Kernel, Full, Target_Name, Get_Category (T),
+            Mode, Server, Quiet, Shadow,
             Synchronous, Uses_Shell (T), Dir);
          Free (Full);
          Unchecked_Free (All_Extra_Args);
