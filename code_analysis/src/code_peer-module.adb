@@ -1164,7 +1164,7 @@ package body Code_Peer.Module is
       Module.Action := Run;
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
@@ -1187,7 +1187,7 @@ package body Code_Peer.Module is
       Module.Action := Quick_Run;
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
