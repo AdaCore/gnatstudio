@@ -1241,15 +1241,14 @@ In some cases, a wrench icon will be associated on the left of a compilation
 message. See @ref{Code Fixing} for more information on how to make advantage
 of this icon.
 
-The filter panel can be used to filter out messages which match (or do not
-match) a text pattern or regular expression. The @code{Close} button on the
-filter panel hides it and cancels the filter. You can press @key{Enter} to
-enable the current pattern. The @code{Regexp} check button specifies how
-to use the filter text entry: as plain text or regular expression.
-The @code{Show matched} button enables the current filter and show all matched
-items.
-The @code{Hide matched} button enables the current filter but hide all matched
-items.
+The filter panel can be used to filter messages which match (or do not
+match) a text pattern or regular expression. As soon as you type in the text
+entry, the filter is enabled.
+The @code{Close} button on the filter panel hides it and cancels the filter.
+The @code{Regexp} check button specifies how to use the filter text entry:
+as plain text or regular expression.
+The @code{Hide matched} check button reverts the filter,
+e.g. switch between matching and non-matching items.
 The @code{Cancel} button cancels the current filter.
 
 @c --------------------------------------------------------------------
