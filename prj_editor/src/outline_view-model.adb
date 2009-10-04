@@ -19,16 +19,16 @@
 
 with System; use System;
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
-with Glib.Object;          use Glib.Object;
-with Glib.Convert;         use Glib.Convert;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
-with Gtk.Tree_Model.Utils; use Gtk.Tree_Model.Utils;
+with Glib.Object;                 use Glib.Object;
+with Glib.Convert;                use Glib.Convert;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
+with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
-with Project_Explorers_Common; use Project_Explorers_Common;
+with Project_Explorers_Common;    use Project_Explorers_Common;
 
 package body Outline_View.Model is
 
@@ -96,7 +96,7 @@ package body Outline_View.Model is
      (Model : access Outline_Model_Record'Class;
       Root : Sorted_Node_Access;
       It : Construct_Tree_Iterator) return Sorted_Node_Access;
-   --  Add and sort the new item. This doesn't update sibling indexes.
+   --  Add and sort the new item. This doesn't update sibling indexes
 
    procedure Add_In_Model
      (Model : access Outline_Model_Record'Class;
@@ -173,17 +173,16 @@ package body Outline_View.Model is
 
    function Construct_Filter
      (Filter    : Tree_Filter;
-      Construct : access Simple_Construct_Information) return Boolean
-   is
+      Construct : access Simple_Construct_Information) return Boolean is
    begin
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
 
       case Construct.Category is
-         when Subprogram_Explorer_Category |
-              Cat_Package .. Cat_Task |
-              Cat_Field | Cat_Variable |
-              Type_Category =>
+         when Subprogram_Explorer_Category
+            | Cat_Package .. Cat_Task
+            | Cat_Field | Cat_Variable
+            | Type_Category =>
 
             if Filter.Hide_Types
               and then Construct.Category in Type_Category
@@ -215,7 +214,11 @@ package body Outline_View.Model is
 
       function Compare (Left, Right : String) return Integer;
       --  Does a case-insensitive comparison, returns -1 if Left < Right, 0 if
-      --  equals, 1 if Left > Right
+      --  equals, 1 if Left > Right.
+
+      -------------
+      -- Compare --
+      -------------
 
       function Compare (Left, Right : String) return Integer is
          Left_I, Right_I : Integer;
@@ -242,6 +245,7 @@ package body Outline_View.Model is
       end Compare;
 
       Comparison : Integer;
+
    begin
       case Left.Order_Kind is
          when Alphabetical =>
@@ -249,6 +253,7 @@ package body Outline_View.Model is
               < Sort_Entities (Right.Category)
             then
                return True;
+
             elsif Sort_Entities (Left.Category)
               = Sort_Entities (Right.Category)
             then
@@ -257,6 +262,7 @@ package body Outline_View.Model is
 
                if Comparison = -1 then
                   return True;
+
                elsif Comparison = 0 then
 
                   --  We need to have a clear and definite way to differenciate
@@ -281,16 +287,16 @@ package body Outline_View.Model is
 
    function Sort_And_Add
      (Model : access Outline_Model_Record'Class;
-      Root : Sorted_Node_Access;
-      It   : Construct_Tree_Iterator) return Sorted_Node_Access
+      Root  : Sorted_Node_Access;
+      It    : Construct_Tree_Iterator) return Sorted_Node_Access
    is
       use Sorted_Node_Set;
 
-      Node_It : Sorted_Node_Access;
-      Node : Sorted_Node_Access;
-
+      Node_It  : Sorted_Node_Access;
+      Node     : Sorted_Node_Access;
       Position : Sorted_Node_Set.Cursor;
       Inserted : Boolean;
+
    begin
       Node := New_Node
         (Model,
@@ -307,6 +313,7 @@ package body Outline_View.Model is
       if Inserted then
          if Previous (Position) = Sorted_Node_Set.No_Element then
             Root.First_Child := Node;
+
          else
             Node_It := Element (Previous (Position));
 
@@ -316,6 +323,7 @@ package body Outline_View.Model is
 
          if Next (Position) = Sorted_Node_Set.No_Element then
             Root.Last_Child := Node;
+
          else
             Node_It := Element (Next (Position));
 
@@ -341,8 +349,8 @@ package body Outline_View.Model is
       File   : Structured_File_Access;
       Parent : Construct_Tree_Iterator;
 
-      It : Construct_Tree_Iterator;
-      Dummy : Sorted_Node_Access;
+      It     : Construct_Tree_Iterator;
+      Dummy  : Sorted_Node_Access;
       pragma Unreferenced (Dummy);
    begin
       if Model = null or else Model.File = null then
@@ -354,12 +362,12 @@ package body Outline_View.Model is
       if Root.N_Children /= -1 then
          --  In this case, we've already done the computation, just return
          --  the value
-
          return;
+
       elsif Root = Model.Phantom_Root'Access then
          --  If we're on the initial root node, then there's no parent
-
          Parent := Null_Construct_Tree_Iterator;
+
       else
          Parent := To_Construct_Tree_Iterator (To_Entity_Access (Root.Entity));
       end if;
@@ -406,10 +414,10 @@ package body Outline_View.Model is
      (Model  : access Outline_Model_Record'Class;
       Entity : Entity_Persistent_Access) return Sorted_Node_Access
    is
-      Node  : constant Sorted_Node_Access := new Sorted_Node;
-      Annot : Annotation (Other_Kind);
+      Node      : constant Sorted_Node_Access := new Sorted_Node;
+      Annot     : Annotation (Other_Kind);
       Construct : constant Simple_Construct_Information :=
-        Get_Construct (Entity);
+                    Get_Construct (Entity);
    begin
       Annot.Other_Val := new Entity_Sort_Annotation'
         (Construct_Annotations_Pckg.General_Annotation_Record
@@ -501,8 +509,7 @@ package body Outline_View.Model is
    -------------------
 
    overriding function Get_N_Columns
-     (Self : access Outline_Model_Record)
-      return Glib.Gint
+     (Self : access Outline_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
    begin
@@ -534,8 +541,7 @@ package body Outline_View.Model is
 
    overriding function Get_Iter
      (Self : access Outline_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
    begin
       if Get_Depth (Path) > 0 then
@@ -561,11 +567,10 @@ package body Outline_View.Model is
 
    function Get_Path
      (Self : access Outline_Model_Record'Class;
-      Node : Sorted_Node_Access)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Node : Sorted_Node_Access) return Gtk.Tree_Model.Gtk_Tree_Path
    is
       Path : constant Gtk_Tree_Path := Gtk_New;
-      Cur : Sorted_Node_Access := Node;
+      Cur  : Sorted_Node_Access := Node;
    begin
       while Cur /= null and then Cur /= Self.Phantom_Root'Access loop
          Prepend_Index (Path, Gint (Cur.Index_In_Siblings));
@@ -578,8 +583,7 @@ package body Outline_View.Model is
 
    overriding function Get_Path
      (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
    begin
       return Get_Path (Self, Get_Sorted_Node (Iter));
@@ -595,8 +599,8 @@ package body Outline_View.Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Entity   : constant Entity_Persistent_Access := Get_Entity (Iter);
-      It : Construct_Tree_Iterator;
+      Entity : constant Entity_Persistent_Access := Get_Entity (Iter);
+      It     : Construct_Tree_Iterator;
    begin
       It := To_Construct_Tree_Iterator (To_Entity_Access (Entity));
 
@@ -675,8 +679,7 @@ package body Outline_View.Model is
 
    overriding function Has_Child
      (Self : access Outline_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
-   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is
    begin
       return Children (Self, Iter) /= Null_Iter;
    end Has_Child;
@@ -823,7 +826,7 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access)
    is
-      It : Sorted_Node_Access;
+      It        : Sorted_Node_Access;
       Construct : Construct_Tree_Iterator;
    begin
       It := Root.First_Child;
@@ -862,9 +865,9 @@ package body Outline_View.Model is
      (Model : access Outline_Model_Record'Class;
       New_Obj : Construct_Tree_Iterator)
    is
-      File   : constant Structured_File_Access := Model.File;
-      Parent : constant Construct_Tree_Iterator :=
-        Get_Parent_Scope (Get_Tree (File), New_Obj);
+      File         : constant Structured_File_Access := Model.File;
+      Parent       : constant Construct_Tree_Iterator :=
+                       Get_Parent_Scope (Get_Tree (File), New_Obj);
       Parent_Annot : Annotation (Other_Kind);
       Parent_Node  : Sorted_Node_Access;
       Child_Node   : Sorted_Node_Access;
@@ -959,7 +962,7 @@ package body Outline_View.Model is
       --  addition & deletion from the model.
 
       procedure Update_Node (Node : Sorted_Node_Access);
-      --  Update buffered data of the node & children recursively if it exists.
+      --  Update buffered data of the node & children recursively if it exists
 
       -------------------
       -- Diff_Callback --
@@ -1038,14 +1041,14 @@ package body Outline_View.Model is
    ---------------------------------
 
    function Get_Path_Enclosing_Location
-     (Model : access Outline_Model_Record;
+     (Model        : access Outline_Model_Record;
       Line, Column : Integer) return Gtk_Tree_Path
    is
       Tree      : constant Construct_Tree := Get_Tree (Model.File);
       Last_Node : Sorted_Node_Access := null;
 
       procedure Open_Node (It : Construct_Tree_Iterator);
-      --  Open all the nodes to the iterator given in parameter.
+      --  Open all the nodes to the iterator given in parameter
 
       procedure Open_Node (It : Construct_Tree_Iterator) is
          Annot : Annotation (Other_Kind);
@@ -1082,9 +1085,9 @@ package body Outline_View.Model is
 
       Open_Node
         (Get_Iterator_At
-           (Tree              => Get_Tree (Model.File),
-            Location          => To_Location (Line, Column),
-            Position          => Enclosing));
+           (Tree     => Get_Tree (Model.File),
+            Location => To_Location (Line, Column),
+            Position => Enclosing));
 
       if Last_Node = null then
          return Gtk_New;
