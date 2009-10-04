@@ -69,6 +69,11 @@ package body GPS.Location_View_Filter_Panel is
       Self   : Locations_Filter_Panel);
    --  Called on hide matched toggle
 
+   procedure On_Regexp_Toggle
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Locations_Filter_Panel);
+   --  Called on regexp toggle
+
    package Gtk_Entry_Callbacks is
      new Gtk.Handlers.User_Callback
           (Gtk.GEntry.Gtk_Entry_Record, Locations_Filter_Panel);
@@ -213,6 +218,12 @@ package body GPS.Location_View_Filter_Panel is
       Gtk.Check_Button.Gtk_New (Self.Regexp, -"Regexp");
       Self.Regexp.Set_Tooltip_Text
         (-"Whether filter is a regular expression");
+      Gtk_Check_Button_Callbacks.Connect
+        (Self.Regexp,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Gtk_Check_Button_Callbacks.To_Marshaller
+           (On_Regexp_Toggle'Access),
+         Locations_Filter_Panel (Self));
 
       Gtk.Tool_Item.Gtk_New (Item);
       Item.Add (Self.Regexp);
@@ -292,6 +303,19 @@ package body GPS.Location_View_Filter_Panel is
       end if;
    end On_Hide_Matched_Toggle;
 
+   ----------------------
+   -- On_Regexp_Toggle --
+   ----------------------
+
+   procedure On_Regexp_Toggle
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Locations_Filter_Panel)
+   is
+      pragma Unreferenced (Object);
+   begin
+      Self.Apply_Filter;
+   end On_Regexp_Toggle;
+
    ------------------------
    -- On_Pattern_Changed --
    ------------------------
@@ -301,7 +325,6 @@ package body GPS.Location_View_Filter_Panel is
       Self   : Locations_Filter_Panel)
    is
       pragma Unreferenced (Object);
-
    begin
       Self.Apply_Filter;
    end On_Pattern_Changed;
