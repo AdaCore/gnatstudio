@@ -115,8 +115,10 @@ package body Outline_View.Model is
 
       --  Now unlink & destroy this node
 
-      Row_Deleted (Obj.Model, Path);
-      Path_Free (Path);
+      if Path /= null then
+         Row_Deleted (Obj.Model, Path);
+         Path_Free (Path);
+      end if;
 
       --  First, ensuire parent consistency
 
