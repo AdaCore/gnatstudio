@@ -32,7 +32,6 @@ with Gtk.Object;
 with Gtk.Widget;
 
 with Traces; use Traces;
-with GNATCOLL.Traces;
 
 with Basic_Types;
 with GPS.Editors;
@@ -60,7 +59,7 @@ package body Code_Peer.Module is
 
    Me : constant Debug_Handle := Create ("CodePeer");
    Support_Multiple_Dirs : constant Debug_Handle :=
-     Create ("CodePeer.Multiple_Dirs", GNATCOLL.Traces.Off);
+     Create ("CodePeer.Multiple_Dirs");
 
    type Module_Context is record
       Module  : Code_Peer_Module_Id;
