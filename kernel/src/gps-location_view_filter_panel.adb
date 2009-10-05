@@ -24,7 +24,6 @@ with Glib.Object;
 with Gtk.Editable;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Image;
 with Gtk.Stock;
 with Gtk.Toggle_Button;
 with Gtk.Tool_Item;
@@ -53,11 +52,6 @@ package body GPS.Location_View_Filter_Panel is
      (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
       Self   : Locations_Filter_Panel);
    --  Called on close button click
-
-   procedure On_Cancel
-     (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
-      Self   : Locations_Filter_Panel);
-   --  Called on Cancel button
 
    procedure On_Pattern_Changed
      (Object : access Gtk.GEntry.Gtk_Entry_Record'Class;
@@ -163,7 +157,6 @@ package body GPS.Location_View_Filter_Panel is
    is
       Close     : Gtk.Tool_Button.Gtk_Tool_Button;
       Item      : Gtk.Tool_Item.Gtk_Tool_Item;
-      Find      : Gtk.Image.Gtk_Image;
 
    begin
       Gtk.Toolbar.Initialize (Self);
@@ -189,14 +182,6 @@ package body GPS.Location_View_Filter_Panel is
          Gtk_Tool_Button_Callbacks.To_Marshaller (On_Close'Access),
          Locations_Filter_Panel (Self));
       Self.Insert (Close);
-
-      --  Filter icon
-
-      Gtk.Image.Gtk_New_From_Icon_Name
-        (Find, Gtk.Stock.Stock_Find, Icon_Size_Button);
-      Gtk.Tool_Item.Gtk_New (Item);
-      Item.Add (Find);
-      Self.Insert (Item);
 
       --  Pattern entry
 
@@ -244,32 +229,7 @@ package body GPS.Location_View_Filter_Panel is
       Gtk.Tool_Item.Gtk_New (Item);
       Item.Add (Self.Hide_Matched);
       Self.Insert (Item);
-
-      --  Cancel filter button
-
-      Gtk.Tool_Button.Gtk_New_From_Stock (Self.Cancel, Gtk.Stock.Stock_Cancel);
-      Self.Cancel.Set_Tooltip_Text (-"Cancel current filter");
-      Gtk_Tool_Button_Callbacks.Connect
-        (Self.Cancel,
-         Gtk.Tool_Button.Signal_Clicked,
-         Gtk_Tool_Button_Callbacks.To_Marshaller (On_Cancel'Access),
-         Locations_Filter_Panel (Self));
-      Self.Insert (Self.Cancel);
    end Initialize;
-
-   ---------------
-   -- On_Cancel --
-   ---------------
-
-   procedure On_Cancel
-     (Object : access Gtk.Tool_Button.Gtk_Tool_Button_Record'Class;
-      Self   : Locations_Filter_Panel)
-   is
-      pragma Unreferenced (Object);
-
-   begin
-      Self.Pattern.Set_Text ("");
-   end On_Cancel;
 
    --------------
    -- On_Close --

@@ -1243,13 +1243,12 @@ of this icon.
 
 The filter panel can be used to filter messages which match (or do not
 match) a text pattern or regular expression. As soon as you type in the text
-entry, the filter is enabled.
+entry, the filter is enabled. If you clear the text, the filter is disabled.
 The @code{Close} button on the filter panel hides it and cancels the filter.
 The @code{Regexp} check button specifies how to use the filter text entry:
 as plain text or regular expression.
 The @code{Hide matched} check button reverts the filter,
 e.g. switch between matching and non-matching items.
-The @code{Cancel} button cancels the current filter.
 
 @c --------------------------------------------------------------------
 @node The Execution Window
