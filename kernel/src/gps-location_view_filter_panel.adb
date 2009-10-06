@@ -135,6 +135,39 @@ package body GPS.Location_View_Filter_Panel is
       return Self.Pattern.Get_Text;
    end Get_Pattern;
 
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   procedure Set_Pattern
+     (Self    : not null access Locations_Filter_Panel_Record'Class;
+      Pattern : String) is
+   begin
+      Self.Pattern.Set_Text (Pattern);
+   end Set_Pattern;
+
+   -------------------
+   -- Set_Is_Regexp --
+   -------------------
+
+   procedure Set_Is_Regexp
+     (Self   : not null access Locations_Filter_Panel_Record'Class;
+      Regexp : Boolean) is
+   begin
+      Self.Regexp.Set_Active (Regexp);
+   end Set_Is_Regexp;
+
+   ----------------------
+   -- Set_Hide_Matched --
+   ----------------------
+
+   procedure Set_Hide_Matched
+     (Self : not null access Locations_Filter_Panel_Record'Class;
+      Hide : Boolean) is
+   begin
+      Self.Hide_Matched.Set_Active (Hide);
+   end Set_Hide_Matched;
+
    -------------
    -- Gtk_New --
    -------------
@@ -155,9 +188,8 @@ package body GPS.Location_View_Filter_Panel is
      (Self   : not null access Locations_Filter_Panel_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      Close     : Gtk.Tool_Button.Gtk_Tool_Button;
-      Item      : Gtk.Tool_Item.Gtk_Tool_Item;
-
+      Close : Gtk.Tool_Button.Gtk_Tool_Button;
+      Item  : Gtk.Tool_Item.Gtk_Tool_Item;
    begin
       Gtk.Toolbar.Initialize (Self);
       Glib.Object.Initialize_Class_Record

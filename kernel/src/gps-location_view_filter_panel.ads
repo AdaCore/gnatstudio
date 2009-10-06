@@ -46,15 +46,30 @@ package GPS.Location_View_Filter_Panel is
       return String;
    --  Returns current filter text or regular expression
 
+   procedure Set_Pattern
+     (Self    : not null access Locations_Filter_Panel_Record'Class;
+      Pattern : String);
+   --  Set the current filter
+
    function Get_Is_Regexp
      (Self : not null access Locations_Filter_Panel_Record'Class)
       return Boolean;
    --  Returns True if current filter is a regular expression
 
+   procedure Set_Is_Regexp
+     (Self   : not null access Locations_Filter_Panel_Record'Class;
+      Regexp : Boolean);
+   --  Set whether current filter is a regular expression
+
    function Get_Hide_Matched
      (Self : not null access Locations_Filter_Panel_Record'Class)
       return Boolean;
-   --  Returns True if matched items must be hidden
+   --  Returns True if matched items should be hidden
+
+   procedure Set_Hide_Matched
+     (Self : not null access Locations_Filter_Panel_Record'Class;
+      Hide : Boolean);
+   --  Set whether matched items should be hidden
 
    Signal_Apply_Filter       : constant Glib.Signal_Name;
    --  Emitted when user apply new filter parameters

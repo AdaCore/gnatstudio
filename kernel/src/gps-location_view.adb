@@ -1931,10 +1931,18 @@ package body GPS.Location_View is
 
          if Boolean'Value (Get_Attribute (Node, "filter_panel", "FALSE")) then
             View.Filter_Panel.Show;
+            View.Filter_Panel.Set_Pattern
+              (Get_Attribute (Node, "filter_pattern", ""));
 
          else
             View.Filter_Panel.Hide;
          end if;
+
+         View.Filter_Panel.Set_Is_Regexp
+           (Boolean'Value (Get_Attribute (Node, "filter_regexp", "FALSE")));
+         View.Filter_Panel.Set_Hide_Matched
+           (Boolean'Value
+             (Get_Attribute (Node, "filter_hide_matches", "FALSE")));
 
          while Category /= null loop
             declare
@@ -2053,7 +2061,15 @@ package body GPS.Location_View is
 
          if View.Filter_Panel.Mapped_Is_Set then
             Set_Attribute (N, "filter_panel", "TRUE");
+            Set_Attribute (N, "filter_pattern", View.Filter_Panel.Get_Pattern);
          end if;
+
+         Set_Attribute
+           (N, "filter_regexp",
+            Boolean'Image (View.Filter_Panel.Get_Is_Regexp));
+         Set_Attribute
+           (N, "filter_hide_matches",
+            Boolean'Image (View.Filter_Panel.Get_Hide_Matched));
 
          Category_Iter := View.Model.Get_Iter_First;
 
