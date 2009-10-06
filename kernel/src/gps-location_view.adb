@@ -2061,7 +2061,11 @@ package body GPS.Location_View is
 
          if View.Filter_Panel.Mapped_Is_Set then
             Set_Attribute (N, "filter_panel", "TRUE");
-            Set_Attribute (N, "filter_pattern", View.Filter_Panel.Get_Pattern);
+
+            if View.Filter_Panel.Get_Pattern /= "" then
+               Set_Attribute
+                 (N, "filter_pattern", View.Filter_Panel.Get_Pattern);
+            end if;
          end if;
 
          if View.Filter_Panel.Get_Is_Regexp then
