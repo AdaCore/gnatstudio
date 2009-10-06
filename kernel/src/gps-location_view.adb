@@ -2064,12 +2064,13 @@ package body GPS.Location_View is
             Set_Attribute (N, "filter_pattern", View.Filter_Panel.Get_Pattern);
          end if;
 
-         Set_Attribute
-           (N, "filter_regexp",
-            Boolean'Image (View.Filter_Panel.Get_Is_Regexp));
-         Set_Attribute
-           (N, "filter_hide_matches",
-            Boolean'Image (View.Filter_Panel.Get_Hide_Matched));
+         if View.Filter_Panel.Get_Is_Regexp then
+            Set_Attribute (N, "filter_regexp", "TRUE");
+         end if;
+
+         if View.Filter_Panel.Get_Hide_Matched then
+            Set_Attribute (N, "filter_hide_matches", "TRUE");
+         end if;
 
          Category_Iter := View.Model.Get_Iter_First;
 
