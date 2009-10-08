@@ -13,13 +13,7 @@ import GPS, os.path, os_utils;
 def on_gps_started (hook_name):
   pref = GPS.Preference ("Coverage-Toolchain")
 
-  if os_utils.locate_exec_on_path ("xcov") == "":
-    if pref.get() != "Gcov":
-      pref.set ("Gcov")
-  else:
-    if pref.get() != "Xcov":
-      pref.set ("Xcov")
-
+  if os_utils.locate_exec_on_path ("xcov") != "":
     GPS.parse_xml ("""
   <!--  Program execution under instrumented execution environment  -->
 
