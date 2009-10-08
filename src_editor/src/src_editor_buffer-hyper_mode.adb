@@ -26,6 +26,7 @@ with Entities.Queries;  use Entities.Queries;
 with GPS.Kernel;        use GPS.Kernel;
 with GUI_Utils;         use GUI_Utils;
 with Src_Editor_Box;    use Src_Editor_Box;
+with String_Utils;      use String_Utils;
 with Language;          use Language;
 with Src_Editor_Module; use Src_Editor_Module;
 
@@ -43,9 +44,11 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Line_Start, Line_End     : Gtk_Text_Iter;
       use List_Of_Highlighters;
 
-      Found_Highlighter        : Boolean := False;
-      Result                   : Boolean;
-      L : List_Of_Highlighters.List;
+      Found_Highlighter  : Boolean := False;
+      Result             : Boolean;
+      In_Comment         : Boolean := False;
+      L                  : List_Of_Highlighters.List;
+
    begin
       --  Remove the previous highlight
 
@@ -74,6 +77,11 @@ package body Src_Editor_Buffer.Hyper_Mode is
                First       : Integer := Line'First;
                Iter_Is_At  : constant Integer := Integer
                  (Get_Offset (Iter) - Get_Offset (Line_Start)) + First;
+               Index       : Natural := Line'First;
+               Entity      : Language_Entity;
+               Ignore      : Natural;
+               pragma Unreferenced (Ignore);
+
             begin
                C := L.First;
 
@@ -131,6 +139,16 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
                   C := Next (C);
                end loop;
+
+               if not Found_Highlighter then
+                  Skip_Blanks (Line, Index);
+                  Looking_At (Lang      => Buffer.Lang,
+                              Buffer    => Line,
+                              First     => Index,
+                              Entity    => Entity,
+                              Next_Char => Ignore);
+                  In_Comment := Entity = Comment_Text;
+               end if;
             end;
          end if;
       end if;
@@ -154,6 +172,9 @@ package body Src_Editor_Buffer.Hyper_Mode is
                Sloc_End       : Source_Location;
                Partial_Entity : Boolean) return Boolean;
             --  Auxiliary parsing function
+
+            function Is_Simple_Word (S : String) return Boolean;
+            --  Return True is S only contains lower case letters.
 
             Highlight : Boolean := False;
 
@@ -186,7 +207,29 @@ package body Src_Editor_Buffer.Hyper_Mode is
                return True;
             end Callback;
 
+            --------------------
+            -- Is_Simple_Word --
+            --------------------
+
+            function Is_Simple_Word (S : String) return Boolean is
+            begin
+               for J in S'Range loop
+                  if S (J) not in 'a' .. 'z' then
+                     return False;
+                  end if;
+               end loop;
+
+               return True;
+            end Is_Simple_Word;
+
          begin
+            --  Assume that an all lower case word in a comment is not an
+            --  interesting target for source navigation.
+
+            if In_Comment and then Is_Simple_Word (Slice) then
+               return;
+            end if;
+
             Parse_Entities (Lang     => Buffer.Lang,
                             Buffer   => Slice,
                             Callback => Callback'Unrestricted_Access);
