@@ -20,4 +20,4 @@ NF-45-I922-014 Fewer system calls for cross-references (2009-09-29)
   The number of system calls performed when loading the cross-reference
   information from the disk (the .ali files) has been significantly
   reduced. This results in a speed up, especially noticeable when using
-  sources from a remote server
+  sources from a remote server.
