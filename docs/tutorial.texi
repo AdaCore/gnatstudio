@@ -293,7 +293,7 @@ in the source editor.
 @noindent
 
 Move the mouse over the @code{Next} identifier in @file{tokens.ads} editor,
-and then hold the @key{Control} key: while you're holding the key, mouse the
+and then hold the @key{Control} key: while you're holding the key, move the
 mouse over entities: these entities now become clickable hyperlinks. Clicking
 on the first mouse button will go to the declaration of the entity highlighted
 (or the body if you are already on the declaration), and clicking on the
