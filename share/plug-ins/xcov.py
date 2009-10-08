@@ -84,7 +84,8 @@ def on_gps_started (hook_name):
         <combo-entry label="Xcov" value="xcov"/>
         <combo-entry label="Xcov + Assembler" value="xcov+asm"/>
       </combo>
-      <field label="Routine list" switch="--routine-list" separator="="
+      <field label="SCO list" switch="--scos" separator="=" as-file="true"/>
+      <field label="Routine list" switch="--routines" separator="="
              as-file="true"/>
       <field label="Trace file" switch="-T" separator=" " as-file="true"/>
     </switches>
