@@ -3694,15 +3694,21 @@ corresponding line is activated.
 @cindex hyperlinks
 @c --------------------------------------------------------------------
 
-When the Control key is pressed, entities in the editors become hyper-links.
+When the Control key is pressed and you start moving the mouse, entities in
+the editors under the mouse cursor become hyperlinks and the mouse cursor
+aspect changes.
 
 Left-clicking on a reference to an entity will open a source editor on the
 declaration of this entity, and left-clicking on an entity declaration will
 open an editor on the implementation of this entity.
 
 Clicking with the middle button on either a reference to an entity or the
-declaration of an entity will jump directly to the implementation of this
-entity.
+declaration of an entity will jump directly to the implementation or type
+completion) of this entity.
+
+Note that for efficiency, GPS may create hyperlinks for some entities which
+have no associated cross reference. In this case, clicking will have no
+effect, even though an hyperlinked may have been displayed.
 
 @c --------------------------------------------------------------------
 @node Project Handling
