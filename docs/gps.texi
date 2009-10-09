@@ -3708,7 +3708,7 @@ completion) of this entity.
 
 Note that for efficiency, GPS may create hyperlinks for some entities which
 have no associated cross reference. In this case, clicking will have no
-effect, even though an hyperlinked may have been displayed.
+effect, even though an hyperlink may have been displayed.
 
 @c --------------------------------------------------------------------
 @node Project Handling
