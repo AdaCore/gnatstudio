@@ -283,6 +283,10 @@ private
       Hyper_Mode_Button_Handler    : Gtk.Handlers.Handler_Id :=
                                        (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to mouse button presses
+
+      Cursor_Needs_Change          : Boolean := False;
+      --  Whether we just entered hyper mode, and the cursor aspect needs
+      --  to be changed.
    end record;
 
 end Src_Editor_View;

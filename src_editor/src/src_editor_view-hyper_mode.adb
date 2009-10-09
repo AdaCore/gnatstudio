@@ -95,22 +95,13 @@ package body Src_Editor_View.Hyper_Mode is
       end if;
 
       View.Hyper_Mode := True;
+      View.Cursor_Needs_Change := True;
 
       if Active (Me) then
          Trace (Me, "HYPER MODE ENTER " & Name (View));
       end if;
 
-      Set_Cursor (Get_Window (View, Text_Window_Text), null);
-
       Hyper_Mode_Enter (Source_Buffer (Get_Buffer (View)));
-
-      --  Highlight the current word, if any
-      declare
-         X, Y : Gint;
-      begin
-         Get_Pointer (View, X, Y);
-         Highlight_On (View, X, Y);
-      end;
 
       --  Connect the motion handler
       View.Hyper_Mode_Motion_Handler :=
@@ -155,9 +146,13 @@ package body Src_Editor_View.Hyper_Mode is
          Gdk_New (Text_View_Cursor, Xterm);
       end if;
 
-      if not In_Destruction_Is_Set (View) then
+      if not In_Destruction_Is_Set (View)
+        and then not View.Cursor_Needs_Change
+      then
          Set_Cursor (Get_Window (View, Text_Window_Text), Text_View_Cursor);
       end if;
+
+      View.Cursor_Needs_Change := False;
 
       Hyper_Mode_Leave (Source_Buffer (Get_Buffer (View)));
 
@@ -252,9 +247,9 @@ package body Src_Editor_View.Hyper_Mode is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View  : constant Source_View   := Source_View (Widget);
+      View  : constant Source_View := Source_View (Widget);
+      X, Y  : Gint;
 
-      X, Y         : Gint;
    begin
       if Active (Me) then
          Trace (Me, "motion_notify " & Name (View));
@@ -265,6 +260,11 @@ package body Src_Editor_View.Hyper_Mode is
       if (Get_State (Event) and Control_Mask) = 0 then
          Hyper_Mode_Leave (Widget);
          return False;
+      end if;
+
+      if View.Cursor_Needs_Change then
+         Set_Cursor (Get_Window (View, Text_Window_Text), null);
+         View.Cursor_Needs_Change := False;
       end if;
 
       --  Call Get_Pointer first, since Gtk+ is waiting for this call in order
