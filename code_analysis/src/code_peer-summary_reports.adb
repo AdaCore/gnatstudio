@@ -37,7 +37,7 @@ with Gtk.Object;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
 with Gtk.Toggle_Button;
-with Gtk.Tree_Model.Utils;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Selection;
 with Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;
@@ -51,7 +51,6 @@ with Code_Analysis_GUI;
 package body Code_Peer.Summary_Reports is
 
    use type Glib.Signal_Name;
-   use type Gtk.Tree_Model.Gtk_Tree_Path;
 
    --  use type Code_Analysis.File_Access;
    --  ??? Uncomment this line after I120-013 will be fixed
@@ -183,7 +182,6 @@ package body Code_Peer.Summary_Reports is
       pragma Unreferenced (Self);
 
       use type Glib.Gint;
-      use type Gtk.Tree_Model.Gtk_Tree_Iter;
 
       type Column_Sort_Order is
         (High_Added,   Medium_Added,   Low_Added,
@@ -944,7 +942,7 @@ package body Code_Peer.Summary_Reports is
                elsif Project_Node /= null then
                   Self.Messages_Model.Set (Project_Node);
 
-               elsif not Gtk.Tree_Model.Utils.Is_Null (Iter) then
+               elsif Iter /= Null_Iter then
                   Self.Messages_Model.Set (Self.Tree);
                end if;
             end;

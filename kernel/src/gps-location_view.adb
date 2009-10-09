@@ -42,7 +42,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tooltips;
-with Gtk.Tree_Model.Utils;      use Gtk.Tree_Model.Utils;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
@@ -1434,7 +1433,7 @@ package body GPS.Location_View is
          Self.Filter.Convert_Child_Iter_To_Iter
            (Message_View_Iter, Message_Iter);
 
-         if Is_Null (Message_View_Iter) then
+         if Message_View_Iter = Null_Iter then
             --  Message is filtered out
 
             return;
@@ -1452,9 +1451,9 @@ package body GPS.Location_View is
            (Category_View_Iter, Category_Iter);
 
          if Self.Filter.Children (Category_View_Iter) = File_View_Iter
-           and then Is_Null (File_Next_View_Iter)
+           and then File_Next_View_Iter = Null_Iter
            and then Self.Filter.Children (File_View_Iter) = Message_View_Iter
-           and then Is_Null (Message_Next_View_Iter)
+           and then Message_Next_View_Iter = Null_Iter
          then
             --  It is a first visible message for the new category. Thus,
             --  we need to expand category and file, select first message,
@@ -1487,7 +1486,7 @@ package body GPS.Location_View is
          Self.Model.Next (Secondary_Next_Iter);
 
          if Self.Model.Children (Message_Iter) = Secondary_Iter
-           and then Is_Null (Secondary_Next_Iter)
+           and then Secondary_Next_Iter = Null_Iter
          then
             Self.Model.Set (Message_Iter, Expanded_State_Column, True);
          end if;

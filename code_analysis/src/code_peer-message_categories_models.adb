@@ -19,6 +19,7 @@
 
 with System.Address_To_Access_Conversions;
 
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 package body Code_Peer.Message_Categories_Models is
@@ -181,7 +182,7 @@ package body Code_Peer.Message_Categories_Models is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint is
    begin
-      if Gtk.Tree_Model.Utils.Is_Null (Iter) then
+      if Iter = Null_Iter then
          return Glib.Gint (Self.Categories.Length);
 
       else

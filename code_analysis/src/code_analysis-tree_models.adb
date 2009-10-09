@@ -19,6 +19,7 @@
 
 with System.Address_To_Access_Conversions;
 
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 package body Code_Analysis.Tree_Models is
@@ -107,7 +108,7 @@ package body Code_Analysis.Tree_Models is
            Self.Create_Tree_Iter
              (Project_Node, Utilities.File_At (Project_Node, 1));
 
-      elsif Gtk.Tree_Model.Utils.Is_Null (Parent) then
+      elsif Parent = Null_Iter then
          return Self.Create_Tree_Iter (Utilities.Project_At (Self.Tree, 1));
 
       else
@@ -151,7 +152,7 @@ package body Code_Analysis.Tree_Models is
             return Gtk.Tree_Model.Null_Iter;
          end if;
 
-      elsif Gtk.Tree_Model.Utils.Is_Null (Parent) then
+      elsif Parent = Null_Iter then
          return Self.Create_Tree_Iter (Self.Projects.First_Element);
 
       else
@@ -502,7 +503,7 @@ package body Code_Analysis.Tree_Models is
             end if;
          end if;
 
-      elsif not Gtk.Tree_Model.Utils.Is_Null (Iter) then
+      elsif Iter /= Null_Iter then
          Gtk.Tree_Model.Append_Index
            (Result, Glib.Gint (Self.Projects.Length));
       end if;
@@ -526,7 +527,7 @@ package body Code_Analysis.Tree_Models is
                           Self.Subprogram_At (Iter);
 
    begin
-      if Gtk.Tree_Model.Utils.Is_Null (Iter) then
+      if Iter = Null_Iter then
          return not Self.Tree.Is_Empty;
 
       elsif Subprogram_Node /= null then
@@ -559,7 +560,7 @@ package body Code_Analysis.Tree_Models is
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Iter);
 
    begin
-      if Gtk.Tree_Model.Utils.Is_Null (Iter) then
+      if Iter = Null_Iter then
          return not Self.Projects.Is_Empty;
 
       elsif Subprogram /= null then
@@ -633,7 +634,7 @@ package body Code_Analysis.Tree_Models is
       elsif Project_Node /= null then
          return Glib.Gint (Project_Node.Files.Length);
 
-      elsif Gtk.Tree_Model.Utils.Is_Null (Iter) then
+      elsif Iter = Null_Iter then
          return Glib.Gint (Self.Tree.Length + 1);
          --  Additional child here is a "Totals" line
 
@@ -665,7 +666,7 @@ package body Code_Analysis.Tree_Models is
       elsif Project /= null then
          return Glib.Gint (Project.Files.Length);
 
-      elsif Gtk.Tree_Model.Utils.Is_Null (Iter) then
+      elsif Iter = Null_Iter then
          return Glib.Gint (Self.Projects.Length + 1);
          --  Additional child here is a "Totals" line
 
@@ -829,7 +830,7 @@ package body Code_Analysis.Tree_Models is
             return Gtk.Tree_Model.Null_Iter;
          end if;
 
-      elsif Gtk.Tree_Model.Utils.Is_Null (Parent) then
+      elsif Parent = Null_Iter then
          Project_Node := Utilities.Project_At (Self.Tree, Integer (N) + 1);
 
          --  Project_Node = null means the child is a "Total" line.
@@ -872,7 +873,7 @@ package body Code_Analysis.Tree_Models is
                 (Project, Project.Files.Element (Natural (N) + 1));
          end if;
 
-      elsif Gtk.Tree_Model.Utils.Is_Null (Parent) then
+      elsif Parent = Null_Iter then
          if Natural (N) < Natural (Self.Projects.Length) then
             return
               Self.Create_Tree_Iter (Self.Projects.Element (Natural (N) + 1));
