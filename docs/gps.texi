@@ -393,7 +393,9 @@ GPS will remove this copy when exiting or loading another project, if the
 copy has not been modified during the session.
 
 If the current directory is not writable, GPS will instead load directly
-@code{<prefix>/share/gps/readonly.gpr}.
+@code{<prefix>/share/gps/readonly.gpr}. In this case, GPS will work in a
+degraded mode, where some capabilities will not work (such as building and
+source navigation).
 
 @item Create new project with wizard
 @cindex project
