@@ -807,7 +807,7 @@ package body Outline_View.Model is
    begin
       if Iter /= null then
          return Init_Tree_Iter
-           (Stamp       => 0,
+           (Stamp       => 1,
             User_Data_1 => To_Address (Iter),
             User_Data_2 => System.Null_Address,
             User_Data_3 => System.Null_Address);
