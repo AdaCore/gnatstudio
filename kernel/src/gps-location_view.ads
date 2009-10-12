@@ -161,7 +161,7 @@ private
       Text_Renderer : Gtk_Cell_Renderer_Text;
       Filter_Panel  : Locations_Filter_Panel;
 
-      RegExp       : GNAT.Expect.Pattern_Matcher_Access;
+      Regexp       : GNAT.Expect.Pattern_Matcher_Access;
       Text         : GNAT.Strings.String_Access;
       Is_Hide      : Boolean := False;
 
