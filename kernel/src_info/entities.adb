@@ -2161,19 +2161,36 @@ package body Entities is
    -------------------
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
-      From_Disk : Time;
+      From_Disk, Src_From_Disk : Time;
       Result    : Boolean := True;
    begin
       if File.LI /= null then
+         --  First check whether we have indeed loaded the latest LI file
          From_Disk := File_Time_Stamp (File.LI.Name);
          Result    := From_Disk = File.LI.Timestamp;
 
          if Active (Assert_Me) then
             Trace (Assert_Me, "Is_Up_To_Date: "
                    & (+Base_Name (Get_Filename (File)))
-                   & " file time:" & Image (From_Disk, "%D-%T")
+                   & " LI file time:" & Image (From_Disk, "%D-%T")
                    & " memory: " & Image (File.LI.Timestamp, "%D-%T")
                    & " => " & Result'Img);
+         end if;
+
+         if Result then
+            --  Then check that LI file was indeed more recent than the source.
+            --  Otherwise the user will need to regenerate the LI file
+
+            Src_From_Disk := File_Time_Stamp (Get_Filename (File));
+            Result := Src_From_Disk <= From_Disk;
+
+            if Active (Assert_Me) then
+               Trace (Assert_Me, "Is_Up_To_Date, checking source: "
+                      & (+Base_Name (Get_Filename (File)))
+                      & " LI file time:" & Image (From_Disk, "%D-%T")
+                      & " Src file time:" & Image (Src_From_Disk, "%D-%T")
+                      & " => " & Result'Img);
+            end if;
          end if;
       end if;
       return Result;
