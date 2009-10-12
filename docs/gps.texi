@@ -18137,7 +18137,7 @@ select @i{Usual space at any level} and then close the dialogs.
 @include gfdl.texi
 @c GNU Free Documentation License
 
-@c --------------------------------------------------------------------
+@c -------------------------------------------------------------------
 @node Index table
 @unnumbered Index
 @printindex cp
