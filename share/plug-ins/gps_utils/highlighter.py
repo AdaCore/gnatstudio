@@ -73,7 +73,6 @@ class Highlighter ():
         of the overlay
      """
 
-     self.buffers = []  # or None if highlighting all buffers
      self.name = name
      self.context_lines = context_lines
      self.fg_color = fg_color
@@ -81,6 +80,14 @@ class Highlighter ():
      self.weight   = weight
      self.style    = style
      self.editable = editable
+
+     self.start ()
+
+  def start (self):
+     """Start highlighting. This is automatically called from __init__,
+        and only needs to be called when you have called stop() first.
+        Do not call this function multiple times.
+     """
 
      Hook ("file_edited").add (self.__do_whole_highlight)
      Hook ("file_saved").add (self.__do_whole_highlight)
@@ -90,6 +97,24 @@ class Highlighter ():
 
      for l in EditorBuffer.list ():
         self.highlight (l)
+
+  def stop (self):
+     """Stop highlighting through self"""
+
+     Hook ("file_edited").remove (self.__do_whole_highlight)
+     Hook ("file_saved").remove (self.__do_whole_highlight)
+     Hook ("file_changed_on_disk").remove (self.__do_whole_highlight)
+     if gobject_available:
+        Hook ("character_added").remove (self.__do_context_highlight)
+
+     for buffer in EditorBuffer.list ():
+        if self.must_highlight (buffer):
+           try:
+              over = self.__create_overlay (buffer)
+              buffer.remove_overlay (over, buffer.beginning_of_buffer(),
+                                     buffer.end_of_buffer())
+           except:
+              pass
 
   def highlight (self, buffer, loc=None):
      """Refresh highlighting in one specific buffer.
@@ -152,7 +177,6 @@ class Highlighter ():
      buffer = EditorBuffer.get (file)
      self.highlight (buffer, loc=buffer.current_view().cursor())
 
-
 class Regexp_Highlighter (Highlighter):
   """A specific class of highlighters based on regexps.
      Example of use:
@@ -165,10 +189,11 @@ class Regexp_Highlighter (Highlighter):
                 weight="",   # or "bold", "normal", "light"
                 style="",    # or "normal", "oblique", "italic"
                 editable=True): # or None
+
+     self.regexp = regexp
      Highlighter.__init__ (self, name, context_lines=context_lines,
                            fg_color=fg_color, bg_color=bg_color,
                            weight=weight, style=style, editable=editable)
-     self.regexp = regexp
 
   def do_highlight (self, buffer, overlay, start, end):
      """Do the highlighting in the range of text"""
@@ -178,4 +203,33 @@ class Regexp_Highlighter (Highlighter):
            return
         buffer.apply_overlay (overlay, start [0], start [1] - 1)
         start = start [1] + 1
+
+class Text_Highlighter (Highlighter):
+  """Similar to Regexp_Highlighter, but highlights constant text instead of
+     a regular expression.
+     By default, highlighting is done in all buffer, override the function
+     must_highlight to reduce the scope.
+  """
+
+  def __init__ (self, name, text,
+                context_lines=0,
+                fg_color="grey", bg_color="",
+                weight="",   # or "bold", "normal", "light"
+                style="",    # or "normal", "oblique", "italic"
+                editable=True): # or None
+
+     self.text = text
+     Highlighter.__init__ (self, name, context_lines=context_lines,
+                           fg_color=fg_color, bg_color=bg_color,
+                           weight=weight, style=style, editable=editable)
+
+  def do_highlight (self, buffer, overlay, start, end):
+     """Do the highlighting in the range of text"""
+     while True:
+        start = start.search (self.text, regexp=True, dialog_on_failure=False)
+        if not start or start[0] > end:
+           return
+        buffer.apply_overlay (overlay, start [0], start [1] - 1)
+        start = start [1] + 1
+
 
