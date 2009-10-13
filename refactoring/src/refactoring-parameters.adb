@@ -108,6 +108,17 @@ package body Refactoring.Parameters is
       --  First should point to '(' or ',' in the string Chars. Any character
       --  preceding First and not yet copied to Result is copied first
 
+      function Is_Dotted_Notation return Boolean;
+      --  When using the dotted notation, we need to skip the first parameter.
+      --  Since there is no explicit indication in the ALI file, we need to
+      --  check what's before the "." just before the name (if there is a dot).
+      --  If it is a tagged object and we have a primitive operation, we are
+      --  using the dotted notation
+
+      ------------------------
+      -- Add_Parameter_Name --
+      ------------------------
+
       procedure Add_Parameter_Name is
          Tmp : Natural;
       begin
@@ -138,6 +149,61 @@ package body Refactoring.Parameters is
          end if;
       end Add_Parameter_Name;
 
+      ------------------------
+      -- Is_Dotted_Notation --
+      ------------------------
+
+      function Is_Dotted_Notation return Boolean is
+         Before : constant String := Get_Text
+           (Kernel, File, Line, Column, -100);
+         --  Before can end in the middle of the entity, depending on where we
+         --  clicked.
+
+         Entity_Before : Entity_Information;
+         Last   : Integer := Before'Last;
+         From, To   : Integer;
+         Status : Find_Decl_Or_Body_Query_Status;
+      begin
+         --  Search for the beginning of the entity's name
+         Skip_Word (Before, Last, Step => -1);
+         Skip_Blanks (Before, Last, Step => -1);
+
+         From := Last - 1;
+         Skip_Blanks (Before, From, Step => -1);
+         To := From;
+         Skip_Word (Before, From, Step => -1);
+
+         if Is_Primitive_Operation_Of (Entity) /= null
+           and then Before (Last) = '.'
+         then
+            Find_Declaration
+              (Db          => Get_Database (Kernel),
+               File_Name   => File,
+               Entity_Name => Before (From + 1 .. To),
+               Line      => Line, --  Approximation resolved in entity manager
+               Column    => Column,
+               Entity    => Entity_Before,
+               Status    => Status);
+
+            --  The following will not handle correctly where the primitive
+            --  operation is declared inside a subprogram, and we use the fully
+            --  qualified name to access it. That should be pretty rare though,
+            --  since primitive operations can only be overridden in such a
+            --  context, and users are not likely to use full qualification.
+            --  But we want to handle the case of factories (ie subprograms)
+            --  that return an access type and we use the dotted notation to
+            --  call a primitive op on the result.
+
+            if Entity_Before /= null
+              and then Get_Kind (Entity_Before).Kind /= Package_Kind
+            then
+               return True;
+            end if;
+         end if;
+
+         return False;
+      end Is_Dotted_Notation;
+
    begin
       Skip_Word   (Chars, First);
       Skip_Blanks (Chars, First);
@@ -153,6 +219,18 @@ package body Refactoring.Parameters is
          Trace (Me, "No parameter for this subprogram");
          return Failure;
       end if;
+
+      if Is_Dotted_Notation then
+         Trace (Me, "Rename parameters: detected dotted notation");
+         Next (Iter);
+         Get (Iter, Param);
+         if Param = null then
+            return Success;
+         end if;
+      end if;
+
+      --  Now add all parameter names, but not if the name is already specified
+      --  by the user
 
       Add_Parameter_Name;
 
