@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.1
 
+- IA13-033: Error when using predef_ada_entity_insertions.py plug-in
+  Problem:    When the predef_ada_entity_insertions.py plug-in is enabled,
+              an error is generated: Command not found when creating
+              contextual menu: insert AST_Entry.
+  Workaround: This error can be ignored.
+
 Known Problems fixed in GPS 4.4.0
 
 - I922-020: Cannot "Open from host" on Windows under some circumstances
