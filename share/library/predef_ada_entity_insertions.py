@@ -1490,7 +1490,7 @@ GPS.parse_xml ("""
         <Title>Insert/GNAT attribute/Bit</Title>
      </contextual>
 
-     <action name="insert AST_Entry attr" output="none">
+     <action name="insert AST_Entry" output="none">
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">predef_ada_entity_insertions.insert_AST_Entry()</shell>
      </action>
@@ -2133,14 +2133,6 @@ GPS.parse_xml ("""
      </action>
      <contextual action="insert CPP_Class" >
         <Title>Insert/GNAT pragma/CPP_Class</Title>
-     </contextual>
-
-     <action name="insert Ast_Entry" output="none">
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">predef_ada_entity_insertions.insert_Ast_Entry()</shell>
-     </action>
-     <contextual action="insert Ast_Entry" >
-        <Title>Insert/GNAT pragma/Ast_Entry</Title>
      </contextual>
 
      <action name="insert Assert" output="none">
