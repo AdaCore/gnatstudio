@@ -10028,12 +10028,13 @@ parser is used for indenting sources.
 @cindex tabulation
 Whether the editor should use tabulations when indenting.
 Note that this preference does not modify the @key{Tab} key which will still
-insert Tab characters. Consider also the @file{tab_expansion.py} plug-in
-that can be enabled via @ref{The Plug-ins Editor}. Another alternative
-is to reconfigure the default key binding for the automatic indentation
-action: by default, it is mapped to @key{Ctrl-Tab} and can be changed to
-@key{Tab} by modifying the @code{/Edit/Format Selection} action from
-@ref{The Key Manager Dialog}.
+insert Tab characters. Consider also the @code{/Edit/Insert Tab With Spaces} key
+shortcut which can be mapped (to e.g. @key{Tab}) via @ref{The Key Manager
+Dialog}. Finally, another alternative is to reconfigure the default key
+binding for the automatic indentation action: by default, it is mapped to
+@key{Ctrl-Tab}
+and can be changed to @key{Tab} by modifying the @code{/Edit/Format Selection}
+action from @ref{The Key Manager Dialog}.
 
 @item Default indentation
 @cindex indentation level
