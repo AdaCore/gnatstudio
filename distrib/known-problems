@@ -6,6 +6,11 @@ Known Problems fixed in GPS 4.4.1
               contextual menu: insert AST_Entry.
   Workaround: This error can be ignored.
 
+- IA09-012: Marks for search/find refs results not displayed on speedbar
+  Problem:    Results of the search/find refs operations are highlighted in
+              the source editor, but on displayed on speedbar.
+  Workaround: This error can be ignored.
+
 Known Problems fixed in GPS 4.4.0
 
 - I922-020: Cannot "Open from host" on Windows under some circumstances

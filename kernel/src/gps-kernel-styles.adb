@@ -281,6 +281,13 @@ package body GPS.Kernel.Styles is
          end if;
          Add_Child (Node, Child, True);
 
+         if In_Speedbar (Info) then
+            Child := new XML_Utils.Node;
+            Child.Tag := new String'("in_speedbar");
+            Child.Value := new String'("true");
+            Add_Child (Node, Child, True);
+         end if;
+
          Add_Child (Main, Node, True);
 
          Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
@@ -317,15 +324,26 @@ package body GPS.Kernel.Styles is
       procedure Read_Style (N : Node_Ptr);
       --  Read one Style from N.
 
+      ----------------
+      -- Read_Style --
+      ----------------
+
       procedure Read_Style (N : Node_Ptr) is
-         Name  : constant String := Get_Field (N, "name").all;
-         Style : constant Style_Access :=
-           Get_Or_Create_Style (Kernel, Name, True);
+         Name        : constant String := Get_Field (N, "name").all;
+         In_Speedbar : constant XML_Utils.String_Ptr :=
+                         Get_Field (N, "in_speedbar");
+         Style       : constant Style_Access :=
+                         Get_Or_Create_Style (Kernel, Name, True);
+
       begin
          Free (Style.Description);
          Style.Description := new String'(Get_Field (N, "desc").all);
          Set_Foreground (Style, Get_Field (N, "fg").all);
          Set_Background (Style, Get_Field (N, "bg").all);
+
+         if In_Speedbar /= null then
+            Set_In_Speedbar (Style, Boolean'Value (In_Speedbar.all));
+         end if;
 
       exception
          when E : others =>
@@ -451,6 +469,7 @@ package body GPS.Kernel.Styles is
          Style.Name := new String'(Name);
          Set_Background (Style, Get_Background (From_Style));
          Set_Foreground (Style, Get_Foreground (From_Style));
+         Set_In_Speedbar (Style, In_Speedbar (From_Style));
          Set (Style_Htable_Access (Kernel.Styles).Table, Name, Style);
       end if;
 
