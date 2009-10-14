@@ -6,6 +6,12 @@ Known Problems fixed in GPS 4.4.1
               contextual menu: insert AST_Entry.
   Workaround: This message can be safely ignored.
 
+- IA12-012: An error occuring when loading a project prevents load of others
+  Problem:    When an error or a warning occurs when loading a project, then
+              changing a scenario variable or loading another project will
+              result in the project not being correctly loaded.
+  Workaround: Restart GPS with the new project.
+
 - IA09-012: Marks for search/find refs results not displayed on speedbar
   Problem:    Results of the search/find refs operations are highlighted in
               the source editor, but on displayed on speedbar.
