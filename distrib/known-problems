@@ -52,6 +52,13 @@ Known Problems fixed in GPS 4.4.0
               and might not be able to parse correctly some files.
   Workaround: Use the information from the .gcov files
 
+- I813-002: Missing space when auto-fixing by inserting "is" 
+  Problem:    When a auto-fix is applied, replacing a semi-column by the
+              reserved word "is", no space is put in front on the is which
+              may result in non compilable code if there is a identifier
+              before.
+  Workaround: Manually fix the code.
+
 - I807-014: Unwanted scrolling when expanding nodes in the Project View
   Problem:    When the Project View contains a lot of entries, expanding one
               entry might cause the window to scroll to another entry.
@@ -69,6 +76,11 @@ Known Problems fixed in GPS 4.4.0
               might cause GPS to split the line right after the first
               character instead.
   Workaround: Fix the line manually.
+
+- I715-007:   Code fixing adds a useless with clause.
+  Problem:    On certain cases, when GNAT detects a non-visible entity,
+              the automatic code fixing adds a with clause intead of a use.
+  Workaround: Manually fix the code.
 
 - I707-012: GPS may hang when doing long compilation and xrefs computation
   Problem:    When doing long compilation associated with xrefs computations,
