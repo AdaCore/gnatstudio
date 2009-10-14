@@ -545,6 +545,8 @@ package body Projects.Registry is
       Prj.Ext.Set_Project_Path (Registry.Data.Tree, Predefined_Path);
 
       Project := Empty_Node;
+      --  Make sure errors are reinitialized before load.
+      Prj.Err.Initialize;
 
       Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
       Prj.Com.Fail := Fail'Unrestricted_Access;
@@ -841,6 +843,9 @@ package body Projects.Registry is
       begin
          Flags := Create_Flags
            (On_Error'Unrestricted_Access, Require_Sources => False);
+
+         --  Make sure errors are reinitialized before load.
+         Prj.Err.Initialize;
 
          Process_Project_And_Apply_Config
            (Main_Project               => View,
