@@ -2,14 +2,15 @@ Known Problems fixed in GPS 4.4.1
 
 - IA13-033: Error when using predef_ada_entity_insertions.py plug-in
   Problem:    When the predef_ada_entity_insertions.py plug-in is enabled,
-              an error is generated: Command not found when creating
+              an error message is generated: Command not found when creating
               contextual menu: insert AST_Entry.
-  Workaround: This error can be ignored.
+  Workaround: This message can be safely ignored.
 
 - IA09-012: Marks for search/find refs results not displayed on speedbar
   Problem:    Results of the search/find refs operations are highlighted in
               the source editor, but on displayed on speedbar.
-  Workaround: This error can be ignored.
+  Workaround: Use the locations view or key shortcuts to navigate between
+              results.
 
 Known Problems fixed in GPS 4.4.0
 
