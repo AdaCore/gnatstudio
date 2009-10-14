@@ -2162,7 +2162,7 @@ package body Entities is
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
       From_Disk, Src_From_Disk : Time;
-      Result    : Boolean := True;
+      Result    : Boolean := False;
    begin
       if File.LI /= null then
          --  First check whether we have indeed loaded the latest LI file
