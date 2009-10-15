@@ -141,6 +141,7 @@ package GPS.Location_Model is
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
    --  If Line is 0, consider the item as a non-leaf item.
+   --  Also update sorting order information for file's item.
 
    procedure Remove_Category_Or_File_Iter
      (Kernel : not null access Kernel_Handle_Record'Class;
