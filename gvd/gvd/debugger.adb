@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -218,7 +218,11 @@ package body Debugger is
       C : Language_Lists.Cursor;
    begin
       if Lang = "" then
-         return Element (Debugger.The_Language);
+         if Has_Element (Debugger.The_Language) then
+            return Element (Debugger.The_Language);
+         else
+            return null;
+         end if;
       end if;
 
       C := First (Debugger.Languages);
