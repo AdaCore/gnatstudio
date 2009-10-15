@@ -707,11 +707,30 @@ package body GPS.Location_View is
       end if;
 
       if Highlight_Category /= null then
-         Highlight_Style :=
-           Get_Or_Create_Style_Copy
-             (View.Kernel,
-              Get_Name (Highlight_Category) & '/' & Category,
-              Highlight_Category);
+         --  By convention, '/' in the style's name used as substyle separator.
+         --  If the name of the Highlight_Style includes separator then we
+         --  reuse this style, overwise we create a substyle using name of the
+         --  specified style as name of base style and the name of the category
+         --  as the name of substyle. Such behavior is important to avoid
+         --  creation of infinite depth of substiles when the set of locations
+         --  is loaded at GPS startup.
+
+         if Ada.Strings.Fixed.Index (Get_Name (Highlight_Category), "/")
+           = 0
+         then
+            Highlight_Style :=
+              Get_Or_Create_Style_Copy
+                (View.Kernel,
+                 Get_Name (Highlight_Category) & '/' & Category,
+                 Highlight_Category);
+
+         else
+            Highlight_Style :=
+              Get_Or_Create_Style_Copy
+                (View.Kernel,
+                 Get_Name (Highlight_Category),
+                 Highlight_Category);
+         end if;
       end if;
 
       Get_Category_File
