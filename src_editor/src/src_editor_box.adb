@@ -2302,7 +2302,6 @@ package body Src_Editor_Box is
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
          Editor.Source_Buffer.Status_Changed;
-         Check_Writable (Editor);
       end if;
    end Load_File;
 
