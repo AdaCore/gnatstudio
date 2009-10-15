@@ -683,11 +683,18 @@ package body Interactive_Consoles is
    is
       Last_Iter : Gtk_Text_Iter;
       Internal  : Boolean;
+      LF        : Boolean := Add_LF;
 
       function Strlen
         (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
       pragma Import (C, Strlen);
       --  Import Strlen directly, for efficiency
+
+      --  Avoid using primary and secondary stack by converting
+      --  the C char* into an unchecked string.
+      Ada_UTF8 : constant Unchecked_String_Access :=
+        To_Unchecked_String (UTF8);
+      Last     : constant Integer := Integer (Strlen (UTF8));
 
    begin
       Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
@@ -695,33 +702,36 @@ package body Interactive_Consoles is
       if Highlight then
          Insert_With_Tags (Console.Buffer, Last_Iter, UTF8, Highlight_Tag);
       else
-         Insert (Console.Buffer, Last_Iter, UTF8);
+         --  Do not display GtkWarnings coming from python under Windows,
+         --  since they are usually harmless, and cause confusion in the
+         --  test suite and on users.
+
+         if Host = Windows
+           and then Last > 17
+           and then Ada_UTF8 (1 .. 17) = "sys:1: GtkWarning"
+         then
+            Trace (Me, Ada_UTF8 (1 .. Last));
+            LF := False;
+         else
+            Insert (Console.Buffer, Last_Iter, UTF8);
+         end if;
       end if;
 
-      if Add_LF then
+      if LF then
          Insert (Console.Buffer, Last_Iter, "" & ASCII.LF);
       end if;
 
       if not Text_Is_Input then
          if Add_To_History and then Console.History /= null then
-            declare
-               --  Avoid using primary and secondary stack by converting
-               --  the C char* into an unchecked string.
-               Ada_UTF8 : constant Unchecked_String_Access :=
-                            To_Unchecked_String (UTF8);
-               Last     : constant Integer := Integer (Strlen (UTF8));
-
-            begin
-               if Ada_UTF8 (Last) = ASCII.LF then
-                  Histories.Add_To_History
-                    (Console.History.all, History_Key (Console.Key.all),
-                     Ada_UTF8 (1 .. Last - 1));
-               else
-                  Histories.Add_To_History
-                    (Console.History.all, History_Key (Console.Key.all),
-                     Ada_UTF8 (1 .. Last));
-               end if;
-            end;
+            if Ada_UTF8 (Last) = ASCII.LF then
+               Histories.Add_To_History
+                 (Console.History.all, History_Key (Console.Key.all),
+                  Ada_UTF8 (1 .. Last - 1));
+            else
+               Histories.Add_To_History
+                 (Console.History.all, History_Key (Console.Key.all),
+                  Ada_UTF8 (1 .. Last));
+            end if;
          end if;
 
          Terminate_Output (Console, Internal, Show_Prompt);
