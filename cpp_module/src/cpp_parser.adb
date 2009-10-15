@@ -2984,12 +2984,16 @@ package body CPP_Parser is
    ------------------------
 
    function Database_Timestamp (Project : Project_Type) return Time is
-      TO_File_Name : constant Virtual_File :=
-                       Create_From_Dir
-                         (Get_DB_Dir (Project),
-                          SN.Browse.DB_File_Name & ".to");
+      DB_Dir       : constant Virtual_File := Get_DB_Dir (Project);
+      TO_File_Name : Virtual_File;
    begin
-      return File_Time_Stamp (TO_File_Name);
+      if DB_Dir = No_File then
+         return No_Time;
+      else
+         TO_File_Name := Create_From_Dir
+           (DB_Dir, SN.Browse.DB_File_Name & ".to");
+         return File_Time_Stamp (TO_File_Name);
+      end if;
    end Database_Timestamp;
 
    --------------------
@@ -3003,7 +3007,7 @@ package body CPP_Parser is
       Single_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
    is
       DB_Dir       : constant Virtual_File := Get_DB_Dir (Project);
-      TO_Timestamp : constant Time := Database_Timestamp (Project);
+      TO_Timestamp : Time;
       Num_C_Files  : Natural := 0;
       Tmp_File     : File_Type;
       Success      : Boolean;
@@ -3063,6 +3067,8 @@ package body CPP_Parser is
          Iterator.State := Skip_Project;
          return;
       end if;
+
+      TO_Timestamp := Database_Timestamp (Project);
 
       for F in Iterator.Current_Files'Range loop
          declare
