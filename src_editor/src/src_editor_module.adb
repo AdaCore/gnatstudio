@@ -1296,6 +1296,8 @@ package body Src_Editor_Module is
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
+         Check_Writable (Editor);
+
          if Get_Status (Get_Buffer (Editor)) = Modified then
             if File_Modified_Pixbuf /= null then
                Set_Icon (Child, File_Modified_Pixbuf);

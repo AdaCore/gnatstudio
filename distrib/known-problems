@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.1
 
+- IA15-008 Typing text while GPS is loading may write in read-only editors
+  Problem:    When typing text during the launch phase of GPS, if GPS is
+              opening read-only editors, then some of the text typed might be
+              inserted in the editors.
+  Workaround: Click on the "read-only" label on the bottom-right of editors
+              to undo the edition.
+
 - IA14-023: No syntax highlighting for some editors when GPS starts
   Problem:    When loading GPS, editors saved in the desktop from previous
               sessions might not appear with language-specific syntax

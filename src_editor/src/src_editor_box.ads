@@ -274,6 +274,7 @@ package Src_Editor_Box is
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);
    --  Check whether the file in Editor is writable, and update the read-only
    --  label accordingly.
+   --  This only works on Editors which are displayed in an MDI child.
 
    ---------------------
    -- Contextual menu --
