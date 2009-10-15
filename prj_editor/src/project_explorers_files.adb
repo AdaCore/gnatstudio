@@ -63,7 +63,6 @@ with Project_Explorers_Common;   use Project_Explorers_Common;
 with XML_Utils;                  use XML_Utils;
 
 package body Project_Explorers_Files is
-
    Explorer_Files_Module_Id     : Module_ID;
 
    File_View_Shows_Only_Project : constant History_Key :=
@@ -212,11 +211,22 @@ package body Project_Explorers_Files is
    type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
    type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
 
+   type Project_View_Changed_Hook_Record is new Function_No_Args with record
+      View : Project_Explorer_Files;
+   end record;
+   type Project_View_Changed_Hook
+     is access Project_View_Changed_Hook_Record'Class;
+
    overriding procedure Execute
      (Hook   : File_Deleted_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_deleted" hook
+
+   overriding procedure Execute
+     (Hook   : Project_View_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Callback for the "project_view_changed" hook
 
    overriding procedure Execute
      (Hook   : File_Saved_Hook_Record;
@@ -614,6 +624,7 @@ package body Project_Explorers_Files is
       Deleted_Hook : File_Deleted_Hook;
       Saved_Hook   : File_Saved_Hook;
       Renamed_Hook : File_Renamed_Hook;
+      Project_Hook : Project_View_Changed_Hook;
    begin
       Gtk.Scrolled_Window.Initialize (Explorer);
       Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
@@ -708,6 +719,13 @@ package body Project_Explorers_Files is
       Add_Hook (Kernel, GPS.Kernel.File_Renamed_Hook,
                 Renamed_Hook,
                 Name  => "project_explorers_files.file_renamed",
+                Watch => GObject (Explorer));
+
+      Project_Hook := new Project_View_Changed_Hook_Record;
+      Project_Hook.View := Project_Explorer_Files (Explorer);
+      Add_Hook (Kernel, GPS.Kernel.Project_View_Changed_Hook,
+                Project_Hook,
+                Name => "project_explorers_files.project_view_changed",
                 Watch => GObject (Explorer));
    end Initialize;
 
@@ -1015,9 +1033,12 @@ package body Project_Explorers_Files is
                     Object_Path (Get_Project (Explorer.Kernel), True, False);
          begin
             File_Append_Directory
-              (Explorer,
-               Greatest_Common_Path (Inc & Obj),
-               Null_Iter, 1, Get_Current_Dir, True);
+              (Explorer      => Explorer,
+               Dir           => Greatest_Common_Path (Inc & Obj),
+               Base          => Null_Iter,
+               Depth         => 1,
+               Append_To_Dir => Get_Current_Dir,
+               Idle          => True);
          end;
 
       else
@@ -1284,6 +1305,19 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Kernel);
    begin
       Add_File (Hook.View, File_Hooks_Args (Data.all).File);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Hook   : Project_View_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Refresh (Hook.View);
    end Execute;
 
    -------------
