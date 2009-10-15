@@ -718,25 +718,8 @@ def insert_Convention_Identifier ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Convention_Identifier ([Name =>]       IDENTIFIER,"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("[Convention =>] convention_IDENTIFIER);"));
 
-def insert_CPP_Class ():
-   GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Class ([Entity =>] LOCAL_NAME);"));
-
 def insert_CPP_Constructor ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Constructor ([Entity =>] LOCAL_NAME);"));
-
-def insert_CPP_Virtual ():
-   col = GPS.current_context().location().column()-1
-   GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Virtual"));
-   GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Entity     =>] ENTITY"))
-   GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Vtable_Ptr =>] vtable_ENTITY]"))
-   GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Position   =>] static_integer_EXPRESSION]);"));
-
-def insert_CPP_Vtable ():
-   col = GPS.current_context().location().column()-1
-   GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Vtable"));
-   GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Entity      =>] ENTITY,"));
-   GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Vtable_Ptr  =>] vtable_ENTITY"));
-   GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Entry_Count =>] static_integer_EXPRESSION);"));
 
 def insert_Debug ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Debug (PROCEDURE_CALL_WITHOUT_SEMICOLON);"));
@@ -2103,36 +2086,12 @@ GPS.parse_xml ("""
         <Title>Insert/GNAT pragma/C_Pass_By_Copy</Title>
      </contextual>
 
-     <action name="insert CPP_Vtable" output="none">
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">predef_ada_entity_insertions.insert_CPP_Vtable()</shell>
-     </action>
-     <contextual action="insert CPP_Vtable" >
-        <Title>Insert/GNAT pragma/CPP_Vtable</Title>
-     </contextual>
-
-     <action name="insert CPP_Virtual" output="none">
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">predef_ada_entity_insertions.insert_CPP_Virtual()</shell>
-     </action>
-     <contextual action="insert CPP_Virtual" >
-        <Title>Insert/GNAT pragma/CPP_Virtual</Title>
-     </contextual>
-
      <action name="insert CPP_Constructor" output="none">
         <filter module="Source_Editor" language="ada" />
         <shell lang="python">predef_ada_entity_insertions.insert_CPP_Constructor()</shell>
      </action>
      <contextual action="insert CPP_Constructor" >
         <Title>Insert/GNAT pragma/CPP_Constructor</Title>
-     </contextual>
-
-     <action name="insert CPP_Class" output="none">
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">predef_ada_entity_insertions.insert_CPP_Class()</shell>
-     </action>
-     <contextual action="insert CPP_Class" >
-        <Title>Insert/GNAT pragma/CPP_Class</Title>
      </contextual>
 
      <action name="insert Assert" output="none">
