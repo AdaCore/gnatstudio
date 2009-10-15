@@ -6,6 +6,13 @@ Known Problems fixed in GPS 4.4.1
               contextual menu: insert AST_Entry.
   Workaround: This message can be safely ignored.
 
+- IA13-032: C/C++ xref broken when there is a project with no sources
+  Problem:    If the project hierarchy contains one or more projects that
+              contain no sources and/or no object directory, GPS might not
+              be able to compute the xref information for C/C++.
+  Workaround: Add "dummy" sources (for instance the project file itself) to
+              the projects, and give them an object directory.
+
 - IA12-012: An error occuring when loading a project prevents load of others
   Problem:    When an error or a warning occurs when loading a project, then
               changing a scenario variable or loading another project will
