@@ -914,11 +914,12 @@ package body Projects.Registry is
 
             exit when Last <= Dir'First;
 
+            --  Register the name with a trailing directory separator
             if Get (Registry.Data.Directories,
-                    +Dir (Dir'First .. Last)) /= Direct
+                    +Dir (Dir'First .. Last + 1)) /= Direct
             then
                Set (Registry.Data.Directories,
-                    K => +Dir (Dir'First .. Last), E => As_Parent);
+                    K => +Dir (Dir'First .. Last + 1), E => As_Parent);
             end if;
          end loop;
       end Register_Directory;

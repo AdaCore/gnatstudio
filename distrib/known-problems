@@ -20,6 +20,13 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Add "dummy" sources (for instance the project file itself) to
               the projects, and give them an object directory.
 
+- IA13-031: Show Files From Project mode in the Files View
+  Problem:    This mode was borken in the recent 4.4.0 release. In particular,
+              when the file view is saved and restored as part of the desktop,
+              its initial contents is empty when showing only the files from
+              the project.
+  Workaround: Unset the mode (through the contextual menu), and reset it
+
 - IA12-012: An error occuring when loading a project prevents load of others
   Problem:    When an error or a warning occurs when loading a project, then
               changing a scenario variable or loading another project will
