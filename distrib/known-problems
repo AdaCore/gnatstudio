@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.1
 
+- IA14-023: No syntax highlighting for some editors when GPS starts
+  Problem:    When loading GPS, editors saved in the desktop from previous
+              sessions might not appear with language-specific syntax
+              highlighting if they are for a language other than Ada, or
+              Ada with a non-GNAT naming scheme.
+  Workaround: Close these editors and re-open them.
+
 - IA13-033: Error when using predef_ada_entity_insertions.py plug-in
   Problem:    When the predef_ada_entity_insertions.py plug-in is enabled,
               an error message is generated: Command not found when creating
