@@ -288,6 +288,15 @@ package body Src_Editor_Buffer is
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
+   type Project_Changed_Hook_Record is new Function_No_Args with record
+      Buffer : Source_Buffer;
+   end record;
+   type Project_Hook is access all Project_Changed_Hook_Record'Class;
+   overriding procedure Execute
+     (Hook   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project has changed
+
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the cursor moves
 
@@ -2501,6 +2510,7 @@ package body Src_Editor_Buffer is
       Tags         : Gtk_Text_Tag_Table;
       Command      : Check_Modified_State;
       P_Hook       : Preferences_Hook;
+      Prj_Hook     : Project_Hook;
       Deleted_Hook : File_Deleted_Hook;
       Renamed_Hook : File_Renamed_Hook;
 
@@ -2529,6 +2539,16 @@ package body Src_Editor_Buffer is
          Name => "src_editor_buffer.preferences_changed",
          Watch => GObject (Buffer));
       Execute (P_Hook.all, Kernel);
+
+      --  Project recomputed hook
+      Prj_Hook := new Project_Changed_Hook_Record'
+        (Function_No_Args with Buffer => Source_Buffer (Buffer));
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_View_Changed_Hook,
+         Func   => Prj_Hook,
+         Name   => "src_editor_buffer.on_project_changed",
+         Watch  => GObject (Buffer));
 
       --  File hooks
       Deleted_Hook := new File_Deleted_Hook_Record;
@@ -2704,6 +2724,29 @@ package body Src_Editor_Buffer is
 
       return Quoted;
    end Is_In_String;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Hook   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      Buffer : constant Source_Buffer := Hook.Buffer;
+   begin
+      --  The project has changed: if this buffer has a file and the language
+      --  is unknown, it is possible that the new project knows which language
+      --  this file is.
+
+      if Buffer.Lang = Unknown_Lang
+        and then Buffer.Filename /= No_File
+      then
+         Set_Language
+           (Buffer, Get_Language_From_File
+              (Get_Language_Handler (Kernel), Buffer.Filename));
+      end if;
+   end Execute;
 
    -------------
    -- Execute --
