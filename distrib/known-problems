@@ -25,6 +25,12 @@ Known Problems fixed in GPS 4.4.1
               Ada with a non-GNAT naming scheme.
   Workaround: Close these editors and re-open them.
 
+- IA14-006: "Check coding standard" not working with paths containing spaces
+  Problem:    Using GPS to check a coding standard against a project or source
+              files will not work if those files/projects have a path
+              containing spaces.
+  Workaround: Use a path without space.
+
 - IA13-033: Error when using predef_ada_entity_insertions.py plug-in
   Problem:    When the predef_ada_entity_insertions.py plug-in is enabled,
               an error message is generated: Command not found when creating
@@ -91,7 +97,7 @@ Known Problems fixed in GPS 4.4.0
               and might not be able to parse correctly some files.
   Workaround: Use the information from the .gcov files
 
-- I813-002: Missing space when auto-fixing by inserting "is" 
+- I813-002: Missing space when auto-fixing by inserting "is"
   Problem:    When a auto-fix is applied, replacing a semi-column by the
               reserved word "is", no space is put in front on the is which
               may result in non compilable code if there is a identifier
