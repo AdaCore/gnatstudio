@@ -183,7 +183,7 @@ class gnatCheckProc:
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
          return
       # launch gnat check with current project
-      cmd = self.gnatCmd + " check -P" + project.file().name()
+      cmd = self.gnatCmd + ' check -P """' + project.file().name() + '"""'
       # also analyse subprojects ?
       if recursive:
         cmd += " -U"
@@ -191,7 +191,7 @@ class gnatCheckProc:
       scenario = GPS.Project.scenario_variables()
       if scenario != None:
          for i, j in scenario.iteritems():
-            cmd += " -X" + i + "=" + j
+            cmd += ' """-X' + i + '=' + j + '"""'
       # use progress
       cmd +=  " -dd"
 
@@ -199,7 +199,7 @@ class gnatCheckProc:
       cmd += " " + filestr
 
       if need_rules_file:
-         cmd += " -rules -from=" + self.rules_file
+         cmd += ' -rules """-from=' + self.rules_file + '"""'
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
@@ -231,7 +231,7 @@ class gnatCheckProc:
       try:
          filestr = ""
          for f in files:
-            filestr += f.name() + " "
+            filestr += '"""' + f.name() + '""" 's
          self.internalSpawn (filestr, files[0].project());
       except:
          GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
