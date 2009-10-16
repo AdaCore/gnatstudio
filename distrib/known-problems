@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.4.1
 
-- IA15-008 Typing text while GPS is loading may write in read-only editors
+- IA15-008: Typing text while GPS is loading may write in read-only editors
   Problem:    When typing text during the launch phase of GPS, if GPS is
               opening read-only editors, then some of the text typed might be
               inserted in the editors.
