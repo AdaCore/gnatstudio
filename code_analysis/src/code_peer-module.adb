@@ -1856,8 +1856,6 @@ package body Code_Peer.Module is
       Menu               : constant String := -"/_CodePeer";
       Advanced_Menu      : constant String := Menu & (-"/Advanced");
       Str                : String_Access := Locate_Exec_On_Path ("codepeer");
-      Src_Editor_Context : constant Action_Filter :=
-                             Lookup_Filter (Kernel, "Source editor");
       Mitem              : Gtk.Menu_Item.Gtk_Menu_Item;
 
    begin
@@ -1937,7 +1935,8 @@ package body Code_Peer.Module is
          Parent_Path => Advanced_Menu,
          Text        => -"_Text Listing",
          Callback    => On_Edit_Text_Listing'Access,
-         Filter      => Src_Editor_Context);
+         Filter      => Action_Filter (Lookup_Filter (Kernel, "File")
+                          and Create (Language => "ada")));
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
