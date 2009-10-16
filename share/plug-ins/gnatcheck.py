@@ -231,7 +231,7 @@ class gnatCheckProc:
       try:
          filestr = ""
          for f in files:
-            filestr += '"""' + f.name() + '""" 's
+            filestr += '"""' + f.name() + '""" '
          self.internalSpawn (filestr, files[0].project());
       except:
          GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
