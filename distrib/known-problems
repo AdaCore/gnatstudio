@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.1
 
+- IA16-010: GPS creates new substyle for each item in locations view at restart
+  Problem:    Each time GPS is starting it creates substyles of highlighting
+              styles used for highlighing in the source editor.
+  Workaround: This can be safely ignored.
+
 - IA15-008: Typing text while GPS is loading may write in read-only editors
   Problem:    When typing text during the launch phase of GPS, if GPS is
               opening read-only editors, then some of the text typed might be
