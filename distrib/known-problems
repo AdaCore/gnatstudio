@@ -7,9 +7,9 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Click on the "read-only" label on the bottom-right of editors
               to undo the edition.
 
-- IA15-007: Sorting by subcategory in the locations view don't affect files
+- IA15-007: Sorting by subcategory in the locations view does not affect files
   Problem:    Sorting by subcategory in the locations view affects only
-              messages under the file item, but don't affect files itself.
+              messages under the file item, but not other files.
   Workaround: Use filter capabilities to filter out all messages of desired
               subcategory.
 
