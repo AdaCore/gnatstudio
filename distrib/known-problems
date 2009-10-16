@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Click on the "read-only" label on the bottom-right of editors
               to undo the edition.
 
+- IA15-007: Sorting by subcategory in the locations view don't affect files
+  Problem:    Sorting by subcategory in the locations view affects only
+              messages under the file item, but don't affect files itself.
+  Workaround: Use filter capabilities to filter out all messages of desired
+              subcategory.
+
 - IA14-023: No syntax highlighting for some editors when GPS starts
   Problem:    When loading GPS, editors saved in the desktop from previous
               sessions might not appear with language-specific syntax

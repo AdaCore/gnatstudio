@@ -365,13 +365,44 @@ package body GPS.Location_Model is
       --  ??? Lexicographic order will be used for line numbers > 1_000_000
 
       declare
-         Img : constant String := Integer'Image (Line + 1_000_000);
+         Img    : constant String := Integer'Image (Line + 1_000_000);
+         Name   : constant String := Get_Name (Highlight_Category);
+         Path   : constant Gtk_Tree_Path := Model.Get_Path (Iter);
+         Parent : Gtk_Tree_Iter := Null_Iter;
+         Dummy  : Boolean;
+         pragma Warnings (Off, Dummy);
+
       begin
          Set
            (Model,
             Iter,
             Category_Line_Column,
-            Get_Name (Highlight_Category) & Img (Img'Last - 5 .. Img'Last));
+            Name & Img (Img'Last - 5 .. Img'Last));
+
+         --  Update the sorting order of the file's item.
+
+         while Get_Depth (Path) > 2 loop
+            Dummy := Up (Path);
+            Parent := Model.Get_Iter (Path);
+         end loop;
+
+         if Parent /= Null_Iter then
+            declare
+               Old : constant String :=
+                       Get_String (Model, Parent, Category_Line_Column);
+
+            begin
+               if Old = "000000" or else Old > Name then
+                  Set
+                    (Model,
+                     Parent,
+                     Category_Line_Column,
+                     Name);
+               end if;
+            end;
+         end if;
+
+         Path_Free (Path);
       end;
 
       if Line = 0 then
