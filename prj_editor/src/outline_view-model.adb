@@ -84,8 +84,7 @@ package body Outline_View.Model is
 
    function Get_Path
      (Self : access Outline_Model_Record'Class;
-      Node : Sorted_Node_Access)
-      return Gtk.Tree_Model.Gtk_Tree_Path;
+      Node : Sorted_Node_Access) return Gtk.Tree_Model.Gtk_Tree_Path;
    --  Retreives the path of a node
 
    procedure Clear_Nodes
@@ -94,12 +93,12 @@ package body Outline_View.Model is
 
    function Sort_And_Add
      (Model : access Outline_Model_Record'Class;
-      Root : Sorted_Node_Access;
-      It : Construct_Tree_Iterator) return Sorted_Node_Access;
+      Root  : Sorted_Node_Access;
+      It    : Construct_Tree_Iterator) return Sorted_Node_Access;
    --  Add and sort the new item. This doesn't update sibling indexes
 
    procedure Add_In_Model
-     (Model : access Outline_Model_Record'Class;
+     (Model   : access Outline_Model_Record'Class;
       New_Obj : Construct_Tree_Iterator);
    --  Adds the iterator in the internal model
 
@@ -210,9 +209,7 @@ package body Outline_View.Model is
    -- "<" --
    ---------
 
-   function "<"
-     (Left, Right : Sorted_Node_Access) return Boolean
-   is
+   function "<" (Left, Right : Sorted_Node_Access) return Boolean is
 
       function Compare (Left, Right : String) return Integer;
       --  Does a case-insensitive comparison, returns -1 if Left < Right, 0 if
@@ -715,8 +712,8 @@ package body Outline_View.Model is
    function Nth_Child
      (Model : access Outline_Model_Record;
       Node  : Sorted_Node_Access;
-      Nth   : Gint) return Sorted_Node_Access is
-
+      Nth   : Gint) return Sorted_Node_Access
+   is
       Cur_It : Sorted_Node_Access;
    begin
       if Node = null then
@@ -759,8 +756,7 @@ package body Outline_View.Model is
 
    overriding function Parent
      (Self  : access Outline_Model_Record;
-      Child : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Child : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       pragma Unreferenced (Self);
    begin
@@ -864,7 +860,7 @@ package body Outline_View.Model is
    ------------------
 
    procedure Add_In_Model
-     (Model : access Outline_Model_Record'Class;
+     (Model   : access Outline_Model_Record'Class;
       New_Obj : Construct_Tree_Iterator)
    is
       File         : constant Structured_File_Access := Model.File;
@@ -877,6 +873,7 @@ package body Outline_View.Model is
    begin
       if Parent = Null_Construct_Tree_Iterator then
          Parent_Node := Model.Phantom_Root'Access;
+
       else
          if Is_Set
            (Get_Annotation_Container (Get_Tree (File), Parent).all,
@@ -1052,6 +1049,10 @@ package body Outline_View.Model is
       procedure Open_Node (It : Construct_Tree_Iterator);
       --  Open all the nodes to the iterator given in parameter
 
+      ---------------
+      -- Open_Node --
+      ---------------
+
       procedure Open_Node (It : Construct_Tree_Iterator) is
          Annot : Annotation (Other_Kind);
       begin
@@ -1080,6 +1081,7 @@ package body Outline_View.Model is
             Compute_Sorted_Nodes (Model, Last_Node);
          end if;
       end Open_Node;
+
    begin
       if Model.File = null then
          return Gtk_New;

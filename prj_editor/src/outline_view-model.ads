@@ -158,7 +158,7 @@ private package Outline_View.Model is
    --  should be called every time the construct tree is changed.
 
    function Get_Path_Enclosing_Location
-     (Model : access Outline_Model_Record;
+     (Model        : access Outline_Model_Record;
       Line, Column : Integer) return Gtk_Tree_Path;
    --  Return the closest path enclosing the {line, column} from the model
 
@@ -179,7 +179,7 @@ private
       Parent      : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;
-      N_Children : Integer := -1;
+      N_Children        : Integer := -1;
 
       Ordered_Index : Sorted_Node_Set.Set;
       Order_Kind    : Order_Kind_Type;
