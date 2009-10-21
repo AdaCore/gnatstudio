@@ -5,6 +5,7 @@ also highlighted
 
 from GPS import *
 from gps_utils.highlighter import *
+import text_utils
 
 min_length = 2
 # Minimal length of the selection before we start highlighting.
@@ -23,6 +24,7 @@ class Editor_Highlighter (Text_Highlighter):
 
       Text_Highlighter.__init__ (
          self, name=name, text=text, context_lines=context_lines,
+         whole_word=True,
          fg_color=fg_color, bg_color=bg_color,
          weight=weight, style=style, editable=editable)
 
@@ -36,6 +38,13 @@ def on_location_changed (hook, file, line, column):
 
    start = buffer.selection_start ()
    end   = buffer.selection_end ()
+
+   try:
+      # Remove highlighting for the previous selection
+      buffer.selection_highlighter.stop ()
+      buffer.selection_highlighter = None
+   except:
+      pass
 
    # Highlight all other occurrences of the selection if needed. This
    # automatically removes any previous highlighting done for the selection.
@@ -51,13 +60,18 @@ def on_location_changed (hook, file, line, column):
          fg_color = Preference ("Plugins/highlight_selection/fgcolor").get (),
          weight = "normal")
 
-   else:
-      try:
-         # Remove highlighting for the previous selection
-         buffer.selection_highlighter.stop ()
-         buffer.selection_highlighter = None
-      except:
-         pass
+   elif Preference ("Plugins/highlight_selection/onentity").get ():
+      start = text_utils.goto_word_start (start)
+      end   = text_utils.goto_word_end (end)
+
+      if abs (start.offset() - end.offset()) >= min_length:
+         buffer.selection_highlighter = Editor_Highlighter (
+            name="selection_occurrences",
+            text   = buffer.get_chars (start, end - 1),
+            buffer = buffer,
+            bg_color=Preference ("Plugins/highlight_selection/bgcolor").get (),
+            fg_color=Preference ("Plugins/highlight_selection/fgcolor").get (),
+            weight = "normal")
 
 Preference ("Plugins/highlight_selection/bgcolor").create (
    "Background color", "color",
@@ -67,5 +81,10 @@ Preference ("Plugins/highlight_selection/fgcolor").create (
    "Foreground color", "color",
    "Foreground color used to highlight other occurrences of the current"
    + " selection", "black")
+Preference ("Plugins/highlight_selection/onentity").create (
+   "Show current entity", "boolean",
+   "Whether to highlight occurrences of the current entity, even if there"
+   + " is no explicit selection",
+   True)
 
 Hook ("location_changed").add (on_location_changed)

@@ -132,6 +132,7 @@ class Highlighter ():
         start.forward_line (-self.context_lines)
         end   = loc
         end.forward_line (self.context_lines)
+
      else:
         start = buffer.beginning_of_buffer ()
         end   = buffer.end_of_buffer ()
@@ -212,6 +213,7 @@ class Text_Highlighter (Highlighter):
   """
 
   def __init__ (self, name, text,
+                whole_word=False,
                 context_lines=0,
                 fg_color="grey", bg_color="",
                 weight="",   # or "bold", "normal", "light"
@@ -219,6 +221,7 @@ class Text_Highlighter (Highlighter):
                 editable=True): # or None
 
      self.text = text
+     self.whole_word = whole_word
      Highlighter.__init__ (self, name, context_lines=context_lines,
                            fg_color=fg_color, bg_color=bg_color,
                            weight=weight, style=style, editable=editable)
@@ -226,7 +229,8 @@ class Text_Highlighter (Highlighter):
   def do_highlight (self, buffer, overlay, start, end):
      """Do the highlighting in the range of text"""
      while True:
-        start = start.search (self.text, regexp=True, dialog_on_failure=False)
+        start = start.search (self.text, regexp=True, dialog_on_failure=False,
+                             whole_word=self.whole_word)
         if not start or start[0] > end:
            return
         buffer.apply_overlay (overlay, start [0], start [1] - 1)

@@ -373,6 +373,25 @@ def goto_end_of_line():
 def is_space (char):
    return char == ' ' or char == '\t'
 
+def goto_word_start (iter):
+   """Move to the beginning of the current word (or leave the cursor
+      where it is). This properly handles '_'
+   """
+   while True:
+      if not iter.starts_word ():
+         iter = iter.forward_word (-1)
+
+      prev = iter.forward_char (-1)
+      if prev.get_char () != '_':
+         return iter
+      iter = prev
+
+def goto_word_end (iter):
+   while True:
+      iter = iter.forward_word ()
+      if iter.get_char () != '_':
+         return iter
+
 @interactive ("Editor", "Source editor", name="delete horizontal space")
 def delete_horizontal_space(backward=1, forward=1):
    """Delete all spaces and tabs around the cursor in the current editor.
