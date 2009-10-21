@@ -38,7 +38,6 @@ with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Event_Box;           use Gtk.Event_Box;
 with Gtk.Frame;               use Gtk.Frame;
-with Gtk.Hbutton_Box;         use Gtk.Hbutton_Box;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Paned;               use Gtk.Paned;
@@ -89,6 +88,7 @@ package body KeyManager_Module.GUI is
       Flat_List          : Gtk_Check_Button;
       Remove_Button      : Gtk_Button;
       Grab_Button        : Gtk_Button;
+      Grab_Label         : Gtk_Label;
 
       Disable_Filtering  : Boolean := False;
    end record;
@@ -506,7 +506,8 @@ package body KeyManager_Module.GUI is
                           Pango_Weight_Bold);
 
             Insert_With_Tags
-              (Ed.Help, Text_Iter, ASCII.LF & ASCII.LF & (-"Key shortcuts: "),
+              (Ed.Help, Text_Iter,
+               ASCII.LF & ASCII.LF & (-"Current key shortcut: "),
                Bold);
             Insert
               (Ed.Help, Text_Iter,
@@ -623,6 +624,7 @@ package body KeyManager_Module.GUI is
 
    begin
       Refresh_Iter (Get_Iter_First (Editor.Model));
+      Add_Selection_Changed (Editor);
    end Refresh_Editor;
 
    -----------------
@@ -726,11 +728,13 @@ package body KeyManager_Module.GUI is
       if Iter /= Null_Iter
         and then Children (Ed.Model, Iter) = Null_Iter
       then
+         Show (Ed.Grab_Label);
+
          declare
             Key     : constant String := Grab_Multiple_Key
-              (Ed.Kernel, Ed.View, Allow_Multiple => True);
+              (Ed.Kernel, Ed, Allow_Multiple => True);
          begin
-            if Key /= "" then
+            if Key /= "" and then Key /= "Escape" then
                Bind_Default_Key_Internal
                  (Kernel         => Ed.Kernel,
                   Table          => Ed.Bindings.all,
@@ -767,6 +771,8 @@ package body KeyManager_Module.GUI is
 --                 end if;
             end if;
          end;
+
+         Hide (Ed.Grab_Label);
       end if;
 
    exception
@@ -818,7 +824,7 @@ package body KeyManager_Module.GUI is
    is
       Editor    : Keys_Editor;
       Scrolled  : Gtk_Scrolled_Window;
-      Bbox      : Gtk_Hbutton_Box;
+      Bbox      : Gtk_Box;
       Hbox, Vbox, Filter_Box : Gtk_Box;
 --        Button    : Gtk_Button;
       Col       : Gtk_Tree_View_Column;
@@ -922,23 +928,30 @@ package body KeyManager_Module.GUI is
       Create_Blue_Label (Editor.Action_Name, Event);
       Pack_Start (Hbox,  Event, Expand => False);
 
-      Gtk_New (Bbox);
-      Set_Layout (Bbox, Buttonbox_Start);
+      Gtk_New_Hbox (Bbox, Homogeneous => False);
       Pack_Start (Hbox, Bbox, Expand => False);
 
       Gtk_New_From_Stock (Editor.Remove_Button, Stock_Remove);
       Set_Sensitive (Editor.Remove_Button, False);
-      Pack_Start (Bbox, Editor.Remove_Button);
+      Pack_Start (Bbox, Editor.Remove_Button, Expand => False);
       Widget_Callback.Object_Connect
         (Editor.Remove_Button,
          Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
 
-      Gtk_New (Editor.Grab_Button, -"Grab");
+      Gtk_New (Editor.Grab_Button, -"Change Shortcut");
       Set_Sensitive (Editor.Grab_Button, False);
-      Pack_Start (Bbox, Editor.Grab_Button);
+      Pack_Start (Bbox, Editor.Grab_Button, Expand => False);
       Widget_Callback.Object_Connect
         (Editor.Grab_Button,
          Gtk.Button.Signal_Clicked, On_Grab_Key'Access, Editor);
+
+      Gtk_New
+        (Editor.Grab_Label,
+         -"<i>Press the key(s) to use a shortcut / ESC to cancel</i>");
+      Set_Use_Markup (Editor.Grab_Label, True);
+      Set_Alignment (Editor.Grab_Label, 0.0, 0.5);
+      Set_Padding (Editor.Grab_Label, 10, 0);
+      Pack_Start (Bbox, Editor.Grab_Label, Expand => True, Fill => True);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Editor.View), Gtk.Tree_Selection.Signal_Changed,
@@ -989,6 +1002,7 @@ package body KeyManager_Module.GUI is
       Action := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Editor);
+      Hide (Editor.Grab_Label);
 
       Set_GUI_Running (True);
 

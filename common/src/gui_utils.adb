@@ -1198,22 +1198,18 @@ package body GUI_Utils is
       pragma Unreferenced (Tmp);
 
       Id     : Handler_Id;
-      Cursor : Gdk.Cursor.Gdk_Cursor;
       Output : aliased Gdk_Event := null;
       O      : constant Event_Access := Output'Unchecked_Access;
    begin
       Tmp := Keyboard_Grab
         (Get_Window (In_Widget), Owner_Events => False, Time => 0);
 
-      Gdk_New (Cursor, Watch);
       Tmp := Pointer_Grab
         (Window     => Get_Window (In_Widget),
          Event_Mask => Button_Press_Mask or Button_Release_Mask,
          Confine_To => Get_Window (In_Widget),
-         Cursor     => Cursor,
          Time       => 0);
       Grab_Add (In_Widget);
-      Unref (Cursor);
 
       Grab_Focus (In_Widget);
 
