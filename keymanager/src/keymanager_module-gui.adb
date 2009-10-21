@@ -87,7 +87,7 @@ package body KeyManager_Module.GUI is
       With_Shortcut_Only : Gtk_Check_Button;
       Flat_List          : Gtk_Check_Button;
       Remove_Button      : Gtk_Button;
-      Grab_Button        : Gtk_Button;
+      Grab_Button        : Gtk_Toggle_Button;
       Grab_Label         : Gtk_Label;
 
       Disable_Filtering  : Boolean := False;
@@ -715,64 +715,67 @@ package body KeyManager_Module.GUI is
       Sort_Iter, Filter_Iter, Iter : Gtk_Tree_Iter;
 --        Old_Action : Action_Record_Access;
    begin
-      Get_Selected (Selection, Sort_Model, Sort_Iter);
-      if Sort_Iter /= Null_Iter then
-         Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
-         Convert_Iter_To_Child_Iter (Ed.Filter, Iter, Filter_Iter);
-      else
-         Iter := Null_Iter;
-      end if;
+      if Get_Active (Ed.Grab_Button) then
+         Get_Selected (Selection, Sort_Model, Sort_Iter);
+         if Sort_Iter /= Null_Iter then
+            Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
+            Convert_Iter_To_Child_Iter (Ed.Filter, Iter, Filter_Iter);
+         else
+            Iter := Null_Iter;
+         end if;
 
-      --  Only edit for leaf nodes (otherwise these are contexts)
+         --  Only edit for leaf nodes (otherwise these are contexts)
 
-      if Iter /= Null_Iter
-        and then Children (Ed.Model, Iter) = Null_Iter
-      then
-         Show (Ed.Grab_Label);
+         if Iter /= Null_Iter
+           and then Children (Ed.Model, Iter) = Null_Iter
+         then
+            Show (Ed.Grab_Label);
 
-         declare
-            Key     : constant String := Grab_Multiple_Key
-              (Ed.Kernel, Ed, Allow_Multiple => True);
-         begin
-            if Key /= "" and then Key /= "Escape" then
-               Bind_Default_Key_Internal
-                 (Kernel         => Ed.Kernel,
-                  Table          => Ed.Bindings.all,
-                  Action         => Get_String (Ed.Model, Iter, Action_Column),
-                  Key              => Key,
-                  Save_In_Keys_XML => True,
-                  Remove_Existing_Actions_For_Shortcut => True,
-                  Remove_Existing_Shortcuts_For_Action => True,
-                  Update_Menus     => False);
-               Refresh_Editor (Ed);
+            declare
+               Key     : constant String := Grab_Multiple_Key
+                 (Ed.Kernel, Ed, Allow_Multiple => True);
+            begin
+               if Key /= "" and then Key /= "Escape" then
+                  Bind_Default_Key_Internal
+                    (Kernel      => Ed.Kernel,
+                     Table       => Ed.Bindings.all,
+                     Action      => Get_String (Ed.Model, Iter, Action_Column),
+                     Key         => Key,
+                     Save_In_Keys_XML => True,
+                     Remove_Existing_Actions_For_Shortcut => True,
+                     Remove_Existing_Shortcuts_For_Action => True,
+                     Update_Menus     => False);
+                  Refresh_Editor (Ed);
 
-               --  ??? Waiting for F613-014
-               --  Do we already have an action with such a binding ?
---                 Old_Action := Lookup_Action_From_Key (Key);
---                 if Old_Action /= null then
---                    if Message_Dialog
---                   (Msg => -"An action is already attached to this shortcut:"
---                       & ASCII.LF
---                       & Old_Action.Name.all & ASCII.LF
---                       & (-"Do you want to override it ?"),
---                       Dialog_Type => Confirmation,
---                       Buttons => Button_OK or Button_Cancel,
---                       Title   => -"Key shortcuts already exists",
---                       Parent  => Get_Window (Ed.Kernel)) = Button_OK
---                    then
---                       Old_Action := null;
---                    end if;
---                 end if;
+                  --  ??? Waiting for F613-014
+                  --  Do we already have an action with such a binding ?
+                  --        Old_Action := Lookup_Action_From_Key (Key);
+                  --        if Old_Action /= null then
+                  --           if Message_Dialog
+                  --  (Msg => -"An action is already attached to this key:"
+                  --              & ASCII.LF
+                  --              & Old_Action.Name.all & ASCII.LF
+                  --              & (-"Do you want to override it ?"),
+                  --              Dialog_Type => Confirmation,
+                  --              Buttons => Button_OK or Button_Cancel,
+                  --              Title   => -"Key shortcuts already exists",
+                  --             Parent  => Get_Window (Ed.Kernel)) = Button_OK
+                  --           then
+                  --              Old_Action := null;
+                  --           end if;
+                  --        end if;
+                  --                 if Old_Action = null then
+                  --           Trace (Me, "Binding changed to " & Key);
+                  --           Set (Ed.Model, Iter, Key_Column, Key);
+                  --           Set (Ed.Model, Iter, Changed_Column, True);
+                  --        end if;
+               end if;
+            end;
 
---                 if Old_Action = null then
---                    Trace (Me, "Binding changed to " & Key);
---                    Set (Ed.Model, Iter, Key_Column, Key);
---                    Set (Ed.Model, Iter, Changed_Column, True);
---                 end if;
-            end if;
-         end;
+            Hide (Ed.Grab_Label);
+         end if;
 
-         Hide (Ed.Grab_Label);
+         Set_Active (Ed.Grab_Button, False);
       end if;
 
    exception
@@ -943,7 +946,7 @@ package body KeyManager_Module.GUI is
       Pack_Start (Bbox, Editor.Grab_Button, Expand => False);
       Widget_Callback.Object_Connect
         (Editor.Grab_Button,
-         Gtk.Button.Signal_Clicked, On_Grab_Key'Access, Editor);
+         Gtk.Toggle_Button.Signal_Toggled, On_Grab_Key'Access, Editor);
 
       Gtk_New
         (Editor.Grab_Label,
