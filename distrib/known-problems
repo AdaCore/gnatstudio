@@ -14,3 +14,11 @@ Known Problems fixed in GPS 4.5.0
   Workaround: Change to standard call, do the renaming, and then back to
               the dotted notation.
 
+- F430-001 Search whole word give wrong result when text is selected
+  Problem:    When a portion of word is selected, e.g. Something is selected
+              as a part of the word A_Something, doing a search whole word may
+              not be completely accurate for that selection, and will e.g.
+              return the selected match if looked for the pattern equals the
+              selection
+  Workaround: Do the search without selecting the text.
+
