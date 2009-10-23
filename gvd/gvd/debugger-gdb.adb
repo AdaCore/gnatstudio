@@ -65,7 +65,7 @@ package body Debugger.Gdb is
    ---------------
 
    Prompt_Regexp             : constant Pattern_Matcher :=
-     Compile ("^>*\(gdb\) ", Multiple_Lines);
+     Compile ("^>*\(([^\s]*-)?gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -80,7 +80,7 @@ package body Debugger.Gdb is
    --  Options always passed to gdb
 
    Highlight_Pattern         : constant Pattern_Matcher :=
-     Compile ("^\(gdb\) ", Multiple_Lines);
+     Compile ("^\(([^\s]*-)?gdb\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window
 
    File_Name_Pattern         : constant Pattern_Matcher :=
