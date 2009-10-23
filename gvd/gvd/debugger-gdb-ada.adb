@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2009, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -182,8 +182,8 @@ package body Debugger.Gdb.Ada is
       Temporary : Boolean := False;
       Unhandled : Boolean := False) return String
    is
-      Break : aliased constant String := "break";
-      Catch : aliased constant String := "catch";
+      Break   : aliased constant String := "break";
+      Catch   : aliased constant String := "catch";
 
       Command : access constant String := Break'Access;
 
@@ -212,12 +212,14 @@ package body Debugger.Gdb.Ada is
          else
             return Command.all & " exception unhandled";
          end if;
+
       elsif Name /= "" and then Name /= "all" then
          if Temporary then
             return "t" & Command.all & " exception " & Name;
          else
             return Command.all & " exception " & Name;
          end if;
+
       else
          if Temporary then
             return "t" & Command.all & " exception";
@@ -460,7 +462,7 @@ package body Debugger.Gdb.Ada is
                & ASCII.LF & Type_Str (Start .. Index));
             Index := Index + 1;
 
-         --  A type we do not expect.
+         --  A type we do not expect
 
          when others =>
             raise Unexpected_Type;
@@ -532,7 +534,7 @@ package body Debugger.Gdb.Ada is
       R := Array_Type_Access (Result);
       Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
-      --  Then parse the dimensions.
+      --  Then parse the dimensions
 
       Num_Dim := 1;
       Index   := Index + 7;
@@ -621,7 +623,7 @@ package body Debugger.Gdb.Ada is
       Tmp_Index := Index;
       Skip_To_Blank (Type_Str, Index);
 
-      --  If we have a simple type, no need to ask gdb, for efficiency reasons.
+      --  If we have a simple type, no need to ask gdb, for efficiency reasons
 
       if Is_Simple_Type (Lang, Type_Str (Tmp_Index .. Index - 1)) then
          G := New_Simple_Type;
@@ -666,20 +668,20 @@ package body Debugger.Gdb.Ada is
    -----------------------
 
    overriding procedure Parse_Record_Type
-     (Lang      : access Gdb_Ada_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out Generic_Type_Access;
-      End_On    : String)
+     (Lang     : access Gdb_Ada_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out Generic_Type_Access;
+      End_On   : String)
    is
-      Tmp_Index  : Natural;
-      Fields     : Natural := 0;
-      R          : Record_Type_Access;
-      Num_Parts  : Natural := 0;
-      G          : Generic_Type_Access;
-      Part       : Generic_Type_Access;
+      Tmp_Index : Natural;
+      Fields    : Natural := 0;
+      R         : Record_Type_Access;
+      Num_Parts : Natural := 0;
+      G         : Generic_Type_Access;
+      Part      : Generic_Type_Access;
 
    begin
       Trace (Me, "Parse_Record_Type: " & Type_Str (Index .. Type_Str'Last));
@@ -767,7 +769,7 @@ package body Debugger.Gdb.Ada is
 
             Skip_To_Char (Type_Str, Index, ' ');
 
-            --  Count the number of alternatives in the variant part.
+            --  Count the number of alternatives in the variant part
 
             Tmp_Index := Index;
 
@@ -919,7 +921,7 @@ package body Debugger.Gdb.Ada is
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
       Bounds  : Dimension;
       Lengths : array (1 ..  Num_Dimensions (Result.all)) of Long_Integer;
-      --  The number of items in each dimension.
+      --  The number of items in each dimension
 
       Previous_Index : Integer;
       Previous_Dim   : Natural;
@@ -1112,7 +1114,7 @@ package body Debugger.Gdb.Ada is
          end if;
       end loop;
 
-      --  Shrink the table of values.
+      --  Shrink the table of values
 
       Shrink_Values (Result.all);
    end Parse_Array_Value;

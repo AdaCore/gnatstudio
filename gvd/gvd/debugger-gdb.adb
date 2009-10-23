@@ -289,9 +289,10 @@ package body Debugger.Gdb is
       Str     : String;
       Matched : Match_Array)
    is
-      Debugger   : constant Debugger_Access := Process.Debugger;
-      Lang    : constant String := Str (Matched (3).First .. Matched (3).Last);
-      Language   : Language_Access;
+      Debugger : constant Debugger_Access := Process.Debugger;
+      Lang     : constant String :=
+                   Str (Matched (3).First .. Matched (3).Last);
+      Language : Language_Access;
 
    begin
       --  Is this a language we have seen before ? If yes, reuse it in case
@@ -2142,10 +2143,10 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      Output      : constant String :=
-                      Send (Debugger, "info tasks", Mode => Internal);
-      EOL         : Positive;
-      Index       : Positive := Output'First;
+      Output : constant String :=
+                 Send (Debugger, "info tasks", Mode => Internal);
+      EOL    : Positive;
+      Index  : Positive := Output'First;
 
    begin
       Len := 0;
@@ -2195,10 +2196,10 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      Output      : constant String :=
-                      Send (Debugger, "info threads", Mode => Internal);
-      EOL         : Natural;
-      Index       : Integer := Output'Last;
+      Output : constant String :=
+                 Send (Debugger, "info threads", Mode => Internal);
+      EOL    : Natural;
+      Index  : Integer := Output'Last;
 
    begin
       Len := Info'First;
@@ -2234,12 +2235,12 @@ package body Debugger.Gdb is
       Info     : out PD_Information_Array;
       Len      : out Natural)
    is
-      Output      : constant String :=
-                      Send (Debugger, "info pds", Mode => Internal);
-      EOL         : Positive;
-      Start       : Positive := Output'First;
-      First       : Positive := Output'First;
-      Second      : Positive := Output'First;
+      Output : constant String :=
+                 Send (Debugger, "info pds", Mode => Internal);
+      EOL    : Positive;
+      Start  : Positive := Output'First;
+      First  : Positive := Output'First;
+      Second : Positive := Output'First;
 
       function Is_Delimitor (C : Character) return Boolean;
       --  Return True if C is a delimiter
@@ -2497,9 +2498,9 @@ package body Debugger.Gdb is
    ----------------------
 
    overriding procedure Change_Directory
-     (Debugger    : access Gdb_Debugger;
-      Dir         : Virtual_File;
-      Mode        : Command_Type := Hidden)
+     (Debugger : access Gdb_Debugger;
+      Dir      : Virtual_File;
+      Mode     : Command_Type := Hidden)
    is
       Directory : constant String := +Dir.Unix_Style_Full_Name;
    begin
@@ -2736,8 +2737,8 @@ package body Debugger.Gdb is
       end Skip_Parenthesis;
 
       Context : constant Language_Debugger_Context :=
-        Get_Language_Debugger_Context (Lang);
-      Dim : Dimension;
+                  Get_Language_Debugger_Context (Lang);
+      Dim     : Dimension;
 
    begin
       Repeat_Num := 1;
@@ -3726,12 +3727,13 @@ package body Debugger.Gdb is
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is
-      Disassembled : constant String := Send
-        (Debugger,
-         "disassemble " &
-         Address_To_String (Start_Address) & " " &
-         Address_To_String (End_Address),
-         Mode => Internal);
+      Disassembled : constant String :=
+                       Send
+                         (Debugger,
+                          "disassemble " &
+                          Address_To_String (Start_Address) & " " &
+                          Address_To_String (End_Address),
+                          Mode => Internal);
       Tmp,
       Start_Index,
       End_Index    : Integer;
@@ -3984,8 +3986,10 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Variable : String) return String
    is
-      S         : constant String := Send
-        (Debugger, "print &(" & Variable & ")", Mode => Internal);
+      S         : constant String :=
+                    Send
+                      (Debugger, "print &(" & Variable & ")",
+                       Mode => Internal);
       Index     : Integer := S'Last;
       Error_Msg : constant String := "No ";
       --  Error messages can be "No definition..." or "No symbol..."
@@ -4025,8 +4029,9 @@ package body Debugger.Gdb is
       end if;
 
       declare
-         S      : constant String := Send
-           (Debugger, "show endian", Mode => Internal);
+         S      : constant String :=
+                    Send
+                      (Debugger, "show endian", Mode => Internal);
          Little : constant String := "little endian";
 
       begin
@@ -4048,8 +4053,9 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Beginning : String) return GNAT.Strings.String_List
    is
-      S           : constant String := Send
-        (Debugger, "complete " & Beginning, Mode => Internal);
+      S           : constant String :=
+                      Send
+                        (Debugger, "complete " & Beginning, Mode => Internal);
       First_Index : Integer := S'First;
       Last_Index  : Integer := S'First;
       Num         : Integer := 0;

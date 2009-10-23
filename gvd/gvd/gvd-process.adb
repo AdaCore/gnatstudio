@@ -21,6 +21,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+
 pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
@@ -33,7 +34,6 @@ with System;                     use System;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with XML_Utils;               use XML_Utils;
 
 with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
@@ -86,6 +86,7 @@ with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
 with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
+with XML_Utils;                  use XML_Utils;
 
 package body GVD.Process is
    Me : constant Debug_Handle := Create ("GVD.Process");
@@ -1009,10 +1010,10 @@ package body GVD.Process is
       Debugger_Name   : String := "";
       Success         : out Boolean)
    is
-      Window      : constant GPS_Window := GPS_Window (Process.Window);
-      Buttons     : Message_Dialog_Buttons;
+      Window  : constant GPS_Window := GPS_Window (Process.Window);
+      Buttons : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
-      Widget      : Gtk_Menu_Item;
+      Widget  : Gtk_Menu_Item;
 
    begin
       Set_Busy (Process, True);
@@ -1351,6 +1352,7 @@ package body GVD.Process is
                return;
             end if;
          end;
+
       else
          Set_Busy (Debugger);
       end if;
@@ -1383,7 +1385,6 @@ package body GVD.Process is
       Busy            : Boolean;
 
       function Check (S : String) return String;
-
       --  Check validity of debugger command S, and modify it if needed
 
       -----------
@@ -1435,10 +1436,11 @@ package body GVD.Process is
       --  Is this a command handled by a script ?
 
       declare
-         Tmp : constant String := Run_Debugger_Hook_Until_Not_Empty
-           (Debugger => Debugger,
-            Hook     => Debugger_Command_Action_Hook,
-            Command  => Command);
+         Tmp : constant String :=
+                 Run_Debugger_Hook_Until_Not_Empty
+                   (Debugger => Debugger,
+                    Hook     => Debugger_Command_Action_Hook,
+                    Command  => Command);
       begin
          if Tmp /= "" then
             if Output_Command then
