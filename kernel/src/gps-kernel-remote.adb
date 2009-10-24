@@ -696,7 +696,6 @@ package body GPS.Kernel.Remote is
       end if;
 
       for J in Property.Servers'Range loop
-         Free (Property.Servers (J).Nickname);
          if Is_Local (J) then
             Property.Servers (J) :=
               (Is_Local => True, Nickname => new String'(""));

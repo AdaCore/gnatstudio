@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.1
 
+- IA23-035: GPS may crash when setting the default remote servers
+  Problem:    In the remote view, clicking on the 'Set default' button may make
+              GPS crash.
+  Workaround: Set the remote servers manually.
+
 - IA16-010: GPS creates new substyle for each item in locations view at restart
   Problem:    Each time GPS is starting it creates substyles of highlighting
               styles used for highlighing in the source editor.
