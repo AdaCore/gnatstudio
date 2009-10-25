@@ -1008,6 +1008,12 @@ package body Language.Tree is
             Word_End := Word_End + 1;
             Skip_To_Char (Identifier, Word_End, '"');
             Word_End := Word_End + 1;
+
+            --  If we can't find a matching ", then the identifier is ". This
+            --  is the mark of an incomplete name.
+            if Word_End > Identifier'Last + 1 then
+               Word_End := Identifier'Last + 1;
+            end if;
          else
             Skip_Word (Identifier, Word_End);
          end if;
