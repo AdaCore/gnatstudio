@@ -50,7 +50,7 @@ Known Problems fixed in GPS 4.4.1
               the projects, and give them an object directory.
 
 - IA13-031: Show Files From Project mode in the Files View
-  Problem:    This mode was borken in the recent 4.4.0 release. In particular,
+  Problem:    This mode was broken in the recent 4.4.0 release. In particular,
               when the file view is saved and restored as part of the desktop,
               its initial contents is empty when showing only the files from
               the project.
