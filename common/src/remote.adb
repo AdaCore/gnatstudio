@@ -32,7 +32,9 @@ package body Remote is
    type Servers_Config is array (Distant_Server_Type) of Server_Config;
 
    Servers : Servers_Config :=
-               (others => (Is_Local => True, Nickname => new String'("")));
+     (others =>
+        (Is_Local => True,
+         Nickname => new String'(Local_Nickname)));
    --  Servers currently used. Default is the localhost.
    --  ??? Global variable, should get rid of it
 
@@ -46,13 +48,8 @@ package body Remote is
    is
    begin
       Free (Servers (Server).Nickname);
-      if Nickname /= "" and then Nickname /= Local_Nickname then
-         Servers (Server) := (Is_Local => False,
-                              Nickname => new String'(Nickname));
-      else
-         Servers (Server) := (Is_Local => True,
-                              Nickname => new String'(""));
-      end if;
+      Servers (Server) := (Is_Local => Nickname = Local_Nickname,
+                           Nickname => new String'(Nickname));
    end Assign;
 
    --------------

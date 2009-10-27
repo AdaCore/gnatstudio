@@ -145,131 +145,6 @@ package body GPS.Kernel.Remote is
       end loop;
    end Destroy;
 
---     ------------------------
---     -- Save_Remote_Config --
---     ------------------------
---
---     procedure Save_Remote_Config (Kernel : Kernel_Handle) is
---        Filename                    : constant Virtual_File :=
---                                        Create_From_Dir
---                                      (Get_Home_Dir (Kernel), "remote.xml");
---        File, Item, Child, Cmd_Node : Node_Ptr;
---        Desc                        : Machine_Descriptor;
---        Nb_Desc                     : Natural;
---        Success                     : Boolean;
---
---     begin
---        Trace (Me, "Saving " & Filename.Display_Full_Name);
---
---        File := new Node;
---        File.Tag := new String'("remote_config");
---
---        Nb_Desc := Get_Nb_Machine_Descriptor;
---
---        for J in 1 .. Nb_Desc loop
---           Desc := Get_Machine_Descriptor (J);
---
---       if Machine_Descriptor_Record (Desc.all).Attribute = User_Defined then
---              Item := new Node;
---              Item.Tag := new String'("remote_machine_descriptor");
---              Set_Attribute
---                (Item, "remote_sync",
---                 Machine_Descriptor_Record (Desc.all).Rsync_Func.all);
---              Set_Attribute (Item, "remote_shell", Desc.Shell_Name.all);
---              Set_Attribute (Item, "remote_access", Desc.Access_Name.all);
---              Set_Attribute (Item, "network_name", Desc.Network_Name.all);
---              Set_Attribute (Item, "nickname", Desc.Nickname.all);
---
---              if Desc.Dbg = null then
---                 Set_Attribute (Item, "debug_console", "false");
---              else
---                 Set_Attribute (Item, "debug_console", "true");
---              end if;
---
---              Child := new Node;
---              Child.Tag := new String'("user_name");
---              Child.Value := new String'(Desc.User_Name.all);
---              Add_Child (Item, Child);
---              Child := new Node;
---              Child.Tag := new String'("timeout");
---              Child.Value := new String'(Natural'Image (Desc.Timeout));
---              Add_Child (Item, Child);
---              Child := new Node;
---              Child.Tag := new String'("cr_lf");
---              Child.Value := new String'(Desc.Cr_Lf'Img);
---              Add_Child (Item, Child);
---              Child := new Node;
---              Child.Tag := new String'("max_nb_connections");
---              Child.Value := new String'
---                (Natural'Image (Desc.Max_Nb_Connections));
---              Add_Child (Item, Child);
---
---              if Desc.Extra_Init_Commands /= null then
---                 Child := new Node;
---                 Child.Tag := new String'("extra_init_commands");
---
---                 for J in Desc.Extra_Init_Commands'Range loop
---                    Cmd_Node := new Node;
---                    Cmd_Node.Tag := new String'("cmd");
---                    Cmd_Node.Value :=
---                      new String'(Desc.Extra_Init_Commands (J).all);
---                    Add_Child (Child, Cmd_Node, True);
---                 end loop;
---
---                 Add_Child (Item, Child);
---              end if;
---
---              Add_Child (File, Item, True);
---           end if;
---
---           --  Save remote paths list
---           if not Get_List (Desc.Nickname.all).Is_Empty then
---              Item := new XML_Utils.Node;
---              Item.Tag := new String'("remote_path_config");
---              Set_Attribute (Item, "server_name", Desc.Nickname.all);
---
---              declare
---                 List   : constant Mirror_List_Access :=
---                            Get_List (Desc.Nickname.all);
---                 Cursor : Mirror_List.Cursor;
---                 Path   : Mirror_Path;
---              begin
---                 Cursor := Mirror_List.First (List.all);
---
---                 while Mirror_List.Has_Element (Cursor) loop
---                    Path := Mirror_List.Element (Cursor);
---
---                    if Path /= Null_Path then
---                       Child := new XML_Utils.Node;
---                       Child.Tag := new String'("mirror_path");
---                       Set_Attribute
---                         (Child, "sync",
---                     Synchronisation_Type'Image (Path.Get_Synchronisation));
---                       Add_File_Child
---                         (Child, "remote_path", Path.Get_Remote_Path);
---                       Add_File_Child
---                         (Child, "local_path", Path.Get_Local_Path);
---                       Add_Child (Item, Child, True);
---                    end if;
---
---                    Mirror_List.Next (Cursor);
---                 end loop;
---              end;
---
---              Add_Child (File, Item, True);
---           end if;
---        end loop;
---
---        Print (File, Filename, Success);
---        Free (File);
---
---        if not Success then
---           Report_Preference_File_Error (Kernel, Filename);
---        elsif Active (Me) then
---           Trace (Me, Filename.Display_Full_Name & " saved.");
---        end if;
---     end Save_Remote_Config;
-
    ----------------------------------
    -- From_Callback_Data_Sync_Hook --
    ----------------------------------
@@ -453,7 +328,7 @@ package body GPS.Kernel.Remote is
                   Nickname => new String'(Srv.Value.all));
             else
                Property.Servers (J) :=
-                 (Is_Local => True, Nickname => new String'(""));
+                 (Is_Local => True, Nickname => new String'(Local_Nickname));
             end if;
          end loop;
 
@@ -462,7 +337,7 @@ package body GPS.Kernel.Remote is
             Free (Property.Servers (J).Nickname);
             Property.Servers (J) :=
               (Is_Local => True,
-               Nickname => new String'(""));
+               Nickname => new String'(Local_Nickname));
          end loop;
       end if;
    end Load;
@@ -516,8 +391,9 @@ package body GPS.Kernel.Remote is
 
          else
             for J in Property.Servers'Range loop
-               Property.Servers (J) := (Is_Local => True,
-                                        Nickname => new String'(""));
+               Property.Servers (J) :=
+                 (Is_Local => True,
+                  Nickname => new String'(Local_Nickname));
             end loop;
          end if;
 
@@ -533,9 +409,8 @@ package body GPS.Kernel.Remote is
       for J in Property.Servers'Range loop
          --  If current server is not local, and we're assigning the local
          --  server.
-         if not Is_Local (J) and then
-           (Property.Servers (J).Nickname.all = Local_Nickname
-            or else Property.Servers (J).Nickname.all = "")
+         if not Is_Local (J)
+           and then Property.Servers (J).Nickname.all = Local_Nickname
          then
             declare
                Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
@@ -544,7 +419,7 @@ package body GPS.Kernel.Remote is
                   Server          => J,
                   Nickname        => Local_Nickname);
             begin
-               Assign (J, "");
+               Assign (J, Local_Nickname);
                Run_Hook (Kernel, Server_Config_Changed_Hook,
                          Hook_Data'Unchecked_Access);
             end;
@@ -696,13 +571,8 @@ package body GPS.Kernel.Remote is
       end if;
 
       for J in Property.Servers'Range loop
-         if Is_Local (J) then
-            Property.Servers (J) :=
-              (Is_Local => True, Nickname => new String'(""));
-         else
-            Property.Servers (J) :=
-              (Is_Local => False, Nickname => new String'(Get_Nickname (J)));
-         end if;
+         Property.Servers (J) :=
+           (Is_Local => Is_Local (J), Nickname => new String'(Local_Nickname));
       end loop;
 
       Prop := new Servers_Property'(Property);
@@ -733,12 +603,6 @@ package body GPS.Kernel.Remote is
       pragma Unreferenced (Id);
 
    begin
-      if Nickname = "" then
-         --  Force to local nickname so that hook's data is correct
-         Assign (Kernel, Server, Local_Nickname, Prj_File, Reload_Prj);
-         return;
-      end if;
-
       if Get_Nickname (Server) = Nickname
         or else Get_Printable_Nickname (Server) = Nickname
       then
@@ -751,16 +615,26 @@ package body GPS.Kernel.Remote is
 
       if Server = Build_Server and then Reload_Prj then
          Load_Data.Kernel := Kernel;
-         Load_Data.File := To_Remote
-           (Project_Path (Get_Project (Kernel)),
-            Get_Nickname (Build_Server));
+
+         if Prj_File = GNATCOLL.VFS.No_File then
+            Load_Data.File := To_Remote
+              (Project_Path (Get_Project (Kernel)),
+               Get_Nickname (Build_Server));
+         else
+            Load_Data.File := To_Remote
+              (Prj_File,
+               Get_Nickname (Build_Server));
+         end if;
 
          if Get_Host (Load_Data.File) /= Get_Nickname (Build_Server) then
-            Insert (Kernel,
-                    -"Error: the project " &
-                    Display_Full_Name (Load_Data.File) &
-                    (-" has no path equivalence on remote machine ") &
-                    Get_Nickname (Build_Server));
+            Insert
+              (Kernel,
+               -"Error: the project " &
+               Display_Full_Name (Load_Data.File) &
+               (-" has no path equivalence on remote machine ") &
+               Get_Nickname (Build_Server) & ASCII.LF &
+               (-("Verify that the 'Path translation' setting is configured " &
+               ("in your Server setting dialog"))));
          else
             Trace (Me, "Asking project reload");
             Id := Reload_Timeout.Add
@@ -824,8 +698,8 @@ package body GPS.Kernel.Remote is
 
       The_Queue_Id : constant String := Get_Queue_Id;
    begin
-      if From = Local_Nickname or else From = "" then
-         if To = Local_Nickname or else To = "" then
+      if From = Local_Nickname then
+         if To = Local_Nickname then
             --  Both are local ...
             return;
          end if;
@@ -842,7 +716,7 @@ package body GPS.Kernel.Remote is
          Remote_Is_Dest := True;
          Machine := Get_Server (To);
 
-      elsif To = Local_Nickname or else To = "" then
+      elsif To = Local_Nickname then
          if not Gexpect.Db.Is_Configured (From) then
             GPS.Kernel.Console.Insert
               (Kernel,

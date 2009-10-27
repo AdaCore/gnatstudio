@@ -176,10 +176,6 @@ package GPS.Kernel.Remote is
    --   assigned to. If No_File, it is assigned to the current project.
    --  Reload_Prj, if set, recomputes the view if the build_server changed.
 
---     function Get_Filesystem
---       (Server : Server_Type) return Filesystem_Record'Class;
-   --  Get the filesystem of the specified server
-
    function Is_Default_Remote_Setting return Boolean;
    --  Tell if the servers assigned are default for the current project
 
