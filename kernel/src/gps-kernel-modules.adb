@@ -20,6 +20,8 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+
 with GNAT.OS_Lib;
 with GNATCOLL.Templates;            use GNATCOLL.Templates;
 with GNATCOLL.Traces;
@@ -110,6 +112,10 @@ package body GPS.Kernel.Modules is
          Filter_For_Visibility : Boolean := True;
          Filter_Matched        : Boolean;
          --  Only valid while computing a contextual menu
+
+         Label_For_Context     : Unbounded_String;
+         --  Note: this field is only valid while computing the menu, in the
+         --  body of Create
 
          case Menu_Type is
             when Type_Command =>
@@ -932,12 +938,19 @@ package body GPS.Kernel.Modules is
 
       function Label_Name
         (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return String is
+         Context : Selection_Context) return String
+      is
+         use type GNAT.Strings.String_Access;
       begin
          if C.Label = null then
             return C.Name.all;
          else
-            return Get_Label (C.Label, Context);
+            --  Cache the expensive call to Get_Label in C.Label_For_Context
+            if C.Label_For_Context = Null_Unbounded_String then
+               C.Label_For_Context := To_Unbounded_String
+                 (Get_Label (C.Label, Context));
+            end if;
+            return To_String (C.Label_For_Context);
          end if;
       end Label_Name;
 
@@ -973,6 +986,7 @@ package body GPS.Kernel.Modules is
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
       List        : Gtk.Widget.Widget_List.Glist;
+      Is_Sensitive : Boolean;
 
    begin
       Run_Hook (Kernel, Contextual_Menu_Open_Hook);
@@ -984,6 +998,9 @@ package body GPS.Kernel.Modules is
       while C /= null loop
          if C.Menu_Type /= Type_Separator then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
+
+            --  Reset the cache set in the previous contextual menu
+            C.Label_For_Context := Null_Unbounded_String;
          end if;
          C := C.Next;
       end loop;
@@ -1001,12 +1018,13 @@ package body GPS.Kernel.Modules is
 
       C := Convert (Kernel.Contextual);
       while C /= null loop
-         if (C.Filter_Matched
-             and then not Has_Explicit_Parent (C, Context))
+         Is_Sensitive := C.Filter_Matched
+           and then not Has_Explicit_Parent (C, Context);
+
+         if Is_Sensitive
            or else not C.Filter_For_Visibility
          then
-            C.Sensitive := C.Filter_Matched
-              and then not Has_Explicit_Parent (C, Context);
+            C.Sensitive := Is_Sensitive;
 
             Create_Item (C, Context, Item, Full_Name);
 
@@ -1913,6 +1931,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_For_Visibility => True,
             Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
       else
          Menu := new Contextual_Menu_Record'
@@ -1926,6 +1945,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_For_Visibility => True,
             Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
       end if;
 
@@ -1966,6 +1986,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_For_Visibility => True,
             Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
       else
          Menu := new Contextual_Menu_Record'
@@ -1979,6 +2000,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_For_Visibility => True,
             Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
       end if;
 
@@ -2021,6 +2043,7 @@ package body GPS.Kernel.Modules is
             Filter_Matched        => False,
             Sensitive             => True,
             Filter_For_Visibility => Visibility_Filter,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
       else
          Menu := new Contextual_Menu_Record'
@@ -2035,6 +2058,7 @@ package body GPS.Kernel.Modules is
             Filter_Matched        => False,
             Sensitive             => True,
             Filter_For_Visibility => Visibility_Filter,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (Label));
          Register_Perma_Command (Kernel, Action);
       end if;
@@ -2088,6 +2112,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_For_Visibility => Visibility_Filter,
             Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
       else
          Menu := new Contextual_Menu_Record'
@@ -2102,6 +2127,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_Matched        => False,
             Filter_For_Visibility => Visibility_Filter,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T));
          Register_Perma_Command (Kernel, Action);
       end if;
@@ -2229,6 +2255,7 @@ package body GPS.Kernel.Modules is
             Filter_For_Visibility => Visibility_Filter,
             Group                 => Group,
             Submenu               => Submenu,
+            Label_For_Context     => Null_Unbounded_String,
             Label                 => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
          Add_Before);
