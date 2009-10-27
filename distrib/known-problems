@@ -5,6 +5,12 @@ Known Problems fixed in GPS 4.4.1
               GPS crash.
   Workaround: Set the remote servers manually.
 
+- IA23-010: GPS may crash when assigning the remote servers to the local host
+  Problem:    When a project has remote servers assigned, setting the remote
+              configuration back to '(local)' may make GPS crash.
+  Workaround: Load the project from a different location, so that the remote
+              configuration is reset.
+
 - IA16-010: GPS creates new substyle for each item in locations view at restart
   Problem:    Each time GPS is starting it creates substyles of highlighting
               styles used for highlighing in the source editor.

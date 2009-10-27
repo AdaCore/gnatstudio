@@ -733,12 +733,6 @@ package body GPS.Kernel.Remote is
       pragma Unreferenced (Id);
 
    begin
-      if Nickname = "" then
-         --  Force to local nickname so that hook's data is correct
-         Assign (Kernel, Server, Local_Nickname, Prj_File, Reload_Prj);
-         return;
-      end if;
-
       if Get_Nickname (Server) = Nickname
         or else Get_Printable_Nickname (Server) = Nickname
       then
@@ -751,9 +745,16 @@ package body GPS.Kernel.Remote is
 
       if Server = Build_Server and then Reload_Prj then
          Load_Data.Kernel := Kernel;
-         Load_Data.File := To_Remote
-           (Project_Path (Get_Project (Kernel)),
-            Get_Nickname (Build_Server));
+
+         if Prj_File = GNATCOLL.VFS.No_File then
+            Load_Data.File := To_Remote
+              (Project_Path (Get_Project (Kernel)),
+               Get_Nickname (Build_Server));
+         else
+            Load_Data.File := To_Remote
+              (Prj_File,
+               Get_Nickname (Build_Server));
+         end if;
 
          if Get_Host (Load_Data.File) /= Get_Nickname (Build_Server) then
             Insert (Kernel,
