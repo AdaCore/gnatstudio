@@ -368,6 +368,13 @@ package body GPS.Kernel.Hyper_Mode is
          --  We are potentially bringing up a contextual menu: deactivate
          --  hyper mode.
          Hyper_Mode_Leave (Data);
+      else
+         --  If the kernel is in hyper mode, enter it on a click
+         if Data.Kernel.In_Hyper_Mode
+           and then not Data.Hyper_Mode
+         then
+            Hyper_Mode_Enter (Data);
+         end if;
       end if;
       return False;
    exception
