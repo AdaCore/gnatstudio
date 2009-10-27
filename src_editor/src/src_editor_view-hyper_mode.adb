@@ -194,24 +194,18 @@ package body Src_Editor_View.Hyper_Mode is
          return False;
       end if;
 
-      if View.Kernel.In_Hyper_Mode then
-         declare
-            X, Y : Gint;
-         begin
-            Get_Pointer (View, X, Y);
-            Highlight_On (View, X, Y);
-         end;
-      end if;
-
-      if Get_Event_Type (Event) /= Button_Press then
-         return False;
-      end if;
-
       Button := Get_Button (Event);
 
       if Button not in 1 .. 2 then
          return False;
       end if;
+
+      declare
+         X, Y : Gint;
+      begin
+         Get_Pointer (View, X, Y);
+         Highlight_On (View, X, Y);
+      end;
 
       Hyper_Mode_Click_On
         (Source_Buffer (Get_Buffer (View)),
