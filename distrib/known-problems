@@ -25,8 +25,8 @@ Known Problems fixed in GPS 4.4.1
 
 - IA14-024: Some plugins cause delays in contextual menu
   Problem:    When right-clicking on an editor, if some optional plugins are
-              loaded and add a lot of entries in the menus - such as the
-              predef_ada_entities.py plugin - then the contextual menu might
+              loaded and add a lot of entries in the menus - such as
+              predef_ada_entity_insertions.py - then the contextual menu might
               be slow to appear.
   Workaround: Disable the plugins which cause the slowness.
 
