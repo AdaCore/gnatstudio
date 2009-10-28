@@ -646,6 +646,7 @@ package body Projects.Editor is
            (Get_String (Pkg_Name),
             In_Packages => Project_View.Decl.Packages,
             In_Tree     => Project.View_Tree);
+
          if Pkg = No_Package then
             if Use_Extended
               and then Extended_Project (Project) /= No_Project
@@ -656,6 +657,7 @@ package body Projects.Editor is
                return Nil_Variable_Value;
             end if;
          end if;
+
          Var := Project.View_Tree.Packages.Table (Pkg).Decl.Attributes;
          Arr := Project.View_Tree.Packages.Table (Pkg).Decl.Arrays;
 
@@ -716,11 +718,14 @@ package body Projects.Editor is
            (Get_String (Pkg_Name),
             In_Packages => Project_View.Decl.Packages,
             In_Tree     => Project.View_Tree);
+
          if Pkg = No_Package then
             return False;
          end if;
+
          Var := Project.View_Tree.Packages.Table (Pkg).Decl.Attributes;
          Arr := Project.View_Tree.Packages.Table (Pkg).Decl.Arrays;
+
       else
          Var := Project_View.Decl.Attributes;
          Arr := Project_View.Decl.Arrays;
@@ -2866,8 +2871,8 @@ package body Projects.Editor is
      (Project  : Project_Type;
       Pkg_Name : String) return Project_Type
    is
-      Pkg  : Project_Node_Id;
-      P    : Project_Type := No_Project;
+      Pkg : Project_Node_Id;
+      P   : Project_Type := No_Project;
    begin
       Pkg := Find_Package_Declaration
         (Project.Tree, Project.Node, Get_String (Pkg_Name));

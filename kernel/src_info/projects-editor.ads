@@ -39,7 +39,7 @@ package Projects.Editor is
    --  Any subprogram in this package might raise this exception. In that case,
    --  the exception message is set to the internationalized text of the error.
 
-   Any_Attribute : constant String := "@@";
+   Any_Attribute      : constant String := "@@";
    Any_Attribute_Name : Namet.Name_Id;
    --  Special value for all the subprograms that take an Attribute_Index
    --  parameter. When this is used, no matching is done on the indexes.
@@ -66,9 +66,9 @@ package Projects.Editor is
    --------------
 
    function Create_Project
-     (Registry : Projects.Registry.Project_Registry'Class;
-      Name     : String;
-      Path     : GNATCOLL.VFS.Virtual_File;
+     (Registry       : Projects.Registry.Project_Registry'Class;
+      Name           : String;
+      Path           : GNATCOLL.VFS.Virtual_File;
       Is_Config_File : Boolean := False) return Prj.Tree.Project_Node_Id;
    function Create_Project
      (Registry : Projects.Registry.Project_Registry'Class;
@@ -325,8 +325,8 @@ package Projects.Editor is
    type Associative_Array_Value is record
       Index    : GNAT.Strings.String_Access;
       Value    : GNAT.Strings.String_Access;
-      At_Index : Natural := 0;  --  For naming exceptions mostly, results in
-                                 --  " at " & Index;
+      At_Index : Natural := 0;
+      --  For naming exceptions mostly, results in " at " & Index;
    end record;
    type Associative_Array_Values is array (Natural range <>)
      of Associative_Array_Value;

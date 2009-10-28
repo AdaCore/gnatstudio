@@ -398,7 +398,7 @@ package Projects is
    --  "Attribute" if there is no package.
    --  If Use_Extended is true and the attribute is not defined in Project
    --  itself, then the attribute is looked up in the project extended by
-   --  Project (if any)
+   --  Project (if any).
 
    function Get_Attribute_Value
      (Project      : Project_Type;
@@ -594,8 +594,8 @@ package Projects is
    --  current view of the project.
 
    procedure Ensure_External_Value
-     (Var      : Scenario_Variable;
-      Tree     : Prj.Tree.Project_Node_Tree_Ref);
+     (Var  : Scenario_Variable;
+      Tree : Prj.Tree.Project_Node_Tree_Ref);
    --  Make sure that an external value is defined for the variable Var. If
    --  none exists, the default value defined in the project hierarchy is used.
    --  This function can be called before a view has been computed for the
@@ -620,8 +620,8 @@ package Projects is
      (Project : Project_Type; Paths : Paths_Type_Information);
    --  Indicate how the types should be stored internally for the project
 
-   function Get_Paths_Type (Project : Project_Type)
-      return Paths_Type_Information;
+   function Get_Paths_Type
+     (Project : Project_Type) return Paths_Type_Information;
    --  Indicate how the types are stored internally for the project
 
    function Is_Normalized (Project : Project_Type) return Boolean;
@@ -748,16 +748,16 @@ private
    --  attached to it.
 
    No_Variable : constant Scenario_Variable :=
-     (Namet.No_Name, Namet.No_Name, Prj.Tree.Empty_Node);
+                   (Namet.No_Name, Namet.No_Name, Prj.Tree.Empty_Node);
 
    No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
-     (others => No_Variable);
+                   (others => No_Variable);
 
    No_Project : constant Project_Type :=
                   (Prj.Tree.Empty_Node, null, null, null);
 
    All_Languages : constant Name_Id_Array :=
-     (1 .. 0 => Namet.No_Name);
+                     (1 .. 0 => Namet.No_Name);
 
    type Imported_Project_Iterator is record
       Root      : Project_Type;

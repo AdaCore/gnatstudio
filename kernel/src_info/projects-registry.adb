@@ -27,6 +27,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+
 with ALI;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
@@ -546,7 +547,7 @@ package body Projects.Registry is
       Prj.Ext.Set_Project_Path (Registry.Data.Tree, Predefined_Path);
 
       Project := Empty_Node;
-      --  Make sure errors are reinitialized before load.
+      --  Make sure errors are reinitialized before load
       Prj.Err.Initialize;
 
       Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
@@ -737,11 +738,14 @@ package body Projects.Registry is
       Reset (Registry, View_Only => False);
       Prj.Tree.Initialize (Registry.Data.Tree);
       Project := Create_Project (Registry, "empty", Get_Current_Dir);
+
+      --  No language known for empty project
+
       Update_Attribute_Value_In_Scenario
-        (Project => Project,
+        (Project            => Project,
          Scenario_Variables => No_Scenario,
-         Attribute => Languages_Attribute,
-         Values    => (1 .. 0 => null));
+         Attribute          => Languages_Attribute,
+         Values             => (1 .. 0 => null));
 
       Load_Custom_Project (Registry, Project);
 
@@ -845,7 +849,7 @@ package body Projects.Registry is
          Flags := Create_Flags
            (On_Error'Unrestricted_Access, Require_Sources => False);
 
-         --  Make sure errors are reinitialized before load.
+         --  Make sure errors are reinitialized before load
          Prj.Err.Initialize;
 
          Process_Project_And_Apply_Config

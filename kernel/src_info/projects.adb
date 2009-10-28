@@ -1218,6 +1218,7 @@ package body Projects is
            (Get_String (Pkg_Name),
             In_Packages => Project_View.Decl.Packages,
             In_Tree     => Project.View_Tree);
+
          if Pkg = No_Package then
             if Use_Extended
               and then Extended_Project (Project) /= No_Project
@@ -1228,6 +1229,7 @@ package body Projects is
                return (1 .. 0 => (No_Name, Nil_Variable_Value));
             end if;
          end if;
+
          Arr := Packages (Project)(Pkg).Decl.Arrays;
 
       else
@@ -2094,8 +2096,8 @@ package body Projects is
    ---------------------------
 
    procedure Ensure_External_Value
-     (Var      : Scenario_Variable;
-      Tree     : Project_Node_Tree_Ref)
+     (Var  : Scenario_Variable;
+      Tree : Project_Node_Tree_Ref)
    is
       N : constant String := External_Reference_Of (Var);
    begin
@@ -2159,8 +2161,8 @@ package body Projects is
    -- Get_Paths_Type --
    --------------------
 
-   function Get_Paths_Type (Project : Project_Type)
-      return Paths_Type_Information is
+   function Get_Paths_Type
+     (Project : Project_Type) return Paths_Type_Information is
    begin
       return Project.Data.Paths_Type;
    end Get_Paths_Type;

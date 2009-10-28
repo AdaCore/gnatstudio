@@ -250,8 +250,10 @@ package body GPS.Kernel.Project is
      (Handle    : access Kernel_Handle_Record'Class;
       Use_Cache : Boolean := True)
    is
-      Gnatls         : constant String := Get_Attribute_Value
-        (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
+      Gnatls         : constant String :=
+                         Get_Attribute_Value
+                           (Get_Project (Handle),
+                            Gnatlist_Attribute, Default => "gnatls");
       Gnatls_Args    : Argument_List_Access :=
                          Argument_String_To_List (Gnatls & " -v");
       Langs          : Argument_List := Get_Languages (Get_Project (Handle));
