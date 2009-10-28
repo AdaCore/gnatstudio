@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1051,6 +1051,39 @@ package body Language.Ada is
          return Result;
       end if;
 
+      --  Adjust the first offset - if the cursor doesn't start at the start
+      --  of an UTF-8 character
+
+      declare
+         Prev_Offset : constant Integer :=
+           UTF8_Find_Prev_Char (Buffer.all, Offset);
+         Next_Offset : Integer;
+      begin
+         if Prev_Offset > Buffer'First then
+            --  Once we have the previous offset, check for the beginning of
+            --  the next one. There are two cases here, either the previous
+            --  offset is the first to analyze, and the next one will be passed
+            --  the start offset value, or it's the one before and next offset
+            --  will be the one to analyze.
+
+            Next_Offset := UTF8_Next_Char (Buffer.all, Prev_Offset);
+
+            if Next_Offset <= Offset then
+               --  If the next offset found is equal or before the initial
+               --  one, it means that the prev offset is actually a character
+               --  below. Use next offset as the first offset to analyze.
+
+               Offset := Next_Offset;
+            else
+               --  If the next offset is after the offset where the analysis
+               --  starts, then the prev offset is indeed the offset of
+               --  the first character to analyze.
+
+               Offset := Prev_Offset;
+            end if;
+         end if;
+      end;
+
       while Offset > Offset_Limit loop
 
          Blank_Here := False;
@@ -1156,7 +1189,7 @@ package body Language.Ada is
                Skip_Comment_Line (Offset);
 
             when others =>
-               Next_Ind := UTF8_Next_Char (Buffer.all, Offset);
+               Next_Ind := UTF8_Next_Char (Buffer.all, Offset) - 1;
 
                if (Next_Ind in Buffer'Range
                    and then
@@ -1171,7 +1204,7 @@ package body Language.Ada is
                   Token.Token_First := Offset;
 
                   if Token.Token_Last = 0 then
-                     Token.Token_Last := Offset;
+                     Token.Token_Last := Next_Ind;
 
                      if Length (Result.Tokens) = 0 and then Blank_Before then
                         Token := Null_Token;
