@@ -40,6 +40,7 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Interactive_Consoles;       use Interactive_Consoles;
@@ -161,6 +162,7 @@ package body GPS.Kernel.Remote is
          Print_Output  : constant Boolean      := Nth_Arg (Data, 7);
          Print_Command : constant Boolean      := Nth_Arg (Data, 8);
          Force         : constant Boolean      := Nth_Arg (Data, 9);
+         File          : constant Virtual_File := Nth_Arg (Data, 10);
 
       begin
          return Rsync_Hooks_Args'
@@ -175,7 +177,8 @@ package body GPS.Kernel.Remote is
             Synchronous      => Synchronous,
             Print_Output     => Print_Output,
             Print_Command    => Print_Command,
-            Force            => Force);
+            Force            => Force,
+            File             => File);
       end;
    end From_Callback_Data_Sync_Hook;
 
@@ -190,7 +193,7 @@ package body GPS.Kernel.Remote is
       return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 10));
+            new Callback_Data'Class'(Create (Script, 11));
    begin
       Set_Nth_Arg (D.all,  1, String (Hook));
       Set_Nth_Arg (D.all,  2, Data.Tool_Name);
@@ -201,6 +204,7 @@ package body GPS.Kernel.Remote is
       Set_Nth_Arg (D.all,  7, Data.Print_Output);
       Set_Nth_Arg (D.all,  8, Data.Print_Command);
       Set_Nth_Arg (D.all,  9, Data.Force);
+      Set_Nth_Arg (D.all, 10, Data.File);
       return D;
    end Create_Callback_Data;
 
@@ -673,7 +677,8 @@ package body GPS.Kernel.Remote is
       Print_Command : Boolean;
       Print_Output  : Boolean;
       Force         : Boolean;
-      Queue_Id      : String  := "")
+      Queue_Id      : String  := "";
+      File          : Virtual_File := No_File)
    is
       Machine        : Machine_Access;
       Remote_Is_Dest : Boolean;
@@ -754,7 +759,8 @@ package body GPS.Kernel.Remote is
                    Synchronous      => Blocking,
                    Print_Output     => Print_Output,
                    Print_Command    => Print_Command,
-                   Force            => Force);
+                   Force            => Force,
+                   File             => File);
 
       begin
          Trace
@@ -791,7 +797,8 @@ package body GPS.Kernel.Remote is
       Print_Command : Boolean;
       Print_Output  : Boolean;
       Force         : Boolean;
-      Queue_Id      : String  := "") is
+      Queue_Id      : String  := "";
+      File          : Virtual_File := No_File) is
    begin
       Synchronize
         (Kernel        => Kernel,
@@ -801,7 +808,8 @@ package body GPS.Kernel.Remote is
          Print_Command => Print_Command,
          Print_Output  => Print_Output,
          Force         => Force,
-         Queue_Id      => Queue_Id);
+         Queue_Id      => Queue_Id,
+         File          => File);
    end Synchronize;
 
    -----------

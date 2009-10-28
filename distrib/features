@@ -30,3 +30,10 @@ NF-45-I922-014 Fewer system calls for cross-references (2009-09-29)
   information from the disk (the .ali files) has been significantly
   reduced. This results in a speed up, especially noticeable when using
   sources from a remote server.
+
+NF-45-I810-019 Remote mode now synchronizes files upon save (2009-10-28)
+
+  When using the GPS remote mode, locally saved files are now synchronized
+  to the remote servers immediately. This allows external programs running
+  on the server to immediately have access to them, and also allows faster
+  sync operations before GPS launches an action on the remote server.

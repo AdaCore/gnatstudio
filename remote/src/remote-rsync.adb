@@ -17,42 +17,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with GNAT.Regpat;         use GNAT.Regpat;
-with GNAT.Expect;         use GNAT.Expect;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Strings;
 
-with Glib;                use Glib;
-with XML_Utils;        use XML_Utils;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Dialog;          use Gtk.Dialog;
-with Gtk.Label;           use Gtk.Label;
+with Glib;                  use Glib;
+with XML_Utils;             use XML_Utils;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Button;            use Gtk.Button;
+with Gtk.Dialog;            use Gtk.Dialog;
+with Gtk.Label;             use Gtk.Label;
 with Gtk.Main;
-with Gtk.Progress_Bar;    use Gtk.Progress_Bar;
-with Gtk.Stock;           use Gtk.Stock;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtk.Progress_Bar;      use Gtk.Progress_Bar;
+with Gtk.Stock;             use Gtk.Stock;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.Handlers;       use Gtkada.Handlers;
 
-with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel.Console;  use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;   use GPS.Kernel.Remote;
-with GPS.Kernel.Timeout;  use GPS.Kernel.Timeout;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Console;    use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Remote;     use GPS.Kernel.Remote;
+with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
 
-with Commands;            use Commands;
-with Password_Manager;    use Password_Manager;
-with Remote.Db;           use Remote.Db;
-with Remote_Module;       use Remote_Module;
-with String_Utils;        use String_Utils;
-with Traces;              use Traces;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with GNATCOLL.VFS_Types;  use GNATCOLL.VFS_Types;
+with Commands;              use Commands;
+with Password_Manager;      use Password_Manager;
+with Remote.Db;             use Remote.Db;
+with Remote_Module;         use Remote_Module;
+with String_Utils;          use String_Utils;
+with Traces;                use Traces;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.VFS_Types;    use GNATCOLL.VFS_Types;
 
-with Gexpect.Db;          use Gexpect, Gexpect.Db;
+with Gexpect.Db;            use Gexpect, Gexpect.Db;
 
 package body Remote.Rsync is
 
@@ -215,9 +215,8 @@ package body Remote.Rsync is
    is
       Rsync_Data          : Rsync_Hooks_Args renames
                               Rsync_Hooks_Args (Data.all);
-      Local_Path          : String_Access;
-      Remote_Path         : String_Access;
-      Src_Path, Dest_Path : String_Access;
+      Remote_Path         : GNAT.OS_Lib.String_Access;
+      Src_Path, Dest_Path : GNAT.OS_Lib.String_Access;
       Machine             : Gexpect.Machine_Access;
       All_Success         : Boolean := True;
       Success             : Boolean;
@@ -242,16 +241,15 @@ package body Remote.Rsync is
          function Use_Links_Arg return GNAT.Strings.String_List;
          --  Argument for link transfer
 
-         procedure Protect (S : in out String_Access);
+         procedure Protect (S : in out GNAT.OS_Lib.String_Access);
          --  Return F's full name, protecting spaces and quotes
 
          -------------
          -- Protect --
          -------------
 
-         procedure Protect (S : in out String_Access)
+         procedure Protect (S : in out GNAT.OS_Lib.String_Access)
          is
-            use Ada.Strings.Unbounded;
             Out_Str : Unbounded_String;
             Ignore  : Boolean;
 
@@ -311,6 +309,9 @@ package body Remote.Rsync is
            Src_Path & Dest_Path;
       end Build_Arg;
 
+      Src : Ada.Strings.Unbounded.Unbounded_String;
+      Dst : Ada.Strings.Unbounded.Unbounded_String;
+
    begin
       --  Check that we want to use rsync
       if Rsync_Data.Tool_Name /= "rsync" then
@@ -356,28 +357,43 @@ package body Remote.Rsync is
             end case;
 
             if Do_Sync then
+               if Rsync_Data.File /= No_File then
+                  if M_Points (J).Local_Root.Is_Parent (Rsync_Data.File) then
+                     Src := To_Unbounded_String
+                       (+Rsync_Data.File.Unix_Style_Full_Name (True));
+                     Dst := To_Unbounded_String
+                       (+Rsync_Data.File.To_Remote
+                          (Rsync_Data.Host_Name).Unix_Style_Full_Name (True));
+                  else
+                     Do_Sync := False;
+                  end if;
+               else
+                  Src := To_Unbounded_String
+                    (+M_Points (J).Local_Root.Unix_Style_Full_Name (True));
+                  Dst := To_Unbounded_String
+                    (+M_Points (J).Remote_Root.Unix_Style_Full_Name (True));
+               end if;
+            end if;
 
-               Local_Path  := new String'
-                 (+M_Points (J).Local_Root.Unix_Style_Full_Name (True));
-
+            if Do_Sync then
                if Machine.User_Name /= "" then
                   Remote_Path := new String'
                     (Machine.User_Name & "@" &
                      Machine.Network_Name & ":" &
-                     (+M_Points (J).Remote_Root.Unix_Style_Full_Name (True)));
+                     To_String (Dst));
 
                else
                   Remote_Path := new String'
                     (Machine.Network_Name & ":" &
-                     (+M_Points (J).Remote_Root.Unix_Style_Full_Name (True)));
+                     To_String (Dst));
                end if;
 
                if Rsync_Data.To_Remote then
-                  Src_Path := Local_Path;
+                  Src_Path := new String'(To_String (Src));
                   Dest_Path := Remote_Path;
                else
                   Src_Path := Remote_Path;
-                  Dest_Path := Local_Path;
+                  Dest_Path := new String'(To_String (Src));
                end if;
 
                Rsync_Module.Ret_Data.Status := 0;
@@ -497,17 +513,18 @@ package body Remote.Rsync is
 
       pragma Unreferenced (Dead);
 
-      function Cat (S1 : String_Access; S2 : String) return String;
+      function Cat (S1 : GNAT.OS_Lib.String_Access; S2 : String) return String;
       --  Cat a string access and a string
 
-      function Cat (S1 : String; S2 : String_Access) return String;
+      function Cat (S1 : String; S2 : GNAT.OS_Lib.String_Access) return String;
       --  Cat a string access and a string
 
       ---------
       -- Cat --
       ---------
 
-      function Cat (S1 : String_Access; S2 : String) return String is
+      function Cat (S1 : GNAT.OS_Lib.String_Access; S2 : String) return String
+      is
       begin
          if S1 = null then
             return S2;
@@ -520,7 +537,8 @@ package body Remote.Rsync is
       -- Cat --
       ---------
 
-      function Cat (S1 : String; S2 : String_Access) return String is
+      function Cat (S1 : String; S2 : GNAT.OS_Lib.String_Access) return String
+      is
       begin
          if S2 = null then
             return S1;

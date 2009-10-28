@@ -921,7 +921,12 @@ package body Remote.View is
             Failure := True;
             Reasons := Reasons & "Project " & Prj.Display_Full_Name &
               " has no equivalence on build server " & New_Build_Server &
-              ASCII.LF;
+              ASCII.LF & ASCII.LF &
+              "Please verify the Path translation setting in the 'Servers " &
+              "settings' dialog, and in particular verify that " & ASCII.LF &
+              Prj.Display_Dir_Name &
+              " can be synchronized to the server '" &
+              New_Build_Server & "'" & ASCII.LF;
          end if;
 
       exception

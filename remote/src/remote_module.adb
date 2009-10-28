@@ -23,16 +23,18 @@ with Glib.Object;
 with Gtk.Widget;
 with Gtkada.MDI;
 
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with Traces;                 use Traces;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Traces;                    use Traces;
 with XML_Parsers;
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 
 with Remote.View;
 
@@ -70,6 +72,11 @@ package body Remote_Module is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr;
    --  Saves the desktop
+
+   procedure File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file has been modified
 
    ----------------------
    -- Show_Remote_View --
@@ -110,6 +117,47 @@ package body Remote_Module is
    begin
       return Remote.View.Save_Desktop (Widget, User, Module_Name);
    end Save_Desktop;
+
+   ----------------
+   -- File_Saved --
+   ----------------
+
+   procedure File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Do_Sync : Boolean;
+   begin
+      for J in Remote.Distant_Server_Type'Range loop
+         if not Remote.Is_Local (J) then
+            Do_Sync := True;
+
+            for K in Remote.Distant_Server_Type'First
+              .. Remote.Distant_Server_Type'Pred (J)
+            loop
+               if Remote.Get_Nickname (J) = Remote.Get_Nickname (K) then
+                  --  Sync already done
+                  Do_Sync := False;
+                  exit;
+               end if;
+            end loop;
+
+            if Do_Sync then
+               Synchronize
+                 (Kernel_Handle (Kernel),
+                  From          => Remote.GPS_Server,
+                  To            => J,
+                  Blocking      => False,
+                  Print_Command => False,
+                  Print_Output  => False,
+                  Force         => False,
+                  Queue_Id      => "file_save_remote",
+                  File          => D.File);
+            end if;
+         end if;
+      end loop;
+   end File_Saved;
 
    ---------------
    -- Customize --
@@ -175,6 +223,10 @@ package body Remote_Module is
 
       --  Load user specific machine list
       Load_Remote_Config (Kernel);
+
+      Add_Hook (Kernel, File_Saved_Hook,
+                Wrapper (File_Saved'Access),
+                Name  => "remote_module.file_saved");
    end Register_Module;
 
    ------------------
