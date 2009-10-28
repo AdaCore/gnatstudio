@@ -716,7 +716,13 @@ package body VCS_View_API is
       VCS : VCS_Access;
 
    begin
-      if Has_Element (Pos) then
+      if Status (Project) = Empty then
+         --  Special case the empty project which is loaded initialy. We really
+         --  do not want any VCS support for this project.
+
+         return Unknown_VCS.Unknown_VCS_Reference;
+
+      elsif Has_Element (Pos) then
          VCS := Element (Pos);
 
       else
