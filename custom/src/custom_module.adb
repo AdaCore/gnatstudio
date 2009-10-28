@@ -23,7 +23,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with System.Assertions;         use System.Assertions;
 
 with Glib.Object;               use Glib.Object;
 
@@ -507,7 +506,8 @@ package body Custom_Module is
                   -"Invalid child node for <contextual>: " & Child.Tag.all,
                   Mode => Error);
                Free (Title);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
 
             Child := Child.Next;
@@ -521,7 +521,8 @@ package body Custom_Module is
                        & Action,
                        Mode => Error);
                Free (Title);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
          else
             Command := null;
@@ -577,7 +578,8 @@ package body Custom_Module is
             Insert (Kernel,
                     -"Invalid <tool> node, it must have a name attribute",
                     Mode => Error);
-            raise Assert_Failure;
+            pragma Assert (False);
+            return;
          end if;
 
          Tool.Tool_Name         := new String'(Name);
@@ -638,10 +640,9 @@ package body Custom_Module is
 
                   if Filter = null then
                      Insert
-                       (Kernel,
-                          -"Unknown action filter " & Id,
-                        Mode => Error);
-                     raise Assert_Failure;
+                       (Kernel, -"Unknown action filter " & Id, Mode => Error);
+                     pragma Assert (False);
+                     return Filter;
                   end if;
 
                   if Lang /= "" or
@@ -734,7 +735,8 @@ package body Custom_Module is
                -("<action> tags in customization files must have"
                  & " a name attribute"),
                Mode => Error);
-            raise Assert_Failure;  --  So that the name of the file is shown
+            pragma Assert (False);
+            return;
          end if;
 
          Child := Node.Child;
@@ -766,7 +768,8 @@ package body Custom_Module is
                  (Kernel,
                   -"Invalid child node for <action> tag",
                   Mode => Error);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
 
             Child := Child.Next;
@@ -838,7 +841,8 @@ package body Custom_Module is
                Insert
                  (Kernel, -"Invalid child node for <button> tag",
                   Mode => Error);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
 
             Child := Child.Next;
@@ -848,7 +852,8 @@ package body Custom_Module is
             if Action = "" then
                Insert (Kernel, -"<button> nodes must have an action attribute",
                        Mode => Error);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
 
             if Pixmap.all /= ""
@@ -963,7 +968,8 @@ package body Custom_Module is
                   Insert (Kernel,
                           -"Only one <title> node allowed in <submenu>",
                           Mode => Error);
-                  raise Assert_Failure;
+                  pragma Assert (False);
+                  return;
                end if;
 
                Free (Title);
@@ -1012,13 +1018,15 @@ package body Custom_Module is
                     & " supported. Please use the program"
                     & " gps2custom-1.3 to convert to the new format."),
                   Mode => Error);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             else
                Insert (Kernel,
                        -"Invalid child node for <submenu>: "
                        & Child.Tag.all,
                        Mode => Error);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
 
             Child := Child.Next;
@@ -1048,7 +1056,8 @@ package body Custom_Module is
             else
                Insert
                  (Kernel, -"Invalid child node for <menu> tag", Mode => Error);
-               raise Assert_Failure;
+               pragma Assert (False);
+               return;
             end if;
 
             Child := Child.Next;
@@ -1060,7 +1069,8 @@ package body Custom_Module is
          then
             Insert (Kernel, -"<menu> nodes must have an action attribute",
                     Mode => Error);
-            raise Assert_Failure;
+            pragma Assert (False);
+            return;
          end if;
 
          if Title.all = "" then
