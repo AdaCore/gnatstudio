@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -305,8 +304,8 @@ package body Find_Utils is
 
             if not Context.Options.Whole_Word
               or else
-              ((Pos = Start_Index
-                or else Is_Word_Delimiter (Buffer (Pos - 1)))
+                ((not (Pos - 1 in Buffer'Range)
+                  or else Is_Word_Delimiter (Buffer (Pos - 1)))
                and then
                  (Pos + Context.Look_For'Length - 1 = End_Index
                   or else Is_Word_Delimiter
