@@ -14,3 +14,8 @@ Known Problems fixed in GPS 4.5.0
   Workaround: Change to standard call, do the renaming, and then back to
               the dotted notation.
 
+- GA10-023 Completion problems with UTF-8
+  Problem:    On certain cases, the smart complete action may not work on 
+              identifiers containing complex UTF-8 characters.
+  Workaround: Manually fix the code.
+
