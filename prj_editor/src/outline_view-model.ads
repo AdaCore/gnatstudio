@@ -70,6 +70,7 @@ private package Outline_View.Model is
    type Sorted_Node is private;
 
    type Sorted_Node_Access is access all Sorted_Node;
+   pragma No_Strict_Aliasing (Sorted_Node_Access);
 
    function Get_Entity
      (Node : Sorted_Node_Access) return Entity_Persistent_Access;
