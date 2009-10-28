@@ -2407,15 +2407,13 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_View) return System.Address
    is
       Child : Gtkada.MDI.MDI_Child;
-      function Unchecked is new Ada.Unchecked_Conversion
-        (Gtkada.MDI.MDI_Child, System.Address);
    begin
       Child := Find_MDI_Child_From_Widget (This.Contents.Box);
 
       if Child = null then
          return System.Null_Address;
       else
-         return Unchecked (Child);
+         return Get_Object (Child);
       end if;
    end Get_MDI_Child;
 

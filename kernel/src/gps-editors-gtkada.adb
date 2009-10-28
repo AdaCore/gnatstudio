@@ -17,12 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides interfaces on top of GPS.Editors that are
---  specialized for GtkAda
-
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Glib;             use Glib;
+with Glib.Object;      use Glib.Object;
 with System;
 
 package body GPS.Editors.GtkAda is
@@ -151,9 +149,8 @@ package body GPS.Editors.GtkAda is
    function Get_MDI_Child
      (This : Editor_View'Class) return Standard.Gtkada.MDI.MDI_Child
    is
-      function Unchecked is new Ada.Unchecked_Conversion
-        (System.Address, Standard.Gtkada.MDI.MDI_Child);
-
+      Stub : Standard.Gtkada.MDI.MDI_Child_Record;
+      pragma Warnings (Off, Stub);
       use type System.Address;
       A : System.Address;
    begin
@@ -161,7 +158,7 @@ package body GPS.Editors.GtkAda is
       if A = System.Null_Address then
          return null;
       else
-         return Unchecked (A);
+         return Standard.Gtkada.MDI.MDI_Child (Get_User_Data (A, Stub));
       end if;
    end Get_MDI_Child;
 

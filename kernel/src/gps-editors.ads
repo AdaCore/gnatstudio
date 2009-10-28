@@ -331,6 +331,7 @@ package GPS.Editors is
 
    type Line_Information_Data is access Line_Information_Array;
    for Line_Information_Data'Size use Standard'Address_Size;
+   pragma No_Strict_Aliasing (Line_Information_Data);
 
    procedure Free (X : in out Line_Information_Record);
    --  Free memory associated with X
@@ -430,7 +431,9 @@ package GPS.Editors is
    function Get_MDI_Child
      (This : Editor_View) return System.Address is abstract;
    --  Return the MDI child created for this view.
-   --  The address returned is a GtkAda.MDI.MDI_Child.
+   --  The address returned is a GtkAda.MDI.MDI_Child (the C pointer, so
+   --  Get_User_Data needs to be used to convert to a MDI_Child -- this is
+   --  to prevent the need for a No_Strict_Aliasing pragma on MDI_Child).
 
    package View_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_View'Class);
