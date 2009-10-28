@@ -29,6 +29,13 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Use filter capabilities to filter out all messages of desired
               subcategory.
 
+- IA14-028: Cannot initialize debugger when using .gdbinit file
+  Problem:    In some cases, GPS will not be able to start a debug session
+              when using a .gdbinit file (or -x switch), depending on the
+              contents of the .gdbinit file.
+  Workaround: Load the .gdbinit file after starting the debugger, or modifying
+              it to avoid the problematic lines.
+
 - IA14-024: Some plugins cause delays in contextual menu
   Problem:    When right-clicking on an editor, if some optional plugins are
               loaded and add a lot of entries in the menus - such as
