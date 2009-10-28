@@ -2646,6 +2646,9 @@ Create a new test harness. See AUnit documentation for more details.
 
 @end table
 
+@item Edit with external editor
+@xref{Using an External Editor}.
+
 @item Aliases
 @cindex alias
 Display the Aliases editor. @xref{Defining text aliases}.
@@ -2733,9 +2736,6 @@ Menu entries include the following categories:
 
 @item Source Navigation
 @xref{Contextual Menus for Source Navigation}.
-
-@item Edit with external editor
-@xref{Using an External Editor}.
 
 @item Dependencies
 @xref{Dependency Browser}.
@@ -2948,7 +2948,7 @@ of text, not a partial selection in a line of text.
 @c --------------------------------------------------------------------------
 
 @noindent
-GPS is fully integrated with a number of external editors, in
+GPS is integrated with a number of external editors, in
 particular @code{Emacs} and @code{vi}. The choice of the default
 external editor is done in the preferences. @xref{The Preferences Dialog}.
 @cindex preferences

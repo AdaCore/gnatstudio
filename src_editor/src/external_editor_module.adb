@@ -829,10 +829,12 @@ package body External_Editor_Module is
          Label   => -"Always use external editor");
 
       Command := new Edit_With_External_Command;
-      Register_Contextual_Menu
-        (Kernel, "Edit with external editor",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "File"));
+      Register_Menu
+        (Kernel, -"/Edit/", -"Edit with external editor", "",
+         null, Command,
+         Ref_Item   => "Unit Testing",
+         Add_Before => False,
+         Filter     => Lookup_Filter (Kernel, "File"));
 
       Register_Module
         (Module                  => Module_ID (External_Editor_Module_Id),
