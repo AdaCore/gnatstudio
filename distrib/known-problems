@@ -94,6 +94,11 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Use the locations view or key shortcuts to navigate between
               results.
 
+- I506-002: Wrong auto fix in case of SPARK annotations
+  Problem:    When there are SPARK annotation on e.g. subprograms, auto-fixing
+              profiles does not work.
+  Workaround: Manually fix the code.
+
 - F430-001 Search whole word give wrong result when text is selected
   Problem:    When a portion of word is selected, e.g. Something is selected
               as a part of the word A_Something, doing a search whole word may

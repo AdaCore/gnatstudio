@@ -229,7 +229,17 @@ package body Codefix.GPS_Io is
         Editor.New_Location
           (End_Cursor.Get_Line, Integer (End_Cursor.Get_Column));
    begin
-      Editor.Delete (Loc_Start, Loc_End);
+      if not
+        (Loc_Start.Line > Loc_End.Line
+         or else
+           (Loc_Start.Line = Loc_End.Line
+            and then Loc_Start.Column > Loc_End.Column))
+      then
+         --  Loc start must be after Loc end, we don't delete null ranges.
+
+         Editor.Delete (Loc_Start, Loc_End);
+      end if;
+
       Editor.Insert (Loc_Start, New_Value);
       Text_Has_Changed (This);
    end Replace;
