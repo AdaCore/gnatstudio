@@ -1053,8 +1053,20 @@ package body Codefix.Text_Manager.Ada_Commands is
                end if;
             end if;
 
-            Last_Entity_Column := Sloc_End.Column;
-            Last_Entity_Line := Sloc_End.Line;
+            case Entity is
+               when Comment_Text
+                  | Annotated_Comment_Text
+                  | Annotated_Keyword_Text =>
+                  --  Don't take into account leading comments or annotations
+                  --  in the profile. We don't want to copy them, and we don't
+                  --  want to change them either.
+                  null;
+
+               when others =>
+                  Last_Entity_Column := Sloc_End.Column;
+                  Last_Entity_Line := Sloc_End.Line;
+
+            end case;
 
             return False;
          end Entity_Callback;
@@ -1146,12 +1158,21 @@ package body Codefix.Text_Manager.Ada_Commands is
          Blank_After := One;
       end if;
 
-      Current_Text.Replace
-        (Destination_Begin,
-         Destination_End,
-         Current_Text.Get (Source_Begin, Source_End),
-         Blank_Before,
-         Blank_After);
+      if Is_Empty then
+         Current_Text.Replace
+           (Destination_Begin,
+            0,
+            Current_Text.Get (Source_Begin, Source_End),
+            Blank_Before,
+            Blank_After);
+      else
+         Current_Text.Replace
+           (Destination_Begin,
+            Destination_End,
+            Current_Text.Get (Source_Begin, Source_End),
+            Blank_Before,
+            Blank_After);
+      end if;
 
       Free (Destination_Begin);
       Free (Destination_End);
