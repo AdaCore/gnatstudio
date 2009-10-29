@@ -26,9 +26,9 @@ def project_recomputed (hook_name):
 
   compact_layout = True
   indent_level = 3
-  GPS.Preference ("Ada-Auto-Indentation").set ("Extended")
-  GPS.Preference ("Ada-Casing-Policy").set ("On_The_Fly")
-  GPS.Preference ("Ada-Format-Operators").set (True)
+  GPS.Preference ("Ada-Auto-Indentation").set ("Extended", False)
+  GPS.Preference ("Ada-Casing-Policy").set ("On_The_Fly", False)
+  GPS.Preference ("Ada-Format-Operators").set (True, False)
 
   for f in s:
     if f == "-A0":
