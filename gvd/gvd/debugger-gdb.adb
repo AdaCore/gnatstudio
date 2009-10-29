@@ -369,6 +369,11 @@ package body Debugger.Gdb is
       Last  : Positive := Matched (0).First;
 
    begin
+      if Gdb_Debugger (Debugger.all).Initializing then
+         --  Debugger has not been fully initialized yet, ignore
+         return;
+      end if;
+
       --  Always call the hook, even in invisible mode. This is in particular
       --  useful for the automatic testsuite
 
@@ -468,6 +473,11 @@ package body Debugger.Gdb is
       Mode     : Command_Type;
 
    begin
+      if Gdb_Debugger (Debugger.all).Initializing then
+         --  Debugger has not been fully initialized yet, ignore
+         return;
+      end if;
+
       --  Always call the hook, even in invisible mode. This is in particular
       --  useful for the automatic testsuite
 
@@ -874,9 +884,12 @@ package body Debugger.Gdb is
 
       pragma Unreferenced (Num);
    begin
+      Debugger.Initializing := True;
+
       --  Wait for initial output and prompt (and display it in the window)
       Wait
-        (Get_Process (Debugger), Num, Compile ("^\(.+\).*$", Multiple_Lines),
+        (Get_Process (Debugger), Num,
+         Compile ("^\([^\s]+\).*$", Multiple_Lines),
          Timeout => -1);
 
       --  Make sure that the prompt is what we are expecting
@@ -970,12 +983,15 @@ package body Debugger.Gdb is
          Display_Prompt (Debugger);
       end if;
 
+      Debugger.Initializing := False;
+
    exception
       --  If the executable was not found, simply display the prompt before
       --  leaving, nothing else needs to be done.
 
       when Executable_Not_Found =>
          Display_Prompt (Debugger);
+         Debugger.Initializing := False;
    end Initialize;
 
    -----------
@@ -1100,6 +1116,7 @@ package body Debugger.Gdb is
                                 (Executable, Get_Nickname (Debug_Server));
       Exec_Has_Spaces     : constant Boolean :=
                               Index (Remote_Exec.Display_Full_Name, " ") /= 0;
+      Lang                : Language_Access;
       Process             : Visual_Debugger;
 
       procedure Launch_Command_And_Output (Command : String);
@@ -1183,7 +1200,9 @@ package body Debugger.Gdb is
 
       --  Get the name and line of the initial file
 
-      if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+      Lang := Get_Language (Debugger);
+
+      if Lang /= null and then Lang.all in Gdb_Ada_Language'Class then
          Switch_Language (Debugger, "c");
          Send (Debugger, "list adainit", Mode => Internal);
          Restore_Language (Debugger);
