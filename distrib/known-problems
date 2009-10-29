@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.1
 
+- IA29-019: Cannot use gnatpp_switches.py with read-only preferences file
+  Problem:    The gnatpp_switches.py pllug-in requires a writable preferences
+              file to operate successfully, which is no longer needed in
+              GPS 4.4.1 and above.
+  Workaround: Make the preferences file writable or copy the gnatpp_switches.py
+              plug-in from the 4.4.1 distribution.
+
 - IA23-035: GPS may crash when setting the default remote servers
   Problem:    In the remote view, clicking on the 'Set default' button may make
               GPS crash.
