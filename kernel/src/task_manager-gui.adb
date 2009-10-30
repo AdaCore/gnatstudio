@@ -688,6 +688,10 @@ package body Task_Manager.GUI is
             User_Data_2 => System.Null_Address,
             User_Data_3 => System.Null_Address);
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Null_Iter;
    end Get_Iter;
 
    --------------
@@ -705,6 +709,10 @@ package body Task_Manager.GUI is
       Result := Gtk_New;
       Append_Index (Result, Gint (To_Integer (Get_User_Data_1 (Iter)) - 1));
       return Result;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Gtk_New ("");
    end Get_Path;
 
    ----------
@@ -730,6 +738,10 @@ package body Task_Manager.GUI is
             User_Data_2 => System.Null_Address,
             User_Data_3 => System.Null_Address);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Next;
 
    ----------------
@@ -748,6 +760,11 @@ package body Task_Manager.GUI is
       end if;
 
       return 0;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return 0;
    end N_Children;
 
    ---------------
@@ -775,6 +792,11 @@ package body Task_Manager.GUI is
       end if;
 
       return Null_Iter;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Null_Iter;
    end Nth_Child;
 
    -------------------
@@ -787,6 +809,11 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Self);
    begin
       return Columns_Types'Length;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return 0;
    end Get_N_Columns;
 
    ---------------------
@@ -801,6 +828,11 @@ package body Task_Manager.GUI is
       T : constant GType_Array := Columns_Types;
    begin
       return T (Guint (Index));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return T (0);
    end Get_Column_Type;
 
    --------------------
@@ -973,6 +1005,12 @@ package body Task_Manager.GUI is
                Set_Object (Value, null);
          end case;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Init (Value, GType_String);
+         Set_String (Value, "");
    end Get_Value;
 
    ---------------

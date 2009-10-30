@@ -164,7 +164,7 @@ package body Builder_Module is
 
    type All_LI_Information_Command is new Root_Command with record
       Iter : Recursive_LI_Information_Iterator;
-      Count, Total : Natural;
+      Count, Total : Natural := 0;
       Chunk_Size   : Natural := 10;  --  ??? Should be configurable
    end record;
 

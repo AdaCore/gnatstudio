@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,7 @@ package Commands.Codefix is
       Kernel            : Kernel_Handle;
       Session           : Codefix_Module.Codefix_Session;
       Current_Error     : Error_Id;
-      Errors_Num        : Natural;
+      Errors_Num        : Natural := 0;
       Errors_Fixed      : Natural := 0;
       Session_Timestamp : Integer := 0;
    end record;
