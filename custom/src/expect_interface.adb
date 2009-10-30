@@ -459,7 +459,7 @@ package body Expect_Interface is
       Index             : Natural;
       Index_Start       : Natural;
       Current, Final    : Natural;
-      Unmatched_Output  : Ada.Strings.Unbounded.String_Access;
+      Unmatched_Output  : Ada.Strings.Unbounded.Aux.Big_String_Access;
 
    begin
       --  First check the progress regexp

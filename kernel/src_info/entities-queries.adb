@@ -2587,7 +2587,7 @@ package body Entities.Queries is
       ------------
 
       function Revert (S : Unbounded_String) return String is
-         Str : Ada.Strings.Unbounded.String_Access;
+         Str : Ada.Strings.Unbounded.Aux.Big_String_Access;
          L   : Natural;
       begin
          Get_String (S, Str, L);
