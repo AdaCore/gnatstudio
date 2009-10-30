@@ -30,6 +30,8 @@ with Gtk.Tree_Model.Utils; use Gtk.Tree_Model.Utils;
 
 with Project_Explorers_Common; use Project_Explorers_Common;
 
+with Traces; use Traces;
+
 package body Outline_View.Model is
 
    use Construct_Annotations_Pckg;
@@ -507,6 +509,11 @@ package body Outline_View.Model is
       pragma Unreferenced (Self);
    begin
       return 2;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return 2;
    end Get_N_Columns;
 
    ---------------------
@@ -526,6 +533,11 @@ package body Outline_View.Model is
       end if;
 
       return GType_String;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return GType_String;
    end Get_Column_Type;
 
    --------------
@@ -553,6 +565,11 @@ package body Outline_View.Model is
       else
          return Null_Iter;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Null_Iter;
    end Get_Iter;
 
    --------------
@@ -583,6 +600,11 @@ package body Outline_View.Model is
    is
    begin
       return Get_Path (Self, Get_Sorted_Node (Iter));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Gtk_New ("");
    end Get_Path;
 
    ---------------
@@ -628,6 +650,12 @@ package body Outline_View.Model is
             Set_String (Value, "no name");
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Init (Value, GType_String);
+         Set_String (Value, "");
    end Get_Value;
 
    ----------
@@ -645,6 +673,11 @@ package body Outline_View.Model is
       else
          Iter := New_Iter (Get_Sorted_Node (Iter).Next);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Iter := Null_Iter;
    end Next;
 
    --------------
@@ -667,6 +700,11 @@ package body Outline_View.Model is
       Compute_Sorted_Nodes (Self, Node);
 
       return New_Iter (Node.First_Child);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Null_Iter;
    end Children;
 
    ---------------
@@ -679,6 +717,11 @@ package body Outline_View.Model is
    is
    begin
       return Children (Self, Iter) /= Null_Iter;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end Has_Child;
 
    ----------------
@@ -701,6 +744,11 @@ package body Outline_View.Model is
       Compute_Sorted_Nodes (Self, Node);
 
       return Gint (Node.N_Children);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return 0;
    end N_Children;
 
    ---------------
@@ -746,6 +794,11 @@ package body Outline_View.Model is
       else
          return New_Iter (Nth_Child (Self, Get_Sorted_Node (Parent), N));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Null_Iter;
    end Nth_Child;
 
    ------------
@@ -764,6 +817,11 @@ package body Outline_View.Model is
       else
          return New_Iter (Get_Sorted_Node (Child).Parent);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Null_Iter;
    end Parent;
 
    ----------------
