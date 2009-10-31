@@ -1569,11 +1569,13 @@ package body Src_Editor_Box is
       Show_Default  : Boolean;
       Callback      : GPS.Kernel.Entity_Callback.Simple_Handler)
    is
-      Item  : Gtk_Menu_Item;
-      Label : Gtk_Label;
-      Pref  : constant Dispatching_Menu_Policy :=
-                Submenu_For_Dispatching_Calls.Get_Pref;
-      Count : Natural := 0;
+      Item   : Gtk_Menu_Item;
+      Label  : Gtk_Label;
+      Pref   : constant Dispatching_Menu_Policy :=
+                 Submenu_For_Dispatching_Calls.Get_Pref;
+      Count  : Natural := 0;
+      Db     : Entities.Entities_Database;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
 
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean;
@@ -1601,10 +1603,11 @@ package body Src_Editor_Box is
 
    begin
       Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
-      Push_State (Get_Kernel (Context), Busy);
+      Push_State (Kernel, Busy);
 
       if Force_Freeze then
-         Freeze (Get_Database (Get_Kernel (Context)));
+         Db := Get_Database (Kernel);
+         Freeze (Db);
       end if;
 
       if Pref = From_Memory then
@@ -1639,22 +1642,27 @@ package body Src_Editor_Box is
          Add (Item, Label);
          GPS.Kernel.Entity_Callback.Object_Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
-            Callback, Get_Kernel (Context), Get_Entity (Context));
+            Callback, Kernel, Get_Entity (Context));
          Add (Menu, Item);
       end if;
 
       if Force_Freeze then
-         Thaw (Get_Database (Get_Kernel (Context)));
+         Thaw (Db);
+         pragma Assert (Frozen (Db) = Create_And_Update);
       end if;
 
-      Pop_State (Get_Kernel (Context));
+      Pop_State (Kernel);
       Trace (Me, "Done computing Dispatch_Declaration_Submenu");
 
    exception
       when E : others =>
          Trace (Me, E);
-         Thaw (Get_Database (Get_Kernel (Context)));
-         Pop_State (Get_Kernel (Context));
+
+         if Frozen (Db) /= Create_And_Update then
+            Thaw (Db);
+         end if;
+
+         Pop_State (Kernel);
    end Append_To_Dispatching_Menu;
 
    --------------------
