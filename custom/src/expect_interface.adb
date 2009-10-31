@@ -20,11 +20,6 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-pragma Warnings (Off);
-with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
---  Used for efficiency
-pragma Warnings (Off);
 with System;
 
 with GNAT.Expect;             use GNAT.Expect;
@@ -126,7 +121,7 @@ package body Expect_Interface is
       --  temporarily disables periodically checking for matching output for
       --  On_Match.
 
-      Unmatched_Output : Unbounded_String;
+      Unmatched_Output : String_Access;
       --  Output of the process since the last time On_Match was called (ie
       --  since the last time Pattern matched).
 
@@ -188,6 +183,12 @@ package body Expect_Interface is
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
    --  Called when an external process has produced some output
 
+   procedure Concat (S : in out String_Access; S2 : String);
+   --  Append S2 at the end of S
+
+   function To_String (S : String_Access) return String;
+   --  Return the contents of S. if S is null, return ""
+
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access;
    function Get_Data (Inst : Class_Instance) return Custom_Action_Access;
@@ -203,7 +204,7 @@ package body Expect_Interface is
       Action   : Custom_Action_Access;
       Timeout  : Integer := 200;
       Pattern  : String := "";
-      Output   : out Unbounded_String;
+      Output   : out String_Access;
       Exit_Why : out Exit_Type);
    --  Execute a call to Expect, but process the gtk+ events periodically.
    --  If the pattern is the empty string, this function will only return when
@@ -233,6 +234,7 @@ package body Expect_Interface is
    begin
       Free (X.Command);
       Unchecked_Free (X.Pattern);
+      Free (X.Unmatched_Output);
       Free (X.On_Exit);
       Free (X.On_Match);
       Unchecked_Free (X.Progress_Regexp);
@@ -389,6 +391,37 @@ package body Expect_Interface is
       return Get_Data (Inst);
    end Get_Data;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (S : String_Access) return String is
+   begin
+      if S = null then
+         return "";
+      else
+         return S.all;
+      end if;
+   end To_String;
+
+   ------------
+   -- Concat --
+   ------------
+
+   procedure Concat (S : in out String_Access; S2 : String) is
+   begin
+      if S = null then
+         S := new String'(S2);
+      elsif S2 /= "" then
+         declare
+            N : constant String := S.all & S2;
+         begin
+            Free (S);
+            S := new String'(N);
+         end;
+      end if;
+   end Concat;
+
    -------------
    -- Exit_Cb --
    -------------
@@ -459,19 +492,18 @@ package body Expect_Interface is
       Index             : Natural;
       Index_Start       : Natural;
       Current, Final    : Natural;
-      Unmatched_Output  : Ada.Strings.Unbounded.Aux.Big_String_Access;
 
    begin
       --  First check the progress regexp
 
       if D.Progress_Regexp /= null then
-         Append (D.Unmatched_Output, Output);
+         Concat (D.Unmatched_Output, Output);
 
          declare
-            Outp : constant String := To_String (D.Unmatched_Output);
+            Outp : String_Access := D.Unmatched_Output;
          begin
             Index := Outp'First;
-            Set_Unbounded_String (D.Unmatched_Output, "");
+            D.Unmatched_Output := new String'("");
             while Index <= Outp'Last loop
                Index_Start := Index;
                Match
@@ -481,7 +513,7 @@ package body Expect_Interface is
                  or else Matches (D.Progress_Current) = No_Match
                  or else Matches (D.Progress_Final) = No_Match;
 
-               Append
+               Concat
                  (D.Unmatched_Output, Outp (Index .. Matches (0).First - 1));
 
                Current := Safe_Value
@@ -504,14 +536,16 @@ package body Expect_Interface is
             end loop;
 
             if Index <= Outp'Last then
-               Append (D.Unmatched_Output, Outp (Index .. Outp'Last));
+               Concat (D.Unmatched_Output, Outp (Index .. Outp'Last));
             end if;
+
+            Free (Outp);
          end;
 
       else
          --  Always put Output in Unmatched_Output in case interactive_expect
          --  want them.
-         Append (D.Unmatched_Output, Output);
+         Concat (D.Unmatched_Output, Output);
       end if;
 
       if D.Pattern = null
@@ -533,19 +567,19 @@ package body Expect_Interface is
 
       --  Attempt to match the regexp in the output.
 
-      if Length (D.Unmatched_Output) = 0 then
+      if D.Unmatched_Output.all = "" then
          return;
       end if;
 
-      Beg_Index := 1;
+      Beg_Index := D.Unmatched_Output'First;
       Prev_Beg  := Beg_Index;
-      Get_String (D.Unmatched_Output, Unmatched_Output, End_Index);
+      End_Index := D.Unmatched_Output'Last;
 
       loop
          Action_To_Execute := D.On_Match;
          Match
            (D.Pattern.all,
-            Unmatched_Output (Beg_Index .. End_Index),
+            D.Unmatched_Output (Beg_Index .. End_Index),
             Matches);
 
          if Matches (0) = No_Match then
@@ -562,10 +596,10 @@ package body Expect_Interface is
                Set_Nth_Arg (C, 1, D.Inst);
                Set_Nth_Arg
                  (C, 2,
-                  Unmatched_Output (Matches (0).First .. Matches (0).Last));
+                  D.Unmatched_Output (Matches (0).First .. Matches (0).Last));
                Set_Nth_Arg
                  (C, 3,
-                  Unmatched_Output (Beg_Index .. Matches (0).First - 1));
+                  D.Unmatched_Output (Beg_Index .. Matches (0).First - 1));
                Tmp := Execute (Action_To_Execute, C);
                Free (C);
             end;
@@ -576,8 +610,8 @@ package body Expect_Interface is
                exit;
             end if;
 
-            --  Prevent infinite loops happenning for users specifying regexps
-            --  that match on empty string.
+            --  Prevent infinite loops happenning for users specifying
+            --  regexps that match on empty string.
 
             if Prev_Beg = Beg_Index then
                exit;
@@ -588,13 +622,14 @@ package body Expect_Interface is
       end loop;
 
       --  If we have matched something, do the necessary adjustments.
-      --  Reduce the output that we have already matched
+      --  Reduce the output that we have already matched.
 
-      if Beg_Index > 1 then
+      if Beg_Index > D.Unmatched_Output'First then
          declare
-            S : constant String := Unmatched_Output (Beg_Index .. End_Index);
+            S : constant String := D.Unmatched_Output (Beg_Index .. End_Index);
          begin
-            Set_Unbounded_String (D.Unmatched_Output, S);
+            Free (D.Unmatched_Output);
+            D.Unmatched_Output := new String'(S);
          end;
       end if;
 
@@ -610,7 +645,7 @@ package body Expect_Interface is
       Action   : Custom_Action_Access;
       Timeout  : Integer := 200;
       Pattern  : String := "";
-      Output   : out Unbounded_String;
+      Output   : out String_Access;
       Exit_Why : out Exit_Type)
    is
       Regexp  : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
@@ -624,7 +659,8 @@ package body Expect_Interface is
          Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
       end if;
 
-      Set_Unbounded_String (Output, "");
+      Free (Output);
+      Output := new String'("");
 
       --  Set the In_Expect flag so that Execute does not perform its own
       --  call to Expect, thus consuming all characters. This is taken care of
@@ -665,14 +701,14 @@ package body Expect_Interface is
                Str : constant String := Strip_CR (Expect_Out (Action.Pd.all));
             begin
                Output_Cb (Action, Str);
-               Append (Output, Str);
+               Concat (Output, Str);
             end;
          else
             declare
                Str : constant String := Expect_Out (Action.Pd.all);
             begin
                Output_Cb (Action, Str);
-               Append (Output, Str);
+               Concat (Output, Str);
             end;
          end if;
 
@@ -802,7 +838,7 @@ package body Expect_Interface is
       E               : Exit_Type;
       Created_Command : Scheduled_Command_Access;
       Dead            : Boolean;
-      Output_Str      : Unbounded_String;
+      Output_Str      : String_Access;
       Q_Id            : constant String := Get_New_Queue_Id;
       pragma Unreferenced (Dead);
 
@@ -982,6 +1018,7 @@ package body Expect_Interface is
                Pattern  => "",
                Output   => Output_Str,
                Exit_Why => E);
+            Free (Output_Str);
             Set_Return_Value (Data, D.Status);
          end if;
 
@@ -1009,7 +1046,7 @@ package body Expect_Interface is
             case E is
                when Matched =>
                   if D.Pd /= null then
-                     Set_Return_Value (Data, To_String (Output_Str));
+                     Set_Return_Value (Data, Output_Str.all);
                   else
                      Set_Error_Msg (Data, "Process terminated");
                   end if;
@@ -1020,6 +1057,8 @@ package body Expect_Interface is
                when Died =>
                   Set_Error_Msg (Data, "Process terminated");
             end case;
+
+            Free (Output_Str);
          end if;
 
       elsif Command = "get_result" then
@@ -1035,7 +1074,8 @@ package body Expect_Interface is
                Output   => Output_Str,
                Exit_Why => E);
 
-            Set_Return_Value (Data, To_String (Output_Str));
+            Set_Return_Value (Data, Output_Str.all);
+            Free (Output_Str);
          end if;
       end if;
 
