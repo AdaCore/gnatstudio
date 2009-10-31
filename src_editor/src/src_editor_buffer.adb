@@ -3118,7 +3118,7 @@ package body Src_Editor_Buffer is
       Force_Write : Boolean := False;
       --  Whether the file mode has been forced to writable
       U_Buffer    : Unbounded_String;
-      S           : Ada.Strings.Unbounded.String_Access;
+      S           : Ada.Strings.Unbounded.Aux.Big_String_Access;
       Length      : Natural;
       Has_Errors  : Boolean := False;
 
