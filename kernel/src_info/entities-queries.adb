@@ -19,9 +19,6 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-pragma Warnings (Off);
-with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
-pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -2570,21 +2567,6 @@ package body Entities.Queries is
       Last_Not_Null : Entity_Information := Entity;
       Result        : Unbounded_String;
 
-      function Revert (S : Unbounded_String) return String;
-      --  Same as String_Utils.Revert, taking an unbounded string
-
-      ------------
-      -- Revert --
-      ------------
-
-      function Revert (S : Unbounded_String) return String is
-         Str : Ada.Strings.Unbounded.String_Access;
-         L   : Natural;
-      begin
-         Get_String (S, Str, L);
-         return Revert (Str (1 .. L));
-      end Revert;
-
    begin
       --  For efficiency, build the name in reverse order, to avoid freeing
       --  and allocating many strings, and revert it before exit.
@@ -2611,7 +2593,7 @@ package body Entities.Queries is
          Append (Result, E.Name.all);
       end loop;
 
-      return Revert (Result);
+      return Revert (To_String (Result));
    end Get_Full_Name;
 
    ----------------
