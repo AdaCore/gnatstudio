@@ -21,10 +21,6 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-pragma Warnings (Off);
-with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
---  Used for efficiency
-pragma Warnings (Off);
 with System;
 
 with GNAT.Expect;             use GNAT.Expect;
@@ -453,13 +449,11 @@ package body Expect_Interface is
    procedure Output_Cb (D : Custom_Action_Access; Output : String) is
       Matches           : Match_Array (0 .. Max_Paren_Count);
       Beg_Index         : Natural;
-      End_Index         : Natural;
       Prev_Beg          : Natural;
       Action_To_Execute : Subprogram_Type;
       Index             : Natural;
       Index_Start       : Natural;
       Current, Final    : Natural;
-      Unmatched_Output  : Ada.Strings.Unbounded.String_Access;
 
    begin
       --  First check the progress regexp
@@ -539,64 +533,65 @@ package body Expect_Interface is
 
       Beg_Index := 1;
       Prev_Beg  := Beg_Index;
-      Get_String (D.Unmatched_Output, Unmatched_Output, End_Index);
 
-      loop
-         Action_To_Execute := D.On_Match;
-         Match
-           (D.Pattern.all,
-            Unmatched_Output (Beg_Index .. End_Index),
-            Matches);
+      declare
+         Unmatched_Output : constant String := To_String (D.Unmatched_Output);
+      begin
+         loop
+            Action_To_Execute := D.On_Match;
+            Match
+              (D.Pattern.all,
+               Unmatched_Output (Beg_Index .. Unmatched_Output'Last),
+               Matches);
 
-         if Matches (0) = No_Match then
-            exit;
-         else
-            --  We have found a match.
-
-            declare
-               C : Callback_Data'Class := Create
-                 (Get_Script (D.Inst), Arguments_Count => 3);
-               Tmp  : Boolean;
-               pragma Unreferenced (Tmp);
-            begin
-               Set_Nth_Arg (C, 1, D.Inst);
-               Set_Nth_Arg
-                 (C, 2,
-                  Unmatched_Output (Matches (0).First .. Matches (0).Last));
-               Set_Nth_Arg
-                 (C, 3,
-                  Unmatched_Output (Beg_Index .. Matches (0).First - 1));
-               Tmp := Execute (Action_To_Execute, C);
-               Free (C);
-            end;
-
-            Beg_Index := Matches (0).Last + 1;
-
-            if Beg_Index > End_Index then
-               exit;
-            end if;
-
-            --  Prevent infinite loops happenning for users specifying regexps
-            --  that match on empty string.
-
-            if Prev_Beg = Beg_Index then
+            if Matches (0) = No_Match then
                exit;
             else
-               Prev_Beg := Beg_Index;
+               --  We have found a match.
+
+               declare
+                  C : Callback_Data'Class := Create
+                    (Get_Script (D.Inst), Arguments_Count => 3);
+                  Tmp  : Boolean;
+                  pragma Unreferenced (Tmp);
+               begin
+                  Set_Nth_Arg (C, 1, D.Inst);
+                  Set_Nth_Arg
+                    (C, 2,
+                     Unmatched_Output (Matches (0).First .. Matches (0).Last));
+                  Set_Nth_Arg
+                    (C, 3,
+                     Unmatched_Output (Beg_Index .. Matches (0).First - 1));
+                  Tmp := Execute (Action_To_Execute, C);
+                  Free (C);
+               end;
+
+               Beg_Index := Matches (0).Last + 1;
+
+               if Beg_Index > Unmatched_Output'Last then
+                  exit;
+               end if;
+
+               --  Prevent infinite loops happenning for users specifying
+               --  regexps that match on empty string.
+
+               if Prev_Beg = Beg_Index then
+                  exit;
+               else
+                  Prev_Beg := Beg_Index;
+               end if;
             end if;
+         end loop;
+
+         --  If we have matched something, do the necessary adjustments.
+         --  Reduce the output that we have already matched.
+
+         if Beg_Index > 1 then
+            Set_Unbounded_String
+              (D.Unmatched_Output,
+               Unmatched_Output (Beg_Index .. Unmatched_Output'Last));
          end if;
-      end loop;
-
-      --  If we have matched something, do the necessary adjustments.
-      --  Reduce the output that we have already matched
-
-      if Beg_Index > 1 then
-         declare
-            S : constant String := Unmatched_Output (Beg_Index .. End_Index);
-         begin
-            Set_Unbounded_String (D.Unmatched_Output, S);
-         end;
-      end if;
+      end;
 
       --  ??? Add exception handler ?
    end Output_Cb;
