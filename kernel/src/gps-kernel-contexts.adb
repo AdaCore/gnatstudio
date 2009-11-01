@@ -748,9 +748,10 @@ package body GPS.Kernel.Contexts is
       Ask_If_Overloaded : Boolean := False) return Entity_Information
    is
       Never_Examined : constant Boolean :=
-        Context.Data.Data.Entity_Resolved = Entity_Not_Found
-        or else (Context.Data.Data.Entity_Resolved = Overloaded_Entity_Found
-                 and then Ask_If_Overloaded);
+                         Context.Data.Data.Entity_Resolved = Entity_Not_Found
+                         or else (Context.Data.Data.Entity_Resolved =
+                                                     Overloaded_Entity_Found
+                                  and then Ask_If_Overloaded);
       File           : Source_File;
 
    begin
@@ -765,8 +766,8 @@ package body GPS.Kernel.Contexts is
         and then Has_File_Information (Context)
       then
          File := Get_Or_Create
-           (Db   => Get_Database (Get_Kernel (Context)),
-            File => File_Information (Context),
+           (Db      => Get_Database (Get_Kernel (Context)),
+            File    => File_Information (Context),
             Handler => Get_LI_Handler_From_File
               (Get_Language_Handler (Get_Kernel (Context)),
                File_Information (Context)));
@@ -793,6 +794,7 @@ package body GPS.Kernel.Contexts is
             if Ask_If_Overloaded then
                Context.Data.Data.Entity_Resolved := Success;
             end if;
+
          elsif Context.Data.Data.Entity_Resolved /= Success then
             Context.Data.Data.Entity := null;
             Context.Data.Data.Closest_Ref := No_Entity_Reference;
@@ -812,12 +814,11 @@ package body GPS.Kernel.Contexts is
    ---------------------
 
    function Get_Closest_Ref
-     (Context           : Selection_Context)
-      return Entities.Entity_Reference
+     (Context : Selection_Context) return Entities.Entity_Reference
    is
       --  Make sure the info is computed
       Entity : constant Entity_Information :=
-        Get_Entity (Context, Ask_If_Overloaded => False);
+                 Get_Entity (Context, Ask_If_Overloaded => False);
       pragma Unreferenced (Entity);
    begin
       if Context.Data.Data.Entity_Resolved = Success then

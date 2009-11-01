@@ -455,12 +455,12 @@ package body GPS.Kernel.Macros is
      (Filter  : access Macro_Filter_Record;
       Context : Selection_Context) return Boolean
    is
-      Project : Project_Type;
       Is_Entity_Context : constant Boolean :=
-        Has_Entity_Name_Information (Context);
-      Is_Area_Context : constant Boolean := Has_Area_Information (Context);
-      Entity  : Entity_Information;
-      Start, Last : Integer;
+                            Has_Entity_Name_Information (Context);
+      Is_Area_Context   : constant Boolean := Has_Area_Information (Context);
+      Project           : Project_Type;
+      Entity            : Entity_Information;
+      Start, Last       : Integer;
    begin
       if Filter.Requires.Project = 'p'
         or else Filter.Requires.Project = 'P'

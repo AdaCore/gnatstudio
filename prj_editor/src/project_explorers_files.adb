@@ -537,16 +537,16 @@ package body Project_Explorers_Files is
       Idle          : Boolean := False;
       Physical_Read : Boolean := True)
    is
-      D : constant Append_Directory_Idle_Data_Access :=
-            new Append_Directory_Idle_Data;
+      D          : constant Append_Directory_Idle_Data_Access :=
+                     new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
       Timeout_Id : Timeout_Handler_Id;
 
    begin
-      D.Dir       := Dir;
+      D.Dir           := Dir;
       Ensure_Directory (D.Dir);
-      D.Norm_Dest := Append_To_Dir;
+      D.Norm_Dest     := Append_To_Dir;
       D.Depth         := Depth;
       D.Base          := Base;
       D.Explorer      := Project_Explorer_Files (Explorer);
@@ -918,8 +918,7 @@ package body Project_Explorers_Files is
 
                when File_Node =>
                   Free_Children (T, Iter);
-                  Append_File_Info
-                    (T.Kernel, T.File_Model, Iter, File);
+                  Append_File_Info (T.Kernel, T.File_Model, Iter, File);
 
                when Project_Node | Extends_Project_Node =>
                   null;
@@ -1106,8 +1105,7 @@ package body Project_Explorers_Files is
       while Iter /= Null_Iter loop
          if Get_File (View.File_Model, Iter, File_Column) = File then
             --  First select the parent and set the 'scroll to dir' state
-            Path := Get_Path (View.File_Model,
-                              Parent (View.File_Model, Iter));
+            Path := Get_Path (View.File_Model, Parent (View.File_Model, Iter));
             Set_Cursor (View.File_Tree, Path, null, False);
             View.Scroll_To_Directory := True;
 
@@ -1220,6 +1218,7 @@ package body Project_Explorers_Files is
                            exit;
                         end if;
                      end;
+
                   elsif Get_Node_Type (View.File_Model, Next_Iter) =
                     File_Node
                   then

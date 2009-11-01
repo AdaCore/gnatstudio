@@ -901,8 +901,7 @@ package body Project_Viewers is
       Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
 
       if Iter = Null_Iter then
-         Set_File_Information
-           (Context, Project => V.Current_Project);
+         Set_File_Information (Context, Project => V.Current_Project);
 
       else
          if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then

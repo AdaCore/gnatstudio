@@ -2283,7 +2283,7 @@ package body Projects is
       Callback  : External_Variable_Callback)
    is
       Iterator : Imported_Project_Iterator := Start (Project, Recursive);
-      P : Project_Type;
+      P        : Project_Type;
 
       procedure Process_Prj (Prj : Project_Node_Id);
       --  Process all the declarations in a single project

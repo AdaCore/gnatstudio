@@ -72,7 +72,7 @@ package body Scenario_Selectors is
      (Selector : access Project_Selector_Record'Class;
       Iter     : Gtk_Tree_Iter;
       Project  : Project_Type);
-   --  Add project and all its importing projects to the selector.
+   --  Add project and all its importing projects to the selector
 
    procedure Project_Selected
      (Selector  : access Gtk_Widget_Record'Class;
@@ -326,7 +326,7 @@ package body Scenario_Selectors is
       Iter     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      It : Gtk_Tree_Iter := Null_Iter;
+      It       : Gtk_Tree_Iter := Null_Iter;
       Iterator : Imported_Project_Iterator;
    begin
       if Get_Active (Selector.Show_As_Hierarchy) then

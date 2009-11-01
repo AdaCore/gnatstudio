@@ -1248,14 +1248,17 @@ package body Browsers.Dependency_Items is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      B          : constant Dependency_Browser := Dependency_Browser
-        (Get_Widget (Open_Dependency_Browser (Get_Kernel (Context.Context))));
+      B          : constant Dependency_Browser :=
+                     Dependency_Browser
+                       (Get_Widget (Open_Dependency_Browser
+                        (Get_Kernel (Context.Context))));
+      Other_File : constant Virtual_File :=
+                     Create
+                       (Other_File_Base_Name
+                          (Project_Information (Context.Context),
+                           File_Information (Context.Context)),
+                        Project_Information (Context.Context));
       Item       : File_Item;
-      Other_File : constant Virtual_File := Create
-        (Other_File_Base_Name
-           (Project_Information (Context.Context),
-            File_Information (Context.Context)),
-         Project_Information (Context.Context));
    begin
       if Other_File /= GNATCOLL.VFS.No_File then
          Item := File_Item (Find_File (B, Other_File));

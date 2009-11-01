@@ -62,7 +62,7 @@ package body GPS.Kernel.Commands is
    function Kill_File_Queue
      (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
       return Boolean;
-   --  Interrupts the commands scheduled in the queue.
+   --  Interrupts the commands scheduled in the queue
 
    ------------------
    -- File_Iterate --
@@ -143,7 +143,7 @@ package body GPS.Kernel.Commands is
         (Head (Get_Task_Manager (Kernel), Queue_Name));
 
       if Old_Command /= null then
-         --  If there is already something in the queue, then interrupt it.
+         --  If there is already something in the queue, then interrupt it
 
          Old_Data := Get_Data
            (File_Iterate_Commands.Generic_Asynchronous_Command_Access
@@ -175,14 +175,15 @@ package body GPS.Kernel.Commands is
       C              : Generic_Asynchronous_Command_Access;
       Projects_Count : Natural := 0;
       Iter           : Imported_Project_Iterator :=
-        Start (Get_Project (Handle));
+                         Start (Get_Project (Handle));
 
       Project_Files  : File_Array_Access;
       All_Files      : File_Array_Access;
       Total_Progress : Natural;
 
-      Old_Command  : Scheduled_Command_Access;
-      Command_Data : File_Iterate_Data_Access;
+      Old_Command    : Scheduled_Command_Access;
+      Command_Data   : File_Iterate_Data_Access;
+
    begin
       while Current (Iter) /= No_Project loop
          Projects_Count := Projects_Count + 1;

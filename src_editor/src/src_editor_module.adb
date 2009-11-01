@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
@@ -2375,8 +2376,8 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File   : constant GNATCOLL.VFS.Virtual_File :=
-        File_Information (Context.Context);
+      File    : constant GNATCOLL.VFS.Virtual_File :=
+                  File_Information (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
       Button  : Gtk_Widget;

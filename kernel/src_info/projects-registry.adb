@@ -992,8 +992,8 @@ package body Projects.Registry is
             Get_Name_String (Source.Path.Name);
 
             declare
-               File : constant Virtual_File := Create
-                 (+Name_Buffer (1 .. Name_Len));
+               File : constant Virtual_File :=
+                        Create (+Name_Buffer (1 .. Name_Len));
             begin
                Set (Registry.Data.Sources,
                     K => +Base_Name (File),
@@ -1005,9 +1005,7 @@ package body Projects.Registry is
                --  multiple units)
                --  For source-based languages, we allow duplicate sources
 
-               if Source.Unit = null
-                 or else Source.Index <= 1
-               then
+               if Source.Unit = null or else Source.Index <= 1 then
                   Prepend (Source_File_List, File);
                end if;
             end;
@@ -1239,8 +1237,7 @@ package body Projects.Registry is
    function Get_Project_From_File
      (Registry          : Project_Registry;
       Base_Name         : Filesystem_String;
-      Root_If_Not_Found : Boolean := True)
-      return Project_Type
+      Root_If_Not_Found : Boolean := True) return Project_Type
    is
       P : constant Project_Type :=
             Get (Registry.Data.Sources, +Base_Name).Project;
@@ -1826,10 +1823,10 @@ package body Projects.Registry is
             --  information when we are using extended projects (with duplicate
             --  source files)
             if Use_Source_Path then
-               Info := (Project   => Project2,
-                        File      => GNATCOLL.VFS.No_File,
-                        Lang      => Name_Error,
-                        Source    => No_Source);
+               Info := (Project => Project2,
+                        File    => GNATCOLL.VFS.No_File,
+                        Lang    => Name_Error,
+                        Source  => No_Source);
                Set (Registry.Data.Sources, +Filename, Info);
             end if;
          end if;

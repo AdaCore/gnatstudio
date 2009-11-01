@@ -17,18 +17,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
+with System;
 
-with Gdk.Color;          use Gdk.Color;
-with Glib.Object;        use Glib.Object;
-with Glib.Properties;    use Glib.Properties;
-with Gtk.Text_Iter;      use Gtk.Text_Iter;
-with Gtk.Text_Mark;      use Gtk.Text_Mark;
-with Gtk.Text_Tag;       use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
-with Pango.Enums;        use Pango.Enums;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Traces;
+
+with Gdk.Color;                 use Gdk.Color;
+with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Text_Tag;              use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
+with Pango.Enums;               use Pango.Enums;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
@@ -42,15 +46,11 @@ use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-
-with Commands;                use Commands;
-with Find_Utils;              use Find_Utils;
-with GNAT.Strings;            use GNAT.Strings;
-with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with Language;                use Language;
-with Src_Contexts;            use Src_Contexts;
-with Traces;                  use Traces;
-with GNATCOLL.Traces;
+with Commands;                  use Commands;
+with Find_Utils;                use Find_Utils;
+with Language;                  use Language;
+with Src_Contexts;              use Src_Contexts;
+with Traces;                    use Traces;
 
 package body Src_Editor_Module.Editors is
 
@@ -66,7 +66,7 @@ package body Src_Editor_Module.Editors is
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
    type Src_Editor_Buffer is new GPS.Editors.Editor_Buffer with record
-      Contents  : Buffer_Reference_Access;  --  null only when not initialized
+      Contents : Buffer_Reference_Access;  --  null only when not initialized
    end record;
    --  This is a reference counted type, so that when the buffer is destroyed
    --  we can reset the Buffer field to null. This requires that the field is
@@ -733,7 +733,7 @@ package body Src_Editor_Module.Editors is
    overriding function Get_New
      (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class
    is
-      Box   : Source_Editor_Box;
+      Box : Source_Editor_Box;
    begin
       Box := Open_File
         (This.Kernel, No_File, Line => 1, Column => 1, Column_End => 1);

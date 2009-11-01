@@ -1069,16 +1069,14 @@ package body Project_Explorers is
 
       if Menu /= null then
          Gtk_New (Check, Label => -"Show absolute paths");
-         Associate
-           (Get_History (Kernel).all, Show_Absolute_Paths, Check);
+         Associate (Get_History (Kernel).all, Show_Absolute_Paths, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
            (Check, Signal_Toggled, Update_Absolute_Paths'Access,
             Slot_Object => T);
 
          Gtk_New (Check, Label => -"Show flat view");
-         Associate
-           (Get_History (Kernel).all, Show_Flat_View, Check);
+         Associate (Get_History (Kernel).all, Show_Flat_View, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
            (Check, Signal_Toggled, Update_View'Access,
@@ -1089,8 +1087,7 @@ package body Project_Explorers is
            (Get_History (Kernel).all,
             Key           => Show_Hidden_Dirs,
             Default_Value => True);
-         Associate
-           (Get_History (Kernel).all, Show_Hidden_Dirs, Check);
+         Associate (Get_History (Kernel).all, Show_Hidden_Dirs, Check);
          Append (Menu, Check);
          Widget_Callback.Object_Connect
            (Check, Signal_Toggled, Update_View'Access,
@@ -1100,8 +1097,7 @@ package body Project_Explorers is
          Append (Menu, Item);
       end if;
 
-      if (Node_Type = Project_Node
-          or else Node_Type = Extends_Project_Node)
+      if (Node_Type = Project_Node or else Node_Type = Extends_Project_Node)
         and then Menu /= null
       then
          Gtk_New (Item, -"Parse all xref information");
@@ -1228,9 +1224,8 @@ package body Project_Explorers is
               File.Display_Full_Name);
       else
          declare
-            Rel_Path : constant String := +Relative_Path
-              (File,
-               Project_Path (Project).Dir);
+            Rel_Path : constant String :=
+                         +Relative_Path (File, Project_Path (Project).Dir);
          begin
             if Rel_Path (Rel_Path'Last) = '/'
               or else Rel_Path (Rel_Path'Last) = '\'
@@ -1844,8 +1839,8 @@ package body Project_Explorers is
 
       function Is_Hidden (Dir : Virtual_File) return Boolean is
 
-         D : Virtual_File := Dir;
          Root : constant Virtual_File := Get_Root (Dir);
+         D    : Virtual_File := Dir;
 
       begin
          while D /= GNATCOLL.VFS.No_File
@@ -1866,6 +1861,7 @@ package body Project_Explorers is
       S_Files  : Filename_Node_Hash.Map;
       D_Cursor : File_Node_Hash.Cursor;
       S_Cursor : Filename_Node_Hash.Cursor;
+
    begin
       --  Depending on whether we used trusted mode or not, some extra
       --  directories might be displayed in addition to the explicit ones
@@ -1911,6 +1907,7 @@ package body Project_Explorers is
 
                Prj := Get_Project_From_Node
                  (Explorer.Tree.Model, Explorer.Kernel, N, False);
+
                if Prj /= No_Project then
                   Index := Imported'First;
                   while Index <= Imported'Last loop
