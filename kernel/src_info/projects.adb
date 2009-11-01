@@ -348,7 +348,7 @@ package body Projects is
    is
       View : constant Prj.Project_Id := Get_View (Project);
    begin
-      if Get_View (Project) = Prj.No_Project then
+      if View = Prj.No_Project then
          --  View=Prj.No_Project case needed for the project wizard
 
          return To_Remote

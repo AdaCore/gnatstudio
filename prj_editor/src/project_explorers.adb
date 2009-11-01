@@ -1225,7 +1225,7 @@ package body Project_Explorers is
       else
          declare
             Rel_Path : constant String :=
-                         +Relative_Path (File, Project_Path (Project).Dir);
+                         +Relative_Path (File, Project_Directory (Project));
          begin
             if Rel_Path (Rel_Path'Last) = '/'
               or else Rel_Path (Rel_Path'Last) = '\'
