@@ -1607,6 +1607,7 @@ package body Src_Editor_Box is
 
       if Force_Freeze then
          Db := Get_Database (Kernel);
+         pragma Assert (not Frozen (Db));
          Freeze (Db);
       end if;
 
