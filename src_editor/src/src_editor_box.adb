@@ -1648,7 +1648,7 @@ package body Src_Editor_Box is
 
       if Force_Freeze then
          Thaw (Db);
-         pragma Assert (Frozen (Db) = Create_And_Update);
+         pragma Assert (not Frozen (Db));
       end if;
 
       Pop_State (Kernel);
