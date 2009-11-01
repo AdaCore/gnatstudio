@@ -155,12 +155,12 @@ package body GPS.Kernel.Macros is
       then
          if Param = "f" then
             return String_Utils.Protect
-              (+Base_Name (File_Information (Context)),
+              (File_Information (Context).Display_Base_Name,
                Protect_Quotes => Quoted);
 
          elsif Param = "fk" then
             return String_Utils.Protect
-              (Krunch (+Base_Name (File_Information (Context))),
+              (Krunch (File_Information (Context).Display_Base_Name),
                Protect_Quotes => Quoted);
 
          else

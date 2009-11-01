@@ -989,7 +989,7 @@ package body Projects.Registry is
             exit when Source = No_Source;
 
             --  Get the absolute path name for this source
-            Get_Name_String (Source.Path.Display_Name);
+            Get_Name_String (Source.Path.Name);
 
             declare
                File : constant Virtual_File := Create

@@ -357,7 +357,7 @@ package body Projects is
 
       else
          return To_Remote
-           (Create (+Get_String (View.Path.Display_Name)), Host);
+           (Create (+Get_String (View.Path.Name)), Host);
       end if;
    end Project_Path;
 
@@ -389,7 +389,7 @@ package body Projects is
             Sources : Name_Id_Array (1 .. Count);
          begin
             for C in Sources'Range loop
-               Sources (C) := String_Elements (Project)(Src).Display_Value;
+               Sources (C) := String_Elements (Project)(Src).Value;
                Src := String_Elements (Project)(Src).Next;
             end loop;
             return Sources;
@@ -446,7 +446,7 @@ package body Projects is
             while Src /= Nil_String loop
                Sources (Index) := Create
                  (Normalize_Pathname
-                    (+Get_String (String_Elements (P) (Src).Display_Value),
+                    (+Get_String (String_Elements (P) (Src).Value),
                      Current_Dir,
                      Resolve_Links => False));
                Ensure_Directory (Sources (Index));
@@ -574,12 +574,12 @@ package body Projects is
             return (1 => Create (Handle_Subdir (View.Library_ALI_Dir.Name)));
          else
             return
-              (Create (Handle_Subdir (View.Object_Directory.Display_Name)),
+              (Create (Handle_Subdir (View.Object_Directory.Name)),
                Create (Handle_Subdir (View.Library_ALI_Dir.Name)));
          end if;
       elsif View.Object_Directory /= No_Path_Information then
          return
-           (1 => Create (Handle_Subdir (View.Object_Directory.Display_Name)));
+           (1 => Create (Handle_Subdir (View.Object_Directory.Name)));
       else
          return (1 .. 0 => <>);
       end if;
@@ -1448,7 +1448,7 @@ package body Projects is
       else
          declare
             Exec : constant Filesystem_String := +Get_String
-              (Name_Id (Get_View (Project).Exec_Directory.Display_Name));
+              (Name_Id (Get_View (Project).Exec_Directory.Name));
 
          begin
             if Exec'Length > 0 then

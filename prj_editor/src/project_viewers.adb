@@ -444,7 +444,7 @@ package body Project_Viewers is
          Set (Viewer.Model,
               Iter,
               Display_File_Name_Column,
-              +Base_Name (File_Name));
+              Display_Base_Name (File_Name));
          Set_File
            (Viewer.Model,
             Iter,
