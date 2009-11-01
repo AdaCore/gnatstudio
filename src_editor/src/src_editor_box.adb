@@ -1658,7 +1658,7 @@ package body Src_Editor_Box is
       when E : others =>
          Trace (Me, E);
 
-         if Frozen (Db) /= Create_And_Update then
+         if Frozen (Db) then
             Thaw (Db);
          end if;
 
