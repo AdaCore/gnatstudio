@@ -1393,8 +1393,8 @@ private
       Predefined_File : Source_File;
       Lang            : Abstract_Language_Handler;
       Registry        : Projects.Registry.Project_Registry_Access;
-      Frozen          : Boolean := False;
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
+      Count           : Integer := 0;
    end record;
    type Entities_Database is access Entities_Database_Record;
 
