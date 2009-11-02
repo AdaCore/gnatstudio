@@ -577,6 +577,7 @@ package body Projects is
               (Create (Handle_Subdir (View.Object_Directory.Name)),
                Create (Handle_Subdir (View.Library_ALI_Dir.Name)));
          end if;
+
       elsif View.Object_Directory /= No_Path_Information then
          return
            (1 => Create (Handle_Subdir (View.Object_Directory.Name)));

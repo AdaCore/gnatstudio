@@ -152,7 +152,7 @@ package body Projects.Editor is
    type Node_Callback is access procedure (Node : Project_Node_Id);
 
    procedure For_Each_Directory_Node
-     (Project : Project_Type; Action  : Node_Callback);
+     (Project : Project_Type; Action : Node_Callback);
    --  For each node that deals with a procedure, calls Action
 
    procedure Remove_Variable_Declaration
@@ -3262,7 +3262,7 @@ package body Projects.Editor is
    -----------------------------
 
    procedure For_Each_Directory_Node
-     (Project : Project_Type; Action  : Node_Callback)
+     (Project : Project_Type; Action : Node_Callback)
    is
       Tree : constant Project_Node_Tree_Ref := Project.Tree;
 
@@ -3536,14 +3536,14 @@ package body Projects.Editor is
    --------------------
 
    function Create_Project
-     (Registry : Projects.Registry.Project_Registry'Class;
-      Name     : String;
-      Path     : GNATCOLL.VFS.Virtual_File;
+     (Registry       : Projects.Registry.Project_Registry'Class;
+      Name           : String;
+      Path           : GNATCOLL.VFS.Virtual_File;
       Is_Config_File : Boolean := False) return Prj.Tree.Project_Node_Id
    is
-      D            : constant Filesystem_String :=
-                       Name_As_Directory (Full_Name (Path))
-                       & To_File_Name (+Name) & Project_File_Extension;
+      D : constant Filesystem_String :=
+            Name_As_Directory (Full_Name (Path))
+            & To_File_Name (+Name) & Project_File_Extension;
    begin
       return Prj.Tree.Create_Project
         (In_Tree        => Get_Tree (Registry),
@@ -3563,7 +3563,8 @@ package body Projects.Editor is
    is
       Tree    : constant Project_Node_Tree_Ref := Get_Tree (Registry);
       Project : constant Project_Node_Id :=
-        Create_Project (Registry, Name, Path, Is_Config_File => False);
+                  Create_Project
+                    (Registry, Name, Path, Is_Config_File => False);
       P       : Project_Type;
    begin
       Reset_Project_Name_Hash (Registry, Prj.Tree.Name_Of (Project, Tree));

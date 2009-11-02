@@ -2348,14 +2348,11 @@ package body Project_Properties is
             Child := Child.Next;
          end loop;
 
-         Register_New_Attribute (Kernel => Kernel, Attr => A);
-
       else
          Parse_Attribute_Type (Kernel, N.Child, A.Name.all, A.Non_Index_Type);
-         Register_New_Attribute
-           (Kernel    => Kernel,
-            Attr      => A);
       end if;
+
+      Register_New_Attribute (Kernel => Kernel, Attr => A);
    end Parse_Attribute_Description;
 
    ---------------
@@ -2622,11 +2619,12 @@ package body Project_Properties is
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
       Set (Ed.Model, Iter, 1, Selected);
-      Select_Attribute_In_List (Index_Pkg   => Ed.Attribute.Pkg.all,
-                                Index_Name  => Ed.Attribute.Name.all,
-                                Project     => Ed.Project,
-                                Index_Value => Get_String (Ed.Model, Iter, 0),
-                                Is_Selected => Selected);
+      Select_Attribute_In_List
+        (Index_Pkg   => Ed.Attribute.Pkg.all,
+         Index_Name  => Ed.Attribute.Name.all,
+         Project     => Ed.Project,
+         Index_Value => Get_String (Ed.Model, Iter, 0),
+         Is_Selected => Selected);
    end Attribute_List_Changed;
 
    ---------------------------
@@ -3988,6 +3986,7 @@ package body Project_Properties is
             elsif Attr_Type.Default.all = "project source files" then
                if Project = Projects.No_Project then
                   return GNAT.Strings.String_List'(1 .. 0 => null);
+
                else
                   declare
                      Files  : File_Array_Access :=
