@@ -529,8 +529,10 @@ package body GPS.Kernel.Modules is
          else
             declare
                Done : aliased Boolean := False;
-               Tmp  : constant String := GPS.Kernel.Macros.Substitute
-                 (Param, Context, Quoted, Done'Access);
+               Tmp  : constant String :=
+                        Locale_To_UTF8
+                          (GPS.Kernel.Macros.Substitute
+                             (Param, Context, Quoted, Done'Access));
             begin
                Has_Error := not Done;
                return Emphasize (Tmp);
