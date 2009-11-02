@@ -7,6 +7,13 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Make the preferences file writable or copy the gnatpp_switches.py
               plug-in from the 4.4.1 distribution.
 
+- IA25-002: Contextual menu slow to display on a dispatching call
+  Problem:    When displaying a contextual menu for a dispatching call, GPS
+              takes a long time to compute the menu, and unexpected loads
+              extra xref information in memory.
+  Workaround: Set the 'Editor/Submenu for dispatching calls preference' to
+              'Never'.
+
 - IA23-035: GPS may crash when setting the default remote servers
   Problem:    In the remote view, clicking on the 'Set default' button may make
               GPS crash.
