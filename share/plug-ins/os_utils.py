@@ -20,3 +20,9 @@ def locate_exec_on_path (prog):
       if os.path.isfile(file+ext):
         return file
   return ""
+
+def display_name (filename):
+  if os.name == 'nt' and os.environ["GNAT_CODE_PAGE"] == "CP_ACP":
+    return unicode(filename, "ISO-8859-1").encode("UTF-8")
+  else:
+    return filename
