@@ -299,11 +299,11 @@ class contextualMenu (GPS.Contextual):
 
    def label (self, context):
       if self.desttype == "file":
-         return "Check Coding standard of " + os.path.basename(self.file.name())
+         return "Check Coding standard of <b>" + os.path.basename(self.file.name()) + "</b>"
       elif self.desttype == "dir":
-         return "Check Coding standard of files in " + os.path.basename (self.dir)
+         return "Check Coding standard of files in <b>" + os.path.basename (self.dir) + "</b>"
       elif self.desttype == "project":
-         return "Check Coding standard of files in " + self.project.name()
+         return "Check Coding standard of files in <b>" + self.project.name() + "</b>"
       return ""
 
    def on_activate (self, context):
