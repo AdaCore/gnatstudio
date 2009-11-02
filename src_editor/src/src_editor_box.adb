@@ -1607,6 +1607,7 @@ package body Src_Editor_Box is
 
       if Force_Freeze then
          Db := Get_Database (Kernel);
+         pragma Assert (Frozen (Db) = Create_And_Update);
          Freeze (Db);
       end if;
 
@@ -1823,7 +1824,8 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Count : Integer := 0;
+      Count  : Integer := 0;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
 
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean;
@@ -1844,13 +1846,17 @@ package body Src_Editor_Box is
       end On_Callee;
 
    begin
-      Push_State (Get_Kernel (Context), Busy);
+      pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
+
+      Push_State (Kernel, Busy);
       For_Each_Dispatching_Call
         (Entity    => Get_Entity (Context),
          Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
          Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
       Pop_State (Get_Kernel (Context));
+
+      pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
       return Count > 1;
    end Filter_Matches_Primitive;
 

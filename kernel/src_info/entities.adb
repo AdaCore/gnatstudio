@@ -1033,18 +1033,35 @@ package body Entities is
    procedure Freeze
      (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update) is
    begin
-      Trace (Assert_Me, "Freeze database " & Mode'Img);
-      Db.Frozen := Mode;
+      if Active (Assert_Me) then
+         Trace (Assert_Me, "Freeze database " & Mode'Img
+                & " count =" & Db.Count'Img);
+      end if;
+
+      Db.Count := Db.Count + 1;
+      Freeze_Stack.Push (Db.Stack, Db.Frozen);
+
+      --  If the Db is completely frozen, we do not want to go back to a
+      --  "less frozen" mode.
+
+      if Db.Frozen < Freeze_Type'Last then
+         Db.Frozen := Mode;
+      end if;
    end Freeze;
 
-   -------------
-   -- Release --
-   -------------
+   ----------
+   -- Thaw --
+   ----------
 
    procedure Thaw (Db : Entities_Database) is
    begin
-      Trace (Assert_Me, "Thaw database " & Create_And_Update'Img);
-      Db.Frozen := Create_And_Update;
+      Freeze_Stack.Pop (Db.Stack, Db.Frozen);
+      Db.Count := Db.Count - 1;
+
+      if Active (Assert_Me) then
+         Trace (Assert_Me, "Thaw database " & Db.Frozen'Img
+                & " count =" & Db.Count'Img);
+      end if;
    end Thaw;
 
    ------------

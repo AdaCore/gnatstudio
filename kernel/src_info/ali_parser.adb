@@ -786,8 +786,8 @@ package body ALI_Parser is
             Xref_Entity.Table (Xref_Ent).Iref_Line, 0,
             First_Sect, Last_Sect);
          if Instantiation_Of = null then
-            if Active (Me) then
-               Trace (Me, "Couldn't find instantiated entity: "
+            if Active (Assert_Me) then
+               Trace (Assert_Me, "Couldn't find instantiated entity: "
                       & Xref_Entity.Table (Xref_Ent).Iref_File_Num'Img
                       & Xref_Entity.Table (Xref_Ent).Iref_Line'Img);
             end if;
@@ -1116,10 +1116,12 @@ package body ALI_Parser is
       if Renaming /= null then
          Set_Is_Renaming_Of (Entity, Renaming);
       else
-         Trace (Me, "Couldn't resolve renaming at "
-                & Xref_Section.Table (Xref_Sect).File_Num'Img
-                & Xref_Entity.Table (Xref_Ent).Rref_Line'Img
-                & Xref_Entity.Table (Xref_Ent).Rref_Col'Img);
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "Couldn't resolve renaming at "
+                   & Xref_Section.Table (Xref_Sect).File_Num'Img
+                   & Xref_Entity.Table (Xref_Ent).Rref_Line'Img
+                   & Xref_Entity.Table (Xref_Ent).Rref_Col'Img);
+         end if;
       end if;
    end Process_Renaming_Ref;
 
@@ -2146,17 +2148,21 @@ package body ALI_Parser is
                File    => Iter.Files (Iter.Current),
                Project => Iter.Project);
 
-            --  We force the update of this ALI, but if the database has been
-            --  frozen this will not force the update of dependent ALIs (which
-            --  will be parsed later anyway)
+            --  We force the update of this ALI if the database is in
+            --  'Create_Only' mode. In this mode, this will not force the
+            --  update of dependent ALIs (which will be parsed later anyway).
 
             if not Update_ALI
-              (Iter.Handler, LI, Reset_ALI => True, Force_Update => True)
+              (Iter.Handler, LI,
+               Reset_ALI => True,
+               Force_Update => Frozen (Iter.Handler.Db) = Create_Only)
             then
-               Trace
-                 (Me,
-                  "Couldn't parse " &
-                  Iter.Files (Iter.Current).Display_Full_Name);
+               if Active (Me) then
+                  Trace
+                    (Me,
+                     "Couldn't parse " &
+                     Iter.Files (Iter.Current).Display_Full_Name);
+               end if;
             end if;
          end if;
 

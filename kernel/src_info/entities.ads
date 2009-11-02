@@ -29,6 +29,7 @@ with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
 with Basic_Types;
+with Generic_Stack;
 with Tries;
 with Virtual_File_Indexes;
 
@@ -1397,6 +1398,8 @@ private
       Equal         => GNATCOLL.VFS."=",
       Free_Elmt_Ptr => Free);
 
+   package Freeze_Stack is new Generic_Stack (Freeze_Type);
+
    -----------------------
    -- Entities_Database --
    -----------------------
@@ -1410,6 +1413,8 @@ private
       Registry        : Projects.Registry.Project_Registry_Access;
       Frozen          : Freeze_Type := Create_And_Update;
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
+      Stack           : Freeze_Stack.Simple_Stack;
+      Count           : Integer := 0;
    end record;
    type Entities_Database is access Entities_Database_Record;
 

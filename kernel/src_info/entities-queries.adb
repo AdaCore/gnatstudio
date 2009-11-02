@@ -1173,7 +1173,7 @@ package body Entities.Queries is
             Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
          else
             --  Otherwise, the File_It iterator is corrupted, reset
-            --  it an look for new files.
+            --  it and look for new files.
 
             Iter.Files_It := First (Iter.Entity.References);
 
@@ -1566,9 +1566,8 @@ package body Entities.Queries is
    -------------
 
    procedure Destroy (Iter : in out Dependency_Iterator) is
-      pragma Unreferenced (Iter);
    begin
-      null;
+      Free (Iter.LI_Iter);
    end Destroy;
 
    -------------
