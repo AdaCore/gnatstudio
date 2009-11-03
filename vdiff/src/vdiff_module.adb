@@ -348,7 +348,7 @@ package body Vdiff_Module is
          Module_Name => Vdiff_Module_Name,
          Priority    => Default_Priority);
       Add_Hook (Kernel, Diff_Action_Hook,
-                Wrapper (Diff_Hook'Access), Name => "vidff.diff");
+                Wrapper (Diff_Hook'Access), Name => "vdiff.diff");
       Register_Menu
         (Kernel, '/' & (-"Tools") & '/', (-"C_ompare"),
          Callback   => null,
