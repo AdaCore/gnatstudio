@@ -138,7 +138,7 @@ package body SN.Xref_Pools is
          --  ??? Should use GNAT.OS_Lib Open/Read instead, would be more
          --  efficient
 
-         Open (FD, In_File, +Full_Name (Filename));
+         Open (FD, In_File, +Full_Name (Filename, True));
 
          if Is_Open (FD) then
             loop
@@ -196,7 +196,7 @@ package body SN.Xref_Pools is
          return;
       end if;
 
-      Create (FD, Out_File, +Full_Name (Filename));
+      Create (FD, Out_File, +Full_Name (Filename, True));
       STable.Get_First (Pool.HTable, Iter);
 
       loop
@@ -209,7 +209,7 @@ package body SN.Xref_Pools is
          else
             Put (FD, '0');
          end if;
-         Put_Line (FD, +Full_Name (E.Xref_Filename));
+         Put_Line (FD, +Full_Name (E.Xref_Filename, True));
          STable.Get_Next (Pool.HTable, Iter);
       end loop;
 
@@ -275,7 +275,7 @@ package body SN.Xref_Pools is
       Data   : Xref_Elmt_Ptr;
       N      : Integer := 0;
       Source : GNAT.Strings.String_Access :=
-                 new String'(+Full_Name (Source_Filename));
+                 new String'(+Full_Name (Source_Filename, True));
 
    begin
       --  Get hashed value
@@ -305,7 +305,7 @@ package body SN.Xref_Pools is
                Data.Xref_Filename := Full_Name;
 
                --  touch this file
-               FD := Create_New_File (+Full_Name.Full_Name, Binary);
+               FD := Create_New_File (+Full_Name.Full_Name (True), Binary);
 
                if FD = Invalid_FD then -- unable to create a new file
                   --  raise an exception if unable to create new xref file
@@ -339,7 +339,7 @@ package body SN.Xref_Pools is
      (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean
    is
-      Full      : aliased String := +Full_Name (Source_Filename);
+      Full      : aliased String := +Full_Name (Source_Filename, True);
       Xref_Elmt : constant Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unchecked_Access);
    begin
@@ -355,7 +355,7 @@ package body SN.Xref_Pools is
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is
-      Full      : aliased String := +Full_Name (Source_Filename);
+      Full      : aliased String := +Full_Name (Source_Filename, True);
       Xref_Elmt : constant Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unchecked_Access);
    begin

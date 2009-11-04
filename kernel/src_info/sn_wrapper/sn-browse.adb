@@ -48,16 +48,16 @@ package body SN.Browse is
       Args :=
         (1 => new String'("-n"),
          2 => new String'
-           (+(Create_From_Dir (DB_Directory, DB_File_Name).Full_Name)),
+           (+(Create_From_Dir (DB_Directory, DB_File_Name).Full_Name (True))),
          3 => new String'("-p"),
-         4 => new String'(+DBIMP_Path.Full_Name),
+         4 => new String'(+DBIMP_Path.Full_Name (True)),
          5 => new String'("-y"),
-         6 => new String'(+File_Name.Full_Name));
+         6 => new String'(+File_Name.Full_Name (True)));
 
       Trace (Me, "Spawn: " & Cbrowser_Path.Display_Full_Name
              & " " & Argument_List_To_String (Args));
       GNAT.Expect.Non_Blocking_Spawn
-        (PD, +Cbrowser_Path.Full_Name, Args, Err_To_Out => True);
+        (PD, +Cbrowser_Path.Full_Name (True), Args, Err_To_Out => True);
       Free (Args);
    end Browse;
 
@@ -190,13 +190,13 @@ package body SN.Browse is
          Ensure_Directory (DB_Directories (D));
 
          Args (4 + D - DB_Directories'First) :=
-           new String'(+DB_Directories (D).Full_Name & (+DB_File_Name));
+           new String'(+DB_Directories (D).Full_Name (True) & (+DB_File_Name));
       end loop;
 
       Trace (Me, "Spawn: " & DBIMP_Path.Display_Full_Name
              & " " & Argument_List_To_String (Args.all));
       Non_Blocking_Spawn
-        (PD, +DBIMP_Path.Full_Name, Args.all, Err_To_Out => True);
+        (PD, +DBIMP_Path.Full_Name (True), Args.all, Err_To_Out => True);
       GNAT.OS_Lib.Free (Args);
 
       Started := True;
