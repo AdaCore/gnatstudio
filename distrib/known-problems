@@ -9,7 +9,7 @@ Known Problems fixed in GPS 4.4.1
 
 - IA25-002: Contextual menu slow to display on a dispatching call
   Problem:    When displaying a contextual menu for a dispatching call, GPS
-              takes a long time to compute the menu, and unexpected loads
+              takes a long time to compute the menu, and unexpectedly loads
               extra xref information in memory.
   Workaround: Set the 'Editor/Submenu for dispatching calls preference' to
               'Never'.
