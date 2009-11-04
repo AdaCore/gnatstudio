@@ -270,7 +270,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 		 */
 		if (b.psize == 0) {
 #ifdef WIN32
-			b.psize = 512;
+			b.psize = 4096;
 #else
 #ifndef sgi
 			b.psize = sb.st_blksize;
