@@ -363,7 +363,7 @@ package body Code_Peer.Message_Review_Dialogs is
       pragma Unreferenced (Object);
 
    begin
-      Self.Unref;
+      Self.Destroy;
    end On_Cancel;
 
    -----------
@@ -416,7 +416,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       --  Hide dialog
 
-      Self.Unref;
+      Self.Destroy;
    end On_Ok;
 
 end Code_Peer.Message_Review_Dialogs;
