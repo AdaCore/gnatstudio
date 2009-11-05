@@ -213,7 +213,7 @@ class rulesEditor(gtk.Dialog):
       self.fileEntry.set_editable(True)
       self.fileEntry.show()
       if None != defaultfile:
-         self.fileEntry.set_text (defaultfile)
+         self.fileEntry.set_text (defaultfile.name())
       self.fileEntry.connect ('changed', self.on_file_entry_changed)
       hbox.pack_start (self.fileEntry, True, True, 0)
 
@@ -264,7 +264,7 @@ class rulesEditor(gtk.Dialog):
       self.on_file_entry_changed()
 
    def get_filename (self):
-      return GPS.File (self.fileEntry.get_text()).name()
+      return GPS.File (self.fileEntry.get_text())
 
    def on_file_entry_changed (self, *args):
       """Callback when the file entry changed"""
@@ -321,7 +321,7 @@ class rulesEditor(gtk.Dialog):
 
    def on_save (self, *args):
       """Callback to 'Save' button"""
-      file = GPS.File (self.fileEntry.get_text ())
+      file = self.get_filename()
       f = open (file.name(), "w")
       content = self.SwitchesChooser.get_cmd_line ()
       content = re.sub (" +", "\n", content)

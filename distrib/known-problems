@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- IB05-015 Gnatcheck plugin issues in remote mode
+  Problem:    When using the remote mode, GPS tries to spawn gnatcheck on the
+              remote server without using the server's paths for both the
+              project file and the optional source files.
+  Workaround: Use gnatcheck locally.
+
 - IA21-005 Key Shortcuts editor dialog is now clearer
   Problem:    When you press Grab in the key shortcuts editor, you are left
               with a busy cursor with no obvious indication that GPS is
@@ -15,7 +21,7 @@ Known Problems fixed in GPS 4.5.0
               the dotted notation.
 
 - GA10-023 Completion problems with UTF-8
-  Problem:    On certain cases, the smart complete action may not work on 
+  Problem:    On certain cases, the smart complete action may not work on
               identifiers containing complex UTF-8 characters.
   Workaround: Manually fix the code.
 

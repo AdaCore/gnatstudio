@@ -48,7 +48,7 @@ class rulesSelector(gtk.Dialog):
       hbox.pack_start (self.fileEntry, True, True, 0)
 
       if None != defaultfile:
-         self.fileEntry.set_text (defaultfile)
+         self.fileEntry.set_text (defaultfile.name())
       self.fileEntry.connect ('changed', self.on_file_entry_changed)
       self.on_file_entry_changed()
 
@@ -58,7 +58,7 @@ class rulesSelector(gtk.Dialog):
       hbox.pack_start (button, False, False, 0)
 
    def get_file (self):
-      return self.fileEntry.get_text()
+      return GPS.File (self.fileEntry.get_text())
 
    def on_file_entry_changed (self, *args):
       """Callback when the file entry changed"""
@@ -96,8 +96,11 @@ class gnatCheckProc:
 
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
-      if not os.path.isfile (self.gnatCmd):
-         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
+
+      if GPS.is_server_local("Tools_Server"):
+         if not os.path.isfile (self.gnatCmd):
+            self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
+
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the gnatcheck module.\n")
@@ -111,14 +114,14 @@ class gnatCheckProc:
          return
 
       # gnat check command changed: we reinitialize the rules list
-      if prev_cmd != self.gnatCmd:
+      if prev_cmd != self.gnatCmd or self.rules == None:
          self.rules = get_supported_rules(self.gnatCmd)
 
       # we retrieve the coding standard file from the project
       for opt in GPS.Project.root().get_attribute_as_list("default_switches", package="check", index="ada"):
         res = re.split ("^\-from\=(.*)$", opt)
         if len(res)>1:
-          self.rules_file = GPS.File (res[1]).name()
+          self.rules_file = GPS.File (res[1])
 
       try:
         ruleseditor = rulesEditor(self.rules, self.rules_file)
@@ -164,8 +167,14 @@ class gnatCheckProc:
          for opt in opts:
            res = re.split ("^\-from\=(.*)$", opt)
            if len(res)>1:
+             # we cd to the root project's dir before creating the file, as
+             # this will then correctly resolve if the file is relative to the
+             # project's dir
+             olddir = GPS.pwd()
              rootdir = GPS.Project.root().file().directory()
-             self.rules_file = rootdir+res[1]
+             GPS.cd(rootdir)
+             self.rules_file = GPS.File (res[1])
+             GPS.cd(olddir)
 
       if need_rules_file:
          selector = rulesSelector (project.name(), self.rules_file)
@@ -183,7 +192,7 @@ class gnatCheckProc:
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
          return
       # launch gnat check with current project
-      cmd = self.gnatCmd + ' check -P """' + project.file().name() + '"""'
+      cmd = self.gnatCmd + ' check -P """' + project.file().name("Tools_Server") + '"""'
       # also analyse subprojects ?
       if recursive:
         cmd += " -U"
@@ -199,7 +208,7 @@ class gnatCheckProc:
       cmd += " " + filestr
 
       if need_rules_file:
-         cmd += ' -rules """-from=' + self.rules_file + '"""'
+         cmd += ' -rules """-from=' + self.rules_file.name("Tools_Server") + '"""'
 
       # clear the Checks category in the Locations view
       if GPS.Locations.list_categories().count (self.locations_string) > 0:
@@ -223,7 +232,7 @@ class gnatCheckProc:
 
    def check_file (self, file):
       try:
-         self.internalSpawn (file.name(), file.project())
+         self.internalSpawn (file.name("Tools_Server"), file.project())
       except:
          GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
 
@@ -231,7 +240,7 @@ class gnatCheckProc:
       try:
          filestr = ""
          for f in files:
-            filestr += '"""' + f.name() + '""" '
+            filestr += '"""' + f.name("Tools_Server") + '""" '
          self.internalSpawn (filestr, files[0].project());
       except:
          GPS.Console ("Messages").write ("Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
@@ -268,11 +277,12 @@ class contextualMenu (GPS.Contextual):
            # verify this is a dir
            self.dir = context.directory()
            # check this directory contains ada sources
-           srcs = GPS.Project.root().sources (recursive = True)
+           srcs = GPS.Project.root().sources (True)
            found = False
            self.files = []
            for f in srcs:
-              if f.name().lower().find (dir.lower()) == 0:
+              filename=f.name()
+              if filename.find (self.dir) == 0:
                  if f.language().lower() == "ada":
                    self.files.append (f)
                    found = True
@@ -299,11 +309,11 @@ class contextualMenu (GPS.Contextual):
 
    def label (self, context):
       if self.desttype == "file":
-         return "Check Coding standard of <b>" + os_utils.display_name (os.path.basename(self.file.name())) + "</b>"
+         return "Check Coding standard of <b>%s</b>" % (os_utils.display_name (os.path.basename(self.file.name())))
       elif self.desttype == "dir":
-         return "Check Coding standard of files in <b>" + os_utils.display_name (os.path.basename (self.dir)) + "</b>"
+         return "Check Coding standard of files in <b>%s</b>" % (os_utils.display_name (os.path.basename(os.path.dirname (self.dir))))
       elif self.desttype == "project":
-         return "Check Coding standard of files in <b>" + os_utils.display_name (self.project.name()) + "</b>"
+         return "Check Coding standard of files in <b>%s</b>" % (os_utils.display_name (self.project.name()))
       return ""
 
    def on_activate (self, context):

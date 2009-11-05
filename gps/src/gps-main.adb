@@ -1280,13 +1280,6 @@ procedure GPS.Main is
       Prj_Output.Set_Default_Output_Handler
         (Display_Prj_Messages'Unrestricted_Access);
 
-      --  Register this very early so that other modules can access remote
-      --  files
-
-      Remote_Module.Register_Module (GPS_Main.Kernel);
-      GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
-      Remote.Rsync.Register_Module (GPS_Main.Kernel);
-
       --  Register the locations view before all the modules that register a
       --  highlighting category. Otherwise, when loading the desktop, the
       --  locations view might create highligthting with categories that don't
@@ -1303,6 +1296,13 @@ procedure GPS.Main is
       end if;
 
       Register_Default_Script_Commands (GPS_Main.Kernel);
+
+      --  Register this very early so that other modules can access remote
+      --  files
+
+      Remote_Module.Register_Module (GPS_Main.Kernel);
+      GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
+      Remote.Rsync.Register_Module (GPS_Main.Kernel);
 
       GPS.Location_View.Register_Commands (GPS_Main.Kernel);
       GPS.Kernel.Clipboard.Register_Commands (GPS_Main.Kernel);

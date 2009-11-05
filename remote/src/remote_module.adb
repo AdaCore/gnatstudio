@@ -23,6 +23,7 @@ with Glib.Object;
 with Gtk.Widget;
 with Gtkada.MDI;
 
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Intl;                  use GPS.Intl;
@@ -31,6 +32,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
 with XML_Parsers;
@@ -77,6 +79,11 @@ package body Remote_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when a file has been modified
+
+   procedure Remote_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Command handler for the "is_local_server" command
 
    ----------------------
    -- Show_Remote_View --
@@ -227,7 +234,32 @@ package body Remote_Module is
       Add_Hook (Kernel, File_Saved_Hook,
                 Wrapper (File_Saved'Access),
                 Name  => "remote_module.file_saved");
+
+      Register_Command
+        (Kernel, "is_server_local",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Remote_Commands_Handler'Access);
    end Register_Module;
+
+   -----------------------------
+   -- Remote_Commands_Handler --
+   -----------------------------
+
+   procedure Remote_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Server : Remote.Server_Type;
+   begin
+      if Command = "is_server_local" then
+         Server := Remote.Server_Type'Value (Nth_Arg (Data, 1));
+         GNATCOLL.Scripts.Set_Return_Value (Data, Remote.Is_Local (Server));
+      end if;
+   exception
+      when others =>
+         GNATCOLL.Scripts.Set_Return_Value (Data, True);
+   end Remote_Commands_Handler;
 
    ------------------
    -- Get_Database --

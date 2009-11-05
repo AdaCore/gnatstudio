@@ -1007,6 +1007,12 @@ GPS.parse_xml ("""
      <description>Return the name of the current build mode. Return an empty string if no mode is registered.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.is_server_local">
+     <param name="server">The server. Possible values are "Build_Server", "Debug_Server", "Execution_Server" and "Tools_Server".</param>
+     <return>A boolean</return>
+     <description>Tell if the specified server is the local machine.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   GPS shell commands
     ###################################################################-->
