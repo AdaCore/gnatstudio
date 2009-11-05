@@ -616,7 +616,7 @@ package body CPP_Parser is
          for D in Files'Range loop
             Ensure_Directory (Obj_Dir (Obj));
             Files (D) := New_String
-              (+(Obj_Dir (Obj).Full_Name & Db_Dir
+              (+(Obj_Dir (Obj).Full_Name (True) & Db_Dir
                & SN.Browse.DB_File_Name & Table_Extension (Table)));
             Obj := Obj + 1;
          end loop;
@@ -2178,7 +2178,7 @@ package body CPP_Parser is
             Body_Known => True,
             Body_Info  => C);
 
-         if not Equal (Get_Filename (Source).Full_Name,
+         if not Equal (Get_Filename (Source).Full_Name (True),
                        (+C.Key (C.File_Name.First  .. C.File_Name.Last)))
          then
             S := Get_Or_Create
@@ -2875,7 +2875,7 @@ package body CPP_Parser is
       Trace (Me, "Parse_All_LI_Information in project "
              & Project_Name (Project));
       Files (1) := New_String
-        (+(Get_DB_Dir (Project).Full_Name
+        (+(Get_DB_Dir (Project).Full_Name (True)
          & SN.Browse.DB_File_Name & Table_Extension (F)));
       DB_API.Open (Iter.Table, Files, Success);
       Free (Files (1));
@@ -3061,7 +3061,7 @@ package body CPP_Parser is
 
          Iterator.List_Filename := Create_From_Dir (DB_Dir, "gps_list");
          Create (Tmp_File, Out_File,
-                 Name => +Iterator.List_Filename.Full_Name);
+                 Name => +Iterator.List_Filename.Full_Name (True));
 
       else
          Iterator.State := Skip_Project;
@@ -3095,7 +3095,8 @@ package body CPP_Parser is
                      Delete (Xref_File_Name, Success);
                   end if;
 
-                  Put_Line (Tmp_File, "@" & (+Full_Name (Xref_File_Name)));
+                  Put_Line (Tmp_File, "@" &
+                            (+Full_Name (Xref_File_Name, True)));
                   Put_Line (Tmp_File, (+Full_Name (File, True)));
                   Recompute_TO := True;
 
@@ -3390,13 +3391,14 @@ package body CPP_Parser is
    begin
       Ensure_Directory (DB_Dir);
       Files (1) := New_String
-        (+(DB_Dir.Full_Name & SN.Browse.DB_File_Name & Table_Extension (F)));
+        (+(DB_Dir.Full_Name (True) &
+         SN.Browse.DB_File_Name & Table_Extension (F)));
       DB_API.Open (Table, Files, Success);
       Free (Files (1));
 
       if Success then
          Success := False;
-         Set_Cursor_At (Table, Filename => +Full_Name (File_Name));
+         Set_Cursor_At (Table, Filename => +Full_Name (File_Name, True));
 
          loop
             Get_Pair (Table, Next_By_Key, Result => F_Pair);
