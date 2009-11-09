@@ -12,6 +12,13 @@ Known Problems fixed in GPS 4.5.0
               waiting for input.
   Workaround: Press the new shortcut you wish to assign.
 
+- IA13-032 Source navigation in C/C++ in long paths
+  Problem:    Under Windows, the C/C++ source navigation in GPS might not
+              work when the project is located in a long path (around 100
+              characters) and/or in a path that contains upper-case
+              characters.
+  Workaround: Move the project in a sorter path with lower-case characters.
+
 - I612-002 Name Parameters and dotted notation
   Problem:    When a primitive operation is called using the new Ada05
               dotted notation, the refactoring Name Parameter repeats the
