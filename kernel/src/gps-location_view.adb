@@ -1238,7 +1238,7 @@ package body GPS.Location_View is
             Locations.Filter.Convert_Child_Iter_To_Iter
               (Filter_Loc_Iter, Loc_Iter);
 
-            if Loc_Iter /= Null_Iter then
+            if Filter_Loc_Iter /= Null_Iter then
                Path := Get_Path (Locations.Filter, Filter_Loc_Iter);
                Expand_To_Path (Locations.Tree, Path);
                Select_Iter (Get_Selection (Locations.Tree), Filter_Loc_Iter);
@@ -1869,9 +1869,12 @@ package body GPS.Location_View is
 
          if Appended then
             View.Filter.Convert_Child_Iter_To_Iter (Aux_Iter, Parent_Iter);
-            Path := View.Filter.Get_Path (Aux_Iter);
-            Appended := Expand_Row (View.Tree, Path, False);
-            Path_Free (Path);
+
+            if Aux_Iter /= Null_Iter then
+               Path := View.Filter.Get_Path (Aux_Iter);
+               Appended := Expand_Row (View.Tree, Path, False);
+               Path_Free (Path);
+            end if;
          end if;
 
          Node := Next (Node);
