@@ -306,7 +306,7 @@ See Tools->Views->Remote menu to create your remote configuration.
 Tip: Refactoring: name parameters
 
 You'd like to add parameter names to a subprogram call? In your source editor,
-move the mouse on the give you'd like to modify, right click, and select
+move the mouse on the call you'd like to modify, right click, and select
 Refactoring->Name parameters. This will e.g. replace
    <b>Procedure_Call (X, True);</b>
 into
