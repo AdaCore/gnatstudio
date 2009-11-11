@@ -1298,7 +1298,8 @@ procedure GPS.Main is
       Register_Default_Script_Commands (GPS_Main.Kernel);
 
       --  Register this very early so that other modules can access remote
-      --  files
+      --  files. Note that we need the scripting capabilities to be initialized
+      --  before the remote mode.
 
       Remote_Module.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
