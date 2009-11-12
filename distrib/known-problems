@@ -1,9 +1,9 @@
 Known Problems fixed in GPS 4.4.1
 
-- IB09-015: GPS crash when using location filters
-  Problem:    GPS can crash on source navigation and editing when filter is
-              applied to locations view.
-  Workaround: Remove filter before start source editing.
+- IB09-015: Crash when using location filters
+  Problem:    GPS may crash on source navigation and editing when a filter is
+              applied in the locations view.
+  Workaround: Remove the filter before starting editing sources.
 
 - IA29-019: Cannot use gnatpp_switches.py with read-only preferences file
   Problem:    The gnatpp_switches.py pllug-in requires a writable preferences
