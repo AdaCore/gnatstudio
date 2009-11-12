@@ -122,6 +122,16 @@ Known Problems fixed in GPS 4.4.0
               drive letters used.
   Workaround: Unassign one of the drives, then retry.
 
+- I826-012: Potential freezes when using Citrix
+  Problem:    When using GPS on a remote Windows machine accessed via Citrix,
+              GPS might freeze when displaying floating windows or contextual
+              menus.
+  Workaround: Use another way of accessing the remote machine, for instance
+              via Remote Desktop, or using GPS locally in remote mode.
+              It might be worthwhile to try disabling Citrix API hooks for
+              GPS, as described in 
+                 <http://support.citrix.com/article/ctx107825>
+
 - I826-009: No entities displayed for C/C++ files in Project View
   Problem:    Under Windows, expanding C/C++ files might display "no entity"
               instead of displaying the entities in this file.
