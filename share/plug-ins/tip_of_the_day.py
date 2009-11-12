@@ -326,7 +326,7 @@ Tip: Break on exception in debugger
 
 You need to break on any exception raised in the debugger?
 You can have GPS set this special breakpoint each time you start the debugger
-automatically by going to Edit->Preferences, seelect Debugger page and enable
+automatically by going to Edit->Preferences, select Debugger page and enable
 the <i>Break on exceptions</i> preference.
 Alternatively you can also type the <i>break exception</i> command directly
 in the debugger console.
