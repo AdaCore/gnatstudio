@@ -17,7 +17,7 @@ Known Problems fixed in GPS 4.5.0
               work when the project is located in a long path (around 100
               characters) and/or in a path that contains upper-case
               characters.
-  Workaround: Move the project in a sorter path with lower-case characters.
+  Workaround: Move the project in a shorter path with lower-case characters.
 
 - I612-002 Name Parameters and dotted notation
   Problem:    When a primitive operation is called using the new Ada05
