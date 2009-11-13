@@ -503,6 +503,7 @@ package body Python_Module is
    procedure Python_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      use type Ada.Containers.Hash_Type;
       Project : constant Project_Type := Get_Data (Data, 1);
    begin
       if Command = "__str__" then
@@ -528,7 +529,10 @@ package body Python_Module is
 
       elsif Command = "__hash__" then
          Set_Return_Value
-           (Data, Integer (Full_Name_Hash (Project_Path (Project))));
+           (Data,
+            Integer
+              (Full_Name_Hash (Project_Path (Project))
+               mod Ada.Containers.Hash_Type (Integer'Last)));
       end if;
 
    exception
