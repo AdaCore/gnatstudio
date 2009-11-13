@@ -240,9 +240,10 @@ package body C_Analyzer is
    begin
       loop
          Item := Top (Stack);
-         exit when Item.Token /= Tok_Identifier
-           and then Item.Token not in Type_Token
-           and then Item.Token not in Storage_Token;
+         exit when Item.Token = No_Token
+           or else (Item.Token /= Tok_Identifier
+                    and then Item.Token not in Type_Token
+                    and then Item.Token not in Storage_Token);
          Pop (Stack);
       end loop;
    end Pop_To_Construct;
