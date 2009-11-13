@@ -1278,7 +1278,7 @@ package body ALI_Parser is
       Project : constant Project_Type := Get_Project (LI);
       Imported_Projects : Project_Type_Array
         (1 .. Imported_Projects_Count (Project));
-      Is_ALI_For_Separate : Boolean;
+      Is_ALI_For_Separate : Boolean := False;
 
    begin
       Get_Imported_Projects (Project, Imported_Projects);
