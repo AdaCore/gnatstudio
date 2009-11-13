@@ -515,11 +515,14 @@ package body Project_Explorers_Files is
       when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions
 
+         Pop_State (D.Explorer.Kernel);
+
          New_D := D;
          Free (New_D);
          return False;
 
       when E : others =>
+         Pop_State (D.Explorer.Kernel);
          Trace (Exception_Handle, E);
          return False;
    end Read_Directory;
