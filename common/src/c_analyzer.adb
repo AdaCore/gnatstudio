@@ -792,7 +792,8 @@ package body C_Analyzer is
 
          while Index < Buffer'Last
            and then (Buffer (Index) /= '''
-                     or else Buffer (Index - 1) = '\')
+                     or else (Buffer (Index - 1) = '\'
+                              and then Buffer (Index - 2) /= '\'))
            and then Buffer (Index) /= ASCII.LF
          loop
             Index := UTF8_Next_Char (Buffer, Index);
@@ -821,7 +822,8 @@ package body C_Analyzer is
 
          while Index < Buffer'Last
            and then (Buffer (Index) /= '"'
-                     or else Buffer (Index - 1) = '\')
+                     or else (Buffer (Index - 1) = '\'
+                              and then Buffer (Index - 2) /= '\'))
            and then Buffer (Index) /= ASCII.LF
          loop
             Index := UTF8_Next_Char (Buffer, Index);
