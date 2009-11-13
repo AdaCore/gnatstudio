@@ -670,6 +670,12 @@ package body Expect_Interface is
 
       Start := Ada.Calendar.Clock;
 
+      if Action.Pd = null
+        and then Action.Unmatched_Output /= null
+      then
+         Concat (Output, Action.Unmatched_Output.all);
+      end if;
+
       while Action.Pd /= null loop
          --  Check for timeout
 
