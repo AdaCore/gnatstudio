@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 4.4.1
 
+- IB12-015: internal error in dependencies.py plugin
+  Problem:    When using this plugin, an internal error might be reported.
+  Workaround: None
+
 - IB09-015: Crash when using location filters
   Problem:    GPS may crash on source navigation and editing when a filter is
               applied in the locations view.

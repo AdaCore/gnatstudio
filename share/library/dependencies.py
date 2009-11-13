@@ -5,7 +5,7 @@ and reports dependencies that are in fact not needed (and since e.g. they will
 impact what's put on the linker command line, you may want to remove them),
 as well as indirect dependencies (A depends on B depends on C, therefore
 A should depend on C directly), which are generally better put
-explicitely, although that is optional.
+explicitly, although that is optional.
 
 A project depends on another one if any of its source file depends on a
 source file of the other project. This script only handles Ada source
@@ -42,6 +42,11 @@ Preference ("Plugins/dependencies/no_src_prj").create (
   "Projects with no sources", "string",
   """comma-separated list of project names that contain no sources, but are used to share common settings. Since this script looks at source files to find out dependencies, the dependencies on such projects would not be shown otherwise.""",
   "shared")
+
+show_single_file = True
+## If True, we show a single file dependency to explain the dependency
+## between two projects. Otherwise, we show all file dependencies. Setting this
+## to False will make the computation much slower though
 
 class Output:
   def __init__ (self):
@@ -144,18 +149,26 @@ class XMLOutput:
      self.xml = ""
 
 def compute_project_dependencies (menu):
+ set_busy ()
  try:
    depends_on   = dict()
    current_deps = dict()
    for p in Project.root().dependencies (recursive = True):
       current_deps[p] = [cur for cur in p.dependencies (recursive = False)]
-      depends_on[p]   = dict()
+      tmp = dict () 
+      previous = p
       for s in p.sources (recursive = False):
-         for imp in s.imports (True):
-            ip = imp.project()
-            if ip != p:
-               try:             depends_on[p][ip].append ((s, imp))
-               except KeyError: depends_on[p][ip] = [(s, imp)]
+         for imp in s.imports (include_implicit=True, include_system=False):
+            ip = imp.project(default_to_root=False)
+            if ip and ip != p:
+               if show_single_file:
+                  if ip != previous:
+                     tmp[ip] = [(s, imp)]
+               else:
+                  try:             tmp[ip].append ((s, imp))
+                  except KeyError: tmp[ip] = [(s, imp)]
+               previous = ip
+      depends_on[p]   = tmp
 
    no_source_projects = [
       s.strip().lower() for s in Preference ("Plugins/dependencies/no_src_prj").get().split (",")]
@@ -177,6 +190,8 @@ def compute_project_dependencies (menu):
    menu.out.close()
  except:
    Console().write ("Unexpected exception " + traceback.format_exc())
+
+ unset_busy ()
 
 def on_gps_started (hook):
    menu = Menu.create ("/Project/Dependencies/Check (to console)",
