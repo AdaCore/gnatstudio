@@ -154,6 +154,7 @@ package body Entities is
       Function_Or_Operator  => True,
       Entry_Or_Entry_Family => True,
       Task_Kind             => True,
+      Macro                 => True,
       others                => False);
    --  This table should contain true if the corresponding element is
    --  considered as a subprogram (see Is_Subprogram).

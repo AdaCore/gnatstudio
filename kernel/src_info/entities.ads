@@ -176,8 +176,8 @@ package Entities is
    pragma Pack (E_Kind);
    --  Description for the type of an entity.
    --  Kind describes its general family.
-   --  Is_Generic is set to true if this is a generic entity (or a template in
-   --  the C++ case).
+   --  Is_Generic is set to true if this is a generic entity (or a macro
+   --  in the C/C++ case, or a template in the C++ case).
    --  Is_Type is true if this is a type, instead of an instance of a type.
 
    type Entity_Category is

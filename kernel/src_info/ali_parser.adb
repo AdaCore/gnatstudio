@@ -110,7 +110,7 @@ package body ALI_Parser is
       'y'    => (Function_Or_Operator,   False, True,  True),
       'Y'    => (Entry_Or_Entry_Family,  False, True,  True),
       'z'    => Unresolved_Entity_Kind, --  ??? Formal of current subprogram
-      'Z'    => Unresolved_Entity_Kind,
+      'Z'    => (Macro,                  True,  False, False),
       '+'    => (Private_Type,           False, True,  False),
       '*'    => (Private_Type,           False, True,  False),
       others => Unresolved_Entity_Kind);
