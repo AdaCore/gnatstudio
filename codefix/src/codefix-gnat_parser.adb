@@ -476,6 +476,23 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'redundant sth'.
 
+   type No_Space_Allowed is new Error_Parser
+     (new String'("Extra_Keyword"), 1)
+   with null record;
+
+   overriding
+   procedure Initialize (This : in out No_Space_Allowed);
+
+   overriding
+   procedure Fix
+     (This         : No_Space_Allowed;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'no space allowed there'.
+
    type Unexpected_Sep is new Error_Parser
      (new String'("Unexpected_Keyword"), 1)
    with null record;
@@ -1836,6 +1853,33 @@ package body Codefix.GNAT_Parser is
       Solutions := Unexpected (Current_Text, Message, ")");
    end Fix;
 
+   ----------------------
+   -- No_Space_Allowed --
+   ----------------------
+
+   overriding
+   procedure Initialize (This : in out No_Space_Allowed) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'(Compile ("no space allowed")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : No_Space_Allowed;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Matches, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Unexpected (Current_Text, Message, " ");
+   end Fix;
+
    -----------------------
    -- Redundant_Keyword --
    -----------------------
@@ -3163,6 +3207,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Name_Missing);
       Add_Parser (Processor, new Double_Keyword);
       Add_Parser (Processor, new Extra_Paren);
+      Add_Parser (Processor, new No_Space_Allowed);
       Add_Parser (Processor, new Redundant_Keyword);
       Add_Parser (Processor, new Unexpected_Sep);
       Add_Parser (Processor, new Unexpected_Word);
