@@ -15,6 +15,10 @@ of the feature.
 New features on 4.5.0
 ---------------------
 
+NF-45-IB10-017 Auto fix for "no space allowed" (2009-11-16)
+
+   Messages "no space allowed" are now auto-fixed by gps.
+
 NF-45-IA13-016 New menu /File/Close All Editors Except Current (2009-10-14)
 
   This menu closes all editors except the one that currently has the focus.
