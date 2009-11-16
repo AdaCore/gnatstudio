@@ -4,6 +4,11 @@ Known Problems fixed in GPS 4.4.1
   Problem:    When using this plugin, an internal error might be reported.
   Workaround: None
 
+- IB11-008: fixes for "end parent.child; expected" messages
+  Problem:    Messages like "end parent.child; expected" are not provided with
+              an auto-fix.
+  Workaround: Manually fix the code.
+
 - IB09-015: Crash when using location filters
   Problem:    GPS may crash on source navigation and editing when a filter is
               applied in the locations view.
