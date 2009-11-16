@@ -1,10 +1,10 @@
 Known Problems fixed in GPS 4.4.1
 
-- IB12-015: internal error in dependencies.py plugin
+- IB12-015: Internal error in dependencies.py plugin
   Problem:    When using this plugin, an internal error might be reported.
-  Workaround: None
+  Workaround: None.
 
-- IB11-008: fixes for "end parent.child; expected" messages
+- IB11-008: Fixes for "end parent.child; expected" messages
   Problem:    Messages like "end parent.child; expected" are not provided with
               an auto-fix.
   Workaround: Manually fix the code.
