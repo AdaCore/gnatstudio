@@ -1333,7 +1333,7 @@ package body Codefix.GNAT_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-           (Compile ("""(end [\w]+;)"" expected", Case_Insensitive)),
+           (Compile ("""(end [\w.]+;)"" expected", Case_Insensitive)),
          new Pattern_Matcher'
            (Compile ("""(end loop [\w]+;)"" expected", Case_Insensitive)));
    end Initialize;
@@ -1757,7 +1757,7 @@ package body Codefix.GNAT_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-           (Compile ("\(style\) ""(end) ([\w]+)"" required")),
+           (Compile ("\(style\) ""(end) ([\w.]+)"" required")),
          new Pattern_Matcher'
            (Compile ("\(style\) ""(exit) ([\w]+)"" required")),
          new Pattern_Matcher'
