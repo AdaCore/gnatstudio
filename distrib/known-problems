@@ -34,6 +34,14 @@ Known Problems fixed in GPS 4.4.1
   Workaround: Set the 'Editor/Submenu for dispatching calls preference' to
               'Never'.
 
+- IA27-014: Symbolic links always resolved when using -Pproject
+  Problem:    The behavior is different when using -Pproject and -Pproject.gpr.
+              In the former case, GPS never resolved symbolic links, but did
+              in the latter. The behavior is now the same in both cases, and
+              depends on the Fast Project Loading preference
+  Workaround: Either specify the extension or not, depending on the behavior
+              you want.
+
 - IA23-035: GPS may crash when setting the default remote servers
   Problem:    In the remote view, clicking on the 'Set default' button may make
               GPS crash.
