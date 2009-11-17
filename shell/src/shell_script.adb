@@ -48,6 +48,7 @@ with Commands.Interactive;      use Commands.Interactive;
 with Histories;                 use Histories;
 with Interactive_Consoles;      use Interactive_Consoles;
 with String_Utils;              use String_Utils;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 
 package body Shell_Script is
 
@@ -263,7 +264,6 @@ package body Shell_Script is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-
    begin
       if Command = "help" then
          if Number_Of_Arguments (Data) = 0 then
@@ -277,16 +277,19 @@ package body Shell_Script is
                & ASCII.LF);
 
          else
+            Execute_GPS_Shell_Command (Kernel, Create ("Help"));
             declare
-               Usage  : constant String := Execute_GPS_Shell_Command
-                 (Kernel  => Kernel,
-                  Command => "Help; Help.getdoc %1 GPS." & Nth_Arg (Data, 1));
+               Usage  : constant String :=
+                 Execute_GPS_Shell_Command
+                   (Kernel,
+                    Parse_String ("Help.getdoc %1 GPS." & Nth_Arg (Data, 1),
+                      Separate_Args));
 
                --  Needs to be executed separately, or we wouldn't get output
                --  in Usage.
                Ignored : constant String := Execute_GPS_Shell_Command
-                 (Kernel  => Kernel,
-                  Command => "Help.reset %2");
+                 (Kernel => Kernel,
+                  CL     => Parse_String ("Help.reset %2", Separate_Args));
                pragma Unreferenced (Ignored);
             begin
                Insert_Text
@@ -306,8 +309,10 @@ package body Shell_Script is
       Arguments_Count : Natural) return Callback_Data'Class
    is
       Data : Shell_GPS_Callback_Data;
+      pragma Unreferenced (Arguments_Count);
    begin
-      Initialize (Data, Script, Arguments_Count);
+      --  ??? we could get rid of Arguments_Count
+      Initialize (Data, Script);
       return Data;
    end Create;
 

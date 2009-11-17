@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2002-2008, AdaCore             --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,8 @@ with GNAT.Expect; use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
+
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
@@ -38,9 +39,6 @@ package body GVD.Proc_Utils is
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Process_Record, Process_Handle);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Argument_List, Argument_List_Access);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Process_Descriptor'Class, Process_Descriptor_Access);
@@ -109,28 +107,25 @@ package body GVD.Proc_Utils is
    procedure Open_Processes (Handle : out Process_Handle;
                              Kernel : Kernel_Handle)
    is
-      Args          : Argument_List_Access;
+      CL            : Command_Line;
       Match         : Expect_Match := 0;
       Success       : Boolean;
    begin
       Handle := new Process_Record;
 
       --  ??? Get_Pref is not fine here, as this can be a remote call
-      Args := Argument_String_To_List_With_Triple_Quotes
-        (List_Processes.Get_Pref);
+      CL := Parse_String (List_Processes.Get_Pref, Separate_Args);
       Spawn (Kernel,
-             Args.all,
+             CL,
              Debug_Server,
              Handle.Descriptor,
              Success);
       if Success then
          Expect (Handle.Descriptor.all, Match, "\n");
       end if;
-      Free (Args);
 
    exception
-      when Process_Died =>
-         Free (Args);
+      when Process_Died => null;
    end Open_Processes;
 
 end GVD.Proc_Utils;

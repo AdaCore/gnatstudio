@@ -22,6 +22,7 @@ with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Strings;              use GNAT;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
@@ -229,11 +230,11 @@ package body VCS_Activities_View_API is
    overriding function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type
    is
-      Filename : aliased String := +Full_Name (Command.File);
+      CL : Command_Line := Create ("Editor.edit");
    begin
-      Execute_GPS_Shell_Command
-        (Command.Kernel, "Editor.edit",
-         (1 => Filename'Unchecked_Access));
+      --  ??? We should use the Editors API
+      Append_Argument (CL, +Full_Name (Command.File), One_Arg);
+      Execute_GPS_Shell_Command (Command.Kernel, CL);
       return Success;
    end Execute;
 

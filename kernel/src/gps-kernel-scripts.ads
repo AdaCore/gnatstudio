@@ -22,7 +22,7 @@
 
 with Basic_Types;
 with Entities;
-with GNAT.OS_Lib;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with Projects;
 
@@ -51,24 +51,16 @@ package GPS.Kernel.Scripts is
    --  This subprogram should be called only after all scripting languages
    --  have been registered.
 
-   function Execute_GPS_Shell_Command
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String) return String;
    procedure Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String);
-   procedure Execute_GPS_Shell_Command
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List);
+      CL      : Command_Line);
    function Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+      CL      : Command_Line) return String;
    --  Execute the command in the GPS shell.
    --  This is only intended as a simpler form of
    --     Execute_Command
-   --       (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args)
+   --       (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), CL)
 
    procedure Register_Command
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -137,7 +129,7 @@ package GPS.Kernel.Scripts is
      (Data : Callback_Data'Class; N : Positive)
       return GNATCOLL.VFS.Virtual_File;
    procedure Set_Nth_Arg
-     (Data : Callback_Data'Class;
+     (Data : in out Callback_Data'Class;
       N    : Positive;
       File : GNATCOLL.VFS.Virtual_File);
    function Get_Data

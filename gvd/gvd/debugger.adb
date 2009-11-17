@@ -24,6 +24,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNATCOLL.Command_Lines;     use GNATCOLL.Command_Lines;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Glib;                       use Glib;
@@ -270,8 +271,13 @@ package body Debugger is
       Success    : Boolean;
       The_Args   : Argument_List := (new String'(Debugger_Name) &
                                      Arguments);
+      CL         : Command_Line := Create (Debugger_Name);
 
    begin
+      for J in The_Args'Range loop
+         Append_Argument (CL, The_Args (J).all, One_Arg);
+      end loop;
+
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
       --  not control the length of what gdb will return...
@@ -281,7 +287,7 @@ package body Debugger is
 
       GPS.Kernel.Remote.Spawn
         (Kernel            => Debugger.Kernel,
-         Arguments         => The_Args,
+         Arguments         => CL,
          Server            => Debug_Server,
          Pd                => Descriptor,
          Success           => Success);

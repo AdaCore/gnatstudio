@@ -50,6 +50,7 @@ with XML_Parsers;                use XML_Parsers;
 
 with Traces;                     use Traces;
 with Language;                   use Language;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 
 package body Navigation_Module is
    Me : constant Debug_Handle := Create ("Navigation");
@@ -565,7 +566,8 @@ package body Navigation_Module is
    begin
       Execute_Command
         (Script       => Marker.Script,
-         Command      => Marker.Command.all,
+         CL           => Parse_String (Marker.Command.all,
+           Command_Line_Treatment (Marker.Script)),
          Hide_Output  => True,
          Show_Command => False,
          Errors       => Errors);

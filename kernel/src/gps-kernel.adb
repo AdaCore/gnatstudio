@@ -25,6 +25,7 @@ with GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
@@ -2352,7 +2353,7 @@ package body GPS.Kernel is
                         R      : constant Boolean :=
                          GNATCOLL.Scripts.Execute_Command
                             (Lang,
-                             Cmd,
+                             Parse_String (Cmd, Command_Line_Treatment (Lang)),
                              Hide_Output => True,
                              Errors => Errors'Unchecked_Access);
                      begin

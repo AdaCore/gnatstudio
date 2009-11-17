@@ -17,8 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with GNATCOLL.Command_Lines;            use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Gtk.Window;                        use Gtk.Window;
@@ -343,49 +342,45 @@ package body Vdiff2_Module.Callback is
          Filename : constant Filesystem_String := Full_Name (Ref_File);
       begin
          Set_Writable : declare
-            Args : Argument_List :=
-                     (1 => new String'(+Filename),
-                      2 => new String'("FALSE"));
+            CL : Command_Line := Create ("Editor.set_writable");
          begin
-            Execute_GPS_Shell_Command (Kernel, "Editor.set_writable", Args);
-            Free (Args);
+            Append_Argument (CL, +Filename, One_Arg);
+            Append_Argument (CL, "FALSE", One_Arg);
+            Execute_GPS_Shell_Command (Kernel, CL);
          end Set_Writable;
 
          Set_Title : declare
-            Args : Argument_List (1 .. 3);
+            CL : Command_Line := Create ("Editor.set_title");
+
          begin
-            Args (1) := new String'(+Filename);
+            Append_Argument (CL, +Filename, One_Arg);
             if D.Title = "" then
-               Args (2) := new String'(+Base_Name (Ref_File));
-               Args (3) := new String'(+Base_Name (Ref_File));
+               Append_Argument (CL, +Base_Name (Ref_File), One_Arg);
+               Append_Argument (CL, +Base_Name (Ref_File), One_Arg);
             else
-               Args (2) := new String'(D.Title);
-               Args (3) := new String'(D.Title);
+               Append_Argument (CL, D.Title, One_Arg);
+               Append_Argument (CL, D.Title, One_Arg);
             end if;
 
-            Execute_GPS_Shell_Command (Kernel, "Editor.set_title", Args);
-            Free (Args);
+            Execute_GPS_Shell_Command (Kernel, CL);
          end Set_Title;
 
          if D.VCS_File /= No_File then
             Set_Reference : declare
-               Args : Argument_List :=
-                        (1 => new String'(+Filename),
-                         2 => new String'(+Full_Name (D.VCS_File)));
+               CL : Command_Line := Create ("VCS.set_reference");
             begin
-               Execute_GPS_Shell_Command (Kernel, "VCS.set_reference", Args);
-               Free (Args);
+               Append_Argument (CL, +Filename, One_Arg);
+               Append_Argument (CL, +Full_Name (D.VCS_File), One_Arg);
+               Execute_GPS_Shell_Command (Kernel, CL);
             end Set_Reference;
 
             if Base /= No_File and then Base /= D.VCS_File then
                Set_Base_Reference : declare
-                  Args : Argument_List :=
-                           (1 => new String'(+Full_Name (Base)),
-                            2 => new String'(+Full_Name (D.VCS_File)));
+                  CL : Command_Line := Create ("VCS.set_reference");
                begin
-                  Execute_GPS_Shell_Command
-                    (Kernel, "VCS.set_reference", Args);
-                  Free (Args);
+                  Append_Argument (CL, +Full_Name (Base), One_Arg);
+                  Append_Argument (CL, +Full_Name (D.VCS_File), One_Arg);
+                  Execute_GPS_Shell_Command (Kernel, CL);
                end Set_Base_Reference;
             end if;
          end if;

@@ -13,7 +13,7 @@
 
    <action name="clearcase_describe" show-command="true" output="none" category="">
       <shell output="">echo "Describing $2-"</shell>
-      <external>cleartool describe -fmt "%%En\\n%%Xn\\n%%f\\n%%m %%Rf\\n" "$2-"</external>
+      <external>cleartool describe -fmt "%%En\\n%%Xn\\n%%f\\n%%m %%Rf\\n" $2-</external>
       <shell>VCS.status_parse "ClearCase Native" "%1" $1 FALSE</shell>
    </action>
 
@@ -28,7 +28,7 @@
    <!-- ClearCase local status -->
 
    <action name="clearcase_local_status" show-command="true" output="none" category="">
-      <external>cleartool ls -short "$2-"</external>
+      <external>cleartool ls -short $2-</external>
       <shell>VCS.status_parse "ClearCase Native" "%1" FALSE TRUE</shell>
    </action>
 
@@ -37,7 +37,7 @@
    <action name="clearcase_checkin" show-command="true" output="none" category="">
       <shell output="">echo "Checking in file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
-      <external>cleartool ci -cfile "%1" "$2-"</external>
+      <external>cleartool ci -cfile "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "Clearcase error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -124,7 +124,7 @@
 
    <action name="clearcase_checkout" show-command="true" output="none" category="">
       <shell>MDI.input_dialog "Checking out file(s)" "Comment:=GPS check-out"</shell>
-      <external>cleartool co -c "%1" "$*"</external>
+      <external>cleartool co -c "%1" $*</external>
       <on-failure>
          <shell output="">echo_error "Clearcase error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -137,7 +137,7 @@
    <!-- Clearcase uncheckout -->
 
    <action name="clearcase_uncheckout" show-command="true" output="none" category="">
-      <external>cleartool uncheckout -keep "$*"</external>
+      <external>cleartool uncheckout -keep $*</external>
       <on-failure>
          <shell output="">echo_error "Clearcase error:"</shell>
          <shell output="">echo_error "%2"</shell>

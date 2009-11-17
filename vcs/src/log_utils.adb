@@ -44,6 +44,7 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
@@ -168,8 +169,7 @@ package body Log_Utils is
       --  GPS_CHANGELOG_USER environement variable value or "name  <e-mail>"
       --  if not found or "name  <user@>" if USER environment variable is set.
 
-      ChangeLog   : aliased String :=
-                      +Dir_Name (File_Name) & "ChangeLog";
+      ChangeLog   : constant String := +Dir_Name (File_Name) & "ChangeLog";
       Date_Tag    : constant String := Image (Clock, ISO_Date);
       Base_Name   : constant Filesystem_String :=
                       GNATCOLL.VFS.Base_Name (File_Name);
@@ -254,16 +254,19 @@ package body Log_Utils is
          Free (Old);
       end Add_Header;
 
+      C : Command_Line;
    begin
       --  Makes sure that the ChangeLog buffer is saved before continuing
       --  otherwise part of the ChangeLog file could be lost.
 
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.save_buffer",
-         (1 => ChangeLog'Unchecked_Access));
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.close",
-         (1 => ChangeLog'Unchecked_Access));
+      --  ??? We should use the Editors API
+      C := Create ("Editor.save_buffer");
+      Append_Argument (C, ChangeLog, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, C);
+
+      C := Create ("Editor.close");
+      Append_Argument (C, ChangeLog, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, C);
 
       --  Get ChangeLog content
 

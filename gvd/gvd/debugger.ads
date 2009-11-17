@@ -94,6 +94,8 @@ package Debugger is
    --  subprogram Spawn, and should work with most debuggers.
    --
    --  Raises Spawn_Error if the debugger could not be spawned.
+   --  ??? It would be nice to change the profile to use Command_Lines.CL
+   --  instead of a String_List.
 
    procedure Initialize (Debugger : access Debugger_Root) is abstract;
    --  Initialize the debugger.

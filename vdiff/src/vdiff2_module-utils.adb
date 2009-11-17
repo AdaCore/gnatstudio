@@ -27,6 +27,8 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
+with GNATCOLL.Command_Lines;            use GNATCOLL.Command_Lines;
+
 with Commands;                          use Commands;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
@@ -588,11 +590,11 @@ package body Vdiff2_Module.Utils is
       --------------------------
 
       function Is_Ref_Editor_Opened return Boolean is
-         Filename : aliased String := +Base_Name (Item.Files (Ref));
-         Args     : constant Argument_List :=
-                      (1 => Filename'Unchecked_Access);
+         Filename : constant String := +Base_Name (Item.Files (Ref));
+         CL       : Command_Line := Create ("MDI.get");
       begin
-         return Execute_GPS_Shell_Command (Kernel, "MDI.get", Args) /= "null";
+         Append_Argument (CL, Filename, One_Arg);
+         return Execute_GPS_Shell_Command (Kernel, CL) /= "null";
       end Is_Ref_Editor_Opened;
 
    begin

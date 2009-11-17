@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                   use Ada.Tags;
 
@@ -64,7 +63,6 @@ with Histories;                  use Histories;
 with Remote;                     use Remote;
 with Build_Command_Manager;
 with Builder_Facility_Module;
-with Basic_Types;
 with Std_Dialogs;                use Std_Dialogs;
 with String_Utils;               use String_Utils;
 with GUI_Utils;                  use GUI_Utils;
@@ -74,6 +72,8 @@ with Commands;                   use Commands;
 with UTF8_Utils;                 use UTF8_Utils;
 
 with Commands.Generic_Asynchronous;
+
+with GNATCOLL.Command_Lines;     use GNATCOLL.Command_Lines;
 
 package body Builder_Module is
 
@@ -102,8 +102,7 @@ package body Builder_Module is
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Run_Description is record
-      Command      : Filesystem_String_Access;
-      Arguments    : GNAT.OS_Lib.Argument_List_Access;
+      CL           : Command_Line;
       Ext_Terminal : Boolean;
       Directory    : GNATCOLL.VFS.Virtual_File;
       Title        : GNAT.Strings.String_Access;
@@ -210,7 +209,6 @@ package body Builder_Module is
    ----------
 
    procedure Free (Ar : in out String_List);
-   procedure Free (Ar : in out String_List_Access);
    --  Free the memory associate with Ar
 
    procedure Add_Run_Menu
@@ -299,17 +297,6 @@ package body Builder_Module is
       for A in Ar'Range loop
          Free (Ar (A));
       end loop;
-   end Free;
-
-   procedure Free (Ar : in out String_List_Access) is
-      procedure Free is new
-        Ada.Unchecked_Deallocation (String_List, String_List_Access);
-
-   begin
-      if Ar /= null then
-         Free (Ar.all);
-         Free (Ar);
-      end if;
    end Free;
 
    ---------------------
@@ -605,8 +592,6 @@ package body Builder_Module is
 
    procedure Free (Run : in out Run_Description) is
    begin
-      Free (Run.Command);
-      Free (Run.Arguments);
       Run.Directory := GNATCOLL.VFS.No_File;
       Free (Run.Title);
    end Free;
@@ -624,7 +609,7 @@ package body Builder_Module is
       Success : Boolean;
 
    begin
-      if Run.Command = null then
+      if Get_Command (Run.CL) = "" then
          return;
       end if;
 
@@ -648,8 +633,7 @@ package body Builder_Module is
 
       Launch_Process
         (Kernel_Handle (Kernel),
-         Command          => Run.Command.all,
-         Arguments        => Run.Arguments.all,
+         CL               => Run.CL,
          Server           => Execution_Server,
          Console          => Console,
          Success          => Success,
@@ -669,11 +653,7 @@ package body Builder_Module is
    procedure Set_Command
      (Run          : in out Run_Description;
       Ext_Terminal : Boolean;
-      Command      : String)
-   is
-      Local_Args : Argument_List_Access;
-      function Unch is new Ada.Unchecked_Conversion
-        (String_Access, Filesystem_String_Access);
+      Command      : String) is
    begin
       Run.Ext_Terminal := Ext_Terminal;
 
@@ -684,16 +664,11 @@ package body Builder_Module is
          --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
          --  is local.
 
-         Run.Command := new Filesystem_String'(+Shell_Env);
-         Run.Arguments := new Argument_List'
-           (new String'("-c"),
-            new String'(Command));
+         Run.CL := Create (Shell_Env);
+         Append_Argument (Run.CL, "-c", One_Arg);
+         Append_Argument (Run.CL, Command, One_Arg);
       else
-         Local_Args := Argument_String_To_List (Command);
-         Run.Command := Unch (Local_Args (Local_Args'First));
-         Run.Arguments := new Argument_List'
-           (Local_Args (Local_Args'First + 1 .. Local_Args'Last));
-         Basic_Types.Unchecked_Free (Local_Args);  --  Not the actual strings
+         Run.CL := Parse_String (Command, Separate_Args);
       end if;
    end Set_Command;
 
@@ -770,10 +745,10 @@ package body Builder_Module is
             if Arguments = ""
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
-               Run.Command := new Filesystem_String'
-                 (Full_Name
-                    (To_Remote (Data.File, Get_Nickname (Execution_Server))));
-               Run.Arguments := Argument_String_To_List (Arguments);
+               Run.CL := Parse_String
+                 (Command => +Full_Name
+                    (To_Remote (Data.File, Get_Nickname (Execution_Server))),
+                  Text    => Arguments);
                Run.Ext_Terminal := Active;
 
                if Use_Exec_Dir then

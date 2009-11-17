@@ -53,6 +53,8 @@ with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+
 package body Clipboard_Views is
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
@@ -265,6 +267,7 @@ package body Clipboard_Views is
    is
       View : constant Clipboard_View_Access := Clipboard_View_Access (Clip);
       Selected : Integer;
+      CL       : Command_Line;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -272,10 +275,18 @@ package body Clipboard_Views is
          Selected := Get_Selected_From_Event (View, Event);
          if Selected > 0 then
             --  Put the focus back on the current editor
-            Execute_GPS_Shell_Command
-              (View.Kernel, "EditorBuffer.get;"
-               & "EditorBuffer.current_view %1;"
-               & "MDI.get_by_child %1; MDIWindow.raise_window %1");
+
+            CL := Create ("EditorBuffer.get");
+            Execute_GPS_Shell_Command (View.Kernel, CL);
+
+            CL := Create ("EditorBuffer.current_view %1");
+            Execute_GPS_Shell_Command (View.Kernel, CL);
+
+            CL := Create ("MDI.get_by_child %1");
+            Execute_GPS_Shell_Command (View.Kernel, CL);
+
+            CL := Create ("MDIWindow.raise_window %1");
+            Execute_GPS_Shell_Command (View.Kernel, CL);
 
             Paste_Clipboard
               (Get_Clipboard (View.Kernel),

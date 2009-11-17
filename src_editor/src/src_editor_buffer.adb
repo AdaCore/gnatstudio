@@ -27,6 +27,7 @@ pragma Warnings (On);
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
+with GNATCOLL.Command_Lines;              use GNATCOLL.Command_Lines;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
@@ -792,6 +793,8 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean is
+      CL : Command_Line;
+
    begin
       if Clock < Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay then
          return True;
@@ -810,11 +813,13 @@ package body Src_Editor_Buffer is
       --  Perform on-the-fly style check
 
       if Buffer.Auto_Syntax_Check then
+         CL := Create ("File");
+         Append_Argument (CL, +Full_Name (Buffer.Filename), One_Arg);
+         Execute_GPS_Shell_Command
+           (Buffer.Kernel, CL);
          Execute_GPS_Shell_Command
            (Buffer.Kernel,
-            "File " & (+Full_Name (Buffer.Filename)));
-         Execute_GPS_Shell_Command
-           (Buffer.Kernel, "File.shadow_check_syntax %1");
+            Parse_String ("File.shadow_check_syntax %1", Separate_Args));
       end if;
 
       --  Emit the Buffer_Modifed hook

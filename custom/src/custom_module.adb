@@ -21,6 +21,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
@@ -892,6 +893,7 @@ package body Custom_Module is
          Child : Node_Ptr;
          Id    : constant String := Get_Attribute (Node, "id", "");
          Label : constant String := Get_Attribute (Node, "label", "");
+         CL    : Command_Line;
       begin
          if Id = "" then
             Insert
@@ -906,12 +908,13 @@ package body Custom_Module is
          --  a Subprogram_Type. This also limits the direct dependencies
          --  between the packages.
 
-         Execute_GPS_Shell_Command
-           (Kernel => Kernel,
-            Command =>
-              "Toolbar; Toolbar.append %1 """
+         CL := Create ("Toolbar");
+         Execute_GPS_Shell_Command (Kernel, CL);
+
+         CL := Parse_String ("Toolbar.append %1 """
               & Id & """ """ & Label & """ """
-              & Get_Attribute (Node, "on-changed") & """");
+              & Get_Attribute (Node, "on-changed") & """", Separate_Args);
+         Execute_GPS_Shell_Command (Kernel, CL);
 
          --  Parse the child nodes
 
@@ -925,17 +928,21 @@ package body Custom_Module is
                     Get_Attribute (Child, "on-selected");
                begin
                   if On_Selected /= "" then
-                     Execute_GPS_Shell_Command
-                       (Kernel,
-                        "Toolbar; Toolbar.entry %1 """ & Id
+                     CL := Create ("Toolbar");
+                     Execute_GPS_Shell_Command (Kernel, CL);
+                     CL := Parse_String
+                       ("Toolbar.entry %1 """ & Id
                         & """; ToolbarEntry.add %1 """ & Child.Value.all
-                        & """ """ & On_Selected & """");
+                        & """ """ & On_Selected & """", Separate_Args);
+                     Execute_GPS_Shell_Command (Kernel, CL);
                   else
-                     Execute_GPS_Shell_Command
-                       (Kernel,
-                        "Toolbar; Toolbar.entry %1 """ & Id
+                     CL := Create ("Toolbar");
+                     Execute_GPS_Shell_Command (Kernel, CL);
+                     CL := Parse_String
+                       ("Toolbar.entry %1 """ & Id
                         & """; ToolbarEntry.add %1 """ & Child.Value.all
-                        & """");
+                        & """", Separate_Args);
+                     Execute_GPS_Shell_Command (Kernel, CL);
                   end if;
                end;
             else

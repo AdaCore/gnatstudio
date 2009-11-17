@@ -20,14 +20,16 @@
 with GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
+
 pragma Warnings (On);
-with GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with Interactive_Consoles;
 with Remote;                 use Remote;
 with GNATCOLL.VFS;
+
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 
 package GPS.Kernel.Remote is
 
@@ -72,7 +74,7 @@ package GPS.Kernel.Remote is
 
    procedure Spawn
      (Kernel            : Kernel_Handle;
-      Arguments         : GNAT.OS_Lib.Argument_List;
+      Arguments         : Command_Line;
       Server            : Server_Type;
       Pd                : out GNAT.Expect.Process_Descriptor_Access;
       Success           : out Boolean;

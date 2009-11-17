@@ -22,14 +22,13 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.String_Split;       use GNAT.String_Split;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
-
-with GNATCOLL.Scripts.Utils;
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -40,7 +39,6 @@ with GPS.Intl;                use GPS.Intl;
 with Traces;                  use Traces;
 with Basic_Types;             use Basic_Types;
 with UTF8_Utils;              use UTF8_Utils;
-with String_Utils;            use String_Utils;
 
 with Builder_Facility_Module; use Builder_Facility_Module;
 
@@ -403,7 +401,7 @@ package body Commands.Builder is
 
    procedure Launch_Build_Command
      (Kernel        : Kernel_Handle;
-      CL            : GNAT.OS_Lib.String_List_Access;
+      CL            : Command_Line;
       Target_Name   : String;
       Mode_Name     : String;
       Category_Name : String := Error_Category;
@@ -418,7 +416,6 @@ package body Commands.Builder is
                    Get_Build_Console (Kernel, Shadow, False);
       Data     : Build_Callback_Data_Access;
       Success  : Boolean;
-      Args     : Argument_List_Access;
       Cmd_Name : Unbounded_String;
 
    begin
@@ -435,12 +432,7 @@ package body Commands.Builder is
          Quiet  => Quiet,
          Shadow => Shadow)
       then
-         Append_To_Build_Output
-           (Kernel,
-            Unprotect
-              (GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
-                 (CL.all, Quote_Backslash => True)),
-            Shadow);
+         Append_To_Build_Output (Kernel, To_Display_String (CL), Shadow);
 
          if Mode_Name /= "default" then
             Cmd_Name := To_Unbounded_String
@@ -453,14 +445,9 @@ package body Commands.Builder is
            and then Shell_Env /= ""
            and then Is_Local (Server)
          then
-            Args := new Argument_List'
-              (new String'("-c"),
-               new String'(Argument_List_To_String (CL.all)));
-
             Launch_Process
               (Kernel,
-               Command              => +Shell_Env,
-               Arguments            => Args.all,
+               CL                   => CL,
                Server               => Server,
                Console              => Console,
                Show_Command         => True,
@@ -476,13 +463,10 @@ package body Commands.Builder is
                Synchronous          => Synchronous,
                Show_Exit_Status     => not Shadow);
 
-            Free (Args);
-
          else
             Launch_Process
               (Kernel,
-               Command              => +CL (CL'First).all,
-               Arguments            => CL (CL'First + 1 .. CL'Last),
+               CL                   => CL,
                Server               => Server,
                Console              => Console,
                Show_Command         => True,

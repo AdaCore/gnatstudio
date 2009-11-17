@@ -18,9 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;       use Ada.Calendar;
-with GNAT.OS_Lib;
 
-with GNATCOLL.Utils;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Kernel.Console; use GPS.Kernel;
@@ -28,6 +26,8 @@ with GPS.Kernel.Project;
 with GPS.Kernel.Timeout;
 with GPS.Intl;           use GPS.Intl;
 with Projects;
+
+with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
 
 with Code_Peer.Bridge.Commands;
 with Code_Peer.Shell_Commands;
@@ -83,9 +83,7 @@ package body Code_Peer.Module.Bridge is
       Command_File_Name : constant Virtual_File :=
                             Create_From_Dir
                               (Object_Directory, Add_Audit_File_Name);
-      Args              : GNAT.OS_Lib.Argument_List :=
-                            (1 => new String'
-                               (+Command_File_Name.Full_Name));
+
       Mode              : constant String :=
                             Code_Peer.Shell_Commands.Get_Build_Mode
                               (Kernel_Handle (Module.Kernel));
@@ -93,9 +91,13 @@ package body Code_Peer.Module.Bridge is
                             Use_CodePeer_Subdir
                               (Kernel_Handle (Module.Kernel));
       Success           : Boolean;
+      CL                : Command_Line;
       pragma Warnings (Off, Success);
 
    begin
+      CL := Create ("gps_codepeer_bridge");
+      Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
+
       if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode
            (Kernel_Handle (Module.Kernel), "codepeer");
@@ -126,15 +128,13 @@ package body Code_Peer.Module.Bridge is
 
       GPS.Kernel.Timeout.Launch_Process
         (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-         Command       => "gps_codepeer_bridge",
-         Arguments     => Args,
+         CL            => CL,
          Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
          Directory     => Object_Directory,
          Callback_Data =>
            new Bridge_Context'(Add_Audit, Module, No_File, Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
-      GNATCOLL.Utils.Free (Args);
 
       if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode
@@ -171,13 +171,15 @@ package body Code_Peer.Module.Bridge is
                             Create_From_Dir
                               (Codepeer_Database_Directory (Project),
                                "Sqlite.db");
-      Args              : GNAT.OS_Lib.Argument_List (1 .. 1);
       Output_Directory  : constant Virtual_File :=
                             Codepeer_Output_Directory (Project);
+      CL                : Command_Line;
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
    begin
+      CL := Create ("gps_codepeer_bridge");
+
       if not Is_Directory (Output_Directory) then
          Console.Insert
            (Module.Kernel,
@@ -195,7 +197,7 @@ package body Code_Peer.Module.Bridge is
          Module.Load (Reply_File_Name);
 
       else
-         Args (1) := new String'(+Command_File_Name.Full_Name);
+         Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
          --  Generate command file
 
          Code_Peer.Bridge.Commands.Inspection
@@ -204,17 +206,14 @@ package body Code_Peer.Module.Bridge is
          --  Run gps_codepeer_bridge
 
          GPS.Kernel.Timeout.Launch_Process
-            (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-             Command       => "gps_codepeer_bridge",
-             Arguments     => Args,
-             Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
-             Directory     => Object_Directory,
-             Callback_Data =>
-             new Bridge_Context'
-                (Inspection, Module, Reply_File_Name),
-             Success       => Success,
-             Exit_Cb       => On_Bridge_Exit'Access);
-         GNATCOLL.Utils.Free (Args);
+           (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
+            CL            => CL,
+            Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
+            Directory     => Object_Directory,
+            Callback_Data => new Bridge_Context'
+              (Inspection, Module, Reply_File_Name),
+            Success       => Success,
+            Exit_Cb       => On_Bridge_Exit'Access);
       end if;
    end Inspection;
 
@@ -297,19 +296,20 @@ package body Code_Peer.Module.Bridge is
       Reply_File_Name    : constant Virtual_File :=
                              Create_From_Dir
                                (Object_Directory, Audit_Reply_File_Name);
-      Args               : GNAT.OS_Lib.Argument_List :=
-                             (1 => new String'
-                                (+Command_File_Name.Full_Name));
       Mode               : constant String :=
                              Code_Peer.Shell_Commands.Get_Build_Mode
                                (Kernel_Handle (Module.Kernel));
       CodePeer_Subdir    : constant Boolean :=
                              Use_CodePeer_Subdir
                                (Kernel_Handle (Module.Kernel));
+      CL                 : Command_Line;
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
    begin
+      CL := Create ("gps_codepeer_bridge");
+      Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
+
       if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode
            (Kernel_Handle (Module.Kernel), "codepeer");
@@ -327,8 +327,7 @@ package body Code_Peer.Module.Bridge is
 
       GPS.Kernel.Timeout.Launch_Process
         (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-         Command       => "gps_codepeer_bridge",
-         Arguments     => Args,
+         CL            => CL,
          Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
          Directory     => Object_Directory,
          Callback_Data =>
@@ -336,7 +335,6 @@ package body Code_Peer.Module.Bridge is
            (Audit_Trail, Module, Reply_File_Name, Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
-      GNATCOLL.Utils.Free (Args);
 
       if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode

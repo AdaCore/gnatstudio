@@ -22,8 +22,8 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -1698,36 +1698,34 @@ package body VCS_View_API is
          Filename           : constant Filesystem_String := Base_Name (File);
          --  The filename to look for in the ChangeLog file
 
-         ChangeLog_Filename : aliased String :=
+         ChangeLog_Filename : constant String :=
                                 +Full_Name (ChangeLog_File);
          --  The global ChangeLog file
 
          Last               : Natural;
          Entry_Found        : Boolean;
 
+         CL : Command_Line;
       begin
          Line   := 1;
          Column := 0;
 
          --  Get last line in the file
 
-         Last := Natural'Value
-           (Execute_GPS_Shell_Command
-              (Kernel,
-               "Editor.get_last_line",
-               (1 => ChangeLog_Filename'Unchecked_Access)));
+         CL := Create ("Editor.get_last_line");
+         Append_Argument (CL, ChangeLog_Filename, One_Arg);
+
+         Last := Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
 
          --  First, look for the filename entry
 
          loop
+            CL := Create ("Editor.get_chars");
+            Append_Argument (CL, ChangeLog_Filename, One_Arg);
+            Append_Argument (CL, Image (Line), One_Arg);
             declare
-               L_Img  : aliased String  := Image (Line);
                B_Line : constant String :=
-                          Execute_GPS_Shell_Command
-                            (Kernel,
-                             "Editor.get_chars",
-                             (ChangeLog_Filename'Unchecked_Access,
-                              L_Img'Unchecked_Access));
+                          Execute_GPS_Shell_Command (Kernel, CL);
 
             begin
                Entry_Found := Index (B_Line, +Filename) /= 0;
@@ -1752,14 +1750,12 @@ package body VCS_View_API is
          Line := Line + 1;
 
          loop
+            CL := Create ("Editor.get_chars");
+            Append_Argument (CL, ChangeLog_Filename, One_Arg);
+            Append_Argument (CL, Image (Line), One_Arg);
             declare
-               L_Img   : aliased String := Image (Line);
-               B_Line  : constant String :=
-                           Execute_GPS_Shell_Command
-                             (Kernel,
-                              "Editor.get_chars",
-                              (ChangeLog_Filename'Unchecked_Access,
-                               L_Img'Unchecked_Access));
+               B_Line : constant String :=
+                 Execute_GPS_Shell_Command (Kernel, CL);
                Is_Empty : Boolean := True;
             begin
                for K in B_Line'Range loop
@@ -1779,30 +1775,20 @@ package body VCS_View_API is
                   then
                      --  An empty line, insert an HT
 
-                     declare
-                        L_Img : aliased String := Image (Line);
-                        C_Img : aliased String := "1";
-                        Text1 : aliased String :=
-                          String'(1 => ASCII.HT);
-                        Text2 : aliased String :=
-                          ASCII.HT & ASCII.LF & ASCII.LF;
-                        Args  : GNAT.OS_Lib.Argument_List (1 .. 4);
+                     CL := Create ("Editor.replace_text");
+                     Append_Argument (CL, ChangeLog_Filename, One_Arg);
+                     Append_Argument (CL, Image (Line), One_Arg);
+                     Append_Argument (CL, "1", One_Arg);
 
-                     begin
-                        Args (1) := ChangeLog_Filename'Unchecked_Access;
-                        Args (2) := L_Img'Unchecked_Access;
-                        Args (3) := C_Img'Unchecked_Access;
+                     if Line >= Last then
+                        --  This is the end of the file
+                        Append_Argument (CL, String'(1 => ASCII.HT), One_Arg);
+                     else
+                        Append_Argument
+                          (CL, ASCII.HT & ASCII.LF & ASCII.LF, One_Arg);
+                     end if;
 
-                        if Line >= Last then
-                           --  This is the end of the file
-                           Args (4) := Text1'Unchecked_Access;
-                        else
-                           Args (4) := Text2'Unchecked_Access;
-                        end if;
-
-                        Execute_GPS_Shell_Command
-                          (Kernel, "Editor.replace_text", Args);
-                     end;
+                     Execute_GPS_Shell_Command (Kernel, CL);
 
                      Column := 2;
 
@@ -1842,17 +1828,14 @@ package body VCS_View_API is
             Get_Location (File, ChangeLog_File, Line, Column);
 
             declare
-               L_Img              : aliased String := Image (Line);
-               C_Img              : aliased String := Image (Column);
-               ChangeLog_Filename : aliased String :=
-                                      +Full_Name (ChangeLog_File);
-
+               CL : Command_Line;
             begin
-               Execute_GPS_Shell_Command
-                 (Kernel,
-                  "Editor.edit",
-                  (ChangeLog_Filename'Unchecked_Access,
-                   L_Img'Unchecked_Access, C_Img'Unchecked_Access));
+               --  ??? We should use the Editors API
+               CL := Create ("Editor.edit");
+               Append_Argument (CL, +Full_Name (ChangeLog_File), One_Arg);
+               Append_Argument (CL, Image (Line), One_Arg);
+               Append_Argument (CL, Image (Column), One_Arg);
+               Execute_GPS_Shell_Command (Kernel, CL);
             end;
 
             if not Already_Open then
@@ -3310,10 +3293,10 @@ package body VCS_View_API is
       declare
          Str : constant String :=
            Execute_GPS_Shell_Command
-            (Kernel,
-             "MDI.input_dialog"
-             & " ""Query history for revision:"""
-             & " ""Revision=" & Revision.all & """");
+             (Kernel,
+              Parse_String ("MDI.input_dialog"
+                & " ""Query history for revision:"""
+                & " ""Revision=" & Revision.all & """", Separate_Args));
       begin
          if Str /= "" then
             Log
@@ -3506,17 +3489,19 @@ package body VCS_View_API is
             Str := new String'
               (Execute_GPS_Shell_Command
                  (Kernel,
-                  "MDI.input_dialog"
-                  & " ""Compare against revision:"""
-                  & " ""Revision=" & Revision_1.all & """"));
+                  Parse_String ("MDI.input_dialog"
+                    & " ""Compare against revision:"""
+                    & " ""Revision=" & Revision_1.all & """",
+                   Separate_Args)));
          else
             Str := new String'
               (Execute_GPS_Shell_Command
                  (Kernel,
-                  "MDI.input_dialog"
-                  & " ""Compare between two revisions:"""
-                  & " ""Revision 1=" & Revision_1.all & """"
-                  & " ""Revision 2=" & Revision_2.all & """"));
+                  Parse_String ("MDI.input_dialog"
+                    & " ""Compare between two revisions:"""
+                    & " ""Revision 1=" & Revision_1.all & """"
+                    & " ""Revision 2=" & Revision_2.all & """",
+                   Separate_Args)));
          end if;
       end if;
 

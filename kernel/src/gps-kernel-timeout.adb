@@ -55,7 +55,7 @@ package body GPS.Kernel.Timeout is
    Me : constant Debug_Handle := Create ("Timeout");
 
    type Console_Process_Data is new GObject_Record with record
-      Args                 : String_List_Access := null;
+      CL                   : Command_Line;
       Server               : Server_Type;
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
@@ -202,7 +202,6 @@ package body GPS.Kernel.Timeout is
       Free (D.Name);
       D.Data.D.Command := null;
 
-      Free (D.Data.Args);
       Pop_State (D.Data.D.Kernel);
 
       Unchecked_Free (D.Data.Expect_Regexp);
@@ -244,7 +243,7 @@ package body GPS.Kernel.Timeout is
          Trace (Me, "Spawn the process");
 
          Spawn (Command.Data.D.Kernel,
-                Command.Data.Args.all,
+                Command.Data.CL,
                 Command.Data.Server,
                 Command.Data.D.Descriptor,
                 Success,
@@ -253,7 +252,6 @@ package body GPS.Kernel.Timeout is
                 Command.Data.Show_Command,
                 Command.Data.Directory,
                 Command.Data.Use_Pipes);
-         Free (Command.Data.Args);
          --  Set Started here so that even if spawn fails we don't pass twice
          --  here
          Command.Data.Started := True;
@@ -564,8 +562,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : Filesystem_String;
-      Arguments            : GNAT.OS_Lib.Argument_List;
+      CL                   : Command_Line;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -616,13 +613,12 @@ package body GPS.Kernel.Timeout is
       if Name_In_Task_Manager /= "" then
          C.Name := new String'(Name_In_Task_Manager);
       else
-         C.Name := new String'(+Command);
+         C.Name := new String'(Get_Command (CL));
       end if;
 
       C.Data := new Console_Process_Data'
         (GObject_Record with
-         Args                 => new String_List'
-           ((1 => new String'(+Command)) & Clone (Arguments)),
+         CL                   => CL,
          Server               => Server,
          Console              => Console,
          Use_Ext_Terminal     => Use_Ext_Terminal,
@@ -691,8 +687,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : Filesystem_String;
-      Arguments            : GNAT.OS_Lib.Argument_List;
+      CL                   : Command_Line;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
@@ -714,8 +709,7 @@ package body GPS.Kernel.Timeout is
    begin
       Launch_Process
         (Kernel               => Kernel,
-         Command              => Command,
-         Arguments            => Arguments,
+         CL                   => CL,
          Server               => GPS_Server,
          Console              => Console,
          Callback             => Callback,
@@ -760,8 +754,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : Filesystem_String;
-      Arguments            : GNAT.OS_Lib.Argument_List;
+      CL                   : Command_Line;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -786,8 +779,7 @@ package body GPS.Kernel.Timeout is
    begin
       Launch_Process
         (Kernel               => Kernel,
-         Command              => Command,
-         Arguments            => Arguments,
+         CL                   => CL,
          Server               => Server,
          Console              => Console,
          Callback             => Callback,

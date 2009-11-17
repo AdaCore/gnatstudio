@@ -21,10 +21,10 @@
 
 with GPS.Kernel;
 with Glib;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Remote;       use Remote;
 with Interactive_Consoles; use Interactive_Consoles;
+with GNATCOLL.Command_Lines;        use GNATCOLL.Command_Lines;
 
 package Commands.Builder is
 
@@ -59,7 +59,7 @@ package Commands.Builder is
 
    procedure Launch_Build_Command
      (Kernel        : GPS.Kernel.Kernel_Handle;
-      CL            : GNAT.OS_Lib.String_List_Access;
+      CL            : Command_Line;
       Target_Name   : String;
       Mode_Name     : String;
       Category_Name : String := Error_Category;

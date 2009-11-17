@@ -24,6 +24,7 @@ with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with Traces;              use Traces;
+with GNATCOLL.Command_Lines;       use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with Vdiff2_Module.Utils; use Vdiff2_Module.Utils;
 with Vdiff2_Module;       use Vdiff2_Module;
@@ -168,6 +169,7 @@ package body Vdiff2_Command_Block is
       Diff   : access Diff_Head)
    is
       Files : constant T_VFile := Diff.Files;
+      CL    : Command_Line;
       Args1 : Argument_List :=
                 (1 => new String'(+Full_Name (Files (1))));
       Args2 : Argument_List :=
@@ -176,16 +178,21 @@ package body Vdiff2_Command_Block is
 
    begin
       if Files (1) /= GNATCOLL.VFS.No_File then
-         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args1);
+         CL := Create ("Editor.close");
+         Append_Argument (CL, +Full_Name (Files (1)), One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
       end if;
 
       if Files (2) /= GNATCOLL.VFS.No_File then
-         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args2);
+         CL := Create ("Editor.close");
+         Append_Argument (CL, +Full_Name (Files (2)), One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
       end if;
 
       if Files (3) /= GNATCOLL.VFS.No_File then
-         Args3 := (1 => new String'(+Full_Name (Files (3))));
-         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
+         CL := Create ("Editor.close");
+         Append_Argument (CL, +Full_Name (Files (3)), One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
          --  At this point all the memory associated with Diff is freed
       end if;
 

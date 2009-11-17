@@ -23,8 +23,8 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNATCOLL.Command_Lines;   use GNATCOLL.Command_Lines;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with System.Assertions;
 
@@ -1038,7 +1038,6 @@ package body Aliases_Module is
                   Mark          : Gtk_Text_Mark;
                   Result        : Boolean;
                   Event         : Gdk_Event;
-                  Args          : Argument_List (1 .. 2);
                   Count         : Natural := 0;
                   Index         : Natural := Replace'First;
                   Start_Line    : constant Integer :=
@@ -1077,17 +1076,20 @@ package body Aliases_Module is
                            Index := Next_Line (Replace, Index) + 1;
                            Count := Count + 1;
                         end loop;
-                        Args (1) := new String'(Image (Start_Line + 1));
-                        Args (2) := new String'(Image (Start_Line + Count));
+
+                        declare
+                           CL : Command_Line;
+                        begin
+                           CL := Create ("Editor.select_text");
+                           Append_Argument
+                             (CL, Image (Start_Line + 1), One_Arg);
+                           Append_Argument
+                             (CL, Image (Start_Line + Count), One_Arg);
+                           Execute_GPS_Shell_Command (Command.Kernel, CL);
+                        end;
 
                         Execute_GPS_Shell_Command
-                          (Command.Kernel,
-                           Command => "Editor.select_text",
-                           Args    => Args);
-                        Free (Args);
-
-                        Execute_GPS_Shell_Command
-                          (Command.Kernel, Command => "Editor.indent");
+                          (Command.Kernel, CL => Create ("Editor.indent"));
 
                         Get_Iter_At_Mark (Buffer, First_Iter, Mark);
                         Place_Cursor (Buffer, First_Iter);

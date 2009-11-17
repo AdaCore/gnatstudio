@@ -51,7 +51,8 @@ with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 
 package body XML_Viewer is
 
@@ -196,7 +197,7 @@ package body XML_Viewer is
       Node : Node_Ptr) return Callback_Data'Class
    is
       Script : constant Scripting_Language := Get_Script (Sub.all);
-      C      : constant Callback_Data'Class := Create (Script, 3);
+      C      : Callback_Data'Class := Create (Script, 3);
    begin
       Set_Nth_Arg (C, 1, Node.Tag.all);
 
@@ -324,7 +325,9 @@ package body XML_Viewer is
    begin
       if Double_Click then
          if Cmd /= "" then
-            Execute_GPS_Shell_Command (Get_Kernel (Custom_Module_ID.all), Cmd);
+            Execute_GPS_Shell_Command
+              (Get_Kernel (Custom_Module_ID.all),
+               Parse_String (Cmd, Separate_Args));
             return True;
          end if;
       end if;

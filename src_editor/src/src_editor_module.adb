@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
+with GNATCOLL.Command_Lines;            use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
 with Gdk.Color;                         use Gdk.Color;
@@ -1874,17 +1875,16 @@ package body Src_Editor_Module is
             Force    => Auto_Save.Get_Pref)
          then
             declare
-               Cmd : Argument_List_Access := Argument_String_To_List
-                 (Print_Helper & " " &
-                  (+Full_Name (Get_Filename (Source))));
+               CL  : Command_Line;
             begin
+               CL := Parse_String (Print_Helper, Separate_Args);
+               Append_Argument
+                 (CL, +Full_Name (Get_Filename (Source)), One_Arg);
+
                Launch_Process
-                 (Kernel,
-                  Command   => +Cmd (Cmd'First).all,
-                  Arguments => Cmd (Cmd'First + 1 .. Cmd'Last),
+                 (Kernel, CL,
                   Console   => Get_Console (Kernel),
                   Success   => Success);
-               Free (Cmd);
             end;
          end if;
       end if;

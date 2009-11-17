@@ -19,7 +19,6 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;
-with GNAT.OS_Lib;
 
 with Gtk.Main;
 
@@ -27,6 +26,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
 with Commands;                use Commands;
 with Remote;                  use Remote;
+with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
 
 package GPS.Kernel.Timeout is
 
@@ -75,8 +75,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : Filesystem_String;
-      Arguments            : GNAT.OS_Lib.Argument_List;
+      CL                   : Command_Line;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -150,8 +149,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : Filesystem_String;
-      Arguments            : GNAT.OS_Lib.Argument_List;
+      CL                   : Command_Line;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -179,8 +177,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : Filesystem_String;
-      Arguments            : GNAT.OS_Lib.Argument_List;
+      CL                   : Command_Line;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;

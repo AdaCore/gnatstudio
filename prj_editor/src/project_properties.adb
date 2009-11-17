@@ -94,6 +94,7 @@ with Traces;                    use Traces;
 with Namet;
 with Wizards;                   use Wizards;
 with XML_Utils;                 use XML_Utils;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 
 package body Project_Properties is
    use Widget_List;
@@ -2656,7 +2657,8 @@ package body Project_Properties is
          declare
             List : constant String := GNATCOLL.Scripts.Execute_Command
               (Script,
-               Command     => Attr.Dynamic_List_Cmd.all,
+               CL          => Parse_String
+                 (Attr.Dynamic_List_Cmd.all, Command_Line_Treatment (Script)),
                Hide_Output => True,
                Errors      => Errors'Access);
          begin

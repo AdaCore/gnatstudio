@@ -41,9 +41,9 @@ with OS_Utils;                    use OS_Utils;
 with Projects.Registry;           use Projects.Registry;
 with Projects;                    use Projects;
 with Remote;                      use Remote;
-with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
-with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
+with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
+with GNATCOLL.Command_Lines;      use GNATCOLL.Command_Lines;
 
 package body Build_Command_Manager is
 
@@ -62,7 +62,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Argument_List_Access;
+      Simulate   : Boolean := False) return Command_Line;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
@@ -416,7 +416,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Argument_List_Access
+      Simulate   : Boolean := False) return Command_Line
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
       Index  : Natural := 1;
@@ -430,7 +430,7 @@ package body Build_Command_Manager is
             --  This should not happen
             Insert (Kernel, (-"Invalid command line"), Mode => Error);
             Free (Result);
-            return null;
+            return Empty_Command_Line;
          end if;
 
          declare
@@ -462,11 +462,15 @@ package body Build_Command_Manager is
       end loop;
 
       declare
-         Real_Result : Argument_List_Access;
+         Real_Result : Command_Line;
       begin
-         Real_Result := new Argument_List (1 .. Index - 1);
-         Real_Result (1 .. Index - 1) := Result (1 .. Index - 1);
-         Unchecked_Free (Result);
+         Real_Result := Create (Result (1).all);
+
+         for J in 2 .. Index - 1 loop
+            Append_Argument (Real_Result, Result (J).all, One_Arg);
+         end loop;
+
+         Free (Result);
          return Real_Result;
       end;
 
@@ -476,7 +480,7 @@ package body Build_Command_Manager is
            (Kernel, (-"Invalid context, cannot build"),
             Mode => Console.Error);
          Free (Result);
-         return null;
+         return Empty_Command_Line;
    end Expand_Command_Line;
 
    -------------------
@@ -499,7 +503,7 @@ package body Build_Command_Manager is
       Prj            : constant Project_Type := Get_Project (Kernel);
       Dir            : Virtual_File;
       T              : Target_Access;
-      Full           : Argument_List_Access;
+      Full           : Command_Line;
       Command_Line   : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
 
@@ -533,28 +537,16 @@ package body Build_Command_Manager is
             CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
-            Args      : Argument_List_Access :=
+            Args      : constant GNATCOLL.Command_Lines.Command_Line :=
                           Expand_Command_Line
                             (Kernel, Mode_Args.all & All_Extra_Args.all,
                              Server,
                              Force_File, Main, Subdir, Simulate => True);
 
          begin
-            if Args = null then
-               Free (CL_Args);
-               Free (Mode_Args);
-               return "";
-
-            else
-               declare
-                  Res : constant String := Argument_List_To_String (Args.all);
-               begin
-                  Free (CL_Args);
-                  Free (Mode_Args);
-                  Free (Args);
-                  return Res;
-               end;
-            end if;
+            Free (CL_Args);
+            Free (Mode_Args);
+            return To_Display_String (Args);
          end Expand_Cmd_Line;
 
       begin
@@ -650,7 +642,7 @@ package body Build_Command_Manager is
          end if;
 
          --  Trace the command line, for debug purposes
-         if Full = null then
+         if Full = Empty_Command_Line then
             Trace (Me, "Macro expansion resulted in empty command line");
             Unchecked_Free (All_Extra_Args);
             return;
@@ -680,7 +672,6 @@ package body Build_Command_Manager is
                Synchronous, Uses_Shell (T), Dir);
          end if;
 
-         Free (Full);
          Unchecked_Free (All_Extra_Args);
       end Launch_For_Mode;
 

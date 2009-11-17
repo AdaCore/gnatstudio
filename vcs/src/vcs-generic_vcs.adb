@@ -49,6 +49,7 @@ with VCS_Status;                use VCS_Status;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
 with GPS.Editors; use GPS.Editors;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 
 package body VCS.Generic_VCS is
 
@@ -1884,19 +1885,21 @@ package body VCS.Generic_VCS is
         (Get_Scripts (Kernel), GPS_Shell_Name);
 
       declare
-         Res : constant String :=
-                 Execute_GPS_Shell_Command
-                   (Kernel,
-                    "Editor.get_last_line "
-                    & Argument_To_Quoted_String (+Full_Name (File)));
+         CL : Command_Line;
       begin
-         Max := Natural'Value (Res);
-      exception
-         when others =>
-            Trace
-              (Me, "Could not get last line of "
-               & Display_Full_Name (File) & ", result='" & Res & ''');
-            return;
+         CL := Create ("Editor.get_last_line");
+         Append_Argument (CL, +Full_Name (File), One_Arg);
+         declare
+            Res : constant String := Execute_GPS_Shell_Command (Kernel, CL);
+         begin
+            Max := Natural'Value (Res);
+         exception
+            when others =>
+               Trace
+                 (Me, "Could not get last line of "
+                  & Display_Full_Name (File) & ", result='" & Res & ''');
+               return;
+         end;
       end;
 
       declare

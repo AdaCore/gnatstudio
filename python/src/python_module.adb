@@ -20,6 +20,7 @@
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
+with GNATCOLL.Command_Lines;         use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
@@ -352,9 +353,8 @@ package body Python_Module is
 
          Execute_Command
            (Script,
-            "sys.path=[r'" &
-            Path (Path'First .. Path'Last - 1) &
-            "']+sys.path",
+            Create ("sys.path=[r'" & Path (Path'First .. Path'Last - 1) &
+              "']+sys.path"),
             Show_Command => False,
             Hide_Output  => True,
             Errors       => Errors);
@@ -370,7 +370,7 @@ package body Python_Module is
                Trace (Me, "Loading " & Files (J).Display_Full_Name);
                Execute_Command
                  (Script,
-                  "import " & (+Base_Name (Files (J), ".py")),
+                  Create ("import " & (+Base_Name (Files (J), ".py"))),
                   Show_Command => False,
                   Hide_Output  => True,
                   Errors       => Errors);

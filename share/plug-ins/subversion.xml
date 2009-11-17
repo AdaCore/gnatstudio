@@ -14,7 +14,7 @@
    <action name="generic_svn_status" show-command="false" output="none" category="">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for files in %1"</shell>
-      <external check-password="true">svn --non-interactive status -N -u -v "$2-"</external>
+      <external check-password="true">svn --non-interactive status -N -u -v $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -122,7 +122,7 @@
    <action name="generic_svn_commit" show-command="false" output="none" category="">
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
-      <external check-password="true">svn --non-interactive --non-recursive commit -F "%1" "$2-"</external>
+      <external check-password="true">svn --non-interactive --non-recursive commit -F "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -137,14 +137,14 @@
 
    <action name="generic_svn_add" show-command="false" output="none" category="">
       <shell output="">echo "adding file(s) $2-"</shell>
-      <external check-password="true">svn add "$2-"</external>
+      <external check-password="true">svn add $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
          <shell output="">Locations.parse "%3" "SVN errors"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
-      <external check-password="true">svn commit -F "%1" "$2-"</external>
+      <external check-password="true">svn commit -F "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -157,7 +157,7 @@
 
    <action name="generic_svn_add_no_commit" show-command="false" output="none" category="">
       <shell output="">echo "adding (no commit) file(s) $2-"</shell>
-      <external check-password="true">svn add --non-recursive "$2-"</external>
+      <external check-password="true">svn add --non-recursive $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -169,14 +169,14 @@
 
    <action name="generic_svn_remove" show-command="false" output="none" category="">
       <shell output="">echo "removing file(s) $2-"</shell>
-      <external check-password="true">svn --non-interactive remove "$2-"</external>
+      <external check-password="true">svn --non-interactive remove $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
          <shell output="">Locations.parse "%3" "SVN errors"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
-      <external check-password="true">svn commit -F "%1" "$2-"</external>
+      <external check-password="true">svn commit -F "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -189,7 +189,7 @@
 
    <action name="generic_svn_remove_no_commit" show-command="false" output="none" category="">
       <shell output="">echo "removing file(s) $2-"</shell>
-      <external check-password="true">svn --non-interactive remove "$2-"</external>
+      <external check-password="true">svn --non-interactive remove $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -244,7 +244,7 @@
 
    <action name="generic_svn_update" show-command="false" output="none" category="">
       <shell>pwd</shell>
-      <external check-password="true" output="">svn --non-interactive update "$*"</external>
+      <external check-password="true" output="">svn --non-interactive update $*</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -273,7 +273,7 @@
    <!-- SVN resolved -->
 
    <action name="generic_svn_resolved" show-command="false" output="none" category="">
-      <external check-password="true" output="">svn resolved "$*"</external>
+      <external check-password="true" output="">svn resolved $*</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
@@ -402,7 +402,7 @@
    <!-- SVN revert -->
 
    <action name="generic_svn_revert" show-command="false" output="none" category="">
-      <external check-password="true" output="">svn revert "$*"</external>
+      <external check-password="true" output="">svn revert $*</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>

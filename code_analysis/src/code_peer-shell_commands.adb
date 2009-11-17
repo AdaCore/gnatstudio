@@ -16,10 +16,9 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-with GNAT.OS_Lib;
 
-with GNATCOLL.Utils;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with GPS.Kernel.Scripts;
 
@@ -34,15 +33,12 @@ package body Code_Peer.Shell_Commands is
       Name   : String)
       return String
    is
-      Args   : GNAT.OS_Lib.Argument_List := (1 => new String'(Name));
-      Result : constant String :=
-                 GPS.Kernel.Scripts.Execute_GPS_Shell_Command
-                  (Kernel, "BuildTarget", Args);
+      CL : Command_Line;
 
    begin
-      GNATCOLL.Utils.Free (Args);
-
-      return Result;
+      CL := Create ("BuildTarget");
+      Append_Argument (CL, Name, One_Arg);
+      return GPS.Kernel.Scripts.Execute_GPS_Shell_Command (Kernel, CL);
    end Build_Target;
 
    --------------------------
@@ -60,22 +56,24 @@ package body Code_Peer.Shell_Commands is
       Synchronous : Boolean      := True;
       Dir         : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Args   : GNAT.OS_Lib.Argument_List :=
-                 (1 => new String'(Target_ID),
-                  2 => new String'(Main_Name),
-                  3 => new String'(+Full_Name (File)),
-                  4 => new String'(Boolean'Image (Force)),
-                  5 => new String'(Extra_Args),
-                  6 => new String'(Build_Mode),
-                  7 => new String'(Boolean'Image (Synchronous)),
-                  8 => new String'(+Full_Name (Dir)));
-      Result : constant String :=
-                 GPS.Kernel.Scripts.Execute_GPS_Shell_Command
-                  (Kernel, "BuildTarget.execute", Args);
-      pragma Unreferenced (Result);
+      CL : Command_Line := Create ("BuildTarget.execute");
 
    begin
-      GNATCOLL.Utils.Free (Args);
+      Append_Argument (CL, Target_ID, One_Arg);
+      Append_Argument (CL, Main_Name, One_Arg);
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Boolean'Image (Force), One_Arg);
+      Append_Argument (CL, Extra_Args, One_Arg);
+      Append_Argument (CL, Build_Mode, One_Arg);
+      Append_Argument (CL, Boolean'Image (Synchronous), One_Arg);
+      Append_Argument (CL, +Full_Name (Dir), One_Arg);
+      declare
+         Result : constant String :=
+           GPS.Kernel.Scripts.Execute_GPS_Shell_Command (Kernel, CL);
+         pragma Unreferenced (Result);
+      begin
+         null;
+      end;
    end Build_Target_Execute;
 
    --------------------
@@ -83,12 +81,9 @@ package body Code_Peer.Shell_Commands is
    --------------------
 
    function Get_Build_Mode (Kernel : GPS.Kernel.Kernel_Handle) return String is
-      Args   : GNAT.OS_Lib.Argument_List (1 .. 0);
-
    begin
-      return
-        GPS.Kernel.Scripts.Execute_GPS_Shell_Command
-          (Kernel, "get_build_mode", Args);
+      return GPS.Kernel.Scripts.Execute_GPS_Shell_Command
+        (Kernel, Create ("get_build_mode"));
    end Get_Build_Mode;
 
    --------------------
@@ -99,14 +94,17 @@ package body Code_Peer.Shell_Commands is
      (Kernel : GPS.Kernel.Kernel_Handle;
       Mode   : String)
    is
-      Args   : GNAT.OS_Lib.Argument_List := (1 => new String'(Mode));
-      Result : constant String :=
-                 GPS.Kernel.Scripts.Execute_GPS_Shell_Command
-                   (Kernel, "set_build_mode", Args);
-      pragma Unreferenced (Result);
+      CL : Command_Line := Create ("set_build_mode");
 
    begin
-      GNATCOLL.Utils.Free (Args);
+      Append_Argument (CL, Mode, One_Arg);
+      declare
+         Result : constant String :=
+           GPS.Kernel.Scripts.Execute_GPS_Shell_Command (Kernel, CL);
+         pragma Unreferenced (Result);
+      begin
+         null;
+      end;
    end Set_Build_Mode;
 
 end Code_Peer.Shell_Commands;

@@ -28,6 +28,7 @@ with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
+with GNATCOLL.Command_Lines;      use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
@@ -96,7 +97,7 @@ package body Expect_Interface is
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
       Server           : Server_Type;
-      Command          : Argument_List_Access;
+      Command          : Command_Line;
       Show_Command     : Boolean;
       On_Match         : Subprogram_Type;
       On_Exit          : Subprogram_Type;
@@ -219,8 +220,8 @@ package body Expect_Interface is
 
    overriding function Name (X : access Custom_Action_Record) return String is
    begin
-      if X.Command /= null then
-         return X.Command (X.Command'First).all;
+      if X.Command /= Empty_Command_Line then
+         return Get_Command (X.Command);
       end if;
 
       return "expect";
@@ -232,7 +233,6 @@ package body Expect_Interface is
 
    overriding procedure Free (X : in out Custom_Action_Record) is
    begin
-      Free (X.Command);
       Unchecked_Free (X.Pattern);
       Free (X.Unmatched_Output);
       Free (X.On_Exit);
@@ -285,7 +285,7 @@ package body Expect_Interface is
          begin
             Spawn
               (Kernel,
-               Command.Command.all,
+               Command.Command,
                Command.Server,
                Command.Pd,
                Res,
@@ -730,8 +730,6 @@ package body Expect_Interface is
          end if;
       end loop;
 
-      --  Unreachable, if the process dies we get an exception
-
       Action.In_Expect := False;
       Exit_Why := Exit_Type'(Died);
 
@@ -876,8 +874,7 @@ package body Expect_Interface is
                    ": "& Command_Line);
 
             D              := new Custom_Action_Record;
-            D.Command      := Argument_String_To_List_With_Triple_Quotes
-              (Command_Line);
+            D.Command      := Parse_String (Command_Line, Separate_Args);
             D.On_Match        := Nth_Arg (Data, 4, null);
             D.On_Exit         := Nth_Arg (Data, 5, null);
             D.Before_Kill     := Nth_Arg (Data, 10, null);
@@ -935,7 +932,7 @@ package body Expect_Interface is
                begin
                   Spawn
                     (Kernel,
-                     D.Command.all,
+                     D.Command,
                      D.Server,
                      D.Pd,
                      Success,

@@ -27,13 +27,13 @@ with GVD.Types;                 use GVD.Types;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
 
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands;                  use Commands;
 with Commands.Debugger;         use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GVD.Preferences;           use GVD.Preferences;
@@ -90,29 +90,21 @@ package body GVD.Source_Editor.GPS is
          Focus             => False);
 
       declare
-         Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(+Full_Name (Editor.Current_File)),
-            2 => new String'(Highlight_Category));
+         CL : Command_Line := Create ("Editor.unhighlight");
       begin
-         Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
-
-         for A in Args'Range loop
-            GNAT.OS_Lib.Free (Args (A));
-         end loop;
+         Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
+         Append_Argument (CL, Highlight_Category, One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
       end;
 
       if Editor.Line /= 0 then
          declare
-            Args : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-              (1 => new String'(+Full_Name (Editor.Current_File)),
-               2 => new String'(Highlight_Category),
-               3 => new String'(Editor.Line'Img));
+            CL : Command_Line := Create ("Editor.highlight");
          begin
-            Execute_GPS_Shell_Command (Kernel, "Editor.highlight", Args);
-
-            for A in Args'Range loop
-               GNAT.OS_Lib.Free (Args (A));
-            end loop;
+            Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
+            Append_Argument (CL, Highlight_Category, One_Arg);
+            Append_Argument (CL, Editor.Line'Img, One_Arg);
+            Execute_GPS_Shell_Command (Kernel, CL);
          end;
       end if;
 
@@ -148,15 +140,11 @@ package body GVD.Source_Editor.GPS is
       end if;
 
       declare
-         Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(+Full_Name (Editor.Current_File)),
-            2 => new String'(Highlight_Category));
+         CL : Command_Line := Create ("Editor.unhighlight");
       begin
-         Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
-
-         for A in Args'Range loop
-            GNAT.OS_Lib.Free (Args (A));
-         end loop;
+         Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
+         Append_Argument (CL, Highlight_Category, One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
       end;
    end Unhighlight_Current_Line;
 
@@ -169,21 +157,17 @@ package body GVD.Source_Editor.GPS is
       Window : access GPS_Window_Record'Class)
    is
       Kernel : constant Kernel_Handle := GPS_Window (Window).Kernel;
-      Args   : GNAT.OS_Lib.Argument_List :=
-        (new String'(Highlight_Category),
-         new String'("#00FF00"),
-         new String'("True"));
+      CL     : Command_Line := Create ("Editor.register_highlighting");
 
    begin
       Editor.Window := GPS_Window (Window);
 
       --  Initialize the color for line highlighting.
 
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-
-      for A in Args'Range loop
-         GNAT.OS_Lib.Free (Args (A));
-      end loop;
+      Append_Argument (CL, Highlight_Category, One_Arg);
+      Append_Argument (CL, "#00FF00", One_Arg);
+      Append_Argument (CL, "True", One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
    end Initialize;
 
    ---------------
@@ -540,15 +524,11 @@ package body GVD.Source_Editor.GPS is
 
       while not Is_Empty (Editor.Highlighted_Files) loop
          declare
-            Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-              (1 => new String'(Head (Editor.Highlighted_Files)),
-               2 => new String'(Highlight_Category));
+            CL : Command_Line := Create ("Editor.unhighlight");
          begin
-            Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
-
-            for A in Args'Range loop
-               GNAT.OS_Lib.Free (Args (A));
-            end loop;
+            Append_Argument (CL, Head (Editor.Highlighted_Files), One_Arg);
+            Append_Argument (CL, Highlight_Category, One_Arg);
+            Execute_GPS_Shell_Command (Kernel, CL);
          end;
 
          Next (Editor.Highlighted_Files);

@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with String_Utils;           use String_Utils;
@@ -34,17 +35,13 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Style  : String := "";
       Number : Natural := 1) return Natural
    is
-      Args_Line : Argument_List :=
-                    (1 => new String'(+Full_Name (File)),
-                     2 => new String'(Image (Pos)),
-                     3 => new String'(Image (Number)),
-                     4 => new String'(Style));
-      Res       : constant String :=
-                    Execute_GPS_Shell_Command
-                      (Kernel, "Editor.add_blank_lines", Args_Line);
+      CL : Command_Line := Create ("Editor.add_blank_lines");
    begin
-      Free (Args_Line);
-      return Natural'Value (Res);
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Image (Pos), One_Arg);
+      Append_Argument (CL, Image (Number), One_Arg);
+      Append_Argument (CL, Style, One_Arg);
+      return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
    end Add_Line;
 
    -----------------
@@ -68,13 +65,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       File     : Virtual_File)
    is
-      Args_Edit : Argument_List :=
-                    (1 => new String'(+Full_Name (File)),
-                     2 => new String'("0"),
-                     3 => new String'("0"));
+      CL : Command_Line := Create ("Editor.edit");
    begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit);
-      Free (Args_Edit);
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, "0", One_Arg);
+      Append_Argument (CL, "0", One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
    end Edit;
 
    ---------------------------
@@ -87,23 +83,16 @@ package body Vdiff2_Module.Utils.Shell_Command is
       File2  : Virtual_File;
       File3  : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Args : Argument_List_Access;
+      CL : Command_Line := Create ("Editor.set_synchronized_scrolling");
    begin
-      if File3 = GNATCOLL.VFS.No_File then
-         Args := new Argument_List'
-           (1 => new String'(+Full_Name (File1)),
-            2 => new String'(+Full_Name (File2)));
-      else
-         Args := new Argument_List'
-           (1 => new String'(+Full_Name (File1)),
-            2 => new String'(+Full_Name (File2)),
-            3 => new String'(+Full_Name (File3)));
+      Append_Argument (CL, +Full_Name (File1), One_Arg);
+      Append_Argument (CL, +Full_Name (File2), One_Arg);
+
+      if File3 /= GNATCOLL.VFS.No_File then
+         Append_Argument (CL, +Full_Name (File3), One_Arg);
       end if;
 
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.set_synchronized_scrolling", Args.all);
-      Free (Args.all);
-      Free (Args);
+      Execute_GPS_Shell_Command (Kernel, CL);
    end Synchronize_Scrolling;
 
    ---------------
@@ -118,18 +107,14 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Before : Integer := -1;
       After  : Integer := -1) return String
    is
-      Args_Replace_Text : Argument_List :=
-                            (1 => new String'(+Full_Name (File)),
-                             2 => new String'(Image (Line)),
-                             3 => new String'(Image (Column)),
-                             4 => new String'(Image (Before)),
-                             5 => new String'(Image (After)));
-      Res               : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.get_chars", Args_Replace_Text);
-
+      CL : Command_Line := Create ("Editor.get_chars");
    begin
-      Free (Args_Replace_Text);
-      return Res;
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Image (Line), One_Arg);
+      Append_Argument (CL, Image (Column), One_Arg);
+      Append_Argument (CL, Image (Before), One_Arg);
+      Append_Argument (CL, Image (After), One_Arg);
+      return Execute_GPS_Shell_Command (Kernel, CL);
    end Get_Chars;
 
    --------------------------
@@ -140,14 +125,10 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File) return Natural
    is
-      Args_Line : Argument_List :=
-                    (1 => new String'(+Full_Name (File)));
-      Res       : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "Editor.get_last_line", Args_Line);
-
+      CL : Command_Line := Create ("Editor.get_last_line");
    begin
-      Free (Args_Line);
-      return Natural'Value (Res);
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
    end Get_File_Last_Line;
 
    ----------------------
@@ -158,14 +139,10 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : String) return Natural
    is
-      Args_Line : Argument_List :=
-                    (1 => new String'(Mark));
-      Res       : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "Editor.get_line", Args_Line);
-
+      CL : Command_Line := Create ("Editor.get_line");
    begin
-      Free (Args_Line);
-      return Natural'Value (Res);
+      Append_Argument (CL, Mark, One_Arg);
+      return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
    end Get_Line_Number;
 
    --------------------
@@ -179,20 +156,15 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Style  : String := "";
       Number : Natural := 1)
    is
-      Args_Highlight : Argument_List :=
-                         (1 => new String'(+Full_Name (File)),
-                          2 => new String'(Style),
-                          3 => null);
-
+      CL : Command_Line;
    begin
       for J in 1 .. Number loop
-         Args_Highlight (3) := new String'(Image (Pos + J - 1));
-         Execute_GPS_Shell_Command
-           (Kernel, "Editor.highlight", Args_Highlight);
-         Free (Args_Highlight (3));
+         CL := Create ("Editor.highlight");
+         Append_Argument (CL, +Full_Name (File), One_Arg);
+         Append_Argument (CL, Style, One_Arg);
+         Append_Argument (CL, Image (Pos + J - 1), One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
       end loop;
-
-      Free (Args_Highlight);
    end Highlight_Line;
 
    ---------------------
@@ -207,6 +179,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1)
    is
+      CL : Command_Line;
       Args_Highlight_Range : Argument_List :=
                                (1 => new String'(+Full_Name (File)),
                                 2 => new String'(Style),
@@ -215,20 +188,26 @@ package body Vdiff2_Module.Utils.Shell_Command is
                                 5 => new String'("-1"));
 
    begin
+      CL := Create ("Editor.highlight_range");
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Style, One_Arg);
+      Append_Argument (CL, Image (Line), One_Arg);
+
       if Line /= 0 then
-         if End_C >= 0  and then Start_C >= 0 then
-            Free (Args_Highlight_Range (5));
-            Args_Highlight_Range (5) := new String'(Image (End_C));
+         if Start_C >= 0 then
+            Append_Argument (CL, Image (Start_C), One_Arg);
+         else
+            Append_Argument (CL, "-1", One_Arg);
          end if;
 
-         if Start_C >= 0 then
-            Free (Args_Highlight_Range (4));
-            Args_Highlight_Range (4) := new String'(Image (Start_C));
+         if End_C >= 0  and then Start_C >= 0 then
+            Append_Argument (CL, Image (End_C), One_Arg);
+         else
+            Append_Argument (CL, "-1", One_Arg);
          end if;
       end if;
 
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.highlight_range", Args_Highlight_Range);
+      Execute_GPS_Shell_Command (Kernel, CL);
       Free (Args_Highlight_Range);
    end Highlight_Range;
 
@@ -239,41 +218,46 @@ package body Vdiff2_Module.Utils.Shell_Command is
    procedure Register_Highlighting
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      CL : Command_Line;
       Default_Color      : constant String  := Diff_Default_Color.Get_Pref;
       Old_Color          : constant String  := Diff_Old_Color.Get_Pref;
       Append_Color       : constant String  := Diff_Append_Color.Get_Pref;
       Remove_Color       : constant String  := Diff_Remove_Color.Get_Pref;
       Change_Color       : constant String  := Diff_Change_Color.Get_Pref;
       Change_Fine_Color  : constant String  := Diff_Fine_Change_Color.Get_Pref;
-      Args               : Argument_List :=
-                             (1 => new String'(Default_Style),
-                              2 => new String'(Default_Color));
 
    begin
       --  <preferences>
 
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-      Args := (1 => new String'(Append_Style),
-               2 => new String'(Append_Color));
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-      Args := (1 => new String'(Old_Style),
-               2 => new String'(Old_Color));
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-      Args := (1 => new String'(Remove_Style),
-               2 => new String'(Remove_Color));
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-      Args := (1 => new String'(Change_Style),
-               2 => new String'(Change_Color));
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-      Args := (1 => new String'(Fine_Change_Style),
-               2 => new String'(Change_Fine_Color));
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
+      CL := Create ("Editor.register_highlighting");
+      Append_Argument (CL, Default_Style, One_Arg);
+      Append_Argument (CL, Default_Color, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
+
+      CL := Create ("Editor.register_highlighting");
+      Append_Argument (CL, Append_Style, One_Arg);
+      Append_Argument (CL, Append_Color, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
+
+      CL := Create ("Editor.register_highlighting");
+      Append_Argument (CL, Old_Style, One_Arg);
+      Append_Argument (CL, Old_Color, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
+
+      CL := Create ("Editor.register_highlighting");
+      Append_Argument (CL, Remove_Style, One_Arg);
+      Append_Argument (CL, Remove_Color, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
+
+      CL := Create ("Editor.register_highlighting");
+      Append_Argument (CL, Change_Style, One_Arg);
+      Append_Argument (CL, Change_Color, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
+
+      CL := Create ("Editor.register_highlighting");
+      Append_Argument (CL, Fine_Change_Style, One_Arg);
+      Append_Argument (CL, Change_Fine_Color, One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
 
       VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff
         := (Change_Fine_Color /= Change_Color);
@@ -287,13 +271,11 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : Natural)
    is
-      Args : Argument_List (1 .. 1);
+      CL : Command_Line := Create ("Editor.remove_blank_lines");
    begin
       if Mark /= Invalid_Mark then
-         Args (1) := new String'(Image (Mark));
-         Execute_GPS_Shell_Command
-           (Kernel, "Editor.remove_blank_lines", Args);
-         Free (Args (1));
+         Append_Argument (CL, Image (Mark), One_Arg);
+         Execute_GPS_Shell_Command (Kernel, CL);
       end if;
    end Remove_Blank_Lines;
 
@@ -310,17 +292,15 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Before : Integer := -1;
       After  : Integer := -1)
    is
-      Args_Replace_Text : Argument_List :=
-                            (1 => new String'(+Full_Name (File)),
-                             2 => new String'(Image (Line)),
-                             3 => new String'(Image (Column)),
-                             4 => new String'(Text),
-                             5 => new String'(Image (Before)),
-                             6 => new String'(Image (After)));
+      CL : Command_Line := Create ("Editor.replace_text");
    begin
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.replace_text", Args_Replace_Text);
-      Free (Args_Replace_Text);
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Image (Line), One_Arg);
+      Append_Argument (CL, Image (Column), One_Arg);
+      Append_Argument (CL, Text, One_Arg);
+      Append_Argument (CL, Image (Before), One_Arg);
+      Append_Argument (CL, Image (After), One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
    end Replace_Text;
 
    -----------------
@@ -333,13 +313,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Pos    : Natural;
       Style  : String := "")
    is
-      Args_Highlight : Argument_List :=
-                         (1 => new String'(+Full_Name (File)),
-                          2 => new String'(Style),
-                          3 => new String'(Image (Pos)));
+      CL : Command_Line := Create ("Editor.unhighlight");
    begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args_Highlight);
-      Free (Args_Highlight);
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Style, One_Arg);
+      Append_Argument (CL, Image (Pos), One_Arg);
+      Execute_GPS_Shell_Command (Kernel, CL);
    end Unhighlight;
 
    ----------------------
@@ -368,28 +347,27 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1)
    is
-      Args_Highlight_Range : Argument_List :=
-                               (1 => new String'(+Full_Name (File)),
-                                2 => new String'(Style),
-                                3 => new String'(Image (Line)),
-                                4 => new String'("-1"),
-                                5 => new String'("-1"));
+      CL : Command_Line := Create ("Editor.unhighlight_range");
    begin
+      Append_Argument (CL, +Full_Name (File), One_Arg);
+      Append_Argument (CL, Style, One_Arg);
+      Append_Argument (CL, Image (Line), One_Arg);
+
       if Line /= 0 then
-         if End_C >= 0  and then Start_C >= 0 then
-            Free (Args_Highlight_Range (5));
-            Args_Highlight_Range (5) := new String'(Image (End_C));
+         if Start_C >= 0 then
+            Append_Argument (CL, Image (Start_C), One_Arg);
+         else
+            Append_Argument (CL, "-1", One_Arg);
          end if;
 
-         if Start_C >= 0 then
-            Free (Args_Highlight_Range (4));
-            Args_Highlight_Range (4) := new String'(Image (Start_C));
+         if End_C >= 0  and then Start_C >= 0 then
+            Append_Argument (CL, Image (End_C), One_Arg);
+         else
+            Append_Argument (CL, "-1", One_Arg);
          end if;
       end if;
 
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.unhighlight_range", Args_Highlight_Range);
-      Free (Args_Highlight_Range);
+      Execute_GPS_Shell_Command (Kernel, CL);
    end Unhighlight_Range;
 
 end Vdiff2_Module.Utils.Shell_Command;

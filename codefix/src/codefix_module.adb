@@ -52,7 +52,8 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Glib;                      use Glib;
 with GPS.Editors;               use GPS.Editors;
 
@@ -462,7 +463,7 @@ package body Codefix_Module is
    begin
       Activate_Codefix
         (Kernel_Handle (Kernel),
-         Execute_GPS_Shell_Command (Kernel, "get_build_output"),
+         Execute_GPS_Shell_Command (Kernel, Create ("get_build_output")),
          Compilation_Data.Category);
    exception
       when E : others => Trace (Exception_Handle, E);

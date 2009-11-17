@@ -25,6 +25,7 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
+with GNATCOLL.Command_Lines;     use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -717,10 +718,13 @@ package body Help_Module is
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
             Errors : aliased Boolean := False;
+            Script : constant Scripting_Language := Lookup_Scripting_Language
+              (Get_Scripts (Kernel), Item.Shell_Lang.all);
             File   : constant String := Execute_Command
-              (Script      => Lookup_Scripting_Language
-                 (Get_Scripts (Kernel), Item.Shell_Lang.all),
-               Command     => Item.Shell.all,
+              (Script      => Script,
+               CL          => Parse_String
+                 (Item.Shell.all,
+                  Command_Line_Treatment (Script)),
                Console     => null,
                Hide_Output => False,
                Errors      => Errors'Unchecked_Access);

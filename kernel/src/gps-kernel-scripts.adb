@@ -27,7 +27,6 @@ with GNAT.Regpat;             use GNAT.Regpat;
 
 with GNATCOLL.Memory;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -432,7 +431,7 @@ package body GPS.Kernel.Scripts is
    -----------------
 
    procedure Set_Nth_Arg
-     (Data : Callback_Data'Class;
+     (Data : in out Callback_Data'Class;
       N    : Positive;
       File : GNATCOLL.VFS.Virtual_File)
    is
@@ -2319,14 +2318,14 @@ package body GPS.Kernel.Scripts is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String) return String
+      CL      : Command_Line) return String
    is
       Errors : aliased Boolean;
    begin
-      Trace (Me, "Executing " & Command);
+      Trace (Me, "Executing " & To_Debug_String (CL));
       return Execute_Command
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         Command, null, True, True, Errors'Unchecked_Access);
+         CL, null, True, True, Errors'Unchecked_Access);
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -2334,56 +2333,17 @@ package body GPS.Kernel.Scripts is
    -------------------------------
 
    procedure Execute_GPS_Shell_Command
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      CL     : Command_Line)
    is
       Output : constant String := Execute_Command_With_Args
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         Command, Args);
+         CL);
       pragma Unreferenced (Output);
    begin
       if Active (Me) then
-         Trace
-           (Me, "Executing " & Command & " "
-            & Argument_List_To_Quoted_String (Args));
+         Trace (Me, "Executing " & To_Display_String (CL));
       end if;
-   end Execute_GPS_Shell_Command;
-
-   -------------------------------
-   -- Execute_GPS_Shell_Command --
-   -------------------------------
-
-   function Execute_GPS_Shell_Command
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String is
-   begin
-      if Active (Me) then
-         Trace (Me, "Executing " & Command & " "
-                & Argument_List_To_Quoted_String (Args));
-      end if;
-
-      return Execute_Command_With_Args
-        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         Command, Args);
-   end Execute_GPS_Shell_Command;
-
-   -------------------------------
-   -- Execute_GPS_Shell_Command --
-   -------------------------------
-
-   procedure Execute_GPS_Shell_Command
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : String)
-   is
-      Errors : aliased Boolean;
-      Str    : constant String := Execute_Command
-        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         Command, null, True, True, Errors'Unchecked_Access);
-      pragma Unreferenced (Str);
-   begin
-      Trace (Me, "Executing " & Command);
    end Execute_GPS_Shell_Command;
 
    ----------------

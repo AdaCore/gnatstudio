@@ -262,14 +262,9 @@ package body GPS.Kernel.Macros is
                return "";
 
             else
-               return String_Utils.Protect
-                 ("-P"
-                  & (+To_Remote
-                      (Project_Path (Project),
-                       Get_Nickname (Server)).Full_Name),
-                  Protect_Spaces      => not Quoted,
-                  Protect_Quotes      => Quoted,
-                  Protect_Backslashes => For_Shell);
+               return "-P" &
+               (+To_Remote (Project_Path (Project),
+                  Get_Nickname (Server)).Full_Name);
             end if;
          end if;
 

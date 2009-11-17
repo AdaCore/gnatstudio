@@ -818,7 +818,7 @@ package body GPS.Kernel.Remote is
 
    procedure Spawn
      (Kernel           : Kernel_Handle;
-      Arguments        : GNAT.OS_Lib.Argument_List;
+      Arguments        : Command_Line;
       Server           : Server_Type;
       Pd               : out GNAT.Expect.Process_Descriptor_Access;
       Success          : out Boolean;
@@ -889,7 +889,7 @@ package body GPS.Kernel.Remote is
       if Is_Local (Server) then
          declare
             E : constant Filesystem_String :=
-                  Check_Exec (+Arguments (Arguments'First).all);
+                  Check_Exec (+Get_Command (Arguments));
          begin
             if E'Length = 0 then
                return;
@@ -900,20 +900,20 @@ package body GPS.Kernel.Remote is
 
          Args := new Argument_List'
            ((1 => Exec) &
-             Clone (Arguments (Arguments'First + 1 .. Arguments'Last)));
+             To_List (Arguments, Include_Command => False));
       else
-         Args := new Argument_List'(Clone (Arguments));
+         Args := new Argument_List'(To_List (Arguments, True));
       end if;
 
       if Console /= null and then Show_Command then
          if Is_Local (Server) then
             Insert (Console,
-                    Argument_List_To_String (Arguments),
+                    To_Display_String (Arguments),
                     Add_LF => True);
          else
             Insert (Console,
                     Get_Nickname (Server) & "> " &
-                    Argument_List_To_String (Arguments),
+                    To_Display_String (Arguments),
                     Add_LF => True);
          end if;
       end if;

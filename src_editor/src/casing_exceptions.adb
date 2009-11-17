@@ -21,7 +21,6 @@ with Glib.Convert; use Glib.Convert;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -32,6 +31,7 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;
+with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Casing_Exceptions is
@@ -165,18 +165,16 @@ package body Casing_Exceptions is
         (File         : Virtual_File;
          Line, Column : Integer)
       is
-         Args   : Argument_List_Access :=
-                    new Argument_List'
-                      (new String'(+Full_Name (File)),
-                       new String'(Integer'Image (Line)),
-                       new String'(Integer'Image (Column)),
-                       new String'(New_Name),
-                       new String'("0"),
-                       new String'(Integer'Image (New_Name'Length)));
+         CL   : Command_Line;
       begin
-         Execute_GPS_Shell_Command
-           (Get_Kernel (Context), "Editor.replace_text", Args.all);
-         Free (Args);
+         CL := Create ("Editor.replace_text");
+         Append_Argument (CL, +Full_Name (File), One_Arg);
+         Append_Argument (CL, Integer'Image (Line), One_Arg);
+         Append_Argument (CL, Integer'Image (Column), One_Arg);
+         Append_Argument (CL, New_Name, One_Arg);
+         Append_Argument (CL, "0", One_Arg);
+         Append_Argument (CL, Integer'Image (New_Name'Length), One_Arg);
+         Execute_GPS_Shell_Command (Get_Kernel (Context), CL);
       end Set_Casing;
 
    begin

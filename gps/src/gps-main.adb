@@ -26,6 +26,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Memory;
@@ -978,7 +979,9 @@ procedure GPS.Main is
             else
                GNATCOLL.Scripts.Execute_Command
                  (Script   => Script,
-                  Command  => Batch (J + 1 .. Batch'Last),
+                  CL       => Parse_String
+                    (Batch (J + 1 .. Batch'Last),
+                     Command_Line_Treatment (Script)),
                   Errors   => Errors);
             end if;
 

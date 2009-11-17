@@ -26,9 +26,9 @@ with System;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
-with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 
+with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -1080,12 +1080,13 @@ package body Commands.Custom is
       Old_Server     : Server_Type := GPS_Server;
 
       function Dollar_Substitution
-        (Param  : String;
-         Quoted : Boolean) return String;
+        (Param : String;
+         Mode  : Command_Line_Mode) return Command_Line;
       --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters
 
       function Substitution
-        (Param : String; Quoted : Boolean) return String;
+        (Param  : String;
+         Mode   : Command_Line_Mode) return Command_Line;
       --  Substitution function for '%1', '%2',...
 
       function Execute_Simple_Command
@@ -1105,24 +1106,25 @@ package body Commands.Custom is
       -------------------------
 
       function Dollar_Substitution
-        (Param  : String;
-         Quoted : Boolean) return String
+        (Param : String;
+         Mode  : Command_Line_Mode) return Command_Line
       is
-         Length    : Natural := 0;
-         Interval  : Natural;
          Is_Num    : Boolean;
          Result    : Natural;
          Multiple  : Boolean := False;
          First_Arg : Natural := 1;
+
+         CL        : Command_Line;
+         pragma Unreferenced (Mode);
       begin
          if Param = "repeat" then
-            return Integer'Image (Context.Repeat_Count);
+            return Create (Integer'Image (Context.Repeat_Count));
          elsif Param = "remaining" then
-            return Integer'Image (Context.Remaining_Repeat);
+            return Create (Integer'Image (Context.Remaining_Repeat));
          end if;
 
          if Context.Args = null then
-            return "";
+            return Empty_Command_Line;
          end if;
 
          if Param = "*" then
@@ -1136,61 +1138,15 @@ package body Commands.Custom is
          end if;
 
          if Multiple then
-            if Quoted then
-               Interval := 3;
-            else
-               Interval := 1;
-            end if;
-
             for J in
               Context.Args'First - 1 + First_Arg .. Context.Args'Last
             loop
                if Context.Args (J) /= null then
-                  Length :=
-                    Length + (Context.Args (J).all'Length) * 2 + Interval;
+                  Append_Argument (CL, Context.Args (J).all, Expandable);
                end if;
             end loop;
 
-            declare
-               Result : String (1 .. Length);
-               Index  : Natural := 1;
-            begin
-               for J in
-                 Context.Args'First - 1 + First_Arg .. Context.Args'Last
-               loop
-                  if Context.Args (J) /= null then
-                     if Interval = 1 then
-                        Result
-                          (Index .. Index + Context.Args (J).all'Length) :=
-                          Context.Args (J).all & ' ';
-
-                        Index := Index +
-                          Context.Args (J).all'Length + 1;
-                     else
-                        declare
-                           Protect : constant String :=
-                                       String_Utils.Protect
-                                         (Context.Args (J).all,
-                                          Protect_Quotes => Quoted);
-                        begin
-                           Result
-                             (Index .. Index + Protect'Length + 2) :=
-                             Protect & """ """;
-
-                           Index := Index + Protect'Length + 3;
-                        end;
-                     end if;
-                  end if;
-               end loop;
-
-               if Interval = 1 then
-                  return String_Utils.Protect
-                    (Result (1 .. Index - 1), Protect_Quotes => Quoted);
-               else
-                  return Result (1 .. Index - 4);
-               end if;
-            end;
-
+            return CL;
          else
             Is_Num := True;
 
@@ -1207,13 +1163,12 @@ package body Commands.Custom is
                if Result in Context.Args'Range
                  and then Context.Args (Result) /= null
                then
-                  return String_Utils.Protect
-                    (Context.Args (Result).all, Protect_Quotes => Quoted);
+                  return Create (Context.Args (Result).all);
                end if;
             end if;
          end if;
 
-         return "";
+         return Empty_Command_Line;
       end Dollar_Substitution;
 
       ------------------
@@ -1222,34 +1177,32 @@ package body Commands.Custom is
 
       function Substitution
         (Param  : String;
-         Quoted : Boolean) return String
+         Mode   : Command_Line_Mode) return Command_Line
       is
          Num   : Integer;
          Done  : aliased Boolean := False;
          Macro : constant String :=
                    Substitute
                      (Param, Command.Execution.Context,
-                      Quoted, Done'Access, Current_Server, For_Shell => True);
+                      False, Done'Access, Current_Server, For_Shell => True);
       begin
          if Done then
-            return Macro;
+            if Macro = "" then
+               return Empty_Command_Line;
+            else
+               return Create (Macro);
+            end if;
          end if;
 
          Num := Safe_Value (Param, Default => 0);
-
-         --  Remove surrounding quotes if any. This is needed so that
-         --  for instance the function get_attributes_as_string
-         --  from Python can be used to call an external tool with
-         --  switches propertly interpreted.
 
          declare
             Output_Index : constant Integer := Output_Substitution
               (Command, Command.Execution.Cmd_Index, Num);
             Output       : GNAT.Strings.String_Access;
-            Last         : Integer;
          begin
             if Output_Index = -1 then
-               return "";
+               return Empty_Command_Line;
             end if;
 
             Output := Command.Execution.Outputs (Output_Index);
@@ -1263,33 +1216,8 @@ package body Commands.Custom is
                --  not work).
                raise Invalid_Substitution;
 
-            elsif Output.all = "" then
-               return Output.all;
-            end if;
-
-            Last := Output'Last;
-            while Last >= Output'First
-              and then Output (Last) = ASCII.LF
-            loop
-               Last := Last - 1;
-            end loop;
-
-            --  Is output quoted with ' or " ?
-
-            if Last > Output'First
-              and then
-                ((Output (Output'First) = ''' and then Output (Last) = ''')
-                 or else
-                   (Output (Output'First) = '"' and then Output (Last) = '"'))
-            then
-               return String_Utils.Protect
-                 (Output (Output'First + 1 .. Last - 1),
-                  Protect_Quotes => Quoted);
-
             else
-               return String_Utils.Protect
-                 (Output (Output'First .. Last),
-                  Protect_Quotes => Quoted);
+               return Parse_String (Output.all, Mode);
             end if;
          end;
       end Substitution;
@@ -1303,11 +1231,15 @@ package body Commands.Custom is
       is
          --  Perform arguments substitutions for the command
 
-         Subst_Percent   : constant String := Substitute
-           (Component.Command.all,
-            Delimiter         => '$',
-            Callback          => Dollar_Substitution'Unrestricted_Access,
-            Recursive         => False);
+         The_Command_Line : Command_Line;
+         --  Treatment of the command line is the following:
+         --  - first we convert the raw command line string to a command line
+         --      (done with the call to parse_string above)
+         --  - then we process the command line to process '$' substitution
+         --  - then we process the command line to process '%' substitution
+         --  - we re-convert the command line to a string at the last moment,
+         --      when we pass the command to the script.
+
          Console         : Interactive_Console;
          Output_Location : GNAT.Strings.String_Access;
 
@@ -1329,12 +1261,28 @@ package body Commands.Custom is
             Old_Dir        : Virtual_File;
             --  has to be determined here so that Current_Server is
             --  correctly set:
-            Subst_Cmd_Line : constant String := Substitute
-              (Subst_Percent,
-               Delimiter => GPS.Kernel.Macros.Special_Character,
-               Callback  => Substitution'Unrestricted_Access,
-               Recursive => False);
+            Treatment      : GNATCOLL.Command_Lines.Command_Line_Mode;
          begin
+            if Command_Line_Treatment (Component.Script) = Raw_String then
+               Treatment := Raw_String;
+            else
+               Treatment := Separate_Args;
+            end if;
+
+            The_Command_Line := Parse_String
+              (Component.Command.all, Treatment);
+
+            --  Implement $-substitution
+            Substitute
+              (The_Command_Line, '$', Dollar_Substitution'Unrestricted_Access);
+
+            --  Implement %-substitution
+
+            Substitute
+              (The_Command_Line,
+               GPS.Kernel.Macros.Special_Character,
+               Substitution'Unrestricted_Access);
+
             if Context.Dir /= No_File then
                Old_Dir := Get_Current_Dir;
                Change_Dir (Context.Dir);
@@ -1343,7 +1291,10 @@ package body Commands.Custom is
             if Component.Script /= null then
                --  Output the command whether or not we are saving its output
                if Console /= null and then Component.Show_Command then
-                  Insert (Console, Subst_Cmd_Line, Add_LF => True);
+                  Insert
+                    (Console,
+                     To_Display_String (The_Command_Line),
+                     Add_LF => True);
                end if;
 
                if Command.Execution.Save_Output
@@ -1352,7 +1303,8 @@ package body Commands.Custom is
                   Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
                     new String'
                       (Execute_Command
-                           (Component.Script, Subst_Cmd_Line,
+                           (Component.Script,
+                            The_Command_Line,
                             Hide_Output  => Output_Location.all = No_Output,
                             Show_Command => Component.Show_Command,
                             Console      =>
@@ -1361,7 +1313,7 @@ package body Commands.Custom is
 
                else
                   Execute_Command
-                    (Component.Script, Subst_Cmd_Line,
+                    (Component.Script, The_Command_Line,
                      Hide_Output  => Output_Location.all = No_Output,
                      Show_Command => Component.Show_Command,
                      Console      => Get_Or_Create_Virtual_Console (Console),
@@ -1383,17 +1335,25 @@ package body Commands.Custom is
          function Execute_External
            (Component : Custom_Component_Record'Class) return Boolean
          is
-            Subst_Cmd_Line  : constant String := Trim
-              (Substitute
-                 (Subst_Percent,
-                  Delimiter         => GPS.Kernel.Macros.Special_Character,
-                  Callback          => Substitution'Unrestricted_Access,
-                  Recursive         => False),
-               Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
-               Right => Ada.Strings.Maps.Null_Set);
-            Tmp             : GNAT.Strings.String_Access;
-            Args            : String_List_Access;
          begin
+            The_Command_Line := Parse_String
+              (Trim
+                 (Component.Command.all,
+                  Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
+                  Right => Ada.Strings.Maps.Null_Set),
+               Separate_Args);
+
+            --  Implement $-substitution
+            Substitute
+              (The_Command_Line, '$', Dollar_Substitution'Unrestricted_Access);
+
+            --  Implement %-substitution
+
+            Substitute
+              (The_Command_Line,
+               GPS.Kernel.Macros.Special_Character,
+               Substitution'Unrestricted_Access);
+
             Trace (Me, "Executing external command " & Component.Command.all);
 
             Free (Command.Execution.Current_Output);
@@ -1414,15 +1374,7 @@ package body Commands.Custom is
                            Multiple_Lines or Single_Line));
             end if;
 
-            Args := GNAT.OS_Lib.Argument_String_To_List (Subst_Cmd_Line);
-
-            for J in Args'Range loop
-               Tmp := Args (J);
-               Args (J) := new String'(Unprotect (Tmp.all));
-               Free (Tmp);
-            end loop;
-
-            if Args'Length = 0 then
+            if The_Command_Line = Empty_Command_Line then
                Trace (Me, "Cannot launch empty command");
                Success := False;
                Command.Execution.External_Process_In_Progress := False;
@@ -1436,8 +1388,7 @@ package body Commands.Custom is
 
                Launch_Process
                  (Command.Kernel,
-                  Command              => +Args (Args'First).all,
-                  Arguments            => Args (Args'First + 1 .. Args'Last),
+                  CL                   => The_Command_Line,
                   Server               => Component.Server,
                   Console              => Console,
                   Callback             => Store_Command_Output'Access,
@@ -1458,7 +1409,6 @@ package body Commands.Custom is
                   Directory            => To_Remote
                     (Context.Dir, Get_Nickname (Component.Server)),
                   Created_Command      => Command.Sub_Command);
-               Free (Args);
 
                Command.Execution.External_Process_In_Progress := Success;
             end if;

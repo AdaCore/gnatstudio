@@ -66,6 +66,7 @@ with Histories;           use Histories;
 with String_Utils;        use String_Utils;
 with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
+with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
 
 package body Interactive_Consoles is
    Me : constant Debug_Handle := Create ("Console");
@@ -1077,7 +1078,10 @@ package body Interactive_Consoles is
             Errors : aliased Boolean;
             S : constant String := Execute_Command
               (Script  => Interactive_Virtual_Console (Console.Virtual).Script,
-               Command      => Input,
+               CL           => Parse_String
+                 (Input,
+                  Command_Line_Treatment
+                    (Interactive_Virtual_Console (Console.Virtual).Script)),
                Show_Command => False,
                Hide_Output  => False,
                Errors       => Errors'Unchecked_Access);
