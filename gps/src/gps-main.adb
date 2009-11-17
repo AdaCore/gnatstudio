@@ -56,6 +56,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Config;                    use Config;
 with DDE;
+with Default_Preferences;       use Default_Preferences;
 with GPS.Callbacks;             use GPS.Callbacks;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -828,16 +829,27 @@ procedure GPS.Main is
                end;
 
             when 'P' =>
+               --  Although this isn't costly, we must not resolve symbolic
+               --  links for project names unless Fast Project Loading mode is
+               --  disabled. Some users (IA27-014) and SCM have local links
+               --  that point to a SCM cache directory (Rational Synergy), but
+               --  directory names are still local. These users should use
+               --  Trusted mode so that we do not resolve symbolic links
+
                Project_Name :=
-                 Create (Normalize_Pathname
-                         (Filesystem_String (Parameter (Parser))));
+                 Create
+                   (Normalize_Pathname
+                        (Filesystem_String (Parameter (Parser)),
+                         Resolve_Links => not Get_Pref (Trusted_Mode)));
 
                if not Is_Regular_File (Project_Name) then
                   if Is_Regular_File
                     (+(Full_Name (Project_Name) & Project_File_Extension))
                   then
                      Project_Name := Create
-                       (Full_Name (Project_Name) & Project_File_Extension);
+                       (Normalize_Pathname
+                          (Full_Name (Project_Name) & Project_File_Extension,
+                           Resolve_Links => not Get_Pref (Trusted_Mode)));
                      Trace
                        (Me, "Found project: " &
                         Display_Full_Name (Project_Name));
