@@ -20,7 +20,6 @@
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
-
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
@@ -44,6 +43,7 @@ with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Main;                          use Gtk.Main;
+with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Object;                        use Gtk.Object;
 with Gtk.Rc;                            use Gtk.Rc;
@@ -134,6 +134,9 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
+   overriding procedure Tab_Contextual
+     (Child : access Editor_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Command_Queue
      (Child : access Editor_Child_Record) return Commands.Command_Queue;
    overriding function Dnd_Data
@@ -187,6 +190,10 @@ package body Src_Editor_Module is
       User   : Kernel_Handle)
       return Node_Ptr;
    --  Support functions for the MDI
+
+   procedure On_Close_Other_Editors
+     (Child : access Gtk_Widget_Record'Class);
+   --  Close all editors except Child
 
    procedure On_Open_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -2376,8 +2383,8 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File    : constant GNATCOLL.VFS.Virtual_File :=
-                  File_Information (Context.Context);
+      File   : constant GNATCOLL.VFS.Virtual_File :=
+        File_Information (Context.Context);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
       Button  : Gtk_Widget;
@@ -3736,6 +3743,56 @@ package body Src_Editor_Module is
    begin
       return Id.Post_It_Note_GC;
    end Post_It_Note_GC;
+
+   ----------------------------
+   -- On_Close_Other_Editors --
+   ----------------------------
+
+   procedure On_Close_Other_Editors
+     (Child : access Gtk_Widget_Record'Class)
+   is
+      C    : constant MDI_Child := MDI_Child (Child);
+      Iter : Child_Iterator := First_Child (Get_MDI (C));
+      Current : MDI_Child;
+   begin
+      loop
+         Current := Get (Iter);
+         exit when Current = null;
+
+         Next (Iter);
+
+         if Current.all in Editor_Child_Record'Class then
+            Trace (Me, "MANU On_Close_Other_Editors, found editor: "
+                   & Get_Title (Current));
+         end if;
+
+         if Current /= C
+           and then Current.all in Editor_Child_Record'Class
+         then
+            Trace (Me, "MANU On_Close_Other_Editors, closing: "
+                   & Get_Title (Current));
+            Close_Child (Current, Force => False);
+         end if;
+
+      end loop;
+   end On_Close_Other_Editors;
+
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   overriding procedure Tab_Contextual
+     (Child : access Editor_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Item, "Close all other editors");
+      Widget_Callback.Object_Connect
+        (Item, Gtk.Menu_Item.Signal_Activate,
+         On_Close_Other_Editors'Access, Child);
+      Append (Menu, Item);
+   end Tab_Contextual;
 
    -----------------------
    -- Get_Command_Queue --

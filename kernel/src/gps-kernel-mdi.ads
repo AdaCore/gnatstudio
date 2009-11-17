@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,9 +22,19 @@
 
 with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
+with Gtk.Menu;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package GPS.Kernel.MDI is
+
+   ---------
+   -- MDI --
+   ---------
+
+   procedure Gtk_New
+     (MDI    : out MDI_Window;
+      Group  : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class);
+   --  Create the MDI and do GPS-specific initializations
 
    ---------------------
    -- Child positions --
@@ -90,6 +100,12 @@ package GPS.Kernel.MDI is
    function Get_Module_From_Child
      (Child : Gtkada.MDI.MDI_Child) return Module_ID;
    --  Return the module that created Child, or null if no module was found.
+
+   procedure Tab_Contextual
+     (Child : access GPS_MDI_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add entries to the contextual menu when the user right-click on a tab.
+   --  By default, this does nothing.
 
    function Get_File_Editor
      (Handle : access Kernel_Handle_Record'Class;

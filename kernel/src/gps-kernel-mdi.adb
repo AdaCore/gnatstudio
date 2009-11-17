@@ -27,6 +27,7 @@ with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -63,6 +64,11 @@ package body GPS.Kernel.MDI is
       Params : Glib.Values.GValues);
    --  Callback when a specific line is selected in the "save all windows"
    --  dialog
+
+   procedure Tab_Contextual
+     (Child : access MDI_Child_Record'Class;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Called when the user is displaying the contextual menu on tabs
 
    ------------------------
    -- Get_Current_Window --
@@ -561,4 +567,43 @@ package body GPS.Kernel.MDI is
       return False;
    end Interrupt;
 
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   procedure Tab_Contextual
+     (Child : access GPS_MDI_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Child, Menu);
+   begin
+      null;
+   end Tab_Contextual;
+
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   procedure Tab_Contextual
+     (Child : access MDI_Child_Record'Class;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+   begin
+      if Child.all in GPS_MDI_Child_Record'Class then
+         GPS_MDI_Child (Child).Tab_Contextual (Menu);
+      end if;
+   end Tab_Contextual;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (MDI    : out MDI_Window;
+      Group  : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class)
+   is
+   begin
+      Gtkada.MDI.Gtk_New (MDI, Group);
+      Set_Tab_Contextual_Menu_Factory (MDI, Tab_Contextual'Access);
+   end Gtk_New;
 end GPS.Kernel.MDI;

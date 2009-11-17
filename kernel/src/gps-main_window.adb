@@ -584,7 +584,9 @@ package body GPS.Main_Window is
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
-      Gtk_New (Main_Window.MDI, Main_Window.Main_Accel_Group);
+
+      GPS.Kernel.MDI.Gtk_New
+        (Main_Window.MDI, Main_Window.Main_Accel_Group);
 
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
