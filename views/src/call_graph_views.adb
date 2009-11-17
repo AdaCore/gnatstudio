@@ -1514,7 +1514,7 @@ package body Call_Graph_Views is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);
 
-      Filter := Lookup_Filter (Kernel, "Entity is container");
+      Filter := Lookup_Filter (Kernel, "Entity is subprogram");
 
       Command := new Entity_Calls_Command;
       Register_Contextual_Menu

@@ -162,9 +162,9 @@ package body Browsers.Call_Graph is
    -- Commands --
    --------------
 
-   type Container_Entity_Filter is new Action_Filter_Record with null record;
+   type Subprogram_Entity_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Container_Entity_Filter;
+     (Filter  : access Subprogram_Entity_Filter;
       Context : Selection_Context) return Boolean;
 
    type Entity_Calls_Command is new Interactive_Command with null record;
@@ -1708,7 +1708,7 @@ package body Browsers.Call_Graph is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Container_Entity_Filter;
+     (Filter  : access Subprogram_Entity_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
@@ -1717,7 +1717,7 @@ package body Browsers.Call_Graph is
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
          return Entity /= null
-           and then Is_Container (Get_Kind (Entity).Kind);
+           and then Is_Subprogram (Entity);
       else
          return False;
       end if;
@@ -2177,6 +2177,9 @@ package body Browsers.Call_Graph is
       GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
+      Filter := new Subprogram_Entity_Filter;
+      Register_Filter (Kernel, Filter, "Entity is subprogram");
+
       Command := new Entity_Calls_Command;
       Register_Contextual_Menu
         (Kernel, "Entity calls in browser",
@@ -2190,9 +2193,6 @@ package body Browsers.Call_Graph is
          Label  => "Browsers/%e is called by",
          Filter => Filter,
          Action => Command);
-
-      Filter := new Container_Entity_Filter;
-      Register_Filter (Kernel, Filter, "Entity is container");
 
       Register_Contextual_Submenu
         (Kernel, "References",
