@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.1
 
+- IB17-002: Project editor issues when the gnat path contains spaces.
+  Problem:    When the gnat compiler is installed in a directory containing
+              spaces, then the project editor won't show the Ada switches
+              in the switch editor.
+  Workaround: Install gnat in a directory without spaces.
+
 - IB12-015: Internal error in dependencies.py plugin
   Problem:    When using this plugin, an internal error might be reported.
   Workaround: None.
