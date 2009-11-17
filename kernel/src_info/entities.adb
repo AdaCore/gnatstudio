@@ -154,6 +154,9 @@ package body Entities is
       Function_Or_Operator  => True,
       Entry_Or_Entry_Family => True,
       Task_Kind             => True,
+      Overloaded_Entity     => True,
+      --  ??? Should we check that at least one of the possible
+      --  completions is a subprogram.
       Macro                 => True,
       others                => False);
    --  This table should contain true if the corresponding element is
@@ -169,7 +172,7 @@ package body Entities is
       Record_Kind           => True,
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
-      --  completions is a subprogram.
+      --  completions is a container.
       others                => False);
 
    Body_Is_Full_Declaration_Array : constant array (E_Kinds) of Boolean :=
