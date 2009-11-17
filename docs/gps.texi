@@ -1525,6 +1525,10 @@ Finally, a window can be closed by right-clicking in the associated
 notebook tab (if the tabs are visible), and select @code{Close} in the
 contextual menu.
 
+In the notebook tab (when you are in an editor), you will also find a
+@code{Close all other editors} menu, which, as its name implies, will
+keep a single editor open, the one you are clicking on.
+
 @c --------------------------------------------------------------------
 @node Splitting Windows
 @section Splitting Windows
