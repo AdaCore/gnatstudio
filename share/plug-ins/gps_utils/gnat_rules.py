@@ -115,8 +115,9 @@ class gnatMakeProc:
 
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
-      if not os.path.isfile (self.gnatCmd):
-         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
+      if GPS.is_server_local ("Build_Server"):
+         if not os.path.isfile (self.gnatCmd):
+            self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the ada_support module.\n")
@@ -320,8 +321,11 @@ class gnatMakeProc:
          # The behavior is then to try getting a valid gnat make command from
          # the local machine, and fallback to the default switches if not
          # found.
-         process = GPS.Process (self.gnatCmd + "make -h", "^.+\r?$",
-                                on_match=self.__add_switch_callback)
+         process = GPS.Process \
+           ("\"\"\"" + self.gnatCmd + "\"\"\" make -h",
+            "^.+\r?$",
+            on_match=self.__add_switch_callback,
+            remote_server="Build_Server")
          process.get_result()
       return True
 
