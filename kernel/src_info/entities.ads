@@ -714,7 +714,7 @@ package Entities is
 
    function Is_Subprogram (Entity : Entity_Information) return Boolean;
    function Is_Array      (Entity : Entity_Information) return Boolean;
-   --  Return True if Entity is associated with a subprograms or an array
+   --  Return True if Entity is associated with a subprogram or an array
 
    type Entity_Reference is private;
    No_Entity_Reference : constant Entity_Reference;
