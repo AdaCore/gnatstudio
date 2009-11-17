@@ -3761,16 +3761,9 @@ package body Src_Editor_Module is
 
          Next (Iter);
 
-         if Current.all in Editor_Child_Record'Class then
-            Trace (Me, "MANU On_Close_Other_Editors, found editor: "
-                   & Get_Title (Current));
-         end if;
-
          if Current /= C
            and then Current.all in Editor_Child_Record'Class
          then
-            Trace (Me, "MANU On_Close_Other_Editors, closing: "
-                   & Get_Title (Current));
             Close_Child (Current, Force => False);
          end if;
 
