@@ -26,6 +26,14 @@ Known Problems fixed in GPS 4.4.1
               applied in the locations view.
   Workaround: Remove the filter before starting editing sources.
 
+- IB06-028: expanded code not displayed with project without object dir
+  Problem:    When using the contextual menu "Expanded code" on source editors
+              to display expanded code for files or subprograms, GPS might
+              fail to generate the expanded code if the root project does
+              not have an object directory.
+  Workaround: View the expanded code in command-line mode, or add an object
+              directory in the root project. 
+
 - IB02-033: Ada keywords highlighted in SPARK annotations
   Problem:    In SPARK annotations, Ada keywords in addition to SPARK keywords
               are highlighted.
