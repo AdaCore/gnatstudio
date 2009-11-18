@@ -1119,15 +1119,15 @@ package body C_Analyzer is
                Indent := Indent + Indent_Level;
 
             when Tok_While =>
-               if not (Top_Token.Token = Tok_Do
-                       and then Top_Token.Curly_Level = Curly_Level
-                       and then Top_Token.Paren_Level = Paren_Level)
+               if Top_Token.Token = Tok_Do
+                 and then Top_Token.Curly_Level = Curly_Level
+                 and then Top_Token.Paren_Level = Paren_Level
                then
+                  Do_Indent (Index, Indent);
+               else
                   Push (Tokens, Temp);
                   Do_Indent (Index, Indent);
                   Indent := Indent + Indent_Level;
-               else
-                  Do_Indent (Index, Indent);
                end if;
 
             when Tok_If =>
@@ -1252,6 +1252,7 @@ package body C_Analyzer is
               or else Top_Token.Paren_Level /= Paren_Level;
 
             if Top_Token.Token = Tok_Do then
+               Indent := Indent - Indent_Level;
                Do_Indent (Index, Indent);
             else
                Indent := Indent - Indent_Level;
@@ -1399,7 +1400,10 @@ package body C_Analyzer is
                               Indent := Indent - Indent_Level;
                            end if;
 
-                           exit when Top_Token.Token = Tok_Do;
+                           if Top_Token.Token = Tok_Do then
+                              Indent := Indent + Indent_Level;
+                              exit;
+                           end if;
 
                            Pop (Tokens);
                            Pop_To_Construct (Tokens, Top_Token);
