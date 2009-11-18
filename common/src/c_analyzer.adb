@@ -240,9 +240,10 @@ package body C_Analyzer is
    begin
       loop
          Item := Top (Stack);
-         exit when Item.Token /= Tok_Identifier
-           and then Item.Token not in Type_Token
-           and then Item.Token not in Storage_Token;
+         exit when Item.Token = No_Token
+           or else (Item.Token /= Tok_Identifier
+                    and then Item.Token not in Type_Token
+                    and then Item.Token not in Storage_Token);
          Pop (Stack);
       end loop;
    end Pop_To_Construct;
@@ -792,7 +793,8 @@ package body C_Analyzer is
 
          while Index < Buffer'Last
            and then (Buffer (Index) /= '''
-                     or else Buffer (Index - 1) = '\')
+                     or else (Buffer (Index - 1) = '\'
+                              and then Buffer (Index - 2) /= '\'))
            and then Buffer (Index) /= ASCII.LF
          loop
             Index := UTF8_Next_Char (Buffer, Index);
@@ -820,10 +822,16 @@ package body C_Analyzer is
          Char_In_Line := Char_In_Line + 1;
 
          while Index < Buffer'Last
-           and then (Buffer (Index) /= '"'
-                     or else Buffer (Index - 1) = '\')
-           and then Buffer (Index) /= ASCII.LF
+           and then
+             ((Buffer (Index) /= '"'
+                and then Buffer (Index) /= ASCII.LF)
+              or else (Buffer (Index - 1) = '\'
+                       and then Buffer (Index - 2) /= '\'))
          loop
+            if Buffer (Index) = ASCII.LF then
+               New_Line;
+            end if;
+
             Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
          end loop;
@@ -1347,45 +1355,57 @@ package body C_Analyzer is
 
             when '}' =>
                Token := Tok_Right_Bracket;
-               Curly_Level := Curly_Level - 1;
 
-               if Top (Indents).Level /= None then
-                  Pop (Indents);
-               else
-                  Pop_To_Construct (Tokens, Top_Token);
-                  Indent := Indent - Indent_Level;
+               --  Ignore extra curlys (may happen with syntax errors or
+               --  with preprocessor directives, as in:
+               --  struct {
+               --  #ifdef FOO
+               --  }
+               --  #else
+               --  }
+               --  #endif
 
-                  if Top_Token.Token = Tok_Switch
-                    and then not Top_Token.First
-                  then
+               if Curly_Level > 0 then
+                  Curly_Level := Curly_Level - 1;
+
+                  if Top (Indents).Level /= None then
+                     Pop (Indents);
+                  else
+                     Pop_To_Construct (Tokens, Top_Token);
                      Indent := Indent - Indent_Level;
+
+                     if Top_Token.Token = Tok_Switch
+                       and then not Top_Token.First
+                     then
+                        Indent := Indent - Indent_Level;
+                     end if;
+
+                     Do_Indent (Index, Indent);
+
+                     declare
+                        First : Boolean := True;
+                     begin
+                        while Top_Token.Token /= No_Token
+                          and then Top_Token.Curly_Level = Curly_Level
+                          and then Top_Token.Paren_Level = Paren_Level
+                        loop
+                           if First then
+                              First := False;
+                           else
+                              Indent := Indent - Indent_Level;
+                           end if;
+
+                           if Top_Token.Start_New_Line then
+                              Indent := Indent - Indent_Level;
+                           end if;
+
+                           exit when Top_Token.Token = Tok_Do;
+
+                           Pop (Tokens);
+                           Pop_To_Construct (Tokens, Top_Token);
+                        end loop;
+                     end;
                   end if;
-
-                  Do_Indent (Index, Indent);
-
-                  declare
-                     First : Boolean := True;
-                  begin
-                     while Top_Token.Token /= No_Token
-                       and then Top_Token.Curly_Level = Curly_Level
-                       and then Top_Token.Paren_Level = Paren_Level
-                     loop
-                        if First then
-                           First := False;
-                        else
-                           Indent := Indent - Indent_Level;
-                        end if;
-
-                        if Top_Token.Start_New_Line then
-                           Indent := Indent - Indent_Level;
-                        end if;
-
-                        exit when Top_Token.Token = Tok_Do;
-
-                        Pop (Tokens);
-                        Pop_To_Construct (Tokens, Top_Token);
-                     end loop;
-                  end;
                end if;
 
             when ';' =>
@@ -1443,8 +1463,11 @@ package body C_Analyzer is
 
             when ')' =>
                Token := Tok_Right_Paren;
-               Pop (Indents);
-               Paren_Level := Paren_Level - 1;
+
+               if Paren_Level > 0 then
+                  Pop (Indents);
+                  Paren_Level := Paren_Level - 1;
+               end if;
 
             when '=' =>
                if Index < Buffer'Last then
