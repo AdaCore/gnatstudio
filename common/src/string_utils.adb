@@ -1241,20 +1241,6 @@ package body String_Utils is
       List (List'Last - List2'Length + 1 .. List'Last) := List2;
    end Append;
 
-   ------------------------------------
-   -- Argument_List_To_Quoted_String --
-   ------------------------------------
-
-   function Argument_List_To_Quoted_String
-     (Args            : GNAT.Strings.String_List;
-      Quote           : Character := '"';
-      Quote_Backslash : Boolean := True) return String
-   is
-   begin
-      return GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
-        (Args, Quote, Quote_Backslash);
-   end Argument_List_To_Quoted_String;
-
    ----------------
    -- Safe_Value --
    ----------------
@@ -1270,18 +1256,6 @@ package body String_Utils is
       when Constraint_Error =>
          return Default;
    end Safe_Value;
-
-   ------------------------------------------------
-   -- Argument_String_To_List_With_Triple_Quotes --
-   ------------------------------------------------
-
-   function Argument_String_To_List_With_Triple_Quotes
-     (Arg_String : String) return String_List_Access
-   is
-   begin
-      return GNATCOLL.Scripts.Utils.Argument_String_To_List_With_Triple_Quotes
-        (Arg_String);
-   end Argument_String_To_List_With_Triple_Quotes;
 
    -------------
    -- Protect --
