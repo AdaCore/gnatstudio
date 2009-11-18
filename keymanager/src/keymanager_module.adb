@@ -1983,4 +1983,55 @@ package body KeyManager_Module is
       Keymanager_Module.GUI_Running := Running;
    end Set_GUI_Running;
 
+   ----------------------------
+   -- Lookup_Action_From_Key --
+   ----------------------------
+
+   function Lookup_Action_From_Key
+     (Key      : String;
+      Bindings : HTable_Access) return String
+   is
+      Partial_Key : Gdk_Key_Type;
+      Modif       : Gdk_Modifier_Type;
+      First, Last : Integer;
+      Keymap      : Keymap_Access;
+      List        : Key_Description_List;
+
+   begin
+      First := Key'First;
+      while First <= Key'Last loop
+         Last := First + 1;
+         while Last <= Key'Last and then Key (Last) /= ' ' loop
+            Last := Last + 1;
+         end loop;
+
+         Value (Key (First .. Last - 1), Partial_Key, Modif);
+
+         if Keymap = null then
+            List := Get (Bindings.all, Key_Binding'(Partial_Key, Modif));
+            Get_Secondary_Keymap (Bindings.all, Partial_Key, Modif, Keymap);
+         else
+            List := Get (Keymap.Table, Key_Binding'(Partial_Key, Modif));
+            Get_Secondary_Keymap (Keymap.Table, Partial_Key, Modif, Keymap);
+         end if;
+
+         while List /= null loop
+            if List.Action /= null then
+               return List.Action.all;
+            end if;
+
+            List := List.Next;
+         end loop;
+
+         if Keymap = null then
+            --  No secondary keymap, and no action => the key is not bound yet
+            return "";
+         end if;
+
+         First := Last + 1;
+      end loop;
+
+      return "";
+   end Lookup_Action_From_Key;
+
 end KeyManager_Module;

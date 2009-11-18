@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -143,6 +143,12 @@ private
    --  On exit, Is_User_Changed is set to true if at least one of the key
    --  bindings has been modified by the user (as opposed to being set by a
    --  script or by default in GPS)
+
+   function Lookup_Action_From_Key
+     (Key      : String;
+      Bindings : HTable_Access) return String;
+   --  Return the name of the action currently bound to Key (possibly a multi-
+   --  key binding). The empty string is returned if the key is not bound yet.
 
    procedure Bind_Default_Key_Internal
      (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;

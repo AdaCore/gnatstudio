@@ -24,6 +24,11 @@ NF-45-IB10-011 New contextual menu "Close all other editors (2009-11-17)
   When right-clicking on a notebook tab of an editor, a new contextual
   menu entry is shown, to close all other open editors
 
+NF-45-IA23-015 Warn when assigning existing shortcut to action (2009-11-18)
+
+  In the /Edit/Key Shortcuts dialog, a warning is now displayed when you
+  try to reassign an existing key binding to another action
+
 NF-45-IA13-016 New menu /File/Close All Editors Except Current (2009-10-14)
 
   This menu closes all editors except the one that currently has the focus.

@@ -29,6 +29,7 @@ with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Intl;                use GPS.Intl;
+with Gtkada.Dialogs;          use Gtkada.Dialogs;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
@@ -713,7 +714,6 @@ package body KeyManager_Module.GUI is
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Sort_Model : Gtk_Tree_Model;
       Sort_Iter, Filter_Iter, Iter : Gtk_Tree_Iter;
---        Old_Action : Action_Record_Access;
    begin
       if Get_Active (Ed.Grab_Button) then
          Get_Selected (Selection, Sort_Model, Sort_Iter);
@@ -734,41 +734,45 @@ package body KeyManager_Module.GUI is
             declare
                Key     : constant String := Grab_Multiple_Key
                  (Ed.Kernel, Ed, Allow_Multiple => True);
+               Old_Action : constant String :=
+                 Lookup_Action_From_Key (Key, Ed.Bindings);
+               New_Action : constant String :=
+                 Get_String (Ed.Model, Iter, Action_Column);
             begin
                if Key /= "" and then Key /= "Escape" then
+                  --  Do we already have an action with such a binding ?
+
+                  if Old_Action /= ""
+                    and then
+                      (Equal (Old_Action, New_Action, Case_Sensitive => False)
+                       or else Message_Dialog
+                         (Msg =>
+                            Key
+                          & (-" already executes """) & Old_Action & """"
+                          & ASCII.LF
+                          & (-"Do you want to assign ") & Key & (-" to """)
+                          & New_Action
+                          & (-""" instead ?"),
+                          Dialog_Type => Confirmation,
+                          Buttons => Button_OK or Button_Cancel,
+                          Title   => -"Key shortcuts already exists",
+                          Parent  => Get_Main_Window (Ed.Kernel)) /= Button_OK)
+                  then
+                     Hide (Ed.Grab_Label);
+                     Set_Active (Ed.Grab_Button, False);
+                     return;
+                  end if;
+
                   Bind_Default_Key_Internal
                     (Kernel      => Ed.Kernel,
                      Table       => Ed.Bindings.all,
-                     Action      => Get_String (Ed.Model, Iter, Action_Column),
+                     Action      => New_Action,
                      Key         => Key,
                      Save_In_Keys_XML => True,
                      Remove_Existing_Actions_For_Shortcut => True,
                      Remove_Existing_Shortcuts_For_Action => True,
                      Update_Menus     => False);
                   Refresh_Editor (Ed);
-
-                  --  ??? Waiting for F613-014
-                  --  Do we already have an action with such a binding ?
-                  --        Old_Action := Lookup_Action_From_Key (Key);
-                  --        if Old_Action /= null then
-                  --           if Message_Dialog
-                  --  (Msg => -"An action is already attached to this key:"
-                  --              & ASCII.LF
-                  --              & Old_Action.Name.all & ASCII.LF
-                  --              & (-"Do you want to override it ?"),
-                  --              Dialog_Type => Confirmation,
-                  --              Buttons => Button_OK or Button_Cancel,
-                  --              Title   => -"Key shortcuts already exists",
-                  --             Parent  => Get_Window (Ed.Kernel)) = Button_OK
-                  --           then
-                  --              Old_Action := null;
-                  --           end if;
-                  --        end if;
-                  --                 if Old_Action = null then
-                  --           Trace (Me, "Binding changed to " & Key);
-                  --           Set (Ed.Model, Iter, Key_Column, Key);
-                  --           Set (Ed.Model, Iter, Changed_Column, True);
-                  --        end if;
                end if;
             end;
 
