@@ -2964,7 +2964,10 @@ package body Ada_Analyzer is
                                     Adjust (Sloc_End);
 
                         begin
-                           if Entity = Keyword_Text then
+                           if Entity = Keyword_Text
+                             and then Is_SPARK_Keyword (Buffer
+                               (Sloc_Start.Index .. Sloc_End.Index))
+                           then
                               Ignore := Callback
                                 (Annotated_Comment_Text,
                                  Prev_Sloc,
