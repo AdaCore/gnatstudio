@@ -622,9 +622,14 @@ package body Builder_Facility_Module is
                end if;
             end loop;
 
+            --  Place the Extended Mains in front, this is a more natural
+            --  order. For instance, if we have defined one main and then
+            --  extended it, we want "F4" to build the extending main.
+
             Free (Root_Mains);
 
-            return Mains (1 .. Index - 1);
+            return Mains (Base_Mains'Length + 1 .. Index - 1) &
+               Mains (1 .. Base_Mains'Length);
          end;
       end if;
    end Get_Mains;
