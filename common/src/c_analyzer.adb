@@ -822,11 +822,16 @@ package body C_Analyzer is
          Char_In_Line := Char_In_Line + 1;
 
          while Index < Buffer'Last
-           and then (Buffer (Index) /= '"'
-                     or else (Buffer (Index - 1) = '\'
-                              and then Buffer (Index - 2) /= '\'))
-           and then Buffer (Index) /= ASCII.LF
+           and then
+             ((Buffer (Index) /= '"'
+                and then Buffer (Index) /= ASCII.LF)
+              or else (Buffer (Index - 1) = '\'
+                       and then Buffer (Index - 2) /= '\'))
          loop
+            if Buffer (Index) = ASCII.LF then
+               New_Line;
+            end if;
+
             Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
          end loop;
