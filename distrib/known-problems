@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.4.1
 
+- IB17-016: Wrong order of mains when using extended projects
+  Problem:    When defining new mains in an extending project, the newly
+              defined mains appear after the original mains in the list
+              of build targets. Also, the shortcut "F4" builds the first
+              main in the original project, rather than in the extending
+              project.
+  Workaround: Use the menu to build the extending main, or the contextual
+              menu on the project, or add a target button in the toolbar
+              using the Build Settings dialog.
+
 - IB17-002: Project editor issues when the gnat path contains spaces.
   Problem:    When the gnat compiler is installed in a directory containing
               spaces, then the project editor won't show the Ada switches
