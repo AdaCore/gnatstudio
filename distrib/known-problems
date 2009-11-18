@@ -15,6 +15,12 @@ Known Problems fixed in GPS 4.4.1
               an auto-fix.
   Workaround: Manually fix the code.
 
+- IB10-028: Using the GPS.Process api in command line
+  Problem:     When using a call of the form p = GPS.Process("some process")
+               the calling p.get_result() does not return results if the
+               process has ended.
+  Workaround:  Use GPS.Process("some process").get_result()
+
 - IB09-015: Crash when using location filters
   Problem:    GPS may crash on source navigation and editing when a filter is
               applied in the locations view.
