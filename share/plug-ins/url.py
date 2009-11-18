@@ -9,13 +9,16 @@
 
 import GPS
 
-# Define an action
+# Callback for {file,http*}:// URLs
 def view_url(url):
-  if url.startswith ("file"):
-    GPS.MDI.get_by_child (
-      GPS.EditorBuffer.get (GPS.File (url[7:])).current_view()).raise_window()
-  else:
-    GPS.HTML.browse (url)
+  try:
+    if url.startswith ("file"):
+      GPS.MDI.get_by_child (
+        GPS.EditorBuffer.get (GPS.File (url[7:])).current_view()).raise_window()
+    else:
+      GPS.HTML.browse (url)
+  except:
+    pass
 
 # Register a highlighter to URLs
 GPS.EditorHighlighter (
