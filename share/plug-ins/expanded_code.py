@@ -134,11 +134,19 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
   line = context.location().line()
 
   if context.project():
-    objdir = context.project().object_dirs (False)[0]
+    l = context.project().object_dirs (False)
     prj = " -P" + GPS.Project.root().file().name()
   else:
-    objdir = GPS.Project.root().object_dirs (False)[0]
+    l = GPS.Project.root().object_dirs (False)
     prj = " -a"
+
+  if l:
+    objdir = l[0]
+  else:
+    objdir = GPS.get_tmp_dir()
+    GPS.Console ("Messages").write (
+       "Could not find an object directory for %s, reverting to %s" %
+         (file, objdir))
 
   dg = os.path.join (objdir, os.path.basename (file)) + '.dg'
 
