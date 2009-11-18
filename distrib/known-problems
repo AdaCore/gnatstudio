@@ -20,6 +20,11 @@ Known Problems fixed in GPS 4.4.1
               applied in the locations view.
   Workaround: Remove the filter before starting editing sources.
 
+- IB02-033: Ada keywords highlighted in SPARK annotations
+  Problem:    In SPARK annotations, Ada keywords in addition to SPARK keywords
+              are highlighted.
+  Workaround: This is only a visual glitch that can be ignored.
+
 - IA29-019: Cannot use gnatpp_switches.py with read-only preferences file
   Problem:    The gnatpp_switches.py pllug-in requires a writable preferences
               file to operate successfully, which is no longer needed in
