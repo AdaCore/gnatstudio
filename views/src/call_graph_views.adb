@@ -632,8 +632,7 @@ package body Call_Graph_Views is
    -- On_Selection_Changed --
    --------------------------
 
-   procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class) is
       V             : constant Callgraph_View_Access :=
                         Callgraph_View_Access (View);
       L             : List_Access;
@@ -665,6 +664,11 @@ package body Call_Graph_Views is
 
          Get_Value (Model, Iter, Entity_Column, Value2);
          Entity := From_GValue (Value2);
+
+         if Entity = null then
+            return;
+         end if;
+
          Decl := Get_Declaration_Of (Entity);
 
          Append (V.Locations_Model, T);
@@ -725,7 +729,8 @@ package body Call_Graph_Views is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Exception_Handle, E);
    end On_Selection_Changed;
 
    ---------------------
