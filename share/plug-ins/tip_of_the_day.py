@@ -292,7 +292,7 @@ coding standard checker, pretty printer, etc).
 Tip: Support for old compilers
 
 Did you know that GPS is independent of the underlying compiler toolchain
-and can be upgraded without installation e.g. a new GNAT version?
+and can be upgraded without installing e.g. a new GNAT version?
 GPS supports GNAT versions as far back as 3.16 up to today's version.
 
 Tip: Remote Programming
@@ -306,7 +306,7 @@ See Tools->Views->Remote menu to create your remote configuration.
 Tip: Refactoring: name parameters
 
 You'd like to add parameter names to a subprogram call? In your source editor,
-move the mouse on the give you'd like to modify, right click, and select
+move the mouse on the call you'd like to modify, right click, and select
 Refactoring->Name parameters. This will e.g. replace
    <b>Procedure_Call (X, True);</b>
 into
@@ -326,7 +326,7 @@ Tip: Break on exception in debugger
 
 You need to break on any exception raised in the debugger?
 You can have GPS set this special breakpoint each time you start the debugger
-automatically by going to Edit->Preferences, seelect Debugger page and enable
+automatically by going to Edit->Preferences, select Debugger page and enable
 the <i>Break on exceptions</i> preference.
 Alternatively you can also type the <i>break exception</i> command directly
 in the debugger console.
