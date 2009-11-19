@@ -39,11 +39,14 @@ from text_utils import *
 def open_and_raise_editor (filename, line=0, column=0):
    """Open the editor for filename, raise the window, and display the
       specified line/column if they are specified"""
-   ed   = GPS.EditorBuffer.get (GPS.File (filename))
-   view = ed.current_view ()
-   loc  = GPS.EditorLocation (ed, line=line, column=column)
-   view.goto (loc)
-   GPS.MDI.get_by_child (view).raise_window()
+   try:
+      ed   = GPS.EditorBuffer.get (GPS.File (filename))
+      view = ed.current_view ()
+      loc  = GPS.EditorLocation (ed, line=line, column=column)
+      view.goto (loc)
+      GPS.MDI.get_by_child (view).raise_window()
+   except:
+      pass
 
 class OpenFileContextual (GPS.Contextual):
    """A contextual menu to open the file specified at the cursor's location.
