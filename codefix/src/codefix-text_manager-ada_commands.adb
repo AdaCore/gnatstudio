@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
-with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
@@ -1314,76 +1313,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Object_Position);
       Free (This.Pkg_Name);
       Free (Text_Command (This));
-   end Free;
-
-   --  Replace_Code_By_Cmd
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (This         : in out Replace_Code_By_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Start_Cursor : File_Cursor'Class;
-      Replaced_Exp : String;
-      New_String   : String)
-   is
-   begin
-      This.Start_Cursor := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Start_Cursor));
-      This.Replaced_Exp := new String'(Replaced_Exp);
-      This.New_String   := new String'(New_String);
-   end Initialize;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (This         : Replace_Code_By_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class)
-   is
-      Start_Cursor : File_Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Start_Cursor.all));
-      Start_Index  : Char_Index;
-
-      Line    : constant String := Get_Line (Current_Text, Start_Cursor, 1);
-      Matcher : constant Pattern_Matcher := Compile (This.Replaced_Exp.all);
-      Matches : Match_Array (0 .. Paren_Count (Matcher));
-      Replace_Cursor : File_Cursor;
-   begin
-      Start_Index := To_Char_Index (Get_Column (Start_Cursor), Line);
-
-      Match (Matcher, Line (Integer (Start_Index) .. Line'Last), Matches);
-
-      Set_Location (Start_Cursor, Get_Line (Start_Cursor), 1);
-
-      if Matches (0) /= No_Match then
-         Replace_Cursor := Start_Cursor;
-         Replace_Cursor.Col :=
-           To_Column_Index (Char_Index (Matches (1).First), Line);
-
-         Current_Text.Replace
-           (Replace_Cursor,
-            Matches (1).Last - Matches (1).First + 1, This.New_String.all);
-      else
-         raise Codefix_Panic with
-           "Impossible to match """ &  This.Replaced_Exp.all & """ on "
-             & """" & Line & """.";
-      end if;
-   end Execute;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Replace_Code_By_Cmd) is
-   begin
-      Free (Text_Command (This));
-      Free (This.Replaced_Exp);
-      Free (This.New_String);
-      Free (This.Start_Cursor);
    end Free;
 
    ----------------

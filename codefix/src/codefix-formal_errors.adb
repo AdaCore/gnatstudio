@@ -255,6 +255,17 @@ package body Codefix.Formal_Errors is
       return Data (Current_Node);
    end Get_Command;
 
+   ----------------
+   -- Set_Parser --
+   ----------------
+
+   procedure Set_Parser
+     (It : Solution_List_Iterator; Parser : Error_Parser_Access)
+   is
+   begin
+      Set_Parser (Data_Ref (It).all, Parser);
+   end Set_Parser;
+
    ---------------
    -- Free_List --
    ---------------
@@ -277,7 +288,7 @@ package body Codefix.Formal_Errors is
       Caption      : String := "") return Solution_List
    is
       Result      : Solution_List;
-      New_Command : Replace_Word_Cmd;
+      New_Command : Replace_Word_Cmd (Simple);
       Old_Word    : Word_Cursor;
    begin
       Set_File (Old_Word, Get_File (Message));
@@ -331,7 +342,7 @@ package body Codefix.Formal_Errors is
       First_String  : String;
       Second_String : String) return Solution_List
    is
-      New_Command : Invert_Words_Cmd;
+      New_Command : Invert_Words_Cmd (Simple);
       Result      : Solution_List;
    begin
       New_Command.Initialize
@@ -361,7 +372,7 @@ package body Codefix.Formal_Errors is
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Solution_List
    is
-      New_Command : Insert_Word_Cmd;
+      New_Command : Insert_Word_Cmd (Simple);
       Word        : Word_Cursor;
       Result      : Solution_List;
 
@@ -391,7 +402,7 @@ package body Codefix.Formal_Errors is
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii) return Solution_List
    is
-      New_Command : Remove_Word_Cmd;
+      New_Command : Remove_Word_Cmd (Simple);
       Word        : Word_Cursor;
       Result      : Solution_List;
    begin
@@ -878,7 +889,7 @@ package body Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class) return Solution_List
    is
       Begin_Cursor  : File_Cursor;
-      New_Command   : Move_Word_Cmd;
+      New_Command   : Move_Word_Cmd (Simple);
       Result        : Solution_List;
       Pragma_Cursor : Word_Cursor;
    begin
@@ -942,7 +953,7 @@ package body Codefix.Formal_Errors is
 
       while Cursor_Node /= Cursor_Lists.Null_Node loop
          declare
-            New_Command : Insert_Word_Cmd;
+            New_Command : Insert_Word_Cmd (Complex);
          begin
             Assign
               (Str_Array (Index_Str),
@@ -1157,26 +1168,6 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Resolve_Unvisible_Declaration;
-
-   ---------------------
-   -- Replace_Code_By --
-   ---------------------
-
-   function Replace_Code_By
-     (Start_Cursor : File_Cursor'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Replaced_Exp : String;
-      New_String   : String) return Solution_List
-   is
-      Result   : Solution_List;
-      Solution : Replace_Code_By_Cmd;
-   begin
-      Initialize
-        (Solution, Current_Text, Start_Cursor, Replaced_Exp, New_String);
-      Append (Result, Solution);
-
-      return Result;
-   end Replace_Code_By;
 
    -----------------------------
    -- Remove_Extra_Underlines --

@@ -19,6 +19,7 @@
 
 --  This package defines the module for code fixing.
 
+with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
@@ -32,12 +33,14 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
+with String_Utils;              use String_Utils;
 with Basic_Types;               use Basic_Types;
 with UTF8_Utils;                use UTF8_Utils;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
 with Codefix.Error_Lists;       use Codefix.Error_Lists;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
 with Codefix.Text_Manager;      use Codefix.Text_Manager;
+with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 with Codefix.GNAT_Parser;       use Codefix.GNAT_Parser;
 with Commands.Codefix;          use Commands.Codefix;
 with Commands;                  use Commands;
@@ -124,11 +127,15 @@ package body Codefix_Module is
    end record;
    type Codefix_Properties_Access is access all Codefix_Properties'Class;
 
+   type Fix_Mode_Type is (Specific, Simple, Style_And_Warnings, Similar);
+
    type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Fix_Command  : Ptr_Command;
-      Error        : Error_Id;
-      Kernel       : Kernel_Handle;
-      Session      : Codefix_Session;
+      Kernel          : Kernel_Handle;
+      Session         : Codefix_Session;
+      Fix_Mode        : Fix_Mode_Type;
+      Fix_Command     : Ptr_Command;
+      Error           : Error_Id;
+      Matching_Parser : Error_Parser_Access;
    end record;
    type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
 
@@ -166,7 +173,7 @@ package body Codefix_Module is
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  ??? Will be removed soon
+   --  Adds multiple messages fixes menus
 
    procedure On_Fix
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -286,7 +293,74 @@ package body Codefix_Module is
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
       Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
    begin
-      On_Fix (Mitem.Kernel, Mitem.Session, Mitem.Error, Mitem.Fix_Command.all);
+      case Mitem.Fix_Mode is
+         when Specific =>
+            On_Fix
+              (Mitem.Kernel,
+               Mitem.Session,
+               Mitem.Error,
+               Mitem.Fix_Command.all);
+
+         when others =>
+            declare
+               Error                 : Error_Id :=
+                 Get_First_Error (Mitem.Session.Corrector.all);
+               Solution_Node         : Solution_List_Iterator;
+               Unique_Simple_Command : Ptr_Command;
+            begin
+               --  Loop over all the errors stored in the session and fix
+               --  all the ones with one simple fix and matching the fix mode.
+
+               while Error /= Null_Error_Id loop
+                  if not Is_Fixed (Error) then
+                     Unique_Simple_Command := null;
+
+                     Solution_Node := First (Get_Solutions (Error));
+
+                     while not At_End (Solution_Node) loop
+                        if Get_Command (Solution_Node).Complexity = Simple
+                          and then Unique_Simple_Command = null
+                        then
+                           Unique_Simple_Command := new Text_Command'Class'
+                             (Get_Command (Solution_Node));
+                        else
+                           Free (Unique_Simple_Command);
+
+                           Unique_Simple_Command := null;
+                           exit;
+                        end if;
+
+                        Solution_Node := Next (Solution_Node);
+                     end loop;
+
+                     if Unique_Simple_Command /= null
+                       and then
+                         (Mitem.Fix_Mode /= Style_And_Warnings
+                          or else Is_Style_Or_Warning
+                            (Get_Error_Message (Error)))
+                       and then
+                         (Mitem.Fix_Mode /= Similar
+                          or else
+                            Unique_Simple_Command.Get_Parser.all'Tag
+                          = Mitem.Matching_Parser.all'Tag)
+                     then
+                        --  If this is an error set up to be fixed, fix it
+
+                        On_Fix
+                          (Mitem.Kernel,
+                           Mitem.Session,
+                           Error,
+                           Unique_Simple_Command.all);
+                     end if;
+                  end if;
+
+                  Free (Unique_Simple_Command);
+
+                  Error := Next (Error);
+               end loop;
+            end;
+      end case;
+
    end On_Fix;
 
    ----------------------
@@ -560,7 +634,6 @@ package body Codefix_Module is
       pragma Unreferenced (Factory, Object);
       Session : Codefix_Session;
       Error   : Error_Id;
-
    begin
       if Has_Message_Information (Context) then
          if not Has_Category_Information (Context)
@@ -569,7 +642,10 @@ package body Codefix_Module is
             return;
          end if;
 
-         Session := Get_Session_By_Name (Category_Information (Context));
+--           Session := Get_Session_By_Name (Category_Information (Context));
+         Session := Get_Session_By_Name ("Builder results");
+         --  This constant should be replaced by the context information,
+         --  waiting for IB19-003.
 
          if Session = null then
             return;
@@ -586,7 +662,7 @@ package body Codefix_Module is
             File    => File_Information (Context),
             Line    => Line_Information (Context),
             Column  => Column_Index (Column_Information (Context)),
-            Message => Message_Information (Context));
+            Message => Remove_Markup (Message_Information (Context)));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
             Create_Submenu (Get_Kernel (Context), Menu, Session, Error);
@@ -614,7 +690,7 @@ package body Codefix_Module is
 
       Register_Contextual_Submenu
         (Kernel,
-         Name    => "Code Fixing",
+         Name    => "Auto Fix",
          Submenu => new Codefix_Contextual_Menu);
 
       Add_Hook
@@ -1007,7 +1083,8 @@ package body Codefix_Module is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (This : out Codefix_Menu_Item; Label : String := "") is
+   procedure Gtk_New
+     (This : out Codefix_Menu_Item; Label : String := "") is
    begin
       This := new Codefix_Menu_Item_Record;
       Codefix_Module.Initialize (This, Label);
@@ -1034,14 +1111,17 @@ package body Codefix_Module is
       Session : access Codefix_Session_Record;
       Error   : Error_Id)
    is
+      Mitem : Codefix_Menu_Item;
       Solution_Node : Solution_List_Iterator;
-      Mitem         : Codefix_Menu_Item;
+      Simple_Number : Integer := 0;
+      Matching_Parser : Error_Parser_Access;
    begin
       Solution_Node := First (Get_Solutions (Error));
 
       while not At_End (Solution_Node) loop
          Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node)));
 
+         Mitem.Fix_Mode     := Specific;
          --  ??? Where is this freed
          Mitem.Fix_Command  := new Text_Command'Class'
            (Get_Command (Solution_Node));
@@ -1052,7 +1132,41 @@ package body Codefix_Module is
          Append (Menu, Mitem);
 
          Solution_Node := Next (Solution_Node);
+
+         if Mitem.Fix_Command.Complexity = Simple then
+            Simple_Number := Simple_Number + 1;
+            Matching_Parser := Mitem.Fix_Command.Get_Parser;
+         end if;
       end loop;
+
+      if Simple_Number = 1 then
+         Gtk_New (Mitem, "Fix all similar errors");
+
+         Mitem.Fix_Mode := Similar;
+         Mitem.Matching_Parser := Matching_Parser;
+         Mitem.Kernel   := Kernel_Handle (Kernel);
+         Mitem.Session  := Codefix_Session (Session);
+         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+         Append (Menu, Mitem);
+
+         if Is_Style_Or_Warning (Get_Error_Message (Error)) then
+            Gtk_New (Mitem, "Fix all simple style errors and warnings");
+
+            Mitem.Fix_Mode := Style_And_Warnings;
+            Mitem.Kernel   := Kernel_Handle (Kernel);
+            Mitem.Session  := Codefix_Session (Session);
+            Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+            Append (Menu, Mitem);
+         end if;
+
+         Gtk_New (Mitem, "Fix all simple errors");
+
+         Mitem.Fix_Mode := Simple;
+         Mitem.Kernel   := Kernel_Handle (Kernel);
+         Mitem.Session  := Codefix_Session (Session);
+         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+         Append (Menu, Mitem);
+      end if;
    end Create_Submenu;
 
    -------------

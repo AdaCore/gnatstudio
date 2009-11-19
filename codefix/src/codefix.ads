@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,11 @@ package Codefix is
      (Index : Char_Index; Str : String) return Column_Index;
    --  Return the column index corresponding to the char index given in
    --  parameter. This will handle tablulations.
+
+   type Root_Error_Parser is abstract tagged null record;
+   --  Root type for all error parsers
+
+   type Error_Parser_Access is access all Root_Error_Parser'Class;
 
    --------------------------------
    -- String_Access manipulation --

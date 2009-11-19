@@ -280,6 +280,16 @@ package String_Utils is
       Value : GNAT.Strings.String_Access);
    --  Idem, but does nothing if Value is null
 
+   function Remove_Markup (Text : String) return String;
+   --  Tries to remove all markup information from the text given in parameter,
+   --  and replace HTML entities by actual characters. This subprogram is
+   --  currently simple-minded and incomplete, to be used only when more
+   --  advanced functionalities are not available.
+   --
+   --  Currently sported transformations are:
+   --
+   --    &quote; -> '
+
    -------------------
    -- Argument_List --
    -------------------

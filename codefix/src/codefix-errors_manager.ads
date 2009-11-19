@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,10 +20,10 @@
 with Generic_List;
 
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
+with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix.Error_Lists;   use Codefix.Error_Lists;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
-with GNAT.Strings;
 with GNATCOLL.VFS;
 
 with Ada.Unchecked_Deallocation;
@@ -47,9 +47,6 @@ package Codefix.Errors_Manager is
 
    function Get_Error_Message (This : Error_Id) return Error_Message;
    --  Return the error message associated to the id.
-
-   function Get_Category (This : Error_Id) return String;
-   --  Return the category of the error.
 
    function Is_Fixed (This : Error_Id) return Boolean;
    --  Return True if the Error_Id has already been fixed, that means that a
@@ -140,7 +137,6 @@ private
    type Error_Id_Record is record
       Message         : Error_Message := Invalid_Error_Message;
       Solutions       : Solution_List := Null_Solution_List;
-      Category        : GNAT.Strings.String_Access;
       Fixed           : Ptr_Boolean := new Boolean'(False);
    end record;
 
@@ -164,7 +160,6 @@ private
      (This      : in out Correction_Manager;
       Message   : Error_Message;
       Solutions : Solution_List;
-      Category  : String;
       New_Error : out Error_Id);
 
 end Codefix.Errors_Manager;

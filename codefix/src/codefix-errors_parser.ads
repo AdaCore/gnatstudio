@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -117,7 +117,6 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;            use GNAT.Regpat;
-with GNAT.Strings;
 
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
@@ -134,9 +133,8 @@ package Codefix.Errors_Parser is
    procedure Free is new
       Ada.Unchecked_Deallocation (Pattern_Matcher, Ptr_Matcher);
 
-   type Error_Parser
-     (Category : GNAT.Strings.String_Access; Nb_Parsers : Natural)
-   is abstract tagged record
+   type Error_Parser (Nb_Parsers : Natural) is abstract new Root_Error_Parser
+   with record
        Matcher    : Arr_Matcher (1 .. Nb_Parsers);
    end record;
    --  The Error_Parser is used to parse a message and call the rigth
@@ -187,7 +185,6 @@ package Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
       Options      : Fix_Options;
-      Category     : out GNAT.Strings.String_Access;
       Solutions    : out Solution_List);
    --  Analyze the message given in parameter, and return possible fixes. If no
    --  fixes can be found, then the resulting solution list is empty.

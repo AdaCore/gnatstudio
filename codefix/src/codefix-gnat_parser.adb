@@ -26,9 +26,7 @@ with GNAT.Regpat; use GNAT.Regpat;
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
 
-   type Agregate_Misspelling is new Error_Parser
-     (new String'("Misspelling"), 1)
-   with null record;
+   type Agregate_Misspelling is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Agregate_Misspelling);
@@ -43,9 +41,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'possible mispelling of "=>"'
 
-   type Light_Misspelling is new Error_Parser
-     (new String'("Misspelling"), 2)
-   with null record;
+   type Light_Misspelling is new Error_Parser (2) with null record;
 
    overriding
    procedure Initialize (This : in out Light_Misspelling);
@@ -60,9 +56,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix the most 'possible mispelling of sth'
 
-   type Double_Misspelling is new Error_Parser
-     (new String'("Misspelling"), 1)
-   with null record;
+   type Double_Misspelling is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Double_Misspelling);
@@ -77,9 +71,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix the case where there is an alternative for the correction
 
-   type Goto_Misspelling is new Error_Parser
-     (new String'("Misspelling"), 1)
-   with null record;
+   type Goto_Misspelling is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Goto_Misspelling);
@@ -94,9 +86,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix expressions like 'go  to Label;'
 
-   type Library_Misspelling is new Error_Parser
-     (new String'("Misspelling"), 1)
-   with record
+   type Library_Misspelling is new Error_Parser (1) with record
       Misspelling_Matcher : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("possible misspelling of ""([^""]+)"""));
    end record;
@@ -117,9 +107,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Problems of misspelling of packages
 
-   type Sth_Should_Be_Sth is new Error_Parser
-     (new String'("Wrong_Keyword"), 4)
-   with null record;
+   type Sth_Should_Be_Sth is new Error_Parser (4) with null record;
 
    overriding
    procedure Initialize (This : in out Sth_Should_Be_Sth);
@@ -134,9 +122,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix messages like 'sth should be sth'
 
-   type Should_Be_Semicolon is new Error_Parser
-     (new String'("Wrong_Keyword"), 1)
-   with null record;
+   type Should_Be_Semicolon is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Should_Be_Semicolon);
@@ -151,9 +137,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'perdiod should probably be semicolon'
 
-   type And_Meant is new Error_Parser
-     (new String'("Wrong_Keyword"), 1)
-   with null record;
+   type And_Meant is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out And_Meant);
@@ -168,9 +152,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix instruction where '&' stands for 'and'
 
-   type Or_Meant is new Error_Parser
-     (new String'("Wrong_Keyword"), 1)
-   with null record;
+   type Or_Meant is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Or_Meant);
@@ -185,9 +167,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix instruction where '|' stands for 'or'
 
-   type Bad_End_Block is new Error_Parser
-     (new String'("Wrong_Keyword"), 2)
-   with null record;
+   type Bad_End_Block is new Error_Parser (2) with null record;
 
    overriding
    procedure Initialize (This : in out Bad_End_Block);
@@ -202,9 +182,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix "end sth" expected in column 7 for "sth"
 
-   type Unqualified_Expression is new Error_Parser
-     (new String'("Qualified_Expression"), 1)
-   with null record;
+   type Unqualified_Expression is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Unqualified_Expression);
@@ -219,9 +197,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix instruction where ' is missing
 
-   type Goes_Before is new Error_Parser
-     (new String'("Wrong_Declaration_Order"), 4)
-   with null record;
+   type Goes_Before is new Error_Parser (4) with null record;
 
    overriding
    procedure Initialize (This : in out Goes_Before);
@@ -236,9 +212,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'so must be before sth'
 
-   type Sth_Expected_3 is new Error_Parser
-     (new String'("Keyword_Missing"), 1)
-   with null record;
+   type Sth_Expected_3 is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Sth_Expected_3);
@@ -253,9 +227,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'function, procedure or package expected'
 
-   type Sth_Expected_2 is new Error_Parser
-     (new String'("Keyword_Missing"), 1)
-   with null record;
+   type Sth_Expected_2 is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Sth_Expected_2);
@@ -270,9 +242,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix error messages where function or procedure is expected.
 
-   type Sth_Expected is new Error_Parser
-     (new String'("Keyword_Missing"), 1)
-   with null record;
+   type Sth_Expected is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Sth_Expected);
@@ -287,9 +257,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix error messages where a keyword is expected at a position.
 
-   type Missing_Kw is new Error_Parser
-     (new String'("Keyword_Missing"), 1)
-   with null record;
+   type Missing_Kw is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Missing_Kw);
@@ -304,9 +272,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'kw missing'.
 
-   type Missing_Sep is new Error_Parser
-     (new String'("Separator_Missing"), 2)
-   with record
+   type Missing_Sep is new Error_Parser (2) with record
       Wrong_Form : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("([\w|\s]+;)"));
    end record;
@@ -327,9 +293,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'sth missing'.
 
-   type Missing_All is new Error_Parser
-     (new String'("Semantic_Incoherence"), 2)
-   with record
+   type Missing_All is new Error_Parser (2) with record
       null;
    end record;
 
@@ -349,9 +313,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'add All to'.
 
-   type Statement_Missing is new Error_Parser
-     (new String'("Statement_Expected"), 1)
-   with null record;
+   type Statement_Missing is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Statement_Missing);
@@ -366,9 +328,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'statement missing'.
 
-   type Space_Missing is new Error_Parser
-     (new String'("Space_Required"), 1)
-   with null record;
+   type Space_Missing is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Space_Missing);
@@ -383,9 +343,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'space required'.
 
-   type Two_Spaces_Missing is new Error_Parser
-     (new String'("Space_Required"), 1)
-   with null record;
+   type Two_Spaces_Missing is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Two_Spaces_Missing);
@@ -400,9 +358,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'space required'.
 
-   type Name_Missing is new Error_Parser
-     (new String'("Block_Name_Expected"), 3)
-   with record
+   type Name_Missing is new Error_Parser (3) with record
       Matcher_Aux : GNAT.Strings.String_List (1 .. 3) :=
         (new String'("(end)[\s]*;"),
          new String'("(exit)"),
@@ -425,9 +381,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'end sth expected'.
 
-   type Double_Keyword is new Error_Parser
-     (new String'("Extra_Keyword"), 1)
-   with null record;
+   type Double_Keyword is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Double_Keyword);
@@ -442,9 +396,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
-   type Extra_Paren is new Error_Parser
-     (new String'("Extra_Keyword"), 1)
-   with null record;
+   type Extra_Paren is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Extra_Paren);
@@ -459,9 +411,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
-   type Redundant_Keyword is new Error_Parser
-     (new String'("Extra_Keyword"), 1)
-   with null record;
+   type Redundant_Keyword is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Redundant_Keyword);
@@ -476,9 +426,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'redundant sth'.
 
-   type No_Space_Allowed is new Error_Parser
-     (new String'("Extra_Keyword"), 1)
-   with null record;
+   type No_Space_Allowed is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out No_Space_Allowed);
@@ -493,9 +441,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'no space allowed there'.
 
-   type Unexpected_Sep is new Error_Parser
-     (new String'("Unexpected_Keyword"), 1)
-   with null record;
+   type Unexpected_Sep is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Unexpected_Sep);
@@ -510,9 +456,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
-   type Unexpected_Word is new Error_Parser
-     (new String'("Unexpected_Keyword"), 1)
-   with null record;
+   type Unexpected_Word is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Unexpected_Word);
@@ -527,9 +471,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'unexpected sth ignored'.
 
-   type Kw_Not_Allowed is new Error_Parser
-     (new String'("Unallowed_Keyword"), 3)
-   with null record;
+   type Kw_Not_Allowed is new Error_Parser (3) with null record;
 
    overriding
    procedure Initialize (This : in out Kw_Not_Allowed);
@@ -544,9 +486,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
 
-   type Sep_Not_Allowed is new Error_Parser
-     (new String'("Unallowed_Style_Character"), 4)
-   with null record;
+   type Sep_Not_Allowed is new Error_Parser (4) with null record;
 
    overriding
    procedure Initialize (This : in out Sep_Not_Allowed);
@@ -561,9 +501,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'kw not allowed' etc.
 
-   type Already_Use_Visible is new Error_Parser
-     (new String'("Useless_Statement"), 1)
-   with null record;
+   type Already_Use_Visible is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Already_Use_Visible);
@@ -578,9 +516,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'pckg is already use_visible'
 
-   type Redundant_With_In_Body is new Error_Parser
-     (new String'("Useless_Statement"), 1)
-   with null record;
+   type Redundant_With_In_Body is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Redundant_With_In_Body);
@@ -595,9 +531,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix for 'redundant with clause in body'
 
-   type Use_Valid_Instead is new Error_Parser
-     (new String'("Useless_Statement"), 1)
-   with null record;
+   type Use_Valid_Instead is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Use_Valid_Instead);
@@ -612,9 +546,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'use 'Valid attribute instead"
 
-   type Should_Be_In is new Error_Parser
-     (new String'("Wrong_Indentation"), 1)
-   with null record;
+   type Should_Be_In is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Should_Be_In);
@@ -629,9 +561,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'sth should be in column'.
 
-   type Bad_Column is new Error_Parser
-     (new String'("Wrong_Indentation"), 3)
-   with null record;
+   type Bad_Column is new Error_Parser (3) with null record;
 
    overriding
    procedure Initialize (This : in out Bad_Column);
@@ -646,9 +576,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix messages about bad indentation.
 
-   type Main_With_Missing is new Error_Parser
-     (new String'("Missing_With"), 6)
-   with null record;
+   type Main_With_Missing is new Error_Parser (6) with null record;
 
    overriding
    procedure Initialize (This : in out Main_With_Missing);
@@ -663,9 +591,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix messages that guess a missing with.
 
-   type Bad_Casing_Standard is new Error_Parser
-     (new String'("Wrong_Case"), 1)
-   with null record;
+   type Bad_Casing_Standard is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Bad_Casing_Standard);
@@ -680,9 +606,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix standard case errors.
 
-   type Bad_Casing_Declared is new Error_Parser
-     (new String'("Wrong_Case"), 1)
-   with null record;
+   type Bad_Casing_Declared is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Bad_Casing_Declared);
@@ -697,9 +621,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix case problems with declared words etc.
 
-   type Bad_Casing_Keyword is new Error_Parser
-     (new String'("Wrong_Case"), 1)
-   with null record;
+   type Bad_Casing_Keyword is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Bad_Casing_Keyword);
@@ -714,9 +636,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix case problems with keywords.
 
-   type Object_Not_Referenced is new Error_Parser
-     (new String'("Unit_Not_Referenced"), 2)
-   with null record;
+   type Object_Not_Referenced is new Error_Parser (2) with null record;
 
    overriding
    procedure Initialize (This : in out Object_Not_Referenced);
@@ -731,9 +651,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'sth is not referenced'.
 
-   type Pkg_Not_Referenced is new Error_Parser
-     (new String'("Unit_Not_Referenced"), 3)
-   with null record;
+   type Pkg_Not_Referenced is new Error_Parser (3) with null record;
 
    overriding
    procedure Initialize (This : in out Pkg_Not_Referenced);
@@ -748,9 +666,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'no entities of sth are referenced'.
 
-   type Never_Read is new Error_Parser
-     (new String'("Unit_Not_Referenced"), 1)
-   with null record;
+   type Never_Read is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Never_Read);
@@ -765,9 +681,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like '"bla" is assigned but never read'.
 
-   type Never_Assigned is new Error_Parser
-     (new String'("Unit_Not_Referenced"), 1)
-   with null record;
+   type Never_Assigned is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Never_Assigned);
@@ -782,9 +696,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like '"bla" is assigned but never read'.
 
-   type Pragma_Missplaced is new Error_Parser
-     (new String'("Pragma_Should_Begin"), 1)
-   with null record;
+   type Pragma_Missplaced is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Pragma_Missplaced);
@@ -799,9 +711,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'pragma must be first line of'.
 
-   type Constant_Expected is new Error_Parser
-     (new String'("Var_Not_Modified"), 1)
-   with null record;
+   type Constant_Expected is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Constant_Expected);
@@ -816,9 +726,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'could be declared constant'.
 
-   type Possible_Interpretation is new Error_Parser
-     (new String'("Ambiguous_Expression"), 1)
-   with record
+   type Possible_Interpretation is new Error_Parser (1) with record
       Local_Matcher : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("possible interpretation at line ([\d]+)"));
       Source_Matcher : Ptr_Matcher := new Pattern_Matcher'
@@ -841,9 +749,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'ambiguous expression (cannot resolve "Sth")'
 
-   type Hidden_Declaration is new Error_Parser
-     (new String'("Ambiguous_Expression"), 1)
-   with record
+   type Hidden_Declaration is new Error_Parser (1) with record
       Check_Possible : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("multiple use clauses cause hiding"));
       Get_From_Current_File : Ptr_Matcher := new Pattern_Matcher'
@@ -868,9 +774,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'multiple use clause hiding'
 
-   type Use_Missing is new Error_Parser
-     (new String'("Use_Missing"), 1)
-   with null record;
+   type Use_Missing is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Use_Missing);
@@ -885,9 +789,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'use would make operation legal'
 
-   type Redundant_Conversion is new Error_Parser
-     (new String'("Useless_Conversion"), 2)
-   with null record;
+   type Redundant_Conversion is new Error_Parser (2) with null record;
 
    overriding
    procedure Initialize (This : in out Redundant_Conversion);
@@ -902,9 +804,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'useless conversion'
 
-   type Missplaced_With is new Error_Parser
-     (new String'("Movable_With_Clause"), 2)
-     with null record;
+   type Missplaced_With is new Error_Parser (2) with null record;
 
    overriding
    procedure Initialize (This : in out Missplaced_With);
@@ -919,9 +819,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'with clause can be moved to body'
 
-   type Not_Fully_Conformant is new Error_Parser
-    (new String'("Not_Fully_Conformant"), 4)
-   with null record;
+   type Not_Fully_Conformant is new Error_Parser (4) with null record;
 
    overriding
    procedure Initialize (This : in out Not_Fully_Conformant);
@@ -936,9 +834,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'not fully conformant with declaration'
 
-   type Generic_Use_Unallowed is new Error_Parser
-     (new String'("Unallowed_Expression"), 1)
-   with null record;
+   type Generic_Use_Unallowed is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Generic_Use_Unallowed);
@@ -953,9 +849,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'a generic package is not allowed in a use clause'.
 
-   type Non_Visible_Declaration is new Error_Parser
-     (new String'("Non_Visible_Declaration"), 2)
-   with null record;
+   type Non_Visible_Declaration is new Error_Parser (2) with null record;
 
    overriding
    procedure Initialize (This : in out Non_Visible_Declaration);
@@ -970,9 +864,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'non visible declaration at'.
 
-   type Consecutive_Underlines is new Error_Parser
-     (new String'("Consecutive_Underlines"), 1)
-   with null record;
+   type Consecutive_Underlines is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Consecutive_Underlines);
@@ -987,9 +879,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'two consecutives underlines not permitted'.
 
-   type Multiple_Blank_Lines is new Error_Parser
-     (new String'("Multiple_Blank_Lines"), 1)
-   with null record;
+   type Multiple_Blank_Lines is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Multiple_Blank_Lines);
@@ -1004,9 +894,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'two consecutives underlines not permitted'.
 
-   type Suggested_Replacement is new Error_Parser
-     (new String'("Suggested_Replacement"), 1)
-   with null record;
+   type Suggested_Replacement is new Error_Parser (1) with null record;
 
    overriding
    procedure Initialize (This : in out Suggested_Replacement);
@@ -1021,9 +909,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'suggested replacement:'.
 
-   type Pragma_Pack is new Error_Parser
-     (new String'("Pragma_Pack"), 1)
-   with record
+   type Pragma_Pack is new Error_Parser (1) with record
       Use_Pragma : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("use explicit pragma Pack"));
    end record;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,15 +66,6 @@ package body Codefix.Errors_Manager is
       return Data (Memorized_Corrections.List_Node (This)).Message;
    end Get_Error_Message;
 
-   ------------------
-   -- Get_Category --
-   ------------------
-
-   function Get_Category (This : Error_Id) return String is
-   begin
-      return Data (Memorized_Corrections.List_Node (This)).Category.all;
-   end Get_Category;
-
    ----------
    -- Free --
    ----------
@@ -83,7 +74,6 @@ package body Codefix.Errors_Manager is
    begin
       Free (This.Message);
       Codefix.Formal_Errors.Free_List (This.Solutions);
-      Free (This.Category);
       Free (This.Fixed);
    end Free;
 
@@ -191,13 +181,11 @@ package body Codefix.Errors_Manager is
                   Source_Text,
                   It,
                   Options,
-                  Category,
                   Solutions);
 
                if Length (Solutions) > 0 then
                   Add_Error
-                    (This, Current_Message, Solutions,
-                     Category.all, New_Error);
+                    (This, Current_Message, Solutions, New_Error);
 
                   if Callback /= null then
                      Callback (New_Error, Source_Text, This);
@@ -272,14 +260,12 @@ package body Codefix.Errors_Manager is
      (This      : in out Correction_Manager;
       Message   : Error_Message;
       Solutions : Solution_List;
-      Category  : String;
       New_Error : out Error_Id)
    is
       New_Error_Record : Error_Id_Record;
    begin
       New_Error_Record.Solutions := Solutions;
       New_Error_Record.Message := Clone (Message);
-      Assign (New_Error_Record.Category, Category);
       Append (This.Potential_Corrections, New_Error_Record);
       New_Error := Last (This.Potential_Corrections);
    end Add_Error;

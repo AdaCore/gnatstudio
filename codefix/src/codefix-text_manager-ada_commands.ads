@@ -19,6 +19,7 @@
 
 with GNAT.Strings;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
+with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 
 package Codefix.Text_Manager.Ada_Commands is
 
@@ -26,7 +27,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Recase_Word_Cmd --
    ---------------------
 
-   type Recase_Word_Cmd is new Text_Command with private;
+   type Recase_Word_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This         : in out Recase_Word_Cmd;
@@ -50,7 +51,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Instruction_Cmd --
    ----------------------------
 
-   type Remove_Instruction_Cmd is new Text_Command with private;
+   type Remove_Instruction_Cmd is new Text_Command (Complex) with private;
 
    procedure Initialize
      (This              : in out Remove_Instruction_Cmd;
@@ -72,7 +73,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Elements_Cmd --
    -------------------------
 
-   type Remove_Elements_Cmd is new Text_Command with private;
+   type Remove_Elements_Cmd is new Text_Command (Complex) with private;
    --  This type is used to store a list of element that have to be removed.
    --  The default behavior of this class is to erase the elements, but it can
    --  be changed to just comment them.
@@ -101,7 +102,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Pkg_Clauses_Cmd --
    ----------------------------
 
-   type Remove_Pkg_Clauses_Cmd is new Text_Command with private;
+   type Remove_Pkg_Clauses_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This         : in out Remove_Pkg_Clauses_Cmd;
@@ -130,7 +131,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Entity_Cmd --
    -----------------------
 
-   type Remove_Entity_Cmd is new Text_Command with private;
+   type Remove_Entity_Cmd is new Text_Command (Complex) with private;
 
    procedure Initialize
      (This         : in out Remove_Entity_Cmd;
@@ -153,7 +154,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Add_Pragma_Cmd --
    --------------------
 
-   type Add_Pragma_Cmd is new Text_Command with private;
+   type Add_Pragma_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This           : in out Add_Pragma_Cmd;
@@ -177,7 +178,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Make_Constant_Cmd --
    -----------------------
 
-   type Make_Constant_Cmd is new Text_Command with private;
+   type Make_Constant_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This         : in out Make_Constant_Cmd;
@@ -200,7 +201,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Parenthesis_Cmd --
    ----------------------------
 
-   type Remove_Parenthesis_Cmd is new Text_Command with private;
+   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This         : in out Remove_Parenthesis_Cmd;
@@ -222,7 +223,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Paste_Profile_Cmd --
    -----------------------
 
-   type Paste_Profile_Cmd is new Text_Command with private;
+   type Paste_Profile_Cmd is new Text_Command (Complex) with private;
 
    procedure Initialize
      (This                              : in out Paste_Profile_Cmd;
@@ -248,7 +249,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Get_Visible_Declaration_Cmd --
    ---------------------------------
 
-   type Get_Visible_Declaration_Cmd is new Text_Command with private;
+   type Get_Visible_Declaration_Cmd is new Text_Command (Complex) with private;
 
    function Get_Package_To_Be_Withed
      (Current_Text    : Text_Navigator_Abstr'Class;
@@ -286,28 +287,11 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Replace_Code_By_Cmd --
    -------------------------
 
-   type Replace_Code_By_Cmd is new Text_Command with private;
-
-   procedure Initialize
-     (This         : in out Replace_Code_By_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Start_Cursor : File_Cursor'Class;
-      Replaced_Exp : String;
-      New_String   : String);
-
-   overriding
-   procedure Execute
-     (This         : Replace_Code_By_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class);
-
-   overriding
-   procedure Free (This : in out Replace_Code_By_Cmd);
-
    ---------------------
    -- Indent_Code_Cmd --
    ---------------------
 
-   type Indent_Code_Cmd is new Text_Command with private;
+   type Indent_Code_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This         : in out Indent_Code_Cmd;
@@ -329,7 +313,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Add_Clauses_Cmd --
    ---------------------
 
-   type Add_Clauses_Cmd is new Text_Command with private;
+   type Add_Clauses_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This           : in out Add_Clauses_Cmd;
@@ -352,7 +336,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Change_To_Tick_Valid_Cmd --
    ------------------------------
 
-   type Change_To_Tick_Valid_Cmd is new Text_Command with private;
+   type Change_To_Tick_Valid_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This           : in out Change_To_Tick_Valid_Cmd;
@@ -372,7 +356,7 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Extra_Underlines --
    -----------------------------
 
-   type Remove_Extra_Underlines_Cmd is new Text_Command with private;
+   type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
      (This           : in out Remove_Extra_Underlines_Cmd;
@@ -396,17 +380,17 @@ private
    package Ada_Lists is new Generic_List (Ada_List);
    use Ada_Lists;
 
-   type Recase_Word_Cmd is new Text_Command with record
+   type Recase_Word_Cmd is new Text_Command (Simple) with record
       Cursor       : Ptr_Mark;
       Correct_Word : GNAT.Strings.String_Access;
       Word_Case    : Case_Type;
    end record;
 
-   type Remove_Instruction_Cmd is new Text_Command with record
+   type Remove_Instruction_Cmd is new Text_Command (Complex) with record
       Begin_Mark : Ptr_Mark;
    end record;
 
-   type Remove_Elements_Cmd is new Text_Command with record
+   type Remove_Elements_Cmd is new Text_Command (Complex) with record
       Remove_List : Mark_List.List;
       Mode        : Remove_Code_Mode := Erase;
    end record;
@@ -415,7 +399,7 @@ private
    use String_List;
    --  ??? Should use standard string list
 
-   type Remove_Pkg_Clauses_Cmd is new Text_Command with record
+   type Remove_Pkg_Clauses_Cmd is new Text_Command (Simple) with record
       Word         : Ptr_Mark;
       Word_Str     : String_Access;
       Position     : Relative_Position;
@@ -423,34 +407,34 @@ private
       Category     : Dependency_Category;
    end record;
 
-   type Remove_Entity_Cmd is new Text_Command with record
+   type Remove_Entity_Cmd is new Text_Command (Complex) with record
       Start_Entity : Ptr_Mark;
       Mode         : Remove_Code_Mode := Erase;
    end record;
 
-   type Add_Pragma_Cmd is new Text_Command with record
+   type Add_Pragma_Cmd is new Text_Command (Simple) with record
       Position       : Ptr_Mark;
       Name, Argument : GNAT.Strings.String_Access;
       Category       : Language_Category;
    end record;
 
-   type Make_Constant_Cmd is new Text_Command with record
+   type Make_Constant_Cmd is new Text_Command (Simple) with record
       Position : Ptr_Mark;
       Name     : GNAT.Strings.String_Access;
    end record;
 
-   type Remove_Parenthesis_Cmd is new Text_Command with record
+   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with record
       Cursor : Ptr_Mark;
    end record;
 
-   type Paste_Profile_Cmd is new Text_Command with record
+   type Paste_Profile_Cmd is new Text_Command (Complex) with record
       Look_For_Source, Look_For_Destination : Relative_Position;
       Source_Mark, Destination_Mark         : Ptr_Mark;
    end record;
 
    type Get_Visible_Declaration_Cmd_Mode is (Prefix, Add_Use);
 
-   type Get_Visible_Declaration_Cmd is new Text_Command with record
+   type Get_Visible_Declaration_Cmd is new Text_Command (Complex) with record
       Mode : Get_Visible_Declaration_Cmd_Mode;
       Source_Position  : Ptr_Mark;
       File_Destination : GNATCOLL.VFS.Virtual_File;
@@ -465,23 +449,23 @@ private
       New_String   : GNAT.Strings.String_Access;
    end record;
 
-   type Indent_Code_Cmd is new Text_Command with record
+   type Indent_Code_Cmd is new Text_Command (Simple) with record
       Line         : Ptr_Mark;
       Force_Column : Column_Index;
    end record;
 
-   type Add_Clauses_Cmd is new Text_Command with record
+   type Add_Clauses_Cmd is new Text_Command (Simple) with record
       File           : Virtual_File;
       Missing_Clause : String_Access;
       Add_With       : Boolean;
       Add_Use        : Boolean;
    end record;
 
-   type Change_To_Tick_Valid_Cmd is new Text_Command with record
+   type Change_To_Tick_Valid_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
    end record;
 
-   type Remove_Extra_Underlines_Cmd is new Text_Command with record
+   type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
    end record;
 

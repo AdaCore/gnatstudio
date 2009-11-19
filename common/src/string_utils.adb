@@ -1454,4 +1454,40 @@ package body String_Utils is
                Header_Num'Base (Tmp mod Header_Num'Range_Length);
    end Case_Insensitive_Hash;
 
+   -------------------
+   -- Remove_Markup --
+   -------------------
+
+   Esc_Quote : constant String := "&quot;";
+
+   function Remove_Markup (Text : String) return String is
+      Result     : String (Text'Range);
+      Result_Cur : Integer := Result'First;
+      Text_Cur   : Integer := Text'First;
+   begin
+      while Text_Cur <= Text'Last loop
+         if Text (Text_Cur) = '&' then
+            if Text_Cur + Esc_Quote'Length - 1 <= Text'Last
+              and then
+                Text (Text_Cur .. Text_Cur + Esc_Quote'Length - 1)
+                = Esc_Quote
+            then
+               Result (Result_Cur) := '"';
+
+               Text_Cur := Text_Cur + Esc_Quote'Length;
+            else
+               Result (Result_Cur) := Text (Text_Cur);
+               Text_Cur := Text_Cur + 1;
+            end if;
+         else
+            Result (Result_Cur) := Text (Text_Cur);
+            Text_Cur := Text_Cur + 1;
+         end if;
+
+         Result_Cur := Result_Cur + 1;
+      end loop;
+
+      return Result (Result'First .. Result_Cur - 1);
+   end Remove_Markup;
+
 end String_Utils;

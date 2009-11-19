@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,7 +32,6 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
       Options      : Fix_Options;
-      Category     : out String_Access;
       Solutions    : out Solution_List)
    is
       Current_Node : Parser_List.List_Node;
@@ -42,32 +41,39 @@ package body Codefix.Errors_Parser is
       Current_Node := First (Processor.Parse_List);
 
       while Current_Node /= Parser_List.Null_Node loop
-         if Get_Error_State
-           (Processor.Preferences,
-            Data (Current_Node).Category.all) /= Disabled
-         then
-            begin
-               Fix
-                 (Data (Current_Node).all,
-                  Current_Text,
-                  Message_It,
-                  Options,
-                  Solutions,
-                  Success);
+         begin
+            Fix
+              (Data (Current_Node).all,
+               Current_Text,
+               Message_It,
+               Options,
+               Solutions,
+               Success);
 
-            exception
-               when E : Codefix_Panic | Obsolescent_Fix =>
-                  Traces.Trace
-                    (Handle => Me,
-                     E      => E,
-                     Msg    => "Cannot propose a fix.");
-            end;
-         end if;
+            if Length (Solutions) /= 0 then
+               --  We've found a solution. Set the parser that managed to
+               --  find it and quit.
+               declare
+                  It : Solution_List_Iterator := First (Solutions);
+               begin
+                  while not At_End (It) loop
+                     Set_Parser
+                       (It, Error_Parser_Access (Data (Current_Node)));
+                     It := Next (It);
+                  end loop;
+               end;
 
-         if Success then
-            Assign (Category, Data (Current_Node).Category);
-            exit;
-         end if;
+               exit;
+            end if;
+         exception
+            when E : Codefix_Panic | Obsolescent_Fix =>
+               Traces.Trace
+                 (Handle => Me,
+                  E      => E,
+                  Msg    => "Cannot propose a fix.");
+         end;
+
+         exit when Success;
 
          Current_Node := Next (Current_Node);
       end loop;
@@ -175,8 +181,5 @@ package body Codefix.Errors_Parser is
          Free (This.Matcher (J));
       end loop;
    end Free;
-
-   --  The following functions are not commented after their name, but after
-   --  the first parameter.
 
 end Codefix.Errors_Parser;

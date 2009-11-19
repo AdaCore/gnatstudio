@@ -21,6 +21,8 @@ with GNAT.Strings;
 with GNAT.Regpat;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
+
 with Generic_List;
 with Language;             use Language;
 with Language.Tree;        use Language.Tree;
@@ -105,6 +107,10 @@ package Codefix.Formal_Errors is
      (This     : Solution_List;
       Position : Positive) return Text_Command'Class;
    --  Get the extract recorded in a solution list at the given position.
+
+   procedure Set_Parser
+     (It : Solution_List_Iterator; Parser : Error_Parser_Access);
+   --  Modifies the parser associated to the command stored in parameter.
 
    procedure Free_List (This : in out Solution_List);
    --  Free the memory associated to a Solution_List.
@@ -235,14 +241,6 @@ package Codefix.Formal_Errors is
       Pkg_Cursor    : File_Cursor'Class;
       Seek_With     : Boolean) return Solution_List;
    --  Propose to add a use or to prefix the object.
-
-   function Replace_Code_By
-     (Start_Cursor : File_Cursor'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Replaced_Exp : String;
-      New_String   : String) return Solution_List;
-   --  Propose to replace the Replaced_Exp from Current_Text starting at
-   --  Start_Cursor by New_String
 
    function Remove_Extra_Underlines
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
