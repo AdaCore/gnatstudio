@@ -796,10 +796,12 @@ package body C_Analyzer is
             case Buffer (Index) is
                when ASCII.LF =>
                   exit when not Escape;
+                  Escape := False;
                   New_Line;
 
                when ''' =>
                   exit when not Escape;
+                  Escape := False;
 
                when '\' =>
                   Escape := not Escape;
@@ -837,10 +839,12 @@ package body C_Analyzer is
             case Buffer (Index) is
                when ASCII.LF =>
                   exit when not Escape;
+                  Escape := False;
                   New_Line;
 
                when '"' =>
                   exit when not Escape;
+                  Escape := False;
 
                when '\' =>
                   Escape := not Escape;
