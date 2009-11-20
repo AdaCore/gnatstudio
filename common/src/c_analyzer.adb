@@ -785,18 +785,29 @@ package body C_Analyzer is
       --------------------
 
       function Skip_Character return Boolean is
+         Escape : Boolean := False;
       begin
          First := Index;
          Index := Index + 1;
          Start_Char   := Char_In_Line;
          Char_In_Line := Char_In_Line + 1;
 
-         while Index < Buffer'Last
-           and then (Buffer (Index) /= '''
-                     or else (Buffer (Index - 1) = '\'
-                              and then Buffer (Index - 2) /= '\'))
-           and then Buffer (Index) /= ASCII.LF
-         loop
+         while Index < Buffer'Last loop
+            case Buffer (Index) is
+               when ASCII.LF =>
+                  exit when not Escape;
+                  New_Line;
+
+               when ''' =>
+                  exit when not Escape;
+
+               when '\' =>
+                  Escape := not Escape;
+
+               when others =>
+                  Escape := False;
+            end case;
+
             Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
          end loop;
@@ -815,22 +826,28 @@ package body C_Analyzer is
       -----------------
 
       function Skip_String return Boolean is
+         Escape : Boolean := False;
       begin
          First := Index;
          Start_Char := Char_In_Line;
          Index := Index + 1;
          Char_In_Line := Char_In_Line + 1;
 
-         while Index < Buffer'Last
-           and then
-             ((Buffer (Index) /= '"'
-                and then Buffer (Index) /= ASCII.LF)
-              or else (Buffer (Index - 1) = '\'
-                       and then Buffer (Index - 2) /= '\'))
-         loop
-            if Buffer (Index) = ASCII.LF then
-               New_Line;
-            end if;
+         while Index < Buffer'Last loop
+            case Buffer (Index) is
+               when ASCII.LF =>
+                  exit when not Escape;
+                  New_Line;
+
+               when '"' =>
+                  exit when not Escape;
+
+               when '\' =>
+                  Escape := not Escape;
+
+               when others =>
+                  Escape := False;
+            end case;
 
             Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
