@@ -1427,7 +1427,8 @@ package body Project_Viewers is
       elsif Command = "remove_source_dir" then
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
-            Dir : constant String := Nth_Arg (Data, 2);
+            Dir : Virtual_File :=
+              Create (Nth_Arg (Data, 2), Get_Nickname (Build_Server));
             Dirs : GNAT.Strings.String_List := Get_Attribute_Value
               (Project, Source_Dirs_Attribute);
             Index : Natural := Dirs'Last;
@@ -1435,16 +1436,31 @@ package body Project_Viewers is
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
             else
+               if not Is_Absolute_Path (Dir) then
+                  Dir := Create_From_Base
+                    (Nth_Arg (Data, 2),
+                     Get_Current_Dir
+                       (Get_Nickname (Build_Server)).Full_Name.all);
+               end if;
+
                for D in Dirs'Range loop
-                  if File_Equal
-                    (+Dirs (D).all,
-                     +Dir,
-                     Get_Nickname (Build_Server))
-                  then
-                     Free (Dirs (D));
-                     Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
-                     Index := Index - 1;
-                  end if;
+                  declare
+                     Tested_Dir : Virtual_File :=
+                       Create (+Dirs (D).all, Get_Nickname (Build_Server));
+                  begin
+                     if not Is_Absolute_Path (Tested_Dir) then
+                        Tested_Dir := Create_From_Base
+                          (+Dirs (D).all,
+                           Get_Current_Dir
+                             (Get_Nickname (Build_Server)).Full_Name.all);
+                     end if;
+
+                     if Dir = Tested_Dir then
+                        Free (Dirs (D));
+                        Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
+                        Index := Index - 1;
+                     end if;
+                  end;
                end loop;
 
                Update_Attribute_Value_In_Scenario

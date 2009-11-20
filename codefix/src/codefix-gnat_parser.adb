@@ -22,6 +22,10 @@ with Language.Tree; use Language.Tree;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Projects.Registry; use Projects.Registry;
 with GNAT.Regpat; use GNAT.Regpat;
+with Language.Tree.Database; use Language.Tree.Database;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+with Language.Ada; use Language.Ada;
 
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
@@ -929,6 +933,22 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problems like 'size given is too small, use pragma Pack'.
+
+   type Undefined_Entity is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Undefined_Entity);
+
+   overriding
+   procedure Fix
+     (This         : Undefined_Entity;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'bla is undefined' if no more information is given
+   --  on that line.
 
    ---------------------------
    -- Aggregate_Misspelling --
@@ -3064,6 +3084,117 @@ package body Codefix.GNAT_Parser is
    end Fix;
 
    ----------------------
+   -- Undefined_Entity --
+   ----------------------
+
+   overriding
+   procedure Initialize (This : in out Undefined_Entity) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("""([^""]+)"" is undefined")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Undefined_Entity;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Solutions);
+
+      Message        : Error_Message renames Get_Message (Message_It);
+      Entity_Name    : String_Access := new String'
+        (Get_Message (Message_It).Get_Message
+        (Matches (1).First .. Matches (1).Last));
+      Expression     : Parsed_Expression;
+      List           : Declaration_List;
+      It             : Declaration_Iterator;
+      Entity         : Entity_Access;
+      Correct_Entity : Entity_Access := Null_Entity_Access;
+
+      File   : constant Structured_File_Access :=
+        Current_Text.Get_Structured_File (Message.Get_File);
+      Entity_Declaration : File_Cursor;
+   begin
+      if not At_End (Next (Message_It)) then
+         declare
+            Next_Message : constant Error_Message :=
+              Get_Message (Next (Message_It));
+         begin
+            if Next_Message.Get_File = Message.Get_File
+              and then Next_Message.Get_Line = Message.Get_Line
+              and then Next_Message.Get_Column = Message.Get_Column
+            then
+               --  In this case, the compiler has additional information for
+               --  that location, and potentially proposal for fixes. Don't
+               --  analyse the database in that case.
+
+               return;
+            end if;
+         end;
+      end if;
+
+      Expression := Parse_Expression_Backward
+        (Ada_Lang, Entity_Name, Entity_Name'Last);
+
+      List := Find_Declarations
+        (Context    =>
+           (From_File,
+            File,
+            --  Retreive the offset where to start looking from. Line offset
+            --  should be precise enough, no need to retreive the exact
+            --  location of the error message.
+            Get_Offset_Of_Line (File, Message.Get_Line)),
+         Expression => Expression,
+         Is_Partial => False);
+
+      It := First (List);
+
+      while not At_End (It) loop
+         Entity := Get_Entity (It);
+
+         if Get_First_Occurence (Entity) = Entity then
+            if Correct_Entity = Null_Entity_Access then
+               Correct_Entity := Entity;
+            else
+               Correct_Entity := Null_Entity_Access;
+               exit;
+            end if;
+         end if;
+
+         Next (It);
+      end loop;
+
+      if Correct_Entity /= Null_Entity_Access then
+         Set_File
+           (Entity_Declaration,
+            Get_File_Path (Get_File (Correct_Entity)));
+         Set_Line
+           (Entity_Declaration,
+            Get_Construct (Correct_Entity).Sloc_Start.Line);
+         Set_Column
+           (Entity_Declaration,
+            --  This is not exact - we're actually retreiving a char index
+            --  here. But for the purpose of retreiving the enclosing package
+            --  later on, that's good enough.
+            Column_Index (Get_Construct (Correct_Entity).Sloc_Start.Column));
+
+         Solutions := Resolve_Unvisible_Declaration
+           (Current_Text,
+            Message,
+            Entity_Declaration,
+            True);
+      end if;
+
+      Free (Expression);
+      Free (Entity_Name);
+   end Fix;
+
+   ----------------------
    -- Register_Parsers --
    ----------------------
 
@@ -3126,6 +3257,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Multiple_Blank_Lines);
       Add_Parser (Processor, new Suggested_Replacement);
       Add_Parser (Processor, new Pragma_Pack);
+      Add_Parser (Processor, new Undefined_Entity);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;
