@@ -423,7 +423,6 @@ package body Src_Editor_Box is
       Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
       if Source /= null then
-
          Char_Column := Collapse_Tabs (Source.Source_Buffer, Line, Column);
 
          --  Find the closest match of the entity, in case the LI file wasn't
@@ -452,11 +451,15 @@ package body Src_Editor_Box is
          --  necessary. Otherwise, there's nothing to be done, since the region
          --  was already selected when opening the editor
          if not File_Up_To_Date then
-            Console.Insert
-              (Kernel,
-               -("The cross-reference information and the destination file do"
-                 & " not match, the cursor was set at the closest reference"
-                 & " to ") & Get_Name (Entity).all);
+            if Get_Language_Context
+              (Get_Language (Source.Source_Buffer)).Accurate_Xref
+            then
+               Console.Insert
+                 (Kernel,
+                  -("The cross-reference information and the destination file "
+                    & "do not match, the cursor was set at the closest "
+                    & "reference to ") & Get_Name (Entity).all);
+            end if;
 
             --  Search for the closest reference to entity, and highlight the
             --  appropriate region in the editor.
@@ -478,7 +481,7 @@ package body Src_Editor_Box is
                Open_File_Editor
                  (Kernel, Filename, L, Col,
                   Col + Visible_Column_Type (Length), False);
-               --  ??? Calcluation for the end column is wrong if there is
+               --  ??? Computation for the end column is wrong if there is
                --  an ASCII.HT within Length distance of Col.
             end;
          end if;
