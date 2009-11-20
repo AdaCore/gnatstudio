@@ -464,11 +464,16 @@ package body Build_Command_Manager is
       declare
          Real_Result : Command_Line;
       begin
-         Real_Result := Create (Result (1).all);
+         if Result'Length > 0 then
+            Real_Result := Create (Result (1).all);
 
-         for J in 2 .. Index - 1 loop
-            Append_Argument (Real_Result, Result (J).all, One_Arg);
-         end loop;
+            for J in 2 .. Index - 1 loop
+               Append_Argument (Real_Result, Result (J).all, One_Arg);
+            end loop;
+
+         else
+            Real_Result := Empty_Command_Line;
+         end if;
 
          Free (Result);
          return Real_Result;
