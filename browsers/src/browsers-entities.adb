@@ -1553,7 +1553,9 @@ package body Browsers.Entities is
               | Enumeration_Literal
               | Exception_Entity
               | Floating_Point
+              | Include_File
               | Macro
+              | Function_Macro
               | Modular_Integer
               | Named_Number
               | Ordinary_Fixed_Point

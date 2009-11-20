@@ -143,6 +143,8 @@ package Entities is
       Enumeration_Kind,
       Exception_Entity,
       Floating_Point,
+      Function_Macro,  --  C/C++ Macro with parameters
+      Include_File,    --  C/C++ file referenced via an #include
       Interface_Kind,
       Label_On_Block,
       Label_On_Loop,
@@ -176,8 +178,8 @@ package Entities is
    pragma Pack (E_Kind);
    --  Description for the type of an entity.
    --  Kind describes its general family.
-   --  Is_Generic is set to true if this is a generic entity (or a macro
-   --  in the C/C++ case, or a template in the C++ case).
+   --  Is_Generic is set to true if this is a generic entity (or a function
+   --  macro in the C/C++ case, or a template in the C++ case).
    --  Is_Type is true if this is a type, instead of an instance of a type.
 
    type Entity_Category is

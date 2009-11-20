@@ -71,8 +71,8 @@ package body ALI_Parser is
       'E'    => (Enumeration_Kind,       False, True,  False),
       'f'    => (Floating_Point,         False, False, False),
       'F'    => (Floating_Point,         False, True,  False),
-      'g'    => Unresolved_Entity_Kind,
-      'G'    => Unresolved_Entity_Kind,
+      'g'    => (Macro,                  False, False, False),
+      'G'    => (Function_Macro,         True,  False, False),
       'h'    => (Interface_Kind,         False, True,  True),
       'H'    => (Record_Kind,            False, True,  True),
       'i'    => (Signed_Integer,         False, False, False),
@@ -92,7 +92,7 @@ package body ALI_Parser is
       'p'    => (Access_Kind,            False, False, False),
       'P'    => (Access_Kind,            False, True,  False),
       'q'    => (Label_On_Block,         False, False, False),
-      'Q'    => Unresolved_Entity_Kind,
+      'Q'    => (Include_File,           False, False, False),
       'r'    => (Record_Kind,            False, False, False),
       'R'    => (Record_Kind,            False, True,  False),
       's'    => (String_Kind,            False, False, False),
@@ -110,7 +110,7 @@ package body ALI_Parser is
       'y'    => (Function_Or_Operator,   False, True,  True),
       'Y'    => (Entry_Or_Entry_Family,  False, True,  True),
       'z'    => Unresolved_Entity_Kind, --  ??? Formal of current subprogram
-      'Z'    => (Macro,                  True,  False, False),
+      'Z'    => Unresolved_Entity_Kind,
       '+'    => (Private_Type,           False, True,  False),
       '*'    => (Private_Type,           False, True,  False),
       others => Unresolved_Entity_Kind);

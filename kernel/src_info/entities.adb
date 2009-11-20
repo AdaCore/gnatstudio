@@ -157,7 +157,7 @@ package body Entities is
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
       --  completions is a subprogram.
-      Macro                 => True,
+      Function_Macro        => True,
       others                => False);
    --  This table should contain true if the corresponding element is
    --  considered as a subprogram (see Is_Subprogram).
@@ -2296,7 +2296,7 @@ package body Entities is
             return Unknown;
 
          when Procedure_Kind | Function_Or_Operator |
-              Entry_Or_Entry_Family =>
+              Entry_Or_Entry_Family | Function_Macro =>
             return Subprogram;
 
          when Package_Kind =>
@@ -2487,6 +2487,8 @@ package body Entities is
          when Floating_Point =>
             return Get_Value ("floating point type", "floating point");
             --  -"floating point type"  -"floating point"
+         when Function_Macro =>
+            return "function macro";  -- -"function macro"
          when Function_Or_Operator =>
             return Get_Value ("function", "function"); --  -"function"
          when Interface_Kind =>
@@ -2495,6 +2497,8 @@ package body Entities is
             return Get_Value ("package", "package");  --  -"package"
          when Procedure_Kind =>
             return Get_Value ("procedure", "procedure");  --  -"procedure"
+         when Include_File =>
+            return "include file";  -- -"include"
          when Label_On_Block =>
             return "block label";              --  -"block label"
          when Label_On_Loop =>
