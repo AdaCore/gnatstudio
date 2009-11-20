@@ -211,19 +211,19 @@ package body Entities.Tooltips is
    --  Helper function, factorizing the tooltip widget creation
 
    function Draw_Tooltip
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information;
-      Ref    : Entity_Reference;
-      Status : Find_Decl_Or_Body_Query_Status) return Gdk.Pixmap.Gdk_Pixmap
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information;
+      Ref           : Entity_Reference;
+      Status        : Find_Decl_Or_Body_Query_Status;
+      Accurate_Xref : Boolean) return Gdk.Gdk_Pixmap
    is
-      Doc    : constant String := Get_Instance (Ref)
+      Doc : constant String := Get_Instance (Ref)
         & Get_Documentation (Kernel, Entity);
    begin
       return Draw_Tooltip
         (Kernel => Kernel,
-         Guess  =>
-           Status = Overloaded_Entity_Found
-         or else Status = Fuzzy_Match,
+         Guess  => Status = Overloaded_Entity_Found
+           or else (Accurate_Xref and then Status = Fuzzy_Match),
          Header => Get_Header (Entity),
          Pixbuf => Get_Pixbuf (Entity),
          Doc    => Doc);

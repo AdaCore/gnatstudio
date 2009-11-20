@@ -32,10 +32,11 @@ with Language.Tree.Database; use Language.Tree.Database;
 package Entities.Tooltips is
 
    function Draw_Tooltip
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information;
-      Ref    : Entity_Reference;
-      Status : Find_Decl_Or_Body_Query_Status) return Gdk_Pixmap;
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information;
+      Ref           : Entity_Reference;
+      Status        : Find_Decl_Or_Body_Query_Status;
+      Accurate_Xref : Boolean) return Gdk_Pixmap;
    --  Return a tooltip representing Entity.
 
    function Draw_Tooltip

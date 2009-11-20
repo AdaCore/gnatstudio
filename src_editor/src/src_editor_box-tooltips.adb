@@ -315,7 +315,9 @@ package body Src_Editor_Box.Tooltips is
          --  Ref the entity, so that if Draw_Tooltip regenerates the xref info,
          --  we are sure to always have a valid entity reference.
          Ref (Entity);
-         Pixmap := Draw_Tooltip (Box.Kernel, Entity, Entity_Ref, Status);
+         Pixmap := Draw_Tooltip
+           (Box.Kernel, Entity, Entity_Ref, Status,
+            Box.Source_Buffer.Get_Language.Get_Language_Context.Accurate_Xref);
          Unref (Entity);
       end;
 
