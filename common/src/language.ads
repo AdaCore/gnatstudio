@@ -231,6 +231,11 @@ package Language is
 
       Case_Sensitive                : Boolean;
       --  Whether the language is case sensitive
+
+      Accurate_Xref                 : Boolean;
+      --  Whether cross reference information for this language is supposed
+      --  to be fully accurate (and therefore any mismatch means the xref info
+      --  is not up-to-date) or not.
    end record;
    --  This record describes the syntax of the language (for color
    --  highlighting purposes). All the fields in this record are language

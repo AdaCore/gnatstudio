@@ -68,7 +68,8 @@ package body Language.Custom is
       Constant_Character            => ASCII.NUL,
       Can_Indent                    => False,
       Syntax_Highlighting           => False,
-      Case_Sensitive                => True);
+      Case_Sensitive                => True,
+      Accurate_Xref                 => False);
 
    Custom_Root : Custom_Language_Access;
    --  Holds a linked list of custom languages, so that we can implement

@@ -501,7 +501,8 @@ package body Language.Ada is
                     Constant_Character            => ''',
                     Can_Indent                    => True,
                     Syntax_Highlighting           => True,
-                    Case_Sensitive                => False);
+                    Case_Sensitive                => False,
+                    Accurate_Xref                 => True);
 
    overriding function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access

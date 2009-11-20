@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2008, AdaCore                --
+--                   Copyright (C) 2000-2009, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -129,7 +129,8 @@ package body Language.Unknown is
       Constant_Character            => ASCII.NUL,
       Can_Indent                    => False,
       Syntax_Highlighting           => False,
-      Case_Sensitive                => True);
+      Case_Sensitive                => True,
+      Accurate_Xref                 => False);
 
    overriding function Get_Language_Context
      (Lang : access Unknown_Language) return Language_Context_Access
