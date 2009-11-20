@@ -15,6 +15,12 @@ of the feature.
 New features on 4.5.0
 ---------------------
 
+NF-45-IB20-006 Better fixes for undefined entities (2009-11-20)
+
+  Problems such as "entity is undefined" can now be provided with an auto-fix
+  even if the compiler didn't find any potential match. A fix is offered if
+  there is a unique entity in the project of the appropriate name.
+
 NF-45-IB10-017 Auto fix for "no space allowed" (2009-11-16)
 
   Messages "no space allowed" are now auto-fixed by gps.
