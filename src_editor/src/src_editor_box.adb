@@ -1357,60 +1357,66 @@ package body Src_Editor_Box is
            Has_Selection
            and then In_Range (Entity_Start, Start_Iter, End_Iter);
 
-         Search_Entity_Bounds (Entity_Start, Entity_End);
-         Selection_Is_Single_Entity :=
-           Has_Selection
-           and then Equal (Entity_Start, Start_Iter)
-           and then Equal (Entity_End, End_Iter);
+         declare
+            Str        : Src_String :=
+              Get_String
+                (Get_Buffer (Editor),
+                 Get_Editable_Line
+                   (Editor.Source_Buffer,
+                    Buffer_Line_Type (Get_Line (Entity_Start)) + 1));
+            The_Line   : Editable_Line_Type;
+            The_Column : Character_Offset_Type;
 
-         --  If the location is in the current selection, use this as the
-         --  context. However, if the selection is a single entity, we should
-         --  create a context such that cross-references menus also appear
+         begin
+            Search_Entity_Bounds
+              (Entity_Start, Entity_End,
+               Maybe_File => Str.Contents /= null
+                 and then Has_Include_Directive
+                   (Str.Contents (1 .. Str.Length)));
+            Selection_Is_Single_Entity :=
+              Has_Selection
+              and then Equal (Entity_Start, Start_Iter)
+              and then Equal (Entity_End, End_Iter);
 
-         if not Selection_Is_Single_Entity
-           and then In_Selection (Line, Column, Start_Iter, End_Iter)
-         then
-            Start_Line := To_Box_Line
-              (Editor.Source_Buffer, Get_Line (Start_Iter));
-            End_Line   := To_Box_Line
-              (Editor.Source_Buffer, Get_Line (End_Iter));
+            --  If the location is in the current selection, use this as the
+            --  context. However, if the selection is a single entity, we
+            --  should create a context such that cross-references menus also
+            --  appear.
 
-            --  Do not consider the last line selected if only the first
-            --  character is selected.
+            if not Selection_Is_Single_Entity
+              and then In_Selection (Line, Column, Start_Iter, End_Iter)
+            then
+               Start_Line := To_Box_Line
+                 (Editor.Source_Buffer, Get_Line (Start_Iter));
+               End_Line   := To_Box_Line
+                 (Editor.Source_Buffer, Get_Line (End_Iter));
 
-            if Get_Line_Offset (End_Iter) = 0 then
-               End_Line := End_Line - 1;
-            end if;
+               --  Do not consider the last line selected if only the first
+               --  character is selected.
 
-            --  Do not consider the first line selected if only the last
-            --  character is selected.
+               if Get_Line_Offset (End_Iter) = 0 then
+                  End_Line := End_Line - 1;
+               end if;
 
-            if Ends_Line (Start_Iter) then
-               Start_Line := Start_Line + 1;
-            end if;
+               --  Do not consider the first line selected if only the last
+               --  character is selected.
 
-            --  Set the column to the start of the selection
+               if Ends_Line (Start_Iter) then
+                  Start_Line := Start_Line + 1;
+               end if;
 
-            Column := Get_Line_Offset (Start_Iter);
+               --  Set the column to the start of the selection
 
-            Set_Area_Information
-              (Context,
-               Get_Text (Start_Iter, End_Iter),
-               Start_Line, End_Line);
+               Column := Get_Line_Offset (Start_Iter);
 
-         else
-            --  Expand the tabs
+               Set_Area_Information
+                 (Context,
+                  Get_Text (Start_Iter, End_Iter),
+                  Start_Line, End_Line);
 
-            declare
-               The_Line   : Editable_Line_Type;
-               The_Column : Character_Offset_Type;
-               Str        : Src_String :=
-                Get_String
-                   (Get_Buffer (Editor),
-                    Get_Editable_Line
-                      (Editor.Source_Buffer,
-                       Buffer_Line_Type (Get_Line (Entity_End)) + 1));
-            begin
+            else
+               --  Expand the tabs
+
                Get_Iter_Position
                  (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
 
@@ -1451,31 +1457,31 @@ package body Src_Editor_Box is
                end if;
 
                Free (Str);
-            end;
 
-            if Menu /= null
-              and then not Click_In_Selection
-            then
-               --  Move the cursor at the correct location. The cursor is
-               --  grabbed automatically by the kernel when displaying the
-               --  menu, and this would result in unwanted scrolling
-               --  otherwise..
-               --  Do not move the cursor if we have clicked in the
-               --  selection, since otherwise that cancels the selection
-               --
-               --  Force the focus on the MDI window right away, instead of
-               --  waiting for the editor to gain the focus later on.
-               --  Otherwise, if the editor doesn't have the focus at this
-               --  point, it will move back to its Saved_Cursor_Mark when
-               --  it does, instead of where we have used Place_Cursor. Note
-               --  that explicitly using Save_Cursor_Position doesn't work
-               --  either, since it needs to be called after Place_Cursor,
-               --  which does the scrolling to Saved_Cursor_Mark.
+               if Menu /= null
+                 and then not Click_In_Selection
+               then
+                  --  Move the cursor at the correct location. The cursor is
+                  --  grabbed automatically by the kernel when displaying the
+                  --  menu, and this would result in unwanted scrolling
+                  --  otherwise..
+                  --  Do not move the cursor if we have clicked in the
+                  --  selection, since otherwise that cancels the selection
+                  --
+                  --  Force the focus on the MDI window right away, instead of
+                  --  waiting for the editor to gain the focus later on.
+                  --  Otherwise, if the editor doesn't have the focus at this
+                  --  point, it will move back to its Saved_Cursor_Mark when
+                  --  it does, instead of where we have used Place_Cursor. Note
+                  --  that explicitly using Save_Cursor_Position doesn't work
+                  --  either, since it needs to be called after Place_Cursor,
+                  --  which does the scrolling to Saved_Cursor_Mark.
 
-               Acquire_Focus (Editor.Source_View);
-               Place_Cursor (Editor.Source_Buffer, Entity_Start);
+                  Acquire_Focus (Editor.Source_View);
+                  Place_Cursor (Editor.Source_Buffer, Entity_Start);
+               end if;
             end if;
-         end if;
+         end;
       end if;
 
       --  Set basic context information about current file

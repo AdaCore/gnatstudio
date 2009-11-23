@@ -48,6 +48,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Result             : Boolean;
       In_Comment         : Boolean := False;
       L                  : List_Of_Highlighters.List;
+      Maybe_File         : Boolean := False;
 
    begin
       --  Remove the previous highlight
@@ -83,6 +84,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
                pragma Unreferenced (Ignore);
 
             begin
+               Maybe_File := Has_Include_Directive (Line);
+
                C := L.First;
 
                while Has_Element (C)
@@ -161,7 +164,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
          Copy (Iter, Entity_Start);
 
-         Search_Entity_Bounds (Entity_Start, Entity_End);
+         Search_Entity_Bounds (Entity_Start, Entity_End, Maybe_File);
 
          declare
             Slice : constant String := Get_Slice (Entity_Start, Entity_End);
