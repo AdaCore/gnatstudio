@@ -294,6 +294,9 @@ package String_Utils is
    --
    --    &quote; -> '
 
+   function Has_Include_Directive (Str : String) return Boolean;
+   --  Return True is Str contains an #include directive
+
    -------------------
    -- Argument_List --
    -------------------

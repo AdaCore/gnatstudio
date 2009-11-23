@@ -21,6 +21,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Containers;             use Ada.Containers;
 with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;               use GNAT.Strings;
@@ -1508,5 +1509,17 @@ package body String_Utils is
 
       return Result (Result'First .. Result_Cur - 1);
    end Remove_Markup;
+
+   ---------------------------
+   -- Has_Include_Directive --
+   ---------------------------
+
+   function Has_Include_Directive (Str : String) return Boolean is
+   begin
+      return Str'Length > 11
+        and then Str (Str'First) = '#'
+        and then Ada.Strings.Fixed.Index
+          (Str (Str'First + 1 .. Str'Last), "include") /= 0;
+   end Has_Include_Directive;
 
 end String_Utils;
