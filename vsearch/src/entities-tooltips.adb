@@ -188,14 +188,20 @@ package body Entities.Tooltips is
 
    function Get_Header (Entity : Entity_Information) return String is
    begin
-      return  "<b>" & Escape_Text (Get_Full_Name (Entity, "."))
-        & "</b>" & ASCII.LF
-        & Attributes_To_String (Get_Attributes (Entity)) &
-        ' ' & (-Kind_To_String (Get_Kind (Entity))) & ' ' &
-      (-"declared at ") &
-      Display_Base_Name (Get_Filename
-                 (Get_File (Get_Declaration_Of (Entity)))) &
-        ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
+      if Get_Kind (Entity).Kind = Include_File then
+         return  "<b>" & Escape_Text (Entity.Name.all)
+           & "</b>" & ASCII.LF &
+           (-Kind_To_String (Get_Kind (Entity)));
+      else
+         return  "<b>" & Escape_Text (Get_Full_Name (Entity, "."))
+           & "</b>" & ASCII.LF
+           & Attributes_To_String (Get_Attributes (Entity)) &
+           ' ' & (-Kind_To_String (Get_Kind (Entity))) & ' ' &
+           (-"declared at ") &
+           Display_Base_Name (Get_Filename
+                            (Get_File (Get_Declaration_Of (Entity)))) &
+           ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
+      end if;
    end Get_Header;
 
    ------------------
