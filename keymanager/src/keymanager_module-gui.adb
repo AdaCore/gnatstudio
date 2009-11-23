@@ -738,26 +738,48 @@ package body KeyManager_Module.GUI is
                  Lookup_Action_From_Key (Key, Ed.Bindings);
                New_Action : constant String :=
                  Get_String (Ed.Model, Iter, Action_Column);
+               Do_Nothing : Boolean := False;
             begin
                if Key /= "" and then Key /= "Escape" then
                   --  Do we already have an action with such a binding ?
 
                   if Old_Action /= ""
                     and then
-                      (Equal (Old_Action, New_Action, Case_Sensitive => False)
-                       or else Message_Dialog
-                         (Msg =>
-                            Key
-                          & (-" already executes """) & Old_Action & """"
-                          & ASCII.LF
-                          & (-"Do you want to assign ") & Key & (-" to """)
-                          & New_Action
-                          & (-""" instead ?"),
-                          Dialog_Type => Confirmation,
-                          Buttons => Button_OK or Button_Cancel,
-                          Title   => -"Key shortcuts already exists",
-                          Parent  => Get_Main_Window (Ed.Kernel)) /= Button_OK)
+                      Equal (Old_Action, New_Action, Case_Sensitive => False)
                   then
+                     Do_Nothing := True;
+
+                  elsif Old_Action /= "" then
+                     if Active (Testsuite_Handle) then
+                        --  When running the testsuite, we cannot display the
+                        --  dialog, since there is apparently no way to control
+                        --  is from python otherwise (probably because it is
+                        --  running in its own gtk+ loop).
+
+                        Do_Nothing := False;  --  Perform the replacement
+                        Trace
+                          (Testsuite_Handle,
+                           "Dialog for already assigned key would have"
+                           & " been displayed");
+
+                     elsif Message_Dialog
+                       (Msg =>
+                          Key
+                        & (-" already executes """) & Old_Action & """"
+                        & ASCII.LF
+                        & (-"Do you want to assign ") & Key & (-" to """)
+                        & New_Action
+                        & (-""" instead ?"),
+                        Dialog_Type => Confirmation,
+                        Buttons => Button_OK or Button_Cancel,
+                        Title   => -"Key shortcut already exists",
+                        Parent  => Get_Main_Window (Ed.Kernel)) /= Button_OK
+                     then
+                        Do_Nothing := True;
+                     end if;
+                  end if;
+
+                  if Do_Nothing then
                      Hide (Ed.Grab_Label);
                      Set_Active (Ed.Grab_Button, False);
                      return;
