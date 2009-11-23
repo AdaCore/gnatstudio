@@ -362,7 +362,9 @@ package body GPS.Kernel.Macros is
                      begin
                         Close (File);
                         return String_Utils.Protect
-                          (+N.Full_Name, Protect_Quotes => Quoted);
+                          (+N.Full_Name,
+                           Protect_Quotes      => Quoted,
+                           Protect_Backslashes => For_Shell);
                      end;
                   end;
 
@@ -408,7 +410,9 @@ package body GPS.Kernel.Macros is
                      end if;
 
                      return String_Utils.Protect
-                       (To_String (Result), Protect_Quotes => Quoted);
+                       (To_String (Result),
+                        Protect_Quotes      => Quoted,
+                        Protect_Backslashes => For_Shell);
                   end;
                end if;
             end if;
