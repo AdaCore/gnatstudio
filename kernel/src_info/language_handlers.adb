@@ -172,7 +172,6 @@ package body Language_Handlers is
 
       if Found then
          return Prop.Value.all;
-
       else
          Lang := Get_Language_From_File_From_Project
            (Project_Registry'Class (Handler.Registry.all),
