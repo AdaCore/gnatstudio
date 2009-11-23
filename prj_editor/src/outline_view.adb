@@ -77,6 +77,8 @@ with Outline_View.Model; use Outline_View.Model;
 
 package body Outline_View is
 
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
+
    type Outline_View_Module_Record is new Module_ID_Record with record
       Construct_Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
    end record;
@@ -291,7 +293,6 @@ package body Outline_View is
       Path        : Gtk_Tree_Path;
       Loc         : File_Location_Hooks_Args_Access;
    begin
-      null;
       if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
         and then Child /= null
       then
@@ -1032,6 +1033,10 @@ package body Outline_View is
            (Get_Construct_Database (Kernel)).all,
          Outline_View_Module_Record (Outline_View_Module.all).
            Construct_Annotation_Key);
+
+      Add_Hook (Kernel, Project_View_Changed_Hook,
+                Wrapper (On_Project_Changed'Access),
+                Name => "outline.projet_changed");
    end Register_Module;
 
    --------------
@@ -1124,5 +1129,30 @@ package body Outline_View is
    begin
       Set_Model (View.Tree, Gtk_Tree_Model (Model));
    end Set_Outline_Model;
+
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+      Child   : constant MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+
+      Outline : Outline_View_Access;
+      Dummy_File : Structured_File_Access;
+      pragma Unreferenced (Dummy_File);
+   begin
+      if Child /= null then
+         Outline := Outline_View_Access (Get_Widget (Child));
+
+         if Outline.File /= No_File then
+            --  We need to force the set of the file here. In certain cases,
+            --  the outline is computed to early and work on an unknown
+            --  language, which is then set when the project is loaded.
+
+            Set_File (Outline, Outline.File);
+         end if;
+      end if;
+   end On_Project_Changed;
 
 end Outline_View;

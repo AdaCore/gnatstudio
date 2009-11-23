@@ -942,7 +942,11 @@ package body Language.Tree.Database is
       Lang      : Language_Access;
       Tree_Lang : Tree_Language_Access) return Structured_File_Access is
    begin
-      if not Is_Regular_File (File) then
+      if not Is_Regular_File (File) or else Lang = Unknown_Lang then
+         --  Files that are not yet associated with a language may be later on,
+         --  e.g. after project initialization. So we don't want to force
+         --  the association between a structured file and an unknown
+         --  language. There will be no information to analyze anyway.
          return null;
       end if;
 

@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.1
 
+- IB20-014: Empty C outline when GPS is open on an C file.
+  Problem:    When GPS is opened on a C file, the outline is empty, and will
+              stay empty for that file during the whole GPS session.
+  Workaround: Close the file, an restard GPS.
+
 - IB17-016: Wrong order of mains when using extended projects
   Problem:    When defining new mains in an extending project, the newly
               defined mains appear after the original mains in the list
