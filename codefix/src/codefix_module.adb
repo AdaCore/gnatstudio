@@ -321,8 +321,8 @@ package body Codefix_Module is
                         if Get_Command (Solution_Node).Complexity = Simple
                           and then Unique_Simple_Command = null
                         then
-                           Unique_Simple_Command := new Text_Command'Class'
-                             (Get_Command (Solution_Node));
+                           Unique_Simple_Command :=
+                             Get_Command (Solution_Node);
                         else
                            Free (Unique_Simple_Command);
 
@@ -353,8 +353,6 @@ package body Codefix_Module is
                            Unique_Simple_Command.all);
                      end if;
                   end if;
-
-                  Free (Unique_Simple_Command);
 
                   Error := Next (Error);
                end loop;
@@ -642,10 +640,7 @@ package body Codefix_Module is
             return;
          end if;
 
---           Session := Get_Session_By_Name (Category_Information (Context));
-         Session := Get_Session_By_Name ("Builder results");
-         --  This constant should be replaced by the context information,
-         --  waiting for IB19-003.
+         Session := Get_Session_By_Name (Category_Information (Context));
 
          if Session = null then
             return;
@@ -811,7 +806,7 @@ package body Codefix_Module is
 
             while not At_End (Solution_Node) loop
                Set_Return_Value
-                 (Data, Get_Caption (Get_Command (Solution_Node)));
+                 (Data, Get_Caption (Get_Command (Solution_Node).all));
                Solution_Node := Next (Solution_Node);
             end loop;
          end;
@@ -835,7 +830,7 @@ package body Codefix_Module is
 
             if not At_End (Solution_Node) then
                On_Fix (Get_Kernel (Data), Error.Session,
-                       Error.Error, Get_Command (Solution_Node));
+                       Error.Error, Get_Command (Solution_Node).all);
             end if;
          end;
 
@@ -1119,12 +1114,10 @@ package body Codefix_Module is
       Solution_Node := First (Get_Solutions (Error));
 
       while not At_End (Solution_Node) loop
-         Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node)));
+         Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node).all));
 
          Mitem.Fix_Mode     := Specific;
-         --  ??? Where is this freed
-         Mitem.Fix_Command  := new Text_Command'Class'
-           (Get_Command (Solution_Node));
+         Mitem.Fix_Command  := Get_Command (Solution_Node);
          Mitem.Error        := Error;
          Mitem.Kernel       := Kernel_Handle (Kernel);
          Mitem.Session      := Codefix_Session (Session);

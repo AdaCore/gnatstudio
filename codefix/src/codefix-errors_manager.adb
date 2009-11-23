@@ -216,7 +216,7 @@ package body Codefix.Errors_Manager is
    is
    begin
       Secured_Execute
-        (Get_Command (Get_Solutions (Error), Choice),
+        (Get_Command (Get_Solutions (Error), Choice).all,
          Current_Text,
          This.Error_Cb);
 

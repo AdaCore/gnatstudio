@@ -60,7 +60,7 @@ package body Commands.Codefix is
         (Command.Session.Corrector.all,
          Command.Session.Current_Text.all,
          Command.Error,
-         Get_Command (First (Get_Solutions (Command.Error))));
+         Get_Command (First (Get_Solutions (Command.Error))).all);
 
       Remove_Pixmap
         (Command.Kernel,

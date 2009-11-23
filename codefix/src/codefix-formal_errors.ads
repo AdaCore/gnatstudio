@@ -94,7 +94,7 @@ package Codefix.Formal_Errors is
    --  Return true if the iterator reached the end of the list.
 
    function Get_Command
-     (It : Solution_List_Iterator) return Text_Command'Class;
+     (It : Solution_List_Iterator) return Ptr_Command;
    --  Return the command currently pointed by this iterator.
 
    function Is_Style_Or_Warning (Error : Error_Message) return Boolean;
@@ -105,7 +105,7 @@ package Codefix.Formal_Errors is
 
    function Get_Command
      (This     : Solution_List;
-      Position : Positive) return Text_Command'Class;
+      Position : Positive) return Ptr_Command;
    --  Get the extract recorded in a solution list at the given position.
 
    procedure Set_Parser
@@ -276,7 +276,7 @@ private
       --  timestamp on e.g. GNATbench.
    end record;
 
-   package Command_List is new Generic_List (Text_Command'Class, Free_Data);
+   package Command_List is new Generic_List (Ptr_Command, Free);
    use Command_List;
 
    type Solution_List is new Command_List.List;
