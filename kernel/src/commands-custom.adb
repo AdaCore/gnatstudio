@@ -1185,7 +1185,7 @@ package body Commands.Custom is
                    Substitute
                      (Param, Command.Execution.Context,
                       False, Done'Access, Current_Server,
-                      For_Shell => Mode = Raw_String);
+                      For_Shell => False);
       begin
          if Done then
             if Macro = "" then
