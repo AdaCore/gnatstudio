@@ -156,19 +156,22 @@ package body GPS.Kernel.Macros is
          if Param = "f" then
             return String_Utils.Protect
               (+File_Information (Context).Base_Name,
-               Protect_Quotes => Quoted);
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
 
          elsif Param = "fk" then
             return String_Utils.Protect
               (Krunch (+File_Information (Context).Base_Name),
-               Protect_Quotes => Quoted);
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
 
          else
             return String_Utils.Protect
               (+To_Remote
                  (File_Information (Context),
                   Get_Nickname (Server)).Full_Name,
-               Protect_Quotes => Quoted);
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
          end if;
 
       elsif Param = "d" then
