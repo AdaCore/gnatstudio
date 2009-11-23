@@ -222,7 +222,7 @@ package Find_Utils is
       Case_Sensitive : Boolean);
    --  Find the occurence of Str in Buffer closest to (Line, Column).
    --  The latter are modified to point to the closest location if Found is
-   --  set, otherwise it si unchanged.
+   --  set, otherwise it is unchanged.
 
    procedure To_Line_Column
      (Buffer         : Glib.UTF8_String;
