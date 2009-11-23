@@ -3192,6 +3192,7 @@ package body Codefix.GNAT_Parser is
 
       Free (Expression);
       Free (Entity_Name);
+      Free (List);
    end Fix;
 
    ----------------------
