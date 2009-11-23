@@ -190,8 +190,9 @@ package body Entities.Tooltips is
    begin
       if Get_Kind (Entity).Kind = Include_File then
          return  "<b>" & Escape_Text (Entity.Name.all)
-           & "</b>" & ASCII.LF &
-           (-Kind_To_String (Get_Kind (Entity)));
+           & "</b>" & ASCII.LF
+           & (-Kind_To_String (Get_Kind (Entity))
+           & ' ' & Entity.Declaration.File.Name.Display_Full_Name);
       else
          return  "<b>" & Escape_Text (Get_Full_Name (Entity, "."))
            & "</b>" & ASCII.LF
