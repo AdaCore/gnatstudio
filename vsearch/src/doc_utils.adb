@@ -65,6 +65,8 @@ package body Doc_Utils is
       Lines_Skipped      : Natural;
       Line               : Integer;
       Column             : Basic_Types.Character_Offset_Type;
+      Found              : Boolean;
+      Tmp_Buffer         : GNAT.Strings.String_Access;
 
    begin
       if not Active (Extract_Me) then
@@ -84,43 +86,39 @@ package body Doc_Utils is
       Context := Get_Language_Context (Lang);
 
       if Declaration_File_Contents = "" then
-         declare
-            Tmp_Buffer : GNAT.Strings.String_Access;
-         begin
-            Tmp_Buffer := Read_File (Declaration_File);
+         Tmp_Buffer := Read_File (Declaration_File);
 
-            if Tmp_Buffer = null then
-               if Active (Me) then
-                  Trace (Me, "Get_Documentation, no file found "
-                         & Declaration_File.Display_Full_Name);
-               end if;
-
-               return "";
+         if Tmp_Buffer = null then
+            if Active (Me) then
+               Trace (Me, "Get_Documentation, no file found "
+                      & Declaration_File.Display_Full_Name);
             end if;
 
-            Chars_Buffer := Glib.Convert.Convert
-              (Str           => Tmp_Buffer.all,
-               To_Codeset    => "UTF-8",
-               From_Codeset  => Get_File_Charset (Declaration_File),
-               Bytes_Read    => Read'Unchecked_Access,
-               Bytes_Written => Buffer_Len'Unchecked_Access);
-            Free (Tmp_Buffer);
+            return "";
+         end if;
 
-            if Chars_Buffer = Null_Ptr then
-               --  In case the conversion to UTF-8 failed
-               return "";
-            end if;
+         Chars_Buffer := Glib.Convert.Convert
+           (Str           => Tmp_Buffer.all,
+            To_Codeset    => "UTF-8",
+            From_Codeset  => Get_File_Charset (Declaration_File),
+            Bytes_Read    => Read'Unchecked_Access,
+            Bytes_Written => Buffer_Len'Unchecked_Access);
+         Free (Tmp_Buffer);
 
-            Buffer := To_Unchecked_String (Chars_Buffer);
-            Index := 1;
-         end;
+         if Chars_Buffer = Null_Ptr then
+            --  In case the conversion to UTF-8 failed
+            return "";
+         end if;
+
+         Buffer := To_Unchecked_String (Chars_Buffer);
+         Index := 1;
       end if;
 
       Line   := Get_Declaration_Of (Entity).Line;
       Column := Basic_Types.Character_Offset_Type
         (Get_Declaration_Of (Entity).Column);
       Find_Closest_Match
-        (Buffer (1 .. Buffer_Len), Line, Column,
+        (Buffer (1 .. Buffer_Len), Line, Column, Found,
          Get_Name (Entity).all,
          Case_Sensitive => Context.Case_Sensitive);
       Skip_Lines (Buffer (1 .. Buffer_Len), Line - 1, Index, Lines_Skipped);

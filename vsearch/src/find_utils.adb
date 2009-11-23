@@ -670,6 +670,7 @@ package body Find_Utils is
      (Buffer         : String;
       Line           : in out Natural;
       Column         : in out Character_Offset_Type;
+      Found          : out Boolean;
       Str            : String;
       Case_Sensitive : Boolean)
    is
@@ -691,6 +692,8 @@ package body Find_Utils is
            Integer (abs (Match.Begin_Column - Column)
                     - abs (Best_Column - Column));
       begin
+         Found := True;
+
          if Line_Diff < 0
            or else (Line_Diff = 0 and then Col_Diff < 0)
          then
@@ -706,8 +709,10 @@ package body Find_Utils is
       C           : Character_Offset_Type := 1;
       Index       : Integer;
       Was_Partial : Boolean;
+
    begin
-      Index  := Buffer'First;
+      Found := False;
+      Index := Buffer'First;
 
       Set_Context
         (Context'Access,

@@ -397,6 +397,7 @@ package body Src_Editor_Box is
       File_Up_To_Date   : Boolean;
       L                 : Natural;
       Is_Case_Sensitive : Boolean;
+      Iter              : Gtk_Text_Iter;
 
       Char_Column       : Character_Offset_Type;
    begin
@@ -451,6 +452,12 @@ package body Src_Editor_Box is
          --  necessary. Otherwise, there's nothing to be done, since the region
          --  was already selected when opening the editor
          if not File_Up_To_Date then
+            --  Remove selection
+            Get_Iter_At_Mark
+              (Source.Source_Buffer, Iter,
+               Get_Mark (Source.Source_Buffer, "selection_bound"));
+            Place_Cursor (Source.Source_Buffer, Iter);
+
             if Get_Language_Context
               (Get_Language (Source.Source_Buffer)).Accurate_Xref
             then
@@ -465,24 +472,31 @@ package body Src_Editor_Box is
             --  appropriate region in the editor.
 
             declare
-               Buffer : GNAT.Strings.String_Access;
-               Col    : Visible_Column_Type;
+               Buffer       : GNAT.Strings.String_Access;
+               Col, Col_End : Visible_Column_Type;
+               Found        : Boolean;
             begin
                L := Convert (Line);
                Buffer := Get_String (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, Char_Column, Get_Name (Entity).all,
+                 (Buffer.all, L, Char_Column, Found, Get_Name (Entity).all,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive);
                Free (Buffer);
 
                Col := Expand_Tabs
                  (Source.Source_Buffer, Line, Char_Column);
+
+               if Found then
+                  Col_End := Col + Visible_Column_Type (Length);
+                  --  ??? Computation for the end column is wrong if there is
+                  --  an ASCII.HT within Length distance of Col.
+               else
+                  Col_End := 0;
+               end if;
+
                Open_File_Editor
-                 (Kernel, Filename, L, Col,
-                  Col + Visible_Column_Type (Length), False);
-               --  ??? Computation for the end column is wrong if there is
-               --  an ASCII.HT within Length distance of Col.
+                 (Kernel, Filename, L, Col, Col_End, False);
             end;
          end if;
       end if;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -217,10 +217,12 @@ package Find_Utils is
      (Buffer         : String;
       Line           : in out Natural;
       Column         : in out Character_Offset_Type;
+      Found          : out Boolean;
       Str            : String;
       Case_Sensitive : Boolean);
    --  Find the occurence of Str in Buffer closest to (Line, Column).
-   --  The latter are modified to point to the closest location.
+   --  The latter are modified to point to the closest location if Found is
+   --  set, otherwise it si unchanged.
 
    procedure To_Line_Column
      (Buffer         : Glib.UTF8_String;
