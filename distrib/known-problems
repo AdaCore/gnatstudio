@@ -44,6 +44,13 @@ Known Problems fixed in GPS 4.4.1
   Workaround: View the expanded code in command-line mode, or add an object
               directory in the root project. 
 
+- IB06-001: Wrong outline, highlighting and indentation of some C constructs
+  Problem:    GPS can get confused by some use of backslash characters or
+              complex macros when computing outline view, syntax highlighting
+              or indentation for C files.
+  Workaround: This is only a visual glitch that can be ignored. Alternatively,
+              rewriting the offending code can work around this problem.
+
 - IB02-033: Ada keywords highlighted in SPARK annotations
   Problem:    In SPARK annotations, Ada keywords in addition to SPARK keywords
               are highlighted.
