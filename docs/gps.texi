@@ -8563,6 +8563,27 @@ clicking on the icon will display the contextual menu directly, giving you
 access to the possible choices. For example, this will be the case when
 an ambiguity is reported by the compiler for resolving an entity.
 
+Right clicking on a message with a fix will open a contextual menu with an
+entry "Auto Fix". Fixes that can be applied by clicking on the wrench are
+available through that menu as well. In addiditon, if exactly one of the fixes
+is considered to be safe by GPS, additional entries will be provided to apply
+fixes on multiple messages:
+
+@table @code
+@item Fix all similar errors
+Will apply the same simple fix for all errors which are detected by the system
+as being the same kind. This is based on message parsing.
+
+@item Fix all simple style errors and warnings
+This entry is offered only when the selected message is a warning and a style
+error. Will fix all other warnings and style errors for which a unique simple
+fix is available.
+
+@item Fix all simple errors
+Will fix all errors messages for which a unique simple fix is available
+
+@end table
+
 @node Documentation Generation
 @section Documentation Generation
 @cindex documentation generation
@@ -8947,10 +8968,10 @@ specific to SPARK. For details of the Project menu in general,
 @itemize
 @item Select @code{Edit Project Properties} from the Project menu.
 
-@item If you want to access SPARK generated files from the GPS project explorer, 
+@item If you want to access SPARK generated files from the GPS project explorer,
  click the Languages tab and ensure that the following items are ticked:
  Ada, Cmd, Fdl, Index, Listing, Metafile, Plg, Pogs Summary, Prv,
- Rls, Rlu, Rul, Siv, Slg, Vcg, 
+ Rls, Rlu, Rul, Siv, Slg, Vcg,
  Otherwise, you only need the Ada language selected.
  You may also want to add in your project file the following line for
  each of the languages in the @code{Compiler} package:
@@ -9046,7 +9067,7 @@ individual annotation can be selected and reformatted.
 This command is enabled if a .VCG file is open in the editing window. It will
 invoke the SPARK Simplifier on the VCG file, using any switches set under
 Project Properties. Output is sent to the Simplifier Output window.
-The siv file is displayed in the editing window. 
+The siv file is displayed in the editing window.
 
 @item Simplify All
 Search under the project directory for all VCG files that require
@@ -9055,14 +9076,14 @@ SPARKSimp tool, with any switches supplied under the SPARKSimp tab in Project
 Properties. Output is displayed in the SPARKSimp Output window.
 
 @item POGS
-Invokes POGS (Proof ObliGation Summariser). This will scan for proof files 
+Invokes POGS (Proof ObliGation Summariser). This will scan for proof files
 in the project's root directory and report the proof status in a file.
-The file name is the project's name with a ".sum" suffix. 
-The default behaviour can be overwritten 
-through @code{Project -> Edit Project Properties -> Switches -> POGS} 
+The file name is the project's name with a ".sum" suffix.
+The default behaviour can be overwritten
+through @code{Project -> Edit Project Properties -> Switches -> POGS}
 by specifying the @code{Input Directory} from which POGS scans for proof
 files and the @code{Output File} where it saves the summary file.
-The summary output file is displayed in the editing window. 
+The summary output file is displayed in the editing window.
 Right-clicking on a VC in the summary file
 invokes a pop-up menu. From this menu you can select @code{SPARK->Show VC} or
 @code{SPARK->Show Simplified VC} to jump directly to the VCG or SIV file
