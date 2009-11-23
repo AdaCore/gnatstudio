@@ -1150,7 +1150,8 @@ package body String_Utils is
               | Character'Pos ('/')
               | Character'Pos ('\')
               | Character'Pos ('>')
-              | Character'Pos ('"') =>
+              | Character'Pos ('"')
+              | Character'Pos (' ') =>
             return False;
 
          when others =>
