@@ -272,7 +272,7 @@ package body Ada_Analyzer is
       --  ends.
 
       Align_Colon         : Natural := 0;
-      --  The column on which to align declarations.
+      --  The column on which to align declarations
 
       Colon_Col           : Natural := 0;
       --  The column where the last ':' was found.
@@ -329,7 +329,7 @@ package body Ada_Analyzer is
    --  to e.g. differenciate pragma Interface vs interface keyword.
 
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
-   --  Return True if the current scope in Stack is a library level package.
+   --  Return True if the current scope in Stack is a library level package
 
    ---------------
    -- Get_Token --
@@ -661,11 +661,11 @@ package body Ada_Analyzer is
       -- Constants --
       ---------------
 
-      None   : constant := -1;
+      None             : constant := -1;
 
       Default_Extended : Extended_Token;
       pragma Warnings (Off, Default_Extended);
-      --  Use default values to initialize this pseudo constant.
+      --  Use default values to initialize this pseudo constant
 
       Indent_Level        : Natural renames Indent_Params.Indent_Level;
       Indent_Continue     : Natural renames Indent_Params.Indent_Continue;
@@ -714,7 +714,7 @@ package body Ada_Analyzer is
       In_Generic          : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
-      --  Not used for now, but may be useful in the future.
+      --  Not used for now, but may be useful in the future
       pragma Unreferenced (Syntax_Error);
 
       Comments_Skipped    : Boolean           := False;
@@ -737,7 +737,7 @@ package body Ada_Analyzer is
       --  otherwise.
 
       Right_Assignment    : Boolean := False;
-      --  When this is true, we are in a left assignment section.
+      --  When this is true, we are in a left assignment section
 
       function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
       --  Handle reserved words.
@@ -759,7 +759,7 @@ package body Ada_Analyzer is
       --  If parsing should be terminated, set Terminated to True.
 
       function End_Of_Word (P : Natural) return Natural;
-      --  Return the end of the word pointed by P.
+      --  Return the end of the word pointed by P
 
       function End_Of_Identifier (P : Natural) return Natural;
       --  Starting from P, scan for the end of the identifier.
@@ -1247,7 +1247,7 @@ package body Ada_Analyzer is
          Top_Tok : constant Token_Type := Top (Tokens).Token;
 
          function Is_Continuation_Line return Boolean;
-         --  Return True is we are indenting a continuation line.
+         --  Return True is we are indenting a continuation line
 
          --------------------------
          -- Is_Continuation_Line --
@@ -2409,7 +2409,7 @@ package body Ada_Analyzer is
                 and then Prev_Token /= Tok_Use)    --  use type
            or else Reserved = Tok_Subtype
          then
-            --  Entering a type declaration/definition.
+            --  Entering a type declaration/definition
 
             if Prev_Token = Tok_Task               --  task type
               or else Prev_Token = Tok_Protected   --  protected type
@@ -2475,7 +2475,7 @@ package body Ada_Analyzer is
          --  In particular, align colons in declarations.
 
          procedure Handle_Two_Chars (Second_Char : Character);
-         --  Handle a two char operator, whose second char is Second_Char.
+         --  Handle a two char operator, whose second char is Second_Char
 
          procedure Preprocessor_Directive;
          --  Handle preprocessor directive.
@@ -2485,7 +2485,7 @@ package body Ada_Analyzer is
          --  Skip empty lines
 
          procedure Skip_Comments;
-         --  Skip comment & blank lines.
+         --  Skip comment & blank lines
 
          procedure Pop_And_Set_Local (Stack : in out Token_Stack.Simple_Stack);
          --  Pops the last element of the stack and set Local_Top_Token
@@ -2958,10 +2958,10 @@ package body Ada_Analyzer is
                         is
                            Ignore : Boolean;
                            pragma Unreferenced (Ignore);
-                           Sloc1 : constant Source_Location :=
-                                    Adjust (Sloc_Start);
-                           Sloc2 : constant Source_Location :=
-                                    Adjust (Sloc_End);
+                           Sloc1  : constant Source_Location :=
+                                      Adjust (Sloc_Start);
+                           Sloc2  : constant Source_Location :=
+                                      Adjust (Sloc_End);
 
                         begin
                            if Entity = Keyword_Text
@@ -2981,6 +2981,7 @@ package body Ada_Analyzer is
                               return Callback
                                 (Annotated_Keyword_Text,
                                  Sloc1, Sloc2, Partial_Entity);
+
                            else
                               return False;
                            end if;
@@ -3001,7 +3002,7 @@ package body Ada_Analyzer is
                            Constructs    => null,
                            Callback      => Local_Callback'Unrestricted_Access,
                            Indent_Offset => Indent_Offset,
-                           Case_Exceptions => Case_Exceptions,
+                           Case_Exceptions     => Case_Exceptions,
                            Is_Optional_Keyword => Is_SPARK_Keyword'Access);
 
                         if Prev_Sloc.Index <= Last then
@@ -3016,6 +3017,7 @@ package body Ada_Analyzer is
                            end if;
                         end if;
                      end;
+
                   else
                      if Callback
                          (Entity,
@@ -3922,7 +3924,9 @@ package body Ada_Analyzer is
 
          elsif Token = No_Token then
             Casing := Unchanged;
+
          else
+            --  We have a reserved word
             Casing := Reserved_Casing;
 
             exit Main_Loop when Handle_Reserved_Word (Token);

@@ -718,6 +718,7 @@ package body Language.Ada is
                then
                   Has_Reference := True;
                end if;
+
             elsif Entity = Identifier_Text then
                if not Skip_Next_Identifier then
                   if Has_Reference then
@@ -728,9 +729,11 @@ package body Language.Ada is
 
                   return True;
                end if;
+
             elsif Entity = Operator_Text and then Word = ":" then
                Has_Reference := True;
                Skip_Next_Identifier := False;
+
             elsif Entity = Operator_Text and then Word = "," then
                Skip_Next_Identifier := True;
             end if;
@@ -748,6 +751,7 @@ package body Language.Ada is
       end Token_Callback;
 
       Index_Begin : Natural;
+
    begin
       Success := False;
 
@@ -763,6 +767,7 @@ package body Language.Ada is
                Index_Begin :=
                  Construct.Sloc_Entity.Index + Construct.Name'Length;
             end if;
+
          else
             Index_Begin := From_Index;
          end if;
@@ -776,7 +781,6 @@ package body Language.Ada is
                Callback => Token_Callback'Unrestricted_Access);
          end if;
       end if;
-
    end Get_Referenced_Entity;
 
    -------------------------------

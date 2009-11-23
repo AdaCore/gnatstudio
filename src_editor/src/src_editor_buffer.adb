@@ -2766,14 +2766,14 @@ package body Src_Editor_Buffer is
       Timeout : Gint;
       Prev    : Boolean;
 
-      Keyword_Font : constant Pango.Font.Pango_Font_Description :=
-                       Keywords_Style.Get_Pref_Font;
-      Comment_Font : constant Pango.Font.Pango_Font_Description :=
-                       Comments_Style.Get_Pref_Font;
+      Keyword_Font           : constant Pango.Font.Pango_Font_Description :=
+                                 Keywords_Style.Get_Pref_Font;
+      Comment_Font           : constant Pango.Font.Pango_Font_Description :=
+                                 Comments_Style.Get_Pref_Font;
       Annotated_Comment_Font : constant Pango.Font.Pango_Font_Description :=
                                  Annotated_Comments_Style.Get_Pref_Font;
-      String_Font  : constant Pango.Font.Pango_Font_Description :=
-                       Strings_Style.Get_Pref_Font;
+      String_Font            : constant Pango.Font.Pango_Font_Description :=
+                                 Strings_Style.Get_Pref_Font;
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
@@ -6223,12 +6223,11 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    procedure Process_Highlight_Region (Buffer : Source_Buffer) is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Ignored    : Boolean;
+      Start_Iter  : Gtk_Text_Iter;
+      End_Iter    : Gtk_Text_Iter;
+      Ignored     : Boolean;
 
-      Tags : Highlighting_Tags renames Buffer.Syntax_Tags;
-
+      Tags        : Highlighting_Tags renames Buffer.Syntax_Tags;
       Entity_Kind : Language_Entity;
 
    begin
