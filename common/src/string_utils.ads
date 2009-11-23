@@ -270,6 +270,10 @@ package String_Utils is
    function Is_Operator_Letter (Char : Glib.Gunichar) return Boolean;
    --  Return True if the given letter is a valid operator
 
+   function Is_File_Letter (Char : Glib.Gunichar) return Boolean;
+   pragma Inline (Is_File_Letter);
+   --  Return True if the given letter is a valid letter for a file name.
+
    procedure Replace
      (S     : in out GNAT.Strings.String_Access;
       Value : String);

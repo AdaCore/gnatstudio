@@ -157,9 +157,11 @@ package GUI_Utils is
 
    procedure Search_Entity_Bounds
      (Start_Iter : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
+      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Maybe_File : Boolean := False);
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
+   --  If Maybe_File is True, consider that the entity may be a filename.
 
    type Completion_Handler is access function
      (Input     : String;

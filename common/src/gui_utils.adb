@@ -1036,15 +1036,31 @@ package body GUI_Utils is
 
    procedure Search_Entity_Bounds
      (Start_Iter : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter)
+      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Maybe_File : Boolean := False)
    is
       Ignored : Boolean;
-
    begin
       --  Search forward the end of the entity...
       Copy (Source => Start_Iter, Dest => End_Iter);
 
-      if Is_Operator_Letter (Gunichar'(Get_Char (End_Iter))) then
+      if Maybe_File then
+         while not Is_End (End_Iter) loop
+            exit when not Is_File_Letter (Gunichar'(Get_Char (End_Iter)));
+            Forward_Char (End_Iter, Ignored);
+         end loop;
+
+         --  And search backward the begining of the entity...
+         while not Is_Start (Start_Iter) loop
+            Backward_Char (Start_Iter, Ignored);
+
+            if not Is_File_Letter (Gunichar'(Get_Char (Start_Iter))) then
+               Forward_Char (Start_Iter, Ignored);
+               exit;
+            end if;
+         end loop;
+
+      elsif Is_Operator_Letter (Gunichar'(Get_Char (End_Iter))) then
          while not Is_End (End_Iter) loop
             exit when not Is_Operator_Letter (Gunichar'(Get_Char (End_Iter)));
             Forward_Char (End_Iter, Ignored);

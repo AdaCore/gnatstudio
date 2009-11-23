@@ -1138,6 +1138,25 @@ package body String_Utils is
       end case;
    end Is_Operator_Letter;
 
+   function Is_File_Letter (Char : Glib.Gunichar) return Boolean is
+   begin
+      if Unichar_Type (Char) = Unicode_Control then
+         return False;
+      end if;
+
+      case Char is
+         when Character'Pos ('<')
+              | Character'Pos ('/')
+              | Character'Pos ('\')
+              | Character'Pos ('>')
+              | Character'Pos ('"') =>
+            return False;
+
+         when others =>
+            return True;
+      end case;
+   end Is_File_Letter;
+
    -----------------
    -- Copy_String --
    -----------------
