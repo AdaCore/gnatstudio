@@ -389,8 +389,12 @@ def goto_word_start (iter):
 def goto_word_end (iter):
    while True:
       iter = iter.forward_word ()
-      if iter.get_char () != '_':
-         return iter
+      try:
+         if iter.get_char () != '_':
+            return iter
+      except:
+         # Probably an invalid position.
+         return iter.buffer().end_of_buffer ()
 
 @interactive ("Editor", "Source editor", name="delete horizontal space")
 def delete_horizontal_space(backward=1, forward=1):
