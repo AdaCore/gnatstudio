@@ -21,7 +21,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
@@ -893,7 +893,7 @@ package body Custom_Module is
          Child : Node_Ptr;
          Id    : constant String := Get_Attribute (Node, "id", "");
          Label : constant String := Get_Attribute (Node, "label", "");
-         CL    : Command_Line;
+         CL    : Arg_List;
       begin
          if Id = "" then
             Insert

@@ -26,7 +26,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Memory;

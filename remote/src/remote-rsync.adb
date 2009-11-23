@@ -54,7 +54,7 @@ with GNATCOLL.VFS_Types;    use GNATCOLL.VFS_Types;
 
 with Gexpect.Db;            use Gexpect, Gexpect.Db;
 
-with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 
 package body Remote.Rsync is
 
@@ -444,7 +444,7 @@ package body Remote.Rsync is
                --  prompts on Windows
                declare
                   Arguments : Argument_List := Build_Arg;
-                  CL        : Command_Line;
+                  CL        : Arg_List;
                begin
                   CL := Create ("rsync");
                   for A in Arguments'Range loop

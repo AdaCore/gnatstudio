@@ -48,7 +48,7 @@ with Commands.Interactive;      use Commands.Interactive;
 with Histories;                 use Histories;
 with Interactive_Consoles;      use Interactive_Consoles;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Shell_Script is
 

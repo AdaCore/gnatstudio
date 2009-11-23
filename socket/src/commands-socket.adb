@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package body Commands.Socket is

@@ -401,7 +401,7 @@ package body Commands.Builder is
 
    procedure Launch_Build_Command
      (Kernel        : Kernel_Handle;
-      CL            : Command_Line;
+      CL            : Arg_List;
       Target_Name   : String;
       Mode_Name     : String;
       Category_Name : String := Error_Category;

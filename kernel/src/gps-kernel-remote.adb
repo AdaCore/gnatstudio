@@ -818,7 +818,7 @@ package body GPS.Kernel.Remote is
 
    procedure Spawn
      (Kernel           : Kernel_Handle;
-      Arguments        : Command_Line;
+      Arguments        : Arg_List;
       Server           : Server_Type;
       Pd               : out GNAT.Expect.Process_Descriptor_Access;
       Success          : out Boolean;

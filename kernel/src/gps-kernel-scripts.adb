@@ -2318,7 +2318,7 @@ package body GPS.Kernel.Scripts is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      CL      : Command_Line) return String
+      CL      : Arg_List) return String
    is
       Errors : aliased Boolean;
    begin
@@ -2334,7 +2334,7 @@ package body GPS.Kernel.Scripts is
 
    procedure Execute_GPS_Shell_Command
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      CL     : Command_Line)
+      CL     : Arg_List)
    is
       Output : constant String := Execute_Command_With_Args
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),

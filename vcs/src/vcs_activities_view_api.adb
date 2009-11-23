@@ -22,7 +22,7 @@ with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Strings;              use GNAT;
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
@@ -230,7 +230,7 @@ package body VCS_Activities_View_API is
    overriding function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type
    is
-      CL : Command_Line := Create ("Editor.edit");
+      CL : Arg_List := Create ("Editor.edit");
    begin
       --  ??? We should use the Editors API
       Append_Argument (CL, +Full_Name (Command.File), One_Arg);

@@ -50,7 +50,7 @@ with XML_Parsers;                use XML_Parsers;
 
 with Traces;                     use Traces;
 with Language;                   use Language;
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Navigation_Module is
    Me : constant Debug_Handle := Create ("Navigation");

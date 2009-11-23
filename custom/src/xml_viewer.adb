@@ -52,7 +52,7 @@ with XML_Utils;                 use XML_Utils;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 
 package body XML_Viewer is
 

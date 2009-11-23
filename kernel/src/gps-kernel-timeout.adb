@@ -55,7 +55,7 @@ package body GPS.Kernel.Timeout is
    Me : constant Debug_Handle := Create ("Timeout");
 
    type Console_Process_Data is new GObject_Record with record
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Server               : Server_Type;
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
@@ -562,7 +562,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -687,7 +687,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
@@ -754,7 +754,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;

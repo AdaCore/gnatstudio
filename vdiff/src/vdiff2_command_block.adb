@@ -24,7 +24,7 @@ with GPS.Kernel.Console;  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with Traces;              use Traces;
-with GNATCOLL.Command_Lines;       use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with Vdiff2_Module.Utils; use Vdiff2_Module.Utils;
 with Vdiff2_Module;       use Vdiff2_Module;
@@ -169,7 +169,7 @@ package body Vdiff2_Command_Block is
       Diff   : access Diff_Head)
    is
       Files : constant T_VFile := Diff.Files;
-      CL    : Command_Line;
+      CL    : Arg_List;
       Args1 : Argument_List :=
                 (1 => new String'(+Full_Name (Files (1))));
       Args2 : Argument_List :=

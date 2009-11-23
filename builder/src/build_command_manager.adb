@@ -43,7 +43,7 @@ with Projects;                    use Projects;
 with Remote;                      use Remote;
 with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
-with GNATCOLL.Command_Lines;      use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 
 package body Build_Command_Manager is
 
@@ -62,7 +62,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Command_Line;
+      Simulate   : Boolean := False) return Arg_List;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
@@ -416,7 +416,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Command_Line
+      Simulate   : Boolean := False) return Arg_List
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
       Index  : Natural := 1;
@@ -462,7 +462,7 @@ package body Build_Command_Manager is
       end loop;
 
       declare
-         Real_Result : Command_Line;
+         Real_Result : Arg_List;
       begin
          if Result'Length > 0 then
             Real_Result := Create (Result (1).all);
@@ -508,7 +508,7 @@ package body Build_Command_Manager is
       Prj            : constant Project_Type := Get_Project (Kernel);
       Dir            : Virtual_File;
       T              : Target_Access;
-      Full           : Command_Line;
+      Full           : Arg_List;
       Command_Line   : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
 
@@ -542,7 +542,7 @@ package body Build_Command_Manager is
             CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
-            Args      : constant GNATCOLL.Command_Lines.Command_Line :=
+            Args      : constant GNATCOLL.Arg_Lists.Arg_List :=
                           Expand_Command_Line
                             (Kernel, Mode_Args.all & All_Extra_Args.all,
                              Server,

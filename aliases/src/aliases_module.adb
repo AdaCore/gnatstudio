@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNATCOLL.Command_Lines;   use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with System.Assertions;
@@ -1078,7 +1078,7 @@ package body Aliases_Module is
                         end loop;
 
                         declare
-                           CL : Command_Line;
+                           CL : Arg_List;
                         begin
                            CL := Create ("Editor.select_text");
                            Append_Argument

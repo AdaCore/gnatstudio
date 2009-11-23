@@ -44,7 +44,7 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
@@ -254,7 +254,7 @@ package body Log_Utils is
          Free (Old);
       end Add_Header;
 
-      C : Command_Line;
+      C : Arg_List;
    begin
       --  Makes sure that the ChangeLog buffer is saved before continuing
       --  otherwise part of the ChangeLog file could be lost.

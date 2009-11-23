@@ -27,7 +27,7 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
-with GNATCOLL.Command_Lines;            use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;            use GNATCOLL.Arg_Lists;
 
 with Commands;                          use Commands;
 with GPS.Intl;                          use GPS.Intl;
@@ -591,7 +591,7 @@ package body Vdiff2_Module.Utils is
 
       function Is_Ref_Editor_Opened return Boolean is
          Filename : constant String := +Base_Name (Item.Files (Ref));
-         CL       : Command_Line := Create ("MDI.get");
+         CL       : Arg_List := Create ("MDI.get");
       begin
          Append_Argument (CL, Filename, One_Arg);
          return Execute_GPS_Shell_Command (Kernel, CL) /= "null";

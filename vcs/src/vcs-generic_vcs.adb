@@ -49,7 +49,7 @@ with VCS_Status;                use VCS_Status;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
 with GPS.Editors; use GPS.Editors;
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body VCS.Generic_VCS is
 
@@ -1885,7 +1885,7 @@ package body VCS.Generic_VCS is
         (Get_Scripts (Kernel), GPS_Shell_Name);
 
       declare
-         CL : Command_Line;
+         CL : Arg_List;
       begin
          CL := Create ("Editor.get_last_line");
          Append_Argument (CL, +Full_Name (File), One_Arg);

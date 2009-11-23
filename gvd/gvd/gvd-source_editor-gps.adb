@@ -27,7 +27,7 @@ with GVD.Types;                 use GVD.Types;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
 
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands;                  use Commands;
@@ -90,7 +90,7 @@ package body GVD.Source_Editor.GPS is
          Focus             => False);
 
       declare
-         CL : Command_Line := Create ("Editor.unhighlight");
+         CL : Arg_List := Create ("Editor.unhighlight");
       begin
          Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
          Append_Argument (CL, Highlight_Category, One_Arg);
@@ -99,7 +99,7 @@ package body GVD.Source_Editor.GPS is
 
       if Editor.Line /= 0 then
          declare
-            CL : Command_Line := Create ("Editor.highlight");
+            CL : Arg_List := Create ("Editor.highlight");
          begin
             Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
             Append_Argument (CL, Highlight_Category, One_Arg);
@@ -140,7 +140,7 @@ package body GVD.Source_Editor.GPS is
       end if;
 
       declare
-         CL : Command_Line := Create ("Editor.unhighlight");
+         CL : Arg_List := Create ("Editor.unhighlight");
       begin
          Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
          Append_Argument (CL, Highlight_Category, One_Arg);
@@ -157,7 +157,7 @@ package body GVD.Source_Editor.GPS is
       Window : access GPS_Window_Record'Class)
    is
       Kernel : constant Kernel_Handle := GPS_Window (Window).Kernel;
-      CL     : Command_Line := Create ("Editor.register_highlighting");
+      CL     : Arg_List := Create ("Editor.register_highlighting");
 
    begin
       Editor.Window := GPS_Window (Window);
@@ -524,7 +524,7 @@ package body GVD.Source_Editor.GPS is
 
       while not Is_Empty (Editor.Highlighted_Files) loop
          declare
-            CL : Command_Line := Create ("Editor.unhighlight");
+            CL : Arg_List := Create ("Editor.unhighlight");
          begin
             Append_Argument (CL, Head (Editor.Highlighted_Files), One_Arg);
             Append_Argument (CL, Highlight_Category, One_Arg);

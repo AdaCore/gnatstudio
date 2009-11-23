@@ -23,7 +23,7 @@ with Ada.Strings.Maps;          use Ada.Strings.Maps;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -1705,7 +1705,7 @@ package body VCS_View_API is
          Last               : Natural;
          Entry_Found        : Boolean;
 
-         CL : Command_Line;
+         CL : Arg_List;
       begin
          Line   := 1;
          Column := 0;
@@ -1828,7 +1828,7 @@ package body VCS_View_API is
             Get_Location (File, ChangeLog_File, Line, Column);
 
             declare
-               CL : Command_Line;
+               CL : Arg_List;
             begin
                --  ??? We should use the Editors API
                CL := Create ("Editor.edit");

@@ -31,7 +31,7 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;
-with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Casing_Exceptions is
@@ -165,7 +165,7 @@ package body Casing_Exceptions is
         (File         : Virtual_File;
          Line, Column : Integer)
       is
-         CL   : Command_Line;
+         CL   : Arg_List;
       begin
          CL := Create ("Editor.replace_text");
          Append_Argument (CL, +Full_Name (File), One_Arg);

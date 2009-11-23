@@ -94,7 +94,7 @@ with Traces;                    use Traces;
 with Namet;
 with Wizards;                   use Wizards;
 with XML_Utils;                 use XML_Utils;
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Project_Properties is
    use Widget_List;

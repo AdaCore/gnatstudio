@@ -22,7 +22,7 @@
 
 with Basic_Types;
 with Entities;
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with Projects;
 
@@ -53,10 +53,10 @@ package GPS.Kernel.Scripts is
 
    procedure Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      CL      : Command_Line);
+      CL      : Arg_List);
    function Execute_GPS_Shell_Command
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      CL      : Command_Line) return String;
+      CL      : Arg_List) return String;
    --  Execute the command in the GPS shell.
    --  This is only intended as a simpler form of
    --     Execute_Command

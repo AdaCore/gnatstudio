@@ -28,7 +28,7 @@ with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
-with GNATCOLL.Command_Lines;      use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
@@ -97,7 +97,7 @@ package body Expect_Interface is
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
       Server           : Server_Type;
-      Command          : Command_Line;
+      Command          : Arg_List;
       Show_Command     : Boolean;
       On_Match         : Subprogram_Type;
       On_Exit          : Subprogram_Type;

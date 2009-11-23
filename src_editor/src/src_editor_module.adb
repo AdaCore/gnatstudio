@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
-with GNATCOLL.Command_Lines;            use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;            use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
 with Gdk.Color;                         use Gdk.Color;
@@ -1875,7 +1875,7 @@ package body Src_Editor_Module is
             Force    => Auto_Save.Get_Pref)
          then
             declare
-               CL  : Command_Line;
+               CL  : Arg_List;
             begin
                CL := Parse_String (Print_Helper, Separate_Args);
                Append_Argument

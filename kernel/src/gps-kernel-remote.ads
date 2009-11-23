@@ -29,7 +29,7 @@ with Interactive_Consoles;
 with Remote;                 use Remote;
 with GNATCOLL.VFS;
 
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package GPS.Kernel.Remote is
 
@@ -74,7 +74,7 @@ package GPS.Kernel.Remote is
 
    procedure Spawn
      (Kernel            : Kernel_Handle;
-      Arguments         : Command_Line;
+      Arguments         : Arg_List;
       Server            : Server_Type;
       Pd                : out GNAT.Expect.Process_Descriptor_Access;
       Success           : out Boolean;

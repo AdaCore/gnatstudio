@@ -53,7 +53,7 @@ with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 
 package body Clipboard_Views is
 
@@ -267,7 +267,7 @@ package body Clipboard_Views is
    is
       View : constant Clipboard_View_Access := Clipboard_View_Access (Clip);
       Selected : Integer;
-      CL       : Command_Line;
+      CL       : Arg_List;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press

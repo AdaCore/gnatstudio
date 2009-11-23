@@ -25,7 +25,7 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Command_Lines;     use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;

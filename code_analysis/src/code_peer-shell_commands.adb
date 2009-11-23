@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with GPS.Kernel.Scripts;
@@ -33,7 +33,7 @@ package body Code_Peer.Shell_Commands is
       Name   : String)
       return String
    is
-      CL : Command_Line;
+      CL : Arg_List;
 
    begin
       CL := Create ("BuildTarget");
@@ -56,7 +56,7 @@ package body Code_Peer.Shell_Commands is
       Synchronous : Boolean      := True;
       Dir         : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      CL : Command_Line := Create ("BuildTarget.execute");
+      CL : Arg_List := Create ("BuildTarget.execute");
 
    begin
       Append_Argument (CL, Target_ID, One_Arg);
@@ -94,7 +94,7 @@ package body Code_Peer.Shell_Commands is
      (Kernel : GPS.Kernel.Kernel_Handle;
       Mode   : String)
    is
-      CL : Command_Line := Create ("set_build_mode");
+      CL : Arg_List := Create ("set_build_mode");
 
    begin
       Append_Argument (CL, Mode, One_Arg);

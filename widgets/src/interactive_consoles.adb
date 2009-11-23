@@ -66,7 +66,7 @@ with Histories;           use Histories;
 with String_Utils;        use String_Utils;
 with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Interactive_Consoles is
    Me : constant Debug_Handle := Create ("Console");

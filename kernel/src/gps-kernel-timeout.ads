@@ -26,7 +26,7 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
 with Commands;                use Commands;
 with Remote;                  use Remote;
-with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 
 package GPS.Kernel.Timeout is
 
@@ -75,7 +75,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -149,7 +149,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -177,7 +177,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      CL                   : Command_Line;
+      CL                   : Arg_List;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;

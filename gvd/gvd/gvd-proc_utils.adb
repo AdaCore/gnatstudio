@@ -24,7 +24,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
@@ -107,7 +107,7 @@ package body GVD.Proc_Utils is
    procedure Open_Processes (Handle : out Process_Handle;
                              Kernel : Kernel_Handle)
    is
-      CL            : Command_Line;
+      CL            : Arg_List;
       Match         : Expect_Match := 0;
       Success       : Boolean;
    begin

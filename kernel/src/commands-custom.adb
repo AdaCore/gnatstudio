@@ -28,7 +28,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regpat;               use GNAT.Regpat;
 
-with GNATCOLL.Command_Lines;    use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -1081,12 +1081,12 @@ package body Commands.Custom is
 
       function Dollar_Substitution
         (Param : String;
-         Mode  : Command_Line_Mode) return Command_Line;
+         Mode  : Command_Line_Mode) return Arg_List;
       --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters
 
       function Substitution
         (Param  : String;
-         Mode   : Command_Line_Mode) return Command_Line;
+         Mode   : Command_Line_Mode) return Arg_List;
       --  Substitution function for '%1', '%2',...
 
       function Execute_Simple_Command
@@ -1107,14 +1107,14 @@ package body Commands.Custom is
 
       function Dollar_Substitution
         (Param : String;
-         Mode  : Command_Line_Mode) return Command_Line
+         Mode  : Command_Line_Mode) return Arg_List
       is
          Is_Num    : Boolean;
          Result    : Natural;
          Multiple  : Boolean := False;
          First_Arg : Natural := 1;
 
-         CL        : Command_Line;
+         CL        : Arg_List;
          pragma Unreferenced (Mode);
       begin
          if Param = "repeat" then
@@ -1177,7 +1177,7 @@ package body Commands.Custom is
 
       function Substitution
         (Param  : String;
-         Mode   : Command_Line_Mode) return Command_Line
+         Mode   : Command_Line_Mode) return Arg_List
       is
          Num   : Integer;
          Done  : aliased Boolean := False;
@@ -1232,7 +1232,7 @@ package body Commands.Custom is
       is
          --  Perform arguments substitutions for the command
 
-         The_Command_Line : Command_Line;
+         The_Command_Line : Arg_List;
          --  Treatment of the command line is the following:
          --  - first we convert the raw command line string to a command line
          --      (done with the call to parse_string above)
@@ -1262,7 +1262,7 @@ package body Commands.Custom is
             Old_Dir        : Virtual_File;
             --  has to be determined here so that Current_Server is
             --  correctly set:
-            Treatment      : GNATCOLL.Command_Lines.Command_Line_Mode;
+            Treatment      : GNATCOLL.Arg_Lists.Command_Line_Mode;
          begin
             if Command_Line_Treatment (Component.Script) = Raw_String then
                Treatment := Raw_String;

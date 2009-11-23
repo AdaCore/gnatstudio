@@ -27,7 +27,7 @@ with GPS.Kernel.Timeout;
 with GPS.Intl;           use GPS.Intl;
 with Projects;
 
-with GNATCOLL.Command_Lines;  use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 
 with Code_Peer.Bridge.Commands;
 with Code_Peer.Shell_Commands;
@@ -91,7 +91,7 @@ package body Code_Peer.Module.Bridge is
                             Use_CodePeer_Subdir
                               (Kernel_Handle (Module.Kernel));
       Success           : Boolean;
-      CL                : Command_Line;
+      CL                : Arg_List;
       pragma Warnings (Off, Success);
 
    begin
@@ -173,7 +173,7 @@ package body Code_Peer.Module.Bridge is
                                "Sqlite.db");
       Output_Directory  : constant Virtual_File :=
                             Codepeer_Output_Directory (Project);
-      CL                : Command_Line;
+      CL                : Arg_List;
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
@@ -302,7 +302,7 @@ package body Code_Peer.Module.Bridge is
       CodePeer_Subdir    : constant Boolean :=
                              Use_CodePeer_Subdir
                                (Kernel_Handle (Module.Kernel));
-      CL                 : Command_Line;
+      CL                 : Arg_List;
       Success            : Boolean;
       pragma Warnings (Off, Success);
 

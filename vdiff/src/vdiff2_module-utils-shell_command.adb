@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Command_Lines; use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with String_Utils;           use String_Utils;
@@ -35,7 +35,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Style  : String := "";
       Number : Natural := 1) return Natural
    is
-      CL : Command_Line := Create ("Editor.add_blank_lines");
+      CL : Arg_List := Create ("Editor.add_blank_lines");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       Append_Argument (CL, Image (Pos), One_Arg);
@@ -65,7 +65,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       File     : Virtual_File)
    is
-      CL : Command_Line := Create ("Editor.edit");
+      CL : Arg_List := Create ("Editor.edit");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       Append_Argument (CL, "0", One_Arg);
@@ -83,7 +83,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       File2  : Virtual_File;
       File3  : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      CL : Command_Line := Create ("Editor.set_synchronized_scrolling");
+      CL : Arg_List := Create ("Editor.set_synchronized_scrolling");
    begin
       Append_Argument (CL, +Full_Name (File1), One_Arg);
       Append_Argument (CL, +Full_Name (File2), One_Arg);
@@ -107,7 +107,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Before : Integer := -1;
       After  : Integer := -1) return String
    is
-      CL : Command_Line := Create ("Editor.get_chars");
+      CL : Arg_List := Create ("Editor.get_chars");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       Append_Argument (CL, Image (Line), One_Arg);
@@ -125,7 +125,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File) return Natural
    is
-      CL : Command_Line := Create ("Editor.get_last_line");
+      CL : Arg_List := Create ("Editor.get_last_line");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
@@ -139,7 +139,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : String) return Natural
    is
-      CL : Command_Line := Create ("Editor.get_line");
+      CL : Arg_List := Create ("Editor.get_line");
    begin
       Append_Argument (CL, Mark, One_Arg);
       return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
@@ -156,7 +156,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Style  : String := "";
       Number : Natural := 1)
    is
-      CL : Command_Line;
+      CL : Arg_List;
    begin
       for J in 1 .. Number loop
          CL := Create ("Editor.highlight");
@@ -179,7 +179,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1)
    is
-      CL : Command_Line;
+      CL : Arg_List;
       Args_Highlight_Range : Argument_List :=
                                (1 => new String'(+Full_Name (File)),
                                 2 => new String'(Style),
@@ -218,7 +218,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
    procedure Register_Highlighting
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      CL : Command_Line;
+      CL : Arg_List;
       Default_Color      : constant String  := Diff_Default_Color.Get_Pref;
       Old_Color          : constant String  := Diff_Old_Color.Get_Pref;
       Append_Color       : constant String  := Diff_Append_Color.Get_Pref;
@@ -271,7 +271,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Mark   : Natural)
    is
-      CL : Command_Line := Create ("Editor.remove_blank_lines");
+      CL : Arg_List := Create ("Editor.remove_blank_lines");
    begin
       if Mark /= Invalid_Mark then
          Append_Argument (CL, Image (Mark), One_Arg);
@@ -292,7 +292,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Before : Integer := -1;
       After  : Integer := -1)
    is
-      CL : Command_Line := Create ("Editor.replace_text");
+      CL : Arg_List := Create ("Editor.replace_text");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       Append_Argument (CL, Image (Line), One_Arg);
@@ -313,7 +313,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Pos    : Natural;
       Style  : String := "")
    is
-      CL : Command_Line := Create ("Editor.unhighlight");
+      CL : Arg_List := Create ("Editor.unhighlight");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       Append_Argument (CL, Style, One_Arg);
@@ -347,7 +347,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1)
    is
-      CL : Command_Line := Create ("Editor.unhighlight_range");
+      CL : Arg_List := Create ("Editor.unhighlight_range");
    begin
       Append_Argument (CL, +Full_Name (File), One_Arg);
       Append_Argument (CL, Style, One_Arg);

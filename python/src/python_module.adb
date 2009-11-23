@@ -20,7 +20,7 @@
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
-with GNATCOLL.Command_Lines;         use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;

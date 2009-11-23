@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Command_Lines;            use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;            use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Gtk.Window;                        use Gtk.Window;
@@ -342,7 +342,7 @@ package body Vdiff2_Module.Callback is
          Filename : constant Filesystem_String := Full_Name (Ref_File);
       begin
          Set_Writable : declare
-            CL : Command_Line := Create ("Editor.set_writable");
+            CL : Arg_List := Create ("Editor.set_writable");
          begin
             Append_Argument (CL, +Filename, One_Arg);
             Append_Argument (CL, "FALSE", One_Arg);
@@ -350,7 +350,7 @@ package body Vdiff2_Module.Callback is
          end Set_Writable;
 
          Set_Title : declare
-            CL : Command_Line := Create ("Editor.set_title");
+            CL : Arg_List := Create ("Editor.set_title");
 
          begin
             Append_Argument (CL, +Filename, One_Arg);
@@ -367,7 +367,7 @@ package body Vdiff2_Module.Callback is
 
          if D.VCS_File /= No_File then
             Set_Reference : declare
-               CL : Command_Line := Create ("VCS.set_reference");
+               CL : Arg_List := Create ("VCS.set_reference");
             begin
                Append_Argument (CL, +Filename, One_Arg);
                Append_Argument (CL, +Full_Name (D.VCS_File), One_Arg);
@@ -376,7 +376,7 @@ package body Vdiff2_Module.Callback is
 
             if Base /= No_File and then Base /= D.VCS_File then
                Set_Base_Reference : declare
-                  CL : Command_Line := Create ("VCS.set_reference");
+                  CL : Arg_List := Create ("VCS.set_reference");
                begin
                   Append_Argument (CL, +Full_Name (Base), One_Arg);
                   Append_Argument (CL, +Full_Name (D.VCS_File), One_Arg);

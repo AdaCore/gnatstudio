@@ -27,7 +27,7 @@ pragma Warnings (On);
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
-with GNATCOLL.Command_Lines;              use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;              use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
@@ -793,7 +793,7 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean is
-      CL : Command_Line;
+      CL : Arg_List;
 
    begin
       if Clock < Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay then

@@ -73,7 +73,7 @@ with UTF8_Utils;                 use UTF8_Utils;
 
 with Commands.Generic_Asynchronous;
 
-with GNATCOLL.Command_Lines;     use GNATCOLL.Command_Lines;
+with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 
 package body Builder_Module is
 
@@ -102,7 +102,7 @@ package body Builder_Module is
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Run_Description is record
-      CL           : Command_Line;
+      CL           : Arg_List;
       Ext_Terminal : Boolean;
       Directory    : GNATCOLL.VFS.Virtual_File;
       Title        : GNAT.Strings.String_Access;
