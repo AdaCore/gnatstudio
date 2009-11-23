@@ -158,7 +158,7 @@ package Src_Editor_View is
      (View : access Source_View_Record'Class) return Boolean;
    pragma Inline (As_Is_Enabled);
    --  Return true is the view is currently in as-is mode (no autocasing for
-   --  next character or stikcy as-is mode).
+   --  next character or sticky as-is mode).
 
    procedure Reset_As_Is_Mode (View : access Source_View_Record'Class);
    --  Set As_Mode to false
