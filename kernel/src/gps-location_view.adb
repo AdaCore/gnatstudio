@@ -1073,8 +1073,6 @@ package body GPS.Location_View is
          Select_Path (Get_Selection (Explorer.Tree), Path);
       end if;
 
-      Iter := Get_Iter (Model, Path);
-
       if Get_Depth (Path) = 1 then
          Gtk_New (Mitem, -"Remove category");
          Gtkada.Handlers.Widget_Callback.Object_Connect
@@ -1107,23 +1105,37 @@ package body GPS.Location_View is
          Append (Menu, Mitem);
 
          declare
-            Line   : constant Positive := Positive
-              (Get_Int (Model, Iter, Line_Column));
-            Column : constant Visible_Column_Type := Visible_Column_Type
-              (Get_Int (Model, Iter, Column_Column));
-            Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
-            Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
+            Message_Iter  : Gtk_Tree_Iter;
+            File_Iter     : Gtk_Tree_Iter;
+            Category_Iter : Gtk_Tree_Iter;
+
          begin
-            Created := True;
+            Explorer.Filter.Convert_Iter_To_Child_Iter (Message_Iter, Iter);
+            File_Iter := Explorer.Model.Parent (Message_Iter);
+            Category_Iter := Explorer.Model.Parent (File_Iter);
+
+            --  Unwind secondary level messages.
+
+            while Explorer.Model.Parent (Category_Iter) /= Null_Iter loop
+               File_Iter := Category_Iter;
+               Category_Iter := Explorer.Model.Parent (Category_Iter);
+            end loop;
+
             Set_File_Information
               (Context,
-               Files  => (1 => Get_File (Model, Par)),
-               Line   => Line,
-               Column => Column);
+               Files => (1 => Get_File (Explorer.Model, File_Iter)),
+               Line  =>
+                 Positive (Explorer.Model.Get_Int (Message_Iter, Line_Column)),
+               Column =>
+                 Visible_Column_Type
+                   (Explorer.Model.Get_Int (Message_Iter, Column_Column)));
             Set_Message_Information
               (Context,
-               Category => Get_String (Model, Granpa, Base_Name_Column),
-               Message  => Get_Message (Model, Iter));
+               Category =>
+                 Explorer.Model.Get_String (Category_Iter, Base_Name_Column),
+               Message => Get_Message (Explorer.Model, Message_Iter));
+
+            Created := True;
          end;
       end if;
 
