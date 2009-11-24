@@ -28,7 +28,6 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -2322,7 +2321,8 @@ package body GPS.Kernel is
                              (Kernel.Scripts, Filter.Shell_Lang.all);
 
                   function Substitution
-                    (Param  : String; Quoted : Boolean) return String;
+                    (Param : String;
+                     Mode  : Command_Line_Mode) return Arg_List;
                   --  Local substitution of special chars
 
                   ------------------
@@ -2330,30 +2330,37 @@ package body GPS.Kernel is
                   ------------------
 
                   function Substitution
-                    (Param : String; Quoted : Boolean) return String
+                    (Param : String;
+                     Mode  : Command_Line_Mode) return Arg_List
                   is
+                     pragma Unreferenced (Mode);
                      Done : aliased Boolean := False;
                   begin
-                     return GPS.Kernel.Macros.Substitute
-                       (Param, Context, Quoted, Done'Access);
+                     return Create (GPS.Kernel.Macros.Substitute
+                                    (Param, Context, False, Done'Access));
                   end Substitution;
 
-                  Cmd : constant String := Substitute
-                    (Str       => Filter.Shell.all,
-                     Delimiter => GPS.Kernel.Macros.Special_Character,
-                     Callback  => Substitution'Unrestricted_Access);
+                  CL : Arg_List;
 
                begin
                   if Lang = null then
                      Result := False;
 
                   else
+                     CL := Parse_String
+                       (Filter.Shell.all, Command_Line_Treatment (Lang));
+
+                     Substitute
+                       (CL,
+                        GPS.Kernel.Macros.Special_Character,
+                        Substitution'Unrestricted_Access);
+
                      declare
                         Errors : aliased Boolean;
                         R      : constant Boolean :=
                          GNATCOLL.Scripts.Execute_Command
                             (Lang,
-                             Parse_String (Cmd, Command_Line_Treatment (Lang)),
+                             CL,
                              Hide_Output => True,
                              Errors => Errors'Unchecked_Access);
                      begin
