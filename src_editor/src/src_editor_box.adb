@@ -1869,7 +1869,9 @@ package body Src_Editor_Box is
       end On_Callee;
 
    begin
-      pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
+      --  Assertion commented out, since does not always hold, e.g. at start
+      --  up when the xref DB is loaded, if the 'Load Xref info' pref is set.
+      --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
 
       Push_State (Kernel, Busy);
       For_Each_Dispatching_Call
@@ -1879,7 +1881,8 @@ package body Src_Editor_Box is
          Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
       Pop_State (Get_Kernel (Context));
 
-      pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
+      --  See comment above to see why this code is commented out
+      --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
       return Count > 1;
    end Filter_Matches_Primitive;
 
