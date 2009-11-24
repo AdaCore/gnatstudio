@@ -1113,6 +1113,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Destination_Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Destination_Mark.all);
       Blank_Before, Blank_After         : Replace_Blanks_Policy := Keep;
+
+      Lock_Source : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (Source_Cursor.Get_File));
+      Lock_Destination : Update_Lock := Lock_Updates
+        (Current_Text.Get_Structured_File (Destination_Cursor.Get_File));
    begin
       Source_It := Get_Iterator_At
         (Current_Text,
@@ -1177,6 +1182,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Destination_End);
       Free (Source_Begin);
       Free (Source_End);
+
+      Lock_Source.Unlock;
+      Lock_Destination.Unlock;
    end Execute;
 
    ----------
