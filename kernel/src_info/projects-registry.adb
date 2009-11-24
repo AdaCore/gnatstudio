@@ -1301,7 +1301,8 @@ package body Projects.Registry is
          end if;
       end Get_File_Extension;
 
-      Base_Name : constant String := +GNATCOLL.VFS.Base_Name (Source_Filename);
+      Base_Name : constant String :=
+                    String (GNATCOLL.VFS.Base_Name (Source_Filename));
       S         : constant Source_File_Data :=
                     Get (Registry.Data.Sources, Base_Name);
 
@@ -1336,9 +1337,7 @@ package body Projects.Registry is
                --  naming scheme
 
                return Languages_Htable.String_Hash_Table.Get
-                 (Registry.Data.Extensions,
-                  +Filesystem_String
-                    (Get_File_Extension (Base_Name)));
+                 (Registry.Data.Extensions, Ext);
             end if;
          end;
 
@@ -1674,6 +1673,7 @@ package body Projects.Registry is
       Iterator               : Imported_Project_Iterator;
       Info                   : Source_File_Data := No_Source_File_Data;
       In_Predefined          : Boolean := False;
+      Project_Found          : Boolean := True;
 
    begin
       --  First check the cache, so that we always return the same instance
@@ -1729,8 +1729,13 @@ package body Projects.Registry is
 
          --  Otherwise we have a source file
 
-         Real_Project := Get_Project_From_File
-           (Registry, Base_Name => Filename, Root_If_Not_Found => True);
+         Real_Project :=
+           Get (Registry.Data.Sources, String (Filename)).Project;
+
+         if Real_Project = No_Project then
+            Project_Found := False;
+            Real_Project := Registry.Data.Root;
+         end if;
 
          if Project /= No_Project then
             Project2 := Project;
@@ -1811,12 +1816,12 @@ package body Projects.Registry is
               and then Project2 = Real_Project
             then
                Info.File := Path;
-               Set (Registry.Data.Sources, +Filename, Info);
+               Set (Registry.Data.Sources, String (Filename), Info);
             end if;
 
             return;
 
-         elsif Project2 = Real_Project then
+         elsif Project2 = Real_Project and then Project_Found then
             --  Still update the cache, to avoid further system calls to
             --  Locate_Regular_File. However, we shouldn't update the cache
             --  if the project was forced, since it might store incorrect
