@@ -38,14 +38,8 @@ package Codefix is
    --  when the fix is applied. This exception is expected to be raised by
    --  the fix functions, and should not issue an unexpected exception trace.
 
-   Indentation_Width : constant := 3;
-   --  Width of an indentation in GNAT
-
    EOL_Str : constant String := (1 => ASCII.LF);
    --  String used to insert an end of line.
-
-   Label_VDiff_Size_Limit : constant Natural := 50;
-   --  Limits of the numbers of chars displayed in the VDiff's labels.
 
    type Column_Index is new Natural;
    --  Type of a column
