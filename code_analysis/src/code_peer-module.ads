@@ -53,6 +53,8 @@ package Code_Peer.Module is
    procedure Load
      (Self : access Module_Id_Record'Class;
       File : Virtual_File);
+   --  Loads code review results from file, creates CodePeer Report window
+   --  and display loaded results.
 
    procedure Review_Message
      (Self    : access Module_Id_Record'Class;
