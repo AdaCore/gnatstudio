@@ -71,13 +71,13 @@ package body Code_Peer.Module is
    Annotation_Style_Name                : constant String
      := "CodePeer editor annotations";
    High_Probability_Style_Name          : constant String
-     := "CodePeer high probability messages";
+     := "CodePeer high messages";
    Medium_Probability_Style_Name        : constant String
-     := "CodePeer medium probability messages";
+     := "CodePeer medium messages";
    Low_Probability_Style_Name           : constant String
-     := "CodePeer low probability messages";
+     := "CodePeer low messages";
    Informational_Probability_Style_Name : constant String
-     := "CodePeer informational probability messages";
+     := "CodePeer informational messages";
 
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
