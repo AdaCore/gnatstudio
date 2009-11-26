@@ -607,51 +607,61 @@ package body Code_Peer.Module is
 
       --  Load code review information
 
-      Input_Sources.File.Open (+File.Full_Name, Input);
-      Reader.Parse (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
-      Input_Sources.File.Close (Input);
+      if File.Is_Regular_File then
+         Input_Sources.File.Open (+File.Full_Name, Input);
+         Reader.Parse
+           (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
+         Input_Sources.File.Close (Input);
 
-      --  Create codepeer report window
+         --  Create codepeer report window
 
-      Code_Peer.Summary_Reports.Gtk_New
-        (Self.Report,
-         GPS.Kernel.Kernel_Handle (Self.Kernel),
-         GPS.Kernel.Modules.Module_ID (Self),
-         Self.Tree);
-      Context_CB.Connect
-        (Self.Report,
-         Code_Peer.Summary_Reports.Signal_Activated,
-         Context_CB.To_Marshaller (On_Activate'Access),
-         Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
-      Context_CB.Connect
-        (Self.Report,
-         Gtk.Object.Signal_Destroy,
-         Context_CB.To_Marshaller (On_Destroy'Access),
-         Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
-      Context_CB.Connect
-        (Self.Report,
-         Code_Peer.Summary_Reports.Signal_Criteria_Changed,
-         Context_CB.To_Marshaller (On_Criteria_Changed'Access),
-         Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+         Code_Peer.Summary_Reports.Gtk_New
+           (Self.Report,
+            GPS.Kernel.Kernel_Handle (Self.Kernel),
+            GPS.Kernel.Modules.Module_ID (Self),
+            Self.Tree);
+         Context_CB.Connect
+           (Self.Report,
+            Code_Peer.Summary_Reports.Signal_Activated,
+            Context_CB.To_Marshaller (On_Activate'Access),
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+         Context_CB.Connect
+           (Self.Report,
+            Gtk.Object.Signal_Destroy,
+            Context_CB.To_Marshaller (On_Destroy'Access),
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+         Context_CB.Connect
+           (Self.Report,
+            Code_Peer.Summary_Reports.Signal_Criteria_Changed,
+            Context_CB.To_Marshaller (On_Criteria_Changed'Access),
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
 
-      GPS.Kernel.MDI.Gtk_New
-        (Self.Report_Subwindow, Self.Report, Module => Self);
-      Self.Report_Subwindow.Set_Title (-"CodePeer report");
-      GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report_Subwindow);
+         GPS.Kernel.MDI.Gtk_New
+           (Self.Report_Subwindow, Self.Report, Module => Self);
+         Self.Report_Subwindow.Set_Title (-"CodePeer report");
+         GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report_Subwindow);
 
-      --  Setup filter criteria
+         --  Setup filter criteria
 
-      Self.Filter_Criteria.Files.Clear;
-      Self.Tree.Iterate (Process_Project'Access);
-      Self.Report.Update_Criteria (Self.Filter_Criteria);
+         Self.Filter_Criteria.Files.Clear;
+         Self.Tree.Iterate (Process_Project'Access);
+         Self.Report.Update_Criteria (Self.Filter_Criteria);
 
-      --  Update location view
+         --  Update location view
 
-      Self.Update_Location_View;
+         Self.Update_Location_View;
 
-      --  Raise report window
+         --  Raise report window
 
-      Self.Report_Subwindow.Raise_Child;
+         Self.Report_Subwindow.Raise_Child;
+
+      else
+         Console.Insert
+           (Self.Kernel,
+            File.Display_Full_Name &
+            (-" does not exist. Please perform a full analysis first"),
+            Mode => Console.Error);
+      end if;
    end Load;
 
    -----------------
@@ -1511,21 +1521,29 @@ package body Code_Peer.Module is
       Message : Code_Peer.Message_Access;
       File    : Virtual_File)
    is
-      pragma Unreferenced (Self);
-
       Input  : Input_Sources.File.File_Input;
       Reader : Code_Peer.Bridge.Audit_Trail_Readers.Reader;
 
    begin
-      --  Load inspection information
+      if File.Is_Regular_File then
 
-      Input_Sources.File.Open (+File.Full_Name, Input);
-      Reader.Parse (Input, Message.Audit);
-      Input_Sources.File.Close (Input);
+         --  Load inspection information
 
-      Message.Audit_Loaded := True;
+         Input_Sources.File.Open (+File.Full_Name, Input);
+         Reader.Parse (Input, Message.Audit);
+         Input_Sources.File.Close (Input);
 
-      Module.Review_Message (Message);
+         Message.Audit_Loaded := True;
+
+         Module.Review_Message (Message);
+
+      else
+         Console.Insert
+           (Self.Kernel,
+            File.Display_Full_Name &
+            (-" does not exist. Please perform a full analysis first"),
+            Mode => Console.Error);
+      end if;
    end Review_Message;
 
    --------------------
