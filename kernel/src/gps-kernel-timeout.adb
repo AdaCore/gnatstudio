@@ -271,7 +271,13 @@ package body GPS.Kernel.Timeout is
             --  as it may be used to keep count of executions, or to free
             --  memory, for instance.
             if Command.Data.D.Exit_Cb /= null then
-               Command.Data.D.Exit_Cb (Command.Data.D, -1);
+               begin
+                  Command.Data.D.Exit_Cb (Command.Data.D, -1);
+
+               exception
+                  when E : others =>
+                     Trace (Exception_Handle, E);
+               end;
             end if;
 
             Free (Command.Data.D.Descriptor);
@@ -375,7 +381,13 @@ package body GPS.Kernel.Timeout is
       end;
 
       if Data.D.Exit_Cb /= null then
-         Data.D.Exit_Cb (Data.D, Status);
+         begin
+            Data.D.Exit_Cb (Data.D, Status);
+
+         exception
+            when E : others =>
+               Trace (Exception_Handle, (E));
+         end;
       end if;
 
       --  So that next call to Cleanup does nothing
