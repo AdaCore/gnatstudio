@@ -17848,7 +17848,7 @@ Contains the definition of all the actions that were defined through the
 graphical interface. This is loaded last, and overrides all actions defined
 elsewhere.
 
-   @item $HOME/.gps/desktop.xml
+   @item $HOME/.gps/perspectives.xml
 Desktop file in XML format (using the menu @code{File->Save More->Desktop}),
 loaded automatically if found.
 
@@ -17948,14 +17948,14 @@ image (@file{gps-animation.png}) will always be displayed.
 @cindex png
 Splash screen displayed by default when GPS is started.
 
-   @item @i{prefix}/share/gps/desktop.xml
+   @item @i{prefix}/share/gps/perspectives.xml
 @cindex default desktop
 @cindex desktop, default
 This is the description of the default desktop that GPS uses when the user
 hasn't defined his own default desktop and no project specific desktop exists.
 You can modify this file if you want, knowing that this will impact all users
 of GPS sharing this installation.
-The format of this file is the same as $HOME/.gps/desktop.xml, which can be
+The format of this file is the same as $HOME/.gps/perspectives.xml, which can be
 copied from your own directory if you wish.
 
    @item @i{prefix}/share/gps/default.gpr

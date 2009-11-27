@@ -4,14 +4,14 @@
       <perspective name="Default">
         <Pane Orientation="ORIENTATION_HORIZONTAL" >
            <Pane Orientation="ORIENTATION_VERTICAL">
-             <Notebook height="10%" width="33%">
+             <Notebook height="20%" width="33%">
                 <Child Raised="True" Group=" 106" State="NORMAL" >
                   <Scenario_View />
                 </Child>
              </Notebook>
              <Notebook height="90%" width="33%">
                 <Child Raised="True" Group=" 106" State="NORMAL" >
-                  <Project_Explorer_Files />
+                  <Project_Explorer_Project />
                 </Child>
                 <Child Group=" 106" State="NORMAL" >
                   <Outline_View />
@@ -57,32 +57,6 @@
 
    <desktops>  <!--  Project-specific, populate the "default" notebook -->
       <desktop state="0" height="600" width="800">
-      </desktop>
-
-      <desktop state="0" height="600" width="800" perspective="Debug">
-        <vfs_project>/home/briot/svn/trunk/gps/gps/gps.gpr</vfs_project>
-        <Pane Orientation="ORIENTATION_HORIZONTAL" >
-          <Notebook Tabs="POS_BOTTOM" height="65%" width="32%" >
-            <Child Raised="True" Group=" 1" State="NORMAL" >
-              <Source_Editor >
-                <Column_End >28</Column_End>
-                <Column >28</Column>
-                <Line >127</Line>
-                <vfs_File >/home/briot/svn/trunk/gps/kernel/src_info/ali_parser.adb</vfs_File>
-              </Source_Editor>
-            </Child>
-          </Notebook>
-          <Notebook Tabs="POS_BOTTOM" height="65%" width="32%" >
-            <Child Raised="True" Focus="True" Group=" 1" State="NORMAL" >
-              <Source_Editor >
-                <Column_End >41</Column_End>
-                <Column >41</Column>
-                <Line >68</Line>
-                <vfs_File >/home/briot/svn/trunk/gps/kernel/src_info/ali_parser.ads</vfs_File>
-              </Source_Editor>
-            </Child>
-          </Notebook>
-        </Pane>
       </desktop>
    </desktops>
 </GPS>

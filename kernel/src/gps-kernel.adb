@@ -113,7 +113,7 @@ package body GPS.Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
-   Desktop_Name : constant Filesystem_String := "desktop.xml";
+   Desktop_Name : constant Filesystem_String := "perspectives.xml";
 
    use Action_Filters_Htable.String_Hash_Table;
 
@@ -795,6 +795,8 @@ package body GPS.Kernel is
             Free (Err);
          elsif Old.Tag.all = "GPS_Desktop" then
             --  An old desktop that doesn't support perspectives ?
+            --  Overwrite it (pre-perspectives desktops should be called
+            --  desktop.xml anyway)
             Free (Old);
          end if;
       end if;
@@ -928,7 +930,7 @@ package body GPS.Kernel is
       Predefined_Desktop      : constant Virtual_File :=
                                   Create_From_Dir
                                     (Get_System_Dir (Handle),
-                                     "share/gps/desktop.xml");
+                                     "share/gps/" & Desktop_Name);
       Node                    : Node_Ptr;
       Project_Name            : Virtual_File := For_Project;
       Child                   : Node_Ptr;
@@ -951,8 +953,8 @@ package body GPS.Kernel is
          Project_Name := Project_Path (Project);
       end if;
 
-      --  We might have to try twice: once to check the user's desktop.xml
-      --  file, and if that fails the predefined desktop.xml file
+      --  We might have to try twice: once to check the user's perspectives.xml
+      --  file, and if that fails the predefined perspectives.xml file
 
       while not Success_Loading_Desktop
         and then (Try_User_Desktop or else not Is_Default_Desktop)
