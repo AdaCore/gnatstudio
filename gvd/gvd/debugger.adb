@@ -269,13 +269,11 @@ package body Debugger is
    is
       Descriptor : Process_Descriptor_Access;
       Success    : Boolean;
-      The_Args   : Argument_List := (new String'(Debugger_Name) &
-                                     Arguments);
       CL         : Arg_List := Create (Debugger_Name);
 
    begin
-      for J in The_Args'Range loop
-         Append_Argument (CL, The_Args (J).all, One_Arg);
+      for J in Arguments'Range loop
+         Append_Argument (CL, Arguments (J).all, One_Arg);
       end loop;
 
       --  Start the external debugger.
@@ -291,7 +289,6 @@ package body Debugger is
          Server            => Debug_Server,
          Pd                => Descriptor,
          Success           => Success);
-      Free (The_Args (The_Args'First));
 
       if not Success
         or else Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid
