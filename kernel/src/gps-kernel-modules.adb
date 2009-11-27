@@ -1629,6 +1629,8 @@ package body GPS.Kernel.Modules is
          Gtk_New (Button, Gtk_Widget (Image), Text);
       end if;
 
+      Set_Homogeneous (Button, False);
+
       Insert (Toolbar, Button);
 
       if Tooltip /= "" then
