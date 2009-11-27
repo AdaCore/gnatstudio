@@ -606,4 +606,18 @@ package body GPS.Kernel.MDI is
       Gtkada.MDI.Gtk_New (MDI, Group);
       Set_Tab_Contextual_Menu_Factory (MDI, Tab_Contextual'Access);
    end Gtk_New;
+
+   ----------------------
+   -- Load_Perspective --
+   ----------------------
+
+   procedure Load_Perspective
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String)
+   is
+   begin
+      GPS.Kernel.Kernel_Desktop.Load_Perspective
+        (Get_MDI (Kernel), Name, Kernel_Handle (Kernel));
+   end Load_Perspective;
+
 end GPS.Kernel.MDI;

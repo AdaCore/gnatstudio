@@ -90,6 +90,12 @@ package GPS.Kernel.MDI is
       Desktop_Independent : Boolean := False);
    --  Internal version of Gtk_New
 
+   procedure Load_Perspective
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String);
+   --  Change the current perspective to another one.
+   --  Nothing is done if Name does not exist
+
    function Get_MDI
      (Handle : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Window;

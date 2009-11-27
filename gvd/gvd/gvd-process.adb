@@ -1820,6 +1820,9 @@ package body GVD.Process is
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
+      --  Switch to the "Debug" perspective if available
+      Load_Perspective (Kernel, "Debug");
+
       Process := new Visual_Debugger_Record;
       GVD.Source_Editor.GPS.Gtk_New (Edit, Top);
       GVD.Process.Initialize
