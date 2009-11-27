@@ -152,7 +152,12 @@ package body Python_Module is
       N       : Node_Ptr;
       Script  : Scripting_Language;
       Virtual : Virtual_Console;
+      Child   : MDI_Child;
    begin
+      if Widget.all not in Interactive_Console_Record'Class then
+         return null;
+      end if;
+
       --  We must test whether this is indeed a python-specific console, since
       --  it might happen that the default console is redirected elsewhere (for
       --  instance to the Messages window at the beginning)
@@ -162,11 +167,15 @@ package body Python_Module is
 
       if Virtual /= null
         and then Gtk_Widget (Widget) = Gtk_Widget (Get_Console (Virtual))
-        and then Get_Title (Find_MDI_Child (Get_MDI (User), Widget)) = "Python"
       then
-         N := new Node;
-         N.Tag := new String'("Python_Console");
-         return N;
+         Child := Find_MDI_Child (Get_MDI (User), Widget);
+         if Child /= null
+            and then Get_Title (Child) = "Python"
+         then
+            N := new Node;
+            N.Tag := new String'("Python_Console");
+            return N;
+         end if;
       end if;
       return null;
    end Save_Desktop;
