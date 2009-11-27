@@ -136,11 +136,8 @@ package GPS.Kernel is
    --  if the default desktop is used.
 
    procedure Save_Desktop
-     (Handle             : access Kernel_Handle_Record;
-      As_Default_Desktop : Boolean := False);
+     (Handle : access Kernel_Handle_Record);
    --  Save the current desktop.
-   --  If As_Default_Desktop is true, then this desktop will be loaded any time
-   --  no other valid desktop is found in the future.
 
    function Load_Desktop
      (Handle      : access Kernel_Handle_Record;

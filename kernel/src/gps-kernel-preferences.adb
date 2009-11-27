@@ -369,10 +369,8 @@ package body GPS.Kernel.Preferences is
       Save_Desktop_On_Exit := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Save-Desktop-On-Exit",
-         Label   => -"Save project-specific desktop on exit",
-         Doc     => -("Whether the desktop should be saved when exiting GPS."
-             & " This only applies to project-specific desktops, never to"
-             & " the default desktop"),
+         Label   => -"Save desktop on exit",
+         Doc     => -"Whether the desktop should be saved when exiting GPS",
          Default => True,
          Page    => -"General");
 

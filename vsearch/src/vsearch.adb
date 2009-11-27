@@ -1752,7 +1752,14 @@ package body Vsearch is
    is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Search);
    begin
-      --  This is called when the user presses "Escape" in the dialog.
+      --  When the user presses "Escape" in the dialog, gtk+ will emit the
+      --  "on_delete" signal and call this function (the MDI also calls it when
+      --  closing the MDI child, in particular when loading a new perspective).
+      --  We close the MDI_Child manually, and make sure the widget itself is
+      --  not destroyed since it is still referenced in the module.
+      --  Close_Vsearch ensures that on_delete is not emitted to avoid infinite
+      --  recursion.
+
       Close_Vsearch (Vsearch);
       return True;
 

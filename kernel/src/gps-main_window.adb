@@ -629,8 +629,11 @@ package body GPS.Main_Window is
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Window");
       Append (Main_Window.Menu_Bar, Menu_Item);
-      Set_Submenu (Menu_Item, Create_Menu
-                   (Main_Window.MDI, Accel_Path_Prefix => "<gps>"));
+      Set_Submenu
+        (Menu_Item, Kernel_Desktop.Create_Menu
+           (Main_Window.MDI,
+            Accel_Path_Prefix => "<gps>",
+            User              => Main_Window.Kernel));
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 

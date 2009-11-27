@@ -39,6 +39,7 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+with Glib.Xml_Int;
 with XML_Utils;                 use XML_Utils;
 
 with Gtk.Box;                   use Gtk.Box;
@@ -735,8 +736,7 @@ package body GPS.Kernel is
    ------------------
 
    procedure Save_Desktop
-     (Handle             : access Kernel_Handle_Record;
-      As_Default_Desktop : Boolean := False)
+     (Handle : access Kernel_Handle_Record)
    is
       function Get_Project_Name return Virtual_File;
       --  Return the project name to match in the file
@@ -748,7 +748,7 @@ package body GPS.Kernel is
       function Get_Project_Name return Virtual_File is
          Project : constant Project_Type := Get_Project (Handle);
       begin
-         if As_Default_Desktop or else Status (Project) /= From_File then
+         if Status (Project) /= From_File then
             return GNATCOLL.VFS.No_File;
          else
             return Project_Path (Project);
@@ -761,17 +761,19 @@ package body GPS.Kernel is
       File_Name    : constant Virtual_File :=
                        Create_From_Dir (Handle.Home_Dir, Desktop_Name);
       Project_Name : constant Virtual_File := Get_Project_Name;
-      N            : Node_Ptr;
-      M            : Node_Ptr;
+      N, N2        : Node_Ptr;
+      M, M2        : Node_Ptr;
       Old          : Node_Ptr;
       Err          : GNAT.Strings.String_Access;
       Success      : Boolean;
+      Central_Saved : Boolean := False;
+
+      Perspectives, Central : Glib.Xml_Int.Node_Ptr;
+      Perspectives_Convert, Central_Convert : Node_Ptr;
 
    begin
-      if Project_Name = GNATCOLL.VFS.No_File
-        and then not As_Default_Desktop
-      then
-         Trace (Me, "not saving the default desktop");
+      if Project_Name = GNATCOLL.VFS.No_File then
+         Trace (Me, "not saving the desktop (project is not from file)");
          return;
       end if;
 
@@ -791,46 +793,78 @@ package body GPS.Kernel is
          if Err /= null then
             Insert (Handle, Err.all, Mode => Error);
             Free (Err);
+         elsif Old.Tag.all = "GPS_Desktop" then
+            --  An old desktop that doesn't support perspectives ?
+            Free (Old);
          end if;
       end if;
 
-      N := new Node'
-        (Tag           => new String'("GPS_Desktop"),
-         Child         => null,
-         Parent        => null,
-         Value         => null,
-         Attributes    => null,
-         Next          => null,
-         Specific_Data => 0);
+      GPS.Kernel.Kernel_Desktop.Save_Desktop
+        (MDI, Kernel_Handle (Handle),
+         Perspectives => Perspectives, Central => Central);
 
-      --  Merge the old contents of the file
+      Perspectives_Convert := XML_Utils.GtkAda.Convert (Perspectives);
 
-      if Old /= null then
-         M := Old.Child;
+      Central_Convert      := XML_Utils.GtkAda.Convert (Central);
+      Add_File_Child (Central_Convert, "project", Project_Name);
 
-         while M /= null loop
-            if M.Tag /= null
-              and then M.Tag.all = "MDI"
-              and then Get_File_Child (M, "project") /= Project_Name
-            then
-               Add_Child (N, Deep_Copy (M));
-            end if;
+      --  Traverse old, and replace the perspectives node with the new one.
+      --  Also replace the project-specific part of the desktop with the new
+      --  one
 
-            M := M.Next;
-         end loop;
-
-         Free (Old);
+      if Old = null then
+         Old := new Node'
+           (Tag           => new String'("GPS"),
+            Child         => null,
+            Parent        => null,
+            Value         => null,
+            Attributes    => null,
+            Next          => null,
+            Specific_Data => 0);
       end if;
 
-      --  Add the current content, indexed on the current project
+      M := Old.Child;
+      while M /= null loop
+         M2 := M.Next;
 
-      M := XML_Utils.GtkAda.Convert (GPS.Kernel.Kernel_Desktop.Save_Desktop
-        (MDI, Kernel_Handle (Handle)));
-      Add_File_Child (M, "project", Project_Name);
-      Add_Child (N, M);
+         if M.Tag /= null then
+            if M.Tag.all = "perspectives" then
+               Free (M);
 
-      Print (N, File_Name, Success);
-      Free (N);
+            elsif M.Tag.all = "desktops" then
+               N := M.Child;
+               while N /= null loop
+                  N2 := N.Next;
+
+                  if N.Tag /= null
+                    and then N.Tag.all = "desktop"
+                    and then Get_File_Child (N, "project") = Project_Name
+                  then
+                     Free (N);
+                  end if;
+
+                  N := N2;
+               end loop;
+
+               Add_Child (M, Central_Convert, Append => False);
+               Central_Saved := True;
+            end if;
+         end if;
+
+         M := M2;
+      end loop;
+
+      if not Central_Saved then
+         M := new Node;
+         M.Tag := new String'("desktops");
+         Add_Child (Old, M);
+         Add_Child (M, Central_Convert, Append => False);
+      end if;
+
+      Add_Child (Old, Perspectives_Convert, Append => False);
+
+      Print (Old, File_Name, Success);
+      Free (Old);
 
       if not Success then
          Report_Preference_File_Error (Handle, File_Name);
@@ -898,12 +932,15 @@ package body GPS.Kernel is
       Node                    : Node_Ptr;
       Project_Name            : Virtual_File := For_Project;
       Child                   : Node_Ptr;
+      Tmp                     : Node_Ptr;
       Desktop_Node            : Node_Ptr;
       Default_Desktop_Node    : Node_Ptr;
+      Perspectives            : Node_Ptr;
       Success_Loading_Desktop : Boolean := False;
       Err                     : String_Access;
       Is_Default_Desktop      : Boolean := False;
       Try_User_Desktop        : Boolean := True;
+      Project_From_Node       : Virtual_File;
 
    begin
       Main_Window.Desktop_Loaded := True;
@@ -925,39 +962,57 @@ package body GPS.Kernel is
                    & " Project=" & Project_Name.Display_Full_Name);
             XML_Parsers.Parse (File, Node, Err);
 
-         elsif Is_Regular_File (Predefined_Desktop) then
+            if Node = null then
+               Insert (Handle, Err.all, Mode => Error);
+               Free (Err);
+            elsif Node.Tag.all = "GPS_Desktop" then
+               --  An old desktop that doesn't support perspectives ? Load
+               --  default desktop instead
+               Free (Node);
+            end if;
+         end if;
+
+         if Node = null and then Is_Regular_File (Predefined_Desktop) then
             Trace (Me, "loading predefined desktop");
             Is_Default_Desktop := True;
             XML_Parsers.Parse (Predefined_Desktop, Node, Err);
+            if Node = null then
+               Insert (Handle, Err.all, Mode => Error);
+               Free (Err);
+            end if;
+         end if;
 
-         else
+         if Node = null then
             Trace (Me, "No desktop to load");
             Set_Default_Size (Main_Window, 800, 600);
             Show_All (Get_Child (Main_Window));
             return False;
          end if;
 
-         if Node = null then
-            Insert (Handle, Err.all, Mode => Error);
-            Free (Err);
-
-         else
-            Child := Node.Child;
-         end if;
+         Child := Node.Child;
 
          while Child /= null loop
             if Child.Tag /= null then
-               if Child.Tag.all = "MDI" then
-                  declare
-                     F : constant Virtual_File :=
-                           Get_File_Child (Child, "project");
-                  begin
-                     if F = GNATCOLL.VFS.No_File then
-                        Default_Desktop_Node := Child;
-                     elsif F = Project_Name then
-                        Desktop_Node := Child;
+               if Child.Tag.all = "perspectives" then
+                  Perspectives := Child;
+
+               elsif Child.Tag.all = "desktops" then
+                  Tmp := Child.Child;
+                  while Tmp /= null loop
+                     if Tmp.Tag.all = "desktop" then
+                        Project_From_Node :=
+                          Get_File_Child (Tmp, "project");
+
+                        if Project_From_Node = GNATCOLL.VFS.No_File then
+                           Default_Desktop_Node := Tmp;
+
+                        elsif Project_From_Node = Project_Name then
+                           Desktop_Node := Tmp;
+                        end if;
                      end if;
-                  end;
+
+                     Tmp := Tmp.Next;
+                  end loop;
                end if;
             end if;
 
@@ -971,20 +1026,21 @@ package body GPS.Kernel is
 
          Success_Loading_Desktop := False;
 
-         if Desktop_Node /= null then
+         if Desktop_Node = null then
+            Trace (Me, "loading default desktop (from file)");
+            Desktop_Node := Default_Desktop_Node;
+         else
             Trace (Me, "loading desktop for " &
                    Project_Name.Display_Full_Name);
-            Success_Loading_Desktop :=
-              Kernel_Desktop.Restore_Desktop
-                (MDI, XML_Utils.GtkAda.Convert (Desktop_Node),
-                 Kernel_Handle (Handle));
+         end if;
 
-         elsif Default_Desktop_Node /= null then
-            Trace (Me, "loading default desktop (from file)");
+         if Desktop_Node /= null then
             Success_Loading_Desktop :=
               Kernel_Desktop.Restore_Desktop
-                     (MDI, XML_Utils.GtkAda.Convert (Default_Desktop_Node),
-                      Kernel_Handle (Handle));
+                (MDI,
+                 Perspectives => XML_Utils.GtkAda.Convert (Perspectives),
+                 From_Tree    => XML_Utils.GtkAda.Convert (Desktop_Node),
+                 User         => Kernel_Handle (Handle));
          end if;
 
          Free (Node);

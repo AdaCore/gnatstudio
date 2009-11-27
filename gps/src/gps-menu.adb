@@ -77,10 +77,6 @@ package body GPS.Menu is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Save Desktop menu
 
-   procedure On_Save_Default_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save Default Desktop menu
-
    procedure On_Change_Dir
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Change Directory... menu
@@ -165,24 +161,10 @@ package body GPS.Menu is
    is
       pragma Unreferenced (Widget);
    begin
-      Save_Desktop (Kernel, As_Default_Desktop => False);
+      Save_Desktop (Kernel);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Save_Desktop;
-
-   -----------------------------
-   -- On_Save_Default_Desktop --
-   -----------------------------
-
-   procedure On_Save_Default_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Save_Desktop (Kernel, As_Default_Desktop => True);
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Save_Default_Desktop;
 
    -------------
    -- Execute --
@@ -403,9 +385,6 @@ package body GPS.Menu is
          On_Save_All'Access,
          Ref_Item => -"Messages");
       Register_Menu (Kernel, Save, -"_Desktop", "", On_Save_Desktop'Access);
-      Register_Menu
-        (Kernel, Save, -"D_efault Desktop", "",
-         On_Save_Default_Desktop'Access);
 
       Register_Menu
         (Kernel, File, -"Change _Directory...", "",

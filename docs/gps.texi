@@ -2226,16 +2226,8 @@ files, graphs, @dots{} and their window size and position in GPS. The desktop
 is saved per top level project, so that if you reload the same project you get
 back to the same situation you were in when you left GPS. Instead, if you load
 a different project another desktop will be loaded (or the default desktop).
-
-@item Default Desktop
-@cindex save default desktop
-Save the current desktop as the default desktop. The next time you
-start GPS, if there is no saved desktop associated with the chosen project,
-then this desktop will be used. If you haven't saved explicitely a default
-desktop, GPS will use its own default desktop from
-@file{prefix/share/gps/desktop.xml} in its installation directory.
-
-This default desktop is never overidden automatically by GPS.
+Through the preference "Save Desktop On Exit", you can also automatically save
+this desktop when you quit GPS.
 
 @end table
 
@@ -9706,12 +9698,12 @@ Whether the tool bar should show both text and icons, or only icons.
 Whether unsaved files and projects should be saved automatically before
 calling external tools (e.g. before a build).
 
-@item Save project-specific desktop on exit
+@item Save desktop on exit
 @cindex desktop
 Whether the desktop (size and positions of all windows) should be saved when
-exiting. The default desktop is never saved automatically, i.e. GPS will only
-save a desktop associated with the current project. If you are working with
-a project created automatically by GPS, the desktop will not be saved.
+exiting.
+If you are working with a project created automatically by GPS, the desktop
+will not be saved.
 
 @item Save editor in desktop
 @cindex desktop
