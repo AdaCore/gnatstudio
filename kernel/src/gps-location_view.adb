@@ -1767,7 +1767,9 @@ package body GPS.Location_View is
       end if;
 
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-         (Get_MDI (Kernel), Location_View_Record'Tag));
+         (Get_MDI (Kernel), Location_View_Record'Tag,
+          Visible_Only => not Allow_Creation));
+
       if Child = null then
          if not Allow_Creation then
             return null;
