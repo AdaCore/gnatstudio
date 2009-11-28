@@ -459,7 +459,8 @@ package body VCS.Generic_VCS is
                Dir := Files (File).Get_Parent;
             end if;
 
-            --  Group files by directories.
+            --  Group files by directories
+
             while File <= Files'Last loop
                exit when
                  (not Ref.Absolute_Names
@@ -694,7 +695,8 @@ package body VCS.Generic_VCS is
             end if;
          end loop;
 
-         --  Recreate the list whithout those hidden directories.
+         --  Recreate the list whithout those hidden directories
+
          if Length < List'Length then
             Tmp := new File_Array (1 .. Length);
             Length := Tmp'First;
@@ -717,7 +719,8 @@ package body VCS.Generic_VCS is
          Unchecked_Free (Files);
          Files := Tmp;
 
-         --  And call recursively.
+         --  And call recursively
+
          for L in List'Range loop
             Add_Directory_Recursively (List (L));
          end loop;
