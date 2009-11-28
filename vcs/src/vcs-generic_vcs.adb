@@ -1528,6 +1528,12 @@ package body VCS.Generic_VCS is
       Num_Matches   : Natural := 0;
       Status_Update : Boolean := False;
    begin
+      if S'Last = 0 then
+         --  Empty text, nothing to do, this happen when doing a diff on a
+         --  file without modification for example.
+         return Success;
+      end if;
+
       Command.Prev_Start := Command.Start;
 
       while Num_Matches < Max_Matches loop
