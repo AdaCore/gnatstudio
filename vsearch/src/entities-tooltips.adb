@@ -129,7 +129,9 @@ package body Entities.Tooltips is
          From_Type   => Start_Name);
 
       if Node = Null_Construct_Tree_Iterator then
-         return -"<i>No documentation available.</i>";
+         --  Try to get the documentation from somewhere else than the
+         --  construct database.
+         return Get_Documentation (Handler, Entity);
       end if;
 
       return Language.Tree.Database.Get_Documentation
