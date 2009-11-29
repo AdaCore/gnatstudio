@@ -64,6 +64,7 @@ package body Entities.Tooltips is
       Attributes : Entity_Attributes;
 
       Kind : constant E_Kind := Get_Kind (Entity);
+
    begin
       if Kind.Kind = Package_Kind then
          Cat := Cat_Package;
@@ -76,7 +77,7 @@ package body Entities.Tooltips is
       Attributes := Get_Attributes (Entity);
 
       if Attributes (Private_Field) then
-         Visibility := Visibility_Protected;
+         Visibility := Visibility_Private;
       elsif Attributes (Protected_Field) then
          Visibility := Visibility_Protected;
       end if;
