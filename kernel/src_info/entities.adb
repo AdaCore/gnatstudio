@@ -2601,17 +2601,15 @@ package body Entities is
       Str   : String (1 .. 1024);
       Index : Natural := Str'First;
    begin
-      if Attr (Global) then
+      if Attr (Class_Static) or else Attr (Static_Local) then
+         Str (Index .. Index + 6) := "static ";
+         Index := Index + 7;
+      elsif Attr (Global) then
          Str (Index .. Index + 6) := "global ";
          Index := Index + 7;
       else
          Str (Index .. Index + 5) := "local ";
          Index := Index + 6;
-      end if;
-
-      if Attr (Class_Static) or else Attr (Static_Local) then
-         Str (Index .. Index + 6) := "static ";
-         Index := Index + 7;
       end if;
 
       if Attr (Protected_Field) then

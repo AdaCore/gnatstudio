@@ -729,6 +729,7 @@ package body ALI_Parser is
       Instantiation_Of : Entity_Information;
       Current_Sfile    : Sdep_Id;
       Has_Completion   : Boolean := False;
+      Attributes       : Entity_Attributes := (others => False);
 
    begin
       Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
@@ -750,10 +751,17 @@ package body ALI_Parser is
       end;
 
       Set_Kind (Entity, Kind);
-      Set_Attributes
-        (Entity,
-         Attributes => (Global => Xref_Entity.Table (Xref_Ent).Lib,
-                        others => False));
+
+      case Xref_Entity.Table (Xref_Ent).Visibility is
+         when Global =>
+            Attributes (Global) := True;
+         when Static =>
+            Attributes (Static_Local) := True;
+         when Other =>
+            null;
+      end case;
+
+      Set_Attributes (Entity, Attributes);
 
       --  Do not process types for entities in other ALI files,
       --  since most of the time the closure will not be in the current ALI
