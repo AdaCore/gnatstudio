@@ -51,6 +51,7 @@ with Expect_Interface;          use Expect_Interface;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GUI_Utils;                 use GUI_Utils;
@@ -64,8 +65,9 @@ with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with XML_Viewer;
 
-with Switches_Parser; use Switches_Parser;
-with XML_Utils; use XML_Utils;
+with Switches_Parser;           use Switches_Parser;
+with XML_Utils;                 use XML_Utils;
+with XML_Utils.GtkAda;          use XML_Utils.GtkAda;
 
 package body Custom_Module is
 
@@ -1315,6 +1317,12 @@ package body Custom_Module is
 
          elsif To_Lower (Current_Node.Tag.all) = "contextual" then
             Parse_Contextual_Node (Current_Node);
+
+         --  XML is case-sensitive, and we do not need to be backward
+         --  compatible for this node, so expect lower-case only
+         elsif Current_Node.Tag.all = "perspective" then
+            GPS.Kernel.Kernel_Desktop.Define_Perspective
+              (Get_MDI (Kernel), Convert (Current_Node), Kernel);
 
          elsif To_Lower (Current_Node.Tag.all) = "filter"
            or else To_Lower (Current_Node.Tag.all) = "filter_and"
