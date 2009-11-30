@@ -2663,7 +2663,8 @@ package body Src_Editor_Buffer is
       Iter   : Gtk_Text_Iter) return Boolean is
    begin
       return Has_Tag (Iter, Buffer.Syntax_Tags (Comment_Text))
-        or else Has_Tag (Iter, Buffer.Syntax_Tags (Annotated_Comment_Text));
+        or else Has_Tag (Iter, Buffer.Syntax_Tags (Annotated_Comment_Text))
+        or else Has_Tag (Iter, Buffer.Syntax_Tags (Annotated_Keyword_Text));
    end Is_In_Comment;
 
    ------------------
