@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                    Copyright (C) 2000-2008, AdaCore                      --
+--                    Copyright (C) 2000-2009, AdaCore                      --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -47,6 +47,8 @@ package body GNAT.Expect.TTY is
       procedure Free_Process (Process : System.Address);
       pragma Import (C, Free_Process, "gvd_free_process");
 
+      procedure Close_TTY (Process : System.Address);
+      pragma Import (C, Close_TTY, "gvd_close_tty");
    begin
       --  If we haven't already closed the process
       if Descriptor.Process /= System.Null_Address then
@@ -67,6 +69,9 @@ package body GNAT.Expect.TTY is
 
          Terminate_Process (Descriptor.Process);
          Status := Waitpid (Descriptor.Process);
+
+         Close_TTY (Descriptor.Process);
+
          Free_Process (Descriptor.Process'Address);
          Descriptor.Process := System.Null_Address;
 
