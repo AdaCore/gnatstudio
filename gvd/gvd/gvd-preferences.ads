@@ -28,13 +28,6 @@ package GVD.Preferences is
    --  Register all the preferences relative to GVD, and their default
    --  values. This doesn't override existing values of the preferences.
 
-   type Debugger_Windows_Policy is
-     (Close_Windows, Hide_Windows, Keep_Windows);
-   package Debugger_Windows_Preferences is new
-     Default_Preferences.Enums.Generics (Debugger_Windows_Policy);
-   --  What should happen to debugger-related windows when a debugger session
-   --  is terminated.
-
    package Debugger_Kind_Preferences is new
      Default_Preferences.Enums.Generics (GVD.Types.Debugger_Type);
 
@@ -49,7 +42,6 @@ package GVD.Preferences is
    Open_Main_Unit                : Boolean_Preference;
    Execution_Window              : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
-   Debugger_Windows              : Debugger_Windows_Preferences.Preference;
    Debugger_Kind                 : Debugger_Kind_Preferences.Preference;
 
    -- Source Window --

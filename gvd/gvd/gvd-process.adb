@@ -1304,6 +1304,8 @@ package body GVD.Process is
          Debug_Terminate (Kernel);
       end if;
 
+      Load_Perspective (Kernel, "Default");
+
       Pop_State (Kernel);
    end Close_Debugger;
 

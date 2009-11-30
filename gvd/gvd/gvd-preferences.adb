@@ -88,20 +88,6 @@ package body GVD.Preferences is
              & " when the window is closed."),
          Default    => True);
 
-      Debugger_Windows := Debugger_Windows_Preferences.Create
-        (Manager => Prefs,
-         Name    => XML_Prefix & "Debugger-Windows",
-         Label   => -"Debugger windows",
-         Page    => General,
-         Doc     =>
-         -("What should happen to debugger-related windows when the"
-           & " debugger session terminates. The windows can either be"
-           & " closed automatically, or be kept in the desktop, in which"
-           & " case they can either be hidden or kept visible. The next"
-           & " debugger session will reuse these windows, which is"
-           & " convenient if you want to put them in a specific place"),
-         Default => Hide_Windows);
-
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,
          Name    => XML_Prefix & "Debugger-Kind",

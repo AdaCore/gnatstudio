@@ -32,7 +32,6 @@ with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
-with GVD.Preferences;     use GVD.Preferences;
 with String_Utils;        use String_Utils;
 with XML_Utils;           use XML_Utils;
 with Traces;              use Traces;
@@ -129,8 +128,6 @@ package body GVD.Generic_View is
          pragma Unreferenced (Kernel);
          P : constant Visual_Debugger := Get_Process (Data);
          V : constant Formal_View_Access := Formal_View_Access (Get_View (P));
-         Policy        : constant Debugger_Windows_Policy :=
-           Debugger_Windows.Get_Pref;
       begin
          Trace (Me, "On_Debugger_Terminate, closing view " & Module_Name);
          if P /= null and then V /= null then
@@ -150,12 +147,6 @@ package body GVD.Generic_View is
             then
                Set_View (Get_Process (V), null);
                Unset_Process (V);
-
-               case Policy is
-                  when Close_Windows => Destroy (V);
-                  when Hide_Windows  => Hide (V);
-                  when Keep_Windows  => null;
-               end case;
             else
                Set_View (Get_Process (V), null);
                Unset_Process (V);
