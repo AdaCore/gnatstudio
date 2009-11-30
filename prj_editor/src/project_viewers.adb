@@ -1469,7 +1469,7 @@ package body Project_Viewers is
                   Attribute          => Source_Dirs_Attribute,
                   Values             => Dirs (Dirs'First .. Index),
                   Attribute_Index    => "");
-               Free (Dirs);
+               Free (Dirs (Dirs'First .. Index));
             end if;
          end;
 
