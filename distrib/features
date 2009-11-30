@@ -36,6 +36,14 @@ NF-45-IB10-011 New contextual menu "Close all other editors (2009-11-17)
   When right-clicking on a notebook tab of an editor, a new contextual
   menu entry is shown, to close all other open editors
 
+NF-45-IA27-021 Support for perspectives (2009-11-30)
+
+  GPS's Multiple Document Interface now supports perspectives. These are
+  activity-specific desktops (for instance one dedicated to debugging
+  sessions, one to VCS operations,...) with their own set of windows. But
+  editors are always visible in all of these, so switching to another
+  perspective does not lose your current work.
+
 NF-45-IA23-015 Warn when assigning existing shortcut to action (2009-11-18)
 
   In the /Edit/Key Shortcuts dialog, a warning is now displayed when you
