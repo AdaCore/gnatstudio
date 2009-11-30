@@ -842,7 +842,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          loop
             declare
                Local_Line : constant String :=
-                 Current_Text.Get_Line (Line_Cursor, 1);
+                 Current_Text.Get_Line (Local_Cursor, 1);
             begin
                if Natural (Current_Index)
                  > Local_Line'Last
