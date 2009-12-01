@@ -9022,7 +9022,7 @@ specific to SPARK. For details of the Project menu in general,
 @item If you want to access SPARK generated files from the GPS project explorer,
  click the Languages tab and ensure that the following items are ticked:
  Ada, Cmd, Fdl, Index, Listing, Metafile, Plg, Pogs Summary, Prv,
- Rls, Rlu, Rul, Siv, Slg, Vcg,
+ Rls, Rlu, Rul, Siv, Slg, Vcg.
  Otherwise, you only need the Ada language selected.
  You may also want to add in your project file the following line for
  each of the languages in the @code{Compiler} package:
@@ -9035,7 +9035,7 @@ package Compiler is
    ...
 @end smallexample
 
- otherwise if you build with gprbuild, you will get warning messages. Another
+ Otherwise, if you build with gprbuild, you will get warning messages. Another
  alternative is to specify @code{gnatmake} in the Preferences dialog as the
  multi-language builder.
 
@@ -9115,13 +9115,13 @@ It applies SPARKFormat to the selected text only so, for example, an
 individual annotation can be selected and reformatted.
 
 @item Simplify File
-This command is enabled if a .VCG file is open in the editing window. It will
-invoke the SPARK Simplifier on the VCG file, using any switches set under
+This command is enabled if a Vcg file is open in the editing window. It will
+invoke the SPARK Simplifier on the Vcg file, using any switches set under
 Project Properties. Output is sent to the Simplifier Output window.
-The siv file is displayed in the editing window.
+The Siv file is displayed in the editing window.
 
 @item Simplify All
-Search under the project directory for all VCG files that require
+Search under the project directory for all Vcg files that require
 simplification and invoke the SPARK Simplifier on them. This is done using the
 SPARKSimp tool, with any switches supplied under the SPARKSimp tab in Project
 Properties. Output is displayed in the SPARKSimp Output window.
@@ -9137,7 +9137,7 @@ files and the @code{Output File} where it saves the summary file.
 The summary output file is displayed in the editing window.
 Right-clicking on a VC in the summary file
 invokes a pop-up menu. From this menu you can select @code{SPARK->Show VC} or
-@code{SPARK->Show Simplified VC} to jump directly to the VCG or SIV file
+@code{SPARK->Show Simplified VC} to jump directly to the Vcg or Siv file
 concerned. POGS can also be invoked via the @key{F11} key.
 
 @item SPARKMake
