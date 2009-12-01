@@ -121,6 +121,7 @@ Multiple Document Interface
 * Splitting Windows::
 * Floating Windows::
 * Moving Windows::
+* Perspectives::
 
 Editing Files
 * General Information::
@@ -1447,6 +1448,7 @@ The format of these index files is specified in @pxref{Adding documentation}.
 * Splitting Windows::
 * Floating Windows::
 * Moving Windows::
+* Perspectives::
 @end menu
 
 @noindent
@@ -1537,7 +1539,7 @@ keep a single editor open, the one you are clicking on.
 @c --------------------------------------------------------------------
 
 @noindent
-The window in the central area of the MDI can be split at will, through
+Windows can be split at will, through
 any combination of horizontal and vertical splits.
 This feature requires at least two windows (text editors, browsers, @dots{})
 to be superimposed in the central area. Selecting either the
@@ -1563,6 +1565,9 @@ achieve an effect similar to e.g. the standard Emacs behavior (where
 a window vertically), you can use the key manager
 (@pxref{The Key Manager Dialog}).
 
+@ref{Moving Windows} will show how to do the splitting through drag-and-drop
+and the mouse, which in general is the fastest way to do.
+
 Several editors or browsers can be put in the same area of the MDI. In such
 a case, they will be grouped together in a notebook widget, and you can
 select any of them by clicking on the corresponding tab. Note that if there
@@ -1587,7 +1592,8 @@ it is possible that you prefer to have several top-level windows under
 direct control of your system or window manager. This would be the
 case for instance if you want to benefit from some extra possibilities
 that your system might provide (virtual desktops, different window
-decoration depending on the window's type, transparent windows, @dots{}).
+decoration depending on the window's type, transparent windows, 
+multiple screens, @dots{}).
 
 GPS is fully compatible with this behavior, since windows can also be
 @b{floating windows}. Any window that is currently embedded in the MDI
@@ -1649,6 +1655,11 @@ left or right to the new position the window should have. Note that your mouse
 must remain within the tab area, since otherwise GPS will enter in the mode
 where the window can be put in other notebooks.
 
+If you want to move a window to another notebook by dragging its tab, you
+should first move out of the tab area (vertically in general), and then
+anywhere in GPS. That's to distinguish between the mode where you want to
+reorder tabs and the mode where you want to move windows.
+
 While you keep the mouse button pressed, and move the mouse around, the
 selected drop area is highlighted with a dashed border. This shows precisely
 where the window would be put if you were to release the mouse button at
@@ -1680,6 +1691,53 @@ If you maintain the @key{control} key pressed while dropping the window,
 all the windows that were in the same notebook are moved, instead of the
 single one you selected. This is the fastest way to move a group of windows
 to a new location, instead of moving them one by one.
+
+@c --------------------------------------------------------------------
+@node Perspectives
+@section Perspectives
+@cindex perspectives
+@c --------------------------------------------------------------------
+@noindent
+
+GPS supports the concept of perspectives. These are activity-specific
+desktops, each with their own set of windows, but sharing some common
+windows like the editors.
+
+Depending on the activity you want to perform (debugging, version control,...)
+you could switch to another perspective. For instance, in the context of the
+debugger, the new perspective would by default contain the call stack window,
+the data window, the debugger consoles,@dots{} each at your favorite location.
+Whenever the debug starts, you therefore do not have to open these windows
+again.
+
+The perspectives have names, and you switch perspectives by selecting the
+menu /Window/Perspectives/. You can also create a new perspective by
+selecting the menu /Window/Perspectives/Create New.
+
+GPS will sometimes automatically change perspectives. For instance, if you
+start a debugger, it will switch to the perspective called "Debug" (if it
+exists). When the debugger terminates, you are switched back to the
+"Default" perspective (again, if it exists).
+
+When you leave a perspective, GPS automatically saves its contents (which
+windows are opened, their location,@dots{}), so that when you are going back
+to the same perspective you find the same layout.
+
+Likewise, when GPS exits, it will save the layout of all perspectives into
+a file called @file{perspectives.xml}, so that it can restore them when you
+restart GPS. This behavior is controlled by the "Save desktop on exit"
+preference, and can be disabled.
+
+One of the difficulties in working with perspectives is knowing which
+windows will be preserved when you switch to another perspective, and which
+windows will be hidden. There is a central area where all preserved windows
+are found. Typically, it only contains editors (including if you have spit
+them side by side for instance). If you drag and drop another window on top
+or to the sides of an editor, that window will be preserved when changing
+perspectives, unless it was already found elsewhere in the new perspective.
+The small tooltip that appears on the screen while you drag and drop will
+tell you whether the window (if dropped at the current location) will be
+visible in other perspectives or not.
 
 @c --------------------------------------------------------------------
 @node Editing Files
