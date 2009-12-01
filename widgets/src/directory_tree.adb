@@ -315,6 +315,7 @@ package body Directory_Tree is
    begin
       Get_Cursor (Tree.File_Tree, Path, Col);
       Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+      Path_Free (Path);
    end On_Tree_Size_Allocate;
 
    ------------------------
