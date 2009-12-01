@@ -1731,7 +1731,7 @@ preference, and can be disabled.
 One of the difficulties in working with perspectives is knowing which
 windows will be preserved when you switch to another perspective, and which
 windows will be hidden. There is a central area where all preserved windows
-are found. Typically, it only contains editors (including if you have spit
+are found. Typically, it only contains editors (including if you have split
 them side by side for instance). If you drag and drop another window on top
 or to the sides of an editor, that window will be preserved when changing
 perspectives, unless it was already found elsewhere in the new perspective.
