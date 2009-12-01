@@ -9037,7 +9037,7 @@ package Compiler is
 
  otherwise if you build with gprbuild, you will get warning messages. Another
  alternative is to specify @code{gnatmake} in the Preferences dialog as the
- mutli-language builder.
+ multi-language builder.
 
 @item Similarly, you may want to optionally click the Source Dirs tab and
 enable @code{Include Subdirectories} so that VCG and SIV files are displayed in
