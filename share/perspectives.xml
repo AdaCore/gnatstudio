@@ -2,14 +2,14 @@
 <GPS>
   <perspectives >
     <perspective name="Default" >
-      <Pane Orientation="ORIENTATION_HORIZONTAL" >
-        <Pane Orientation="ORIENTATION_VERTICAL" >
-          <Notebook Tabs="POS_BOTTOM" height=" 16%" width=" 32%" >
+      <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL" >
+        <Pane width=" 20%" Orientation="ORIENTATION_VERTICAL" >
+          <Notebook height=" 20%" Tabs="POS_BOTTOM" >
             <Child Raised="True" Group=" 106" State="NORMAL" >
               <Scenario_View />
             </Child>
           </Notebook>
-          <Notebook Tabs="POS_BOTTOM" height=" 66%" width=" 32%" >
+          <Notebook height=" 80%" Tabs="POS_BOTTOM" >
             <Child Raised="True" Group=" 106" State="NORMAL" >
               <Project_Explorer_Project />
             </Child>
@@ -18,9 +18,9 @@
             </Child>
           </Notebook>
         </Pane>
-        <Pane Orientation="ORIENTATION_VERTICAL" >
-          <central height=" 55%" width=" 66%"  />
-          <Notebook Tabs="POS_BOTTOM" height=" 27%" width=" 66%" >
+        <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL" >
+          <central height=" 80%"  />
+          <Notebook height=" 20%" Tabs="POS_BOTTOM" >
             <Child Raised="True" Group=" 107" State="NORMAL" >
               <Message_Window />
             </Child>
@@ -30,21 +30,21 @@
     </perspective>
     <perspective name="Debug" >
       <Pane Orientation="ORIENTATION_HORIZONTAL" >
-        <Pane Orientation="ORIENTATION_VERTICAL" >
-          <Notebook height="80%" width="33%" >
+        <Pane width=" 20%" Orientation="ORIENTATION_VERTICAL" >
+          <Notebook height=" 20%" >
             <Child Raised="True" Group=" 106" State="NORMAL" >
               <Vsearch  />
             </Child>
           </Notebook>
-          <Notebook height="20%" width="33%" >
+          <Notebook height="80%" >
             <Child Raised="True" Group=" 106" State="NORMAL" >
               <Project_Explorer_Project  />
             </Child>
           </Notebook>
         </Pane>
-        <Pane Orientation="ORIENTATION_VERTICAL" >
-          <central height="67%" width="67%"  />
-          <Notebook height="33%" width="67%" >
+        <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL" >
+          <central height=" 80%"  />
+          <Notebook height=" 20%" >
             <Child Raised="True" Group=" 107" State="NORMAL" >
               <Message_Window  />
             </Child>
@@ -54,7 +54,7 @@
     </perspective>
   </perspectives>
   <desktops>
-    <desktop perspective="Default" state=" 0" y=" 577" x=" 2716" height=" 600" width=" 800" >
+    <desktop perspective="Default" state=" 0" height=" 600" width=" 800" >
     </desktop>
   </desktops>
 </GPS>
