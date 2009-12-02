@@ -2014,12 +2014,33 @@ package body Codefix.Text_Manager is
    -----------------------
 
    function Get_Matching_Word
-     (Word : Word_Cursor; Text : Text_Navigator_Abstr'Class) return String
+     (Word  : Word_Cursor;
+      Text  : Text_Navigator_Abstr'Class;
+      Check : Boolean := False) return String
    is
    begin
       case Word.Mode is
          when Text_Ascii =>
-            return Word.String_Match.all;
+            if not Check then
+               return Word.String_Match.all;
+            end if;
+            declare
+               Str_Parsed : constant String := Text.Get_Line (Word);
+            begin
+               if Str_Parsed'Length < Word.String_Match.all'Length or else
+                 Str_Parsed
+                   (Str_Parsed'First ..
+                        Str_Parsed'First + Word.String_Match.all'Length - 1)
+                     /= Word.String_Match.all
+               then
+                  raise Codefix_Panic with "string '"
+                    & Word.String_Match.all
+                    & "' in '"
+                    & Str_Parsed & "' can't be found";
+               else
+                  return Word.String_Match.all;
+               end if;
+            end;
          when Regular_Expression =>
             declare
                Matches    : Match_Array (0 .. 1);
@@ -2036,8 +2057,8 @@ package body Codefix.Text_Manager is
                if Matches (0) = No_Match then
                   raise Codefix_Panic with "pattern '"
                     & Word.String_Match.all
-                    & " in '"
-                    & Word.String_Match.all & "' can't be found";
+                    & "' in '"
+                    & Str_Parsed & "' can't be found";
                else
                   return Str_Parsed (Matches (1).First .. Matches (1).Last);
                end if;

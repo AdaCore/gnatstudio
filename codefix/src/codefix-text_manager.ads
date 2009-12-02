@@ -146,9 +146,13 @@ package Codefix.Text_Manager is
    --  Return the word currently stored by the cursor, "" if none
 
    function Get_Matching_Word
-     (Word : Word_Cursor; Text : Text_Navigator_Abstr'Class) return String;
+     (Word  : Word_Cursor;
+      Text  : Text_Navigator_Abstr'Class;
+      Check : Boolean := False) return String;
    --  Return the word matching the cursor given in parameter, if the mode
    --  of the word is regular expression. Otherwise, just return the word.
+   --  If Check is True, then check the presence of Word in Text even for plain
+   --  text.
 
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark

@@ -131,7 +131,8 @@ package body Codefix.Text_Manager.Commands is
       Make_Word_Cursor (This.Word, Current_Text, Word);
 
       Current_Text.Replace
-        (Word, Word.Get_Matching_Word (Current_Text)'Length, "");
+        (Word,
+         Word.Get_Matching_Word (Current_Text, Check => True)'Length, "");
 
       if Current_Text.Get_Line (Word, 1) = "" then
          Current_Text.Delete_Line (Word);
