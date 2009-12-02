@@ -153,7 +153,8 @@ package Codefix.Formal_Errors is
       Message           : File_Cursor'Class;
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii) return Solution_List;
-   --  Delete the unexpected string
+   --  Delete the unexpected string. The Mode parameter discriminates between
+   --  plain strings (the default) and strings given as regular expressions.
 
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
