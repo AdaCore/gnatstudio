@@ -41,7 +41,8 @@ with Codefix.Error_Lists;       use Codefix.Error_Lists;
 with Codefix.GPS_Io;            use Codefix.GPS_Io;
 with Codefix.Text_Manager;      use Codefix.Text_Manager;
 with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
-with Codefix.GNAT_Parser;       use Codefix.GNAT_Parser;
+with Codefix.GNAT_Parser;
+with Codefix.SPARK_Parser;
 with Commands.Codefix;          use Commands.Codefix;
 with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
@@ -754,6 +755,9 @@ package body Codefix_Module is
       Register_Preferences (Kernel);
 
       Codefix.GNAT_Parser.Register_Parsers
+        (Codefix_Module_ID.Codefix_Processor);
+
+      Codefix.SPARK_Parser.Register_Parsers
         (Codefix_Module_ID.Codefix_Processor);
 
       Initialize_Parsers (Codefix_Module_ID.Codefix_Processor);
