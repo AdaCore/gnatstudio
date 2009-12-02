@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                Copyright (C) 2006-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +27,7 @@ package Language.Documentation is
       Decl_Index    : Natural;
       Comment_Start : out Natural;
       Comment_End   : out Natural;
+      Allow_Blanks  : Boolean := False;
       Debug         : Debug_Handle := null);
    procedure Get_Documentation_After
      (Context       : Language_Context;
@@ -38,5 +38,7 @@ package Language.Documentation is
       Debug         : Debug_Handle := null);
    --  Get the comment just before or just after Decl_Index, skipping code
    --  lines as needed.
+   --  If Allow_Blanks is True, then skip blank lines before looking for
+   --  comments.
 
 end Language.Documentation;

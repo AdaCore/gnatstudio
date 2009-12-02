@@ -1096,24 +1096,31 @@ package body Language is
    ------------------------------------
 
    procedure Skip_To_Previous_Comment_Start
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural)
+     (Context      : Language_Context;
+      Buffer       : String;
+      Index        : in out Natural;
+      Allow_Blanks : Boolean := False)
    is
       Lines_Skipped : Natural;
+      No_Blanks     : Boolean := not Allow_Blanks;
    begin
       loop
          Skip_Lines (Buffer, -1, Index, Lines_Skipped);
 
-         exit when Lines_Skipped /= 1 or else Is_Blank_Line (Buffer, Index);
+         exit when Lines_Skipped /= 1;
 
-         Skip_Blanks (Buffer, Index);
+         if Is_Blank_Line (Buffer, Index) then
+            exit when No_Blanks;
+         else
+            No_Blanks := True;
+            Skip_Blanks (Buffer, Index);
 
-         if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
-           No_Comment
-         then
-            Skip_To_Current_Comment_Block_Start (Context, Buffer, Index);
-            return;
+            if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
+              No_Comment
+            then
+               Skip_To_Current_Comment_Block_Start (Context, Buffer, Index);
+               return;
+            end if;
          end if;
       end loop;
 

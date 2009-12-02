@@ -284,11 +284,12 @@ package Language is
    --  Likewise if no comment is found before the end of the buffer.
 
    procedure Skip_To_Previous_Comment_Start
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural);
+     (Context      : Language_Context;
+      Buffer       : String;
+      Index        : in out Natural;
+      Allow_Blanks : Boolean := False);
    --  Skip lines of code (backward) until we find the start of a comment.
-   --  If  we see an empty line first Index is set to 0.
+   --  If we see an empty line first Index is set to 0, unless Allow_Blanks.
    --  Likewise if no comment is found before the beginning of the buffer.
 
    ----------------------

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2006                        --
---                              AdaCore                              --
+--                Copyright (C) 2006-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,13 +31,15 @@ package body Language.Documentation is
       Decl_Index    : Natural;
       Comment_Start : out Natural;
       Comment_End   : out Natural;
+      Allow_Blanks  : Boolean := False;
       Debug         : Debug_Handle := null)
    is
       Current : Integer;
    begin
       Current := Decl_Index;
       Comment_Start := Current;
-      Skip_To_Previous_Comment_Start (Context, Buffer, Comment_Start);
+      Skip_To_Previous_Comment_Start
+        (Context, Buffer, Comment_Start, Allow_Blanks);
 
       if Comment_Start /= 0 then
          Comment_End := Comment_Start;
