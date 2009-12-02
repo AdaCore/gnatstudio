@@ -236,36 +236,52 @@ class gnatMakeProc:
           self.style_checks_analysis = False
 
         elif self.warnings_analysis:
-          res = re.split ("^ *([^ *]+)([*]?) +(.+) *$", line)
+          res = re.split ("^ *([^ *+]+)([*]?)([+]?) +(.+) *$", line)
+          i_sw = 1
+          i_star = 2
+          i_plus = 3
+          i_desc = 4
           if len (res) > 2:
-            if res[1] == "a":
+            if res[i_sw] == "a":
               # retrieve the list of warnings not activated by -gnatwa
-              exception = re.split ("\(except ([a-zA-Z. ]*)\) *$", res[3])
-              self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1]+".e")
-              self.warnings_list.append (Warning (res[1], res[3], False, True))
-            elif res[1] == "e" or res[1] == ".e" or res[1] == "s":
+              # Note that this is not used anymore with recent GNAT version:
+              # the all_warnings_exception_list is now determined by '+' sign
+              # after the switch definition
+              exception = re.split ("\(except ([a-zA-Z. ]*)\) *$", res[i_desc])
+              if len (exception) > 1:
+                self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1]+".e")
+              self.warnings_list.append (Warning (res[i_sw], res[i_desc], False, True))
+
+            elif res[i_sw] == "e" or res[i_sw] == ".e" or res[i_sw] == "s":
               # include the global switches directly.
-              self.warnings_list.append (Warning (res[1], res[3], False, True))
+              self.warnings_list.append (Warning (res[i_sw], res[i_desc], False, True))
 
             # include only on warnings, and a limited list of global warnings (gnatwa, gnatws, gnatw.e)
-            if not re.search ("turn off", res[3]) and not re.search ("(all|every)", res[3]) and not re.search ("^normal warning", res[3]):
-              is_alias_part = False
-              # switches activated by default are not part of gnatwa
-              if res[2] != "*":
-                if re.search ("turn on", res[3]):
-                  # part of gnatwa, unless explicitely part of the gnatwa exception list
-                  # search if warning is not part of gnatwa
-                  is_alias_part = True
-                  for ex in self.all_warnings_exception_list:
-                    if ex == res[1]:
-                      is_alias_part = False
-                      break
-                else:
+            elif not re.search ("turn off", res[i_desc]) and not re.search ("(all|every)", res[i_desc]) and not re.search ("^normal warning", res[i_desc]):
+              # two ways to determine if the switch is part of gnatwa or not:
+              # the old way used the gnatwa exception list, that was part of
+              # the -gnatwa description, while we now use with recent gnat
+              # versions the '+' sign after the switch description
+              if len (self.all_warnings_exception_list) == 0:
+                is_alias_part = (res[i_plus] == "+")
+              else:
+                is_alias_part = False
+                # switches activated by default are not part of gnatwa
+                if res[i_star] == "*":
                   is_alias_part = False
+                else:
+                  if re.search ("turn on", res[i_desc]):
+                    # part of gnatwa, unless explicitely part of the gnatwa exception list
+                    # search if warning is not part of gnatwa
+                    is_alias_part = True
+                    for ex in self.all_warnings_exception_list:
+                      if ex == res[i_sw]:
+                        is_alias_part = False
+                        break
 
               # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
               # remove the 'turn on' in the description
-              warn = Warning (res[1], res[3], res[2] == "*")
+              warn = Warning (res[i_sw], res[i_desc], res[i_star] == "*")
               if is_alias_part:
                  warn.Add_Default_Val_Dependency ("-gnatwa", True);
               warn.Add_Default_Val_Dependency ("-gnatw.e", True);
