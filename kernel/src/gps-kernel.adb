@@ -984,49 +984,42 @@ package body GPS.Kernel is
             end if;
          end if;
 
-         if Node = null then
-            Trace (Me, "No desktop to load");
-            Set_Default_Size (Main_Window, 800, 600);
-            Show_All (Get_Child (Main_Window));
-            return False;
-         end if;
+         if Node /= null then
+            Child := Node.Child;
 
-         Child := Node.Child;
+            while Child /= null loop
+               if Child.Tag /= null then
+                  if Child.Tag.all = "perspectives" then
+                     Perspectives := Child;
 
-         while Child /= null loop
-            if Child.Tag /= null then
-               if Child.Tag.all = "perspectives" then
-                  Perspectives := Child;
+                  elsif Child.Tag.all = "desktops" then
+                     Tmp := Child.Child;
+                     while Tmp /= null loop
+                        if Tmp.Tag.all = "desktop" then
+                           Project_From_Node :=
+                             Get_File_Child (Tmp, "project");
 
-               elsif Child.Tag.all = "desktops" then
-                  Tmp := Child.Child;
-                  while Tmp /= null loop
-                     if Tmp.Tag.all = "desktop" then
-                        Project_From_Node :=
-                          Get_File_Child (Tmp, "project");
+                           if Project_From_Node = GNATCOLL.VFS.No_File then
+                              Default_Desktop_Node := Tmp;
 
-                        if Project_From_Node = GNATCOLL.VFS.No_File then
-                           Default_Desktop_Node := Tmp;
-
-                        elsif Project_From_Node = Project_Name then
-                           Desktop_Node := Tmp;
+                           elsif Project_From_Node = Project_Name then
+                              Desktop_Node := Tmp;
+                           end if;
                         end if;
-                     end if;
 
-                     Tmp := Tmp.Next;
-                  end loop;
+                        Tmp := Tmp.Next;
+                     end loop;
+                  end if;
                end if;
-            end if;
 
-            Child := Child.Next;
-         end loop;
+               Child := Child.Next;
+            end loop;
+         end if;
 
          --  Call Show_All before restoring the desktop, in case some
          --  children stored in the desktop have something to hide.
 
          Show_All (Get_Child (Main_Window));
-
-         Success_Loading_Desktop := False;
 
          if Desktop_Node = null then
             Trace (Me, "loading default desktop (from file)");
@@ -1036,13 +1029,20 @@ package body GPS.Kernel is
                    Project_Name.Display_Full_Name);
          end if;
 
-         if Desktop_Node /= null then
-            Success_Loading_Desktop :=
-              Kernel_Desktop.Restore_Desktop
-                (MDI,
-                 Perspectives => XML_Utils.GtkAda.Convert (Perspectives),
-                 From_Tree    => XML_Utils.GtkAda.Convert (Desktop_Node),
-                 User         => Kernel_Handle (Handle));
+         Success_Loading_Desktop :=
+           Kernel_Desktop.Restore_Desktop
+             (MDI,
+              Perspectives => XML_Utils.GtkAda.Convert (Perspectives),
+              From_Tree    => XML_Utils.GtkAda.Convert (Desktop_Node),
+              User         => Kernel_Handle (Handle));
+
+         if Node = null then
+            --  This needs to be called after calling Restore_Desktop so that
+            --  the MDI could create a minimal environment
+            Trace (Me, "No desktop to load");
+            Set_Default_Size (Main_Window, 800, 600);
+            Show_All (Get_Child (Main_Window));
+            return False;
          end if;
 
          Free (Node);
