@@ -975,7 +975,8 @@ package body GPS.Kernel is
          end if;
 
          if Node = null and then Is_Regular_File (Predefined_Desktop) then
-            Trace (Me, "loading predefined desktop");
+            Trace (Me, "loading predefined desktop "
+                   & Predefined_Desktop.Display_Full_Name);
             Is_Default_Desktop := True;
             XML_Parsers.Parse (Predefined_Desktop, Node, Err);
             if Node = null then
@@ -1014,6 +1015,9 @@ package body GPS.Kernel is
 
                Child := Child.Next;
             end loop;
+         else
+            Desktop_Node := null;
+            Default_Desktop_Node := null;
          end if;
 
          --  Call Show_All before restoring the desktop, in case some
@@ -1022,11 +1026,11 @@ package body GPS.Kernel is
          Show_All (Get_Child (Main_Window));
 
          if Desktop_Node = null then
-            Trace (Me, "loading default desktop (from file)");
+            Trace (Me, "loading default desktop");
             Desktop_Node := Default_Desktop_Node;
          else
-            Trace (Me, "loading desktop for " &
-                   Project_Name.Display_Full_Name);
+            Trace (Me, "loading desktop for "
+                   & Project_Name.Display_Full_Name);
          end if;
 
          Success_Loading_Desktop :=
