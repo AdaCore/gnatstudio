@@ -210,24 +210,20 @@ package body Doc_Utils is
 
       --  If not found, check the comment just before the body
 
-      if Beginning = 0  then
-         if Chars_Buffer /= Null_Ptr then
-            Free (Chars_Buffer);
-            Chars_Buffer := Null_Ptr;
-            Buffer := null;
-         end if;
-
+      if Beginning = 0 then
          Find_Next_Body (Entity, Location => Location);
 
-         if Location /= No_File_Location
-           and then Location /= Get_Declaration_Of (Entity)
-         then
-            declare
-               Tmp_Buffer : GNAT.Strings.String_Access;
-            begin
+         if Location /= No_File_Location then
+            if Get_Filename (Location.File) /= Declaration_File then
+               if Chars_Buffer /= Null_Ptr then
+                  Free (Chars_Buffer);
+               end if;
+
                Tmp_Buffer := Read_File (Get_Filename (Location.File));
 
-               if Tmp_Buffer /= null then
+               if Tmp_Buffer = null then
+                  return "";
+               else
                   Chars_Buffer := Glib.Convert.Convert
                     (Str          => Tmp_Buffer.all,
                      To_Codeset   => "UTF-8",
@@ -240,26 +236,28 @@ package body Doc_Utils is
                   if Chars_Buffer = Null_Ptr then
                      return "";
                   end if;
-
-                  Buffer := To_Unchecked_String (Chars_Buffer);
-
-                  Index := 1;
-
-                  Skip_Lines
-                    (Buffer (1 .. Buffer_Len), Location.Line - 1, Index,
-                     Lines_Skipped);
-
-                  if Lines_Skipped = Location.Line - 1 then
-                     Get_Documentation_Before
-                       (Context       => Context.all,
-                        Buffer        => Buffer (1 .. Buffer_Len),
-                        Decl_Index    => Index,
-                        Comment_Start => Beginning,
-                        Comment_End   => Current,
-                        Debug         => Me);
-                  end if;
                end if;
-            end;
+
+               Buffer := To_Unchecked_String (Chars_Buffer);
+            end if;
+
+            Index := 1;
+            Skip_Lines
+              (Buffer (1 .. Buffer_Len), Location.Line - 1, Index,
+               Lines_Skipped);
+
+            if Lines_Skipped = Location.Line - 1 then
+               --  Allow blank lines before a body, which is common
+               --  for e.g. C/C++
+               Get_Documentation_Before
+                 (Context       => Context.all,
+                  Buffer        => Buffer (1 .. Buffer_Len),
+                  Decl_Index    => Index,
+                  Comment_Start => Beginning,
+                  Comment_End   => Current,
+                  Allow_Blanks  => True,
+                  Debug         => Me);
+            end if;
          end if;
       end if;
 
@@ -274,8 +272,6 @@ package body Doc_Utils is
          begin
             if Chars_Buffer /= Null_Ptr then
                Free (Chars_Buffer);
-               Chars_Buffer := Null_Ptr;
-               Buffer := null;
             end if;
 
             return Result;
@@ -283,8 +279,6 @@ package body Doc_Utils is
       else
          if Chars_Buffer /= Null_Ptr then
             Free (Chars_Buffer);
-            Chars_Buffer := Null_Ptr;
-            Buffer := null;
          end if;
 
          return "";
