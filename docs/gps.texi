@@ -4146,9 +4146,9 @@ Default column is selected). This means that if the environment
 variable doesn't exist when GPS is started, GPS will behave as if it
 did exist with this default value.
 
-The list of possible values can be edited through the @code{Remove},
-@code{Add} and @code{Rename} buttons, although you can also simply
-click on the value itself to change it.
+The list of possible values can be edited by right-clicking on the name
+of the variable, and selecting one of @code{Edit properties} or
+@code{Delete variable}.
 
 @subsection Editing existing configuration variables
 @cindex editing configuration variable

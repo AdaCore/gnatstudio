@@ -350,10 +350,6 @@ package body Aliases_Module is
       Event  : Gdk_Event) return Gtk_Menu;
    --  Create the contextual menu for the expansion edition area
 
-   procedure Contextual_Destroy
-     (Widget : access Gtk_Widget_Record'Class; Menu : Gtk_Menu);
-   --  Destroy the contextual menu area for the expansion edition zone
-
    procedure Insert_Special (Item : access Gtk_Widget_Record'Class);
    --  Insert the special entity associated with Item
 
@@ -1656,21 +1652,6 @@ package body Aliases_Module is
          return Menu;
    end Contextual_Factory;
 
-   ------------------------
-   -- Contextual_Destroy --
-   ------------------------
-
-   procedure Contextual_Destroy
-     (Widget : access Gtk_Widget_Record'Class; Menu : Gtk_Menu)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Destroy (Menu);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Contextual_Destroy;
-
    ----------------------------
    -- Show_Read_Only_Toggled --
    ----------------------------
@@ -1857,8 +1838,7 @@ package body Aliases_Module is
 
       Register_Contextual_Menu
         (Widget       => Editor.Expansion,
-         Menu_Create  => Contextual_Factory'Access,
-         Menu_Destroy => Contextual_Destroy'Access);
+         Menu_Create  => Contextual_Factory'Access);
 
       Widget_Callback.Object_Connect
         (Expansion_Buffer, Gtk.Text_Buffer.Signal_Insert_Text,

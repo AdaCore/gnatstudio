@@ -482,8 +482,9 @@ package body GUI_Utils is
 
    procedure Register_Contextual_Menu
      (Widget       : access Gtk_Widget_Record'Class;
-      Menu_Create  : Contextual_Menu_Create  := null;
-      Menu_Destroy : Contextual_Menu_Destroy := null) is
+      Menu_Create  : Contextual_Menu_Create;
+      Menu_Destroy : Contextual_Menu_Destroy :=
+        Default_Menu_Destroy'Access) is
    begin
       --  If the widget doesn't have a window, it might not work. But then, if
       --  the children have windows and do not handle the event, this might get
@@ -527,6 +528,19 @@ package body GUI_Utils is
       function Unmap_User_Menu
         (Menu : access Gtk_Widget_Record'Class;
          User : Callback_User_Data) return Boolean;
+
+      --------------------------
+      -- Default_Menu_Destroy --
+      --------------------------
+
+      procedure Default_Menu_Destroy
+        (User : User_Data;
+         Menu : Gtk_Menu)
+      is
+         pragma Unreferenced (User);
+      begin
+         Destroy (Menu);
+      end Default_Menu_Destroy;
 
       ---------------------
       -- Unmap_User_Menu --
@@ -649,8 +663,9 @@ package body GUI_Utils is
       procedure Register_Contextual_Menu
         (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
          User         : User_Data;
-         Menu_Create  : Contextual_Menu_Create := null;
-         Menu_Destroy : Contextual_Menu_Destroy := null) is
+         Menu_Create  : Contextual_Menu_Create;
+         Menu_Destroy : Contextual_Menu_Destroy :=
+           Default_Menu_Destroy'Access) is
       begin
          if not No_Window_Is_Set (Widget) then
             Add_Events
@@ -2017,5 +2032,21 @@ package body GUI_Utils is
          return D & '/';
       end if;
    end Format;
+
+   --------------------------
+   -- Default_Menu_Destroy --
+   --------------------------
+
+   procedure Default_Menu_Destroy
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Menu   : Gtk.Menu.Gtk_Menu)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Destroy (Menu);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Default_Menu_Destroy;
 
 end GUI_Utils;

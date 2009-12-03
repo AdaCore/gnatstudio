@@ -187,10 +187,6 @@ package body GPS.Kernel.Modules is
    --  Create a contextual menu as a result of a mouse event
    --  Return null if no menu was created.
 
-   procedure Destroy_Contextual_Menu
-     (User : Contextual_Menu_User_Data; Menu : Gtk_Menu);
-   --  Destroy the contextual menu that was created before
-
    type Interactive_Action is record
       Kernel  : Kernel_Handle;
       Command : Interactive_Command_Access;
@@ -1138,19 +1134,6 @@ package body GPS.Kernel.Modules is
          return null;
    end Create_Contextual_Menu;
 
-   -----------------------------
-   -- Destroy_Contextual_Menu --
-   -----------------------------
-
-   procedure Destroy_Contextual_Menu
-     (User : Contextual_Menu_User_Data;
-      Menu : Gtk_Menu)
-   is
-      pragma Unreferenced (User);
-   begin
-      Destroy (Menu);
-   end Destroy_Contextual_Menu;
-
    ------------------------------
    -- Register_Contextual_Menu --
    ------------------------------
@@ -1176,8 +1159,7 @@ package body GPS.Kernel.Modules is
       Kernel_Contextuals.Register_Contextual_Menu
         (Event_On_Widget,
          User_Data,
-         Menu_Create  => Create_Contextual_Menu'Access,
-         Menu_Destroy => Destroy_Contextual_Menu'Access);
+         Menu_Create  => Create_Contextual_Menu'Access);
    end Register_Contextual_Menu;
 
    --------------------
