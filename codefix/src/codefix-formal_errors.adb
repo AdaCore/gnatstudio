@@ -283,8 +283,8 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : File_Cursor'Class;
       Str_Expected : String;
-      Str_Red      : String := "";
-      Format_Red   : String_Mode := Text_Ascii;
+      Str_Read     : String := "";
+      Format_Read  : String_Mode := Text_Ascii;
       Caption      : String := "") return Solution_List
    is
       Result          : Solution_List;
@@ -296,14 +296,14 @@ package body Codefix.Formal_Errors is
       Set_File (Old_Word, Get_File (Message));
       Set_Location (Old_Word, Get_Line (Message), Get_Column (Message));
 
-      if Str_Red /= "" then
-         Set_Word (Old_Word, String_Match => Str_Red, Mode => Format_Red);
+      if Str_Read /= "" then
+         Set_Word (Old_Word, String_Match => Str_Read, Mode => Format_Read);
 
          if Caption = "" then
-            if Format_Red = Text_Ascii then
+            if Format_Read = Text_Ascii then
                Set_Caption
                  (New_Command,
-                  "Replace """ & Str_Red & """ by """ & Str_Expected & """");
+                  "Replace """ & Str_Read & """ by """ & Str_Expected & """");
             else
                Set_Caption
                  (New_Command,

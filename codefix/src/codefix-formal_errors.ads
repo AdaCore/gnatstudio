@@ -123,11 +123,11 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : File_Cursor'Class;
       Str_Expected : String;
-      Str_Red      : String := "";
-      Format_Red   : String_Mode := Text_Ascii;
+      Str_Read     : String := "";
+      Format_Read  : String_Mode := Text_Ascii;
       Caption      : String := "") return Solution_List;
-   --  This fonction replace Str_Red by Str_Expected in the current text by
-   --  the position specified in the Message. If there is no Str_Red, it
+   --  This fonction replace Str_Read by Str_Expected in the current text by
+   --  the position specified in the Message. If there is no Str_Read, it
    --  looks for the first word in the position.
 
    function Wrong_Order
