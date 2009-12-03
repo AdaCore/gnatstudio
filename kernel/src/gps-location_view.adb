@@ -1968,9 +1968,11 @@ package body GPS.Location_View is
             View.Filter_Panel.Show;
             View.Filter_Panel.Set_Pattern
               (Get_Attribute (Node, "filter_pattern", ""));
+            Set_Child_Visible (View.Filter_Panel, True);
 
          else
             View.Filter_Panel.Hide;
+            Set_Child_Visible (View.Filter_Panel, False);
          end if;
 
          View.Filter_Panel.Set_Is_Regexp
@@ -2565,9 +2567,11 @@ package body GPS.Location_View is
 
    begin
       if Self.Filter_Panel.Mapped_Is_Set then
+         Set_Child_Visible (Self.Filter_Panel, False);
          Self.Filter_Panel.Hide;
 
       else
+         Set_Child_Visible (Self.Filter_Panel, True);
          Self.Filter_Panel.Show;
       end if;
    end On_Filter_Panel_Activated;
