@@ -1690,7 +1690,7 @@ package body Entities is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid End_Of_Scope");
 
-      --  In End_Of_Scope is currently the spec, save this in the standard list
+      --  If End_Of_Scope is currently the spec, save this in the standard list
       --  of references
       if Entity.End_Of_Scope /= No_E_Reference
         and then (Entity.End_Of_Scope.Location /= Location
