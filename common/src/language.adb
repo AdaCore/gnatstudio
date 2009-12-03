@@ -1101,8 +1101,9 @@ package body Language is
       Index        : in out Natural;
       Allow_Blanks : Boolean := False)
    is
-      Lines_Skipped : Natural;
-      No_Blanks     : Boolean := not Allow_Blanks;
+      Lines_Skipped   : Natural;
+      No_Blanks       : Boolean := not Allow_Blanks;
+      Non_Blank_Found : Boolean := False;
    begin
       loop
          Skip_Lines (Buffer, -1, Index, Lines_Skipped);
@@ -1112,7 +1113,13 @@ package body Language is
          if Is_Blank_Line (Buffer, Index) then
             exit when No_Blanks;
          else
-            No_Blanks := True;
+            if Non_Blank_Found then
+               --  No longer allow blank lines after a first non blank one
+               No_Blanks := True;
+            else
+               Non_Blank_Found := True;
+            end if;
+
             Skip_Blanks (Buffer, Index);
 
             if Looking_At_Start_Of_Comment (Context, Buffer, Index) /=
