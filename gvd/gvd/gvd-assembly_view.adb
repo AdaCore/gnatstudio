@@ -147,7 +147,7 @@ package body GVD.Assembly_View is
 
    package Simple_Views is new Scrolled_Views.Simple_Views
      (Module_Name        => "Assembly_View",
-      View_Name          => -"Assembly View",
+      View_Name          => -"Assembly",
       Formal_View_Record => Assembly_View_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,

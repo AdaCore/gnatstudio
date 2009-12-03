@@ -307,7 +307,7 @@ package body Completion_Module is
                Group => Group_Consoles,
                Focus_Widget => Gtk_Widget (Get_Entry (Explorer)),
                Module => Completion_Module);
-      Set_Title (Child, -"Entity View", -"Entity View");
+      Set_Title (Child, -"Entities", -"Entities");
       Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 
       return MDI_Child (Child);

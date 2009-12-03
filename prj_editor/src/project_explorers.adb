@@ -2333,7 +2333,7 @@ package body Project_Explorers is
                      Focus_Widget   => Gtk_Widget (Explorer.Tree),
                      Group          => Group_View,
                      Module         => Explorer_Module_ID);
-         Set_Title (C2, -"Project View",  -"Project View");
+         Set_Title (C2, -"Project",  -"Project");
          Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
 
          Set_Focus_Child (C2);

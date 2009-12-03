@@ -1362,7 +1362,7 @@ package body Project_Explorers_Files is
                      Default_Height => 600,
                      Group          => Group_View,
                      Module         => Explorer_Files_Module_Id);
-         Set_Title (C2, -"File View",  -"File View");
+         Set_Title (C2, -"Files",  -"Files");
          Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
          Child := MDI_Child (C2);
       end if;

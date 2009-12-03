@@ -650,7 +650,7 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-Select the window titled "Scenario View".  If not available, you can open it
+Select the window titled "Scenario".  If not available, you can open it
 using the menu @code{Tools->Views->Scenario}.
 This window contains a @code{Build} label.
 

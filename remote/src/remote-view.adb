@@ -510,7 +510,7 @@ package body Remote.View is
                Default_Width => 215,
                Group         => Group_View,
                Module        => Module);
-      Set_Title (Child, -"Remote View", -"Remote View");
+      Set_Title (Child, -"Remote", -"Remote");
       Put (Get_MDI (User), Child, Initial_Position => Position_Left);
       return MDI_Child (Child);
    end Load_Desktop;
@@ -1106,7 +1106,7 @@ package body Remote.View is
                   Default_Width => 215,
                   Group         => Group_View,
                   Module        => Module);
-         Set_Title (Child, -"Remote View", -"Remote View");
+         Set_Title (Child, -"Remote", -"Remote");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
       end if;
 

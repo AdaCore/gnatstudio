@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -80,7 +80,7 @@ package body Memory_View_Pkg is
 
    begin
       Gtk.Window.Initialize (Memory_View, Window_Toplevel);
-      Set_Title (Memory_View, -"Memory View");
+      Set_Title (Memory_View, -"Memory");
       Set_Policy (Memory_View, True, True, False);
       Set_Position (Memory_View, Win_Pos_None);
       Set_Modal (Memory_View, False);

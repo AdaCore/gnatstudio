@@ -829,7 +829,7 @@ package body Outline_View is
                   Focus_Widget   => Gtk_Widget (Outline.Tree),
                   Group          => Group_View,
                   Module         => Outline_View_Module);
-         Set_Title (Child, -"Outline View", -"Outline View");
+         Set_Title (Child, -"Outline", -"Outline");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
 
          Data := Context_Hooks_Args'
