@@ -48,6 +48,22 @@ package body Codefix.SPARK_Parser is
    --    is both imported and exported'
    --  Fix Semantic Error 321: 'Tilde may not appear in pre-conditions'
 
+   type Misplaced_Tilde_Or_Percent is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Misplaced_Tilde_Or_Percent);
+
+   overriding
+   procedure Fix
+     (This         : Misplaced_Tilde_Or_Percent;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix Semantic Error 320: 'Tilde or Percent may only be applied to an
+   --  entire variable'
+
    ---------------------------------
    -- Unexpected_Tilde_Or_Percent --
    ---------------------------------
@@ -84,6 +100,33 @@ package body Codefix.SPARK_Parser is
         Unexpected (Current_Text, Message, "(~|%)", Regular_Expression);
    end Fix;
 
+   ---------------------------------
+   -- Misplaced_Tilde_Or_Percent --
+   ---------------------------------
+
+   overriding procedure Initialize (This : in out Misplaced_Tilde_Or_Percent)
+   is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+            (Compile ("Tilde or Percent may only be applied to an " &
+                      "entire variable")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Misplaced_Tilde_Or_Percent;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Matches, Options);
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Move_Tilde_Or_Percent (Current_Text, Message);
+   end Fix;
+
    ----------------------
    -- Register_Parsers --
    ----------------------
@@ -91,6 +134,7 @@ package body Codefix.SPARK_Parser is
    procedure Register_Parsers (Processor : in out Fix_Processor) is
    begin
       Add_Parser (Processor, new Unexpected_Tilde_Or_Percent);
+      Add_Parser (Processor, new Misplaced_Tilde_Or_Percent);
    end Register_Parsers;
 
 end Codefix.SPARK_Parser;

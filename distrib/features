@@ -17,9 +17,10 @@ New features on 4.5.0
 
 NF-45-IC01-026 Auto-fix for unexpected tilde or percent in SPARK (2009-12-02)
 
-  Semantic errors 317, 318, 319 and 321 raised by SPARK Examiner complain
-  about an unexpected tilde or percent. An auto-fix for such errors is offered,
-  which consists in removing the offending tilde or percent.
+  Semantic errors 317, 318, 319, 320 and 321 raised by SPARK Examiner complain
+  about an unexpected or misplaced tilde or percent. An auto-fix for such
+  errors is offered, which consists either in removing the offending tilde or
+  percent, or in replacing it correctly.
 
 NF-45-IB20-006 Better fixes for undefined entities (2009-11-20)
 

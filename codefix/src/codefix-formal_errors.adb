@@ -23,6 +23,8 @@ with GNAT.Regpat;                       use GNAT.Regpat;
 
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
+with Codefix.Text_Manager.Spark_Commands;
+                                       use Codefix.Text_Manager.Spark_Commands;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 with Language.Tree.Database;            use Language.Tree.Database;
@@ -1336,6 +1338,26 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Remove_Blank_Lines;
+
+   ---------------------------
+   -- Move_Tilde_Or_Percent --
+   ---------------------------
+
+   function Move_Tilde_Or_Percent
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Move_Tilde_Or_Percent_Cmd;
+      Command     : Move_Tilde_Or_Percent_Cmd renames
+        Move_Tilde_Or_Percent_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Cursor);
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Move_Tilde_Or_Percent;
 
    -------------------------
    -- Is_Style_Or_Warning --

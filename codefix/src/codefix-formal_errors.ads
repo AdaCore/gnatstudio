@@ -116,7 +116,7 @@ package Codefix.Formal_Errors is
    --  Free the memory associated to a Solution_List.
 
    ----------------------------------------------------------------------------
-   --  functions of formal errors
+   --  generic formal errors
    ----------------------------------------------------------------------------
 
    function Should_Be
@@ -243,6 +243,10 @@ package Codefix.Formal_Errors is
       Seek_With     : Boolean) return Solution_List;
    --  Propose to add a use or to prefix the object.
 
+   ----------------------------------------------------------------------------
+   --  Ada specific formal errors
+   ----------------------------------------------------------------------------
+
    function Remove_Extra_Underlines
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List;
@@ -260,6 +264,16 @@ package Codefix.Formal_Errors is
       return Solution_List;
    --  Propose a fix removing all the blank lines starting at the cursor
    --  location.
+
+   ----------------------------------------------------------------------------
+   --  SPARK specific formal errors
+   ----------------------------------------------------------------------------
+
+   function Move_Tilde_Or_Percent
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List;
+   --  Propose a fix moving the misplaced tilde or percent at the cursor
+   --  location to its correct place
 
    overriding function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
