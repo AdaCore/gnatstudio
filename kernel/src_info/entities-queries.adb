@@ -2249,21 +2249,21 @@ package body Entities.Queries is
                Line := Line + 1;
             end if;
 
-            if T.End_Line - 1 <= Info'Last then
-               if Is_Container (Get_Kind (T.Entity).Kind) then
+            if Is_Container (Get_Kind (T.Entity).Kind) then
+               if T.End_Line <= Info'Last then
                   Info (Line .. T.End_Line) := (others => T.Entity);
-                  Line := T.End_Line + 1;
+               end if;
 
-               else
+               Line := T.End_Line + 1;
+            else
+               if T.End_Line - 1 <= Info'Last then
                   if T.End_Line = T.Start_Line then
                      Info (Line) := Enclosing_Entity;
                   else
                      Info (Line .. T.End_Line - 1) := (others => T.Entity);
                   end if;
-                  Line := T.End_Line;
                end if;
 
-            else
                Line := T.End_Line;
             end if;
 
