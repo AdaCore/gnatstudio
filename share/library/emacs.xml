@@ -38,6 +38,7 @@
   <key action="transpose chars">control-t</key>
   <key action="Transpose lines">control-x control-t</key>
   <key action="/File/Save">control-x control-s</key>
+  <key action="/File/Save As..." >control-x control-w</key>
   <key action="goto beginning of line">control-a</key>
   <key action="goto end of line">control-e</key>
   <key action="goto beginning of buffer">alt-less</key>
@@ -107,7 +108,6 @@
   <key action="/Edit/Rectangle/Open">control-x r o</key>
   <key action="/Edit/Rectangle/Replace with Text">control-x r t</key>
 
-  <key action="/Navigate/Find or Replace..." />
   <key action="/Navigate/Find Incremental">control-s</key>
   <key action="/Navigate/Find Previous Incremental">control-r</key>
 </GPS>
