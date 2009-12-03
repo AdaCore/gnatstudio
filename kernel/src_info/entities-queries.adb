@@ -2571,6 +2571,10 @@ package body Entities.Queries is
      (Entity    : Entity_Information;
       Separator : String := ".") return String
    is
+      Max_Level     : constant := 128;
+      --  Limit number of names, to avoid e.g. infinite loop in case of
+      --  incorrect/confusing xref info.
+
       E             : Entity_Information := Entity;
       Last_Not_Null : Entity_Information := Entity;
       Result        : Unbounded_String;
@@ -2579,7 +2583,9 @@ package body Entities.Queries is
       --  For efficiency, build the name in reverse order, to avoid freeing
       --  and allocating many strings, and revert it before exit.
 
-      while E /= null loop
+      for J in 1 .. Max_Level loop
+         exit when E = null;
+
          Append (Result, E.Name.all);
          Compute_Callers_And_Called (E.Declaration.File);
          Last_Not_Null := E;
@@ -2594,7 +2600,7 @@ package body Entities.Queries is
       --  look for possible parent packages.
 
       E := Last_Not_Null;
-      loop
+      for J in 1 .. Max_Level loop
          E := Get_Parent_Package (E);
          exit when E = null;
          Append (Result, Separator);
