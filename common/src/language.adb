@@ -1105,6 +1105,20 @@ package body Language is
       No_Blanks       : Boolean := not Allow_Blanks;
       Non_Blank_Found : Boolean := False;
    begin
+      if Index = Buffer'First then
+         Skip_Blanks (Buffer, Index);
+
+         if Looking_At_Start_Of_Comment
+             (Context, Buffer, Index) /= No_Comment
+         then
+            Skip_To_Current_Comment_Block_Start (Context, Buffer, Index);
+         else
+            Index := 0;
+         end if;
+
+         return;
+      end if;
+
       loop
          Skip_Lines (Buffer, -1, Index, Lines_Skipped);
 
