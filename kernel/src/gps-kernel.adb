@@ -935,8 +935,8 @@ package body GPS.Kernel is
       Project_Name            : Virtual_File := For_Project;
       Child                   : Node_Ptr;
       Tmp                     : Node_Ptr;
-      Desktop_Node            : Node_Ptr;
-      Default_Desktop_Node    : Node_Ptr;
+      Project_Node            : Node_Ptr;
+      Default_Project_Node    : Node_Ptr;
       Perspectives            : Node_Ptr;
       Success_Loading_Desktop : Boolean := False;
       Err                     : String_Access;
@@ -952,6 +952,11 @@ package body GPS.Kernel is
       then
          Project_Name := Project_Path (Project);
       end if;
+
+      --  Call Show_All before restoring the desktop, in case some
+      --  children stored in the desktop have something to hide.
+
+      Show_All (Get_Child (Main_Window));
 
       --  We might have to try twice: once to check the user's perspectives.xml
       --  file, and if that fails the predefined perspectives.xml file
@@ -985,6 +990,10 @@ package body GPS.Kernel is
             end if;
          end if;
 
+         Perspectives := null;
+         Project_Node := null;
+         Default_Project_Node := null;
+
          if Node /= null then
             Child := Node.Child;
 
@@ -1001,10 +1010,10 @@ package body GPS.Kernel is
                              Get_File_Child (Tmp, "project");
 
                            if Project_From_Node = GNATCOLL.VFS.No_File then
-                              Default_Desktop_Node := Tmp;
+                              Default_Project_Node := Tmp;
 
                            elsif Project_From_Node = Project_Name then
-                              Desktop_Node := Tmp;
+                              Project_Node := Tmp;
                            end if;
                         end if;
 
@@ -1015,19 +1024,11 @@ package body GPS.Kernel is
 
                Child := Child.Next;
             end loop;
-         else
-            Desktop_Node := null;
-            Default_Desktop_Node := null;
          end if;
 
-         --  Call Show_All before restoring the desktop, in case some
-         --  children stored in the desktop have something to hide.
-
-         Show_All (Get_Child (Main_Window));
-
-         if Desktop_Node = null then
-            Trace (Me, "loading default desktop");
-            Desktop_Node := Default_Desktop_Node;
+         if Project_Node = null then
+            Trace (Me, "loading desktop for default project");
+            Project_Node := Default_Project_Node;
          else
             Trace (Me, "loading desktop for "
                    & Project_Name.Display_Full_Name);
@@ -1037,15 +1038,14 @@ package body GPS.Kernel is
            Kernel_Desktop.Restore_Desktop
              (MDI,
               Perspectives => XML_Utils.GtkAda.Convert (Perspectives),
-              From_Tree    => XML_Utils.GtkAda.Convert (Desktop_Node),
+              From_Tree    => XML_Utils.GtkAda.Convert (Project_Node),
               User         => Kernel_Handle (Handle));
 
-         if Node = null then
+         if Node = null and then not Try_User_Desktop then
             --  This needs to be called after calling Restore_Desktop so that
             --  the MDI could create a minimal environment
             Trace (Me, "No desktop to load");
             Set_Default_Size (Main_Window, 800, 600);
-            Show_All (Get_Child (Main_Window));
             return False;
          end if;
 
@@ -1067,7 +1067,7 @@ package body GPS.Kernel is
       if Is_Default_Desktop then
          return False;
       else
-         return Desktop_Node /= null or else Default_Desktop_Node /= null;
+         return Project_Node /= null or else Default_Project_Node /= null;
       end if;
 
    exception
