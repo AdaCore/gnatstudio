@@ -114,17 +114,21 @@ package body Doc_Utils is
          Index := 1;
       end if;
 
-      Line   := Get_Declaration_Of (Entity).Line;
-      Column := Basic_Types.Character_Offset_Type
-        (Get_Declaration_Of (Entity).Column);
-      Find_Closest_Match
-        (Buffer (1 .. Buffer_Len), Line, Column, Found,
-         Get_Name (Entity).all,
-         Case_Sensitive => Context.Case_Sensitive);
-      Skip_Lines (Buffer (1 .. Buffer_Len), Line - 1, Index, Lines_Skipped);
+      if Get_Kind (Entity).Kind /= Include_File then
+         Line   := Get_Declaration_Of (Entity).Line;
+         Column := Basic_Types.Character_Offset_Type
+           (Get_Declaration_Of (Entity).Column);
 
-      if Lines_Skipped /= Line - 1 then
-         return "";
+         Find_Closest_Match
+           (Buffer (1 .. Buffer_Len), Line, Column, Found,
+            Get_Name (Entity).all,
+            Case_Sensitive => Context.Case_Sensitive);
+
+         Skip_Lines (Buffer (1 .. Buffer_Len), Line - 1, Index, Lines_Skipped);
+
+         if Lines_Skipped /= Line - 1 then
+            return "";
+         end if;
       end if;
 
       --  First, look for documentation before the entity's declaration.
