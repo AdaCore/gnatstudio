@@ -2801,14 +2801,16 @@ package body Projects is
             When_No_Sources            => Warning,
             Require_Sources_Other_Lang => True,
             Compiler_Driver_Mandatory  => False,
-            Allow_Duplicate_Basenames  => True);
+            Allow_Duplicate_Basenames  => True,
+            Allow_Invalid_External     => Warning);
       else
          return Create_Flags
            (Report_Error               => On_Error,
             When_No_Sources            => Silent,
             Require_Sources_Other_Lang => False,
             Compiler_Driver_Mandatory  => False,
-            Allow_Duplicate_Basenames  => True);
+            Allow_Duplicate_Basenames  => True,
+            Allow_Invalid_External     => Silent);
       end if;
    end Create_Flags;
 
