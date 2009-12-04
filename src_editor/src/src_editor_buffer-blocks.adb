@@ -41,11 +41,12 @@ package body Src_Editor_Buffer.Blocks is
       pragma Inline (Copy);
       --  Return a copy of Str
 
-      Constructs        : Construct_List;
-      Current           : Construct_Access;
-      Line_Start        : Editable_Line_Type;
-      Line_End          : Editable_Line_Type;
-      Block             : Block_Access;
+      Constructs : Construct_List;
+      Current    : Construct_Access;
+      Line_Start : Editable_Line_Type;
+      Line_End   : Editable_Line_Type;
+      Column     : Integer;
+      Block      : Block_Access;
 
       ----------
       -- Copy --
@@ -89,11 +90,14 @@ package body Src_Editor_Buffer.Blocks is
          then
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
-
-            Block := new Block_Record'
+            --  Use the minimal column for the construct, friendlier for
+            --  visual display of blocks
+            Column     := Integer'Min
+              (Current.Sloc_Start.Column, Current.Sloc_End.Column);
+            Block      := new Block_Record'
               (Indentation_Level => 0,
-               Offset_Start      => Current.Sloc_Start.Column,
-               Stored_Offset     => Current.Sloc_Start.Column,
+               Offset_Start      => Column,
+               Stored_Offset     => Column,
                First_Line        => Line_Start,
                Last_Line         => Line_End,
                Name              => Copy (Current.Name),
@@ -103,7 +107,7 @@ package body Src_Editor_Buffer.Blocks is
             for J in Line_Start + 1 .. Line_End loop
                if Buffer.Editable_Lines (J).Block = null then
 
-                  --  When freeing (Destroy_Buffer)), we assume that the block
+                  --  When freeing (Destroy_Buffer), we assume that the block
                   --  is always associated with its last line, so make sure
                   --  this is true here
                   Block.Last_Line := J;
@@ -172,7 +176,7 @@ package body Src_Editor_Buffer.Blocks is
       Result    : Boolean;
 
    begin
-      if Get_Constructs_State (Buffer) /= Exact then
+      if Get_Constructs_State (Buffer) = Exact then
          return;
       end if;
 
