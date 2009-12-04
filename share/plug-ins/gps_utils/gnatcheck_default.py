@@ -100,7 +100,7 @@ Renamings of local exceptions are not flagged.</tip>
     <check switch="+RImproperly_Located_Instantiations" label="instantiations that can cause problems"/>
     <check switch="+RLibrary_Level_Subprograms" label="library level subprograms"/>
     <check switch="+RNon_Qualified_Aggregates" label="non-qualified aggregates"/>
-    <check switch="+RNumeric_Literals" label="integer literals greater then" hasextraparam="True" separator=":">
+    <check switch="+RNumeric_Literals" label="integer literals greater than" hasextraparam="True" separator=":">
       <field label="min nonchecked literal"  default="1"/>
     </check>
     <check switch="+RParameters_Out_Of_Order" label="formal parameters ordering"/>
