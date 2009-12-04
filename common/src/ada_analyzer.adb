@@ -1771,6 +1771,7 @@ package body Ada_Analyzer is
          Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
          Start_Of_Line : Natural;
          Index_Next    : Natural;
+         Tmp_Index     : Natural;
 
       begin
          Temp.Token       := Reserved;
@@ -2015,6 +2016,17 @@ package body Ada_Analyzer is
 
                Subprogram_Decl := True;
                Num_Parens      := 0;
+            end if;
+
+            if Prev_Token = Tok_Overriding then
+               --  Adjust column of subprogram to take into account possible
+               --  [not] overriding at start of the line by using the
+               --  first non blank character on the line.
+
+               Tmp_Index := Start_Of_Line;
+               Skip_Blanks (Buffer, Tmp_Index);
+               Temp.Sloc.Column := Tmp_Index - Start_Of_Line + 1;
+               Temp.Sloc.Index  := Tmp_Index;
             end if;
 
             if Prev_Token = Tok_Access or else Prev_Token = Tok_Protected then
