@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.5.0
 
+- IC01-004 Issues with project switching
+  Problem:    When switching from a project A to a project B within GPS (for
+              instance through the menu Project->Open...), GPS might be unable
+              to load completely the new project B if it contains a scenario
+              variable that has the same name as a variable in project A, but
+              the value of that variable in project A is not a valid value in
+              the context of project B.
+  Workaround: Instead of switching within GPS, close GPS and re-open it on
+              project B.
+
 - IB05-015 Gnatcheck plugin issues in remote mode
   Problem:    When using the remote mode, GPS tries to spawn gnatcheck on the
               remote server without using the server's paths for both the
