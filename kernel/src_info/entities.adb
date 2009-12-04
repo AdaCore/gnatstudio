@@ -1199,6 +1199,8 @@ package body Entities is
 
    procedure Reset (Db : Entities_Database) is
    begin
+      Db.Predefined_File := null;
+
       --  Reset Lis first, since this will indirectly change a field in the
       --  source files (which are therefore better kept in memory in the
       --  meantime)

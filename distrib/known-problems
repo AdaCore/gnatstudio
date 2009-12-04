@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.1
 
+- IC01-004: Potential instability when switching projects
+  Problem:    When loading a new project in GPS (for instance through the
+              menus Project->Open... or Project->Recent), GPS might become
+              unstable or crash.
+  Workaround: Instead of loading a new project from GPS, close GPS and load
+              it on the new project.
+
 - IB20-014: Empty C outline when GPS is open on an C file.
   Problem:    When GPS is opened on a C file, the outline is empty, and will
               stay empty for that file during the whole GPS session.
