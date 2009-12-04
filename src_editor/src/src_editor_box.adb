@@ -323,13 +323,11 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert_UTF8
+         Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
-            & (-("Recompile your file or select Build->Recompute Xref"
-                 & " Information, depending on the language")),
-            Mode           => Error);
+            & Entity_Name_Information (Context) & ASCII.LF,
+            Mode => Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
@@ -2031,8 +2029,6 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Command);
       Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Editor      : constant Source_Editor_Box :=
-                      Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Entity      : constant Entity_Information :=
                       Get_Entity (Context.Context, Ask_If_Overloaded => True);
       Entity_Type : Entity_Information;
@@ -2045,9 +2041,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
-            & (-("Recompile your file or select Build->Recompute Xref"
-                 & " Information, depending on the language")),
+            & Entity_Name_Information (Context.Context) & ASCII.LF,
             Mode => Error);
          return Commands.Failure;
 
@@ -2146,8 +2140,6 @@ package body Src_Editor_Box is
             Column   => Get_Column (Loc));
       end Insert;
 
-      Editor      : constant Source_Editor_Box :=
-                      Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Entity      : constant Entity_Information :=
                       Get_Entity (Context.Context, Ask_If_Overloaded => True);
       Entity_Type : Entity_Information;
@@ -2158,13 +2150,11 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert
+         Console.Insert_UTF8
            (Kernel,
             -"No cross-reference information found for "
-            & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
-            & (-("Recompile your file or select Build->Recompute Xref"
-                 & " Information, depending on the language")),
-            Mode           => Error);
+            & Entity_Name_Information (Context.Context) & ASCII.LF,
+            Mode => Error);
          return Commands.Failure;
 
       else
