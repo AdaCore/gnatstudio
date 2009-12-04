@@ -213,9 +213,9 @@ private
    type Node_Kinds is (Node_Category, Node_File, Node_Message);
 
    --  Declaration of Node_Record as tagged type with discriminant versus
-   --  hierarhy of tagged types allows simplify its association with
+   --  hierarchy of tagged types allows simplify its association with
    --  Gtk_Tree_Iter. The only one derived tagged type is Abstract_Message
-   --  which is publically visible as base for concrete types for messages.
+   --  which is publicly visible as base for concrete types for messages.
 
    type Node_Record (Kind : Node_Kinds) is tagged limited record
       Parent   : Node_Access;
