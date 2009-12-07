@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,6 @@ pragma Warnings (On);
 with Gtk_Utils;                 use Gtk_Utils;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
 
@@ -130,7 +129,7 @@ package body GPS.Callbacks is
          if Child = null then
             Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
          else
-            if Pref_Draw_Title_Bars.Get_Pref then
+            if Has_Title_Bar (Child) then
                Reset_Title
                  (GPS_Window (Get_Main_Window (Kernel)),
                   Get_Short_Title (Child));

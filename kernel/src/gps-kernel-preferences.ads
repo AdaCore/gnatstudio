@@ -208,7 +208,6 @@ package GPS.Kernel.Preferences is
    MDI_Focus_Title_Color : Color_Preference;
    MDI_All_Floating      : Boolean_Preference;
    MDI_Float_Short_Title : Boolean_Preference;
-   Pref_Draw_Title_Bars  : Boolean_Preference;
 
    -- Project Editor --
    Default_Switches_Color          : Color_Preference;

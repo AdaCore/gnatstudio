@@ -129,6 +129,10 @@ package body GPS.Main_Window is
    package Toolbar_Icons_Size_Preferences is new
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
+   package Title_Bars_Policy_Preferences is new
+     Default_Preferences.Enums.Generics (Title_Bars_Policy);
+
+   Pref_Titles_Policy   : Title_Bars_Policy_Preferences.Preference;
    Pref_Tabs_Policy     : Show_Tabs_Policy_Preferences.Preference;
    Pref_Tabs_Position   : Tabs_Position_Preferences.Preference;
    Pref_Toolbar_Style   : Toolbar_Icons_Size_Preferences.Preference;
@@ -493,7 +497,7 @@ package body GPS.Main_Window is
          Background_Color  => MDI_Background_Color.Get_Pref,
          Title_Bar_Color   => MDI_Title_Bar_Color.Get_Pref,
          Focus_Title_Color => MDI_Focus_Title_Color.Get_Pref,
-         Draw_Title_Bars   => Pref_Draw_Title_Bars.Get_Pref,
+         Draw_Title_Bars   => Pref_Titles_Policy.Get_Pref,
          Show_Tabs_Policy  => Policy,
          Tabs_Position     => Pos);
 
@@ -530,15 +534,15 @@ package body GPS.Main_Window is
          Gtk_Window (Main_Window),
          Home_Dir, Prefix_Directory);
 
-      Pref_Draw_Title_Bars := Create
+      Pref_Titles_Policy := Title_Bars_Policy_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
-         Name  => "Window-Draw-Title-Bars",
+         Name  => "Window-Title-Bars",
          Label => -"Show title bars",
          Page  => -"Windows",
          Doc   => -("Whether the windows should have their own title bars."
            & " If this is disabled, then the notebooks tabs will"
-           & " be used to show the current window"),
-         Default => True);
+           & " be highlighted to show the current window"),
+         Default => Always);
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
