@@ -1665,6 +1665,10 @@ selected drop area is highlighted with a dashed border. This shows precisely
 where the window would be put if you were to release the mouse button at
 that point.
 
+If you move your mouse all the way to the side of the desktop, and then drop
+the window, that window will occupy the full width (resp. height) of the
+desktop on that side.
+
 Here are the various places where a window can be dropped:
 
 @table @b
