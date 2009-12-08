@@ -2009,7 +2009,9 @@ package body ALI_Parser is
         (Handler, Source_Filename, Project, LI_Name, Predefined);
 
       if LI_Name = GNATCOLL.VFS.No_File then
-         Trace (Me, "No LI found for " & Display_Full_Name (Source_Filename));
+         Trace (Me, "No LI found for "
+                & Display_Full_Name (Source_Filename)
+                & " in project " & Project_Name (Project));
 
          if File_Has_No_LI_Report /= null then
             Entities.Error (File_Has_No_LI_Report.all, Source);
