@@ -9878,13 +9878,21 @@ Color to use for the title bar of unselected items.
 Color to use for the title bar of selected items.
 
 @item Show title bars
-If True, each window in GPS will have its own title bars, showing some
+If Always, each window in GPS will have its own title bars, showing some
 particular information (like the name of the file edited for editors), and
 some buttons to iconify, maximize or close the window. This title bar is
 highlighted when the window is the one currently selected.
 
-If False, the title bar is not displayed, to save space on the screen. The
+If Never, the title bar is not displayed, to save space on the screen. The
 tabs of the notebooks will then be highlighted.
+
+If Central Only, then only the windows in the central area (ie the part that
+gets preserved when switching perspective, mostly editors) will have a title
+bar. All other windows will not show the title bar. This is often a good way
+to save space on the screen: the title bar is useful for editors since it
+gives the full name of the file as well as provide an easy handle for drag
+and drop operations, whereas the other views do not change position as much
+and it is better to save space on the screen by not displaying their title.
 
 @item Notebook tabs policy
 Indicates when the notebook tabs should be displayed. If set to "Never", you
