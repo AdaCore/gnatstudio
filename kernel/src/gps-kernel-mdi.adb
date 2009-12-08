@@ -41,8 +41,12 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
+with Config;
+with Default_Preferences;      use Default_Preferences;
+with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
 with Projects;                 use Projects;
@@ -50,7 +54,31 @@ with Projects;                 use Projects;
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
 
+with Pango.Font;                use Pango.Font;
+
 package body GPS.Kernel.MDI is
+
+   type Tabs_Position_Preference is (Bottom, Top, Left, Right);
+   package Tabs_Position_Preferences is new
+     Default_Preferences.Enums.Generics (Tabs_Position_Preference);
+
+   type Tabs_Policy_Enum is (Never, Automatic, Always);
+   package Show_Tabs_Policy_Preferences is new
+     Default_Preferences.Enums.Generics (Tabs_Policy_Enum);
+
+   package Title_Bars_Policy_Preferences is new
+     Default_Preferences.Enums.Generics (Title_Bars_Policy);
+
+   Pref_Titles_Policy    : Title_Bars_Policy_Preferences.Preference;
+   Pref_Tabs_Policy      : Show_Tabs_Policy_Preferences.Preference;
+   Pref_Tabs_Position    : Tabs_Position_Preferences.Preference;
+   MDI_Opaque            : Boolean_Preference;
+   MDI_Destroy_Floats    : Boolean_Preference;
+   MDI_Background_Color  : Color_Preference;
+   MDI_Title_Bar_Color   : Color_Preference;
+   MDI_Focus_Title_Color : Color_Preference;
+   MDI_All_Floating      : Boolean_Preference;
+   MDI_Float_Short_Title : Boolean_Preference;
 
    -----------------------
    -- Local subprograms --
@@ -185,6 +213,146 @@ package body GPS.Kernel.MDI is
 
       return GPS.Editors.GtkAda.Get_MDI_Child (Buf.Current_View);
    end Get_File_Editor;
+
+   ----------------------------
+   -- Create_MDI_Preferences --
+   ----------------------------
+
+   procedure Create_MDI_Preferences
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      MDI_Opaque := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-Opaque",
+         Default => Config.Default_Opaque_MDI,
+         Doc     => -("Whether items will be resized or moved opaquely when"
+                      & " not maximized"),
+         Label   => -"Opaque",
+         Page    => -"Windows");
+
+      MDI_Destroy_Floats := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-Destroy-Floats",
+         Default => False,
+         Doc     =>
+           -("If disabled, closing the window associated with a floating"
+             & " item will put the item back in the main GPS window,"
+             & " but will not destroy it. If enabled, the item is"
+             & " destroyed"),
+         Label   => -"Destroy floats",
+         Page    => -"Windows");
+
+      MDI_All_Floating := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-All-Floating",
+         Default => False,
+         Doc     =>
+           -("If enabled, all windows will be set as floating, and put"
+             & " under control of your window manager. Otherwise, a"
+             & " multiple document interface is used."),
+         Label   => -"All floating",
+         Page    => -"Windows");
+
+      MDI_Float_Short_Title := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-Float-Short-Title",
+         Default => False,
+         Doc     =>
+           -("If enabled, all floating windows will have a short title. In"
+           & " particular, base file names will be used for editors."),
+         Label   => -"Short titles for floats",
+         Page    => -"Windows");
+
+      MDI_Background_Color := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-Background-Color",
+         Default => "#666666",
+         Doc     => -"Color to use for the background of the MDI",
+         Label   => -"Background color",
+         Page    => -"Windows");
+
+      MDI_Title_Bar_Color := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-Title-Bar-Color",
+         Default => "#AAAAAA",
+         Doc     => -"Color to use for the title bar of unselected items",
+         Label   => -"Title bar color",
+         Page    => -"Windows");
+
+      MDI_Focus_Title_Color := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "MDI-Focus-Title-Color",
+         Default => "#6297C5",
+         Doc     => -"Color to use for the title bar of selected items",
+         Label   => -"Selected title bar color",
+         Page    => -"Windows");
+
+      Pref_Titles_Policy := Title_Bars_Policy_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name  => "Window-Title-Bars",
+         Label => -"Show title bars",
+         Page  => -"Windows",
+         Doc   => -("Whether the windows should have their own title bars."
+           & " If this is disabled, then the notebooks tabs will"
+           & " be highlighted to show the current window"),
+         Default => Always);
+
+      Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name  => "Window-Tabs-Policy",
+         Label => -"Notebook tabs policy",
+         Page  => -"Windows",
+         Doc   => -"When the notebook tabs should be displayed",
+         Default => Automatic);
+
+      Pref_Tabs_Position := Tabs_Position_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name  => "Window-Tabs-Position",
+         Label => -"Notebook tabs position",
+         Page  => -"Windows",
+         Doc   => -("Where the tabs should be displayed relative to the"
+           & " notebooks"),
+         Default => Bottom);
+   end Create_MDI_Preferences;
+
+   -------------------
+   -- Configure_MDI --
+   -------------------
+
+   procedure Configure_MDI (Kernel : access Kernel_Handle_Record'Class) is
+      Pos    : Gtk_Position_Type;
+      Policy : Show_Tabs_Policy_Enum;
+   begin
+      case Tabs_Position_Preference'(Pref_Tabs_Position.Get_Pref) is
+         when Bottom => Pos := Pos_Bottom;
+         when Right  => Pos := Pos_Right;
+         when Top    => Pos := Pos_Top;
+         when Left   => Pos := Pos_Left;
+      end case;
+
+      case Tabs_Policy_Enum'(Pref_Tabs_Policy.Get_Pref) is
+         when Automatic => Policy := Show_Tabs_Policy_Enum'(Automatic);
+         when Never     => Policy := Show_Tabs_Policy_Enum'(Never);
+         when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
+      end case;
+
+      Configure
+        (Get_MDI (Kernel),
+         Opaque_Resize             => MDI_Opaque.Get_Pref,
+         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref,
+         Title_Font                => Default_Font.Get_Pref,
+         Background_Color          => MDI_Background_Color.Get_Pref,
+         Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
+         Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
+         Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
+         Show_Tabs_Policy          => Policy,
+         Tabs_Position             => Pos);
+
+      Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
+
+      Use_Short_Titles_For_Floats
+        (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
+   end Configure_MDI;
 
    -----------------------
    -- Save_MDI_Children --

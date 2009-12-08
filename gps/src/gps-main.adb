@@ -1594,6 +1594,13 @@ procedure GPS.Main is
          "(c) 2001-2009 AdaCore" & ASCII.LF);
       Free (About_Contents);
 
+      --  Apply the preferences to the MDI. In particular, we want to set the
+      --  default position for notebook tabs, since they can be overriden by
+      --  the desktop (and changing that default later on would switch all
+      --  notebooks)
+
+      Configure_MDI (GPS_Main.Kernel);
+
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
 

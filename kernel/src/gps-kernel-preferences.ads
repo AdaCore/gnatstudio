@@ -200,15 +200,6 @@ package GPS.Kernel.Preferences is
    Print_Command             : String_Preference;
    Max_Output_Length         : Integer_Preference;
 
-   -- MDI --
-   MDI_Opaque            : Boolean_Preference;
-   MDI_Destroy_Floats    : Boolean_Preference;
-   MDI_Background_Color  : Color_Preference;
-   MDI_Title_Bar_Color   : Color_Preference;
-   MDI_Focus_Title_Color : Color_Preference;
-   MDI_All_Floating      : Boolean_Preference;
-   MDI_Float_Short_Title : Boolean_Preference;
-
    -- Project Editor --
    Default_Switches_Color          : Color_Preference;
    Switches_Editor_Title_Font      : Font_Preference;

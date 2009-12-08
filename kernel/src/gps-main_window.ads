@@ -97,9 +97,6 @@ package GPS.Main_Window is
    --  Save the desktop if needed.
    --  Status is the exit status (0 is success)
 
-   procedure Load_Desktop (Window : access GPS_Window_Record'Class);
-   --  Load a saved desktop, if any, and create the console if needed
-
    procedure Reset_Title
      (Window : access GPS_Window_Record;
       Info   : String := "");

@@ -96,6 +96,13 @@ package GPS.Kernel.MDI is
    --  Change the current perspective to another one.
    --  Nothing is done if Name does not exist
 
+   procedure Configure_MDI (Kernel : access Kernel_Handle_Record'Class);
+   --  Configure the MDI based on the preferences
+
+   procedure Create_MDI_Preferences
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Create the preferences for the MDI
+
    function Get_MDI
      (Handle : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Window;

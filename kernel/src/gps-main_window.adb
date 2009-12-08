@@ -50,8 +50,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;
 
-with Pango.Font;                use Pango.Font;
-
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
@@ -117,24 +115,10 @@ package body GPS.Main_Window is
    Rename_Cmd_Parameter : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Short_Cst'Access);
 
-   type Tabs_Position_Preference is (Bottom, Top, Left, Right);
-   package Tabs_Position_Preferences is new
-     Default_Preferences.Enums.Generics (Tabs_Position_Preference);
-
-   type Tabs_Policy_Enum is (Never, Automatic, Always);
-   package Show_Tabs_Policy_Preferences is new
-     Default_Preferences.Enums.Generics (Tabs_Policy_Enum);
-
    type Toolbar_Icons_Size is (Hide_Toolbar, Small_Icons, Large_Icons);
    package Toolbar_Icons_Size_Preferences is new
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
-   package Title_Bars_Policy_Preferences is new
-     Default_Preferences.Enums.Generics (Title_Bars_Policy);
-
-   Pref_Titles_Policy   : Title_Bars_Policy_Preferences.Preference;
-   Pref_Tabs_Policy     : Show_Tabs_Policy_Preferences.Preference;
-   Pref_Tabs_Position   : Tabs_Position_Preferences.Preference;
    Pref_Toolbar_Style   : Toolbar_Icons_Size_Preferences.Preference;
    Pref_Show_Statusbar  : Boolean_Preference;
 
@@ -430,8 +414,6 @@ package body GPS.Main_Window is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Win    : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Pos    : Gtk_Position_Type;
-      Policy : Show_Tabs_Policy_Enum;
    begin
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" & Default_Font.Get_Pref & '"' & ASCII.LF);
@@ -466,19 +448,6 @@ package body GPS.Main_Window is
          Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
       end if;
 
-      case Tabs_Position_Preference'(Pref_Tabs_Position.Get_Pref) is
-         when Bottom => Pos := Pos_Bottom;
-         when Right  => Pos := Pos_Right;
-         when Top    => Pos := Pos_Top;
-         when Left   => Pos := Pos_Left;
-      end case;
-
-      case Tabs_Policy_Enum'(Pref_Tabs_Policy.Get_Pref) is
-         when Automatic => Policy := Show_Tabs_Policy_Enum'(Automatic);
-         when Never     => Policy := Show_Tabs_Policy_Enum'(Never);
-         when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
-      end case;
-
       if Pref_Show_Statusbar.Get_Pref then
          Show (Win.Statusbar);
          Set_Child_Visible (Win.Statusbar, True);
@@ -489,22 +458,7 @@ package body GPS.Main_Window is
          Set_Size_Request (Win.Statusbar, 0, 0);
       end if;
 
-      Configure
-        (Get_MDI (Kernel),
-         Opaque_Resize     => MDI_Opaque.Get_Pref,
-         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref,
-         Title_Font        => Default_Font.Get_Pref,
-         Background_Color  => MDI_Background_Color.Get_Pref,
-         Title_Bar_Color   => MDI_Title_Bar_Color.Get_Pref,
-         Focus_Title_Color => MDI_Focus_Title_Color.Get_Pref,
-         Draw_Title_Bars   => Pref_Titles_Policy.Get_Pref,
-         Show_Tabs_Policy  => Policy,
-         Tabs_Position     => Pos);
-
-      Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
-
-      Use_Short_Titles_For_Floats
-        (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
+      Configure_MDI (Kernel);
    end Preferences_Changed;
 
    ----------------
@@ -534,32 +488,7 @@ package body GPS.Main_Window is
          Gtk_Window (Main_Window),
          Home_Dir, Prefix_Directory);
 
-      Pref_Titles_Policy := Title_Bars_Policy_Preferences.Create
-        (Get_Preferences (Main_Window.Kernel),
-         Name  => "Window-Title-Bars",
-         Label => -"Show title bars",
-         Page  => -"Windows",
-         Doc   => -("Whether the windows should have their own title bars."
-           & " If this is disabled, then the notebooks tabs will"
-           & " be highlighted to show the current window"),
-         Default => Always);
-
-      Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
-        (Get_Preferences (Main_Window.Kernel),
-         Name  => "Window-Tabs-Policy",
-         Label => -"Notebook tabs policy",
-         Page  => -"Windows",
-         Doc   => -"When the notebook tabs should be displayed",
-         Default => Automatic);
-
-      Pref_Tabs_Position := Tabs_Position_Preferences.Create
-        (Get_Preferences (Main_Window.Kernel),
-         Name  => "Window-Tabs-Position",
-         Label => -"Notebook tabs position",
-         Page  => -"Windows",
-         Doc   => -("Where the tabs should be displayed relative to the"
-           & " notebooks"),
-         Default => Bottom);
+      Create_MDI_Preferences (Main_Window.Kernel);
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
@@ -1391,17 +1320,6 @@ package body GPS.Main_Window is
          Main_Quit;
       end if;
    end On_Destroy;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   procedure Load_Desktop (Window : access GPS_Window_Record'Class) is
-      Was_Loaded : Boolean;
-      pragma Unreferenced (Was_Loaded);
-   begin
-      Was_Loaded := Load_Desktop (Window.Kernel);
-   end Load_Desktop;
 
    -----------------
    -- Reset_Title --
