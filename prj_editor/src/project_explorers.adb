@@ -28,6 +28,7 @@ with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Glib;                      use Glib;
+with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
@@ -133,6 +134,16 @@ package body Project_Explorers is
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
    --  See inherited documentation
+
+   type Explorer_Path is record
+      Explorer : Project_Explorer;
+      Path     : Gtk_Tree_Path;
+   end record;
+
+   package Scroll_Idle is new Glib.Main.Generic_Sources (Explorer_Path);
+
+   function Idle_Scroll_To (Data : Explorer_Path) return Boolean;
+   --  Utility function to scroll to Data.Path
 
    ---------------
    -- Searching --
@@ -1688,6 +1699,24 @@ package body Project_Explorers is
       Thaw_Sort (Explorer.Tree.Model, Sort_Col);
    end Compute_Children;
 
+   --------------------
+   -- Idle_Scroll_To --
+   --------------------
+
+   function Idle_Scroll_To (Data : Explorer_Path) return Boolean is
+   begin
+      Scroll_To_Cell
+        (Data.Explorer.Tree,
+         Data.Path, null, True,
+         0.1, 0.1);
+      Path_Free (Data.Path);
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Idle_Scroll_To;
+
    -------------------
    -- Expand_Row_Cb --
    -------------------
@@ -1705,6 +1734,9 @@ package body Project_Explorers is
       Area_Rect : Gdk_Rectangle;
       Path2     : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
+
+      Dummy     : G_Source_Id;
+      pragma Unreferenced (Dummy);
 
    begin
       if T.Expanding then
@@ -1730,10 +1762,9 @@ package body Project_Explorers is
             Path2 := Get_Path (T.Tree.Model, Iter);
             Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
             if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
-               Scroll_To_Cell
-                 (T.Tree,
-                  Path, null, True,
-                  0.1, 0.1);
+               Dummy :=
+                 Scroll_Idle.Idle_Add
+                   (Idle_Scroll_To'Access, (T, Copy (Path)));
             end if;
             Path_Free (Path2);
          end if;
