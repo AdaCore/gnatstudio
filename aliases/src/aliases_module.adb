@@ -1875,7 +1875,8 @@ package body Aliases_Module is
       Color := Parse (Highlight_Color);
       Alloc (Get_Default_Colormap, Color);
       Gtk_New (Editor.Highlight_Tag);
-      Set_Property (Editor.Highlight_Tag, Foreground_Gdk_Property, Color);
+      Set_Property
+        (Editor.Highlight_Tag, Gtk.Text_Tag.Foreground_Gdk_Property, Color);
       Gtk.Text_Tag_Table.Add
         (Get_Tag_Table (Get_Buffer (Editor.Expansion)),
          Editor.Highlight_Tag);
