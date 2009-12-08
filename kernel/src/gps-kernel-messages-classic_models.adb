@@ -18,11 +18,19 @@
 -----------------------------------------------------------------------
 with Ada.Unchecked_Conversion;
 
+with Gtk.Enums;
 with Gtk.Tree_Model.Utils;
+
+with GNATCOLL.VFS.GtkAda;
+with String_Utils;
 
 package body GPS.Kernel.Messages.Classic_Models is
 
+   use Gdk.Color;
+   use Gdk.Pixbuf;
    use Gtk.Tree_Model;
+   use Gtk.Widget;
+   use String_Utils;
 
    function Create_Iter
      (Self : not null access constant Classic_Tree_Model_Record'Class;
@@ -35,6 +43,12 @@ package body GPS.Kernel.Messages.Classic_Models is
    function Create_Path
      (Self : not null access constant Classic_Tree_Model_Record'Class;
       Node : not null Node_Access) return Gtk_Tree_Path;
+
+   Non_Leaf_Color_Name : constant String := "blue";
+   --  Name of the color to be used for category and file names
+
+   Location_Padding : constant := 10;
+   --  Size of field for line:column location information in view
 
    ----------------------
    -- Category_Removed --
@@ -162,8 +176,35 @@ package body GPS.Kernel.Messages.Classic_Models is
 
    begin
       case Index is
-         when 0 =>
+         when Category_Column =>
             return Glib.GType_String;
+
+         when Subcategory_Column =>
+            return Glib.GType_String;
+
+         when File_Column =>
+            return GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type;
+
+         when Line_Column =>
+            return Glib.GType_Int;
+
+         when Column_Column =>
+            return Glib.GType_Int;
+
+         when Text_Column =>
+            return Glib.GType_String;
+
+         when Node_Icon_Column =>
+            return Gdk.Pixbuf.Get_Type;
+
+         when Node_Markup_Column =>
+            return Glib.GType_String;
+
+         when Node_Foreground_Column =>
+            return Gdk.Color.Gdk_Color_Type;
+
+         when Action_Pixbuf_Column =>
+            return Gdk.Pixbuf.Get_Type;
 
          when others =>
             return Glib.GType_Invalid;
@@ -219,7 +260,7 @@ package body GPS.Kernel.Messages.Classic_Models is
       pragma Unreferenced (Self);
 
    begin
-      return 1;
+      return Total_Columns;
    end Get_N_Columns;
 
    --------------
@@ -277,7 +318,62 @@ package body GPS.Kernel.Messages.Classic_Models is
 
    begin
       case Column is
-         when 0 =>
+         when Category_Column =>
+            Init (Value, GType_String);
+
+            case Node.Kind is
+               when Node_Category =>
+                  Set_String (Value, To_String (Node.Name));
+
+               when Node_File =>
+                  Set_String (Value, To_String (Node.Parent.Name));
+
+               when Node_Message =>
+                  Set_String
+                    (Value, To_String (Message_Access (Node).Get_Category));
+            end case;
+
+         when Subcategory_Column =>
+            raise Program_Error;
+
+         when File_Column =>
+            Init (Value, GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type);
+
+            case Node.Kind is
+               when Node_Category =>
+                  GNATCOLL.VFS.GtkAda.Set_File (Value, No_File);
+
+               when Node_File =>
+                  GNATCOLL.VFS.GtkAda.Set_File (Value, Node.File);
+
+               when Node_Message =>
+                  GNATCOLL.VFS.GtkAda.Set_File
+                    (Value, Message_Access (Node).Get_File);
+            end case;
+
+         when Line_Column =>
+            Init (Value, Glib.GType_Int);
+
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  Set_Int (Value, -1);
+
+               when Node_Message =>
+                  Set_Int (Value, Gint (Message_Access (Node).Line));
+            end case;
+
+         when Column_Column =>
+            Init (Value, Glib.GType_Int);
+
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  Set_Int (Value, -1);
+
+               when Node_Message =>
+                  Set_Int (Value, Gint (Message_Access (Node).Line));
+            end case;
+
+         when Text_Column =>
             Init (Value, GType_String);
 
             case Node.Kind is
@@ -290,8 +386,109 @@ package body GPS.Kernel.Messages.Classic_Models is
                when Node_Message =>
                   Set_String
                     (Value,
-                     To_String (Abstract_Message'Class (Node.all).Get_Markup));
+                To_String (Abstract_Message'Class (Node.all).Get_Text));
             end case;
+
+         when Node_Icon_Column =>
+            Init (Value, Gdk.Pixbuf.Get_Type);
+
+            --  Create puxbufs for category and file nodes. It is down here
+            --  because icon factory is not customized at message container
+            --  initialization time.
+
+            if Self.Category_Pixbuf = null then
+               Self.Category_Pixbuf :=
+                 Self.Container.Kernel.Get_Main_Window.Render_Icon
+                   ("gps-box", Gtk.Enums.Icon_Size_Menu);
+            end if;
+
+            if Self.File_Pixbuf = null then
+               Self.File_Pixbuf :=
+                 Self.Container.Kernel.Get_Main_Window.Render_Icon
+                   ("gps-file", Gtk.Enums.Icon_Size_Menu);
+            end if;
+
+            case Node.Kind is
+               when Node_Category =>
+                  Set_Object
+                    (Value, Glib.Object.GObject (Self.Category_Pixbuf));
+
+               when Node_File =>
+                  Set_Object (Value, Glib.Object.GObject (Self.File_Pixbuf));
+
+               when others =>
+                  null;
+            end case;
+
+         when Node_Markup_Column =>
+            Init (Value, GType_String);
+
+            case Node.Kind is
+               when Node_Category =>
+                  Set_String (Value, To_String (Node.Name));
+
+               when Node_File =>
+                  Set_String (Value, String (Node.File.Base_Name));
+
+               when Node_Message =>
+                  case Message_Access (Node).Level is
+                     when Primary =>
+                        declare
+                           Location : constant String :=
+                             Image (Node.Line)
+                             & ':' & Image (Natural (Node.Column));
+                           Padding  : String (1 .. Location_Padding) :=
+                             (others => ' ');
+
+                        begin
+                           if Location'Length <= Padding'Length then
+                              Padding (1 .. Location'Length) := Location;
+                              Set_String
+                                (Value,
+                                 "<b>" & Padding & "</b> "
+                                 & To_String
+                                   (Abstract_Message'Class
+                                      (Node.all).Get_Markup));
+
+                           else
+                              Set_String
+                                (Value,
+                                 "<b>" & Location & "</b> "
+                                 & To_String
+                                   (Abstract_Message'Class
+                                      (Node.all).Get_Markup));
+                           end if;
+                        end;
+
+                     when Secondary =>
+                        declare
+                           Padding : constant String (1 .. Location_Padding) :=
+                             (others => ' ');
+
+                        begin
+                           Set_String
+                             (Value,
+                              "<b>" & Padding & "</b> "
+                              & To_String
+                                (Abstract_Message'Class
+                                   (Node.all).Get_Markup));
+                        end;
+                  end case;
+            end case;
+
+         when Node_Foreground_Column =>
+            Init (Value, Gdk_Color_Type);
+
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  Set_Value (Value, Self.Non_Leaf_Color);
+
+               when Node_Message =>
+                  null;
+            end case;
+
+         when Action_Pixbuf_Column =>
+            Init (Value, Gdk.Pixbuf.Get_Type);
 
          when others =>
             null;
@@ -334,8 +531,27 @@ package body GPS.Kernel.Messages.Classic_Models is
    ----------------
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class) is
+      Success : Boolean;
+
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
+
+      --  Allocate foreground color for category and file nodes
+
+      Self.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
+      Alloc_Color
+        (Get_Default_Colormap, Self.Non_Leaf_Color, False, True, Success);
+
+      --  Create puxbufs for category and file nodes
+      --  XXX Don't work because customization is not done at the point of
+      --  kernel initialization.
+
+      Self.Category_Pixbuf :=
+        Self.Container.Kernel.Get_Main_Window.Render_Icon
+          ("gps-box", Gtk.Enums.Icon_Size_Menu);
+      Self.File_Pixbuf :=
+        Self.Container.Kernel.Get_Main_Window.Render_Icon
+          ("gps-file", Gtk.Enums.Icon_Size_Menu);
    end Initialize;
 
    -------------------

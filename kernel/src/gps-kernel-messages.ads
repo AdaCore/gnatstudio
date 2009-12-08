@@ -178,6 +178,41 @@ package GPS.Kernel.Messages is
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) is null;
 
+   ---------------------
+   -- Gtk+ Tree Model --
+   ---------------------
+
+   Category_Column        : constant Glib.Gint := 0;
+   --  Contains name of the category.
+   Subcategory_Column     : constant Glib.Gint := 1;
+   --  Contains name of the subcategory. Not implemented for now.
+   File_Column            : constant Glib.Gint := 2;
+   --  Contains name of the file in which message's location placed. For
+   --  category and subcategory items the value is No_File. Note: for
+   --  secondary messages it returns file where secondary location located,
+   --  which can be differ from the file for parent's primary message.
+   Line_Column            : constant Glib.Gint := 3;
+   --  Contains line number of the message. For category/subcategory/file
+   --  level nodes the value -1 is used.
+   Column_Column          : constant Glib.Gint := 4;
+   --  Contains column number of the message. For category/subcategory/file
+   --  level nodes the value -1 os used.
+   Text_Column            : constant Glib.Gint := 5;
+   --  Cintains plain text of the message.
+   Node_Icon_Column       : constant Glib.Gint := 6;
+   --  Contains icon for the node.
+   Node_Markup_Column     : constant Glib.Gint := 7;
+   --  Contains markup of the node. Markup includes line:column information
+   --  and text of the message with potential highlighting of some parts
+   --  (secondary locations for example) for messages nodes, basename of the
+   --  file for file nodes and category's name for category node.
+   Node_Foreground_Column : constant Glib.Gint := 8;
+   --  Contains Gdk color for the foreground of the node.
+   Action_Pixbuf_Column   : constant Glib.Gint := 9;
+   --  Contains pixmuf object of the associated action.
+   Total_Columns          : constant Glib.Gint := 10;
+   --  Total number of columns.
+
    --------------------------
    -- For private use only --
    --------------------------

@@ -20,6 +20,8 @@
 --  This package provides classic Category/File/Message Gtk+ model to
 --  be used in user interface.
 
+private with Gdk.Color;
+private with Gdk.Pixbuf;
 private with Glib.Values;
 private with Gtk.Tree_Model;
 
@@ -44,7 +46,16 @@ private
 
    type Classic_Tree_Model_Record is
      new Abstract_Messages_Tree_Model_Record with record
-      Stamp : Glib.Gint := 0;
+      Stamp           : Glib.Gint := 1;
+      --  Integer value to distinguish obsolete values of Gtk_Tree_Iter by
+      --  Gtk+ convention.
+
+      Non_Leaf_Color  : Gdk.Color.Gdk_Color;
+      --  Foreground color for category and file nodes.
+
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
+      --  Pixbufs to decorate category and file nodes.
    end record;
 
    procedure Node_Added
