@@ -27,6 +27,8 @@ with GNAT.IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with System;      use System;
 
+with Config; use Config;
+
 package body GNAT.Expect.TTY is
 
    -----------
@@ -70,7 +72,9 @@ package body GNAT.Expect.TTY is
          Terminate_Process (Descriptor.Process);
          Status := Waitpid (Descriptor.Process);
 
-         Close_TTY (Descriptor.Process);
+         if Host /= Windows then
+            Close_TTY (Descriptor.Process);
+         end if;
 
          Free_Process (Descriptor.Process'Address);
          Descriptor.Process := System.Null_Address;
