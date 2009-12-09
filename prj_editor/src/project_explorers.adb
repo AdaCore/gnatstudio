@@ -1381,21 +1381,19 @@ package body Project_Explorers is
 
       Text       : String_Access;
    begin
+      if not Active (Explorers_Tooltips) then
+         return;
+      end if;
+
       Pixmap := null;
       Area   := (0, 0, 0, 0);
 
       Window := Get_Bin_Window (Tooltip.Explorer.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
-      --  ??? By default, return immediately (Row_Found = False) since tooltips
-      --  in the explorer are too intrusive: they will appear on top of other
-      --  windows, and contextual menus.
-
-      if Active (Explorers_Tooltips) then
-         Get_Path_At_Pos
-           (Tooltip.Explorer.Tree, X, Y, Path,
-            Column, Cell_X, Cell_Y, Row_Found);
-      end if;
+      Get_Path_At_Pos
+        (Tooltip.Explorer.Tree, X, Y, Path,
+         Column, Cell_X, Cell_Y, Row_Found);
 
       if not Row_Found then
          return;
