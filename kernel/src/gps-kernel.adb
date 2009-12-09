@@ -772,11 +772,6 @@ package body GPS.Kernel is
       Perspectives_Convert, Central_Convert : Node_Ptr;
 
    begin
-      if Project_Name = GNATCOLL.VFS.No_File then
-         Trace (Me, "not saving the desktop (project is not from file)");
-         return;
-      end if;
-
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
@@ -803,12 +798,18 @@ package body GPS.Kernel is
 
       GPS.Kernel.Kernel_Desktop.Save_Desktop
         (MDI, Kernel_Handle (Handle),
-         Perspectives => Perspectives, Central => Central);
+         Perspectives => Perspectives,
+         Central      => Central);
 
       Perspectives_Convert := XML_Utils.GtkAda.Convert (Perspectives);
 
-      Central_Convert      := XML_Utils.GtkAda.Convert (Central);
-      Add_File_Child (Central_Convert, "project", Project_Name);
+      if Project_Name = GNATCOLL.VFS.No_File then
+         Trace (Me, "not saving central area (project is not from file)");
+         Central_Convert := null;
+      else
+         Central_Convert := XML_Utils.GtkAda.Convert (Central);
+         Add_File_Child (Central_Convert, "project", Project_Name);
+      end if;
 
       --  Traverse old, and replace the perspectives node with the new one.
       --  Also replace the project-specific part of the desktop with the new
@@ -833,7 +834,7 @@ package body GPS.Kernel is
             if M.Tag.all = "perspectives" then
                Free (M);
 
-            elsif M.Tag.all = "desktops" then
+            elsif Central_Convert /= null and then M.Tag.all = "desktops" then
                N := M.Child;
                while N /= null loop
                   N2 := N.Next;
@@ -856,7 +857,7 @@ package body GPS.Kernel is
          M := M2;
       end loop;
 
-      if not Central_Saved then
+      if Central_Convert /= null and then not Central_Saved then
          M := new Node;
          M.Tag := new String'("desktops");
          Add_Child (Old, M);
