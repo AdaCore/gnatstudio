@@ -1343,12 +1343,6 @@ package body Call_Graph_Views is
          --  show its called entities.
          Append (Model, Locations, Iter);
          Set (Model, Locations, Name_Column, Computing_Label);
-
-      else
-         Locations := Children (Model, Iter);
-         while Locations /= Null_Iter loop
-            Next (Model, Locations);
-         end loop;
       end if;
 
       if Ref /= No_Entity_Reference then
