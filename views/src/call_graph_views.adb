@@ -1372,9 +1372,9 @@ package body Call_Graph_Views is
 
             Set_Address (Value, To_Address (L));
 
-            Set_Value
-              (Gtk_Tree_Store (Get_Model (View.Tree)),
-               Iter, List_Column, Value);
+            --  Record back the new list
+
+            Set_Value (Model, Iter, List_Column, Value);
          end;
       end if;
 
