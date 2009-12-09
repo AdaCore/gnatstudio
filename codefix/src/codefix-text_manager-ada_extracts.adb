@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -209,7 +209,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
    begin
       New_Extract :=
         (Clone (Ada_Instruction (This)) with
-         Elements_List => Tokens_List.Null_List);
+         Elements_List => Tokens_List.Null_List,
+         Kind          => This.Kind);
 
       Token_It := First (This.Elements_List);
 
@@ -352,12 +353,17 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Column_Offset : constant Integer := Integer (Start_Cur.Col);
          Instruction   : constant String :=
            Get (Current_Text, Start_Cur, Stop_Cur);
+         Skip_Next     : Boolean := False;
 
          function Entity_Callback
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
             Partial_Entity : Boolean) return Boolean;
+
+         ---------------------
+         -- Entity_Callback --
+         ---------------------
 
          function Entity_Callback
            (Entity         : Language_Entity;
@@ -378,7 +384,25 @@ package body Codefix.Text_Manager.Ada_Extracts is
                Real_End_Col := Real_End_Col + Column_Offset - 1;
             end if;
 
-            if Entity = Operator_Text
+            if Skip_Next and then Entity /= Normal_Text then
+               Skip_Next := False;
+            elsif Equal (Name, "pragma", False) then
+               --  In case of 'pragma Bla (X)', we don't want to add Bla in
+               --  the list.
+
+               Skip_Next := True;
+               Destination.Kind := Pragma_Kind;
+            elsif Equal (Name, "use", False) then
+                  Destination.Kind := Use_Kind;
+            elsif Equal (Name, "with", False) then
+               Destination.Kind := With_Kind;
+            elsif Equal (Name, "type", False) then
+               if Destination.Kind = Use_Kind then
+                  Destination.Kind := Use_Type_Kind;
+               else
+                  Destination.Kind := Type_Kind;
+               end if;
+            elsif Entity = Operator_Text
               and then (Name = ":=" or else Name = "=>")
             then
                declare
@@ -402,10 +426,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
                   return True;
                end;
-            elsif not Equal (Name, "use", False)
-              and then not Equal (Name, "with", False)
-              and then not Equal (Name, "type", False)
-              and then Name /= ";"
+            elsif Name /= ";"
+              and then Name /= ")"
+              and then Name /= "("
             then
                declare
                   New_Token   : Token_Record;
@@ -555,7 +578,34 @@ package body Codefix.Text_Manager.Ada_Extracts is
    is
       Last_Used  : Natural;
       First_Used : Natural;
+
+      function Is_Whole_List return Boolean;
+      --  Return true if the selection First_Used .. Last_Used is a whole list.
+
+      -------------------
+      -- Is_Whole_List --
+      -------------------
+
+      function Is_Whole_List return Boolean is
+      begin
+         return First_Used = 1
+            and then (Last_Used = Length (This.Elements_List)
+                      or else Data
+                        (Get_Element (This, Last_Used + 1)).Content.all = ":");
+      end Is_Whole_List;
+
    begin
+      declare
+         Current_Node : Tokens_List.List_Node :=
+           Tokens_List.First (This.Elements_List);
+
+      begin
+         loop
+            Current_Node := Next (Current_Node);
+            exit when Current_Node = Tokens_List.Null_Node;
+         end loop;
+      end;
+
       if Last = 0 then
          Last_Used := First;
       else
@@ -564,17 +614,20 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       First_Used := First;
 
-      if First_Used > 1 then
-         if Data
-           (Get_Element (This, First_Used - 1)).Content.all = ","
-         then
-            First_Used := First_Used - 1;
-            --  -1 comments the previous character, the ','.
-         elsif To_Lower
-           (Data (Get_Element (This, First_Used - 1)).Content.all) = "when"
-         then
-            Last_Used := Last_Used + 1;
-         end if;
+      --  Adjust the first & last to take into account elements separators
+      --  such as ','.
+
+      if First_Used > 1
+        and then Data
+          (Get_Element (This, First_Used - 1)).Content.all = ","
+      then
+         First_Used := First_Used - 1;
+         --  -1 comments the previous character, the ','.
+      elsif First_Used > 1
+        and then To_Lower
+          (Data (Get_Element (This, First_Used - 1)).Content.all) = "when"
+      then
+         Last_Used := Last_Used + 1;
       elsif Length (This.Elements_List) > 1
         and then Data (Get_Element (This, Last_Used + 1)).Content.all = ","
       then
@@ -587,10 +640,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       --  has to be removed, then just remove it.
 
       if To_Lower (Data (Get_Element (This, 1)).Content.all) /= "when"
-        and then First_Used = 1
-        and then (Last_Used = Length (This.Elements_List)
-                  or else Data
-                    (Get_Element (This, Last_Used + 1)).Content.all = ":")
+        and then Is_Whole_List
       then
          case Mode is
             when Erase =>
@@ -669,7 +719,16 @@ package body Codefix.Text_Manager.Ada_Extracts is
          exit when Current_Node = Tokens_List.Null_Node;
       end loop;
 
-      raise Obsolescent_Fix;
+      return 0;
    end Get_Nth_Element;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind (This : Ada_List) return List_Kind is
+   begin
+      return This.Kind;
+   end Get_Kind;
 
 end Codefix.Text_Manager.Ada_Extracts;

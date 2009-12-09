@@ -283,10 +283,6 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Get_Visible_Declaration_Cmd);
    --  Free the memory associated to a Get_Visible_Declaration.
 
-   -------------------------
-   -- Replace_Code_By_Cmd --
-   -------------------------
-
    ---------------------
    -- Indent_Code_Cmd --
    ---------------------
@@ -371,6 +367,27 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding
    procedure Free (This : in out Remove_Extra_Underlines_Cmd);
+
+   ---------------------------
+   -- Remove_Pragma_Element --
+   ---------------------------
+
+   type Remove_Pragma_Element_Cmd is new Text_Command (Simple) with private;
+
+   procedure Initialize
+     (This         : in out Remove_Pragma_Element_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Element_Name : String;
+      Pragma_Name  : String);
+
+   overriding
+   procedure Execute
+     (This         : Remove_Pragma_Element_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Remove_Pragma_Element_Cmd);
 
 private
 
@@ -467,6 +484,12 @@ private
 
    type Remove_Extra_Underlines_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
+   end record;
+
+   type Remove_Pragma_Element_Cmd is new Text_Command (Simple) with record
+      Location     : Ptr_Mark;
+      Element_Name : String_Access;
+      Pragma_Name  : String_Access;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

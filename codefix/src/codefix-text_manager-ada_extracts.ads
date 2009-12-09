@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2008, AdaCore              --
+--                     Copyright (C) 2002-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -146,11 +146,24 @@ package Codefix.Text_Manager.Ada_Extracts is
       Mode     : Remove_Code_Mode;
       First    : String;
       Last     : String := "");
-   --  Remove elements form form First to Last. If Last = 0 then only First
+   --  Remove elements form form First to Last. If Last = "" then only First
    --  will be removed.
 
    function Get_Nth_Element (This : Ada_List; Name : String) return Natural;
-   --  Return the number of the element Name in the list.
+   --  Return the number of the element Name in the list, 0 if none.
+
+   type List_Kind is
+     (Unknown_Kind,
+      Pragma_Kind,
+      With_Kind,
+      Use_Kind,
+      Use_Type_Kind,
+      Type_Kind);
+
+   subtype Clause_Kind is List_Kind range With_Kind .. Use_Type_Kind;
+
+   function Get_Kind (This : Ada_List) return List_Kind;
+   --  Return the kind of the list as parsed by Get_Unit.
 
 private
 
@@ -182,6 +195,7 @@ private
 
    type Ada_List is new Ada_Instruction with record
       Elements_List : Tokens_List.List;
+      Kind          : List_Kind := Unknown_Kind;
    end record;
 
    function Get_Element (This : Ada_List; Num : Natural)

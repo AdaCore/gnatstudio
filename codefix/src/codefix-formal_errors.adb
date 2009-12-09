@@ -1339,6 +1339,33 @@ package body Codefix.Formal_Errors is
       return Result;
    end Remove_Blank_Lines;
 
+   ---------------------------------------------
+   -- Remove_Element_From_Unreferenced_Pragma --
+   ---------------------------------------------
+
+   function Remove_Element_From_Unreferenced_Pragma
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Object_Name   : String) return Solution_List
+   is
+      Result : Solution_List;
+
+      Command_Ptr : constant Ptr_Command := new Remove_Pragma_Element_Cmd;
+      Command     : Remove_Pragma_Element_Cmd renames
+        Remove_Pragma_Element_Cmd (Command_Ptr.all);
+
+   begin
+      Command.Initialize
+        (Current_Text => Current_Text,
+         Cursor       => Object_Cursor,
+         Element_Name => Object_Name,
+         Pragma_Name  => "Unreferenced");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Remove_Element_From_Unreferenced_Pragma;
+
    ---------------------------
    -- Move_Tilde_Or_Percent --
    ---------------------------

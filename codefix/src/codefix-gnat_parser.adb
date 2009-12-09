@@ -950,6 +950,21 @@ package body Codefix.GNAT_Parser is
    --  Fix problems like 'bla is undefined' if no more information is given
    --  on that line.
 
+   type Unwanted_Pragma_Unreferenced is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Unwanted_Pragma_Unreferenced);
+
+   overriding
+   procedure Fix
+     (This         : Unwanted_Pragma_Unreferenced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'warning: pragma unreferenced given for...'
+
    ---------------------------
    -- Aggregate_Misspelling --
    ---------------------------
@@ -3195,6 +3210,36 @@ package body Codefix.GNAT_Parser is
       Free (List);
    end Fix;
 
+   ----------------------------------
+   -- Unwanted_Pragma_Unreferenced --
+   ----------------------------------
+
+   overriding
+   procedure Initialize (This : in out Unwanted_Pragma_Unreferenced) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("pragma Unreferenced given for ""([^""]+)""")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Unwanted_Pragma_Unreferenced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+   begin
+      Solutions := Remove_Element_From_Unreferenced_Pragma
+        (Current_Text  => Current_Text,
+         Object_Cursor => Get_Message (Message_It),
+         Object_Name   => Get_Message
+           (Message_It).Get_Message (Matches (1).First .. Matches (1).Last));
+   end Fix;
+
    ----------------------
    -- Register_Parsers --
    ----------------------
@@ -3259,6 +3304,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Suggested_Replacement);
       Add_Parser (Processor, new Pragma_Pack);
       Add_Parser (Processor, new Undefined_Entity);
+      Add_Parser (Processor, new Unwanted_Pragma_Unreferenced);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;

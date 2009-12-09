@@ -275,11 +275,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Is_Instantiation : Boolean;
       Node      : String_List.List_Node;
 
-      Instantiation_Pkg : Remove_Instruction_Cmd;
-      Clauses_Pkg       : Remove_Elements_Cmd;
-      --  ??? It would be good to be able to use this without commands, e.g.
-      --  without having to place mark since this is probably not needed here.
-
+      Instantiation_Pkg : Ada_Instruction;
+      Clauses_Pkg       : Ada_List;
       Obj_List          : String_List.List;
    begin
       File_Cursor (Word) :=
@@ -311,16 +308,25 @@ package body Codefix.Text_Manager.Ada_Commands is
             Cat_Package,
             Word.String_Match.all);
 
-         Initialize
-           (Instantiation_Pkg,
-            Current_Text,
-            Word);
+         Get_Unit
+           (Current_Text => Current_Text,
+            Position     => Word,
+            Destination  => Instantiation_Pkg);
+
          Is_Instantiation := True;
       else
-         Add_To_Remove
-           (Clauses_Pkg,
-            Current_Text,
-            Word);
+         Get_Unit
+           (Current_Text => Current_Text,
+            Position     => Word,
+            Destination  => Clauses_Pkg);
+
+         if Clauses_Pkg.Get_Kind not in Clause_Kind then
+            --  If the list is neither a use or a with list, then that means
+            --  that something changed in the text (e.g. the clause has been
+            --  removed from a previous message). The fix is obsolescent.
+
+            raise Obsolescent_Fix;
+         end if;
 
          if This.Destination /= GNATCOLL.VFS.No_File then
             Append
@@ -331,6 +337,9 @@ package body Codefix.Text_Manager.Ada_Commands is
          Is_Instantiation := False;
       end if;
 
+      --  If the category is not already a use clause, see if there are use
+      --  clauses for that unit and remove them as well.
+
       if This.Category /= Cat_Use then
          Clauses_List := Get_Use_Clauses
            (Word.String_Match.all,
@@ -340,23 +349,32 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Clause_Node := First (Clauses_List);
 
-         if This.Destination /= GNATCOLL.VFS.No_File then
-            while Clause_Node /= Words_Lists.Null_Node loop
-               Add_To_Remove
-                 (Clauses_Pkg, Current_Text, Data (Clause_Node));
+         while Clause_Node /= Words_Lists.Null_Node loop
+            declare
+               Use_Pck : Ada_List;
+            begin
+               Get_Unit
+                 (Current_Text => Current_Text,
+                  Position     => Data (Clause_Node),
+                  Destination  => Use_Pck);
+
+               Use_Pck.Remove_Elements
+                 (Text_Nav => Current_Text,
+                  Mode     => Erase,
+                  First    => Data (Clause_Node).Get_Word);
+
+               Use_Pck.Free;
+            end;
+
+            if This.Destination /= GNATCOLL.VFS.No_File then
                Append
                  (Obj_List,
                   new String'
                     ("use " & Data (Clause_Node).String_Match.all & ";"));
-               Clause_Node := Next (Clause_Node);
-            end loop;
-         else
-            while Clause_Node /= Words_Lists.Null_Node loop
-               Add_To_Remove
-                 (Clauses_Pkg, Current_Text, Data (Clause_Node));
-               Clause_Node := Next (Clause_Node);
-            end loop;
-         end if;
+            end if;
+
+            Clause_Node := Next (Clause_Node);
+         end loop;
 
          Free (Clauses_List);
       end if;
@@ -371,11 +389,13 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Word);
 
       if Is_Instantiation then
-         Execute (Instantiation_Pkg, Current_Text);
-         Execute (Clauses_Pkg, Current_Text);
-      else
-         Execute (Clauses_Pkg, Current_Text);
+         Instantiation_Pkg.Remove_Instruction (Current_Text);
       end if;
+
+      Clauses_Pkg.Remove_Elements
+        (Text_Nav => Current_Text,
+         Mode     => Erase,
+         First    => Word.Get_Word);
 
       if Last_With /= Null_File_Cursor then
 
@@ -1669,6 +1689,89 @@ package body Codefix.Text_Manager.Ada_Commands is
          Integer (Index - Start_Index),
          New_Id (1 .. New_Id_Index - 1));
    end Execute;
+
+   -------------------------------
+   -- Remove_Pragma_Element_Cmd --
+   -------------------------------
+
+   procedure Initialize
+     (This         : in out Remove_Pragma_Element_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Element_Name : String;
+      Pragma_Name  : String)
+   is
+   begin
+      This.Element_Name := new String'(To_Lower (Element_Name));
+      This.Pragma_Name := new String'(To_Lower (Pragma_Name));
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   overriding
+   procedure Execute
+     (This         : Remove_Pragma_Element_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+
+      Pragma_Cursor : File_Cursor;
+      Tree : constant Construct_Tree :=
+        Get_Tree (Current_Text.Get_Structured_File (Cursor.File));
+      It   : Construct_Tree_Iterator := Current_Text.Get_Iterator_At
+        (Cursor            => Cursor,
+         Position          => Before);
+   begin
+      Pragma_Cursor.Set_File (Cursor.Get_File);
+
+      while It /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (It).Category = Cat_Pragma
+           and then To_Lower (Get_Construct (It).Name.all)
+           = This.Pragma_Name.all
+         then
+            --  We're on a pragma of the proper name - see if there's the
+            --  element that we're looking for here and if we can delete it.
+
+            Pragma_Cursor.Set_Location (Get_Construct (It).Sloc_Start.Line, 1);
+            Pragma_Cursor.Set_Column
+              (To_Column_Index
+                 (Char_Index (Get_Construct (It).Sloc_Start.Column),
+                  Current_Text.Get_Line (Pragma_Cursor, 0)));
+
+            declare
+               List : Ada_List;
+               Num  : Integer;
+            begin
+               Get_Unit (Current_Text, Pragma_Cursor, List);
+               Num := List.Get_Nth_Element (This.Element_Name.all);
+
+               if Num /= 0 then
+                  List.Remove_Elements
+                    (Text_Nav => Current_Text,
+                     Mode     => Erase,
+                     First    => Num);
+
+                  Free (List);
+
+                  return;
+               end if;
+
+               Free (List);
+            end;
+         end if;
+
+         It := Prev (Tree, It, Jump_Over);
+      end loop;
+   end Execute;
+
+   overriding
+   procedure Free (This : in out Remove_Pragma_Element_Cmd) is
+   begin
+      Free (This.Location);
+      Free (This.Element_Name);
+      Free (This.Pragma_Name);
+   end Free;
 
    ----------
    -- Free --

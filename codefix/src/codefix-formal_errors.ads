@@ -243,6 +243,12 @@ package Codefix.Formal_Errors is
       Seek_With     : Boolean) return Solution_List;
    --  Propose to add a use or to prefix the object.
 
+   function Remove_Element_From_Unreferenced_Pragma
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Object_Name   : String) return Solution_List;
+   --  Remove a name from an "Unreferenced" pragma
+
    ----------------------------------------------------------------------------
    --  Ada specific formal errors
    ----------------------------------------------------------------------------
