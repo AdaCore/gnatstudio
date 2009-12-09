@@ -278,10 +278,10 @@ package body Src_Editor_Box.Tooltips is
       end;
 
       declare
-         Entity        : Entity_Information;
-         Entity_Ref    : Entity_Reference;
-         Status        : Find_Decl_Or_Body_Query_Status;
-         Context       : Selection_Context := New_Context;
+         Entity     : Entity_Information;
+         Entity_Ref : Entity_Reference;
+         Status     : Find_Decl_Or_Body_Query_Status;
+         Context    : Selection_Context := New_Context;
       begin
          Get_Contextual_Menu
            (Context  => Context,
