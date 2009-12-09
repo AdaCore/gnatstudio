@@ -7,7 +7,7 @@ from GPS import *
 from gps_utils.highlighter import *
 import text_utils
 
-min_length = 2
+min_length = 3
 # Minimal length of the selection before we start highlighting.
 # For efficiency reasons, it isn't recommended to highlight when there is
 # a single character selected.
@@ -61,13 +61,17 @@ def on_location_changed (hook, file, line, column):
          weight = "normal")
 
    elif Preference ("Plugins/highlight_selection/onentity").get ():
+      # Do nothing if buffer is empty
+      if buffer.end_of_buffer().offset() == 0:
+         return
+
       start = text_utils.goto_word_start (start)
       end   = text_utils.goto_word_end (end)
 
       if abs (start.offset() - end.offset()) >= min_length:
          buffer.selection_highlighter = Editor_Highlighter (
             name="selection_occurrences",
-            text   = buffer.get_chars (start, end - 1),
+            text   = buffer.get_chars (start, end - 1).replace ("\n", "\\n"),
             buffer = buffer,
             bg_color=Preference ("Plugins/highlight_selection/bgcolor").get (),
             fg_color=Preference ("Plugins/highlight_selection/fgcolor").get (),
