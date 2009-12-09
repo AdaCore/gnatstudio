@@ -58,7 +58,7 @@ package Generic_Views is
    generic
       Module_Name : String;
       --  The name of the module, and name used in the desktop file. It mustn't
-      --  contain any space
+      --  contain any space.
 
       View_Name   : String;
       --  Name of MDI window that is used to create the view

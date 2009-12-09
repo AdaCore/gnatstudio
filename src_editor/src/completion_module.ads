@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2008, AdaCore                 --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,6 +36,6 @@ package Completion_Module is
    --  Remove the completion window
 
    function In_Smart_Completion return Boolean;
-   --  Return True if we are currently showing a smart completion window.
+   --  Return True if we are currently showing a smart completion window
 
 end Completion_Module;

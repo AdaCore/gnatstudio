@@ -281,7 +281,7 @@ package body Completion_Module is
    procedure On_Entity_View
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Menu callback to display the Entity View.
+   --  Menu callback to display the Entity View
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -302,11 +302,11 @@ package body Completion_Module is
    begin
       Gtk_New (Explorer, Kernel, "");
       Gtk_New (Child, Explorer,
-               Default_Width => 600,
+               Default_Width  => 600,
                Default_Height => 400,
-               Group => Group_Consoles,
-               Focus_Widget => Gtk_Widget (Get_Entry (Explorer)),
-               Module => Completion_Module);
+               Group          => Group_Consoles,
+               Focus_Widget   => Gtk_Widget (Get_Entry (Explorer)),
+               Module         => Completion_Module);
       Set_Title (Child, -"Entities", -"Entities");
       Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 

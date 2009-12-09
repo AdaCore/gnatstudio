@@ -80,7 +80,7 @@ package body Clipboard_Views is
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    procedure Refresh (View : access Clipboard_View_Record'Class);
    --  Refresh the contents of the clipboard view

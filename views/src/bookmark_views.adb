@@ -102,7 +102,7 @@ package body Bookmark_Views is
       Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
       Deleting  : Boolean := False;
-      --  Whether we are deleting multiple bookmarks.
+      --  Whether we are deleting multiple bookmarks
    end record;
    type Bookmark_View is access all Bookmark_View_Record'Class;
 
@@ -512,7 +512,7 @@ package body Bookmark_Views is
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
 
          if Iter /= Null_Iter then
-            --  Select the row that was clicked.
+            --  Select the row that was clicked
             Path := Get_Path (Model, Iter);
             Set_Cursor (View.Tree, Path, null, False);
             Path_Free (Path);

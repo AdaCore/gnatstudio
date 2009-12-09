@@ -80,13 +80,14 @@ package body Generic_Views is
          User : Kernel_Handle) return MDI_Child
       is
          pragma Unreferenced (MDI);
-         View  : View_Access;
-         Child : GPS_MDI_Child;
+         View         : View_Access;
+         Child        : GPS_MDI_Child;
          Focus_Widget : Gtk_Widget;
       begin
          if Node.Tag.all = Module_Name then
             View := new Formal_View_Record;
             Focus_Widget := Initialize (View, User);
+
             if Node.Child /= null then
                Load_From_XML (View, Node.Child);
             end if;
@@ -153,8 +154,8 @@ package body Generic_Views is
          Group          : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
          return View_Access
       is
-         Child : GPS_MDI_Child;
-         View  : View_Access;
+         Child        : GPS_MDI_Child;
+         View         : View_Access;
          Focus_Widget : Gtk_Widget;
       begin
          if Reuse_If_Exist then

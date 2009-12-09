@@ -90,12 +90,12 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    procedure Next (It : in out Declaration_Id_Iterator);
-   --  Moves the iterator to the next element of the list.
+   --  Moves the iterator to the next element of the list
 
    overriding
    function Get
      (It : Declaration_Id_Iterator) return Declaration_View;
-   --  Return the element contained in this iterator.
+   --  Return the element contained in this iterator
 
    function Is_Valid (It : Declaration_Id_Iterator'Class) return Boolean;
 
@@ -158,12 +158,12 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    procedure Next (It : in out Declaration_Composition_Iterator);
-   --  Moves the iterator to the next element of the list.
+   --  Moves the iterator to the next element of the list
 
    overriding
    function Get
      (It : Declaration_Composition_Iterator) return Declaration_View;
-   --  Return the element contained in this iterator.
+   --  Return the element contained in this iterator
 
    function Is_Valid
      (It : Declaration_Composition_Iterator'Class) return Boolean;
@@ -198,12 +198,12 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    procedure Next (It : in out Unique_Declaration_Iterator);
-   --  Moves the iterator to the next element of the list.
+   --  Moves the iterator to the next element of the list
 
    overriding
    function Get
      (It : Unique_Declaration_Iterator) return Declaration_View;
-   --  Return the element contained in this iterator.
+   --  Return the element contained in this iterator
 
    overriding
    procedure Free (List : in out Unique_Declaration_List);
@@ -254,7 +254,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    procedure Free (It : in out Declaration_Iterator) is
    begin
-      --  Excluded_List is freed with the list, no need to free it here.
+      --  Excluded_List is freed with the list, no need to free it here
       Free (It.It);
    end Free;
 
@@ -664,8 +664,8 @@ package body Ada_Semantic_Tree.Declarations is
       Expression                : Parsed_Expression := Null_Parsed_Expression;
       Categories                : Category_Array := Null_Category_Array;
       Is_Partial                : Boolean := False;
-      Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack
-     ) return Declaration_List
+      Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack)
+      return Declaration_List
    is
       pragma Unreferenced (Categories);
 
@@ -780,12 +780,11 @@ package body Ada_Semantic_Tree.Declarations is
                   Append
                     (Result.Contents,
                      Declaration_Composition_List'
-                       (Root_Entity => Previous_Declaration.Entity,
-                        Name       => new String'(""),
-                        Is_Partial =>
-                          Next (Token)
-                        = Token_List.Null_Node and then Is_Partial,
-                        Is_All => Previous_Declaration.Is_All,
+                       (Root_Entity     => Previous_Declaration.Entity,
+                        Name            => new String'(""),
+                        Is_Partial      => Next (Token) = Token_List.Null_Node
+                                             and then Is_Partial,
+                        Is_All          => Previous_Declaration.Is_All,
                         From_Visibility => Actual_From_Visibility));
                else
                   Analyze_Token
@@ -805,14 +804,14 @@ package body Ada_Semantic_Tree.Declarations is
 
             when Tok_Open_Parenthesis =>
                if Context.Context_Type /= From_File then
-                  --  We do not handle parenthesis in a search in database.
+                  --  We do not handle parenthesis in a search in database
 
                   return;
                end if;
 
                if Previous_Declaration.Profile = null then
                   --  There is no possible profile completion here, drop the
-                  --  proposal
+                  --  proposal.
 
                   return;
                end if;
@@ -831,7 +830,6 @@ package body Ada_Semantic_Tree.Declarations is
                   Param_Added : Boolean := False;
                begin
                   --  Perform the analysis of the actual parameters.
-
                   --  Reset any former value of the actual parameters.
 
                   Free (Local_Declaration.Actuals);
@@ -846,9 +844,7 @@ package body Ada_Semantic_Tree.Declarations is
 
                      Append_Actual
                        (Local_Declaration.Actuals.all,
-                        Get_Actual_Parameter
-                          (Get_Buffer (Context.File),
-                           0, 0),
+                        Get_Actual_Parameter (Get_Buffer (Context.File), 0, 0),
                         False,
                         Param_Added,
                         Success);
@@ -973,7 +969,7 @@ package body Ada_Semantic_Tree.Declarations is
                         Result);
                   end if;
                else
-                  --  There no database-wide search starting with a with token.
+                  --  There no database-wide search starting with a with token
 
                   return;
                end if;
@@ -991,7 +987,6 @@ package body Ada_Semantic_Tree.Declarations is
 
          when From_File =>
             Db := Get_Database (Context.File);
-
       end case;
 
       All_Name_Id := Db.Get_Identifier ("all");
@@ -1008,12 +1003,14 @@ package body Ada_Semantic_Tree.Declarations is
 
             return Result;
          end if;
+
       else
          Analyzed_Expression := Expression;
       end if;
 
       if From_Visibility /= Null_Visibility_Context then
          Actual_From_Visibility := From_Visibility;
+
       else
          if Context.Context_Type = From_File then
             Actual_From_Visibility.File := Context.File;
@@ -1031,7 +1028,7 @@ package body Ada_Semantic_Tree.Declarations is
          Analyzed_Token : Token_List.List_Node;
       begin
          --  Do a pre-analyzis of the expression - its beginning may not be
-         --  relevant for our purpose
+         --  relevant for our purpose.
 
          First_Token := First (Analyzed_Expression.Tokens);
          Analyzed_Token := First_Token;
@@ -1177,7 +1174,7 @@ package body Ada_Semantic_Tree.Declarations is
    begin
       while not At_End (It) loop
          if Get_Entity (It) = Entity then
-            --   ??? We should compute a more accurate value here.
+            --   ??? We should compute a more accurate value here
 
             return Public_Library_Visible;
          end if;
@@ -1336,7 +1333,7 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
             end;
          else
-            --  If not, then we just have to compare the names.
+            --  If not, then we just have to compare the names
 
             if Match (It.Name.all, Name_Str.all, It.Is_Partial) then
                return True;
@@ -1362,7 +1359,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding procedure Free (It : in out Declaration_Composition_Iterator) is
    begin
-      --  Name will be freed with List, doing free here is erroneous.
+      --  Name will be freed with List, doing free here is erroneous
       Free (It.It);
    end Free;
 

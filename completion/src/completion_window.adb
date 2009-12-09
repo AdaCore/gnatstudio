@@ -61,7 +61,7 @@ package body Completion_Window is
    Minimal_Items_To_Show : constant := 50;
 
    Max_Window_Width : constant := 300;
-   --  Maximum width of the window, in pixels.
+   --  Maximum width of the window, in pixels
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String, String_Access);
@@ -97,7 +97,7 @@ package body Completion_Window is
    function On_Focus_Out
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for a focus_out_event on the tree view.
+   --  Callback for a focus_out_event on the tree view
 
    function On_Key_Press
      (Window : access Completion_Window_Record'Class;
@@ -107,12 +107,12 @@ package body Completion_Window is
    procedure Insert_Text_Handler
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback after a text insertion.
+   --  Callback after a text insertion
 
    procedure Mark_Set_Handler
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback after a Mark set on the buffer.
+   --  Callback after a Mark set on the buffer
 
    procedure Viewport_Moved_Handler
      (Window : access Completion_Window_Record'Class;
@@ -122,25 +122,25 @@ package body Completion_Window is
    procedure Delete_Text_Handler
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback after a text deletion.
+   --  Callback after a text deletion
 
    procedure Before_Delete_Text_Handler
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback before a text deletion.
+   --  Callback before a text deletion
 
    function On_Button_Pressed
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback on a button press in the tree view.
+   --  Callback on a button press in the tree view
 
    procedure On_Window_Selection_Changed
      (Window : access Completion_Window_Record'Class);
-   --  Callback on a selection change in the tree view.
+   --  Callback on a selection change in the tree view
 
    procedure On_Explorer_Selection_Changed
      (Explorer : access Completion_Explorer_Record'Class);
-   --  Callback on a selection change in the tree view.
+   --  Callback on a selection change in the tree view
 
    function On_Explorer_Destroyed
      (Explorer : access Completion_Explorer_Record'Class;
@@ -152,7 +152,7 @@ package body Completion_Window is
    --  Delete the window if there is no item to show.
 
    procedure Free (X : in out Information_Record);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    function Complete_Common_Prefix
      (Window : access Completion_Window_Record'Class) return Boolean;
@@ -161,21 +161,21 @@ package body Completion_Window is
 
    function To_Showable_String
      (P : Root_Proposal'Class) return String;
-   --  Return the string to display in the main window.
+   --  Return the string to display in the main window
 
    procedure Fill_Notes_Container
      (Explorer : access Completion_Explorer_Record'Class;
       Item     : Information_Record);
-   --  Fill the Notes window and show it.
+   --  Fill the Notes window and show it
 
    procedure Empty_Notes_Container
      (Explorer : access Completion_Explorer_Record'Class);
-   --  Empty the Notes window.
+   --  Empty the Notes window
 
    procedure Augment_Notes
      (Info     : in out Information_Record;
       Proposal : Root_Proposal'Class);
-   --  Add Note to the notes stored in Info.
+   --  Add Note to the notes stored in Info
 
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean;
@@ -227,7 +227,7 @@ package body Completion_Window is
 
       use type Gdk.Pixbuf.Gdk_Pixbuf;
    begin
-      --  If the notes window is not empty, empty it here.
+      --  If the notes window is not empty, empty it here
       Empty_Notes_Container (Explorer);
 
       if Item.Proposals.Is_Empty then
@@ -371,7 +371,7 @@ package body Completion_Window is
       First_Shown : constant Natural := Explorer.Shown;
       Count       : Natural := 0;
    begin
-      --  If the idle function is running, unregister it.
+      --  If the idle function is running, unregister it
 
       if Explorer.Has_Idle_Expansion then
          Remove (Explorer.Idle_Expansion);
@@ -397,7 +397,7 @@ package body Completion_Window is
 
          Count := Count + 1;
 
-         --  Exit when we have found the number of items we wanted.
+         --  Exit when we have found the number of items we wanted
 
          exit when Count >= Number * 2;
       end loop;
@@ -468,7 +468,7 @@ package body Completion_Window is
          Completion : constant String := Get_Completion (Proposal);
          List       : Proposals_List.List;
       begin
-         --  Check whether the current iter contains the same completion.
+         --  Check whether the current iter contains the same completion
          if Explorer.Index = 1
            or else Explorer.Info (Explorer.Index - 1).Text = null
            or else Explorer.Info
@@ -579,7 +579,7 @@ package body Completion_Window is
       Previously_Selected : Natural := 0;
 
       function Equals (A, B : String) return Boolean;
-      --  Perform a case-conscious comparison.
+      --  Perform a case-conscious comparison
 
       ------------
       -- Equals --
@@ -644,7 +644,7 @@ package body Completion_Window is
          end if;
       end loop;
 
-      --  Expand the selection to show more items, if needed.
+      --  Expand the selection to show more items, if needed
       if Window.Explorer.Shown < Minimal_Items_To_Show then
          Expand_Selection
            (Window.Explorer, Minimal_Items_To_Show - Window.Explorer.Shown);
@@ -662,7 +662,7 @@ package body Completion_Window is
          Prev := Get_Iter_First (Window.Explorer.Model);
 
          if Prev = Null_Iter then
-            --  If there is no entry in the tree, hide the window.
+            --  If there is no entry in the tree, hide the window
             Hide_All (Window);
             return;
          else
@@ -862,11 +862,11 @@ package body Completion_Window is
       Get_Selected (Sel, Model, Iter);
 
       if Iter = Null_Iter then
-         --  Hide the contents window.
+         --  Hide the contents window
          Hide_All (Window.Notes_Window);
 
       else
-         --  Something is selected: the window is no longer Volatile.
+         --  Something is selected: the window is no longer Volatile
          Window.Volatile := False;
 
          Show_All (Window.Notes_Window);
@@ -1075,7 +1075,7 @@ package body Completion_Window is
          Insert (Window.Buffer, Text_Begin,
                  Window.Explorer.Info (Pos).Text.all);
 
-         --  If the proposal can be stored, store it in the history.
+         --  If the proposal can be stored, store it in the history
 
          if Window.Explorer.Info (Pos).Proposals.First_Element.all in
            Comp_Proposal'Class
@@ -1109,7 +1109,7 @@ package body Completion_Window is
             --  means we are hitting the end of the text buffer. In this case
             --  move the cursor to the end.
 
-            --  For safety, verify that we are indeed on the last line.
+            --  For safety, verify that we are indeed on the last line
             Get_Iter_At_Mark (Window.Buffer, Text_Begin, Window.Mark);
             if Get_Line_Count (Window.Buffer) = Get_Line (Text_Begin) + 1 then
                Get_End_Iter (Window.Buffer, Text_Begin);
@@ -1141,7 +1141,7 @@ package body Completion_Window is
       type Page_Direction is (Up, Down);
 
       procedure Move_Page (Where : Page_Direction);
-      --  Move the selection up or down one page.
+      --  Move the selection up or down one page
 
       function Complete return Boolean;
       --  Complete using the currently selected item and close the window.
@@ -1474,15 +1474,15 @@ package body Completion_Window is
    ----------
 
    procedure Show
-     (Window         : Completion_Window_Access;
-      View           : Gtk_Text_View;
-      Buffer         : Gtk_Text_Buffer;
-      Iter           : Gtk_Text_Iter;
-      Mark           : Gtk_Text_Mark;
-      Lang           : Language_Access;
-      Complete       : Boolean;
-      Volatile       : Boolean;
-      Mode           : Smart_Completion_Type)
+     (Window   : Completion_Window_Access;
+      View     : Gtk_Text_View;
+      Buffer   : Gtk_Text_Buffer;
+      Iter     : Gtk_Text_Iter;
+      Mark     : Gtk_Text_Mark;
+      Lang     : Language_Access;
+      Complete : Boolean;
+      Volatile : Boolean;
+      Mode     : Smart_Completion_Type)
    is
       Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
@@ -1519,7 +1519,7 @@ package body Completion_Window is
         Get_Language_Context (Lang).Case_Sensitive;
       Window.Lang := Lang;
 
-      --  Set the position.
+      --  Set the position
 
       Get_Iter_Location (View, Iter, Iter_Coords);
 
@@ -1533,19 +1533,19 @@ package body Completion_Window is
         (Get_Window (View, Text_Window_Text), Gdk_X, Gdk_Y, Dummy);
       --  ??? should we check for the result ?
 
-      --  Compute the placement of the window.
+      --  Compute the placement of the window
 
       Size_Request (Window.Explorer.View, Requisition);
       Requisition := Get_Child_Requisition (Window.Explorer.View);
 
-      --  ??? Uposition should take into account the current desktop.
+      --  ??? Uposition should take into account the current desktop
 
       Window.Explorer.Fixed_Width_Font :=
         Get_Font_Description (Get_Style (View));
 
       declare
          Char_Width, Char_Height : Gint;
-         Layout : Pango_Layout;
+         Layout                  : Pango_Layout;
       begin
          Modify_Font (Window.Explorer.View, Window.Explorer.Fixed_Width_Font);
 
@@ -1565,7 +1565,7 @@ package body Completion_Window is
       Width := Gint'Min (Max_Window_Width, Max_Width) + 5;
 
       if Requisition.Height > Max_Height then
-         --  Display an integer number of lines in the tree view.
+         --  Display an integer number of lines in the tree view
          Rows := (Gint (Window.Explorer.Index - 1) *
                   (Max_Height)) / Requisition.Height;
          Height := Rows * (Requisition.Height /
@@ -1587,6 +1587,7 @@ package body Completion_Window is
 
       if Gdk_Y + Window_Y < Root_Height - Height then
          Y := Gdk_Y + Window_Y;
+
       else
          Get_Iter_Location (View, Iter, Iter_Coords);
 
@@ -1601,15 +1602,16 @@ package body Completion_Window is
 
       Set_UPosition (Window, X, Y);
 
-      --  Compute the size and position of the Notes window.
+      --  Compute the size and position of the Notes window
 
       Set_Default_Size
         (Window.Notes_Window, Notes_Window_Width, Height);
 
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
          Set_UPosition (Window.Notes_Window, X + Width, Y);
+
       else
-         --  Make sure the Notes window doesn't overlap the tree view.
+         --  Make sure the Notes window doesn't overlap the tree view
          if X <= Notes_Window_Width then
             Notes_Window_Width := X - 2;
             Set_Default_Size

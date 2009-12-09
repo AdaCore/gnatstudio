@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009, AdaCore                       --
+--                    Copyright (C) 2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -474,7 +474,7 @@ package body Completion_Window.Entity_Views is
    begin
       Gtk_New (Explorer, Kernel, "");
       Gtk_New (Child, Explorer,
-               Group => Group_Consoles,
+               Group  => Group_Consoles,
                Module => Module);
       Set_Title (Child, -"Entities", -"Entities");
 

@@ -99,27 +99,27 @@ package body Call_Graph_Views is
    type View_Type is (View_Calls, View_Called_By);
 
    type Callgraph_View_Record is new Generic_Views.View_Record with record
-      Tree   : Gtk_Tree_View;
-      Kernel : Kernel_Handle;
       Typ    : View_Type := View_Calls;
+      Tree              : Gtk_Tree_View;
+      Kernel            : Kernel_Handle;
 
-      Show_Locations : Boolean := True;
+      Show_Locations    : Boolean := True;
       --  Whether we should show the locations in the call graph
 
       Block_On_Expanded : Boolean := False;
       --  If true, we do not recompute the contents of children nodes when a
       --  node is expanded
 
-      Locations_Tree  : Gtk_Tree_View;
-      Locations_Model : Gtk_List_Store;
+      Locations_Tree    : Gtk_Tree_View;
+      Locations_Model   : Gtk_List_Store;
 
-      Pane            : Gtk_Hpaned;
+      Pane              : Gtk_Hpaned;
    end record;
 
    type Reference_Record is record
-      Line   : Integer;
-      Column : Visible_Column_Type;
-      File   : GNATCOLL.VFS.Virtual_File;
+      Line                : Integer;
+      Column              : Visible_Column_Type;
+      File                : GNATCOLL.VFS.Virtual_File;
       Through_Dispatching : Boolean;
    end record;
 
@@ -321,7 +321,7 @@ package body Call_Graph_Views is
                     (Get_Int (Model, Iter, Location_Column_Column))
                   + Get_Name (Entity)'Length,
                   New_File   => False,
-                  Focus => False);
+                  Focus      => False);
             end if;
          end if;
       end if;
@@ -837,12 +837,12 @@ package body Call_Graph_Views is
       Menu         : Gtk_Menu)
    is
       pragma Unreferenced (Event_Widget, Kernel, Menu);
-      V       : constant Callgraph_View_Access :=
-                  Callgraph_View_Access (Object);
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
-      Iter    : Gtk_Tree_Iter;
-      Entity  : Entity_Information;
-      Value   : GValue;
+      V      : constant Callgraph_View_Access :=
+                 Callgraph_View_Access (Object);
+      Model  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Iter   : Gtk_Tree_Iter;
+      Entity : Entity_Information;
+      Value  : GValue;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
       if Iter /= Null_Iter then
@@ -1181,7 +1181,7 @@ package body Call_Graph_Views is
          Show_Column_Titles => False,
          Sortable_Columns   => True,
          Initial_Sort_On    => Names'First);
-      Set_Name (View.Tree, "Call Graph Tree");  --  For test suite
+      Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
       Gtk_New_Hpaned (View.Pane);
 
       Gtk_New (Scroll);
@@ -1358,14 +1358,20 @@ package body Call_Graph_Views is
             use type System.Address;
 
          begin
+            --  Get current reference list
+
             Get_Value (Model, Iter, List_Column, Value);
             Address := Get_Address (Value);
+
+            --  Create a new list if neeeded
 
             if Address = System.Null_Address then
                L := new List;
             else
                L := To_Reference_List (Address);
             end if;
+
+            --  Append new values to the list
 
             Append (L.all, To_Record (Ref, Through_Dispatching));
 
@@ -1491,9 +1497,11 @@ package body Call_Graph_Views is
            (Kernel, False, Group => GPS.Kernel.MDI.Group_Consoles);
          View.Typ := View_Called_By;
          Expand_Row
-           (View.Tree, Insert_Entity (View, null, Entity,
-            No_Entity_Reference, -" is called by ",
-            Through_Dispatching => False));
+           (View.Tree,
+            Insert_Entity
+              (View, null, Entity,
+               No_Entity_Reference, -" is called by ",
+               Through_Dispatching => False));
 
          Size_Request (View.Tree, R);
          R := Get_Child_Requisition (View.Tree);
