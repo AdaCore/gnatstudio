@@ -79,6 +79,7 @@ package body Call_Graph_Views is
    Line_Column    : constant := 4;
    Column_Column  : constant := 5;
    List_Column    : constant := 6;
+   Kind_Column    : constant := 7;
 
    Location_Line_Column      : constant := 0;
    Location_Column_Column    : constant := 1;
@@ -99,7 +100,6 @@ package body Call_Graph_Views is
    type View_Type is (View_Calls, View_Called_By);
 
    type Callgraph_View_Record is new Generic_Views.View_Record with record
-      Typ    : View_Type := View_Calls;
       Tree              : Gtk_Tree_View;
       Kernel            : Kernel_Handle;
 
@@ -166,8 +166,8 @@ package body Call_Graph_Views is
 
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Callgraph_View",
-      View_Name          => "Call Tree",
-      Reuse_If_Exist     => False,
+      View_Name          => "Call Trees",
+      Reuse_If_Exist     => True,
       Formal_View_Record => Callgraph_View_Record);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
@@ -206,6 +206,7 @@ package body Call_Graph_Views is
       Entity              : Entity_Information;
       Ref                 : Entity_Reference;
       Suffix              : String := "";
+      Kind                : View_Type;
       Through_Dispatching : Boolean;
       Parent_Iter         : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter;
    --  Insert an entry for Entity in the tree.
@@ -251,6 +252,25 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record'Class);
    --  Open the value currently selected in the main tree
 
+   function Get_View_Type
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return View_Type;
+   pragma Inline (Get_View_Type);
+   --  Returns the View_Type for the entity pointer to by Iter
+
+   -------------------
+   -- Get_View_Type --
+   -------------------
+
+   function Get_View_Type
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return View_Type is
+   begin
+      if Iter = Null_Iter then
+         return View_Calls;
+      else
+         return View_Type'Val (Get_Int (Model, Iter, Kind_Column));
+      end if;
+   end Get_View_Type;
+
    ---------------
    -- To_Record --
    ---------------
@@ -293,13 +313,15 @@ package body Call_Graph_Views is
       if Iter /= Null_Iter then
          if Parent (Model, Iter) = Null_Iter then
             Open_Selected_Value (View);
+
          else
             --  The entity to highlight depends on the type of the view
-            case View.Typ is
-            when View_Calls =>
-               Get_Value (Model, Iter, Entity_Column, Value);
-            when View_Called_By =>
-               Get_Value (Model, Parent (Model, Iter), Entity_Column, Value);
+            case Get_View_Type (Model, Iter) is
+               when View_Calls =>
+                  Get_Value (Model, Iter, Entity_Column, Value);
+               when View_Called_By =>
+                  Get_Value
+                    (Model, Parent (Model, Iter), Entity_Column, Value);
             end case;
 
             Entity := From_GValue (Value);
@@ -794,7 +816,7 @@ package body Call_Graph_Views is
       Append (M, Data.Computing_Iter, Iter);
       Set (M, Data.Computing_Iter, Name_Column, Computing_Label);
 
-      case V.Typ is
+      case Get_View_Type (Get_Model (V.Tree), Iter) is
          when View_Calls     =>
             Examine_Entity_Call_Graph
               (Kernel            => V.Kernel,
@@ -992,6 +1014,11 @@ package body Call_Graph_Views is
                Set_Attribute
                  (N, "decl", Get_String (Model, Iter, Decl_Column));
 
+               Set_Attribute
+                 (N, "type",
+                  View_Type'Image
+                    (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
+
                Decl := Get_Declaration_Of (Entity);
                N.Tag := new String'("entity");
                Set_Attribute
@@ -1029,13 +1056,6 @@ package body Call_Graph_Views is
    begin
       Root := new Node;
       Root.Tag := new String'("callgraph");
-      case View.Typ is
-         when View_Called_By =>
-            Set_Attribute (Root, "type", "called_by");
-         when View_Calls =>
-            Set_Attribute (Root, "type", "calls");
-      end case;
-
       Set_Attribute (Root, "position", Get_Position (View.Pane)'Img);
 
       Recursive_Save (Null_Iter, Root);
@@ -1049,8 +1069,11 @@ package body Call_Graph_Views is
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model    : constant Gtk_Tree_Store :=
+                   Gtk_Tree_Store (Get_Model (View.Tree));
+
+      Is_Calls : Boolean := True;
+      --  For upward compatibility
 
       procedure Recursive_Load
         (Parent_Iter   : Gtk_Tree_Iter;
@@ -1099,6 +1122,23 @@ package body Call_Graph_Views is
                Set (Model, Iter, Name_Column, Get_Attribute (N, "name"));
                Set (Model, Iter, Decl_Column, Get_Attribute (N, "decl"));
 
+               --  We want to be compatible with previous version not having
+               --  the type node. We then information from top type node.
+
+               if Is_Calls then
+                  Set
+                    (Model, Iter, Kind_Column,
+                     View_Type'Pos
+                       (View_Type'Value
+                          (Get_Attribute (N, "type", "view_calls"))));
+               else
+                  Set
+                    (Model, Iter, Kind_Column,
+                     View_Type'Pos
+                       (View_Type'Value
+                          (Get_Attribute (N, "type", "view_called_by"))));
+               end if;
+
                File := Create
                  (Full_Filename => +Get_Attribute (N, "entity_decl"));
                Source := Get_Or_Create
@@ -1137,18 +1177,15 @@ package body Call_Graph_Views is
       end Recursive_Load;
 
    begin
-      if Get_Attribute (XML, "type") = "calls" then
-         View.Typ := View_Calls;
-      else
-         View.Typ := View_Called_By;
-      end if;
-
       declare
          Pos_Str : constant String := Get_Attribute (XML, "position");
+         V_Type  : constant String := Get_Attribute (XML, "type");
       begin
          if Pos_Str /= "" then
             Set_Position (View.Pane, Gint'Value (Pos_Str));
          end if;
+
+         Is_Calls := V_Type = "calls";
       end;
 
       Recursive_Load (Null_Iter, XML.Child, False);
@@ -1166,6 +1203,11 @@ package body Call_Graph_Views is
       Scroll : Gtk_Scrolled_Window;
 
    begin
+      if View.Tree /= null then
+         --  This widget is already initialized, return it
+         return Gtk_Widget (View.Tree);
+      end if;
+
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
       Set_Policy (View, Policy_Automatic, Policy_Automatic);
@@ -1177,7 +1219,8 @@ package body Call_Graph_Views is
                                 File_Column   => Get_Virtual_File_Type,
                                 Line_Column   => GType_Int,
                                 Column_Column => GType_Int,
-                                List_Column   => GType_Pointer),
+                                List_Column   => GType_Pointer,
+                                Kind_Column   => GType_Int),
          Column_Names       => Names,
          Show_Column_Titles => False,
          Sortable_Columns   => True,
@@ -1300,6 +1343,7 @@ package body Call_Graph_Views is
       Entity              : Entity_Information;
       Ref                 : Entity_Reference;
       Suffix              : String := "";
+      Kind                : View_Type;
       Through_Dispatching : Boolean;
       Parent_Iter         : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
    is
@@ -1325,7 +1369,8 @@ package body Call_Graph_Views is
          Ent := From_GValue (Value);
          Unset (Value);
 
-         exit when Ent = Entity;
+         exit when Ent = Entity
+           and then Get_Int (Model, Iter, Kind_Column) = View_Type'Pos (Kind);
 
          Next (Model, Iter);
       end loop;
@@ -1338,6 +1383,7 @@ package body Call_Graph_Views is
               & ':' & Image (Get_Line (Decl))
               & ':' & Image (Integer (Get_Column (Decl))));
          Set_Value (Model, Iter, Entity_Column, To_GValue (Entity));
+         Set (Model, Iter, Kind_Column, View_Type'Pos (Kind));
 
          --  Append a dummy child, so that the parent can be expanded to
          --  show its called entities.
@@ -1413,13 +1459,14 @@ package body Call_Graph_Views is
       Iter : Gtk_Tree_Iter;
       pragma Unreferenced (Is_Renaming, Iter);
    begin
-      case Data.View.Typ is
+      case Get_View_Type (Get_Model (Data.View.Tree), Data.Entity_Iter) is
          when View_Called_By =>
             Iter := Insert_Entity
               (View                => Data.View,
                Parent              => Entity,
                Entity              => Parent,
                Ref                 => Ref,
+               Kind                => View_Called_By,
                Suffix              => "",
                Through_Dispatching => Through_Dispatching,
                Parent_Iter         => Data.Entity_Iter);
@@ -1430,6 +1477,7 @@ package body Call_Graph_Views is
                Parent              => Parent,
                Entity              => Entity,
                Ref                 => Ref,
+               Kind                => View_Calls,
                Suffix              => "",
                Through_Dispatching => Through_Dispatching,
                Parent_Iter         => Data.Entity_Iter);
@@ -1456,11 +1504,12 @@ package body Call_Graph_Views is
    begin
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
-           (Kernel, False, Group => GPS.Kernel.MDI.Group_Consoles);
-         View.Typ := View_Calls;
+           (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
          Expand_Row (View.Tree,
            Insert_Entity (View, null, Entity, No_Entity_Reference,
-             -" calls ", Through_Dispatching => False));
+             -" calls ",
+             Kind                => View_Calls,
+             Through_Dispatching => False));
 
          Size_Request (View.Tree, R);
          R := Get_Child_Requisition (View.Tree);
@@ -1489,13 +1538,13 @@ package body Call_Graph_Views is
    begin
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
-           (Kernel, False, Group => GPS.Kernel.MDI.Group_Consoles);
-         View.Typ := View_Called_By;
+           (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
          Expand_Row
            (View.Tree,
             Insert_Entity
               (View, null, Entity,
                No_Entity_Reference, -" is called by ",
+               Kind                => View_Called_By,
                Through_Dispatching => False));
 
          Size_Request (View.Tree, R);
