@@ -167,6 +167,7 @@ package body Call_Graph_Views is
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Callgraph_View",
       View_Name          => "Call Tree",
+      Reuse_If_Exist     => False,
       Formal_View_Record => Callgraph_View_Record);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 

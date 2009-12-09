@@ -85,7 +85,18 @@ package body Generic_Views is
          Focus_Widget : Gtk_Widget;
       begin
          if Node.Tag.all = Module_Name then
-            View := new Formal_View_Record;
+            if Reuse_If_Exist then
+               Child := GPS_MDI_Child
+                 (Find_MDI_Child_By_Tag
+                    (Get_MDI (User), Formal_View_Record'Tag));
+            end if;
+
+            if Child = null then
+               View := new Formal_View_Record;
+            else
+               View := View_Access (Get_Widget (Child));
+            end if;
+
             Focus_Widget := Initialize (View, User);
 
             if Node.Child /= null then
@@ -96,13 +107,17 @@ package body Generic_Views is
                Focus_Widget := Get_Child (View);
             end if;
 
-            Gtk_New (Child, View,
-                     Default_Width  => 215,
-                     Default_Height => 600,
-                     Focus_Widget   => Focus_Widget,
-                     Module         => Module,
-                     Group          => Group_View);
-            Set_Title (Child, View_Name, View_Name);
+            if Child = null then
+               --  Child does not exist yet, create it
+               Gtk_New (Child, View,
+                        Default_Width  => 215,
+                        Default_Height => 600,
+                        Focus_Widget   => Focus_Widget,
+                        Module         => Module,
+                        Group          => Group_View);
+               Set_Title (Child, View_Name, View_Name);
+            end if;
+
             Put (Get_MDI (User), Child, Initial_Position => Position_Left);
             return MDI_Child (Child);
          end if;
@@ -148,10 +163,9 @@ package body Generic_Views is
       ------------------------
 
       function Get_Or_Create_View
-        (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Reuse_If_Exist : Boolean := True;
-         Focus          : Boolean := True;
-         Group          : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Focus  : Boolean := True;
+         Group  : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
          return View_Access
       is
          Child        : GPS_MDI_Child;

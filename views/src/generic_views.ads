@@ -66,6 +66,9 @@ package Generic_Views is
       type Formal_View_Record is new View_Record with private;
       --  Type of the widget representing the view
 
+      Reuse_If_Exist : Boolean;
+      --  If True a single MDI child will be created and shared
+
       with function Initialize
         (View   : access Formal_View_Record'Class;
          Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -95,10 +98,9 @@ package Generic_Views is
       --  Return the module ID corresponding to that view
 
       function Get_Or_Create_View
-        (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Reuse_If_Exist : Boolean := True;
-         Focus          : Boolean := True;
-         Group          : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Focus  : Boolean := True;
+         Group  : Gtkada.MDI.Child_Group := GPS.Kernel.MDI.Group_View)
          return View_Access;
       --  Return the view (create a new one if necessary, or always if
       --  Reuse_If_Exist is False).
