@@ -15,6 +15,11 @@ of the feature.
 New features on 4.5.0
 ---------------------
 
+NF-45-IC04-030 Auto-fix for "warning, var is unreferenced" (2009-12-09)
+
+  When the compiler detects that a variable with a pragma unreferenced is
+  used, and issue a warning, an auto-fix is now automatically offered.
+
 NF-45-IC01-026 Auto-fix for unexpected tilde or percent in SPARK (2009-12-02)
 
   Semantic errors 317, 318, 319, 320 and 321 raised by SPARK Examiner complain
