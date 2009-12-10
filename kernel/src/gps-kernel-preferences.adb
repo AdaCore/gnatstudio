@@ -566,7 +566,9 @@ package body GPS.Kernel.Preferences is
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Default-Style",
          Label        => -"Default",
-         Doc          => -"Default style used in the source editors",
+         Doc          => -("Default style used in the source editors."
+           & " The background color defined here also defines the background"
+           & " color of all editors."),
          Default_Font => "Courier 10",
          Default_Fg   => "black",
          Default_Bg   => "white",
