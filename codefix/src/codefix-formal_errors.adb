@@ -1333,7 +1333,7 @@ package body Codefix.Formal_Errors is
         Remove_Blank_Lines_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Cursor);
-      Set_Caption ("Remove extra blank lines");
+      Command.Set_Caption ("Remove extra blank lines");
 
       Append (Result, Command_Ptr);
 
@@ -1361,7 +1361,7 @@ package body Codefix.Formal_Errors is
          Cursor       => Object_Cursor,
          Element_Name => Object_Name,
          Pragma_Name  => "Unreferenced");
-      Set_Caption ("Remove object from unreferenced pragma");
+      Command.Set_Caption ("Remove object from unreferenced pragma");
 
       Append (Result, Command_Ptr);
 
