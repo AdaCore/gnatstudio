@@ -787,5 +787,15 @@ When this command is executed after a repeat_next command, the whole line is del
       <filter id="Source editor" />
       <shell lang="python">if $repeat == 1: text_utils.kill_line (None, $remaining+1)</shell>
    </action>
+
+  <action name="New View Horizontal" output="none" category="MDI">
+     <description>When on an editor, splits the current notebook into two side-by-side windows, so that the two windows show two views of the same file. If another window already exists to the side, a new view is created inside that existing notebook, rather than create a new one</description>
+     <shell lang="python">GPS.MDI.current().split (vertically=False,new_view=True,reuse=True)</shell>
+  </action>
+
+  <action name="New View Vertical" output="none" category="MDI">
+     <description>When on an editor, splits the current notebook into two windows vertically, so that the two windows show two views of the same file. If another window already exists above or below, a new view is created inside that existing notebook, rather than create a new one</description>
+     <shell lang="python">GPS.MDI.current().split (vertically=True,new_view=True,reuse=True)</shell>
+  </action>
 """)
 

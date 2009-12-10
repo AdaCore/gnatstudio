@@ -1840,7 +1840,7 @@ package body VCS_View_API is
 
             if not Already_Open then
                Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-                      Reuse_If_Possible => True, After => True);
+                      Mode => After_Reuse);
             end if;
          end;
       end loop;

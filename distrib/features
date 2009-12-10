@@ -15,6 +15,13 @@ of the feature.
 New features on 4.5.0
 ---------------------
 
+NF-45-IC10-030 Better emulation of Emacs's split features (2009-12-10)
+
+  If you loaded the emacs.xml plugin, the control-x 2 and control-x 3 key
+  shortcuts will now better emulate Emacs, and create new views of the
+  editors, and properly reuse existing notebooks rather than create new
+  ones
+
 NF-45-IC04-030 Auto-fix for "warning, var is unreferenced" (2009-12-09)
 
   When the compiler detects that a variable with a pragma unreferenced is

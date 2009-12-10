@@ -84,8 +84,8 @@
 
   <key action="delete horizontal space">alt-backslash</key>
 
-  <key action="/Window/Split Side-by-Side">control-x 3</key>
-  <key action="/Window/Split Up-Down">control-x 2</key>
+  <key action="New View Vertical">control-x 2</key>
+  <key action="New View Horizontal">control-x 3</key>
 
   <key action="Move to next window">control-x control-b</key>
   <key action="Move to previous window" />

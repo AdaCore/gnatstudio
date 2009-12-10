@@ -101,13 +101,15 @@ package body GPS.Main_Window is
    Reuse_Cst      : aliased constant String := "reuse";
    Visible_Only_Cst : aliased constant String := "visible_only";
    Short_Cst      : aliased constant String := "short";
+   New_View_Cst   : aliased constant String := "new_view";
    Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Child_Cst'Access);
    Float_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Float_Cst'Access);
    Split_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Vertically_Cst'Access, 2 => Reuse_Cst'Access);
+     (1 => Vertically_Cst'Access, 2 => Reuse_Cst'Access,
+      3 => New_View_Cst'Access);
    Next_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Visible_Only_Cst'Access);
    Name_Cmd_Parameters : constant Cst_Argument_List :=
@@ -218,10 +220,10 @@ package body GPS.Main_Window is
       case Command.Mode is
          when Split_H =>
             Split (Get_MDI (Command.Kernel), Orientation_Horizontal,
-                   After => True);
+                   Mode => After);
          when Split_V =>
             Split (Get_MDI (Command.Kernel), Orientation_Vertical,
-                   After => True);
+                   Mode  => After);
          when Clone =>
             declare
                Focus : constant MDI_Child :=
@@ -848,7 +850,7 @@ package body GPS.Main_Window is
       Register_Command
         (Main_Window.Kernel, "split",
          Class        => MDI_Window_Class,
-         Maximum_Args => 2,
+         Maximum_Args => 3,
          Handler      => Default_Window_Command_Handler'Access);
       Register_Command
         (Main_Window.Kernel, "float",
@@ -934,8 +936,11 @@ package body GPS.Main_Window is
         New_Class (Kernel, "MDIWindow");
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, MDI_Window_Class);
       Child  : constant MDI_Child := MDI_Child (GObject'(Get_Data (Inst)));
+      Child2 : MDI_Child;
       Widget : Gtk_Widget;
+      Orientation : Gtk_Orientation;
       Result : Class_Instance;
+      Reuse  : Boolean;
    begin
       if Child = null then
          Set_Error_Msg (Data, "MDIWindow no longer exists");
@@ -946,17 +951,26 @@ package body GPS.Main_Window is
       elsif Command = "split" then
          Name_Parameters (Data, Split_Cmd_Parameters);
          if Get_State (Child) = Normal then
-            Set_Focus_Child (Child);
+            Raise_Child (Child);
+            Child2 := Dnd_Data (Child, Copy => Nth_Arg (Data, 3, False));
+            Set_Focus_Child (Child2);
+
             if Nth_Arg (Data, 2, True) then
+               Orientation := Orientation_Vertical;
+            else
+               Orientation := Orientation_Horizontal;
+            end if;
+
+            Reuse := Nth_Arg (Data, 3, False);
+
+            if Reuse then
                Split (Get_MDI (Kernel),
-                      Orientation       => Orientation_Vertical,
-                      Reuse_If_Possible => Nth_Arg (Data, 3, False),
-                      After             => False);
+                      Orientation       => Orientation,
+                      Mode              => Any_Side_Reuse);
             else
                Split (Get_MDI (Kernel),
-                      Orientation       => Orientation_Horizontal,
-                      Reuse_If_Possible => Nth_Arg (Data, 3, False),
-                      After             => False);
+                      Orientation       => Orientation,
+                      Mode              => Before);
             end if;
          end if;
 

@@ -628,8 +628,8 @@ package body Vdiff2_Module.Utils is
       Synchronize_Scrolling (Kernel, Item.Files (1), Item.Files (2));
 
       if Split_MDI then
-         Split (Get_MDI (Kernel), Orientation_Horizontal,
-                Reuse_If_Possible => True);
+         Split
+           (Get_MDI (Kernel), Orientation_Horizontal, Mode => Before_Reuse);
       end if;
 
       --  Note: we need to open the "ref" editor first, so that the focus is
@@ -953,11 +953,9 @@ package body Vdiff2_Module.Utils is
       Edit (Kernel, Item.Files (2));
       Edit (Kernel, Item.Files (1));
 
-      Split (Get_MDI (Kernel), Orientation_Horizontal,
-             Reuse_If_Possible => True);
+      Split (Get_MDI (Kernel), Orientation_Horizontal, Mode => Before_Reuse);
       Edit (Kernel, Item.Files (3));
-      Split (Get_MDI (Kernel), Orientation_Horizontal,
-             Reuse_If_Possible => True);
+      Split (Get_MDI (Kernel), Orientation_Horizontal, Mode => Before_Reuse);
 
       --  Synchronize the scrollings
 
