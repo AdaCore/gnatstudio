@@ -511,7 +511,10 @@ package body GPS.Main_Window is
          Default => True);
 
       Set_Policy (Main_Window, False, True, False);
-      Set_Position (Main_Window, Win_Pos_None);
+      --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
+      --  window managers as "top-left" corner, which may cause issues with
+      --  taskbars.
+      Set_Position (Main_Window, Win_Pos_Center);
       Set_Modal (Main_Window, False);
       Set_Default_Size (Main_Window, 800, 700);
 
