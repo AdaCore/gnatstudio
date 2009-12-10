@@ -806,6 +806,7 @@ package body GPS.Kernel is
       if Project_Name = GNATCOLL.VFS.No_File then
          Trace (Me, "not saving central area (project is not from file)");
          Central_Convert := null;
+         Glib.Xml_Int.Free (Central);
       else
          Central_Convert := XML_Utils.GtkAda.Convert (Central);
          Add_File_Child (Central_Convert, "project", Project_Name);
