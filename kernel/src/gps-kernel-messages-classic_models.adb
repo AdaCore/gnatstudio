@@ -508,7 +508,7 @@ package body GPS.Kernel.Messages.Classic_Models is
 
                   begin
                      loop
-                        M := Message_Access (Node);
+                        M := Message_Access (N);
 
                         case M.Level is
                            when Primary =>
