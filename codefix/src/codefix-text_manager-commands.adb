@@ -61,7 +61,11 @@ package body Codefix.Text_Manager.Commands is
 
    function Get_Caption (This : Text_Command'Class) return String is
    begin
-      return This.Caption.all;
+      if This.Caption = null then
+         return "fix not documented";
+      else
+         return This.Caption.all;
+      end if;
    end Get_Caption;
 
    function Get_Parser
