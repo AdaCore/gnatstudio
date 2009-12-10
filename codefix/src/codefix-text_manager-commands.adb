@@ -532,14 +532,13 @@ package body Codefix.Text_Manager.Commands is
      (This         : Remove_Blank_Lines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Cursor   : File_Cursor := File_Cursor
+      Cursor : File_Cursor := File_Cursor
         (Current_Text.Get_Current_Cursor (This.Start_Mark.all));
-      Text     : constant Ptr_Text := Current_Text.Get_File (Cursor.File);
-      Max_Line : constant Integer := Text.Line_Max;
+      Text   : constant Ptr_Text := Current_Text.Get_File (Cursor.File);
    begin
       Cursor.Col := 1;
 
-      while Cursor.Line <= Max_Line
+      while Cursor.Line < Text.Line_Max
         and then Is_Blank (Text.Get_Line (Cursor, 1))
       loop
          Text.Delete_Line (Cursor);

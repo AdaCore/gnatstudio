@@ -896,7 +896,22 @@ package body Codefix.GNAT_Parser is
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Fix problems like 'two consecutives underlines not permitted'.
+   --  Fix problems like 'multiple blank lines'.
+
+   type EOF_Blank_Lines is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out EOF_Blank_Lines);
+
+   overriding
+   procedure Fix
+     (This         : EOF_Blank_Lines;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'blank line not allowed at end of file'.
 
    type Suggested_Replacement is new Error_Parser (1) with null record;
 
@@ -3015,6 +3030,38 @@ package body Codefix.GNAT_Parser is
         (Current_Text, First_Line_To_Remove);
    end Fix;
 
+   ---------------------
+   -- EOF_Blank_Lines --
+   ---------------------
+
+   overriding procedure Initialize (This : in out EOF_Blank_Lines) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("blank lines not allowed at end of file")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : EOF_Blank_Lines;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+
+      First_Line_To_Remove : File_Cursor :=
+        File_Cursor (Get_Message (Message_It));
+   begin
+      First_Line_To_Remove.Set_Location
+        (First_Line_To_Remove.Get_Line + 1,
+         1);
+
+      Solutions := Remove_Blank_Lines
+        (Current_Text, First_Line_To_Remove);
+   end Fix;
+
    ----------------------------
    -- Lower_Bound_Assumption --
    ----------------------------
@@ -3301,6 +3348,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Redundant_With_In_Body);
       Add_Parser (Processor, new Consecutive_Underlines);
       Add_Parser (Processor, new Multiple_Blank_Lines);
+      Add_Parser (Processor, new EOF_Blank_Lines);
       Add_Parser (Processor, new Suggested_Replacement);
       Add_Parser (Processor, new Pragma_Pack);
       Add_Parser (Processor, new Undefined_Entity);
