@@ -208,9 +208,11 @@ package GPS.Kernel.Messages is
    --  file for file nodes and category's name for category node.
    Node_Foreground_Column : constant Glib.Gint := 8;
    --  Contains Gdk color for the foreground of the node.
-   Action_Pixbuf_Column   : constant Glib.Gint := 9;
+   Node_Tooltip_Column    : constant Glib.Gint := 9;
+   --  Contains tooltip text for the node.
+   Action_Pixbuf_Column   : constant Glib.Gint := 10;
    --  Contains pixmuf object of the associated action.
-   Total_Columns          : constant Glib.Gint := 10;
+   Total_Columns          : constant Glib.Gint := 11;
    --  Total number of columns.
 
    --------------------------

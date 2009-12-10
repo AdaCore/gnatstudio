@@ -203,6 +203,9 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Node_Foreground_Column =>
             return Gdk.Color.Gdk_Color_Type;
 
+         when Node_Tooltip_Column =>
+            return Glib.GType_String;
+
          when Action_Pixbuf_Column =>
             return Gdk.Pixbuf.Get_Type;
 
@@ -485,6 +488,51 @@ package body GPS.Kernel.Messages.Classic_Models is
 
                when Node_Message =>
                   null;
+            end case;
+
+         when Node_Tooltip_Column =>
+            Init (Value, GType_String);
+
+            case Node.Kind is
+               when Node_Category =>
+                  Set_String (Value, To_String (Node.Name));
+
+               when Node_File =>
+                  Set_String (Value, String (Node.File.Base_Name));
+
+               when Node_Message =>
+                  declare
+                     Markup : Unbounded_String;
+                     N      : Node_Access := Node;
+                     M      : Message_Access;
+
+                  begin
+                     loop
+                        M := Message_Access (Node);
+
+                        case M.Level is
+                           when Primary =>
+                              Markup := ASCII.LF & M.Get_Markup & Markup;
+
+                              exit;
+
+                           when Secondary =>
+                              Markup :=
+                                ASCII.LF & "  " & M.Get_Markup & Markup;
+                        end case;
+
+                        N := N.Parent;
+                     end loop;
+
+                     Markup :=
+                       N.Parent.Parent.Name
+                         & ASCII.LF & String (N.Parent.File.Base_Name)
+                         & ":" & Image (Node.Line)
+                         & ':' & Image (Natural (Node.Column))
+                         & Markup;
+
+                     Set_String (Value, To_String (Markup));
+                  end;
             end case;
 
          when Action_Pixbuf_Column =>
