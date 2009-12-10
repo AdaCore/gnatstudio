@@ -15,6 +15,11 @@ of the feature.
 New features on 4.5.0
 ---------------------
 
+NF-45-IC10-032 Auto-fix "blank line not allowed at end of file" (2009-12-10)
+
+  An auto fix is now provided for messages like "blank line not allowed at end
+  of file".
+
 NF-45-IC10-030 Better emulation of Emacs's split features (2009-12-10)
 
   If you loaded the emacs.xml plugin, the control-x 2 and control-x 3 key
