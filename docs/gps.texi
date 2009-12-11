@@ -1047,7 +1047,7 @@ keys navigate between listed locations, @code{Left} collapses the current
 level, @code{Right} expands the current level, and @code{Return} jumps to the
 currently selected location.
 
-All open callgraph views are automatically saved in the desktop, and restored
+The callgraph view is automatically saved in the desktop, and restored
 the next time you restart GPS. However, the information displayed in these
 might no longer be accurate at this stage, since it shows the status of the
 callgraph during the last GPS session.
