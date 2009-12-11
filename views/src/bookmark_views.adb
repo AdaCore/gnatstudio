@@ -1032,7 +1032,7 @@ package body Bookmark_Views is
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module
         (Kernel, Module_ID (Bookmark_Views_Module),
-         "_Bookmarks", -"Call Tree");
+         "_Bookmarks", -"Call Trees");
 
       Register_Hook_No_Return (Kernel, Bookmark_Added_Hook, String_Hook_Type);
       Register_Hook_No_Return

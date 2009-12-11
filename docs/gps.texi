@@ -1592,7 +1592,7 @@ it is possible that you prefer to have several top-level windows under
 direct control of your system or window manager. This would be the
 case for instance if you want to benefit from some extra possibilities
 that your system might provide (virtual desktops, different window
-decoration depending on the window's type, transparent windows, 
+decoration depending on the window's type, transparent windows,
 multiple screens, @dots{}).
 
 GPS is fully compatible with this behavior, since windows can also be
@@ -3626,10 +3626,14 @@ Open the corresponding spec file if the current edited file is a body file,
 or body file otherwise. This option is only available for the Ada language.
 
 @item @i{Entity} calls
-Display a list of all subprograms called by @i{entity} in a tree view. This is generally more convenient than using the corresponding Browsers/ submenu if you expect lots of references, @xref{The Callgraph View}.
+Display a list of all subprograms called by @i{entity} in a tree
+view. This is generally more convenient than using the corresponding
+Browsers/ submenu if you expect lots of references, @xref{The Callgraph View}.
 
 @item @i{Entity} is called by
-Display a list of all subprograms calling @i{entity} in a tree view. This is generally more convenient than using the correponding Browsers/ submenu if you expect lots of references, @xref{The Callgraph View}.
+Display a list of all subprograms calling @i{entity} in a tree
+view. This is generally more convenient than using the correponding
+Browsers/ submenu if you expect lots of references, @xref{The Callgraph View}.
 
 @item References
 @cindex references
@@ -8347,7 +8351,7 @@ The list of active items includes:
 @cindex bookmark
 @xref{Bookmarks}.
 
-@item Call Tree
+@item Call Trees
 Open a tree view of function callers and callees. See also @ref{Call Graph}.
 
 @item Clipboard
