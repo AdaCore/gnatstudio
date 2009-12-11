@@ -27,6 +27,12 @@ NF-45-IC10-030 Better emulation of Emacs's split features (2009-12-10)
   editors, and properly reuse existing notebooks rather than create new
   ones
 
+NF-45-IC07-012 All call-trees are now grouped into the same window (2009-12-10)
+
+  The call trees are now sharing the same window. This avoids cluttering
+  the GUI with multiple windows. It is also consistent with the location
+  view for example.
+
 NF-45-IC04-030 Auto-fix for "warning, var is unreferenced" (2009-12-09)
 
   When the compiler detects that a variable with a pragma unreferenced is
