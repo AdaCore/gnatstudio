@@ -1123,7 +1123,8 @@ package body Call_Graph_Views is
                Set (Model, Iter, Decl_Column, Get_Attribute (N, "decl"));
 
                --  We want to be compatible with previous version not having
-               --  the type node. We then information from top type node.
+               --  the type node. We then get information from top type node in
+               --  this case.
 
                if Is_Calls then
                   Set
