@@ -34,6 +34,7 @@ with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Paned;                   use Gtk.Paned;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
@@ -256,6 +257,15 @@ package body Call_Graph_Views is
      (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return View_Type;
    pragma Inline (Get_View_Type);
    --  Returns the View_Type for the entity pointer to by Iter
+
+   procedure Remove_Entity (Object : access Gtk_Widget_Record'Class);
+   --  Remove the selected entity in the Location_View
+
+   procedure Clear_View (Object : access Gtk_Widget_Record'Class);
+   --  Remove all entries from the call trees view
+
+   procedure Collapse_All (Object : access Gtk_Widget_Record'Class);
+   --  Collapse all call trees entries
 
    -------------------
    -- Get_View_Type --
@@ -847,6 +857,48 @@ package body Call_Graph_Views is
          Thaw_Sort (M, Column);
    end On_Row_Expanded;
 
+   -------------------
+   -- Remove_Entity --
+   -------------------
+
+   procedure Remove_Entity (Object : access Gtk_Widget_Record'Class) is
+      View  : constant Callgraph_View_Access :=
+                Callgraph_View_Access (Object);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Remove (Gtk_Tree_Store (Model), Iter);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Remove_Entity;
+
+   ----------------
+   -- Clear_View --
+   ----------------
+
+   procedure Clear_View (Object : access Gtk_Widget_Record'Class) is
+      Model : constant Gtk_Tree_Store :=
+                Gtk_Tree_Store
+                  (Get_Model (Callgraph_View_Access (Object).Tree));
+   begin
+      Clear (Model);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Clear_View;
+
+   ------------------
+   -- Collapse_All --
+   ------------------
+
+   procedure Collapse_All (Object : access Gtk_Widget_Record'Class) is
+   begin
+      Gtk.Tree_View.Collapse_All (Callgraph_View_Access (Object).Tree);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Collapse_All;
+
    --------------------------
    -- View_Context_Factory --
    --------------------------
@@ -859,13 +911,14 @@ package body Call_Graph_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Kernel, Menu);
+      pragma Unreferenced (Event_Widget, Kernel);
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (Object);
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter   : Gtk_Tree_Iter;
       Entity : Entity_Information;
       Value  : GValue;
+      Mitem  : Gtk_Menu_Item;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
 
@@ -880,6 +933,27 @@ package body Call_Graph_Views is
             Set_File_Information   (Context, Files  => Empty_File_Array);
             Set_Entity_Information (Context, Entity => Entity);
          end if;
+
+         Gtk_New (Mitem, -"Collapse all");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Collapse_All'Access, V);
+
+         if Iter_Depth (Model, Iter) = 0 then
+            Gtk_New (Mitem, -"Remove entity");
+            Append (Menu, Mitem);
+            Widget_Callback.Object_Connect
+              (Mitem, Gtk.Menu_Item.Signal_Activate, Remove_Entity'Access, V);
+         end if;
+
+         Gtk_New (Mitem, -"Clear Call Trees");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, Gtk.Menu_Item.Signal_Activate, Clear_View'Access, V);
+
+         Gtk_New (Mitem);
+         Append (Menu, Mitem);
+
       else
          Unselect_All (Get_Selection (V.Tree));
       end if;

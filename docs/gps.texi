@@ -1052,6 +1052,21 @@ the next time you restart GPS. However, the information displayed in these
 might no longer be accurate at this stage, since it shows the status of the
 callgraph during the last GPS session.
 
+Left-clicking on a line in the Call Tree brings up a contextual
+menu with the following entries:
+
+@table @b
+@item Collapse all
+Collapse all the entities in the Callgraph View.
+
+@item Remove entity
+Remove the selected entity from the Callgraph View.
+
+@item Clear Call Trees
+Remove all entries from the Callgraph View.
+
+@end table
+
 @c --------------------------------------------------------------------
 @node Bookmarks
 @section Bookmarks
