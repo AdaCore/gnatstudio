@@ -1027,9 +1027,8 @@ depends on what arguments are passed to the caller at run time, and it is
 possible that the subprogram is in fact never dispatched to.
 
 This view is automatically displayed when you select one of the contextual
-menus @code{... calls} and
-@code{... is called by}. Every time you select one of
-these menus, a new view is opened to display that entity.
+menus @code{... calls} and @code{... is called by}. Every time you
+select one of these menus, a new view is opened to display that entity.
 
 Whenever you expand a node from the tree by clicking on the small expander
 arrow on the left of the line, further callgraph information is computed for

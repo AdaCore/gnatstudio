@@ -868,6 +868,7 @@ package body Call_Graph_Views is
       Value  : GValue;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
 

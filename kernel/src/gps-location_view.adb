@@ -279,7 +279,7 @@ package body GPS.Location_View is
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self  : Location_View) return Boolean;
-   --  Used by model filter for query item visibility.
+   --  Used by model filter for query item visibility
 
    procedure Modify
      (Model  : access Gtk_Tree_Model_Filter_Record'Class;
@@ -702,7 +702,6 @@ package body GPS.Location_View is
    begin
       if not Is_Absolute_Path (File) then
          Category_Created := False;
-
          return;
       end if;
 
@@ -715,8 +714,8 @@ package body GPS.Location_View is
          --  creation of infinite depth of substiles when the set of locations
          --  is loaded at GPS startup.
 
-         if Ada.Strings.Fixed.Index (Get_Name (Highlight_Category), "/")
-           = 0
+         if Ada.Strings.Fixed.Index
+           (Get_Name (Highlight_Category), "/") = 0
          then
             Highlight_Style :=
               Get_Or_Create_Style_Copy
@@ -728,8 +727,7 @@ package body GPS.Location_View is
             Highlight_Style :=
               Get_Or_Create_Style_Copy
                 (View.Kernel,
-                 Get_Name (Highlight_Category),
-                 Highlight_Category);
+                 Get_Name (Highlight_Category), Highlight_Category);
          end if;
       end if;
 
@@ -1114,7 +1112,7 @@ package body GPS.Location_View is
             File_Iter := Explorer.Model.Parent (Message_Iter);
             Category_Iter := Explorer.Model.Parent (File_Iter);
 
-            --  Unwind secondary level messages.
+            --  Unwind secondary level messages
 
             while Explorer.Model.Parent (Category_Iter) /= Null_Iter loop
                File_Iter := Category_Iter;
