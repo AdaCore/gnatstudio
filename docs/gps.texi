@@ -9740,7 +9740,11 @@ information on themes. It is only displayed when there are themes registered.
 @table @i
 @item Default font
 @cindex font
-The default font used in GPS
+@cindex background color
+The default font used in GPS. The background color you select for this
+preference will set the background color for all consoles and most views (the
+ones that display their data as trees, mostly). To change the background color
+of editors, see the preference Edit/Fonts&Colors/Default.
 
 @item Fixed view font
 @cindex font

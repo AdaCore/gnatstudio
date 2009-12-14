@@ -15,6 +15,12 @@ of the feature.
 New features on 4.5.0
 ---------------------
 
+NF-45-IC10-047 Changing background of views (2009-12-14)
+
+  It is now possible to chose a background color of than white for views,
+  by changing the Default Style preference. This was already doable for
+  editors.
+
 NF-45-IC10-032 Auto-fix "blank line not allowed at end of file" (2009-12-10)
 
   An auto fix is now provided for messages like "blank line not allowed at end
