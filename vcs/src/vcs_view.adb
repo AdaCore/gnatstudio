@@ -293,7 +293,7 @@ package body VCS_View is
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Default_Font.Get_Pref,
+            Default_Font.Get_Pref_Font,
             Tooltip_Color.Get_Pref,
             Tooltip.Explorer.Tree,
             Pixmap);

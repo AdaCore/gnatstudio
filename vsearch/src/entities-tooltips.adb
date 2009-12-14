@@ -271,7 +271,7 @@ package body Entities.Tooltips is
       Widget : constant Gtk_Widget := Gtk_Widget (Get_Main_Window (Kernel));
       Pixmap : Gdk.Pixmap.Gdk_Pixmap;
 
-      Font   : constant Pango_Font_Description := Default_Font.Get_Pref;
+      Font   : constant Pango_Font_Description := Default_Font.Get_Pref_Font;
       Fixed  : constant Pango_Font_Description := View_Fixed_Font.Get_Pref;
 
       Header_Layout, Doc_Layout : Pango_Layout;

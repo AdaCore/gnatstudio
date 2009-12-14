@@ -42,7 +42,6 @@ with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
@@ -540,7 +539,7 @@ package body Buffer_Views is
          Hide_Expander      => False);
       Add (View, View.Tree);
 
-      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), Signal_Child_Added,
@@ -597,7 +596,7 @@ package body Buffer_Views is
    begin
       if Child /= null then
          View := Buffer_View_Access (Get_Widget (Child));
-         Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
+         Set_Font_And_Colors (View.Tree, Fixed_Font => True);
       end if;
    end Preferences_Changed;
 

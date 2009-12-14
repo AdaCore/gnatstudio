@@ -58,7 +58,6 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.Terminal;     use Gtkada.Terminal;
 with Gtkada.MDI;          use Gtkada.MDI;
 with Gtkada.Types;
-with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
 
 with Traces;              use Traces;
@@ -1506,7 +1505,6 @@ package body Interactive_Consoles is
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
-      Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
@@ -1516,7 +1514,7 @@ package body Interactive_Consoles is
       Manage_Prompt       : Boolean := True) is
    begin
       Console := new Interactive_Console_Record;
-      Initialize (Console, Prompt, Handler, User_Data, Font,
+      Initialize (Console, Prompt, Handler, User_Data,
                   History_List, Key, Highlight, Wrap_Mode,
                   Empty_Equals_Repeat, ANSI_Support, Manage_Prompt);
    end Gtk_New;
@@ -1530,7 +1528,6 @@ package body Interactive_Consoles is
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
-      Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
@@ -1541,7 +1538,6 @@ package body Interactive_Consoles is
    is
       Iter : Gtk_Text_Iter;
       Term : Gtkada_Terminal;
---        Term_View : Gtkada_Terminal_View;
    begin
       --  Initialize the text buffer and the text view
 
@@ -1562,10 +1558,7 @@ package body Interactive_Consoles is
 
       if ANSI_Support then
          Gtk_New (Term, Prevent_Cursor_Motion_With_Mouse => True);
---           Gtk_New (Term_View, Term);
-
          Console.Buffer := Gtk_Text_Buffer (Term);
---           Console.View := Gtk_Text_View (Term_View);
       else
          Gtk_New (Console.Buffer);
       end if;
@@ -1604,18 +1597,12 @@ package body Interactive_Consoles is
       Add (Get_Tag_Table (Console.Buffer), Console.Highlight_Tag);
 
       Gtk_New (Console.Prompt_Tag);
-      Set_Property
-        (Console.Prompt_Tag,
-         Gtk.Text_Tag.Font_Desc_Property,
-         Font);
 
       Add (Get_Tag_Table (Console.Buffer), Console.Prompt_Tag);
 
       Add (Console, Console.View);
 
       Console.Internal_Insert := True;
-
-      Modify_Font (Console.View, Font);
 
       Widget_Callback.Connect (Console, Signal_Destroy, On_Destroy'Access);
 

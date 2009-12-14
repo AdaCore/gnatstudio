@@ -340,7 +340,7 @@ package body GPS.Kernel.MDI is
         (Get_MDI (Kernel),
          Opaque_Resize             => MDI_Opaque.Get_Pref,
          Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref,
-         Title_Font                => Default_Font.Get_Pref,
+         Title_Font                => Default_Font.Get_Pref_Font,
          Background_Color          => MDI_Background_Color.Get_Pref,
          Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
          Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
@@ -787,5 +787,30 @@ package body GPS.Kernel.MDI is
       GPS.Kernel.Kernel_Desktop.Load_Perspective
         (Get_MDI (Kernel), Name, Kernel_Handle (Kernel));
    end Load_Perspective;
+
+   -------------------------
+   -- Set_Font_And_Colors --
+   -------------------------
+
+   procedure Set_Font_And_Colors
+     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Fixed_Font : Boolean)
+   is
+   begin
+      if Fixed_Font then
+         Modify_Font (Widget, View_Fixed_Font.Get_Pref);
+      else
+         Modify_Font (Widget, Default_Font.Get_Pref_Font);
+      end if;
+
+      Modify_Text (Widget, State_Normal, Default_Font.Get_Pref_Fg);
+      Modify_Text (Widget, State_Active, Default_Font.Get_Pref_Fg);
+      Modify_Fg   (Widget, State_Normal, Default_Font.Get_Pref_Fg);
+      Modify_Fg   (Widget, State_Active, Default_Font.Get_Pref_Fg);
+      Modify_Base (Widget, State_Normal, Default_Font.Get_Pref_Bg);
+      Modify_Base (Widget, State_Active, Default_Font.Get_Pref_Bg);
+      Modify_Bg   (Widget, State_Normal, Default_Font.Get_Pref_Bg);
+      Modify_Bg   (Widget, State_Active, Default_Font.Get_Pref_Bg);
+   end Set_Font_And_Colors;
 
 end GPS.Kernel.MDI;

@@ -46,7 +46,6 @@ with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Main_Window.Debug;  use GPS.Main_Window.Debug;
 with GVD.Preferences;        use GVD.Preferences;
@@ -56,7 +55,6 @@ with GVD.Views;              use GVD.Views;
 with GVD_Module;             use GVD_Module;
 with Histories;              use Histories;
 with Interactive_Consoles;   use Interactive_Consoles;
-with Pango.Font;             use Pango.Font;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
 with Traces;                 use Traces;
@@ -426,11 +424,11 @@ package body GVD.Consoles is
          Handler             => Interpret_Command_Handler'Access,
          User_Data           => Console.all'Address,
          Prompt              => "",
-         Font                => Default_Style.Get_Pref_Font,
          History_List        => Get_History (Kernel),
          Key                 => "gvd_console",
          Wrap_Mode           => Wrap_Char,
          Empty_Equals_Repeat => True);
+      Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
 
       Set_Max_Length (Get_History (Kernel).all, 100, "gvd_console");
       Allow_Duplicates
@@ -526,11 +524,11 @@ package body GVD.Consoles is
          Prompt      => "",
          Handler     => Debuggee_Console_Handler'Access,
          User_Data   => Console.all'Address,
-         Font         => Default_Style.Get_Pref_Font,
          History_List => null,
          Key          => "gvd_tty_console",
          ANSI_Support => True,
          Wrap_Mode    => Wrap_Char);
+      Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
       Widget_Callback.Connect
         (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
 

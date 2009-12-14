@@ -54,7 +54,6 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities.Tooltips;         use Entities.Tooltips;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -342,7 +341,7 @@ package body Outline_View is
    begin
       if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
-         Modify_Font (Outline.Tree, View_Fixed_Font.Get_Pref);
+         Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
       end if;
    end Preferences_Changed;
 
@@ -692,7 +691,7 @@ package body Outline_View is
       Outline.File_Icon := Render_Icon
         (Get_Main_Window (Kernel), "gps-file", Icon_Size_Menu);
 
-      Modify_Font (Outline.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
 
       Return_Callback.Object_Connect
         (Outline.Tree,

@@ -75,6 +75,22 @@ package GUI_Utils is
    --  Default is the default string set in the user entry.
    --  Return "" if the user pressed cancel or did not enter anything
 
+   ------------
+   -- Colors --
+   ------------
+
+   function Darken (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+   function Lighten (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+   --  Darken or lighten a color. This is linear darkening for all of RGB
+   --  components.
+   --  The returned color has been allocated
+
+   function Darken_Or_Lighten
+     (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color;
+   --  Darken or lighten a color depending on its current luminosity. The goal
+   --  is to obtain a contrast between the two
+   --  The returned color has been allocated
+
    -------------
    -- Buttons --
    -------------

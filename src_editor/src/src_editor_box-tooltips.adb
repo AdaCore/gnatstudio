@@ -189,7 +189,7 @@ package body Src_Editor_Box.Tooltips is
                                  Buffer_Line_Type (Line + 1));
             Content       : Unbounded_String;
             Font          : constant Pango_Font_Description :=
-                              Default_Font.Get_Pref;
+                              Default_Font.Get_Pref_Font;
             Layout        : Pango_Layout;
             Width, Height : Gint := 0;
             GC            : Gdk.Gdk_GC;

@@ -43,6 +43,7 @@ with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -162,7 +163,7 @@ package body Clipboard_Views is
          if Text /= null then
             Create_Pixmap_From_Text
               (Text.all,
-               Default_Font.Get_Pref,
+               Default_Font.Get_Pref_Font,
                White (Get_Default_Colormap),
                Tooltip.Clipboard_View.Tree,
                Pixmap);
@@ -323,7 +324,7 @@ package body Clipboard_Views is
       View : constant Clipboard_View_Access :=
                Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
    end On_Preferences_Changed;
 
    -------------

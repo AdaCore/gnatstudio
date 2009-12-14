@@ -39,7 +39,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
@@ -155,10 +154,11 @@ package body Shell_Script is
            (Console      => Console,
             Prompt       => "GPS> ",
             User_Data    => Kernel.all'Address,
-            Font         => Default_Style.Get_Pref_Font,
             History_List => Get_History (Kernel),
             Key          => "shell",
             Wrap_Mode    => Wrap_Char);
+         Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
+
          Gtk_New (Child, Console,
                   Default_Width       => 400,
                   Default_Height      => 120,

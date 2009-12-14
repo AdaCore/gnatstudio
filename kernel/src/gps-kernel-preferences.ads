@@ -122,7 +122,7 @@ package GPS.Kernel.Preferences is
    --  preference.
 
    -- General --
-   Default_Font           : Font_Preference;
+   Default_Font           : Style_Preference;
    View_Fixed_Font        : Font_Preference;
    Use_Native_Dialogs     : Boolean_Preference;
    Default_Widget_Width   : Integer_Preference;

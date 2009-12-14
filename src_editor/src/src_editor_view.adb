@@ -53,7 +53,6 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Text_Buffer;         use Gtkada.Text_Buffer;
 
-with Pango.Font;                 use Pango.Font;
 with Pango.Layout;               use Pango.Layout;
 
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
@@ -67,6 +66,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -206,12 +206,6 @@ package body Src_Editor_View is
 
    procedure Redraw_Speed_Column (View : access Source_View_Record'Class);
    --  Redraw the speed column
-
-   procedure Set_Font
-     (View : access Source_View_Record'Class;
-      Font : Pango.Font.Pango_Font_Description);
-   --  Change the font used in the given Source_View. Note that this service
-   --  should not be used if the widget is not realized.
 
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
@@ -533,7 +527,7 @@ package body Src_Editor_View is
    begin
       --  Now that the window is realized, we can set the font and
       --  the size of the left border window size.
-      Set_Font (View, Default_Style.Get_Pref_Font);
+      Modify_Font (View, Default_Style.Get_Pref_Font);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1206,7 +1200,6 @@ package body Src_Editor_View is
 
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class) is
       Color   : Gdk_Color;
-      Success : Boolean;
       View    : constant Source_View := Source_View (Widget);
    begin
       --  ??? Here we are creating GCs and allocating colors for every instance
@@ -1239,23 +1232,15 @@ package body Src_Editor_View is
       Gdk_New
         (View.Default_GC,
          Get_Window (View, Text_Window_Text));
-      Color := Parse ("#eeeeee");
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
-      if Success then
-         Set_Foreground (View.Side_Background_GC, Color);
-      else
-         Set_Foreground
-           (View.Side_Background_GC,
-            White (Get_Default_Colormap));
-      end if;
+      Set_Foreground (View.Side_Column_GC, View.Text_Color);
 
-      Color := Parse ("#A0A0A0");
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+      --  We'll use a slightly darker color for the side area with line
+      --  numbers
 
-      if Success then
-         Set_Foreground (View.Default_GC, Color);
-      end if;
+      Set_Foreground (View.Side_Background_GC,
+                      Darken_Or_Lighten (View.Background_Color));
+      Set_Foreground (View.Default_GC, View.Text_Color);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1577,10 +1562,6 @@ package body Src_Editor_View is
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
       Ink_Rect, Logical_Rect : Gdk_Rectangle;
    begin
-      --  Set the font
-
-      Set_Font (Source, Default_Style.Get_Pref_Font);
-
       --  Recompute the width of one character
 
       Layout := Create_Pango_Layout (Source);
@@ -1627,7 +1608,11 @@ package body Src_Editor_View is
          end if;
       end if;
 
-      --  Modify the text background and color
+      --  Modify the text background, color and font
+
+      if Realized_Is_Set (Source) then
+         Modify_Font (Source, Default_Style.Get_Pref_Font);
+      end if;
 
       Color := Default_Style.Get_Pref_Bg;
 
@@ -1672,23 +1657,6 @@ package body Src_Editor_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Execute;
-
-   --------------
-   -- Set_Font --
-   --------------
-
-   procedure Set_Font
-     (View : access Source_View_Record'Class;
-      Font : Pango.Font.Pango_Font_Description) is
-   begin
-      --  Make sure the widget is already realized. Otherwise, the
-      --  layout and style are not created yet.
-      if Realized_Is_Set (View) then
-         Modify_Font (View, Font);
-      end if;
-
-      --  ??? Should recompute the width of the column on the side
-   end Set_Font;
 
    -------------------------------
    -- Scroll_To_Cursor_Location --

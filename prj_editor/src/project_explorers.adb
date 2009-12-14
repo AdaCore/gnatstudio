@@ -703,7 +703,7 @@ package body Project_Explorers is
       Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
       Add (Scrolled, Explorer.Tree);
-      Modify_Font (Explorer.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -938,7 +938,7 @@ package body Project_Explorers is
    begin
       if Child /= null then
          Explorer := Project_Explorer_Access (Get_Widget (Child));
-         Modify_Font (Explorer.Tree, View_Fixed_Font.Get_Pref);
+         Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
       end if;
    end Preferences_Changed;
 
@@ -1416,7 +1416,7 @@ package body Project_Explorers is
             Width   : Gint;
             Height  : Gint;
          begin
-            Font := Default_Font.Get_Pref;
+            Font := Default_Font.Get_Pref_Font;
             Layout := Create_Pango_Layout (Tooltip.Explorer, "");
             Set_Markup (Layout, Str);
             Set_Font_Description (Layout, Font);

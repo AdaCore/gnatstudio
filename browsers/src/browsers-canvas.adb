@@ -518,7 +518,7 @@ package body Browsers.Canvas is
                          Browsers_Bg_Color.Get_Pref);
       end if;
 
-      Annotation_Font := Copy (Default_Font.Get_Pref);
+      Annotation_Font := Copy (Default_Font.Get_Pref_Font);
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
@@ -548,7 +548,8 @@ package body Browsers.Canvas is
       Iter := Start (Hook.Browser.Canvas);
       while Get (Iter) /= null loop
          Set_Font_Description
-           (Browser_Item (Get (Iter)).Title_Layout, Default_Font.Get_Pref);
+           (Browser_Item (Get (Iter)).Title_Layout,
+            Default_Font.Get_Pref_Font);
 
          Refresh (Browser_Item (Get (Iter)));
          Next (Iter);
@@ -1214,7 +1215,8 @@ package body Browsers.Canvas is
       else
          if Item.Title_Layout = null then
             Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
-            Set_Font_Description (Item.Title_Layout, Default_Font.Get_Pref);
+            Set_Font_Description
+              (Item.Title_Layout, Default_Font.Get_Pref_Font);
          else
             Set_Text (Item.Title_Layout, Title);
          end if;
@@ -1915,7 +1917,7 @@ package body Browsers.Canvas is
       Layout : Pango_Layout;
    begin
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description (Layout, Default_Font.Get_Pref);
+      Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
 
       Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
       Redraw_Title_Bar (Item);
@@ -2715,7 +2717,7 @@ package body Browsers.Canvas is
       Canvas        : constant Interactive_Canvas := Get_Canvas (Browser);
       Kernel        : constant Kernel_Handle := Get_Kernel (Browser);
       Font          : constant Pango_Font_Description :=
-                        Default_Font.Get_Pref;
+                        Default_Font.Get_Pref_Font;
       Iterator      : Item_Iterator;
       Item          : Canvas_Item;
       World_X,

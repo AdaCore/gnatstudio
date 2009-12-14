@@ -1741,6 +1741,9 @@ package body Vsearch is
       Add_Hook (Handle, Search_Regexps_Changed_Hook,
                 Wrapper (New_Predefined_Regexp'Access),
                 Name => "vsearch.search_regexps");
+
+      --  ??? Should be changed when prefs are changed
+      Set_Font_And_Colors (Vsearch.Table, Fixed_Font => False);
    end Initialize;
 
    ---------------

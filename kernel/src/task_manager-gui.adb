@@ -37,6 +37,7 @@ with Gtk.Tree_Model.Utils;     use Gtk.Tree_Model.Utils;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
@@ -578,7 +579,7 @@ package body Task_Manager.GUI is
 
       Add (View, Scrolled);
 
-      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
       Return_Callback.Object_Connect
         (View.Tree,
@@ -917,7 +918,7 @@ package body Task_Manager.GUI is
       end if;
 
       GUI.Progress_Layout := Create_Pango_Layout (Iface);
-      Set_Font_Description (GUI.Progress_Layout, Default_Font.Get_Pref);
+      Set_Font_Description (GUI.Progress_Layout, Default_Font.Get_Pref_Font);
 
       Set_Text (GUI.Progress_Layout, "L");
       Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);

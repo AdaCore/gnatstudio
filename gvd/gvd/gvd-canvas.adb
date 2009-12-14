@@ -1007,7 +1007,8 @@ package body GVD.Canvas is
 
       --  Initialize the canvas
 
-      Annotation_Font := Copy (GPS.Kernel.Preferences.Default_Font.Get_Pref);
+      Annotation_Font :=
+        Copy (GPS.Kernel.Preferences.Default_Font.Get_Pref_Font);
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale,

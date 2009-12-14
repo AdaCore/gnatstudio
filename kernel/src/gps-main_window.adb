@@ -29,6 +29,8 @@ with Glib.Error;                use Glib.Error;
 with Glib.Object;
 with Glib.Values;               use Glib.Values;
 
+with Pango.Font;                use Pango.Font;
+
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -418,7 +420,8 @@ package body GPS.Main_Window is
       Win    : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
    begin
       Gtk.Rc.Parse_String
-        ("gtk-font-name=""" & Default_Font.Get_Pref & '"' & ASCII.LF);
+        ("gtk-font-name="""
+         & To_String (Default_Font.Get_Pref_Font) & '"' & ASCII.LF);
 
       Gtk.Rc.Parse_String
         ("style ""gtk-default-tooltips-style""  {" & ASCII.LF

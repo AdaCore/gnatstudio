@@ -261,9 +261,13 @@ package body GPS.Kernel.Preferences is
 
       Default_Font := Create
         (Manager => Kernel.Preferences,
-         Name    => "General-Default-Font",
-         Default => Config.Default_Font,
-         Doc     => -"The default font used in GPS",
+         Name    => "General-Default-Style",
+         Default_Font => Config.Default_Font,
+         Default_Fg   => "black",
+         Default_Bg   => "white",
+         Doc     => -("The default style used in GPS. The color indicates the"
+           & " what should be used for the background color of windows (for"
+           & " editors check the Editor/Colors preference page)."),
          Page    => -"General",
          Label   => -"Default font");
 
@@ -578,7 +582,9 @@ package body GPS.Kernel.Preferences is
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Keywords-Style",
          Label        => -"Keywords",
-         Doc          => -"Style to use when displaying keywords",
+         Doc          => -("Style to use when displaying keywords."
+           & " The background color will be that of the default if left"
+           & " to white"),
          Default_Font => "Courier Bold 10",
          Default_Fg   => "black",
          Default_Bg   => "white",
@@ -588,7 +594,9 @@ package body GPS.Kernel.Preferences is
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Comments-Style",
          Label        => -"Comments",
-         Doc          => -"Style to use when displaying comments",
+         Doc          => -"Style to use when displaying comments."
+           & " The background color will be that of the default if left"
+           & " to white",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "blue",
          Default_Bg   => "white",
@@ -598,7 +606,9 @@ package body GPS.Kernel.Preferences is
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Annotated-Comments-Style",
          Label        => -"Annotated Comments",
-         Doc          => -"Style to use when displaying annotated comments",
+         Doc          => -"Style to use when displaying annotated comments."
+           & " The background color will be that of the default if left"
+           & " to white",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "#21A9DE",
          Default_Bg   => "white",
@@ -608,7 +618,9 @@ package body GPS.Kernel.Preferences is
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Strings-Style",
          Label        => -"Strings",
-         Doc          => -"Style to use when displaying strings",
+         Doc          => -"Style to use when displaying strings."
+           & " The background color will be that of the default if left"
+           & " to white",
          Default_Font => "Courier 10",
          Default_Fg   => "brown",
          Default_Bg   => "white",
@@ -618,7 +630,9 @@ package body GPS.Kernel.Preferences is
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Hyper-Links-Style",
          Label        => -"Hyper links",
-         Doc          => -"Style to use when displaying hyper-links",
+         Doc          => -"Style to use when displaying hyper-links."
+           & " The background color will be that of the default if left"
+           & " to white",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "blue",
          Default_Bg   => "white",

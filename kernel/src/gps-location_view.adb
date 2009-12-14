@@ -35,7 +35,7 @@ with Glib;                      use Glib;
 
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Enums;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -87,6 +87,11 @@ package body GPS.Location_View is
    function Idle_Expand_Category (Self : Location_View) return Boolean;
    --  Idle callback used to expand category, its first file and select
    --  first message and the open first location if requested.
+
+   procedure Set_Filter_Visibility
+     (Self : access Location_View_Record'Class;
+      Visible : Boolean);
+   --  Hide or show the filter panel
 
    package Query_Tooltip_Callbacks is
      new Gtk.Handlers.User_Return_Callback
@@ -1303,6 +1308,7 @@ package body GPS.Location_View is
       --  Initialize the filter panel
 
       Gtk_New (View.Filter_Panel, Kernel);
+      Set_Filter_Visibility (View, Visible => True);
       Location_View_Callbacks.Object_Connect
         (View.Filter_Panel,
          Signal_Apply_Filter,
@@ -1370,7 +1376,7 @@ package body GPS.Location_View is
                 Wrapper (Preferences_Changed'Access),
                 Name => "location_view.preferences_changed",
                 Watch => GObject (View));
-      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
       Add_Hook (Kernel, Location_Changed_Hook,
                 Wrapper (Location_Changed'Access),
@@ -1837,7 +1843,7 @@ package body GPS.Location_View is
       View := Location_View (Get_Widget (Child));
       Read_Secondary_Pattern_Preferences (View);
 
-      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
       Node := First (View.Stored_Locations);
 
       while Node /= Location_List.Null_Node loop
@@ -1963,14 +1969,12 @@ package body GPS.Location_View is
          Category := Node.Child;
 
          if Boolean'Value (Get_Attribute (Node, "filter_panel", "FALSE")) then
-            View.Filter_Panel.Show;
+            Set_Filter_Visibility (View, Visible => True);
             View.Filter_Panel.Set_Pattern
               (Get_Attribute (Node, "filter_pattern", ""));
-            Set_Child_Visible (View.Filter_Panel, True);
 
          else
-            View.Filter_Panel.Hide;
-            Set_Child_Visible (View.Filter_Panel, False);
+            Set_Filter_Visibility (View, Visible => False);
          end if;
 
          View.Filter_Panel.Set_Is_Regexp
@@ -2554,6 +2558,26 @@ package body GPS.Location_View is
       Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title (+"Locations");
    end On_Cancel_Filter;
 
+   ---------------------------
+   -- Set_Filter_Visibility --
+   ---------------------------
+
+   procedure Set_Filter_Visibility
+     (Self : access Location_View_Record'Class;
+      Visible : Boolean) is
+   begin
+      if Visible then
+         Set_Child_Visible (Self.Filter_Panel, True);
+         Set_USize (Self.Filter_Panel, -1, -1);
+         Self.Filter_Panel.Show;
+      else
+         Set_Child_Visible (Self.Filter_Panel, False);
+         Set_USize (Self.Filter_Panel, -1, 0);
+         Set_Size_Request (Self.Filter_Panel, -1, 0);
+         Self.Filter_Panel.Hide;
+      end if;
+   end Set_Filter_Visibility;
+
    -------------------------------
    -- On_Filter_Panel_Activated --
    -------------------------------
@@ -2562,16 +2586,8 @@ package body GPS.Location_View is
      (Widget : access Gtk_Widget_Record'Class)
    is
       Self : constant Location_View := Location_View (Widget);
-
    begin
-      if Self.Filter_Panel.Mapped_Is_Set then
-         Set_Child_Visible (Self.Filter_Panel, False);
-         Self.Filter_Panel.Hide;
-
-      else
-         Set_Child_Visible (Self.Filter_Panel, True);
-         Self.Filter_Panel.Show;
-      end if;
+      Set_Filter_Visibility (Self, not Self.Filter_Panel.Mapped_Is_Set);
    end On_Filter_Panel_Activated;
 
    ----------------------

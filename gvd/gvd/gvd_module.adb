@@ -1809,7 +1809,7 @@ package body GVD_Module is
          if Value.all /= "" then
             Create_Pixmap_From_Text
               (Text       => Value.all,
-               Font       => GPS.Kernel.Preferences.Default_Font.Get_Pref,
+               Font       => GPS.Kernel.Preferences.Default_Font.Get_Pref_Font,
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,

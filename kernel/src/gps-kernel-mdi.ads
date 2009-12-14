@@ -23,6 +23,7 @@
 with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
 with Gtk.Menu;
+with Gtk.Widget;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package GPS.Kernel.MDI is
@@ -158,6 +159,11 @@ package GPS.Kernel.MDI is
    --  But the child can decide to process the interrupt itself (and do
    --  something less drastic than killing the whole process), and return
    --  True.
+
+   procedure Set_Font_And_Colors
+     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Fixed_Font : Boolean);
+   --  Change the style of the widget based on the preferences
 
 private
 

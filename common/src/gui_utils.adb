@@ -2049,4 +2049,79 @@ package body GUI_Utils is
       when E : others => Trace (Exception_Handle, E);
    end Default_Menu_Destroy;
 
+   ------------
+   -- Darken --
+   ------------
+
+   function Darken (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color is
+      Output  : Gdk.Color.Gdk_Color;
+      Success : Boolean;
+   begin
+      Set_Rgb
+        (Output,
+         Red   => Guint16 (Integer (Red (Color)) * 90 / 100),
+         Green => Guint16 (Integer (Green (Color)) * 90 / 100),
+         Blue  => Guint16 (Integer (Blue (Color)) * 90 / 100));
+      Alloc_Color (Get_Default_Colormap, Output, False, True, Success);
+      if Success then
+         return Output;
+      else
+         return Color;
+      end if;
+   end Darken;
+
+   -------------
+   -- Lighten --
+   -------------
+
+   function Lighten (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color is
+      Percent : constant := 10;
+      White   : constant Integer := Integer (Guint16'Last) * Percent / 100;
+      Output  : Gdk.Color.Gdk_Color;
+      Success : Boolean;
+   begin
+      --  Very basic algorithm. Since we also want to change blacks, we can't
+      --  simply multiply RGB components, so we just move part of the way to
+      --  white:    R' = R + (White - R) * 10% = 90% * R + 10% * White
+
+      Set_Rgb
+        (Output,
+         Red   =>
+           Guint16 (Integer (Red (Color)) * (100 - Percent) / 100 + White),
+         Green =>
+           Guint16 (Integer (Green (Color)) * (100 - Percent) / 100 + White),
+         Blue  =>
+           Guint16 (Integer (Blue (Color)) * (100 - Percent) / 100 + White));
+      Alloc_Color (Get_Default_Colormap, Output, False, True, Success);
+      if Success then
+         return Output;
+      else
+         return Color;
+      end if;
+   end Lighten;
+
+   -----------------------
+   -- Darken_Or_Lighten --
+   -----------------------
+
+   function Darken_Or_Lighten
+     (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color
+   is
+      --  Compute luminosity as in photoshop (as per wikipedia)
+      Luminosity : constant Float :=
+        0.299 * Float (Red (Color))
+        + 0.587 * Float (Green (Color))
+        + 0.114 * Float (Blue (Color));
+
+      Gray_Luminosity : constant Float :=
+        0.299 * Float (Guint16'Last / 2)
+        + 0.587 * Float (Guint16'Last / 2)
+        + 0.114 * Float (Guint16'Last / 2);
+   begin
+      if Luminosity > Gray_Luminosity then
+         return Darken (Color);
+      else
+         return Lighten (Color);
+      end if;
+   end Darken_Or_Lighten;
 end GUI_Utils;

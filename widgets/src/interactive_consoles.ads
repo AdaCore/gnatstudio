@@ -36,7 +36,6 @@ with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
-with Pango.Font;
 
 with Histories;
 with GUI_Utils;
@@ -91,7 +90,6 @@ package Interactive_Consoles is
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
-      Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
@@ -122,7 +120,6 @@ package Interactive_Consoles is
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
-      Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;

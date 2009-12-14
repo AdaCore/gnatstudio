@@ -30,7 +30,6 @@ with XML_Utils;              use XML_Utils;
 
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Object;             use Gtk.Object;
-with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -402,7 +401,7 @@ package body GPS.Kernel.Console is
       Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console /= null then
-         Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
+         Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
       end if;
    end On_Preferences_Changed;
 
@@ -425,7 +424,6 @@ package body GPS.Kernel.Console is
          "",
          null,
          Kernel.all'Address,
-         View_Fixed_Font.Get_Pref,
          Highlight    => Message_Highlight.Get_Pref,
          History_List => null,
          ANSI_Support => Host /= Windows, --  ANSI_Support does not work
@@ -433,6 +431,8 @@ package body GPS.Kernel.Console is
          Key          => "",
          Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
+
+      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
 
       Gtk_New (Child, Console,
                Default_Width       => 400,
@@ -495,13 +495,14 @@ package body GPS.Kernel.Console is
          if Create then
             Gtk_New
               (Console, "", null,
-               System.Null_Address, Default_Style.Get_Pref_Font,
+               System.Null_Address,
                History_List => Get_History (Kernel),
                Key          => History,
                Wrap_Mode    => Wrap_Char,
                Manage_Prompt => Manage_Prompt,
                ANSI_Support => ANSI_Support,
                Highlight    => Message_Highlight.Get_Pref);
+            Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
