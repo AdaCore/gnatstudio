@@ -21,6 +21,8 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib.Values;              use Glib.Values;
 
+with Gdk.Color; use Gdk.Color;
+
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
@@ -55,6 +57,8 @@ with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
 
 with Pango.Font;                use Pango.Font;
+
+with GUI_Utils;                 use GUI_Utils;
 
 package body GPS.Kernel.MDI is
 
@@ -796,6 +800,8 @@ package body GPS.Kernel.MDI is
      (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Fixed_Font : Boolean)
    is
+      Active_Bg : constant Gdk_Color := Darken_Or_Lighten
+        (Default_Font.Get_Pref_Bg);
    begin
       if Fixed_Font then
          Modify_Font (Widget, View_Fixed_Font.Get_Pref);
@@ -807,8 +813,10 @@ package body GPS.Kernel.MDI is
       Modify_Text (Widget, State_Active, Default_Font.Get_Pref_Fg);
       Modify_Fg   (Widget, State_Normal, Default_Font.Get_Pref_Fg);
       Modify_Fg   (Widget, State_Active, Default_Font.Get_Pref_Fg);
+
       Modify_Base (Widget, State_Normal, Default_Font.Get_Pref_Bg);
-      Modify_Base (Widget, State_Active, Default_Font.Get_Pref_Bg);
+      Modify_Base (Widget, State_Active, Active_Bg);
+
       Modify_Bg   (Widget, State_Normal, Default_Font.Get_Pref_Bg);
       Modify_Bg   (Widget, State_Active, Default_Font.Get_Pref_Bg);
    end Set_Font_And_Colors;
