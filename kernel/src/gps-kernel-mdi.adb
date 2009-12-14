@@ -51,14 +51,13 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
+with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
 
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
 
 with Pango.Font;                use Pango.Font;
-
-with GUI_Utils;                 use GUI_Utils;
 
 package body GPS.Kernel.MDI is
 
@@ -811,14 +810,9 @@ package body GPS.Kernel.MDI is
 
       Modify_Text (Widget, State_Normal, Default_Font.Get_Pref_Fg);
       Modify_Text (Widget, State_Active, Default_Font.Get_Pref_Fg);
-      Modify_Fg   (Widget, State_Normal, Default_Font.Get_Pref_Fg);
-      Modify_Fg   (Widget, State_Active, Default_Font.Get_Pref_Fg);
 
       Modify_Base (Widget, State_Normal, Default_Font.Get_Pref_Bg);
       Modify_Base (Widget, State_Active, Active_Bg);
-
-      Modify_Bg   (Widget, State_Normal, Default_Font.Get_Pref_Bg);
-      Modify_Bg   (Widget, State_Active, Default_Font.Get_Pref_Bg);
    end Set_Font_And_Colors;
 
 end GPS.Kernel.MDI;
