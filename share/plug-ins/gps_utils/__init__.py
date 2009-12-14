@@ -154,7 +154,7 @@ def in_ada_file (context):
    if not hasattr (context, "in_ada_file"):
       buffer = EditorBuffer.get (open=False)
       context.in_ada_file =  buffer \
-         and MDI.current ().name () == buffer.file().name () \
+         and MDI.current() == MDI.get_by_child (buffer.current_view()) \
          and buffer.file ().language ().lower () == "ada"
    return context.in_ada_file
 
@@ -162,7 +162,8 @@ def in_xml_file (context):
    """Returns True if the focus is in an XML editor"""
    if not hasattr (context, "in_xml_file"):
       buffer = EditorBuffer.get (open=False)
-      context.in_xml_file =  MDI.current ().name () == buffer.file().name () \
+      context.in_xml_file = \
+         MDI.current() == MDI.get_by_child (buffer.current_view()) \
          and buffer.file ().language ().lower () in ["xml", "html"]
    return context.in_xml_file
 
