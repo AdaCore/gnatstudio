@@ -1903,27 +1903,31 @@ package body Builder_Facility_Module is
 
             while Has_Element (C) loop
                Mode := Element (C);
-               Append (Tooltip, ASCII.LF
-                       & "    " & Mode.Name  & ": " & Mode.Description & "  ");
 
-               if Mode.Args /= null
-                 and then Mode.Args'Length /= 0
-               then
-                  Append (Tooltip, ASCII.LF & "        ("
-                          & Mode.Args (Mode.Args'First).all);
-                  Len := Mode.Args (Mode.Args'First)'Length;
+               if not Mode.Shadow then
+                  Append (Tooltip, ASCII.LF
+                          & "    " & Mode.Name  & ": "
+                          & Mode.Description & "  ");
 
-                  for J in Mode.Args'First + 1 .. Mode.Args'Last loop
-                     if Len > 40 then
-                        Append (Tooltip, ASCII.LF & "         ");
-                        Len := 0;
-                     end if;
+                  if Mode.Args /= null
+                    and then Mode.Args'Length /= 0
+                  then
+                     Append (Tooltip, ASCII.LF & "        ("
+                             & Mode.Args (Mode.Args'First).all);
+                     Len := Mode.Args (Mode.Args'First)'Length;
 
-                     Append (Tooltip, " " & Mode.Args (J).all);
-                     Len := Len + Mode.Args (J)'Length;
-                  end loop;
+                     for J in Mode.Args'First + 1 .. Mode.Args'Last loop
+                        if Len > 40 then
+                           Append (Tooltip, ASCII.LF & "         ");
+                           Len := 0;
+                        end if;
 
-                  Append (Tooltip, ")");
+                        Append (Tooltip, " " & Mode.Args (J).all);
+                        Len := Len + Mode.Args (J)'Length;
+                     end loop;
+
+                     Append (Tooltip, ")");
+                  end if;
                end if;
 
                Next (C);
