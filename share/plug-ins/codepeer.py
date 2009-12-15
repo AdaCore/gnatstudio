@@ -70,6 +70,7 @@ if codepeer != "":
       <supported-model>gnatmake</supported-model>
       <supported-model>gprbuild</supported-model>
       <supported-model filter="--subdirs=">gprclean</supported-model>
+      <server>Tools_Server</server>
       <substitutions>
         <substitute src="%builder" dest="%gnatmake"/>
       </substitutions>
