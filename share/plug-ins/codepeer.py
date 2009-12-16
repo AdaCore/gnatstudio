@@ -149,6 +149,22 @@ if codepeer != "":
        </command-line>
     </target>
 
+    <target model="gprclean" category="CodePeer" name="Remove SCIL">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-clean</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>%gprclean</arg>
+          <arg>-q</arg>
+          <arg>-r</arg>
+          <arg>%eL</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+    </target>
+
     <target model="codepeer" category="CodePeer" name="Run CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
