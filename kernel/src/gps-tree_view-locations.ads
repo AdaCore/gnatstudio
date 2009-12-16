@@ -55,6 +55,8 @@ private
       On_Row_Expanded_Iter    : Gtk.Tree_Model.Gtk_Tree_Iter;
       On_Row_Expanded_Handler : Glib.Main.G_Source_Id :=
         Glib.Main.No_Source_Id;
+      --  Context for scrolling after node expansion. Path and Iter point to
+      --  top expanded node. Handler is a Gtk+ idle handler.
    end record;
 
    overriding procedure On_Lowerst_Model_Row_Inserted

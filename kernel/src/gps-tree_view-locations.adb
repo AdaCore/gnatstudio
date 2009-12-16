@@ -135,13 +135,9 @@ package body GPS.Tree_View.Locations is
       Self.Get_Visible_Range (Start_Path, End_Path, Success);
 
       if Success
---          and then Self.Get_Model.Has_Child (Self.On_Row_Expanded_Iter)
         and then Model.Has_Child (Iter)
       then
---        --  Ensure that when a row is expanded some children are visible
---
---        Down (Path);
---        Iter := Get_Iter (Get_Model (View.Tree), Path);
+         --  Go down till not expanded node or node leaf node is found
 
          loop
             Down (Path);
@@ -151,52 +147,14 @@ package body GPS.Tree_View.Locations is
               or else not Model.Has_Child (Iter);
          end loop;
 
---        if View.Tree.Row_Expanded (Path)
---          and then N_Children (Get_Model (View.Tree), Iter) > 1
---        then
---           --  More than one child, try to display the first child and the
---         --  following one. This is cleaner as a row returned as visible even
---           --  if partially on the screen. So if the second child is at least
---           --  partly visible we know for sure that the first child is fully
---           --  visible.
---           Down (Path);
---        end if;
---
---        Res := Compare (Path, End_Path);
---
---        if Res >= 0
---          and then Get_Iter (Get_Model (View.Tree), Path) /= Null_Iter
---        then
---           --  Path is the last path visible, scoll to see some entries under
---           --  this node.
---           Scroll_To_Cell (View.Tree, Path, null, True, 0.9, 0.1);
---        end if;
          if Compare (Path, End_Path) >= 0 then
             Self.Scroll_To_Cell (Path, null, True, 0.9, 0.1);
          end if;
       end if;
 
---        Path                 : constant Gtk_Tree_Path := View.Row;
---        Iter                 : Gtk_Tree_Iter;
---        Res                  : Gint;
---     begin
---        Get_Visible_Range (View.Tree, Start_Path, End_Path, Success);
---
---        if not Success then
---           return False;
---        end if;
---
---
---        Path_Free (Path);
---        View.Row := null;
---        Path_Free (Start_Path);
---        Path_Free (End_Path);
-
       Path_Free (Start_Path);
       Path_Free (End_Path);
       Path_Free (Path);
---        Path := null;
---        Path_Free (Self.On_Row_Expanded_Path);
 
       Self.On_Row_Expanded_Path := null;
       Self.On_Row_Expanded_Iter := Null_Iter;
