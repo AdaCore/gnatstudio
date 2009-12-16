@@ -85,12 +85,14 @@ private
      array (Code_Peer.Message_Probability_Level)
        of GPS.Kernel.Styles.Style_Access;
 
-   type CodePeer_Action is (None, Run, Quick_Run, Run_Project, Load_UI);
+   type CodePeer_Action is
+     (None, Run_All, Run_Project, Run_File, Quick_Run, Load_UI);
    --  Various actions related to codepeer handling:
    --   - None: no action registered
-   --   - Run: run "Run CodePeer" target on the whole project tree
+   --   - Run_All: run "Run CodePeer" target on the whole project tree
+   --   - Run_Project: run "Run CodePeer" target on the root project
+   --   - Run_File: run "Run CodePeer" target on the current file
    --   - Quick_Run: run "Run CodePeer Quickly" target
-   --   - Run Project: run "Run CodePeer" target on the root project
    --   - Load_UI: load CodePeer UI
 
    type Module_Id_Record
@@ -108,7 +110,10 @@ private
 
       Action           : CodePeer_Action := None;
       --  Indicate possible action to be performed when a build target is
-      --  finished
+      --  finished.
+
+      File             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      --  If Action is Run_File, indicates which file should be analyzed
    end record;
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class);

@@ -42,7 +42,7 @@ with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Projects.Registry;
+with Projects.Registry;    use Projects.Registry;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
@@ -51,6 +51,7 @@ with Code_Peer.Module.Bridge;
 with Code_Peer.Shell_Commands; use Code_Peer.Shell_Commands;
 with Commands.Code_Peer;
 with Code_Analysis_GUI;
+with Projects; use Projects;
 
 package body Code_Peer.Module is
 
@@ -104,6 +105,11 @@ package body Code_Peer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
+   procedure Analyze
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Action : CodePeer_Action);
+   --  Helper functions for On_Analyze_xxx callbacks below
+
    procedure On_Analyze_All
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
@@ -113,6 +119,11 @@ package body Code_Peer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Analyze Root Project" menu item is activated
+
+   procedure On_Analyze_File
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Analyze File" menu item is activated
 
    procedure On_Quick_Analyze_All
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -207,7 +218,8 @@ package body Code_Peer.Module is
       Force       : Boolean;
       Output_Only : Boolean := False;
       Quick       : Boolean := False;
-      Recursive   : Boolean := True);
+      Recursive   : Boolean := True;
+      File        : Virtual_File := No_File);
    --  Launch CodePeer review.
    --  If Force is True, no dialog is displayed to change codepeer switches.
    --  If Output_Only is True, run CodePeer in "output only" mode.
@@ -215,6 +227,8 @@ package body Code_Peer.Module is
    --  "Run CodePeer".
    --  If Recursive is True, run CodePeer on the whole project tree, on the
    --  project root only otherwise.
+   --  If File is set, run CodePeer on the specified file only. Recursive
+   --  should be set to False in this case.
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -223,9 +237,13 @@ package body Code_Peer.Module is
    --  callbacks.
 
    procedure Create_Library_File
-     (Project : Projects.Project_Type; Recursive : Boolean);
+     (Kernel    : Kernel_Handle;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean;
+      File      : Virtual_File := No_File);
    --  Create CodePeer library file. Recursive is True if all project files
    --  should be included.
+   --  File if set represents the (only) file to analyze.
 
    -------------------------
    -- Use_CodePeer_Subdir --
@@ -244,51 +262,73 @@ package body Code_Peer.Module is
    -------------------------
 
    procedure Create_Library_File
-     (Project : Projects.Project_Type; Recursive : Boolean)
+     (Kernel    : Kernel_Handle;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean;
+      File      : Virtual_File := No_File)
    is
-      File : Ada.Text_IO.File_Type;
+      F    : Ada.Text_IO.File_Type;
+      Prj  : Projects.Project_Type;
       Objs : constant GNATCOLL.VFS.File_Array :=
               Projects.Object_Path (Project, True, True);
 
    begin
       Ada.Text_IO.Create
-        (File,
+        (F,
          Ada.Text_IO.Out_File,
          String (Codepeer_Library_File_Name (Project).Full_Name.all));
 
       Ada.Text_IO.Put_Line
-        (File,
+        (F,
          "Output_Dir := """
          & (+Codepeer_Output_Directory (Project).Full_Name) & """;");
-      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.New_Line (F);
 
       Ada.Text_IO.Put_Line
-        (File,
+        (F,
          "Database_Dir := """
          & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
-      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.New_Line (F);
 
       if Recursive then
          for J in Objs'Range loop
             Ada.Text_IO.Put_Line
-              (File,
+              (F,
                "Source (Directory => """ &
                String (Objs (J).Full_Name.all) & "SCIL"",");
             Ada.Text_IO.Put_Line
-              (File, "        Files     => (""*.scil""),");
+              (F, "        Files     => (""*.scil""),");
             Ada.Text_IO.Put_Line
-              (File, "        Language  => SCIL);");
+              (F, "        Language  => SCIL);");
          end loop;
       else
+         if File = No_File then
+            Ada.Text_IO.Put_Line
+              (F, "Source (Directory => ""SCIL"",");
+            Ada.Text_IO.Put
+              (F, "        Files     => (""*.scil""),");
+
+         else
+            Prj := Get_Project_From_File (Get_Registry (Kernel).all, File);
+            Ada.Text_IO.Put_Line
+              (F, "Source (Directory => """
+                  & String (Object_Path (Prj).Full_Name.all) & "SCIL"",");
+            Ada.Text_IO.Put
+              (F, "        Files     => (""");
+            Ada.Text_IO.Put (F, Get_Unit_Name_From_Filename (Prj, File));
+
+            if Get_Unit_Part_From_Filename (Prj, File) = Unit_Body then
+               Ada.Text_IO.Put (F, "__body");
+            end if;
+
+            Ada.Text_IO.Put_Line (F, ".scil""),");
+         end if;
+
          Ada.Text_IO.Put_Line
-           (File, "Source (Directory => ""SCIL"",");
-         Ada.Text_IO.Put_Line
-           (File, "        Files     => (""*.scil""),");
-         Ada.Text_IO.Put_Line
-           (File, "        Language  => SCIL);");
+           (F, "        Language  => SCIL);");
       end if;
 
-      Ada.Text_IO.Close (File);
+      Ada.Text_IO.Close (F);
    end Create_Library_File;
 
    ------------
@@ -300,7 +340,8 @@ package body Code_Peer.Module is
       Force       : Boolean;
       Output_Only : Boolean := False;
       Quick       : Boolean := False;
-      Recursive   : Boolean := True)
+      Recursive   : Boolean := True;
+      File        : Virtual_File := No_File)
    is
       Mode             : constant String :=
                            Code_Peer.Shell_Commands.Get_Build_Mode
@@ -317,7 +358,8 @@ package body Code_Peer.Module is
       end if;
 
       Module.Action := Load_UI;
-      Create_Library_File (Project, Recursive);
+      Create_Library_File
+        (Kernel_Handle (Module.Kernel), Project, Recursive, File);
 
       if Output_Only then
          Code_Peer.Shell_Commands.Build_Target_Execute
@@ -1181,6 +1223,31 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Run_Analysis_Manually;
 
+   -------------
+   -- Analyze --
+   -------------
+
+   procedure Analyze
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Action : CodePeer_Action) is
+   begin
+      Module.Action := Action;
+
+      if Action = Run_File then
+         Module.File := File_Information (Get_Current_Context (Kernel));
+      end if;
+
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end Analyze;
+
    --------------------
    -- On_Analyze_All --
    --------------------
@@ -1191,22 +1258,12 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Module.Action := Run;
-      Code_Peer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
-         Force       => True,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
+      Analyze (Kernel, Run_All);
    end On_Analyze_All;
 
-   --------------------
-   -- On_Analyze_All --
-   --------------------
+   ---------------------
+   -- On_Analyze_Root --
+   ---------------------
 
    procedure On_Analyze_Root
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -1214,18 +1271,21 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Module.Action := Run_Project;
-      Code_Peer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
-         Force       => True,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
+      Analyze (Kernel, Run_Project);
    end On_Analyze_Root;
+
+   ---------------------
+   -- On_Analyze_File --
+   ---------------------
+
+   procedure On_Analyze_File
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Analyze (Kernel, Run_File);
+   end On_Analyze_File;
 
    --------------------------
    -- On_Quick_Analyze_All --
@@ -1369,11 +1429,16 @@ package body Code_Peer.Module is
       end if;
 
       case Action is
-         when Run =>
+         when Run_All =>
             Review (Module, Force => True);
 
          when Run_Project =>
             Review (Module, Force => True, Recursive => False);
+
+         when Run_File =>
+            Review
+              (Module, Force => True, Recursive => False, File => Module.File);
+            Module.File := No_File;
 
          when Quick_Run =>
             Review (Module, Force => True, Quick => True);
@@ -2023,9 +2088,16 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
-         Text        => -"_Analyze Root Project",
-         Ref_Item    => -"Window",
+         Text        => -"Analyze _Root Project",
          Callback    => On_Analyze_Root'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Menu,
+         Text        => -"Analyze _File",
+         Callback    => On_Analyze_File'Access,
+         Filter      => Action_Filter (Lookup_Filter (Kernel, "File")
+                          and Create (Language => "ada")));
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
