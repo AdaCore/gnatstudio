@@ -399,6 +399,7 @@ package body GPS.Tree_View is
       end loop;
 
       Aux.Reserve_Capacity (Ada.Containers.Count_Type (Length));
+      Aux.Set_Length (Ada.Containers.Count_Type (Length));
 
       for J in New_Order'Range loop
          Aux.Replace_Element (Gint (J), Node.Children.Element (New_Order (J)));
