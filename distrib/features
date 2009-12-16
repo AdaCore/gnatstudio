@@ -12,7 +12,16 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
-New features on 4.4.0
+New features in 4.4.1
+---------------------
+
+NF-44-H519-028 Support for CodePeer (2009-12-16)
+
+   GPS now includes support for the CodePeer static analysis tool, allowing
+   to easily launch an automated code review on your project and display an
+   interactive report of the review.
+
+New features in 4.4.0
 ---------------------
 
 NF-44-I909-020 Reload project after POGS (2009-09-10)
