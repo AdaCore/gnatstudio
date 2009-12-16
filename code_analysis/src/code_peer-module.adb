@@ -2086,6 +2086,9 @@ package body Code_Peer.Module is
          Text        => -"CodePeer _Log",
          Callback    => On_Edit_Log'Access);
 
+      Gtk.Menu_Item.Gtk_New (Mitem);
+      GPS.Kernel.Modules.Register_Menu (Kernel, Advanced_Menu, Mitem);
+
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
