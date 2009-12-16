@@ -75,17 +75,17 @@ def on_gps_started (hook_name):
                      title="Object Branch Coverage"/>
         <combo-entry label="Statement" value="stmt"
                      title="Source Statement Coverage"/>
-        <combo-entry label="Decision" value="decision"
+        <combo-entry label="Decision" value="stmt+decision"
                      title="Source Decision Coverage"/>
-        <combo-entry label="MCDC" value="mcdc"
+        <combo-entry label="MCDC" value="stmt+mcdc"
                      title="Source MCDC Coverage"/>
       </combo>
       <combo label="Annotate" switch="--annotate" separator="=" column="1">
         <combo-entry label="Xcov" value="xcov"/>
-        <combo-entry label="Xcov + Assembler" value="xcov+asm"/>
+        <combo-entry label="Xcov + Annotations" value="xcov+"/>
       </combo>
-      <field label="SCO list" switch="--scos" separator="=" as-file="true"/>
-      <field label="Routine list" switch="--routines" separator="="
+      <field label="SCO list" switch="--scos=" separator="@" as-file="true"/>
+      <field label="Routine list" switch="--routines=" separator="@"
              as-file="true"/>
       <field label="Trace file" switch="-T" separator=" " as-file="true"/>
     </switches>
