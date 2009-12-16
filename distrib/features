@@ -18,7 +18,7 @@ New features in 4.5.0
 NF-45-IC15-023 New CodePeer menus (2009-12-16)
 
   The CodePeer integration now provides additional menus: Analyze Root Project,
-  Remove SCIL and Remove SCIL & DB.
+  Analyze File, Remove SCIL and Remove SCIL & DB.
 
 NF-45-IC10-047 Changing background of views (2009-12-14)
 
