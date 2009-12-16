@@ -574,6 +574,12 @@ package body GPS.Main_Window is
       Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
       Set_Submenu (Menu_Item, Menu);
 
+      Gtk_New_With_Mnemonic (Menu_Item, -"_Project");
+      Append (Main_Window.Menu_Bar, Menu_Item);
+      Gtk_New (Menu);
+      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
+      Set_Submenu (Menu_Item, Menu);
+
       Gtk_New_With_Mnemonic (Menu_Item, -"_Build");
       Append (Main_Window.Menu_Bar, Menu_Item);
       Gtk_New (Menu);
