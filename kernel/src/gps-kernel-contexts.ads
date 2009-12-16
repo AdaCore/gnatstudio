@@ -209,7 +209,7 @@ package GPS.Kernel.Contexts is
    --  From_Expression indicates the context of the entity. For instance, if
    --  the source code contains   A.Func (5).X, then the entity is "X", but
    --  From_Expression should be "A.Func (5).X". This expression is used when
-   --  computing the full name of the entity to sent it to the debugger for
+   --  computing the full name of the entity to send it to the debugger for
    --  instance.
 
    procedure Set_Entity_Information
