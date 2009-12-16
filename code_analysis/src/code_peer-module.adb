@@ -58,8 +58,6 @@ package body Code_Peer.Module is
    use type GPS.Editors.Editor_Buffer'Class;
 
    Me : constant Debug_Handle := Create ("CodePeer");
-   Support_Multiple_Dirs : constant Debug_Handle :=
-     Create ("CodePeer.Multiple_Dirs");
 
    type Module_Context is record
       Module  : Code_Peer_Module_Id;
@@ -111,6 +109,11 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Analyze All" menu item is activated
 
+   procedure On_Analyze_Root
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Analyze Root Project" menu item is activated
+
    procedure On_Quick_Analyze_All
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
@@ -119,7 +122,17 @@ package body Code_Peer.Module is
    procedure On_Generate_SCIL
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Advanced->Generate SCIL" menu item is activated
+   --  Called when "Generate SCIL" menu item is activated
+
+   procedure On_Remove_SCIL
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Remove SCIL" menu item is activated
+
+   procedure On_Remove_CodePeer
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Remove SCIL & DB" menu item is activated
 
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -193,12 +206,15 @@ package body Code_Peer.Module is
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
       Force       : Boolean;
       Output_Only : Boolean := False;
-      Quick       : Boolean := False);
+      Quick       : Boolean := False;
+      Recursive   : Boolean := True);
    --  Launch CodePeer review.
    --  If Force is True, no dialog is displayed to change codepeer switches.
    --  If Output_Only is True, run CodePeer in "output only" mode.
    --  If Quick is True, run "Run CodePeer Quickly" target instead of
-   --  "Run CodePeer"
+   --  "Run CodePeer".
+   --  If Recursive is True, run CodePeer on the whole project tree, on the
+   --  project root only otherwise.
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -206,8 +222,10 @@ package body Code_Peer.Module is
    --  Global variable for store CodePeer plugin module. Used in the main menu
    --  callbacks.
 
-   procedure Create_Library_File (Project : Projects.Project_Type);
-   --  Create CodePeer library file
+   procedure Create_Library_File
+     (Project : Projects.Project_Type; Recursive : Boolean);
+   --  Create CodePeer library file. Recursive is True if all project files
+   --  should be included.
 
    -------------------------
    -- Use_CodePeer_Subdir --
@@ -225,7 +243,9 @@ package body Code_Peer.Module is
    -- Create_Library_File --
    -------------------------
 
-   procedure Create_Library_File (Project : Projects.Project_Type) is
+   procedure Create_Library_File
+     (Project : Projects.Project_Type; Recursive : Boolean)
+   is
       File : Ada.Text_IO.File_Type;
       Objs : constant GNATCOLL.VFS.File_Array :=
               Projects.Object_Path (Project, True, True);
@@ -248,7 +268,7 @@ package body Code_Peer.Module is
          & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
       Ada.Text_IO.New_Line (File);
 
-      if Active (Support_Multiple_Dirs) then
+      if Recursive then
          for J in Objs'Range loop
             Ada.Text_IO.Put_Line
               (File,
@@ -279,7 +299,8 @@ package body Code_Peer.Module is
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
       Force       : Boolean;
       Output_Only : Boolean := False;
-      Quick       : Boolean := False)
+      Quick       : Boolean := False;
+      Recursive   : Boolean := True)
    is
       Mode             : constant String :=
                            Code_Peer.Shell_Commands.Get_Build_Mode
@@ -296,7 +317,7 @@ package body Code_Peer.Module is
       end if;
 
       Module.Action := Load_UI;
-      Create_Library_File (Project);
+      Create_Library_File (Project, Recursive);
 
       if Output_Only then
          Code_Peer.Shell_Commands.Build_Target_Execute
@@ -1183,6 +1204,29 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Analyze_All;
 
+   --------------------
+   -- On_Analyze_All --
+   --------------------
+
+   procedure On_Analyze_Root
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Module.Action := Run_Project;
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Analyze_Root;
+
    --------------------------
    -- On_Quick_Analyze_All --
    --------------------------
@@ -1228,6 +1272,76 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Generate_SCIL;
 
+   --------------------
+   -- On_Remove_SCIL --
+   --------------------
+
+   procedure On_Remove_SCIL
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Objs   : constant GNATCOLL.VFS.File_Array :=
+                Projects.Object_Path (Get_Project (Kernel), True, True);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
+
+   begin
+      Console.Insert (Kernel, -"Deleting SCIL directories...");
+
+      --  Remove all <obj>/codepeer/SCIL dirs. Ignore errors on e.g. read-only
+      --  or non-existent directories.
+
+      for J in Objs'Range loop
+         Remove_Dir (Dir       => Create_From_Dir (Objs (J), "codepeer/SCIL"),
+                     Recursive => True,
+                     Success   => Ignore);
+      end loop;
+
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Remove SCIL"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Remove_SCIL;
+
+   ------------------------
+   -- On_Remove_CodePeer --
+   ------------------------
+
+   procedure On_Remove_CodePeer
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Objs   : constant GNATCOLL.VFS.File_Array :=
+                Projects.Object_Path (Get_Project (Kernel), True, True);
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore);
+
+   begin
+      Console.Insert
+        (Kernel, -"Deleted all CodePeer artefacts.", Add_LF => False);
+
+      --  Remove all <obj>/codepeer dirs. Ignore errors on e.g. read-only
+      --  or non-existent directories.
+
+      for J in Objs'Range loop
+         Remove_Dir (Dir       => Create_From_Dir (Objs (J), "codepeer"),
+                     Recursive => True,
+                     Success   => Ignore);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Remove_CodePeer;
+
    -----------------------------
    -- On_Compilation_Finished --
    -----------------------------
@@ -1257,6 +1371,9 @@ package body Code_Peer.Module is
       case Action is
          when Run =>
             Review (Module, Force => True);
+
+         when Run_Project =>
+            Review (Module, Force => True, Recursive => False);
 
          when Quick_Run =>
             Review (Module, Force => True, Quick => True);
@@ -1906,6 +2023,13 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
+         Text        => -"_Analyze Root Project",
+         Ref_Item    => -"Window",
+         Callback    => On_Analyze_Root'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Menu,
          Text        => -"_Display Code Review",
          Callback    => On_Display_Code_Review'Access);
 
@@ -1945,7 +2069,7 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"_Text Overview",
+         Text        => -"Text _Overview",
          Callback    => On_Edit_Text_Overview'Access);
 
       GPS.Kernel.Modules.Register_Menu
@@ -1965,14 +2089,26 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Remove Lock",
+         Text        => -"R_emove Lock",
          Callback    => On_Remove_Lock'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
-         Text        => -"Remove XML Code Review",
+         Text        => -"Remove _XML Code Review",
          Callback    => On_Remove_XML_Review'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Advanced_Menu,
+         Text        => -"_Remove SCIL",
+         Callback    => On_Remove_SCIL'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Advanced_Menu,
+         Text        => -"Remove _SCIL & DB",
+         Callback    => On_Remove_CodePeer'Access);
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style

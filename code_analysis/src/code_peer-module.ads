@@ -85,11 +85,12 @@ private
      array (Code_Peer.Message_Probability_Level)
        of GPS.Kernel.Styles.Style_Access;
 
-   type CodePeer_Action is (None, Run, Quick_Run, Load_UI);
+   type CodePeer_Action is (None, Run, Quick_Run, Run_Project, Load_UI);
    --  Various actions related to codepeer handling:
    --   - None: no action registered
-   --   - Run: run "Run CodePeer" target
+   --   - Run: run "Run CodePeer" target on the whole project tree
    --   - Quick_Run: run "Run CodePeer Quickly" target
+   --   - Run Project: run "Run CodePeer" target on the root project
    --   - Load_UI: load CodePeer UI
 
    type Module_Id_Record
