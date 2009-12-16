@@ -45,6 +45,7 @@ with Gtk.Tooltips;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
+with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -79,10 +80,6 @@ package body GPS.Location_View is
       Data   : access Hooks_Data'Class);
    --  Called whenever the location in the current editor has changed, so that
    --  we can highlight the corresponding line in the locations window
-
-   function Idle_Show_Row (View : Location_View) return Boolean;
-   --  Idle callback used to ensure that the proper path on the location view
-   --  is visible.
 
    function Idle_Expand_Category (Self : Location_View) return Boolean;
    --  Idle callback used to expand category, its first file and select
@@ -232,25 +229,10 @@ package body GPS.Location_View is
    --  Create a mark for Filename, at position given by Line, Column, with
    --  length Length.
 
-   procedure On_Row_Expanded
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Callback for the "row_expanded" signal
-
-   procedure On_Row_Collapsed
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Callback for the "row_collapsed" signal
-
    procedure On_Model_Row_Inserted
      (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback for the model's "row_inserted" signal
-
-   procedure On_Filter_Row_Inserted
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Callback for the filter's "row_inserted" signal
 
    function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -367,65 +349,6 @@ package body GPS.Location_View is
 
       return False;
    end Idle_Expand_Category;
-
-   -------------------
-   -- Idle_Show_Row --
-   -------------------
-
-   function Idle_Show_Row (View : Location_View) return Boolean is
-      Path                 : constant Gtk_Tree_Path := View.Row;
-      Iter                 : Gtk_Tree_Iter;
-      Start_Path, End_Path : Gtk_Tree_Path;
-      Success              : Boolean := False;
-      Res                  : Gint;
-   begin
-      Get_Visible_Range (View.Tree, Start_Path, End_Path, Success);
-
-      if not Success then
-         return False;
-      end if;
-
-      --  Ensure that when a row is expanded some children are visible
-
-      Down (Path);
-      Iter := Get_Iter (Get_Model (View.Tree), Path);
-
-      if View.Tree.Get_Model.Get_Boolean (Iter, Expanded_State_Column)
-        and then N_Children (Get_Model (View.Tree), Iter) > 1
-      then
-         --  More than one child, try to display the first child and the
-         --  following one. This is cleaner as a row returned as visible even
-         --  if partially on the screen. So if the second child is at least
-         --  partly visible we know for sure that the first child is fully
-         --  visible.
-         Down (Path);
-      end if;
-
-      Res := Compare (Path, End_Path);
-
-      if Res >= 0
-        and then Get_Iter (Get_Model (View.Tree), Path) /= Null_Iter
-      then
-         --  Path is the last path visible, scoll to see some entries under
-         --  this node.
-         Scroll_To_Cell (View.Tree, Path, null, True, 0.9, 0.1);
-      end if;
-
-      Path_Free (Path);
-      View.Row := null;
-      Path_Free (Start_Path);
-      Path_Free (End_Path);
-
-      View.Idle_Row_Handler := Glib.Main.No_Source_Id;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         View.Idle_Row_Handler := Glib.Main.No_Source_Id;
-         return False;
-   end Idle_Show_Row;
 
    -----------------
    -- Create_Mark --
@@ -1345,21 +1268,6 @@ package body GPS.Location_View is
          After => False);
 
       Location_View_Callbacks.Object_Connect
-        (View.Tree,
-         Signal_Row_Expanded, On_Row_Expanded'Access,
-         Slot_Object => View,
-         After       => True);
-      Location_View_Callbacks.Object_Connect
-        (View.Tree,
-         Signal_Row_Collapsed,
-         On_Row_Collapsed'Access,
-         View);
-      Location_View_Callbacks.Object_Connect
-        (View.Filter,
-         Signal_Row_Inserted,
-         On_Filter_Row_Inserted'Access,
-         View);
-      Location_View_Callbacks.Object_Connect
         (View.Model,
          Signal_Row_Inserted,
          On_Model_Row_Inserted'Access,
@@ -1386,42 +1294,6 @@ package body GPS.Location_View is
       Read_Secondary_Pattern_Preferences (View);
    end Initialize;
 
-   ----------------------------
-   -- On_Filter_Row_Inserted --
-   ----------------------------
-
-   procedure On_Filter_Row_Inserted
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-      Dummy : Boolean;
-      pragma Warnings (Off, Dummy);
-
-   begin
-      Get_Tree_Iter (Nth (Params, 2), Iter);
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      Iter := Self.Filter.Parent (Iter);
-
-      if Iter /= Null_Iter then
-         Path := Self.Filter.Get_Path (Iter);
-
-         if Self.Filter.Get_Boolean (Iter, Expanded_State_Column) then
-            Dummy := Expand_Row (Self.Tree, Path, False);
-
-         else
-            Dummy := Collapse_Row (Self.Tree, Path);
-         end if;
-
-         Path_Free (Path);
-      end if;
-   end On_Filter_Row_Inserted;
-
    ---------------------------
    -- On_Model_Row_Inserted --
    ---------------------------
@@ -1434,8 +1306,6 @@ package body GPS.Location_View is
       Category_Iter          : Gtk_Tree_Iter;
       File_Iter              : Gtk_Tree_Iter;
       Message_Iter           : Gtk_Tree_Iter;
-      Secondary_Iter         : Gtk_Tree_Iter;
-      Secondary_Next_Iter    : Gtk_Tree_Iter;
       Category_View_Iter     : Gtk_Tree_Iter;
       File_View_Iter         : Gtk_Tree_Iter;
       File_Next_View_Iter    : Gtk_Tree_Iter;
@@ -1509,111 +1379,8 @@ package body GPS.Location_View is
                    (Idle_Expand_Category'Access, Location_View (Self));
             end if;
          end if;
-
-      elsif Depth = 4 then
-         --  Secondary message row. Force expand message flag in the model.
-         --  This code can be removed from here into the unredling model.
-
-         Secondary_Iter := Iter;
-
-         Message_Iter := Self.Model.Parent (Secondary_Iter);
-         Secondary_Next_Iter := Secondary_Iter;
-         Self.Model.Next (Secondary_Next_Iter);
-
-         if Self.Model.Children (Message_Iter) = Secondary_Iter
-           and then Secondary_Next_Iter = Null_Iter
-         then
-            Self.Model.Set (Message_Iter, Expanded_State_Column, True);
-         end if;
       end if;
    end On_Model_Row_Inserted;
-
-   ----------------------
-   -- On_Row_Collapsed --
-   ----------------------
-
-   procedure On_Row_Collapsed
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      Iter       : Gtk_Tree_Iter;
-      Model_Iter : Gtk_Tree_Iter;
-
-   begin
-      Get_Tree_Iter (Nth (Params, 1), Iter);
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
-      Self.Model.Set (Model_Iter, Expanded_State_Column, False);
-   end On_Row_Collapsed;
-
-   ---------------------
-   -- On_Row_Expanded --
-   ---------------------
-
-   procedure On_Row_Expanded
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      Path       : Gtk_Tree_Path;
-      Iter       : Gtk_Tree_Iter;
-      Model_Iter : Gtk_Tree_Iter;
-      Child_Iter : Gtk_Tree_Iter;
-      Child_Path : Gtk_Tree_Path;
-      Dummy      : Boolean;
-      pragma Warnings (Off, Dummy);
-
-   begin
-      Get_Tree_Iter (Nth (Params, 1), Iter);
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      Self.Filter.Convert_Iter_To_Child_Iter (Model_Iter, Iter);
-      Self.Model.Set (Model_Iter, Expanded_State_Column, True);
-
-      Path := Get_Path (Get_Model (Self.Tree), Iter);
-
-      if Get_Depth (Path) = 2
-        and then Self.Idle_Row_Handler = Glib.Main.No_Source_Id
-      then
-         --  Request move of the view to ensure first message is visible to
-         --  the user
-
-         if Self.Row /= null then
-            Path_Free (Self.Row);
-         end if;
-
-         Self.Row := Gtk.Tree_Model.Copy (Path);
-
-         Self.Idle_Row_Handler := View_Idle.Idle_Add
-           (Idle_Show_Row'Access, Location_View (Self));
-      end if;
-
-      --  Go throught children and expand them if corresponding flag in the
-      --  model is set.
-
-      Child_Iter := Self.Filter.Children (Iter);
-
-      while Child_Iter /= Null_Iter loop
-         if Self.Filter.Get_Boolean (Child_Iter, Expanded_State_Column) then
-            Child_Path := Self.Filter.Get_Path (Child_Iter);
-            Dummy := Self.Tree.Expand_Row (Child_Path, False);
-            Path_Free (Child_Path);
-         end if;
-
-         Self.Filter.Next (Child_Iter);
-      end loop;
-
-      Path_Free (Path);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Row_Expanded;
 
    ------------------
    -- Button_Press --

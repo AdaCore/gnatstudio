@@ -27,7 +27,6 @@ with GNATCOLL.VFS;
 
 with Gtk.Box;                        use Gtk.Box;
 with Gtk.Cell_Renderer_Text;         use Gtk.Cell_Renderer_Text;
-with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
@@ -38,6 +37,7 @@ with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Styles;              use GPS.Kernel.Styles;
 with GPS.Location_Model;             use GPS.Location_Model;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
+with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
 with Basic_Types;                    use Basic_Types;
 with Generic_List;
 
@@ -149,7 +149,7 @@ private
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
 
-      Tree          : Gtk_Tree_View;
+      Tree : GPS_Locations_Tree_View;
       --  Tree view
 
       Filter        : Gtk_Tree_Model_Filter;
