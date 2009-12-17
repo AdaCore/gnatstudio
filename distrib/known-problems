@@ -197,6 +197,12 @@ Known Problems fixed in GPS 4.4.1
 
 Known Problems fixed in GPS 4.4.0
 
+- IC15-016: GPS does not warn when editing a file writable for another user
+  Problem:    When saving a file which is owned by another user, writable for
+              that user but not writable by the owner of the GPS process, then
+              GPS does not detect this and marks the file as saved.
+  Workaround: None known, avoid using GPS on files owned by another user.
+
 - I922-020: Cannot "Open from host" on Windows under some circumstances
   Problem:    Under Windows, using the actions "File->Open From Host" or
               "Project->Open From Host" may not work, if your system has all
