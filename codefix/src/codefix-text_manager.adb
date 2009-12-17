@@ -677,7 +677,7 @@ package body Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Navigator_Abstr'Class;
       Cursor : in out File_Cursor'Class;
-      Word   : out GNAT.Strings.String_Access) is
+      Word   : out Word_Cursor) is
    begin
       Next_Word
         (Get_File (This, Get_File (Cursor)).all,
@@ -1162,14 +1162,16 @@ package body Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Interface'Class;
       Cursor : in out Text_Cursor'Class;
-      Word   : out GNAT.Strings.String_Access)
+      Word   : out Word_Cursor)
    is
       Current_Line      : GNAT.Strings.String_Access;
       Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
       Begin_Word        : Char_Index;
       Cursor_Char_Index : Char_Index;
-
    begin
+      Word.Mode := Text_Ascii;
+      Word.File := This.File_Name;
+
       Line_Cursor.Col := 1;
       Assign (Current_Line, Get_Line (This, Line_Cursor));
       Cursor_Char_Index := To_Char_Index
@@ -1195,14 +1197,17 @@ package body Codefix.Text_Manager is
       end loop;
 
       if Is_Blank (Current_Line (Natural (Cursor_Char_Index))) then
-         Word := new String'
+         Word.String_Match := new String'
            (Current_Line
               (Natural (Begin_Word) .. Natural (Cursor_Char_Index) - 1));
       else
-         Word := new String'
+         Word.String_Match := new String'
            (Current_Line
               (Natural (Begin_Word) .. Natural (Cursor_Char_Index)));
       end if;
+
+      Word.Line := Line_Cursor.Line;
+      Word.Col := To_Column_Index (Cursor_Char_Index, Current_Line.all);
 
       if Cursor_Char_Index = Char_Index (Current_Line'Last) then
          Cursor_Char_Index := 1;

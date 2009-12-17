@@ -409,6 +409,49 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Parenthesis_Cmd);
 
+   --------------------------
+   -- Fix_Index_Number_Cmd --
+   --------------------------
+
+   type Fix_Index_Number_Cmd is new Text_Command (Simple) with private;
+   --  Removes or adds the index number to array attributes
+
+   type Fix_Index_Number_Cmd_Mode is (Remove, Add);
+
+   procedure Initialize
+     (This         : in out Fix_Index_Number_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Mode         : Fix_Index_Number_Cmd_Mode);
+   --  Either removes the index or add the index for the array attribute
+
+   overriding procedure Execute
+     (This         : Fix_Index_Number_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding procedure Free (This : in out Fix_Index_Number_Cmd);
+
+   ----------------------------
+   -- Reorder_Subprogram_Cmd --
+   ----------------------------
+
+   type Reorder_Subprogram_Cmd is new Text_Command (Simple) with private;
+   --  Alphabetically Reorders a subprogram in the subprogram list
+
+   procedure Initialize
+     (This         : in out Reorder_Subprogram_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+   --  Either removes the index or add the index for the array attribute
+
+   overriding
+   procedure Execute
+     (This         : Reorder_Subprogram_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Reorder_Subprogram_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -513,7 +556,16 @@ private
    end record;
 
    type Remove_Parenthesis_Cmd is new Text_Command (Simple) with record
-      Location        : Ptr_Mark;
+      Location : Ptr_Mark;
+   end record;
+
+   type Fix_Index_Number_Cmd is new Text_Command (Simple) with record
+      Location : Ptr_Mark;
+      Mode : Fix_Index_Number_Cmd_Mode;
+   end record;
+
+   type Reorder_Subprogram_Cmd is new Text_Command (Simple) with record
+      Location : Ptr_Mark;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

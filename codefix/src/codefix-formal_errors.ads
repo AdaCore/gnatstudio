@@ -249,6 +249,13 @@ package Codefix.Formal_Errors is
       Object_Name   : String) return Solution_List;
    --  Remove a name from an "Unreferenced" pragma
 
+   function Add_Line
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Line          : String;
+      Indent        : Boolean) return Solution_List;
+   --  Add a line at the given location
+
    ----------------------------------------------------------------------------
    --  Ada specific formal errors
    ----------------------------------------------------------------------------
@@ -276,6 +283,19 @@ package Codefix.Formal_Errors is
       Open_Paren : File_Cursor'Class)
       return Solution_List;
    --  Removes a couple of parenthesis.
+
+   function Fix_Index_Number
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class;
+      Do_Remove    : Boolean)
+      return Solution_List;
+   --  Adds or remove the index used in array attributes.
+
+   function Reorder_Subprogram
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List;
+   --  Reorders a subprogram in the list.
 
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors

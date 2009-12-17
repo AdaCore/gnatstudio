@@ -284,6 +284,8 @@ package Codefix.Text_Manager is
      (Kind => Operator_Text, Name => new String'(":"));
    Is_Tok : constant Token_Record :=
      (Kind => Keyword_Text, Name => new String'("is"));
+   Tick_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => new String'("'"));
 
    function Search_Token
      (This     : Text_Interface'Class;
@@ -328,7 +330,7 @@ package Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Interface'Class;
       Cursor : in out Text_Cursor'Class;
-      Word   : out GNAT.Strings.String_Access);
+      Word   : out Word_Cursor);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 
@@ -550,7 +552,7 @@ package Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Navigator_Abstr'Class;
       Cursor : in out File_Cursor'Class;
-      Word   : out GNAT.Strings.String_Access);
+      Word   : out Word_Cursor);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 

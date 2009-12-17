@@ -1361,6 +1361,60 @@ package body Codefix.Formal_Errors is
       return Result;
    end Remove_Parenthesis_Couple;
 
+   ----------------------
+   -- Fix_Index_Number --
+   ----------------------
+
+   function Fix_Index_Number
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class;
+      Do_Remove    : Boolean)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Fix_Index_Number_Cmd;
+      Command     : Fix_Index_Number_Cmd renames
+        Fix_Index_Number_Cmd (Command_Ptr.all);
+   begin
+      if Do_Remove then
+         Command.Initialize (Current_Text, Location, Remove);
+      else
+         Command.Initialize (Current_Text, Location, Add);
+      end if;
+
+      if Do_Remove then
+         Command.Set_Caption ("Remove index");
+      else
+         Command.Set_Caption ("Add index");
+      end if;
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Fix_Index_Number;
+
+   ------------------------
+   -- Reorder_Subprogram --
+   ------------------------
+
+   function Reorder_Subprogram
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Reorder_Subprogram_Cmd;
+      Command     : Reorder_Subprogram_Cmd renames
+        Reorder_Subprogram_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Location);
+      Command.Set_Caption ("Reorder subprogram");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Reorder_Subprogram;
+
    ---------------------------------------------
    -- Remove_Element_From_Unreferenced_Pragma --
    ---------------------------------------------
@@ -1388,6 +1442,34 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Remove_Element_From_Unreferenced_Pragma;
+
+   --------------
+   -- Add_Line --
+   --------------
+
+   function Add_Line
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Line          : String;
+      Indent        : Boolean) return Solution_List
+   is
+      Result : Solution_List;
+
+      Command_Ptr : constant Ptr_Command := new Add_Line_Cmd (Simple);
+      Command     : Add_Line_Cmd renames
+        Add_Line_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize
+        (Current_Text => Current_Text,
+         Position     => Object_Cursor,
+         Line         => Line,
+         Indent       => Indent);
+      Command.Set_Caption ("Insert a line");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Add_Line;
 
    ---------------------------
    -- Move_Tilde_Or_Percent --

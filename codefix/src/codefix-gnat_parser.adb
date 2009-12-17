@@ -1025,6 +1025,52 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'warning: pragma unreferenced given for...'
 
+   type Wrong_Index_Usage is new Error_Parser (2) with null record;
+
+   overriding
+   procedure Initialize (This : in out Wrong_Index_Usage);
+
+   overriding
+   procedure Fix
+     (This         : Wrong_Index_Usage;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'index number not allowed for one dimensional array'
+   --  or 'index number required for multi-dimensional array'
+
+   type Wrong_Sb_Order is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Wrong_Sb_Order);
+
+   overriding
+   procedure Fix
+     (This         : Wrong_Sb_Order;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'subprogram body "bla" not in alphabetical order'
+
+   type No_Statement_Following_Then is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out No_Statement_Following_Then);
+
+   overriding
+   procedure Fix
+     (This         : No_Statement_Following_Then;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like no statements may follow "then" on same line
+
    ---------------------------
    -- Aggregate_Misspelling --
    ---------------------------
@@ -3412,6 +3458,93 @@ package body Codefix.GNAT_Parser is
            (Message_It).Get_Message (Matches (1).First .. Matches (1).Last));
    end Fix;
 
+   -----------------------
+   -- Wrong_Index_Usage --
+   -----------------------
+
+   overriding procedure Initialize (This : in out Wrong_Index_Usage) is
+   begin
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("index number (not allowed) for one dimensional array")),
+         new Pattern_Matcher'
+           (Compile ("index number (required) for multi-dimensional array")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Wrong_Index_Usage;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+
+      Mode : constant String := Get_Message
+        (Message_It).Get_Message (Matches (1).First .. Matches (1).Last);
+   begin
+      if Mode = "not allowed" then
+         Solutions := Fix_Index_Number
+           (Current_Text, Get_Message (Message_It), True);
+      else
+         Solutions := Fix_Index_Number
+           (Current_Text, Get_Message (Message_It), False);
+      end if;
+   end Fix;
+
+   --------------------
+   -- Wrong_Sb_Order --
+   --------------------
+
+   overriding procedure Initialize (This : in out Wrong_Sb_Order) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("subprogram body ""[^""]+"" not in alphabetical order")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Wrong_Sb_Order;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Reorder_Subprogram
+        (Current_Text, Get_Message (Message_It));
+   end Fix;
+
+   ---------------------------------
+   -- No_Statement_Following_Then --
+   ---------------------------------
+
+   overriding procedure Initialize
+     (This : in out No_Statement_Following_Then)
+   is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("no statements may follow ""then"" on same line")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : No_Statement_Following_Then;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Add_Line (Current_Text, Get_Message (Message_It), "", True);
+   end Fix;
+
    ----------------------
    -- Register_Parsers --
    ----------------------
@@ -3481,6 +3614,9 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Pragma_Pack);
       Add_Parser (Processor, new Undefined_Entity);
       Add_Parser (Processor, new Unwanted_Pragma_Unreferenced);
+      Add_Parser (Processor, new Wrong_Index_Usage);
+      Add_Parser (Processor, new Wrong_Sb_Order);
+      Add_Parser (Processor, new No_Statement_Following_Then);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;

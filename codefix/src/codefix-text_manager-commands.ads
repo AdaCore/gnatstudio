@@ -226,7 +226,8 @@ package Codefix.Text_Manager.Commands is
      (This         : in out Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
-      Line         : String);
+      Line         : String;
+      Indent       : Boolean);
    --  Set all the marks that will be needed to add the line later
 
    overriding
@@ -284,6 +285,12 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the slice removed
 
+   procedure Remove_Blank_Lines
+     (Current_Text : in out Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+   --  Remove all consecutive blank lines starting at the location given
+   --  in parameter. This helper function may be used directly in commands.
+
 private
 
    ----------------------------------------------------------------------------
@@ -331,6 +338,7 @@ private
    type Add_Line_Cmd is new Text_Command with record
       Line     : GNAT.Strings.String_Access;
       Position : Ptr_Mark;
+      Indent   : Boolean;
    end record;
 
    type Replace_Slice_Cmd is new Text_Command with record

@@ -759,7 +759,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       declare
          Pragma_Cursor : File_Cursor;
          Line_Cursor   : File_Cursor;
-         Next_Str      : GNAT.Strings.String_Access;
+         Next_Str      : Word_Cursor;
       begin
          Pragma_Cursor := Position;
          Pragma_Cursor.Line := Pragma_Cursor.Line + 1;
@@ -767,11 +767,11 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Next_Word (Current_Text, Pragma_Cursor, Next_Str);
 
-         if To_Lower (Next_Str.all) = "pragma" then
+         if To_Lower (Next_Str.Get_Word) = "pragma" then
             Free (Next_Str);
             Next_Word (Current_Text, Pragma_Cursor, Next_Str);
 
-            if To_Lower (Next_Str.all) = To_Lower (This.Name.all) then
+            if To_Lower (Next_Str.Get_Word) = To_Lower (This.Name.all) then
                Pragma_Cursor := File_Cursor
                  (Search_Token
                     (Current_Text, Pragma_Cursor, Close_Paren_Tok));
@@ -1829,6 +1829,202 @@ package body Codefix.Text_Manager.Ada_Commands is
    end Execute;
 
    overriding procedure Free (This : in out Remove_Parenthesis_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
+   --------------------------
+   -- Fix_Index_Number_Cmd --
+   --------------------------
+
+   procedure Initialize
+     (This         : in out Fix_Index_Number_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Mode         : Fix_Index_Number_Cmd_Mode)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+      This.Mode := Mode;
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Fix_Index_Number_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+   begin
+      if This.Mode = Remove then
+         declare
+            Open_Paren : File_Cursor'Class :=
+              Current_Text.Get_File (Cursor.File).Search_Token
+              (Cursor, Open_Paren_Tok, Reverse_Step);
+            Close_Paren : File_Cursor'Class :=
+              Get_Closing_Paren (Current_Text, Open_Paren);
+         begin
+            Current_Text.Replace (Open_Paren, Close_Paren, "", One, One);
+            Free (Close_Paren);
+            Free (Open_Paren);
+         end;
+      else
+         declare
+            End_Word : File_Cursor'Class := Clone (Cursor);
+            Word     : Word_Cursor;
+         begin
+            Current_Text.Next_Word (End_Word, Word);
+
+            if Word.Get_Word = "'" then
+               --  In this case, we just retreived the ', we need to jump over
+               --  the attribute name as well.
+
+               Free (Word);
+               Current_Text.Next_Word (End_Word, Word);
+            end if;
+
+            Word.Col := Word.Col + 1;
+            Current_Text.Replace (Word, 0, " (1)");
+            Free (Word);
+         end;
+      end if;
+
+      Free (Cursor);
+   end Execute;
+
+   overriding procedure Free (This : in out Fix_Index_Number_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
+   ----------------------------
+   -- Reorder_Subprogram_Cmd --
+   ----------------------------
+
+   procedure Initialize
+     (This         : in out Reorder_Subprogram_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Reorder_Subprogram_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+
+      S_File : constant Structured_File_Access :=
+        Current_Text.Get_Structured_File (Cursor.File);
+      Tree   : constant Construct_Tree := Get_Tree (S_File);
+
+      Sb_It : constant Construct_Tree_Iterator :=
+        Current_Text.Get_Iterator_At (Cursor);
+      Prev_Entity : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
+
+      Prev_It : Construct_Tree_Iterator := Sb_It;
+
+      Src_Begin_Cursor, Src_End_Cursor : File_Cursor;
+      Dst_Cursor : File_Cursor;
+   begin
+      --  Look for the previous subprogram in alphabetical order, if none found
+      --  then the missplace subprogram has to be placed at the beginning of
+      --  the scope.
+
+      while Prev_It /= Null_Construct_Tree_Iterator
+        and then Get_Parent_Scope (Tree, Prev_It)
+        = Get_Parent_Scope (Tree, Sb_It)
+      loop
+         if Get_Construct (Prev_It).Category in Subprogram_Category then
+            if To_Lower (Get_Construct (Prev_It).Name.all) >
+              To_Lower (Get_Construct (Sb_It).Name.all)
+            then
+               Prev_Entity := Prev (Tree, Prev_It, Jump_Over);
+
+               if Get_Parent_Scope (Tree, Prev_Entity)
+                 /= Get_Parent_Scope (Tree, Sb_It)
+               then
+                  --  If we're out of the parent scope, then this is not
+                  --  the previous entity.
+
+                  Prev_Entity := Null_Construct_Tree_Iterator;
+               end if;
+            end if;
+         end if;
+
+         Prev_It := Prev (Tree, Prev_It, Jump_Over);
+      end loop;
+
+      --  Set the cursors for the text move.
+
+      Src_End_Cursor.File := Cursor.File;
+      Src_Begin_Cursor.File := Cursor.File;
+      Dst_Cursor.File := Cursor.File;
+
+      Src_Begin_Cursor.Col := 1;
+      Src_Begin_Cursor.Line := Get_Construct (Sb_It).Sloc_Start.Line;
+
+      Src_End_Cursor.Line := Get_Construct (Sb_It).Sloc_End.Line;
+
+      declare
+         End_Line : constant String :=
+           Current_Text.Get_Line (Src_End_Cursor, 0);
+      begin
+         Src_End_Cursor.Col := To_Column_Index (End_Line'Length, End_Line);
+      end;
+
+      if Prev_Entity = Null_Construct_Tree_Iterator then
+         --  If the subprogram has to be first, then place it right after the
+         --  start of the enclosing entity.
+
+         Prev_Entity := Get_Parent_Scope (Tree, Sb_It);
+
+         Dst_Cursor.Line := Get_Construct (Prev_Entity).Sloc_Start.Line;
+
+         declare
+            End_Line : constant String :=
+              Current_Text.Get_Line (Dst_Cursor, 0);
+         begin
+            Dst_Cursor.Col := To_Column_Index (End_Line'Length, End_Line) + 1;
+         end;
+      else
+         --  If there is a subprogram before, place it after the end of that
+         --  subprogram.
+
+         Dst_Cursor.Line := Get_Construct (Prev_Entity).Sloc_End.Line;
+
+         declare
+            End_Line : constant String :=
+              Current_Text.Get_Line (Dst_Cursor, 0);
+         begin
+            Dst_Cursor.Col := To_Column_Index (End_Line'Length, End_Line) + 1;
+         end;
+      end if;
+
+      declare
+         Sb_Text : constant String :=
+           EOL_Str & EOL_Str & Current_Text.Get
+             (Src_Begin_Cursor, Src_End_Cursor);
+      begin
+         --  Remove the current subprogram
+
+         Current_Text.Replace (Src_Begin_Cursor, Src_End_Cursor, "");
+
+         --  Remove potential extra blank lines introduced by the removal
+
+         Remove_Blank_Lines (Current_Text, Src_Begin_Cursor);
+
+         --  Add the subprogram at the appropriate location
+
+         Current_Text.Replace (Dst_Cursor, 0, Sb_Text);
+      end;
+   end Execute;
+
+   overriding procedure Free (This : in out Reorder_Subprogram_Cmd) is
    begin
       Free (This.Location);
    end Free;

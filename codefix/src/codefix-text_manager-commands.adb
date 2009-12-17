@@ -444,11 +444,13 @@ package body Codefix.Text_Manager.Commands is
      (This         : in out Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
-      Line         : String) is
+      Line         : String;
+      Indent       : Boolean) is
    begin
       Assign (This.Line, Line);
       This.Position := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Position));
+      This.Indent := Indent;
    end Initialize;
 
    overriding procedure Free (This : in out Add_Line_Cmd) is
@@ -463,10 +465,16 @@ package body Codefix.Text_Manager.Commands is
    is
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Position.all);
+
+      End_Of_Line : constant String := Current_Text.Get_Line (Cursor);
    begin
+      if End_Of_Line /= "" then
+         Current_Text.Replace (Cursor, End_Of_Line'Length, "");
+      end if;
+
       Add_Line
         (Get_File (Current_Text, This.Position.File_Name).all,
-         Cursor, This.Line.all);
+         Cursor, End_Of_Line & This.Line.all, This.Indent);
    end Execute;
 
    ----------------------
@@ -532,17 +540,28 @@ package body Codefix.Text_Manager.Commands is
      (This         : Remove_Blank_Lines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Cursor : File_Cursor := File_Cursor
+      Cursor : constant File_Cursor := File_Cursor
         (Current_Text.Get_Current_Cursor (This.Start_Mark.all));
+   begin
+      Remove_Blank_Lines (Current_Text, Cursor);
+   end Execute;
+
+   procedure Remove_Blank_Lines
+     (Current_Text : in out Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+   is
+      Line_Cursor : File_Cursor'Class := Clone (Cursor);
       Text   : constant Ptr_Text := Current_Text.Get_File (Cursor.File);
    begin
-      Cursor.Col := 1;
+      Line_Cursor.Col := 1;
 
-      while Cursor.Line < Text.Line_Max
-        and then Is_Blank (Text.Get_Line (Cursor, 1))
+      while Line_Cursor.Line < Text.Line_Max
+        and then Is_Blank (Text.Get_Line (Line_Cursor, 1))
       loop
-         Text.Delete_Line (Cursor);
+         Text.Delete_Line (Line_Cursor);
       end loop;
-   end Execute;
+
+      Free (Line_Cursor);
+   end Remove_Blank_Lines;
 
 end Codefix.Text_Manager.Commands;
