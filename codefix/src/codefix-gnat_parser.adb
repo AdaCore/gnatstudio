@@ -171,6 +171,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix instruction where '|' stands for 'or'
 
+   type Short_Circuit_Required is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Short_Circuit_Required);
+
+   overriding
+   procedure Fix
+     (This         : Short_Circuit_Required;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix instruction where '|' stands for 'or'
+
    type Bad_End_Block is new Error_Parser (2) with null record;
 
    overriding
@@ -415,6 +430,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'extra sth ignored'.
 
+   type Redudant_Paren is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Redudant_Paren);
+
+   overriding
+   procedure Fix
+     (This         : Redudant_Paren;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'redundant parenthesis'.
+
    type Redundant_Keyword is new Error_Parser (1) with null record;
 
    overriding
@@ -503,7 +533,22 @@ package body Codefix.GNAT_Parser is
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Fix 'kw not allowed' etc.
+   --  Fix 'sep not allowed' etc.
+
+   type In_Should_Be_Omitted is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out In_Should_Be_Omitted);
+
+   overriding
+   procedure Fix
+     (This         : In_Should_Be_Omitted;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix "in" should be omitted.
 
    type Already_Use_Visible is new Error_Parser (1) with null record;
 
@@ -1261,6 +1306,35 @@ package body Codefix.GNAT_Parser is
       Solutions := Should_Be (Current_Text, Message, "or", "\|");
    end Fix;
 
+   ----------------------------
+   -- Short_Circuit_Required --
+   ----------------------------
+
+   overriding procedure Initialize (This : in out Short_Circuit_Required) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("""((or else)|(and then))"" required")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Short_Circuit_Required;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+   begin
+      Solutions := Should_Be
+        (Current_Text,
+         Get_Message (Message_It),
+         Get_Message (Message_It).Get_Message
+         (Matches (1).First .. Matches (1).Last),
+         "([\w]+)",
+         Regular_Expression);
+   end Fix;
+
    -------------------
    -- Bad_End_Block --
    -------------------
@@ -1789,6 +1863,31 @@ package body Codefix.GNAT_Parser is
       Solutions := Unexpected (Current_Text, Message, ")");
    end Fix;
 
+   --------------------
+   -- Redudant_Paren --
+   --------------------
+
+   overriding procedure Initialize (This : in out Redudant_Paren) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+       (Compile ("redundant parentheses")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Redudant_Paren;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Matches, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Remove_Parenthesis_Couple (Current_Text, Message);
+   end Fix;
    ----------------------
    -- No_Space_Allowed --
    ----------------------
@@ -2002,6 +2101,32 @@ package body Codefix.GNAT_Parser is
 
       Free (Unallowed_Characters);
       Free (Word_Read);
+   end Fix;
+
+   --------------------------
+   -- In_Should_Be_Omitted --
+
+   overriding procedure Initialize (This : in out In_Should_Be_Omitted) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'(Compile ("""in"" should be omitted")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : In_Should_Be_Omitted;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Unexpected
+        (Current_Text      => Current_Text,
+         Message           => Get_Message (Message_It),
+         String_Unexpected => "(in[\s]*)",
+         Mode              => Regular_Expression);
    end Fix;
 
    -------------------------
@@ -3302,6 +3427,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Should_Be_Semicolon);
       Add_Parser (Processor, new And_Meant);
       Add_Parser (Processor, new Or_Meant);
+      Add_Parser (Processor, new Short_Circuit_Required);
       Add_Parser (Processor, new Bad_End_Block);
       Add_Parser (Processor, new Unqualified_Expression);
       Add_Parser (Processor, new Goes_Before);
@@ -3317,12 +3443,14 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Name_Missing);
       Add_Parser (Processor, new Double_Keyword);
       Add_Parser (Processor, new Extra_Paren);
+      Add_Parser (Processor, new Redudant_Paren);
       Add_Parser (Processor, new No_Space_Allowed);
       Add_Parser (Processor, new Redundant_Keyword);
       Add_Parser (Processor, new Unexpected_Sep);
       Add_Parser (Processor, new Unexpected_Word);
       Add_Parser (Processor, new Kw_Not_Allowed);
       Add_Parser (Processor, new Sep_Not_Allowed);
+      Add_Parser (Processor, new In_Should_Be_Omitted);
       Add_Parser (Processor, new Already_Use_Visible);
       Add_Parser (Processor, new Use_Valid_Instead);
       Add_Parser (Processor, new Should_Be_In);

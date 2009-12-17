@@ -1105,9 +1105,9 @@ package body Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class;
       Object_Name  : String) return Solution_List
    is
-      New_Command_Ptr : constant Ptr_Command := new Remove_Parenthesis_Cmd;
-      New_Command     : Remove_Parenthesis_Cmd renames
-        Remove_Parenthesis_Cmd (New_Command_Ptr.all);
+      New_Command_Ptr : constant Ptr_Command := new Remove_Conversion_Cmd;
+      New_Command     : Remove_Conversion_Cmd renames
+        Remove_Conversion_Cmd (New_Command_Ptr.all);
       Result          : Solution_List;
    begin
       Initialize (New_Command, Current_Text, Cursor);
@@ -1339,6 +1339,27 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Remove_Blank_Lines;
+
+   -------------------------------
+   -- Remove_Parenthesis_Couple --
+   -------------------------------
+
+   function Remove_Parenthesis_Couple
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Open_Paren : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Remove_Parenthesis_Cmd;
+      Command     : Remove_Parenthesis_Cmd renames
+        Remove_Parenthesis_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Open_Paren);
+      Command.Set_Caption ("Remove parenthesis couple");
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Remove_Parenthesis_Couple;
 
    ---------------------------------------------
    -- Remove_Element_From_Unreferenced_Pragma --

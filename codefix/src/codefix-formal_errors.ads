@@ -271,6 +271,12 @@ package Codefix.Formal_Errors is
    --  Propose a fix removing all the blank lines starting at the cursor
    --  location.
 
+   function Remove_Parenthesis_Couple
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Open_Paren : File_Cursor'Class)
+      return Solution_List;
+   --  Removes a couple of parenthesis.
+
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors
    ----------------------------------------------------------------------------

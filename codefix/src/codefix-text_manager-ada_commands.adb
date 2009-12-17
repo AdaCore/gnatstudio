@@ -26,6 +26,69 @@ with Language.Ada;                      use Language.Ada;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
+   function Get_Closing_Paren
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Open_Cursor  : File_Cursor'Class) return File_Cursor;
+   --  Returns the Closing parenthesis corresponding to the open one given
+   --  in parameter
+
+   -----------------------
+   -- Get_Closing_Paren --
+   -----------------------
+
+   function Get_Closing_Paren
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Open_Cursor  : File_Cursor'Class) return File_Cursor
+   is
+      Close_Cursor : File_Cursor;
+
+      Depth : Integer := 0;
+
+      function Entity_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean;
+
+      function Entity_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+         Name : constant String := Line (Sloc_Start.Column .. Sloc_End.Column);
+      begin
+         if Entity = Operator_Text and then Name = "(" then
+            Depth := Depth + 1;
+         elsif Entity = Operator_Text and then Name = ")" then
+            Depth := Depth - 1;
+
+            if Depth = 0 then
+               Close_Cursor.Set_File (Open_Cursor.File);
+               Close_Cursor.Set_Line (Sloc_Start.Line);
+               Close_Cursor.Set_Column
+                 (To_Column_Index (Char_Index (Sloc_Start.Column), Line));
+
+               return True;
+            end if;
+         end if;
+
+         return False;
+      end Entity_Callback;
+
+   begin
+      Parse_Entities
+        (Ada_Lang,
+         Current_Text.Get_File (Open_Cursor.File).all,
+         Entity_Callback'Unrestricted_Access,
+         Open_Cursor);
+
+      return Close_Cursor;
+   end Get_Closing_Paren;
+
    --  Recase_Word_Cmd
 
    ----------------
@@ -824,7 +887,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    ----------------
 
    procedure Initialize
-     (This         : in out Remove_Parenthesis_Cmd;
+     (This         : in out Remove_Conversion_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) is
    begin
@@ -837,89 +900,41 @@ package body Codefix.Text_Manager.Ada_Commands is
    -------------
 
    overriding procedure Execute
-     (This         : Remove_Parenthesis_Cmd;
+     (This         : Remove_Conversion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      procedure Right_Paren
-        (Current_Index : in out Char_Index; Line_Cursor : File_Cursor);
-      --  Put Current_Index extactly on the right paren correponding the last
-      --  left paren.
-
       Work_Extract  : Ada_Instruction;
-      Cursor        : File_Cursor;
-      Line_Cursor   : File_Cursor;
-      Current_Index : Char_Index := 1;
-
-      -----------------
-      -- Right_Paren --
-      -----------------
-
-      procedure Right_Paren
-        (Current_Index : in out Char_Index; Line_Cursor : File_Cursor)
-      is
-         Local_Cursor : File_Cursor := Line_Cursor;
-      begin
-         loop
-            declare
-               Local_Line : constant String :=
-                 Current_Text.Get_Line (Local_Cursor, 1);
-            begin
-               if Natural (Current_Index)
-                 > Local_Line'Last
-               then
-                  Current_Index := 1;
-                  Local_Cursor.Line := Local_Cursor.Line + 1;
-               end if;
-
-               case Local_Line (Natural (Current_Index)) is
-                  when '(' =>
-                     Current_Index := Current_Index + 1;
-                     Right_Paren (Current_Index, Local_Cursor);
-                  when ')' =>
-                     return;
-                  when others =>
-                     Current_Index := Current_Index + 1;
-               end case;
-            end;
-         end loop;
-      end Right_Paren;
-
+      Cursor        : File_Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Cursor.all));
       Text : Ptr_Text;
 
+      Open_Paren : File_Cursor'Class :=
+        Current_Text.Search_Token (Cursor, Open_Paren_Tok);
+      Close_Paren : File_Cursor;
    begin
-      Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Cursor.all));
-
       Text := Current_Text.Get_File (Cursor.File);
 
-      Line_Cursor := Cursor;
-      Line_Cursor.Col := 1;
       Get_Unit (Current_Text, Cursor, Work_Extract);
+
+      Close_Paren := Get_Closing_Paren (Current_Text, Open_Paren);
+
+      Current_Text.Replace (Close_Paren, 1, "");
 
       Text.Erase
         (Cursor,
          Current_Text.Search_Token (Cursor, Open_Paren_Tok));
 
-      Current_Index := To_Char_Index
-        (Cursor.Col, Current_Text.Get_Line (Line_Cursor, 1));
-
-      Right_Paren (Current_Index, Line_Cursor);
-
-      Cursor := Line_Cursor;
-      Cursor.Col := To_Column_Index
-        (Current_Index, Current_Text.Get_Line (Line_Cursor, 1));
-
-      Text.Erase (Cursor, Cursor);
-
+      Free (Open_Paren);
+      Free (Close_Paren);
       Free (Work_Extract);
       Free (Cursor);
    end Execute;
 
-   ----------
+   --------
    -- Free --
-   ----------
+   --------
 
-   overriding procedure Free (This : in out Remove_Parenthesis_Cmd) is
+   overriding procedure Free (This : in out Remove_Conversion_Cmd) is
    begin
       Free (This.Cursor);
       Free (Text_Command (This));
@@ -1690,6 +1705,16 @@ package body Codefix.Text_Manager.Ada_Commands is
          New_Id (1 .. New_Id_Index - 1));
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
+   overriding
+   procedure Free (This : in out Remove_Extra_Underlines_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
    -------------------------------
    -- Remove_Pragma_Element_Cmd --
    -------------------------------
@@ -1773,12 +1798,37 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Pragma_Name);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
+   ----------------------------
+   -- Remove_Parenthesis_Cmd --
+   ----------------------------
 
-   overriding
-   procedure Free (This : in out Remove_Extra_Underlines_Cmd) is
+   procedure Initialize
+     (This            : in out Remove_Parenthesis_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Cursor          : File_Cursor'Class)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Remove_Parenthesis_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Open_Cursor : File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+      Close_Cursor : File_Cursor;
+   begin
+      Close_Cursor := Get_Closing_Paren (Current_Text, Open_Cursor);
+      Current_Text.Replace (Close_Cursor, 1, "");
+      Current_Text.Replace (Open_Cursor, 1, "");
+
+      Free (Open_Cursor);
+      Free (Close_Cursor);
+   end Execute;
+
+   overriding procedure Free (This : in out Remove_Parenthesis_Cmd) is
    begin
       Free (This.Location);
    end Free;

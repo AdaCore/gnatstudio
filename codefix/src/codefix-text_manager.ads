@@ -325,13 +325,6 @@ package Codefix.Text_Manager is
       return String;
    --  Return the entire prefix of the first unit of category after the cursor
 
-   function Get_Right_Paren
-     (This         : Text_Interface'Class;
-      Cursor       : Text_Cursor'Class;
-      Current_Line : String)
-      return Text_Cursor'Class;
-   --  Return the right paren corresponding to the one in the cursor
-
    procedure Next_Word
      (This   : Text_Interface'Class;
       Cursor : in out Text_Cursor'Class;
@@ -544,12 +537,6 @@ package Codefix.Text_Manager is
       Category : Language_Category := Cat_Unknown)
       return String;
    --  Return the entire prefix of the first unit of category after the cursor
-
-   function Get_Right_Paren
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class)
-     return File_Cursor'Class;
-   --  Return the right paren corresponding to the one in the cursor
 
    procedure Get_Entity
      (Current_Text         : Text_Navigator_Abstr'Class;

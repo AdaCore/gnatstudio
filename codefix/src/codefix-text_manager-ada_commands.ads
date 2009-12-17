@@ -201,22 +201,22 @@ package Codefix.Text_Manager.Ada_Commands is
    -- Remove_Parenthesis_Cmd --
    ----------------------------
 
-   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with private;
+   type Remove_Conversion_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
-     (This         : in out Remove_Parenthesis_Cmd;
+     (This         : in out Remove_Conversion_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class);
    --  Set all the marks that will be needed to remove the conversion later.
 
    overriding
    procedure Execute
-     (This         : Remove_Parenthesis_Cmd;
+     (This         : Remove_Conversion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an Extract with the remove of the conversion.
 
    overriding
-   procedure Free (This : in out Remove_Parenthesis_Cmd);
+   procedure Free (This : in out Remove_Conversion_Cmd);
    --  Free the memory associated to a Remove_Parenthesis_Cmd.
 
    -----------------------
@@ -389,6 +389,26 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Pragma_Element_Cmd);
 
+   ----------------------------
+   -- Remove_Parenthesis_Cmd --
+   ----------------------------
+
+   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with private;
+   --  Removes a block of parenthesis, e.g. ((a)) -> (a)
+
+   procedure Initialize
+     (This            : in out Remove_Parenthesis_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Cursor          : File_Cursor'Class);
+
+   overriding
+   procedure Execute
+     (This         : Remove_Parenthesis_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Remove_Parenthesis_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -440,7 +460,7 @@ private
       Name     : GNAT.Strings.String_Access;
    end record;
 
-   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with record
+   type Remove_Conversion_Cmd is new Text_Command (Simple) with record
       Cursor : Ptr_Mark;
    end record;
 
@@ -490,6 +510,10 @@ private
       Location     : Ptr_Mark;
       Element_Name : String_Access;
       Pragma_Name  : String_Access;
+   end record;
+
+   type Remove_Parenthesis_Cmd is new Text_Command (Simple) with record
+      Location        : Ptr_Mark;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;
