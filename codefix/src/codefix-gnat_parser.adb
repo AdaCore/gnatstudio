@@ -332,6 +332,19 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'add All to'.
 
+   type Implicit_Dereference is new Error_Parser (1) with null record;
+
+   overriding procedure Initialize (This : in out Implicit_Dereference);
+
+   overriding procedure Fix
+     (This         : Implicit_Dereference;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'implicit dereference'.
+
    type Statement_Missing is new Error_Parser (1) with null record;
 
    overriding
@@ -346,6 +359,19 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix 'statement missing'.
+
+   type Useless_Assignment is new Error_Parser (1) with null record;
+
+   overriding procedure Initialize (This : in out Useless_Assignment);
+
+   overriding procedure Fix
+     (This         : Useless_Assignment;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'useless assignment'.
 
    type Space_Missing is new Error_Parser (1) with null record;
 
@@ -760,6 +786,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'pragma must be first line of'.
 
+   type Useless_Pragma_Pack is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Useless_Pragma_Pack);
+
+   overriding
+   procedure Fix
+     (This         : Useless_Pragma_Pack;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'pragma Pack has no effect'.
+
    type Constant_Expected is new Error_Parser (1) with null record;
 
    overriding
@@ -852,6 +893,21 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'useless conversion'
+
+   type Useless_Abs is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Useless_Abs);
+
+   overriding
+   procedure Fix
+     (This         : Useless_Abs;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'abs applied to known non-negative value has no effect'
 
    type Missplaced_With is new Error_Parser (2) with null record;
 
@@ -1721,6 +1777,31 @@ package body Codefix.GNAT_Parser is
          After_Pattern => "type[\s]+[\w]+[\s]+is[\s]+(access)");
    end Fix;
 
+   --------------------------
+   -- Implicit_Dereference --
+   --------------------------
+
+   overriding procedure Initialize (This : in out Implicit_Dereference) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("implicit dereference")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Implicit_Dereference;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Expected
+        (Current_Text, Get_Message (Message_It), ".all", Add_Spaces => False);
+   end Fix;
+
    -----------------------
    -- Statement_Missing --
    -----------------------
@@ -1745,6 +1826,29 @@ package body Codefix.GNAT_Parser is
    begin
       Solutions := Expected
         (Current_Text, Message, "null;", Position => Before);
+   end Fix;
+
+   ------------------------
+   -- Useless_Assignment --
+   ------------------------
+
+   overriding procedure Initialize (This : in out Useless_Assignment) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("useless assignment")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Useless_Assignment;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Remove_Statement (Current_Text, Get_Message (Message_It));
    end Fix;
 
    -------------------
@@ -2645,6 +2749,29 @@ package body Codefix.GNAT_Parser is
       Solutions := First_Line_Pragma (Current_Text, Message);
    end Fix;
 
+   -------------------------
+   -- Useless_Pragma_Pack --
+   -------------------------
+
+   overriding procedure Initialize (This : in out Useless_Pragma_Pack) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+         (Compile ("pragma Pack has no effect")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Useless_Pragma_Pack;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Remove_Statement (Current_Text, Get_Message (Message_It));
+   end Fix;
+
    -----------------------
    -- Constant_Expected --
    -----------------------
@@ -2976,8 +3103,40 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Conversion
         (Current_Text,
          Message,
+         "Remove useless conversion of """ &
          Get_Message (Message)
-           (Matches (1).First .. Matches (1).Last));
+         (Matches (1).First .. Matches (1).Last) & """");
+   end Fix;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (This : in out Useless_Abs) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile
+              ("abs applied to known non-negative value has no effect")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Useless_Abs;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Remove_Conversion
+        (Current_Text,
+         Message,
+         "Remove abs operator");
    end Fix;
 
    ---------------------
@@ -3570,7 +3729,9 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Missing_Kw);
       Add_Parser (Processor, new Missing_Sep);
       Add_Parser (Processor, new Missing_All);
+      Add_Parser (Processor, new Implicit_Dereference);
       Add_Parser (Processor, new Statement_Missing);
+      Add_Parser (Processor, new Useless_Assignment);
       Add_Parser (Processor, new Space_Missing);
       Add_Parser (Processor, new Two_Spaces_Missing);
       Add_Parser (Processor, new Name_Missing);
@@ -3597,10 +3758,12 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Never_Read);
       Add_Parser (Processor, new Never_Assigned);
       Add_Parser (Processor, new Pragma_Missplaced);
+      Add_Parser (Processor, new Useless_Pragma_Pack);
       Add_Parser (Processor, new Constant_Expected);
       Add_Parser (Processor, new Possible_Interpretation);
       Add_Parser (Processor, new Hidden_Declaration);
       Add_Parser (Processor, new Redundant_Conversion);
+      Add_Parser (Processor, new Useless_Abs);
       Add_Parser (Processor, new Missplaced_With);
       Add_Parser (Processor, new Not_Fully_Conformant);
       Add_Parser (Processor, new Generic_Use_Unallowed);

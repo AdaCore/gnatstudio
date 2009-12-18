@@ -1103,7 +1103,7 @@ package body Codefix.Formal_Errors is
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Object_Name  : String) return Solution_List
+      Message      : String) return Solution_List
    is
       New_Command_Ptr : constant Ptr_Command := new Remove_Conversion_Cmd;
       New_Command     : Remove_Conversion_Cmd renames
@@ -1112,7 +1112,7 @@ package body Codefix.Formal_Errors is
    begin
       Initialize (New_Command, Current_Text, Cursor);
       Set_Caption
-        (New_Command, "Remove useless conversion of """ & Object_Name & """");
+        (New_Command, Message);
       Append (Result, New_Command_Ptr);
 
       return Result;
@@ -1414,6 +1414,28 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Reorder_Subprogram;
+
+   ----------------------
+   -- Remove_Statement --
+   ----------------------
+
+   function Remove_Statement
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Remove_Instruction_Cmd;
+      Command     : Remove_Instruction_Cmd renames
+        Remove_Instruction_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Location);
+      Command.Set_Caption ("Remove statement");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Remove_Statement;
 
    ---------------------------------------------
    -- Remove_Element_From_Unreferenced_Pragma --

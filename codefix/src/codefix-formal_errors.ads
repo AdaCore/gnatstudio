@@ -211,7 +211,7 @@ package Codefix.Formal_Errors is
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Object_Name  : String) return Solution_List;
+      Message      : String) return Solution_List;
    --  Remove the conversion at made at Cursor position.
 
    function Move_With_To_Body
@@ -296,6 +296,12 @@ package Codefix.Formal_Errors is
       Location     : File_Cursor'Class)
       return Solution_List;
    --  Reorders a subprogram in the list.
+
+   function Remove_Statement
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List;
+   --  Remove the statement located at the location given in parameter
 
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors
