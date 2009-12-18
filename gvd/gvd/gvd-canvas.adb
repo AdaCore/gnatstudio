@@ -195,6 +195,9 @@ package body GVD.Canvas is
    --  Called when the preferences have changed, and the canvas should be
    --  redisplayed with the new setup.
 
+   procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class);
+   --  Initialize the graphic contexts based on the preferences
+
    function Get_Next_Item_Num
      (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
       Candidate : Integer := -1) return Integer;
@@ -1019,6 +1022,41 @@ package body GVD.Canvas is
       return Gtk_Widget (Canvas);
    end Initialize;
 
+   -------------------
+   -- Initialize_GC --
+   -------------------
+
+   procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class) is
+   begin
+      if Canvas.Item_Context.GC /= null then
+         Set_Foreground (Canvas.Item_Context.GC, Black (Get_Default_Colormap));
+         Canvas.Tooltip_Context.GC := Canvas.Item_Context.GC;
+
+         Set_Foreground (Canvas.Item_Context.Xref_GC, Xref_Color.Get_Pref);
+         Canvas.Tooltip_Context.Xref_GC := Canvas.Item_Context.Xref_GC;
+
+         Set_Foreground
+           (Canvas.Item_Context.Modified_GC, Change_Color.Get_Pref);
+         Canvas.Tooltip_Context.Modified_GC := Canvas.Item_Context.Modified_GC;
+
+         Set_Foreground (Canvas.Item_Context.Selection_GC,
+                         Selected_Item_Color.Get_Pref);
+         Canvas.Tooltip_Context.Selection_GC :=
+           Canvas.Item_Context.Selection_GC;
+
+         Set_Foreground (Canvas.Box_Context.Grey_GC, Title_Color.Get_Pref);
+
+         Set_Foreground
+           (Canvas.Box_Context.Black_GC, Black (Get_Default_Colormap));
+
+         Set_Foreground
+           (Canvas.Box_Context.Thaw_Bg_GC, Thaw_Bg_Color.Get_Pref);
+
+         Set_Foreground
+           (Canvas.Box_Context.Freeze_Bg_GC, Freeze_Bg_Color.Get_Pref);
+      end if;
+   end Initialize_GC;
+
    ----------------
    -- On_Realize --
    ----------------
@@ -1047,6 +1085,23 @@ package body GVD.Canvas is
             C.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
          Preferences_Changed (C);
       end if;
+
+      --  Create graphic contexts
+
+      if C.Item_Context.GC = null then
+         Gdk_New (C.Item_Context.GC, Get_Window (C));
+         Gdk_New (C.Item_Context.Xref_GC, Get_Window (C));
+         Gdk_New (C.Item_Context.Modified_GC, Get_Window (C));
+         Gdk_New (C.Item_Context.Selection_GC, Get_Window (C));
+         Gdk_New (C.Box_Context.Grey_GC, Get_Window (C));
+         Gdk_New (C.Box_Context.Black_GC, Get_Window (C));
+         Gdk_New (C.Box_Context.Refresh_Button_GC, Get_Window (C));
+         Gdk_New (C.Box_Context.Thaw_Bg_GC, Get_Window (C));
+         Gdk_New (C.Box_Context.Freeze_Bg_GC, Get_Window (C));
+      end if;
+
+      Initialize_GC (C);
+
    exception
       when E : others => Traces.Trace (Exception_Handle, E);
    end On_Realize;
@@ -1103,14 +1158,11 @@ package body GVD.Canvas is
    procedure Preferences_Changed
      (Canvas  : access GVD_Canvas_Record'Class)
    is
-      Win  : Gdk.Window.Gdk_Window;
       Item : Canvas_Item;
       Iter : Item_Iterator;
       Hide : constant Boolean := Hide_Big_Items.Get_Pref;
 
    begin
-      Realize (Canvas);
-      Win := Get_Window (Canvas);
       Set_Detect_Aliases (Canvas, Default_Detect_Aliases.Get_Pref);
 
       --  If we are not attached to a process, this means the canvas is empty
@@ -1119,43 +1171,12 @@ package body GVD.Canvas is
          Recompute_All_Aliases (Get_Process (Canvas));
       end if;
 
+      Initialize_GC (Canvas);
+
       --  The drawing context for the items
 
       Items.Set_Max_Height (Max_Item_Height.Get_Pref);
       Items.Set_Max_Width  (Max_Item_Width.Get_Pref);
-
-      if Canvas.Item_Context.GC /= null then
-         Destroy (Canvas.Item_Context.GC);
-      end if;
-
-      Gdk_New (Canvas.Item_Context.GC, Win);
-      Set_Foreground (Canvas.Item_Context.GC, Black (Get_Default_Colormap));
-      Canvas.Tooltip_Context.GC := Canvas.Item_Context.GC;
-
-      if Canvas.Item_Context.Xref_GC /= null then
-         Destroy (Canvas.Item_Context.Xref_GC);
-      end if;
-
-      Gdk_New (Canvas.Item_Context.Xref_GC, Win);
-      Set_Foreground (Canvas.Item_Context.Xref_GC, Xref_Color.Get_Pref);
-      Canvas.Tooltip_Context.Xref_GC := Canvas.Item_Context.Xref_GC;
-
-      if Canvas.Item_Context.Modified_GC /= null then
-         Destroy (Canvas.Item_Context.Modified_GC);
-      end if;
-
-      Gdk_New (Canvas.Item_Context.Modified_GC, Win);
-      Set_Foreground (Canvas.Item_Context.Modified_GC, Change_Color.Get_Pref);
-      Canvas.Tooltip_Context.Modified_GC := Canvas.Item_Context.Modified_GC;
-
-      if Canvas.Item_Context.Selection_GC /= null then
-         Destroy (Canvas.Item_Context.Selection_GC);
-      end if;
-
-      Gdk_New (Canvas.Item_Context.Selection_GC, Win);
-      Set_Foreground (Canvas.Item_Context.Selection_GC,
-                      Selected_Item_Color.Get_Pref);
-      Canvas.Tooltip_Context.Selection_GC := Canvas.Item_Context.Selection_GC;
 
       if Canvas.Item_Context.Text_Layout /= null then
          Unref (Canvas.Item_Context.Text_Layout);
@@ -1176,44 +1197,6 @@ package body GVD.Canvas is
         Create_Pango_Layout (Get_Canvas (Canvas));
       Set_Font_Description
         (Canvas.Item_Context.Type_Layout, Type_Font.Get_Pref);
-
-      --  The drawing context for the boxes
-
-      if Canvas.Box_Context.Grey_GC /= null then
-         Destroy (Canvas.Box_Context.Grey_GC);
-      end if;
-
-      Gdk_New (Canvas.Box_Context.Grey_GC, Win);
-      Set_Foreground (Canvas.Box_Context.Grey_GC, Title_Color.Get_Pref);
-
-      if Canvas.Box_Context.Black_GC /= null then
-         Destroy (Canvas.Box_Context.Black_GC);
-      end if;
-
-      Gdk_New (Canvas.Box_Context.Black_GC, Win);
-      Set_Foreground
-        (Canvas.Box_Context.Black_GC, Black (Get_Default_Colormap));
-
-      if Canvas.Box_Context.Refresh_Button_GC /= null then
-         Destroy (Canvas.Box_Context.Refresh_Button_GC);
-      end if;
-
-      Gdk_New (Canvas.Box_Context.Refresh_Button_GC, Win);
-
-      if Canvas.Box_Context.Thaw_Bg_GC /= null then
-         Destroy (Canvas.Box_Context.Thaw_Bg_GC);
-      end if;
-
-      Gdk_New (Canvas.Box_Context.Thaw_Bg_GC, Win);
-      Set_Foreground (Canvas.Box_Context.Thaw_Bg_GC, Thaw_Bg_Color.Get_Pref);
-
-      if Canvas.Box_Context.Freeze_Bg_GC /= null then
-         Destroy (Canvas.Box_Context.Freeze_Bg_GC);
-      end if;
-
-      Gdk_New (Canvas.Box_Context.Freeze_Bg_GC, Win);
-      Set_Foreground
-        (Canvas.Box_Context.Freeze_Bg_GC, Freeze_Bg_Color.Get_Pref);
 
       Allocate_Fonts (Canvas);
 
