@@ -32,22 +32,22 @@
       <Pane width=" 100%" Orientation="ORIENTATION_VERTICAL" >
         <Notebook height=" 15%" Tabs="POS_BOTTOM" >
           <Child Raised="True" Group=" 101" State="NORMAL" >
-            <Debugger_Data />
+            <Debugger_Data  />
           </Child>
         </Notebook>
         <Pane height=" 85%" Orientation="ORIENTATION_HORIZONTAL" >
           <Pane width=" 20%" Orientation="ORIENTATION_VERTICAL" >
             <Notebook height=" 20%" Tabs="POS_BOTTOM" >
               <Child Raised="True" Group=" 106" State="NORMAL" >
-                <Scenario_View />
+                <Scenario_View  />
               </Child>
             </Notebook>
             <Notebook height=" 80%" Tabs="POS_BOTTOM" >
               <Child Raised="True" Group=" 106" State="NORMAL" >
-                <Project_Explorer_Project />
+                <Project_Explorer_Project  />
               </Child>
               <Child Group=" 106" State="NORMAL" >
-                <Outline_View />
+                <Outline_View  />
               </Child>
             </Notebook>
           </Pane>
@@ -56,13 +56,13 @@
               <central width=" 80%"  />
               <Notebook width=" 20%" Tabs="POS_BOTTOM" >
                 <Child Raised="True" Focus="True" Group=" 103" State="NORMAL" >
-                  <Call_Stack />
+                  <Call_Stack  />
                 </Child>
               </Notebook>
             </Pane>
             <Notebook height=" 20%" Tabs="POS_BOTTOM" >
               <Child Raised="True" Group=" 107" State="NORMAL" >
-                <Message_Window />
+                <Message_Window  />
               </Child>
             </Notebook>
           </Pane>
