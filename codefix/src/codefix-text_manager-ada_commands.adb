@@ -1883,8 +1883,15 @@ package body Codefix.Text_Manager.Ada_Commands is
                Current_Text.Next_Word (End_Word, Word);
             end if;
 
-            Word.Col := Word.Col + 1;
-            Current_Text.Replace (Word, 0, " (1)");
+            declare
+               Ins_Cursor : File_Cursor'Class := Clone (File_Cursor (Word));
+            begin
+               Ins_Cursor.Col := Ins_Cursor.Col
+                 + Word.Get_Matching_Word (Current_Text)'Length;
+               Current_Text.Replace (Ins_Cursor, 0, " (1)");
+               Free (Ins_Cursor);
+            end;
+
             Free (Word);
          end;
       end if;
@@ -2025,6 +2032,46 @@ package body Codefix.Text_Manager.Ada_Commands is
    end Execute;
 
    overriding procedure Free (This : in out Reorder_Subprogram_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
+   --------------------------
+   -- Remove_Attribute_Cmd --
+   --------------------------
+
+   procedure Initialize
+     (This         : in out Remove_Attribute_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Remove_Attribute_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+      Start  : File_Cursor'Class := Clone (Cursor);
+      Word   : Word_Cursor;
+   begin
+      Current_Text.Next_Word (Cursor, Word);
+
+      if Word.Get_Matching_Word (Current_Text) = "'" then
+         Free (Word);
+         Current_Text.Next_Word (Cursor, Word);
+      end if;
+
+      Current_Text.Replace (Start, Word, "");
+
+      Free (Cursor);
+      Free (Word);
+   end Execute;
+
+   overriding procedure Free (This : in out Remove_Attribute_Cmd) is
    begin
       Free (This.Location);
    end Free;

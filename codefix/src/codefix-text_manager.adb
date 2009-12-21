@@ -122,7 +122,7 @@ package body Codefix.Text_Manager is
       end if;
 
       case Char is
-         when '.' | ',' | ';' => return True;
+         when '.' | ',' | ';' | ''' => return True;
          when others => return False;
       end case;
    end Is_Separator;
@@ -1192,22 +1192,33 @@ package body Codefix.Text_Manager is
 
       while Natural (Cursor_Char_Index) < Current_Line'Last
         and then not Is_Blank (Current_Line (Natural (Cursor_Char_Index)))
+        and then not Is_Separator (Current_Line (Natural (Cursor_Char_Index)))
       loop
          Cursor_Char_Index := Cursor_Char_Index + 1;
       end loop;
 
-      if Is_Blank (Current_Line (Natural (Cursor_Char_Index))) then
+      if Is_Blank (Current_Line (Natural (Cursor_Char_Index)))
+        or else
+          (Is_Separator (Current_Line (Natural (Cursor_Char_Index)))
+           and then (Begin_Word /= Cursor_Char_Index))
+      then
+         --  If the last character is a blank, or a separator and the current
+         --  word is not a separator, then forget about the last cursor.
+
          Word.String_Match := new String'
            (Current_Line
               (Natural (Begin_Word) .. Natural (Cursor_Char_Index) - 1));
       else
+         --  Otherwise, we're at the end of the line, get the whole parsed
+         --  data.
+
          Word.String_Match := new String'
            (Current_Line
               (Natural (Begin_Word) .. Natural (Cursor_Char_Index)));
       end if;
 
       Word.Line := Line_Cursor.Line;
-      Word.Col := To_Column_Index (Cursor_Char_Index, Current_Line.all);
+      Word.Col := To_Column_Index (Begin_Word, Current_Line.all);
 
       if Cursor_Char_Index = Char_Index (Current_Line'Last) then
          Cursor_Char_Index := 1;
@@ -1416,14 +1427,14 @@ package body Codefix.Text_Manager is
 
    procedure Replace
      (This           : in out Text_Navigator_Abstr'Class;
-      Position       : File_Cursor;
+      Position       : File_Cursor'Class;
       Len            : Integer;
       New_Text       : String;
       Blanks_Before  : Replace_Blanks_Policy;
       Blanks_After   : Replace_Blanks_Policy)
    is
-      Dest_Start : File_Cursor := Position;
-      Dest_Stop  : File_Cursor := Position;
+      Dest_Start : File_Cursor'Class := Clone (Position);
+      Dest_Stop  : File_Cursor'Class := Clone (Position);
       Line       : constant String := This.Get_Line (Position, 1);
    begin
       Dest_Stop.Col := To_Column_Index
@@ -1436,14 +1447,17 @@ package body Codefix.Text_Manager is
          New_Text      => New_Text,
          Blanks_Before => Blanks_Before,
          Blanks_After  => Blanks_After);
+
+      Free (Dest_Start);
+      Free (Dest_Stop);
    end Replace;
 
    procedure Replace
-     (This                      : in out Text_Navigator_Abstr'Class;
-      Dest_Start, Dest_Stop     : in out File_Cursor;
-      New_Text                  : String;
-      Blanks_Before             : Replace_Blanks_Policy := Keep;
-      Blanks_After              : Replace_Blanks_Policy := Keep)
+     (This                  : in out Text_Navigator_Abstr'Class;
+      Dest_Start, Dest_Stop : in out File_Cursor'Class;
+      New_Text              : String;
+      Blanks_Before         : Replace_Blanks_Policy := Keep;
+      Blanks_After          : Replace_Blanks_Policy := Keep)
    is
       Dest_Text : constant Ptr_Text := This.Get_File (Dest_Start.File);
 
@@ -1503,7 +1517,34 @@ package body Codefix.Text_Manager is
       --  Index of the last start of line in New_Text.
 
    begin
-      Dest_Text.Replace (Dest_Start, Dest_Stop, New_Text);
+      if Dest_Stop in Word_Cursor'Class then
+         --  If Dest_Stop is a word cursor, then create a simple file cursor
+         --  out of it an re-call replace with the simpler parameter.
+
+         declare
+            New_Stop : File_Cursor;
+         begin
+            New_Stop.Line := Dest_Stop.Line;
+            New_Stop.File := Dest_Stop.File;
+            New_Stop.Col := Dest_Stop.Col +
+              Word_Cursor (Dest_Stop).Get_Matching_Word (This)'Length - 1;
+
+            This.Replace
+              (Dest_Start, New_Stop, New_Text, Blanks_Before, Blanks_After);
+
+            Dest_Stop.Col := New_Stop.Col;
+            Dest_Stop.Line := New_Stop.Line;
+
+            Free (New_Stop);
+
+            return;
+         end;
+      else
+         --  Otherwise, just preform the actual replacement, and then
+         --  adjustments
+
+         Dest_Text.Replace (Dest_Start, Dest_Stop, New_Text);
+      end if;
 
       Dest_Stop.Line := Dest_Start.Line;
 
@@ -1546,17 +1587,21 @@ package body Codefix.Text_Manager is
       Mark_Start := new Mark_Abstr'Class'(This.Get_New_Mark (Dest_Start));
       Mark_Stop := new Mark_Abstr'Class'(This.Get_New_Mark (Dest_Stop));
 
-      Dest_Start := File_Cursor (This.Get_Current_Cursor (Mark_Start.all));
+      File_Cursor (Dest_Start) :=
+        File_Cursor (This.Get_Current_Cursor (Mark_Start.all));
       Replace_Blank_Slice (Text_Cursor (Dest_Start), Blanks_Before, First);
 
-      Dest_Stop := File_Cursor (This.Get_Current_Cursor (Mark_Stop.all));
+      File_Cursor (Dest_Stop) :=
+        File_Cursor (This.Get_Current_Cursor (Mark_Stop.all));
       Replace_Blank_Slice (Text_Cursor (Dest_Stop), Blanks_After, Last);
 
       Dest_Text.Indent_Line (Dest_Start);
       Dest_Text.Indent_Line (Dest_Stop);
 
-      Dest_Start := File_Cursor (This.Get_Current_Cursor (Mark_Start.all));
-      Dest_Stop := File_Cursor (This.Get_Current_Cursor (Mark_Stop.all));
+      File_Cursor (Dest_Start) :=
+        File_Cursor (This.Get_Current_Cursor (Mark_Start.all));
+      File_Cursor (Dest_Stop) :=
+        File_Cursor (This.Get_Current_Cursor (Mark_Stop.all));
 
       Free (Mark_Start);
       Free (Mark_Stop);

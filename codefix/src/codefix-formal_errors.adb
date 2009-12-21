@@ -1437,6 +1437,28 @@ package body Codefix.Formal_Errors is
       return Result;
    end Remove_Statement;
 
+   ----------------------
+   -- Remove_Attribute --
+   ----------------------
+
+   function Remove_Attribute
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Remove_Attribute_Cmd;
+      Command     : Remove_Attribute_Cmd renames
+        Remove_Attribute_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Location);
+      Command.Set_Caption ("Remove attribute");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Remove_Attribute;
+
    ---------------------------------------------
    -- Remove_Element_From_Unreferenced_Pragma --
    ---------------------------------------------

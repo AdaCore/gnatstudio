@@ -332,7 +332,9 @@ package Codefix.Text_Manager is
       Cursor : in out Text_Cursor'Class;
       Word   : out Word_Cursor);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
-   --  that a word is a succession of non-blanks characters.
+   --  that a word is a succession of non-blanks characters. potentially
+   --  stopped by a separator (see Is_Separator_Char). Separators are words
+   --  on their own.
 
    function Get_Structured_File
      (This : access Text_Interface'Class) return Structured_File_Access;
@@ -590,21 +592,22 @@ package Codefix.Text_Manager is
 
    procedure Replace
      (This          : in out Text_Navigator_Abstr'Class;
-      Position      : File_Cursor;
+      Position      : File_Cursor'Class;
       Len           : Integer;
       New_Text      : String;
       Blanks_Before : Replace_Blanks_Policy;
       Blanks_After  : Replace_Blanks_Policy);
    procedure Replace
      (This                  : in out Text_Navigator_Abstr'Class;
-      Dest_Start, Dest_Stop : in out File_Cursor;
+      Dest_Start, Dest_Stop : in out File_Cursor'Class;
       New_Text              : String;
       Blanks_Before         : Replace_Blanks_Policy := Keep;
       Blanks_After          : Replace_Blanks_Policy := Keep);
    --  Replace in this the text from Start to Stop by the one from Source_Start
    --  to Source_End. If Blank_pos is None, blanks will be removed, if it's
    --  One, only one blank will be put. At the end of the process, Dest_Start
-   --  and Dest_Stop are updated with the new positions.
+   --  and Dest_Stop are updated with the new positions. If Dest_Stop is a
+   --  Word_Cursor, then the whole word will be modified.
 
    ----------------------------------------------------------------------------
    --  type Text_Command

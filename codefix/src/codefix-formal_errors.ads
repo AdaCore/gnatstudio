@@ -303,6 +303,12 @@ package Codefix.Formal_Errors is
       return Solution_List;
    --  Remove the statement located at the location given in parameter
 
+   function Remove_Attribute
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List;
+   --  Removes the attribute at the given location, e.g. useless 'Base.
+
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors
    ----------------------------------------------------------------------------

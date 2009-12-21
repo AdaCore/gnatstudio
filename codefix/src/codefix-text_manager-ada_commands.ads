@@ -452,6 +452,25 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Reorder_Subprogram_Cmd);
 
+   --------------------------
+   -- Remove_Attribute_Cmd --
+   --------------------------
+
+   type Remove_Attribute_Cmd is new Text_Command (Simple) with private;
+
+   procedure Initialize
+     (This         : in out Remove_Attribute_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+   --  When placed on a tick character, remove the attribute reference, e.g.
+   --  useless 'Base.
+
+   overriding procedure Execute
+     (This         : Remove_Attribute_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding procedure Free (This : in out Remove_Attribute_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -565,6 +584,10 @@ private
    end record;
 
    type Reorder_Subprogram_Cmd is new Text_Command (Simple) with record
+      Location : Ptr_Mark;
+   end record;
+
+   type Remove_Attribute_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
    end record;
 

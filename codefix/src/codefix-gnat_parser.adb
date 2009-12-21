@@ -486,6 +486,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'redundant sth'.
 
+   type Redundant_Attribute is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Redundant_Attribute);
+
+   overriding
+   procedure Fix
+     (This         : Redundant_Attribute;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'redundant attribute'.
+
    type No_Space_Allowed is new Error_Parser (1) with null record;
 
    overriding
@@ -2096,6 +2111,29 @@ package body Codefix.GNAT_Parser is
       else
          raise Uncorrectable_Message;
       end if;
+   end Fix;
+
+   -------------------------
+   -- Redundant_Attribute --
+   -------------------------
+
+   overriding procedure Initialize (This : in out Redundant_Attribute) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("redundant attribute")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Redundant_Attribute;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Remove_Attribute (Current_Text, Get_Message (Message_It));
    end Fix;
 
    --------------------
@@ -3740,6 +3778,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Redudant_Paren);
       Add_Parser (Processor, new No_Space_Allowed);
       Add_Parser (Processor, new Redundant_Keyword);
+      Add_Parser (Processor, new Redundant_Attribute);
       Add_Parser (Processor, new Unexpected_Sep);
       Add_Parser (Processor, new Unexpected_Word);
       Add_Parser (Processor, new Kw_Not_Allowed);
