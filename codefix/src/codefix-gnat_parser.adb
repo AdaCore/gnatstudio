@@ -501,6 +501,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'redundant attribute'.
 
+   type Redundant_Comparison is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Redundant_Comparison);
+
+   overriding
+   procedure Fix
+     (This         : Redundant_Comparison;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'comparison with True is redundant'.
+
    type No_Space_Allowed is new Error_Parser (1) with null record;
 
    overriding
@@ -830,6 +845,21 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'could be declared constant'.
+
+   type Suspicious_Renaming is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Suspicious_Renaming);
+
+   overriding
+   procedure Fix
+     (This         : Suspicious_Renaming;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'suggest using an initialized constant object instead'
 
    type Possible_Interpretation is new Error_Parser (1) with record
       Local_Matcher : Ptr_Matcher := new Pattern_Matcher'
@@ -2136,6 +2166,29 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Attribute (Current_Text, Get_Message (Message_It));
    end Fix;
 
+   --------------------------
+   -- Redundant_Comparison --
+   --------------------------
+
+   overriding procedure Initialize (This : in out Redundant_Comparison) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("comparison with True is redundant")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Redundant_Comparison;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Remove_Comparison (Current_Text, Get_Message (Message_It));
+   end Fix;
+
    --------------------
    -- Unexpected_Sep --
    --------------------
@@ -2837,6 +2890,31 @@ package body Codefix.GNAT_Parser is
          Message,
          Get_Message (Message)
            (Matches (1).First .. Matches (1).Last));
+   end Fix;
+
+   -------------------------
+   -- Suspicious_Renaming --
+   -------------------------
+
+   overriding procedure Initialize (This : in out Suspicious_Renaming) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("suggest using an initialized constant object instead")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Suspicious_Renaming;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+   begin
+      Solutions := Renames_To_Constant
+        (Current_Text, Get_Message (Message_It));
    end Fix;
 
    -----------------------------
@@ -3779,6 +3857,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new No_Space_Allowed);
       Add_Parser (Processor, new Redundant_Keyword);
       Add_Parser (Processor, new Redundant_Attribute);
+      Add_Parser (Processor, new Redundant_Comparison);
       Add_Parser (Processor, new Unexpected_Sep);
       Add_Parser (Processor, new Unexpected_Word);
       Add_Parser (Processor, new Kw_Not_Allowed);
@@ -3799,6 +3878,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Pragma_Missplaced);
       Add_Parser (Processor, new Useless_Pragma_Pack);
       Add_Parser (Processor, new Constant_Expected);
+      Add_Parser (Processor, new Suspicious_Renaming);
       Add_Parser (Processor, new Possible_Interpretation);
       Add_Parser (Processor, new Hidden_Declaration);
       Add_Parser (Processor, new Redundant_Conversion);

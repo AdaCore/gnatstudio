@@ -471,6 +471,42 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Attribute_Cmd);
 
+   --------------------------
+   -- Remove_Attribute_Cmd --
+   --------------------------
+
+   type Renames_To_Constant_Cmd is new Text_Command (Simple) with private;
+
+   procedure Initialize
+     (This         : in out Renames_To_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+   --  Modifies a V : T renames X; to V : constant T := X;
+
+   overriding procedure Execute
+     (This         : Renames_To_Constant_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding procedure Free (This : in out Renames_To_Constant_Cmd);
+
+   ---------------------------
+   -- Remove_Comparison_Cmd --
+   ---------------------------
+
+   type Remove_Comparison_Cmd is new Text_Command (Simple) with private;
+
+   procedure Initialize
+     (This         : in out Remove_Comparison_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+   --  Removes the redudnant comparison, namely = True or /= True
+
+   overriding procedure Execute
+     (This         : Remove_Comparison_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding procedure Free (This : in out Remove_Comparison_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -588,6 +624,14 @@ private
    end record;
 
    type Remove_Attribute_Cmd is new Text_Command (Simple) with record
+      Location : Ptr_Mark;
+   end record;
+
+   type Renames_To_Constant_Cmd is new Text_Command (Simple) with record
+      Location : Ptr_Mark;
+   end record;
+
+   type Remove_Comparison_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
    end record;
 

@@ -282,16 +282,24 @@ package Codefix.Text_Manager is
      (Kind => Operator_Text, Name => new String'(")"));
    Semicolon_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => new String'(":"));
-   Is_Tok : constant Token_Record :=
-     (Kind => Keyword_Text, Name => new String'("is"));
    Tick_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => new String'("'"));
+   Equals_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => new String'("="));
+   Not_Equals_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => new String'("/="));
+   Renames_Tok : constant Token_Record :=
+     (Kind => Keyword_Text, Name => new String'("renames"));
+   Is_Tok : constant Token_Record :=
+     (Kind => Keyword_Text, Name => new String'("is"));
+   True_Tok : constant Token_Record :=
+     (Kind => Identifier_Text, Name => new String'("true"));
 
    function Search_Token
      (This     : Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
       Searched : Token_Record;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
    --  Search a token in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -507,7 +515,8 @@ package Codefix.Text_Manager is
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Searched : Token_Record;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
+      Step     : Step_Way := Normal_Step)
+      return Word_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 

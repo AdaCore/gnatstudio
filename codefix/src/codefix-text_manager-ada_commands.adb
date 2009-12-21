@@ -2076,4 +2076,81 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Location);
    end Free;
 
+   -------------------------
+   -- Renames_To_Constant --
+   -------------------------
+
+   procedure Initialize
+     (This         : in out Renames_To_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Renames_To_Constant_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+      Semicol_Cursor : File_Cursor'Class :=
+        Current_Text.Search_Token (Cursor, Semicolon_Tok, Reverse_Step);
+   begin
+      Current_Text.Replace (Semicol_Cursor, Semicol_Cursor, ": constant");
+
+      declare
+         Renames_Cursor : File_Cursor'Class :=
+           Current_Text.Search_Token (Semicol_Cursor, Renames_Tok);
+      begin
+         Current_Text.Replace (Renames_Cursor, Renames_Cursor, ":=");
+         Free (Renames_Cursor);
+      end;
+
+      Free (Semicol_Cursor);
+   end Execute;
+
+   overriding procedure Free (This : in out Renames_To_Constant_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
+   ---------------------------
+   -- Remove_Comparison_Cmd --
+   ---------------------------
+
+   procedure Initialize
+     (This         : in out Remove_Comparison_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Remove_Comparison_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+      Comp_Cursor : File_Cursor'Class :=
+        Current_Text.Search_Tokens
+          (Cursor, (Equals_Tok, Not_Equals_Tok), Reverse_Step);
+      True_Cursor : File_Cursor'Class :=
+           Current_Text.Search_Token (Comp_Cursor, True_Tok);
+   begin
+      Current_Text.Replace (Comp_Cursor, True_Cursor, "", One, One);
+
+      Free (Comp_Cursor);
+      Free (True_Cursor);
+   end Execute;
+
+   overriding procedure Free (This : in out Remove_Comparison_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
 end Codefix.Text_Manager.Ada_Commands;

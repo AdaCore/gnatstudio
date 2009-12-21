@@ -309,6 +309,18 @@ package Codefix.Formal_Errors is
       return Solution_List;
    --  Removes the attribute at the given location, e.g. useless 'Base.
 
+   function Renames_To_Constant
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List;
+   --  Changes a renaming declaration to a constant variable
+
+   function Remove_Comparison
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List;
+   --  Removes a useless comparison, e.g. = True or /= True
+
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors
    ----------------------------------------------------------------------------

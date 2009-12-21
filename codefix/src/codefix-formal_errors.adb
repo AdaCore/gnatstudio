@@ -1459,6 +1459,50 @@ package body Codefix.Formal_Errors is
       return Result;
    end Remove_Attribute;
 
+   -------------------------
+   -- Renames_To_Constant --
+   -------------------------
+
+   function Renames_To_Constant
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Renames_To_Constant_Cmd;
+      Command     : Renames_To_Constant_Cmd renames
+        Renames_To_Constant_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Location);
+      Command.Set_Caption ("Change renaming to constant");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Renames_To_Constant;
+
+   -----------------------
+   -- Remove_Comparison --
+   -----------------------
+
+   function Remove_Comparison
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Remove_Comparison_Cmd;
+      Command     : Remove_Comparison_Cmd renames
+        Remove_Comparison_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Location);
+      Command.Set_Caption ("Remove redundant comparison");
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Remove_Comparison;
+
    ---------------------------------------------
    -- Remove_Element_From_Unreferenced_Pragma --
    ---------------------------------------------

@@ -510,7 +510,7 @@ package body Codefix.Text_Manager is
       Cursor   : File_Cursor'Class;
       Searched : Token_Record;
       Step     : Step_Way := Normal_Step)
-      return File_Cursor'Class is
+      return Word_Cursor'Class is
    begin
       return Search_Token
         (Get_File (This, Get_File (Cursor)).all,
@@ -915,16 +915,13 @@ package body Codefix.Text_Manager is
      (This     : Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
       Searched : Token_Record;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class
    is
       Tokens : constant Token_List := (1 => Searched);
-      Result : Word_Cursor'Class := Search_Tokens
+      Result : constant Word_Cursor'Class := Search_Tokens
         (This, Cursor, Tokens, Step);
-      Real_Result : constant File_Cursor := Clone (File_Cursor (Result));
    begin
-      Free (Result);
-
-      return Real_Result;
+      return Result;
    end Search_Token;
 
    --------------------
@@ -1064,7 +1061,6 @@ package body Codefix.Text_Manager is
                    Step));
 
          if Result /= Null_Word_Cursor then
-            Result := Clone (Result);
             return Result;
          end if;
 
