@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2004-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2004-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -320,7 +319,7 @@ package body Custom_Combos is
 
       else
          Combo := new Custom_Combo_Record;
-         Initialize_Hbox (Combo, Homogeneous => False, Spacing => -4);
+         Initialize_Hbox (Combo, Homogeneous => False, Spacing => 0);
 
          if Title /= "" then
             Gtk_New (Label, Title);
