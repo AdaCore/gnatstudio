@@ -15,6 +15,17 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-IC17-028 New auto-fixes for warnings (2009-12-21)
+
+  GPS is now able to auto-fix the following warnings:
+     redundant attribute, "A_Type" is its own base type
+     pragma Pack has no effect, no unplaced components
+     renaming function result object is suspicious
+     implicit dereference
+     useless assignment
+     abs applied to known non-negative value has no effect
+     comparison with True is redundant
+
 NF-45-IC15-023 New CodePeer menus (2009-12-16)
 
   The CodePeer integration now provides additional menus: Analyze Root Project,
