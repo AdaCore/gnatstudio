@@ -54,14 +54,14 @@ def analyzeCall (call, fileName, line):
    message = re.sub ("^\"", "", param)
    message = re.sub ("\"$", "", message)
 
-   codefixed = re.search ("CODEFIX", call) != None
-   codefixable = not codefixed and re.search ("CODEFIX ?\?", call) != None
+   codefixable = re.search ("CODEFIX ?\?", call) != None
+   codefixed = not codefixable and re.search ("CODEFIX", call) != None
 
    if param != None:
       if codefixed:
          fixedOut.write (basename + ":" + str (line) + ": " + message + "\n")
       elif codefixable:
-         toBeFixedOut (basename + ":" + str (line) + ": " + message + "\n")
+         toBeFixedOut.write (basename + ":" + str (line) + ": " + message + "\n")
       else:
          found = False
 
@@ -147,7 +147,7 @@ for pattern in nonFixbableMessagesFile.readlines ():
 dirName = sys.argv [1]
 
 for fileName in os.listdir (dirName):
-   if re.match ("[\w-]+\.adb", fileName):
+   if re.match ("[\w-]+\.adb$", fileName):
       analyzeFile (dirName + "/" + fileName)
 
 fixedOut.close ()
