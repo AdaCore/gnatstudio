@@ -17,7 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 --  This package provides specialized Gtk_Tree_View widget to be used
---  in the locations view. In addition to GPS_Tree_View it:
+--  in the locations view. It uses some knownledge of underling model
+--  layout, thus can be used only with model from locations window. In
+--  addition to GPS_Tree_View it:
+--
+--   - creates columns and renderers at initialization time;
+--
+--   - handle "query-tooltip" request and display tooltip when visible
+--     area of the view is insufficient to display all text of the message;
 --
 --   - make primary message node expanded by default to allow secondary
 --     messages to be visible. Primary message node detected by its depth
@@ -26,7 +33,10 @@
 --   - view is scrolled automatically to make first child visible when node
 --     is expanded.
 
+with Glib;
 private with Glib.Main;
+private with Gtk.Cell_Renderer_Text;
+with Gtk.Tree_View_Column;
 
 package GPS.Tree_View.Locations is
 
@@ -47,10 +57,26 @@ package GPS.Tree_View.Locations is
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
       Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
 
+   function Sorting_Column
+     (Self : not null access GPS_Locations_Tree_View_Record'Class)
+      return Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+   function Action_Column
+     (Self : not null access GPS_Locations_Tree_View_Record'Class)
+      return Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+   --  These two for use by old implementation only.
+
 private
 
    type GPS_Locations_Tree_View_Record is
      new GPS_Tree_View_Record with record
+      Action_Column           : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  Column for action icon
+      Location_Column         : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  Column for location and text of the message; it is used for the name
+      --  of category and file also.
+      Text_Renderer           : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
+      --  Renderer for location and its text
+
       On_Row_Expanded_Path    : Gtk.Tree_Model.Gtk_Tree_Path;
       On_Row_Expanded_Iter    : Gtk.Tree_Model.Gtk_Tree_Iter;
       On_Row_Expanded_Handler : Glib.Main.G_Source_Id :=

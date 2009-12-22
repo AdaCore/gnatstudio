@@ -26,7 +26,6 @@ with GNAT.Strings;
 with GNATCOLL.VFS;
 
 with Gtk.Box;                        use Gtk.Box;
-with Gtk.Cell_Renderer_Text;         use Gtk.Cell_Renderer_Text;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
@@ -158,19 +157,14 @@ private
       Model         : GPS.Location_Model.Location_Model;
       --  Underlying model
 
-      Text_Renderer : Gtk_Cell_Renderer_Text;
       Filter_Panel  : Locations_Filter_Panel;
 
       Regexp       : GNAT.Expect.Pattern_Matcher_Access;
       Text         : GNAT.Strings.String_Access;
       Is_Hide      : Boolean := False;
 
-      Action_Column   : Gtk_Tree_View_Column;
-
       Sort_By_Category : Boolean := False;
       --  Whether the view should be sorted by category
-
-      Sorting_Column   : Gtk_Tree_View_Column;
 
       Stored_Locations : List;
 

@@ -29,11 +29,9 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
-with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Glib;                      use Glib;
 
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
@@ -41,11 +39,9 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tooltips;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
-with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -89,16 +85,6 @@ package body GPS.Location_View is
      (Self : access Location_View_Record'Class;
       Visible : Boolean);
    --  Hide or show the filter panel
-
-   package Query_Tooltip_Callbacks is
-     new Gtk.Handlers.User_Return_Callback
-           (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Location_View);
-
-   function On_Query_Tooltip
-     (Object : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Params : Glib.Values.GValues;
-      Self   : Location_View)
-      return Boolean;
 
    ---------------------
    -- Local constants --
@@ -184,9 +170,6 @@ package body GPS.Location_View is
      (View    : access Location_View_Record'Class;
       Message : String) return Locations_List.List;
    --  Return a list of file locations contained in Message
-
-   procedure Set_Column_Types (View : access Location_View_Record'Class);
-   --  Sets the types of columns to be displayed in the tree_view
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -836,42 +819,6 @@ package body GPS.Location_View is
       end;
    end Add_Location;
 
-   ----------------------
-   -- Set_Column_Types --
-   ----------------------
-
-   procedure Set_Column_Types (View : access Location_View_Record'Class) is
-      Col         : Gtk_Tree_View_Column renames View.Sorting_Column;
-      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
-
-      Dummy       : Gint;
-      pragma Unreferenced (Dummy);
-
-   begin
-      Set_Rules_Hint (View.Tree, False);
-
-      Gtk_New (View.Action_Column);
-      Gtk_New (Pixbuf_Rend);
-      Pack_Start (View.Action_Column, Pixbuf_Rend, False);
-      Add_Attribute (View.Action_Column, Pixbuf_Rend, "pixbuf", Button_Column);
-      Dummy := Append_Column (View.Tree, View.Action_Column);
-
-      Gtk_New (View.Text_Renderer);
-      Gtk_New (Pixbuf_Rend);
-
-      Gtk_New (Col);
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Pack_Start (Col, View.Text_Renderer, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, View.Text_Renderer, "markup", Base_Name_Column);
-      Add_Attribute (Col, View.Text_Renderer, "foreground_gdk", Color_Column);
-
-      Dummy := Append_Column (View.Tree, Col);
-      View.Tree.Set_Expander_Column (Col);
-
-      Clicked (View.Sorting_Column);
-   end Set_Column_Types;
-
    ----------------
    -- On_Destroy --
    ----------------
@@ -1214,12 +1161,9 @@ package body GPS.Location_View is
         (View.Filter, Columns_Types, Modify'Access, Location_View (View));
 
       Gtk_New (View.Tree, View.Filter);
-      Set_Enable_Search (View.Tree, False);
       View.Filter.Unref;
-      View.Tree.Set_Headers_Visible (False);
       View.Tree.Set_Name ("Locations Tree");
-
-      Set_Column_Types (View);
+      View.Tree.Sorting_Column.Clicked;
 
       Gtk_New (Scrolled);
       Set_Policy
@@ -1248,14 +1192,6 @@ package body GPS.Location_View is
          Location_View_Callbacks.To_Marshaller (On_Visibility_Toggled'Access),
          Location_View (View));
       View.Pack_Start (View.Filter_Panel, False, False);
-
-      Glib.Properties.Set_Property
-        (View.Tree, Gtk.Widget.Has_Tooltip_Property, True);
-      Query_Tooltip_Callbacks.Connect
-        (View.Tree,
-         Gtk.Widget.Signal_Query_Tooltip,
-         On_Query_Tooltip'Access,
-         Location_View (View));
 
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
@@ -1412,13 +1348,13 @@ package body GPS.Location_View is
            (Explorer.Tree,
             Gint (X), Gint (Y), Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
-         if Column /= Explorer.Action_Column then
+         if Column /= Explorer.Tree.Action_Column then
             Get_Cell_Area
               (Explorer.Tree, Path,
-               Explorer.Sorting_Column, Cell_Rect);
+               Explorer.Tree.Sorting_Column, Cell_Rect);
             Get_Background_Area
               (Explorer.Tree, Path,
-               Explorer.Sorting_Column, Back_Rect);
+               Explorer.Tree.Sorting_Column, Back_Rect);
 
             --  If we are clicking before the beginning of the cell, allow the
             --  event to pass. This allows clicking on expanders.
@@ -1436,7 +1372,7 @@ package body GPS.Location_View is
                Path_Free (Path);
                return False;
             else
-               if Column = Explorer.Action_Column then
+               if Column = Explorer.Tree.Action_Column then
                   declare
                      Value    : GValue;
                      Iter     : Gtk_Tree_Iter;
@@ -1448,7 +1384,8 @@ package body GPS.Location_View is
                      Explorer.Filter.Convert_Iter_To_Child_Iter
                        (Iter, Aux_Iter);
 
-                     Explorer.Model.Get_Value (Iter, Action_Column, Value);
+                     Explorer.Model.Get_Value
+                       (Iter, GPS.Location_Model.Action_Column, Value);
                      Action := To_Action_Item (Get_Address (Value));
 
                      if Action /= null
@@ -1839,7 +1776,7 @@ package body GPS.Location_View is
               (View.Model.Get_Boolean
                  (Iter, GPS.Location_Model.Highlight_Column)));
 
-         View.Model.Get_Value (Iter, Action_Column, Value);
+         View.Model.Get_Value (Iter, GPS.Location_Model.Action_Column, Value);
          Action := To_Action_Item (Get_Address (Value));
 
          if Action /= null then
@@ -2356,90 +2293,6 @@ package body GPS.Location_View is
    begin
       Set_Filter_Visibility (Self, not Self.Filter_Panel.Mapped_Is_Set);
    end On_Filter_Panel_Activated;
-
-   ----------------------
-   -- On_Query_Tooltip --
-   ----------------------
-
-   function On_Query_Tooltip
-     (Object : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Params : Glib.Values.GValues;
-      Self   : Location_View)
-      return Boolean
-   is
-      pragma Unreferenced (Object);
-
-      X             : Glib.Gint :=
-                        Glib.Values.Get_Int (Glib.Values.Nth (Params, 1));
-      Y             : Glib.Gint :=
-                        Glib.Values.Get_Int (Glib.Values.Nth (Params, 2));
-      Keyboard_Mode : constant Boolean :=
-                        Glib.Values.Get_Boolean (Glib.Values.Nth (Params, 3));
-      Stub          : Gtk.Tooltips.Gtk_Tooltips_Record;
-      Tooltip       : constant Gtk.Tooltips.Gtk_Tooltips :=
-                        Gtk.Tooltips.Gtk_Tooltips
-                          (Glib.Object.Get_User_Data
-                             (Glib.Values.Get_Address
-                                (Glib.Values.Nth (Params, 4)), Stub));
-      Success       : Boolean;
-      Model         : Gtk.Tree_Model.Gtk_Tree_Model;
-      Path          : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Rect          : Gdk.Rectangle.Gdk_Rectangle;
-      X_Offset      : Glib.Gint;
-      Y_Offset      : Glib.Gint;
-      Start         : Glib.Gint;
-      Width         : Glib.Gint;
-      Height        : Glib.Gint;
-      X1            : Glib.Gint;
-      X2            : Glib.Gint;
-
-   begin
-      Self.Tree.Get_Tooltip_Context
-        (X, Y, Keyboard_Mode, Model, Path, Iter, Success);
-
-      if not Success then
-         Gtk.Tree_Model.Path_Free (Path);
-
-         return False;
-      end if;
-
-      Self.Sorting_Column.Cell_Set_Cell_Data (Model, Iter, False, False);
-
-      Self.Tree.Get_Cell_Area (Path, Self.Sorting_Column, Rect);
-      X1 := Rect.X;
-      X2 := Rect.X;
-
-      Self.Sorting_Column.Cell_Get_Position
-        (Self.Text_Renderer, Start, Width, Success);
-
-      if not Success then
-         Gtk.Tree_Model.Path_Free (Path);
-
-         return False;
-      end if;
-
-      X2 := X2 + Start;
-
-      Self.Text_Renderer.Get_Size
-        (Self.Tree, Rect, X_Offset, Y_Offset, Width, Height);
-      X2 := X2 + Width;
-
-      Self.Tree.Get_Visible_Rect (Rect);
-
-      if X1 > Rect.X and X2 < (Rect.X + Rect.Width) then
-         Gtk.Tree_Model.Path_Free (Path);
-
-         return False;
-      end if;
-
-      Tooltip.Set_Markup (Model.Get_String (Iter, Base_Name_Column));
-      Self.Tree.Set_Tooltip_Row (Tooltip, Path);
-
-      Gtk.Tree_Model.Path_Free (Path);
-
-      return True;
-   end On_Query_Tooltip;
 
    ---------------------------
    -- On_Visibility_Toggled --
