@@ -1,0 +1,271 @@
+64-bit division
+Asm operand has wrong form
+ELSE not allowed here
+ELSIF cannot appear after ELSE
+ELSIF not allowed here
+OR not allowed here
+Priority_Specific_Dispatching at \{\:\# incompatible with Locking_Policy at \{
+Priority_Specific_Dispatching at \{\:\# incompatible with Task_Dispatching_Policy at \{
+WHEN not allowed here
+a range is not a valid discriminant constraint
+abort may take time to complete\?
+access definition not allowed in formal object declaration
+access discriminant not allowed
+access-to-constant operand type not allowed
+access-to-protected-subprogram types not yet supported
+accessibility check failure
+actual for & must
+actual for& must be a variable
+actual subtype must be constrained
+actual subtype must be unconstrained
+ad errors, must be fixed, and recompiled
+all discriminants in an association must have the same type
+ambiguous bounds in discrete range
+ambiguous operands for comparison
+ambiguous operands for equality
+ambiguous operands for membership
+anonymous access type definition not allowed here
+anonymous array definition not allowed here
+anonymous record definitions are not permitted
+are an Ada 2005 extension
+argument for pragma% must be string literal
+assignment to IN mode parameter not allowed
+assignment to discriminant not allowed
+atomic access to & cannot be guaranteed
+atomic access to component of & cannot be guaranteed
+attribute & may not be used in a subtype mark
+attribute can only be renamed as
+binary operator expected
+body stub cannot appear here
+box notation only allowed with named notation
+but the following files violate this restriction:
+by_reference actual may be misaligned\?
+call to & does not permit null string
+call to & requires static string argument
+can only omit ELSE expression in Boolean case
+cannot add discriminants to untagged type
+cannot be imported \(local type is not constant\)
+cannot compile configuration pragmas with gcc
+cannot compile subprogram in file
+cannot constrain type with unknown discriminants
+cannot convert local pointer
+cannot create gnat.adc
+cannot eliminate subprogram
+cannot generate 'S'C'I'L
+cannot instantiate a limited withed package
+cannot instantiate& before body seen
+cannot locate
+cannot read gnat.adc
+cannot resolve expression
+cannot take reference to Atomic/Volatile object
+change component clause to position component on word boundary
+character not defined for }
+child of an instance must be an instance or renaming
+child unit allowed only at library level
+child unit& hides compilation unit with the same name
+child units not allowed
+circular Instantiation
+circular unit dependency
+compiled with different
+compiled with different GNAT versions
+compiled with different exception handling mechanisms
+compiled with restriction No_Default_Initialization
+compiled without restriction No_Default_Initialization
+component has non-static size
+component of unchecked union cannot be controlled
+component of unchecked union cannot have tasks
+component on bit offset spanning more than two words not supported
+component subtypes must statically match
+conditional expression is an Ada extension
+current instance attribute must appear alone
+current instance prefix must be a direct name
+decimal fixed type not allowed
+declaration expected
+descriptor mechanism for parameter not permitted
+digit expected
+discrete type required for index
+discrete type required for range
+discriminant & does not correspond to ancestor discriminant
+discriminant has deeper accessibility level than target
+discriminant part not allowed in protected body
+disk full writing gnat.adc
+division by zero
+duplicate entry body
+duplicate generic body
+elaboration circularity detected
+entry call required in select statement
+error in inlined body
+error in non-remote access type
+error writing gnat.adc
+exception handler not permitted here
+exception handlers in accept not allowed
+expect [\w]+ name in renaming
+expect entity name in renaming declaration
+expect expression for entry index
+expect range constraint for discrete type
+expect subtype of }
+expect valid formal access definition
+expect valid subprogram name as default
+expect variable in call to&
+expecting generic type definition here
+expression raises exception, cannot be static
+extension aggregate not allowed
+file could not be successfully preprocessed
+first bit cannot be negative
+float value out of range, infinity will be generated
+full constant declaration appears too late
+generic [\w]+ cannot be used as
+generic formal of mode IN must not be of
+generic instantiation cannot appear here
+generic private child packages not permitted
+gnatchop
+has been modified and must be recompiled
+has been modified and should be recompiled
+has dynamic elaboration checks and with's
+hidden by private with clause
+identifier expected
+illegal component name
+illegal prefix for slice
+illegal reading of out parameter
+illegal use of generic function
+in instantiation
+incompatible component types for array conversion
+incompatible index types for array conversion
+incompatible number of dimensions for conversion
+incompatible types for operator
+incompatible types given in constraint
+inconsistent interrupt states at
+incorrect conversion of local operand to remote type
+incorrect conversion of remote operand to local type
+initialization not allowed for `IN OUT` formals
+initialization not allowed for limited types
+instantiation error
+instantiation of & within itself
+integer type definition bounds out of range
+invalid body for generic function
+invalid body for generic procedure 
+invalid constraint: type has no discriminant
+invalid context for logical operation
+invalid dereference of a remote access-to-class-wide value
+invalid exception name in renaming
+invalid generic unit name
+invalid kind of formal derived type
+invalid switch
+invalid use of subtype mark in expression or call
+is a reserved word in Ada 2005
+is an Ada 2005 extension
+is hidden within declaration of instance
+is never static
+is not a component of
+is obsolete and read-only
+label not permitted in this context
+last bit cannot be less than first bit minus one
+left hand side of assignment must be a variable
+library unit renaming not allowed
+literal out of range of type Standard\.Character
+literal out of range of type Standard\.Wide_Character
+maximum nesting level exceeded
+may be raised at run time
+misaligned actual cannot be passed by reference
+missing `END [\w]+;` for [\w]+\#\!`
+missing argument for parameter
+missing operand
+mixed logical operators in expression
+mixing [\w]+ and [\w]+ is not allowed, parentheses are required
+modular types not allowed
+more than one value supplied for discriminant
+multiple default preprocessing data
+must be compiled
+must be recompiled
+name in call is not a callable entity
+name of formal subprogram must be a direct name
+nested array aggregate expected
+no IF for this THEN
+no [\w]+ for this [\w]+
+no [\w]+ for this `end [\w]+
+no compilation units found
+no modular type available in this context
+no source files written
+no visible subprogram matches specification
+only a subtype mark is allowed in a formal
+only one ELSE part allowed
+only one label allowed on block or loop
+only pragmas allowed in configuration file
+operator symbol not allowed for generic subprogram
+overlapping priority ranges at \{\:\# and \{\:\#
+package body cannot appear here
+position cannot be negative
+positional association follows named one
+positional parameter association not allowed after named one
+positional parameters not allowed after named ones
+possible missing instantiation of 'Text_'I'O.'
+prefix must statically denote a non-remote subprogram
+prefix must statically denote a remote subprogram
+prefix of protected procedure or entry call must be variable
+premature derivation of incomplete type
+premature usage of incomplete type
+premature use of
+premature use of type for derivation
+private units not allowed
+proper body expected
+protected interface cannot inherit from
+protected type cannot implement
+range too large for any predefined type
+reason: pragma Elaborate in unit
+reason: with clause
+record not allowed in generic type definition
+renamed unit must be a library unit
+renaming declaration cannot appear here
+run-time library configuration error
+scalar type required for range
+set notation is a language extension
+shift functions are never static
+should be recompiled
+simultaneous visibility of the limited and unlimited views not allowed
+size attribute is only static for static scalar type
+slice cannot have more than one dimension
+some but not all files compiled with Normalize_Scalars
+static expression must have scalar or string type
+string literal not available for private array
+subtype declaration not allowed as generic parameter declaration
+subtype indication expected
+subtype mark required
+symbol expected
+synchronized interface cannot inherit from
+task has no entry with this name
+task interface cannot inherit from
+task type cannot implement
+the only constraint allowed here is a range constraint
+the renamed object is not access-to-constant
+the renamed object is not access-to-variable
+this line is longer than 32766 characters
+this line is too long
+too few discriminants given in constraint
+too many actuals in generic instantiation
+too many arguments in call
+too many arguments in call to
+too many instantiations
+triggering statement cannot be procedure call
+type cannot derive from
+unconstrained allocation not allowed
+unexpected relational operator
+unfrozen subprogram cannot rename itself
+unimplemented attribute
+unknown discriminant not allowed
+unknown discriminants not allowed for elementary types
+unknown symbol
+unrecognized attribute
+unrecognized descriptor class name
+unrecognized mechanism name
+unsupported intrinsic subprogram call
+upper half character not allowed
+use -gnatX
+use of construct not allowed in compiler
+value for discriminant & must be static
+variant record has no direct equivalent in C
+violates restriction No_Dependence
+which has static elaboration checks
+will be raised at run-?time
+would be legal in Ada 2005
+wrong interface conversion
+wrong number of arguments for pragma
