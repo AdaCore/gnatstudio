@@ -215,7 +215,9 @@ package body Call_Graph_Views is
    --  Parent is the caller of the entity.
 
    procedure On_Row_Expanded
-     (View : access Gtk_Widget_Record'Class; Args : GValues);
+     (View : access Gtk_Widget_Record'Class;
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path);
    --  Called when a row is expanded by the user
 
    procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class);
@@ -772,24 +774,25 @@ package body Call_Graph_Views is
 
    procedure On_Row_Expanded
      (View : access Gtk_Widget_Record'Class;
-      Args : GValues)
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path)
    is
-      V           : constant Callgraph_View_Access :=
-                      Callgraph_View_Access (View);
-      M           : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (V.Tree));
-      Iter, Child : Gtk_Tree_Iter := Null_Iter;
-      Dummy       : Gtk_Tree_Iter;
-      Value       : GValue;
-      Entity      : Entity_Information;
-      Column      : Gint;
-      Data        : Ancestors_User_Data_Access;
+      pragma Unreferenced (Path);
+
+      V      : constant Callgraph_View_Access :=
+                 Callgraph_View_Access (View);
+      M      : constant Gtk_Tree_Store :=
+                 Gtk_Tree_Store (Get_Model (V.Tree));
+      Child  : Gtk_Tree_Iter := Null_Iter;
+      Dummy  : Gtk_Tree_Iter;
+      Value  : GValue;
+      Entity : Entity_Information;
+      Column : Gint;
+      Data   : Ancestors_User_Data_Access;
    begin
       if V.Block_On_Expanded then
          return;
       end if;
-
-      Get_Tree_Iter (Nth (Args, 1), Iter);
 
       Get_Value (M, Iter, Entity_Column, Value);
       Entity := From_GValue (Value);
@@ -1396,8 +1399,10 @@ package body Call_Graph_Views is
          Context_Func    => View_Context_Factory'Access);
 
       Widget_Callback.Object_Connect
-        (View.Tree, Signal_Row_Expanded,
-         On_Row_Expanded'Access, Slot_Object => View);
+        (View.Tree,
+         Signal_Row_Expanded,
+         Widget_Callback.To_Marshaller (On_Row_Expanded'Access),
+         Slot_Object => View);
 
       Widget_Callback.Object_Connect
         (Get_Selection (View.Tree), Signal_Changed,

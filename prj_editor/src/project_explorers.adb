@@ -309,13 +309,17 @@ package body Project_Explorers is
    --  file.
 
    procedure Expand_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path);
    --  Called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
 
    procedure Collapse_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path);
    --  Called every time a node is collapsed
 
    function Button_Press
@@ -716,10 +720,15 @@ package body Project_Explorers is
       --  when the user has changed the visibility status of a node.
 
       Explorer.Expand_Id := Widget_Callback.Object_Connect
-        (Explorer.Tree, Signal_Row_Expanded, Expand_Row_Cb'Access, Explorer);
+        (Explorer.Tree,
+         Signal_Row_Expanded,
+         Widget_Callback.To_Marshaller (Expand_Row_Cb'Access),
+         Explorer);
       Widget_Callback.Object_Connect
         (Explorer.Tree,
-         Signal_Row_Collapsed, Collapse_Row_Cb'Access, Explorer);
+         Signal_Row_Collapsed,
+         Widget_Callback.To_Marshaller (Collapse_Row_Cb'Access),
+         Explorer);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
@@ -1720,19 +1729,18 @@ package body Project_Explorers is
    -------------------
 
    procedure Expand_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path)
    is
       Margin    : constant Gint := 30;
       T         : constant Project_Explorer := Project_Explorer (Explorer);
-      Path      : constant Gtk_Tree_Path :=
-                    Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
-      Node      : constant Gtk_Tree_Iter := Get_Iter (T.Tree.Model, Path);
-      Success   : Boolean;
-      pragma Unreferenced (Success);
       Area_Rect : Gdk_Rectangle;
       Path2     : Gtk_Tree_Path;
-      Iter      : Gtk_Tree_Iter;
+      Iter2     : Gtk_Tree_Iter;
 
+      Success   : Boolean;
+      pragma Unreferenced (Success);
       Dummy     : G_Source_Id;
       pragma Unreferenced (Dummy);
 
@@ -1743,21 +1751,21 @@ package body Project_Explorers is
 
       T.Expanding := True;
 
-      Compute_Children (T, Node);
+      Compute_Children (T, Iter);
 
       Success := Expand_Row (T.Tree, Path, False);
 
       Set_Node_Type
         (T.Tree.Model,
-         Node,
-         Get_Node_Type (T.Tree.Model, Node),
+         Iter,
+         Get_Node_Type (T.Tree.Model, Iter),
          True);
 
       if Realized_Is_Set (T.Tree) then
-         Iter := Children (T.Tree.Model, Node);
+         Iter2 := Children (T.Tree.Model, Iter);
 
-         if Iter /= Null_Iter then
-            Path2 := Get_Path (T.Tree.Model, Iter);
+         if Iter2 /= Null_Iter then
+            Path2 := Get_Path (T.Tree.Model, Iter2);
             Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
             if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
                Dummy :=
@@ -1781,19 +1789,21 @@ package body Project_Explorers is
    ---------------------
 
    procedure Collapse_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path)
    is
-      E    : constant Project_Explorer := Project_Explorer (Explorer);
-      Path : constant Gtk_Tree_Path :=
-               Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
-      Node : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
+      pragma Unreferenced (Path);
+
+      E : constant Project_Explorer := Project_Explorer (Explorer);
+
    begin
       --  Redraw the pixmap
 
       Set_Node_Type
         (E.Tree.Model,
-         Node,
-         Get_Node_Type (E.Tree.Model, Node),
+         Iter,
+         Get_Node_Type (E.Tree.Model, Iter),
          False);
    end Collapse_Row_Cb;
 

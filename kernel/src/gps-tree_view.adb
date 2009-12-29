@@ -100,14 +100,16 @@ package body GPS.Tree_View is
    --  Expands node when necessary
 
    procedure On_Row_Expanded
-     (Self   : access GPS_Tree_View_Record'Class;
-      Params : Glib.Values.GValues);
+     (Self : access GPS_Tree_View_Record'Class;
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path);
    --  Save state of the node and restore expanded/collapsed state of node's
    --  children.
 
    procedure On_Row_Collapsed
-     (Self   : access GPS_Tree_View_Record'Class;
-      Params : Glib.Values.GValues);
+     (Self : access GPS_Tree_View_Record'Class;
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path);
    --  Save state of the node
 
    procedure On_Destroy (Self : access GPS_Tree_View_Record'Class);
@@ -174,9 +176,15 @@ package body GPS.Tree_View is
      (Self : not null access GPS_Tree_View_Record'Class) is
    begin
       GPS_Tree_View_Callbacks.Connect
-        (Self, Signal_Row_Collapsed, On_Row_Collapsed'Access, True);
+        (Self,
+         Signal_Row_Collapsed,
+         GPS_Tree_View_Callbacks.To_Marshaller (On_Row_Collapsed'Access),
+         True);
       GPS_Tree_View_Callbacks.Connect
-        (Self, Signal_Row_Expanded, On_Row_Expanded'Access, True);
+        (Self,
+         Signal_Row_Expanded,
+         GPS_Tree_View_Callbacks.To_Marshaller (On_Row_Expanded'Access),
+         True);
       GPS_Tree_View_Callbacks.Connect
         (Self, Signal_Destroy, On_Destroy'Access, True);
    end Connect_To_View;
@@ -416,11 +424,13 @@ package body GPS.Tree_View is
    ----------------------
 
    procedure On_Row_Collapsed
-     (Self   : access GPS_Tree_View_Record'Class;
-      Params : Glib.Values.GValues)
+     (Self : access GPS_Tree_View_Record'Class;
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path)
    is
-      Source_Iter  : constant Gtk_Tree_Iter := Get_Tree_Iter (Nth (Params, 1));
-      Lowerst_Path : constant Gtk_Tree_Path := Self.To_Lowerst (Source_Iter);
+      pragma Unreferenced (Path);
+
+      Lowerst_Path : constant Gtk_Tree_Path := Self.To_Lowerst (Iter);
 
    begin
 
@@ -444,19 +454,18 @@ package body GPS.Tree_View is
    ---------------------
 
    procedure On_Row_Expanded
-     (Self   : access GPS_Tree_View_Record'Class;
-      Params : Glib.Values.GValues)
+     (Self : access GPS_Tree_View_Record'Class;
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path)
    is
-      Source_Path : constant Gtk_Tree_Path :=
-        Copy (Get_Tree_Path (Nth (Params, 2)));
-      Source_Iter : Gtk_Tree_Iter := Get_Tree_Iter (Nth (Params, 1));
+      Child_Path : Gtk_Tree_Path;
+      Child_Iter : Gtk_Tree_Iter;
 
    begin
       --  Update stored node's state
 
       declare
-         Lowerst_Path : constant Gtk_Tree_Path :=
-           Self.To_Lowerst (Source_Iter);
+         Lowerst_Path : constant Gtk_Tree_Path := Self.To_Lowerst (Iter);
          Indices      : constant Glib.Gint_Array := Get_Indices (Lowerst_Path);
          Node         : Node_Access := Self.Root;
 
@@ -468,18 +477,19 @@ package body GPS.Tree_View is
          Node.Expanded := True;
          Path_Free (Lowerst_Path);
 
-         Self.On_Row_Expanded (Source_Path, Source_Iter, Node);
+         Self.On_Row_Expanded (Path, Iter, Node);
       end;
 
       --  Expand children nodes when necessary
 
-      Source_Iter := Self.Get_Model.Children (Source_Iter);
-      Down (Source_Path);
+      Child_Path := Copy (Path);
+      Child_Iter := Self.Get_Model.Children (Iter);
+      Down (Child_Path);
 
-      while Source_Iter /= Null_Iter loop
+      while Child_Iter /= Null_Iter loop
          declare
             Lowerst_Path : constant Gtk_Tree_Path :=
-              Self.To_Lowerst (Source_Iter);
+              Self.To_Lowerst (Child_Iter);
             Indices      : constant Glib.Gint_Array :=
               Get_Indices (Lowerst_Path);
             Child_Node   : Node_Access := Self.Root;
@@ -492,17 +502,17 @@ package body GPS.Tree_View is
             end loop;
 
             if Child_Node.Expanded then
-               Dummy := Self.Expand_Row (Source_Path, False);
+               Dummy := Self.Expand_Row (Child_Path, False);
             end if;
 
             Path_Free (Lowerst_Path);
 
-            Self.Get_Model.Next (Source_Iter);
-            Next (Source_Path);
+            Self.Get_Model.Next (Child_Iter);
+            Next (Child_Path);
          end;
       end loop;
 
-      Path_Free (Source_Path);
+      Path_Free (Child_Path);
    end On_Row_Expanded;
 
    -------------------------------------------

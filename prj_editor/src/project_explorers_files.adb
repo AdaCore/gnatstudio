@@ -107,7 +107,8 @@ package body Project_Explorers_Files is
 
    procedure File_Tree_Expand_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues);
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path);
    --  Called every time a node is expanded in the file view.
    --  It is responsible for automatically adding the children of the current
    --  node if they are not there already.
@@ -119,7 +120,8 @@ package body Project_Explorers_Files is
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues);
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path);
    --  Called every time a node is collapsed in the file view
 
    procedure On_File_Destroy
@@ -688,12 +690,18 @@ package body Project_Explorers_Files is
       Refresh (Explorer);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree, Signal_Row_Expanded,
-         File_Tree_Expand_Row_Cb'Access, Explorer, False);
+        (Explorer.File_Tree,
+         Signal_Row_Expanded,
+         Widget_Callback.To_Marshaller (File_Tree_Expand_Row_Cb'Access),
+         Explorer,
+         False);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree, Signal_Row_Collapsed,
-         File_Tree_Collapse_Row_Cb'Access, Explorer, False);
+        (Explorer.File_Tree,
+         Signal_Row_Collapsed,
+         Widget_Callback.To_Marshaller (File_Tree_Collapse_Row_Cb'Access),
+         Explorer,
+         False);
 
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, Signal_Destroy,
@@ -823,28 +831,23 @@ package body Project_Explorers_Files is
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues)
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path)
    is
+      pragma Unreferenced (Path);
+
       T    : constant Project_Explorer_Files :=
                Project_Explorer_Files (Explorer);
-      Path : constant Gtk_Tree_Path :=
-               Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
-      Iter : Gtk_Tree_Iter;
+      File : constant Virtual_File :=
+               Get_File (T.File_Model, Iter, File_Column);
 
    begin
-      Iter := Get_Iter (T.File_Model, Path);
-
-      if Iter /= Null_Iter then
-         declare
-            File : constant Virtual_File :=
-                     Get_File (T.File_Model, Iter, File_Column);
-
-         begin
-            if File.Is_Directory then
-               Set (T.File_Model, Iter, Icon_Column,
-                    GObject (Close_Pixbufs (Directory_Node)));
-            end if;
-         end;
+      if File.Is_Directory then
+         Set
+           (T.File_Model,
+            Iter,
+            Icon_Column,
+            GObject (Close_Pixbufs (Directory_Node)));
       end if;
 
    exception
@@ -885,13 +888,11 @@ package body Project_Explorers_Files is
 
    procedure File_Tree_Expand_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues)
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path)
    is
       T       : constant Project_Explorer_Files :=
                   Project_Explorer_Files (Explorer);
-      Path    : constant Gtk_Tree_Path :=
-                  Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
-      Iter    : Gtk_Tree_Iter;
       Success : Boolean;
       pragma Unreferenced (Success);
 
@@ -900,48 +901,44 @@ package body Project_Explorers_Files is
          return;
       end if;
 
-      Iter := Get_Iter (T.File_Model, Path);
+      T.Expanding := True;
 
-      if Iter /= Null_Iter then
-         T.Expanding := True;
+      declare
+         File      : constant Virtual_File :=
+           Get_File (T.File_Model, Iter, File_Column);
+         N_Type    : constant Node_Types := Node_Types'Val
+           (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
-         declare
-            File      : constant Virtual_File :=
-                          Get_File (T.File_Model, Iter, File_Column);
-            N_Type    : constant Node_Types := Node_Types'Val
-              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
+      begin
+         case N_Type is
+            when Directory_Node =>
+               Free_Children (T, Iter);
+               Set (T.File_Model, Iter, Icon_Column,
+                    GObject (Open_Pixbufs (Directory_Node)));
+               File_Append_Directory (T, File, Iter, 1);
 
-         begin
-            case N_Type is
-               when Directory_Node =>
-                  Free_Children (T, Iter);
-                  Set (T.File_Model, Iter, Icon_Column,
-                       GObject (Open_Pixbufs (Directory_Node)));
-                  File_Append_Directory (T, File, Iter, 1);
+            when File_Node =>
+               Free_Children (T, Iter);
+               Append_File_Info (T.Kernel, T.File_Model, Iter, File);
 
-               when File_Node =>
-                  Free_Children (T, Iter);
-                  Append_File_Info (T.Kernel, T.File_Model, Iter, File);
+            when Project_Node | Extends_Project_Node =>
+               null;
 
-               when Project_Node | Extends_Project_Node =>
-                  null;
+            when Category_Node | Entity_Node =>
+               null;
 
-               when Category_Node | Entity_Node =>
-                  null;
+            when Obj_Directory_Node | Exec_Directory_Node =>
+               null;
 
-               when Obj_Directory_Node | Exec_Directory_Node =>
-                  null;
+            when Modified_Project_Node =>
+               null;
+         end case;
+      end;
 
-               when Modified_Project_Node =>
-                  null;
-            end case;
-         end;
+      Success := Expand_Row (T.File_Tree, Path, False);
+      Scroll_To_Cell (T.File_Tree, Path, null, True, 0.1, 0.1);
 
-         Success := Expand_Row (T.File_Tree, Path, False);
-         Scroll_To_Cell (T.File_Tree, Path, null, True, 0.1, 0.1);
-
-         T.Expanding := False;
-      end if;
+      T.Expanding := False;
 
    exception
       when E : others => Trace (Exception_Handle, E);

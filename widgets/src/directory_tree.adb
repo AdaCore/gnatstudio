@@ -148,7 +148,8 @@ package body Directory_Tree is
 
    procedure File_Tree_Expand_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues);
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path);
    --  Called every time a node is expanded in the file view.
    --  It is responsible for automatically adding the children of the current
    --  node if they are not there already.
@@ -160,7 +161,8 @@ package body Directory_Tree is
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues);
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path);
    --  Called every time a node is collapsed in the file view
 
    procedure On_File_Destroy
@@ -1360,11 +1362,16 @@ package body Directory_Tree is
 
       Widget_Callback.Object_Connect
         (Tree.File_Tree, Signal_Row_Expanded,
-         File_Tree_Expand_Row_Cb'Access, Tree, False);
+         Widget_Callback.To_Marshaller (File_Tree_Expand_Row_Cb'Access),
+         Tree,
+         False);
 
       Widget_Callback.Object_Connect
-        (Tree.File_Tree, Signal_Row_Collapsed,
-         File_Tree_Collapse_Row_Cb'Access, Tree, False);
+        (Tree.File_Tree,
+         Signal_Row_Collapsed,
+         Widget_Callback.To_Marshaller (File_Tree_Collapse_Row_Cb'Access),
+         Tree,
+         False);
 
       Widget_Callback.Object_Connect
         (Tree.File_Tree, Signal_Destroy,
@@ -1434,28 +1441,20 @@ package body Directory_Tree is
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues)
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path)
    is
-      T    : constant Dir_Tree :=
-        Dir_Tree (Explorer);
-      Path : constant Gtk_Tree_Path :=
-        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
-      Iter : Gtk_Tree_Iter;
+      pragma Unreferenced (Path);
+
+      T         : constant Dir_Tree := Dir_Tree (Explorer);
+      Iter_File : Virtual_File;
 
    begin
-      Iter := Get_Iter (T.File_Model, Path);
+      Iter_File := Get_File (T.File_Model, Iter, File_Column);
 
-      if Iter /= Null_Iter then
-         declare
-            Iter_File : Virtual_File;
-         begin
-            Iter_File := Get_File (T.File_Model, Iter, File_Column);
-
-            if Is_Directory (Iter_File) then
-               Set (T.File_Model, Iter, Icon_Column,
-                    GObject (Close_Pixbufs (Directory_Node)));
-            end if;
-         end;
+      if Is_Directory (Iter_File) then
+         Set (T.File_Model, Iter, Icon_Column,
+              GObject (Close_Pixbufs (Directory_Node)));
       end if;
 
    exception
@@ -1512,12 +1511,10 @@ package body Directory_Tree is
 
    procedure File_Tree_Expand_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Values   : GValues)
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path)
    is
       T       : constant Dir_Tree := Dir_Tree (Explorer);
-      Path    : constant Gtk_Tree_Path :=
-        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
-      Iter    : Gtk_Tree_Iter;
       Success : Boolean;
       pragma Unreferenced (Success);
 
@@ -1526,32 +1523,28 @@ package body Directory_Tree is
          return;
       end if;
 
-      Iter := Get_Iter (T.File_Model, Path);
+      T.Expanding := True;
 
-      if Iter /= Null_Iter then
-         T.Expanding := True;
+      declare
+         Iter_File : Virtual_File;
+      begin
+         Iter_File := Get_File (T.File_Model, Iter, File_Column);
 
-         declare
-            Iter_File : Virtual_File;
-         begin
-            Iter_File := Get_File (T.File_Model, Iter, File_Column);
+         Free_Children (T, Iter);
+         Set (T.File_Model, Iter, Icon_Column,
+              GObject (Open_Pixbufs (Directory_Node)));
+         File_Append_Directory (T, Iter_File, Iter, 1);
+      end;
 
-            Free_Children (T, Iter);
-            Set (T.File_Model, Iter, Icon_Column,
-                 GObject (Open_Pixbufs (Directory_Node)));
-            File_Append_Directory (T, Iter_File, Iter, 1);
-         end;
+      Success := Expand_Row (T.File_Tree, Path, False);
+      Set_Cursor (T.File_Tree, Path, null, False);
 
-         Success := Expand_Row (T.File_Tree, Path, False);
-         Set_Cursor (T.File_Tree, Path, null, False);
+      Scroll_To_Cell
+        (T.File_Tree,
+         Path, null, True,
+         0.1, 0.1);
 
-         Scroll_To_Cell
-           (T.File_Tree,
-            Path, null, True,
-            0.1, 0.1);
-
-         T.Expanding := False;
-      end if;
+      T.Expanding := False;
 
    exception
       when E : others => Trace (Me, E);
