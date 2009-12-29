@@ -16,20 +16,25 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+with Interfaces.C.Strings;
+
 with Glib.Object;
 with Glib.Properties;
 with Glib.Values;
 with Gdk.Color;
+with Gdk.Event;
 with Gdk.Rectangle;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Tooltips;
 with Gtk.Widget;
 
+with Traces;
 with GPS.Location_Model;
 
 package body GPS.Tree_View.Locations is
 
    use Gdk.Color;
+   use Gdk.Event;
    use Gdk.Rectangle;
    use Glib;
    use Glib.Main;
@@ -43,9 +48,13 @@ package body GPS.Tree_View.Locations is
    use Gtk.Tree_View_Column;
    use Gtk.Widget;
    use GPS.Location_Model;
+   use Traces;
 
-   package View_Idles is
-     new Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
+   function On_Button_Press
+     (Self  : access GPS_Locations_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Boolean;
+   --  Handle "button-press" event. Emit "action-clicked" or "location-clicked"
+   --  signal when click is done on action column or location column.
 
    function On_Row_Expanded_Idle
      (Self : GPS_Locations_Tree_View) return Boolean;
@@ -57,14 +66,72 @@ package body GPS.Tree_View.Locations is
    --  Handle "query-tooltip" request. Shows tooltip when the size of the
    --  renderer is larger than its visible size in the view.
 
+   procedure Action_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Emits "action-clicked" signal.
+
+   procedure Location_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Emits "location-clicked" signal.
+
    procedure Class_Initialize
      (Self : not null access GPS_Locations_Tree_View_Record'Class);
    --  Common initialization code to be shared between two implementations
    --  of Initialize.
 
+   package View_Idles is
+     new Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
+
    package Query_Tooltip_Callbacks is
      new Gtk.Handlers.Return_Callback
        (GPS_Locations_Tree_View_Record, Boolean);
+
+   package GPS_Locations_Tree_View_Boolean_Callbacks is
+     new Gtk.Handlers.Return_Callback
+       (GPS_Locations_Tree_View_Record, Boolean);
+
+   package GPS_Locations_Tree_View_Callbacks is
+     new Gtk.Handlers.Callback (GPS_Locations_Tree_View_Record);
+
+   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+
+   Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 2) :=
+     (1 => Interfaces.C.Strings.New_String (String (Signal_Action_Clicked)),
+      2 => Interfaces.C.Strings.New_String (String (Signal_Location_Clicked)));
+
+   function Signals_Parameters return Glib.Object.Signal_Parameter_Types;
+
+   --------------------
+   -- Action_Clicked --
+   --------------------
+
+   procedure Action_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+   begin
+      GPS_Locations_Tree_View_Callbacks.Emit_By_Name
+        (Self, Signal_Action_Clicked, Path, Iter);
+   end Action_Clicked;
+
+   ----------------------
+   -- Location_Clicked --
+   ----------------------
+
+   procedure Location_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+   begin
+      GPS_Locations_Tree_View_Callbacks.Emit_By_Name
+        (Self, Signal_Location_Clicked, Path, Iter);
+   end Location_Clicked;
 
    ----------------------
    -- Class_Initialize --
@@ -78,6 +145,13 @@ package body GPS.Tree_View.Locations is
       pragma Unreferenced (Dummy);
 
    begin
+      Initialize_Class_Record
+        (Self,
+         Signals,
+         Class_Record,
+         "GPSLocationsTreeView",
+         Signals_Parameters);
+
       Self.Set_Rules_Hint (False);
       Self.Set_Headers_Visible (False);
       Self.Set_Enable_Search (False);
@@ -117,6 +191,12 @@ package body GPS.Tree_View.Locations is
       Set_Property (Self, Has_Tooltip_Property, True);
       Query_Tooltip_Callbacks.Connect
         (Self, Signal_Query_Tooltip, On_Query_Tooltip'Access);
+      GPS_Locations_Tree_View_Boolean_Callbacks.Connect
+        (Self,
+         Signal_Button_Press_Event,
+         GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
+           (On_Button_Press'Access),
+         After => False);
    end Class_Initialize;
 
    -------------
@@ -163,6 +243,96 @@ package body GPS.Tree_View.Locations is
       GPS.Tree_View.Initialize (Self, Model);
       Class_Initialize (Self);
    end Initialize;
+
+   ---------------------
+   -- On_Button_Press --
+   ---------------------
+
+   function On_Button_Press
+     (Self  : access GPS_Locations_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Boolean
+   is
+      X         : constant Gint := Gint (Get_X (Event));
+      Y         : constant Gint := Gint (Get_Y (Event));
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Cell_Rect : Gdk_Rectangle;
+      Back_Rect : Gdk_Rectangle;
+
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Press
+      then
+         Self.Get_Path_At_Pos
+           (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
+
+         if Column /= Self.Action_Column then
+            Self.Get_Cell_Area (Path, Self.Sorting_Column, Cell_Rect);
+            Self.Get_Background_Area (Path, Self.Sorting_Column, Back_Rect);
+
+            --  If we are clicking before the beginning of the cell, allow the
+            --  event to pass. This allows clicking on expanders.
+
+            if Buffer_X > Back_Rect.X
+              and then Buffer_X < Cell_Rect.X
+            then
+               Path_Free (Path);
+
+               return False;
+            end if;
+         end if;
+
+         if Path /= null then
+            if Get_Depth (Path) < 3 then
+               Path_Free (Path);
+
+               return False;
+
+            else
+               Self.Get_Selection.Select_Path (Path);
+
+               if Column = Self.Action_Column then
+                  Self.Action_Clicked (Path, Self.Get_Model.Get_Iter (Path));
+
+               else
+                  Self.Location_Clicked (Path, Self.Get_Model.Get_Iter (Path));
+               end if;
+            end if;
+
+            Path_Free (Path);
+         end if;
+
+         return True;
+
+      else
+         Self.Grab_Focus;
+
+         --  If there is no selection, select the item under the cursor
+
+         Self.Get_Path_At_Pos
+           (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
+
+         if Path /= null then
+            if not Self.Get_Selection.Path_Is_Selected (Path) then
+               Self.Get_Selection.Unselect_All;
+               Self.Get_Selection.Select_Path (Path);
+            end if;
+
+            Path_Free (Path);
+         end if;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+
+         return False;
+   end On_Button_Press;
 
    -----------------------------------
    -- On_Lowerst_Model_Row_Inserted --
@@ -328,6 +498,24 @@ package body GPS.Tree_View.Locations is
       return False;
    end On_Row_Expanded_Idle;
 
+   ------------------------
+   -- Signals_Parameters --
+   ------------------------
+
+   function Signals_Parameters return Glib.Object.Signal_Parameter_Types is
+      Result : constant
+        Glib.Object.Signal_Parameter_Types (1 .. 2, 1 .. 3) :=
+        (1 => (1      => Path_Get_Type,
+               2      => Iter_Get_Type,
+               others => Glib.GType_None),
+         2 => (1      => Path_Get_Type,
+               2      => Iter_Get_Type,
+               others => Glib.GType_None));
+
+   begin
+      return Result;
+   end Signals_Parameters;
+
    --------------------
    -- Sorting_Column --
    --------------------
@@ -338,16 +526,5 @@ package body GPS.Tree_View.Locations is
    begin
       return Self.Location_Column;
    end Sorting_Column;
-
-   -------------------
-   -- Action_Column --
-   -------------------
-
-   function Action_Column
-     (Self : not null access GPS_Locations_Tree_View_Record'Class)
-      return Gtk.Tree_View_Column.Gtk_Tree_View_Column is
-   begin
-      return Self.Action_Column;
-   end Action_Column;
 
 end GPS.Tree_View.Locations;

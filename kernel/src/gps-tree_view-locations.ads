@@ -31,7 +31,11 @@
 --     in the tree (level 3 for now);
 --
 --   - view is scrolled automatically to make first child visible when node
---     is expanded.
+--     is expanded;
+--
+--   - emit "action_clicked" signal on click on action's column;
+--
+--   - emit "location_clicked" signal on click on location's column.
 
 with Glib;
 private with Glib.Main;
@@ -57,15 +61,29 @@ package GPS.Tree_View.Locations is
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
       Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
 
+   Signal_Action_Clicked   : constant Glib.Signal_Name;
+   --  Emitted on click in action column.
+   --  procedure Handler
+   --    (Self : not null access GPS_Locations_Tree_View_Record'Class;
+   --     Path : Gtk_Tree_Path;
+   --     Iter : Gtk_Tree_Iter);
+
+   Signal_Location_Clicked : constant Glib.Signal_Name;
+   --  Emitted on click in locations column.
+   --  procedure Handler
+   --    (Self : not null access GPS_Locations_Tree_View_Record'Class;
+   --     Path : Gtk_Tree_Path;
+   --     Iter : Gtk_Tree_Iter);
+
    function Sorting_Column
      (Self : not null access GPS_Locations_Tree_View_Record'Class)
       return Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-   function Action_Column
-     (Self : not null access GPS_Locations_Tree_View_Record'Class)
-      return Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-   --  These two for use by old implementation only.
+   --  This one for use by old implementation only
 
 private
+
+   Signal_Action_Clicked   : constant Glib.Signal_Name := "action_clicked";
+   Signal_Location_Clicked : constant Glib.Signal_Name := "location_clicked";
 
    type GPS_Locations_Tree_View_Record is
      new GPS_Tree_View_Record with record

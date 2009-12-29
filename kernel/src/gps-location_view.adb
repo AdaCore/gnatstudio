@@ -25,7 +25,6 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
@@ -171,10 +170,17 @@ package body GPS.Location_View is
       Message : String) return Locations_List.List;
    --  Return a list of file locations contained in Message
 
-   function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
-   --  Callback for the "button_press" event
+   procedure On_Action_Clicked
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter);
+   --  Activate corresponding command if any
+
+   procedure On_Location_Clicked
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter);
+   --  Goto to location
 
    procedure Remove_Category (Object : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View
@@ -1196,14 +1202,16 @@ package body GPS.Location_View is
 
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
+      Location_View_Callbacks.Object_Connect
         (View.Tree,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Button_Press'Access),
-         View,
-         After => False);
-
+         Signal_Action_Clicked,
+         Location_View_Callbacks.To_Marshaller (On_Action_Clicked'Access),
+         View);
+      Location_View_Callbacks.Object_Connect
+        (View.Tree,
+         Signal_Location_Clicked,
+         Location_View_Callbacks.To_Marshaller (On_Location_Clicked'Access),
+         View);
       Location_View_Callbacks.Object_Connect
         (View.Model,
          Signal_Row_Inserted,
@@ -1310,124 +1318,50 @@ package body GPS.Location_View is
       end if;
    end On_Model_Row_Inserted;
 
-   ------------------
-   -- Button_Press --
-   ------------------
+   -----------------------
+   -- On_Action_Clicked --
+   -----------------------
 
-   function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+   procedure On_Action_Clicked
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter)
    is
-      Explorer  : constant Location_View := Location_View (View);
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Success   : Command_Return_Type;
+      pragma Unreferenced (Path);
+
+      Value   : GValue;
+      Action  : Action_Item;
+      Success : Command_Return_Type;
       pragma Unreferenced (Success);
 
-      Cell_Rect : Gdk_Rectangle;
-      Back_Rect : Gdk_Rectangle;
-
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
+      Self.Tree.Get_Model.Get_Value
+        (Iter, GPS.Location_Model.Action_Column, Value);
+      Action := To_Action_Item (Get_Address (Value));
+
+      if Action /= null
+        and then Action.Associated_Command /= null
       then
-         Get_Path_At_Pos
-           (Explorer.Tree,
-            Gint (X), Gint (Y), Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
-         if Column /= Explorer.Tree.Action_Column then
-            Get_Cell_Area
-              (Explorer.Tree, Path,
-               Explorer.Tree.Sorting_Column, Cell_Rect);
-            Get_Background_Area
-              (Explorer.Tree, Path,
-               Explorer.Tree.Sorting_Column, Back_Rect);
-
-            --  If we are clicking before the beginning of the cell, allow the
-            --  event to pass. This allows clicking on expanders.
-
-            if Buffer_X > Back_Rect.X
-              and then Buffer_X < Cell_Rect.X
-            then
-               Path_Free (Path);
-               return False;
-            end if;
-         end if;
-
-         if Path /= null then
-            if Get_Depth (Path) < 3 then
-               Path_Free (Path);
-               return False;
-            else
-               if Column = Explorer.Tree.Action_Column then
-                  declare
-                     Value    : GValue;
-                     Iter     : Gtk_Tree_Iter;
-                     Aux_Iter : Gtk_Tree_Iter;
-                     Action   : Action_Item;
-
-                  begin
-                     Aux_Iter := Explorer.Filter.Get_Iter (Path);
-                     Explorer.Filter.Convert_Iter_To_Child_Iter
-                       (Iter, Aux_Iter);
-
-                     Explorer.Model.Get_Value
-                       (Iter, GPS.Location_Model.Action_Column, Value);
-                     Action := To_Action_Item (Get_Address (Value));
-
-                     if Action /= null
-                       and then Action.Associated_Command /= null
-                     then
-                        Success := Execute (Action.Associated_Command);
-                     end if;
-
-                     Unset (Value);
-                  end;
-
-                  Select_Path (Get_Selection (Explorer.Tree), Path);
-
-               else
-                  Select_Path (Get_Selection (Explorer.Tree), Path);
-                  Goto_Location (Location_View (View));
-               end if;
-            end if;
-
-            Path_Free (Path);
-         end if;
-
-         return True;
-
-      else
-         Grab_Focus (Explorer.Tree);
-
-         --  If there is no selection, select the item under the cursor
-
-         Get_Path_At_Pos
-           (Explorer.Tree,
-            Gint (X), Gint (Y), Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
-         if Path /= null then
-            if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
-               Unselect_All (Get_Selection (Explorer.Tree));
-               Select_Path (Get_Selection (Explorer.Tree), Path);
-            end if;
-
-            Path_Free (Path);
-         end if;
+         Success := Execute (Action.Associated_Command);
       end if;
 
-      return False;
+      Unset (Value);
+   end On_Action_Clicked;
 
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end Button_Press;
+   -------------------------
+   -- On_Location_Clicked --
+   -------------------------
+
+   procedure On_Location_Clicked
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter)
+   is
+      pragma Unreferenced (Path, Iter);
+
+   begin
+      Goto_Location (Self);
+   end On_Location_Clicked;
 
    ---------------------------------
    -- Get_Or_Create_Location_View --
