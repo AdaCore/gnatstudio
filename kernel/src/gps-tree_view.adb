@@ -75,13 +75,14 @@ package body GPS.Tree_View is
 
    procedure On_Lowerst_Model_Row_Inserted
      (Object : access Gtk_Tree_Model_Record'Class;
-      Params : Glib.Values.GValues;
+      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter;
       Self   : GPS_Tree_View);
    --  Allocates new node
 
    procedure On_Lowerst_Model_Row_Deleted
      (Object : access Gtk_Tree_Model_Record'Class;
-      Params : Glib.Values.GValues;
+      Path   : Gtk_Tree_Path;
       Self   : GPS_Tree_View);
    --  Frees corresponding node and its children
 
@@ -93,7 +94,8 @@ package body GPS.Tree_View is
 
    procedure On_Source_Model_Row_Has_Child_Toggled
      (Object : access Gtk_Tree_Model_Record'Class;
-      Params : Glib.Values.GValues;
+      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter;
       Self   : GPS_Tree_View);
    --  Expands node when necessary
 
@@ -135,13 +137,15 @@ package body GPS.Tree_View is
       Gtk_Tree_Model_Callbacks.Connect
         (Model,
          Signal_Row_Inserted,
-         On_Lowerst_Model_Row_Inserted'Access,
+         Gtk_Tree_Model_Callbacks.To_Marshaller
+           (On_Lowerst_Model_Row_Inserted'Access),
          GPS_Tree_View (Self),
          False);
       Gtk_Tree_Model_Callbacks.Connect
         (Model,
          Signal_Row_Deleted,
-         On_Lowerst_Model_Row_Deleted'Access,
+         Gtk_Tree_Model_Callbacks.To_Marshaller
+           (On_Lowerst_Model_Row_Deleted'Access),
          GPS_Tree_View (Self),
          True);
       Gtk_Tree_Model_Callbacks.Connect
@@ -156,7 +160,8 @@ package body GPS.Tree_View is
       Gtk_Tree_Model_Callbacks.Connect
         (Self.Get_Model,
          Signal_Row_Has_Child_Toggled,
-         On_Source_Model_Row_Has_Child_Toggled'Access,
+         Gtk_Tree_Model_Callbacks.To_Marshaller
+           (On_Source_Model_Row_Has_Child_Toggled'Access),
          GPS_Tree_View (Self),
          True);
    end Connect_To_Model;
@@ -324,12 +329,11 @@ package body GPS.Tree_View is
 
    procedure On_Lowerst_Model_Row_Deleted
      (Object : access Gtk_Tree_Model_Record'Class;
-      Params : Glib.Values.GValues;
+      Path   : Gtk_Tree_Path;
       Self   : GPS_Tree_View)
    is
       pragma Unreferenced (Object);
 
-      Path    : constant Gtk_Tree_Path := Get_Tree_Path (Nth (Params, 1));
       Indices : constant Glib.Gint_Array := Get_Indices (Path);
       Node    : Node_Access := Self.Root;
 
@@ -349,13 +353,12 @@ package body GPS.Tree_View is
 
    procedure On_Lowerst_Model_Row_Inserted
      (Object : access Gtk_Tree_Model_Record'Class;
-      Params : Glib.Values.GValues;
+      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter;
       Self   : GPS_Tree_View)
    is
       pragma Unreferenced (Object);
 
-      Path    : constant Gtk_Tree_Path := Get_Tree_Path (Nth (Params, 1));
-      Iter    : constant Gtk_Tree_Iter := Get_Tree_Iter (Nth (Params, 2));
       Indices : constant Glib.Gint_Array := Get_Indices (Path);
       Parent  : Node_Access := Self.Root;
       Node    : Node_Access;
@@ -508,21 +511,18 @@ package body GPS.Tree_View is
 
    procedure On_Source_Model_Row_Has_Child_Toggled
      (Object : access Gtk_Tree_Model_Record'Class;
-      Params : Glib.Values.GValues;
+      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter;
       Self   : GPS_Tree_View)
    is
       pragma Unreferenced (Object);
 
-      Source_Path : constant Gtk_Tree_Path := Get_Tree_Path (Nth (Params, 1));
-      Source_Iter : constant Gtk_Tree_Iter := Get_Tree_Iter (Nth (Params, 2));
-
    begin
-      if Self.Get_Model.Has_Child (Source_Iter)
-        and then not Self.Row_Expanded (Source_Path)
+      if Self.Get_Model.Has_Child (Iter)
+        and then not Self.Row_Expanded (Path)
       then
          declare
-            Lowerst_Path : constant Gtk_Tree_Path :=
-              Self.To_Lowerst (Source_Iter);
+            Lowerst_Path : constant Gtk_Tree_Path := Self.To_Lowerst (Iter);
             Indices      : constant Glib.Gint_Array :=
               Get_Indices (Lowerst_Path);
             Node         : Node_Access := Self.Root;
@@ -535,7 +535,7 @@ package body GPS.Tree_View is
             end loop;
 
             if Node.Expanded then
-               Dummy := Self.Expand_Row (Source_Path, False);
+               Dummy := Self.Expand_Row (Path, False);
             end if;
 
             Path_Free (Lowerst_Path);

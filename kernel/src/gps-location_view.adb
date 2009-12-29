@@ -213,8 +213,9 @@ package body GPS.Location_View is
    --  length Length.
 
    procedure On_Model_Row_Inserted
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues);
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter);
    --  Callback for the model's "row_inserted" signal
 
    function Get_Or_Create_Location_View_MDI
@@ -1206,7 +1207,7 @@ package body GPS.Location_View is
       Location_View_Callbacks.Object_Connect
         (View.Model,
          Signal_Row_Inserted,
-         On_Model_Row_Inserted'Access,
+         Location_View_Callbacks.To_Marshaller (On_Model_Row_Inserted'Access),
          View);
 
       Register_Contextual_Menu
@@ -1235,10 +1236,10 @@ package body GPS.Location_View is
    ---------------------------
 
    procedure On_Model_Row_Inserted
-     (Self   : access Location_View_Record'Class;
-      Params : Glib.Values.GValues)
+     (Self : access Location_View_Record'Class;
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter)
    is
-      Iter                   : Gtk_Tree_Iter;
       Category_Iter          : Gtk_Tree_Iter;
       File_Iter              : Gtk_Tree_Iter;
       Message_Iter           : Gtk_Tree_Iter;
@@ -1247,21 +1248,12 @@ package body GPS.Location_View is
       File_Next_View_Iter    : Gtk_Tree_Iter;
       Message_View_Iter      : Gtk_Tree_Iter;
       Message_Next_View_Iter : Gtk_Tree_Iter;
-      Path                   : Gtk_Tree_Path;
       Depth                  : Gint;
       Dummy                  : Boolean;
       pragma Warnings (Off, Dummy);
 
    begin
-      Get_Tree_Iter (Nth (Params, 2), Iter);
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      Path := Self.Model.Get_Path (Iter);
       Depth := Get_Depth (Path);
-      Path_Free (Path);
 
       if Depth = 3 then
          --  Message row inserted, expand category and file rows if it is first

@@ -49,7 +49,8 @@ package body Gtkada.Tree_View is
 
    procedure Row_Inserted_Callback
      (Widget : access GObject_Record'Class;
-      Params : Glib.Values.GValues);
+      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter);
    --  Callback for the "row_inserted" signal.
 
    ----------------------------
@@ -212,12 +213,14 @@ package body Gtkada.Tree_View is
 
    procedure Row_Inserted_Callback
      (Widget : access GObject_Record'Class;
-      Params : Glib.Values.GValues)
+      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter)
    is
+      pragma Unreferenced (Path);
+
       Tree : constant Tree_View := Tree_View (Widget);
-      Iter : Gtk_Tree_Iter;
+
    begin
-      Get_Tree_Iter (Nth (Params, 2), Iter);
       Set (Tree.Model, Iter, Tree.Expanded_State_Column, False);
    end Row_Inserted_Callback;
 
@@ -283,7 +286,8 @@ package body Gtkada.Tree_View is
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Widget.Model,
          Signal_Row_Inserted,
-         Row_Inserted_Callback'Access,
+         Gtkada.Handlers.Object_Callback.To_Marshaller
+           (Row_Inserted_Callback'Access),
          Widget,
          After => True);
    end Initialize;
