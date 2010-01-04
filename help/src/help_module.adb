@@ -591,7 +591,7 @@ package body Help_Module is
          end;
 
       elsif Command = "file" then
-         --  ??? We should return a Virtual_File instead.
+         --  ??? We should return a Virtual_File instead
          Set_Return_Value
            (Data,
             +Get_System_Dir (Kernel).Full_Name &
@@ -616,7 +616,7 @@ package body Help_Module is
 
       elsif Command = "add_doc_directory" then
          --  ??? We should add directly the Virtual_File, instead of its
-         --  full_name
+         --  full_name.
          Add_Doc_Directory
            (Get_Kernel (Data), Create (+Nth_Arg (Data, 1)));
       end if;
@@ -1302,7 +1302,7 @@ package body Help_Module is
          Callback    => On_Load_Index'Access);
 
       --  This procedure will not reset the Doc path, since it might have been
-      --  set before from other modules (through XML strings)
+      --  set before from other modules (through XML strings).
       Add_Doc_Path_From_Env (Kernel);
 
       Register_Menu
