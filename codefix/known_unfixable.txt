@@ -1,16 +1,55 @@
+& not available
 64-bit division
 Asm operand has wrong form
+Default_Switches forbidden
 ELSE not allowed here
 ELSIF cannot appear after ELSE
 ELSIF not allowed here
+Full type declaration cannot have unknown discriminants
+Last_Chance_Handler will be called on exception
 OR not allowed here
 OUT parameter& not set before return
+Object cannot be initialized statically
+Objects of the type cannot be initialized statically by default
+PACKAGE should not appear here
 Priority_Specific_Dispatching at \{\:\# incompatible with Locking_Policy at \{
 Priority_Specific_Dispatching at \{\:\# incompatible with Task_Dispatching_Policy at \{
+RANGE attribute illegal here
+REQUEUE does not permit parameters
+Shared_Passive partitions cannot contain tasks
+Unchecked_Union discriminant must have default value
 Unchecked_Union may not have empty component list
+Unchecked_Union must be record type
+Unchecked_Union must have variant part
+Unchecked_Union must not be tagged
+Unit_Name parameter for pragma% must be an identifier
+WHEN \(case statement alternative\) expected
+WHEN expected
+WHEN expected, must have at least one alternative in case
 WHEN not allowed here
+WITH must be preceded by single expression in extension aggregate
+\{ \(count = \#\)
+\{ \(count = at least \#\)
+\{ depends on \$ which no longer exists
+^        \$$
+^  \{$
+^\\\\\?\(see
+^\\\\\?\~$
+^aggregate$
+^entry barrier [\w]+$
+^entry barrier$
+^entry call$
+^exception name$
+^package or procedure name$
+^private type$
+^protected body$
+^protected type$
+^tagged types$
+^type universal [\w]+$
+`WITH TYPE` is an obsolete 'G'N'A'T extension
 a range is not a valid discriminant constraint
 abort may take time to complete\?
+accept statements are not allowed
 access definition not allowed in formal object declaration
 access discriminant not allowed
 access modifier not allowed
@@ -20,51 +59,80 @@ access to procedure not allowed
 access-to-constant operand type not allowed
 access-to-protected-subprogram types not yet supported
 accessibility check failure
+accuracy definition not allowed in membership test
 actual for & must
 actual for& must be a variable
 actual subtype must be constrained
 actual subtype must be unconstrained
 ad errors, must be fixed, and recompiled
 address arithmetic not predefined in package System
+aggregate type cannot be limited
 aliased component must be constrained
 aliased component type must be constrained
 alignment value must be positive
 alignment value must be power of 2
 all discriminants in an association must have the same type
+alternative has no legal type
 ambiguous bounds in discrete range
+ambiguous entry name in requeue
 ambiguous operand for concatenation
+ambiguous operand in conversion
 ambiguous operands for comparison
 ambiguous operands for equality
 ambiguous operands for membership
+ambiguous prefix for slicing
+ancestor part must be of a nonlimited tagged type
+ancestor part must be of a tagged type
+ancestor part must be statically tagged
+ancestor part of aggregate must be private type
 anonymous access type definition not allowed here
 anonymous array definition not allowed here
 anonymous record definitions are not permitted
+apostrophe illegal here
 are an Ada 2005 extension
+argument for pragma Debug must be procedure call
 argument for pragma% must be string literal
+argument of conversion cannot be
+argument of type conversion must be single expression
+arguments not allowed in requeue statement
+arguments unsupported in requeue statement
+array type required in indexed component
+assertion will fail at run-time
 assignment to IN mode parameter not allowed
 assignment to discriminant not allowed
 assignment to loop parameter not allowed
+asynchronous select not allowed!
 at most one of terminate or delay alternative
 atomic access to & cannot be guaranteed
 atomic access to component of & cannot be guaranteed
 attribute & may not be used in a subtype mark
 attribute can only be renamed as
+attribute designator expected
 attribute must be a primitive dispatching operation
+because \$ has a pragma Elaborate_Body
 binary operator expected
+body in file\{\? will be ignored
+body not found
+body of & depends on child unit&
 body stub cannot appear here
+body stub not allowed here
 both component types in a view conversion must be aliased, or neither
+bounds of aggregate do not match target
 box notation only allowed with named notation
+but file\{ was not found
 but the following files violate this restriction:
 by_reference actual may be misaligned\?
 call to & does not permit null string
 call to & requires static string argument
 call to recursive subprogram cannot be inlined
+call to subprogram with no separate spec prevents inlining
 can only omit ELSE expression in Boolean case
 cannot add discriminants to untagged type
 cannot allocate abstract object
 cannot be imported \(local type is not constant\)
 cannot be inlined
 cannot be used as compilation unit
+cannot call abstract subprogram
 cannot compile configuration pragmas with gcc
 cannot compile subprogram in file
 cannot constrain type with unknown discriminants
@@ -77,24 +145,32 @@ cannot generate 'S'C'I'L
 cannot have private package body
 cannot have private subprogram body
 cannot have private subunits
+cannot import abstract subprogram& declared
+cannot import&, renaming already provided for declaration
+cannot inline call to recursive subprogram
 cannot instantiate a limited withed package
 cannot instantiate& before body seen
 cannot locate
 cannot pass atomic argument to non-atomic formal
 cannot pass volatile argument to non-volatile formal
 cannot read gnat.adc
+cannot reference discriminant of Unchecked_Union
 cannot resolve expression
+cannot resolve membership operation
 cannot take reference to Atomic/Volatile object
 change component clause to position component on word boundary
 character not defined for }
+check will fail at run time
 child of an instance must be an instance or renaming
 child unit allowed only at library level
 child unit not allowed
 child unit& hides compilation unit with the same name
 child units not allowed
+choice parameter not allowed
 circular Instantiation
 circular type definition
 circular unit dependency
+class-wide argument not allowed here
 code statement can only appear in body of subprogram
 compilation unit cannot be abstract subprogram
 compilation unit expected
@@ -103,23 +179,34 @@ compiled with different GNAT versions
 compiled with different exception handling mechanisms
 compiled with restriction No_Default_Initialization
 compiled without restriction No_Default_Initialization
+component & must be byte aligned
+component clause not allowed for variable length component
 component has non-static size
+component name must be direct name or attribute
 component of unchecked union cannot be controlled
 component of unchecked union cannot have tasks
 component on bit offset spanning more than two words not supported
 component subtypes must statically match
 component type of a view conversion cannot be private, tagged, or volatile
+component\& in limited extension must have% attribute
 concatenation not available for limited array
 conditional expression is an Ada extension
+conflicts with label
 constant declaration requires initialization expression
+construct not allowed in
+construct not allowed in configurable run-time mode
 conversion between unrelated limited array types not allowed
+creation of protected object of type& will violate restriction No_Implicit_Heap_Allocations
 current instance attribute must appear alone
 current instance prefix must be a direct name
+deallocation might have no effect
 decimal fixed type not allowed
 declaration expected
 declaration hides
+default value for optional formal& is non-static
 delta expression must be positive
 dereference must not be of an incomplete type
+descendents of package [\w]+ may not be compiled
 descriptor mechanism for parameter not permitted
 designated type of actual does not match that of formal
 digit expected
@@ -130,41 +217,68 @@ discriminant & does not correspond to ancestor discriminant
 discriminant cannot constrain scalar type
 discriminant has deeper accessibility level than target
 discriminant must appear alone as a direct name
+discriminant part not allowed for single protected
 discriminant part not allowed for single task
 discriminant part not allowed in protected body
 discriminant part not allowed in task body
 disk full writing gnat.adc
 division by zero
+does not contain a unit that can be a main program
 does not require a body
+duplicate accept statement for same entry
 duplicate entry body
 duplicate generic body
+dynamic interface conversion
+dynamic membership test on interface types
 elaboration circularity detected
+enclosing body of accept must be a task
+end of file expected
+entity& was previously exported
+entity& was previously imported
 entry call required in select statement
+entry cannot have return value
 enumeration type required, found
 error in inlined body
 error in non-remote access type
 error writing gnat.adc
 exception handler not permitted here
 exception handlers in accept not allowed
+execution may raise unhandled exception
 expect [\w]+ name in renaming
+expect ancestor type of
 expect anonymous access type in object renaming
+expect array type in prefix of slice
 expect entity name in renaming declaration
+expect entry name in requeue statement
 expect expression for entry index
+expect identifier in parameter association
 expect range constraint for discrete type
 expect subtype of }
+expect tagged or access qualifier
+expect task name
 expect valid formal access definition
 expect valid subprogram name as default
 expect variable in call to&
 expected SEPARATE subunit, found child unit
 expected an access type with designated
+expecting expression or component association
 expecting generic type definition here
+explicit membership test may be optimized away
 exponentiation not available for fixed point
 expression raises exception, cannot be static
 extension aggregate not allowed
+extraneous text in definition
+extraneous text on preprocessor line
 file contains no compilation units
 file could not be successfully preprocessed
+file has too few compilation units
+file name must be same in all % pragmas
+file name pattern must have exactly one \* character
+file name required for first % pragma in file
 first bit cannot be negative
 float value out of range, infinity will be generated
+floating-point value underflows to
+formal & is not subtype conformant with &in dispatching requeue
 formal parameter& has anonymous access type
 formal subprogram parameter not allowed
 found an access type with designated
@@ -174,10 +288,13 @@ full constant declaration appears too late
 generic [\w]+ cannot be used as
 generic formal of mode IN must not be of
 generic instantiation cannot appear here
+generic instantiation not allowed here
 generic private child packages not permitted
+generic subprogram cannot be called
 generic units cannot be overloaded
 gnatchop
 gradual underflow causes loss of precision
+has been made static as a result of Export
 has been modified and must be recompiled
 has been modified and should be recompiled
 has dynamic elaboration checks and with's
@@ -185,14 +302,28 @@ hidden by private with clause
 identifier expected
 illegal bound in discrete range
 illegal component name
+illegal context for OTHERS choice
 illegal context for call to function with limited result
+illegal declaration in protected definition
+illegal declaration in task definition
+illegal operand
 illegal prefix for slice
 illegal reading of out parameter
+illegal remote access to class-wide type
 illegal use of generic function
+imported 'C'P'P type cannot have discriminants
+imported constant& must have a constrained subtype
+imported entity is hidden by & declared
+imported value must be initialized
+in inlined body
 in instantiation
+in pure unit
+in rci unit
+incompatible arguments for operator
 incompatible component types for array conversion
 incompatible index types for array conversion
 incompatible number of dimensions for conversion
+incompatible types
 incompatible types for operator
 incompatible types given in constraint
 incompatible types in range
@@ -200,25 +331,37 @@ incomplete type cannot be completed with a private declaration
 inconsistent interrupt states at
 incorrect conversion of local operand to remote type
 incorrect conversion of remote operand to local type
+incorrect use of
 infinite recursion
+inherited discriminant not allowed here
 initialization not allowed for `IN OUT` formals
 initialization not allowed for limited types
+initialization not allowed here
 instantiation error
 instantiation of & within itself
 integer type definition bounds out of range
+interface name cannot be null string
+invalid argument for pragma%
 invalid body for generic function
 invalid body for generic procedure 
 invalid constraint: type has no discriminant
+invalid context for accept statement
 invalid context for logical operation
+invalid context for mixed mode operation
 invalid dereference of a remote access-to-class-wide value
 invalid entry index in accept for simple entry
+invalid entry_name specified
 invalid exception name in renaming
 invalid generic unit name
 invalid kind of formal derived type
+invalid kind of private extension
 invalid loop name in exit statement
 invalid operator name
 invalid prefix
+invalid representation clause
+invalid restriction identifier&
 invalid switch
+invalid tagged conversion, not compatible with
 invalid use of incomplete type
 invalid use of subtype mark in expression or call
 is a reserved word in Ada 2005
@@ -229,25 +372,39 @@ is not a component of
 is not a language defined unit
 is not static constant
 is obsolete and read-only
+is only defined in Ada 2005
+is withed by
+keyword BODY expected here
+keyword\* cannot be used
 label not permitted in this context
+language defined units may not be recompiled
 last bit cannot be less than first bit minus one
 left hand side of assignment must be a variable
 library unit renaming not allowed
+limited record declaration not allowed
 literal out of range of type Standard\.Character
 literal out of range of type Standard\.Wide_Character
 local name must be a subtype
+lower bound of aggregate out of range
+matching subprogram \#\!
 maximum nesting level exceeded
 may be null
-may be raised at run time
+may be raised
 may be referenced before it has a value
+may call Last_Chance_Handler
+may conflict with shell command
 may raise Storage_Error
+may result in unhandled exception
+maybe subtype name was meant
 mechanism for & has already been set
 membership test not applicable to cpp-class types
 misaligned actual cannot be passed by reference
+misplaced RETURN statement
+misplaced WITH
+misplaced `THEN ABORT`
 missing RETURN statement in function body
 missing `END &;`
 missing `END LOOP &;`
-missing `END [\w]+;` for [\w]+
 missing `END [\w]+;` for [\w]+
 missing `END;` for BEGIN
 missing argument for parameter
@@ -255,6 +412,8 @@ missing entry index in accept for entry family
 missing index for entry family component
 missing operand
 mixed logical operators in expression
+mixing AND and OR is not allowed
+mixing OR and AND is not allowed
 mixing [\w]+ and [\w]+ is not allowed, parentheses are required
 mode conformance error in renaming
 modified by call, but value never referenced
@@ -263,37 +422,55 @@ modular types not allowed
 more than one value supplied for discriminant
 multiple choice not allowed here
 multiple default preprocessing data
+multiple preprocessing data for
 must be compiled
+must be elaborated before
 must be recompiled
+must therefore be elaborated before
 name expected
 name in call is not a callable entity
 name of formal subprogram must be a direct name
+named parameters not permitted for attributes
 nested array aggregate expected
 no IF for this THEN
 no [\w]+ for this [\w]+
 no [\w]+ for this `END [\w]+`
 no [\w]+ for this `end [\w]+`
+no `[\w ]+` for this [\w]+
 no compilation units found
+no entry declaration matches accept statement
 no entry declaration matches entry body
+no entry matches context
 no legal interpretation for indexed component
 no modular type available in this context
 no selector& for
 no source files written
+no unique type for this aggregate
 no valid types for left-hand side for assignment
 no visible subprogram matches specification
 non-static function call
+non-visible \(private\) declaration
 not declared in
+one or more inlined subprograms accessed in
 only a subtype mark is allowed in a formal
+only allowed alternative in timed entry call is delay
+only configuration pragmas allowed in configuration file
 only one ELSE part allowed
 only one label allowed on block or loop
 only one terminate alternative allowed
+only one variant part allowed in a record
 only pragmas allowed in configuration file
+operation outside protected type may not call back its protected operations
 operator for type& is not declared in
+operator symbol cannot be used as subunit name
+operator symbol not allowed at library level
 operator symbol not allowed for generic subprogram
+optional formal& does not have default value
 others choice not allowed here
 overlapping priority ranges at \{\:\# and \{\:\#
 package body cannot appear here
 package& is hidden by declaration
+parameters out of order for pragma%
 position cannot be negative
 positional association follows named one
 positional parameter association not allowed after named one
@@ -302,11 +479,25 @@ possible infinite loop
 possible missing instantiation of 'Text_'I'O.'
 possible unprotected access to protected data
 potentially blocking operation in protected operation
+pragma Restrictions (No_Exception_Propagation) in effect
+pragma Restrictions \(No_Exception_Propagation\) in effect
+pragma Source_File_Name may not be used for System
+pragma argument identifier required here
+pragma not allowed here
 pragma not allowed in formal part
+pragma% argument expects identifier%
+pragma% argument has incorrect identifier
 pragma% does not allow & argument
+pragma% does not uniquely identify subprogram
+pragma% is only effective in main program
+pragma% must be in declaration/statement context
+pragma& is non-standard
+precision will be lost in the conversion
+prefix for selection is not a name
 prefix is non-static array
 prefix must statically denote a non-remote subprogram
 prefix must statically denote a remote subprogram
+prefix of Class attribute must be tagged
 prefix of protected procedure or entry call must be variable
 prefix type for attribute is not static scalar subtype
 premature derivation of incomplete type
@@ -316,34 +507,61 @@ premature use of
 premature use of type for derivation
 previously given size is too small
 private units not allowed
+program execution may be erroneous
 proper body expected
 protected interface cannot inherit from
 protected type cannot implement
 range attribute cannot be used in expression
+range constraint not allowed in membership test
 range high bound too large for digits value
 range low bound too small for digits value
+range must be given for fixed-point type
+range must be preceded by subtype mark
+range not allowed for modular type
 range not allowed here
 range too large for any predefined type
 reason:
 reason: pragma Elaborate in unit
 reason: with clause
+recompile
 record not allowed in generic type definition
 redefinition of package body
+remove incorrect body in file
+remove pragma Pack or use record representation clause
+renamed generic unit must be a library unit
 renamed unit must be a child unit of generic parent
 renamed unit must be a library unit
 renaming declaration cannot appear here
+renaming declaration not allowed here
 renaming of conversion only allowed for tagged types
+representation clause requires simple name
+requires numeric parameter
+reserved word\* cannot be used as identifier
+resuming here
+resynchronizing
+run-time configuration error
 run-time library configuration error
+safer to wait for termination
 scalar type required for range
+select alternative cannot follow else part
+selected loop parameter not allowed
 selector expected
 set notation is a language extension
 shift functions are never static
 should be recompiled
 should not be used in entry body
 simultaneous visibility of the limited and unlimited views not allowed
+since extensions \(and set notation\) are allowed
+since no component clauses were specified
+single component aggregate in non-static context
 size attribute is only static for static scalar type
+size for& is not a multiple of alignment
+size for& not a multiple of storage unit size
+size given for& too small
 slice cannot have more than one dimension
 some but not all files compiled with Normalize_Scalars
+source array type has deeper accessibility level than target
+specified address for& may be inconsistent with alignment
 stand alone atomic constant must be imported
 stand alone volatile constant must be imported
 static array attribute must be Length, First, or Last
@@ -351,27 +569,39 @@ static attribute must apply to array/scalar type
 static conversion requires static scalar
 static expression fails Constraint_Check
 static expression must have scalar or string type
+string expression in raise is Ada 2005 extension
+string literal contains invalid wide character
+string literal expected for pragma argument
 string literal not available for private array
+subprogram body not allowed here
 subprogram specification expected
+subscripted loop parameter not allowed
 subtype declaration not allowed as generic parameter declaration
 subtype indication expected
+subtype mark expected
 subtype mark required
 subtype must statically match function result subtype
 subtype name not allowed here
 suggest using template with multiple instructions
 symbol expected
+symbol or literal string expected
 synchronized interface cannot inherit from
+tag-indeterminate expression  must have designated type
+tag-indeterminate expression must have type
+target object has invalid level for requeue
 target of goto statement is not reachable
 target of goto statement must be a label
 task discriminant not allowed
 task has no entry with this name
 task interface cannot inherit from
 task type cannot implement
+task/protected object in variant record will not be freed
 the only constraint allowed here is a range constraint
 the only representation clause allowed here is an address clause
 the renamed object is not access-to-constant
 the renamed object is not access-to-variable
 this construct is allowed only in Open'V'M'S
+this declaration not allowed in protected body
 this line is longer than 32766 characters
 this line is too long
 too few discriminants given in constraint
@@ -379,17 +609,29 @@ too few subscripts in array reference
 too many actuals in generic instantiation
 too many arguments in call
 too many arguments in call to
+too many elements
 too many formals for attribute
 too many instantiations
+too many subscripts in array reference
 too many subscripts in entry reference
 too many user-defined concatenations
 triggering statement cannot be procedure call
 triggering statement must be delay
+triggering statement must be entry call or delay
 type cannot be determined from context
 type cannot derive from
+type definition expected
+type is not one-dimensional array in slice prefix
+type of aggregate cannot be class-wide
 type of allocator cannot be abstract
+type of limited ancestor part must be constrained
 type of& has incomplete component
+type& must be fully defined before this point
+types containing access components not supported in Shared_Passive partitions
+unable to inline subprograms defined in
 unconstrained allocation not allowed
+unconstrained variant records not supported in Shared_Passive partitions
+unexpected logical operator
 unexpected relational operator
 unfrozen subprogram cannot rename itself
 unimplemented attribute
@@ -401,28 +643,39 @@ unmatched actual & in call
 unrecognized attribute
 unrecognized descriptor class name
 unrecognized mechanism name
+unrecognized pragma
 unsupported intrinsic subprogram call
+upper bound out of range
 upper half character not allowed
 use -gnatX
 use -gnatf for details
+use Ada 2005 `LIMITED WITH` clause instead
 use clause not allowed in predefined spec
 use of -p switch questionable
 use of construct not allowed in compiler
+use of pragma Elaborate may not be safe
+use type not allowed
 value for discriminant & must be static
 value of discriminant & is out of range
 value outside permitted range
+variable declaration not allowed in remote types unit
+variable size record with interface types
 variable& is not modified in loop body
 variable& is read but never assigned
 variant record has no direct equivalent in C
 view conversion between unrelated by reference array types not allowed
 violates restriction No_Dependence
+violation of restriction
 which has static elaboration checks
+which is an untagged type
+which is withed by
 will be raised at run time
 will be raised at run-time
 will be raised for objects of this type
 within its scope, generic denotes its instance
 would be legal in Ada 2005
 writable actual overlaps with actual for
+wrong ALI format
 wrong form for Unit_Name parameter of pragma%
 wrong form for argument of pragma Eliminate
 wrong interface conversion
