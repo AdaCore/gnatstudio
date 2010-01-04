@@ -13,6 +13,10 @@ a range is not a valid discriminant constraint
 abort may take time to complete\?
 access definition not allowed in formal object declaration
 access discriminant not allowed
+access modifier not allowed
+access parameters not allowed
+access to function not allowed
+access to procedure not allowed
 access-to-constant operand type not allowed
 access-to-protected-subprogram types not yet supported
 accessibility check failure
@@ -21,6 +25,7 @@ actual for& must be a variable
 actual subtype must be constrained
 actual subtype must be unconstrained
 ad errors, must be fixed, and recompiled
+address arithmetic not predefined in package System
 aliased component must be constrained
 aliased component type must be constrained
 alignment value must be positive
@@ -53,10 +58,13 @@ but the following files violate this restriction:
 by_reference actual may be misaligned\?
 call to & does not permit null string
 call to & requires static string argument
+call to recursive subprogram cannot be inlined
 can only omit ELSE expression in Boolean case
 cannot add discriminants to untagged type
 cannot allocate abstract object
 cannot be imported \(local type is not constant\)
+cannot be inlined
+cannot be used as compilation unit
 cannot compile configuration pragmas with gcc
 cannot compile subprogram in file
 cannot constrain type with unknown discriminants
@@ -66,6 +74,9 @@ cannot eliminate subprogram
 cannot exit from program unit or accept statement
 cannot find body of generic package
 cannot generate 'S'C'I'L
+cannot have private package body
+cannot have private subprogram body
+cannot have private subunits
 cannot instantiate a limited withed package
 cannot instantiate& before body seen
 cannot locate
@@ -78,12 +89,15 @@ change component clause to position component on word boundary
 character not defined for }
 child of an instance must be an instance or renaming
 child unit allowed only at library level
+child unit not allowed
 child unit& hides compilation unit with the same name
 child units not allowed
 circular Instantiation
 circular type definition
 circular unit dependency
 code statement can only appear in body of subprogram
+compilation unit cannot be abstract subprogram
+compilation unit expected
 compiled with different
 compiled with different GNAT versions
 compiled with different exception handling mechanisms
@@ -116,9 +130,12 @@ discriminant & does not correspond to ancestor discriminant
 discriminant cannot constrain scalar type
 discriminant has deeper accessibility level than target
 discriminant must appear alone as a direct name
+discriminant part not allowed for single task
 discriminant part not allowed in protected body
+discriminant part not allowed in task body
 disk full writing gnat.adc
 division by zero
+does not require a body
 duplicate entry body
 duplicate generic body
 elaboration circularity detected
@@ -139,14 +156,19 @@ expect valid formal access definition
 expect valid subprogram name as default
 expect variable in call to&
 expected SEPARATE subunit, found child unit
+expected an access type with designated
 expecting generic type definition here
 exponentiation not available for fixed point
 expression raises exception, cannot be static
 extension aggregate not allowed
+file contains no compilation units
 file could not be successfully preprocessed
 first bit cannot be negative
 float value out of range, infinity will be generated
 formal parameter& has anonymous access type
+formal subprogram parameter not allowed
+found an access type with designated
+found incomplete
 freeing `NOT NULL` object will raise Constraint_Error
 full constant declaration appears too late
 generic [\w]+ cannot be used as
@@ -155,6 +177,7 @@ generic instantiation cannot appear here
 generic private child packages not permitted
 generic units cannot be overloaded
 gnatchop
+gradual underflow causes loss of precision
 has been modified and must be recompiled
 has been modified and should be recompiled
 has dynamic elaboration checks and with's
@@ -173,6 +196,7 @@ incompatible number of dimensions for conversion
 incompatible types for operator
 incompatible types given in constraint
 incompatible types in range
+incomplete type cannot be completed with a private declaration
 inconsistent interrupt states at
 incorrect conversion of local operand to remote type
 incorrect conversion of remote operand to local type
@@ -192,6 +216,7 @@ invalid exception name in renaming
 invalid generic unit name
 invalid kind of formal derived type
 invalid loop name in exit statement
+invalid operator name
 invalid prefix
 invalid switch
 invalid use of incomplete type
@@ -201,6 +226,7 @@ is an Ada 2005 extension
 is hidden within declaration of instance
 is never static
 is not a component of
+is not a language defined unit
 is not static constant
 is obsolete and read-only
 label not permitted in this context
@@ -219,7 +245,11 @@ mechanism for & has already been set
 membership test not applicable to cpp-class types
 misaligned actual cannot be passed by reference
 missing RETURN statement in function body
-missing `END [\w]+;` for [\w]+\#\!`
+missing `END &;`
+missing `END LOOP &;`
+missing `END [\w]+;` for [\w]+
+missing `END [\w]+;` for [\w]+
+missing `END;` for BEGIN
 missing argument for parameter
 missing entry index in accept for entry family
 missing index for entry family component
@@ -227,18 +257,22 @@ missing operand
 mixed logical operators in expression
 mixing [\w]+ and [\w]+ is not allowed, parentheses are required
 mode conformance error in renaming
+modified by call, but value never referenced
+modified by call, but value overwritten
 modular types not allowed
 more than one value supplied for discriminant
 multiple choice not allowed here
 multiple default preprocessing data
 must be compiled
 must be recompiled
+name expected
 name in call is not a callable entity
 name of formal subprogram must be a direct name
 nested array aggregate expected
 no IF for this THEN
 no [\w]+ for this [\w]+
-no [\w]+ for this `end [\w]+
+no [\w]+ for this `END [\w]+`
+no [\w]+ for this `end [\w]+`
 no compilation units found
 no entry declaration matches entry body
 no legal interpretation for indexed component
@@ -266,6 +300,9 @@ positional parameter association not allowed after named one
 positional parameters not allowed after named ones
 possible infinite loop
 possible missing instantiation of 'Text_'I'O.'
+possible unprotected access to protected data
+potentially blocking operation in protected operation
+pragma not allowed in formal part
 pragma% does not allow & argument
 prefix is non-static array
 prefix must statically denote a non-remote subprogram
@@ -282,10 +319,12 @@ private units not allowed
 proper body expected
 protected interface cannot inherit from
 protected type cannot implement
+range attribute cannot be used in expression
 range high bound too large for digits value
 range low bound too small for digits value
 range not allowed here
 range too large for any predefined type
+reason:
 reason: pragma Elaborate in unit
 reason: with clause
 record not allowed in generic type definition
@@ -296,18 +335,24 @@ renaming declaration cannot appear here
 renaming of conversion only allowed for tagged types
 run-time library configuration error
 scalar type required for range
+selector expected
 set notation is a language extension
 shift functions are never static
 should be recompiled
+should not be used in entry body
 simultaneous visibility of the limited and unlimited views not allowed
 size attribute is only static for static scalar type
 slice cannot have more than one dimension
 some but not all files compiled with Normalize_Scalars
+stand alone atomic constant must be imported
+stand alone volatile constant must be imported
 static array attribute must be Length, First, or Last
 static attribute must apply to array/scalar type
 static conversion requires static scalar
+static expression fails Constraint_Check
 static expression must have scalar or string type
 string literal not available for private array
+subprogram specification expected
 subtype declaration not allowed as generic parameter declaration
 subtype indication expected
 subtype mark required
@@ -323,8 +368,10 @@ task has no entry with this name
 task interface cannot inherit from
 task type cannot implement
 the only constraint allowed here is a range constraint
+the only representation clause allowed here is an address clause
 the renamed object is not access-to-constant
 the renamed object is not access-to-variable
+this construct is allowed only in Open'V'M'S
 this line is longer than 32766 characters
 this line is too long
 too few discriminants given in constraint
@@ -341,10 +388,12 @@ triggering statement must be delay
 type cannot be determined from context
 type cannot derive from
 type of allocator cannot be abstract
+type of& has incomplete component
 unconstrained allocation not allowed
 unexpected relational operator
 unfrozen subprogram cannot rename itself
 unimplemented attribute
+unit should be compiled with -gnat05 switch
 unknown discriminant not allowed
 unknown discriminants not allowed for elementary types
 unknown symbol
@@ -357,6 +406,7 @@ upper half character not allowed
 use -gnatX
 use -gnatf for details
 use clause not allowed in predefined spec
+use of -p switch questionable
 use of construct not allowed in compiler
 value for discriminant & must be static
 value of discriminant & is out of range
@@ -369,8 +419,10 @@ violates restriction No_Dependence
 which has static elaboration checks
 will be raised at run time
 will be raised at run-time
+will be raised for objects of this type
 within its scope, generic denotes its instance
 would be legal in Ada 2005
+writable actual overlaps with actual for
 wrong form for Unit_Name parameter of pragma%
 wrong form for argument of pragma Eliminate
 wrong interface conversion
