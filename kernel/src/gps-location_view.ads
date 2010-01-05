@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -179,10 +179,6 @@ private
       --  Index of the secondary line
 
       --  Idle handlers
-
-      Idle_Row_Handler    : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-      Row : Gtk_Tree_Path;
-      --  Used to record the row to make visible, see Idle_Show_Row
 
       Idle_Expand_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Expand_Path         : Gtk_Tree_Path;
