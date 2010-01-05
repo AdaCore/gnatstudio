@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -259,11 +259,10 @@ package body GPS.Location_View is
    --  Used by model filter for query item visibility
 
    procedure Modify
-     (Model  : access Gtk_Tree_Model_Filter_Record'Class;
+     (Self   : access Gtk_Tree_Model_Filter_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Value  : out Glib.Values.GValue;
-      Column : Gint;
-      Self   : Location_View);
+      Column : Gint);
    --  Used by model filter for modify items (to substitute number of child
    --  items in category and file).
 
@@ -285,9 +284,6 @@ package body GPS.Location_View is
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
-
-   package Modify_Funcs is
-     new Gtk.Tree_Model_Filter.Modify_Funcs (Location_View);
 
    --------------------------
    -- Idle_Expand_Category --
@@ -1164,8 +1160,7 @@ package body GPS.Location_View is
       View.Model.Unref;
       Visible_Funcs.Set_Visible_Func
         (View.Filter, Is_Visible'Access, Location_View (View));
-      Modify_Funcs.Set_Modify_Func
-        (View.Filter, Columns_Types, Modify'Access, Location_View (View));
+      View.Filter.Set_Modify_Func (Columns_Types, Modify'Access);
 
       Gtk_New (View.Tree, View.Filter);
       View.Filter.Unref;
@@ -2291,30 +2286,27 @@ package body GPS.Location_View is
    ------------
 
    procedure Modify
-     (Model  : access Gtk_Tree_Model_Filter_Record'Class;
+     (Self   : access Gtk_Tree_Model_Filter_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Value  : out Glib.Values.GValue;
-      Column : Gint;
-      Self   : Location_View)
+      Column : Gint)
    is
-      pragma Unreferenced (Model);
-
-      Aux  : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
+      Model : constant Gtk_Tree_Model := Self.Get_Model;
+      Aux   : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
 
    begin
-      Path := Self.Filter.Get_Path (Iter);
-      Self.Filter.Convert_Iter_To_Child_Iter (Aux, Iter);
+      Path := Self.Get_Path (Iter);
+      Self.Convert_Iter_To_Child_Iter (Aux, Iter);
 
       if Column = Base_Name_Column
         and then Get_Depth (Path) < 3
       then
          declare
             Message : constant String :=
-                        Self.Model.Get_String (Aux, Base_Name_Column);
+                        Model.Get_String (Aux, Base_Name_Column);
             Items   : constant Natural :=
-                        Natural
-                          (Self.Model.Get_Int (Aux, Number_Of_Items_Column));
+                        Natural (Model.Get_Int (Aux, Number_Of_Items_Column));
             Img     : constant String := Image (Items);
 
          begin
@@ -2330,7 +2322,7 @@ package body GPS.Location_View is
 
       else
          Unset (Value);
-         Self.Model.Get_Value (Aux, Column, Value);
+         Model.Get_Value (Aux, Column, Value);
       end if;
 
       Path_Free (Path);
