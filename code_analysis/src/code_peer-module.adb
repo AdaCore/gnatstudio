@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1385,9 +1385,6 @@ package body Code_Peer.Module is
       pragma Unreferenced (Ignore);
 
    begin
-      Console.Insert
-        (Kernel, -"Deleted all CodePeer artefacts.", Add_LF => False);
-
       --  Remove all <obj>/codepeer dirs. Ignore errors on e.g. read-only
       --  or non-existent directories.
 
@@ -1396,6 +1393,9 @@ package body Code_Peer.Module is
                      Recursive => True,
                      Success   => Ignore);
       end loop;
+
+      Console.Insert
+        (Kernel, -"Deleted all CodePeer artefacts.", Add_LF => False);
 
    exception
       when E : others =>
