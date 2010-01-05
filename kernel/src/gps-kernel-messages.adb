@@ -41,10 +41,20 @@ package body GPS.Kernel.Messages is
       Message : not null access Abstract_Message'Class);
    --  Call listeners to notify about add of message.
 
+   procedure Notify_Listeners_About_Message_Property_Changed
+     (Self    : not null access constant Messages_Container'Class;
+      Message : not null access Abstract_Message'Class);
+   --  Call listeners to notify about change of message's property.
+
    procedure Notify_Models_About_Message_Added
      (Self    : not null access constant Messages_Container'Class;
-      Message : not null Message_Access);
+      Message : not null access Abstract_Message'Class);
    --  Call models to notify about add of the message.
+
+   procedure Notify_Models_About_Message_Property_Changed
+     (Self    : not null access constant Messages_Container'Class;
+      Message : not null access Abstract_Message'Class);
+   --  Call models to notify about change of message's property.
 
    procedure Remove_Category
      (Self              : not null access Messages_Container'Class;
@@ -68,6 +78,10 @@ package body GPS.Kernel.Messages is
      new Ada.Unchecked_Conversion (Messages_Container_Access, System.Address);
    function To_Messages_Container_Access is
      new Ada.Unchecked_Conversion (System.Address, Messages_Container_Access);
+
+   procedure Free is
+     new Ada.Unchecked_Deallocation
+       (GPS.Editors.Line_Information_Record, Action_Item);
 
    ------------------------------
    -- Create_Message_Container --
@@ -102,7 +116,19 @@ package body GPS.Kernel.Messages is
 
    begin
       Free (Self.Mark);
+      Free (Self.Action);
    end Finalize;
+
+   ----------------
+   -- Get_Action --
+   ----------------
+
+   function Get_Action
+     (Self : not null access constant Abstract_Message'Class)
+      return Action_Item is
+   begin
+      return Self.Action;
+   end Get_Action;
 
    ------------------
    -- Get_Category --
@@ -463,22 +489,64 @@ package body GPS.Kernel.Messages is
       end loop;
    end Notify_Listeners_About_Message_Added;
 
+   -----------------------------------------------------
+   -- Notify_Listeners_About_Message_Property_Changed --
+   -----------------------------------------------------
+
+   procedure Notify_Listeners_About_Message_Property_Changed
+     (Self    : not null access constant Messages_Container'Class;
+      Message : not null access Abstract_Message'Class)
+   is
+      Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+
+   begin
+      while Has_Element (Listener_Position) loop
+         begin
+            Element (Listener_Position).Message_Property_Changed (Message);
+
+         exception
+            when E : others =>
+               Trace (Exception_Handle, E);
+         end;
+
+         Next (Listener_Position);
+      end loop;
+   end Notify_Listeners_About_Message_Property_Changed;
+
    ---------------------------------------
    -- Notify_Models_About_Message_Added --
    ---------------------------------------
 
    procedure Notify_Models_About_Message_Added
      (Self    : not null access constant Messages_Container'Class;
-      Message : not null Message_Access)
+      Message : not null access Abstract_Message'Class)
    is
       Model_Position : Model_Vectors.Cursor := Self.Models.First;
 
    begin
       while Has_Element (Model_Position) loop
-         Element (Model_Position).Message_Added (Message);
+         Element (Model_Position).Message_Added (Message_Access (Message));
          Next (Model_Position);
       end loop;
    end Notify_Models_About_Message_Added;
+
+   --------------------------------------------------
+   -- Notify_Models_About_Message_Property_Changed --
+   --------------------------------------------------
+
+   procedure Notify_Models_About_Message_Property_Changed
+     (Self    : not null access constant Messages_Container'Class;
+      Message : not null access Abstract_Message'Class)
+   is
+      Model_Position : Model_Vectors.Cursor := Self.Models.First;
+
+   begin
+      while Has_Element (Model_Position) loop
+         Element (Model_Position).Message_Property_Changed
+           (Message_Access (Message));
+         Next (Model_Position);
+      end loop;
+   end Notify_Models_About_Message_Property_Changed;
 
    -----------------------
    -- Register_Listener --
@@ -689,6 +757,24 @@ package body GPS.Kernel.Messages is
          end if;
       end if;
    end Remove_File;
+
+   ----------------
+   -- Set_Action --
+   ----------------
+
+   procedure Set_Action
+     (Self   : not null access Abstract_Message'Class;
+      Action : Action_Item)
+   is
+      Container : constant Messages_Container_Access := Self.Get_Container;
+
+   begin
+      Free (Self.Action);
+      Self.Action := Action;
+
+      Container.Notify_Listeners_About_Message_Property_Changed (Self);
+      Container.Notify_Models_About_Message_Property_Changed (Self);
+   end Set_Action;
 
    -------------------------
    -- Unregister_Listener --

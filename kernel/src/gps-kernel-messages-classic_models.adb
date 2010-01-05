@@ -24,6 +24,7 @@ with Gtk.Tree_Model.Utils;
 with GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;
 with String_Utils;
+with Traces;
 
 package body GPS.Kernel.Messages.Classic_Models is
 
@@ -34,6 +35,7 @@ package body GPS.Kernel.Messages.Classic_Models is
    use GPS.Editors;
    use GPS.Editors.GtkAda;
    use String_Utils;
+   use Traces;
 
    function Create_Iter
      (Self : not null access constant Classic_Tree_Model_Record'Class;
@@ -215,6 +217,9 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Action_Pixbuf_Column =>
             return Gdk.Pixbuf.Get_Type;
 
+         when Action_Command_Column =>
+            return Glib.GType_Pointer;
+
          when others =>
             return Glib.GType_Invalid;
       end case;
@@ -322,6 +327,9 @@ package body GPS.Kernel.Messages.Classic_Models is
    is
       use Ada.Strings.Unbounded;
       use Glib.Values;
+
+      function To_Address is
+        new Ada.Unchecked_Conversion (Action_Item, System.Address);
 
       Node : constant Node_Access := Self.Get_Node (Iter);
 
@@ -560,9 +568,36 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Action_Pixbuf_Column =>
             Init (Value, Gdk.Pixbuf.Get_Type);
 
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  null;
+
+               when Node_Message =>
+                  if Node.Action /= null then
+                     Set_Object
+                       (Value, Glib.Object.GObject (Node.Action.Image));
+                  end if;
+            end case;
+
+         when Action_Command_Column =>
+            Init (Value, Glib.GType_Pointer);
+
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  null;
+
+               when Node_Message =>
+                  Set_Address (Value, To_Address (Node.Action));
+            end case;
+
          when others =>
             null;
       end case;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Init (Value, Glib.GType_Invalid);
    end Get_Value;
 
    -------------
@@ -634,6 +669,25 @@ package body GPS.Kernel.Messages.Classic_Models is
    begin
       Self.Node_Added (Node_Access (Message));
    end Message_Added;
+
+   ------------------------------
+   -- Message_Property_Changed --
+   ------------------------------
+
+   overriding procedure Message_Property_Changed
+     (Self    : not null access Classic_Tree_Model_Record;
+      Message : not null Message_Access)
+   is
+      Path : Gtk_Tree_Path;
+      Iter : Gtk_Tree_Iter;
+
+   begin
+      Self.Stamp := Self.Stamp + 1;
+      Iter := Self.Create_Iter (Node_Access (Message));
+      Path := Self.Create_Path (Node_Access (Message));
+      Self.Row_Changed (Path, Iter);
+      Path_Free (Path);
+   end Message_Property_Changed;
 
    ---------------------
    -- Message_Removed --

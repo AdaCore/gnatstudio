@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -84,6 +84,10 @@ private
       Index    : Positive);
 
    overriding procedure Message_Added
+     (Self    : not null access Classic_Tree_Model_Record;
+      Message : not null Message_Access);
+
+   overriding procedure Message_Property_Changed
      (Self    : not null access Classic_Tree_Model_Record;
       Message : not null Message_Access);
 

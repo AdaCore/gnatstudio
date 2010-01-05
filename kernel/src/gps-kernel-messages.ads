@@ -39,7 +39,7 @@ private with Ada.Strings.Unbounded.Hash;
 with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
 with GNATCOLL.VFS;
-private with GPS.Editors;
+with GPS.Editors;
 
 package GPS.Kernel.Messages is
 
@@ -51,6 +51,8 @@ package GPS.Kernel.Messages is
    type Abstract_Listener is abstract tagged limited null record;
 
    type Listener_Access is access all Abstract_Listener'Class;
+
+   type Action_Item is access all GPS.Editors.Line_Information_Record;
 
    ----------------------
    -- Abstract Message --
@@ -91,6 +93,17 @@ package GPS.Kernel.Messages is
    function Get_Parent
      (Self : not null access constant Abstract_Message'Class)
       return Message_Access;
+
+   procedure Set_Action
+     (Self   : not null access Abstract_Message'Class;
+      Action : Action_Item);
+   --  Associate specified action with the message. Message takes ownership on
+   --  the associated action. Previous action is deallocated.
+
+   function Get_Action
+     (Self : not null access constant Abstract_Message'Class)
+      return Action_Item;
+   --  Returns action associated with the message.
 
    procedure Initialize
      (Self      : not null access Abstract_Message'Class;
@@ -184,6 +197,10 @@ package GPS.Kernel.Messages is
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) is null;
 
+   procedure Message_Property_Changed
+     (Self    : not null access Abstract_Listener;
+      Message : not null access Abstract_Message'Class) is null;
+
    ---------------------
    -- Gtk+ Tree Model --
    ---------------------
@@ -221,6 +238,8 @@ package GPS.Kernel.Messages is
    --  source file.
    Action_Pixbuf_Column   : constant Glib.Gint := 11;
    --  Contains pixmuf object of the associated action.
+   Action_Command_Column  : constant Glib.Gint := 12;
+   --  Contains command to be executed on action.
    Total_Columns          : constant Glib.Gint := 13;
    --  Total number of columns.
 
@@ -282,6 +301,7 @@ private
             Line   : Natural;
             Column : Basic_Types.Visible_Column_Type;
             Mark   : Editor_Mark_Access;
+            Action : Action_Item;
       end case;
    end record;
 
@@ -323,6 +343,10 @@ private
       Index    : Positive) is null;
 
    procedure Message_Added
+     (Self    : not null access Abstract_Messages_Tree_Model_Record;
+      Message : not null Message_Access) is null;
+
+   procedure Message_Property_Changed
      (Self    : not null access Abstract_Messages_Tree_Model_Record;
       Message : not null Message_Access) is null;
 
