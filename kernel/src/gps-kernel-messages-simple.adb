@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,8 +16,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  This package provides simple implementation of Abstract_Message
---  which is suitable for general purpose.
 
 package body GPS.Kernel.Messages.Simple is
 
@@ -59,14 +57,15 @@ package body GPS.Kernel.Messages.Simple is
       First  : Positive;
       Last   : Natural)
    is
+      Offset : constant Natural := Text'First - 1;
       Result : constant not null Simple_Message_Access :=
         new Simple_Message (Secondary);
 
    begin
       Initialize (Result, Parent, File, Line, Column);
       Result.Text  := To_Unbounded_String (Text);
-      Result.First := First;
-      Result.Last  := Last;
+      Result.First := First - Offset;
+      Result.Last  := Last - Offset;
    end Create_Simple_Message;
 
    ----------------
