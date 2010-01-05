@@ -981,35 +981,32 @@ package body GPS.Location_View is
          Append (Menu, Mitem);
 
          declare
-            Message_Iter  : Gtk_Tree_Iter;
             File_Iter     : Gtk_Tree_Iter;
             Category_Iter : Gtk_Tree_Iter;
 
          begin
-            Explorer.Filter.Convert_Iter_To_Child_Iter (Message_Iter, Iter);
-            File_Iter := Explorer.Model.Parent (Message_Iter);
-            Category_Iter := Explorer.Model.Parent (File_Iter);
+            File_Iter := Model.Parent (Iter);
+            Category_Iter := Model.Parent (File_Iter);
 
             --  Unwind secondary level messages
 
-            while Explorer.Model.Parent (Category_Iter) /= Null_Iter loop
+            while Model.Parent (Category_Iter) /= Null_Iter loop
                File_Iter := Category_Iter;
-               Category_Iter := Explorer.Model.Parent (Category_Iter);
+               Category_Iter := Model.Parent (Category_Iter);
             end loop;
 
             Set_File_Information
               (Context,
-               Files => (1 => Get_File (Explorer.Model, File_Iter)),
+               Files => (1 => Get_File (Model, File_Iter)),
                Line  =>
-                 Positive (Explorer.Model.Get_Int (Message_Iter, Line_Column)),
+                 Positive (Model.Get_Int (Iter, Line_Column)),
                Column =>
                  Visible_Column_Type
-                   (Explorer.Model.Get_Int (Message_Iter, Column_Column)));
+                   (Model.Get_Int (Iter, Column_Column)));
             Set_Message_Information
               (Context,
-               Category =>
-                 Explorer.Model.Get_String (Category_Iter, Base_Name_Column),
-               Message => Get_Message (Explorer.Model, Message_Iter));
+               Category => Model.Get_String (Category_Iter, Base_Name_Column),
+               Message => Get_Message (Model, Iter));
 
             Created := True;
          end;
