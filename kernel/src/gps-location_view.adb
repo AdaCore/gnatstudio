@@ -182,13 +182,14 @@ package body GPS.Location_View is
       Iter : Gtk_Tree_Iter);
    --  Goto to location
 
-   procedure Remove_Category (Object : access Gtk_Widget_Record'Class);
+   procedure On_Remove_Category_Or_File
+     (Self : access Location_View_Record'Class);
    --  Remove the selected category in the Location_View
 
-   procedure Expand_Category (Object : access Gtk_Widget_Record'Class);
+   procedure On_Expand_Category (Self : access Location_View_Record'Class);
    --  Expand all files in the selected Category
 
-   procedure Collapse (Object : access Gtk_Widget_Record'Class);
+   procedure On_Collapse_All (Self : access Location_View_Record'Class);
    --  Collapse all categories in the Location View
 
    type Clear_Locations_View_Command is new Interactive_Command
@@ -244,8 +245,7 @@ package body GPS.Location_View is
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive shell command handler
 
-   procedure Toggle_Sort
-     (Widget : access Gtk_Widget_Record'Class);
+   procedure On_Toggle_Sort (Self : access Location_View_Record'Class);
    --  Callback for the activation of the sort contextual menu item
 
    procedure Preferences_Changed
@@ -276,7 +276,7 @@ package body GPS.Location_View is
    --  Called on "visibility-toggled" signal from filter panel
 
    procedure On_Filter_Panel_Activated
-     (Widget : access Gtk_Widget_Record'Class);
+     (Self : access Location_View_Record'Class);
    --  Called when filter panel item in the context menu is activated
 
    package Location_View_Callbacks is
@@ -409,58 +409,59 @@ package body GPS.Location_View is
    -- Expand_Category --
    ---------------------
 
-   procedure Expand_Category (Object : access Gtk_Widget_Record'Class) is
-      View  : constant Location_View := Location_View (Object);
+   procedure On_Expand_Category (Self : access Location_View_Record'Class) is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
+
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Get_Selected (Get_Selection (Self.Tree), Model, Iter);
       Path := Get_Path (Model, Iter);
 
       while Get_Depth (Path) > 1 loop
          Dummy := Up (Path);
       end loop;
 
-      Dummy := Expand_Row (View.Tree, Path, True);
+      Dummy := Expand_Row (Self.Tree, Path, True);
 
       Path_Free (Path);
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Expand_Category;
+   end On_Expand_Category;
 
-   --------------
-   -- Collapse --
-   --------------
+   ---------------------
+   -- On_Collapse_All --
+   ---------------------
 
-   procedure Collapse (Object : access Gtk_Widget_Record'Class) is
-      View : constant Location_View := Location_View (Object);
+   procedure On_Collapse_All (Self : access Location_View_Record'Class) is
    begin
-      Collapse_All (View.Tree);
+      Self.Tree.Collapse_All;
+
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Collapse;
+   end On_Collapse_All;
 
    ---------------------
    -- Remove_Category --
    ---------------------
 
-   procedure Remove_Category (Object : access Gtk_Widget_Record'Class) is
-      View        : constant Location_View := Location_View (Object);
+   procedure On_Remove_Category_Or_File
+     (Self : access Location_View_Record'Class)
+   is
       Filter_Iter : Gtk_Tree_Iter;
       Store_Iter  : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
 
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Filter_Iter);
-      View.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
-      Remove_Category_Or_File_Iter (View.Kernel, View.Model, Store_Iter);
+      Get_Selected (Get_Selection (Self.Tree), Model, Filter_Iter);
+      Self.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
+      Remove_Category_Or_File_Iter (Self.Kernel, Self.Model, Store_Iter);
 
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Remove_Category;
+   end On_Remove_Category_Or_File;
 
    ---------------
    -- Next_Item --
@@ -901,47 +902,39 @@ package body GPS.Location_View is
    begin
       Get_Selected (Get_Selection (Explorer.Tree), Model, Iter);
 
-      if Model = null then
+      if Model = null
+        or else Iter = Null_Iter
+      then
+         --  There is no selection
+
          return;
       end if;
 
       Path := Get_Path (Model, Iter);
 
-      if Path = null then
-         return;
-      end if;
-
       Gtk_New (Check, -"Filter panel");
       Set_Active (Check, Explorer.Filter_Panel.Mapped_Is_Set);
       Append (Menu, Check);
-      Widget_Callback.Object_Connect
-        (Check,
-         Gtk.Menu_Item.Signal_Activate,
-         On_Filter_Panel_Activated'Access,
-         Explorer);
+      Location_View_Callbacks.Object_Connect
+        (Check, Signal_Activate, On_Filter_Panel_Activated'Access, Explorer);
 
       Gtk_New (Check, -"Sort by subcategory");
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Menu_Item.Signal_Activate, Toggle_Sort'Access, Explorer);
+      Location_View_Callbacks.Object_Connect
+        (Check, Signal_Activate, On_Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, -"Expand category");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem,
-         Gtk.Menu_Item.Signal_Activate,
-         Expand_Category'Access,
-         Explorer,
-         After => False);
+      Location_View_Callbacks.Object_Connect
+        (Mitem, Signal_Activate, On_Expand_Category'Access, Explorer);
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, -"Collapse all");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, Gtk.Menu_Item.Signal_Activate, Collapse'Access, Explorer,
-         After => False);
+      Location_View_Callbacks.Object_Connect
+        (Mitem, Signal_Activate, On_Collapse_All'Access, Explorer);
       Append (Menu, Mitem);
 
       if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
@@ -951,32 +944,26 @@ package body GPS.Location_View is
 
       if Get_Depth (Path) = 1 then
          Gtk_New (Mitem, -"Remove category");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
+         Location_View_Callbacks.Object_Connect
            (Mitem,
-            Gtk.Menu_Item.Signal_Activate,
-            Remove_Category'Access,
-            Explorer,
-            After => False);
+            Signal_Activate,
+            On_Remove_Category_Or_File'Access,
+            Explorer);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) = 2 then
          Gtk_New (Mitem, -"Remove File");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
+         Location_View_Callbacks.Object_Connect
            (Mitem,
-            Gtk.Menu_Item.Signal_Activate,
-            Remove_Category'Access,
-            Explorer,
-            After => False);
+            Signal_Activate,
+            On_Remove_Category_Or_File'Access,
+            Explorer);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) >= 3 then
          Gtk_New (Mitem, -"Jump to location");
          Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Gtk.Menu_Item.Signal_Activate,
-            Goto_Location'Access,
-            Explorer,
-            False);
+           (Mitem, Signal_Activate, Goto_Location'Access, Explorer);
 
          Append (Menu, Mitem);
 
@@ -1020,15 +1007,11 @@ package body GPS.Location_View is
       Path_Free (Path);
    end Context_Func;
 
-   -----------------
-   -- Toggle_Sort --
-   -----------------
+   --------------------
+   -- On_Toggle_Sort --
+   --------------------
 
-   procedure Toggle_Sort
-     (Widget : access Gtk_Widget_Record'Class)
-   is
-      Self : constant Location_View := Location_View (Widget);
-
+   procedure On_Toggle_Sort (Self : access Location_View_Record'Class) is
    begin
       Self.Sort_By_Category := not Self.Sort_By_Category;
 
@@ -1043,7 +1026,7 @@ package body GPS.Location_View is
 
    exception
       when E : others => Trace (Exception_Handle, E);
-   end Toggle_Sort;
+   end On_Toggle_Sort;
 
    ----------------------
    -- Location_Changed --
@@ -2205,9 +2188,7 @@ package body GPS.Location_View is
    -------------------------------
 
    procedure On_Filter_Panel_Activated
-     (Widget : access Gtk_Widget_Record'Class)
-   is
-      Self : constant Location_View := Location_View (Widget);
+     (Self : access Location_View_Record'Class) is
    begin
       Set_Filter_Visibility (Self, not Self.Filter_Panel.Mapped_Is_Set);
    end On_Filter_Panel_Activated;
