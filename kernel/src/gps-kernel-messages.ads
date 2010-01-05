@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,6 +39,7 @@ private with Ada.Strings.Unbounded.Hash;
 with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
 with GNATCOLL.VFS;
+private with GPS.Editors;
 
 package GPS.Kernel.Messages is
 
@@ -107,6 +108,11 @@ package GPS.Kernel.Messages is
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type);
    --  Initialize message and connect it to parent message
+
+   procedure Finalize (Self : not null access Abstract_Message);
+   --  Called to release resources occupied by the message before memory for
+   --  message will be released. Derived types can override it to do additional
+   --  actions, but must call this subprogram always to avoid memory leaks.
 
    ------------------------
    -- Messages Container --
@@ -198,7 +204,7 @@ package GPS.Kernel.Messages is
    --  Contains column number of the message. For category/subcategory/file
    --  level nodes the value -1 os used.
    Text_Column            : constant Glib.Gint := 5;
-   --  Cintains plain text of the message.
+   --  Contains plain text of the message.
    Node_Icon_Column       : constant Glib.Gint := 6;
    --  Contains icon for the node.
    Node_Markup_Column     : constant Glib.Gint := 7;
@@ -210,9 +216,12 @@ package GPS.Kernel.Messages is
    --  Contains Gdk color for the foreground of the node.
    Node_Tooltip_Column    : constant Glib.Gint := 9;
    --  Contains tooltip text for the node.
-   Action_Pixbuf_Column   : constant Glib.Gint := 10;
+   Node_Mark_Column       : constant Glib.Gint := 10;
+   --  Contains editor's mark of the current position of the location in the
+   --  source file.
+   Action_Pixbuf_Column   : constant Glib.Gint := 11;
    --  Contains pixmuf object of the associated action.
-   Total_Columns          : constant Glib.Gint := 11;
+   Total_Columns          : constant Glib.Gint := 13;
    --  Total number of columns.
 
    --------------------------
@@ -226,6 +235,8 @@ package GPS.Kernel.Messages is
    --  to break circular dependency between Kernel and Messages_Container.
 
 private
+
+   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
 
    type Node_Record is tagged;
    type Node_Access is access all Node_Record'Class;
@@ -270,6 +281,7 @@ private
          when Node_Message =>
             Line   : Natural;
             Column : Basic_Types.Visible_Column_Type;
+            Mark   : Editor_Mark_Access;
       end case;
    end record;
 

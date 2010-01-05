@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ package body GPS.Kernel.Messages is
    use Ada.Strings.Unbounded;
    use Category_Maps;
    use File_Maps;
+   use GPS.Editors;
    use Listener_Vectors;
    use Model_Vectors;
    use Node_Vectors;
@@ -89,6 +90,19 @@ package body GPS.Kernel.Messages is
 
       return To_Address (Result);
    end Create_Message_Container;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize (Self : not null access Abstract_Message) is
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Editor_Mark'Class, Editor_Mark_Access);
+
+   begin
+      Free (Self.Mark);
+   end Finalize;
 
    ------------------
    -- Get_Category --
@@ -276,6 +290,10 @@ package body GPS.Kernel.Messages is
    begin
       Self.Line := Line;
       Self.Column := Column;
+      Self.Mark :=
+        new Editor_Mark'Class'
+          (Container.Kernel.Get_Buffer_Factory.New_Mark
+               (File, Line, Integer (Column)));
 
       --  Resolve category node, create new one when there is no existent node
 
@@ -406,6 +424,10 @@ package body GPS.Kernel.Messages is
       Self.Corresponding_File := File;
       Self.Line := Line;
       Self.Column := Column;
+      Self.Mark :=
+        new Editor_Mark'Class'
+          (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
+               (File, Line, Integer (Column)));
 
       Self.Parent := Node_Access (Parent);
       Parent.Children.Append (Node_Access (Self));
@@ -611,6 +633,7 @@ package body GPS.Kernel.Messages is
                end loop;
             end;
 
+            Finalize (Message_Access (Message_Node));
             Free (Message_Node);
          end loop;
       end Delete_Messages;

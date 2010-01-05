@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,7 @@ with Gtk.Enums;
 with Gtk.Tree_Model.Utils;
 
 with GNATCOLL.VFS.GtkAda;
+with GPS.Editors.GtkAda;
 with String_Utils;
 
 package body GPS.Kernel.Messages.Classic_Models is
@@ -30,6 +31,8 @@ package body GPS.Kernel.Messages.Classic_Models is
    use Gdk.Pixbuf;
    use Gtk.Tree_Model;
    use Gtk.Widget;
+   use GPS.Editors;
+   use GPS.Editors.GtkAda;
    use String_Utils;
 
    function Create_Iter
@@ -205,6 +208,9 @@ package body GPS.Kernel.Messages.Classic_Models is
 
          when Node_Tooltip_Column =>
             return Glib.GType_String;
+
+         when Node_Mark_Column =>
+            return Get_Editor_Mark_Type;
 
          when Action_Pixbuf_Column =>
             return Gdk.Pixbuf.Get_Type;
@@ -533,6 +539,22 @@ package body GPS.Kernel.Messages.Classic_Models is
 
                      Set_String (Value, To_String (Markup));
                   end;
+            end case;
+
+         when Node_Mark_Column =>
+            Init (Value, Get_Editor_Mark_Type);
+
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  Set_Mark (Value, Nil_Editor_Mark);
+
+               when Node_Message =>
+                  if Node.Mark = null then
+                     Set_Mark (Value, Nil_Editor_Mark);
+
+                  else
+                     Set_Mark (Value, Node.Mark.all);
+                  end if;
             end case;
 
          when Action_Pixbuf_Column =>
