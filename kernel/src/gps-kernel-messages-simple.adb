@@ -16,10 +16,12 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+with Glib.Convert;
 
 package body GPS.Kernel.Messages.Simple is
 
    use Ada.Strings.Unbounded;
+   use Glib.Convert;
 
    ---------------------------
    -- Create_Simple_Message --
@@ -78,15 +80,17 @@ package body GPS.Kernel.Messages.Simple is
    is
    begin
       if Self.First > Self.Last then
-         return Self.Text;
+         return To_Unbounded_String (Escape_Text (To_String (Self.Text)));
 
       else
          return
-           Unbounded_Slice (Self.Text, 1, Self.First - 1)
-           & "<span color=""blue""><u>"
-           & Unbounded_Slice (Self.Text, Self.First, Self.Last)
-           & "</u></span>"
-           & Unbounded_Slice (Self.Text, Self.Last + 1, Length (Self.Text));
+           To_Unbounded_String
+             (Escape_Text (Slice (Self.Text, 1, Self.First - 1))
+              & "<span color=""blue""><u>"
+              & Escape_Text (Slice (Self.Text, Self.First, Self.Last))
+              & "</u></span>"
+              & Escape_Text
+                (Slice (Self.Text, Self.Last + 1, Length (Self.Text))));
       end if;
    end Get_Markup;
 
