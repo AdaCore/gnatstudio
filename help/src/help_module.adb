@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -947,7 +947,7 @@ package body Help_Module is
            (-") hosted on ") & Config.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
-         "(c) 2001-2009 AdaCore",
+         "(c) 2001-2010 AdaCore",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Current_Window (Kernel));
