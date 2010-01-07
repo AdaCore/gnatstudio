@@ -1506,9 +1506,12 @@ package body ALI_Parser is
       Is_Parent_LI : Boolean := False;
 
    begin
-      Trace (Me, "DEBUG: Locate_ALI " & (+Short_ALI_Filename)
-             & " in project "
-             & Display_Full_Name (Project_Path (Project)));
+      if Active (Me) then
+         Trace (Me, "DEBUG: Locate_ALI " & (+Short_ALI_Filename)
+                & " in project "
+                & Display_Full_Name (Project_Path (Project)));
+      end if;
+
       Predefined := False;
       LI_Filename := GNATCOLL.VFS.No_File;
 
@@ -1525,8 +1528,11 @@ package body ALI_Parser is
          while LI_Filename = GNATCOLL.VFS.No_File
            and then P /= No_Project
          loop
-            Trace (Me, "DEBUG: Locate_ALI, analyzing project "
-                   & Display_Full_Name (Project_Path (P)));
+            if Active (Me) then
+               Trace (Me, "DEBUG: Locate_ALI, analyzing project "
+                      & Display_Full_Name (Project_Path (P)));
+            end if;
+
             declare
                Last    : Integer := Short_ALI_Filename'Last - Extension'Length;
                Dot_Replacement : constant Filesystem_String :=
@@ -1798,9 +1804,12 @@ package body ALI_Parser is
    is
       Ext  : Project_Type;
    begin
-      Trace (Me, "DEBUG: LI_Filename_From_Source "
-             & Display_Full_Name (Source_Filename)
-             & " project=" & Display_Full_Name (Project_Path (Project)));
+      if Active (Me) then
+         Trace (Me, "DEBUG: LI_Filename_From_Source "
+                & Display_Full_Name (Source_Filename)
+                & " project=" & Display_Full_Name (Project_Path (Project)));
+      end if;
+
       --  Do we have a runtime file ?
 
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
@@ -1816,9 +1825,11 @@ package body ALI_Parser is
                return;
             end if;
 
-            Trace (Me, "DEBUG: "
-                & (+Get_ALI_Filename (Handler, Base_Name (Source_Filename)))
-                & " not found");
+            if Active (Me) then
+               Trace (Me, "DEBUG: "
+                 & (+Get_ALI_Filename (Handler, Base_Name (Source_Filename)))
+                 & " not found");
+            end if;
 
             --  If the source comes from an extended project, look for object
             --  files there in addition
@@ -1854,13 +1865,16 @@ package body ALI_Parser is
                   --  Thus, in addition to checking directly for an ALI file,
                   --  we also check for ALI file from the parent unit.
 
-                  Trace
-                    (Me, "DEBUG: looking for "
-                     & (+Get_ALI_Filename
-                       (Handler,
-                        Get_Filename_From_Unit
-                          (Project, Unit (Unit'First .. Last - 1), Unit_Body,
-                           Language => Ada_String))));
+                  if Active (Me) then
+                     Trace
+                       (Me, "DEBUG: looking for "
+                        & (+Get_ALI_Filename
+                          (Handler,
+                           Get_Filename_From_Unit
+                             (Project, Unit (Unit'First .. Last - 1),
+                              Unit_Body, Language => Ada_String))));
+                  end if;
+
                   Locate_ALI
                     (Handler,
                      Get_ALI_Filename
@@ -2047,9 +2061,11 @@ package body ALI_Parser is
         (Handler, Source_Filename, Project, LI_Name, Predefined);
 
       if LI_Name = GNATCOLL.VFS.No_File then
-         Trace (Me, "No LI found for "
-                & Display_Full_Name (Source_Filename)
-                & " in project " & Project_Name (Project));
+         if Active (Me) then
+            Trace (Me, "No LI found for "
+                   & Display_Full_Name (Source_Filename)
+                   & " in project " & Project_Name (Project));
+         end if;
 
          if File_Has_No_LI_Report /= null then
             Entities.Error (File_Has_No_LI_Report.all, Source);
