@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1506,7 +1506,11 @@ package body ALI_Parser is
       Is_Parent_LI : Boolean := False;
 
    begin
+      Trace (Me, "DEBUG: Locate_ALI " & (+Short_ALI_Filename)
+             & " in project "
+             & Display_Full_Name (Project_Path (Project)));
       Predefined := False;
+      LI_Filename := GNATCOLL.VFS.No_File;
 
       if P /= No_Project then
          --  Start searching in the extending projects, in case the file was
@@ -1518,7 +1522,11 @@ package body ALI_Parser is
 
          --  Compute the search path. If the objects path of the project is
          --  not null, then prepend it to the total search path.
-         while P /= No_Project loop
+         while LI_Filename = GNATCOLL.VFS.No_File
+           and then P /= No_Project
+         loop
+            Trace (Me, "DEBUG: Locate_ALI, analyzing project "
+                   & Display_Full_Name (Project_Path (P)));
             declare
                Last    : Integer := Short_ALI_Filename'Last - Extension'Length;
                Dot_Replacement : constant Filesystem_String :=
@@ -1535,6 +1543,15 @@ package body ALI_Parser is
                        (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
                         & Extension);
                   begin
+                     if Active (Me) then
+                        for Pa in Path'Range loop
+                           Trace (Me, "DEBUG: Locate_ALI File="
+                                  & (+File)
+                                  & " Path="
+                                  & Display_Full_Name (Path (Pa)));
+                        end loop;
+                     end if;
+
                      if Path'Length /= 0 then
                         LI_Filename := Locate_Regular_File (File, Path);
                      end if;
@@ -1559,6 +1576,9 @@ package body ALI_Parser is
       --  that is irrelevant: they must be in one of the projects' object_dir
 
       if LI_Filename = GNATCOLL.VFS.No_File then
+         Trace
+           (Me,
+            "DEBUG: Locate_ALI: file not found, checking in predefined path");
          declare
             Predefined_Object_Path : constant File_Array :=
               Get_Predefined_Object_Path (Handler.Registry);
@@ -1778,10 +1798,14 @@ package body ALI_Parser is
    is
       Ext  : Project_Type;
    begin
+      Trace (Me, "DEBUG: LI_Filename_From_Source "
+             & Display_Full_Name (Source_Filename)
+             & " project=" & Display_Full_Name (Project_Path (Project)));
       --  Do we have a runtime file ?
 
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
+            Trace (Me, "DEBUG: Unit_Body or separate");
             --  Check the most likely ALI file (<file>.ali)
             Locate_ALI
               (Handler,
@@ -1792,12 +1816,17 @@ package body ALI_Parser is
                return;
             end if;
 
+            Trace (Me, "DEBUG: "
+                & (+Get_ALI_Filename (Handler, Base_Name (Source_Filename)))
+                & " not found");
+
             --  If the source comes from an extended project, look for object
             --  files there in addition
 
             if Project /= No_Project then
                Ext := Extended_Project (Project);
                if Ext /= No_Project then
+                  Trace (Me, "DEBUG: checking again in extended project");
                   LI_Filename_From_Source
                     (Handler, Source_Filename, Ext, LI, Predefined);
 
@@ -1812,6 +1841,7 @@ package body ALI_Parser is
                  (Project, Source_Filename);
                Last : Integer := Unit'Last;
             begin
+               Trace (Me, "DEBUG: Unit name is " & Unit);
                while Last >= Unit'First
                  and then Unit (Last) /= '.'
                loop
@@ -1824,6 +1854,13 @@ package body ALI_Parser is
                   --  Thus, in addition to checking directly for an ALI file,
                   --  we also check for ALI file from the parent unit.
 
+                  Trace
+                    (Me, "DEBUG: looking for "
+                     & (+Get_ALI_Filename
+                       (Handler,
+                        Get_Filename_From_Unit
+                          (Project, Unit (Unit'First .. Last - 1), Unit_Body,
+                           Language => Ada_String))));
                   Locate_ALI
                     (Handler,
                      Get_ALI_Filename
@@ -1842,6 +1879,7 @@ package body ALI_Parser is
                   --  This is a little slower, therefore the above algorithm is
                   --  preferred.
 
+                  Trace (Me, "DEBUG: will Find_Multi_Unit_ALI");
                   LI := Find_Multi_Unit_ALI
                     (Handler, Source_Filename, Project);
                   Predefined := False;
