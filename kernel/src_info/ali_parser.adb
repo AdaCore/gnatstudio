@@ -1805,9 +1805,15 @@ package body ALI_Parser is
       Ext  : Project_Type;
    begin
       if Active (Me) then
-         Trace (Me, "DEBUG: LI_Filename_From_Source "
-                & Display_Full_Name (Source_Filename)
-                & " project=" & Display_Full_Name (Project_Path (Project)));
+         if Project = No_Project then
+            Trace (Me, "DEBUG: LI_Filename_From_Source "
+                   & Display_Full_Name (Source_Filename)
+                   & " no project");
+         else
+            Trace (Me, "DEBUG: LI_Filename_From_Source "
+                   & Display_Full_Name (Source_Filename)
+                   & " project=" & Display_Full_Name (Project_Path (Project)));
+         end if;
       end if;
 
       --  Do we have a runtime file ?
