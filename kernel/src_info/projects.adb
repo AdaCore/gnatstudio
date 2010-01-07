@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2009, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -348,7 +348,10 @@ package body Projects is
    is
       View : constant Prj.Project_Id := Get_View (Project);
    begin
-      if View = Prj.No_Project then
+      if Project.Node = Empty_Node then
+         return GNATCOLL.VFS.No_File;
+
+      elsif View = Prj.No_Project then
          --  View=Prj.No_Project case needed for the project wizard
 
          return To_Remote
