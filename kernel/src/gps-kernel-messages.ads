@@ -93,6 +93,8 @@ package GPS.Kernel.Messages is
    function Get_Parent
      (Self : not null access constant Abstract_Message'Class)
       return Message_Access;
+   --  For secondary message it returns parent message, for primary message it
+   --  returns null.
 
    procedure Set_Action
      (Self   : not null access Abstract_Message'Class;

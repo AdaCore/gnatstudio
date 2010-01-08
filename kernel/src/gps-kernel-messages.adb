@@ -322,7 +322,13 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return Message_Access is
    begin
-      return Message_Access (Self.Parent);
+      case Self.Level is
+         when Primary =>
+            return null;
+
+         when Secondary =>
+            return Message_Access (Self.Parent);
+      end case;
    end Get_Parent;
 
    --------------------------------
