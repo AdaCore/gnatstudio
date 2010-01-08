@@ -150,6 +150,7 @@ package body GPS.Kernel.Messages is
         new Ada.Unchecked_Deallocation (Editor_Mark'Class, Editor_Mark_Access);
 
    begin
+      Self.Mark.Delete;
       Free (Self.Mark);
       Free (Self.Action);
    end Finalize;
