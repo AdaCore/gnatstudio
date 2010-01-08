@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,10 +48,10 @@ package body GPS.Location_Model is
      (Style_Access, System.Address);
 
    procedure Remove_Line
-     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Model      : not null access Gtk_Tree_Model_Record'Class;
-      Loc_Iter   : Gtk_Tree_Iter;
-      Styles     : in out String_List.List);
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Model    : not null access Gtk_Tree_Model_Record'Class;
+      Loc_Iter : Gtk_Tree_Iter;
+      Styles   : in out String_List.List);
    --  Clear the marks and highlightings of one specific line.
    --  I826-008: Add used style to the list of style, they are used outside
    --  to do complete remove of all highlighted segments.
@@ -378,7 +378,7 @@ package body GPS.Location_Model is
             Category_Line_Column,
             Name & Img (Img'Last - 5 .. Img'Last));
 
-         --  Update the sorting order of the file's item.
+         --  Update the sorting order of the file's item
 
          while Get_Depth (Path) > 2 loop
             Dummy := Up (Path);
@@ -392,11 +392,7 @@ package body GPS.Location_Model is
 
             begin
                if Old = "000000" or else Old > Name then
-                  Set
-                    (Model,
-                     Parent,
-                     Category_Line_Column,
-                     Name);
+                  Set (Model, Parent, Category_Line_Column, Name);
                end if;
             end;
          end if;
@@ -555,8 +551,7 @@ package body GPS.Location_Model is
       File_Iter : Gtk_Tree_Iter;
       Line      : Natural;
       Column    : Natural := 0;
-      Loc_Iter  : out Gtk_Tree_Iter)
-   is
+      Loc_Iter  : out Gtk_Tree_Iter) is
    begin
       Loc_Iter := Model.Children (File_Iter);
 
@@ -664,7 +659,6 @@ package body GPS.Location_Model is
       Iter : Gtk_Tree_Iter;
 
    begin
-
       loop
          Iter := Self.Get_Iter_First;
          exit when Iter = Null_Iter;
@@ -820,10 +814,10 @@ package body GPS.Location_Model is
    -----------------
 
    procedure Remove_Line
-     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Model      : not null access Gtk_Tree_Model_Record'Class;
-      Loc_Iter   : Gtk_Tree_Iter;
-      Styles     : in out String_List.List)
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Model    : not null access Gtk_Tree_Model_Record'Class;
+      Loc_Iter : Gtk_Tree_Iter;
+      Styles   : in out String_List.List)
    is
       File_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                     Model.Parent (Loc_Iter);
