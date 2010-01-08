@@ -54,6 +54,12 @@ package GPS.Kernel.Messages is
 
    type Action_Item is access all GPS.Editors.Line_Information_Record;
 
+   type Unbounded_String_Array is
+     array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;
+
+   type Virtual_File_Array is
+     array (Positive range <>) of GNATCOLL.VFS.Virtual_File;
+
    ----------------------
    -- Abstract Message --
    ----------------------
@@ -67,6 +73,8 @@ package GPS.Kernel.Messages is
 
    subtype Primary_Abstract_Message is Abstract_Message (Primary);
    subtype Secondary_Abstract_Message is Abstract_Message (Secondary);
+
+   type Message_Array is array (Positive range <>) of Message_Access;
 
    function Get_Category
      (Self : not null access constant Abstract_Message'Class)
@@ -140,6 +148,26 @@ package GPS.Kernel.Messages is
      (Kernel : not null access Kernel_Handle_Record'Class)
       return not null Messages_Container_Access;
    --  Returns messages conntainer for the specified instance of the kernel.
+
+   function Get_Categories
+     (Self : not null access constant Messages_Container'Class)
+      return Unbounded_String_Array;
+   --  Returns list of all categories.
+
+   function Get_Files
+     (Self     : not null access constant Messages_Container'Class;
+      Category : Ada.Strings.Unbounded.Unbounded_String)
+      return Virtual_File_Array;
+   --  Returns list of files in the specified category. Empty array is returned
+   --  when there is not such category.
+
+   function Get_Messages
+     (Self     : not null access constant Messages_Container'Class;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      File     : GNATCOLL.VFS.Virtual_File)
+      return Message_Array;
+   --  Returns list of messages for the specified file in the specified
+   --  category. Returns empty list when there is no file or category.
 
    procedure Remove_All_Messages
      (Self : not null access Messages_Container'Class);

@@ -166,6 +166,24 @@ package body GPS.Kernel.Messages is
       return Self.Action;
    end Get_Action;
 
+   --------------------
+   -- Get_Categories --
+   --------------------
+
+   function Get_Categories
+     (Self : not null access constant Messages_Container'Class)
+      return Unbounded_String_Array
+   is
+      Result : Unbounded_String_Array (1 .. Natural (Self.Categories.Length));
+
+   begin
+      for J in Result'Range loop
+         Result (J) := Self.Categories.Element (J).Name;
+      end loop;
+
+      return Result;
+   end Get_Categories;
+
    ------------------
    -- Get_Category --
    ------------------
@@ -239,6 +257,40 @@ package body GPS.Kernel.Messages is
       end case;
    end Get_File;
 
+   ---------------
+   -- Get_Files --
+   ---------------
+
+   function Get_Files
+     (Self     : not null access constant Messages_Container'Class;
+      Category : Ada.Strings.Unbounded.Unbounded_String)
+      return Virtual_File_Array
+   is
+      Category_Position : constant Category_Maps.Cursor :=
+        Self.Category_Map.Find (Category);
+      Category_Node     : Node_Access;
+
+   begin
+      if Has_Element (Category_Position) then
+         Category_Node := Element (Category_Position);
+
+         declare
+            Result : Virtual_File_Array
+              (1 .. Natural (Category_Node.Children.Length));
+
+         begin
+            for J in Result'Range loop
+               Result (J) := Category_Node.Children.Element (J).File;
+            end loop;
+
+            return Result;
+         end;
+
+      else
+         return Virtual_File_Array'(1 .. 0 => No_File);
+      end if;
+   end Get_Files;
+
    ----------------
    -- Get_Markup --
    ----------------
@@ -303,6 +355,48 @@ package body GPS.Kernel.Messages is
 
       return null;
    end Get_Message_At;
+
+   ------------------
+   -- Get_Messages --
+   ------------------
+
+   function Get_Messages
+     (Self     : not null access constant Messages_Container'Class;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      File     : GNATCOLL.VFS.Virtual_File)
+      return Message_Array
+   is
+      Category_Position : constant Category_Maps.Cursor :=
+        Self.Category_Map.Find (Category);
+      Category_Node     : Node_Access;
+      File_Position     : File_Maps.Cursor;
+      File_Node         : Node_Access;
+
+   begin
+      if Has_Element (Category_Position) then
+         Category_Node := Element (Category_Position);
+         File_Position := Category_Node.File_Map.Find (File);
+
+         if Has_Element (File_Position) then
+            File_Node := Element (File_Position);
+
+            declare
+               Result : Message_Array
+                 (1 .. Natural (File_Node.Children.Length));
+
+            begin
+               for J in Result'Range loop
+                  Result (J) :=
+                    Message_Access (File_Node.Children.Element (J));
+               end loop;
+
+               return Result;
+            end;
+         end if;
+      end if;
+
+      return Message_Array'(1 .. 0 => null);
+   end Get_Messages;
 
    ----------------------------
    -- Get_Messages_Container --
