@@ -105,6 +105,9 @@ package GPS.Kernel.Messages is
       return Action_Item;
    --  Returns action associated with the message.
 
+   procedure Remove (Self : not null access Abstract_Message'Class);
+   --  Removes message and deallocate it.
+
    procedure Initialize
      (Self      : not null access Abstract_Message'Class;
       Container : not null Messages_Container_Access;
@@ -198,6 +201,10 @@ package GPS.Kernel.Messages is
       Message : not null access Abstract_Message'Class) is null;
 
    procedure Message_Property_Changed
+     (Self    : not null access Abstract_Listener;
+      Message : not null access Abstract_Message'Class) is null;
+
+   procedure Message_Removed
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) is null;
 

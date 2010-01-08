@@ -39,22 +39,33 @@ package body GPS.Kernel.Messages is
    procedure Notify_Listeners_About_Message_Added
      (Self    : not null access constant Messages_Container'Class;
       Message : not null access Abstract_Message'Class);
-   --  Call listeners to notify about add of message.
+   --  Calls listeners to notify about add of message.
 
    procedure Notify_Listeners_About_Message_Property_Changed
      (Self    : not null access constant Messages_Container'Class;
       Message : not null access Abstract_Message'Class);
-   --  Call listeners to notify about change of message's property.
+   --  Calls listeners to notify about change of message's property.
+
+   procedure Notify_Listeners_About_Message_Removed
+     (Self    : not null access constant Messages_Container'Class;
+      Message : not null access Abstract_Message'Class);
+   --  Calls listeners to notify about remove of message.
 
    procedure Notify_Models_About_Message_Added
      (Self    : not null access constant Messages_Container'Class;
       Message : not null access Abstract_Message'Class);
-   --  Call models to notify about add of the message.
+   --  Calls models to notify about add of the message.
 
    procedure Notify_Models_About_Message_Property_Changed
      (Self    : not null access constant Messages_Container'Class;
       Message : not null access Abstract_Message'Class);
-   --  Call models to notify about change of message's property.
+   --  Calls models to notify about change of message's property.
+
+   procedure Notify_Models_About_Message_Removed
+     (Self   : not null access constant Messages_Container'Class;
+      Parent : not null access Node_Record'Class;
+      Index  : Positive);
+   --  Calls models to notify about remove of the message.
 
    procedure Remove_Category
      (Self              : not null access Messages_Container'Class;
@@ -513,6 +524,30 @@ package body GPS.Kernel.Messages is
       end loop;
    end Notify_Listeners_About_Message_Property_Changed;
 
+   --------------------------------------------
+   -- Notify_Listeners_About_Message_Removed --
+   --------------------------------------------
+
+   procedure Notify_Listeners_About_Message_Removed
+     (Self    : not null access constant Messages_Container'Class;
+      Message : not null access Abstract_Message'Class)
+   is
+      Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+
+   begin
+      while Has_Element (Listener_Position) loop
+         begin
+            Element (Listener_Position).Message_Removed (Message);
+
+         exception
+            when E : others =>
+               Trace (Exception_Handle, E);
+         end;
+
+         Next (Listener_Position);
+      end loop;
+   end Notify_Listeners_About_Message_Removed;
+
    ---------------------------------------
    -- Notify_Models_About_Message_Added --
    ---------------------------------------
@@ -548,6 +583,25 @@ package body GPS.Kernel.Messages is
       end loop;
    end Notify_Models_About_Message_Property_Changed;
 
+   -----------------------------------------
+   -- Notify_Models_About_Message_Removed --
+   -----------------------------------------
+
+   procedure Notify_Models_About_Message_Removed
+     (Self   : not null access constant Messages_Container'Class;
+      Parent : not null access Node_Record'Class;
+      Index  : Positive)
+   is
+      Model_Position : Model_Vectors.Cursor := Self.Models.First;
+
+   begin
+      while Has_Element (Model_Position) loop
+         Element (Model_Position).Message_Removed
+           (Node_Access (Parent), Index);
+         Next (Model_Position);
+      end loop;
+   end Notify_Models_About_Message_Removed;
+
    -----------------------
    -- Register_Listener --
    -----------------------
@@ -564,6 +618,35 @@ package body GPS.Kernel.Messages is
          Self.Listeners.Append (Listener);
       end if;
    end Register_Listener;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (Self : not null access Abstract_Message'Class) is
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Abstract_Message'Class, Message_Access);
+
+      Container : constant Messages_Container_Access := Self.Get_Container;
+      Parent    : constant Node_Access := Self.Parent;
+      Index     : constant Positive :=
+        Parent.Children.Find_Index (Node_Access (Self));
+      Aux       : Message_Access := Message_Access (Self);
+
+   begin
+      while not Self.Children.Is_Empty loop
+         Message_Access (Self.Children.Last_Element).Remove;
+      end loop;
+
+      Container.Notify_Listeners_About_Message_Removed (Self);
+      Parent.Children.Delete (Index);
+      Container.Notify_Models_About_Message_Removed (Parent, Index);
+
+      Self.Finalize;
+      Free (Aux);
+   end Remove;
 
    -------------------------
    -- Remove_All_Messages --
@@ -672,44 +755,12 @@ package body GPS.Kernel.Messages is
       procedure Free is
         new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
-      procedure Delete_Messages (Parent_Node : Node_Access);
-
-      ---------------------
-      -- Delete_Messages --
-      ---------------------
-
-      procedure Delete_Messages (Parent_Node : Node_Access) is
-         Message_Node : Node_Access;
-
-      begin
-         while not Parent_Node.Children.Is_Empty loop
-            Message_Node := Parent_Node.Children.Last_Element;
-
-            Delete_Messages (Message_Node);
-
-            Parent_Node.Children.Delete_Last;
-
-            declare
-               Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-            begin
-               while Has_Element (Model_Position) loop
-                  Element (Model_Position).Message_Removed
-                    (Parent_Node,
-                     Natural (Parent_Node.Children.Length) + 1);
-                  Next (Model_Position);
-               end loop;
-            end;
-
-            Finalize (Message_Access (Message_Node));
-            Free (Message_Node);
-         end loop;
-      end Delete_Messages;
-
    begin
       --  Remove messages
 
-      Delete_Messages (File_Node);
+      while not File_Node.Children.Is_Empty loop
+         Message_Access (File_Node.Children.Last_Element).Remove;
+      end loop;
 
       Category_Node.File_Map.Delete (File_Position);
       Category_Node.Children.Delete (File_Index);
