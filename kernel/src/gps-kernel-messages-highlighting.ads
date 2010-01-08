@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 --  This package implements integration between message container and
 --  source editor to handle message highlighting. It is good candidate
 --  to be moved to sourc editor in the future, but it uses direct access
@@ -29,9 +30,9 @@ package GPS.Kernel.Messages.Highlighting is
 private
 
    --  I826-008 workaround: we manage the set of all styles used per file per
-   --  category to unhighlight all occurences of what styles and avoid
+   --  category to unhighlight all occurrences of what styles and avoid
    --  potencial glitches.
-   --  XXX It is not implemented now.
+   --  ??? Not implemented yet.
 
    type Highlighting_Manager
      (Kernel : not null access Kernel_Handle_Record'Class) is
