@@ -236,8 +236,9 @@ package GPS.Kernel.Messages is
       Message : not null access Abstract_Message'Class) is null;
 
    procedure Message_Property_Changed
-     (Self    : not null access Abstract_Listener;
-      Message : not null access Abstract_Message'Class) is null;
+     (Self     : not null access Abstract_Listener;
+      Message  : not null access Abstract_Message'Class;
+      Property : String) is null;
 
    procedure Message_Removed
      (Self    : not null access Abstract_Listener;

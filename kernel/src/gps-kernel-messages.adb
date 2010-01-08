@@ -42,8 +42,9 @@ package body GPS.Kernel.Messages is
    --  Calls listeners to notify about add of message.
 
    procedure Notify_Listeners_About_Message_Property_Changed
-     (Self    : not null access constant Messages_Container'Class;
-      Message : not null access Abstract_Message'Class);
+     (Self     : not null access constant Messages_Container'Class;
+      Message  : not null access Abstract_Message'Class;
+      Property : String);
    --  Calls listeners to notify about change of message's property.
 
    procedure Notify_Listeners_About_Message_Removed
@@ -669,15 +670,17 @@ package body GPS.Kernel.Messages is
    -----------------------------------------------------
 
    procedure Notify_Listeners_About_Message_Property_Changed
-     (Self    : not null access constant Messages_Container'Class;
-      Message : not null access Abstract_Message'Class)
+     (Self     : not null access constant Messages_Container'Class;
+      Message  : not null access Abstract_Message'Class;
+      Property : String)
    is
       Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
    begin
       while Has_Element (Listener_Position) loop
          begin
-            Element (Listener_Position).Message_Property_Changed (Message);
+            Element (Listener_Position).Message_Property_Changed
+              (Message, Property);
 
          exception
             when E : others =>
@@ -988,7 +991,8 @@ package body GPS.Kernel.Messages is
       Free (Self.Action);
       Self.Action := Action;
 
-      Container.Notify_Listeners_About_Message_Property_Changed (Self);
+      Container.Notify_Listeners_About_Message_Property_Changed
+        (Self, "action");
       Container.Notify_Models_About_Message_Property_Changed (Self);
    end Set_Action;
 
