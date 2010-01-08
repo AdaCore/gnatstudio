@@ -212,42 +212,45 @@ package GPS.Kernel.Messages is
    -- Gtk+ Tree Model --
    ---------------------
 
-   Category_Column        : constant Glib.Gint := 0;
+   Category_Column           : constant Glib.Gint := 0;
    --  Contains name of the category.
-   Subcategory_Column     : constant Glib.Gint := 1;
+   Subcategory_Column        : constant Glib.Gint := 1;
    --  Contains name of the subcategory. Not implemented for now.
-   File_Column            : constant Glib.Gint := 2;
+   File_Column               : constant Glib.Gint := 2;
    --  Contains name of the file in which message's location placed. For
    --  category and subcategory items the value is No_File. Note: for
    --  secondary messages it returns file where secondary location located,
    --  which can be differ from the file for parent's primary message.
-   Line_Column            : constant Glib.Gint := 3;
+   Line_Column               : constant Glib.Gint := 3;
    --  Contains line number of the message. For category/subcategory/file
    --  level nodes the value -1 is used.
-   Column_Column          : constant Glib.Gint := 4;
+   Column_Column             : constant Glib.Gint := 4;
    --  Contains column number of the message. For category/subcategory/file
    --  level nodes the value -1 os used.
-   Text_Column            : constant Glib.Gint := 5;
+   Text_Column               : constant Glib.Gint := 5;
    --  Contains plain text of the message.
-   Node_Icon_Column       : constant Glib.Gint := 6;
+   Node_Icon_Column          : constant Glib.Gint := 6;
    --  Contains icon for the node.
-   Node_Markup_Column     : constant Glib.Gint := 7;
+   Node_Markup_Column        : constant Glib.Gint := 7;
    --  Contains markup of the node. Markup includes line:column information
    --  and text of the message with potential highlighting of some parts
    --  (secondary locations for example) for messages nodes, basename of the
    --  file for file nodes and category's name for category node.
-   Node_Foreground_Column : constant Glib.Gint := 8;
+   Node_Foreground_Column    : constant Glib.Gint := 8;
    --  Contains Gdk color for the foreground of the node.
-   Node_Tooltip_Column    : constant Glib.Gint := 9;
+   Node_Tooltip_Column       : constant Glib.Gint := 9;
    --  Contains tooltip text for the node.
-   Node_Mark_Column       : constant Glib.Gint := 10;
+   Node_Mark_Column          : constant Glib.Gint := 10;
    --  Contains editor's mark of the current position of the location in the
    --  source file.
-   Action_Pixbuf_Column   : constant Glib.Gint := 11;
+   Action_Pixbuf_Column      : constant Glib.Gint := 11;
    --  Contains pixmuf object of the associated action.
-   Action_Command_Column  : constant Glib.Gint := 12;
+   Action_Command_Column     : constant Glib.Gint := 12;
    --  Contains command to be executed on action.
-   Total_Columns          : constant Glib.Gint := 13;
+   Number_Of_Children_Column : constant Glib.Gint := 13;
+   --  Contains number of children items. This number is useful for filtering
+   --  purpose because it contains unmodified number of children items.
+   Total_Columns             : constant Glib.Gint := 14;
    --  Total number of columns.
 
    --------------------------
@@ -292,8 +295,9 @@ private
    --  which is publicly visible as base for concrete types for messages.
 
    type Node_Record (Kind : Node_Kinds) is tagged limited record
-      Parent   : Node_Access;
-      Children : Node_Vectors.Vector;
+      Parent        : Node_Access;
+      Children      : Node_Vectors.Vector;
+      Message_Count : Natural;
 
       case Kind is
          when Node_Category =>

@@ -220,6 +220,9 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Action_Command_Column =>
             return Glib.GType_Pointer;
 
+         when Number_Of_Children_Column =>
+            return Glib.GType_Int;
+
          when others =>
             return Glib.GType_Invalid;
       end case;
@@ -589,6 +592,10 @@ package body GPS.Kernel.Messages.Classic_Models is
                when Node_Message =>
                   Set_Address (Value, To_Address (Node.Action));
             end case;
+
+         when Number_Of_Children_Column =>
+            Init (Value, Glib.GType_Int);
+            Set_Int (Value, Gint (Node.Message_Count));
 
          when others =>
             null;

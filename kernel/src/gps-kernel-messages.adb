@@ -81,6 +81,14 @@ package body GPS.Kernel.Messages is
       File_Node     : in out Node_Access);
    --  Removes specified file and all underling entities.
 
+   procedure Increment_Message_Counters
+     (Self : not null access Abstract_Message'Class);
+   --  Increments messages counters on parent nodes.
+
+   procedure Decrement_Message_Counters
+     (Self : not null access Abstract_Message'Class);
+   --  Decrements messages counters on parent nodes.
+
    function Get_Container
      (Self : not null access constant Abstract_Message'Class)
       return not null Messages_Container_Access;
@@ -115,6 +123,22 @@ package body GPS.Kernel.Messages is
 
       return To_Address (Result);
    end Create_Message_Container;
+
+   --------------------------------
+   -- Decrement_Message_Counters --
+   --------------------------------
+
+   procedure Decrement_Message_Counters
+     (Self : not null access Abstract_Message'Class)
+   is
+      Node : Node_Access := Self.Parent;
+
+   begin
+      while Node /= null loop
+         Node.Message_Count := Node.Message_Count - 1;
+         Node := Node.Parent;
+      end loop;
+   end Decrement_Message_Counters;
 
    --------------
    -- Finalize --
@@ -301,6 +325,22 @@ package body GPS.Kernel.Messages is
       return Message_Access (Self.Parent);
    end Get_Parent;
 
+   --------------------------------
+   -- Increment_Message_Counters --
+   --------------------------------
+
+   procedure Increment_Message_Counters
+     (Self : not null access Abstract_Message'Class)
+   is
+      Node : Node_Access := Self.Parent;
+
+   begin
+      while Node /= null loop
+         Node.Message_Count := Node.Message_Count + 1;
+         Node := Node.Parent;
+      end loop;
+   end Increment_Message_Counters;
+
    ----------------
    -- Initialize --
    ----------------
@@ -325,6 +365,7 @@ package body GPS.Kernel.Messages is
       File_Node         : Node_Access;
 
    begin
+      Self.Message_Count := 0;
       Self.Line := Line;
       Self.Column := Column;
       Self.Mark :=
@@ -340,12 +381,13 @@ package body GPS.Kernel.Messages is
       else
          Category_Node :=
            new Node_Record'
-             (Kind      => Node_Category,
-              Parent    => null,
-              Children  => Node_Vectors.Empty_Vector,
-              Container => Container,
-              Name      => Category_Name,
-              File_Map  => File_Maps.Empty_Map);
+             (Kind          => Node_Category,
+              Parent        => null,
+              Children      => Node_Vectors.Empty_Vector,
+              Message_Count => 0,
+              Container     => Container,
+              Name          => Category_Name,
+              File_Map      => File_Maps.Empty_Map);
          Container.Categories.Append (Category_Node);
          Container.Category_Map.Insert (Category_Name, Category_Node);
 
@@ -392,10 +434,11 @@ package body GPS.Kernel.Messages is
       else
          File_Node :=
            new Node_Record'
-             (Kind     => Node_File,
-              Parent   => Category_Node,
-              Children => Node_Vectors.Empty_Vector,
-              File     => File);
+             (Kind          => Node_File,
+              Parent        => Category_Node,
+              Children      => Node_Vectors.Empty_Vector,
+              Message_Count => 0,
+              File          => File);
          Category_Node.Children.Append (File_Node);
          Category_Node.File_Map.Insert (File, File_Node);
 
@@ -437,6 +480,10 @@ package body GPS.Kernel.Messages is
       Self.Parent := File_Node;
       File_Node.Children.Append (Node_Access (Self));
 
+      --  Update message counters
+
+      Self.Increment_Message_Counters;
+
       --  Notify listeners
 
       Container.Notify_Listeners_About_Message_Added (Self);
@@ -461,6 +508,7 @@ package body GPS.Kernel.Messages is
       Self.Corresponding_File := File;
       Self.Line := Line;
       Self.Column := Column;
+      Self.Message_Count := 0;
       Self.Mark :=
         new Editor_Mark'Class'
           (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
@@ -468,6 +516,10 @@ package body GPS.Kernel.Messages is
 
       Self.Parent := Node_Access (Parent);
       Parent.Children.Append (Node_Access (Self));
+
+      --  Update messages counters
+
+      Self.Increment_Message_Counters;
 
       --  Notify listeners and models
 
@@ -641,6 +693,7 @@ package body GPS.Kernel.Messages is
       end loop;
 
       Container.Notify_Listeners_About_Message_Removed (Self);
+      Self.Decrement_Message_Counters;
       Parent.Children.Delete (Index);
       Container.Notify_Models_About_Message_Removed (Parent, Index);
 
