@@ -53,7 +53,7 @@ MA 02111-1307, USA.
       return Token; \
    }
 
-int (*Paf_Word) (char *word,int len,char **parameter_list,char **macro);
+extern int (*Paf_Word) (char *word,int len,char **parameter_list,char **macro);
 
 static SearchTable *pbtrMacro;
 static unsigned char *yyptr;
