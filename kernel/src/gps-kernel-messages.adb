@@ -224,6 +224,17 @@ package body GPS.Kernel.Messages is
       return Gtk.Tree_Model.Gtk_Tree_Model (Self.Models.First_Element);
    end Get_Classic_Tree_Model;
 
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column
+     (Self : not null access constant Abstract_Message'Class)
+      return Basic_Types.Visible_Column_Type is
+   begin
+      return Self.Column;
+   end Get_Column;
+
    -------------------
    -- Get_Container --
    -------------------
@@ -323,6 +334,17 @@ package body GPS.Kernel.Messages is
    begin
       return Self.Style;
    end Get_Highlighting_Style;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line
+     (Self : not null access constant Abstract_Message'Class)
+      return Positive is
+   begin
+      return Self.Line;
+   end Get_Line;
 
    ----------------
    -- Get_Markup --

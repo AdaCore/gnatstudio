@@ -88,6 +88,16 @@ package GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return GNATCOLL.VFS.Virtual_File;
 
+   function Get_Line
+     (Self : not null access constant Abstract_Message'Class)
+      return Positive;
+   --  Returns the line number of the original location of the message
+
+   function Get_Column
+     (Self : not null access constant Abstract_Message'Class)
+      return Basic_Types.Visible_Column_Type;
+   --  Returns the column number of the original location of the message
+
    function Get_Text
      (Self : not null access constant Abstract_Message)
       return Ada.Strings.Unbounded.Unbounded_String is abstract;
