@@ -225,18 +225,6 @@ package GPS.Kernel.Messages is
    --  Removes all messages for specified file in the specified category.
    --  Do nothing when there is no such category or file.
 
-   function Get_Message_At
-     (Self     : not null access constant Messages_Container'Class;
-      Category : String;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Natural;
-      Column   : Basic_Types.Visible_Column_Type)
-      return Message_Access;
-   --  Returns last inserted mesage at the specified location if any;
-   --  otherwise returns null.
-   --  XXX It is used for implementation of legacy API, need to be reviewed.
-   --  Please, avoid use of it or change this comment.
-
    function Get_Classic_Tree_Model
      (Self : not null access constant Messages_Container'Class)
       return Gtk.Tree_Model.Gtk_Tree_Model;
