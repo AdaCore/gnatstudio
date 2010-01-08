@@ -484,7 +484,8 @@ class Tip:
 
         self.results = results
 
-        background = gtk.gdk.color_parse ("#FFFFE0")
+        border     = gtk.gdk.color_parse ("#6897CB") # GPS blue
+        background = gtk.gdk.color_parse ("#FFFFE0") # light yellow
 
         window = gtk.Window()
         self.window = window
@@ -496,14 +497,17 @@ class Tip:
             window.set_transient_for (parent)
 
         window.set_position (gtk.WIN_POS_CENTER_ON_PARENT)
-        window.modify_bg (gtk.STATE_NORMAL, background)
+        window.modify_bg (gtk.STATE_NORMAL, border)
 
-        frame = gtk.Frame()
-        frame.set_shadow_type (gtk.SHADOW_OUT)
-        window.add (frame)
+        # EventBox for the blue frame
+
+        ebox = gtk.EventBox()
+        ebox.modify_bg(gtk.STATE_NORMAL, background)
+        ebox.set_border_width (5)
+        window.add(ebox)
 
         vbox = gtk.VBox()
-        frame.add (vbox)
+        ebox.add (vbox)
 
         # window title
 
