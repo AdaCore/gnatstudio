@@ -240,6 +240,17 @@ package body GPS.Kernel.Messages is
       end case;
    end Get_Container;
 
+   ---------------------
+   -- Get_Editor_Mark --
+   ---------------------
+
+   function Get_Editor_Mark
+     (Self : not null access constant Abstract_Message'Class)
+      return GPS.Editors.Editor_Mark'Class is
+   begin
+      return Self.Mark.all;
+   end Get_Editor_Mark;
+
    --------------
    -- Get_File --
    --------------

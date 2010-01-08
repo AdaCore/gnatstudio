@@ -115,6 +115,11 @@ package GPS.Kernel.Messages is
       return Action_Item;
    --  Returns action associated with the message.
 
+   function Get_Editor_Mark
+     (Self : not null access constant Abstract_Message'Class)
+      return GPS.Editors.Editor_Mark'Class;
+   --  Returns editor's mark of the current location of the message.
+
    procedure Remove (Self : not null access Abstract_Message'Class);
    --  Removes message and deallocate it.
 
