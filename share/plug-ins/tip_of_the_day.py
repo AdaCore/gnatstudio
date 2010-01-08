@@ -596,7 +596,6 @@ class Tip:
         next_button.connect ("clicked", self.on_next_button)
         prev_button.connect ("clicked", self.on_prev_button)
 
-
 # Register preferences
 
 GPS.Preference ("General/Display-Tip-Of-The-Day").create (
