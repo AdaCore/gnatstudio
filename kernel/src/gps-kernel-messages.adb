@@ -303,6 +303,27 @@ package body GPS.Kernel.Messages is
       end if;
    end Get_Files;
 
+   -----------------------------
+   -- Get_Highlighting_Length --
+   -----------------------------
+
+   function Get_Highlighting_Length
+     (Self : not null access constant Abstract_Message'Class) return Natural is
+   begin
+      return Self.Length;
+   end Get_Highlighting_Length;
+
+   ----------------------------
+   -- Get_Highlighting_Style --
+   ----------------------------
+
+   function Get_Highlighting_Style
+     (Self : not null access constant Abstract_Message'Class)
+      return GPS.Kernel.Styles.Style_Access is
+   begin
+      return Self.Style;
+   end Get_Highlighting_Style;
+
    ----------------
    -- Get_Markup --
    ----------------
@@ -995,6 +1016,39 @@ package body GPS.Kernel.Messages is
         (Self, "action");
       Container.Notify_Models_About_Message_Property_Changed (Self);
    end Set_Action;
+
+   ----------------------
+   -- Set_Highlighting --
+   ----------------------
+
+   procedure Set_Highlighting
+     (Self   : not null access Abstract_Message'Class;
+      Style  : GPS.Kernel.Styles.Style_Access;
+      Length : Positive)
+   is
+   begin
+      Self.Style := Style;
+      Self.Length := Length;
+
+      Self.Get_Container.Notify_Listeners_About_Message_Property_Changed
+        (Self, "highlighting");
+   end Set_Highlighting;
+
+   ----------------------
+   -- Set_Highlighting --
+   ----------------------
+
+   procedure Set_Highlighting
+     (Self  : not null access Abstract_Message'Class;
+      Style : GPS.Kernel.Styles.Style_Access)
+   is
+   begin
+      Self.Style := Style;
+      Self.Length := 0;
+
+      Self.Get_Container.Notify_Listeners_About_Message_Property_Changed
+        (Self, "highlighting");
+   end Set_Highlighting;
 
    -------------------------
    -- Unregister_Listener --

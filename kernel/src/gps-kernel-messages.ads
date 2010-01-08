@@ -40,6 +40,7 @@ with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
 with GNATCOLL.VFS;
 with GPS.Editors;
+with GPS.Kernel.Styles;
 
 package GPS.Kernel.Messages is
 
@@ -114,6 +115,29 @@ package GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return Action_Item;
    --  Returns action associated with the message.
+
+   procedure Set_Highlighting
+     (Self   : not null access Abstract_Message'Class;
+      Style  : GPS.Kernel.Styles.Style_Access;
+      Length : Positive);
+   --  Set highlighting style and span to be used in the editor to highlight
+   --  corresponding location.
+
+   procedure Set_Highlighting
+     (Self  : not null access Abstract_Message'Class;
+      Style : GPS.Kernel.Styles.Style_Access);
+   --  Set style for line highlightinh in the editor.
+
+   function Get_Highlighting_Style
+     (Self : not null access constant Abstract_Message'Class)
+      return GPS.Kernel.Styles.Style_Access;
+   --  Returns highlighting style to be used by source editor to highlight
+   --  message.
+
+   function Get_Highlighting_Length
+     (Self : not null access constant Abstract_Message'Class) return Natural;
+   --  Returns length of highlighting. Zero length means all line must be
+   --  highlighted.
 
    function Get_Editor_Mark
      (Self : not null access constant Abstract_Message'Class)
@@ -349,6 +373,8 @@ private
             Column : Basic_Types.Visible_Column_Type;
             Mark   : Editor_Mark_Access;
             Action : Action_Item;
+            Style  : GPS.Kernel.Styles.Style_Access;
+            Length : Natural := 0;
       end case;
    end record;
 
