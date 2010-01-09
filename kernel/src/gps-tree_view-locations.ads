@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,11 +96,10 @@ private
       --  Renderer for location and its text
 
       On_Row_Expanded_Path    : Gtk.Tree_Model.Gtk_Tree_Path;
-      On_Row_Expanded_Iter    : Gtk.Tree_Model.Gtk_Tree_Iter;
       On_Row_Expanded_Handler : Glib.Main.G_Source_Id :=
         Glib.Main.No_Source_Id;
-      --  Context for scrolling after node expansion. Path and Iter point to
-      --  top expanded node. Handler is a Gtk+ idle handler.
+      --  Context for scrolling after node expansion. Path points to the top
+      --  expanded node. Handler is a Gtk+ idle handler.
    end record;
 
    overriding procedure On_Lowerst_Model_Row_Inserted

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -436,7 +436,7 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       Node : not null Node_Access)
    is
-      pragma Unreferenced (Node);
+      pragma Unreferenced (Node, Iter);
 
    begin
       --  Expansion of one node can raise an expansion of the large number of
@@ -445,7 +445,6 @@ package body GPS.Tree_View.Locations is
 
       if Self.On_Row_Expanded_Handler = No_Source_Id then
          Self.On_Row_Expanded_Path := Copy (Path);
-         Self.On_Row_Expanded_Iter := Iter;
          Self.On_Row_Expanded_Handler :=
            View_Idles.Idle_Add
              (On_Row_Expanded_Idle'Access, GPS_Locations_Tree_View (Self));
@@ -461,7 +460,9 @@ package body GPS.Tree_View.Locations is
    is
       Model      : Gtk_Tree_Model renames Self.Get_Model;
       Path       : Gtk_Tree_Path renames Self.On_Row_Expanded_Path;
-      Iter       : Gtk_Tree_Iter renames Self.On_Row_Expanded_Iter;
+      Iter       : Gtk_Tree_Iter := Model.Get_Iter (Path);
+      --  Iterator can't be stored and must be getted from the model because
+      --  it expires each time filter model is changed.
       Start_Path : Gtk_Tree_Path;
       End_Path   : Gtk_Tree_Path;
       Success    : Boolean;
@@ -492,7 +493,6 @@ package body GPS.Tree_View.Locations is
       Path_Free (Path);
 
       Self.On_Row_Expanded_Path := null;
-      Self.On_Row_Expanded_Iter := Null_Iter;
       Self.On_Row_Expanded_Handler := No_Source_Id;
 
       return False;
