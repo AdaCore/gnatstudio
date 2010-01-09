@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 
 with Gtk.Enums;
@@ -28,6 +29,7 @@ with Traces;
 
 package body GPS.Kernel.Messages.Classic_Models is
 
+   use Ada.Strings.Fixed;
    use Gdk.Color;
    use Gdk.Pixbuf;
    use Gtk.Tree_Model;
@@ -334,6 +336,52 @@ package body GPS.Kernel.Messages.Classic_Models is
       function To_Address is
         new Ada.Unchecked_Conversion (Action_Item, System.Address);
 
+      procedure Set_Node_Markup
+        (Value : in out Glib.Values.GValue;
+         Node  : not null Node_Access);
+      --  Sets node's markup into the value
+
+      ---------------------
+      -- Set_Node_Markup --
+      ---------------------
+
+      procedure Set_Node_Markup
+        (Value : in out Glib.Values.GValue;
+         Node  : not null Node_Access) is
+      begin
+         case Node.Kind is
+            when Node_Category =>
+               Set_String (Value, To_String (Node.Name));
+
+            when Node_File =>
+               Set_String (Value, String (Node.File.Base_Name));
+
+            when Node_Message =>
+               case Message_Access (Node).Level is
+                  when Primary =>
+                     declare
+                        Location : constant String :=
+                          Image (Node.Line)
+                          & ':' & Image (Natural (Node.Column));
+                        Length   : constant Natural :=
+                          Integer'Max (0, Location_Padding - Location'Length);
+
+                     begin
+                        Set_String
+                          (Value,
+                           "<b>" & Location & "</b>" & (Length * ' ')
+                           & To_String (Message_Access (Node).Get_Markup));
+                     end;
+
+                  when Secondary =>
+                     Set_String
+                       (Value,
+                        (Location_Padding * ' ')
+                        & To_String (Message_Access (Node).Get_Markup));
+               end case;
+         end case;
+      end Set_Node_Markup;
+
       Node : constant Node_Access := Self.Get_Node (Iter);
 
    begin
@@ -442,59 +490,7 @@ package body GPS.Kernel.Messages.Classic_Models is
 
          when Node_Markup_Column =>
             Init (Value, GType_String);
-
-            case Node.Kind is
-               when Node_Category =>
-                  Set_String (Value, To_String (Node.Name));
-
-               when Node_File =>
-                  Set_String (Value, String (Node.File.Base_Name));
-
-               when Node_Message =>
-                  case Message_Access (Node).Level is
-                     when Primary =>
-                        declare
-                           Location : constant String :=
-                             Image (Node.Line)
-                             & ':' & Image (Natural (Node.Column));
-                           Padding  : String (1 .. Location_Padding) :=
-                             (others => ' ');
-
-                        begin
-                           if Location'Length <= Padding'Length then
-                              Padding (1 .. Location'Length) := Location;
-                              Set_String
-                                (Value,
-                                 "<b>" & Padding & "</b> "
-                                 & To_String
-                                   (Abstract_Message'Class
-                                      (Node.all).Get_Markup));
-
-                           else
-                              Set_String
-                                (Value,
-                                 "<b>" & Location & "</b> "
-                                 & To_String
-                                   (Abstract_Message'Class
-                                      (Node.all).Get_Markup));
-                           end if;
-                        end;
-
-                     when Secondary =>
-                        declare
-                           Padding : constant String (1 .. Location_Padding) :=
-                             (others => ' ');
-
-                        begin
-                           Set_String
-                             (Value,
-                              "<b>" & Padding & "</b> "
-                              & To_String
-                                (Abstract_Message'Class
-                                   (Node.all).Get_Markup));
-                        end;
-                  end case;
-            end case;
+            Set_Node_Markup (Value, Node);
 
          when Node_Foreground_Column =>
             Init (Value, Gdk_Color_Type);
