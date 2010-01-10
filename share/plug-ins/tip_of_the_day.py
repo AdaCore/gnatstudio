@@ -65,7 +65,7 @@ Tip: Highlight all occurrences of a word
 Img: tip_all_occurrences.png
 
 You'd like to highlight all occurrences of the current word in the editor?
-Enable the 'occurrences.py' plug-in in Tools->Plug-ins and then set a key
+Enable the <i>occurrences.py</i> plug-in in Tools->Plug-ins and then set a key
 short cut for the 'Mark Occurrences' action via the Edit->Key Shortcuts editor.
 
 Tip: Disable indentation temporarily
@@ -330,6 +330,11 @@ automatically by going to Edit->Preferences, select Debugger page and enable
 the <i>Break on exceptions</i> preference.
 Alternatively you can also type the <i>break exception</i> command directly
 in the debugger console.
+
+Tip: Copy/Paste contextual menus
+
+You can add Cut/Copy/Paste menus to the Editor's contextual menu by
+going to Tools->Plug-ins and enable the <i>copy_paste.py</i> plug-in.
 
 Tip: Your tip here
 
