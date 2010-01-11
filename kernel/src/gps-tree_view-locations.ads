@@ -40,6 +40,7 @@
 with Glib;
 private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
+with Gtk.Tree_Model_Filter;
 with Gtk.Tree_View_Column;
 
 package GPS.Tree_View.Locations is
@@ -50,16 +51,15 @@ package GPS.Tree_View.Locations is
    type GPS_Locations_Tree_View is
      access all GPS_Locations_Tree_View_Record'Class;
 
-   procedure Gtk_New (Object : in out GPS_Locations_Tree_View);
    procedure Gtk_New
      (Object : in out GPS_Locations_Tree_View;
-      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
+      Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
+      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Initialize
-     (Self : not null access GPS_Locations_Tree_View_Record'Class);
-   procedure Initialize
-     (Self  : not null access GPS_Locations_Tree_View_Record'Class;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
+     (Self   : not null access GPS_Locations_Tree_View_Record'Class;
+      Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
+      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model);
 
    Signal_Action_Clicked   : constant Glib.Signal_Name;
    --  Emitted on click in action column.
@@ -117,5 +117,11 @@ private
       Node : not null Node_Access);
    --  Registers idle callback to scroll view to make visible the first child
    --  node.
+
+   overriding function To_Lowerst_Model_Iter
+     (Self : not null access GPS_Locations_Tree_View_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Iter;
+   --  Converts iterator from the view's source model to lowerst model.
 
 end GPS.Tree_View.Locations;

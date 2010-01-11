@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,38 +20,45 @@
 --  state of the nodes between collapse/expand operation on the parent node;
 --  filtering out/in and resorting.
 --
---  The some limitation of the current implementation is support for
---  limited number of classes of intermediate models. Right now, only
---  Gtk_Tree_Model_Filter and Gtk_Tree_Model_Sort can be used.
+--  Application must define derived type to provide implementation of two
+--  abstract subprograms to convert iterator from view's source model to
+--  lowerst model and backward.
+--
+--  To properly initialize view, call to Initialize must be done first and
+--  reference to lowerst model passed to it; after when stack of intermediate
+--  models can be sreated and view's source model must be setted by call to
+--  Set_Source_Model. Stack of source models can't be changed during view's
+--  life. Rationale: callbacks to lowerst model must be set before it is
+--  connected to intermediate model; but standard intermediate models allows
+--  to set its source model only at creation time.
 
 private with Ada.Containers.Vectors;
 
 private with Glib;
-private with Gtk.Handlers;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
 
 package GPS.Tree_View is
 
    type GPS_Tree_View_Record is
-     new Gtk.Tree_View.Gtk_Tree_View_Record with private;
+     abstract new Gtk.Tree_View.Gtk_Tree_View_Record with private;
 
    type GPS_Tree_View is access all GPS_Tree_View_Record'Class;
 
-   procedure Gtk_New (Object : out GPS_Tree_View);
-   procedure Gtk_New
-     (Object : out GPS_Tree_View;
-      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
-
-   procedure Initialize (Self : not null access GPS_Tree_View_Record'Class);
    procedure Initialize
-     (Self  : not null access GPS_Tree_View_Record'Class;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class);
+     (Self          : not null access GPS_Tree_View_Record'Class;
+      Lowerst_Model : not null Gtk.Tree_Model.Gtk_Tree_Model);
 
-   overriding procedure Set_Model
-     (Self  : access GPS_Tree_View_Record;
-      Model : Gtk.Tree_Model.Gtk_Tree_Model);
-   --  Set new source model. The stack of models must never be changed.
+   procedure Set_Source_Model
+     (Self         : access GPS_Tree_View_Record;
+      Source_Model : Gtk.Tree_Model.Gtk_Tree_Model);
+   --  Set source model. The stack of models must never be changed.
+
+   function To_Lowerst_Model_Iter
+     (Self : not null access GPS_Tree_View_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Iter is abstract;
+   --  Converts iterator from the view's source model to lowerst model.
 
 private
 
@@ -70,16 +77,13 @@ private
    end record;
 
    type GPS_Tree_View_Record is
-     new Gtk.Tree_View.Gtk_Tree_View_Record with record
-      Root                          : Node_Access;
+     abstract new Gtk.Tree_View.Gtk_Tree_View_Record with record
+      Lowerst_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      --  Lowerst model.
+
+      Root          : Node_Access;
       --  Root node. The tree reflects underling model, not the model directly
       --  connected to the view.
-
-      Row_Inserted_Handler          : Gtk.Handlers.Handler_Id;
-      Row_Deleted_Handler           : Gtk.Handlers.Handler_Id;
-      Row_Has_Child_Toggled_Handler : Gtk.Handlers.Handler_Id;
-      Rows_Reordered_Handler        : Gtk.Handlers.Handler_Id;
-      --  Handle for callacks connected to model
    end record;
 
    procedure On_Lowerst_Model_Row_Inserted

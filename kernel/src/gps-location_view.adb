@@ -258,14 +258,6 @@ package body GPS.Location_View is
       Self  : Location_View) return Boolean;
    --  Used by model filter for query item visibility
 
-   procedure Modify
-     (Self   : access Gtk_Tree_Model_Filter_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Value  : out Glib.Values.GValue;
-      Column : Gint);
-   --  Used by model filter for modify items (to substitute number of child
-   --  items in category and file).
-
    procedure On_Apply_Filter (Self : access Location_View_Record'Class);
    --  Called on "apply-filter" signal from filter panel
 
@@ -1128,13 +1120,10 @@ package body GPS.Location_View is
       --  Initialize the tree
 
       Gtk_New (View.Model, Kernel);
-      Gtk_New (View.Filter, View.Model);
-      View.Model.Unref;
+      Gtk_New (View.Tree, View.Filter, Gtk_Tree_Model (View.Model));
       Visible_Funcs.Set_Visible_Func
         (View.Filter, Is_Visible'Access, Location_View (View));
-      View.Filter.Set_Modify_Func (Columns_Types, Modify'Access);
-
-      Gtk_New (View.Tree, View.Filter);
+      View.Model.Unref;
       View.Filter.Unref;
       View.Tree.Set_Name ("Locations Tree");
       View.Tree.Sorting_Column.Clicked;
@@ -2250,52 +2239,5 @@ package body GPS.Location_View is
    begin
       return Self.Model;
    end Model;
-
-   ------------
-   -- Modify --
-   ------------
-
-   procedure Modify
-     (Self   : access Gtk_Tree_Model_Filter_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Value  : out Glib.Values.GValue;
-      Column : Gint)
-   is
-      Model : constant Gtk_Tree_Model := Self.Get_Model;
-      Aux   : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-
-   begin
-      Path := Self.Get_Path (Iter);
-      Self.Convert_Iter_To_Child_Iter (Aux, Iter);
-
-      if Column = Base_Name_Column
-        and then Get_Depth (Path) < 3
-      then
-         declare
-            Message : constant String :=
-                        Model.Get_String (Aux, Base_Name_Column);
-            Items   : constant Natural :=
-                        Natural (Model.Get_Int (Aux, Number_Of_Items_Column));
-            Img     : constant String := Image (Items);
-
-         begin
-            if Items = 1 then
-               Init (Value, GType_String);
-               Set_String (Value, Message & " (" & Img & (-" item") & ")");
-
-            else
-               Init (Value, GType_String);
-               Set_String (Value, Message & " (" & Img & (-" items") & ")");
-            end if;
-         end;
-
-      else
-         Unset (Value);
-         Model.Get_Value (Aux, Column, Value);
-      end if;
-
-      Path_Free (Path);
-   end Modify;
 
 end GPS.Location_View;
