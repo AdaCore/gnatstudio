@@ -140,4 +140,4 @@ NF-45-G626-028 Smart completion for pragmas and attributes (2010-01-11)
 
   GPS is now able to offer auto completions for Ada pragmas and attributes,
   including display of the corresponding documentation. This replaces the
-  plug-in predef_ada_entity_insertions.py, which has been removed.
+  predef_ada_entity_insertions.py plug-in which has been removed.
