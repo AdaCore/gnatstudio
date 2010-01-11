@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2006-2008, AdaCore               --
+--                    Copyright (C) 2006-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -68,8 +68,11 @@ package body Virtual_Lists.Extensive is
    overriding function Get
      (It : Extensive_List_Iterator) return Data_Type
    is
+      Result : Data_Type := Data (It.It);
    begin
-      return Data (It.It);
+      Copy_On_Get (Result);
+
+      return Result;
    end Get;
 
    ----------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,8 +30,7 @@ with Language;               use Language;
 with Language.Tree.Database; use Language.Tree.Database;
 with Basic_Types;            use Basic_Types;
 with Completion;             use Completion;
-
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
 
 package Engine_Wrappers is
 
@@ -146,7 +145,7 @@ package Engine_Wrappers is
    --  Iterator
 
    type Entity_Iterator is new Root_Iterator with record
-      I : Declaration_Iterator;
+      I : Ada_Semantic_Tree.Entity_Iterator;
    end record;
 
    overriding function At_End (Iter : Entity_Iterator) return Boolean;

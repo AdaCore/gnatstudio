@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,14 +20,16 @@
 --  This package provides the entry point registering all assistants needed
 --  by the ada queries.
 
-with Language.Tree.Database; use Language.Tree.Database;
-
 package Ada_Semantic_Tree.Assistants is
 
-   procedure Register_Ada_Assistants (Db : Construct_Database_Access);
+   procedure Register_Ada_Assistants
+     (Db                 : Construct_Database_Access;
+      Std_Entities_Files : Virtual_File);
    --  This procedure will register all the assistants needed to compute ada
    --  semantics. It has to be invoked before any file is added to the
    --  database, and as soon as possible in the assistant registration. No
    --  query should be made before the assistants have been registered.
+   --  If Std_Entities_Files is not No_File, then it should be a path to the
+   --  xml file containing pramas / attributes descriptions.
 
 end Ada_Semantic_Tree.Assistants;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,7 @@ with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
 with Ada_Semantic_Tree.List_Resolver;
 use Ada_Semantic_Tree.List_Resolver;
+with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
 
 private with Completion.History;
@@ -109,10 +110,10 @@ private
 
    type Construct_Completion_Proposal is new Storable_Proposal
    with record
-      Tree_Node     : Construct_Tree_Iterator;
-      File          : Structured_File_Access;
-      Is_All        : Boolean := False;
       Actual_Params : Actual_Parameter_Resolver_Access;
+      --  ??? maybe this can be retreived directly from the view...
+
+      View : Entity_View;
       Is_In_Call    : Boolean;
    end record;
 
@@ -184,7 +185,7 @@ private
    with record
       Context  : Visibility_Context;
       Resolver : Completion_Resolver_Access;
-      List     : Declaration_List;
+      List     : Entity_List;
    end record;
 
    overriding
@@ -208,9 +209,9 @@ private
    with record
       Context  : Visibility_Context;
       Resolver : Completion_Resolver_Access;
-      Iter     : Declaration_Iterator;
+      Iter     : Entity_Iterator;
 
-      Current_Decl : Declaration_View := Null_Declaration_View;
+      Current_Decl : Entity_View := Null_Entity_View;
 
       --  This is used when completing with possible parameters
       Params_Array : Formal_Parameter_Array_Access;

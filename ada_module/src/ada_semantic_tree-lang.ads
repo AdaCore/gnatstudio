@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,10 +16,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with Language;               use Language;
-with Language.Tree;          use Language.Tree;
-with Language.Tree.Database; use Language.Tree.Database;
 
 package Ada_Semantic_Tree.Lang is
 

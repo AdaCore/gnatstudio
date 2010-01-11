@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,6 @@ with GNAT.Strings;                 use GNAT.Strings;
 
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;
@@ -78,14 +77,16 @@ package body Ada_Semantic_Tree_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Std_Entities_Files : Virtual_File)
+   is
    begin
       Initialize
         (Get_Construct_Database (Kernel).all,
          new GPS_Buffer_Provider'
            (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
-        (Get_Construct_Database (Kernel));
+        (Get_Construct_Database (Kernel), Std_Entities_Files);
    end Register_Module;
 
 end Ada_Semantic_Tree_Module;

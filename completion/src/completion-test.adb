@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -306,7 +306,18 @@ procedure Completion.Test is
    begin
       Initialize (Construct_Db.all, new File_Buffer_Provider);
 
-      Ada_Semantic_Tree.Assistants.Register_Ada_Assistants (Construct_Db);
+      declare
+         File : constant Virtual_File := GNATCOLL.VFS.Create
+           ("../../../share/predefined_ada.xml");
+      begin
+         if File.Is_Regular_File then
+            Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
+              (Construct_Db, File);
+         else
+            Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
+              (Construct_Db, No_File);
+         end if;
+      end;
 
       if Project /= "" then
          Db := Create (New_Registry'Unchecked_Access);

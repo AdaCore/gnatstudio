@@ -1,0 +1,398 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                    Copyright (C) 2010, AdaCore                    --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glib.Convert; use Glib.Convert;
+
+with XML_Utils;   use XML_Utils;
+with XML_Parsers; use XML_Parsers;
+with Ada.Unchecked_Deallocation;
+with Tries;
+
+with Ada.Characters.Handling;
+use Ada.Characters.Handling;
+
+package body Ada_Semantic_Tree.Std_Entities is
+
+   Std_Entities_Assistant_Id : constant String := "STD_ENTITIES_ASSISTANT";
+
+   function Get_Index (Desc : Std_Description) return String_Access;
+
+   procedure Free (This : in out Std_Description);
+
+   package Std_Description_Tries is new Tries
+     (Std_Description, null, Get_Index);
+
+   type Std_Entities_Db is new Database_Assistant with record
+      Attributes_Trie : Std_Description_Tries.Trie_Tree_Access;
+      Pragmas_Trie    : Std_Description_Tries.Trie_Tree_Access;
+   end record;
+
+   overriding procedure Free (Assistant : in out Std_Entities_Db);
+
+   type Std_Entities_Db_Assistant is access all Std_Entities_Db'Class;
+
+   type Std_Entity_Record is new Entity_View_Record with record
+      Desc : Std_Description;
+   end record;
+
+   overriding function Get_Documentation
+     (E : access Std_Entity_Record) return Glib.UTF8_String;
+
+   overriding function Get_Name
+     (E : access Std_Entity_Record) return Glib.UTF8_String;
+
+   overriding function Get_Category
+     (E : access Std_Entity_Record) return Language_Category;
+
+   -----------------------------
+   -- Virtual list facilities --
+   -----------------------------
+
+   type Std_Mode_Type is (Pragma_Mode, Attribute_Mode);
+
+   type Std_List is new Entity_List_Pckg.Virtual_List_Component
+   with record
+      Db      : Construct_Database_Access;
+      Prefix  : String_Access;
+      Context : Context_Of_Use_Array;
+      Mode    : Std_Mode_Type;
+   end record;
+
+   overriding procedure Free (Component : in out Std_List);
+
+   type Std_Iterator is new
+     Entity_List_Pckg.Virtual_List_Component_Iterator
+   with record
+      It : Std_Description_Tries.Iterator;
+   end record;
+
+   overriding function First
+     (List : Std_List)
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class;
+
+   overriding function At_End (It : Std_Iterator) return Boolean;
+
+   overriding procedure Next (It : in out Std_Iterator);
+
+   overriding function Get (It : Std_Iterator) return Entity_View;
+
+   overriding procedure Free (It : in out Std_Iterator);
+
+   ------------------------
+   -- Register_Assistant --
+   ------------------------
+
+   procedure Register_Assistant
+     (Database : Construct_Database_Access; From_File : Virtual_File)
+   is
+      New_Assistant : constant Std_Entities_Db_Assistant :=
+        new Std_Entities_Db;
+
+      type Element_Kind is (A_Pragma, An_Attribute);
+
+      procedure Analyze_Element
+        (Node :  XML_Utils.Node_Ptr; Kind : Element_Kind);
+
+      ---------------------
+      -- Analyze_Element --
+      ---------------------
+
+      procedure Analyze_Element
+        (Node :  XML_Utils.Node_Ptr; Kind : Element_Kind)
+      is
+         Current : XML_Utils.Node_Ptr := Node.Child;
+
+         New_Element : constant Std_Description :=
+           new Std_Description_Record;
+
+         Is_Standard_Ada : Boolean := False;
+         Doc : String_Access;
+         Category : Language_Category := Cat_Unknown;
+      begin
+         New_Element.Name := new String'(Get_Attribute (Node, "name"));
+
+         if Get_Attribute (Node, "category") /= "" then
+            Category := Language_Category'Value
+              ("CAT_" & Get_Attribute (Node, "category"));
+         end if;
+
+         Is_Standard_Ada := Get_Attribute (Node, "origin") = "Ada RM";
+
+         New_Element.Index := new String'
+           (To_Lower (Get_Attribute (Node, "name")));
+
+         while Current /= null loop
+            if Current.Tag.all = "DOC" then
+               Doc := String_Access (Current.Value);
+            end if;
+
+            Current := Current.Next;
+         end loop;
+
+         if Is_Standard_Ada then
+            New_Element.Documentation :=
+              new String'
+                ("<b>Ada Standard</b>" & ASCII.LF & Escape_Text (Doc.all));
+         else
+            New_Element.Documentation :=
+              new String'
+                ("<b>GNAT specific</b>" & ASCII.LF & Escape_Text (Doc.all));
+         end if;
+
+         case Kind is
+            when A_Pragma =>
+               New_Element.Category := Cat_Pragma;
+
+               Std_Description_Tries.Insert
+                 (New_Assistant.Pragmas_Trie.all, New_Element);
+
+            when An_Attribute =>
+               New_Element.Category := Category;
+
+               Std_Description_Tries.Insert
+                 (New_Assistant.Attributes_Trie.all, New_Element);
+
+         end case;
+      end Analyze_Element;
+
+      Root_Node : XML_Utils.Node_Ptr;
+      Errors    : String_Access;
+
+      Current : XML_Utils.Node_Ptr;
+
+   begin
+      New_Assistant.Attributes_Trie :=
+        new Std_Description_Tries.Trie_Tree (True);
+      New_Assistant.Pragmas_Trie :=
+        new Std_Description_Tries.Trie_Tree (True);
+
+      Register_Assistant
+        (Db        => Database,
+         Name      => Std_Entities_Assistant_Id,
+         Assistant => Database_Assistant_Access (New_Assistant));
+
+      if From_File = No_File then
+         return;
+      end if;
+
+      XML_Parsers.Parse (From_File, Root_Node, Errors);
+
+      Current := Root_Node.Child;
+
+      while Current /= null loop
+         if Current.Tag.all = "ATTRIBUTE" then
+            Analyze_Element (Current, An_Attribute);
+         elsif Current.Tag.all = "PRAGMA" then
+            Analyze_Element (Current, A_Pragma);
+         end if;
+
+         Current := Current.Next;
+      end loop;
+   end Register_Assistant;
+
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index (Desc : Std_Description) return String_Access is
+   begin
+      if Desc /= null then
+         return Desc.Index;
+      else
+         return null;
+      end if;
+   end Get_Index;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Std_Description) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Std_Description_Record, Std_Description);
+   begin
+      if This /= null then
+         Free (This.Name);
+         Free (This.Index);
+         Free (This.Documentation);
+         Unchecked_Free (This);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Component : in out Std_List) is
+   begin
+      Free (Component.Prefix);
+   end Free;
+
+   -----------
+   -- First --
+   -----------
+
+   overriding function First
+     (List : Std_List)
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class
+   is
+      Assistant : constant Std_Entities_Db_Assistant :=
+        Std_Entities_Db_Assistant
+          (Get_Assistant (List.Db, Std_Entities_Assistant_Id));
+      It : Std_Iterator;
+   begin
+      case List.Mode is
+         when Pragma_Mode =>
+            It := Std_Iterator'
+              (It => Std_Description_Tries.Start
+                 (Assistant.Pragmas_Trie, List.Prefix.all));
+         when Attribute_Mode =>
+            It := Std_Iterator'
+              (It => Std_Description_Tries.Start
+                 (Assistant.Attributes_Trie, List.Prefix.all));
+      end case;
+
+      return It;
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   overriding function At_End (It : Std_Iterator) return Boolean is
+   begin
+      return Std_Description_Tries.At_End (It.It);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next (It : in out Std_Iterator) is
+   begin
+      Std_Description_Tries.Next (It.It);
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get (It : Std_Iterator) return Entity_View is
+   begin
+      return new Std_Entity_Record'
+        (Entity_View_Record with
+         Desc => Std_Description_Tries.Get (It.It));
+   end Get;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (It : in out Std_Iterator) is
+   begin
+      Std_Description_Tries.Free (It.It);
+   end Free;
+
+   --------------------------
+   -- Get_Possible_Pragmas --
+   --------------------------
+
+   procedure Get_Possible_Pragmas
+     (Db      : Construct_Database_Access;
+      Prefix  : String;
+      Context : Context_Of_Use_Array;
+      Result  : in out Entity_List)
+   is
+      New_List : Std_List;
+   begin
+      New_List.Db := Db;
+      New_List.Prefix := new String'(Prefix);
+      New_List.Context := Context;
+      New_List.Mode := Pragma_Mode;
+
+      Entity_List_Pckg.Append (Result.Contents, New_List);
+   end Get_Possible_Pragmas;
+
+   -----------------------------
+   -- Get_Possible_Attributes --
+   -----------------------------
+
+   procedure Get_Possible_Attributes
+     (Db      : Construct_Database_Access;
+      Prefix  : String;
+      Context : Context_Of_Use_Array;
+      Result  : in out Entity_List)
+   is
+      New_List : Std_List;
+   begin
+      New_List.Db := Db;
+      New_List.Prefix := new String'(Prefix);
+      New_List.Context := Context;
+      New_List.Mode := Attribute_Mode;
+
+      Entity_List_Pckg.Append (Result.Contents, New_List);
+   end Get_Possible_Attributes;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   overriding function Get_Documentation
+     (E : access Std_Entity_Record) return Glib.UTF8_String is
+   begin
+      return E.Desc.Documentation.all;
+   end Get_Documentation;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   overriding function Get_Name
+     (E : access Std_Entity_Record) return Glib.UTF8_String is
+   begin
+      return E.Desc.Name.all;
+   end Get_Name;
+
+   ------------------
+   -- Get_Category --
+   ------------------
+
+   overriding function Get_Category
+     (E : access Std_Entity_Record) return Language_Category is
+   begin
+      return E.Desc.Category;
+   end Get_Category;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Assistant : in out Std_Entities_Db) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Std_Description_Tries.Trie_Tree,
+         Std_Description_Tries.Trie_Tree_Access);
+   begin
+      Std_Description_Tries.Clear (Assistant.Attributes_Trie.all);
+      Std_Description_Tries.Clear (Assistant.Pragmas_Trie.all);
+
+      Free (Assistant.Attributes_Trie);
+      Free (Assistant.Pragmas_Trie);
+   end Free;
+
+end Ada_Semantic_Tree.Std_Entities;

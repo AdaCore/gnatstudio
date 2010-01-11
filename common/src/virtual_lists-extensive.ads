@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,10 @@
 generic
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free the given data
+
+   with procedure Copy_On_Get (Data : in out Data_Type) is null;
+   --  If a copy needs to be done before returning the object on the Get
+   --  subprogram. Does nothing by default.
 package Virtual_Lists.Extensive is
 
    ------------------------------

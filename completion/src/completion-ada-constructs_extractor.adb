@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -99,9 +99,9 @@ package body Completion.Ada.Constructs_Extractor is
 
       Entity := To_Entity_Access (Stored.Persistent_Entity);
 
-      Constr_Result.Tree_Node := To_Construct_Tree_Iterator (Entity);
-      Constr_Result.File := Get_File (Entity);
-      Constr_Result.Is_All := Stored.Is_All;
+      Constr_Result.View := To_Declaration (Entity);
+      Set_Is_All (Constr_Result.View, Stored.Is_All);
+
       Constr_Result.Is_In_Call := Stored.Is_In_Call;
       Constr_Result.Resolver := Get_Resolver (Manager, Resolver_ID);
 
@@ -145,9 +145,26 @@ package body Completion.Ada.Constructs_Extractor is
    is
       Id_Length : Integer := 0;
 
-      It : Construct_Tree_Iterator := Proposal.Tree_Node;
+      Entity : constant Entity_Access := Proposal.View.Get_Entity;
+      It : Construct_Tree_Iterator := To_Construct_Tree_Iterator
+        (Proposal.View);
       Construct : access Simple_Construct_Information;
    begin
+      if It = Null_Construct_Tree_Iterator then
+         --  In this case, we're on a view that doesn't corresponds to anything
+         --  in the source, just use the name for id.
+
+         declare
+            Name : constant UTF8_String := Proposal.View.Get_Name;
+         begin
+            return
+              (Id_Length   => Name'Length,
+               Id          => Name,
+               Resolver_ID => Resolver_ID,
+               others      => <>);
+         end;
+      end if;
+
       while It /= Null_Construct_Tree_Iterator loop
          Construct := Get_Construct (It);
 
@@ -155,10 +172,10 @@ package body Completion.Ada.Constructs_Extractor is
             Id_Length := Id_Length + Construct.Name'Length + 1;
          end if;
 
-         It := Get_Parent_Scope (Get_Tree (Proposal.File), It);
+         It := Get_Parent_Scope (Get_Tree (Get_File (Entity)), It);
       end loop;
 
-      if Proposal.Is_All then
+      if Is_All (Proposal.View) then
          Id_Length := Id_Length + 4;
       end if;
 
@@ -166,7 +183,7 @@ package body Completion.Ada.Constructs_Extractor is
          Id        : String (1 .. Id_Length);
          Index     : Integer := Id'Length;
       begin
-         It := Proposal.Tree_Node;
+         It := To_Construct_Tree_Iterator (Proposal.View);
 
          while It /= Null_Construct_Tree_Iterator loop
             Construct := Get_Construct (It);
@@ -178,21 +195,21 @@ package body Completion.Ada.Constructs_Extractor is
                Index := Index - (Construct.Name'Length + 1);
             end if;
 
-            It := Get_Parent_Scope (Get_Tree (Proposal.File), It);
+            It := Get_Parent_Scope (Get_Tree (Get_File (Entity)), It);
          end loop;
 
-         if Proposal.Is_All then
+         if Is_All (Proposal.View) then
             Id (Index - 3 .. Index) := "all.";
             Index := Index - 4;
          end if;
 
-         Construct := Get_Construct (Proposal.Tree_Node);
+         Construct := Get_Construct (Proposal.View);
 
          return
            (Id'Length - 1,
             Resolver_ID,
             Id (1 .. Id'Length  - 1), --  -1 to Remove the last dot
-            Get_File_Path (Proposal.File),
+            Get_File_Path (Get_File (Entity)),
             Construct.Sloc_Start.Line,
             Construct.Sloc_Start.Column);
       end;
@@ -276,26 +293,26 @@ package body Completion.Ada.Constructs_Extractor is
      (Proposal : Construct_Completion_Proposal) return UTF8_String
    is
       Construct : constant access Simple_Construct_Information :=
-        Get_Construct (Proposal.Tree_Node);
+        Get_Construct (Proposal.View);
    begin
-      if Proposal.Actual_Params /= null then
+      if Proposal.View.Get_Entity = Null_Entity_Access then
+         return Proposal.View.Get_Name;
+      elsif Proposal.Actual_Params /= null then
          return "params of " & Construct.Name.all;
+      elsif Is_All (Proposal.View) then
+         return "all";
+      elsif Construct.Category = Cat_Package
+        or else Construct.Category = Cat_Function
+        or else Construct.Category = Cat_Procedure
+      then
+         declare
+            Id : constant Composite_Identifier := To_Composite_Identifier
+              (Construct.Name.all);
+         begin
+            return Get_Item (Id, Length (Id));
+         end;
       else
-         if Proposal.Is_All then
-            return "all";
-         elsif Construct.Category = Cat_Package
-           or else Construct.Category = Cat_Function
-           or else Construct.Category = Cat_Procedure
-         then
-            declare
-               Id : constant Composite_Identifier := To_Composite_Identifier
-                 (Construct.Name.all);
-            begin
-               return Get_Item (Id, Length (Id));
-            end;
-         else
-            return Construct.Name.all;
-         end if;
+         return Construct.Name.all;
       end if;
    end Get_Label;
 
@@ -310,7 +327,7 @@ package body Completion.Ada.Constructs_Extractor is
       Max_Param_Length     : Glong := 0;
       Current_Param_Length : Glong := 0;
       Construct            : constant access Simple_Construct_Information :=
-        Get_Construct (Proposal.Tree_Node);
+        Get_Construct (Proposal.View);
    begin
       if Proposal.Actual_Params /= null
         and then Construct.Category not in Data_Category
@@ -351,9 +368,11 @@ package body Completion.Ada.Constructs_Extractor is
      (Proposal : Construct_Completion_Proposal) return Language_Category
    is
       Construct : constant access Simple_Construct_Information :=
-        Get_Construct (Proposal.Tree_Node);
+        Get_Construct (Proposal.View);
    begin
-      if Proposal.Is_All then
+      if Proposal.View.Get_Entity = Null_Entity_Access then
+         return Proposal.View.Get_Category;
+      elsif Is_All (Proposal.View) then
          return Cat_Literal;
       elsif Proposal.Actual_Params /= null
         and then Construct.Category not in Data_Category
@@ -371,10 +390,12 @@ package body Completion.Ada.Constructs_Extractor is
    overriding function Get_Visibility
      (Proposal : Construct_Completion_Proposal) return Construct_Visibility is
    begin
-      if Proposal.Is_All then
+      if Proposal.View.Get_Entity = Null_Entity_Access then
+         return Visibility_Public;
+      elsif Is_All (Proposal.View) then
          return Visibility_Public;
       else
-         return Get_Construct (Proposal.Tree_Node).Visibility;
+         return Get_Construct (Proposal.View).Visibility;
       end if;
    end Get_Visibility;
 
@@ -385,9 +406,7 @@ package body Completion.Ada.Constructs_Extractor is
    overriding function Get_Documentation
      (Proposal : Construct_Completion_Proposal) return UTF8_String is
    begin
-      return Get_Documentation
-        (Ada_Tree_Lang,
-         To_Entity_Access (Proposal.File, Proposal.Tree_Node));
+      return Proposal.View.Get_Documentation;
    end Get_Documentation;
 
    ------------------
@@ -398,11 +417,17 @@ package body Completion.Ada.Constructs_Extractor is
      (Proposal : Construct_Completion_Proposal) return File_Location
    is
       Construct : constant access Simple_Construct_Information :=
-        Get_Construct (Proposal.Tree_Node);
+        Get_Construct (Proposal.View);
+      Entity : constant Entity_Access := Proposal.View.Get_Entity;
    begin
-      return (Get_File_Path (Proposal.File),
-              Construct.Sloc_Start.Line,
-              Basic_Types.Visible_Column_Type (Construct.Sloc_Start.Column));
+      if Entity /= Null_Entity_Access then
+         return (Get_File_Path (Get_File (Entity)),
+                 Construct.Sloc_Start.Line,
+                 Basic_Types.Visible_Column_Type
+                   (Construct.Sloc_Start.Column));
+      else
+         return (No_File, 0, 0);
+      end if;
    end Get_Location;
 
    -----------
@@ -415,7 +440,7 @@ package body Completion.Ada.Constructs_Extractor is
       Offset     : Integer) return Boolean
    is
       Construct : constant access Simple_Construct_Information :=
-        Get_Construct (Proposal.Tree_Node);
+        Get_Construct (Proposal.View);
 
       Ada_Context : Ada_Completion_Context;
 
@@ -451,7 +476,7 @@ package body Completion.Ada.Constructs_Extractor is
                return False;
             end if;
 
-            Entity := To_Entity_Access (Proposal.File, Proposal.Tree_Node);
+            Entity := Get_Entity (Proposal.View);
 
             if Is_Public_Library_Visible (Entity) then
                --  ??? We should probably check with / use visibility if
@@ -484,10 +509,14 @@ package body Completion.Ada.Constructs_Extractor is
       Constr_Result : Stored_Construct_Completion_Proposal renames
         Stored_Construct_Completion_Proposal (Result.all);
    begin
+      if Get_Entity (Proposal.View) = Null_Entity_Access then
+         return null;
+      end if;
+
       Constr_Result.Persistent_Entity := To_Entity_Persistent_Access
-        (To_Entity_Access (Proposal.File, Proposal.Tree_Node));
+        (Get_Entity (Proposal.View));
       Ref (Constr_Result.Persistent_Entity);
-      Constr_Result.Is_All := Proposal.Is_All;
+      Constr_Result.Is_All := Is_All (Proposal.View);
       Constr_Result.Is_In_Call := Proposal.Is_In_Call;
 
       if Proposal.Actual_Params /= null then
@@ -676,7 +705,7 @@ package body Completion.Ada.Constructs_Extractor is
          if Is_Valid (It) and then not At_End (It) then
             It.Current_Decl := Get_View (It.Iter);
          else
-            It.Current_Decl := Null_Declaration_View;
+            It.Current_Decl := Null_Entity_View;
          end if;
       else
          It.Current_Decl := To_Declaration
@@ -694,7 +723,6 @@ package body Completion.Ada.Constructs_Extractor is
    overriding function Get
      (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class
    is
-      Entity : constant Entity_Access := Get_Entity (This.Current_Decl);
       Actuals : Actual_Parameter_Resolver_Access;
    begin
       Actuals := Get_Actual_Parameters (This.Current_Decl);
@@ -705,9 +733,7 @@ package body Completion.Ada.Constructs_Extractor is
 
       return Construct_Completion_Proposal'
         (Resolver      => This.Resolver,
-         Tree_Node     => To_Construct_Tree_Iterator (Entity),
-         File          => Get_File (This.Current_Decl),
-         Is_All        => Is_All (This.Current_Decl),
+         View          => Deep_Copy (This.Current_Decl),
          Actual_Params => Actuals,
          Is_In_Call    => This.Params_Array /= null);
    end Get;

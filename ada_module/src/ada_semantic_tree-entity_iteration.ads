@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,8 +25,6 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;           use GNAT.Strings;
 
-with Language.Tree;             use Language.Tree;
-with Language.Tree.Database;    use Language.Tree.Database;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
@@ -147,8 +145,8 @@ private
 
       --  for Referenced_Entity step
 
-      Decl_List      : Declaration_List := Null_Declaration_List;
-      Decl_It        : Declaration_Iterator;
+      Decl_List      : Entity_List := Null_Entity_List;
+      Decl_It        : Entity_Iterator;
       Sub_It         : Semantic_Tree_Iterator_Access;
       Cut_Access     : Boolean;
       Cut_Subprogram : Boolean;

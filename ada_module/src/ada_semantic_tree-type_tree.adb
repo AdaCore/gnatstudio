@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,6 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Language;                use Language;
-with Language.Tree;           use Language.Tree;
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Language.Ada;            use Language.Ada;
 with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
@@ -491,14 +489,14 @@ package body Ada_Semantic_Tree.Type_Tree is
             Expression : Parsed_Expression := Parse_Expression_Backward
               (Ada_Lang, Get_Identifier (Ref_Ids));
 
-            Decl_List   : Declaration_List :=
+            Decl_List   : Entity_List :=
               Find_Declarations
                 ((From_File,
                   Get_File (The_Type),
                   Get_Construct (The_Type).Sloc_End.Index),
                  Expression        => Expression,
                  Excluded_Entities => Excluded);
-            It          : Declaration_Iterator := First (Decl_List);
+            It          : Entity_Iterator := First (Decl_List);
             Parent_Type : Entity_Access;
             Parent_Info : Ada_Type_Access;
          begin

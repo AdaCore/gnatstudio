@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,15 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language; use Language;
-with Language.Tree; use Language.Tree;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Projects.Registry; use Projects.Registry;
-with GNAT.Regpat; use GNAT.Regpat;
-with Language.Tree.Database; use Language.Tree.Database;
+with GNAT.Regpat;                    use GNAT.Regpat;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with Projects.Registry;              use Projects.Registry;
+with Language;                       use Language;
+with Language.Tree;                  use Language.Tree;
+with Language.Ada;                   use Language.Ada;
+with Language.Tree.Database;         use Language.Tree.Database;
+with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
-with Language.Ada; use Language.Ada;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
@@ -3619,8 +3620,8 @@ package body Codefix.GNAT_Parser is
         (Get_Message (Message_It).Get_Message
         (Matches (1).First .. Matches (1).Last));
       Expression     : Parsed_Expression;
-      List           : Declaration_List;
-      It             : Declaration_Iterator;
+      List           : Entity_List;
+      It             : Entity_Iterator;
       Entity         : Entity_Access;
       Correct_Entity : Entity_Access := Null_Entity_Access;
 

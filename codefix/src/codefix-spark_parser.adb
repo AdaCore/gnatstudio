@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,6 @@ with Language.Tree; use Language.Tree;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNAT.Regpat; use GNAT.Regpat;
 with Language.Tree.Database; use Language.Tree.Database;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Codefix.SPARK_Parser is
    use Cursor_Lists;

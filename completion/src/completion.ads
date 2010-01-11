@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,7 +97,7 @@ package Completion is
       --  of avoiding name clashes.
 
       Id          : String (1 .. Id_Length);
-      File        : Virtual_File;
+      File        : Virtual_File := No_File;
       Line        : Natural := 0;
       Column      : Natural := 0;
    end record;

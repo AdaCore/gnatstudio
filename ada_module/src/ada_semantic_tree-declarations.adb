@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,27 +18,49 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                 use GNAT.Strings;
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Language.Ada;                 use Language.Ada;
 with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
-with Ada_Semantic_Tree.Units;      use Ada_Semantic_Tree.Units;
-with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Units;           use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Parts;           use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Std_Entities;    use Ada_Semantic_Tree.Std_Entities;
 
 package body Ada_Semantic_Tree.Declarations is
 
    use Token_List;
+
+   -----------------------------
+   -- Declaration_View_Record --
+   -----------------------------
+
+   type Declaration_View_Record is new Entity_View_Record with record
+      Profile : List_Profile_Access;
+      Actuals : Actual_Parameter_Resolver_Access := null;
+   end record;
+
+   overriding procedure Free (This : in out Declaration_View_Record);
+
+   overriding procedure Deep_Copy (This : in out Declaration_View_Record);
+
+   overriding procedure Configure_View
+     (E : in out Declaration_View_Record; It : Entity_Iterator);
+
+   overriding function Get_Documentation
+     (E : access Declaration_View_Record) return UTF8_String;
+
+   overriding function Get_Name
+     (E : access Declaration_View_Record) return UTF8_String;
 
    --------------------
    -- Declaration_Id --
    --------------------
 
    type Declaration_Id_List
-     is new Declaration_List_Pckg.Virtual_List_Component
+     is new Entity_List_Pckg.Virtual_List_Component
    with record
       First_File      : Structured_File_Access;
       First_Buffer    : String_Access;
@@ -52,7 +74,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    type Iteration_Stage is (File_Hierarchy, Database);
    type Declaration_Id_Iterator
-     is new Declaration_List_Pckg.Virtual_List_Component_Iterator
+     is new Entity_List_Pckg.Virtual_List_Component_Iterator
    with record
       --  Common data
 
@@ -79,7 +101,7 @@ package body Ada_Semantic_Tree.Declarations is
    overriding
    function First
      (List : Declaration_Id_List)
-      return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class;
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  Return an iterator pointing on the first element of a list
 
    overriding
@@ -94,7 +116,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    function Get
-     (It : Declaration_Id_Iterator) return Declaration_View;
+     (It : Declaration_Id_Iterator) return Entity_View;
    --  Return the element contained in this iterator
 
    function Is_Valid (It : Declaration_Id_Iterator'Class) return Boolean;
@@ -110,7 +132,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
-      Result          : in out Declaration_List);
+      Result          : in out Entity_List);
    --  Look for the identifier given in parameter successively from:
    --  (1) The current file
    --  (2) The parent units
@@ -121,7 +143,7 @@ package body Ada_Semantic_Tree.Declarations is
    -----------------------------
 
    type Declaration_Composition_List is new
-     Declaration_List_Pckg.Virtual_List_Component
+     Entity_List_Pckg.Virtual_List_Component
    with record
       From_Visibility : Visibility_Context;
       Root_Entity    : Entity_Access;
@@ -131,7 +153,7 @@ package body Ada_Semantic_Tree.Declarations is
    end record;
 
    type Declaration_Composition_Iterator
-     is new Declaration_List_Pckg.Virtual_List_Component_Iterator
+     is new Entity_List_Pckg.Virtual_List_Component_Iterator
    with record
       It         : Semantic_Tree_Iterator;
       Name       : String_Access;
@@ -147,7 +169,7 @@ package body Ada_Semantic_Tree.Declarations is
    overriding
    function First
      (List : Declaration_Composition_List)
-      return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class;
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  Return an iterator pointing on the first element of a list
 
    overriding
@@ -162,7 +184,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    function Get
-     (It : Declaration_Composition_Iterator) return Declaration_View;
+     (It : Declaration_Composition_Iterator) return Entity_View;
    --  Return the element contained in this iterator
 
    function Is_Valid
@@ -173,21 +195,21 @@ package body Ada_Semantic_Tree.Declarations is
    -----------------------------
 
    type Unique_Declaration_List is new
-     Declaration_List_Pckg.Virtual_List_Component
+     Entity_List_Pckg.Virtual_List_Component
    with record
-      Object : Declaration_View;
+      Object : Entity_View;
    end record;
 
    type Unique_Declaration_Iterator
-     is new Declaration_List_Pckg.Virtual_List_Component_Iterator
+     is new Entity_List_Pckg.Virtual_List_Component_Iterator
    with record
-      Object : Declaration_View;
+      Object : Entity_View;
    end record;
 
    overriding
    function First
      (List : Unique_Declaration_List)
-      return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class;
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  Return an iterator pointing on the first element of a list
 
    overriding
@@ -202,246 +224,20 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    function Get
-     (It : Unique_Declaration_Iterator) return Declaration_View;
+     (It : Unique_Declaration_Iterator) return Entity_View;
    --  Return the element contained in this iterator
 
    overriding
    procedure Free (List : in out Unique_Declaration_List);
 
-   -------------------
-   -- Get_Construct --
-   -------------------
+   -----------------------
+   -- Other subprograms --
+   -----------------------
 
-   function Get_Construct
-     (Decl : Declaration_View)
-      return access Simple_Construct_Information is
-   begin
-      return Get_Construct (Decl.Entity);
-   end Get_Construct;
+   procedure Set_Actuals
+     (It : Entity_View; Act : Actual_Parameter_Resolver_Access);
 
-   --------------
-   -- Get_File --
-   --------------
-
-   function Get_File
-     (Decl : Declaration_View) return Structured_File_Access is
-   begin
-      return Get_File (Decl.Entity);
-   end Get_File;
-
-   ------------
-   -- Is_All --
-   ------------
-
-   function Is_All (Decl : Declaration_View) return Boolean is
-   begin
-      return Decl.Is_All;
-   end Is_All;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Declaration_List) is
-   begin
-      Free (List.Contents);
-      Unref (List.Excluded_List);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (It : in out Declaration_Iterator) is
-   begin
-      --  Excluded_List is freed with the list, no need to free it here
-      Free (It.It);
-   end Free;
-
-   -----------
-   -- First --
-   -----------
-
-   function First (List : Declaration_List) return Declaration_Iterator is
-      Result : Declaration_Iterator;
-   begin
-      Result :=
-        (It            => Declaration_List_Pckg.First (List.Contents),
-         Excluded_List => List.Excluded_List);
-
-      while not Is_Valid (Result) loop
-         Next (Result);
-      end loop;
-
-      return Result;
-   end First;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (It : in out Declaration_Iterator) is
-   begin
-      Next (It.It);
-
-      while not Is_Valid (It) loop
-         Next (It.It);
-      end loop;
-   end Next;
-
-   ------------
-   -- At_End --
-   ------------
-
-   function At_End (It : Declaration_Iterator) return Boolean is
-   begin
-      return At_End (It.It);
-   end At_End;
-
-   --------------
-   -- Is_Valid --
-   --------------
-
-   function Is_Valid (It : Declaration_Iterator) return Boolean is
-      Result : Boolean;
-   begin
-      if At_End (It) then
-         return True;
-      else
-         Result := not Is_Excluded (It.Excluded_List, Get_Entity (It));
-
-         return Result;
-      end if;
-   end Is_Valid;
-
-   --------------
-   -- Get_View --
-   --------------
-
-   function Get_View (It : Declaration_Iterator) return Declaration_View is
-      Result : Declaration_View := Get (It.It);
-   begin
-      --  In order to have an homogeneic result, we either create a new list
-      --  profile if none, or copy the existing one. This way, the caller will
-      --  always be responsible of freeing the result.
-
-      if Result.Profile /= null then
-         Result.Profile := new List_Profile'(Result.Profile.all);
-      else
-         Result.Profile := new List_Profile'
-           (Get_List_Profile (Result.Entity));
-      end if;
-
-      if Result.Actuals /= null then
-         Result.Actuals := new Actual_Parameter_Resolver'(Result.Actuals.all);
-      end if;
-
-      return Result;
-   end Get_View;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entity (It : Declaration_Iterator) return Entity_Access is
-      View   : Declaration_View := Get (It.It);
-      Result : Entity_Access;
-   begin
-      Result := View.Entity;
-      Free (View);
-      --  ??? It's a bit annoying to have to create and free a temporary view,
-      --  would be better to somehow get the entity directly.
-
-      return Result;
-   end Get_Entity;
-
-   ----------------
-   -- Pop_Entity --
-   ----------------
-
-   procedure Pop_Entity (Stack : in out Excluded_Stack_Type) is
-   begin
-      Pop (Stack.Entities);
-   end Pop_Entity;
-
-   -----------------
-   -- Push_Entity --
-   -----------------
-
-   procedure Push_Entity
-     (Stack : in out Excluded_Stack_Type; Entity : Entity_Access) is
-   begin
-      Push (Stack.Entities, Entity);
-   end Push_Entity;
-
-   -----------------
-   -- Is_Excluded --
-   -----------------
-
-   function Is_Excluded
-     (Stack : Excluded_Stack_Type; Entity : Entity_Access) return Boolean
-   is
-      Excluded : Excluded_Stack_Pckg.Simple_Stack;
-   begin
-      if Stack = null then
-         return False;
-      end if;
-
-      Excluded := Stack.Entities;
-
-      while Excluded /= null loop
-         declare
-            Excluded_Entity : constant Entity_Access := Excluded.Val;
-         begin
-            --  If the two entities are exactly on the same construct, or if
-            --  they are parts of the same enitity, then we found an excluded
-            --  construct.
-
-            if (Get_File (Excluded_Entity) = Get_File (Entity)
-              and then To_Construct_Tree_Iterator (Excluded_Entity)
-                = To_Construct_Tree_Iterator (Entity))
-              or else Are_Same_Entity (Excluded_Entity, Entity)
-            then
-               return True;
-            end if;
-         end;
-
-         Excluded := Excluded.Next;
-      end loop;
-
-      return False;
-   end Is_Excluded;
-
-   ---------
-   -- Ref --
-   ---------
-
-   procedure Ref (Stack : in out Excluded_Stack_Type) is
-   begin
-      if Stack = null then
-         Stack := new Excluded_Stack_Type_Record;
-      end if;
-
-      Stack.Refs := Stack.Refs + 1;
-   end Ref;
-
-   -----------
-   -- Unref --
-   -----------
-
-   procedure Unref (Stack : in out Excluded_Stack_Type) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Excluded_Stack_Type_Record, Excluded_Stack_Type);
-   begin
-      if Stack /= null then
-         Stack.Refs := Stack.Refs - 1;
-
-         if Stack.Refs = 0 then
-            Clear (Stack.Entities);
-            Free (Stack);
-         end if;
-      end if;
-   end Unref;
+   function Get_Profile (It : Entity_View) return List_Profile_Access;
 
    -----------
    -- First --
@@ -449,7 +245,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding function First
      (List : Declaration_Id_List)
-      return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       Result : Declaration_Id_Iterator;
    begin
@@ -594,14 +390,14 @@ package body Ada_Semantic_Tree.Declarations is
    ---------
 
    overriding function Get
-     (It : Declaration_Id_Iterator) return Declaration_View
+     (It : Declaration_Id_Iterator) return Entity_View
    is
-      Declaration : Declaration_View;
+      Declaration : Entity_View;
       Full_Cell   : Entity_Access;
    begin
       case It.Stage is
          when File_Hierarchy =>
-            Declaration := Declaration_View'
+            Declaration := new Declaration_View_Record'
               (Confidence    => Public_Library_Visible,
                Entity        => It.Visible_Constructs (It.Visible_Index),
                Is_All        => False,
@@ -620,7 +416,7 @@ package body Ada_Semantic_Tree.Declarations is
             return Declaration;
 
          when Database =>
-            return Declaration_View'
+            return new Declaration_View_Record'
               (Confidence    => Public_Library_Visible,
                Entity        => To_Entity_Access
                  (Get_File (It.Db_Iterator), Get_Construct (It.Db_Iterator)),
@@ -665,7 +461,7 @@ package body Ada_Semantic_Tree.Declarations is
       Categories                : Category_Array := Null_Category_Array;
       Is_Partial                : Boolean := False;
       Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack)
-      return Declaration_List
+      return Entity_List
    is
       pragma Unreferenced (Categories);
 
@@ -678,8 +474,8 @@ package body Ada_Semantic_Tree.Declarations is
       procedure Analyze_Token
         (Previous_Token       : Token_List.List_Node;
          Token                : Token_List.List_Node;
-         Previous_Declaration : Declaration_View;
-         Result               : in out Declaration_List);
+         Previous_Declaration : Entity_View;
+         Result               : in out Entity_List);
 
       -------------------
       -- Analyze_Token --
@@ -688,8 +484,8 @@ package body Ada_Semantic_Tree.Declarations is
       procedure Analyze_Token
         (Previous_Token       : Token_List.List_Node;
          Token                : Token_List.List_Node;
-         Previous_Declaration : Declaration_View;
-         Result               : in out Declaration_List)
+         Previous_Declaration : Entity_View;
+         Result               : in out Entity_List)
       is
 
          procedure Handle_Identifier (Id : Distinct_Identifier);
@@ -699,8 +495,8 @@ package body Ada_Semantic_Tree.Declarations is
          -----------------------
 
          procedure Handle_Identifier (Id : Distinct_Identifier) is
-            Tmp    : Declaration_List;
-            Tmp_It : Declaration_Iterator;
+            Tmp    : Entity_List;
+            Tmp_It : Entity_Iterator;
          begin
             if Token = First_Token
               or else
@@ -715,8 +511,24 @@ package body Ada_Semantic_Tree.Declarations is
                   Context,
                   Actual_From_Visibility,
                   Tmp);
+            elsif Previous_Token /= Token_List.Null_Node
+              and then Data (Previous_Token).Tok_Type = Tok_Pragma
+            then
+               Get_Possible_Pragmas
+                 (Db      => Db,
+                  Prefix  => Id.all,
+                  Context => (others => True),
+                  Result  => Result);
+            elsif Previous_Token /= Token_List.Null_Node
+              and then Data (Previous_Token).Tok_Type = Tok_Tick
+            then
+               Get_Possible_Attributes
+                 (Db      => Db,
+                  Prefix  => Id.all,
+                  Context => (others => True),
+                  Result  => Result);
             else
-               Declaration_List_Pckg.Append
+               Entity_List_Pckg.Append
                  (Tmp.Contents,
                   Declaration_Composition_List'
                     (Root_Entity => Previous_Declaration.Entity,
@@ -729,14 +541,14 @@ package body Ada_Semantic_Tree.Declarations is
             end if;
 
             if Next (Token) = Token_List.Null_Node then
-               Declaration_List_Pckg.Concat
+               Entity_List_Pckg.Concat
                  (Result.Contents, Tmp.Contents);
             else
                Tmp_It := First (Tmp);
 
                while not At_End (Tmp_It) loop
                   declare
-                     View : Declaration_View := Get_View (Tmp_It);
+                     View : Entity_View := Get_View (Tmp_It);
                   begin
                      if not Is_Excluded (Excluded_Entities, View.Entity) then
                         Analyze_Token
@@ -762,16 +574,17 @@ package body Ada_Semantic_Tree.Declarations is
             when Tok_Dot =>
                --  ??? We could factorize that in a "Are actuals consistent"
                --  subprogram.
-               if Previous_Declaration.Profile /= null
+               if Get_Profile (Previous_Declaration) /= null
                  and then
-                   ((Previous_Declaration.Actuals = null
+                   ((Get_Actual_Parameters (Previous_Declaration) = null
                      and then
                        Get_Number_Of_Formals
-                         (Previous_Declaration.Profile.all) > 0)
+                         (Get_Profile (Previous_Declaration).all) > 0)
                     or else
-                      (Previous_Declaration.Actuals /= null
+                      (Get_Actual_Parameters (Previous_Declaration) /= null
                        and then not
-                         Is_Complete (Previous_Declaration.Actuals.all)))
+                         Is_Complete
+                           (Get_Actual_Parameters (Previous_Declaration).all)))
                then
                   return;
                end if;
@@ -809,7 +622,7 @@ package body Ada_Semantic_Tree.Declarations is
                   return;
                end if;
 
-               if Previous_Declaration.Profile = null then
+               if Get_Profile (Previous_Declaration) = null then
                   --  There is no possible profile completion here, drop the
                   --  proposal.
 
@@ -819,7 +632,7 @@ package body Ada_Semantic_Tree.Declarations is
                declare
                   Current_Token : Token_List.List_Node := Next (Token);
                   Success : Boolean := False;
-                  Local_Declaration : Declaration_View :=
+                  Local_Declaration : Entity_View :=
                     Deep_Copy (Previous_Declaration);
 
                   Free_Local : Boolean := True;
@@ -832,18 +645,18 @@ package body Ada_Semantic_Tree.Declarations is
                   --  Perform the analysis of the actual parameters.
                   --  Reset any former value of the actual parameters.
 
-                  Free (Local_Declaration.Actuals);
-
-                  Local_Declaration.Actuals := new Actual_Parameter_Resolver'
-                    (Get_Actual_Parameter_Resolver
-                       (Previous_Declaration.Profile.all));
+                  Set_Actuals
+                    (Local_Declaration, new Actual_Parameter_Resolver'
+                       (Get_Actual_Parameter_Resolver
+                          (Get_Profile (Previous_Declaration).all)));
 
                   if Local_Declaration.From_Prefixed then
                      --  If we go from a prefixed notation, then the first
                      --  actual parameter is coming from the prefix.
 
                      Append_Actual
-                       (Local_Declaration.Actuals.all,
+                       (Declaration_View_Record
+                          (Local_Declaration.all).Actuals.all,
                         Get_Actual_Parameter (Get_Buffer (Context.File), 0, 0),
                         False,
                         Param_Added,
@@ -860,7 +673,8 @@ package body Ada_Semantic_Tree.Declarations is
                            Data (Current_Token).Token_Last);
 
                         Append_Actual
-                          (Local_Declaration.Actuals.all,
+                          (Declaration_View_Record
+                             (Local_Declaration.all).Actuals.all,
                            New_Param,
                            False,
                            Param_Added,
@@ -884,7 +698,9 @@ package body Ada_Semantic_Tree.Declarations is
                      elsif
                        Data (Current_Token).Tok_Type = Tok_Close_Parenthesis
                      then
-                        if Is_Complete (Local_Declaration.Actuals.all) then
+                        if Is_Complete
+                          (Get_Actual_Parameters (Local_Declaration).all)
+                        then
                            if Next (Current_Token) = Token_List.Null_Node then
                               Append
                                 (Result.Contents,
@@ -930,7 +746,7 @@ package body Ada_Semantic_Tree.Declarations is
                      --  parameter.
 
                      if Any_Named_Formal_Missing
-                       (Local_Declaration.Actuals.all)
+                       (Get_Actual_Parameters (Local_Declaration).all)
                      then
                         Append
                           (Result.Contents,
@@ -974,12 +790,44 @@ package body Ada_Semantic_Tree.Declarations is
                   return;
                end if;
 
+            when Tok_Pragma =>
+               pragma Assert (Token = First_Token);
+
+               if Next (Token) /= Token_List.Null_Node then
+                  Analyze_Token
+                    (Token,
+                     Next (Token),
+                     Previous_Declaration,
+                     Result);
+               else
+                  Get_Possible_Pragmas
+                    (Db      => Db,
+                     Prefix  => "",
+                     Context => (others => True),
+                     Result  => Result);
+               end if;
+
+            when Tok_Tick =>
+               if Next (Token) /= Token_List.Null_Node then
+                  Analyze_Token
+                    (Token,
+                     Next (Token),
+                     Previous_Declaration,
+                     Result);
+               else
+                  Get_Possible_Attributes
+                    (Db      => Db,
+                     Prefix  => "",
+                     Context => (others => True),
+                     Result  => Result);
+               end if;
+
             when others =>
                null;
          end case;
       end Analyze_Token;
 
-      Result : Declaration_List;
+      Result : Entity_List;
    begin
       case Context.Context_Type is
          when From_Database =>
@@ -1048,7 +896,7 @@ package body Ada_Semantic_Tree.Declarations is
             Analyze_Token
               (Token_List.Null_Node,
                First_Token,
-               Null_Declaration_View,
+               Null_Entity_View,
                Result);
          end if;
       end;
@@ -1072,7 +920,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
-      Result          : in out Declaration_List)
+      Result          : in out Entity_List)
    is
       Id_Name : String renames Identifier.all;
    begin
@@ -1082,12 +930,12 @@ package body Ada_Semantic_Tree.Declarations is
          declare
             C : Unit_Iterator := Get_Units
               (Get_Database (Context.File), Id_Name, Is_Partial);
-            List : Declaration_List_Extensive_Pckg.Extensive_List_Pckg.List;
+            List : Entity_List_Extensive_Pckg.Extensive_List_Pckg.List;
             Construct_It : Construct_Tree_Iterator;
             Construct    : access Simple_Construct_Information;
 
-            use Declaration_List_Extensive_Pckg;
-            use Declaration_List_Extensive_Pckg.Extensive_List_Pckg;
+            use Entity_List_Extensive_Pckg;
+            use Entity_List_Extensive_Pckg.Extensive_List_Pckg;
 
             Unit        : Unit_Access;
             Entity_Unit : Entity_Access;
@@ -1104,7 +952,7 @@ package body Ada_Semantic_Tree.Declarations is
                then
                   Append
                     (List,
-                     Declaration_View'
+                     new Declaration_View_Record'
                        (Confidence    => Use_Visible,
                         Entity        => Entity_Unit,
                         Is_All        => False,
@@ -1163,14 +1011,14 @@ package body Ada_Semantic_Tree.Declarations is
       Expression      : Parsed_Expression := Null_Parsed_Expression)
       return Visibility_Confidence
    is
-      Decls : Declaration_List := Find_Declarations
+      Decls : Entity_List := Find_Declarations
         (Context           => (From_File, File, Offset),
          From_Visibility   => From_Visibility,
          Expression        => Expression,
          Categories        => Null_Category_Array,
          Is_Partial        => False);
 
-      It   : Declaration_Iterator := First (Decls);
+      It   : Entity_Iterator := First (Decls);
    begin
       while not At_End (It) loop
          if Get_Entity (It) = Entity then
@@ -1219,7 +1067,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding function First
      (List : Declaration_Composition_List)
-      return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class
    is
       It   : Declaration_Composition_Iterator;
       Kind : Semantic_Kind;
@@ -1271,11 +1119,11 @@ package body Ada_Semantic_Tree.Declarations is
    ---------
 
    overriding function Get
-     (It : Declaration_Composition_Iterator) return Declaration_View
+     (It : Declaration_Composition_Iterator) return Entity_View
    is
       Info : constant Semantic_Information := Get (It.It);
    begin
-      return
+      return new Declaration_View_Record'
         (Confidence    => Public_Library_Visible,
          Entity        => Info.Entity,
          Is_All        => Info.Kind = All_Access,
@@ -1367,8 +1215,10 @@ package body Ada_Semantic_Tree.Declarations is
    -- Free --
    ----------
 
-   procedure Free (This : in out Declaration_View) is
+   overriding procedure Free (This : in out Declaration_View_Record) is
    begin
+      Free (Entity_View_Record (This));
+
       Free (This.Profile);
       Free (This.Actuals);
    end Free;
@@ -1377,42 +1227,76 @@ package body Ada_Semantic_Tree.Declarations is
    -- Deep_Copy --
    ---------------
 
-   function Deep_Copy (This : Declaration_View) return Declaration_View is
-      Copy : Declaration_View;
+   overriding procedure Deep_Copy (This : in out Declaration_View_Record) is
    begin
-      Copy := This;
+      Deep_Copy (Entity_View_Record (This));
 
       if This.Profile /= null then
-         Copy.Profile := new List_Profile'
+         This.Profile := new List_Profile'
            (This.Profile.all);
       end if;
 
       if This.Actuals /= null then
-         Copy.Actuals := new Actual_Parameter_Resolver'
+         This.Actuals := new Actual_Parameter_Resolver'
            (Deep_Copy (This.Actuals.all));
       end if;
-
-      return Copy;
    end Deep_Copy;
 
-   ----------------
-   -- Get_Entity --
-   ----------------
+   --------------------
+   -- Configure_View --
+   --------------------
 
-   function Get_Entity (It : Declaration_View) return Entity_Access is
+   overriding procedure Configure_View
+     (E : in out Declaration_View_Record; It : Entity_Iterator)
+   is
+      pragma Unreferenced (It);
    begin
-      return It.Entity;
-   end Get_Entity;
+      if E.Profile = null then
+         E.Profile := new List_Profile'(Get_List_Profile (E.Entity));
+      end if;
+   end Configure_View;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   overriding function Get_Documentation
+     (E : access Declaration_View_Record) return UTF8_String
+   is
+   begin
+      return Get_Documentation (Ada_Tree_Lang, E.Entity);
+   end Get_Documentation;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   overriding function Get_Name
+     (E : access Declaration_View_Record) return UTF8_String
+   is
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (E);
+   begin
+      if Construct /= null and then Construct.Name /= null then
+         return Construct.Name.all;
+      else
+         return "";
+      end if;
+   end Get_Name;
 
    ---------------------------
    -- Get_Actual_Parameters --
    ---------------------------
 
    function Get_Actual_Parameters
-     (It : Declaration_View)
+     (It : Entity_View)
       return Actual_Parameter_Resolver_Access is
    begin
-      return It.Actuals;
+      if It /= null and then It.all in Declaration_View_Record then
+         return Declaration_View_Record (It.all).Actuals;
+      else
+         return null;
+      end if;
    end Get_Actual_Parameters;
 
    -----------
@@ -1421,7 +1305,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding function First
      (List : Unique_Declaration_List)
-      return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class is
+      return Entity_List_Pckg.Virtual_List_Component_Iterator'Class is
    begin
       return Unique_Declaration_Iterator'(Object => List.Object);
    end First;
@@ -1433,7 +1317,7 @@ package body Ada_Semantic_Tree.Declarations is
    overriding function At_End
      (It : Unique_Declaration_Iterator) return Boolean is
    begin
-      return It.Object = Null_Declaration_View;
+      return It.Object = Null_Entity_View;
    end At_End;
 
    ----------
@@ -1442,7 +1326,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding procedure Next (It : in out Unique_Declaration_Iterator) is
    begin
-      It.Object := Null_Declaration_View;
+      It.Object := Null_Entity_View;
    end Next;
 
    ---------
@@ -1450,7 +1334,7 @@ package body Ada_Semantic_Tree.Declarations is
    ---------
 
    overriding function Get
-     (It : Unique_Declaration_Iterator) return Declaration_View is
+     (It : Unique_Declaration_Iterator) return Entity_View is
    begin
       return Deep_Copy (It.Object);
    end Get;
@@ -1468,14 +1352,45 @@ package body Ada_Semantic_Tree.Declarations is
    -- To_Declaration --
    --------------------
 
-   function To_Declaration (Entity : Entity_Access) return Declaration_View
+   function To_Declaration (Entity : Entity_Access) return Entity_View
    is
-      Result : Declaration_View;
+      Result : constant Entity_View := new Declaration_View_Record;
    begin
       Result.Confidence := Public_Library_Visible;
       Result.Entity := Entity;
 
       return Result;
    end To_Declaration;
+
+   -----------------
+   -- Set_Actuals --
+   -----------------
+
+   procedure Set_Actuals
+     (It : Entity_View; Act : Actual_Parameter_Resolver_Access) is
+   begin
+      if It.all in Declaration_View_Record then
+         declare
+            Decl : Declaration_View_Record renames
+              Declaration_View_Record (It.all);
+         begin
+            Free (Decl.Actuals);
+            Decl.Actuals := Act;
+         end;
+      end if;
+   end Set_Actuals;
+
+   -----------------
+   -- Get_Profile --
+   -----------------
+
+   function Get_Profile (It : Entity_View) return List_Profile_Access is
+   begin
+      if It /= null and then It.all in Declaration_View_Record then
+         return Declaration_View_Record (It.all).Profile;
+      else
+         return null;
+      end if;
+   end Get_Profile;
 
 end Ada_Semantic_Tree.Declarations;

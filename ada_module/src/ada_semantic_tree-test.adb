@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -104,8 +104,8 @@ procedure Ada_Semantic_Tree.Test is
             Visibility : Visibility_Confidence := Public_Library_Visible;
             pragma Unreferenced (Visibility);
             --  ??? This visibility parameter is currenty not used.
-            List : Declaration_List;
-            It : Declaration_Iterator;
+            List : Entity_List;
+            It : Entity_Iterator;
             Construct : access Simple_Construct_Information;
             Decl      : Entity_Access;
          begin
@@ -361,8 +361,8 @@ procedure Ada_Semantic_Tree.Test is
             is
                pragma Unreferenced (Entity, Sloc_Start, Partial_Entity);
 
-               List : Declaration_List;
-               It   : Declaration_Iterator;
+               List : Entity_List;
+               It   : Entity_Iterator;
                --  Construct : Simple_Construct_Information
             begin
                if Verbose then
@@ -495,13 +495,13 @@ procedure Ada_Semantic_Tree.Test is
                Start_Offset => Word_End,
                End_Offset   => Word_Begin);
 
-            List : constant Declaration_List := Find_Declarations
+            List : constant Entity_List := Find_Declarations
               (Context           => (From_Database, Construct_Db),
                From_Visibility   => Null_Visibility_Context,
                Expression        => Expression,
                Is_Partial        => False);
 
-            List_It : Declaration_Iterator;
+            List_It : Entity_Iterator;
          begin
             List_It := First (List);
 
@@ -554,8 +554,8 @@ procedure Ada_Semantic_Tree.Test is
          Put_Line ("IMPORT " & Buffer (Word_Begin .. Word_End));
 
          declare
-            List : Declaration_List;
-            It : Declaration_Iterator;
+            List : Entity_List;
+            It : Entity_Iterator;
          begin
             List := Find_Declarations
               ((From_Database, Construct_Db),
@@ -725,7 +725,8 @@ begin
 
    Initialize (Construct_Db.all, new File_Buffer_Provider);
 
-   Ada_Semantic_Tree.Assistants.Register_Ada_Assistants (Construct_Db);
+   Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
+     (Construct_Db, GNATCOLL.VFS.No_File);
 
    declare
       Files     : constant GNATCOLL.VFS.File_Array_Access :=

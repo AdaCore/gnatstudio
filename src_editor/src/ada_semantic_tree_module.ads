@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,12 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel;
 
 package Ada_Semantic_Tree_Module is
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Std_Entities_Files : Virtual_File);
    --  Register the module, needed to take advantage of the Ada_Semantic_Tree
    --  queries.
 

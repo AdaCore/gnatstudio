@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with Gtk.Handlers;       use Gtk.Handlers;
 with Completion_Window;  use Completion_Window;
 
 with Language.Ada;                   use Language.Ada;
+with Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -240,7 +241,7 @@ package body Completion_Window.Entity_Views is
    procedure On_Entry_Changed
      (View : access Entity_View_Record'Class)
    is
-      List       : Declaration_List;
+      List       : Ada_Semantic_Tree.Entity_List;
       Expression : Parsed_Expression;
       Text       : String_Access;
    begin
@@ -257,7 +258,8 @@ package body Completion_Window.Entity_Views is
 
       Set_Iterator
         (View.Explorer,
-         new Entity_Iterator'(Entity_Iterator'(I => First (List))));
+         new Entity_Iterator'
+           (I => Ada_Semantic_Tree.First (List)));
 
       Clear (View.Explorer);
 

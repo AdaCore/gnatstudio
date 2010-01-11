@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with Ada_Semantic_Tree.Dependency_Tree;
 with Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Type_Tree;
 with Ada_Semantic_Tree.Interfaces;
+with Ada_Semantic_Tree.Std_Entities;
 
 package body Ada_Semantic_Tree.Assistants is
 
@@ -31,7 +32,9 @@ package body Ada_Semantic_Tree.Assistants is
    -- Register_Ada_Assistants --
    -----------------------------
 
-   procedure Register_Ada_Assistants (Db : Construct_Database_Access) is
+   procedure Register_Ada_Assistants
+     (Db                 : Construct_Database_Access;
+      Std_Entities_Files : Virtual_File) is
    begin
       --  Since the assistants are registring annotations keys, the order in
       --  which they are registered influences a lot the memory lost by the
@@ -48,6 +51,8 @@ package body Ada_Semantic_Tree.Assistants is
       Ada_Semantic_Tree.Type_Tree.Register_Assistant (Db);
       Ada_Semantic_Tree.Dependency_Tree.Register_Assistant (Db);
       Ada_Semantic_Tree.Interfaces.Register_Assistant (Db);
+      Ada_Semantic_Tree.Std_Entities.Register_Assistant
+        (Db, Std_Entities_Files);
    end Register_Ada_Assistants;
 
 end Ada_Semantic_Tree.Assistants;

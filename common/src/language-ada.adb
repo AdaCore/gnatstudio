@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -807,7 +807,11 @@ package body Language.Ada is
       procedure Handle_Expression (Offset : in out Natural; Skip : Boolean);
       procedure Skip_String (Offset : in out Natural);
       procedure Skip_Comment_Line (Offset : in out Natural);
-      procedure Push_Pckg (Offset : in out Natural);
+
+      procedure Push_Potential_Keyword (Offset : in out Natural);
+      --  Push a potential keyword that we need to parse, namely with, use
+      --  and pragma
+
       function Check_Prev_Word
         (Offset : Positive; Word : String)
          return Boolean;
@@ -951,26 +955,35 @@ package body Language.Ada is
          end loop;
       end Skip_Comment_Line;
 
-      ---------------
-      -- Push_Pckg --
-      ---------------
+      ----------------------------
+      -- Push_Potential_Keyword --
+      ----------------------------
 
-      procedure Push_Pckg (Offset : in out Natural) is
+      procedure Push_Potential_Keyword (Offset : in out Natural) is
+         With_Str   : constant String := "with";
+         Use_Str    : constant String := "use";
+         Pragma_Str : constant String := "pragma";
       begin
-         if Check_Prev_Word (Offset, "with") then
+         if Check_Prev_Word (Offset, With_Str) then
             Token.Tok_Type := Tok_With;
             Token.Token_Last := Offset;
-            Offset := Offset - 3;
+            Offset := Offset - (With_Str'Length - 1);
             Token.Token_First := Offset;
             Push (Token, Offset);
-         elsif Check_Prev_Word (Offset, "use") then
+         elsif Check_Prev_Word (Offset, Use_Str) then
             Token.Tok_Type := Tok_Use;
             Token.Token_Last := Offset;
-            Offset := Offset - 2;
+            Offset := Offset - (Use_Str'Length - 1);
+            Token.Token_First := Offset;
+            Push (Token, Offset);
+         elsif Check_Prev_Word (Offset, Pragma_Str) then
+            Token.Tok_Type := Tok_Pragma;
+            Token.Token_Last := Offset;
+            Offset := Offset - (Pragma_Str'Length - 1);
             Token.Token_First := Offset;
             Push (Token, Offset);
          end if;
-      end Push_Pckg;
+      end Push_Potential_Keyword;
 
       ----------
       -- Push --
@@ -1142,6 +1155,11 @@ package body Language.Ada is
                Token.Tok_Type := Tok_Dot;
                Push (Token, Offset);
 
+            when ''' =>
+               Push (Token, Offset);
+               Token.Tok_Type := Tok_Tick;
+               Push (Token, Offset);
+
             when ' ' | ASCII.HT | ASCII.CR =>
                Push (Token, Offset);
                Blank_Here := True;
@@ -1213,14 +1231,14 @@ package body Language.Ada is
 
                      if Length (Result.Tokens) = 0 and then Blank_Before then
                         Token := Null_Token;
-                        Push_Pckg (Offset);
+                        Push_Potential_Keyword (Offset);
                         exit;
                      end if;
 
                      if Length (Result.Tokens) > 0
                        and then Head (Result.Tokens).Tok_Type = Tok_Identifier
                      then
-                        Push_Pckg (Offset);
+                        Push_Potential_Keyword (Offset);
                         Token := Null_Token;
                         exit;
                      end if;

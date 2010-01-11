@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2009, AdaCore               --
+--                    Copyright (C) 2007-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -116,6 +116,14 @@ package body Completion.History is
       end if;
 
       Stored := To_Stored_Proposal (Storable_Proposal'Class (Proposal));
+
+      if Stored = null then
+         --  If we can't create a stored proposal out of the proposal, then
+         --  don't store it.
+
+         return;
+      end if;
+
       It     := First (Resolver.Stack);
 
       --  Free all elements equals to the one given in parameter form the

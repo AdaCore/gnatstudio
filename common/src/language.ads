@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2009, AdaCore                 --
+--                  Copyright (C) 2000-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -776,15 +776,29 @@ package Language is
 
    type Token_Type is
      (No_Token,
+
+      --  Separators
+
       Tok_Dot,
       Tok_Open_Parenthesis,
       Tok_Close_Parenthesis,
+      Tok_Arrow,
+
+      --  Words
+
       Tok_Identifier,
+
+      --  Unparsed parts
+
       Tok_Expression,
+
+      --  Keywords
+
+      Tok_All,
+      Tok_Tick,
       Tok_With,
       Tok_Use,
-      Tok_All,
-      Tok_Arrow);
+      Tok_Pragma);
    --  Types of tokens that are found in an expression
 
    type Token_Record is record

@@ -1364,7 +1364,9 @@ procedure GPS.Main is
 
       --  Initialize the ada semantic tree module
 
-      Ada_Semantic_Tree_Module.Register_Module (GPS_Main.Kernel);
+      Ada_Semantic_Tree_Module.Register_Module
+        (GPS_Main.Kernel,
+         Create_From_Dir (Prefix_Dir, "share/gps/predefined_ada.xml"));
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
