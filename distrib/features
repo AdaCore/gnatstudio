@@ -138,4 +138,5 @@ NF-45-I810-019 Remote mode now synchronizes files upon save (2009-10-28)
 
 NF-45-G626-028 Smart completion for pragmas and attributes (2010-01-11)
 
-  GPS is now able to offer auto completions for Ada pragmas and attributes.
+  GPS is now able to offer auto completions for Ada pragmas and attributes,
+  including display of the corresponding documentation.
