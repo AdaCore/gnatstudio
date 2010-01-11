@@ -26,6 +26,7 @@ with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
+with Traces;                       use Traces;
 
 package body Ada_Semantic_Tree_Module is
 
@@ -87,6 +88,9 @@ package body Ada_Semantic_Tree_Module is
            (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
         (Get_Construct_Database (Kernel), Std_Entities_Files);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
    end Register_Module;
 
 end Ada_Semantic_Tree_Module;
