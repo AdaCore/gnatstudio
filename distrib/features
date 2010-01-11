@@ -2,7 +2,7 @@
 GPS 4.5 NEW FEATURES LIST
 =========================
 
-Copyright (C) 2009, AdaCore
+Copyright (C) 2009-2010, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -135,3 +135,7 @@ NF-45-I810-019 Remote mode now synchronizes files upon save (2009-10-28)
   to the remote servers immediately. This allows external programs running
   on the server to immediately have access to them, and also allows faster
   sync operations before GPS launches an action on the remote server.
+
+NF-45-G626-028 Smart completion for pragmas and attributes (2010-01-11)
+
+  GPS is now able to offer auto completions for Ada pragmas and attributes.
