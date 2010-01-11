@@ -61,6 +61,8 @@ with Types;                     use Types;
 package body Projects.Registry is
 
    Me      : constant Debug_Handle := Create ("Projects.Registry");
+   Me_Debug : constant Debug_Handle :=
+               Create ("Projects.Registry.Debug", GNATCOLL.Traces.Off);
    Me_Gnat : constant Debug_Handle :=
                Create ("Projects.GNAT", GNATCOLL.Traces.Off);
 
@@ -1230,15 +1232,15 @@ package body Projects.Registry is
         (Registry.Data.View_Tree.Source_Paths_HT, Path);
 
       if Id = No_Source then
-         if Active (Me) then
-            Trace (Me, "DEBUG: project not found for file " & Full
+         if Active (Me_Debug) then
+            Trace (Me_Debug, "DEBUG: project not found for file " & Full
                    & " parameter was "
                    & Display_Full_Name (Source_Filename));
 
             Id := Source_Paths_Htable.Get_First
               (Registry.Data.View_Tree.Source_Paths_HT);
             while Id /= No_Source loop
-               Trace (Me, "DEBUG: in htable, we have "
+               Trace (Me_Debug, "DEBUG: in htable, we have "
                       & Get_String (Id.Path.Name));
 
                Id := Source_Paths_Htable.Get_Next
