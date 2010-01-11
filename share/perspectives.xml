@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <GPS>
-  <perspectives >
+  <perspectives state=" 0" height=" 600" width=" 800" >
     <perspective name="Default" >
       <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL" >
         <Pane width=" 20%" Orientation="ORIENTATION_VERTICAL" >
@@ -71,7 +71,7 @@
     </perspective>
   </perspectives>
   <desktops>
-    <desktop perspective="Default" state=" 0" height=" 600" width=" 800" >
+    <desktop perspective="Default" >
     </desktop>
   </desktops>
 </GPS>
