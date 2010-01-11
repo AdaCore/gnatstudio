@@ -23,6 +23,9 @@
 --
 --   - creates columns and renderers at initialization time;
 --
+--   - creates intermediate filter model and connect between lowerst model
+--     and view;
+--
 --   - handle "query-tooltip" request and display tooltip when visible
 --     area of the view is insufficient to display all text of the message;
 --
@@ -36,6 +39,8 @@
 --   - emit "action_clicked" signal on click on action's column;
 --
 --   - emit "location_clicked" signal on click on location's column.
+--
+--   - substitute number of children messages in categories and files nodes.
 
 with Glib;
 private with Glib.Main;
