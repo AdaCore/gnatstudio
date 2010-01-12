@@ -9,7 +9,7 @@ with "../aunit/aunit";
 with "../browsers/browsers";
 with "../builder/builder";
 with "../code_analysis/code_analysis";
-with "../codefix/codefix";
+with "../codefix/ui/codefix_ui";
 with "../completion/completion";
 with "../cpp_module/cpp_module";
 with "../custom/custom";
