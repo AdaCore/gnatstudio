@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -300,8 +300,8 @@ package body Src_Editor_Buffer.Text_Handling is
       Result            : Boolean;
       Char, Prev, PPrev : Character;
       Forward_Moves     : Natural := 0;
-      Text_Replaced     : Boolean;
-      --  Record the number of foward moves done to replace the cursor at the
+      Text_Replaced     : Boolean := False;
+      --  Record the number of forward moves done to replace the cursor at the
       --  right place in On_The_Fly mode while inserting a character inside a
       --  word. This is needed as the mark of the cursor will be replaced.
 
