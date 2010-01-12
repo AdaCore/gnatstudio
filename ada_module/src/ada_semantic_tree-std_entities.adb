@@ -204,6 +204,8 @@ package body Ada_Semantic_Tree.Std_Entities is
 
          Current := Current.Next;
       end loop;
+
+      Free (Root_Node);
    end Register_Assistant;
 
    ---------------
