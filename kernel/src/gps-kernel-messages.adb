@@ -80,8 +80,18 @@ package body GPS.Kernel.Messages is
      (Self          : not null access Messages_Container'Class;
       File_Position : in out File_Maps.Cursor;
       File_Index    : Positive;
-      File_Node     : in out Node_Access);
-   --  Removes specified file and all underling entities
+      File_Node     : in out Node_Access;
+      Recursive     : Boolean);
+   --  Removes specified file and all underling entities. Removes category
+   --  when it doesn't have items and resursive destruction is allowed.
+
+   procedure Remove_Message
+     (Self      : not null access Messages_Container'Class;
+      Message   : in out Message_Access;
+      Recursive : Boolean);
+   --  Removes specified message, all secondary messages. Removes enclosing
+   --  file and category when they don't have other items and recursive
+   --  destruction is allowed.
 
    procedure Increment_Message_Counters
      (Self : not null access Abstract_Message'Class);
@@ -103,6 +113,9 @@ package body GPS.Kernel.Messages is
    procedure Free is
      new Ada.Unchecked_Deallocation
        (GPS.Editors.Line_Information_Record, Action_Item);
+
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
    ------------------------------
    -- Create_Message_Container --
@@ -765,6 +778,7 @@ package body GPS.Kernel.Messages is
    is
       Listener_Position : constant Listener_Vectors.Cursor :=
                             Self.Listeners.Find (Listener);
+
    begin
       if not Has_Element (Listener_Position) then
          Self.Listeners.Append (Listener);
@@ -776,28 +790,10 @@ package body GPS.Kernel.Messages is
    ------------
 
    procedure Remove (Self : not null access Abstract_Message'Class) is
-
-      procedure Free is
-        new Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
-
-      Container : constant Messages_Container_Access := Self.Get_Container;
-      Parent    : constant Node_Access := Self.Parent;
-      Index     : constant Positive :=
-                    Parent.Children.Find_Index (Node_Access (Self));
-      Aux       : Message_Access := Message_Access (Self);
+      Message : Message_Access := Message_Access (Self);
 
    begin
-      while not Self.Children.Is_Empty loop
-         Message_Access (Self.Children.Last_Element).Remove;
-      end loop;
-
-      Container.Notify_Listeners_About_Message_Removed (Self);
-      Self.Decrement_Message_Counters;
-      Parent.Children.Delete (Index);
-      Container.Notify_Models_About_Message_Removed (Parent, Index);
-
-      Self.Finalize;
-      Free (Aux);
+      Self.Get_Container.Remove_Message (Message, True);
    end Remove;
 
    -------------------------
@@ -835,22 +831,22 @@ package body GPS.Kernel.Messages is
       pragma Assert (Has_Element (Category_Position));
       pragma Assert (Category_Node /= null);
 
-      File_Position : File_Maps.Cursor;
-      File_Index    : Positive;
-      File_Node     : Node_Access;
-
-      procedure Free is
-        new Unchecked_Deallocation (Node_Record'Class, Node_Access);
-
    begin
       --  Remove files
 
       while not Category_Node.Children.Is_Empty loop
-         File_Node  := Category_Node.Children.Last_Element;
-         File_Index := Category_Node.Children.Last_Index;
-         File_Position := Category_Node.File_Map.Find (File_Node.File);
+         declare
+            File_Node     : Node_Access := Category_Node.Children.Last_Element;
+            File_Position : File_Maps.Cursor :=
+                              Category_Node.File_Map.Find (File_Node.File);
 
-         Self.Remove_File (File_Position, File_Index, File_Node);
+         begin
+            Self.Remove_File
+              (File_Position,
+               Category_Node.Children.Last_Index,
+               File_Node,
+               False);
+         end;
       end loop;
 
       Self.Category_Map.Delete (Category_Position);
@@ -901,18 +897,22 @@ package body GPS.Kernel.Messages is
      (Self          : not null access Messages_Container'Class;
       File_Position : in out File_Maps.Cursor;
       File_Index    : Positive;
-      File_Node     : in out Node_Access)
+      File_Node     : in out Node_Access;
+      Recursive     : Boolean)
    is
-      Category_Node : constant Node_Access := File_Node.Parent;
-
-      procedure Free is
-        new Unchecked_Deallocation (Node_Record'Class, Node_Access);
+      Category_Node : Node_Access := File_Node.Parent;
 
    begin
       --  Remove messages
 
       while not File_Node.Children.Is_Empty loop
-         Message_Access (File_Node.Children.Last_Element).Remove;
+         declare
+            Message : Message_Access :=
+              Message_Access (File_Node.Children.Last_Element);
+
+         begin
+            Self.Remove_Message (Message, False);
+         end;
       end loop;
 
       Category_Node.File_Map.Delete (File_Position);
@@ -929,6 +929,23 @@ package body GPS.Kernel.Messages is
       end;
 
       Free (File_Node);
+
+      --  Remove category when there are no files for it
+
+      if Recursive
+        and then Category_Node.Children.Is_Empty
+      then
+         declare
+            Category_Position : Category_Maps.Cursor :=
+              Self.Category_Map.Find (Category_Node.Name);
+            Category_Index    : constant Positive :=
+              Self.Categories.Find_Index (Category_Node);
+
+         begin
+            Self.Remove_Category
+              (Category_Position, Category_Index, Category_Node);
+         end;
+      end if;
    end Remove_File;
 
    -----------------
@@ -957,11 +974,66 @@ package body GPS.Kernel.Messages is
          if Has_Element (File_Position) then
             File_Node := Element (File_Position);
             File_Index := Category_Node.Children.Find_Index (File_Node);
-
-            Self.Remove_File (File_Position, File_Index, File_Node);
+            Self.Remove_File (File_Position, File_Index, File_Node, True);
          end if;
       end if;
    end Remove_File;
+
+   --------------------
+   -- Remove_Message --
+   --------------------
+
+   procedure Remove_Message
+     (Self      : not null access Messages_Container'Class;
+      Message   : in out Message_Access;
+      Recursive : Boolean)
+   is
+
+      procedure Free is
+        new Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
+
+      Parent    : Node_Access := Message.Parent;
+      Index     : constant Positive :=
+                    Parent.Children.Find_Index (Node_Access (Message));
+
+   begin
+      while not Message.Children.Is_Empty loop
+         declare
+            Secondary : Message_Access :=
+              Message_Access (Message.Children.Last_Element);
+
+         begin
+            Self.Remove_Message (Secondary, False);
+         end;
+      end loop;
+
+      Self.Notify_Listeners_About_Message_Removed (Message);
+      Message.Decrement_Message_Counters;
+      Parent.Children.Delete (Index);
+      Self.Notify_Models_About_Message_Removed (Parent, Index);
+
+      Message.Finalize;
+      Free (Message);
+
+      --  Remove file node when there are no messages for the file and
+      --  recursive destruction is enabled.
+
+      if Recursive
+        and then Parent.Kind = Node_File
+        and then Parent.Children.Is_Empty
+      then
+         declare
+            Category_Node : constant Node_Access := Parent.Parent;
+            File_Position : File_Maps.Cursor :=
+              Category_Node.File_Map.Find (Parent.File);
+            File_Index    : constant Positive :=
+              Category_Node.Children.Find_Index (Parent);
+
+         begin
+            Self.Remove_File (File_Position, File_Index, Parent, True);
+         end;
+      end if;
+   end Remove_Message;
 
    ----------------
    -- Set_Action --
