@@ -163,11 +163,19 @@ package body GPS.Kernel.Messages.Classic_Models is
       Category : not null Node_Access;
       Index    : Positive)
    is
-      Path : constant Gtk_Tree_Path := Self.Create_Path (Category);
+      Path  : constant Gtk_Tree_Path := Self.Create_Path (Category);
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
 
    begin
       Append_Index (Path, Gint (Index) - 1);
       Self.Row_Deleted (Path);
+
+      if Category.Children.Is_Empty then
+         Dummy := Up (Path);
+         Self.Row_Has_Child_Toggled (Path, Self.Create_Iter (Category));
+      end if;
+
       Path_Free (Path);
    end File_Removed;
 
@@ -701,11 +709,19 @@ package body GPS.Kernel.Messages.Classic_Models is
       File  : not null Node_Access;
       Index : Positive)
    is
-      Path : constant Gtk_Tree_Path := Self.Create_Path (File);
+      Path  : constant Gtk_Tree_Path := Self.Create_Path (File);
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
 
    begin
       Append_Index (Path, Gint (Index) - 1);
       Self.Row_Deleted (Path);
+
+      if File.Children.Is_Empty then
+         Dummy := Up (Path);
+         Self.Row_Has_Child_Toggled (Path, Self.Create_Iter (File));
+      end if;
+
       Path_Free (Path);
    end Message_Removed;
 
@@ -778,14 +794,27 @@ package body GPS.Kernel.Messages.Classic_Models is
      (Self : not null access Classic_Tree_Model_Record;
       Node : not null Node_Access)
    is
-      Path : Gtk_Tree_Path;
-      Iter : Gtk_Tree_Iter;
+      use type Ada.Containers.Count_Type;
+
+      Path  : Gtk_Tree_Path;
+      Iter  : Gtk_Tree_Iter;
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
 
    begin
       Self.Stamp := Self.Stamp + 1;
       Iter := Self.Create_Iter (Node);
       Path := Self.Create_Path (Node);
       Self.Row_Inserted (Path, Iter);
+
+      if Node.Parent /= null
+        and then Node.Parent.Children.Length = 1
+      then
+         Dummy := Up (Path);
+         Iter := Self.Parent (Iter);
+         Self.Row_Has_Child_Toggled (Path, Iter);
+      end if;
+
       Path_Free (Path);
    end Node_Added;
 
