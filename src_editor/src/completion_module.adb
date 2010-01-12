@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1380,7 +1380,8 @@ package body Completion_Module is
       if Last = 1
         and then (Buffer (1) = '.'
                   or else Buffer (1) = ','
-                  or else Buffer (1) = '(')
+                  or else Buffer (1) = '('
+                  or else Buffer (1) = ''')
       then
          if Smart_Completion_Pref = Dynamic then
             Timeout := 0;

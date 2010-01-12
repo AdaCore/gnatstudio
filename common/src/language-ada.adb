@@ -803,6 +803,7 @@ package body Language.Ada is
       Token              : Token_Record;
       Result             : Parsed_Expression;
       Last_Token_On_Line : Token_List.List_Node;
+      Prev_Tick          : Boolean := False;
 
       procedure Handle_Expression (Offset : in out Natural; Skip : Boolean);
       procedure Skip_String (Offset : in out Natural);
@@ -817,7 +818,14 @@ package body Language.Ada is
          return Boolean;
 
       procedure Push (Token : in out Token_Record; Offset : Natural);
+      --  Adds a token at the beginning on the list.
+
       procedure Pop;
+
+      function Was_Start_Of_Character return Boolean;
+      --  Return true if the last tick was the start of a character, not an
+      --  attribute, given that the offset is on the first non blank character
+      --  before.
 
       ---------------------
       -- Skip_Expression --
@@ -1016,6 +1024,35 @@ package body Language.Ada is
          end if;
       end Push;
 
+      ---------------------
+      -- Adjust_For_Tick --
+      ---------------------
+
+      function Was_Start_Of_Character return Boolean
+      is
+         Next_Ind : Natural;
+      begin
+         Next_Ind := UTF8_Next_Char (Buffer.all, Offset) - 1;
+
+         if (Next_Ind in Buffer'Range
+             and then
+               (Is_Alnum
+                  (UTF8_Get_Char (Buffer (Offset .. Next_Ind)))))
+           or else
+             (Next_Ind not in Buffer'Range
+              and then Is_Alphanumeric (Buffer (Offset)))
+           or else Buffer (Offset) = '_'
+           or else Buffer (Offset) = ')'
+         then
+            --  We're on a UTF8 character or a closing paren - consider this
+            --  as being an attribute except if found an other tick later on.
+
+            return False;
+         else
+            return True;
+         end if;
+      end Was_Start_Of_Character;
+
       ---------
       -- Pop --
       ---------
@@ -1110,6 +1147,38 @@ package body Language.Ada is
             exit;
          end if;
 
+         if Prev_Tick
+           and then Buffer (Offset) /= ' '
+           and then Buffer (Offset) /= ASCII.HT
+           and then Buffer (Offset) /= ASCII.CR
+           and then Buffer (Offset) /= ASCII.LF
+         then
+            --  If the last character found was a tick, and the current
+            --  character has to be analysed, check if that was really related
+            --  to an attribute, and finish the analysis if appropriate.
+
+            if Was_Start_Of_Character then
+               --  If we're actually on a character, then remove the
+               --  character tokens and end the analysis. Cases of removal
+               --  are:
+               --
+               --  ['] [a] [']
+               --  ['] [a]
+               --  [']
+
+               for J in 1 .. 3 loop
+                  if Length (Result.Tokens) > 0 then
+                     Pop;
+                  end if;
+               end loop;
+
+               Token := Null_Token;
+               exit;
+            end if;
+
+            Prev_Tick := False;
+         end if;
+
          case Buffer (Offset) is
             when ',' =>
                Push (Token, Offset);
@@ -1157,8 +1226,11 @@ package body Language.Ada is
 
             when ''' =>
                Push (Token, Offset);
+
                Token.Tok_Type := Tok_Tick;
                Push (Token, Offset);
+
+               Prev_Tick := True;
 
             when ' ' | ASCII.HT | ASCII.CR =>
                Push (Token, Offset);
