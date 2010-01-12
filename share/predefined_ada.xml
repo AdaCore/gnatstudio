@@ -6363,4 +6363,176 @@ encoding within that file, and does not affect withed units, specs, or
 subunits.
       </DOC>
    </PRAGMA>
+
+   <STANDARD name = "&amp;" category = "function"/>
+
+   <STANDARD name = "&lt;" category = "function"/>
+
+   <STANDARD name = "&lt;=" category = "function"/>
+
+   <STANDARD name = "*" category = "function"/>
+
+   <STANDARD name = "**" category = "function"/>
+
+   <STANDARD name = "+" category = "function"/>
+
+   <STANDARD name = "-" category = "function"/>
+
+   <STANDARD name = "/" category = "function"/>
+
+   <STANDARD name = "/=" category = "function"/>
+
+   <STANDARD name = "=" category = "function"/>
+
+   <STANDARD name = ">" category = "function"/>
+
+   <STANDARD name = ">=" category = "function"/>
+
+   <STANDARD name = "ASCII" category = "package">
+      <FIELD name = "NUL" doc = "16#00#"/>
+      <FIELD name = "SOH" doc = "16#01#"/>
+      <FIELD name = "STX" doc = "16#02#"/>
+      <FIELD name = "ETX" doc = "16#03#"/>
+      <FIELD name = "EOT" doc = "16#04#"/>
+      <FIELD name = "ENQ" doc = "16#05#"/>
+      <FIELD name = "ACK" doc = "16#06#"/>
+      <FIELD name = "BEL" doc = "16#07#"/>
+      <FIELD name = "BS" doc = "16#08#"/>
+      <FIELD name = "HT" doc = "16#09#"/>
+      <FIELD name = "LF" doc = "16#0A#"/>
+      <FIELD name = "VT" doc = "16#0B#"/>
+      <FIELD name = "FF" doc = "16#0C#"/>
+      <FIELD name = "CR" doc = "16#0D#"/>
+      <FIELD name = "SO" doc = "16#0E#"/>
+      <FIELD name = "SI" doc = "16#0F#"/>
+      <FIELD name = "DLE" doc = "16#10#"/>
+      <FIELD name = "DC1" doc = "16#11#"/>
+      <FIELD name = "DC2" doc = "16#12#"/>
+      <FIELD name = "DC3" doc = "16#13#"/>
+      <FIELD name = "DC4" doc = "16#14#"/>
+      <FIELD name = "NAK" doc = "16#15#"/>
+      <FIELD name = "SYN" doc = "16#16#"/>
+      <FIELD name = "ETB" doc = "16#17#"/>
+      <FIELD name = "CAN" doc = "16#18#"/>
+      <FIELD name = "EM" doc = "16#19#"/>
+      <FIELD name = "SUB" doc = "16#1A#"/>
+      <FIELD name = "ESC" doc = "16#1B#"/>
+      <FIELD name = "FS" doc = "16#1C#"/>
+      <FIELD name = "GS" doc = "16#1D#"/>
+      <FIELD name = "RS" doc = "16#1E#"/>
+      <FIELD name = "US" doc = "16#1F#"/>
+      <FIELD name = "Exclam" doc = "16#21#"/>
+      <FIELD name = "Quotation" doc = "16#22#"/>
+      <FIELD name = "Sharp" doc = "16#23#"/>
+      <FIELD name = "Dollar" doc = "16#24#"/>
+      <FIELD name = "Percent" doc = "16#25#"/>
+      <FIELD name = "Ampersand" doc = "16#26#"/>
+      <FIELD name = "Colon" doc = "16#3A#"/>
+      <FIELD name = "Semicolon" doc = "16#3B#"/>
+      <FIELD name = "Query" doc = "16#3F#"/>
+      <FIELD name = "At_Sign" doc = "16#40#"/>
+      <FIELD name = "L_Bracket" doc = "16#5B#"/>
+      <FIELD name = "Back_Slash" doc = "16#5C#"/>
+      <FIELD name = "R_Bracket" doc = "16#5D#"/>
+      <FIELD name = "Circumflex" doc = "16#5E#"/>
+      <FIELD name = "Underline" doc = "16#5F#"/>
+      <FIELD name = "Grave" doc = "16#60#"/>
+      <FIELD name = "LC_A" doc = "16#61#"/>
+      <FIELD name = "LC_B" doc = "16#62#"/>
+      <FIELD name = "LC_C" doc = "16#63#"/>
+      <FIELD name = "LC_D" doc = "16#64#"/>
+      <FIELD name = "LC_E" doc = "16#65#"/>
+      <FIELD name = "LC_F" doc = "16#66#"/>
+      <FIELD name = "LC_G" doc = "16#67#"/>
+      <FIELD name = "LC_H" doc = "16#68#"/>
+      <FIELD name = "LC_I" doc = "16#69#"/>
+      <FIELD name = "LC_J" doc = "16#6A#"/>
+      <FIELD name = "LC_K" doc = "16#6B#"/>
+      <FIELD name = "LC_L" doc = "16#6C#"/>
+      <FIELD name = "LC_M" doc = "16#6D#"/>
+      <FIELD name = "LC_N" doc = "16#6E#"/>
+      <FIELD name = "LC_O" doc = "16#6F#"/>
+      <FIELD name = "LC_P" doc = "16#70#"/>
+      <FIELD name = "LC_Q" doc = "16#71#"/>
+      <FIELD name = "LC_R" doc = "16#72#"/>
+      <FIELD name = "LC_S" doc = "16#73#"/>
+      <FIELD name = "LC_T" doc = "16#74#"/>
+      <FIELD name = "LC_U" doc = "16#75#"/>
+      <FIELD name = "LC_V" doc = "16#76#"/>
+      <FIELD name = "LC_W" doc = "16#77#"/>
+      <FIELD name = "LC_X" doc = "16#78#"/>
+      <FIELD name = "LC_Y" doc = "16#79#"/>
+      <FIELD name = "LC_Z" doc = "16#7A#"/>
+      <FIELD name = "L_BRACE" doc = "16#7B#"/>
+      <FIELD name = "BA" doc = "16#7C#"/>
+      <FIELD name = "R_BRACE" doc = "16#7D#"/>
+      <FIELD name = "TILDE" doc = "16#7E#"/>
+      <FIELD name = "DEL" doc = "16#7F#"/>
+   </STANDARD>
+
+   <STANDARD name = "Boolean" category = "type"/>
+
+   <STANDARD name = "Character" category = "type"/>
+
+   <STANDARD name = "Constraint_Error" category = "variable"/>
+
+   <STANDARD name = "Duration" category = "type"/>
+
+   <STANDARD name = "False" category = "variable"/>
+
+   <STANDARD name = "Float" category = "type"/>
+
+   <STANDARD name = "Integer" category = "type"/>
+
+   <STANDARD name = "Long_Float" category = "type"/>
+
+   <STANDARD name = "Long_Integer" category = "type"/>
+
+   <STANDARD name = "Long_Long_Float" category = "type"/>
+
+   <STANDARD name = "Long_Long_Integer" category = "type"/>
+
+   <STANDARD name = "Natural" category = "type"/>
+
+   <STANDARD name = "Numeric_Error" category = "variable"/>
+
+   <STANDARD name = "Positive" category = "type"/>
+
+   <STANDARD name = "Program_Error" category = "variable"/>
+
+   <STANDARD name = "Short_Float" category = "type"/>
+
+   <STANDARD name = "Short_Integer" category = "type"/>
+
+   <STANDARD name = "Short_Short_Integer" category = "type"/>
+
+   <STANDARD name = "Storage_Error" category = "variable"/>
+
+   <STANDARD name = "String" category = "type"/>
+
+   <STANDARD name = "Tasking_Error" category = "variable"/>
+
+   <STANDARD name = "True" category = "variable"/>
+
+   <STANDARD name = "Wide_Character" category = "type"/>
+
+   <STANDARD name = "Wide_String" category = "type"/>
+
+   <STANDARD name = "Wide_Wide_Character" category = "type"/>
+
+   <STANDARD name = "Wide_Wide_String" category = "type"/>
+
+   <STANDARD name = "abs" category = "function"/>
+
+   <STANDARD name = "and" category = "function"/>
+
+   <STANDARD name = "mod" category = "function"/>
+
+   <STANDARD name = "not" category = "function"/>
+
+   <STANDARD name = "or" category = "function"/>
+
+   <STANDARD name = "rem" category = "function"/>
+
+   <STANDARD name = "xor" category = "function"/>
 </PREDEFINED_ADA>
