@@ -3,14 +3,14 @@ with "../shared";
 with "../plugins";
 
 with "../action_editor/action_editor";
-with "../ada_module/ada_module";
+with "../ada_module/ui/ada_module_ui";
 with "../aliases/aliases";
 with "../aunit/aunit";
 with "../browsers/browsers";
 with "../builder/builder";
 with "../code_analysis/code_analysis";
 with "../codefix/ui/codefix_ui";
-with "../completion/completion";
+with "../completion/ui/completion_ui";
 with "../cpp_module/cpp_module";
 with "../custom/custom";
 with "../distrib";

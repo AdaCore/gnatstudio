@@ -1,10 +1,11 @@
-with "../kernel/kernel";
-with "../common/common";
-with "../shared";
-with "../ada_module/ada_module";
-with "../gvd/gvd";
+with "../../kernel/kernel";
+with "../../common/common";
+with "../../shared";
+with "../../gvd/gvd";
 
-project Completion is
+with "../core/completion_core";
+
+project Completion_UI is
 
    for Source_Dirs use ("src");
    for Languages use ("Ada");
@@ -19,4 +20,4 @@ project Completion is
 
    package IDE renames Shared.IDE;
 
-end Completion;
+end Completion_UI;
