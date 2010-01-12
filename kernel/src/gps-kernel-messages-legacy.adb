@@ -144,7 +144,7 @@ package body GPS.Kernel.Messages.Legacy is
          Message := Element (Message_Position);
 
          if Message.Line = Line
-           and then Message.Column = Column
+           and then (Column = 0 or else Message.Column = Column)
          then
             return Message_Access (Message);
          end if;

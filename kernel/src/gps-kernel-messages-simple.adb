@@ -16,12 +16,38 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Ada.Strings.Fixed;
+
 with Glib.Convert;
 
 package body GPS.Kernel.Messages.Simple is
 
+   use Ada.Strings;
+   use Ada.Strings.Fixed;
    use Ada.Strings.Unbounded;
    use Glib.Convert;
+   use XML_Utils;
+
+   procedure Save
+     (Message_Node : not null Message_Access;
+      XML_Node     : not null Node_Ptr);
+
+   function Load
+     (XML_Node  : not null Node_Ptr;
+      Container : not null Messages_Container_Access;
+      Category  : String;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Natural;
+      Column    : Basic_Types.Visible_Column_Type)
+      return not null Message_Access;
+
+   procedure Load
+     (XML_Node : not null Node_Ptr;
+      Parent   : not null Message_Access;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Natural;
+      Column   : Basic_Types.Visible_Column_Type);
 
    ---------------------------
    -- Create_Simple_Message --
@@ -104,5 +130,82 @@ package body GPS.Kernel.Messages.Simple is
    begin
       return Self.Text;
    end Get_Text;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (XML_Node  : not null Node_Ptr;
+      Container : not null Messages_Container_Access;
+      Category  : String;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Natural;
+      Column    : Basic_Types.Visible_Column_Type)
+      return not null Message_Access
+   is
+      Text : constant String := Get_Attribute (XML_Node, "text", "");
+
+   begin
+      return
+        Message_Access
+          (Create_Simple_Message
+               (Container, Category, File, Line, Column, Text));
+   end Load;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load
+     (XML_Node : not null Node_Ptr;
+      Parent   : not null Message_Access;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Natural;
+      Column   : Basic_Types.Visible_Column_Type)
+   is
+      Text  : constant String := Get_Attribute (XML_Node, "text", "");
+      First : constant Positive :=
+                Positive'Value (Get_Attribute (XML_Node, "first", "1"));
+      Last  : constant Natural :=
+                Natural'Value (Get_Attribute (XML_Node, "last", "0"));
+
+   begin
+      Create_Simple_Message (Parent, File, Line, Column, Text, First, Last);
+   end Load;
+
+   --------------
+   -- Register --
+   --------------
+
+   procedure Register (Container : not null access Messages_Container'Class) is
+   begin
+      Container.Register_Message_Class
+        (Simple_Message'Tag, Save'Access, Load'Access, Load'Access);
+   end Register;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Message_Node : not null Message_Access;
+      XML_Node     : not null Node_Ptr)
+   is
+      Self : constant Simple_Message_Access :=
+               Simple_Message_Access (Message_Node);
+
+   begin
+      Set_Attribute (XML_Node, "text", To_String (Self.Text));
+
+      if Self.Level = Secondary
+        and then Self.First <= Self.Last
+      then
+         Set_Attribute
+           (XML_Node, "first", Trim (Integer'Image (Self.First), Both));
+         Set_Attribute
+           (XML_Node, "last", Trim (Integer'Image (Self.Last), Both));
+      end if;
+   end Save;
 
 end GPS.Kernel.Messages.Simple;

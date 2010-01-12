@@ -35,6 +35,7 @@ private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
+private with Ada.Tags;
 
 with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
@@ -315,11 +316,15 @@ package GPS.Kernel.Messages is
    -- For private use only --
    --------------------------
 
-   function Create_Message_Container
+   function Create_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
       return System.Address;
    --  Creates new nessages container and returns its address. Address is used
    --  to break circular dependency between Kernel and Messages_Container.
+
+   procedure Free_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Save messages and destroyes messages container
 
 private
 
@@ -429,19 +434,68 @@ private
    type Messages_Model_Access is
      access all Abstract_Messages_Tree_Model_Record'Class;
 
+   type Message_Save_Procedure is
+     access procedure
+       (Message_Node : not null Message_Access;
+        XML_Node     : not null XML_Utils.Node_Ptr);
+
+   type Primary_Message_Load_Procedure is
+     access function
+       (XML_Node  : not null XML_Utils.Node_Ptr;
+        Container : not null Messages_Container_Access;
+        Category  : String;
+        File      : GNATCOLL.VFS.Virtual_File;
+        Line      : Natural;
+        Column    : Basic_Types.Visible_Column_Type)
+        return not null Message_Access;
+
+   type Secondary_Message_Load_Procedure is
+     access procedure
+       (XML_Node : not null XML_Utils.Node_Ptr;
+        Parent   : not null Message_Access;
+        File     : GNATCOLL.VFS.Virtual_File;
+        Line     : Natural;
+        Column   : Basic_Types.Visible_Column_Type);
+
    package Model_Vectors is
      new Ada.Containers.Vectors (Positive, Messages_Model_Access);
 
    package Listener_Vectors is
      new Ada.Containers.Vectors (Positive, Listener_Access);
 
+   function Hash (Item : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
+
+   package Primary_Message_Load_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag, Primary_Message_Load_Procedure, Hash, Ada.Tags."=");
+
+   package Secondary_Message_Load_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag, Secondary_Message_Load_Procedure, Hash, Ada.Tags."=");
+
+   package Message_Save_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag, Message_Save_Procedure, Hash, Ada.Tags."=");
+
    type Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
    is tagged limited record
-      Category_Map : Category_Maps.Map;
-      Categories   : Node_Vectors.Vector;
-      Models       : Model_Vectors.Vector;
-      Listeners    : Listener_Vectors.Vector;
+      Project_File      : GNATCOLL.VFS.Virtual_File;
+      Category_Map      : Category_Maps.Map;
+      Categories        : Node_Vectors.Vector;
+      Models            : Model_Vectors.Vector;
+      Listeners         : Listener_Vectors.Vector;
+      Savers            : Message_Save_Maps.Map;
+      Primary_Loaders   : Primary_Message_Load_Maps.Map;
+      Secondary_Loaders : Secondary_Message_Load_Maps.Map;
    end record;
+
+   procedure Register_Message_Class
+     (Self           : not null access Messages_Container'Class;
+      Tag            : Ada.Tags.Tag;
+      Save           : not null Message_Save_Procedure;
+      Primary_Load   : not null Primary_Message_Load_Procedure;
+      Secondary_Load : not null Secondary_Message_Load_Procedure);
+   --  Registers save and load procedures for the specified class of messages
 
 end GPS.Kernel.Messages;

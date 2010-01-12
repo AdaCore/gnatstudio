@@ -17,25 +17,54 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed.Hash;
 with Ada.Unchecked_Conversion;
 
 with Glib.Convert;
 
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Classic_Models;
+with GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Project;
+with Projects;
 with Traces;
+with XML_Parsers;
+with XML_Utils;
 
 package body GPS.Kernel.Messages is
 
    use Ada;
    use Ada.Containers;
+   use Ada.Strings;
+   use Ada.Strings.Fixed;
    use Ada.Strings.Unbounded;
+   use Ada.Tags;
+   use Basic_Types;
    use Category_Maps;
    use File_Maps;
    use GPS.Editors;
+   use GPS.Kernel.Hooks;
+   use GPS.Kernel.Project;
+   use GPS.Kernel.Styles;
    use Listener_Vectors;
    use Model_Vectors;
    use Node_Vectors;
+   use Projects;
    use Traces;
+   use XML_Parsers;
+   use XML_Utils;
+
+   Messages_File_Name : constant Filesystem_String := "messages.xml";
+
+   type Project_Changed_Hook_Record is new Function_No_Args with null record;
+
+   type Project_Changed_Hook_Access is
+     access all Project_Changed_Hook_Record'Class;
+
+   overriding procedure Execute
+     (Self   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class);
+   --  Clears messages container and load data for opened project.
 
    procedure Notify_Listeners_About_Message_Added
      (Self    : not null access constant Messages_Container'Class;
@@ -105,6 +134,12 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return not null Messages_Container_Access;
 
+   procedure Save (Self : not null access Messages_Container'Class);
+   --  Saves all messages for the current project
+
+   procedure Load (Self : not null access Messages_Container'Class);
+   --  Loads all messages for the current project
+
    function To_Address is
      new Unchecked_Conversion (Messages_Container_Access, System.Address);
    function To_Messages_Container_Access is
@@ -117,11 +152,11 @@ package body GPS.Kernel.Messages is
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
-   ------------------------------
-   -- Create_Message_Container --
-   ------------------------------
+   -------------------------------
+   -- Create_Messages_Container --
+   -------------------------------
 
-   function Create_Message_Container
+   function Create_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
       return System.Address
    is
@@ -130,14 +165,29 @@ package body GPS.Kernel.Messages is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
       Model  : Classic_Tree_Model;
+      Hook   : Project_Changed_Hook_Access;
 
    begin
-      Gtk_New (Model, Result);
+      --  Creates Gtk+ model
 
+      Gtk_New (Model, Result);
       Result.Models.Append (Messages_Model_Access (Model));
 
+      --  Register simple message load/save procedures
+
+      GPS.Kernel.Messages.Simple.Register (Result);
+
+      --  Setup "project_changed" hook
+
+      Hook := new Project_Changed_Hook_Record;
+      Add_Hook
+        (Kernel,
+         Project_Changed_Hook,
+         Hook,
+         "messages_container.project_changed");
+
       return To_Address (Result);
-   end Create_Message_Container;
+   end Create_Messages_Container;
 
    --------------------------------
    -- Decrement_Message_Counters --
@@ -155,6 +205,33 @@ package body GPS.Kernel.Messages is
       end loop;
    end Decrement_Message_Counters;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : Project_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+
+      Container : constant Messages_Container_Access :=
+                    Get_Messages_Container (Kernel);
+
+   begin
+      --  Save messages for previous project
+
+      if Container.Project_File /= No_File then
+         Container.Save;
+      end if;
+
+      --  Load messages for opened project
+
+      Container.Remove_All_Messages;
+      Container.Project_File := Project_Path (Get_Project (Kernel));
+      Container.Load;
+   end Execute;
+
    --------------
    -- Finalize --
    --------------
@@ -169,6 +246,29 @@ package body GPS.Kernel.Messages is
       Free (Self.Mark);
       Free (Self.Action);
    end Finalize;
+
+   -----------------------------
+   -- Free_Messages_Container --
+   -----------------------------
+
+   procedure Free_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Messages_Container'Class, Messages_Container_Access);
+
+      Container : Messages_Container_Access := Get_Messages_Container (Kernel);
+
+   begin
+      if Container.Project_File /= No_File then
+         Container.Save;
+      end if;
+
+      Container.Remove_All_Messages;
+      Free (Container);
+   end Free_Messages_Container;
 
    ----------------
    -- Get_Action --
@@ -442,6 +542,15 @@ package body GPS.Kernel.Messages is
       end case;
    end Get_Parent;
 
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Item : Ada.Tags.Tag) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Fixed.Hash (External_Tag (Item));
+   end Hash;
+
    --------------------------------
    -- Increment_Message_Counters --
    --------------------------------
@@ -640,6 +749,147 @@ package body GPS.Kernel.Messages is
         (Message_Access (Self));
    end Initialize;
 
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (Self : not null access Messages_Container'Class) is
+
+      procedure Load_Message
+        (XML_Node : Node_Ptr;
+         Category : String;
+         File     : Virtual_File);
+      --  Loads primary message and its secondary messages
+
+      procedure Load_Message
+        (XML_Node : Node_Ptr;
+         Parent   : not null Message_Access);
+      --  Loads secondary message
+
+      ------------------
+      -- Load_Message --
+      ------------------
+
+      procedure Load_Message
+        (XML_Node : Node_Ptr;
+         Category : String;
+         File     : Virtual_File)
+      is
+         Class     : constant Tag :=
+                       Internal_Tag (Get_Attribute (XML_Node, "class", ""));
+         Line      : constant Natural :=
+                       Natural'Value (Get_Attribute (XML_Node, "line", ""));
+         Column    : constant Visible_Column_Type :=
+                       Visible_Column_Type'Value
+                         (Get_Attribute (XML_Node, "column", ""));
+         Message   : Message_Access;
+         XML_Child : Node_Ptr := XML_Node.Child;
+
+      begin
+         Message :=
+           Self.Primary_Loaders.Element (Class)
+           (XML_Node,
+            Messages_Container_Access (Self),
+            Category,
+            File,
+            Line,
+            Column);
+
+         while XML_Child /= null loop
+            if XML_Child.Tag.all = "message" then
+               Load_Message (XML_Child, Message);
+            end if;
+
+            XML_Child := XML_Child.Next;
+         end loop;
+      end Load_Message;
+
+      ------------------
+      -- Load_Message --
+      ------------------
+
+      procedure Load_Message
+        (XML_Node : Node_Ptr;
+         Parent   : not null Message_Access)
+      is
+         Class     : constant Tag :=
+                       Internal_Tag (Get_Attribute (XML_Node, "class", ""));
+         File      : constant Virtual_File :=
+                       Get_File_Child (XML_Node, "file");
+         Line      : constant Natural :=
+                       Natural'Value (Get_Attribute (XML_Node, "line", ""));
+         Column    : constant Visible_Column_Type :=
+                       Visible_Column_Type'Value
+                         (Get_Attribute (XML_Node, "column", ""));
+
+      begin
+         Self.Secondary_Loaders.Element (Class)
+           (XML_Node, Parent, File, Line, Column);
+      end Load_Message;
+
+      Messages_File     : constant Virtual_File :=
+                            Create_From_Dir
+                              (Self.Kernel.Home_Dir, Messages_File_Name);
+      Project_File      : constant Virtual_File :=
+                            Project_Path (Get_Project (Self.Kernel));
+      Root_XML_Node     : Node_Ptr;
+      Project_XML_Node  : Node_Ptr;
+      Category_XML_Node : Node_Ptr;
+      File_XML_Node     : Node_Ptr;
+      Message_XML_Node  : Node_Ptr;
+      Error             : GNAT.Strings.String_Access;
+      Category          : Unbounded_String;
+      File              : Virtual_File;
+
+   begin
+      if Messages_File.Is_Regular_File then
+         Parse (Messages_File, Root_XML_Node, Error);
+      end if;
+
+      if Root_XML_Node /= null then
+         Project_XML_Node := Root_XML_Node.Child;
+
+         while Project_XML_Node /= null loop
+            exit when Get_File_Child (Project_XML_Node, "file") = Project_File;
+
+            Project_XML_Node := Project_XML_Node.Next;
+         end loop;
+      end if;
+
+      if Project_XML_Node /= null then
+         Category_XML_Node := Project_XML_Node.Child;
+
+         while Category_XML_Node /= null loop
+            Category :=
+              To_Unbounded_String
+                (Get_Attribute (Category_XML_Node, "name", "ERROR"));
+
+            File_XML_Node := Category_XML_Node.Child;
+
+            while File_XML_Node /= null loop
+               File := Get_File_Child (File_XML_Node, "name");
+
+               Message_XML_Node := File_XML_Node.Child;
+
+               while Message_XML_Node /= null loop
+                  if Message_XML_Node.Tag.all = "message" then
+                     Load_Message
+                       (Message_XML_Node, To_String (Category), File);
+                  end if;
+
+                  Message_XML_Node := Message_XML_Node.Next;
+               end loop;
+
+               File_XML_Node := File_XML_Node.Next;
+            end loop;
+
+            Category_XML_Node := Category_XML_Node.Next;
+         end loop;
+      end if;
+
+      Free (Project_XML_Node);
+   end Load;
+
    ------------------------------------------
    -- Notify_Listeners_About_Message_Added --
    ------------------------------------------
@@ -784,6 +1034,22 @@ package body GPS.Kernel.Messages is
          Self.Listeners.Append (Listener);
       end if;
    end Register_Listener;
+
+   ----------------------------
+   -- Register_Message_Class --
+   ----------------------------
+
+   procedure Register_Message_Class
+     (Self           : not null access Messages_Container'Class;
+      Tag            : Ada.Tags.Tag;
+      Save           : not null Message_Save_Procedure;
+      Primary_Load   : not null Primary_Message_Load_Procedure;
+      Secondary_Load : not null Secondary_Message_Load_Procedure) is
+   begin
+      Self.Savers.Insert (Tag, Save);
+      Self.Primary_Loaders.Insert (Tag, Primary_Load);
+      Self.Secondary_Loaders.Insert (Tag, Secondary_Load);
+   end Register_Message_Class;
 
    ------------
    -- Remove --
@@ -1034,6 +1300,148 @@ package body GPS.Kernel.Messages is
          end;
       end if;
    end Remove_Message;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save (Self : not null access Messages_Container'Class) is
+
+      procedure Save_Node
+        (Current_Node    : not null Node_Access;
+         Parent_XML_Node : not null Node_Ptr);
+      --  Saves specified node as child of specified XML node
+
+      ---------------
+      -- Save_Node --
+      ---------------
+
+      procedure Save_Node
+        (Current_Node    : not null Node_Access;
+         Parent_XML_Node : not null Node_Ptr)
+      is
+         XML_Node : Node_Ptr;
+
+      begin
+         --  Create XML node for the current node with corresponding tag and
+         --  add corresponding attributes to it.
+
+         case Current_Node.Kind is
+            when Node_Category =>
+               XML_Node :=
+                 new Node'(Tag => new String'("category"), others => <>);
+
+            when Node_File =>
+               XML_Node :=
+                 new Node'(Tag => new String'("file"), others => <>);
+
+            when Node_Message =>
+               XML_Node :=
+                 new Node'(Tag => new String'("message"), others => <>);
+         end case;
+
+         Add_Child (Parent_XML_Node, XML_Node, True);
+
+         case Current_Node.Kind is
+            when Node_Category =>
+               Set_Attribute (XML_Node, "name", To_String (Current_Node.Name));
+
+            when Node_File =>
+               Add_File_Child (XML_Node, "name", Current_Node.File);
+
+            when Node_Message =>
+               Set_Attribute
+                 (XML_Node, "class", External_Tag (Current_Node'Tag));
+               Set_Attribute
+                 (XML_Node,
+                  "line",
+                  Trim (Positive'Image (Current_Node.Line), Both));
+               Set_Attribute
+                 (XML_Node,
+                  "column",
+                  Trim
+                    (Visible_Column_Type'Image (Current_Node.Column), Both));
+
+               if Current_Node.Style /= null then
+                  Set_Attribute
+                    (XML_Node,
+                     "highlighting_style",
+                     Get_Name (Current_Node.Style));
+                  Set_Attribute
+                    (XML_Node,
+                     "highlighting_length",
+                     Trim (Integer'Image (Current_Node.Length), Both));
+               end if;
+
+               if Message_Access (Current_Node).Level = Secondary then
+                  Add_File_Child
+                    (XML_Node,
+                     "file",
+                     Message_Access (Current_Node).Corresponding_File);
+               end if;
+
+               Self.Savers.Element
+                 (Current_Node'Tag) (Message_Access (Current_Node), XML_Node);
+         end case;
+
+         --  Save child nodes also
+
+         for J in 1 .. Natural (Current_Node.Children.Length) loop
+            Save_Node (Current_Node.Children.Element (J), XML_Node);
+         end loop;
+      end Save_Node;
+
+      Messages_File    : constant Virtual_File :=
+                           Create_From_Dir
+                             (Self.Kernel.Home_Dir, Messages_File_Name);
+      Project_File     : constant Virtual_File := Self.Project_File;
+      Root_XML_Node    : Node_Ptr;
+      Project_XML_Node : Node_Ptr;
+      Error            : GNAT.Strings.String_Access;
+
+   begin
+      if Messages_File.Is_Regular_File then
+         Parse (Messages_File, Root_XML_Node, Error);
+      end if;
+
+      --  Create root node when it is absent
+
+      if Root_XML_Node = null then
+         Root_XML_Node :=
+           new Node'(Tag => new String'("messages"), others => <>);
+      end if;
+
+      --  Remove project specific node if necessary
+
+      declare
+         Current : Node_Ptr := Root_XML_Node.Child;
+
+      begin
+         while Current /= null loop
+            exit when Get_File_Child (Current, "file") = Project_File;
+
+            Current := Current.Next;
+         end loop;
+
+         Free (Current);
+      end;
+
+      --  Create project node
+
+      Project_XML_Node :=
+        new Node'(Tag => new String'("project"), others => <>);
+      Add_Child (Root_XML_Node, Project_XML_Node);
+      Add_File_Child (Project_XML_Node, "file", Project_File);
+
+      --  Save categories
+
+      for J in 1 .. Natural (Self.Categories.Length) loop
+         Save_Node (Self.Categories.Element (J), Project_XML_Node);
+      end loop;
+
+      Print (Root_XML_Node, Messages_File);
+      Free (Root_XML_Node);
+   end Save;
 
    ----------------
    -- Set_Action --

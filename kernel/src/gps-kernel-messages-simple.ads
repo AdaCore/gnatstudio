@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,6 +44,9 @@ package GPS.Kernel.Messages.Simple is
       First  : Positive;
       Last   : Natural);
    --  Creates new instance of secondary Simple_Message.
+
+   procedure Register (Container : not null access Messages_Container'Class);
+   --  Registers load/save procedures for the simple message
 
 private
 
