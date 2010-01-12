@@ -1,6 +1,6 @@
 with "../../kernel/kernel";
 with "../../common/common";
-with "../../ada_module/ada_module";
+with "../../ada_module/core/ada_module_core";
 with "../../shared";
 
 project Codefix_Core is
