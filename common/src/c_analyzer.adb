@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings; use GNAT.Strings;
 with String_Utils; use String_Utils;
 with Glib.Unicode; use Glib.Unicode;
 with Indent_Stack;
@@ -535,6 +536,7 @@ package body C_Analyzer is
       Tok_Ident         : Extended_Token;
       Tokens            : Token_Stack.Simple_Stack;
       Indents           : Indent_Stack.Stack.Simple_Stack;
+      Main_File         : String_Access;
 
       procedure Do_Indent
         (P            : Natural;
@@ -559,8 +561,8 @@ package body C_Analyzer is
       function Preprocessor_Directive return Boolean;
       --  Handle preprocessor directive.
       --  Assume that Buffer (Index) = '#'
-      --  For now, handle #if 0 as a multiple-line comment, and recognize
-      --  #include directives.
+      --  For now, handle #if 0 as a multiple-line comment, recognize
+      --  #include directives and # <number> <file> directives.
       --  Return whether processing should be stopped.
 
       procedure Replace_Text
@@ -1019,6 +1021,8 @@ package body C_Analyzer is
             if Buffer'Last > Index + 7
               and then Buffer (Index + 1 .. Index + 7) = "include"
             then
+               --  #include directive
+
                First_Index  := Index;
                First_Column := Char_In_Line;
                Index        := Index + 8;
@@ -1071,6 +1075,66 @@ package body C_Analyzer is
                      end;
                   end if;
                end if;
+            elsif Buffer'Last > Index + 3
+              and then Buffer (Index + 1) = ' '
+              and then Buffer (Index + 2) in '1' .. '9'
+            then
+               loop
+                  --  # <num> <file> directive
+                  Index := Index + 2;
+                  Start_Line :=
+                    Character'Pos (Buffer (Index)) - Character'Pos ('0');
+                  Index := Index + 1;
+
+                  while Index <= Buffer'Last
+                    and then Buffer (Index) in '0' .. '9'
+                  loop
+                     Index := Index + 1;
+                     Start_Line := Start_Line * 10 +
+                       Character'Pos (Buffer (Index)) - Character'Pos ('0');
+                  end loop;
+
+                  Skip_Blanks (Buffer, Index);
+                  pragma Assert (Buffer (Index) = '"');
+                  Index := Index + 1;
+                  First_Index := Index;
+
+                  while Index <= Buffer'Last
+                    and then Buffer (Index) /= '"'
+                  loop
+                     Index := Index + 1;
+                  end loop;
+
+                  if Main_File = null then
+                     Main_File :=
+                       new String'(Buffer (First_Index .. Index - 1));
+                  elsif Buffer (First_Index .. Index - 1) = Main_File.all then
+                     Indent_Done := False;
+                     Line := Start_Line;
+                     Char_In_Line := 0;
+                     Index := Index + 1;
+                     Skip_To_Char (Buffer, Index, ASCII.LF);
+
+                     if Index < Buffer'Last then
+                        Index := Index + 1;
+                     end if;
+
+                     return False;
+                  end if;
+
+                  loop
+                     --  Skip until reaching a # <num> <file> directive
+                     Skip_To_Char (Buffer, Index, '#');
+
+                     if Index + 4 > Buffer'Last then
+                        return False;
+                     end if;
+
+                     exit when  Buffer (Index - 1) = ASCII.LF
+                       and then Buffer (Index + 1) = ' '
+                       and then Buffer (Index + 2) in '1' .. '9';
+                  end loop;
+               end loop;
             end if;
 
             --  Skip line and possible continuation lines (when using
@@ -1712,9 +1776,11 @@ package body C_Analyzer is
          Char_In_Line := Char_In_Line + 1;
       end loop;
 
+      Free (Main_File);
+
    exception
       when others =>
-         null;
+         Free (Main_File);
    end Analyze_C_Source;
 
 end C_Analyzer;
