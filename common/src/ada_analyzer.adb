@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2242,6 +2242,18 @@ package body Ada_Analyzer is
                end if;
 
                Temp.Declaration := True;
+
+               if Prev_Token = Tok_Colon then
+                  --  Adjust status column of declare block to take into
+                  --  account a label at start of the line by using the first
+                  --  non blank character on the line.
+
+                  Tmp_Index := Start_Of_Line;
+                  Skip_Blanks (Buffer, Tmp_Index);
+                  Temp.Sloc.Column := Tmp_Index - Start_Of_Line + 1;
+                  Temp.Sloc.Index  := Tmp_Index;
+               end if;
+
                Push (Tokens, Temp);
 
             elsif Reserved = Tok_Is then
