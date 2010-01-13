@@ -26,23 +26,27 @@ package GPS.Kernel.Messages.Simple is
    type Simple_Message_Access is access all Simple_Message'Class;
 
    function Create_Simple_Message
-     (Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type;
-      Text      : String)
+     (Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
       return not null Simple_Message_Access;
    --  Creates new instance of primary Simple_Message.
 
    procedure Create_Simple_Message
-     (Parent : not null Message_Access;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type;
-      Text   : String;
-      First  : Positive;
-      Last   : Natural);
+     (Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      First         : Positive;
+      Last          : Natural;
+      Actual_Line   : Integer;
+      Actual_Column : Integer);
    --  Creates new instance of secondary Simple_Message.
 
    procedure Register (Container : not null access Messages_Container'Class);

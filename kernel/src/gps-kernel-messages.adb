@@ -134,9 +134,6 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return not null Messages_Container_Access;
 
-   procedure Save (Self : not null access Messages_Container'Class);
-   --  Saves all messages for the current project
-
    procedure Load (Self : not null access Messages_Container'Class);
    --  Loads all messages for the current project
 
@@ -221,13 +218,11 @@ package body GPS.Kernel.Messages is
    begin
       --  Save messages for previous project
 
-      if Container.Project_File /= No_File then
-         Container.Save;
-      end if;
+      Container.Save;
+      Container.Remove_All_Messages;
 
       --  Load messages for opened project
 
-      Container.Remove_All_Messages;
       Container.Project_File := Project_Path (Get_Project (Kernel));
       Container.Load;
    end Execute;
@@ -262,10 +257,6 @@ package body GPS.Kernel.Messages is
       Container : Messages_Container_Access := Get_Messages_Container (Kernel);
 
    begin
-      if Container.Project_File /= No_File then
-         Container.Save;
-      end if;
-
       Container.Remove_All_Messages;
       Free (Container);
    end Free_Messages_Container;
@@ -572,12 +563,14 @@ package body GPS.Kernel.Messages is
    ----------------
 
    procedure Initialize
-     (Self      : not null access Abstract_Message'Class;
-      Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type)
+     (Self          : not null access Abstract_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
    is
       pragma Assert (Category /= "");
       pragma Assert (File /= No_File);
@@ -597,7 +590,7 @@ package body GPS.Kernel.Messages is
       Self.Mark :=
         new Editor_Mark'Class'
           (Container.Kernel.Get_Buffer_Factory.New_Mark
-               (File, Line, Integer (Column)));
+               (File, Actual_Line, Actual_Column));
 
       --  Resolve category node, create new one when there is no existent node
 
@@ -720,11 +713,13 @@ package body GPS.Kernel.Messages is
    ----------------
 
    procedure Initialize
-     (Self   : not null access Abstract_Message'Class;
-      Parent : not null Message_Access;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type) is
+     (Self          : not null access Abstract_Message'Class;
+      Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer) is
    begin
       Self.Corresponding_File := File;
       Self.Line := Line;
@@ -733,7 +728,7 @@ package body GPS.Kernel.Messages is
       Self.Mark :=
         new Editor_Mark'Class'
           (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
-               (File, Line, Integer (Column)));
+               (File, Actual_Line, Actual_Column));
 
       Self.Parent := Node_Access (Parent);
       Parent.Children.Append (Node_Access (Self));
@@ -775,15 +770,30 @@ package body GPS.Kernel.Messages is
          Category : String;
          File     : Virtual_File)
       is
-         Class     : constant Tag :=
-                       Internal_Tag (Get_Attribute (XML_Node, "class", ""));
-         Line      : constant Natural :=
-                       Natural'Value (Get_Attribute (XML_Node, "line", ""));
-         Column    : constant Visible_Column_Type :=
-                       Visible_Column_Type'Value
-                         (Get_Attribute (XML_Node, "column", ""));
-         Message   : Message_Access;
-         XML_Child : Node_Ptr := XML_Node.Child;
+         Class         : constant Tag :=
+                           Internal_Tag
+                             (Get_Attribute (XML_Node, "class", ""));
+         Line          : constant Natural :=
+                           Natural'Value
+                             (Get_Attribute (XML_Node, "line", ""));
+         Column        : constant Visible_Column_Type :=
+                           Visible_Column_Type'Value
+                             (Get_Attribute (XML_Node, "column", ""));
+         Actual_Line   : constant Integer :=
+                           Integer'Value
+                             (Get_Attribute (XML_Node, "actual_line", "-1"));
+         Actual_Column : constant Integer :=
+                           Integer'Value
+                             (Get_Attribute (XML_Node, "actual_column", "-1"));
+         Style_Name    : constant String :=
+                           Get_Attribute (XML_Node, "highlighting_style", "");
+         Length        : constant Natural :=
+                           Natural'Value
+                             (Get_Attribute
+                                (XML_Node, "highlighting_length", "0"));
+         Message       : Message_Access;
+         XML_Child     : Node_Ptr := XML_Node.Child;
+         Style         : Style_Access;
 
       begin
          Message :=
@@ -793,7 +803,20 @@ package body GPS.Kernel.Messages is
             Category,
             File,
             Line,
-            Column);
+            Column,
+            Actual_Line,
+            Actual_Column);
+
+         if Style_Name /= "" then
+            Style := Get_Or_Create_Style (Self.Kernel, Style_Name, True);
+
+            if Length = 0 then
+               Set_Highlighting (Message, Style);
+
+            else
+               Set_Highlighting (Message, Style, Length);
+            end if;
+         end if;
 
          while XML_Child /= null loop
             if XML_Child.Tag.all = "message" then
@@ -812,19 +835,27 @@ package body GPS.Kernel.Messages is
         (XML_Node : Node_Ptr;
          Parent   : not null Message_Access)
       is
-         Class     : constant Tag :=
-                       Internal_Tag (Get_Attribute (XML_Node, "class", ""));
-         File      : constant Virtual_File :=
-                       Get_File_Child (XML_Node, "file");
-         Line      : constant Natural :=
-                       Natural'Value (Get_Attribute (XML_Node, "line", ""));
-         Column    : constant Visible_Column_Type :=
-                       Visible_Column_Type'Value
-                         (Get_Attribute (XML_Node, "column", ""));
+         Class         : constant Tag :=
+                           Internal_Tag
+                             (Get_Attribute (XML_Node, "class", ""));
+         File          : constant Virtual_File :=
+                           Get_File_Child (XML_Node, "file");
+         Line          : constant Natural :=
+                           Natural'Value
+                             (Get_Attribute (XML_Node, "line", ""));
+         Column        : constant Visible_Column_Type :=
+                           Visible_Column_Type'Value
+                             (Get_Attribute (XML_Node, "column", ""));
+         Actual_Line   : constant Integer :=
+                           Integer'Value
+                             (Get_Attribute (XML_Node, "actual_line", "-1"));
+         Actual_Column : constant Integer :=
+                           Integer'Value
+                             (Get_Attribute (XML_Node, "actual_column", "-1"));
 
       begin
          Self.Secondary_Loaders.Element (Class)
-           (XML_Node, Parent, File, Line, Column);
+           (XML_Node, Parent, File, Line, Column, Actual_Line, Actual_Column);
       end Load_Message;
 
       Messages_File     : constant Virtual_File :=
@@ -1306,6 +1337,20 @@ package body GPS.Kernel.Messages is
    ----------
 
    procedure Save (Self : not null access Messages_Container'Class) is
+   begin
+      Self.Save
+        (Create_From_Dir (Self.Kernel.Home_Dir, Messages_File_Name), False);
+   end Save;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Self  : not null access Messages_Container'Class;
+      File  : GNATCOLL.VFS.Virtual_File;
+      Debug : Boolean)
+   is
 
       procedure Save_Node
         (Current_Node    : not null Node_Access;
@@ -1361,16 +1406,27 @@ package body GPS.Kernel.Messages is
                   "column",
                   Trim
                     (Visible_Column_Type'Image (Current_Node.Column), Both));
+               Set_Attribute
+                 (XML_Node,
+                  "actual_line",
+                  Trim (Integer'Image (Current_Node.Mark.Line), Both));
+               Set_Attribute
+                 (XML_Node,
+                  "actual_column",
+                  Trim (Integer'Image (Current_Node.Mark.Column), Both));
 
                if Current_Node.Style /= null then
                   Set_Attribute
                     (XML_Node,
                      "highlighting_style",
                      Get_Name (Current_Node.Style));
-                  Set_Attribute
-                    (XML_Node,
-                     "highlighting_length",
-                     Trim (Integer'Image (Current_Node.Length), Both));
+
+                  if Current_Node.Length /= 0 then
+                     Set_Attribute
+                       (XML_Node,
+                        "highlighting_length",
+                        Trim (Integer'Image (Current_Node.Length), Both));
+                  end if;
                end if;
 
                if Message_Access (Current_Node).Level = Secondary then
@@ -1382,6 +1438,15 @@ package body GPS.Kernel.Messages is
 
                Self.Savers.Element
                  (Current_Node'Tag) (Message_Access (Current_Node), XML_Node);
+
+               if Debug then
+                  --  Indebug mode save flag to mark messages with associated
+                  --  action
+
+                  if Current_Node.Action /= null then
+                     Set_Attribute (XML_Node, "has_action", "true");
+                  end if;
+               end if;
          end case;
 
          --  Save child nodes also
@@ -1391,56 +1456,55 @@ package body GPS.Kernel.Messages is
          end loop;
       end Save_Node;
 
-      Messages_File    : constant Virtual_File :=
-                           Create_From_Dir
-                             (Self.Kernel.Home_Dir, Messages_File_Name);
       Project_File     : constant Virtual_File := Self.Project_File;
       Root_XML_Node    : Node_Ptr;
       Project_XML_Node : Node_Ptr;
       Error            : GNAT.Strings.String_Access;
 
    begin
-      if Messages_File.Is_Regular_File then
-         Parse (Messages_File, Root_XML_Node, Error);
-      end if;
+      if Project_File /= No_File then
+         if File.Is_Regular_File then
+            Parse (File, Root_XML_Node, Error);
+         end if;
 
-      --  Create root node when it is absent
+         --  Create root node when it is absent
 
-      if Root_XML_Node = null then
-         Root_XML_Node :=
-           new Node'(Tag => new String'("messages"), others => <>);
-      end if;
+         if Root_XML_Node = null then
+            Root_XML_Node :=
+              new Node'(Tag => new String'("messages"), others => <>);
+         end if;
 
-      --  Remove project specific node if necessary
+         --  Remove project specific node if necessary
 
-      declare
-         Current : Node_Ptr := Root_XML_Node.Child;
+         declare
+            Current : Node_Ptr := Root_XML_Node.Child;
 
-      begin
-         while Current /= null loop
-            exit when Get_File_Child (Current, "file") = Project_File;
+         begin
+            while Current /= null loop
+               exit when Get_File_Child (Current, "file") = Project_File;
 
-            Current := Current.Next;
+               Current := Current.Next;
+            end loop;
+
+            Free (Current);
+         end;
+
+         --  Create project node
+
+         Project_XML_Node :=
+           new Node'(Tag => new String'("project"), others => <>);
+         Add_Child (Root_XML_Node, Project_XML_Node);
+         Add_File_Child (Project_XML_Node, "file", Project_File);
+
+         --  Save categories
+
+         for J in 1 .. Natural (Self.Categories.Length) loop
+            Save_Node (Self.Categories.Element (J), Project_XML_Node);
          end loop;
 
-         Free (Current);
-      end;
-
-      --  Create project node
-
-      Project_XML_Node :=
-        new Node'(Tag => new String'("project"), others => <>);
-      Add_Child (Root_XML_Node, Project_XML_Node);
-      Add_File_Child (Project_XML_Node, "file", Project_File);
-
-      --  Save categories
-
-      for J in 1 .. Natural (Self.Categories.Length) loop
-         Save_Node (Self.Categories.Element (J), Project_XML_Node);
-      end loop;
-
-      Print (Root_XML_Node, Messages_File);
-      Free (Root_XML_Node);
+         Print (Root_XML_Node, File);
+         Free (Root_XML_Node);
+      end if;
    end Save;
 
    ----------------

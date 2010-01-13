@@ -159,20 +159,24 @@ package GPS.Kernel.Messages is
    --  Removes message and deallocate it.
 
    procedure Initialize
-     (Self      : not null access Abstract_Message'Class;
-      Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type);
+     (Self          : not null access Abstract_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer);
    --  Initialize message and connect it to container
 
    procedure Initialize
-     (Self   : not null access Abstract_Message'Class;
-      Parent : not null Message_Access;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type);
+     (Self          : not null access Abstract_Message'Class;
+      Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer);
    --  Initialize message and connect it to parent message
 
    procedure Finalize (Self : not null access Abstract_Message);
@@ -322,9 +326,18 @@ package GPS.Kernel.Messages is
    --  Creates new nessages container and returns its address. Address is used
    --  to break circular dependency between Kernel and Messages_Container.
 
+   procedure Save (Self : not null access Messages_Container'Class);
+   --  Saves all messages for the current project
+
+   procedure Save
+     (Self  : not null access Messages_Container'Class;
+      File  : GNATCOLL.VFS.Virtual_File;
+      Debug : Boolean);
+   --  Saves all messages into the specified file
+
    procedure Free_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Save messages and destroyes messages container
+   --  Destroyes messages container
 
 private
 
@@ -441,21 +454,25 @@ private
 
    type Primary_Message_Load_Procedure is
      access function
-       (XML_Node  : not null XML_Utils.Node_Ptr;
-        Container : not null Messages_Container_Access;
-        Category  : String;
-        File      : GNATCOLL.VFS.Virtual_File;
-        Line      : Natural;
-        Column    : Basic_Types.Visible_Column_Type)
+       (XML_Node      : not null XML_Utils.Node_Ptr;
+        Container     : not null Messages_Container_Access;
+        Category      : String;
+        File          : GNATCOLL.VFS.Virtual_File;
+        Line          : Natural;
+        Column        : Basic_Types.Visible_Column_Type;
+        Actual_Line   : Integer;
+        Actual_Column : Integer)
         return not null Message_Access;
 
    type Secondary_Message_Load_Procedure is
      access procedure
-       (XML_Node : not null XML_Utils.Node_Ptr;
-        Parent   : not null Message_Access;
-        File     : GNATCOLL.VFS.Virtual_File;
-        Line     : Natural;
-        Column   : Basic_Types.Visible_Column_Type);
+       (XML_Node      : not null XML_Utils.Node_Ptr;
+        Parent        : not null Message_Access;
+        File          : GNATCOLL.VFS.Virtual_File;
+        Line          : Natural;
+        Column        : Basic_Types.Visible_Column_Type;
+        Actual_Line   : Integer;
+        Actual_Column : Integer);
 
    package Model_Vectors is
      new Ada.Containers.Vectors (Positive, Messages_Model_Access);

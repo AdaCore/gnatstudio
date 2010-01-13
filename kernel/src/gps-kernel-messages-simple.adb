@@ -34,39 +34,53 @@ package body GPS.Kernel.Messages.Simple is
       XML_Node     : not null Node_Ptr);
 
    function Load
-     (XML_Node  : not null Node_Ptr;
-      Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type)
+     (XML_Node      : not null Node_Ptr;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
       return not null Message_Access;
 
    procedure Load
-     (XML_Node : not null Node_Ptr;
-      Parent   : not null Message_Access;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Natural;
-      Column   : Basic_Types.Visible_Column_Type);
+     (XML_Node      : not null Node_Ptr;
+      Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer);
 
    ---------------------------
    -- Create_Simple_Message --
    ---------------------------
 
    function Create_Simple_Message
-     (Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type;
-      Text      : String)
+     (Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
       return not null Simple_Message_Access
    is
       Result : constant not null Simple_Message_Access :=
         new Simple_Message (Primary);
 
    begin
-      Initialize (Result, Container, Category, File, Line, Column);
+      Initialize
+        (Result,
+         Container,
+         Category,
+         File,
+         Line,
+         Column,
+         Actual_Line,
+         Actual_Column);
       Result.Text := To_Unbounded_String (Text);
 
       return Result;
@@ -77,20 +91,23 @@ package body GPS.Kernel.Messages.Simple is
    ---------------------------
 
    procedure Create_Simple_Message
-     (Parent : not null Message_Access;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Natural;
-      Column : Basic_Types.Visible_Column_Type;
-      Text   : String;
-      First  : Positive;
-      Last   : Natural)
+     (Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      First         : Positive;
+      Last          : Natural;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
    is
       Offset : constant Natural := Text'First - 1;
       Result : constant not null Simple_Message_Access :=
         new Simple_Message (Secondary);
 
    begin
-      Initialize (Result, Parent, File, Line, Column);
+      Initialize
+        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
       Result.Text  := To_Unbounded_String (Text);
       Result.First := First - Offset;
       Result.Last  := Last - Offset;
@@ -136,12 +153,14 @@ package body GPS.Kernel.Messages.Simple is
    ----------
 
    function Load
-     (XML_Node  : not null Node_Ptr;
-      Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type)
+     (XML_Node      : not null Node_Ptr;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
       return not null Message_Access
    is
       Text : constant String := Get_Attribute (XML_Node, "text", "");
@@ -150,7 +169,14 @@ package body GPS.Kernel.Messages.Simple is
       return
         Message_Access
           (Create_Simple_Message
-               (Container, Category, File, Line, Column, Text));
+               (Container,
+                Category,
+                File,
+                Line,
+                Column,
+                Text,
+                Actual_Line,
+                Actual_Column));
    end Load;
 
    ----------
@@ -158,11 +184,13 @@ package body GPS.Kernel.Messages.Simple is
    ----------
 
    procedure Load
-     (XML_Node : not null Node_Ptr;
-      Parent   : not null Message_Access;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Natural;
-      Column   : Basic_Types.Visible_Column_Type)
+     (XML_Node      : not null Node_Ptr;
+      Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
    is
       Text  : constant String := Get_Attribute (XML_Node, "text", "");
       First : constant Positive :=
@@ -171,7 +199,16 @@ package body GPS.Kernel.Messages.Simple is
                 Natural'Value (Get_Attribute (XML_Node, "last", "0"));
 
    begin
-      Create_Simple_Message (Parent, File, Line, Column, Text, First, Last);
+      Create_Simple_Message
+        (Parent,
+         File,
+         Line,
+         Column,
+         Text,
+         First,
+         Last,
+         Actual_Line,
+         Actual_Column);
    end Load;
 
    --------------
