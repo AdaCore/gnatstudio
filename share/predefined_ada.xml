@@ -6364,29 +6364,29 @@ subunits.
       </DOC>
    </PRAGMA>
 
-   <STANDARD name = "&amp;" category = "function"/>
+   <STANDARD name = "&quot;&amp;&quot;" category = "function"/>
 
-   <STANDARD name = "&lt;" category = "function"/>
+   <STANDARD name = "&quot;&lt;&quot;" category = "function"/>
 
-   <STANDARD name = "&lt;=" category = "function"/>
+   <STANDARD name = "&quot;&lt;=&quot;" category = "function"/>
 
-   <STANDARD name = "*" category = "function"/>
+   <STANDARD name = "&quot;*&quot;" category = "function"/>
 
-   <STANDARD name = "**" category = "function"/>
+   <STANDARD name = "&quot;**&quot;" category = "function"/>
 
-   <STANDARD name = "+" category = "function"/>
+   <STANDARD name = "&quot;+&quot;" category = "function"/>
 
-   <STANDARD name = "-" category = "function"/>
+   <STANDARD name = "&quot;-&quot;" category = "function"/>
 
-   <STANDARD name = "/" category = "function"/>
+   <STANDARD name = "&quot;/&quot;" category = "function"/>
 
-   <STANDARD name = "/=" category = "function"/>
+   <STANDARD name = "&quot;/=&quot;" category = "function"/>
 
-   <STANDARD name = "=" category = "function"/>
+   <STANDARD name = "&quot;=&quot;" category = "function"/>
 
-   <STANDARD name = ">" category = "function"/>
+   <STANDARD name = "&quot;>&quot;" category = "function"/>
 
-   <STANDARD name = ">=" category = "function"/>
+   <STANDARD name = "&quot;>=&quot;" category = "function"/>
 
    <STANDARD name = "ASCII" category = "package">
       <FIELD name = "NUL" doc = "16#00#"/>
