@@ -24,6 +24,7 @@ with Glib.Convert;
 
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Classic_Models;
+with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;
@@ -174,6 +175,7 @@ package body GPS.Kernel.Messages is
       --  Register simple message load/save procedures
 
       GPS.Kernel.Messages.Simple.Register (Result);
+      GPS.Kernel.Messages.Hyperlink.Register (Result);
       GPS.Kernel.Messages.Markup.Register (Result);
 
       --  Setup "project_changed" hook
