@@ -180,7 +180,6 @@ Debugging
 * Using the Source Editor when Debugging::
 * The Debugger Console::
 * Customizing the Debugger::
-* Upgrading from GVD to GPS::
 
 Version Control System
 * The VCS Explorer::
@@ -6188,12 +6187,6 @@ e.g. the GDB documentation
 @end ifhtml
 - for more details.
 
-The integrated debugger provided by GPS is using an improved version of
-the GVD engine, so the functionalities between GVD and GPS are very similar.
-If you are familiar with GVD, you may be interested in reading
-@ref{Upgrading from GVD to GPS} which explains the differences between the
-two environments.
-
 Debugging is tightly integrated with the other components of GPS. For
 example, it is possible to edit files and navigate through your sources
 while debugging.
@@ -6236,7 +6229,6 @@ debug sessions at once.
 * The Assembly Window::
 * The Debugger Console::
 * Customizing the Debugger::
-* Upgrading from GVD to GPS::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -7250,205 +7242,6 @@ the second one specifies that only the assembly code should be visible,
 and the last one indicates that both should be displayed.
 
 @end table
-
-@node Upgrading from GVD to GPS
-@section Upgrading from GVD to GPS
-@noindent
-This section is intended for users already familiar with GVD, in order
-to help them transitioning to GPS. If you have not used GVD, you may want
-to skip this section.
-
-This section outlines the differences between GVD and GPS, and also
-lists some of the advantages of GPS compared to GVD.
-
-@subsection Command Line Switches
-@noindent
-The following command line switches related to debugging are available
-in GPS:
-
-@table @code
-@item --debug
-Automatically start a debug session, as done by GVD.
-You can also specify a program name and its arguments, so this
-option replaces the @code{--pargs} and @code{executable-file} arguments in GVD.
-
-@item --debugger
-Equivalent to the same GVD option, with the difference that
-arguments can be specified as well, replacing the @code{--dargs} option.
-
-@item --target
-Same as in GVD.
-@end table
-
-For example, the equivalent of the following command line using a sh-like
-shell would be:
-
-@smallexample
-$ gvd --debugger=gdb-5 executable --pargs 1 2 3
-@end smallexample
-
-would be
-
-@smallexample
-$ gps --debug="executable 1 2 3" --debugger=gdb-5
-@end smallexample
-
-@table @code
-@item --traceon=GVD.OUT
-
-This switch replaces the --log-level=4 option that was
-used to get the full log of the communications between GVD
-and the underlying debugger.
-
-@end table
-
-@subsection Menu Items
-@noindent
-All the debugger-related menus in GVD can be found under the 'Debug'
-menu in GPS, with the following mapping:
-
-@table @code
-@item File->xxx
-available under @code{Debug->Debug->xxx}
-
-@item Program->xxx
-available under @code{Debug->xxx}
-
-@item Data->xxx
-available under @code{Debug->Data->xxx}
-@end table
-
-The menu @code{File->New Debugger...} is replaced by the combination of
-the menu @code{Debug->Initialize} and the project properties, available
-under @code{Project->Edit Project Properties} where you can similarly
-specify your @i{Debugger Host} (called @i{Tools Host}), your
-@i{Program Host}, the @i{Protocol} used by the underlying debugger
-to communicate with the target, and the name of the debugger.
-To conveniently switch between multiple debugger configurations, we
-recommend to use a scenario variable and set different properties based
-on the value of this variable. See
-@ref{Scenarios and Configuration Variables} and
-@ref{Working in a Cross Environment} for more details.
-
-@subsection Tool Bar Buttons
-@noindent
-GPS provides by default fewer debugger buttons than GVD, because some
-buttons are actually not used very often, and others have been merged.
-In addition, it will be possible in the future to completely configure
-the GPS tool bar.
-
-@table @code
-@item Run
-Menu @code{Debug->Run...} (@key{F2})
-
-@item Start
-Start/Continue button
-
-@item Step
-Step button
-
-@item Stepi
-Menu @code{Debug->Step Instruction} (@key{Shift-F5})
-
-@item Next
-Next button
-
-@item Nexti
-Menu @code{Debug->Next Instruction} (@key{Shift-F6})
-
-@item Finish
-Finish button
-
-@item Cont
-Start/Continue button
-
-@item Up
-Up button
-
-@item Down
-Down button
-
-@item Interrupt
-Menu @code{Debug->Interrupt} (@key{Control-Backslash})
-@end table
-
-@subsection Key Short Cuts
-@noindent
-The same key shortcuts have been kept by default between GVD and GPS
-except for the Interrupt menu, which is now @key{Control-Backslash} instead
-of @key{Esc}.
-
-@subsection Contextual Menus
-@noindent
-All the debugger-related contextual menus can now be found under the
-@code{Debug} sub-menu.
-
-The only difference is the contextual menu @code{Show} used to display
-the assembly dump of the current code. It is replaced by the menu
-@code{Debug->Data->Assembly}, see @ref{The Assembly Window} for more
-details.
-
-@subsection File Explorer
-@noindent
-The file explorer provided in GVD is replaced by the @code{Project View}
-and the @code{File View} in GPS.
-
-When using the @code{--debug} command line switch and no explicit project
-file, GPS will automatically create a project file in a way very
-similar to what GVD does to display its file explorer, and available under
-the @code{Project View}.
-
-In addition, the @code{File View} gives access to any file in your file
-system, even if it is not available as part of the debug information.
-
-@subsection Advantages of GPS
-@noindent
-The advantages when using GPS instead of GVD can be classified in two main
-categories: when not using project files, and when using them.
-
-When not using project files, you get access to the following advantages
-in GPS:
-
-@itemize @bullet
-@item Complete source editor including indentation, shortcuts, multiple
-views, @dots{}
-See @ref{Editing Files} for more details.
-
-@item A more stable and robust debugger engine.
-The debugger engine included in GPS corresponds to GVD version 2.0.
-In effect, GPS @i{is} the new version of GVD.
-
-@item Better look and feel.
-GPS uses the new version of the graphical toolkit used by GVD, which
-provides a modern look and feel and a more stable interface under Windows
-(with additions such as support for the mouse wheel).
-
-@item Support for version control systems
-which is integrated and available through a few mouse clicks or key bindings.
-See @ref{Version Control System} for more details.
-
-@item A more flexible window handling,
-see @ref{Multiple Document Interface} for more details.
-@end itemize
-
-When using project files, you will get, in addition to the advantages listed
-above:
-
-@itemize @bullet
-@item Source navigation, see @ref{Source Navigation} for more details.
-
-@item Source Browsers,
-in particular the entity browser, a nice complement of the debugger data window.
-See @ref{Source Browsing} for more details.
-
-@item Builds, see @ref{Compilation/Build} for more details.
-
-@item Semantic support.
-In particular, GPS is be able to e.g. differentiate variables from types when
-displaying a contextual menu, which is not possible in GVD.
-
-@item Flexibility of project files, see @ref{Project Handling} for more details.
-@end itemize
 
 @c --------------------------------------------------------------------
 @node Customizing the Debugger
