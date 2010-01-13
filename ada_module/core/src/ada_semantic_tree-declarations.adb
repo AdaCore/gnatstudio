@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings; use GNAT.Strings;
+
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
-with GNAT.Strings;                 use GNAT.Strings;
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Language.Ada;                 use Language.Ada;
 with Ada_Semantic_Tree.Entity_Iteration;
@@ -54,6 +55,13 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding function Get_Name
      (E : access Declaration_View_Record) return UTF8_String;
+
+   overriding procedure Fill_Children
+     (E               : access Declaration_View_Record;
+      From_Visibility : Visibility_Context;
+      Name            : String;
+      Is_Partial      : Boolean;
+      Result          : in out Entity_List);
 
    --------------------
    -- Declaration_Id --
@@ -497,7 +505,21 @@ package body Ada_Semantic_Tree.Declarations is
          procedure Handle_Identifier (Id : Distinct_Identifier) is
             Tmp    : Entity_List;
             Tmp_It : Entity_Iterator;
+
+            Partial_Id : constant Boolean :=
+              Next (Token) = Token_List.Null_Node
+              and then Is_Partial;
+            --  Computes if this identifier is a partial one.
+
          begin
+            if Token = First_Token then
+               Get_Possible_Standard_Entities
+                 (Db         => Db,
+                  Prefix     => Id.all,
+                  Is_Partial => Partial_Id,
+                  Result     => Tmp);
+            end if;
+
             if Token = First_Token
               or else
                 (Previous_Token /= Token_List.Null_Node
@@ -507,10 +529,11 @@ package body Ada_Semantic_Tree.Declarations is
             then
                Get_Possibilities
                  (Id,
-                  Next (Token) = Token_List.Null_Node and then Is_Partial,
+                  Partial_Id,
                   Context,
                   Actual_From_Visibility,
                   Tmp);
+
             elsif Previous_Token /= Token_List.Null_Node
               and then Data (Previous_Token).Tok_Type = Tok_Pragma
             then
@@ -528,16 +551,12 @@ package body Ada_Semantic_Tree.Declarations is
                   Context => (others => True),
                   Result  => Result);
             else
-               Entity_List_Pckg.Append
-                 (Tmp.Contents,
-                  Declaration_Composition_List'
-                    (Root_Entity => Previous_Declaration.Entity,
-                     Name       => new String'(Id.all),
-                     Is_Partial =>
-                       Next (Token)
-                     = Token_List.Null_Node and then Is_Partial,
-                     Is_All => Id = All_Name_Id,
-                     From_Visibility => Actual_From_Visibility));
+               Fill_Children
+                 (E               => Previous_Declaration,
+                  Name            => Id.all,
+                  Is_Partial      => Partial_Id,
+                  From_Visibility => Actual_From_Visibility,
+                  Result          => Tmp);
             end if;
 
             if Next (Token) = Token_List.Null_Node then
@@ -590,15 +609,13 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
 
                if Next (Token) = Token_List.Null_Node then
-                  Append
-                    (Result.Contents,
-                     Declaration_Composition_List'
-                       (Root_Entity     => Previous_Declaration.Entity,
-                        Name            => new String'(""),
-                        Is_Partial      => Next (Token) = Token_List.Null_Node
-                                             and then Is_Partial,
-                        Is_All          => Previous_Declaration.Is_All,
-                        From_Visibility => Actual_From_Visibility));
+                  Fill_Children
+                    (E               => Previous_Declaration,
+                     Name            => "",
+                     Is_Partial      => Next (Token) = Token_List.Null_Node
+                                       and then Is_Partial,
+                     From_Visibility => Actual_From_Visibility,
+                     Result          => Result);
                else
                   Analyze_Token
                     (Token,
@@ -608,7 +625,7 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
 
             when Tok_All =>
-                  Handle_Identifier (All_Name_Id);
+               Handle_Identifier (All_Name_Id);
 
             when Tok_Identifier =>
                Handle_Identifier
@@ -1283,6 +1300,28 @@ package body Ada_Semantic_Tree.Declarations is
          return "";
       end if;
    end Get_Name;
+
+   -------------------
+   -- Fill_Children --
+   -------------------
+
+   overriding procedure Fill_Children
+     (E               : access Declaration_View_Record;
+      From_Visibility : Visibility_Context;
+      Name            : String;
+      Is_Partial      : Boolean;
+      Result          : in out Entity_List)
+   is
+   begin
+      Append
+        (Result.Contents,
+         Declaration_Composition_List'
+           (Root_Entity     => E.Entity,
+            Name            => new String'(Name),
+            Is_Partial      => Is_Partial,
+            Is_All          => E.Is_All,
+            From_Visibility => From_Visibility));
+   end Fill_Children;
 
    ---------------------------
    -- Get_Actual_Parameters --

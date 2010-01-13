@@ -53,6 +53,15 @@ package Ada_Semantic_Tree.Std_Entities is
    --  Add to the entity list the list of attributes matching the context of
    --  use and the prefix given in parameter.
 
+   procedure Get_Possible_Standard_Entities
+     (Db                       : Construct_Database_Access;
+      Prefix                   : String;
+      Is_Partial               : Boolean;
+      Result                   : in out Entity_List;
+      Exclude_Standard_Package : Boolean := False);
+   --  Add to the entity list the list of entities coming from the standard
+   --  package matching the prefix given in parameter.
+
 private
 
    type Std_Description_Record is record

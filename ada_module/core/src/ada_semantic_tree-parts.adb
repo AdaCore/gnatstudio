@@ -749,20 +749,24 @@ package body Ada_Semantic_Tree.Parts is
    ----------------------
 
    function Get_Relation (Entity : Entity_Access) return Ada_Relation_Access is
-      Assistant : constant Database_Assistant_Access :=
+      Assistant : Database_Assistant_Access;
+      Unit :  Unit_Access;
+   begin
+      if Entity = Null_Entity_Access then
+         return null;
+      end if;
+
+      Assistant :=
         Get_Assistant
           (Get_Database (Get_File (Entity)), Ada_Part_Assistant_Id);
 
-      Ada_Assistant : Ada_Part_Db_Assistant renames Ada_Part_Db_Assistant
-        (Assistant.all);
+      Unit := Get_Owning_Unit (Entity);
 
-      Unit : constant Unit_Access := Get_Owning_Unit (Entity);
-   begin
       Analyze_Unit (Assistant, Unit);
 
       return Get_Relation
         (Entity,
-         Ada_Assistant);
+         Ada_Part_Db_Assistant (Assistant.all));
    end Get_Relation;
 
    ------------------

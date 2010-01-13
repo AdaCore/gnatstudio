@@ -19,10 +19,12 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
-with Language.Ada;            use Language.Ada;
-with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
+with Language.Ada;                   use Language.Ada;
+
+with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Ada_Semantic_Tree.Type_Tree is
 

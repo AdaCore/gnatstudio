@@ -30,7 +30,7 @@ with Gtk.Handlers;       use Gtk.Handlers;
 with Completion_Window;  use Completion_Window;
 
 with Language.Ada;                   use Language.Ada;
-with Ada_Semantic_Tree;
+with Ada_Semantic_Tree; use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -258,7 +258,7 @@ package body Completion_Window.Entity_Views is
 
       Set_Iterator
         (View.Explorer,
-         new Entity_Iterator'
+         new Engine_Wrappers.Entity_Iterator'
            (I => Ada_Semantic_Tree.First (List)));
 
       Clear (View.Explorer);

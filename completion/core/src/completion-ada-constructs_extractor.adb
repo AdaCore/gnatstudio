@@ -24,6 +24,7 @@ with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
 with Language.Ada;                      use Language.Ada;
 with Ada_Semantic_Tree.Lang;                 use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Completion.Ada.Constructs_Extractor is
 

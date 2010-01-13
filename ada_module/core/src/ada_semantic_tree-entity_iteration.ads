@@ -25,7 +25,6 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;           use GNAT.Strings;
 
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
 

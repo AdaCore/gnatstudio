@@ -24,37 +24,6 @@ with Ada_Semantic_Tree.List_Resolver; use Ada_Semantic_Tree.List_Resolver;
 
 package Ada_Semantic_Tree.Declarations is
 
-   type Visibility_Filter is mod 2 ** 32;
-
-   All_Visible_Packages : constant Visibility_Filter := 2#0000_0001#;
-   --  Denotes only the packages that are already in the visible scope.
-   All_Visible_Entities : constant Visibility_Filter :=
-     2#0000_0010# or All_Visible_Packages;
-   --  Denotes all the visible entities.
-   All_Accessible_Units : constant Visibility_Filter := 2#0000_0100#;
-   --  Denote only the units.
-   All_Types            : constant Visibility_Filter :=
-     2#0000_1000# or All_Accessible_Units;
-   --  Denote any expression that can be interpreted as a type designation
-   --  ??? This has to be used after a 'new' or ': [in|out|access]' or 'access'
-   --  token (not yet used).
-   Everything           : constant Visibility_Filter := 16#FFFFFF#
-     and not All_Accessible_Units;
-   --  Denotes everyting.
-
-   type Visibility_Context is record
-      File                      : Structured_File_Access;
-      Offset                    : Natural;
-      Filter                    : Visibility_Filter := Everything;
-      Min_Visibility_Confidence : Visibility_Confidence;
-   end record;
-   --  This type gives a way to precise the file location from which a search
-   --  has to be done, with the level of precision and the kind of entities
-   --  needed.
-
-   Null_Visibility_Context : constant Visibility_Context :=
-     (null, 0, 0, Not_Visible);
-
    type Search_Context_Type is (From_Database, From_File);
 
    type Search_Context (Context_Type : Search_Context_Type) is record

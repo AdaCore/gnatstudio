@@ -30,6 +30,12 @@ with Glib; use Glib;
 
 package Ada_Semantic_Tree is
 
+   type Entity_List is private;
+   --  A declaration list is an virtual list of declarations - contents
+   --  partially calculated when the list is built, and partially when it's
+   --  iterated over. This way, it's possible to cut the processing on too
+   --  long results.
+
    -----------------
    -- ENTITY_VIEW --
    -----------------
@@ -92,15 +98,49 @@ package Ada_Semantic_Tree is
    function Get_Name
      (E : access Entity_View_Record) return UTF8_String is abstract;
 
+   type Visibility_Filter is mod 2 ** 32;
+
+   All_Visible_Packages : constant Visibility_Filter := 2#0000_0001#;
+   --  Denotes only the packages that are already in the visible scope.
+   All_Visible_Entities : constant Visibility_Filter :=
+     2#0000_0010# or All_Visible_Packages;
+   --  Denotes all the visible entities.
+   All_Accessible_Units : constant Visibility_Filter := 2#0000_0100#;
+   --  Denote only the units.
+   All_Types            : constant Visibility_Filter :=
+     2#0000_1000# or All_Accessible_Units;
+   --  Denote any expression that can be interpreted as a type designation
+   --  ??? This has to be used after a 'new' or ': [in|out|access]' or 'access'
+   --  token (not yet used).
+   Everything           : constant Visibility_Filter := 16#FFFFFF#
+     and not All_Accessible_Units;
+   --  Denotes everyting.
+
+   type Visibility_Context is record
+      File                      : Structured_File_Access;
+      Offset                    : Natural;
+      Filter                    : Visibility_Filter := Everything;
+      Min_Visibility_Confidence : Visibility_Confidence;
+   end record;
+   --  This type gives a way to precise the file location from which a search
+   --  has to be done, with the level of precision and the kind of entities
+   --  needed.
+
+   Null_Visibility_Context : constant Visibility_Context :=
+     (null, 0, 0, Not_Visible);
+
+   procedure Fill_Children
+     (E               : access Entity_View_Record;
+      From_Visibility : Visibility_Context;
+      Name            : String;
+      Is_Partial      : Boolean;
+      Result          : in out Entity_List) is null;
+   --  Adds to result the children of the current entity, given the constrains
+   --  in parameter.
+
    -----------------
    -- ENTITY_LIST --
    -----------------
-
-   type Entity_List is private;
-   --  A declaration list is an virtual list of declarations - contents
-   --  partially calculated when the list is built, and partially when it's
-   --  iterated over. This way, it's possible to cut the processing on too
-   --  long results.
 
    Null_Entity_List : constant Entity_List;
 

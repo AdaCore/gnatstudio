@@ -18,9 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Ordered_Maps;
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Characters.Handling;         use Ada.Characters.Handling;
 with Ada_Semantic_Tree.Lang;          use Ada_Semantic_Tree.Lang;
-with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;

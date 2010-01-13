@@ -22,8 +22,7 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
 
 package Ada_Semantic_Tree.Type_Tree is
 

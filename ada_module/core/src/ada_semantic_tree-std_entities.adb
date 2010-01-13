@@ -41,6 +41,10 @@ package body Ada_Semantic_Tree.Std_Entities is
    type Std_Entities_Db is new Database_Assistant with record
       Attributes_Trie : Std_Description_Tries.Trie_Tree_Access;
       Pragmas_Trie    : Std_Description_Tries.Trie_Tree_Access;
+      Standard_Trie   : Std_Description_Tries.Trie_Tree_Access;
+      ASCII_Trie      : Std_Description_Tries.Trie_Tree_Access;
+
+      Standard_Entity : Std_Description;
    end record;
 
    overriding procedure Free (Assistant : in out Std_Entities_Db);
@@ -49,6 +53,7 @@ package body Ada_Semantic_Tree.Std_Entities is
 
    type Std_Entity_Record is new Entity_View_Record with record
       Desc : Std_Description;
+      Db   : Construct_Database_Access;
    end record;
 
    overriding function Get_Documentation
@@ -60,18 +65,35 @@ package body Ada_Semantic_Tree.Std_Entities is
    overriding function Get_Category
      (E : access Std_Entity_Record) return Language_Category;
 
+   overriding procedure Fill_Children
+     (E               : access Std_Entity_Record;
+      From_Visibility : Visibility_Context;
+      Name            : String;
+      Is_Partial      : Boolean;
+      Result          : in out Entity_List);
+
+   procedure Get_Possible_ASCII_Entities
+     (Db     : Construct_Database_Access;
+      Prefix : String;
+      Result : in out Entity_List);
+   --  Add to the entity list the list of entities coming from the ASCII
+   --  standard package matching the prefix given in parameter.
+
    -----------------------------
    -- Virtual list facilities --
    -----------------------------
 
-   type Std_Mode_Type is (Pragma_Mode, Attribute_Mode);
+   type Std_Mode_Type is
+     (Pragma_Mode, Attribute_Mode, Standard_Mode, ASCII_Mode);
 
    type Std_List is new Entity_List_Pckg.Virtual_List_Component
    with record
-      Db      : Construct_Database_Access;
-      Prefix  : String_Access;
-      Context : Context_Of_Use_Array;
-      Mode    : Std_Mode_Type;
+      Db                       : Construct_Database_Access;
+      Prefix                   : String_Access;
+      Context                  : Context_Of_Use_Array;
+      Mode                     : Std_Mode_Type;
+      Exclude_Standard_Package : Boolean := False;
+      Is_Partial               : Boolean;
    end record;
 
    overriding procedure Free (Component : in out Std_List);
@@ -79,7 +101,11 @@ package body Ada_Semantic_Tree.Std_Entities is
    type Std_Iterator is new
      Entity_List_Pckg.Virtual_List_Component_Iterator
    with record
-      It : Std_Description_Tries.Iterator;
+      It                       : Std_Description_Tries.Iterator;
+      Db                       : Construct_Database_Access;
+      Exclude_Standard_Package : Boolean;
+      Is_Partial               : Boolean;
+      Lowercased_Name          : String_Access;
    end record;
 
    overriding function First
@@ -94,6 +120,8 @@ package body Ada_Semantic_Tree.Std_Entities is
 
    overriding procedure Free (It : in out Std_Iterator);
 
+   function Is_Valid (It : Std_Iterator'Class) return Boolean;
+
    ------------------------
    -- Register_Assistant --
    ------------------------
@@ -104,7 +132,7 @@ package body Ada_Semantic_Tree.Std_Entities is
       New_Assistant : constant Std_Entities_Db_Assistant :=
         new Std_Entities_Db;
 
-      type Element_Kind is (A_Pragma, An_Attribute);
+      type Element_Kind is (A_Pragma, An_Attribute, A_Standard_Component);
 
       procedure Analyze_Element
         (Node :  XML_Utils.Node_Ptr; Kind : Element_Kind);
@@ -145,14 +173,16 @@ package body Ada_Semantic_Tree.Std_Entities is
             Current := Current.Next;
          end loop;
 
-         if Is_Standard_Ada then
-            New_Element.Documentation :=
-              new String'
-                ("<b>Ada Standard</b>" & ASCII.LF & Escape_Text (Doc.all));
-         else
-            New_Element.Documentation :=
-              new String'
-                ("<b>GNAT specific</b>" & ASCII.LF & Escape_Text (Doc.all));
+         if Kind = A_Pragma or else Kind = An_Attribute then
+            if Is_Standard_Ada then
+               New_Element.Documentation :=
+                 new String'
+                   ("<b>Ada Standard</b>" & ASCII.LF & Escape_Text (Doc.all));
+            else
+               New_Element.Documentation :=
+                 new String'
+                   ("<b>GNAT specific</b>" & ASCII.LF & Escape_Text (Doc.all));
+            end if;
          end if;
 
          case Kind is
@@ -168,6 +198,12 @@ package body Ada_Semantic_Tree.Std_Entities is
                Std_Description_Tries.Insert
                  (New_Assistant.Attributes_Trie.all, New_Element);
 
+            when A_Standard_Component =>
+               New_Element.Category := Category;
+
+               Std_Description_Tries.Insert
+                 (New_Assistant.Standard_Trie.all, New_Element);
+
          end case;
       end Analyze_Element;
 
@@ -180,6 +216,10 @@ package body Ada_Semantic_Tree.Std_Entities is
       New_Assistant.Attributes_Trie :=
         new Std_Description_Tries.Trie_Tree (True);
       New_Assistant.Pragmas_Trie :=
+        new Std_Description_Tries.Trie_Tree (True);
+      New_Assistant.Standard_Trie :=
+        new Std_Description_Tries.Trie_Tree (True);
+      New_Assistant.ASCII_Trie :=
         new Std_Description_Tries.Trie_Tree (True);
 
       Register_Assistant
@@ -200,10 +240,46 @@ package body Ada_Semantic_Tree.Std_Entities is
             Analyze_Element (Current, An_Attribute);
          elsif Current.Tag.all = "PRAGMA" then
             Analyze_Element (Current, A_Pragma);
+         elsif Current.Tag.all = "STANDARD" then
+            Analyze_Element (Current, A_Standard_Component);
+
+            if Get_Attribute (Current, "name") = "ASCII" then
+               declare
+                  Ascii_Node  : XML_Utils.Node_Ptr := Current.Child;
+                  New_Element : Std_Description;
+               begin
+                  while Ascii_Node /= null loop
+                     New_Element := new Std_Description_Record;
+                     New_Element.Name := new String'
+                       (Get_Attribute (Ascii_Node, "name"));
+                     New_Element.Index := new String'
+                       (To_Lower (Get_Attribute (Ascii_Node, "name")));
+                     New_Element.Documentation := new String'
+                       (Get_Attribute (Ascii_Node, "doc"));
+                     New_Element.Category := Cat_Variable;
+
+                     Std_Description_Tries.Insert
+                       (New_Assistant.ASCII_Trie.all,
+                        New_Element);
+
+                     Ascii_Node := Ascii_Node.Next;
+                  end loop;
+               end;
+            end if;
          end if;
 
          Current := Current.Next;
       end loop;
+
+      New_Assistant.Standard_Entity := new Std_Description_Record'
+        (Name          => new String'("Standard"),
+         Documentation => null,
+         Index         => new String'("standard"),
+         Category      => Cat_Package);
+
+      Std_Description_Tries.Insert
+           (New_Assistant.Standard_Trie.all,
+            New_Assistant.Standard_Entity);
 
       Free (Root_Node);
    end Register_Assistant;
@@ -263,12 +339,44 @@ package body Ada_Semantic_Tree.Std_Entities is
          when Pragma_Mode =>
             It := Std_Iterator'
               (It => Std_Description_Tries.Start
-                 (Assistant.Pragmas_Trie, List.Prefix.all));
+                 (Assistant.Pragmas_Trie, List.Prefix.all),
+               Db => List.Db,
+               Exclude_Standard_Package => List.Exclude_Standard_Package,
+               Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
+               Is_Partial => List.Is_Partial);
+
          when Attribute_Mode =>
             It := Std_Iterator'
               (It => Std_Description_Tries.Start
-                 (Assistant.Attributes_Trie, List.Prefix.all));
+                 (Assistant.Attributes_Trie, List.Prefix.all),
+               Db => List.Db,
+               Exclude_Standard_Package => List.Exclude_Standard_Package,
+               Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
+               Is_Partial => List.Is_Partial);
+
+         when Standard_Mode =>
+            It := Std_Iterator'
+              (It => Std_Description_Tries.Start
+                 (Assistant.Standard_Trie, List.Prefix.all),
+               Db => List.Db,
+               Exclude_Standard_Package => List.Exclude_Standard_Package,
+               Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
+               Is_Partial => List.Is_Partial);
+
+         when ASCII_Mode =>
+            It := Std_Iterator'
+              (It => Std_Description_Tries.Start
+                 (Assistant.ASCII_Trie, List.Prefix.all),
+               Db => List.Db,
+               Exclude_Standard_Package => List.Exclude_Standard_Package,
+               Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
+               Is_Partial => List.Is_Partial);
+
       end case;
+
+      if not Is_Valid (It) then
+         Next (It);
+      end if;
 
       return It;
    end First;
@@ -289,6 +397,10 @@ package body Ada_Semantic_Tree.Std_Entities is
    overriding procedure Next (It : in out Std_Iterator) is
    begin
       Std_Description_Tries.Next (It.It);
+
+      if not Is_Valid (It) then
+         Next (It);
+      end if;
    end Next;
 
    ---------
@@ -299,7 +411,8 @@ package body Ada_Semantic_Tree.Std_Entities is
    begin
       return new Std_Entity_Record'
         (Entity_View_Record with
-         Desc => Std_Description_Tries.Get (It.It));
+         Desc => Std_Description_Tries.Get (It.It),
+         Db   => It.Db);
    end Get;
 
    ----------
@@ -309,7 +422,26 @@ package body Ada_Semantic_Tree.Std_Entities is
    overriding procedure Free (It : in out Std_Iterator) is
    begin
       Std_Description_Tries.Free (It.It);
+      Free (It.Lowercased_Name);
    end Free;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (It : Std_Iterator'Class) return Boolean is
+   begin
+      return At_End (It)
+        or else
+          ((not It.Exclude_Standard_Package
+            or else Get_Index
+              (Std_Description_Tries.Get (It.It)).all /= "standard")
+           and then
+             (It.Is_Partial
+              or else Get_Index
+                (Std_Description_Tries.Get (It.It)).all
+              = It.Lowercased_Name.all));
+   end Is_Valid;
 
    --------------------------
    -- Get_Possible_Pragmas --
@@ -327,6 +459,7 @@ package body Ada_Semantic_Tree.Std_Entities is
       New_List.Prefix := new String'(Prefix);
       New_List.Context := Context;
       New_List.Mode := Pragma_Mode;
+      New_List.Is_Partial := True;
 
       Entity_List_Pckg.Append (Result.Contents, New_List);
    end Get_Possible_Pragmas;
@@ -347,9 +480,53 @@ package body Ada_Semantic_Tree.Std_Entities is
       New_List.Prefix := new String'(Prefix);
       New_List.Context := Context;
       New_List.Mode := Attribute_Mode;
+      New_List.Is_Partial := True;
 
       Entity_List_Pckg.Append (Result.Contents, New_List);
    end Get_Possible_Attributes;
+
+   ------------------------------------
+   -- Get_Possible_Standard_Entities --
+   ------------------------------------
+
+   procedure Get_Possible_Standard_Entities
+     (Db                       : Construct_Database_Access;
+      Prefix                   : String;
+      Is_Partial               : Boolean;
+      Result                   : in out Entity_List;
+      Exclude_Standard_Package : Boolean := False)
+   is
+      New_List : Std_List;
+   begin
+      New_List.Db := Db;
+      New_List.Prefix := new String'(Prefix);
+      New_List.Context := (others => True);
+      New_List.Mode := Standard_Mode;
+      New_List.Exclude_Standard_Package := Exclude_Standard_Package;
+      New_List.Is_Partial := Is_Partial;
+
+      Entity_List_Pckg.Append (Result.Contents, New_List);
+   end Get_Possible_Standard_Entities;
+
+   ---------------------------------
+   -- Get_Possible_ASCII_Entities --
+   ---------------------------------
+
+   procedure Get_Possible_ASCII_Entities
+     (Db     : Construct_Database_Access;
+      Prefix : String;
+      Result : in out Entity_List)
+   is
+      New_List : Std_List;
+   begin
+      New_List.Db := Db;
+      New_List.Prefix := new String'(Prefix);
+      New_List.Context := (others => True);
+      New_List.Mode := ASCII_Mode;
+      New_List.Is_Partial := True;
+
+      Entity_List_Pckg.Append (Result.Contents, New_List);
+   end Get_Possible_ASCII_Entities;
 
    -----------------------
    -- Get_Documentation --
@@ -358,7 +535,11 @@ package body Ada_Semantic_Tree.Std_Entities is
    overriding function Get_Documentation
      (E : access Std_Entity_Record) return Glib.UTF8_String is
    begin
-      return E.Desc.Documentation.all;
+      if E.Desc.Documentation /= null then
+         return E.Desc.Documentation.all;
+      else
+         return "";
+      end if;
    end Get_Documentation;
 
    --------------
@@ -381,6 +562,26 @@ package body Ada_Semantic_Tree.Std_Entities is
       return E.Desc.Category;
    end Get_Category;
 
+   -------------------
+   -- Fill_Children --
+   -------------------
+
+   overriding procedure Fill_Children
+     (E               : access Std_Entity_Record;
+      From_Visibility : Visibility_Context;
+      Name            : String;
+      Is_Partial      : Boolean;
+      Result          : in out Entity_List)
+   is
+      pragma Unreferenced (From_Visibility);
+   begin
+      if Get_Index (E.Desc).all = "standard" then
+         Get_Possible_Standard_Entities (E.Db, Name, Is_Partial, Result, True);
+      elsif Get_Index (E.Desc).all = "ascii" then
+         Get_Possible_ASCII_Entities (E.Db, Name, Result);
+      end if;
+   end Fill_Children;
+
    ----------
    -- Free --
    ----------
@@ -392,9 +593,13 @@ package body Ada_Semantic_Tree.Std_Entities is
    begin
       Std_Description_Tries.Clear (Assistant.Attributes_Trie.all);
       Std_Description_Tries.Clear (Assistant.Pragmas_Trie.all);
+      Std_Description_Tries.Clear (Assistant.Standard_Trie.all);
+      Std_Description_Tries.Clear (Assistant.ASCII_Trie.all);
 
       Free (Assistant.Attributes_Trie);
       Free (Assistant.Pragmas_Trie);
+      Free (Assistant.Standard_Trie);
+      Free (Assistant.ASCII_Trie);
    end Free;
 
 end Ada_Semantic_Tree.Std_Entities;
