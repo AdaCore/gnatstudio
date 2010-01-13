@@ -541,7 +541,7 @@ package body Ada_Semantic_Tree.Declarations is
                  (Db      => Db,
                   Prefix  => Id.all,
                   Context => (others => True),
-                  Result  => Result);
+                  Result  => Tmp);
             elsif Previous_Token /= Token_List.Null_Node
               and then Data (Previous_Token).Tok_Type = Tok_Tick
             then
@@ -549,7 +549,7 @@ package body Ada_Semantic_Tree.Declarations is
                  (Db      => Db,
                   Prefix  => Id.all,
                   Context => (others => True),
-                  Result  => Result);
+                  Result  => Tmp);
             else
                Fill_Children
                  (E               => Previous_Declaration,
