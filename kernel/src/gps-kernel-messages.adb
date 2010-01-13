@@ -262,6 +262,12 @@ package body GPS.Kernel.Messages is
 
    begin
       Container.Remove_All_Messages;
+
+      while not Container.Models.Is_Empty loop
+         Container.Models.Last_Element.Unref;
+         Container.Models.Delete_Last;
+      end loop;
+
       Free (Container);
    end Free_Messages_Container;
 
