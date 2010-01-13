@@ -791,10 +791,16 @@ package body GPS.Kernel.Messages is
                              (Get_Attribute (XML_Node, "column", ""));
          Actual_Line   : constant Integer :=
                            Integer'Value
-                             (Get_Attribute (XML_Node, "actual_line", "-1"));
+                             (Get_Attribute
+                                (XML_Node,
+                                 "actual_line",
+                                 Natural'Image (Line)));
          Actual_Column : constant Integer :=
                            Integer'Value
-                             (Get_Attribute (XML_Node, "actual_column", "-1"));
+                             (Get_Attribute
+                                (XML_Node,
+                                 "actual_column",
+                                 Visible_Column_Type'Image (Column)));
          Style_Name    : constant String :=
                            Get_Attribute (XML_Node, "highlighting_style", "");
          Length        : constant Natural :=
@@ -1422,14 +1428,22 @@ package body GPS.Kernel.Messages is
                   "column",
                   Trim
                     (Visible_Column_Type'Image (Current_Node.Column), Both));
-               Set_Attribute
-                 (XML_Node,
-                  "actual_line",
-                  Trim (Integer'Image (Current_Node.Mark.Line), Both));
-               Set_Attribute
-                 (XML_Node,
-                  "actual_column",
-                  Trim (Integer'Image (Current_Node.Mark.Column), Both));
+
+               if Current_Node.Mark.Line /= Current_Node.Line then
+                  Set_Attribute
+                    (XML_Node,
+                     "actual_line",
+                     Trim (Integer'Image (Current_Node.Mark.Line), Both));
+               end if;
+
+               if Current_Node.Mark.Column
+                 /= Integer (Current_Node.Column)
+               then
+                  Set_Attribute
+                    (XML_Node,
+                     "actual_column",
+                     Trim (Integer'Image (Current_Node.Mark.Column), Both));
+               end if;
 
                if Current_Node.Style /= null then
                   Set_Attribute
