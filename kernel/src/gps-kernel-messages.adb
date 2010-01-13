@@ -24,6 +24,7 @@ with Glib.Convert;
 
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Classic_Models;
+with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;
 with Projects;
@@ -173,6 +174,7 @@ package body GPS.Kernel.Messages is
       --  Register simple message load/save procedures
 
       GPS.Kernel.Messages.Simple.Register (Result);
+      GPS.Kernel.Messages.Markup.Register (Result);
 
       --  Setup "project_changed" hook
 
@@ -1074,12 +1076,18 @@ package body GPS.Kernel.Messages is
      (Self           : not null access Messages_Container'Class;
       Tag            : Ada.Tags.Tag;
       Save           : not null Message_Save_Procedure;
-      Primary_Load   : not null Primary_Message_Load_Procedure;
-      Secondary_Load : not null Secondary_Message_Load_Procedure) is
+      Primary_Load   : Primary_Message_Load_Procedure;
+      Secondary_Load : Secondary_Message_Load_Procedure) is
    begin
       Self.Savers.Insert (Tag, Save);
-      Self.Primary_Loaders.Insert (Tag, Primary_Load);
-      Self.Secondary_Loaders.Insert (Tag, Secondary_Load);
+
+      if Primary_Load /= null then
+         Self.Primary_Loaders.Insert (Tag, Primary_Load);
+      end if;
+
+      if Secondary_Load /= null then
+         Self.Secondary_Loaders.Insert (Tag, Secondary_Load);
+      end if;
    end Register_Message_Class;
 
    ------------

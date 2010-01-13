@@ -511,8 +511,8 @@ private
      (Self           : not null access Messages_Container'Class;
       Tag            : Ada.Tags.Tag;
       Save           : not null Message_Save_Procedure;
-      Primary_Load   : not null Primary_Message_Load_Procedure;
-      Secondary_Load : not null Secondary_Message_Load_Procedure);
+      Primary_Load   : Primary_Message_Load_Procedure;
+      Secondary_Load : Secondary_Message_Load_Procedure);
    --  Registers save and load procedures for the specified class of messages
 
 end GPS.Kernel.Messages;
