@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;
 with Traces;
@@ -44,7 +46,7 @@ package body GPS.Kernel.Messages.Highlighting is
       Message : not null access Abstract_Message'Class);
    --  Highlights location of the message in the source editor.
 
-      -------------
+   -------------
    -- Execute --
    -------------
 
@@ -151,11 +153,16 @@ package body GPS.Kernel.Messages.Highlighting is
       end if;
    end Message_Removed;
 
-   -----------------------
-   -- Register_Listener --
-   -----------------------
+   --------------
+   -- Register --
+   --------------
 
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class) is
+
+      function To_Address is
+        new Ada.Unchecked_Conversion
+          (Highlighting_Manager_Access, System.Address);
+
       Manager : constant Highlighting_Manager_Access :=
         new Highlighting_Manager (Kernel);
       Hook    : constant On_File_Edited_Hook :=
@@ -164,11 +171,36 @@ package body GPS.Kernel.Messages.Highlighting is
    begin
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager));
+      Kernel.Highlighting_Manager := To_Address (Manager);
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
          GPS.Kernel.File_Edited_Hook,
          Hook,
          "location_view.file_edited");
    end Register;
+
+   ----------------
+   -- Unregister --
+   ----------------
+
+   procedure Unregister
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      function To_Highlighting_Manager is
+        new Ada.Unchecked_Conversion
+          (System.Address, Highlighting_Manager_Access);
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Highlighting_Manager'Class, Highlighting_Manager_Access);
+
+      Manager : Highlighting_Manager_Access :=
+                  To_Highlighting_Manager (Kernel.Highlighting_Manager);
+
+   begin
+      Get_Messages_Container (Kernel).Unregister_Listener
+        (Listener_Access (Manager));
+      Free (Manager);
+   end Unregister;
 
 end GPS.Kernel.Messages.Highlighting;

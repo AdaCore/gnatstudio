@@ -19,13 +19,15 @@
 
 --  This package implements integration between message container and
 --  source editor to handle message highlighting. It is good candidate
---  to be moved to sourc editor in the future, but it uses direct access
---  to container's internals because equivalent operations is not
---  provided now.
+--  to be moved to source editor in the future.
 
 package GPS.Kernel.Messages.Highlighting is
 
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Creates and registers highlighting manager
+
+   procedure Unregister (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Unregister and destroys highlighting manager
 
 private
 
