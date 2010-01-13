@@ -1374,6 +1374,10 @@ package body Completion_Module is
             Buffer := Source_Buffer (Get_Buffer (View));
          end if;
 
+         if Buffer = null then
+            return False;
+         end if;
+
          The_Text := Get_String (Buffer);
          Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
 
