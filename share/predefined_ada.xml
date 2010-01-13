@@ -6384,9 +6384,9 @@ subunits.
 
    <STANDARD name = "&quot;=&quot;" category = "function"/>
 
-   <STANDARD name = "&quot;>&quot;" category = "function"/>
+   <STANDARD name = "&quot;&gt;&quot;" category = "function"/>
 
-   <STANDARD name = "&quot;>=&quot;" category = "function"/>
+   <STANDARD name = "&quot;&gt;=&quot;" category = "function"/>
 
    <STANDARD name = "ASCII" category = "package">
       <FIELD name = "NUL" doc = "16#00#"/>
@@ -6522,17 +6522,17 @@ subunits.
 
    <STANDARD name = "Wide_Wide_String" category = "type"/>
 
-   <STANDARD name = "abs" category = "function"/>
+   <STANDARD name = "&quot;abs&quot;" category = "function"/>
 
-   <STANDARD name = "and" category = "function"/>
+   <STANDARD name = "&quot;and&quot;" category = "function"/>
 
-   <STANDARD name = "mod" category = "function"/>
+   <STANDARD name = "&quot;mod&quot;" category = "function"/>
 
-   <STANDARD name = "not" category = "function"/>
+   <STANDARD name = "&quot;not&quot;" category = "function"/>
 
-   <STANDARD name = "or" category = "function"/>
+   <STANDARD name = "&quot;or&quot;" category = "function"/>
 
-   <STANDARD name = "rem" category = "function"/>
+   <STANDARD name = "&quot;rem&quot;" category = "function"/>
 
-   <STANDARD name = "xor" category = "function"/>
+   <STANDARD name = "&quot;xor&quot;" category = "function"/>
 </PREDEFINED_ADA>
