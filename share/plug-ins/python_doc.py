@@ -589,8 +589,8 @@ def generate_doc (entity):
   ## If the files are read-only in the system dir, we would only be able to
   ## generate the doc once
 
-  os.chmod(GPS.get_home_dir() + "generated_doc/childtree.png", stat.S_IWRITE)
-  os.chmod(GPS.get_home_dir() + "generated_doc/childtree2.png", stat.S_IWRITE)
+  os.chmod(GPS.get_home_dir() + "generated_doc/childtree.png", stat.S_IREAD + stat.S_IWRITE)
+  os.chmod(GPS.get_home_dir() + "generated_doc/childtree2.png", stat.S_IREAD + stat.S_IWRITE)
 
   ## These comment lines are for use through pydoc
   #home_dir = GPS.get_home_dir()
