@@ -17,14 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
-
 with Glib.Convert;
 
 package body GPS.Kernel.Messages.Simple is
 
-   use Ada.Strings;
-   use Ada.Strings.Fixed;
    use Ada.Strings.Unbounded;
    use Glib.Convert;
    use XML_Utils;
@@ -52,6 +48,43 @@ package body GPS.Kernel.Messages.Simple is
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer);
+
+   function Create_Simple_Message
+     (Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
+      return not null Simple_Message_Access;
+   --  Internal create subprogram
+
+   ---------------------------
+   -- Create_Simple_Message --
+   ---------------------------
+
+   function Create_Simple_Message
+     (Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String)
+      return not null Simple_Message_Access is
+   begin
+      return
+        Create_Simple_Message
+          (Container,
+           Category,
+           File,
+           Line,
+           Column,
+           Text,
+           Line,
+           Integer (Column));
+   end Create_Simple_Message;
 
    ---------------------------
    -- Create_Simple_Message --
@@ -96,21 +129,16 @@ package body GPS.Kernel.Messages.Simple is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
-      First         : Positive;
-      Last          : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer)
    is
-      Offset : constant Natural := Text'First - 1;
       Result : constant not null Simple_Message_Access :=
         new Simple_Message (Secondary);
 
    begin
       Initialize
         (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
-      Result.Text  := To_Unbounded_String (Text);
-      Result.First := First - Offset;
-      Result.Last  := Last - Offset;
+      Result.Text := To_Unbounded_String (Text);
    end Create_Simple_Message;
 
    ----------------
@@ -122,19 +150,7 @@ package body GPS.Kernel.Messages.Simple is
       return Ada.Strings.Unbounded.Unbounded_String
    is
    begin
-      if Self.First > Self.Last then
-         return To_Unbounded_String (Escape_Text (To_String (Self.Text)));
-
-      else
-         return
-           To_Unbounded_String
-             (Escape_Text (Slice (Self.Text, 1, Self.First - 1))
-              & "<span color=""blue""><u>"
-              & Escape_Text (Slice (Self.Text, Self.First, Self.Last))
-              & "</u></span>"
-              & Escape_Text
-                (Slice (Self.Text, Self.Last + 1, Length (Self.Text))));
-      end if;
+      return To_Unbounded_String (Escape_Text (To_String (Self.Text)));
    end Get_Markup;
 
    --------------
@@ -192,11 +208,7 @@ package body GPS.Kernel.Messages.Simple is
       Actual_Line   : Integer;
       Actual_Column : Integer)
    is
-      Text  : constant String := Get_Attribute (XML_Node, "text", "");
-      First : constant Positive :=
-                Positive'Value (Get_Attribute (XML_Node, "first", "1"));
-      Last  : constant Natural :=
-                Natural'Value (Get_Attribute (XML_Node, "last", "0"));
+      Text : constant String := Get_Attribute (XML_Node, "text", "");
 
    begin
       Create_Simple_Message
@@ -205,8 +217,6 @@ package body GPS.Kernel.Messages.Simple is
          Line,
          Column,
          Text,
-         First,
-         Last,
          Actual_Line,
          Actual_Column);
    end Load;
@@ -234,15 +244,6 @@ package body GPS.Kernel.Messages.Simple is
 
    begin
       Set_Attribute (XML_Node, "text", To_String (Self.Text));
-
-      if Self.Level = Secondary
-        and then Self.First <= Self.Last
-      then
-         Set_Attribute
-           (XML_Node, "first", Trim (Integer'Image (Self.First), Both));
-         Set_Attribute
-           (XML_Node, "last", Trim (Integer'Image (Self.Last), Both));
-      end if;
    end Save;
 
 end GPS.Kernel.Messages.Simple;

@@ -18,8 +18,7 @@
 -----------------------------------------------------------------------
 --  This package provides simple implementation of Abstract_Message
 --  which is suitable for general purpose. Message's text is escaped
---  to protect from interpretation as markup by Pango; secondary level
---  messages can mark specified portion of text as "hyperlink".
+--  to protect from interpretation as markup by Pango.
 
 package GPS.Kernel.Messages.Simple is
 
@@ -34,9 +33,7 @@ package GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
-      Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Text          : String)
       return not null Simple_Message_Access;
    --  Creates new instance of primary Simple_Message.
 
@@ -46,8 +43,6 @@ package GPS.Kernel.Messages.Simple is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
-      First         : Positive;
-      Last          : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer);
    --  Creates new instance of secondary Simple_Message.
@@ -60,17 +55,6 @@ private
    type Simple_Message (Level : Message_Levels) is
      new Abstract_Message (Level) with record
       Text : Ada.Strings.Unbounded.Unbounded_String;
-
-      case Level is
-         when Primary =>
-            null;
-
-         when Secondary =>
-            First : Positive := 1;
-            Last  : Natural  := 0;
-            --  Range of the slice of the secondary location information to be
-            --  highlighted.
-      end case;
    end record;
 
    overriding function Get_Text
