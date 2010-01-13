@@ -443,9 +443,8 @@ package body Projects.Registry is
          Registry.Data.View_Tree := new Project_Tree_Data;
          Reset (Registry.Data.Sources);
          Reset (Registry.Data.Directories);
-
-         Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
-         Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
+         Set_Trusted_Mode
+           (Registry, Trusted_Mode => Registry.Data.Trusted_Mode);
       end if;
 
       if not View_Only then
@@ -1196,22 +1195,11 @@ package body Projects.Registry is
       Id   : Source_Id;
       Path : Path_Name_Type;
       Prj  : Project_Id;
-
-      --  ??? Experiment for IB06-021
-      --  We might have normalized the file already while resolving links,
-      --  and thus even if we tell Full_Name not to resolve them, it will
-      --  still reuse its cache.
-
---        Full : String := String
---                (Full_Name
---                  (Source_Filename,
---                   Normalize     => True,
---                   Resolve_Links => Opt.Follow_Links_For_Files).all);
-
       Full : String := String
-        (Normalize_Pathname
-           (+Full_Name (Source_Filename).all,
-            Resolve_Links => Opt.Follow_Links_For_Files));
+              (Full_Name
+                (Source_Filename,
+                 Normalize     => True,
+                 Resolve_Links => Opt.Follow_Links_For_Files).all);
 
    begin
       --  Lookup in the project's Source_Paths_HT, rather than in
@@ -1233,20 +1221,9 @@ package body Projects.Registry is
 
       if Id = No_Source then
          if Active (Me_Debug) then
-            Trace (Me_Debug, "DEBUG: project not found for file " & Full
+            Trace (Me_Debug, "project not found for file " & Full
                    & " parameter was "
                    & Display_Full_Name (Source_Filename));
-
-            Id := Source_Paths_Htable.Get_First
-              (Registry.Data.View_Tree.Source_Paths_HT);
-            while Id /= No_Source loop
-               Trace (Me_Debug, "DEBUG: in htable, we have "
-                      & Get_String (Id.Path.Name));
-
-               Id := Source_Paths_Htable.Get_Next
-                 (Registry.Data.View_Tree.Source_Paths_HT);
-            end loop;
-
          end if;
 
          if Root_If_Not_Found then
