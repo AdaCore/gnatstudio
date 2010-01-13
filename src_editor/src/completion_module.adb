@@ -1349,6 +1349,57 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
+      function Auto_Complete_Ada_Keyword return Boolean;
+      --  Return true if the cursor is at a location where an Ada keyword
+      --  should open an auto-completion, false otherwise
+
+      -------------------------------
+      -- Auto_Complete_Ada_Keyword --
+      -------------------------------
+
+      function Auto_Complete_Ada_Keyword return Boolean is
+         Widget        : constant Gtk_Widget :=
+           Get_Current_Focus_Widget (Kernel);
+         View   : Source_View;
+         Buffer : Source_Buffer;
+
+         The_Text : String_Access;
+         It   : Gtk_Text_Iter;
+         Exp  : Parsed_Expression;
+      begin
+         if Widget /= null
+           and then Widget.all in Source_View_Record'Class
+         then
+            View   := Source_View (Widget);
+            Buffer := Source_Buffer (Get_Buffer (View));
+         end if;
+
+         The_Text := Get_String (Buffer);
+         Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+         Exp := Ada_Lang.Parse_Expression_Backward
+           (The_Text,
+            Get_Byte_Index (It));
+
+         if Token_List.Length (Exp.Tokens) = 1 then
+            case Token_List.Data
+              (Token_List.First (Exp.Tokens)).Tok_Type
+            is
+               when Tok_With | Tok_Use | Tok_Pragma =>
+                  return True;
+
+               when others =>
+                  return False;
+
+            end case;
+         end if;
+
+         Free (The_Text);
+         Free (Exp);
+
+         return False;
+      end Auto_Complete_Ada_Keyword;
+
       pragma Unreferenced (Kernel);
       Edition_Data : constant File_Edition_Hooks_Args :=
                        File_Edition_Hooks_Args (Data.all);
@@ -1381,7 +1432,13 @@ package body Completion_Module is
         and then (Buffer (1) = '.'
                   or else Buffer (1) = ','
                   or else Buffer (1) = '('
-                  or else Buffer (1) = ''')
+                  or else Buffer (1) = '''
+                  or else
+                    (Buffer (1) = ' '
+                     and then Auto_Complete_Ada_Keyword))
+      --  ??? this whole test is too Ada-specific for the moment. Should
+      --  probably be move to some primitive of language at some point, in
+      --  order to support other auto-completion triggers for other languages.
       then
          if Smart_Completion_Pref = Dynamic then
             Timeout := 0;
