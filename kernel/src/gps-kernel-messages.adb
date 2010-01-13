@@ -934,7 +934,7 @@ package body GPS.Kernel.Messages is
          end loop;
       end if;
 
-      Free (Project_XML_Node);
+      Free (Root_XML_Node);
    end Load;
 
    ------------------------------------------
