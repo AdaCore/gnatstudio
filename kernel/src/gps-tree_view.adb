@@ -30,6 +30,7 @@ package body GPS.Tree_View is
 
    use Glib;
    use Glib.Values;
+   use Gtk.Handlers;
    use Gtk.Object;
    use Gtk.Tree_Model;
    use Gtk.Tree_View;
@@ -146,26 +147,32 @@ package body GPS.Tree_View is
 
       --  Connect to lowerst model
 
-      Gtk_Tree_Model_Callbacks.Connect
-        (Lowerst_Model,
-         Signal_Row_Inserted,
-         Gtk_Tree_Model_Callbacks.To_Marshaller
-           (On_Lowerst_Model_Row_Inserted'Access),
-         GPS_Tree_View (Self),
-         False);
-      Gtk_Tree_Model_Callbacks.Connect
-        (Lowerst_Model,
-         Signal_Row_Deleted,
-         Gtk_Tree_Model_Callbacks.To_Marshaller
-           (On_Lowerst_Model_Row_Deleted'Access),
-         GPS_Tree_View (Self),
-         True);
-      Gtk_Tree_Model_Callbacks.Connect
-        (Lowerst_Model,
-         Signal_Rows_Reordered,
-         On_Lowerst_Model_Rows_Reordered'Access,
-         GPS_Tree_View (Self),
-         True);
+      Add_Watch
+        (Gtk_Tree_Model_Callbacks.Connect
+           (Lowerst_Model,
+            Signal_Row_Inserted,
+            Gtk_Tree_Model_Callbacks.To_Marshaller
+              (On_Lowerst_Model_Row_Inserted'Access),
+            GPS_Tree_View (Self),
+            False),
+         Self);
+      Add_Watch
+        (Gtk_Tree_Model_Callbacks.Connect
+           (Lowerst_Model,
+            Signal_Row_Deleted,
+            Gtk_Tree_Model_Callbacks.To_Marshaller
+              (On_Lowerst_Model_Row_Deleted'Access),
+            GPS_Tree_View (Self),
+            True),
+         Self);
+      Add_Watch
+        (Gtk_Tree_Model_Callbacks.Connect
+           (Lowerst_Model,
+            Signal_Rows_Reordered,
+            On_Lowerst_Model_Rows_Reordered'Access,
+            GPS_Tree_View (Self),
+            True),
+         Self);
    end Initialize;
 
    ----------------
