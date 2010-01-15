@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1337,7 +1337,7 @@ package body Code_Analysis_Module is
 
       GPS.Kernel.MDI.Gtk_New
         (Cont_N_Anal.Analysis.Child, Cont_N_Anal.Analysis.View,
-         Group  => Group_VCS_Explorer,
+         Group  => Group_Default,
          Module => Code_Analysis_Module_ID);
       Set_Title
         (Cont_N_Anal.Analysis.Child,
