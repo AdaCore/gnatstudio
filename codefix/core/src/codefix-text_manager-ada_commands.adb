@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,12 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
-with GNATCOLL.Utils;                    use GNATCOLL.Utils;
-with Case_Handling;                     use Case_Handling;
-with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
-with String_Utils;                      use String_Utils;
-with Language.Ada;                      use Language.Ada;
+with Ada.Characters.Handling;       use Ada.Characters.Handling;
+with GNATCOLL.Utils;                use GNATCOLL.Utils;
+with Case_Handling;                 use Case_Handling;
+with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
+with String_Utils;                  use String_Utils;
+with Language.Ada;                  use Language.Ada;
+with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 
 package body Codefix.Text_Manager.Ada_Commands is
 

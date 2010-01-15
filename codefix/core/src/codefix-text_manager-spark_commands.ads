@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                     Copyright (C) 2009-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 
 package Codefix.Text_Manager.Spark_Commands is
 
