@@ -120,7 +120,7 @@ NF-45-IA23-015 Warn when assigning existing shortcut to action (2009-11-18)
 
 NF-45-IA22-010 Auto-completion for entities from Standard (2010-01-13)
 
-  The smart completion now completes entities coming from the Ada Standard 
+  The smart completion now completes entities coming from the Ada Standard
   package.
 
 NF-45-IA13-016 New menu /File/Close All Editors Except Current (2009-10-14)
