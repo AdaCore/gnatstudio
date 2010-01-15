@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2004-2009, AdaCore                   --
+--                Copyright (C) 2004-2010, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -78,8 +78,14 @@ package body XML_Readers is
       Length : constant Natural := Get_Length (Atts);
    begin
       for J in 0 .. Length - 1 loop
-         Str := Str & Get_Local_Name (Atts, J) & "="""
-           & Protect (Get_Value (Atts, J)) & """ ";
+         if J /= 0 then
+            Append (Str, " ");
+         end if;
+
+         Append (Str, Get_Local_Name (Atts, J));
+         Append (Str, "=""");
+         Append (Str, Protect (Get_Value (Atts, J)));
+         Append (Str, '"');
       end loop;
 
       return new String'(To_String (Str));
