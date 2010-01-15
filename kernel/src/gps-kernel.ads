@@ -1178,12 +1178,6 @@ private
 
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode
-
-      Messages_Container : System.Address := System.Null_Address;
-      --  The message container for this instance of kernel
-
-      Highlighting_Manager : System.Address := System.Null_Address;
-      --  The highlighting manager
    end record;
 
 end GPS.Kernel;
