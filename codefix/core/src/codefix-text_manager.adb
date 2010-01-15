@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2009, AdaCore                 --
+--                  Copyright (C) 2003-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Ada.Exceptions;    use Ada.Exceptions;
 
 with GNAT.Case_Util;    use GNAT.Case_Util;
 with GNAT.Regpat;       use GNAT.Regpat;
@@ -2013,5 +2015,89 @@ package body Codefix.Text_Manager is
             end;
       end case;
    end Get_Matching_Word;
+
+   ----------------------------------------------------------------------------
+   --  type Text_Command
+   ----------------------------------------------------------------------------
+
+   ------------------
+   -- Text_Command --
+   ------------------
+
+   procedure Free (This : in out Text_Command) is
+   begin
+      Free (This.Caption);
+   end Free;
+
+   procedure Free_Data (This : in out Text_Command'Class) is
+   begin
+      Free (This);
+   end Free_Data;
+
+   procedure Free (This : in out Ptr_Command) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Text_Command'Class, Ptr_Command);
+   begin
+      if This /= null then
+         Free (This.all);
+         Unchecked_Free (This);
+      end if;
+   end Free;
+
+   procedure Set_Caption
+     (This : in out Text_Command'Class;
+      Caption : String) is
+   begin
+      Assign (This.Caption, Caption);
+   end Set_Caption;
+
+   function Get_Caption (This : Text_Command'Class) return String is
+   begin
+      if This.Caption = null then
+         return "fix not documented";
+      else
+         return This.Caption.all;
+      end if;
+   end Get_Caption;
+
+   function Get_Parser
+     (This : Text_Command'Class) return Error_Parser_Access is
+   begin
+      return This.Parser;
+   end Get_Parser;
+
+   procedure Set_Parser
+     (This : in out Text_Command'Class;
+      Parser : Error_Parser_Access) is
+   begin
+      This.Parser := Parser;
+   end Set_Parser;
+
+   procedure Free (Corruption : in out Execute_Corrupted) is
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
+        (Execute_Corrupted_Record'Class, Execute_Corrupted);
+   begin
+      Internal_Free (Corruption);
+   end Free;
+
+   procedure Secured_Execute
+     (This         : Text_Command'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Error_Cb     : Execute_Corrupted := null)
+   is
+   begin
+      Execute (This, Current_Text);
+   exception
+      when E : Obsolescent_Fix =>
+         if Error_Cb /= null then
+            Error_Cb.Obsolescent (Exception_Information (E));
+         end if;
+
+      when E : Codefix_Panic =>
+         if Error_Cb /= null then
+            Error_Cb.Panic (Exception_Information (E));
+         end if;
+
+   end Secured_Execute;
 
 end Codefix.Text_Manager;

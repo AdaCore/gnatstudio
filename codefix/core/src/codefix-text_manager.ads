@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -638,6 +638,80 @@ package Codefix.Text_Manager is
    --  Duplicate all informations of a Word_Cursor, specially informations
    --  memorized in dynamic memory.
 
+   ----------------------------------------------------------------------------
+   --  type Text_Command
+   ----------------------------------------------------------------------------
+
+   ------------------
+   -- Text_Command --
+   ------------------
+
+   type Fix_Complexity is (Simple, Complex);
+
+   type Text_Command
+     (Complexity : Fix_Complexity) is abstract tagged private;
+   --  A Text_Command is a modification in the text that can be defined one
+   --  time, and made later, with taking into account others possible changes.
+
+   type Ptr_Command is access all Text_Command'Class;
+
+   procedure Execute
+     (This         : Text_Command;
+      Current_Text : in out Text_Navigator_Abstr'Class) is null;
+   --  New version of Execute. Reset success to True if the command is in the
+   --  new kind, false if the old execute has still to be called.
+
+   type Execute_Corrupted_Record is abstract tagged null record;
+
+   type Execute_Corrupted is access all Execute_Corrupted_Record'Class;
+
+   procedure Panic
+     (Corruption : access Execute_Corrupted_Record; Error_Message : String)
+   is abstract;
+   --  This primitive is called when a Codefix_Panic is caught while applying a
+   --  fix.
+
+   procedure Obsolescent
+     (Corruption : access Execute_Corrupted_Record; Error_Message : String)
+   is abstract;
+   --  This primitive is called when a Obsolescent_Fix is caught while applying
+   --  a fix.
+
+   procedure Free (Corruption : in out Execute_Corrupted);
+
+   procedure Secured_Execute
+     (This         : Text_Command'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Error_Cb     : Execute_Corrupted := null);
+   --  Same as execute, but catches exception. Error_Cb.Panic is called in case
+   --  of a Codefix_Panic, and Error_Cb.Obsolescent is called in case of an
+   --  Obsolescent fix caught.
+   --  ??? Cases where Obsolescent_Fix should be raised instead of
+   --  Codefix_Panic should be investigated further.
+
+   procedure Free (This : in out Text_Command);
+   --  Free the memory associated to a Text_Command
+
+   procedure Free_Data (This : in out Text_Command'Class);
+   --  Free the memory associated to a Text_Command
+
+   procedure Free (This : in out Ptr_Command);
+   --  Free the data associated to a Ptr_Command
+
+   procedure Set_Caption
+     (This : in out Text_Command'Class;
+      Caption : String);
+   --  Define the caption that describes the action of a Text_Command
+
+   function Get_Caption (This : Text_Command'Class) return String;
+   --  Return the caption associated to a Text_Command
+
+   function Get_Parser (This : Text_Command'Class) return Error_Parser_Access;
+
+   procedure Set_Parser
+     (This : in out Text_Command'Class;
+      Parser : Error_Parser_Access);
+
 private
 
    function Compare_Last (Str_1, Str_2 : String) return Boolean;
@@ -750,5 +824,11 @@ private
    function Normalize (Str : GNAT.Strings.String_Access) return String;
    --  Change the string in order to make comparaisons between lists of
    --  parameters.
+
+   type Text_Command (Complexity : Fix_Complexity) is abstract tagged record
+      Caption : GNAT.Strings.String_Access;
+      Parser  : Error_Parser_Access;
+      --  ??? To be set right after the validated fix!
+   end record;
 
 end Codefix.Text_Manager;
