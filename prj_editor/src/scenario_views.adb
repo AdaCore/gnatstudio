@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -186,7 +186,7 @@ package body Scenario_Views is
      (View   : access Scenario_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Hook : Refresh_Hook;
+      Hook     : Refresh_Hook;
       Viewport : Gtk_Viewport;
    begin
       View.Kernel := Kernel_Handle (Kernel);
@@ -222,7 +222,8 @@ package body Scenario_Views is
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
       Hook := new Refresh_Hook_Record'
-           (Function_No_Args with View => Scenario_View (View));
+        (Function_No_Args with View => Scenario_View (View));
+
       Add_Hook
         (Kernel, Project_View_Changed_Hook, Hook,
          Name => "scenario.project_view_changed",
@@ -362,11 +363,11 @@ package body Scenario_Views is
    is
       pragma Unreferenced (Event);
       Scenar_Var : constant Scenario_Variable_Array :=
-        Scenario_Variables (User.Kernel);
-      Name : String := External_Reference_Of (Scenar_Var (User.Index));
+                     Scenario_Variables (User.Kernel);
+      Name       : String := External_Reference_Of (Scenar_Var (User.Index));
+      Menu       : Gtk_Menu;
+      Item       : Gtk_Menu_Item;
 
-      Menu : Gtk_Menu;
-      Item : Gtk_Menu_Item;
    begin
       To_Mixed (Name);
 

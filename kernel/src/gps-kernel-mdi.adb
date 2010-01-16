@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -155,8 +155,7 @@ package body GPS.Kernel.MDI is
       Module              : access Module_ID_Record'Class;
       Desktop_Independent : Boolean := False) is
    begin
-      Gtkada.MDI.Initialize
-        (Child, Widget, Flags, Group, Focus_Widget);
+      Gtkada.MDI.Initialize (Child, Widget, Flags, Group, Focus_Widget);
 
       if Default_Width /= -1 or else Default_Height /= -1 then
          Set_Size_Request (Child, Default_Width, Default_Height);
