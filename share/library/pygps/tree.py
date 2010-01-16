@@ -14,10 +14,7 @@ try:
          column.
          Returns None if no such row exists."""
       if not iter:
-         was_tree = True
          iter = tree.get_model()
-      else:
-         was_tree = False
 
       for row in iter:
          if row[column] == key:
