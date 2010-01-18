@@ -1,0 +1,461 @@
+""''"" should be "";""
+& does not match corresponding formal of&#
+& is an 8-bit Ada Boolean
+& is an internal 'G'N'A'T unit
+& is not a usable package
+& is not directly visible
+& is not modified, volatile has no effect
+& is not visible
+& is undefined
+'G'N'A'T pragma cpp'_class is now obsolete; replace it by pragma import
+'G'N'A'T pragma cpp'_virtual is now obsolete and has no effect
+'G'N'A'T pragma cpp'_vtable is now obsolete and has no effect
+ABSTRACT must be followed by TAGGED
+ABSTRACT not allowed here, ignored
+ABSTRACT not allowed in interface type definition
+ALIASED not allowed here
+ALIASED not allowed in type definition
+ALIASED required
+ALL is not permitted for anonymous access types
+AND expected
+BEGIN in wrong column, should be@
+BODY expected
+Bit_Order can only be defined for record type
+Bit_Order specification has no effect
+C enum types have the size of a C int
+CONSTANT not permitted in renaming declaration
+Casing argument for pragma% must be one of Mixedcase, Lowercase, Uppercase
+END in wrong column, should be@
+IF or `END IF` expected
+IF, ELSIF, ELSE, or `END IF` expected
+IN must precede OUT in parameter mode
+IN not allowed together with ACCESS
+LIMITED keyword not allowed in private extension
+LOOP belongs here, not before FOR
+LOOP belongs here, not before WHILE
+NEW or INTERFACE expected
+NULL expected
+Numeric_Error is an obsolescent feature
+OR or ELSE expected
+OR or ELSE or THEN ABORT expected
+OTHERS choice is redundant
+OTHERS must appear alone in a choice list
+OTHERS must appear last in an aggregate
+OTHERS must represent at least one component
+Object_Size cannot be given for &
+Object_Size must be 8, 16, 32, or multiple of 64
+PRIVATE in wrong column, should be@
+PRIVATE not allowed in body
+PRIVATE not allowed in protected body
+SYNCHRONIZED not allowed for record extension
+Stream_Size cannot be given for &
+TAGGED expected
+Unchecked_Union must have one discriminant
+Unchecked_Union must not be limited record type
+Value_Size cannot be given for &
+Value_Size cannot be given for unconstrained array
+Valued_Procedure has no effect for convention Ada
+WITH can only appear in context clause
+WITH expected
+\% must appear before %
+\\  unlimited view of & visible through the context clause #
+\^' may have been intended here
+\corresponding parameter of & must be explicitly null-excluding
+\use Constraint_Error instead
+\use clause on& would make operation legal
+`END CASE` not allowed at end of case expression
+`END IF` not allowed at end of conditional expression
+`IN` not allowed together with `ACCESS`
+`NOT NULL` allowed only for an access type
+`NOT NULL` can only be used with `ACCESS`
+`NOT NULL` comes after NEW, not before
+`NOT NULL` not allowed
+`NOT NULL` not allowed \(& already excludes null\)
+`NOT NULL` not allowed if constraint given
+`NOT NULL` not allowed in numeric expression
+`NOT NULL` not allowed in object renaming
+`NOT NULL` only allowed for an access type
+`NOT NULL` required for parameter &
+`OUT` not allowed together with `ACCESS`
+`SELECT OR` may be intended rather than `SELECT ELSE`
+abstract inherited private operation& must be overridden
+abstract subprograms must be visible
+activation of an instance of task type& requires pragma Elaborate_All on &
+actual for non-limited & cannot be a limited type
+actual must exclude null to match generic formal#
+actual must have aliased components to match formal type &
+actual type must be access-to-constant type
+actual type must be access-to-variable type
+add Convention pragma to declaration of &#
+add Convention pragma to declaration of& #
+add LIMITED to type indication
+address cannot be given for &
+aggregate may not have single positional component
+alignment cannot be given for &
+all components must be declared in spec
+allocation from empty storage pool!
+ambiguous bounds in range of iteration
+ambiguous call to&
+ambiguous character literal
+ambiguous expression
+ambiguous universal_fixed_expression
+an abstract subprogram cannot have a body
+anonymous arrays not allowed as components
+argument for pragma% must be% or%
+array type is already constrained
+assignment statement not allowed in package spec
+assignment to pass-by-copy formal may have no effect
+attribute Old applied to constant has no effect
+bad mechanism name, Value assumed
+barrier not allowed here \(belongs in body\)
+barrier not allowed on function, only on entry
+barrier not allowed on procedure, only on entry
+begin block not allowed in package spec
+body stub not allowed in package spec
+bounds may be wrong way round
+call to abstract function must be dispatching
+call to abstract procedure must be dispatching
+call to& in elaboration code requires pragma Elaborate_All on&
+can never be greater than, could replace by ""'=""
+can never be less than, could replace by ""'=""
+cannot add discriminants to untagged type
+cannot give enumeration rep clause for subtype
+cannot have atomic actual type for non-atomic formal type
+cannot have volatile actual type for non-volatile formal type
+cannot instantiate generic function as procedure
+cannot instantiate generic procedure as function
+cannot instantiate non-atomic formal object with atomic actual
+cannot instantiate non-volatile formal object with volatile actual
+case expression is an Ada extension
+case expression must be parenthesized
+child of a generic package must be a generic unit
+code between label and backwards goto rewritten as loop
+code statement with no inputs should usually be Volatile
+code statement with no outputs should usually be Volatile
+code statements in sequence should usually be Volatile
+colon expected
+completion of limited tagged type must be limited
+completion of nonabstract type cannot be abstract
+completion of nonlimited type cannot be limited
+completion of tagged private type must be tagged
+component may not follow variant part
+component must be declared in private part of protected type
+component size requires array type
+condition can only be False if invalid values present
+condition can only be True if invalid values present
+condition is always False
+condition is always True
+conditional expression must be parenthesized
+constant components are not permitted
+constant& may be modified via address clause#
+constraint not allowed in object renaming declaration
+control character not allowed in string
+controlled type has no explicit Adjust method
+controlled type has no explicit Finalize method
+controlling argument is not dynamically tagged
+corresponding parameter of& must be explicitly null excluding
+could use Unmodified instead of Warnings Off for &
+could use Unreferenced instead of Warnings Off for &
+deallocation from empty storage pool
+decl cannot appear after body#
+declaration must appear after completion of type
+declaration of full view must appear in private part
+default & on & is not directly visible
+default not allowed for controlling access parameter
+default values not allowed for operator parameters
+deferred constant must be declared in visible part
+deferred constant must be private type
+descendant of& must be declared as a protected interface
+descendant of& must be declared as a synchronized interface
+descendant of& must be declared as a task interface
+digits value is too large, maximum is
+digits value out of range, maximum is
+digits value out of range, maximum is 18
+directory separator character not allowed
+discriminant & is not referenced!
+discriminant name may not be parenthesized
+does not match convention of access type &
+duplicate end line ignored
+duplicate point ignored
+duplicate private part
+dynamically tagged expression required
+entry & is not overriding
+entry & overrides inherited operation #
+enumeration rep clause not allowed for this type
+exception & is never raised
+expect Box after arrow
+expect arrow after others
+exporting a type has no effect
+extended_return_statement cannot return value; use `""RETURN;""`
+extra " & Tname \(5 .. Tname'Last\) & "ignored
+extra parentheses surrounding aggregate not allowed
+for loop implicitly declares loop variable
+formal object does not have a null exclusion
+formal parameter& is read but never assigned
+format effector not allowed in string
+found function name, possibly missing Access attribute
+found procedure name, possibly missing Access attribute
+full constant for declaration# must be in private part
+full declaration of \} must be a record extension
+full declaration of \} must be a tagged type 
+full view must define a constrained type if partial view has no discriminants
+full view must inherit discriminants of the parent type used in the private extension
+full view of non-abstract extension cannot be abstract
+full view of non-limited extension cannot be limited
+full view of private extension must be an extension
+full view of type must be definite subtype
+function that returns abstract type must be abstract
+generic child unit& is not visible
+horizontal tab not allowed in string
+identifier `Defined` expected
+identifier cannot end with punctuation character
+identifier cannot end with underline
+identifier cannot start with digit character
+identifier cannot start with mark character
+identifier cannot start with other format character
+identifier cannot start with punctuation
+identifier cannot start with underline
+identifier list not allowed for RENAMES
+identifier may not start with digit
+if single-component aggregate is intended, write e.g.
+if variable intended, remove CONSTANT from declaration
+illegal character
+illegal character, replaced by ""\(""
+illegal character, replaced by ""\)""
+illegal constraint for formal discrete type
+illegal constraint on constrained type
+illegal constraint on type without discriminants
+illegal wide character
+import not allowed for& declared#
+imported 'C'P'P type should be explicitly declared limited
+incomplete type from limited view cannot appear in use clause
+incomplete view of tagged type should be declared tagged
+incorrect line terminator
+inherited operation % with convention % defined #
+interface & not implemented by full type
+interface & not implemented by partial view
+interface name contains illegal character
+interface subprogram % must be abstract or null
+interface subprogram & must be overridden
+interface types cannot have discriminants
+interpretation
+interpretation #!
+invalid constraint: parent type is already constrained
+invalid constraint: type has no discriminant
+invalid wide character in identifier
+largest supported alignment for& is
+left operand has the following interpretations
+limited interface cannot inherit from non-limited interface
+limited withed package cannot appear in use clause
+loop or block statement must follow label
+loop range is null, loop will not execute
+lower bound check only fails if it is invalid
+lower bound test optimized away
+machine radix value must be 2 or 10
+maximum allowed choice value is
+maximum allowed choice value is%
+may need a cpp_constructor
+maybe `='>` was intended
+misplaced THEN
+missing apostrophe
+missing body for
+missing body for &
+missing case value:
+missing case values:
+missing discriminants in full type declaration
+missing explicit dereference in call
+missing explicit dereference in call 
+missing full declaration for
+missing full declaration for private extension
+missing full declaration for private type&
+missing space
+missing specification for Protected body
+missing specification for protected body
+missing specification for task body
+missing with_clause for scope of imported type&
+mode could be IN instead of `IN OUT`
+modulus exceeds limit
+move ''Access to private part, or \(Ada 2005\) use anonymous access type instead of
+move subprogram to the visible part
+must be general access to class-wide type
+must use extension aggregate
+no parenthesis allowed here
+no primitive operations for& after this line
+no statements may follow ELSE on same line
+non null exclusion of actual and formal & do not match
+non-graphic character not permitted in string literal
+non-local pointer cannot point to local object
+nonabstract type& has abstract subprogram
+nonbinary modulus exceeds limit
+nonlimited tagged type cannot have limited components
+not conformant with previous declaration
+not dispatching
+not expression should be parenthesized here!
+not mode conformant with declaration
+not mode conformant with operation inherited
+not subtype conformant with declaration
+not subtype conformant with operation inherited
+null exclusion can only apply to an access type
+null-exclusion does not match declaration#
+numeric literal cannot start with point
+object & is always True
+object in prefixed call to& must be aliased
+object size is too small, minimum allowed is
+only a tagged type can be abstract
+only one private part allowed per package
+only one private part allowed per task
+only procedures can be null
+operand of not must be enclosed in parentheses
+operation can be dispatching in only one type
+operation does not override inherited&
+operator of the type is not directly visible
+others must be last association
+overridden operation % with convention % defined #
+overriding indicator not allowed here
+overriding indicator only allowed if subprogram is primitive
+overriding operation % with convention % defined #
+packed array size cannot exceed Integer''Last bytes
+packed array size cannot exceed Integer''Last storage units
+parameter cannot be defaulted in non-Ada call
+parent of full type must descend from parent of private extension
+parent of type extension must not be a class-wide type
+parent subtype of full type must be unconstrained
+parent type must not be a class-wide type
+parent type& of limited type must be limited
+parentheses not allowed for range attribute
+parentheses not allowed for subtype mark
+position of tag cannot be specified
+possible interpretatiom
+possible interpretation
+possible interpretation 
+possible interpretation as
+possible interpretation as universal_fixed operation
+possible interpretation: Character!
+possible interpretation: Wide_Character!
+possible interpretation: Wide_Wide_Character!
+possible interpretation:\}!
+possible interpretations:
+possible missing with/use of System.Storage_Elements
+possibly missing limited_with clause in one of the following
+pragma Inline for& is ignored
+pragma Inline for& is redundant
+pragma Inline_Always not allowed for dispatching subprograms
+pragma Pack causes component size to be
+pragma Pack for& ignored
+pragma Pure_Function on& is redundant
+pragma Ravenscar is an obsolescent feature
+pragma Restricted_Run_Time is an obsolescent feature
+pragma Unmodified given for
+pragma Warnings Off for & unused, could be omitted
+pragma appears too late, ignored
+pragmas may not precede guard
+predefined package Standard cannot appear in a context clause
+primitive % defined #
+private function with tagged result must override visible-part function
+probable missing pragma Convention for &
+procedure & must have No_Return pragma
+profile is not type conformant with prefixed view profile of inherited operation&
+progenitor interface& of limited type must be limited
+progenitor& must be limited interface
+proper body not allowed in package spec
+protected operation cannot be a null procedure
+punctuation character cannot follow underline
+quote not allowed in percent delimited string
+range test optimized away
+real literal cannot end with point
+redundant double negation
+redundant renaming, entity is directly visible
+redundant slice denotes whole array
+renamed object does not exclude `NULL`
+representation clause not allowed in protected definition
+representation item appears too late!
+representation item must appear after type is fully defined
+representation item must be after full type declaration
+representation item not allowed for generic type
+restriction identifier % is obsolescent
+return must specify `NOT NULL`
+return type of & is an 8-bit Ada Boolean
+scale exceeds maximum value of 18
+scale is less than minimum value of -18
+select alternative \(ACCEPT, ABORT, DELAY\) expected
+simultaneous visibility of limited and unlimited views not allowed
+simultaneous visibility of the limited and unlimited views not allowed
+size cannot be given for &
+size cannot be given for unconstrained array
+size clause not allowed for variable length type
+size for & too small, minimum allowed is
+size for& too small, minimum allowed is
+size given \(\^\) for type& too small, minimum allowed is
+size required \(\^\) for type& too large, maximum allowed is 64
+spec of this package does not allow a body
+spec should appear immediately after declaration of &
+spec should appear immediately after the type
+statement not allowed in declarative part
+statement not allowed in package spec
+storage size clause for task is an obsolescent feature
+strings are delimited by double quote character
+subprogram & has wrong convention
+subprogram & is not overriding
+subprogram & overrides inherited operation #
+subprogram & overrides predefined operator 
+subprogram body has no previous spec
+subprogram cannot rename itself
+subprogram must not be deeper than access type
+subprogram pointer & should have foreign convention
+subprogram spec should appear immediately after the type
+subprogram& is not overriding
+subprogram& overrides inherited operation
+subtype mark must precede RANGE
+suggest adding pragma Elaborate_Body to spec of &
+suggest replacement of `&''Length` by `&''Last`
+synchronized derived type must have extension
+this code can never be executed and has been deleted
+this expression must be parenthesized
+this expression must be parenthesized!
+this handler can never be entered, and has been removed
+this token should be@
+too large, maximum allowed is
+too small, minimum allowed is
+two consecutive punctuation characters not permitted
+type derived from tagged type must have extension
+type does not match declaration#
+type is already constrained
+type is not directly visible
+type must be declared abstract or & overridden
+type of aggregate has private ancestor
+type& must be completed in the private part
+unary minus expression should be parenthesized here!
+underline cannot follow punctuation character
+unexpected identifier, possibly & was meant here
+unexpected subprogram name ignored
+unlimited view visible through context clause #
+unlimited view visible through use clause 
+unreachable code
+unrecognized convention name, C assumed
+upper bound check only fails for invalid values
+upper bound test optimized away
+use """""" instead
+use ""'#"" instead
+use ""'\|"" instead
+use ""~"" instead
+use Component_Size to set desired value
+use Storage_Size pragma instead
+use appropriate corresponding type in C \(e.g. char\)
+use fully qualified name starting with Standard to make& visible
+use of ""'!"" is an obsolescent feature
+use of ""'%"" is an obsolescent feature
+use of "":"" is an obsolescent feature
+use of convention for type& is dubious
+use pragma Elaborate_All instead if possible
+use pragma Profile \(Ravenscar\) instead
+use pragma Profile \(Restricted\) instead
+use qualified expression instead
+use restriction identifier % instead
+useless handler contains only a reraise statement
+value can only be in range if it is invalid
+value can only be out of range if it is invalid
+value is known to be in range
+value is known to be out of range
+wide character not allowed in identifier
+would be legal if Storage_Size of 0 given
+would be legal if pragma Preelaborable_Initialization given for & #

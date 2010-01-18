@@ -19,6 +19,7 @@
 import sys, os, re, StringIO
 
 nonFixableMessages = []
+fixableMessages = []
 
 fixedOut = open ("fixed.out", "w")
 toBeFixedOut = open ("to_be_fixed.out", "w+")
@@ -54,25 +55,32 @@ def analyzeCall (call, fileName, line):
    message = re.sub ("^\"", "", param)
    message = re.sub ("\"$", "", message)
 
-   codefixable = re.search ("CODEFIX ?\?", call) != None
-   codefixed = not codefixable and re.search ("CODEFIX", call) != None
-
    if param != None:
-      if codefixed:
+      if re.search ("CODEFIX", call) != None:
          fixedOut.write (basename + ":" + str (line) + ": " + message + "\n")
-      elif codefixable:
-         toBeFixedOut.write (basename + ":" + str (line) + ": " + message + "\n")
       else:
          found = False
+         mypattern = ""
 
-         for pattern in nonFixableMessages:
+         for pattern in fixableMessages:
             if pattern.search (message) != None:
                found = True
+               mypattern = pattern.pattern
+
 
          if found:
-            knownUnfixableOut.write (basename + ":" + str (line) + ": " + message + "\n")
+            toBeFixedOut.write (basename + ":" + str (line) + ": " + message + " - [" + mypattern + "]\n")
          else:
-            unknownOut.write (basename + ":" + str (line) + ": " + message + "\n")
+            found = False
+
+            for pattern in nonFixableMessages:
+               if pattern.search (message) != None:
+                  found = True
+
+            if found:
+               knownUnfixableOut.write (basename + ":" + str (line) + ": " + message + "\n")
+            else:
+               unknownOut.write (basename + ":" + str (line) + ": " + message + "\n")
 
 ###############
 # analyseFile #
@@ -136,11 +144,19 @@ def analyzeFile (fileName):
 ########
 
 nonFixbableMessagesFile = open ("known_unfixable.txt")
+fixableMessageFile = open ("to_be_fixed.txt")
 
 for pattern in nonFixbableMessagesFile.readlines ():
    cleanPattern = re.sub ("\r|\n", "", pattern)
    try:
       nonFixableMessages.append (re.compile (cleanPattern))
+   except:
+      print "can't compile \"" + cleanPattern + "\""
+
+for pattern in fixableMessageFile.readlines ():
+   cleanPattern = re.sub ("\r|\n", "", pattern)
+   try:
+      fixableMessages.append (re.compile (cleanPattern))
    except:
       print "can't compile \"" + cleanPattern + "\""
 
