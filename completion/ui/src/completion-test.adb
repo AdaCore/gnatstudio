@@ -54,7 +54,7 @@ procedure Completion.Test is
    Max_Accepted_Time_For_Iteration : Duration := 0.1;
    --  Maximum time for the iteration, in seconds
 
-   Max_Accepted_Time_For_Initialization : Duration := 0.2;
+   Max_Accepted_Time_For_Initialization : Duration := 0.3;
    --  Maximum time for the initialization, in seconds
 
    procedure Set_Max_Time;
