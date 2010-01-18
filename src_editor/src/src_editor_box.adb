@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -899,11 +899,8 @@ package body Src_Editor_Box is
       Set_Resize_Mode (Box.Label_Box, Resize_Queue);
 
       --  Line:Column number area...
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => False);
       Gtk_New (Event_Box);
-      Add (Frame, Event_Box);
+      Pack_End (Box.Label_Box, Event_Box, Expand => False, Fill => False);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Event_Box, Box.Cursor_Loc_Label);
 
@@ -915,8 +912,9 @@ package body Src_Editor_Box is
                     Create_Pango_Layout (Box.Cursor_Loc_Label, "99999:999");
          Width, Height : Gint;
       begin
+         Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
          Get_Pixel_Size (Layout, Width, Height);
-         Set_Size_Request (Frame, Width, Height);
+         Set_Size_Request (Event_Box, Width, Height);
          Unref (Layout);
       end;
 
