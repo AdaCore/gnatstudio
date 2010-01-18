@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -900,6 +900,7 @@ package body Src_Editor_Box is
                     Create_Pango_Layout (Box.Cursor_Loc_Label, "99999:999");
          Width, Height : Gint;
       begin
+         Set_Font_Description (Layout, Default_Font.Get_Pref);
          Get_Pixel_Size (Layout, Width, Height);
          Set_Size_Request (Frame, Width, Height);
          Unref (Layout);

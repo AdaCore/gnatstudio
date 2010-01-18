@@ -1,3 +1,10 @@
+Known Problems fixed in GPS 4.4.2
+
+- IC21-009: Cursor location in Text View may become partially hidden
+  Problem:    When the GPS default font is pretty big, the cursor location may
+              not be large enough to contain the actual value.
+  Workaround: Try user a smaller default font.
+
 Known Problems fixed in GPS 4.4.1
 
 - IC01-004: Potential instability when switching projects
@@ -59,7 +66,7 @@ Known Problems fixed in GPS 4.4.1
               fail to generate the expanded code if the root project does
               not have an object directory.
   Workaround: View the expanded code in command-line mode, or add an object
-              directory in the root project. 
+              directory in the root project.
 
 - IB06-001: Wrong outline, highlighting and indentation of some C constructs
   Problem:    GPS can get confused by some use of backslash characters or
@@ -217,7 +224,7 @@ Known Problems fixed in GPS 4.4.0
   Workaround: Use another way of accessing the remote machine, for instance
               via Remote Desktop, or using GPS locally in remote mode.
               It might be worthwhile to try disabling Citrix API hooks for
-              GPS, as described in 
+              GPS, as described in
                  <http://support.citrix.com/article/ctx107825>
 
 - I826-009: No entities displayed for C/C++ files in Project View
