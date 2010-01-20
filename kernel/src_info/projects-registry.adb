@@ -1189,8 +1189,7 @@ package body Projects.Registry is
    function Get_Project_From_File
      (Registry          : Project_Registry;
       Source_Filename   : Virtual_File;
-      Root_If_Not_Found : Boolean := True)
-      return Project_Type
+      Root_If_Not_Found : Boolean := True) return Project_Type
    is
       Id   : Source_Id;
       Path : Path_Name_Type;
@@ -1904,8 +1903,7 @@ package body Projects.Registry is
          --  which supports UTF-8.
          return Create
            (Full_Filename =>
-              (Normalize_Pathname (Name,
-                                   Resolve_Links => False)));
+              (Normalize_Pathname (Name, Resolve_Links => False)));
       end if;
    end Create;
 
@@ -1924,8 +1922,7 @@ package body Projects.Registry is
    ----------------------
 
    procedure Set_Xrefs_Subdir
-     (Registry : in out Project_Registry; Subdir : Filesystem_String)
-   is
+     (Registry : in out Project_Registry; Subdir : Filesystem_String) is
    begin
       if Registry.Data.Xrefs_Subdir /= null then
          GNAT.Strings.Free (Registry.Data.Xrefs_Subdir);
@@ -1941,8 +1938,7 @@ package body Projects.Registry is
    ---------------------
 
    procedure Set_Mode_Subdir
-     (Registry : in out Project_Registry; Subdir : Filesystem_String)
-   is
+     (Registry : in out Project_Registry; Subdir : Filesystem_String) is
    begin
       if Prj.Subdirs /= null then
          if Prj.Subdirs.all /= +Subdir then
