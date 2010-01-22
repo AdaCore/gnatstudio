@@ -304,7 +304,7 @@ procedure Completion.Test is
       Current_File : Structured_File_Access;
 
    begin
-      Initialize (Construct_Db.all, new File_Buffer_Provider);
+      Initialize (Construct_Db, new File_Buffer_Provider);
 
       declare
          File : constant Virtual_File := GNATCOLL.VFS.Create

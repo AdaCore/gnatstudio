@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -920,7 +920,7 @@ package body Language.Tree.Database is
    ----------------
 
    procedure Initialize
-     (Db       : in out Construct_Database;
+     (Db       : Construct_Database_Access;
       Provider : Buffer_Provider_Access)
    is
    begin
@@ -930,6 +930,7 @@ package body Language.Tree.Database is
       Construct_Annotations_Pckg.Get_Annotation_Key
         (Db.Construct_Registry, Db.Persistent_Entity_Key);
       Db.Provider := Provider;
+      Db.Null_Structured_File.Db := Db;
    end Initialize;
 
    -------------------
@@ -947,7 +948,7 @@ package body Language.Tree.Database is
          --  e.g. after project initialization. So we don't want to force
          --  the association between a structured file and an unknown
          --  language. There will be no information to analyze anyway.
-         return null;
+         return Db.Null_Structured_File'Access;
       end if;
 
       if not Contains (Db.Files_Db, File) then
@@ -1645,5 +1646,24 @@ package body Language.Tree.Database is
       Added_Files := new File_Array'
         (Local_Added (1 .. Added_Index - 1));
    end Analyze_File_Differences;
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (Left, Right : Structured_File_Access) return Boolean
+   is
+      type Tmp_Acc is access all Structured_File;
+   begin
+      --  The null definition include both cases where the actual value of the
+      --  pointer is null, and cases where the file path is unknown. The latter
+      --  may have been returned by a Get_Or_Create.
+
+      return
+        ((Tmp_Acc (Left) = null or else Left.File = No_File)
+         and then (Tmp_Acc (Right) = null or else Right.File = No_File))
+        or else Tmp_Acc (Left) = Tmp_Acc (Right);
+   end "=";
 
 end Language.Tree.Database;

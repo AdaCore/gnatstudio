@@ -723,7 +723,7 @@ begin
 
    Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
 
-   Initialize (Construct_Db.all, new File_Buffer_Provider);
+   Initialize (Construct_Db, new File_Buffer_Provider);
 
    Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
      (Construct_Db, GNATCOLL.VFS.No_File);

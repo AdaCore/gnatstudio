@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -135,6 +135,13 @@ package Language.Tree.Database is
 
    type Structured_File_Access is access all Structured_File;
 
+   overriding function "="
+     (Left, Right : Structured_File_Access) return Boolean;
+   --  This function performs a special equality between null pointers and
+   --  "null" structured files (not associated with an actual file), which are
+   --  always considered to be equal. All others cases are computing the
+   --  regular equality between pointers.
+
    procedure Ref (File : Structured_File_Access);
    --  Increment reference counting. When there are references to a file,
    --  deletion is cancelled.
@@ -241,7 +248,7 @@ package Language.Tree.Database is
    type Construct_Database_Access is access all Construct_Database;
 
    procedure Initialize
-     (Db       : in out Construct_Database;
+     (Db       : Construct_Database_Access;
       Provider : Buffer_Provider_Access);
    --  This procedure has to be called before any other operation on the
    --  database.
@@ -256,7 +263,8 @@ package Language.Tree.Database is
       Tree_Lang : Tree_Language_Access) return Structured_File_Access;
    --  Return the file node corresponding to the given file path, and create
    --  one if needed. The creation of the file implies the addition of all its
-   --  contents.
+   --  contents. An empty file (not null) will be returned in case the input
+   --  file path is not valid.
 
    procedure Remove_File
      (Db        : Construct_Database_Access;
@@ -611,6 +619,8 @@ private
       Construct_Registry : aliased Construct_Annotations_Pckg.
         Annotation_Key_Registry;
       Persistent_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
+
+      Null_Structured_File : aliased Structured_File;
    end record;
 
    type Construct_Db_Iterator is record

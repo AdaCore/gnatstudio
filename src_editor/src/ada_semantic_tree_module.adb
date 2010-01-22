@@ -83,7 +83,7 @@ package body Ada_Semantic_Tree_Module is
    is
    begin
       Initialize
-        (Get_Construct_Database (Kernel).all,
+        (Get_Construct_Database (Kernel),
          new GPS_Buffer_Provider'
            (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
