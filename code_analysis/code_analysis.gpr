@@ -1,4 +1,5 @@
 with "../kernel/kernel";
+with "../language/language";
 with "../shared";
 
 project Code_Analysis is
