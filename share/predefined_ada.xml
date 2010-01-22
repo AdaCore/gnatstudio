@@ -2285,8 +2285,7 @@ S'Write writes the value of Item to Stream. See 13.13.2.
       </DOC>
    </ATTRIBUTE>
 
-   <PRAGMA id = "0" name = "Abort_Defer">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Abort_Defer" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Abort_Defer;
@@ -2299,8 +2298,7 @@ sequence).
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Ada_05">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Ada_05" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Ada_05;
@@ -2315,8 +2313,7 @@ either Ada 83 or Ada 95 programs.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Ada_2005">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Ada_2005" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Ada_2005;
@@ -2326,8 +2323,7 @@ same syntax and effect.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Ada_83">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Ada_83" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Ada_83;
@@ -2352,8 +2348,7 @@ checks required by Ada 83.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Ada_95">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Ada_95" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Ada_95;
@@ -2368,8 +2363,7 @@ either Ada 83 or Ada 95 programs.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "All_Calls_Remote">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "All_Calls_Remote" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -2377,8 +2371,7 @@ pragma All_Calls_Remote [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Annotate">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Annotate" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Annotate (IDENTIFIER [,IDENTIFIER] {, ARG});
@@ -2402,8 +2395,7 @@ for use by external tools, including ASIS.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Assert">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Assert" origin = "Ada RM">
       <DOC>
 Syntax:
 pragma Assert (
@@ -2458,8 +2450,7 @@ assertions on and off cannot affect the legality of a program.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Assertion_Policy">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Assertion_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -2467,8 +2458,7 @@ pragma Assertion_Policy (policy_identifier);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Assume_No_Invalid_Values">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Assume_No_Invalid_Values" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Assume_No_Invalid_Values (On | Off);
@@ -2511,8 +2501,7 @@ and it is recommended that these two options not be used together.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Ast_Entry">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Ast_Entry" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma AST_Entry (entry_IDENTIFIER);
@@ -2530,8 +2519,7 @@ this pragma, see the DEC Ada Language Reference Manual, section 9.12a.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Asynchronous">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Asynchronous" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -2539,8 +2527,7 @@ pragma Asynchronous (local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Atomic">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Atomic" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -2548,8 +2535,7 @@ pragma Atomic (local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Atomic_Components">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Atomic_Components" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -2557,8 +2543,7 @@ pragma Atomic_Components (array_local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Attach_Handler">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Attach_Handler" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -2566,8 +2551,7 @@ pragma Attach_Handler (handler_name, expression);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "CPP_Class">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "CPP_Class" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2596,8 +2580,7 @@ backward compatibility but its functionality is available using pragma
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "CPP_Constructor">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "CPP_Constructor" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2644,8 +2627,7 @@ a descendant of type T.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "CPP_Virtual">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "CPP_Virtual" origin = "GNAT RM">
       <DOC>
 This pragma is now obsolete has has no effect because GNAT generates
 the same object layout than the G++ compiler.
@@ -2654,8 +2636,7 @@ See *Note Interfacing to C++:: for related information.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "CPP_Vtable">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "CPP_Vtable" origin = "GNAT RM">
       <DOC>
 This pragma is now obsolete has has no effect because GNAT generates
 the same object layout than the G++ compiler.
@@ -2664,8 +2645,7 @@ See *Note Interfacing to C++:: for related information.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "C_Pass_By_Copy">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "C_Pass_By_Copy" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma C_Pass_By_Copy
@@ -2696,8 +2676,7 @@ on a parameter by parameter basis.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Check">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Check" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Check (
@@ -2721,8 +2700,7 @@ pragma `Check_Policy'.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Check_Name">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Check_Name" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Check_Name (check_name_IDENTIFIER);
@@ -2745,8 +2723,7 @@ in `with' clauses).
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Check_Policy">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Check_Policy" origin = "GNAT RM">
       <DOC>
 Syntax:
 pragma Check_Policy
@@ -2792,8 +2769,7 @@ compatibility with the standard `Assertion_Policy' pragma.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Comment">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Comment" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2808,8 +2784,7 @@ unit), and if more than one pragma is used, all comments are retained.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Common_Object">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Common_Object" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2836,8 +2811,7 @@ available.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Compile_Time_Error">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Compile_Time_Error" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2860,8 +2834,7 @@ embedded ASCII.LF characters to break the message into multiple lines.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Compile_Time_Warning">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Compile_Time_Warning" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2882,8 +2855,7 @@ implemented.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Compiler_Unit">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Compiler_Unit" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2899,8 +2871,7 @@ Is_Compiler_Unit.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Complete_Representation">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Complete_Representation" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2916,8 +2887,7 @@ future.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Complex_Representation">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Complex_Representation" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -2936,8 +2906,7 @@ this type in floating-point registers.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Component_Alignment">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Component_Alignment" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3004,8 +2973,7 @@ the GNAT uses the default alignment as described previously.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Controlled">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Controlled" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3013,8 +2981,7 @@ pragma Controlled (first_subtype_local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Convention">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Convention" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3022,8 +2989,7 @@ pragma Convention ([Convention=>]convention_identifier,[Entity=>]local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Convention_Identifier">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Convention_Identifier" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3051,8 +3017,7 @@ used system-wide.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Debug">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Debug" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3077,8 +3042,7 @@ the configuration pragma `Debug_Policy'.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Debug_Policy">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Debug_Policy" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3090,8 +3054,7 @@ overrides the effect of the `-gnata' switch on the command line.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Detect_Blocking">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Detect_Blocking" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3103,8 +3066,7 @@ Program_Error if that happens.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Discard_Names">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Discard_Names" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3112,8 +3074,7 @@ pragma Discard_Names [([On => ] local_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Elaborate">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Elaborate" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3121,8 +3082,7 @@ pragma Elaborate (library_unit_name{, library_unit_name});
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Elaborate_All">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Elaborate_All" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3130,8 +3090,7 @@ pragma Elaborate_All (library_unit_name{, library_unit_name});
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Elaborate_Body">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Elaborate_Body" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3139,8 +3098,7 @@ pragma Elaborate_Body [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Elaboration_Checks">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Elaboration_Checks" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3159,8 +3117,7 @@ Handling in GNAT.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Eliminate">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Eliminate" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3283,8 +3240,7 @@ Consequently, a pragma Eliminate for a dispatching operation is ignored.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3292,8 +3248,7 @@ pragma Export ([Convention=>]convention_identifier,[Entity=>]local_name;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export_Exception">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export_Exception" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3317,8 +3272,7 @@ Language Reference Manual, section 13.9a3.2.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export_Function">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export_Function" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3392,8 +3346,7 @@ allows the specification of parameter mechanisms.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export_Object">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export_Object" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3415,8 +3368,7 @@ otherwise ignored by GNAT.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export_Procedure">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export_Procedure" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3474,8 +3426,7 @@ allows the specification of parameter mechanisms.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export_Value">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export_Value" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3493,8 +3444,7 @@ target and is ignored for other targets.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Export_Valued_Procedure">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Export_Valued_Procedure" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3557,8 +3507,7 @@ allows the specification of parameter mechanisms.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Extend_System">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Extend_System" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3599,8 +3548,7 @@ Guide: ()Top GNAT Pro User's Guide, for details.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "External">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "External" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3617,8 +3565,7 @@ purposes as pragma `Export' before the latter was standardized.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "External_Name_Casing">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "External_Name_Casing" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3687,8 +3634,7 @@ to enforce the upper casing of all external symbols.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Fast_Math">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Fast_Math" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3711,8 +3657,7 @@ rather than use the preinstantiated versions.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Favor_Top_Level">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Favor_Top_Level" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3729,8 +3674,7 @@ also the No_Implicit_Dynamic_Code restriction.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Finalize_Storage_Only">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Finalize_Storage_Only" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3744,8 +3688,7 @@ terminating execution, hence the name.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Float_Representation">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Float_Representation" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3780,8 +3723,7 @@ float format, as follows:
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Ident">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Ident" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3799,8 +3741,7 @@ compatibility with this compiler, you should obey this length limit.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Implemented_By_Entry">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Implemented_By_Entry" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3831,8 +3772,7 @@ rather than GNAT-specific.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Implicit_Packing">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Implicit_Packing" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3876,8 +3816,7 @@ declaration to compile without an explicit pragma Pack.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Import">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Import" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -3885,8 +3824,7 @@ pragma Import ([Convention=>]convention_identifier,[Entity=>]local_name;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Import_Exception">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Import_Exception" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3910,8 +3848,7 @@ Language Reference Manual, section 13.9a.3.1.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Import_Function">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Import_Function" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -3988,8 +3925,7 @@ expressions, or uses of the `'Null_Parameter' attribute.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Import_Object">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Import_Object" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4011,8 +3947,7 @@ view).  SIZE is syntax checked, but otherwise ignored by GNAT.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Import_Procedure">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Import_Procedure" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4056,8 +3991,7 @@ a procedure rather than a function and the parameters `Result_Type' and
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Import_Valued_Procedure">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Import_Valued_Procedure" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4115,8 +4049,7 @@ what is required.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Initialize_Scalars">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Initialize_Scalars" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4173,8 +4106,7 @@ pragma.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Inline">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Inline" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4182,8 +4114,7 @@ pragma Inline (name {, name});
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Inline_Always">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Inline_Always" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4195,8 +4126,7 @@ this option is used.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Inline_Generic">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Inline_Generic" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4208,8 +4138,7 @@ by default when using GNAT.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Inspection_Point">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Inspection_Point" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4217,8 +4146,7 @@ pragma Inspection_Point [(object_name {, object_name})];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Interface">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Interface" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4241,8 +4169,7 @@ is compatible with other Ada 83 compilers.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Interface_Name">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Interface_Name" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4258,8 +4185,7 @@ least one of EXTERNAL_NAME or LINK_NAME.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Interrupt_Handler">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Interrupt_Handler" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4277,8 +4203,7 @@ instruction.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Interrupt_Priority">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Interrupt_Priority" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4286,8 +4211,7 @@ pragma Interrupt_Priority [(expression)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Interrupt_State">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Interrupt_State" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4361,8 +4285,7 @@ the `abort' statement.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Keep_Names">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Keep_Names" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4378,8 +4301,7 @@ want to retain the names for specific enumeration types.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "License">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "License" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4457,8 +4379,7 @@ licensed under the modified GPL.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Link_With">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Link_With" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4477,8 +4398,7 @@ arguments, with the same effect as successive pragmas.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Linker_Alias">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Linker_Alias" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4514,8 +4434,7 @@ end p;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Linker_Constructor">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Linker_Constructor" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4543,8 +4462,7 @@ Alone Libraries is preferable to the use of this pragma.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Linker_Destructor">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Linker_Destructor" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4564,8 +4482,7 @@ apply because of these specific contexts.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Linker_Options">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Linker_Options" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4573,8 +4490,7 @@ pragma Linker_Options (string_expression);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Linker_Section">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Linker_Section" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4619,8 +4535,7 @@ end IO_Card;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "List">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "List" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4628,8 +4543,7 @@ pragma List (identifier);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Locking_Policy">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Locking_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4637,8 +4551,7 @@ pragma Locking_Policy (policy_identifier);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Long_Float">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Long_Float" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4658,8 +4571,7 @@ for a description of the `GNAT LIBRARY' command.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Machine_Attribute">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Machine_Attribute" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4681,8 +4593,7 @@ further information.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Main">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Main" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4699,8 +4610,7 @@ has no effect in GNAT, other than being syntax checked.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Main_Storage">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Main_Storage" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4717,8 +4627,7 @@ pragma also has no effect in DEC Ada 83 for OpenVMS Alpha Systems.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "No_Body">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "No_Body" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4739,8 +4648,7 @@ is no interference from earlier versions of the package body.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "No_Return">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "No_Return" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4764,8 +4672,7 @@ is identical in effect to the pragma as implemented in Ada 95 mode.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "No_Strict_Aliasing">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "No_Strict_Aliasing" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4782,8 +4689,7 @@ suppressed, see *Note Optimization and Strict Aliasing:
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Normalize_Scalars">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Normalize_Scalars" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4851,8 +4757,7 @@ exists.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Obsolescent">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Obsolescent" origin = "GNAT RM">
       <DOC>
 The second form of pragma `Unreferenced' is used within a context
 clause. In this case the arguments must be unit names of units
@@ -4862,8 +4767,7 @@ units and unreferenced entities within these units.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Optimize">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Optimize" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4871,8 +4775,7 @@ pragma Optimize (identifier);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Optimize_Alignment">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Optimize_Alignment" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4939,8 +4842,7 @@ at the start of the file.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Pack">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Pack" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4948,8 +4850,7 @@ pragma Pack (first_subtype_local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Page">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Page" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4957,8 +4858,7 @@ pragma Page;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Partition_Elaboration_Policy">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Partition_Elaboration_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4966,8 +4866,7 @@ pragma Partition_Elaboration_Policy;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Passive">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Passive" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -4985,8 +4884,7 @@ optimized.  GNAT does not attempt to optimize any tasks in this manner
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Persistent_BSS">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Persistent_BSS" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5016,8 +4914,7 @@ Linker_Section'.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Polling">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Polling" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5059,8 +4956,7 @@ Note that polling can also be enabled by use of the `-gnatP' switch.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Postcondition">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Postcondition" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5192,8 +5088,7 @@ but are ignored at run-time even if postcondition checking is enabled.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Precondition">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Precondition" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5233,8 +5128,7 @@ enabled.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Preelaborable_Initialization">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Preelaborable_Initialization" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5242,8 +5136,7 @@ pragma Preelaborable_Initialization (direct_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Preelaborate">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Preelaborate" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5251,8 +5144,7 @@ pragma Preelaborate [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Priority">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Priority" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5260,8 +5152,7 @@ pragma Priority (expression);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Priority_Specific_Dispatching">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Priority_Specific_Dispatching" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5269,8 +5160,7 @@ pragma Priority_Specific_Dispatching;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Profile">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Profile" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5316,8 +5206,7 @@ restrictions.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Psect_Object">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Psect_Object" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5334,8 +5223,7 @@ This pragma is identical in effect to pragma `Common_Object'.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Pure">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Pure" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5343,8 +5231,7 @@ pragma Pure [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Pure_Function">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Pure_Function" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5393,8 +5280,7 @@ example, a function thus marked is free to `with' non-pure units.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Queuing_Policy">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Queuing_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5402,8 +5288,7 @@ pragma Queuing_Policy (policy_identifier);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Relative_Deadline">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Relative_Deadline" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5411,8 +5296,7 @@ pragma Relative_Deadline;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Remote_Call_Interface">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Remote_Call_Interface" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5420,8 +5304,7 @@ pragma Remote_Call_Interface [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Remote_Types">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Remote_Types" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5429,8 +5312,7 @@ pragma Remote_Types [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Restriction_Warnings">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Restriction_Warnings" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5445,8 +5327,7 @@ than an error message if the restriction is violated.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Restrictions">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Restrictions" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5454,8 +5335,7 @@ pragma Restrictions (restriction{, restriction});
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Reviewable">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Reviewable" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5463,16 +5343,14 @@ pragma Reviewable;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Shared">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Shared" origin = "GNAT RM">
       <DOC>
 This pragma is provided for compatibility with Ada 83. The syntax and
 semantics are identical to pragma Atomic.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Shared_Passive">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Shared_Passive" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5480,8 +5358,7 @@ pragma Shared_Passive [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Short_Circuit_And_Or">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Short_Circuit_And_Or" origin = "GNAT RM">
       <DOC>
 This configuration pragma causes any occurrence of the AND operator
 applied to operands of type Standard.Boolean to be short-circuited
@@ -5496,8 +5373,7 @@ semantics are identical to pragma Atomic.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Source_File_Name">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Source_File_Name" origin = "GNAT RM">
       <DOC>
 most importantly, once pragma Source_File_Name_Project appears, no
 further Source_File_Name pragmas are allowed.
@@ -5511,16 +5387,14 @@ manager).
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Source_File_Name_Project">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Source_File_Name_Project" origin = "GNAT RM">
       <DOC>
 This pragma has the same syntax and semantics as pragma
 Source_File_Name.  It is only allowed as a stand alone configuration
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Source_Reference">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Source_Reference" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5540,8 +5414,7 @@ value is needed for error messages issued by all phases of the compiler.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Storage_Size">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Storage_Size" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5549,8 +5422,7 @@ pragma Storage_Size (expression);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Stream_Convert">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Stream_Convert" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5618,8 +5490,7 @@ type.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Style_Checks">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Style_Checks" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5669,8 +5540,7 @@ Rf2 : Integer := ARG;      -- OK, no error
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Subtitle">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Subtitle" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5681,8 +5551,7 @@ but is ignored by GNAT.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Suppress">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Suppress" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5709,8 +5578,7 @@ prove that they will not fail, whether or not checks are suppressed.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Suppress_All">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Suppress_All" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5724,8 +5592,7 @@ configuration pragma is the preferred usage in GNAT.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Suppress_Exception_Locations">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Suppress_Exception_Locations" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5746,8 +5613,7 @@ compiled in normal mode without it.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Suppress_Initialization">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Suppress_Initialization" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5758,8 +5624,7 @@ associated with the given type name for all variables of this type.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Task_Dispatching_Policy">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Task_Dispatching_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5767,8 +5632,7 @@ pragma Task_Dispatching_Policy (policy_identifier);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Task_Info">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Task_Info" origin = "GNAT RM">
       <DOC>
 Syntax
 
@@ -5785,8 +5649,7 @@ System.Task_Info in the runtime library.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Task_Name">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Task_Name" origin = "GNAT RM">
       <DOC>
 Syntax
 
@@ -5837,8 +5700,7 @@ end;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Task_Storage">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Task_Storage" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5854,8 +5716,7 @@ created, depending on the target.  This pragma can appear anywhere a
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Thread_Local_Storage">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Thread_Local_Storage" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5881,8 +5742,7 @@ rejected.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Time_Slice">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Time_Slice" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5897,8 +5757,7 @@ Ada 83 pragma of the same name when operating under OpenVMS systems.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Title">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Title" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5920,8 +5779,7 @@ mixed following the normal rules for procedure calls in Ada.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unchecked_Union">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unchecked_Union" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5937,8 +5795,7 @@ section B.3.3.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unimplemented_Unit">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unimplemented_Unit" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5954,8 +5811,7 @@ specs of unimplemented packages in syntax or semantic checking mode.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Universal_Aliasing">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Universal_Aliasing" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5972,8 +5828,7 @@ Aliasing.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Universal_Data">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Universal_Data" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -5994,8 +5849,7 @@ where universal addressing of the data is desired.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unmodified">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unmodified" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6015,8 +5869,7 @@ be.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unreferenced">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unreferenced" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6054,8 +5907,7 @@ another unit would not be flagged); pragma Obsolescent can be used
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unreferenced_Objects">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unreferenced_Objects" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6075,8 +5927,7 @@ unwanted warnings about these variables not being referenced.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unreserve_All_Interrupts">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unreserve_All_Interrupts" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6110,8 +5961,7 @@ of the `Unreserve_All_Interrupts' pragma.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Unsuppress">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Unsuppress" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -6130,8 +5980,7 @@ to suppress checks.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Use_VADS_Size">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Use_VADS_Size" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6147,8 +5996,7 @@ description of the VADS_Size attribute for further details.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Validity_Checks">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Validity_Checks" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6189,8 +6037,7 @@ A := C;                       -- C will be validity checked
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Volatile">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Volatile" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -6205,8 +6052,7 @@ the implementation in DEC Ada 83.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Volatile_Components">
-      <ORIGIN>Ada RM</ORIGIN>
+   <PRAGMA id = "0" name = "Volatile_Components" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -6214,8 +6060,7 @@ pragma Volatile_Components (array_local_name);
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Warnings">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Warnings" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6293,8 +6138,7 @@ style messages.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Weak_External">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Weak_External" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6340,8 +6184,7 @@ end External_Module;
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Wide_Character_Encoding">
-      <ORIGIN>GNAT RM</ORIGIN>
+   <PRAGMA id = "0" name = "Wide_Character_Encoding" origin = "GNAT RM">
       <DOC>
 Syntax:
 
@@ -6366,6 +6209,10 @@ subunits.
 
    <STANDARD name = "&quot;&amp;&quot;" category = "function"/>
 
+   <STANDARD name = "&quot;&gt;&quot;" category = "function"/>
+
+   <STANDARD name = "&quot;&gt;=&quot;" category = "function"/>
+
    <STANDARD name = "&quot;&lt;&quot;" category = "function"/>
 
    <STANDARD name = "&quot;&lt;=&quot;" category = "function"/>
@@ -6384,9 +6231,19 @@ subunits.
 
    <STANDARD name = "&quot;=&quot;" category = "function"/>
 
-   <STANDARD name = "&quot;&gt;&quot;" category = "function"/>
+   <STANDARD name = "&quot;abs&quot;" category = "function"/>
 
-   <STANDARD name = "&quot;&gt;=&quot;" category = "function"/>
+   <STANDARD name = "&quot;and&quot;" category = "function"/>
+
+   <STANDARD name = "&quot;mod&quot;" category = "function"/>
+
+   <STANDARD name = "&quot;not&quot;" category = "function"/>
+
+   <STANDARD name = "&quot;or&quot;" category = "function"/>
+
+   <STANDARD name = "&quot;rem&quot;" category = "function"/>
+
+   <STANDARD name = "&quot;xor&quot;" category = "function"/>
 
    <STANDARD name = "ASCII" category = "package">
       <FIELD name = "NUL" doc = "16#00#"/>
@@ -6521,18 +6378,4 @@ subunits.
    <STANDARD name = "Wide_Wide_Character" category = "type"/>
 
    <STANDARD name = "Wide_Wide_String" category = "type"/>
-
-   <STANDARD name = "&quot;abs&quot;" category = "function"/>
-
-   <STANDARD name = "&quot;and&quot;" category = "function"/>
-
-   <STANDARD name = "&quot;mod&quot;" category = "function"/>
-
-   <STANDARD name = "&quot;not&quot;" category = "function"/>
-
-   <STANDARD name = "&quot;or&quot;" category = "function"/>
-
-   <STANDARD name = "&quot;rem&quot;" category = "function"/>
-
-   <STANDARD name = "&quot;xor&quot;" category = "function"/>
 </PREDEFINED_ADA>
