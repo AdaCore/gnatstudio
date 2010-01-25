@@ -543,11 +543,15 @@ package body Language.Tree.Database is
    -- Get_Buffer --
    ----------------
 
+   Empty_String : aliased String := "";
+
    function Get_Buffer
      (File : Structured_File_Access) return GNAT.Strings.String_Access
    is
    begin
-      if File.Cache_Buffer = null then
+      if File = null then
+         return Empty_String'Access;
+      elsif File.Cache_Buffer = null then
          File.Cache_Buffer := Get_Buffer (File.Db.Provider, File.File);
       end if;
 
@@ -561,7 +565,11 @@ package body Language.Tree.Database is
    function Get_File_Path
      (File : Structured_File_Access) return Virtual_File is
    begin
-      return File.File;
+      if File = null then
+         return No_File;
+      else
+         return File.File;
+      end if;
    end Get_File_Path;
 
    ------------------------
