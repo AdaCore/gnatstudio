@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -98,7 +98,7 @@ package body Debugger.Gdb is
 
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
-      """?(auto; currently )([^""\s]+)("".)?\n", Multiple_Lines);
+      """?(auto; currently )?([^""\s]+)("".)?\n", Multiple_Lines);
    --  Pattern used to detect language changes in the debugger
 
    Terminate_Pattern         : constant Pattern_Matcher := Compile
