@@ -3,7 +3,7 @@ Known Problems fixed in GPS 4.4.2
 - IC21-009: Cursor location in Text View may become partially hidden
   Problem:    When the GPS default font is pretty big, the cursor location may
               not be large enough to contain the actual value.
-  Workaround: Try user a smaller default font.
+  Workaround: Try using a smaller default font.
 
 Known Problems fixed in GPS 4.4.1
 
