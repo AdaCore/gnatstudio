@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -638,7 +638,7 @@ package body Code_Coverage is
 
       else
          Set (Tree_Store, Iter, Cov_Col,
-              " underermined"); -- & Status_Message (Coverage.Status));
+              " undetermined"); -- & Status_Message (Coverage.Status));
          Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (0));
          Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (0));
          Set (Tree_Store, Iter, Cov_Bar_Txt, -"n/a");
