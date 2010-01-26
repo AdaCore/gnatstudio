@@ -2443,12 +2443,11 @@ Indent and format the selection or the current line.
 @cindex completion
 
 Complete the identifier prefix under the cursor, and list the results in a
-pop-up list. This command can take advantage of and entity database and offers
+pop-up list. This command can take advantage of an entity database and offers
 completions from the entire project, along with documentation extracted from
 comments surrounding declarations. To take full advantage of this feature, the
-smart completion preference must be enabled, which will imply the load of the
-entity database at GPS startup. The first time you use this feature, GPS will
-ask you wether you want this enabled or not.
+smart completion preference must be enabled, which will imply the computation
+of the entity database at GPS startup.
 
 In order to use this feature, open any Ada file, and begin to type an
 identifier. It has to be an identifier declared either in the current file (and
