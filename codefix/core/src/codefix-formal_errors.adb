@@ -969,7 +969,7 @@ package body Codefix.Formal_Errors is
          when others =>
             Raise_Exception
               (Codefix_Panic'Identity,
-               "Wrong category given : " &
+               "Wrong category given: " &
                Language_Category'Image (Actual_Category));
       end case;
 
