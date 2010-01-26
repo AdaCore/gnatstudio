@@ -146,6 +146,10 @@ NF-45-I810-019 Remote mode now synchronizes files upon save (2009-10-28)
   on the server to immediately have access to them, and also allows faster
   sync operations before GPS launches an action on the remote server.
 
+NF-45-GA24-019 Smart completion for discriminants (2010-01-26)
+
+  The smart completion now offers to complete with record discriminants.
+
 NF-45-G626-028 Smart completion for pragmas and attributes (2010-01-11)
 
   GPS is now able to offer auto completions for Ada pragmas and attributes,
