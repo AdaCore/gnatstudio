@@ -445,6 +445,7 @@ package Language is
       Cat_Variable,
       Cat_Local_Variable,
       Cat_Parameter,
+      Cat_Discriminant,
       Cat_Field,
       Cat_Literal,
       Cat_Representation_Clause,
