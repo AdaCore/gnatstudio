@@ -2648,7 +2648,8 @@ package body Codefix.GNAT_Parser is
       This.Matcher :=
         (new Pattern_Matcher'
            (Compile ("(procedure|variable|constant|parameter|type|literal|" &
-                     "named number|unit|) ?""([\w]+)"" is not referenced")),
+                     "named number|unit|discriminant|) ?""([\w]+)""" &
+                     " is not referenced")),
          new Pattern_Matcher'
            (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")));
    end Initialize;
@@ -2686,6 +2687,9 @@ package body Codefix.GNAT_Parser is
          Operation_Mask := Options.Remove_Policy;
       elsif First_Word = "parameter" then
          Category := Cat_Parameter;
+         Operation_Mask := Add_Pragma_Unreferenced;
+      elsif First_Word = "discriminant" then
+         Category := Cat_Discriminant;
          Operation_Mask := Add_Pragma_Unreferenced;
       elsif First_Word = "literal" then
          Category := Cat_Literal;
