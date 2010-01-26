@@ -3632,6 +3632,9 @@ package body Ada_Analyzer is
 
                      elsif Num_Parens = 0 then
                         if In_Declaration = Subprogram_Decl
+                          or else
+                            (Local_Top_Token.Token = Tok_Task
+                             and then In_Declaration = Type_Decl)
                           or else Local_Top_Token.Token = Tok_Subtype
                           or else Local_Top_Token.Token = Tok_For
                         then
