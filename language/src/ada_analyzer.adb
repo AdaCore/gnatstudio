@@ -717,7 +717,7 @@ package body Ada_Analyzer is
       Index_Ident         : Natural;
       In_Generic          : Boolean           := False;
 
-      type In_Declaration_Kind is (No_Decl, Subprogam_Decl, Type_Decl);
+      type In_Declaration_Kind is (No_Decl, Subprogram_Decl, Type_Decl);
 
       In_Declaration : In_Declaration_Kind := No_Decl;
       --  Identifies when we are in a declaration
@@ -1764,7 +1764,7 @@ package body Ada_Analyzer is
             end case;
 
             Constructs.Current.Is_Declaration :=
-              In_Declaration = Subprogam_Decl
+              In_Declaration = Subprogram_Decl
                 or else Value.Type_Declaration
                 or else Value.Package_Declaration
                 or else Value.Protected_Declaration;
@@ -1929,7 +1929,7 @@ package body Ada_Analyzer is
             end if;
 
          elsif Reserved = Tok_Renames then
-            if In_Declaration = Subprogam_Decl then
+            if In_Declaration = Subprogram_Decl then
                --  function A (....)
                --    renames B;
 
@@ -2029,7 +2029,7 @@ package body Ada_Analyzer is
                --  type P is array () of access procedure;
                --  procedure P (X : access procedure);
 
-               In_Declaration := Subprogam_Decl;
+               In_Declaration := Subprogram_Decl;
                Num_Parens     := 0;
             end if;
 
@@ -2089,7 +2089,7 @@ package body Ada_Analyzer is
             end if;
 
          elsif Reserved = Tok_Return
-           and then In_Declaration = Subprogam_Decl
+           and then In_Declaration = Subprogram_Decl
          then
             Indent_Function_Return (Prec);
 
@@ -2567,7 +2567,7 @@ package body Ada_Analyzer is
 
                   if Local_Top_Token.Token in Token_Class_Declk
                     and then Local_Top_Token.Profile_End = 0
-                    and then In_Declaration = Subprogam_Decl
+                    and then In_Declaration = Subprogram_Decl
                   then
                      Local_Top_Token.Profile_End := P;
                      Local_Top_Token.Align_Colon := 0;
@@ -2611,7 +2611,7 @@ package body Ada_Analyzer is
                   Val.Token := Tok_Colon;
 
                   case In_Declaration is
-                     when Subprogam_Decl =>
+                     when Subprogram_Decl =>
                         Val.Variable_Kind := Parameter_Kind;
 
                      when Type_Decl =>
@@ -3182,7 +3182,7 @@ package body Ada_Analyzer is
                   Prev_Token := Tok_Left_Paren;
 
                   if Num_Parens = 0 then
-                     if In_Declaration = Subprogam_Decl then
+                     if In_Declaration = Subprogram_Decl then
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
@@ -3275,7 +3275,7 @@ package body Ada_Analyzer is
                     and then Local_Top_Token.Token in Token_Class_Declk
                     and then Local_Top_Token.Profile_Start = 0
                   then
-                     if In_Declaration = Subprogam_Decl then
+                     if In_Declaration = Subprogram_Decl then
                         Local_Top_Token.Profile_Start := P;
                      end if;
 
@@ -3309,7 +3309,7 @@ package body Ada_Analyzer is
                         Level := P - Start_Of_Line + Padding
                                  + Indent_Conditional;
 
-                     elsif In_Declaration = Subprogam_Decl
+                     elsif In_Declaration = Subprogram_Decl
                        or else Top (Paren_Stack).all = Type_Declaration
                        or else Prev_Prev_Token = Tok_Arrow
                        or else (Format
@@ -3631,8 +3631,7 @@ package body Ada_Analyzer is
                         Pop_And_Set_Local (Tokens);
 
                      elsif Num_Parens = 0 then
-                        if In_Declaration = Subprogam_Decl
---                            or else In_Declaration = Type_Decl
+                        if In_Declaration = Subprogram_Decl
                           or else Local_Top_Token.Token = Tok_Subtype
                           or else Local_Top_Token.Token = Tok_For
                         then
@@ -3660,7 +3659,7 @@ package body Ada_Analyzer is
 
                      end if;
 
-                     if In_Declaration = Subprogam_Decl then
+                     if In_Declaration = Subprogram_Decl then
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
