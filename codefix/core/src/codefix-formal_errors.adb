@@ -850,7 +850,7 @@ package body Codefix.Formal_Errors is
                end;
             end if;
 
-         when Cat_Parameter =>
+         when Cat_Parameter | Cat_Discriminant =>
             if Entity_Found then
                declare
                   New_Command_Ptr : constant Ptr_Command := new Add_Pragma_Cmd;
@@ -864,9 +864,18 @@ package body Codefix.Formal_Errors is
                      Name         => "Unreferenced",
                      Argument     => Name);
 
-                  Set_Caption
-                    (New_Command,
-                     "Add pragma Unreferenced to parameter """ & Name & """");
+                  if Actual_Category = Cat_Parameter then
+                     Set_Caption
+                       (New_Command,
+                        "Add pragma Unreferenced to parameter """
+                        & Name & """");
+                  elsif Actual_Category = Cat_Discriminant then
+                     Set_Caption
+                       (New_Command,
+                        "Add pragma Unreferenced to discriminant """
+                        & Name & """");
+                  end if;
+
                   Append (Result, New_Command_Ptr);
                end;
             end if;
