@@ -10,6 +10,13 @@ Known Problems fixed in GPS 4.5.0
   Workaround: Instead of switching within GPS, close GPS and re-open it on
               project B.
 
+- IB06-021 No xref when Source_Dirs contains unresolved links
+  Problem:    If you have used absolute paths in the name of source dirs for
+              your project and these names include symbolic links, then GPS
+              will not provide any cross-reference (no matter whether you
+              use Fast Project Loading or not)
+  Workaround: Use relative dirs if possible in project files
+
 - IB05-015 Gnatcheck plugin issues in remote mode
   Problem:    When using the remote mode, GPS tries to spawn gnatcheck on the
               remote server without using the server's paths for both the
