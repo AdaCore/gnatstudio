@@ -210,6 +210,14 @@
    fun:gtk_rc_get_style
 }
 {
+   gtk+ 2.18 (J130-003)
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:pango_language_from_string
+   fun:pango_script_get_sample_language
+}
+{
    from opensuse 11.2
    Memcheck:Leak
    fun:malloc
