@@ -870,12 +870,12 @@ package body GVD.Process is
                --  Match found, record offset for next one. We cannot change
                --  Offset here as we need it later when calling the filters.
                New_Offset := Matched (0).Last -
-                 Process.Current_Output_Pos - Str'Length;
+                 (Process.Current_Output_Pos - Str'Length);
             end if;
 
          else
             --  Match found (see comment above)
-            New_Offset := Matched (0).Last - Process.Last_Match;
+            New_Offset := Matched (0).Last - (Process.Last_Match + 1);
          end if;
 
          if Matched (0) = No_Match then
