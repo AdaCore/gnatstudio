@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
---                             AdaCore                               --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,15 +43,15 @@ package body GVD.Menu is
       end if;
 
       declare
-         Is_Func : aliased Boolean;
+         Is_Func    : aliased Boolean;
          Expression : constant String := Display_Entry_Dialog
-           (Parent  => Debugger.Window,
-            Title   => -"Expression Selection",
-            Message => -"Enter an expression to display:",
-            Key     => "gvd_display_expression_dialog",
-            Check_Msg => -"Expression is a subprogram call",
-            History   => Get_History (GPS_Window (Debugger.Window).Kernel),
-            Key_Check => "expression_subprogram_debugger",
+           (Parent        => Debugger.Window,
+            Title         => -"Expression Selection",
+            Message       => -"Enter an expression to display:",
+            Key           => "gvd_display_expression_dialog",
+            Check_Msg     => -"Expression is a subprogram call",
+            History       => Get_History (GPS_Window (Debugger.Window).Kernel),
+            Key_Check     => "expression_subprogram_debugger",
             Button_Active => Is_Func'Unchecked_Access);
 
       begin

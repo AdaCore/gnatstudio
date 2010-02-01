@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -795,7 +795,8 @@ package body GVD.Process is
       Window     : System.Address)
    is
       Process        : constant Visual_Debugger :=
-                 Convert (To_Main_Debug_Window (Window).Kernel, Descriptor);
+                         Convert
+                           (To_Main_Debug_Window (Window).Kernel, Descriptor);
       Tmp_Str        : GNAT.Strings.String_Access;
       Current_Filter : Regexp_Filter_List;
       Matched        : Match_Array (0 .. Max_Paren_Count);

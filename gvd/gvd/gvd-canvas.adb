@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2009, AdaCore             --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -286,7 +286,7 @@ package body GVD.Canvas is
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Canvas : General_Browser);
-   --  Callback for the "detect aliases" contextual menu item.
+   --  Callback for the "detect aliases" contextual menu item
 
    procedure Change_Display_Mode
      (Widget  : access Gtk_Widget_Record'Class;
@@ -396,7 +396,7 @@ package body GVD.Canvas is
      (Property : in out GVD_Items_Property_Record;
       From     : XML_Utils.Node_Ptr)
    is
-      Tmp : XML_Utils.Node_Ptr := From.Child;
+      Tmp   : XML_Utils.Node_Ptr := From.Child;
       Count : Natural := 0;
    begin
       while Tmp /= null loop
@@ -421,8 +421,7 @@ package body GVD.Canvas is
 
    procedure Load_Items_From_Property
      (Process  : access Visual_Debugger_Record'Class;
-      Property : GVD_Items_Property_Record'Class)
-   is
+      Property : GVD_Items_Property_Record'Class) is
    begin
       if Property.Items /= null then
          for Item in reverse Property.Items'Range loop
@@ -576,8 +575,7 @@ package body GVD.Canvas is
 
    function Get_Canvas
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
-      return Gtkada.Canvas.Interactive_Canvas
-   is
+      return Gtkada.Canvas.Interactive_Canvas is
    begin
       if Process.Data = null then
          return null;
@@ -826,9 +824,9 @@ package body GVD.Canvas is
    ---------------------
 
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class) is
-      C : constant GVD_Canvas := GVD_Canvas (Canvas);
-      Iter    : Item_Iterator;
-      Item    : Canvas_Item;
+      C    : constant GVD_Canvas := GVD_Canvas (Canvas);
+      Iter : Item_Iterator;
+      Item : Canvas_Item;
 
    begin
       Iter := Start (Get_Canvas (C));
@@ -856,10 +854,10 @@ package body GVD.Canvas is
       Item      : access Display_Item_Record'Class;
       Component : Generic_Type_Access)
    is
-      Canvas : constant GVD_Canvas := GVD_Canvas (Process.Data);
+      Canvas            : constant GVD_Canvas := GVD_Canvas (Process.Data);
       Has_New_Selection : constant Boolean :=
-        Canvas.Selected_Item /= Browser_Item (Item) or else
-        Canvas.Selected_Component /= Component;
+                            Canvas.Selected_Item /= Browser_Item (Item)
+                              or else Canvas.Selected_Component /= Component;
    begin
       --  Unselect the current selection
 
@@ -919,8 +917,8 @@ package body GVD.Canvas is
    ---------------------------
 
    procedure Change_Detect_Aliases
-     (Item    : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas  : General_Browser)
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Canvas : General_Browser)
    is
       pragma Unreferenced (Item);
       C : constant GVD_Canvas := GVD_Canvas (Canvas);
@@ -1113,7 +1111,7 @@ package body GVD.Canvas is
    procedure Attach_To_Data_Window
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Create_If_Necessary : Boolean)
-     renames Canvas_Views.Attach_To_View;
+      renames Canvas_Views.Attach_To_View;
 
    -----------------------
    -- Get_Next_Item_Num --
@@ -1156,7 +1154,7 @@ package body GVD.Canvas is
    -------------------------
 
    procedure Preferences_Changed
-     (Canvas  : access GVD_Canvas_Record'Class)
+     (Canvas : access GVD_Canvas_Record'Class)
    is
       Item : Canvas_Item;
       Iter : Item_Iterator;
@@ -1218,8 +1216,8 @@ package body GVD.Canvas is
    -------------------------
 
    procedure Change_Display_Mode
-     (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record) is
+     (Widget : access Gtk_Widget_Record'Class;
+      Item   : Item_Record) is
    begin
       if Get_Active (Gtk_Radio_Menu_Item (Widget))
         and then Get_Display_Mode (Item.Item) /= Item.Mode
@@ -1233,8 +1231,8 @@ package body GVD.Canvas is
    -------------------
 
    procedure Change_Format
-     (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record) is
+     (Widget : access Gtk_Widget_Record'Class;
+      Item   : Item_Record) is
    begin
       if Get_Active (Gtk_Radio_Menu_Item (Widget))
         and then Get_Format (Item.Item) /= Item.Format
@@ -1248,8 +1246,8 @@ package body GVD.Canvas is
    ---------------------
 
    procedure Clone_Component
-     (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
+     (Widget : access Gtk_Widget_Record'Class;
+      Item   : Item_Record)
    is
       pragma Unreferenced (Widget);
    begin
@@ -1271,7 +1269,7 @@ package body GVD.Canvas is
    ------------------
 
    procedure Unselect_All
-     (Canvas  : access GVD_Canvas_Record'Class) is
+     (Canvas : access GVD_Canvas_Record'Class) is
    begin
       if Canvas.Selected_Component /= null
         and then Canvas.Selected_Item /= null
@@ -1294,7 +1292,7 @@ package body GVD.Canvas is
      (Canvas : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event)
    is
-      C       : constant GVD_Canvas := GVD_Canvas (Canvas);
+      C : constant GVD_Canvas := GVD_Canvas (Canvas);
    begin
       if Get_Button (Event) = 1 then
          if Get (Start (Get_Canvas (C))) /= null then
@@ -1318,12 +1316,12 @@ package body GVD.Canvas is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      Canvas    : constant GVD_Canvas := GVD_Canvas (Object);
-      Mitem     : Gtk_Menu_Item;
-      Check     : Gtk_Check_Menu_Item;
-      Xr, Yr    : Gint;
-      Success   : Boolean;
-      Item      : Display_Item;
+      Canvas  : constant GVD_Canvas := GVD_Canvas (Object);
+      Mitem   : Gtk_Menu_Item;
+      Check   : Gtk_Check_Menu_Item;
+      Xr, Yr  : Gint;
+      Success : Boolean;
+      Item    : Display_Item;
    begin
       Default_Browser_Context_Factory
         (Context, Kernel, Event_Widget, Object, Event, Menu);
@@ -1389,14 +1387,14 @@ package body GVD.Canvas is
       Component      : Items.Generic_Type_Access;
       Component_Name : String)
    is
-      Canvas : constant GVD_Canvas := GVD_Canvas (Debugger.Data);
+      Canvas  : constant GVD_Canvas := GVD_Canvas (Debugger.Data);
       Mitem   : Gtk_Menu_Item;
       Radio   : Gtk_Radio_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
       Submenu : Gtk_Menu;
 
    begin
-      --  Display "Close" option.
+      --  Display "Close" option
 
       Gtk_New (Mitem, Label => -"Close" & " " & Get_Name (Item));
       Item_Handler.Connect
