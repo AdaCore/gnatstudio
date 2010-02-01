@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -217,6 +217,8 @@ package String_Utils is
    --  Return a version of Text after stripping all the CR from the string.
    --  This function is used on Windows or when the Strip_CR preference is
    --  enabled (for systems that share dos files).
+   --  CR/LF sequences are replaced by LF chars.
+   --  CR chars alone are replaced by LF chars.
 
    procedure Strip_CR
      (Text     : in out String;
@@ -232,6 +234,7 @@ package String_Utils is
       CR_Found  : out Boolean;
       NUL_Found : out Boolean);
    --  Same as Strip_CR, and strip also ASCII.NUL characters
+   --  Note that CR chars alone are not replaced by LF chars.
 
    function Strip_Ending_Linebreaks (Text : String) return String;
    --  Return a version of Text after stripping all ending CR and LF
