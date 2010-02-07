@@ -233,7 +233,7 @@ package body Language.Ada is
                13 => new String'("gnaampmake")),
             Editable       => True),
       2 => (Attribute_Name  => new String'("gnatlist"),
-            attribute_Index => null,
+            Attribute_Index => null,
             Description     => new String'("Gnatls"),
             Values          => new GNAT.Strings.String_List'
               (1  => new String'("gnatls"),
