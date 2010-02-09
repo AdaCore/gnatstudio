@@ -752,9 +752,25 @@ package body Ada_Analyzer is
       Right_Assignment    : Boolean := False;
       --  When this is true, we are in a left assignment section
 
-      function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
-      --  Handle reserved words.
-      --  Return whether parsing should be terminated.
+      procedure Handle_Word_Token
+        (Reserved : Token_Type;
+         Temp     : out Extended_Token;
+         Do_Pop   : out Integer;
+         Do_Push  : out Boolean;
+         Finish   : out Boolean);
+      --  Handle a reserved word and computes a token out of it. Results
+      --  reads as follows:
+      --    Temp    - the token created
+      --    Do_Pop  - number of tokens to be popped out of the token list after
+      --              intendation
+      --    Do_Push - does temp needs to be pushed to the token list after
+      --              indentation?
+      --    Finish  - should the analysis be terminated?
+
+      procedure Handle_Word_Indent
+        (Reserved : Token_Type; Temp : in out Extended_Token);
+      --  Performs indentation after a call to Handle_Word_Token, and before
+      --  tokens are pushed or popped.
 
       procedure Next_Word
         (P           : in out Natural;
@@ -1777,18 +1793,28 @@ package body Ada_Analyzer is
          Pop (Stack, Value);
       end Pop;
 
-      --------------------------
-      -- Handle_Reserved_Word --
-      --------------------------
+      -----------------------
+      -- Handle_Word_Token --
+      -----------------------
 
-      function Handle_Reserved_Word (Reserved : Token_Type) return Boolean is
-         Temp          : Extended_Token;
+      procedure Handle_Word_Token
+        (Reserved : Token_Type;
+         Temp     : out Extended_Token;
+         Do_Pop   : out Integer;
+         Do_Push  : out Boolean;
+         Finish   : out Boolean)
+      is
          Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
          Start_Of_Line : Natural;
          Index_Next    : Natural;
          Tmp_Index     : Natural;
 
       begin
+         Do_Push := False;
+         Do_Pop := 0;
+         Finish := False;
+         Temp := (others => <>);
+
          Temp.Token       := Reserved;
          Start_Of_Line    := Line_Start (Buffer, Prec);
          Temp.Sloc.Line   := Line_Count;
@@ -1797,13 +1823,14 @@ package body Ada_Analyzer is
          Temp.Visibility  := Top_Token.Visibility_Section;
 
          if Callback /= null then
-            if Callback
+            Finish := Callback
               (Keyword_Text,
                Temp.Sloc,
                (Line_Count, Current - Start_Of_Line + 1, Current),
-               False)
-            then
-               return True;
+               False);
+
+            if Finish then
+               return;
             end if;
          end if;
 
@@ -1864,24 +1891,13 @@ package body Ada_Analyzer is
          --  Note: the order of the following conditions is important
 
          if Reserved = Tok_Body then
-            In_Declaration := No_Decl;
-
             if Top_Token.Token = Tok_Package then
                Top_Token.Package_Declaration := False;
             elsif Top_Token.Token = Tok_Protected then
                Top_Token.Protected_Declaration := False;
             end if;
 
-         elsif Reserved = Tok_Tagged then
-            null;
-
          elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
-            if Align_On_Colons
-              and then Top_Token.Token = Tok_Record
-            then
-               Temp.Align_Colon := Compute_Alignment (Prec);
-            end if;
-
             Temp.Visibility_Section := Top_Token.Visibility_Section;
 
             --  If the case is in a type declaration (e.g. protected), then
@@ -1897,55 +1913,26 @@ package body Ada_Analyzer is
                Temp.Attributes (Ada_Record_Attribute) := True;
             end if;
 
-            Do_Indent (Prec, Num_Spaces);
-
-            if Indent_Case_Extra = RM_Style then
-               Temp.Extra_Indent := True;
-               Num_Spaces := Num_Spaces + Indent_Level;
-            end if;
-
-            Push (Tokens, Temp);
+            Do_Push := True;
 
          elsif Prev_Token /= Tok_End and then
            ((Reserved = Tok_If and then Num_Parens = 0)
-             or else Reserved = Tok_For
-             or else Reserved = Tok_While
-             or else Reserved = Tok_Accept)
+            or else Reserved = Tok_For
+            or else Reserved = Tok_While
+            or else Reserved = Tok_Accept)
          then
-            Push (Tokens, Temp);
-
-         elsif Reserved = Tok_Abort then
-            if Top_Token.Token = Tok_Select and then Prev_Token = Tok_Then then
-               --  Temporarily unindent if we have a 'then abort' construct,
-               --  with 'abort' on its own line, e.g:
-               --  select
-               --     Foo;
-               --  then
-               --    abort
-               --     Bar;
-
-               Do_Indent
-                 (Prec, Num_Spaces - Indent_Level, Continuation => True);
-            end if;
+            Do_Push := True;
 
          elsif Reserved = Tok_Renames then
-            if In_Declaration = Subprogram_Decl then
-               --  function A (....)
-               --    renames B;
-
-               Indent_Function_Return (Prec);
-            end if;
-
             if not Top_Token.Declaration
               and then (Top_Token.Token = Tok_Function
-                or else Top_Token.Token = Tok_Procedure
-                or else Top_Token.Token = Tok_Package)
+                        or else Top_Token.Token = Tok_Procedure
+                        or else Top_Token.Token = Tok_Package)
             then
                --  Terminate current subprogram declaration, e.g:
                --  procedure ... renames ...;
 
-               In_Declaration := No_Decl;
-               Pop (Tokens);
+               Do_Pop := Do_Pop + 1;
             end if;
 
          elsif Prev_Token = Tok_Is
@@ -1962,45 +1949,11 @@ package body Ada_Analyzer is
                      or else (Reserved = Tok_Null
                               and then Top_Token.Token = Tok_Procedure))
          then
-            --  Handle indentation of e.g.
-            --
-            --  function Abstract_Func
-            --    return String
-            --    is abstract;
-
-            if Top_Token.Token = Tok_Function
-              and then Reserved /= Tok_New
-              and then
-                (Reserved = Tok_Abstract
-                 or else Reserved = Tok_Separate
-                 or else
-                   Start_Of_Line /= Line_Start (Buffer, Top_Token.Sloc.Index))
-            then
-               Indent_Function_Return (Prec);
-               Num_Spaces := Num_Spaces + Indent_Level;
-            end if;
-
-            Pop (Tokens);
-
-            --  Unindent since this is a declaration, e.g:
-            --  package ... is new ...;
-            --  function ... is abstract;
-            --  function ... is separate;
-            --  procedure ... is null;
-
-            --  Or a Gnatdist main procedure declaration :
-            --  procedure ... is in ...;
-
-            Num_Spaces := Num_Spaces - Indent_Level;
-
-            if Num_Spaces < 0 then
-               Num_Spaces := 0;
-               Syntax_Error := True;
-            end if;
+            Do_Pop := Do_Pop + 1;
 
          elsif Reserved = Tok_Pragma then
             Num_Parens := 0;
-            Push (Tokens, Temp);
+            Do_Push := True;
 
          elsif Reserved = Tok_Function
            or else Reserved = Tok_Procedure
@@ -2062,36 +2015,14 @@ package body Ada_Analyzer is
                   --
                   --  procedure xxx ();
                   --  procedure ...
-                  Pop (Tokens);
+                  Do_Pop := Do_Pop + 1;
                end if;
 
-               Push (Tokens, Temp);
+               Do_Push := True;
 
             elsif Prev_Token /= Tok_With then
-               --  unindent after a generic declaration, e.g:
-               --
-               --  generic
-               --     with procedure xxx;
-               --     with function xxx;
-               --     with package xxx;
-               --  package xxx is
-
-               Num_Spaces := Num_Spaces - Indent_Level;
-
-               if Num_Spaces < 0 then
-                  Num_Spaces := 0;
-                  Syntax_Error := True;
-               end if;
-
-               In_Generic := False;
-
-               Push (Tokens, Temp);
+               Do_Push := True;
             end if;
-
-         elsif Reserved = Tok_Return
-           and then In_Declaration = Subprogram_Decl
-         then
-            Indent_Function_Return (Prec);
 
          elsif Reserved = Tok_End
            or else (Reserved = Tok_Elsif and then Num_Parens = 0)
@@ -2110,36 +2041,14 @@ package body Ada_Analyzer is
             if Reserved = Tok_End then
                case Top_Token.Token is
                   when Tok_When | Tok_Exception =>
-                     --  Undo additional level of indentation, as in:
-                     --     ...
-                     --  exception
-                     --     when others =>
-                     --        null;
-                     --  end;
-
-                     Num_Spaces := Num_Spaces - Indent_Level;
-
                      --  End of subprogram
-                     Pop (Tokens);
-
-                  when Tok_Case =>
-                     if Top_Token.Extra_Indent then
-                        Num_Spaces := Num_Spaces - Indent_Level;
-                     end if;
-
-                  when Tok_Record =>
-                     --  If the "record" keyword was on its own line
-
-                     if Top_Token.Extra_Indent then
-                        Do_Indent (Prec, Num_Spaces - Indent_Level);
-                        Num_Spaces := Num_Spaces - Indent_Record;
-                     end if;
+                     Do_Pop := Do_Pop + 1;
 
                   when others =>
                      null;
                end case;
 
-               Pop (Tokens);
+               Do_Pop := Do_Pop + 1;
 
             elsif Top_Token.Token = Tok_Then
               and then Reserved = Tok_Elsif
@@ -2147,17 +2056,10 @@ package body Ada_Analyzer is
                Top_Token.Token := Tok_If;
             end if;
 
-            Num_Spaces := Num_Spaces - Indent_Level;
-
-            if Num_Spaces < 0 then
-               Num_Spaces   := 0;
-               Syntax_Error := True;
-            end if;
-
          elsif Reserved = Tok_With then
             if not In_Generic then
                if Top_Token.Token = No_Token then
-                  Push (Tokens, Temp);
+                  Do_Push := True;
 
                elsif Top_Token.Token = Tok_Type then
                   --  ??? is this correct for Ada 05 constructs:
@@ -2169,10 +2071,10 @@ package body Ada_Analyzer is
 
          elsif Reserved = Tok_Use and then
            (Top_Token.Token = No_Token or else
-             (Top_Token.Token /= Tok_For
+              (Top_Token.Token /= Tok_For
                and then Top_Token.Token /= Tok_Record))
          then
-            Push (Tokens, Temp);
+            Do_Push := True;
 
          elsif    (Reserved = Tok_Is and then not In_Generic)
            or else Reserved = Tok_Declare
@@ -2205,13 +2107,6 @@ package body Ada_Analyzer is
                     and then Prev_Token /= Tok_Limited
                     and then Prev_Token /= Tok_With)
          then
-            --  unindent for this reserved word, and then indent again, e.g:
-            --
-            --  procedure xxx is
-            --     ...
-            --  begin    <--
-            --     ...
-
             if Reserved = Tok_Do then
                if Top_Token.Token = Tok_Accept then
                   Top_Token.Token := Tok_Do;
@@ -2222,12 +2117,12 @@ package body Ada_Analyzer is
                   --  end;
 
                   Temp.Token := Tok_Return;
-                  Push (Tokens, Temp);
+                  Do_Push := True;
                end if;
             end if;
 
             if Reserved = Tok_Select then
-               Push (Tokens, Temp);
+               Do_Push := True;
 
             elsif Top_Token.Token = Tok_If
               and then Reserved = Tok_Then
@@ -2246,7 +2141,7 @@ package body Ada_Analyzer is
                   Top_Token.Token := Tok_Loop;
 
                else
-                  Push (Tokens, Temp);
+                  Do_Push := True;
                end if;
 
             elsif Reserved = Tok_Declare then
@@ -2269,12 +2164,10 @@ package body Ada_Analyzer is
                   Temp.Sloc.Index  := Tmp_Index;
                end if;
 
-               Push (Tokens, Temp);
+               Do_Push := True;
 
             elsif Reserved = Tok_Is then
                if not In_Generic then
-                  In_Declaration := No_Decl;
-
                   case Top_Token.Token is
                      when Tok_Case | Tok_When | Tok_Type | Tok_Subtype =>
                         Top_Token.Type_Definition_Section := True;
@@ -2322,7 +2215,354 @@ package body Ada_Analyzer is
                   Top_Token.Declaration := False;
 
                else
-                  Push (Tokens, Temp);
+                  Do_Push := True;
+               end if;
+
+            elsif Reserved = Tok_Record then
+               --  Is "record" the first keyword on the line ?
+               --  If True, we are in a case like:
+               --     type A is
+               --        record    --  from Indent_Record
+               --           null;
+               --        end record;
+
+               if Top_Token.Token = Tok_Type then
+                  Top_Token.Attributes (Ada_Record_Attribute) := True;
+                  Temp.Attributes (Ada_Record_Attribute) := True;
+                  Temp.Type_Definition_Section :=
+                    Top_Token.Type_Definition_Section;
+               end if;
+
+               Do_Push := True;
+
+            elsif Reserved = Tok_Else
+              or else (Top_Token.Token = Tok_Select
+                       and then Reserved = Tok_Then)
+              or else Reserved = Tok_When
+              or else Reserved = Tok_Or
+              or else Reserved = Tok_Private
+            then
+               if (Reserved = Tok_Or or else Reserved = Tok_Else)
+                 and then Top_Token.Token = Tok_When
+               then
+                  Do_Pop := Do_Pop + 1;
+                  Top_Token := Top (Tokens);
+               end if;
+
+               if Reserved = Tok_Private then
+                  Top_Token.Visibility_Section := Visibility_Private;
+               end if;
+
+               if Reserved = Tok_When then
+                  Do_Push := True;
+               end if;
+            end if;
+
+         elsif (Reserved = Tok_Type
+                and then Prev_Token /= Tok_With    --  with type
+                and then Prev_Token /= Tok_Use)    --  use type
+           or else Reserved = Tok_Subtype
+         then
+            --  Entering a type declaration/definition
+
+            if Prev_Token = Tok_Task               --  task type
+              or else Prev_Token = Tok_Protected   --  protected type
+            then
+               Top_Token.Type_Declaration := True;
+            else
+               Do_Push := True;
+            end if;
+
+            In_Declaration := Type_Decl;
+
+         elsif Reserved = Tok_Exception then
+            if Top_Token.Token /= Tok_Colon then
+               Do_Push := True;
+            end if;
+         end if;
+
+      exception
+         when Token_Stack.Stack_Empty =>
+            Syntax_Error := True;
+      end Handle_Word_Token;
+
+      ------------------------
+      -- Handle_Word_Indent --
+      ------------------------
+
+      procedure Handle_Word_Indent
+        (Reserved : Token_Type; Temp : in out Extended_Token)
+      is
+         Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
+         Start_Of_Line : Natural;
+         Index_Next    : Natural;
+         Tmp_Index     : Natural;
+
+      begin
+         Top_Token := Top (Tokens);
+         Start_Of_Line := Line_Start (Buffer, Prec);
+
+         --  Note: the order of the following conditions is important
+
+         if Prev_Token /= Tok_End and then Reserved = Tok_Case then
+            if Align_On_Colons
+              and then Top_Token.Token = Tok_Record
+            then
+               Temp.Align_Colon := Compute_Alignment (Prec);
+            end if;
+
+            Do_Indent (Prec, Num_Spaces);
+
+            if Indent_Case_Extra = RM_Style then
+               Temp.Extra_Indent := True;
+               Num_Spaces := Num_Spaces + Indent_Level;
+            end if;
+
+         elsif Reserved = Tok_Abort then
+            if Top_Token.Token = Tok_Select and then Prev_Token = Tok_Then then
+               --  Temporarily unindent if we have a 'then abort' construct,
+               --  with 'abort' on its own line, e.g:
+               --  select
+               --     Foo;
+               --  then
+               --    abort
+               --     Bar;
+
+               Do_Indent
+                 (Prec, Num_Spaces - Indent_Level, Continuation => True);
+            end if;
+
+         elsif Reserved = Tok_Renames then
+            if In_Declaration = Subprogram_Decl then
+               --  function A (....)
+               --    renames B;
+
+               Indent_Function_Return (Prec);
+            end if;
+
+         elsif Prev_Token = Tok_Is
+           and then not In_Generic
+           and then Top_Token.Token /= Tok_Type
+           and then (Top_Token.Token /= Tok_Task
+                     or else Reserved = Tok_Separate)
+           and then Top_Token.Token /= Tok_Protected
+           and then Top_Token.Token /= Tok_Subtype
+           and then (Reserved = Tok_New
+                     or else Reserved = Tok_In
+                     or else Reserved = Tok_Abstract
+                     or else Reserved = Tok_Separate
+                     or else (Reserved = Tok_Null
+                              and then Top_Token.Token = Tok_Procedure))
+         then
+            --  Handle indentation of e.g.
+            --
+            --  function Abstract_Func
+            --    return String
+            --    is abstract;
+
+            if Top_Token.Token = Tok_Function
+              and then Reserved /= Tok_New
+              and then
+                (Reserved = Tok_Abstract
+                 or else Reserved = Tok_Separate
+                 or else
+                   Start_Of_Line /= Line_Start (Buffer, Top_Token.Sloc.Index))
+            then
+               Indent_Function_Return (Prec);
+               Num_Spaces := Num_Spaces + Indent_Level;
+            end if;
+
+            --  Unindent since this is a declaration, e.g:
+            --  package ... is new ...;
+            --  function ... is abstract;
+            --  function ... is separate;
+            --  procedure ... is null;
+
+            --  Or a Gnatdist main procedure declaration :
+            --  procedure ... is in ...;
+
+            Num_Spaces := Num_Spaces - Indent_Level;
+
+            if Num_Spaces < 0 then
+               Num_Spaces := 0;
+               Syntax_Error := True;
+            end if;
+
+         elsif Reserved = Tok_Function
+           or else Reserved = Tok_Procedure
+           or else Reserved = Tok_Package
+           or else Reserved = Tok_Task
+           or else Reserved = Tok_Protected
+           or else Reserved = Tok_Entry
+         then
+            if In_Generic and then Prev_Token /= Tok_With then
+               --  unindent after a generic declaration, e.g:
+               --
+               --  generic
+               --     with procedure xxx;
+               --     with function xxx;
+               --     with package xxx;
+               --  package xxx is
+
+               Num_Spaces := Num_Spaces - Indent_Level;
+
+               if Num_Spaces < 0 then
+                  Num_Spaces := 0;
+                  Syntax_Error := True;
+               end if;
+            end if;
+
+         elsif Reserved = Tok_Return
+           and then In_Declaration = Subprogram_Decl
+         then
+            Indent_Function_Return (Prec);
+
+         elsif Reserved = Tok_End
+           or else (Reserved = Tok_Elsif and then Num_Parens = 0)
+           or else (Reserved = Tok_Null
+                    and then Prev_Token = Tok_Is
+                    and then Top_Token.Token = Tok_Procedure)
+         then
+            --  unindent after end of elsif, e.g:
+            --
+            --  if xxx then
+            --     xxx
+            --  elsif xxx then
+            --     xxx
+            --  end if;
+
+            if Reserved = Tok_End then
+               case Top_Token.Token is
+                  when Tok_When | Tok_Exception =>
+                     --  Undo additional level of indentation, as in:
+                     --     ...
+                     --  exception
+                     --     when others =>
+                     --        null;
+                     --  end;
+
+                     Num_Spaces := Num_Spaces - Indent_Level;
+
+                  when Tok_Case =>
+                     if Top_Token.Extra_Indent then
+                        Num_Spaces := Num_Spaces - Indent_Level;
+                     end if;
+
+                  when Tok_Record =>
+                     --  If the "record" keyword was on its own line
+
+                     if Top_Token.Extra_Indent then
+                        Do_Indent (Prec, Num_Spaces - Indent_Level);
+                        Num_Spaces := Num_Spaces - Indent_Record;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end if;
+
+            Num_Spaces := Num_Spaces - Indent_Level;
+
+            if Num_Spaces < 0 then
+               Num_Spaces   := 0;
+               Syntax_Error := True;
+            end if;
+
+         elsif    (Reserved = Tok_Is and then not In_Generic)
+           or else Reserved = Tok_Declare
+           or else Reserved = Tok_Begin
+           or else Reserved = Tok_Do
+           or else (Prev_Token /= Tok_Or
+                    and then Reserved = Tok_Else
+                    and then Num_Parens = 0)
+           or else (Prev_Token /= Tok_And
+                    and then Reserved = Tok_Then
+                    and then Num_Parens = 0)
+           or else (Prev_Token /= Tok_End and then Reserved = Tok_Select)
+           or else (Reserved = Tok_Or
+                    and then (Top_Token.Token = Tok_Select
+                              or else Top_Token.Token = Tok_When))
+           or else (Prev_Token /= Tok_End and then Reserved = Tok_Loop)
+           or else (Prev_Token /= Tok_End and then Prev_Token /= Tok_Null
+                    and then Reserved = Tok_Record)
+           or else ((Top_Token.Token = Tok_Exception
+                     or else Top_Token.Token = Tok_Case
+                     or else Top_Token.Token = Tok_Select)
+                    and then Reserved = Tok_When
+                    and then Prev_Token /= Tok_Exit
+                    and then Prev_Prev_Token /= Tok_Exit)
+           or else (Top_Token.Declaration
+                    and then Reserved = Tok_Private
+                    and then
+                      (Prev_Token /= Tok_Is
+                       or else Top_Token.Token = Tok_Package)
+                    and then Prev_Token /= Tok_Limited
+                    and then Prev_Token /= Tok_With)
+         then
+            --  unindent for this reserved word, and then indent again, e.g:
+            --
+            --  procedure xxx is
+            --     ...
+            --  begin    <--
+            --     ...
+
+            if Reserved = Tok_Declare then
+               if Align_On_Colons then
+                  Temp.Align_Colon :=
+                    Compute_Alignment
+                      (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
+               end if;
+
+               if Prev_Token = Tok_Colon then
+                  --  Adjust status column of declare block to take into
+                  --  account a label at start of the line by using the first
+                  --  non blank character on the line.
+
+                  Tmp_Index := Start_Of_Line;
+                  Skip_Blanks (Buffer, Tmp_Index);
+                  Temp.Sloc.Column := Tmp_Index - Start_Of_Line + 1;
+                  Temp.Sloc.Index  := Tmp_Index;
+               end if;
+
+            elsif Reserved = Tok_Is then
+               if not In_Generic then
+                  case Top_Token.Token is
+                     when Tok_Case | Tok_When | Tok_Type | Tok_Subtype =>
+                        null;
+
+                     when Tok_Task | Tok_Protected =>
+                        if Align_On_Colons then
+                           Top_Token.Align_Colon := Compute_Alignment
+                             (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
+                        end if;
+
+                     when others =>
+                        if Top_Token.Token = Tok_Function then
+                           Index_Next := Current + 1;
+
+                           --  Skip blanks on current line
+
+                           while Index_Next < Buffer'Last
+                             and then Buffer (Index_Next) /= ASCII.LF
+                             and then (Buffer (Index_Next) = ' '
+                                       or else Buffer (Index_Next) = ASCII.HT)
+                           loop
+                              Index_Next := Index_Next + 1;
+                           end loop;
+                        end if;
+
+                        if Align_On_Colons then
+                           Top_Token.Align_Colon := Compute_Alignment
+                             (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
+                        end if;
+                  end case;
+               end if;
+
+            elsif Reserved = Tok_Begin then
+               if Top_Token.Declaration then
+                  Num_Spaces := Num_Spaces - Indent_Level;
+                  Top_Token.Align_Colon := 0;
+                  Top_Token.Declaration := False;
                end if;
 
             elsif Reserved = Tok_Record then
@@ -2340,18 +2580,12 @@ package body Ada_Analyzer is
                end if;
 
                if Top_Token.Token = Tok_Type then
-                  Top_Token.Attributes (Ada_Record_Attribute) := True;
-                  Temp.Attributes (Ada_Record_Attribute) := True;
-                  Temp.Type_Definition_Section :=
-                    Top_Token.Type_Definition_Section;
                   Num_Spaces := Num_Spaces + Indent_Level;
 
                   if Align_On_Colons then
                      Temp.Align_Colon := Compute_Alignment (Prec);
                   end if;
                end if;
-
-               Push (Tokens, Temp);
 
             elsif Reserved = Tok_Else
               or else (Top_Token.Token = Tok_Select
@@ -2364,18 +2598,12 @@ package body Ada_Analyzer is
                  and then Top_Token.Token = Tok_When
                then
                   Num_Spaces := Num_Spaces - Indent_Level;
-                  Pop (Tokens);
-                  Top_Token := Top (Tokens);
                end if;
 
                if Reserved /= Tok_When
                  or else Top_Token.Token /= Tok_Select
                then
                   Num_Spaces := Num_Spaces - Indent_Level;
-               end if;
-
-               if Reserved = Tok_Private then
-                  Top_Token.Visibility_Section := Visibility_Private;
                end if;
 
                if Reserved = Tok_When then
@@ -2388,8 +2616,6 @@ package body Ada_Analyzer is
                         Num_Spaces := Num_Spaces + Indent_Level;
                      end if;
                   end if;
-
-                  Push (Tokens, Temp);
                end if;
             end if;
 
@@ -2439,41 +2665,19 @@ package body Ada_Analyzer is
 
             Do_Indent (Prec, Num_Spaces);
             Num_Spaces := Num_Spaces + Indent_Level;
-            In_Generic := True;
-
-         elsif (Reserved = Tok_Type
-                and then Prev_Token /= Tok_With    --  with type
-                and then Prev_Token /= Tok_Use)    --  use type
-           or else Reserved = Tok_Subtype
-         then
-            --  Entering a type declaration/definition
-
-            if Prev_Token = Tok_Task               --  task type
-              or else Prev_Token = Tok_Protected   --  protected type
-            then
-               Top_Token.Type_Declaration := True;
-            else
-               Push (Tokens, Temp);
-            end if;
-
-            In_Declaration := Type_Decl;
 
          elsif Reserved = Tok_Exception then
             if Top_Token.Token /= Tok_Colon then
                Num_Spaces := Num_Spaces - Indent_Level;
                Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
-               Push (Tokens, Temp);
             end if;
          end if;
-
-         return False;
 
       exception
          when Token_Stack.Stack_Empty =>
             Syntax_Error := True;
-            return False;
-      end Handle_Reserved_Word;
+      end Handle_Word_Indent;
 
       ---------------
       -- Next_Word --
@@ -4000,7 +4204,57 @@ package body Ada_Analyzer is
             --  We have a reserved word
             Casing := Reserved_Casing;
 
-            exit Main_Loop when Handle_Reserved_Word (Token);
+            declare
+               Temp : aliased Extended_Token;
+               Do_Push   : Boolean;
+               Do_Pop    : Integer;
+               Do_Finish : Boolean;
+            begin
+               Handle_Word_Token (Token, Temp, Do_Pop, Do_Push, Do_Finish);
+
+               exit Main_Loop when Do_Finish;
+
+               Handle_Word_Indent (Token, Temp);
+
+               for J in 1 .. Do_Pop loop
+                  Pop (Tokens);
+               end loop;
+
+               if Do_Push then
+                  Push (Tokens, Temp);
+               else
+                  null;
+               end if;
+
+               --  Computes In_Generic
+
+               if not In_Generic
+                 and then Token = Tok_Generic
+               then
+                  In_Generic := True;
+               elsif In_Generic
+                 and then Prev_Token /= Tok_With
+                 and then
+                   (Token = Tok_Function
+                    or else Token = Tok_Procedure
+                    or else Token = Tok_Package)
+               then
+                  In_Generic := False;
+               end if;
+
+               --  Computes In_Declaration
+               --  ??? There is still some computation of this done in
+               --  Handle_Word_Token. It would be nice to have all of it here.
+
+               if Token = Tok_Body
+                 or else Token = Tok_Renames
+                 or else
+                   (Token = Tok_Is
+                    and then not In_Generic)
+               then
+                  In_Declaration := No_Decl;
+               end if;
+            end;
          end if;
 
          if Indent_Params.Casing_Policy /= Disabled then
