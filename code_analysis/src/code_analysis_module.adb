@@ -1322,12 +1322,8 @@ package body Code_Analysis_Module is
    procedure On_Project_Loaded_Hook
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Node : Node_Ptr;
-      Analysis : constant Code_Analysis_Instance :=
-                   Get_Or_Create
-                     (To_String
-                        (String_Set.First_Element
-                           (Code_Analysis_Module_ID.Registered_Analysis)));
+      Node     : Node_Ptr;
+      Analysis : Code_Analysis_Instance;
 
       procedure On_New_File (Project : Project_Type; File : Virtual_File);
       --  Called when a File node is found while parsing XML.
@@ -1349,6 +1345,10 @@ package body Code_Analysis_Module is
         (Get_MDI (Kernel), "Code_Analysis_Tree");
 
       if Node /= null then
+         Analysis :=
+           Get_Or_Create
+             (To_String
+                  (Code_Analysis_Module_ID.Registered_Analysis.First_Element));
          Parse_XML
            (Get_Project (Kernel),
             Node);
