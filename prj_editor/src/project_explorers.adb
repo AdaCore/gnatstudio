@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1754,6 +1754,40 @@ package body Project_Explorers is
       Compute_Children (T, Iter);
 
       Success := Expand_Row (T.Tree, Path, False);
+
+      --  Gtk+ Hack. Here, in Compute_Children, we have probably removed the
+      --  prelight, either when re-sorting the tree, or when deleting rows
+      --  (the dummy iter, or project-related iters).
+      --  In order to re-prelight the expander, fake a motion event.
+      --  This is a copy of a hack done in gtktreeview.c
+      --  (gtk_tree_view_real_collapse_row)
+      declare
+         Event  : Gdk_Event;
+         Child_X, Child_Y, X, Y  : Gint;
+         Mask   : Gdk_Modifier_Type;
+         Dummy_W : Gdk_Window;
+         Child  : Gdk_Window;
+         Parent : Gdk_Window;
+         Dummy  : Boolean;
+         pragma Unreferenced (Dummy);
+         use Gdk;
+      begin
+         Child := Get_Bin_Window (T.Tree);
+         Parent := Get_Parent (Child);
+         Get_Pointer (Parent, X, Y, Mask, Dummy_W);
+         if Dummy_W = Child then
+            Allocate (Event      => Event,
+                      Event_Type => Motion_Notify,
+                      Window     => Get_Window (T.Tree));
+            Get_Position (Child, Child_X, Child_Y);
+            Set_Window (Event, Child);
+            Set_Time (Event, 0);
+            Set_X (Event, Gdouble (X - Child_X));
+            Set_Y (Event, Gdouble (Y - Child_Y));
+            Dummy := Return_Callback.Emit_By_Name
+              (T.Tree, Signal_Motion_Notify_Event, Event);
+         end if;
+      end;
 
       Set_Node_Type
         (T.Tree.Model,
