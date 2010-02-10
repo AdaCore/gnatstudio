@@ -1069,18 +1069,17 @@ package body Code_Analysis_Module is
 
       Iter := Get_Iter_From_Context (Local_Project, File, View.Model);
 
-      if Iter /= Null_Iter then
-         Path := Get_Path (View.Model, Iter);
-      else
-         Path := Get_Path
-           (View.Model,
-            Get_Iter_First (View.Model));
+      if Iter = Null_Iter then
+         Iter := Get_Iter_First (View.Model);
       end if;
 
-      Collapse_All (View.Tree);
-      Expand_To_Path (View.Tree, Path);
-      Select_Path (Get_Selection (View.Tree), Path);
-      Path_Free (Path);
+      if Iter /= Null_Iter then
+         Path := Get_Path (View.Model, Iter);
+         Collapse_All (View.Tree);
+         Expand_To_Path (View.Tree, Path);
+         Select_Path (Get_Selection (View.Tree), Path);
+         Path_Free (Path);
+      end if;
 
       if Raise_Report then
          Raise_Child (Child);
