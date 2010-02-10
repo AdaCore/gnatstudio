@@ -2574,6 +2574,20 @@ package body GPS.Kernel is
       Kernel_Desktop.Register_Desktop_Functions (Unch (Save), Unch (Load));
    end Register_Desktop_Functions;
 
+   ---------------------
+   -- Get_XML_Content --
+   ---------------------
+
+   function Get_XML_Content
+     (MDI : Gtkada.MDI.MDI_Window;
+      Tag : String) return XML_Utils.Node_Ptr
+   is
+      function Unch is new Ada.Unchecked_Conversion
+        (Glib.Xml_Int.Node_Ptr, XML_Utils.Node_Ptr);
+   begin
+      return Unch (Kernel_Desktop.Get_XML_Content (MDI, Tag));
+   end Get_XML_Content;
+
    ----------------------
    -- Enter_Hyper_Mode --
    ----------------------

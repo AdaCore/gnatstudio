@@ -86,7 +86,11 @@ package GPS.Kernel is
    procedure Register_Desktop_Functions
      (Save : Save_Desktop_Function;
       Load : Load_Desktop_Function);
-   --  Wrapper around Kernel_Desktop.Register_Desktop_Functions
+
+   function Get_XML_Content
+     (MDI : Gtkada.MDI.MDI_Window;
+      Tag : String) return XML_Utils.Node_Ptr;
+   --  Wrapper around Kernel_Desktop functions
 
    -------------------
    -- Kernel_Handle --
