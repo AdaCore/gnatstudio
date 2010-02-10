@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,8 +57,6 @@ with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
 
 package body Completion_Window is
-
-   Minimal_Items_To_Show : constant := 50;
 
    Max_Window_Width : constant := 300;
    --  Maximum width of the window, in pixels
@@ -365,11 +363,9 @@ package body Completion_Window is
    ----------------------
 
    procedure Expand_Selection
-     (Explorer : access Completion_Explorer_Record'Class;
-      Number   : Natural)
+     (Explorer : access Completion_Explorer_Record'Class)
    is
-      First_Shown : constant Natural := Explorer.Shown;
-      Count       : Natural := 0;
+      Count : Natural := 0;
    begin
       --  If the idle function is running, unregister it
 
@@ -385,7 +381,7 @@ package body Completion_Window is
          --  Call Idle_Expand, and exit the loop if the function returns False
 
          if (Idle_Expand (Completion_Explorer_Access (Explorer)) = False)
-           or else Explorer.Shown - First_Shown >= Number
+           or else Explorer.Shown >= Explorer.Number_To_Show
          then
             if Explorer.More_Iter /= Null_Iter then
                Set (Explorer.Model, Explorer.More_Iter,
@@ -399,7 +395,7 @@ package body Completion_Window is
 
          --  Exit when we have found the number of items we wanted
 
-         exit when Count >= Number * 2;
+         exit when Count >= Minimal_Items_To_Show * 2;
       end loop;
 
       --  If we failed to get Number items, register an idle computation to
@@ -526,6 +522,22 @@ package body Completion_Window is
 
       Next (Explorer.Iter.all);
 
+      if Explorer.Shown >= Explorer.Number_To_Show then
+         --  There is probably a "computing" iter: remove it
+         if Explorer.More_Iter /= Null_Iter then
+            Remove (Explorer.Model, Explorer.More_Iter);
+         end if;
+
+         --  Create a "more" iter
+         Append (Explorer.Model, Explorer.More_Iter);
+         Set (Explorer.Model,
+              Explorer.More_Iter,
+              Markup_Column,
+              "<span color=""grey""><i> (more...) </i></span>");
+
+         return False;
+      end if;
+
       if At_End (Explorer.Iter.all) then
          --  We have reached the end. We can remove the "more" iter, since we
          --  will no longer be computing.
@@ -646,8 +658,7 @@ package body Completion_Window is
 
       --  Expand the selection to show more items, if needed
       if Window.Explorer.Shown < Minimal_Items_To_Show then
-         Expand_Selection
-           (Window.Explorer, Minimal_Items_To_Show - Window.Explorer.Shown);
+         Expand_Selection (Window.Explorer);
       end if;
 
       --  Re-select the item previously selected, or, if there was none,
@@ -920,7 +931,9 @@ package body Completion_Window is
 
             if Prev (Path) then
                Iter := Get_Iter (Explorer.Model, Path);
-               Expand_Selection (Explorer, Minimal_Items_To_Show);
+               Explorer.Number_To_Show := Explorer.Number_To_Show +
+                 Minimal_Items_To_Show;
+               Expand_Selection (Explorer);
                Select_Iter (Sel, Iter);
             end if;
 
@@ -1157,9 +1170,7 @@ package body Completion_Window is
          Page_Size       : Gdouble;
       begin
          if Where = Down then
-            Expand_Selection
-              (Explorer => Window.Explorer,
-               Number => Minimal_Items_To_Show);
+            Expand_Selection (Explorer => Window.Explorer);
          end if;
 
          Adj := Get_Vadjustment (Window.Explorer.View);
@@ -1680,7 +1691,7 @@ package body Completion_Window is
          After => True);
 
       Window.Explorer.Pattern := new String'("");
-      Expand_Selection (Window.Explorer, Minimal_Items_To_Show);
+      Expand_Selection (Window.Explorer);
 
       Tree_Iter := Get_Iter_First (Window.Explorer.Model);
 

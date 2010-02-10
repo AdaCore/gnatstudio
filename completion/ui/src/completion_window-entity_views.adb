@@ -43,7 +43,6 @@ with Traces; use Traces;
 
 package body Completion_Window.Entity_Views is
 
-   Minimal_Items_To_Show : constant := 50;
    Initial_Tree_Size     : constant := 300; --  Width of the tree, in pixel
 
    package Simple_Cb is new Gtk.Handlers.Callback
@@ -263,7 +262,7 @@ package body Completion_Window.Entity_Views is
 
       Clear (View.Explorer);
 
-      Expand_Selection (View.Explorer, Minimal_Items_To_Show);
+      Expand_Selection (View.Explorer);
 
       Select_Next (View.Explorer);
 

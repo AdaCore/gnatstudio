@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -138,9 +138,10 @@ package Completion_Window is
 
 private
 
+   Minimal_Items_To_Show : constant := 50;
+
    procedure Expand_Selection
-     (Explorer : access Completion_Explorer_Record'Class;
-      Number   : Natural);
+     (Explorer : access Completion_Explorer_Record'Class);
    --  Expand the current selection until Number entries have been added or
    --  the completion iter has reach the end.
 
@@ -184,6 +185,8 @@ private
 
       Shown : Natural := 0;
       --  Number of elements displayed in the tree.
+
+      Number_To_Show : Natural := Minimal_Items_To_Show;
 
       Notes_Container : Gtk_Bin;
       --  The container which actually contains the notes.
