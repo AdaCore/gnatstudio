@@ -175,16 +175,9 @@ package body Code_Analysis_Module is
      (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+      Submenu : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Determine wether we add entries directly in the contextual menu, or in
    --  a generated submenu. Submenus are created if many instances are loaded.
-
-   procedure Append_To_Contextual_Submenu
-     (Analysis : String;
-      Context  : Selection_Context;
-      Submenu  : access Gtk_Menu_Record'Class);
-   --  Allow to fill the given Submenu with coverage entries in the appropriate
-   --  order for a contextual menu.
 
    procedure On_Single_View_Menu
      (Widget : access GObject_Record'Class;
@@ -1689,33 +1682,13 @@ package body Code_Analysis_Module is
      (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+      Submenu : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       use Code_Analysis_Instances;
       pragma Unreferenced (Factory, Object);
-      Analysis : constant String := "Coverage";
-      Submenu  : Gtk_Menu;
+      Analysis : constant String :=
+         To_String (Code_Analysis_Module_ID.Registered_Analysis.First_Element);
       Item     : Gtk_Menu_Item;
-
-   begin
-      Gtk_New (Item, Analysis);
-      Append (Menu, Item);
-      Gtk_New (Submenu);
-      Set_Submenu (Item, Submenu);
-      Set_Sensitive (Item, True);
-      Append_To_Contextual_Submenu (Analysis, Context, Submenu);
-   end Append_To_Menu;
-
-   ----------------------------------
-   -- Append_To_Contextual_Submenu --
-   ----------------------------------
-
-   procedure Append_To_Contextual_Submenu
-     (Analysis : String;
-      Context  : Selection_Context;
-      Submenu  : access Gtk_Menu_Record'Class)
-   is
-      Item : Gtk_Menu_Item;
 
    begin
       if Has_File_Information (Context) then
@@ -1854,7 +1827,7 @@ package body Code_Analysis_Module is
                Project  => No_Project,
                File     => No_File));
       end if;
-   end Append_To_Contextual_Submenu;
+   end Append_To_Menu;
 
    -------------------------
    -- On_Single_View_Menu --
