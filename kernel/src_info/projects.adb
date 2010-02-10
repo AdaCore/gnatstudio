@@ -335,7 +335,9 @@ package body Projects is
    function Project_Name_Hash
      (Project : Project_Type) return Ada.Containers.Hash_Type is
    begin
-      return Strings.Hash (Project_Name (Project));
+      --  Project names being case insensitive, we hash the lower-case name
+      return Strings.Hash
+        (Ada.Characters.Handling.To_Lower (Project_Name (Project)));
    end Project_Name_Hash;
 
    ------------------
