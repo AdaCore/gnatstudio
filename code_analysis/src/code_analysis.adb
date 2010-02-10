@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,9 +17,53 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Less_Case_Insensitive;
 with GNAT.Heap_Sort_G;
 
 package body Code_Analysis is
+
+   -----------
+   --  Less --
+   -----------
+
+   function Less (V1, V2 : String) return Boolean is
+   begin
+      return Ada.Strings.Less_Case_Insensitive (V1, V2);
+   end Less;
+
+   function Less (V1, V2 : Virtual_File) return Boolean is
+   begin
+      return Ada.Strings.Less_Case_Insensitive
+        (V1.Display_Base_Name, V2.Display_Base_Name);
+   end Less;
+
+   function Less (V1, V2 : Project_Type) return Boolean is
+   begin
+      return Ada.Strings.Less_Case_Insensitive
+        (Projects.Project_Name (V1), Projects.Project_Name (V2));
+   end Less;
+
+   ---------
+   -- Equ --
+   ---------
+
+   function Equ  (V1, V2 : Subprogram_Access) return Boolean is
+   begin
+      return Ada.Strings.Equal_Case_Insensitive
+        (V1.Name.all, V2.Name.all);
+   end Equ;
+
+   function Equ  (V1, V2 : File_Access) return Boolean is
+   begin
+      return Ada.Strings.Equal_Case_Insensitive
+        (V1.Name.Display_Base_Name, V2.Name.Display_Base_Name);
+   end Equ;
+
+   function Equ  (V1, V2 : Project_Access) return Boolean is
+   begin
+      return Ada.Strings.Equal_Case_Insensitive
+        (Project_Name (V1.Name), Project_Name (V2.Name));
+   end Equ;
 
    -------------------------
    -- Clear_Code_Analysis --

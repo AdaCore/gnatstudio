@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,9 +25,8 @@
 --  levels: Project, File, Subprogram, Line.
 --  </description>
 
-with Ada.Containers.Indefinite_Hashed_Maps; use Ada.Containers;
-with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Hash;
+with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
+with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
@@ -166,28 +165,35 @@ package Code_Analysis is
    type Project_Access    is access all Project;
    type Node_Access       is access all Node'Class;
 
+   function Less (V1, V2 : String) return Boolean;
+   function Less (V1, V2 : Virtual_File) return Boolean;
+   function Less (V1, V2 : Project_Type) return Boolean;
+   function Equ  (V1, V2 : Subprogram_Access) return Boolean;
+   function Equ  (V1, V2 : File_Access) return Boolean;
+   function Equ  (V1, V2 : Project_Access) return Boolean;
+
    package Subprogram_Maps is
-     new Indefinite_Hashed_Maps
+     new Indefinite_Ordered_Maps
        (Key_Type        => String,
         Element_Type    => Subprogram_Access,
-        Hash            => Ada.Strings.Hash,
-        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
+        "="             => Equ,
+        "<"             => Less);
    --  Used to stored the Subprogram nodes of every Files
 
    package File_Maps is
-     new Hashed_Maps
+     new Ordered_Maps
        (Key_Type        => GNATCOLL.VFS.Virtual_File,
         Element_Type    => File_Access,
-        Hash            => GNATCOLL.VFS.Full_Name_Hash,
-        Equivalent_Keys => GNATCOLL.VFS."=");
+        "="             => Equ,
+        "<"             => Less);
    --  Used to stored the File nodes of every Projects
 
    package Project_Maps is
-     new Hashed_Maps
+     new Ordered_Maps
        (Key_Type        => Project_Type,
         Element_Type    => Project_Access,
-        Hash            => Project_Name_Hash,
-        Equivalent_Keys => Projects."=");
+        "="             => Equ,
+        "<"             => Less);
    --  Used to stored the Project nodes
 
    type Code_Analysis_Tree is access all Project_Maps.Map;
