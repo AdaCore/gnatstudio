@@ -487,10 +487,6 @@ package body Coverage_GUI is
                --  Look for the gcov file in the object directory of the root
                --  project.
                Gcov_Root := Object_Path (Get_Project (Kernel));
-
-               if Gcov_Root = No_File then
-                  Gcov_Root := Dir (Project_Path (Get_Project (Kernel)));
-               end if;
             else
                --  Look for the gcov file in the path pointed by GCOV_ROOT
                Gcov_Root := Create (+Gcov_Root_Env.all);
