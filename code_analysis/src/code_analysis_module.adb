@@ -1324,7 +1324,10 @@ package body Code_Analysis_Module is
    is
       Node : Node_Ptr;
       Analysis : constant Code_Analysis_Instance :=
-                   Code_Analysis_Module_ID.Analyzes.First_Element;
+                   Get_Or_Create
+                     (To_String
+                        (String_Set.First_Element
+                           (Code_Analysis_Module_ID.Registered_Analysis)));
 
       procedure On_New_File (Project : Project_Type; File : Virtual_File);
       --  Called when a File node is found while parsing XML.
