@@ -89,7 +89,6 @@ package body Code_Analysis_Module is
    ------------------------
 
    type Code_Analysis_Instance_Record is record
-      Instances : GNATCOLL.Scripts.Instance_List_Access;
       Projects  : Code_Analysis_Tree;
       Name      : GNAT.Strings.String_Access;
       Date      : Time;
@@ -134,14 +133,6 @@ package body Code_Analysis_Module is
      (Module : in out Code_Analysis_Module_ID_Record);
 
    Code_Analysis_Module_ID : Code_Analysis_Module_ID_Access;
-
-   type Code_Analysis_Property_Record is new Instance_Property_Record
-   with record
-      Analysis : Code_Analysis_Instance;
-   end record;
-
-   type Code_Analysis_Property is access all
-     Code_Analysis_Property_Record'Class;
 
    type CB_Data_Record is record
       Kernel   : Kernel_Handle;
@@ -259,9 +250,8 @@ package body Code_Analysis_Module is
    --  Create a shell scripting instance of the module
 
    procedure Attach_Instance_And_Analysis
-     (Data     : in out Callback_Data'Class;
-      Instance : Class_Instance;
-      Analysis : Code_Analysis_Instance);
+     (Instance : Class_Instance;
+      Analysis : String);
    --  Set the Instance in the instance list of Analysis
    --  Set Analysis in the created property for Instance.
 
@@ -497,28 +487,14 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (Command);
       use Code_Analysis_Instances;
-      Analysis : Code_Analysis_Instance := null;
       Instance : Class_Instance;
 
    begin
       Name_Parameters (Data, (1 => Ana_Name_Cst'Access));
-      Analysis := Get_Or_Create (Nth_Arg (Data, 1));
 
-      --  Set the current instance to corresponding instance of the
-      --  Analysis of the given name
-      declare
-         Stored_Instance : Class_Instance := Get
-           (Analysis.Instances.all, Get_Script (Data));
-      begin
-         if Stored_Instance = No_Class_Instance then
-            --  Attach the current instance to
-            Instance := New_Instance
-              (Get_Script (Data), Code_Analysis_Module_ID.Class);
-            Attach_Instance_And_Analysis (Data, Instance, Analysis);
-         else
-            Instance := Stored_Instance;
-         end if;
-      end;
+      Instance := New_Instance
+        (Get_Script (Data), Code_Analysis_Module_ID.Class);
+      Attach_Instance_And_Analysis (Instance, Nth_Arg (Data, 1));
 
       Set_Return_Value (Data, Instance);
 
@@ -531,17 +507,11 @@ package body Code_Analysis_Module is
    ----------------------------------
 
    procedure Attach_Instance_And_Analysis
-     (Data     : in out Callback_Data'Class;
-      Instance : Class_Instance;
-      Analysis : Code_Analysis_Instance)
+     (Instance : Class_Instance;
+      Analysis : String)
    is
-      Property : Code_Analysis_Property;
    begin
-      Set (Analysis.Instances.all, Get_Script (Data), Instance);
-      Property := new Code_Analysis_Property_Record;
-      Property.Analysis := Analysis;
-      Set_Data (Instance, CodeAnalysis_Cst,
-                Instance_Property_Record (Property.all));
+      Set_Data (Instance, Code_Analysis_Module_ID.Class, Analysis);
    end Attach_Instance_And_Analysis;
 
    -------------------
@@ -580,7 +550,6 @@ package body Code_Analysis_Module is
          Code_Analysis_Module_ID.Analyzes.Insert (Analysis);
 
          Analysis.Name      := new String'(Name);
-         Analysis.Instances := new Instance_List;
          Analysis.Projects  := new Project_Maps.Map;
       end if;
 
@@ -617,7 +586,7 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property : Instance_Property;
+      Analysis : Code_Analysis_Instance;
       Instance : Class_Instance;
       Src_Inst : Class_Instance;
       Cov_Inst : Class_Instance;
@@ -628,9 +597,10 @@ package body Code_Analysis_Module is
 
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
@@ -664,8 +634,7 @@ package body Code_Analysis_Module is
 
       Prj_Name  := Get_Project_From_File
         (Get_Registry (Get_Kernel (Data)).all, Src_File);
-      Prj_Node  := Get_Or_Create
-        (Code_Analysis_Property (Property).Analysis.Projects, Prj_Name);
+      Prj_Node  := Get_Or_Create (Analysis.Projects, Prj_Name);
 
       if not Is_Regular_File (Cov_File) then
          Set_Error_Msg (Data, -"The name given for 'cov' file is wrong");
@@ -685,8 +654,7 @@ package body Code_Analysis_Module is
       --  Build/Refresh Report of Analysis
 
       Show_Analysis_Report
-        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis,
-         Prj_Name, Src_File);
+        (Get_Kernel (Data), Analysis, Prj_Name, Src_File);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -766,7 +734,7 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property : Instance_Property;
+      Analysis : Code_Analysis_Instance;
       Instance : Class_Instance;
       Context  : Selection_Context;
       Prj_Inst : Class_Instance;
@@ -776,9 +744,10 @@ package body Code_Analysis_Module is
 
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
@@ -802,15 +771,13 @@ package body Code_Analysis_Module is
       Prj_Name  := Load_Or_Find
          (Get_Registry (Get_Kernel (Data)).all, Prj_File, Errors => null);
       Prj_Node  := Get_Or_Create
-        (Code_Analysis_Property (Property).Analysis.Projects, Prj_Name);
+        (Analysis.Projects, Prj_Name);
       Add_Gcov_Project_Info (Get_Kernel (Data), Prj_Node);
 
       --  Build/Refresh Report of Analysis
       Context := Get_Current_Context (Get_Kernel (Data));
       Set_File_Information (Context, Project => Prj_Name);
-      Show_Analysis_Report
-        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis,
-         Prj_Name);
+      Show_Analysis_Report (Get_Kernel (Data), Analysis, Prj_Name);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -863,16 +830,17 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property : Instance_Property;
+      Analysis : Code_Analysis_Instance;
       Instance : Class_Instance;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
       Prj_Iter : Imported_Project_Iterator;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
@@ -882,16 +850,14 @@ package body Code_Analysis_Module is
 
       loop
          exit when Current (Prj_Iter) = No_Project;
-         Prj_Node := Get_Or_Create
-           (Code_Analysis_Property (Property).Analysis.Projects,
-            Current (Prj_Iter));
+         Prj_Node := Get_Or_Create (Analysis.Projects, Current (Prj_Iter));
          Add_Gcov_Project_Info (Get_Kernel (Data), Prj_Node);
          Next (Prj_Iter);
       end loop;
 
       --  Build/Refresh Report of Analysis
-      Show_Analysis_Report
-        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
+      Show_Analysis_Report (Get_Kernel (Data), Analysis);
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Add_All_Gcov_Project_Info_From_Shell;
@@ -929,24 +895,23 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property : Instance_Property;
+      Analysis : Code_Analysis_Instance;
       Instance : Class_Instance;
 
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
-      Show_All_Coverage_Information
-        (Get_Kernel (Data),
-         Code_Analysis_Property (Property).Analysis.Projects);
+      Show_All_Coverage_Information (Get_Kernel (Data), Analysis.Projects);
+
       --  Build/Refresh the Coverage Report
-      Show_Analysis_Report
-        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
+      Show_Analysis_Report (Get_Kernel (Data), Analysis);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Show_All_Coverage_Information_From_Shell;
@@ -960,21 +925,20 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property : Instance_Property;
+      Analysis : Code_Analysis_Instance;
       Instance : Class_Instance;
 
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
-      Hide_All_Coverage_Information
-        (Get_Kernel (Data),
-         Code_Analysis_Property (Property).Analysis.Projects);
+      Hide_All_Coverage_Information (Get_Kernel (Data), Analysis.Projects);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -989,20 +953,20 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
+      Analysis : Code_Analysis_Instance;
       Instance : Class_Instance;
-      Property : Instance_Property;
 
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
 
-      Show_Analysis_Report
-        (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis);
+      Show_Analysis_Report (Get_Kernel (Data), Analysis);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1268,24 +1232,8 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Instance : Class_Instance;
 
    begin
-      Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-
-      declare
-         Property : Instance_Property;
-         --  Limited lifetime for Property as it is no longer valid after
-         --  Destroy_All_Analyzes call
-      begin
-         Property := Get_Data (Instance, CodeAnalysis_Cst);
-
-         if Code_Analysis_Property (Property).Analysis = null then
-            Set_Error_Msg (Data, -"The analysis no longer exists");
-            return;
-         end if;
-      end;
-
       Destroy_All_Analyzes (Get_Kernel (Data));
 
    exception
@@ -1382,9 +1330,6 @@ package body Code_Analysis_Module is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Code_Analysis_Instance_Record, Code_Analysis_Instance);
-      Instances : constant Instance_Array :=
-                   Get_Instances (Analysis.Instances.all);
-      Property  : Instance_Property;
       Child     : GPS_MDI_Child;
 
    begin
@@ -1400,18 +1345,6 @@ package body Code_Analysis_Module is
       Remove_Location_Category (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
-
-      --  For each shell instance, get its property and set the Analysis field
-      --  to null
-      for J in Instances'Range loop
-         Property := Get_Data (Instances (J), CodeAnalysis_Cst);
-
-         if Property /= null then
-            Code_Analysis_Property (Property).Analysis := null;
-         end if;
-      end loop;
-
-      Free (Analysis.Instances);
 
       if Code_Analysis_Module_ID.Analyzes.Contains (Analysis) then
          Code_Analysis_Module_ID.Analyzes.Delete (Analysis);
@@ -2036,16 +1969,18 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property  : Instance_Property;
+      Analysis  : Code_Analysis_Instance;
       Instance  : Class_Instance;
       File_Inst : Class_Instance;
       File_Dump : GNATCOLL.VFS.Virtual_File;
+
    begin
       --  Check if the attached Analysis is still there
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
@@ -2064,7 +1999,7 @@ package body Code_Analysis_Module is
          File_Dump := Get_Data (File_Inst);
       end if;
 
-      Dump_To_File (Code_Analysis_Property (Property).Analysis, File_Dump);
+      Dump_To_File (Analysis, File_Dump);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Dump_To_File_From_Shell;
@@ -2078,7 +2013,7 @@ package body Code_Analysis_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Property    : Instance_Property;
+      Analysis    : Code_Analysis_Instance;
       Instance    : Class_Instance;
       File_Inst   : Class_Instance;
       Loaded_File : GNATCOLL.VFS.Virtual_File;
@@ -2094,8 +2029,7 @@ package body Code_Analysis_Module is
       procedure On_New_File (Project : Project_Type; File : Virtual_File) is
       begin
          Add_Gcov_File_Info_In_Callback
-           (Get_Kernel (Data), Code_Analysis_Property (Property).Analysis,
-            Project, File, True);
+           (Get_Kernel (Data), Analysis, Project, File, True);
       end On_New_File;
 
       procedure Parse_XML is new Code_Analysis_XML.Parse_XML (On_New_File);
@@ -2103,9 +2037,10 @@ package body Code_Analysis_Module is
    begin
       --  Check if the attached Analysis is still there
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
-      Property := Get_Data (Instance, CodeAnalysis_Cst);
+      Analysis := Get_Or_Create
+        (Name => Get_Data (Instance, Code_Analysis_Module_ID.Class));
 
-      if Code_Analysis_Property (Property).Analysis = null then
+      if Analysis = null then
          Set_Error_Msg (Data, -"The analysis no longer exists");
          return;
       end if;
