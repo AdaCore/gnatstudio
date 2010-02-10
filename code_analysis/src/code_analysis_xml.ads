@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@
 --  of a Code_Analysis tree structure on the standard output.
 --  </description>
 
-with XML_Utils;  use XML_Utils;
+with GNATCOLL.VFS;  use GNATCOLL.VFS;
+with XML_Utils;     use XML_Utils;
 with Code_Analysis; use Code_Analysis;
 with Projects;      use Projects;
 
@@ -34,46 +35,14 @@ package Code_Analysis_XML is
    --  Starts a dominos calling to the xml dumping subprograms
    --  following the Code_Analysis tree structure.
 
+   generic
+      with procedure On_New_File
+        (Project : Project_Type;
+         File    : GNATCOLL.VFS.Virtual_File);
    procedure Parse_XML
      (Project  : Project_Type;
-      Projects : Code_Analysis_Tree;
-      Child    : in out Node_Ptr);
+      Node     : Node_Ptr);
    --  Starts a dominos calling to the xml parsing subprograms
    --  to fill the Code_Analysis tree structure.
-
-private
-
-   procedure Dump_Project
-     (Prj_Node : Project_Access;
-      Parent   : Node_Ptr);
-   --  Add to Parent an XML child nammed Project, and call Dump_File for each
-   --  file it contains.
-
-   procedure Parse_Project
-     (Prj_Node : Project_Access;
-      Parent   : Node_Ptr);
-   --  Load from an XML child tagged "Project", the information needed to fill
-   --  a Code_Analysis Project_Node.
-   --  Then, call Parse_File on each XML children.
-
-   procedure Dump_File
-     (File_Node : Code_Analysis.File_Access; Parent : Node_Ptr);
-   --  Add to Parent an XML child nammed File, and call Dump_File for each
-   --  file it contains.
-
-   procedure Parse_File
-     (File_Node : Code_Analysis.File_Access;
-      Parent    : Node_Ptr);
-   --  Load from an XML child tagged "File", the information needed to fill
-   --  a Code_Analysis File_Node, its Subprogram and Line nodes.
-
-   procedure Dump_Subprogram
-     (Subp_Node : Subprogram_Access; Parent : Node_Ptr);
-   --  Add to Parent an XML child nammed Subprogram, and call Dump_File for
-   --  each file it contains.
-
-   procedure Dump_Line (Line_Node : Code_Analysis.Line; Parent : Node_Ptr);
-   --  Add to Parent an XML child nammed Line, and call Dump_File for each
-   --  file it contains.
 
 end Code_Analysis_XML;

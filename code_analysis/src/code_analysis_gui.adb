@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -89,6 +89,9 @@ package body Code_Analysis_GUI is
            Cov_Bar_Txt => GType_String,
            Cov_Bar_Val => GType_Int));
       Gtk_New (View.Tree, Gtk_Tree_Model (View.Model));
+      --  Ideally, we should have used Set_Name on the view itself, but for
+      --  historical reasons we set it on View.Tree. This name can be retrieved
+      --  using the Name function below.
       Set_Name (View.Tree, Name.all); --  testsuite
 
       ------------------
@@ -199,6 +202,16 @@ package body Code_Analysis_GUI is
 
       return View;
    end Build_Analysis_Report;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (View : access Code_Analysis_View_Record'Class) return String
+   is
+   begin
+      return Get_Name (View.Tree);
+   end Name;
 
    ----------------------------
    -- Expand_All_From_Report --

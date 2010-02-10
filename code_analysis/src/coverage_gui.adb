@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,14 +21,12 @@ with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Default_Preferences.Enums;
 
 with Language;                  use Language;
-with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Language.Unknown;          use Language.Unknown;
 with Language.Tree;             use Language.Tree;
@@ -112,8 +110,8 @@ package body Coverage_GUI is
       if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
          GPS.Kernel.Console.Insert
            (Kernel, Display_Base_Name (Src_File) &
-         (-" has been modified since GCOV information were generated.") &
-         (-" Skipped."),
+            (-" has been modified since GCOV information were generated.") &
+            (-" Skipped."),
             Mode => GPS.Kernel.Console.Error);
          Set_Error (File_Node, File_Out_Of_Date);
       else
@@ -291,11 +289,10 @@ package body Coverage_GUI is
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
-               Line_Coverage'Class
-                 (File_Node.Lines
-                    (J).Analysis_Data.Coverage_Data.all).
-                 Add_Location_If_Uncovered
-                 (Kernel,
+               Add_Location_If_Uncovered
+                 (Line_Coverage'Class
+                    (File_Node.Lines (J).Analysis_Data.Coverage_Data.all),
+                  Kernel,
                   File_Node.Name,
                   J,
                   File_Node.Lines (J).Contents,
@@ -489,8 +486,11 @@ package body Coverage_GUI is
             if Gcov_Root_Env = null then
                --  Look for the gcov file in the object directory of the root
                --  project.
-               Gcov_Root := Object_Path
-                 (Get_Root_Project (Get_Registry (Kernel).all));
+               Gcov_Root := Object_Path (Get_Project (Kernel));
+
+               if Gcov_Root = No_File then
+                  Gcov_Root := Dir (Project_Path (Get_Project (Kernel)));
+               end if;
             else
                --  Look for the gcov file in the path pointed by GCOV_ROOT
                Gcov_Root := Create (+Gcov_Root_Env.all);
@@ -503,7 +503,7 @@ package body Coverage_GUI is
                   -"Could not determine directory for GCOV files: make sure" &
                   " that the root project has an object directory, or that" &
                   " the environment variable GCOV_ROOT is set.",
-                 Mode => Error);
+                  Mode => Error);
             end if;
 
             return Create_From_Dir
@@ -523,18 +523,19 @@ package body Coverage_GUI is
 
    function Have_Gcov_Info
      (Projects : Code_Analysis_Tree;
-      Context  : Selection_Context) return Boolean
+      Project  : Project_Type;
+      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      return Boolean
    is
       Prj_Node : Code_Analysis.Project_Access;
    begin
-      Prj_Node := Get_Or_Create (Projects, Project_Information (Context));
+      Prj_Node := Get_Or_Create (Projects, Project);
 
-      if Has_File_Information (Context) then
+      if File /= No_File then
          declare
             File_Node : Code_Analysis.File_Access;
          begin
-            File_Node := Get_Or_Create
-              (Prj_Node, File_Information (Context));
+            File_Node := Get_Or_Create (Prj_Node, File);
 
             if File_Node.Analysis_Data.Coverage_Data /= null
               and then File_Node.Analysis_Data.Coverage_Data.Is_Valid

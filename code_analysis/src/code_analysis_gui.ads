@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -127,6 +127,9 @@ package Code_Analysis_GUI is
    --  If Is_Error is True, then the Report of Analysis will be built with an
    --  emptiness warning header.
    --  Should be called by Show_Analysis_Report or Show_Empty_Analysis_Report
+
+   function Name (View : access Code_Analysis_View_Record'Class) return String;
+   --  Get the View's name.
 
    function On_Double_Click (Object : access Gtk_Widget_Record'Class;
                              Event  : Gdk_Event;

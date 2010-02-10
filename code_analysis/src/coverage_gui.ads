@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with Glib;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Intl;        use GPS.Intl;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with Projects;        use Projects;
 with Traces;          use Traces;
 with Code_Analysis;   use Code_Analysis;
 
@@ -149,7 +150,9 @@ package Coverage_GUI is
 
    function Have_Gcov_Info
      (Projects : Code_Analysis_Tree;
-      Context  : Selection_Context) return Boolean;
+      Project  : Project_Type;
+      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      return Boolean;
    --  Verify that contextual Project and/or file if any, have associated
    --  coverage information in their corresponding node of the analysis tree.
 
