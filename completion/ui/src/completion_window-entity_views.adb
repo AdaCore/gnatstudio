@@ -43,7 +43,7 @@ with Traces; use Traces;
 
 package body Completion_Window.Entity_Views is
 
-   Initial_Tree_Size     : constant := 300; --  Width of the tree, in pixel
+   Initial_Tree_Size     : constant := 200; --  Width of the tree, in pixel
 
    package Simple_Cb is new Gtk.Handlers.Callback
      (Entity_View_Record);
@@ -135,6 +135,10 @@ package body Completion_Window.Entity_Views is
                Loc.Column,
                Focus => False);
          end;
+
+         if View.Dialog /= null then
+            Destroy (View.Dialog);
+         end if;
       end if;
    end Jump_To_Selected;
 
@@ -221,7 +225,15 @@ package body Completion_Window.Entity_Views is
 
          when GDK_Return =>
             Jump_To_Selected (View);
+
             return True;
+
+         when GDK_Escape =>
+            if View.Dialog /= null then
+               Destroy (View.Dialog);
+            end if;
+
+            return False;
 
          when others =>
             return False;
@@ -294,7 +306,7 @@ package body Completion_Window.Entity_Views is
 
       Gtk_New (View.Ent);
 
-      Pack_Start (Hbox, View.Ent, False, False, 3);
+      Pack_Start (Hbox, View.Ent, True, True, 0);
 
       Pack_Start (View, Hbox, False, False, 3);
 
@@ -507,5 +519,14 @@ package body Completion_Window.Entity_Views is
    begin
       return View.Ent;
    end Get_Entry;
+
+   ----------------
+   -- Set_Dialog --
+   ----------------
+
+   procedure Set_Dialog (Explorer : Entity_View_Access; Dialog : Gtk_Dialog) is
+   begin
+      Explorer.Dialog := Dialog;
+   end Set_Dialog;
 
 end Completion_Window.Entity_Views;
