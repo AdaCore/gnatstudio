@@ -19,7 +19,7 @@ NF-45-J211-009 Add "Goto Entity" dialog (2010-02-11)
 
   This new dialog allows browsing the entities in the project, with the same
   interface as the Entity view. This dialog can be summoned through the menu
-  Navigate -> Goto Entities or through the key binding Control-T.
+  Navigate -> Goto Entity... or through the key binding Control-T.
 
 NF-45-J210-027 Support for assembler language (2010-02-11)
 
