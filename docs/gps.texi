@@ -3508,6 +3508,11 @@ right after (for an opening delimiter) the cursor if any.
 Open a dialog where you can type a line number,  in order to jump to a specific
 location in the current source editor.
 
+@item Goto Entity...
+@cindex goto entity
+Open a dialog allowing browsing of the entities loaded in the project.
+This dialog functions similarly to the Entities View.
+
 @item Goto File Spec<->Body
 @cindex goto file spec/body
 @cindex Ada
