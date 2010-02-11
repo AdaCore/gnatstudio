@@ -15,6 +15,11 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J210-027 Support for assembler language (2010-02-11)
+
+  The project editor now supports adding assembler language for use by
+  GPRbuild during compilation and builds.
+
 NF-45-J113-016 Completion triggered on "with", "use" and "pragma" (2009-01-13)
 
   The smart completion is now automatically trigerred when inserting a space
