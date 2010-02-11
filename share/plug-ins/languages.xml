@@ -244,4 +244,10 @@
     <Parent>Ada</Parent>
     <Body_Suffix>.dg</Body_Suffix>
   </Language>
+
+  <Language>
+    <Name>Assembler</Name>
+    <Body_Suffix>.s</Body_Suffix>
+  </Language>
+
 </GPS>
