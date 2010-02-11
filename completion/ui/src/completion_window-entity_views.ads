@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2009, AdaCore                       --
+--                Copyright (C) 2009-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 
 --  This package provides an Entity View widget
 
+with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.GEntry; use Gtk.GEntry;
 
 with XML_Utils;  use XML_Utils;
@@ -56,6 +57,10 @@ package Completion_Window.Entity_Views is
       Module : Module_ID) return MDI_Child;
    --  Desktop functions
 
+   procedure Set_Dialog (Explorer : Entity_View_Access; Dialog : Gtk_Dialog);
+   --  Set the Explorer in Dialog mode: in this mode, Dialog will be quit
+   --  right after jumping to an entry.
+
 private
 
    type Entity_View_Record is new Gtk_Vbox_Record with record
@@ -65,6 +70,8 @@ private
       Notes_Scroll : Gtk_Scrolled_Window;
 
       Is_Horizontal : Boolean := True;
+
+      Dialog        : Gtk_Dialog;
 
       Vertical_Position   : Gint := -1;
       Horizontal_Position : Gint := -1;
