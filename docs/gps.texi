@@ -3511,7 +3511,7 @@ location in the current source editor.
 @item Goto Entity...
 @cindex goto entity
 Open a dialog allowing browsing of the entities loaded in the project.
-This dialog functions similarly to the Entity View. @xref{The Entity View}
+This dialog functions similarly to @ref{The Entity View}.
 
 @item Goto File Spec<->Body
 @cindex goto file spec/body
