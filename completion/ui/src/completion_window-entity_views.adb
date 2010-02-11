@@ -359,11 +359,11 @@ package body Completion_Window.Entity_Views is
          To_Marshaller (On_Pane_Button_Release'Access),
          View, After => False);
 
-      Insert_Text (View.Ent, Initial, Position);
-
       View.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
       Modify_Font (View.Explorer.View, View.Explorer.Fixed_Width_Font);
       Modify_Font (View.Ent, View.Explorer.Fixed_Width_Font);
+
+      Insert_Text (View.Ent, Initial, Position);
    end Initialize;
 
    ------------------------------
