@@ -489,7 +489,7 @@ package body Completion_Window.Entity_Views is
       Gtk_New (Child, Explorer,
                Group  => Group_Consoles,
                Module => Module);
-      Set_Title (Child, -"Entities", -"Entities");
+      Set_Title (Child, -"Entity", -"Entity");
 
       declare
       begin
