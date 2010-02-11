@@ -353,7 +353,7 @@ package body Completion_Module is
                Group          => Group_Consoles,
                Focus_Widget   => Gtk_Widget (Get_Entry (Explorer)),
                Module         => Completion_Module);
-      Set_Title (Child, -"Entities", -"Entities");
+      Set_Title (Child, -"Entity", -"Entity");
       Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
 
       return MDI_Child (Child);
@@ -1375,7 +1375,7 @@ package body Completion_Module is
          Name => "completion_module.file_saved");
 
       Register_Menu
-        (Kernel, "/_Tools/_Views/", -"_Entities",
+        (Kernel, "/_Tools/_Views/", -"_Entity",
          Ref_Item => -"Remote",
          Callback   => On_Entity_View'Access);
 
