@@ -29,10 +29,13 @@ with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Object;                use Gtk.Object;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -47,6 +50,7 @@ with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -278,7 +282,18 @@ package body Completion_Module is
    function Entity_View (Kernel : Kernel_Handle) return MDI_Child;
    --  Create an entity view
 
+   procedure Entity_View_Dialog
+     (Kernel  : Kernel_Handle;
+      Pattern : String);
+   --  Create an Entity_View in a dialog.
+   --  The pattern entry is pre-filled with Pattern.
+
    procedure On_Entity_View
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Menu callback to display the Entity View
+
+   procedure On_Entity_View_Dialog
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Menu callback to display the Entity View
@@ -291,6 +306,37 @@ package body Completion_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
    --  Desktop handling
+
+   ------------------------
+   -- Entity_View_Dialog --
+   ------------------------
+
+   procedure Entity_View_Dialog
+     (Kernel  : Kernel_Handle;
+      Pattern : String)
+   is
+      Dialog   : Gtk_Dialog;
+      Explorer : Entity_View_Access;
+
+      Response : Gtk_Response_Type;
+      Dummy    : Gtk_Widget;
+      pragma Unreferenced (Dummy);
+   begin
+      Gtk_New (Explorer, Kernel, Pattern);
+      Gtk_New (Dialog, "Goto entity...", Get_Main_Window (Kernel), 0);
+
+      Set_Dialog (Explorer, Dialog);
+      Pack_Start (Get_Vbox (Dialog), Explorer, True, True, 3);
+      Set_Default_Size (Dialog, 650, 300);
+      Show_All (Dialog);
+
+      Dummy := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Response := Run (Dialog);
+      if Response = Gtk_Response_Cancel then
+         Destroy (Dialog);
+      end if;
+   end Entity_View_Dialog;
 
    -----------------
    -- Entity_View --
@@ -337,6 +383,26 @@ package body Completion_Module is
    exception
       when E : others => Trace (Traces.Exception_Handle, E);
    end On_Entity_View;
+
+   ---------------------------
+   -- On_Entity_View_Dialog --
+   ---------------------------
+
+   procedure On_Entity_View_Dialog
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
+   begin
+      if Has_Entity_Name_Information (Context) then
+         Entity_View_Dialog (Kernel, Entity_Name_Information (Context));
+      else
+         Entity_View_Dialog (Kernel, "");
+      end if;
+   exception
+      when E : others => Trace (Traces.Exception_Handle, E);
+   end On_Entity_View_Dialog;
 
    ------------------
    -- Save_Desktop --
@@ -1312,6 +1378,13 @@ package body Completion_Module is
         (Kernel, "/_Tools/_Views/", -"_Entities",
          Ref_Item => -"Remote",
          Callback   => On_Entity_View'Access);
+
+      Register_Menu
+        (Kernel, "/_Navigate/", "Goto _Entity...",
+         Ref_Item => "Goto _Line...",
+         Accel_Key => GDK_T,
+         Accel_Mods => Control_Mask,
+         Callback => On_Entity_View_Dialog'Access);
 
       Register_Preferences (Kernel);
 
