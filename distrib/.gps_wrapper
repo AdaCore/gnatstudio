@@ -1,7 +1,7 @@
 #!/bin/sh
 # .gps_wrapper
 #
-# Copyright 2002-2008 AdaCore
+# Copyright 2002-2010 AdaCore
 
 prog=`basename $0`
 root=`dirname $0`
@@ -12,13 +12,8 @@ if [ $debug = debug ]; then
    shift;
 fi
 
-if [ "$root" = "." ]; then
-   root=`pwd`
-fi
-
-# Strip 'bin' directory to retrieve the real root
-
-root=`dirname $root`
+# Get absolute directory and strip 'bin' directory to retrieve real root
+root=`cd $root/..; pwd`
 
 GPS_STARTUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 GPS_STARTUP_PATH=$PATH
