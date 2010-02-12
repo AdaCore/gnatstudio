@@ -96,7 +96,6 @@ if codepeer != "":
     </submenu>
 
     <builder-mode name="codepeer">
-    <builder-mode name="codepeer">
       <description>Build SCIL for code review</description>
       <subdir>codepeer</subdir>
       <supported-model>builder</supported-model>
