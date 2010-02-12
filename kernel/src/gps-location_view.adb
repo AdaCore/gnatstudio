@@ -1045,8 +1045,7 @@ package body GPS.Location_View is
       Get_Selected (Get_Selection (Locations.Tree), Model, Current);
 
       if Current /= Null_Iter
-        and then Integer (Get_Int (Model, Current, Line_Column))
-        = D.Line
+        and then Integer (Get_Int (Model, Current, Line_Column)) = D.Line
       then
          return;
       end if;

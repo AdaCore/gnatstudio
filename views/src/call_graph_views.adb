@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1586,11 +1586,13 @@ package body Call_Graph_Views is
       if Entity /= null then
          View := Generic_View.Get_Or_Create_View
            (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
-         Expand_Row (View.Tree,
-           Insert_Entity (View, null, Entity, No_Entity_Reference,
-             -" calls ",
-             Kind                => View_Calls,
-             Through_Dispatching => False));
+         Expand_Row
+           (View.Tree,
+            Insert_Entity
+              (View, null, Entity,
+               No_Entity_Reference, -" calls ",
+              Kind                => View_Calls,
+              Through_Dispatching => False));
 
          Size_Request (View.Tree, R);
          R := Get_Child_Requisition (View.Tree);
