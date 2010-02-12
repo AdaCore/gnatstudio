@@ -809,25 +809,26 @@ package body Call_Graph_Views is
       --  status of children anyway, so we might as well recompute everything.
       --  It is also more logical from the user's point of view that this would
       --  act as a refresh.
-      --  Keep one child for the moment, or the expanded status is lost by gtk+
-
-      Prepend (M, Child, Iter);
-      Iter_Copy (Child, Dummy);
-      Next (M, Dummy);
-
-      while Dummy /= Null_Iter loop
-         Remove (M, Dummy);
-         Iter_Copy (Child, Dummy);
-         Next (M, Dummy);
-      end loop;
+      --  Keep one child (the computing node), or the expanded status is lost
+      --  by gtk+.
 
       Data := new Ancestors_User_Data'
         (Commands_User_Data_Record with
          View           => V,
          Computing_Iter => Null_Iter,
          Entity_Iter    => Iter);
-      Append (M, Data.Computing_Iter, Iter);
+
+      Prepend (M, Data.Computing_Iter, Iter);
       Set (M, Data.Computing_Iter, Name_Column, Computing_Label);
+
+      Iter_Copy (Data.Computing_Iter, Child);
+      Next (M, Child);
+
+      while Child /= Null_Iter loop
+         Iter_Copy (Child, Dummy);
+         Next (M, Child);
+         Remove (M, Dummy);
+      end loop;
 
       case Get_View_Type (Get_Model (V.Tree), Iter) is
          when View_Calls     =>
@@ -847,11 +848,6 @@ package body Call_Graph_Views is
                Dispatching_Calls => True,
                Background_Mode   => True);
       end case;
-
-      --  Remove the dummy node
-
-      Child := Children (M, Iter);
-      Remove (M, Child);
 
       Thaw_Sort (M, Column);
    exception
@@ -1456,7 +1452,10 @@ package body Call_Graph_Views is
       end loop;
 
       if Iter = Null_Iter then
-         Append (Model, Iter, Parent_Iter);
+         --  The new node is inserted at the top of the tree
+
+         Prepend (Model, Iter, Parent_Iter);
+
          Set (Model, Iter, Name_Column, Get_Name (Entity).all & Suffix);
          Set (Model, Iter, Decl_Column,
               Display_Base_Name (Get_Filename (Get_File (Decl)))
@@ -1503,6 +1502,25 @@ package body Call_Graph_Views is
             Set_Value (Model, Iter, List_Column, Value);
          end;
       end if;
+
+      --  Select the new node
+
+      declare
+         Selection : constant Gtk_Tree_Selection := Get_Selection (View.Tree);
+         Path      : Gtk_Tree_Path;
+      begin
+         if Parent_Iter = Null_Iter then
+            Path := Get_Path (Model, Iter);
+         else
+            Path := Get_Path (Model, Parent_Iter);
+         end if;
+         Select_Path (Selection, Path);
+
+         --  Make the new node visible
+
+         Scroll_To_Cell (View.Tree, Path, null, True, 0.5, 0.0);
+         Path_Free (Path);
+      end;
 
       return Iter;
    end Insert_Entity;
