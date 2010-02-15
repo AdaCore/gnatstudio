@@ -26,6 +26,11 @@ NF-45-J210-027 Support for assembler language (2010-02-11)
   The project editor now supports adding assembler language for use by
   GPRbuild during compilation and builds.
 
+NF-45-J128-026 Support for generic parameters (2010-02-15)
+
+  Generics parameters are now supported in the Ada outline view and smart
+  completion.
+
 NF-45-J113-016 Completion triggered on "with", "use" and "pragma" (2009-01-13)
 
   The smart completion is now automatically trigerred when inserting a space
