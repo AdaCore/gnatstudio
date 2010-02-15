@@ -3402,7 +3402,9 @@ package body Ada_Analyzer is
                   Prev_Token := Tok_Left_Paren;
 
                   if Num_Parens = 0 then
-                     if In_Declaration = Subprogram_Decl then
+                     if In_Declaration = Subprogram_Decl
+                       and then not Top_Token.Attributes (Ada_New_Attribute)
+                     then
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
@@ -3882,7 +3884,9 @@ package body Ada_Analyzer is
 
                      end if;
 
-                     if In_Declaration = Subprogram_Decl then
+                     if In_Declaration = Subprogram_Decl
+                       and then not Top_Token.Attributes (Ada_New_Attribute)
+                     then
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
