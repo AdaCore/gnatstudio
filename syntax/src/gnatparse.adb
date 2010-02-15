@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -80,7 +79,9 @@ begin
          Put (Reduce (Info.Profile.all) & " ");
       end if;
 
-      if Info.Is_Declaration then
+      if Info.Is_Generic_Spec then
+         Put ("(gen) ");
+      elsif Info.Is_Declaration then
          Put ("(spec) ");
       end if;
 
