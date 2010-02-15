@@ -16,6 +16,7 @@
 Makefile
 Makefile.common
 b~*
+*.d
 common/Makefile.common
 common/common.gpr
 common/expect/Makefile
