@@ -716,7 +716,6 @@ package body GVD.Canvas is
          --  Might be null if it was already on the canvas
          if Item /= null then
             Put (Get_Canvas (GVD_Canvas (Process.Data)), Item, X, Y);
-            Show_Item (Get_Canvas (GVD_Canvas (Process.Data)), Item);
 
             if Link_From /= null then
                Recompute_All_Aliases (Process, Recompute_Values => False);
@@ -728,6 +727,9 @@ package body GVD.Canvas is
             Refresh_Canvas (Get_Canvas (GVD_Canvas (Process.Data)));
             Align_Item
               (Get_Canvas (GVD_Canvas (Process.Data)), Item, 0.4, 0.4);
+
+            --  Show the item last, one the scrollbars have been computed
+            Show_Item (Get_Canvas (GVD_Canvas (Process.Data)), Item);
          end if;
 
          Free (Link_Name);
