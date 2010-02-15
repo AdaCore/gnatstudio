@@ -236,7 +236,7 @@ package body Ada_Analyzer is
       Token         : Token_Type := No_Token;
       --  Enclosing token
 
-      Declaration   : Boolean := False;
+      In_Declaration : Boolean := False;
       --  Are we inside a declarative part ?
 
       Extra_Indent : Boolean := False;
@@ -305,6 +305,9 @@ package body Ada_Analyzer is
 
       Attributes            : Construct_Attribute_Map := No_Attribute;
       --  Defines the attributes that have been found for the given token
+
+      Is_Generic_Param      : Boolean := False;
+      --  This this token a generic parameter?
    end record;
    --  Extended information for a token
 
@@ -620,7 +623,9 @@ package body Ada_Analyzer is
       Tmp := Stack;
 
       while Tmp /= null and then Tmp.Val.Token /= No_Token loop
-         if Tmp.Val.Token /= Tok_Package then
+         if Tmp.Val.Token /= Tok_Package
+           and then Tmp.Val.Token /= Tok_Generic
+         then
             return False;
          end if;
 
@@ -1293,7 +1298,7 @@ package body Ada_Analyzer is
                      and then
                        (Prev_Token /= Tok_Arrow
                         or else (Top_Tok /= Tok_Case
-                                 and then not Top (Tokens).Declaration
+                                 and then not Top (Tokens).In_Declaration
                                  and then Top_Tok /= Tok_When
                                  and then Top_Tok /= Tok_Select
                                  and then Top_Tok /= Tok_Exception)))
@@ -1633,8 +1638,8 @@ package body Ada_Analyzer is
 
          elsif Value.Token /= Tok_Record
            and then Value.Token /= Tok_When
+           and then Value.Token /= Tok_Generic
            and then Constructs /= null
-           and then (Value.Token /= Tok_Type or else not In_Generic)
          then
             Column             := Prec - Line_Start (Buffer, Prec) + 1;
             Info               := Constructs.Current;
@@ -1653,6 +1658,8 @@ package body Ada_Analyzer is
 
             Constructs.Current.Visibility := Value.Visibility;
             Constructs.Current.Attributes := Value.Attributes;
+
+            Constructs.Current.Is_Generic_Spec := Value.Is_Generic_Param;
 
             if Value.Attributes (Ada_Tagged_Attribute) then
                Constructs.Current.Category := Cat_Class;
@@ -1924,7 +1931,7 @@ package body Ada_Analyzer is
             Do_Push := True;
 
          elsif Reserved = Tok_Renames then
-            if not Top_Token.Declaration
+            if not Top_Token.In_Declaration
               and then (Top_Token.Token = Tok_Function
                         or else Top_Token.Token = Tok_Procedure
                         or else Top_Token.Token = Tok_Package)
@@ -1936,7 +1943,6 @@ package body Ada_Analyzer is
             end if;
 
          elsif Prev_Token = Tok_Is
-           and then not In_Generic
            and then Top_Token.Token /= Tok_Type
            and then (Top_Token.Token /= Tok_Task
                      or else Reserved = Tok_Separate)
@@ -1949,7 +1955,7 @@ package body Ada_Analyzer is
                      or else (Reserved = Tok_Null
                               and then Top_Token.Token = Tok_Procedure))
          then
-            Do_Pop := Do_Pop + 1;
+            In_Declaration := Subprogram_Decl;
 
          elsif Reserved = Tok_Pragma then
             Num_Parens := 0;
@@ -2006,8 +2012,8 @@ package body Ada_Analyzer is
             elsif Top_Token.Token = Tok_Type then
                null;
 
-            elsif not In_Generic then
-               if not Top_Token.Declaration
+            else
+               if not Top_Token.In_Declaration
                  and then (Top_Token.Token = Tok_Function
                            or else Top_Token.Token = Tok_Procedure)
                then
@@ -2018,9 +2024,16 @@ package body Ada_Analyzer is
                   Do_Pop := Do_Pop + 1;
                end if;
 
-               Do_Push := True;
+               if Top_Token.Token = Tok_Generic
+                 and then Prev_Token /= Tok_With
+               then
+                  --  Pops the temporary generic token and replace it by
+                  --  the actual subprogram or package
 
-            elsif Prev_Token /= Tok_With then
+                  Temp.Sloc := Top_Token.Sloc;
+                  Do_Pop := Do_Pop + 1;
+               end if;
+
                Do_Push := True;
             end if;
 
@@ -2076,7 +2089,7 @@ package body Ada_Analyzer is
          then
             Do_Push := True;
 
-         elsif    (Reserved = Tok_Is and then not In_Generic)
+         elsif     Reserved = Tok_Is
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
            or else Reserved = Tok_Do
@@ -2099,7 +2112,7 @@ package body Ada_Analyzer is
                     and then Reserved = Tok_When
                     and then Prev_Token /= Tok_Exit
                     and then Prev_Prev_Token /= Tok_Exit)
-           or else (Top_Token.Declaration
+           or else (Top_Token.In_Declaration
                     and then Reserved = Tok_Private
                     and then
                       (Prev_Token /= Tok_Is
@@ -2151,7 +2164,7 @@ package body Ada_Analyzer is
                       (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
                end if;
 
-               Temp.Declaration := True;
+               Temp.In_Declaration := True;
 
                if Prev_Token = Tok_Colon then
                   --  Adjust status column of declare block to take into
@@ -2167,52 +2180,50 @@ package body Ada_Analyzer is
                Do_Push := True;
 
             elsif Reserved = Tok_Is then
-               if not In_Generic then
-                  case Top_Token.Token is
-                     when Tok_Case | Tok_When | Tok_Type | Tok_Subtype =>
+               case Top_Token.Token is
+                  when Tok_Case | Tok_When | Tok_Type | Tok_Subtype =>
+                     Top_Token.Type_Definition_Section := True;
+
+                  when Tok_Task | Tok_Protected =>
+                     if Top_Token.Token = Tok_Protected then
                         Top_Token.Type_Definition_Section := True;
+                     end if;
 
-                     when Tok_Task | Tok_Protected =>
-                        if Top_Token.Token = Tok_Protected then
-                           Top_Token.Type_Definition_Section := True;
-                        end if;
+                     if Align_On_Colons then
+                        Top_Token.Align_Colon := Compute_Alignment
+                          (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
+                     end if;
 
-                        if Align_On_Colons then
-                           Top_Token.Align_Colon := Compute_Alignment
-                             (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
-                        end if;
+                     Top_Token.In_Declaration := True;
 
-                        Top_Token.Declaration := True;
+                  when others =>
+                     if Top_Token.Token = Tok_Function then
+                        Index_Next := Current + 1;
 
-                     when others =>
-                        if Top_Token.Token = Tok_Function then
-                           Index_Next := Current + 1;
+                        --  Skip blanks on current line
 
-                           --  Skip blanks on current line
+                        while Index_Next < Buffer'Last
+                          and then Buffer (Index_Next) /= ASCII.LF
+                          and then (Buffer (Index_Next) = ' '
+                                    or else Buffer (Index_Next) = ASCII.HT)
+                        loop
+                           Index_Next := Index_Next + 1;
+                        end loop;
+                     end if;
 
-                           while Index_Next < Buffer'Last
-                             and then Buffer (Index_Next) /= ASCII.LF
-                             and then (Buffer (Index_Next) = ' '
-                                       or else Buffer (Index_Next) = ASCII.HT)
-                           loop
-                              Index_Next := Index_Next + 1;
-                           end loop;
-                        end if;
+                     if Align_On_Colons then
+                        Top_Token.Align_Colon := Compute_Alignment
+                          (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
+                     end if;
 
-                        if Align_On_Colons then
-                           Top_Token.Align_Colon := Compute_Alignment
-                             (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
-                        end if;
-
-                        Top_Token.Declaration := True;
-                  end case;
-               end if;
+                     Top_Token.In_Declaration := True;
+               end case;
 
             elsif Reserved = Tok_Begin then
-               if Top_Token.Declaration then
+               if Top_Token.In_Declaration then
                   Num_Spaces := Num_Spaces - Indent_Level;
                   Top_Token.Align_Colon := 0;
-                  Top_Token.Declaration := False;
+                  Top_Token.In_Declaration := False;
 
                else
                   Do_Push := True;
@@ -2279,6 +2290,11 @@ package body Ada_Analyzer is
             if Top_Token.Token /= Tok_Colon then
                Do_Push := True;
             end if;
+
+         elsif Reserved = Tok_Generic then
+            Temp.In_Declaration := True;
+            Do_Push := True;
+
          end if;
 
       exception
@@ -2491,7 +2507,7 @@ package body Ada_Analyzer is
                     and then Reserved = Tok_When
                     and then Prev_Token /= Tok_Exit
                     and then Prev_Prev_Token /= Tok_Exit)
-           or else (Top_Token.Declaration
+           or else (Top_Token.In_Declaration
                     and then Reserved = Tok_Private
                     and then
                       (Prev_Token /= Tok_Is
@@ -2559,10 +2575,10 @@ package body Ada_Analyzer is
                end if;
 
             elsif Reserved = Tok_Begin then
-               if Top_Token.Declaration then
+               if Top_Token.In_Declaration then
                   Num_Spaces := Num_Spaces - Indent_Level;
                   Top_Token.Align_Colon := 0;
-                  Top_Token.Declaration := False;
+                  Top_Token.In_Declaration := False;
                end if;
 
             elsif Reserved = Tok_Record then
@@ -2801,7 +2817,7 @@ package body Ada_Analyzer is
                Skip_Blanks (Buffer, Non_Blank);
             end if;
 
-            if Local_Top_Token.Declaration
+            if Local_Top_Token.In_Declaration
               and then Local_Top_Token.Token = Tok_Identifier
             then
                Pop_And_Set_Local (Tokens);
@@ -3478,6 +3494,7 @@ package body Ada_Analyzer is
                   if Num_Parens = 1
                     and then Local_Top_Token.Token in Token_Class_Declk
                     and then Local_Top_Token.Profile_Start = 0
+                    and then not Local_Top_Token.Attributes (Ada_New_Attribute)
                   then
                      if In_Declaration = Subprogram_Decl then
                         Local_Top_Token.Profile_Start := P;
@@ -3836,21 +3853,20 @@ package body Ada_Analyzer is
 
                      elsif Num_Parens = 0 then
                         if In_Declaration = Subprogram_Decl
+                          or else In_Declaration = Type_Decl
                           or else
                             (Local_Top_Token.Token = Tok_Task
                              and then In_Declaration = Type_Decl)
                           or else Local_Top_Token.Token = Tok_Subtype
                           or else Local_Top_Token.Token = Tok_For
                         then
-                           if not In_Generic then
-                              --  subprogram spec or type decl or repr. clause,
-                              --  e.g:
-                              --  procedure xxx (...);
-                              --  type ... is ...;
-                              --  for ... use ...;
+                           --  subprogram spec or type decl or repr. clause,
+                           --  e.g:
+                           --  procedure xxx (...);
+                           --  type ... is ...;
+                           --  for ... use ...;
 
-                              Pop_And_Set_Local (Tokens);
-                           end if;
+                           Pop_And_Set_Local (Tokens);
 
                            In_Declaration := No_Decl;
 
@@ -3875,7 +3891,7 @@ package body Ada_Analyzer is
                   else
                      Prev_Token := Tok_Comma;
 
-                     if Local_Top_Token.Declaration
+                     if Local_Top_Token.In_Declaration
                        and then Local_Top_Token.Token = Tok_Identifier
                      then
                         Pop_And_Set_Local (Tokens);
@@ -4100,7 +4116,7 @@ package body Ada_Analyzer is
                Top_Token.Sloc_Name.Index  := Prec;
             end if;
 
-            if (Top_Token.Declaration
+            if (Top_Token.In_Declaration
                 or else Top_Token.Type_Declaration
                 or else Top_Token.Attributes (Ada_Record_Attribute)
                 or else Is_Parameter
@@ -4109,7 +4125,6 @@ package body Ada_Analyzer is
                   (Top_Token.Type_Definition_Section
                    and then Top_Token.Token = Tok_Type
                    and then Top_Token.Attributes = No_Attribute))
-              and then not In_Generic
               and then (Num_Parens = 0
                         or else Is_Parameter
                         or else Is_Discriminant
@@ -4118,7 +4133,8 @@ package body Ada_Analyzer is
                         or else Prev_Token = Tok_Declare
                         or else Prev_Token = Tok_Is
                         or else Prev_Token = Tok_Private
-                        or else Prev_Token = Tok_Record)
+                        or else Prev_Token = Tok_Record
+                        or else Prev_Token = Tok_Generic)
             then
                --  This is a variable, a field declaration or a enumeration
                --  literal
@@ -4133,7 +4149,7 @@ package body Ada_Analyzer is
                   Val.Identifier (1 .. Str_Len) := Str (1 .. Str_Len);
                   Val.Ident_Len   := Str_Len;
                   Val.Sloc_Name   := Val.Sloc;
-                  Val.Declaration := True;
+                  Val.In_Declaration := True;
                   Val.Visibility  := Top_Token.Visibility_Section;
 
                   if Is_Parameter then
@@ -4144,6 +4160,7 @@ package body Ada_Analyzer is
 
                   Val.Is_In_Type_Definition :=
                     Top_Token.Type_Definition_Section;
+                  Val.Is_Generic_Param := In_Generic;
                   Push (Tokens, Val);
                end;
             end if;
@@ -4220,13 +4237,7 @@ package body Ada_Analyzer is
                   Pop (Tokens);
                end loop;
 
-               if Do_Push then
-                  Push (Tokens, Temp);
-               else
-                  null;
-               end if;
-
-               --  Computes In_Generic
+               --  Handles In_Generic
 
                if not In_Generic
                  and then Token = Tok_Generic
@@ -4240,6 +4251,13 @@ package body Ada_Analyzer is
                     or else Token = Tok_Package)
                then
                   In_Generic := False;
+               end if;
+
+               if Do_Push then
+                  Temp.Is_Generic_Param := In_Generic;
+                  Push (Tokens, Temp);
+               else
+                  null;
                end if;
 
                --  Computes In_Declaration

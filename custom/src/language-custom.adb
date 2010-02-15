@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2009, AdaCore                 --
+--                  Copyright (C) 2000-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -856,16 +856,17 @@ package body Language.Custom is
       Construct.all :=
         (Category,
          null,
-         Is_Declaration => Is_Declaration,
-         Visibility     => Visibility_Public,
-         Name           => N,
-         Profile        => P,
-         Sloc_Start     => Sloc_Start,
-         Sloc_Entity    => Sloc_Entity,
-         Sloc_End       => Sloc_End,
-         Prev           => Prev,
-         Next           => Next,
-         Attributes     => (others => False));
+         Is_Declaration  => Is_Declaration,
+         Visibility      => Visibility_Public,
+         Name            => N,
+         Profile         => P,
+         Sloc_Start      => Sloc_Start,
+         Sloc_Entity     => Sloc_Entity,
+         Sloc_End        => Sloc_End,
+         Prev            => Prev,
+         Next            => Next,
+         Attributes      => (others => False),
+         Is_Generic_Spec => False);
    end Set_Construct;
 
    ------------------

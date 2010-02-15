@@ -557,6 +557,9 @@ package Language is
       Is_Declaration : Boolean;
       --  Is this a declaration (e.g function specification) ?
 
+      Is_Generic_Spec : Boolean := False;
+      --  Is this in a generic parameter?
+
       Visibility     : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
@@ -911,18 +914,19 @@ private
      (null, Token_List.Null_List);
 
    Null_Construct_Info : constant Construct_Information :=
-                           (Category       => Cat_Unknown,
-                            Category_Name  => null,
-                            Is_Declaration => False,
-                            Visibility     => Visibility_Public,
-                            Name           => null,
-                            Profile        => null,
-                            Sloc_Start     => (0, 0, 0),
-                            Sloc_Entity    => (0, 0, 0),
-                            Sloc_End       => (0, 0, 0),
-                            Prev           => null,
-                            Next           => null,
-                            Attributes     => (others => False));
+                           (Category        => Cat_Unknown,
+                            Category_Name   => null,
+                            Is_Declaration  => False,
+                            Is_Generic_Spec => False,
+                            Visibility      => Visibility_Public,
+                            Name            => null,
+                            Profile         => null,
+                            Sloc_Start      => (0, 0, 0),
+                            Sloc_Entity     => (0, 0, 0),
+                            Sloc_End        => (0, 0, 0),
+                            Prev            => null,
+                            Next            => null,
+                            Attributes      => (others => False));
 
    Null_Simple_Construct_Info : constant Simple_Construct_Information :=
                                   (Category       => Cat_Unknown,
