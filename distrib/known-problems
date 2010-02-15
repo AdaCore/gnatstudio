@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- J212-001 GPS fails to load icons when launched with relative path on unix
+  Problem:    When running gps on unix systems with a relative path, e.g.
+              ./gps/bin/gps
+              GPS will fail to load some resources (e.g. icons).
+  Workaround  Launch GPS with no path, or an absolute path.
+
 - IC01-004 Issues with project switching
   Problem:    When switching from a project A to a project B within GPS (for
               instance through the menu Project->Open...), GPS might be unable
