@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -3605,14 +3605,15 @@ package body Docgen2 is
          Dst_Dir.Make_Dir;
       end if;
 
+      Src_Dir.Copy (Dst_Dir.Full_Name & Base_Dir_Name (Src_Dir), Success);
+
       Cursor := List.First;
       while Docgen2.Scripts.Custom_CSS_File_Vectors.Has_Element (Cursor) loop
          File := Docgen2.Scripts.Custom_CSS_File_Vectors.Element (Cursor);
-         File.Copy (Dst_Dir.Full_Name & Base_Name (File), Success);
+         File.Copy (Dst_Dir.Full_Name & Base_Dir_Name (Src_Dir), Success);
          Docgen2.Scripts.Custom_CSS_File_Vectors.Next (Cursor);
       end loop;
 
-      Src_Dir.Copy (Dst_Dir.Full_Name & Base_Dir_Name (Src_Dir), Success);
       pragma Assert (Success);
    end Generate_Support_Files;
 
