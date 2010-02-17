@@ -209,6 +209,12 @@ package Language.Tree.Database is
       Column : Visible_Column_Type) return Integer;
    --  Convert a column into a line offset, taking into account tabulations.
 
+   function To_Offset
+     (File   : Structured_File_Access;
+      Line   : Integer;
+      Column : Visible_Column_Type) return Integer;
+   --  Return the offset from Line and Column in File.
+
    function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access;
    --  Return the tree language associated to this file.
