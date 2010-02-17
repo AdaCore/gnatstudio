@@ -3605,8 +3605,11 @@ package body Docgen2 is
          Dst_Dir.Make_Dir;
       end if;
 
+      --  Make sure to copy first the full "support" directory into the
+      --  destination directory.
       Src_Dir.Copy (Dst_Dir.Full_Name & Base_Dir_Name (Src_Dir), Success);
 
+      --  Then copy individual user-defined css files into this support subdir
       Cursor := List.First;
       while Docgen2.Scripts.Custom_CSS_File_Vectors.Has_Element (Cursor) loop
          File := Docgen2.Scripts.Custom_CSS_File_Vectors.Element (Cursor);
