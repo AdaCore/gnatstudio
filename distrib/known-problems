@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.2
 
+- J215-022: Documentation generation issue with custom css files
+  Problem:    When a plugin defines a custom css files to be included in the
+              generated documentation, then this css files is copied in the
+              doc directory instead of the expected doc/support directory.
+  Workaround: Manually move the css files to the support subdirectory.
+
 - IC21-009: Cursor location in Text View may become partially hidden
   Problem:    When the GPS default font is pretty big, the cursor location may
               not be large enough to contain the actual value.
