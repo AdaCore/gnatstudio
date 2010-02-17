@@ -30,7 +30,6 @@ with Gtk.Handlers;       use Gtk.Handlers;
 with Completion_Window;  use Completion_Window;
 
 with Language.Ada;                   use Language.Ada;
-with Ada_Semantic_Tree; use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -40,6 +39,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
 with Traces; use Traces;
+with Language.Tree.Database; use Language.Tree.Database;
 
 package body Completion_Window.Entity_Views is
 
@@ -88,13 +88,14 @@ package body Completion_Window.Entity_Views is
    -------------
 
    procedure Gtk_New
-     (View    : out Entity_View_Access;
-      Kernel  : Kernel_Handle;
-      Initial : Glib.UTF8_String)
+     (View       : out Entity_View_Access;
+      Kernel     : Kernel_Handle;
+      Initial    : Glib.UTF8_String;
+      Visibility : Visibility_Context)
    is
    begin
       View := new Entity_View_Record;
-      Initialize (View, Kernel, Initial);
+      Initialize (View, Kernel, Initial, Visibility);
    end Gtk_New;
 
    ----------------------
@@ -263,7 +264,7 @@ package body Completion_Window.Entity_Views is
       List := Find_Declarations
         (Context           =>
            (From_Database, Get_Construct_Database (View.Explorer.Kernel)),
-         From_Visibility   => Null_Visibility_Context,
+         From_Visibility   => View.Visibility,
          Is_Partial        => True,
          Expression        => Expression);
 
@@ -289,9 +290,10 @@ package body Completion_Window.Entity_Views is
    ----------------
 
    procedure Initialize
-     (View     : access Entity_View_Record'Class;
-      Kernel   : Kernel_Handle;
-      Initial  : Glib.UTF8_String)
+     (View       : access Entity_View_Record'Class;
+      Kernel     : Kernel_Handle;
+      Initial    : Glib.UTF8_String;
+      Visibility : Visibility_Context)
    is
       Hbox     : Gtk_Hbox;
       Label    : Gtk_Label;
@@ -362,6 +364,8 @@ package body Completion_Window.Entity_Views is
       View.Explorer.Fixed_Width_Font := Default_Style.Get_Pref_Font;
       Modify_Font (View.Explorer.View, View.Explorer.Fixed_Width_Font);
       Modify_Font (View.Ent, View.Explorer.Fixed_Width_Font);
+
+      View.Visibility := Visibility;
 
       Insert_Text (View.Ent, Initial, Position);
    end Initialize;
@@ -485,7 +489,7 @@ package body Completion_Window.Entity_Views is
       Explorer : Entity_View_Access;
       Child    : GPS_MDI_Child;
    begin
-      Gtk_New (Explorer, Kernel, "");
+      Gtk_New (Explorer, Kernel, "", Null_Visibility_Context);
       Gtk_New (Child, Explorer,
                Group  => Group_Consoles,
                Module => Module);
