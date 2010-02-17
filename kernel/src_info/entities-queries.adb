@@ -44,7 +44,7 @@ package body Entities.Queries is
    Callers_Me : constant Trace_Handle := Create ("Entities.Callers", Off);
    Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
    Constructs_Heuristics : constant Trace_Handle :=
-     Create ("Entities.Constructs", On);
+     Create ("Entities.Constructs", Off);
 
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
