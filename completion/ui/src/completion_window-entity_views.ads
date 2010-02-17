@@ -27,6 +27,7 @@ with Gtkada.MDI; use Gtkada.MDI;
 with Gtk.Paned;  use Gtk.Paned;
 
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with Ada_Semantic_Tree; use Ada_Semantic_Tree;
 
 package Completion_Window.Entity_Views is
 
@@ -34,15 +35,17 @@ package Completion_Window.Entity_Views is
    type Entity_View_Access is access all Entity_View_Record'Class;
 
    procedure Gtk_New
-     (View     : out Entity_View_Access;
-      Kernel   : Kernel_Handle;
-      Initial  : Glib.UTF8_String);
+     (View       : out Entity_View_Access;
+      Kernel     : Kernel_Handle;
+      Initial    : Glib.UTF8_String;
+      Visibility : Visibility_Context);
    --  Create a new Completion_Explorer
 
    procedure Initialize
      (View     : access Entity_View_Record'Class;
       Kernel   : Kernel_Handle;
-      Initial  : Glib.UTF8_String);
+      Initial  : Glib.UTF8_String;
+      Visibility : Visibility_Context);
    --  Internal initialization procedure
 
    function Get_Entry
@@ -65,6 +68,8 @@ private
 
    type Entity_View_Record is new Gtk_Vbox_Record with record
       Explorer : Completion_Explorer_Access;
+
+      Visibility : Visibility_Context;
       Ent      : Gtk_Entry;
       Pane     : Gtk_Paned;
       Notes_Scroll : Gtk_Scrolled_Window;
