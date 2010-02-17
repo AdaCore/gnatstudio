@@ -694,6 +694,19 @@ package body Language.Tree.Database is
       return Current_Index - Get_Offset_Of_Line (File, Line) + 1;
    end To_Line_Offset;
 
+   ---------------
+   -- To_Offset --
+   ---------------
+
+   function To_Offset
+     (File   : Structured_File_Access;
+      Line   : Integer;
+      Column : Visible_Column_Type) return Integer is
+   begin
+      return Get_Offset_Of_Line (File, Line)
+        + To_Line_Offset (File, Line, Column);
+   end To_Offset;
+
    ------------------
    -- Get_Language --
    ------------------
