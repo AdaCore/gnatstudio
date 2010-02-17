@@ -583,7 +583,12 @@ package body Entities.Queries is
       if Active (Constructs_Heuristics)
         and then
           (Status = Entity_Not_Found
-           or else (Status = Fuzzy_Match and then not Fuzzy_Expected))
+          --  Ideally, we should activate that on fuzzy match as well.
+          --  Unfortunately, there are currently too many fuzzy matches cases
+          --  where the information is actually correct, e.g. in case of
+          --  dot notation, so don't activate this thing for now.
+          --  or else (Status = Fuzzy_Match and then not Fuzzy_Expected)
+          )
       then
          declare
             Tree_Lang : constant Tree_Language_Access :=
