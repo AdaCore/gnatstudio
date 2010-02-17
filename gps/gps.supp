@@ -4619,3 +4619,38 @@
   Memcheck:Overlap
   fun:memcpy
 }
+
+#### glib 2.23.3
+{
+  [J217-011] GPS: valgrind/start_exit failure with glib 2.23.3 
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  obj:*/libgobject-2.0.so.0
+  obj:*/libgobject-2.0.so.0
+  obj:*/libgobject-2.0.so.0
+  obj:*/libgobject-2.0.so.0
+  fun:g_type_add_interface_static
+}
+{
+  [J217-011] GPS: valgrind/start_exit failure with glib 2.23.3 
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  obj:*/libgobject-2.0.so.0
+  obj:*/libgobject-2.0.so.0
+  obj:*/libgobject-2.0.so.0
+  fun:g_type_add_interface_static
+}
+{
+  [J217-011] GPS: valgrind/start_exit failure with glib 2.23.3 
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  obj:*/libgobject-2.0.so.0
+  obj:*/libgobject-2.0.so.0
+  fun:g_type_register_static
+}
