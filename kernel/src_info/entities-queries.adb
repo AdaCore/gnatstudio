@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,17 +28,23 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
+with Language;                  use Language;
+with Language.Tree;             use Language.Tree;
+with Language.Tree.Database;    use Language.Tree.Database;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;
 with Ada.Containers; use Ada.Containers;
+with Entities.Construct_Assistant; use Entities.Construct_Assistant;
 
 package body Entities.Queries is
 
    Me     : constant Trace_Handle := Create ("Entities.Queries", Off);
    Callers_Me : constant Trace_Handle := Create ("Entities.Callers", Off);
    Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
+   Constructs_Heuristics : constant Trace_Handle :=
+     Create ("Entities.Constructs", On);
 
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
@@ -512,7 +518,8 @@ package body Entities.Queries is
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False;
-      Handler         : LI_Handler := null)
+      Handler         : LI_Handler := null;
+      Fuzzy_Expected  : Boolean := False)
    is
       H       : LI_Handler := Handler;
       Updated : Source_File;
@@ -567,11 +574,63 @@ package body Entities.Queries is
          end if;
 
          Trace (Me, "Result=" & Status'Img);
-
       else
          Status := Entity_Not_Found;
          Entity := null;
          Trace (Me, "Entity not found");
+      end if;
+
+      if Active (Constructs_Heuristics)
+        and then
+          (Status = Entity_Not_Found
+           or else (Status = Fuzzy_Match and then not Fuzzy_Expected))
+      then
+         declare
+            Tree_Lang : constant Tree_Language_Access :=
+              Tree_Language_Access
+                (Get_Tree_Language_From_File
+                     (Language_Handler (Db.Lang), Source.Name));
+            S_File : constant Structured_File_Access :=
+              Get_Or_Create
+                (Db        => Db.Construct_Db,
+                 File      => Source.Name,
+                 Lang      => Get_Language_From_File
+                   (Language_Handler (Db.Lang), Source.Name),
+                 Tree_Lang => Tree_Lang);
+
+            Result    : Entity_Access;
+            Construct : Construct_Tree_Iterator;
+         begin
+            Update_Contents (S_File);
+
+            Construct := Get_Iterator_At
+              (Tree      => Get_Tree (S_File),
+               Location  => To_Location
+                 (Line,
+                  To_Line_Offset (S_File, Line, Column)),
+               From_Type => Start_Name);
+
+            if Construct /= Null_Construct_Tree_Iterator then
+               --  We're already on a construct
+               Result := Tree_Lang.Get_Declaration
+                 (To_Entity_Access (S_File, Construct));
+            else
+               --  Otherwise, search the corresponding declaration
+               Result := Tree_Lang.Find_Declaration
+                 (S_File, Line, To_Line_Offset (S_File, Line, Column));
+            end if;
+
+            if Result /= Null_Entity_Access then
+               --  We didn't find any entity using the LI mechanism, but
+               --  the construct engine found one.
+
+               Entity := To_LI_Entity (Result);
+
+               Entity.Is_Valid := False;
+
+               Status := Fuzzy_Match;
+            end if;
+         end;
       end if;
    end Find_Declaration;
 
@@ -590,12 +649,15 @@ package body Entities.Queries is
                        Null_Entity_Reference_Cursor;
       Return_Next  : Boolean := Current_Location = No_File_Location;
       It           : Entity_Reference_Cursor;
+      Start_Loc    : File_Location;
    begin
       if Active (Me) then
          Trace (Me, "Find_Next_Body for "
                 & Get_Name (Entity).all
                 & " current=" & To_String (Current_Location));
       end if;
+
+      --  First, try to get the next entity using the ali files
 
       Update_Xref (Entity.Declaration.File);
 
@@ -623,6 +685,73 @@ package body Entities.Queries is
 
          It := Next (It);
       end loop;
+
+      --  If not found, then try using the construct database
+
+      if Active (Constructs_Heuristics)
+        and then not Return_Next
+        and then First_Entity = Null_Entity_Reference_Cursor
+      then
+         if Current_Location /= No_File_Location then
+            Start_Loc := Current_Location;
+         else
+            Start_Loc := Entity.Declaration;
+         end if;
+
+         declare
+            Db : constant Entities_Database  := Start_Loc.File.Db;
+
+            Tree_Lang : constant Tree_Language_Access :=
+              Tree_Language_Access
+                (Get_Tree_Language_From_File
+                     (Language_Handler (Db.Lang),
+                      Start_Loc.File.Name));
+            S_File : constant Structured_File_Access :=
+              Get_Or_Create
+                (Db        => Db.Construct_Db,
+                 File      => Start_Loc.File.Name,
+                 Lang      => Get_Language_From_File
+                   (Language_Handler (Db.Lang), Start_Loc.File.Name),
+                 Tree_Lang => Tree_Lang);
+            Construct : Construct_Tree_Iterator;
+            Entity : Entity_Access;
+         begin
+            Update_Contents (S_File);
+
+            Construct :=
+              Get_Iterator_At
+                (Tree      => Get_Tree (S_File),
+                 Location  => To_Location
+                   (Start_Loc.Line,
+                    To_Line_Offset
+                      (S_File,
+                       Start_Loc.Line,
+                       Start_Loc.Column)),
+                 From_Type => Start_Name);
+
+            if Construct /= Null_Construct_Tree_Iterator then
+               Entity := To_Entity_Access (S_File, Construct);
+               Entity := Tree_Lang.Find_Next_Part (Entity);
+
+               if Entity /= Null_Entity_Access then
+                  Location.File :=
+                    Get_Or_Create
+                      (Db           => Db,
+                       File         => Get_File_Path (Get_File (Entity)));
+                  Location.Line := Get_Construct (Entity).Sloc_Entity.Line;
+
+                  Location.Column := To_Visible_Column
+                    (Get_File (Entity),
+                     Get_Construct (Entity).Sloc_Entity.Line,
+                     Get_Construct (Entity).Sloc_Entity.Column);
+
+                  return;
+               end if;
+            end if;
+         end;
+      end if;
+
+      --  Still not found, no result
 
       if No_Location_If_First
         or else First_Entity = Null_Entity_Reference_Cursor

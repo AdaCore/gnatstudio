@@ -339,7 +339,8 @@ package GPS.Kernel is
       Ask_If_Overloaded : Boolean;
       Entity            : out Entities.Entity_Information;
       Closest_Ref       : out Entities.Entity_Reference;
-      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
+      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
+      Fuzzy_Expected    : Boolean := False);
    --  Find the declaration of the given entity in the file.
    --  If Ask_If_Overloaded is True and there are several possible matches for
    --  the entiy (for instance because the xref info is not up-to-date), an

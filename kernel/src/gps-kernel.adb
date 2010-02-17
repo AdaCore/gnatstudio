@@ -281,7 +281,8 @@ package body GPS.Kernel is
       --  is more efficient in case the current directory has lots of source
       --  files.
 
-      Handle.Database := Create (Handle.Registry);
+      Handle.Database := Create
+        (Handle.Registry, Handle.Get_Construct_Database);
       Register_Language_Handler (Handle.Database, Handler);
 
       Gtk_New (Handle.Icon_Factory);
@@ -1642,12 +1643,14 @@ package body GPS.Kernel is
       Ask_If_Overloaded : Boolean;
       Entity            : out Entities.Entity_Information;
       Closest_Ref       : out Entities.Entity_Reference;
-      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
+      Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
+      Fuzzy_Expected    : Boolean := False)
    is
    begin
       Find_Declaration
         (Kernel.Database, File, Entity_Name,
-         Line, Column, Entity, Closest_Ref, Status);
+         Line, Column, Entity, Closest_Ref,
+         Status, Fuzzy_Expected => Fuzzy_Expected);
 
       --  ??? Should have the preference for the handling of fuzzy matches:
       --   - consider it as a no match: set Status to Entity_Not_Found;

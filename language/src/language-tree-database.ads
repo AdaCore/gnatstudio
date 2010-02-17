@@ -31,6 +31,7 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Construct_Tries;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with Basic_Types; use Basic_Types;
 
 package Language.Tree.Database is
 
@@ -38,6 +39,15 @@ package Language.Tree.Database is
    --  This type points to a precise entity in the database. It's not suitable
    --  for persistent storage: its data are not valid anymore after a refresh
    --  on the file where the entity is located.
+
+   type Construct_Database is new Identifier_Manager with private;
+   --  A construct database is a data structure containing a file index and a
+   --  construct index, both sorted alphabetically.
+
+   type Structured_File is private;
+   --  This type reprensents a file with a structured view of its contents
+
+   type Structured_File_Access is access all Structured_File;
 
    -------------------
    -- Tree_Language --
@@ -92,6 +102,22 @@ package Language.Tree.Database is
      (Tree : access Unknown_Tree_Language) return Language_Access;
    --  See inherited documentation
 
+   function Find_Declaration
+     (Lang     : access Tree_Language;
+      File     : Structured_File_Access;
+      Line     : Integer;
+      Column   : Integer) return Entity_Access;
+   --  Find a declaration for the location given in parameter - this is
+   --  best effort based. The implementer is responsible to decide if the
+   --  information he has is accurate enough or not. By default, just
+   --  return an null entity.
+
+   function Find_Next_Part
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return Entity_Access;
+   --  Find the next part of the entity given in parameter if there is any.
+   --  By default, return Entity.
+
    Unknown_Tree_Lang : constant Tree_Language_Access;
 
    ---------------------
@@ -129,11 +155,6 @@ package Language.Tree.Database is
    ---------------------
    -- Structured_File --
    ---------------------
-
-   type Structured_File is private;
-   --  This type reprensents a file with a structured view of its contents
-
-   type Structured_File_Access is access all Structured_File;
 
    overriding function "="
      (Left, Right : Structured_File_Access) return Boolean;
@@ -174,6 +195,19 @@ package Language.Tree.Database is
    --  Return the offset of the line given in parameter. For efficency, the
    --  line offsets of all lines are cached when calling this function,
    --  and freed either when the File is freed or updated.
+
+   function To_Visible_Column
+     (File         : Structured_File_Access;
+      Line        : Integer;
+      Line_Offset : Integer) return Visible_Column_Type;
+   --  Convert a line offset to a visible column, taking into account
+   --  tabulations.
+
+   function To_Line_Offset
+     (File   : Structured_File_Access;
+      Line   : Integer;
+      Column : Visible_Column_Type) return Integer;
+   --  Convert a column into a line offset, taking into account tabulations.
 
    function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access;
@@ -240,10 +274,6 @@ package Language.Tree.Database is
    ------------------------
    -- Construct_Database --
    ------------------------
-
-   type Construct_Database is new Identifier_Manager with private;
-   --  A construct database is a data structure containing a file index and a
-   --  construct index, both sorted alphabetically.
 
    type Construct_Database_Access is access all Construct_Database;
 

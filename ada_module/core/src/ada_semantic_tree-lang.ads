@@ -59,6 +59,18 @@ package Ada_Semantic_Tree.Lang is
       Entity : Entity_Access) return Entity_Access;
    --  See inherited documentation
 
+   overriding function Find_Declaration
+     (Lang     : access Ada_Tree_Language;
+      File     : Structured_File_Access;
+      Line     : Integer;
+      Column   : Integer) return Entity_Access;
+   --  See inherited documentation
+
+   overriding function Find_Next_Part
+     (Lang   : access Ada_Tree_Language;
+      Entity : Entity_Access) return Entity_Access;
+   --  See inherited documentation
+
    Ada_Tree_Lang : constant Tree_Language_Access;
 
    function Same_Profile

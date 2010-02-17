@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
 with GPS.Intl;                   use GPS.Intl;
 with Language;                   use Language;
+with Language.Tree.Database;     use Language.Tree.Database;
 with Language_Handlers;          use Language_Handlers;
 with Language_Utils;             use Language_Utils;
 with Projects.Registry;          use Projects.Registry;
@@ -1018,7 +1019,8 @@ package body Entities is
    ------------
 
    function Create
-     (Registry : Projects.Registry.Project_Registry_Access)
+     (Registry     : Projects.Registry.Project_Registry_Access;
+      Construct_Db : Language.Tree.Database.Construct_Database_Access)
       return Entities_Database
    is
       Db : Entities_Database;
@@ -1027,6 +1029,8 @@ package body Entities is
       Db.Registry := Registry;
       Db.Frozen   := Create_And_Update;
       Db.FS_Optimizer := Create;
+      Db.Construct_Db := Construct_Db;
+
       return Db;
    end Create;
 

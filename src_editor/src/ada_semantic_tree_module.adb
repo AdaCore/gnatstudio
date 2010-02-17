@@ -27,6 +27,7 @@ with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
 with Traces;                       use Traces;
+with Entities.Construct_Assistant;
 
 package body Ada_Semantic_Tree_Module is
 
@@ -88,6 +89,9 @@ package body Ada_Semantic_Tree_Module is
            (Buffer_Provider with Kernel => Kernel_Handle (Kernel)));
       Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
         (Get_Construct_Database (Kernel), Std_Entities_Files);
+      Entities.Construct_Assistant.Register_Assistant
+        (Kernel.Get_Construct_Database,
+         Kernel.Get_Database);
    exception
       when E : others =>
          Trace (Exception_Handle, E);

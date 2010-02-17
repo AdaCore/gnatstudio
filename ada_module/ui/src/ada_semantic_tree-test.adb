@@ -709,10 +709,9 @@ procedure Ada_Semantic_Tree.Test is
    Loaded, Success : Boolean;
 
 begin
---     Set_Profiling (False);
    Projects.Registry.Initialize;
 
-   Db := Create (New_Registry'Unchecked_Access);
+   Db := Create (New_Registry'Unchecked_Access, Construct_Db);
 
    Load
      (Registry           => New_Registry,

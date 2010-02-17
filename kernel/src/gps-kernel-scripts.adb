@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -787,8 +787,11 @@ package body GPS.Kernel.Scripts is
             Status : Find_Decl_Or_Body_Query_Status;
             F      : Virtual_File;
             Source : Source_File;
+            Fuzzy_Expected : Boolean;
 
          begin
+            Fuzzy_Expected := Number_Of_Arguments (Data) < 5;
+
             if File = No_Class_Instance then
                --  ??? MANU Don't know what Handler to pass here, since we do
                --  not have enough information to recognize the context.
@@ -814,7 +817,8 @@ package body GPS.Kernel.Scripts is
                Ask_If_Overloaded => False,
                Closest_Ref       => Ref,
                Entity            => Entity,
-               Status            => Status);
+               Status            => Status,
+               Fuzzy_Expected    => Fuzzy_Expected);
 
             if Status /= Success and then Status /= Fuzzy_Match then
                Set_Error_Msg (Data, -"Entity not found");

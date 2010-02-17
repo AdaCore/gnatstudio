@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2009, AdaCore              --
+--                     Copyright (C) 2003-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,8 @@ with GNATCOLL.VFS;
 with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
+with Language.Tree;
+with Language.Tree.Database;
 with Basic_Types;
 with Generic_Stack;
 with Tries;
@@ -74,7 +76,8 @@ package Entities is
    type Entities_Database is private;
 
    function Create
-     (Registry : Projects.Registry.Project_Registry_Access)
+     (Registry     : Projects.Registry.Project_Registry_Access;
+      Construct_Db : Language.Tree.Database.Construct_Database_Access)
       return Entities_Database;
    --  Return a new empty database
 
@@ -1417,6 +1420,8 @@ private
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
       Stack           : Freeze_Stack.Simple_Stack;
       Count           : Integer := 0;
+
+      Construct_Db    : Language.Tree.Database.Construct_Database_Access;
    end record;
    type Entities_Database is access Entities_Database_Record;
 

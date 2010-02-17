@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -98,7 +98,8 @@ package Entities.Queries is
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False;
-      Handler         : LI_Handler := null);
+      Handler         : LI_Handler := null;
+      Fuzzy_Expected  : Boolean := False);
    --  Find the entity that is referenced at the given location.
    --  If Entity_Name is unspecified, GPS will no take this into account
    --  If Check_Decl_Only is True, then only declarations are checked, not
@@ -106,6 +107,8 @@ package Entities.Queries is
    --  The Handler is computed automatically if not passed as an argument.
    --  Closest_Ref is the reference to the entity that was the closest to the
    --  given location.
+   --  If Fuzzy_Expected is true, then the search won't try to fallback to
+   --  the constructs in case of a fuzzy result.
 
    procedure Find_Next_Body
      (Entity               : Entity_Information;

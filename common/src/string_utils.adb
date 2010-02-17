@@ -209,6 +209,7 @@ package body String_Utils is
       Tab_Width     : Integer := 8)
    is
       Current_Col   : Natural := 1;
+      Start_Line    : constant Natural := Index;
    begin
       while Current_Col < Columns
         and then Index <= Buffer'Last
@@ -218,7 +219,7 @@ package body String_Utils is
            and then Buffer (Index) = ASCII.HT
          then
             Current_Col := Current_Col
-              + Tab_Width - ((Current_Col - 1) mod Tab_Width);
+              + Tab_Width - ((Current_Col - Start_Line) mod Tab_Width);
          else
             Current_Col := Current_Col + 1;
          end if;

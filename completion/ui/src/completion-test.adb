@@ -320,7 +320,7 @@ procedure Completion.Test is
       end;
 
       if Project /= "" then
-         Db := Create (New_Registry'Unchecked_Access);
+         Db := Create (New_Registry'Unchecked_Access, Construct_Db);
 
          Load
            (Registry           => New_Registry,

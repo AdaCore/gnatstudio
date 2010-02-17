@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,9 +25,10 @@ with GNAT.Strings;
 with Glib.Convert;            use Glib.Convert;
 
 with Diffing;
-with Language.Ada;            use Language.Ada;
-with Language.Documentation;  use Language.Documentation;
-with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+with Language.Ada;                   use Language.Ada;
+with Language.Documentation;         use Language.Documentation;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 with String_Utils;            use String_Utils;
 
@@ -965,6 +966,115 @@ package body Ada_Semantic_Tree.Lang is
    begin
       return Get_First_Occurence (Entity);
    end Get_Declaration;
+
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
+   function Forward_Expression (Str : String; Index : Integer) return Integer;
+
+   function Forward_Expression
+     (Str : String; Index : Integer) return Integer
+   is
+      Result : Integer;
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         pragma Unreferenced (Entity, Partial_Entity, Sloc_Start);
+      begin
+         Result := Sloc_End.Index;
+
+         return True;
+      end Callback;
+   begin
+      Parse_Entities
+        (Ada_Lang, Str (Index .. Str'Last), Callback'Unrestricted_Access);
+
+      return Result;
+   end Forward_Expression;
+
+   overriding function Find_Declaration
+     (Lang     : access Ada_Tree_Language;
+      File     : Structured_File_Access;
+      Line     : Integer;
+      Column   : Integer) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+
+      List : Entity_List := Find_Declarations
+        (Context =>
+           (From_File,
+            File,
+            Forward_Expression
+              (Get_Buffer (File).all,
+               Get_Offset_Of_Line (File, Line) + Column - 1)));
+
+      It     : Entity_Iterator := First (List);
+      View   : Entity_View;
+      Result : Entity_Access := Null_Entity_Access;
+   begin
+      if not At_End (It) then
+         View := Get_View (It);
+
+         Next (It);
+
+         if At_End (It) then
+            --  In this case, there is a unique match. Return it.
+
+            Result := Get_First_Occurence (Get_Entity (View));
+         end if;
+
+         Free (View);
+      end if;
+
+      Free (It);
+      Free (List);
+
+      return Result;
+   end Find_Declaration;
+
+   --------------------
+   -- Find_Next_Part --
+   --------------------
+
+   overriding function Find_Next_Part
+     (Lang   : access Ada_Tree_Language;
+      Entity : Entity_Access) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+
+      First, Second, Third : Entity_Access;
+   begin
+      First  := Get_First_Occurence (Entity);
+      Second := Get_Second_Occurence (Entity);
+      Third  := Get_Third_Occurence (Entity);
+
+      if Entity = First then
+         if Second /= Null_Entity_Access then
+            return Second;
+         else
+            return First;
+         end if;
+      elsif Entity = Second then
+         if Third /= Null_Entity_Access then
+            return Third;
+         else
+            return First;
+         end if;
+      else
+         return First;
+      end if;
+   end Find_Next_Part;
 
    ------------------
    -- Same_Profile --

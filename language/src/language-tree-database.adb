@@ -25,6 +25,7 @@ with Language.Documentation; use Language.Documentation;
 with Language.Unknown;       use Language.Unknown;
 
 with System;            use System;
+with String_Utils; use String_Utils;
 
 package body Language.Tree.Database is
 
@@ -454,6 +455,34 @@ package body Language.Tree.Database is
       return Unknown_Lang;
    end Get_Language;
 
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
+   function Find_Declaration
+     (Lang     : access Tree_Language;
+      File     : Structured_File_Access;
+      Line     : Integer;
+      Column   : Integer) return Entity_Access
+   is
+      pragma Unreferenced (Lang, File, Line, Column);
+   begin
+      return Null_Entity_Access;
+   end Find_Declaration;
+
+   --------------------
+   -- Find_Next_Part --
+   --------------------
+
+   function Find_Next_Part
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Entity;
+   end Find_Next_Part;
+
    ----------------
    -- Get_Buffer --
    ----------------
@@ -612,6 +641,58 @@ package body Language.Tree.Database is
 
       return File.Line_Starts (Line);
    end Get_Offset_Of_Line;
+
+   -----------------------
+   -- To_Visible_Column --
+   -----------------------
+
+   function To_Visible_Column
+     (File         : Structured_File_Access;
+      Line        : Integer;
+      Line_Offset : Integer) return Visible_Column_Type
+   is
+      Tab_Width : constant := 8;
+
+      Str : constant GNAT.Strings.String_Access := Get_Buffer (File);
+      Current_Index : Integer  := Get_Offset_Of_Line (File, Line);
+      Current_Col   : Visible_Column_Type := 1;
+   begin
+      loop
+         exit when Current_Index - Get_Offset_Of_Line (File, Line) + 1
+           >= Line_Offset;
+
+         if Natural (Current_Index) <= Str'Last
+           and then Str (Natural (Current_Index)) = ASCII.HT
+         then
+            Current_Col := Current_Col + Visible_Column_Type (Tab_Width) -
+              ((Current_Col - 1) mod Visible_Column_Type (Tab_Width));
+         else
+            Current_Col := Current_Col + 1;
+         end if;
+
+         Current_Index := Current_Index + 1;
+      end loop;
+
+      return Current_Col;
+   end To_Visible_Column;
+
+   --------------------
+   -- To_Line_Offset --
+   --------------------
+
+   function To_Line_Offset
+     (File   : Structured_File_Access;
+      Line   : Integer;
+      Column : Visible_Column_Type) return Integer
+   is
+      Current_Index : Integer := Get_Offset_Of_Line (File, Line);
+   begin
+      Skip_To_Column (Buffer  => Get_Buffer (File).all,
+                      Columns => Integer (Column),
+                      Index   => Current_Index);
+
+      return Current_Index - Get_Offset_Of_Line (File, Line) + 1;
+   end To_Line_Offset;
 
    ------------------
    -- Get_Language --
