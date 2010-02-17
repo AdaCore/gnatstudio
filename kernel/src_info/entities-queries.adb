@@ -521,6 +521,8 @@ package body Entities.Queries is
       Handler         : LI_Handler := null;
       Fuzzy_Expected  : Boolean := False)
    is
+      pragma Unreferenced (Fuzzy_Expected);
+
       H       : LI_Handler := Handler;
       Updated : Source_File;
    begin
@@ -583,7 +585,7 @@ package body Entities.Queries is
       if Active (Constructs_Heuristics)
         and then
           (Status = Entity_Not_Found
-          --  Ideally, we should activate that on fuzzy match as well.
+          --  ??? Ideally, we should activate that on fuzzy match as well.
           --  Unfortunately, there are currently too many fuzzy matches cases
           --  where the information is actually correct, e.g. in case of
           --  dot notation, so don't activate this thing for now.
