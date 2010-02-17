@@ -86,6 +86,7 @@ with Engine_Wrappers;                 use Engine_Wrappers;
 with Projects;                        use Projects;
 with Projects.Registry;               use Projects.Registry;
 with XML_Utils;                       use XML_Utils;
+with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
 package body Completion_Module is
 
@@ -283,8 +284,9 @@ package body Completion_Module is
    --  Create an entity view
 
    procedure Entity_View_Dialog
-     (Kernel  : Kernel_Handle;
-      Pattern : String);
+     (Kernel     : Kernel_Handle;
+      Pattern    : String;
+      Visibility : Visibility_Context);
    --  Create an Entity_View in a dialog.
    --  The pattern entry is pre-filled with Pattern.
 
@@ -312,8 +314,9 @@ package body Completion_Module is
    ------------------------
 
    procedure Entity_View_Dialog
-     (Kernel  : Kernel_Handle;
-      Pattern : String)
+     (Kernel     : Kernel_Handle;
+      Pattern    : String;
+      Visibility : Visibility_Context)
    is
       Dialog   : Gtk_Dialog;
       Explorer : Entity_View_Access;
@@ -322,7 +325,7 @@ package body Completion_Module is
       Dummy    : Gtk_Widget;
       pragma Unreferenced (Dummy);
    begin
-      Gtk_New (Explorer, Kernel, Pattern);
+      Gtk_New (Explorer, Kernel, Pattern, Visibility);
       Gtk_New (Dialog, "Goto entity...", Get_Main_Window (Kernel), 0);
 
       Set_Dialog (Explorer, Dialog);
@@ -346,7 +349,7 @@ package body Completion_Module is
       Child    : GPS_MDI_Child;
       Explorer : Entity_View_Access;
    begin
-      Gtk_New (Explorer, Kernel, "");
+      Gtk_New (Explorer, Kernel, "", Null_Visibility_Context);
       Gtk_New (Child, Explorer,
                Default_Width  => 600,
                Default_Height => 400,
@@ -371,7 +374,8 @@ package body Completion_Module is
       Child    : MDI_Child;
    begin
       Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Entity_View_Record'Tag);
+        (Get_MDI (Kernel),
+         Completion_Window.Entity_Views.Entity_View_Record'Tag);
 
       if Child = null then
          Child := Entity_View (Kernel);
@@ -394,11 +398,40 @@ package body Completion_Module is
    is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context := Get_Current_Context (Kernel);
+
+      Visibility      : Visibility_Context;
+      File            : Virtual_File;
+      Structured_File : Structured_File_Access;
    begin
-      if Has_Entity_Name_Information (Context) then
-         Entity_View_Dialog (Kernel, Entity_Name_Information (Context));
+      --  Create the Visisbility context from the context
+      if Has_Entity_Name_Information (Context)
+        and then Has_Line_Information (Context)
+        and then Has_Column_Information (Context)
+      then
+         --  Compute the offset
+
+         File := File_Information (Context);
+         Structured_File := Get_Or_Create
+           (Get_Construct_Database (Kernel),
+            File,
+            Get_Language_From_File (Get_Language_Handler (Kernel), File),
+            Get_Tree_Language_From_File
+              (Get_Language_Handler (Kernel), File, True));
+
+         Visibility :=
+           (Structured_File,
+            To_Offset
+              (Structured_File,
+               Line_Information (Context),
+               Column_Information (Context)),
+            Everything,
+            Use_Visible);
+
+         Entity_View_Dialog
+           (Kernel,
+            Entity_Name_Information (Context), Visibility);
       else
-         Entity_View_Dialog (Kernel, "");
+         Entity_View_Dialog (Kernel, "", Null_Visibility_Context);
       end if;
    exception
       when E : others => Trace (Traces.Exception_Handle, E);
@@ -414,7 +447,9 @@ package body Completion_Module is
    is
       pragma Unreferenced (User);
    begin
-      if Widget.all in Entity_View_Record'Class then
+      if Widget.all in
+        Completion_Window.Entity_Views.Entity_View_Record'Class
+      then
          return Save_Desktop (Entity_View_Access (Widget));
       end if;
       return null;
