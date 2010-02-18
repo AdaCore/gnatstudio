@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -339,7 +339,7 @@ package body GUI_Utils is
             if Busy_Cursor = null then
                --  We create the cursor only once, since this is both more
                --  efficient and avoids some memory leaks (for some reason, it
-               --  seems that gtk+ is not properly deallocated cursors, for
+               --  seems that gtk+ is not properly deallocating cursors, for
                --  windows that were created while the busy cursor was active).
                Gdk_New (Busy_Cursor, Watch);
             end if;
