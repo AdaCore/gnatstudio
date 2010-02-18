@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 4.5.0
 
+- J212-018 Error when editing a project with indexed attributes assignments
+  Problem:    When you are editing a project, GPS first tries to normalize
+              it. This normalization fails if your project contains an
+              assignment like
+                 for Switches use Imported.Compiler'Switches;
+              where the Switches attribute excepts an index in general but
+              not is provided here.
+  Workaround: Either rename directly the whole Compiler package, or specify
+              the attribute for Switches, for instance
+                 for Switches ("ada") use Imported.Compiler'Switches ("ada");
+
 - J212-001 GPS fails to load icons when launched with relative path on unix
   Problem:    When running gps on unix systems with a relative path, e.g.
               ./gps/bin/gps

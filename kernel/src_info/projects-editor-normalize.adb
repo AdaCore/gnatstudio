@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                             G P S                                 --
 --                                                                   --
---                    Copyright (C) 2001-2009, AdaCore               --
+--                    Copyright (C) 2001-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -231,7 +231,14 @@ package body Projects.Editor.Normalize is
                      Current_Item_Node (Decl_Item, Tree);
       begin
          if Kind_Of (Current, Tree) = N_Attribute_Declaration then
-            if Case_Insensitive (Current, Tree) then
+            --  It is possible that the attribute doesn't have an index in the
+            --  case of
+            --    for Switches use Imported.Compiler'Switches;
+            --  whereas in general Switches excepts an index.
+
+            if Case_Insensitive (Current, Tree)
+              and then Associative_Array_Index_Of (Current, Tree) /= No_Name
+            then
                Get_Name_String (Associative_Array_Index_Of (Current, Tree));
                To_Lower (Name_Buffer (1 .. Name_Len));
 
