@@ -162,6 +162,12 @@ NF-45-I810-019 Remote mode now synchronizes files upon save (2009-10-28)
   on the server to immediately have access to them, and also allows faster
   sync operations before GPS launches an action on the remote server.
 
+NF-45-I501-009 New shell function: GPS.version (2010-02-18)
+
+  A new function that can be used in plug-ins is provided to query the
+  current GPS version: GPS.version(), which can be useful when e.g. writing
+  plug-ins that need to support multiple versions of GPS.
+
 NF-45-GA24-019 Smart completion for discriminants (2010-01-26)
 
   The smart completion now offers to complete with record discriminants.

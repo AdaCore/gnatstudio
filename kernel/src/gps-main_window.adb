@@ -52,6 +52,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;
 
+with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
@@ -851,6 +852,11 @@ package body GPS.Main_Window is
          Minimum_Args => 0,
          Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "version",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Default_Command_Handler'Access);
 
       Register_Command
         (Main_Window.Kernel, Constructor_Method,
@@ -1070,6 +1076,9 @@ package body GPS.Main_Window is
          Quit (GPS_Window (Get_Main_Window (Kernel)),
                Force => Nth_Arg (Data, 1, False),
                Status => Nth_Arg (Data, 2, 0));
+
+      elsif Command = "version" then
+         Set_Return_Value (Data, Config.Version);
 
       elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);

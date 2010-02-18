@@ -1013,6 +1013,11 @@ GPS.parse_xml ("""
      <description>Tell if the specified server is the local machine.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.version">
+     <return>A string</return>
+     <description>Return GPS version as a string.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   GPS shell commands
     ###################################################################-->
