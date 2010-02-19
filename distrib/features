@@ -26,6 +26,14 @@ NF-45-J210-027 Support for assembler language (2010-02-11)
   The project editor now supports adding assembler language for use by
   GPRbuild during compilation and builds.
 
+NF-45-J208-007 Partial navigation without compilation (2010-02-19)
+
+  There is now a degrated navigation mode working when files are not compiled.
+  This mode works on goto body from an entity declaration, goto declaration
+  from an entity body, and on simple cases when trying to retreive the
+  declaration from a random reference, using e.g. goto declaration or
+  hyperlink.
+
 NF-45-J128-026 Support for generic parameters (2010-02-15)
 
   Generics parameters are now supported in the Ada outline view and smart
