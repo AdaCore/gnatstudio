@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -127,8 +127,20 @@ package body Commands.Builder is
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;
       Shadow              : Boolean;
-      Create_If_Not_Exist : Boolean) return Interactive_Console is
+      Create_If_Not_Exist : Boolean;
+      New_Console_Name    : String := "") return Interactive_Console is
    begin
+      if New_Console_Name /= "" then
+         return Create_Interactive_Console
+           (Kernel              => Kernel,
+            Title               => New_Console_Name,
+            History             => "interactive",
+            Create_If_Not_Exist => True,
+            Module              => null,
+            Force_Create        => False,
+            Accept_Input        => True);
+      end if;
+
       if Shadow then
          return Create_Interactive_Console
            (Kernel              => Kernel,
@@ -410,15 +422,23 @@ package body Commands.Builder is
       Shadow        : Boolean;
       Synchronous   : Boolean;
       Use_Shell     : Boolean;
+      New_Console   : Boolean;
       Directory     : Virtual_File)
    is
-      Console  : constant Interactive_Console :=
-                   Get_Build_Console (Kernel, Shadow, False);
+      Console  : Interactive_Console;
       Data     : Build_Callback_Data_Access;
       Success  : Boolean;
       Cmd_Name : Unbounded_String;
-
+      Cb       : Output_Callback;
    begin
+      if New_Console then
+         Console := Get_Build_Console (Kernel, Shadow, False, Target_Name);
+         Cb      := null;
+      else
+         Console := Get_Build_Console (Kernel, Shadow, False);
+         Cb      := Build_Callback'Access;
+      end if;
+
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
       Data.Mode_Name := To_Unbounded_String (Mode_Name);
@@ -451,12 +471,12 @@ package body Commands.Builder is
                Server               => Server,
                Console              => Console,
                Show_Command         => True,
-               Show_Output          => False,
+               Show_Output          => New_Console,
                Callback_Data        => Data.all'Access,
                Success              => Success,
                Line_By_Line         => False,
                Directory            => Directory,
-               Callback             => Build_Callback'Access,
+               Callback             => Cb,
                Exit_Cb              => End_Build_Callback'Access,
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
@@ -470,12 +490,12 @@ package body Commands.Builder is
                Server               => Server,
                Console              => Console,
                Show_Command         => True,
-               Show_Output          => False,
+               Show_Output          => New_Console,
                Callback_Data        => Data.all'Access,
                Success              => Success,
                Line_By_Line         => False,
                Directory            => Directory,
-               Callback             => Build_Callback'Access,
+               Callback             => Cb,
                Exit_Cb              => End_Build_Callback'Access,
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
