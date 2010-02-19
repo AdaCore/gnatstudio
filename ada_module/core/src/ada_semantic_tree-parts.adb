@@ -959,7 +959,7 @@ package body Ada_Semantic_Tree.Parts is
    function Get_Last_Visible_Declaration
      (Entity : Entity_Access;
       File   : Structured_File_Access;
-      Offset : Natural) return Entity_Access
+      Offset : String_Index_Type) return Entity_Access
    is
       Relation : constant Ada_Relation_Access := Get_Relation (Entity);
 

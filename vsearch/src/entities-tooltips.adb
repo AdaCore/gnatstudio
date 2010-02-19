@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -125,7 +125,8 @@ package body Entities.Tooltips is
          Location    =>
            (Absolute_Offset => False,
             Line            => Loc.Line,
-            Line_Offset     => Natural (Loc.Column)),
+            Line_Offset     =>
+              To_Line_String_Index (Data_File, Loc.Line, Loc.Column)),
          From_Type   => Start_Name);
 
       if Node = Null_Construct_Tree_Iterator then

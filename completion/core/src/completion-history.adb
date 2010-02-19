@@ -29,7 +29,7 @@ package body Completion.History is
 
    overriding procedure Get_Completion_Root
      (Resolver   : access Completion_History;
-      Offset     : Integer;
+      Offset     : String_Index_Type;
       Context    : Completion_Context;
       Result     : in out Completion_List)
    is

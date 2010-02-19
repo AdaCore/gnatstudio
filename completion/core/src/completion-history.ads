@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2009, AdaCore               --
+--                    Copyright (C) 2007-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -78,7 +78,7 @@ package Completion.History is
    overriding
    procedure Get_Completion_Root
      (Resolver   : access Completion_History;
-      Offset     : Integer;
+      Offset     : String_Index_Type;
       Context    : Completion_Context;
       Result     : in out Completion_List);
    --  See inherited documentation

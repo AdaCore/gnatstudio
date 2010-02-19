@@ -971,12 +971,13 @@ package body Ada_Semantic_Tree.Lang is
    -- Find_Declaration --
    ----------------------
 
-   function Forward_Expression (Str : String; Index : Integer) return Integer;
+   function Forward_Expression
+     (Str : String; Index : String_Index_Type) return String_Index_Type;
 
    function Forward_Expression
-     (Str : String; Index : Integer) return Integer
+     (Str : String; Index : String_Index_Type) return String_Index_Type
    is
-      Result : Integer;
+      Result : String_Index_Type;
 
       function Callback
         (Entity         : Language_Entity;
@@ -992,13 +993,15 @@ package body Ada_Semantic_Tree.Lang is
       is
          pragma Unreferenced (Entity, Partial_Entity, Sloc_Start);
       begin
-         Result := Sloc_End.Index;
+         Result := String_Index_Type (Sloc_End.Index);
 
          return True;
       end Callback;
    begin
       Parse_Entities
-        (Ada_Lang, Str (Index .. Str'Last), Callback'Unrestricted_Access);
+        (Ada_Lang,
+         Str (Integer (Index) .. Str'Last),
+         Callback'Unrestricted_Access);
 
       return Result;
    end Forward_Expression;
@@ -1007,7 +1010,7 @@ package body Ada_Semantic_Tree.Lang is
      (Lang     : access Ada_Tree_Language;
       File     : Structured_File_Access;
       Line     : Integer;
-      Column   : Integer) return Entity_Access
+      Column   : String_Index_Type) return Entity_Access
    is
       pragma Unreferenced (Lang);
 

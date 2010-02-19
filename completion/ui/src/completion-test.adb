@@ -259,12 +259,13 @@ procedure Completion.Test is
             when Tok_Identifier =>
                Put (" ");
                Put (Buffer
-                    (Token.Token_First ..  Token.Token_Last));
+                 (Integer (Token.Token_First)
+                    .. Integer (Token.Token_Last)));
             when Tok_Expression =>
                Put (" (");
-               Put (Natural'Image (Token.Token_First));
+               Put (String_Index_Type'Image (Token.Token_First));
                Put (",");
-               Put (Natural'Image (Token.Token_Last));
+               Put (String_Index_Type'Image (Token.Token_Last));
                Put (")");
             when others =>
                null;
@@ -275,7 +276,9 @@ procedure Completion.Test is
 
    begin
       Result := Parse_Expression_Backward
-        (Ada_Lang, Buffer, UTF8_Find_Prev_Char (Buffer.all, Buffer'Last));
+        (Ada_Lang,
+         Buffer,
+         String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)));
       Display (Result.Tokens);
    end Parse_File;
 
@@ -396,7 +399,12 @@ procedure Completion.Test is
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context =>
-              Create_Context (Manager, File, Buffer, Ada_Lang, End_Word));
+              Create_Context
+                (Manager,
+                 File,
+                 Buffer,
+                 Ada_Lang,
+                 String_Index_Type (End_Word)));
 
          Time_Passed := Clock - Start_Date;
 
@@ -448,7 +456,7 @@ procedure Completion.Test is
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context => Create_Context
-              (Manager, File, Buffer, Ada_Lang, End_Word));
+              (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)));
 
          Time_Passed := Clock - Start_Date;
 
@@ -496,9 +504,9 @@ procedure Completion.Test is
 
          Get_Completion_Root
            (Resolver => Resolver,
-            Offset   => End_Word,
+            Offset   => String_Index_Type (End_Word),
             Context  => Create_Context
-              (Manager, File, Buffer, Ada_Lang, End_Word),
+              (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)),
             Result   => Result);
 
          Time_Passed := Clock - Start_Date;
@@ -575,7 +583,7 @@ procedure Completion.Test is
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context => Create_Context
-              (Manager, File, Buffer, Ada_Lang, End_Word));
+              (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)));
 
          Time_Passed := Clock - Start_Date;
 

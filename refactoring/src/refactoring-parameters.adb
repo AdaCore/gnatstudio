@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,12 @@ with GPS.Intl;              use GPS.Intl;
 with Refactoring.Performers; use Refactoring.Performers;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
+with Language.Tree.Database; use Language.Tree.Database;
+with Language.Ada;           use Language.Ada;
+with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
 
 package body Refactoring.Parameters is
    Me : constant Debug_Handle := Create ("Refactor.Params");
@@ -154,36 +160,72 @@ package body Refactoring.Parameters is
       ------------------------
 
       function Is_Dotted_Notation return Boolean is
-         Before : constant String := Get_Text
-           (Kernel, File, Line, Column, -100);
-         --  Before can end in the middle of the entity, depending on where we
-         --  clicked.
+         S_File : constant Structured_File_Access := Get_Or_Create
+           (Db        => Kernel.Get_Construct_Database,
+            File      => File,
+            Lang      => Ada_Lang,
+            Tree_Lang => Ada_Tree_Lang);
+
+         Offset : constant String_Index_Type :=
+           To_String_Index (S_File, Line, Column);
+
+         Expression : Parsed_Expression :=
+           Parse_Expression_Backward
+             (Lang         => Ada_Lang,
+              Buffer       => Get_Buffer (S_File),
+              Start_Offset => Offset);
 
          Entity_Before : Entity_Information;
-         Last   : Integer := Before'Last;
-         From, To   : Integer;
          Status : Find_Decl_Or_Body_Query_Status;
+         Entity_Token : Token_Record;
+
+         Tok_Line   : Integer;
+         Tok_Column : Visible_Column_Type;
       begin
-         --  Search for the beginning of the entity's name
-         Skip_Word (Before, Last, Step => -1);
-         Skip_Blanks (Before, Last, Step => -1);
+         --  We expect to have something like [id] [.] [call]. Otherwise, we're
+         --  not on a prefixed notation
 
-         From := Last - 1;
-         Skip_Blanks (Before, From, Step => -1);
-         To := From;
-         Skip_Word (Before, From, Step => -1);
+         if Token_List.Length (Expression.Tokens) < 3 then
+            Free (Expression);
+            return False;
+         end if;
 
-         if Is_Primitive_Operation_Of (Entity) /= null
-           and then Before (Last) = '.'
-         then
+         Token_List.Remove_Nodes
+           (Expression.Tokens,
+            Token_List.Prev
+              (Expression.Tokens, Token_List.Last (Expression.Tokens)));
+
+         Entity_Token := Token_List.Data (Token_List.Last (Expression.Tokens));
+
+         if Entity_Token.Tok_Type /= Tok_Dot then
+            Free (Expression);
+            return False;
+         end if;
+
+         Token_List.Remove_Nodes
+           (Expression.Tokens,
+            Token_List.Prev
+              (Expression.Tokens, Token_List.Last (Expression.Tokens)));
+
+         Entity_Token := Token_List.Data (Token_List.Last (Expression.Tokens));
+
+         if Entity_Token.Tok_Type /= Tok_Identifier then
+            Free (Expression);
+            return False;
+         end if;
+
+         if Is_Primitive_Operation_Of (Entity) /= null then
+            To_Line_Column
+              (S_File, Entity_Token.Token_First, Tok_Line, Tok_Column);
+
             Find_Declaration
               (Db          => Get_Database (Kernel),
                File_Name   => File,
-               Entity_Name => Before (From + 1 .. To),
-               Line      => Line, --  Approximation resolved in entity manager
-               Column    => Column,
-               Entity    => Entity_Before,
-               Status    => Status);
+               Entity_Name => Get_Name (Expression, Entity_Token),
+               Line        => Tok_Line,
+               Column      => Tok_Column,
+               Entity      => Entity_Before,
+               Status      => Status);
 
             --  The following will not handle correctly where the primitive
             --  operation is declared inside a subprogram, and we use the fully
@@ -197,10 +239,12 @@ package body Refactoring.Parameters is
             if Entity_Before /= null
               and then Get_Kind (Entity_Before).Kind /= Package_Kind
             then
+               Free (Expression);
                return True;
             end if;
          end if;
 
+         Free (Expression);
          return False;
       end Is_Dotted_Notation;
 

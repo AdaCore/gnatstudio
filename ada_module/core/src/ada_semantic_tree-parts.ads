@@ -77,7 +77,7 @@ package Ada_Semantic_Tree.Parts is
    function Get_Last_Visible_Declaration
      (Entity : Entity_Access;
       File   : Structured_File_Access;
-      Offset : Natural) return Entity_Access;
+      Offset : String_Index_Type) return Entity_Access;
    --  Return the last declaration that is visible according to the file
    --  & offset given in parameter.
 

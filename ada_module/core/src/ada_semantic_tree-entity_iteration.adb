@@ -228,7 +228,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                   It.Decl_List := Find_Declarations
                     ((From_File,
                       It.Current_File,
-                      Get_Construct (It.Current_Construct).Sloc_End.Index),
+                     String_Index_Type
+                       (Get_Construct (It.Current_Construct).Sloc_End.Index)),
                      Expression        => Expression,
                      Categories        => Null_Category_Array,
                      Is_Partial        => False,
@@ -614,7 +615,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             --  the given location, then it's not valid to return it.
 
             if It.From_Visibility.File = It.Current_File
-              and then It.From_Visibility.Offset < Get_Construct
+              and then Natural (It.From_Visibility.Offset) < Get_Construct
                 (It.Content_It).Sloc_Start.Index
             then
                return False;

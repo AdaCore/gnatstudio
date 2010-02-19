@@ -78,8 +78,8 @@ package Ada_Semantic_Tree.List_Resolver is
 
    function Get_Actual_Parameter
      (Buffer      : access Glib.UTF8_String;
-      Param_Start : Natural;
-      Param_End   : Natural) return Actual_Parameter;
+      Param_Start : String_Index_Type;
+      Param_End   : String_Index_Type) return Actual_Parameter;
    --  Created an actual parameter out of a piece of code - param start and
    --  param end has to be set around the entier parameter, including the
    --  name preceded by the arrow if any.

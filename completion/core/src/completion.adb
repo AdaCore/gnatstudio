@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -86,7 +86,7 @@ package body Completion is
    ---------------------------
 
    function Get_Completion_Offset
-     (Context : Completion_Context) return Natural is
+     (Context : Completion_Context) return String_Index_Type is
    begin
       return Context.Offset;
    end Get_Completion_Offset;
@@ -208,7 +208,7 @@ package body Completion is
       File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : String_Access;
       Lang    : Language_Access;
-      Offset  : Natural) return Completion_Context
+      Offset  : String_Index_Type) return Completion_Context
    is
       New_Context : constant Completion_Context :=
         new Completion_Context_Record;
@@ -471,7 +471,7 @@ package body Completion is
    overriding function Match
      (Proposal : Simple_Completion_Proposal;
       Context  : Completion_Context;
-      Offset   : Integer) return Boolean
+      Offset   : String_Index_Type) return Boolean
    is
       pragma Unreferenced (Proposal, Context, Offset);
    begin

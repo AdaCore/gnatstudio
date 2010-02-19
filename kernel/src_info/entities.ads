@@ -1197,6 +1197,11 @@ private
       Trie_Tree_Index : Natural := 0;
       --  This is the index of the entity among the entities of the same name,
       --  in LI_Handler.Name_Index
+
+      Is_Dummy : Boolean := False;
+      --  When true, this entity is not coming from a regular ALI file, and
+      --  not referenced in the source file. Typically, it's coming from a
+      --  construct and stored in a different location.
    end record;
 
    --------------------

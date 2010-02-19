@@ -118,7 +118,7 @@ procedure Ada_Semantic_Tree.Test is
             end if;
 
             List := Find_Declarations
-              ((From_File, File, Looked_Offset),
+              ((From_File, File, String_Index_Type (Looked_Offset)),
                From_Visibility   => Null_Visibility_Context,
                Expression        => Null_Parsed_Expression,
                Categories        => Null_Category_Array,
@@ -152,7 +152,8 @@ procedure Ada_Semantic_Tree.Test is
          declare
             It : constant Construct_Tree_Iterator := Get_Iterator_At
               (Tree              => Get_Tree (File),
-               Location          => To_Location (Word_Begin),
+               Location          =>
+                 To_Location (String_Index_Type (Word_Begin)),
                From_Type         => Start_Construct,
                Position          => Before,
                Categories_Seeked => Null_Category_Array);
@@ -190,7 +191,8 @@ procedure Ada_Semantic_Tree.Test is
          declare
             It : constant Construct_Tree_Iterator := Get_Iterator_At
               (Tree              => Get_Tree (File),
-               Location          => To_Location (Word_Begin),
+               Location          =>
+                 To_Location (String_Index_Type (Word_Begin)),
                From_Type         => Start_Construct,
                Position          => Before,
                Categories_Seeked => Null_Category_Array);
@@ -371,7 +373,7 @@ procedure Ada_Semantic_Tree.Test is
                end if;
 
                List := Find_Declarations
-                 ((From_File, Full_File, Sloc_End.Index),
+                 ((From_File, Full_File, String_Index_Type (Sloc_End.Index)),
                   From_Visibility   => Null_Visibility_Context,
                   Expression        => Null_Parsed_Expression,
                   Categories        => Null_Category_Array,
@@ -492,8 +494,8 @@ procedure Ada_Semantic_Tree.Test is
             Expression : Parsed_Expression := Parse_Expression_Backward
               (Lang         => Ada_Lang,
                Buffer       => Buffer,
-               Start_Offset => Word_End,
-               End_Offset   => Word_Begin);
+               Start_Offset => String_Index_Type (Word_End),
+               End_Offset   => String_Index_Type (Word_Begin));
 
             List : constant Entity_List := Find_Declarations
               (Context           => (From_Database, Construct_Db),
@@ -561,7 +563,10 @@ procedure Ada_Semantic_Tree.Test is
               ((From_Database, Construct_Db),
                Expression        =>
                  Parse_Expression_Backward
-                   (Ada_Lang, Buffer, Word_End, Word_Begin),
+                   (Ada_Lang,
+                    Buffer,
+                    String_Index_Type (Word_End),
+                    String_Index_Type (Word_Begin)),
                Is_Partial        => True);
 
             It := First (List);

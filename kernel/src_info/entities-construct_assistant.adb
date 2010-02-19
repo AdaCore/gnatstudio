@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types; use Basic_Types;
+
 package body Entities.Construct_Assistant is
 
    LI_Assistant_Id : constant String := "LI_ASSISTANT";
@@ -73,6 +75,7 @@ package body Entities.Construct_Assistant is
         (Get_Assistant (Get_Database (Get_File (E)), LI_Assistant_Id));
 
       Construct_Annotation : Construct_Annotations_Pckg.Annotation;
+      New_Entity : Entity_Information;
    begin
       Get_Annotation
         (Get_Annotation_Container
@@ -85,7 +88,7 @@ package body Entities.Construct_Assistant is
 
          Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
 
-         LI_Annotation (Construct_Annotation.Other_Val.all).LI_Entity :=
+         New_Entity :=
            new Entity_Information_Record'
              (Name                         =>
               new String'(Get_Construct (E).Name.all),
@@ -99,7 +102,7 @@ package body Entities.Construct_Assistant is
                  To_Visible_Column
                    (Get_File (E),
                     Get_Construct (E).Sloc_Entity.Line,
-                    Get_Construct (E).Sloc_Entity.Column)),
+                    String_Index_Type (Get_Construct (E).Sloc_Entity.Column))),
               Caller_At_Declaration        => null,
               End_Of_Scope                 => No_E_Reference,
               Parent_Types                 => Null_Entity_Information_List,
@@ -113,10 +116,15 @@ package body Entities.Construct_Assistant is
               Child_Types                  => Null_Entity_Information_List,
               References                   => Entity_File_Maps.Empty_Map,
               File_Timestamp_In_References => 0,
-              Is_Valid                     => True,
+              Is_Valid                     => False,
               Ref_Count                    => 1,
-              Trie_Tree_Index              => 0);
+              Trie_Tree_Index              => 0,
+              Is_Dummy                     => True);
 
+         Ref (New_Entity.Declaration.File);
+
+         LI_Annotation (Construct_Annotation.Other_Val.all).LI_Entity :=
+           New_Entity;
          Set_Annotation
            (Get_Annotation_Container
               (Get_Tree
@@ -132,7 +140,7 @@ package body Entities.Construct_Assistant is
            LI_Entity.Declaration.Column := To_Visible_Column
              (Get_File (E),
               Get_Construct (E).Sloc_Entity.Line,
-              Get_Construct (E).Sloc_Entity.Column);
+              String_Index_Type (Get_Construct (E).Sloc_Entity.Column));
       end if;
 
       return LI_Annotation (Construct_Annotation.Other_Val.all).LI_Entity;

@@ -59,7 +59,7 @@ package Ada_Semantic_Tree.Visibility is
      (Tree_To     : Construct_Tree;
       Object_To   : Construct_Tree_Iterator;
       Tree_From   : Construct_Tree;
-      Offset_From : Integer) return Location_Relation;
+      Offset_From : String_Index_Type) return Location_Relation;
    --  Computes the relation of Tree/Object_To, as seen from
    --  Tree/Offset_From
 
@@ -74,7 +74,7 @@ package Ada_Semantic_Tree.Visibility is
    function Is_Accessible
      (Entity      : Entity_Access;
       From_File   : Structured_File_Access;
-      From_Offset : Integer) return Boolean;
+      From_Offset : String_Index_Type) return Boolean;
    --  Return true if the entity is accessible, that is to say either
    --  it's a public library visible entity, or it's in one of the visible
    --  areas of the unit hierarchy from the location given in parameter.

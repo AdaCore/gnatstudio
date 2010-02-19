@@ -63,7 +63,7 @@ package Ada_Semantic_Tree.Lang is
      (Lang     : access Ada_Tree_Language;
       File     : Structured_File_Access;
       Line     : Integer;
-      Column   : Integer) return Entity_Access;
+      Column   : String_Index_Type) return Entity_Access;
    --  See inherited documentation
 
    overriding function Find_Next_Part

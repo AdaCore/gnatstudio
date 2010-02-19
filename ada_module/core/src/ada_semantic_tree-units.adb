@@ -794,7 +794,7 @@ package body Ada_Semantic_Tree.Units is
    ----------------------
 
    function Get_Owning_Unit
-     (File : Structured_File_Access; Offset : Integer)
+     (File : Structured_File_Access; Offset : String_Index_Type)
       return Unit_Access
    is
       Tree  : constant Construct_Tree := Get_Tree (File);
@@ -822,10 +822,11 @@ package body Ada_Semantic_Tree.Units is
             End_Unit_It :=
               To_Construct_Tree_Iterator (Get_End_Entity (Unit_Info));
 
-            if Offset >= Get_Construct (Start_Unit_It).Sloc_Start.Index
+            if Natural (Offset) >=
+              Get_Construct (Start_Unit_It).Sloc_Start.Index
               and then
                 (End_Unit_It = Null_Construct_Tree_Iterator
-                 or else Offset <
+                 or else Natural (Offset) <
                    Get_Construct (End_Unit_It).Sloc_Start.Index)
             then
                return Unit_Info;
@@ -841,7 +842,8 @@ package body Ada_Semantic_Tree.Units is
    function Get_Owning_Unit (Entity : Entity_Access) return Unit_Access is
    begin
       return Get_Owning_Unit
-        (Get_File (Entity), Get_Construct (Entity).Sloc_Start.Index);
+        (Get_File (Entity),
+         String_Index_Type (Get_Construct (Entity).Sloc_Start.Index));
    end Get_Owning_Unit;
 
    ----------------------

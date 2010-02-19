@@ -31,6 +31,8 @@ with String_Utils;      use String_Utils;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 
+with Basic_Types;
+
 package body Codefix.Text_Manager is
 
    function Search_Tokens
@@ -812,7 +814,8 @@ package body Codefix.Text_Manager is
          (Absolute_Offset => False,
           Line            => Get_Line (Cursor),
           Line_Offset     =>
-            Integer (To_Char_Index (Get_Column (Cursor), Line_Cursor))),
+            Basic_Types.String_Index_Type
+              (To_Char_Index (Get_Column (Cursor), Line_Cursor))),
          From_Type,
          Position,
          Categories_Seeked);

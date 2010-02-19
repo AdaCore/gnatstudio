@@ -20,7 +20,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with Basic_Types;
 with Glib.Unicode;                use Glib, Glib.Unicode;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
@@ -1224,19 +1223,23 @@ package body Language is
    function Parse_Expression_Backward
      (Lang              : access Language_Root;
       Buffer            : access Glib.UTF8_String;
-      Start_Offset      : Natural;
-      End_Offset        : Natural := 0;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0;
       Simple_Expression : Boolean := False)
       return Parsed_Expression
    is
       pragma Unreferenced (Lang, Simple_Expression);
-      Lowest : constant Natural := Integer'Max (End_Offset, Buffer'First);
-      Index  : Natural := Start_Offset;
+      Lowest : constant String_Index_Type :=
+        String_Index_Type'Max (End_Offset, String_Index_Type (Buffer'First));
+      Index  : String_Index_Type := Start_Offset;
    begin
-      if Index not in Lowest .. Buffer'Last then
+      if Index not in Lowest .. String_Index_Type (Buffer'Last) then
          return Null_Parsed_Expression;
       else
-         Skip_Word (Buffer (Lowest .. Index), Index, Step => -1);
+         Skip_Word
+           (Buffer (Natural (Lowest) .. Natural (Index)),
+            Natural (Index),
+            Step => -1);
 
          --  Build in place to avoid a copy of the list
 
@@ -1261,7 +1264,7 @@ package body Language is
       Simple_Expression : Boolean := False) return Parsed_Expression is
    begin
       return Parse_Expression_Backward
-        (Lang, Buffer, Buffer'Last, 0, Simple_Expression);
+        (Lang, Buffer, String_Index_Type (Buffer'Last), 0, Simple_Expression);
    end Parse_Expression_Backward;
 
    --------------
@@ -1273,7 +1276,7 @@ package body Language is
    begin
       if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
          return Expression.Original_Buffer
-           (Token.Token_First .. Token.Token_Last);
+           (Natural (Token.Token_First) .. Natural (Token.Token_Last));
       else
          return "";
       end if;
@@ -1286,8 +1289,8 @@ package body Language is
    function Parse_Expression_Backward_To_String
      (Lang              : access Language_Root'Class;
       Buffer            : Glib.UTF8_String;
-      Start_Offset      : Natural;
-      End_Offset        : Natural := 0;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0;
       Simple_Expression : Boolean := False) return String
    is
       use Token_List;

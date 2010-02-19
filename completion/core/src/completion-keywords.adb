@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                    Copyright (C) 2008-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,15 +30,16 @@ package body Completion.Keywords is
 
    overriding procedure Get_Completion_Root
      (Resolver   : access Completion_Keywords;
-      Offset     : Integer;
+      Offset     : String_Index_Type;
       Context    : Completion_Context;
       Result     : in out Completion_List)
    is
       Proposal : Simple_Completion_Proposal;
       List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
       Keywords : constant String_List := Language.Keywords (Context.Lang);
-      Word     : UTF8_String (Offset + 1 .. Context.Offset) :=
-                   Context.Buffer (Offset + 1 .. Context.Offset);
+      Word     : UTF8_String
+        (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
+           Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));
       Doc      : constant String :=
                    -(Get_Name (Context.Lang) & " keyword.");
    begin

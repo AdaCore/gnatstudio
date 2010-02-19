@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -300,10 +300,10 @@ package body Language.Tree is
    begin
       case Left.Absolute_Offset is
          when True =>
-            return Left.Offset = Right.Index;
+            return Left.Offset = String_Index_Type (Right.Index);
          when False =>
             return Left.Line = Right.Line
-              and then Left.Line_Offset = Right.Column;
+              and then Left.Line_Offset = String_Index_Type (Right.Column);
       end case;
    end "=";
 
@@ -344,11 +344,13 @@ package body Language.Tree is
    begin
       case Left.Absolute_Offset is
          when True =>
-            return Left.Offset < Right.Index;
+            return Left.Offset < String_Index_Type (Right.Index);
          when False =>
             return Left.Line < Right.Line
-              or else (Left.Line = Right.Line
-                       and then Left.Line_Offset < Right.Column);
+              or else
+                (Left.Line = Right.Line
+                 and then Left.Line_Offset <
+                   String_Index_Type (Right.Column));
       end case;
    end "<";
 
@@ -361,11 +363,13 @@ package body Language.Tree is
    begin
       case Left.Absolute_Offset is
          when True =>
-            return Left.Offset <= Right.Index;
+            return Left.Offset <= String_Index_Type (Right.Index);
          when False =>
             return Left.Line <= Right.Line
-              or else (Left.Line = Right.Line
-                       and then Left.Line_Offset <= Right.Column);
+              or else
+                (Left.Line = Right.Line
+                 and then Left.Line_Offset <=
+                   String_Index_Type (Right.Column));
       end case;
    end "<=";
 
@@ -378,11 +382,13 @@ package body Language.Tree is
    begin
       case Left.Absolute_Offset is
          when True =>
-            return Left.Offset > Right.Index;
+            return Left.Offset > String_Index_Type (Right.Index);
          when False =>
             return Left.Line > Right.Line
-              or else (Left.Line = Right.Line
-                       and then Left.Line_Offset > Right.Column);
+              or else
+                (Left.Line = Right.Line
+                 and then Left.Line_Offset >
+                   String_Index_Type (Right.Column));
       end case;
    end ">";
 
@@ -395,11 +401,13 @@ package body Language.Tree is
    begin
       case Left.Absolute_Offset is
          when True =>
-            return Left.Offset >= Right.Index;
+            return Left.Offset >= String_Index_Type (Right.Index);
          when False =>
             return Left.Line >= Right.Line
-              or else (Left.Line = Right.Line
-                       and then Left.Line_Offset >= Right.Column);
+              or else
+                (Left.Line = Right.Line
+                 and then Left.Line_Offset >=
+                   String_Index_Type (Right.Column));
       end case;
    end ">=";
 
@@ -407,7 +415,7 @@ package body Language.Tree is
    -- To_Location --
    -----------------
 
-   function To_Location (Offset : Integer) return Text_Location is
+   function To_Location (Offset : String_Index_Type) return Text_Location is
    begin
       return (True, Offset);
    end To_Location;
@@ -416,9 +424,23 @@ package body Language.Tree is
    -- To_Location --
    -----------------
 
-   function To_Location (Line, Line_Offset : Natural) return Text_Location is
+   function To_Location
+     (Line        : Natural;
+      Line_Offset : String_Index_Type)
+      return Text_Location
+   is
    begin
       return (False, Line, Line_Offset);
+   end To_Location;
+
+   -----------------
+   -- To_Location --
+   -----------------
+
+   function To_Location (Loc : Source_Location) return Text_Location
+   is
+   begin
+      return (False, Loc.Line, String_Index_Type (Loc.Column));
    end To_Location;
 
    ---------------------
@@ -766,12 +788,12 @@ package body Language.Tree is
 
    function Encloses
      (Scope  : Construct_Tree_Iterator;
-      Offset : Positive)
+      Offset : String_Index_Type)
       return Boolean
    is
    begin
-      return Offset >= Get_Construct (Scope).Sloc_Start.Index
-        and then Offset <= Get_Construct (Scope).Sloc_End.Index;
+      return Natural (Offset) >= Get_Construct (Scope).Sloc_Start.Index
+        and then Natural (Offset) <= Get_Construct (Scope).Sloc_End.Index;
    end Encloses;
 
    -------------------
@@ -1261,7 +1283,7 @@ package body Language.Tree is
 
    function Full_Construct_Path
      (Tree   : Construct_Tree;
-      Offset : Natural) return Construct_Tree_Iterator_Array
+      Offset : String_Index_Type) return Construct_Tree_Iterator_Array
    is
       It : constant Construct_Tree_Iterator := Get_Iterator_At
         (Tree              => Tree,

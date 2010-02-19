@@ -66,7 +66,7 @@ package Ada_Semantic_Tree.Dependency_Tree is
 
    function Get_Local_Visible_Constructs
      (File       : Structured_File_Access;
-      Offset     : Natural;
+      Offset     : String_Index_Type;
       Name       : Distinct_Identifier;
       Visibility : not null access Visibility_Resolver;
       Use_Wise   : Boolean := True;
@@ -79,7 +79,7 @@ package Ada_Semantic_Tree.Dependency_Tree is
 
    function Is_Locally_Visible
      (File     : Structured_File_Access;
-      Offset   : Natural;
+      Offset   : String_Index_Type;
       Entity   : Entity_Access;
       Use_Wise : Boolean := True) return Boolean;
    --  Return true if the entity is locally visible from the file. This is just
@@ -97,7 +97,7 @@ package Ada_Semantic_Tree.Dependency_Tree is
 
    function First
      (File       : Structured_File_Access;
-      Offset     : Natural;
+      Offset     : String_Index_Type;
       Name       : String;
       Use_Wise   : Boolean := True;
       Is_Partial : Boolean := False)

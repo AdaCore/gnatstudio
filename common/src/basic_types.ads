@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -81,13 +81,15 @@ package Basic_Types is
    ------------------
 
    type Visible_Column_Type is new Integer;
-   type Character_Offset_Type is new Integer;
-   --  The two types above indicate column types.
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
-   --
+
+   type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the
    --  beginning of the line and the character. First character has offset 0.
+
+   type String_Index_Type is new Natural;
+   --  String_Index_Type indicates a index in a string, in bytes, starts at 1.
 
    -----------------
    -- File caches --

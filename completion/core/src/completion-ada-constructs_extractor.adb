@@ -19,7 +19,6 @@
 
 with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
-with Basic_Types;                       use Basic_Types;
 with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
 with Language.Ada;                      use Language.Ada;
@@ -438,7 +437,7 @@ package body Completion.Ada.Constructs_Extractor is
    overriding function Match
      (Proposal   : Construct_Completion_Proposal;
       Context    : Completion_Context;
-      Offset     : Integer) return Boolean
+      Offset     : String_Index_Type) return Boolean
    is
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (Proposal.View);
@@ -566,7 +565,7 @@ package body Completion.Ada.Constructs_Extractor is
 
    overriding procedure Get_Completion_Root
      (Resolver : access Construct_Completion_Resolver;
-      Offset   : Integer;
+      Offset   : String_Index_Type;
       Context  : Completion_Context;
       Result   : in out Completion_List)
    is

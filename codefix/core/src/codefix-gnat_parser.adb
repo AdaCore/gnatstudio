@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types;                    use Basic_Types;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 with Projects.Registry;              use Projects.Registry;
@@ -3652,7 +3653,7 @@ package body Codefix.GNAT_Parser is
       end if;
 
       Expression := Parse_Expression_Backward
-        (Ada_Lang, Entity_Name, Entity_Name'Last);
+        (Ada_Lang, Entity_Name, String_Index_Type (Entity_Name'Last));
 
       List := Find_Declarations
         (Context    =>

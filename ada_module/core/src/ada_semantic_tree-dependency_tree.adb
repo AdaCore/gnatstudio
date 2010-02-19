@@ -254,7 +254,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
    function Get_Local_Visible_Constructs
      (File       : Structured_File_Access;
-      Offset     : Natural;
+      Offset     : String_Index_Type;
       Name       : Distinct_Identifier;
       Visibility : not null access Visibility_Resolver;
       Use_Wise   : Boolean := True;
@@ -558,7 +558,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          while It /= End_Entity_It
            and then
              (Unit_Index /= Units'Last
-              or else Get_Construct (It).Sloc_Start.Index < Offset)
+              or else Get_Construct (It).Sloc_Start.Index < Natural (Offset))
          loop
             Current_Entity := To_Entity_Access (Current_File, It);
 
@@ -667,7 +667,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
    function Is_Locally_Visible
      (File     : Structured_File_Access;
-      Offset   : Natural;
+      Offset   : String_Index_Type;
       Entity   : Entity_Access;
       Use_Wise : Boolean := True) return Boolean
    is
@@ -1354,7 +1354,8 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                   while Current_Scope /= null
                     and then not Encloses
                       (To_Construct_Tree_Iterator (Current_Scope.Entity),
-                       Get_Construct (New_It).Sloc_Start.Index)
+                       String_Index_Type
+                         (Get_Construct (New_It).Sloc_Start.Index))
                   loop
                      Current_Scope := Current_Scope.Parent;
 
@@ -1425,7 +1426,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
    function First
      (File       : Structured_File_Access;
-      Offset     : Natural;
+      Offset     : String_Index_Type;
       Name       : String;
       Use_Wise   : Boolean := True;
       Is_Partial : Boolean := False)

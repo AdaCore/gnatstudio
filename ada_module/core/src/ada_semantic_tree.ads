@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types; use Basic_Types;
 with Language; use Language;
 with Language.Tree.Database; use Language.Tree.Database;
 with Virtual_Lists;
@@ -118,7 +119,7 @@ package Ada_Semantic_Tree is
 
    type Visibility_Context is record
       File                      : Structured_File_Access;
-      Offset                    : Natural;
+      Offset                    : String_Index_Type;
       Filter                    : Visibility_Filter := Everything;
       Min_Visibility_Confidence : Visibility_Confidence;
    end record;

@@ -36,7 +36,7 @@ package Ada_Semantic_Tree.Declarations is
             File   : Structured_File_Access;
             --  The file handle where the occurence is set.
 
-            Offset : Natural;
+            Offset : String_Index_Type;
             --  The offset where the occurence is located, on the buffer passed
             --  in File.
       end case;
@@ -88,7 +88,7 @@ package Ada_Semantic_Tree.Declarations is
    function Match_Declaration_With
      (Entity          : Entity_Access;
       File            : Structured_File_Access;
-      Offset          : Natural;
+      Offset          : String_Index_Type;
       From_Visibility : Visibility_Context :=
         Null_Visibility_Context;
       Expression      : Parsed_Expression := Null_Parsed_Expression)

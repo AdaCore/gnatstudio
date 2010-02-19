@@ -959,7 +959,10 @@ package body Entities is
             --  does a Ref in Remove ?
 
             Entity.Ref_Count := Natural'Last;
-            Remove (Entity.Declaration.File.Entities, Entity);
+
+            if not Entity.Is_Dummy then
+               Remove (Entity.Declaration.File.Entities, Entity);
+            end if;
 
             if Entity.Declaration.File.Handler /= null then
                Remove (Entity.Declaration.File.Handler, Entity);
@@ -2014,7 +2017,8 @@ package body Entities is
             File_Timestamp_In_References => 0,
             Is_Valid                     => True,
             Ref_Count                    => 1,
-            Trie_Tree_Index              => 0);
+            Trie_Tree_Index              => 0,
+            Is_Dummy                     => False);
 
          Ref (File);  --  Used in declaration
          Append (UEI.List.all, E);

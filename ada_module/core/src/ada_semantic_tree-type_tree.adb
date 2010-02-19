@@ -495,7 +495,7 @@ package body Ada_Semantic_Tree.Type_Tree is
               Find_Declarations
                 ((From_File,
                   Get_File (The_Type),
-                  Get_Construct (The_Type).Sloc_End.Index),
+                  String_Index_Type (Get_Construct (The_Type).Sloc_End.Index)),
                  Expression        => Expression,
                  Excluded_Entities => Excluded);
             It          : Entity_Iterator := First (Decl_List);

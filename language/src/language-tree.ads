@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -118,9 +118,10 @@ package Language.Tree is
    type Text_Location (Absolute_Offset : Boolean) is record
       case Absolute_Offset is
          when True =>
-            Offset : Integer;
+            Offset      : String_Index_Type;
          when False =>
-            Line, Line_Offset : Natural;
+            Line        : Natural;
+            Line_Offset : String_Index_Type;
       end case;
    end record;
    --  This type is used to make comparaisons to Source_Location when only a
@@ -139,11 +140,17 @@ package Language.Tree is
    function ">="
      (Left : Text_Location; Right : Source_Location) return Boolean;
 
-   function To_Location (Offset : Integer) return Text_Location;
+   function To_Location (Offset : String_Index_Type) return Text_Location;
    --  Return a text location for the offset given in parameter.
 
-   function To_Location (Line, Line_Offset : Natural) return Text_Location;
+   function To_Location
+     (Line        : Natural;
+      Line_Offset : String_Index_Type)
+      return Text_Location;
    --  Return a text location for the line/column given in parameter.
+
+   function To_Location (Loc : Source_Location) return Text_Location;
+   --  Converts a source location to a text location
 
    function Get_Iterator_At
      (Tree              : Construct_Tree;
@@ -217,7 +224,7 @@ package Language.Tree is
       return Boolean;
    function Encloses
      (Scope  : Construct_Tree_Iterator;
-      Offset : Positive)
+      Offset : String_Index_Type)
        return Boolean;
    --  Same as above, but doesn't need a "real" entity, only a location
 
@@ -318,8 +325,8 @@ package Language.Tree is
    --  in parameter.
 
    function Full_Construct_Path
-     (Tree : Construct_Tree;
-      Offset : Natural) return Construct_Tree_Iterator_Array;
+     (Tree   : Construct_Tree;
+      Offset : String_Index_Type) return Construct_Tree_Iterator_Array;
    --  Return an array containing all the parents around the offset given in
 
    -----------------

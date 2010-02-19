@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,7 @@ with Glib.Convert;                use Glib.Convert;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
+with Basic_Types;                 use Basic_Types;
 with Project_Explorers_Common;    use Project_Explorers_Common;
 
 with Traces; use Traces;
@@ -1148,7 +1149,9 @@ package body Outline_View.Model is
       Open_Node
         (Get_Iterator_At
            (Tree     => Get_Tree (Model.File),
-            Location => To_Location (Line, Column),
+            Location => To_Location (Line,  String_Index_Type (Column)),
+            --  ??? not sure if that conversion is accurate - we don't know
+            --  the type of column here!
             Position => Enclosing));
 
       if Last_Node = null then

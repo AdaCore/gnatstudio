@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2008, AdaCore             --
+--                      Copyright (C) 2007-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -231,8 +231,8 @@ package body Ada_Semantic_Tree.List_Resolver is
 
    function Get_Actual_Parameter
      (Buffer      : access Glib.UTF8_String;
-      Param_Start : Natural;
-      Param_End   : Natural) return Actual_Parameter
+      Param_Start : String_Index_Type;
+      Param_End   : String_Index_Type) return Actual_Parameter
    is
       Result : Actual_Parameter;
       It     : Token_List.List_Node;

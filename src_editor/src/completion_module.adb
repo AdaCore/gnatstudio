@@ -420,7 +420,7 @@ package body Completion_Module is
 
          Visibility :=
            (Structured_File,
-            To_Offset
+            To_String_Index
               (Structured_File,
                Line_Information (Context),
                Column_Information (Context)),
@@ -1068,7 +1068,7 @@ package body Completion_Module is
                     Get_Filename (Buffer),
                     GNAT.Strings.String_Access (Data.The_Text),
                     Get_Language (Buffer),
-                    Get_Byte_Index (It)));
+                    String_Index_Type (Get_Byte_Index (It))));
             Trace (Me_Adv, "Getting completions done");
 
             --  If the completion list is empty, return without showing
@@ -1491,7 +1491,7 @@ package body Completion_Module is
 
          Exp := Ada_Lang.Parse_Expression_Backward
            (The_Text,
-            Get_Byte_Index (It));
+            String_Index_Type (Get_Byte_Index (It)));
 
          if Token_List.Length (Exp.Tokens) = 1 then
             case Token_List.Data

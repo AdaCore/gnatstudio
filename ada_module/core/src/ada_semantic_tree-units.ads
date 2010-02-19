@@ -79,7 +79,8 @@ package Ada_Semantic_Tree.Units is
    --  Return all the children of the unit given in parameter.
 
    function Get_Owning_Unit
-     (File : Structured_File_Access; Offset : Integer) return Unit_Access;
+     (File : Structured_File_Access;
+      Offset : String_Index_Type) return Unit_Access;
    --  Return the unit related to this location in the file.
 
    function Get_Owning_Unit (Entity : Entity_Access) return Unit_Access;

@@ -46,7 +46,7 @@ package Completion.Ada.Constructs_Extractor is
    overriding
    procedure Get_Completion_Root
      (Resolver : access Construct_Completion_Resolver;
-      Offset   : Integer;
+      Offset   : String_Index_Type;
       Context  : Completion_Context;
       Result   : in out Completion_List);
    --  See inherited documentation
@@ -161,7 +161,7 @@ private
    function Match
      (Proposal : Construct_Completion_Proposal;
       Context  : Completion_Context;
-      Offset   : Integer) return Boolean;
+      Offset   : String_Index_Type) return Boolean;
    --  See inherited documentation
 
    overriding

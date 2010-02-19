@@ -72,11 +72,11 @@ package body Ada_Semantic_Tree.Declarations is
    with record
       First_File      : Structured_File_Access;
       First_Buffer    : String_Access;
-      First_Offset    : Natural;
+      First_Offset    : String_Index_Type;
       Construct_Db    : Construct_Database_Access;
       Name            : Distinct_Identifier;
       Is_Partial      : Boolean;
-      Offset          : Integer;
+      Offset          : String_Index_Type;
       From_Visibility : Visibility_Context;
    end record;
 
@@ -1022,7 +1022,7 @@ package body Ada_Semantic_Tree.Declarations is
    function Match_Declaration_With
      (Entity          : Entity_Access;
       File            : Structured_File_Access;
-      Offset          : Natural;
+      Offset          : String_Index_Type;
       From_Visibility : Visibility_Context :=
         Null_Visibility_Context;
       Expression      : Parsed_Expression := Null_Parsed_Expression)

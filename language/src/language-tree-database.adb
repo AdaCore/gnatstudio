@@ -463,7 +463,7 @@ package body Language.Tree.Database is
      (Lang     : access Tree_Language;
       File     : Structured_File_Access;
       Line     : Integer;
-      Column   : Integer) return Entity_Access
+      Column   : String_Index_Type) return Entity_Access
    is
       pragma Unreferenced (Lang, File, Line, Column);
    begin
@@ -606,7 +606,9 @@ package body Language.Tree.Database is
    ------------------------
 
    function Get_Offset_Of_Line
-     (File : Structured_File_Access; Line : Integer) return Integer is
+     (File : Structured_File_Access; Line : Integer)
+      return String_Index_Type
+   is
    begin
       if File.Line_Starts = null then
          declare
@@ -628,7 +630,7 @@ package body Language.Tree.Database is
                      Free (Tmp_Lines);
                   end if;
 
-                  Lines (Lines_Index) := J + 1;
+                  Lines (Lines_Index) := String_Index_Type (J) + 1;
                   Lines_Index := Lines_Index + 1;
                end if;
             end loop;
@@ -649,12 +651,12 @@ package body Language.Tree.Database is
    function To_Visible_Column
      (File         : Structured_File_Access;
       Line        : Integer;
-      Line_Offset : Integer) return Visible_Column_Type
+      Line_Offset : String_Index_Type) return Visible_Column_Type
    is
       Tab_Width : constant := 8;
 
       Str : constant GNAT.Strings.String_Access := Get_Buffer (File);
-      Current_Index : Integer  := Get_Offset_Of_Line (File, Line);
+      Current_Index : String_Index_Type  := Get_Offset_Of_Line (File, Line);
       Current_Col   : Visible_Column_Type := 1;
    begin
       loop
@@ -676,36 +678,74 @@ package body Language.Tree.Database is
       return Current_Col;
    end To_Visible_Column;
 
-   --------------------
-   -- To_Line_Offset --
-   --------------------
+   --------------------------
+   -- To_Line_String_Index --
+   --------------------------
 
-   function To_Line_Offset
+   function To_Line_String_Index
      (File   : Structured_File_Access;
       Line   : Integer;
-      Column : Visible_Column_Type) return Integer
+      Column : Visible_Column_Type) return String_Index_Type
    is
-      Current_Index : Integer := Get_Offset_Of_Line (File, Line);
+      Current_Index : String_Index_Type := Get_Offset_Of_Line (File, Line);
    begin
       Skip_To_Column (Buffer  => Get_Buffer (File).all,
                       Columns => Integer (Column),
-                      Index   => Current_Index);
+                      Index   => Natural (Current_Index));
 
-      return Current_Index - Get_Offset_Of_Line (File, Line) + 1;
-   end To_Line_Offset;
+      return String_Index_Type
+        (Current_Index - Get_Offset_Of_Line (File, Line)) + 1;
+   end To_Line_String_Index;
 
-   ---------------
-   -- To_Offset --
-   ---------------
+   ---------------------
+   -- To_String_Index --
+   ---------------------
 
-   function To_Offset
+   function To_String_Index
      (File   : Structured_File_Access;
       Line   : Integer;
-      Column : Visible_Column_Type) return Integer is
+      Column : Visible_Column_Type) return String_Index_Type is
    begin
       return Get_Offset_Of_Line (File, Line)
-        + To_Line_Offset (File, Line, Column);
-   end To_Offset;
+        + To_Line_String_Index (File, Line, Column) - 1;
+   end To_String_Index;
+
+   --------------------
+   -- To_Line_Column --
+   --------------------
+
+   procedure To_Line_Column
+     (File                 : Structured_File_Access;
+      Absolute_Byte_Offset : String_Index_Type;
+      Line                 : out Integer;
+      Column               : out Visible_Column_Type)
+   is
+      --  Dummy initialization, to force recomputation of file offsets if
+      --  needed.
+      First_Line : String_Index_Type := Get_Offset_Of_Line (File, 1);
+      pragma Unreferenced (First_Line);
+
+      Index_In_Line : String_Index_Type;
+   begin
+      Line := -1;
+
+      for J in File.Line_Starts'Range loop
+         if File.Line_Starts (J) > Absolute_Byte_Offset then
+            Line := J - 1;
+
+            exit;
+         end if;
+      end loop;
+
+      if Line = -1 then
+         Line := File.Line_Starts'Last;
+      end if;
+
+      Index_In_Line := Absolute_Byte_Offset -
+        Get_Offset_Of_Line (File, Line) + 1;
+
+      Column := To_Visible_Column (File, Line, Index_In_Line);
+   end To_Line_Column;
 
    ------------------
    -- Get_Language --

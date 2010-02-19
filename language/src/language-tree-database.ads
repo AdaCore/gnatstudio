@@ -31,7 +31,6 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Construct_Tries;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
-with Basic_Types; use Basic_Types;
 
 package Language.Tree.Database is
 
@@ -106,7 +105,7 @@ package Language.Tree.Database is
      (Lang     : access Tree_Language;
       File     : Structured_File_Access;
       Line     : Integer;
-      Column   : Integer) return Entity_Access;
+      Column   : String_Index_Type) return Entity_Access;
    --  Find a declaration for the location given in parameter - this is
    --  best effort based. The implementer is responsible to decide if the
    --  information he has is accurate enough or not. By default, just
@@ -191,29 +190,37 @@ package Language.Tree.Database is
    --  Return the file path of the given file node.
 
    function Get_Offset_Of_Line
-     (File : Structured_File_Access; Line : Integer) return Integer;
+     (File : Structured_File_Access; Line : Integer) return String_Index_Type;
    --  Return the offset of the line given in parameter. For efficency, the
    --  line offsets of all lines are cached when calling this function,
    --  and freed either when the File is freed or updated.
 
    function To_Visible_Column
-     (File         : Structured_File_Access;
+     (File        : Structured_File_Access;
       Line        : Integer;
-      Line_Offset : Integer) return Visible_Column_Type;
+      Line_Offset : String_Index_Type) return Visible_Column_Type;
    --  Convert a line offset to a visible column, taking into account
    --  tabulations.
 
-   function To_Line_Offset
+   function To_Line_String_Index
      (File   : Structured_File_Access;
       Line   : Integer;
-      Column : Visible_Column_Type) return Integer;
+      Column : Visible_Column_Type) return String_Index_Type;
    --  Convert a column into a line offset, taking into account tabulations.
+   --  Note that the first column is 1, the first byte offset is 0.
 
-   function To_Offset
+   function To_String_Index
      (File   : Structured_File_Access;
       Line   : Integer;
-      Column : Visible_Column_Type) return Integer;
-   --  Return the offset from Line and Column in File.
+      Column : Visible_Column_Type) return String_Index_Type;
+   --  Return the offset from Line and Column in File, considering that the
+   --  line is a string starting at 1.
+
+   procedure To_Line_Column
+     (File                 : Structured_File_Access;
+      Absolute_Byte_Offset : String_Index_Type;
+      Line                 : out Integer;
+      Column               : out Visible_Column_Type);
 
    function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access;
@@ -593,7 +600,7 @@ private
 
    type Construct_Db_Data_Access is access all Construct_Db_Data_Array;
 
-   type Line_Start_Indexes is array (Natural range <>) of Natural;
+   type Line_Start_Indexes is array (Natural range <>) of String_Index_Type;
    type Line_Start_Indexes_Access is access all Line_Start_Indexes;
 
    procedure Free is new Ada.Unchecked_Deallocation

@@ -31,7 +31,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Glib;         use Glib;
 
 with GNAT.Strings; use GNAT.Strings;
-with Basic_Types;
+with Basic_Types;  use Basic_Types;
 with Language;     use Language;
 with Generic_List;
 with Virtual_Lists;
@@ -80,7 +80,7 @@ package Completion is
    --  Return the buffer associated to this context.
 
    function Get_Completion_Offset
-     (Context : Completion_Context) return Natural;
+     (Context : Completion_Context) return String_Index_Type;
    --  Return the offset associated to this context.
 
    function Get_File
@@ -133,7 +133,7 @@ package Completion is
 
    procedure Get_Completion_Root
      (Resolver : access Completion_Resolver;
-      Offset   : Integer;
+      Offset   : String_Index_Type;
       Context  : Completion_Context;
       Result   : in out Completion_List) is abstract;
    --  Starts a completion, looking from the offset given in parameter.
@@ -179,7 +179,7 @@ package Completion is
       File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : String_Access;
       Lang    : Language_Access;
-      Offset  : Natural) return Completion_Context;
+      Offset  : String_Index_Type) return Completion_Context;
    --  Creates a new context for this manager, with the offset and the buffer
    --  given in parameter.
 
@@ -265,7 +265,7 @@ package Completion is
    function Match
      (Proposal   : Completion_Proposal;
       Context    : Completion_Context;
-      Offset     : Integer) return Boolean is abstract;
+      Offset     : String_Index_Type) return Boolean is abstract;
    --  Return true if the proposal given in parameter matches the completion
    --  search parameters given, false otherwise.
 
@@ -318,7 +318,7 @@ private
       Buffer : String_Access;
       --  Buffer.all should be encoded in UTF8.
 
-      Offset : Integer;
+      Offset : String_Index_Type;
       Lang   : Language_Access;
       File   : GNATCOLL.VFS.Virtual_File;
    end record;
@@ -417,7 +417,7 @@ private
    overriding function Match
      (Proposal : Simple_Completion_Proposal;
       Context  : Completion_Context;
-      Offset   : Integer) return Boolean;
+      Offset   : String_Index_Type) return Boolean;
    --  See inherited documentation
 
    overriding function To_Completion_Id

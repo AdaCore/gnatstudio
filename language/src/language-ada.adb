@@ -790,15 +790,15 @@ package body Language.Ada is
    overriding function Parse_Expression_Backward
      (Lang              : access Ada_Language;
       Buffer            : access Glib.UTF8_String;
-      Start_Offset      : Natural;
-      End_Offset        : Natural := 0;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0;
       Simple_Expression : Boolean := False)
       return Parsed_Expression
    is
       pragma Unreferenced (Lang);
       use Token_List;
 
-      Offset             : Natural := Start_Offset;
+      Offset             : Natural := Natural (Start_Offset);
       Offset_Limit       : Natural;
       Token              : Token_Record;
       Result             : Parsed_Expression;
@@ -834,7 +834,7 @@ package body Language.Ada is
       procedure Handle_Expression (Offset : in out Natural; Skip : Boolean) is
          Local_Token : Token_Record := Token;
       begin
-         Local_Token.Token_Last := Offset;
+         Local_Token.Token_Last := String_Index_Type (Offset);
 
          while Offset > Offset_Limit loop
             case Buffer (Offset) is
@@ -845,9 +845,9 @@ package body Language.Ada is
                when ',' =>
                   if not Skip then
                      Local_Token.Tok_Type := Tok_Expression;
-                     Local_Token.Token_First := Offset + 1;
+                     Local_Token.Token_First := String_Index_Type (Offset) + 1;
                      Push (Local_Token, Offset);
-                     Local_Token.Token_Last := Offset - 1;
+                     Local_Token.Token_Last := String_Index_Type (Offset) - 1;
                   end if;
 
                when '"' =>
@@ -861,7 +861,7 @@ package body Language.Ada is
                when '(' =>
                   if not Skip then
                      Local_Token.Tok_Type := Tok_Expression;
-                     Local_Token.Token_First := Offset + 1;
+                     Local_Token.Token_First := String_Index_Type (Offset) + 1;
                      Push (Local_Token, Offset);
 
                      Local_Token.Tok_Type := Tok_Open_Parenthesis;
@@ -974,21 +974,21 @@ package body Language.Ada is
       begin
          if Check_Prev_Word (Offset, With_Str) then
             Token.Tok_Type := Tok_With;
-            Token.Token_Last := Offset;
+            Token.Token_Last := String_Index_Type (Offset);
             Offset := Offset - (With_Str'Length - 1);
-            Token.Token_First := Offset;
+            Token.Token_First := String_Index_Type (Offset);
             Push (Token, Offset);
          elsif Check_Prev_Word (Offset, Use_Str) then
             Token.Tok_Type := Tok_Use;
-            Token.Token_Last := Offset;
+            Token.Token_Last := String_Index_Type (Offset);
             Offset := Offset - (Use_Str'Length - 1);
-            Token.Token_First := Offset;
+            Token.Token_First := String_Index_Type (Offset);
             Push (Token, Offset);
          elsif Check_Prev_Word (Offset, Pragma_Str) then
             Token.Tok_Type := Tok_Pragma;
-            Token.Token_Last := Offset;
+            Token.Token_Last := String_Index_Type (Offset);
             Offset := Offset - (Pragma_Str'Length - 1);
-            Token.Token_First := Offset;
+            Token.Token_First := String_Index_Type (Offset);
             Push (Token, Offset);
          end if;
       end Push_Potential_Keyword;
@@ -1008,11 +1008,11 @@ package body Language.Ada is
 
          if Token /= Null_Token then
             if Token.Token_First = 0 then
-               Token.Token_First := Offset;
+               Token.Token_First := String_Index_Type (Offset);
             end if;
 
             if Token.Token_Last = 0 then
-               Token.Token_Last := Offset;
+               Token.Token_Last := String_Index_Type (Offset);
             end if;
 
             Prepend (Result.Tokens, Token);
@@ -1091,15 +1091,15 @@ package body Language.Ada is
          return Result;
       end if;
 
-      if End_Offset < Buffer'First then
+      if Natural (End_Offset) < Buffer'First then
          Offset_Limit := Buffer'First - 1;
       else
-         Offset_Limit := End_Offset - 1;
+         Offset_Limit := Natural (End_Offset) - 1;
       end if;
 
       Skip_Comment_Line (Offset);
 
-      if Offset /= Start_Offset then
+      if Offset /= Natural (Start_Offset) then
          --  In this case, we are on a comment line. So the expression is
          --  empty.
 
@@ -1247,13 +1247,13 @@ package body Language.Ada is
                   --  We are in an operator symbol case
 
                   Token.Tok_Type := Tok_Identifier;
-                  Token.Token_Last := Offset;
+                  Token.Token_Last := String_Index_Type (Offset);
 
                   Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
 
                   Skip_String (Offset);
 
-                  Token.Token_First := Offset;
+                  Token.Token_First := String_Index_Type (Offset);
 
                   Push (Token, Offset);
                else
@@ -1296,10 +1296,10 @@ package body Language.Ada is
                  or else Buffer (Offset) = '_'
                then
                   Token.Tok_Type := Tok_Identifier;
-                  Token.Token_First := Offset;
+                  Token.Token_First := String_Index_Type (Offset);
 
                   if Token.Token_Last = 0 then
-                     Token.Token_Last := Next_Ind;
+                     Token.Token_Last := String_Index_Type (Next_Ind);
 
                      if Length (Result.Tokens) = 0 and then Blank_Before then
                         Token := Null_Token;

@@ -197,7 +197,7 @@ package body Ada_Semantic_Tree.Visibility is
      (Tree_To     : Construct_Tree;
       Object_To   : Construct_Tree_Iterator;
       Tree_From   : Construct_Tree;
-      Offset_From : Integer) return Location_Relation
+      Offset_From : String_Index_Type) return Location_Relation
    is
       Path_To   : constant Construct_Tree_Iterator_Array :=
         Full_Construct_Path (Tree_To, Object_To);
@@ -245,8 +245,9 @@ package body Ada_Semantic_Tree.Visibility is
                if Tree_To = Tree_From
                  and then Encloses
                    (Path_To (Path_To'Last),
-                    Get_Construct
-                      (Path_From (Path_From'Last)).Sloc_Start.Index)
+                    String_Index_Type
+                      (Get_Construct
+                         (Path_From (Path_From'Last)).Sloc_Start.Index))
                  and then not Get_Construct
                    (Path_To (Path_To'Last)).Is_Declaration
                then
@@ -339,7 +340,7 @@ package body Ada_Semantic_Tree.Visibility is
    function Is_Accessible
      (Entity      : Entity_Access;
       From_File   : Structured_File_Access;
-      From_Offset : Integer) return Boolean
+      From_Offset : String_Index_Type) return Boolean
    is
       Rel : Location_Relation;
    begin

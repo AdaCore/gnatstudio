@@ -44,7 +44,7 @@ package body Entities.Queries is
    Callers_Me : constant Trace_Handle := Create ("Entities.Callers", Off);
    Ref_Me : constant Trace_Handle := Create ("Entities.Ref", Off);
    Constructs_Heuristics : constant Trace_Handle :=
-     Create ("Entities.Constructs", Off);
+     Create ("Entities.Constructs", On);
 
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
@@ -521,8 +521,6 @@ package body Entities.Queries is
       Handler         : LI_Handler := null;
       Fuzzy_Expected  : Boolean := False)
    is
-      pragma Unreferenced (Fuzzy_Expected);
-
       H       : LI_Handler := Handler;
       Updated : Source_File;
    begin
@@ -585,12 +583,7 @@ package body Entities.Queries is
       if Active (Constructs_Heuristics)
         and then
           (Status = Entity_Not_Found
-          --  ??? Ideally, we should activate that on fuzzy match as well.
-          --  Unfortunately, there are currently too many fuzzy matches cases
-          --  where the information is actually correct, e.g. in case of
-          --  dot notation, so don't activate this thing for now.
-          --  or else (Status = Fuzzy_Match and then not Fuzzy_Expected)
-          )
+           or else (Status = Fuzzy_Match and then not Fuzzy_Expected))
       then
          declare
             Tree_Lang : constant Tree_Language_Access :=
@@ -614,7 +607,7 @@ package body Entities.Queries is
               (Tree      => Get_Tree (S_File),
                Location  => To_Location
                  (Line,
-                  To_Line_Offset (S_File, Line, Column)),
+                  To_Line_String_Index (S_File, Line, Column)),
                From_Type => Start_Name);
 
             if Construct /= Null_Construct_Tree_Iterator then
@@ -624,16 +617,33 @@ package body Entities.Queries is
             else
                --  Otherwise, search the corresponding declaration
                Result := Tree_Lang.Find_Declaration
-                 (S_File, Line, To_Line_Offset (S_File, Line, Column));
+                 (S_File, Line, To_Line_String_Index (S_File, Line, Column));
             end if;
 
             if Result /= Null_Entity_Access then
-               --  We didn't find any entity using the LI mechanism, but
-               --  the construct engine found one.
+               --  First, try to see if there's already a similar entity in
+               --  the database. If that's the case, it's better to use it than
+               --  the dummy one created from the construct.
 
-               Entity := To_LI_Entity (Result);
+               Entity := Get_Or_Create
+                 (Name   => Get_Construct (Result).Name.all,
+                  File     => Get_Or_Create
+                    (Db    => Db,
+                     File  => Get_File_Path (Get_File (Result))),
+                  Line   => Get_Construct (Result).Sloc_Entity.Line,
+                  Column => To_Visible_Column
+                    (Get_File (Result),
+                     Get_Construct (Result).Sloc_Entity.Line,
+                     String_Index_Type
+                       (Get_Construct (Result).Sloc_Entity.Column)),
+                  Allow_Create => False);
 
-               Entity.Is_Valid := False;
+               --  If we don't have any regular entity for the location found,
+               --  then create a dummy one linked to the construct.
+
+               if Entity = null then
+                  Entity := To_LI_Entity (Result);
+               end if;
 
                Status := Fuzzy_Match;
             end if;
@@ -657,6 +667,7 @@ package body Entities.Queries is
       Return_Next  : Boolean := Current_Location = No_File_Location;
       It           : Entity_Reference_Cursor;
       Start_Loc    : File_Location;
+      Number_Of_Entities_Found : Integer := 0;
    begin
       if Active (Me) then
          Trace (Me, "Find_Next_Body for "
@@ -671,6 +682,8 @@ package body Entities.Queries is
       It := First (Entity.References);
 
       while It /= Null_Entity_Reference_Cursor loop
+         Number_Of_Entities_Found := Number_Of_Entities_Found + 1;
+
          Ref := Element (It);
 
          if Ref.Kind = Body_Entity
@@ -696,8 +709,7 @@ package body Entities.Queries is
       --  If not found, then try using the construct database
 
       if Active (Constructs_Heuristics)
-        and then not Return_Next
-        and then First_Entity = Null_Entity_Reference_Cursor
+        and then Number_Of_Entities_Found <= 1
       then
          if Current_Location /= No_File_Location then
             Start_Loc := Current_Location;
@@ -721,7 +733,7 @@ package body Entities.Queries is
                    (Language_Handler (Db.Lang), Start_Loc.File.Name),
                  Tree_Lang => Tree_Lang);
             Construct : Construct_Tree_Iterator;
-            Entity : Entity_Access;
+            Entity, New_Entity : Entity_Access;
          begin
             Update_Contents (S_File);
 
@@ -730,7 +742,7 @@ package body Entities.Queries is
                 (Tree      => Get_Tree (S_File),
                  Location  => To_Location
                    (Start_Loc.Line,
-                    To_Line_Offset
+                    To_Line_String_Index
                       (S_File,
                        Start_Loc.Line,
                        Start_Loc.Column)),
@@ -738,19 +750,22 @@ package body Entities.Queries is
 
             if Construct /= Null_Construct_Tree_Iterator then
                Entity := To_Entity_Access (S_File, Construct);
-               Entity := Tree_Lang.Find_Next_Part (Entity);
+               New_Entity := Tree_Lang.Find_Next_Part (Entity);
 
-               if Entity /= Null_Entity_Access then
+               if Entity /= Null_Entity_Access
+                 and then New_Entity /= Entity
+               then
                   Location.File :=
                     Get_Or_Create
                       (Db           => Db,
-                       File         => Get_File_Path (Get_File (Entity)));
-                  Location.Line := Get_Construct (Entity).Sloc_Entity.Line;
+                       File         => Get_File_Path (Get_File (New_Entity)));
+                  Location.Line := Get_Construct (New_Entity).Sloc_Entity.Line;
 
                   Location.Column := To_Visible_Column
-                    (Get_File (Entity),
-                     Get_Construct (Entity).Sloc_Entity.Line,
-                     Get_Construct (Entity).Sloc_Entity.Column);
+                    (Get_File (New_Entity),
+                     Get_Construct (New_Entity).Sloc_Entity.Line,
+                     String_Index_Type
+                       (Get_Construct (New_Entity).Sloc_Entity.Column));
 
                   return;
                end if;

@@ -25,6 +25,8 @@ with GNAT.Expect;
 with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
 
+with Basic_Types; use Basic_Types;
+
 package Language is
 
    type Language_Root is abstract tagged limited private;
@@ -807,8 +809,8 @@ package Language is
 
    type Token_Record is record
       Tok_Type    : Token_Type := No_Token;
-      Token_First : Natural := 0;
-      Token_Last  : Natural := 0;
+      Token_First : String_Index_Type := 0;
+      Token_Last  : String_Index_Type := 0;
    end record;
    Null_Token : constant Token_Record;
    --  This record holds the informations concerning one specific token.
@@ -839,8 +841,8 @@ package Language is
    function Parse_Expression_Backward
      (Lang              : access Language_Root;
       Buffer            : access Glib.UTF8_String;
-      Start_Offset      : Natural;
-      End_Offset        : Natural := 0;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0;
       Simple_Expression : Boolean := False)
       return Parsed_Expression;
    --  This function looks backwards from the offset given in parameter and
@@ -878,8 +880,8 @@ package Language is
    function Parse_Expression_Backward_To_String
      (Lang              : access Language_Root'Class;
       Buffer            : Glib.UTF8_String;
-      Start_Offset      : Natural;
-      End_Offset        : Natural := 0;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0;
       Simple_Expression : Boolean := False) return String;
    --  Same as above, but doesn't return semantic information for each node.
    --  Instead, the expression is returned as a sanitized string, ie with
