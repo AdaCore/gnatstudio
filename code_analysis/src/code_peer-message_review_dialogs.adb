@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                     Copyright (C) 2009-2010, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -267,7 +267,7 @@ package body Code_Peer.Message_Review_Dialogs is
          Message_Probability_Level'Pos (High));
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Probability_Model_Label_Column, -"Not a error");
+      Store.Set (Iter, Probability_Model_Label_Column, -"Not an error");
       Store.Set (Iter, Probability_Model_Changed_Column, True);
       Store.Set
         (Iter,
