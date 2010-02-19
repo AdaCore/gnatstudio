@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,6 +55,11 @@ package body Build_Command_Manager is
    Invalid_Argument : exception;
    --  Raised by Expand_Arg below
 
+   type Arg_List_And_Dir is record
+      Args : Arg_List;
+      Dir  : Virtual_File := No_File;
+   end record;
+
    function Expand_Command_Line
      (Kernel     : GPS.Kernel.Kernel_Handle;
       CL         : Argument_List;
@@ -62,7 +67,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Arg_List;
+      Simulate   : Boolean := False) return Arg_List_And_Dir;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
@@ -76,7 +81,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean) return Argument_List;
+      Simulate   : Boolean) return Arg_List_And_Dir;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
@@ -110,7 +115,7 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean) return Argument_List
+      Simulate   : Boolean) return Arg_List_And_Dir
    is
       function Substitution
         (Param  : String; Quoted : Boolean) return String;
@@ -154,45 +159,28 @@ package body Build_Command_Manager is
       --  See H926-007.
 
       if Arg = "%X" then
-         declare
-            Vars : Argument_List_Access := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, "-X"));
-            --  ??? Scenario_Variables_Cmd_Line should be modified to
-            --  return an Argument_List[_Access].
-            Res  : constant Argument_List := Vars.all;
-         begin
-            Unchecked_Free (Vars);
-            return Res;
-         end;
+         return (Parse_String
+                 (Scenario_Variables_Cmd_Line (Kernel, "-X"), Separate_Args),
+                 No_File);
 
       --  ??? Ditto for %vars
       elsif Arg = "%vars" then
-         declare
-            Vars : Argument_List_Access := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, ""));
-            Res  : constant Argument_List := Vars.all;
-         begin
-            Unchecked_Free (Vars);
-            return Res;
-         end;
+         return (Parse_String
+                 (Scenario_Variables_Cmd_Line (Kernel, ""), Separate_Args),
+                 No_File);
 
       --  ??? Would be nice to support a generic %vars(xxx)
       elsif Arg = "%vars(-D)" then
-         declare
-            Vars : Argument_List_Access := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, "-D"));
-            Res  : constant Argument_List := Vars.all;
-         begin
-            Unchecked_Free (Vars);
-            return Res;
-         end;
+         return (Parse_String
+                 (Scenario_Variables_Cmd_Line (Kernel, "-D"), Separate_Args),
+                 No_File);
 
       --  ??? Ditto for %eL
       elsif Arg = "%eL" then
          if Trusted_Mode.Get_Pref then
-            return (1 .. 0 => null);
+            return (Empty_Command_Line, No_File);
          else
-            return (1 => new String'("-eL"));
+            return (Create ("-eL"), No_File);
          end if;
 
       --  ??? Ditto for %attr
@@ -226,16 +214,13 @@ package body Build_Command_Manager is
             Attr : constant String := Arg (J + 1 .. K - 1);
             Prj  : constant Project_Type :=
               Get_Project (Get_Kernel (Context));
-            Val  : Argument_List_Access :=
-              Argument_String_To_List
-                (Get_Attribute_Value
-                   (Prj, Build (Pkg, Attr),
-                    Default => Arg (K + 1 .. Arg'Last - 1)));
-            Res  : constant Argument_List := Val.all;
 
          begin
-            Unchecked_Free (Val);
-            return Res;
+            return (Parse_String
+              (Get_Attribute_Value (Prj, Build (Pkg, Attr),
+                 Default => Arg (K + 1 .. Arg'Last - 1)),
+                 Separate_Args),
+              No_File);
          end;
 
       --  ??? Ditto for %switches
@@ -243,10 +228,11 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 9) = "%switches("
         and then Arg (Arg'Last) = ')'
       then
-         return Get_Attribute_Value
+         return (Create (Get_Attribute_Value
            (Get_Project (Get_Kernel (Context)),
-            Build ("IDE", "Default_Switches"),
-            Arg (Arg'First + 10 .. Arg'Last - 1));
+              Build ("IDE", "Default_Switches"), "",
+              Arg (Arg'First + 10 .. Arg'Last - 1))),
+           No_File);
 
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
@@ -266,7 +252,7 @@ package body Build_Command_Manager is
             Langs    : Argument_List := Get_Languages (Prj, Recursive => True);
 
             Multi_Language_Build : Boolean := True;
-
+            Res      : Arg_List_And_Dir;
          begin
             if Arg /= "%gprbuild"
               and then ((Langs'Length = 1
@@ -297,31 +283,58 @@ package body Build_Command_Manager is
                   end loop;
 
                   if Builder then
-                     return (new String'("gprbuild"), new String'("--target="
-                       & Gnatmake (First .. Gnatmake'Last - 9)));
+                     Res.Args := Create ("gprbuild");
+                     Append_Argument
+                       (Res.Args,
+                        "--target=" & Gnatmake (First .. Gnatmake'Last - 9),
+                        One_Arg);
+                     return Res;
                   else
-                     return (new String'("gprclean"), new String'("--target="
-                       & Gnatmake (First .. Gnatmake'Last - 9)));
+                     Res.Args := Create ("gprclean");
+                     Append_Argument
+                       (Res.Args,
+                        "--target=" & Gnatmake (First .. Gnatmake'Last - 9),
+                        One_Arg);
+                     return Res;
                   end if;
 
                elsif Builder then
-                  return (1 => new String'("gprbuild"));
+                  Res.Args := Create ("gprbuild");
+                  return Res;
                else
-                  return (1 => new String'("gprclean"));
+                  Res.Args := Create ("gprclean");
+                  return Res;
                end if;
 
             elsif Builder then
                if Multi_Language_Build then
-                  return (1 => new String'("gprmake"));
+                  Res.Args := Create ("gprmake");
+                  return Res;
                else
-                  return (1 => new String'(Gnatmake));
+                  Res.Args := Create (Gnatmake);
+                  return Res;
                end if;
             else
-               return
-                 (new String'(Get_Attribute_Value
-                   (Prj, GNAT_Attribute, Default => "gnat")),
-                  new String'("clean"));
+               Res.Args := Create
+                 (Get_Attribute_Value
+                    (Prj, GNAT_Attribute, Default => "gnat"));
+               Append_Argument (Res.Args, "clean", One_Arg);
+               return Res;
             end if;
+         end;
+
+      elsif Arg = "%external" then
+         return (Parse_String
+                 (GPS.Kernel.Preferences.Execute_Command.Get_Pref,
+              Separate_Args),
+           No_File);
+
+      elsif Arg = "[exec_dir]" then
+         declare
+            Prj : constant Project_Type :=
+              Get_Project (Get_Kernel (Context));
+         begin
+            return (Empty_Command_Line, Executables_Directory (Prj));
          end;
 
       elsif Arg = "%fp" then
@@ -330,7 +343,7 @@ package body Build_Command_Manager is
             --  remove reference to File from the Locations View.
             --  See F830-003.
             Remove_Location_Category (Kernel, Error_Category, Force_File);
-            return (1 => new String'(+Base_Name (Force_File)));
+            return (Create (+Base_Name (Force_File)), No_File);
          end if;
 
          declare
@@ -338,7 +351,7 @@ package body Build_Command_Manager is
          begin
             if File = No_File then
                if Simulate then
-                  return (1 => new String'("<current-file>"));
+                  return (Create ("<current-file>"), No_File);
 
                else
                   Console.Insert
@@ -350,7 +363,7 @@ package body Build_Command_Manager is
               (Get_Registry (Kernel).all, File, False) = No_Project
             then
                if Simulate then
-                  return (1 => new String'("<current-file>"));
+                  return (Create ("<current-file>"), No_File);
 
                else
                   Console.Insert
@@ -366,7 +379,7 @@ package body Build_Command_Manager is
                --  See F830-003.
                Remove_Location_Category (Kernel, Error_Category, File);
 
-               return (1 => new String'(+Base_Name (File)));
+               return (Create (+Base_Name (File)), No_File);
             end if;
          end;
 
@@ -374,7 +387,7 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 2) = "%TT"
       then
          if Main /= "" then
-            return (1 => new String'(Main & Arg (Arg'First + 3 .. Arg'Last)));
+            return (Create (Main & Arg (Arg'First + 3 .. Arg'Last)), No_File);
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
@@ -386,9 +399,9 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 1) = "%T"
       then
          if Main /= "" then
-            return (1 => new String'
-                      (GNAT.Directory_Operations.Base_Name (Main)
-                       & Arg (Arg'First + 2 .. Arg'Last)));
+            return (Create
+                    (GNAT.Directory_Operations.Base_Name (Main)
+                 & Arg (Arg'First + 2 .. Arg'Last)), No_File);
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
@@ -396,12 +409,35 @@ package body Build_Command_Manager is
             raise Invalid_Argument;
          end if;
 
+      elsif Arg'Length > 1
+        and then Arg (Arg'First .. Arg'First + 1) = "%E"
+      then
+         if Main /= "" then
+            declare
+               P           : Project_Type;
+               Main_Source : constant Filesystem_String :=
+                 +(Main & Arg (Arg'First + 2 .. Arg'Last));
+
+            begin
+               P := Get_Project_From_File
+                 (Get_Registry (Kernel).all, Main_Source);
+               return (Create
+                 (+(Executables_Directory (P).Full_Name.all
+                    & Get_Executable_Name (P, Main_Source))),
+                 No_File);
+            end;
+         else
+            Console.Insert
+              (Kernel, -"Could not determine the executable name for main.",
+               Mode => Console.Error);
+            raise Invalid_Argument;
+         end if;
+
       else
-         return (1 => new String'
-                   (GNATCOLL.Templates.Substitute
-                    (Str       => Arg,
-                     Delimiter => GPS.Kernel.Macros.Special_Character,
-                     Callback  => Substitution'Unrestricted_Access)));
+         return (Create (GNATCOLL.Templates.Substitute
+           (Str       => Arg,
+            Delimiter => GPS.Kernel.Macros.Special_Character,
+            Callback  => Substitution'Unrestricted_Access)), No_File);
       end if;
    end Expand_Arg;
 
@@ -416,12 +452,10 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Arg_List
+      Simulate   : Boolean := False) return Arg_List_And_Dir
    is
-      Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
-      Index  : Natural := 1;
-      --  Index of the next free element in Result
-
+      Result : Arg_List_And_Dir;
+      Final  : Arg_List_And_Dir;
       Context : constant Selection_Context := Get_Current_Context (Kernel);
 
    begin
@@ -429,63 +463,30 @@ package body Build_Command_Manager is
          if CL (J) = null then
             --  This should not happen
             Insert (Kernel, (-"Invalid command line"), Mode => Error);
-            Free (Result);
-            return Empty_Command_Line;
+            return (Empty_Command_Line, No_File);
          end if;
 
-         declare
-            Expanded : constant Argument_List :=
-                         Expand_Arg
-                           (Kernel, Context, CL (J).all, Server,
-                            Force_File, Main, Subdir, Simulate);
-         begin
-            --  Expand the result if needed
-            if Result'Last - Index < Expanded'Length then
-               declare
-                  New_Result : constant Argument_List_Access :=
-                                 new Argument_List
-                                   (1 ..
-                                      (Result'Length + Expanded'Length) * 2);
-               begin
-                  for K in 1 .. Index - 1 loop
-                     New_Result (K) := Result (K);
-                  end loop;
-                  Unchecked_Free (Result);
-                  Result := New_Result;
-               end;
-            end if;
+         Result := Expand_Arg
+           (Kernel, Context, CL (J).all, Server,
+            Force_File, Main, Subdir, Simulate);
 
-            Result (Index .. Index + Expanded'Length - 1) := Expanded;
+         if Result.Dir /= No_File then
+            Final.Dir := Result.Dir;
+         end if;
 
-            Index := Index + Expanded'Length;
-         end;
+         for J in 0 .. Args_Length (Result.Args) loop
+            Append_Argument (Final.Args, Nth_Arg (Result.Args, J), One_Arg);
+         end loop;
       end loop;
 
-      declare
-         Real_Result : Arg_List;
-      begin
-         if Result'Length > 0 then
-            Real_Result := Create (Result (1).all);
-
-            for J in 2 .. Index - 1 loop
-               Append_Argument (Real_Result, Result (J).all, One_Arg);
-            end loop;
-
-         else
-            Real_Result := Empty_Command_Line;
-         end if;
-
-         Free (Result);
-         return Real_Result;
-      end;
+      return Final;
 
    exception
       when Invalid_Argument =>
          Insert
            (Kernel, (-"Invalid context, cannot build"),
             Mode => Console.Error);
-         Free (Result);
-         return Empty_Command_Line;
+         return (Empty_Command_Line, No_File);
    end Expand_Command_Line;
 
    -------------------
@@ -506,9 +507,9 @@ package body Build_Command_Manager is
       Directory   : Virtual_File := No_File)
    is
       Prj            : constant Project_Type := Get_Project (Kernel);
-      Dir            : Virtual_File;
+      Dir            : Virtual_File := No_File;
       T              : Target_Access;
-      Full           : Arg_List;
+      Full           : Arg_List_And_Dir;
       Command_Line   : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
 
@@ -542,7 +543,7 @@ package body Build_Command_Manager is
             CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
-            Args      : constant GNATCOLL.Arg_Lists.Arg_List :=
+            Res       : constant Arg_List_And_Dir :=
                           Expand_Command_Line
                             (Kernel, Mode_Args.all & All_Extra_Args.all,
                              Server,
@@ -551,7 +552,7 @@ package body Build_Command_Manager is
          begin
             Free (CL_Args);
             Free (Mode_Args);
-            return To_Display_String (Args);
+            return To_Display_String (Res.Args);
          end Expand_Cmd_Line;
 
       begin
@@ -647,7 +648,7 @@ package body Build_Command_Manager is
          end if;
 
          --  Trace the command line, for debug purposes
-         if Full = Empty_Command_Line then
+         if Full = (Empty_Command_Line, No_File) then
             Trace (Me, "Macro expansion resulted in empty command line");
             Unchecked_Free (All_Extra_Args);
             return;
@@ -655,10 +656,14 @@ package body Build_Command_Manager is
 
          --  Launch the build command
 
-         if Directory /= No_File then
-            Dir := Directory;
+         if Full.Dir /= No_File then
+            Dir := Full.Dir;
          else
-            Dir := GNATCOLL.VFS.Dir (Project_Path (Prj));
+            if Directory /= No_File then
+               Dir := Directory;
+            else
+               Dir := GNATCOLL.VFS.Dir (Project_Path (Prj));
+            end if;
          end if;
 
          --  Apparently codefix depends on Error_Category to work properly,
@@ -667,12 +672,12 @@ package body Build_Command_Manager is
 
          if Get_Category (T) = "CodePeer" then
             Launch_Build_Command
-              (Kernel, Full, Target_Name, Mode, "CodePeer",
+              (Kernel, Full.Args, Target_Name, Mode, "CodePeer",
                Server, Quiet, Shadow,
                Synchronous, Uses_Shell (T), Dir);
          else
             Launch_Build_Command
-              (Kernel, Full, Target_Name, Mode, Error_Category,
+              (Kernel, Full.Args, Target_Name, Mode, Error_Category,
                Server, Quiet, Shadow,
                Synchronous, Uses_Shell (T), Dir);
          end if;

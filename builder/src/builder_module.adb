@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Tags;                   use Ada.Tags;
 
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
@@ -44,7 +43,6 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -65,7 +63,6 @@ with Build_Command_Manager;
 with Builder_Facility_Module;
 with Std_Dialogs;                use Std_Dialogs;
 with String_Utils;               use String_Utils;
-with GUI_Utils;                  use GUI_Utils;
 with Traces;                     use Traces;
 with Commands;                   use Commands;
 
@@ -97,8 +94,6 @@ package body Builder_Module is
    Item_Accel_Path : constant String := "item";
    --  Prefix used in accel path for items defined in this module
 
-   Custom_Make_Suffix  : constant String := "Custom...";
-
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Run_Description is record
@@ -127,10 +122,6 @@ package body Builder_Module is
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
-      Run_Menu   : Gtk.Menu.Gtk_Menu;
-      --  The build menu, updated automatically every time the list of main
-      --  units changes.
-
       Last_Run_Cmd  : Run_Description;
       --  The last command spawned from the run menu
 
@@ -148,10 +139,6 @@ package body Builder_Module is
    type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
    --  So that items created for the dynamic Make and Run menus have a special
    --  type, and we only remove these when refreshing the menu
-
-   function Is_Dynamic_Menu_Item
-     (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Return True if W is a Dynamic menu item
 
    procedure Interrupt_Xrefs_Loading
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -256,12 +243,6 @@ package body Builder_Module is
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Build->Run menu
 
-   procedure On_Run_Last_Launched
-     (Menu   : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Build->Run->Last Launched
-   --  Rererun the last run command
-
    procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Interrupt menu
@@ -277,16 +258,6 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Command handler for the "compile" command
-
-   --------------------------
-   -- Is_Dynamic_Menu_Item --
-   --------------------------
-
-   function Is_Dynamic_Menu_Item
-     (W : access Gtk_Widget_Record'Class) return Boolean is
-   begin
-      return W'Tag = Dynamic_Menu_Item_Record'Tag;
-   end Is_Dynamic_Menu_Item;
 
    ----------
    -- Free --
@@ -672,19 +643,6 @@ package body Builder_Module is
       end if;
    end Set_Command;
 
-   --------------------------
-   -- On_Run_Last_Launched --
-   --------------------------
-
-   procedure On_Run_Last_Launched
-     (Menu   : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Menu);
-   begin
-      Launch (Kernel, Builder_Module_ID.Last_Run_Cmd);
-   end On_Run_Last_Launched;
-
    ------------
    -- On_Run --
    ------------
@@ -860,125 +818,7 @@ package body Builder_Module is
    ---------------------
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Mitem : Gtk_Menu_Item;
-      Menu2 : Gtk_Menu renames Builder_Module_ID.Run_Menu;
-      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
    begin
-      --  Only add the shortcuts for the root project
-      --  Special case: if the root project is an extending project (which is
-      --  the case as soon as one of the other projects in the hierarchy is
-      --  also an extending, for instance when files where modified locally),
-      --  we want to add the main units of the parent as well, otherwise the
-      --  build menu becomes useless as soon as we are using extending
-      --  projects.
-
-      declare
-         Loaded_Project   : constant Project_Type := Get_Project (Kernel);
-         Loaded_Mains     : Argument_List :=
-                              Get_Attribute_Value
-                                (Loaded_Project,
-                                 Attribute => Main_Attribute);
-         Loaded_Has_Mains : constant Boolean := Loaded_Mains'Length > 0;
-         Extended_Project : constant Project_Type :=
-                              Projects.Extended_Project (Loaded_Project);
-         Iter             : Imported_Project_Iterator :=
-                              Start (Loaded_Project);
-         Current_Project  : Project_Type := Current (Iter);
-         Set_Shortcut     : Boolean := True;
-      begin
-         if Builder_Module_ID.Run_Menu /= null then
-            Remove_All_Children
-              (Builder_Module_ID.Run_Menu, Is_Dynamic_Menu_Item'Access);
-         end if;
-
-         --  ??? Few limitations on what is done here:
-         --
-         --  1. We iterate over all imported projects. We look at the extended
-         --  project main files only if the loaded project has none. This
-         --  means that it will work when the current project inherits its Main
-         --  attribute from the extended project or when it redefines it except
-         --  with an empty list in which case the extended project main files
-         --  should be looked at but they are not.
-         --
-         --  2. We only consider the project extended by the lodaded project as
-         --  a special case. Other extended projects are handled as imported
-         --  projects whereas they should also be handled separately.
-         --
-         --  3. This loop is shared with the one in the builder module that is
-         --  responsible for filling the /Debug/Initialize menu. Both should
-         --  be factorized but this requires maniplulating (main file, project)
-         --  association since a main file needs to be build in a specific
-         --  context which is not necessarily the one in which is it defined
-         --  (see the comment below about main files from extended projects).
-
-         while Current_Project /= No_Project loop
-            if not Loaded_Has_Mains
-              or else Current_Project /= Extended_Project
-            then
-               declare
-                  Mains           : Argument_List :=
-                                      Get_Attribute_Value
-                                        (Current_Project,
-                                         Attribute => Main_Attribute);
-                  Context_Project : Project_Type;
-               begin
-                  --  We should compile main files from the extended project
-                  --  in the context of the loaded project.
-
-                  if Current_Project = Extended_Project then
-                     Context_Project := Loaded_Project;
-                  else
-                     Context_Project := Current_Project;
-                  end if;
-
-                  if Mains'Length /= 0 then
-                     Set_Shortcut := Current_Project = Loaded_Project;
-
-                     Add_Run_Menu
-                       (Menu         => Builder_Module_ID.Run_Menu,
-                        Project      => Context_Project,
-                        Kernel       => Kernel,
-                        Mains        => Mains,
-                        Set_Shortcut => Set_Shortcut);
-                     --  The provided Project Argument is not relevant here
-                  end if;
-
-                  Free (Mains);
-               end;
-            end if;
-
-            Next (Iter);
-            Current_Project := Current (Iter);
-         end loop;
-
-         Free (Loaded_Mains);
-      end;
-
-      --  Should be able to run any program
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
-      Append (Menu2, Mitem);
-      Set_Accel_Path
-        (Mitem, -(Run_Menu_Prefix) & (-Custom_Make_Suffix), Group);
-      File_Project_Cb.Object_Connect
-        (Mitem, Signal_Activate, On_Run'Access,
-         Slot_Object => Kernel,
-         User_Data   => File_Project_Record'
-           (Project => Get_Project (Kernel), File => GNATCOLL.VFS.No_File));
-
-      --  Rerunning the previous command
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, -"Last Launched");
-      Append (Menu2, Mitem);
-      Set_Accel_Path (Mitem, -(Run_Menu_Prefix) & (-"Last Launched"), Group);
-      Kernel_Callback.Connect
-        (Mitem, Signal_Activate, On_Run_Last_Launched'Access,
-         User_Data => Kernel_Handle (Kernel));
-
-      Show_All (Menu2);
-
       if Automatic_Xrefs_Load.Get_Pref then
          Load_Xref_In_Memory (Kernel_Handle (Kernel));
       end if;
@@ -1025,7 +865,6 @@ package body Builder_Module is
       Build_Menu : constant String := '/' & (-"_Build") & '/';
       Tools : constant String := '/' & (-"Tools") & '/';
       Mitem : Gtk_Menu_Item;
-      Menu  : Gtk_Menu;
    begin
       --  This memory is allocated once, and lives as long as the application
 
@@ -1042,39 +881,18 @@ package body Builder_Module is
          Filter  => Lookup_Filter (Kernel, "Project only"),
          Submenu => new Run_Contextual);
 
-      --  Dynamic run menu
-
-      Mitem := Register_Menu
-        (Kernel, Build_Menu, -"_Run", Stock_Execute,
-         null, Ref_Item => "Settings");
-      Gtk_New (Menu);
-      Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
-      Set_Submenu (Mitem, Menu);
-
-      declare
-         Result : constant String := Add_Customization_String
-           (Kernel        => Kernel,
-            Customization =>
-              "<key action='/Build/Run/item1'>shift-F2</key>",
-            From_File     => "builder module");
-      begin
-         if Result /= "" then
-            Insert (Kernel, Result, Mode => Console.Error);
-         end if;
-      end;
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
-
       Register_Menu
         (Kernel, Build_Menu, -"Recompute _Xref info", "",
-         On_Compute_Xref'Access, Ref_Item => "Settings");
+         On_Compute_Xref'Access, Ref_Item => -"Settings", Add_Before => False);
       Register_Menu
         (Kernel, Build_Menu, -"Load Xref info in memory", "",
-         On_Load_Xref_In_Memory'Access, Ref_Item => "Settings");
+         On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings",
+         Add_Before => False);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
+      Register_Menu
+        (Kernel, Build_Menu, Mitem,
+         Ref_Item => -"Settings", Add_Before => False);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Tools, Mitem);

@@ -142,6 +142,18 @@
    </switches>
 </target-model>
 
+<!-- This is an XML model for launching executables -->
+<target-model name="execute" category="">
+   <description>Run an executable</description>
+   <command-line>
+      <arg>%E</arg>
+   </command-line>
+   <switches command="%(tool_name)s" columns="1">
+     <check label="Run in executables directory" switch="[exec_dir]" before="true" />
+     <check label="Run in an external terminal" switch="%external" before="true" />
+   </switches>
+</target-model>
+
 <!-- This is a minimal XML model, used for launching custom commands -->
 <target-model name="custom" category="">
    <description>Launch a custom build command</description>
@@ -309,6 +321,25 @@
        <arg>-P%pp</arg>
        <arg>%X</arg>
     </command-line>
+</target>
+
+<!-- Targets to launch runs  -->
+<target model="execute" category="_Run" name="Run _Main">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gtk-media-play</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <target-type>executable</target-type>
+    <command-line>
+       <arg>%E</arg>
+    </command-line>
+</target>
+
+<target model="execute" category="_Run" name="Custom...">
+    <in-toolbar>FALSE</in-toolbar>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line />
 </target>
 
 <!-- This is an empty target using the Custom model  -->

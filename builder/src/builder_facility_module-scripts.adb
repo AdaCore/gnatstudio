@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2009, AdaCore                  --
+--                 Copyright (C) 2008-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -378,6 +378,9 @@ package body Builder_Facility_Module.Scripts is
       Bind_Default_Key (Kernel      => Kernel,
                         Action      => (-"Build Main Number 1"),
                         Default_Key => "F4");
+      Bind_Default_Key (Kernel      => Kernel,
+                        Action      => (-"Run Main Number 1"),
+                        Default_Key => "shift-F2");
       Bind_Default_Key (Kernel      => Kernel,
                         Action      => -"Custom Build...",
                         Default_Key => "F9");

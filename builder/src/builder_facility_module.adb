@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2009, AdaCore                  --
+--                 Copyright (C) 2008-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1464,7 +1464,7 @@ package body Builder_Facility_Module is
                         Stock_Image => Get_Icon (Target),
                         Callback    => null,
                         Command     => Interactive_Command_Access (C),
-                        Ref_Item    => -"Run",
+                        Ref_Item    => -"Settings",
                         --  Do not use mnemonics if we are registering a
                         --  main, as this is a file name in this case.
                         Mnemonics   => Main = "");
