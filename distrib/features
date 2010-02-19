@@ -30,9 +30,8 @@ NF-45-J208-007 Partial navigation without compilation (2010-02-19)
 
   GPS now provides a navigation mode working even when files are not compiled.
   This mode works on goto body from an entity declaration, goto declaration
-  from an entity body, and on simple cases when trying to retreive the
-  declaration from a random reference, using e.g. goto declaration or
-  hyperlink.
+  from an entity body, and on simple cases when trying to retrieve the
+  declaration from any reference, using e.g. goto declaration or hyperlink.
 
 NF-45-J128-026 Support for generic parameters (2010-02-15)
 
