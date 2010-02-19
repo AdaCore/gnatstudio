@@ -5507,12 +5507,6 @@ access to all the targets defined in your makefile.
    execute the command is the one for this shell. Otherwise, the command
    will be spawned directly by GPS without any shell interpretation.
 
-   @item Last Launched
-   This menu spawns the same command you previously spawned through the Run
-   menu. However, it does not open an intermediate dialog. If you bind this
-   dialog to a key shortcut through the @code{/Edit/Key Shortcuts} menu, this
-   provides a convenient way to spawn the same command multiple times
-
    @end table
 
 @item Recompute Xref info
@@ -11514,6 +11508,9 @@ Python equivalent:
 GPS.current_context().entity().name()
 @end smallexample
 
+@item %E
+The full path to the executable name corresponding to the target.
+
 @item %ek
 Krunched name of the entity the user clicked on.
 This is the same as @code{%e}, except long names are shorted as in @code{%fk}.
@@ -11525,6 +11522,10 @@ Replaced by either an empty string, or @code{-eL}, depending on whether the
 should be followed or not when parsing projects.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
+
+@item %external
+Replaced by the command line specified in the preference
+  @i{External Commands->Execute command}.
 
 @item %f
 Base name of the currently selected file.
