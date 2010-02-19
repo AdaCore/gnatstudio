@@ -674,12 +674,12 @@ package body Build_Command_Manager is
             Launch_Build_Command
               (Kernel, Full.Args, Target_Name, Mode, "CodePeer",
                Server, Quiet, Shadow,
-               Synchronous, Uses_Shell (T), Dir);
+               Synchronous, Uses_Shell (T), False, Dir);
          else
             Launch_Build_Command
               (Kernel, Full.Args, Target_Name, Mode, Error_Category,
                Server, Quiet, Shadow,
-               Synchronous, Uses_Shell (T), Dir);
+               Synchronous, Uses_Shell (T), Get_Category (T) = "_Run", Dir);
          end if;
 
          Unchecked_Free (All_Extra_Args);
