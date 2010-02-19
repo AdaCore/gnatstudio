@@ -79,7 +79,6 @@ use Completion.Ada.Constructs_Extractor;
 
 with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
-with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
 
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
 with Engine_Wrappers;                 use Engine_Wrappers;
@@ -412,11 +411,7 @@ package body Completion_Module is
 
          File := File_Information (Context);
          Structured_File := Get_Or_Create
-           (Get_Construct_Database (Kernel),
-            File,
-            Get_Language_From_File (Get_Language_Handler (Kernel), File),
-            Get_Tree_Language_From_File
-              (Get_Language_Handler (Kernel), File, True));
+           (Get_Construct_Database (Kernel), File);
 
          Visibility :=
            (Structured_File,
@@ -540,8 +535,6 @@ package body Completion_Module is
       File      : Structured_File_Access;
       Smart_Completion_Pref : constant Smart_Completion_Type :=
         Smart_Completion.Get_Pref;
-      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-
    begin
       if Smart_Completion_Pref /= Disabled then
          if Get_Language_From_File
@@ -551,10 +544,7 @@ package body Completion_Module is
             --  ??? This is a temporary kludge in order to avoid considering C
             --  files.
             File := Get_Or_Create
-              (Get_Construct_Database (Kernel),
-               File_Data.File,
-               Get_Language_From_File (Handler, File_Data.File),
-               Get_Tree_Language_From_File (Handler, File_Data.File));
+              (Get_Construct_Database (Kernel), File_Data.File);
 
             Update_Contents (File);
          end if;
@@ -1027,14 +1017,11 @@ package body Completion_Module is
             Data.Manager := new Ada_Completion_Manager;
             Data.The_Text := Get_String (Buffer);
 
-            --  ??? This should be made language-independent
             Data.Lock := new Update_Lock'
               (Lock_Updates
                  (Get_Or_Create
                     (Get_Construct_Database (Kernel),
-                     Get_Filename (Buffer),
-                     Ada_Lang,
-                     Ada_Tree_Lang)));
+                     Get_Filename (Buffer))));
 
             Data.Constructs_Resolver := New_Construct_Completion_Resolver
                  (Get_Construct_Database (Kernel),
@@ -1326,14 +1313,8 @@ package body Completion_Module is
    is
       Dummy : Structured_File_Access;
       pragma Unreferenced (Dummy);
-
-      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
    begin
-      Dummy := Get_Or_Create
-        (Get_Construct_Database (Kernel),
-         File,
-         Get_Language_From_File (Handler, File),
-         Get_Tree_Language_From_File (Handler, File));
+      Dummy := Get_Or_Create (Get_Construct_Database (Kernel), File);
    end Load_One_File_Constructs;
 
    ---------------------

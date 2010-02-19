@@ -56,12 +56,6 @@ package Entities is
    --  cross-references, and the various queries for the browsers).
    --  Derived types should be created for all the languages supported.
 
-   type Abstract_Language_Handler_Record is abstract tagged private;
-   type Abstract_Language_Handler
-     is access all Abstract_Language_Handler_Record'Class;
-   --  Type overriden in language_handlers.ads, which provide the necessary
-   --  primitive operations to query the language associated with a file.
-
    type File_Error_Reporter_Record is abstract tagged null record;
    type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
    procedure Error
@@ -112,7 +106,8 @@ package Entities is
 
    procedure Register_Language_Handler
      (Db   : Entities_Database;
-      Lang : access Abstract_Language_Handler_Record'Class);
+      Lang : access
+        Language.Tree.Database.Abstract_Language_Handler_Record'Class);
    --  Register a new language handler
 
    procedure Reset (Db : Entities_Database);
@@ -826,7 +821,8 @@ package Entities is
 
    function Generate_LI_For_Project
      (Handler      : access LI_Handler_Record;
-      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Lang_Handler : access
+        Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
       Errors       : Projects.Error_Report;
       Recursive    : Boolean := False)
@@ -840,7 +836,8 @@ package Entities is
 
    procedure Parse_File_Constructs
      (Handler      : access LI_Handler_Record;
-      Languages    : access Abstract_Language_Handler_Record'Class;
+      Languages    : access
+        Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
@@ -876,8 +873,6 @@ package Entities is
    Null_LI_Entities_Iterator : constant LI_Entities_Iterator;
 
 private
-
-   type Abstract_Language_Handler_Record is abstract tagged null record;
 
    ----------------
    -- Scope_Tree --
@@ -1419,7 +1414,7 @@ private
       LIs             : LI_HTable.Instance;
 
       Predefined_File : Source_File;
-      Lang            : Abstract_Language_Handler;
+      Lang            : Language.Tree.Database.Abstract_Language_Handler;
       Registry        : Projects.Registry.Project_Registry_Access;
       Frozen          : Freeze_Type := Create_And_Update;
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;

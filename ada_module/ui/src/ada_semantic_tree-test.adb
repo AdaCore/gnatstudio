@@ -319,14 +319,8 @@ procedure Ada_Semantic_Tree.Test is
             Right_File := Create_From_Dir
               (Get_Current_Dir, +Buffer (Word_Begin .. Word_End));
 
-            Left_Tree :=
-              Get_Tree
-                (Get_Or_Create
-                     (Construct_Db, Left_File, Ada_Lang, Ada_Tree_Lang));
-            Right_Tree :=
-              Get_Tree
-                (Get_Or_Create
-                     (Construct_Db, Right_File, Ada_Lang, Ada_Tree_Lang));
+            Left_Tree := Get_Tree (Get_Or_Create (Construct_Db, Left_File));
+            Right_Tree := Get_Tree (Get_Or_Create (Construct_Db, Right_File));
 
             New_Line;
             Diff
@@ -437,11 +431,7 @@ procedure Ada_Semantic_Tree.Test is
                   if Lang_Name /= No_Name
                     and then To_Lower (Get_Name_String (Lang_Name)) = "ada"
                   then
-                     Full_File := Get_Or_Create
-                       (Construct_Db,
-                        Files.all (J),
-                        Ada_Lang,
-                        Ada_Tree_Lang);
+                     Full_File := Get_Or_Create (Construct_Db, Files.all (J));
 
 --                       Set_Profiling (True);
                      Parse_Entities
@@ -464,9 +454,7 @@ procedure Ada_Semantic_Tree.Test is
 
                Full_File := Get_Or_Create
                  (Get_Database (File),
-                  Create (+Buffer (Word_Begin .. Word_End), New_Registry),
-                  Ada_Lang,
-                  Ada_Tree_Lang);
+                  Create (+Buffer (Word_Begin .. Word_End), New_Registry));
 
                Put_Line
                  ("---> ANALYZE " & (+Base_Name (Get_File_Path (Full_File))));
@@ -683,11 +671,7 @@ procedure Ada_Semantic_Tree.Test is
    begin
       Index := 1;
 
-      File_Node := Get_Or_Create
-        (Construct_Db,
-         File,
-         Ada_Lang,
-         Ada_Tree_Lang);
+      File_Node := Get_Or_Create (Construct_Db, File);
 
       while Index /= 0 loop
          Next_Test_Command
@@ -712,7 +696,6 @@ procedure Ada_Semantic_Tree.Test is
    pragma Unreferenced (Db);
 
    Loaded, Success : Boolean;
-
 begin
    Projects.Registry.Initialize;
 
@@ -727,7 +710,8 @@ begin
 
    Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
 
-   Initialize (Construct_Db, new File_Buffer_Provider);
+   Initialize
+     (Construct_Db, new File_Buffer_Provider, new Ada_Language_Handler);
 
    Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
      (Construct_Db, GNATCOLL.VFS.No_File);
@@ -743,11 +727,7 @@ begin
       for J in 1 .. 3 loop
          Clear (Construct_Db);
          for J in Files.all'Range loop
-            File_Node := Get_Or_Create
-              (Construct_Db,
-               Files.all (J),
-               Ada_Lang,
-               Ada_Tree_Lang);
+            File_Node := Get_Or_Create (Construct_Db, Files.all (J));
          end loop;
       end loop;
 

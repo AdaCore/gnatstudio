@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,7 +41,8 @@ with GNATCOLL.VFS;
 package Language_Handlers is
 
    type Language_Handler_Record
-     is new Entities.Abstract_Language_Handler_Record with private;
+     is new Language.Tree.Database.Abstract_Language_Handler_Record
+   with private;
    type Language_Handler is access all Language_Handler_Record'Class;
 
    procedure Create_Handler (Handler : out Language_Handler);
@@ -94,7 +95,7 @@ package Language_Handlers is
    -- Languages --
    ---------------
 
-   function Get_Language_From_File
+   overriding function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language.Language_Access;
@@ -105,7 +106,7 @@ package Language_Handlers is
    --  setting is returned.
    --  Return Unknown_Lang if no other language could be found.
 
-   function Get_Tree_Language_From_File
+   overriding function Get_Tree_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
@@ -175,7 +176,7 @@ private
    type Handler_Info_Access is access Handler_Info_Array;
 
    type Language_Handler_Record
-     is new Entities.Abstract_Language_Handler_Record
+     is new Language.Tree.Database.Abstract_Language_Handler_Record
    with record
       Languages : Language_Info_Access;
       Handlers  : Handler_Info_Access;

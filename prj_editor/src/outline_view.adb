@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -70,7 +70,6 @@ with Traces;                    use Traces;
 
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
-with Language_Handlers;      use Language_Handlers;
 
 with Outline_View.Model; use Outline_View.Model;
 
@@ -1052,13 +1051,7 @@ package body Outline_View is
       Outline.File := File;
 
       Struct_File := Get_Or_Create
-        (Get_Construct_Database (Outline.Kernel),
-         Outline.File,
-         Get_Language_From_File
-           (Get_Language_Handler (Outline.Kernel),
-            Outline.File),
-         Get_Tree_Language_From_File
-           (Get_Language_Handler (Outline.Kernel), Outline.File, True));
+        (Get_Construct_Database (Outline.Kernel), Outline.File);
 
       Model := Get_Outline_Model (Outline_View_Access (Outline));
 

@@ -102,6 +102,22 @@ package Ada_Semantic_Tree.Lang is
    --  Cat_Type (and assimilated) : the type hierarchy. This is handled by
    --    Language.Ada_Type_Tree
 
+   type Ada_Language_Handler is new
+     Abstract_Language_Handler_Record with null record;
+   --  Dummy language handler, considering all the files as being Ada files.
+   --  used e.g. for testing purpose.
+
+   overriding function Get_Language_From_File
+     (Handler           : access Ada_Language_Handler;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return Language_Access;
+
+   overriding function Get_Tree_Language_From_File
+     (Handler           : access Ada_Language_Handler;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
+      From_Project_Only : Boolean := False)
+      return Tree_Language_Access;
+
 private
 
    type Ada_Tree_Language is new Tree_Language with null record;

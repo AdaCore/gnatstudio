@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -113,7 +113,7 @@ package body Language_Handlers is
    -- Get_Language_From_File --
    ----------------------------
 
-   function Get_Language_From_File
+   overriding function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language.Language_Access
@@ -134,7 +134,7 @@ package body Language_Handlers is
    -- Get_Tree_Language_From_File --
    ---------------------------------
 
-   function Get_Tree_Language_From_File
+   overriding function Get_Tree_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)

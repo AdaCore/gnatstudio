@@ -38,7 +38,6 @@ with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with Language.Ada;           use Language.Ada;
-with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
 
 package body Refactoring.Parameters is
    Me : constant Debug_Handle := Create ("Refactor.Params");
@@ -161,10 +160,8 @@ package body Refactoring.Parameters is
 
       function Is_Dotted_Notation return Boolean is
          S_File : constant Structured_File_Access := Get_Or_Create
-           (Db        => Kernel.Get_Construct_Database,
-            File      => File,
-            Lang      => Ada_Lang,
-            Tree_Lang => Ada_Tree_Lang);
+           (Db   => Kernel.Get_Construct_Database,
+            File => File);
 
          Offset : constant String_Index_Type :=
            To_String_Index (S_File, Line, Column);

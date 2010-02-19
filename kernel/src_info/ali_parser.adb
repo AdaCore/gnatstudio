@@ -38,6 +38,7 @@ with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Traces;
+with Language.Tree.Database;    use Language.Tree.Database;
 
 with ALI;                       use ALI;
 with Types;                     use Types;

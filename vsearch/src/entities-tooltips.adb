@@ -107,10 +107,8 @@ package body Entities.Tooltips is
 
    begin
       Data_File := Language.Tree.Database.Get_Or_Create
-        (Db        => Database,
-         File      => Decl_File,
-         Lang      => Get_Language_From_File (Handler, Decl_File),
-         Tree_Lang => Tree_Lang);
+        (Db   => Database,
+         File => Decl_File);
 
       if Data_File = null then
          --  This probably means that this is not a Ada file. Try to get the

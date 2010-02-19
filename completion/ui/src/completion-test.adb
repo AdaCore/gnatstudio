@@ -36,13 +36,13 @@ with Language;               use Language;
 with String_Utils;           use String_Utils;
 with Language.Ada;           use Language.Ada;
 with Language.Tree;          use Language.Tree;
-with Ada_Semantic_Tree.Lang;      use Ada_Semantic_Tree.Lang;
 with Language.Tree.Database; use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Entities;               use Entities;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
 
 procedure Completion.Test is
    use Standard.Ada;
@@ -307,7 +307,8 @@ procedure Completion.Test is
       Current_File : Structured_File_Access;
 
    begin
-      Initialize (Construct_Db, new File_Buffer_Provider);
+      Initialize
+        (Construct_Db, new File_Buffer_Provider, new Ada_Language_Handler);
 
       declare
          File : constant Virtual_File := GNATCOLL.VFS.Create
@@ -344,17 +345,13 @@ procedure Completion.Test is
                   pragma Unreferenced (Dummy_File_Node);
                begin
                   Dummy_File_Node := Get_Or_Create
-                    (Construct_Db,
-                     Files.all (J),
-                     Ada_Lang,
-                     Ada_Tree_Lang);
+                    (Construct_Db, Files.all (J));
                end;
             end loop;
          end;
       end if;
 
-      Current_File := Get_Or_Create
-        (Construct_Db, File, Ada_Lang, Ada_Tree_Lang);
+      Current_File := Get_Or_Create (Construct_Db, File);
 
       return New_Construct_Completion_Resolver
         (Construct_Db,

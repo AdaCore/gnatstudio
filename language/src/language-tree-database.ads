@@ -119,6 +119,31 @@ package Language.Tree.Database is
 
    Unknown_Tree_Lang : constant Tree_Language_Access;
 
+   -------------------------
+   -- Language_Handler --
+   -------------------------
+
+   type Abstract_Language_Handler_Record is abstract tagged null record;
+   type Abstract_Language_Handler
+     is access all Abstract_Language_Handler_Record'Class;
+   --  Type overriden in language_handlers.ads, which provide the necessary
+   --  primitive operations to query the language associated with a file.
+
+   function Get_Language_From_File
+     (Handler           : access Abstract_Language_Handler_Record;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return Language_Access
+      is abstract;
+   --  Find the language of a given file.
+   --  Return Unknown_Lang if no other language could be found.
+
+   function Get_Tree_Language_From_File
+     (Handler           : access Abstract_Language_Handler_Record;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
+      From_Project_Only : Boolean := False)
+      return Tree_Language_Access is abstract;
+   --  Same as above but returns the tree language
+
    ---------------------
    -- Buffer_Provider --
    ---------------------
@@ -291,8 +316,9 @@ package Language.Tree.Database is
    type Construct_Database_Access is access all Construct_Database;
 
    procedure Initialize
-     (Db       : Construct_Database_Access;
-      Provider : Buffer_Provider_Access);
+     (Db         : Construct_Database_Access;
+      Provider   : Buffer_Provider_Access;
+      Lg_Handler : Abstract_Language_Handler);
    --  This procedure has to be called before any other operation on the
    --  database.
 
@@ -301,9 +327,7 @@ package Language.Tree.Database is
 
    function Get_Or_Create
      (Db        : Construct_Database_Access;
-      File      : Virtual_File;
-      Lang      : Language_Access;
-      Tree_Lang : Tree_Language_Access) return Structured_File_Access;
+      File      : Virtual_File) return Structured_File_Access;
    --  Return the file node corresponding to the given file path, and create
    --  one if needed. The creation of the file implies the addition of all its
    --  contents. An empty file (not null) will be returned in case the input
@@ -664,6 +688,8 @@ private
       Persistent_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
 
       Null_Structured_File : aliased Structured_File;
+
+      Lg_Handler    : Abstract_Language_Handler;
    end record;
 
    type Construct_Db_Iterator is record

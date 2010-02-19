@@ -1062,8 +1062,9 @@ package body Language.Tree.Database is
    ----------------
 
    procedure Initialize
-     (Db       : Construct_Database_Access;
-      Provider : Buffer_Provider_Access)
+     (Db         : Construct_Database_Access;
+      Provider   : Buffer_Provider_Access;
+      Lg_Handler : Abstract_Language_Handler)
    is
    begin
       Db.Tree_Registry := Tree_Annotations_Pckg.Create_Annotation_Key_Registry;
@@ -1073,6 +1074,7 @@ package body Language.Tree.Database is
         (Db.Construct_Registry, Db.Persistent_Entity_Key);
       Db.Provider := Provider;
       Db.Null_Structured_File.Db := Db;
+      Db.Lg_Handler := Lg_Handler;
    end Initialize;
 
    -------------------
@@ -1081,19 +1083,30 @@ package body Language.Tree.Database is
 
    function Get_Or_Create
      (Db        : Construct_Database_Access;
-      File      : Virtual_File;
+      File      : Virtual_File) return Structured_File_Access
+   is
       Lang      : Language_Access;
-      Tree_Lang : Tree_Language_Access) return Structured_File_Access is
+      Tree_Lang : Tree_Language_Access;
    begin
-      if not Is_Regular_File (File) or else Lang = Unknown_Lang then
-         --  Files that are not yet associated with a language may be later on,
-         --  e.g. after project initialization. So we don't want to force
-         --  the association between a structured file and an unknown
-         --  language. There will be no information to analyze anyway.
-         return Db.Null_Structured_File'Access;
-      end if;
+      if Contains (Db.Files_Db, File) then
+         return Element (Db.Files_Db, File);
+      else
+         if not Is_Regular_File (File) then
+            return Db.Null_Structured_File'Access;
+         end if;
 
-      if not Contains (Db.Files_Db, File) then
+         Lang := Db.Lg_Handler.Get_Language_From_File (File);
+
+         if Lang = Unknown_Lang then
+            --  Files that are not yet associated with a language may be later
+            --  on, e.g. after project initialization. So we don't want to
+            --  force the association between a structured file and an unknown
+            --  language. There will be no information to analyze anyway.
+            return Db.Null_Structured_File'Access;
+         end if;
+
+         Tree_Lang := Db.Lg_Handler.Get_Tree_Language_From_File (File);
+
          declare
             New_File  : constant Structured_File_Access := new Structured_File;
          begin
@@ -1109,8 +1122,6 @@ package body Language.Tree.Database is
 
             return New_File;
          end;
-      else
-         return Element (Db.Files_Db, File);
       end if;
    end Get_Or_Create;
 

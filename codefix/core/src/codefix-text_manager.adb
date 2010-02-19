@@ -29,7 +29,6 @@ with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 
 with Basic_Types;
 
@@ -1253,12 +1252,8 @@ package body Codefix.Text_Manager is
       if not This.Structure_Up_To_Date.all then
          Update_Contents (This.Construct_Db, This.File_Name);
 
-         --  ??? Should be language independent
          This.Construct_File := Get_Or_Create
-           (This.Construct_Db,
-            This.File_Name,
-            Ada_Lang,
-            Ada_Tree_Lang);
+           (This.Construct_Db, This.File_Name);
 
          This.Structure_Up_To_Date.all := True;
       end if;

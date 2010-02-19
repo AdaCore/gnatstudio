@@ -37,6 +37,9 @@ with String_Utils;              use String_Utils;
 with Traces;
 with Ada.Containers; use Ada.Containers;
 with Entities.Construct_Assistant; use Entities.Construct_Assistant;
+--  with Ada.Text_IO; use Ada.Text_IO;
+
+--  with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
 
 package body Entities.Queries is
 
@@ -585,6 +588,7 @@ package body Entities.Queries is
           (Status = Entity_Not_Found
            or else (Status = Fuzzy_Match and then not Fuzzy_Expected))
       then
+--           Put_Line ("HEURISTICS IN FIND"); Flush;
          declare
             Tree_Lang : constant Tree_Language_Access :=
               Tree_Language_Access
@@ -592,11 +596,8 @@ package body Entities.Queries is
                      (Language_Handler (Db.Lang), Source.Name));
             S_File : constant Structured_File_Access :=
               Get_Or_Create
-                (Db        => Db.Construct_Db,
-                 File      => Source.Name,
-                 Lang      => Get_Language_From_File
-                   (Language_Handler (Db.Lang), Source.Name),
-                 Tree_Lang => Tree_Lang);
+                (Db   => Db.Construct_Db,
+                 File => Source.Name);
 
             Result    : Entity_Access;
             Construct : Construct_Tree_Iterator;
@@ -711,11 +712,24 @@ package body Entities.Queries is
       if Active (Constructs_Heuristics)
         and then Number_Of_Entities_Found <= 1
       then
+--           Put_Line ("HEURISTICS IN BODY"); Flush;
          if Current_Location /= No_File_Location then
             Start_Loc := Current_Location;
          else
             Start_Loc := Entity.Declaration;
          end if;
+
+--           declare
+--              Tb  : GNAT.Traceback.Tracebacks_Array (1 .. 200);
+--              Len : Natural;
+--           begin
+--              Put_Line (String (Base_Name (Start_Loc.File.Name)));
+--              Put_Line (Start_Loc.Line'Img);
+--              Put_Line (Start_Loc.Column'Img);
+--              GNAT.Traceback.Call_Chain (Tb, Len);
+--              Put_Line
+--                (GNAT.Traceback.Symbolic.Symbolic_Traceback (Tb (1 .. Len)));
+--           end;
 
          declare
             Db : constant Entities_Database  := Start_Loc.File.Db;
@@ -727,11 +741,8 @@ package body Entities.Queries is
                       Start_Loc.File.Name));
             S_File : constant Structured_File_Access :=
               Get_Or_Create
-                (Db        => Db.Construct_Db,
-                 File      => Start_Loc.File.Name,
-                 Lang      => Get_Language_From_File
-                   (Language_Handler (Db.Lang), Start_Loc.File.Name),
-                 Tree_Lang => Tree_Lang);
+                (Db   => Db.Construct_Db,
+                 File => Start_Loc.File.Name);
             Construct : Construct_Tree_Iterator;
             Entity, New_Entity : Entity_Access;
          begin

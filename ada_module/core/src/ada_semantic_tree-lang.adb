@@ -1220,4 +1220,33 @@ package body Ada_Semantic_Tree.Lang is
       return Ada_Assistant (Assistant.all).Ada_Ref_Key;
    end Get_Ref_Key;
 
+   --------------------------
+   -- Get_Language_Handler --
+   --------------------------
+
+   overriding function Get_Language_From_File
+     (Handler           : access Ada_Language_Handler;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return Language_Access
+   is
+      pragma Unreferenced (Handler, Source_Filename, From_Project_Only);
+   begin
+      return Ada_Lang;
+   end Get_Language_From_File;
+
+   ---------------------------------
+   -- Get_Tree_Language_From_File --
+   ---------------------------------
+
+   overriding function Get_Tree_Language_From_File
+     (Handler           : access Ada_Language_Handler;
+      Source_Filename   : GNATCOLL.VFS.Virtual_File;
+      From_Project_Only : Boolean := False)
+      return Tree_Language_Access
+   is
+      pragma Unreferenced (Handler, Source_Filename, From_Project_Only);
+   begin
+      return Ada_Tree_Lang;
+   end Get_Tree_Language_From_File;
+
 end Ada_Semantic_Tree.Lang;

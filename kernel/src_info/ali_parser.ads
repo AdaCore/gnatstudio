@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2009, AdaCore              --
+--                     Copyright (C) 2003-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with Entities;
 with GNATCOLL.VFS;
 with Projects.Registry;
+with Language.Tree.Database;
 
 package ALI_Parser is
 
@@ -50,7 +51,8 @@ package ALI_Parser is
       return Entities.LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
-      Lang_Handler : access Entities.Abstract_Language_Handler_Record'Class;
+      Lang_Handler : access
+        Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
       Errors       : Projects.Error_Report;
       Recursive    : Boolean := False)

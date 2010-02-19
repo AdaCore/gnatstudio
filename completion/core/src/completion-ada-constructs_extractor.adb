@@ -21,8 +21,6 @@ with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
-with Language.Ada;                      use Language.Ada;
-with Ada_Semantic_Tree.Lang;                 use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Completion.Ada.Constructs_Extractor is
@@ -51,7 +49,7 @@ package body Completion.Ada.Constructs_Extractor is
       Resolver.Manager := null;
       Resolver.Construct_Db := Construct_Db;
       Resolver.Current_File := Get_Or_Create
-        (Construct_Db, Current_File, Ada_Lang, Ada_Tree_Lang);
+        (Construct_Db, Current_File);
       Resolver.Current_Buffer := Current_Buffer;
 
       return Resolver_Acc;

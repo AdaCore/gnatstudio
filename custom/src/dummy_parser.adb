@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2009, AdaCore               --
+--                    Copyright (C) 2004-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with Entities; use Entities;
 with GNATCOLL.VFS;
 with Projects;
+with Language.Tree.Database; use Language.Tree.Database;
 
 package body Dummy_Parser is
 
