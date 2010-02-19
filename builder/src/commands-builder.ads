@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                  --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -68,6 +68,7 @@ package Commands.Builder is
       Shadow        : Boolean;
       Synchronous   : Boolean;
       Use_Shell     : Boolean;
+      New_Console   : Boolean;
       Directory     : Virtual_File);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
@@ -76,6 +77,8 @@ package Commands.Builder is
    --  Category_Name is the name of the target category being launched.
    --  If Use_Shell, and if the SHELL environment variable is defined,
    --  then call the command through $SHELL -c "command line".
+   --  If New_Console, create a new interactive console to communicate with
+   --  the process.
    --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
    --  Synchronous.
 
@@ -88,7 +91,9 @@ package Commands.Builder is
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;
       Shadow              : Boolean;
-      Create_If_Not_Exist : Boolean) return Interactive_Console;
+      Create_If_Not_Exist : Boolean;
+      New_Console_Name    : String := "") return Interactive_Console;
    --  Return the console appropriate for showing compiler errors
+   --  If New_Console_Name is specified, create a new console with this name.
 
 end Commands.Builder;
