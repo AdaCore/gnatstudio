@@ -139,6 +139,7 @@ package body Commands.Builder is
             Create_If_Not_Exist => True,
             Module              => null,
             Force_Create        => False,
+            ANSI_Support        => True,
             Accept_Input        => True);
       end if;
 
@@ -411,31 +412,44 @@ package body Commands.Builder is
    --------------------------
 
    procedure Launch_Build_Command
-     (Kernel        : Kernel_Handle;
-      CL            : Arg_List;
-      Target_Name   : String;
-      Mode_Name     : String;
-      Category_Name : String := Error_Category;
-      Server        : Server_Type;
-      Quiet         : Boolean;
-      Shadow        : Boolean;
-      Synchronous   : Boolean;
-      Use_Shell     : Boolean;
-      New_Console   : Boolean;
-      Directory     : Virtual_File)
+     (Kernel           : GPS.Kernel.Kernel_Handle;
+      CL               : Arg_List;
+      Target_Name      : String;
+      Mode_Name        : String;
+      Category_Name    : String := Error_Category;
+      Server           : Server_Type;
+      Quiet            : Boolean;
+      Shadow           : Boolean;
+      Synchronous      : Boolean;
+      Use_Shell        : Boolean;
+      New_Console_Name : String;
+      Directory        : Virtual_File)
    is
       Console  : Interactive_Console;
       Data     : Build_Callback_Data_Access;
       Success  : Boolean;
       Cmd_Name : Unbounded_String;
       Cb       : Output_Callback;
+      Exit_Cb  : Exit_Callback;
+      Is_A_Run : Boolean;
+      Show_Output  : Boolean;
+      Show_Command : Boolean;
    begin
-      if New_Console then
-         Console := Get_Build_Console (Kernel, Shadow, False, Target_Name);
+      if New_Console_Name /= "" then
+         Console := Get_Build_Console
+           (Kernel, Shadow, False, New_Console_Name);
          Cb      := null;
+         Exit_Cb := null;
+         Show_Output := True;
+         Show_Command := True;
+         Is_A_Run := True;
       else
          Console := Get_Build_Console (Kernel, Shadow, False);
          Cb      := Build_Callback'Access;
+         Exit_Cb := End_Build_Callback'Access;
+         Show_Output := False;
+         Show_Command := True;
+         Is_A_Run := False;
       end if;
 
       Data := new Build_Callback_Data;
@@ -445,11 +459,12 @@ package body Commands.Builder is
       Data.Quiet := Quiet;
       Data.Shadow := Shadow;
 
-      if Compilation_Starting
-        (Kernel,
-         To_String (Data.Target_Name),
-         Quiet  => Quiet,
-         Shadow => Shadow)
+      if Is_A_Run
+        or else Compilation_Starting
+          (Kernel,
+           To_String (Data.Target_Name),
+           Quiet  => Quiet,
+           Shadow => Shadow)
       then
          Append_To_Build_Output (Kernel, To_Display_String (CL), Shadow);
 
@@ -469,14 +484,14 @@ package body Commands.Builder is
                CL                   => CL,
                Server               => Server,
                Console              => Console,
-               Show_Command         => True,
-               Show_Output          => New_Console,
+               Show_Command         => Show_Command,
+               Show_Output          => Show_Output,
                Callback_Data        => Data.all'Access,
                Success              => Success,
                Line_By_Line         => False,
                Directory            => Directory,
                Callback             => Cb,
-               Exit_Cb              => End_Build_Callback'Access,
+               Exit_Cb              => Exit_Cb,
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
@@ -488,14 +503,14 @@ package body Commands.Builder is
                CL                   => CL,
                Server               => Server,
                Console              => Console,
-               Show_Command         => True,
-               Show_Output          => New_Console,
+               Show_Command         => Show_Command,
+               Show_Output          => Show_Output,
                Callback_Data        => Data.all'Access,
                Success              => Success,
                Line_By_Line         => False,
                Directory            => Directory,
                Callback             => Cb,
-               Exit_Cb              => End_Build_Callback'Access,
+               Exit_Cb              => Exit_Cb,
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,

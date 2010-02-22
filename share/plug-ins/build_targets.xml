@@ -148,6 +148,9 @@
    <command-line>
       <arg>%E</arg>
    </command-line>
+   <server>Execution_Server</server>
+   <is-run>TRUE</is-run>
+   <icon>gtk-media-play</icon>
    <switches command="%(tool_name)s" columns="1">
      <check label="Run in executables directory" switch="[exec_dir]" before="true" />
      <check label="Run in an external terminal" switch="%external" before="true" />
@@ -226,6 +229,7 @@
 
 <target model="builder" category="_Project" name="Build Main">
     <in-toolbar>TRUE</in-toolbar>
+    <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
     <icon>gps-build-main</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
@@ -312,6 +316,7 @@
 <target model="gprclean" category="C_lean" name="Clean _Project">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
+    <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
@@ -326,6 +331,7 @@
 <!-- Targets to launch runs  -->
 <target model="execute" category="_Run" name="Run _Main">
     <in-toolbar>TRUE</in-toolbar>
+    <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>

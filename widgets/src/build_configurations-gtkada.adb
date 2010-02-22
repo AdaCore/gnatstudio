@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2009, AdaCore                  --
+--                 Copyright (C) 2008-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -313,6 +313,11 @@ package body Build_Configurations.Gtkada is
 
          T.Target.Properties.In_Toolbar := Get_Active (T.Icon_Check);
          T.Target.Properties.In_Menu    := Get_Active (T.Menu_Check);
+         T.Target.Properties.In_Contextual_Menu_For_Projects :=
+           Get_Active (T.Project_Contextual_Menu_Check);
+         T.Target.Properties.In_Contextual_Menu_For_Files :=
+           Get_Active (T.File_Contextual_Menu_Check);
+
          T.Target.Properties.Target_Type :=
            To_Unbounded_String (To_Lower (Get_Text (T.Multiple_Targets)));
       end loop;
@@ -523,16 +528,20 @@ package body Build_Configurations.Gtkada is
       Table         : Gtk_Table;
       Hbox          : Gtk_Hbox;
       Label         : Gtk_Label;
+      Main_Hbox     : Gtk_Hbox;
       Box           : Target_UI_Access;
       Combo         : Gtk_Combo_Box_Entry;
       Top_Box       : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
+      Locations_Frame : Gtk_Frame;
       Button        : Gtk_Button;
+      Buttons_Vbox  : Gtk_Vbox;
 
    begin
       --  Global box
 
       Gtk_New (Box, UI.Registry);
+
       Box.Target := Target;
       Box.History := History;
       Box.Tooltips := UI.Tooltips;
@@ -579,7 +588,11 @@ package body Build_Configurations.Gtkada is
 
          --  Add the options frame
 
+         Gtk_New_Hbox (Main_Hbox, Spacing => 3);
          Gtk_New (Options_Frame);
+         Pack_Start (Box, Main_Hbox, False, False, 3);
+         Pack_Start (Main_Hbox, Options_Frame, False, False, 0);
+
          Gtk_New (Label);
          Set_Use_Markup (Label, True);
          Set_Markup (Label, "Options");
@@ -674,21 +687,30 @@ package body Build_Configurations.Gtkada is
                     Xoptions      => Expand or Fill);
          end;
 
-         Gtk_New (Box.Icon_Check, "Display button in toolbar");
-         Attach (Table,
-                 Child         => Box.Icon_Check,
-                 Left_Attach   => 2,
-                 Right_Attach  => 3,
-                 Top_Attach    => 0,
-                 Bottom_Attach => 1);
+         Gtk_New_Vbox (Buttons_Vbox);
 
-         Gtk_New (Box.Menu_Check, "Display item in menu");
-         Attach (Table,
-                 Child         => Box.Menu_Check,
-                 Left_Attach   => 2,
-                 Right_Attach  => 3,
-                 Top_Attach    => 1,
-                 Bottom_Attach => 2);
+         Gtk_New (Locations_Frame);
+         Pack_Start (Main_Hbox, Locations_Frame, True, True, 0);
+         Add (Locations_Frame, Buttons_Vbox);
+
+         Gtk_New (Label, "Display target");
+         Set_Label_Widget (Locations_Frame, Label);
+
+         Gtk_New (Box.Icon_Check, "in the toolbar");
+         Pack_Start (Buttons_Vbox, Box.Icon_Check, False, False, 3);
+
+         Gtk_New (Box.Menu_Check, "in the main menu");
+         Pack_Start (Buttons_Vbox, Box.Menu_Check, False, False, 3);
+
+         Gtk_New (Box.Project_Contextual_Menu_Check,
+                  "in contextual menus for projects");
+         Pack_Start (Buttons_Vbox, Box.Project_Contextual_Menu_Check,
+                     False, False, 3);
+
+         Gtk_New (Box.File_Contextual_Menu_Check,
+                  "in contextual menus for files");
+         Pack_Start (Buttons_Vbox, Box.File_Contextual_Menu_Check,
+                     False, False, 3);
 
          Gtk_New_Hbox (Hbox);
          Set_Spacing (Hbox, 3);
@@ -727,7 +749,7 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 2,
                  Xoptions      => Expand or Fill);
 
-         Pack_Start (Box, Options_Frame, False, False, 3);
+         Pack_Start (Main_Hbox, Options_Frame, True, True, 3);
 
          --  Initialize the options
 
@@ -758,6 +780,10 @@ package body Build_Configurations.Gtkada is
 
          Set_Active (Box.Icon_Check, Target.Properties.In_Toolbar);
          Set_Active (Box.Menu_Check, Target.Properties.In_Menu);
+         Set_Active (Box.Project_Contextual_Menu_Check,
+                     Target.Properties.In_Contextual_Menu_For_Projects);
+         Set_Active (Box.File_Contextual_Menu_Check,
+                     Target.Properties.In_Contextual_Menu_For_Files);
          Box.Multiple_Targets.Set_Text
            (To_String (Target.Properties.Target_Type));
       end if;

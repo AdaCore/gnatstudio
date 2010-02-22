@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -237,6 +237,9 @@ package body Build_Configurations is
                if Child.Value /= null then
                   Model.Icon := To_Unbounded_String (Child.Value.all);
                end if;
+
+            elsif Child.Tag.all = "is-run" then
+               Model.Is_Run := Boolean'Value (Child.Value.all);
 
             elsif Child.Tag.all = "server" then
                Model.Server := Server_Type'Value (Child.Value.all);
@@ -839,6 +842,18 @@ package body Build_Configurations is
 
       C.Next := new Node;
       C := C.Next;
+      C.Tag := new String'("in-contextual-menus-for-projects");
+      C.Value := new String'
+        (Target.Properties.In_Contextual_Menu_For_Projects'Img);
+
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("in-contextual-menus-for-files");
+      C.Value := new String'
+        (Target.Properties.In_Contextual_Menu_For_Files'Img);
+
+      C.Next := new Node;
+      C := C.Next;
       C.Tag := new String'("launch-mode");
       C.Value := new String'(Target.Properties.Launch_Mode'Img);
 
@@ -977,6 +992,14 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "in-menu" then
             Target.Properties.In_Menu := Boolean'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "in-contextual-menus-for-projects" then
+            Target.Properties.In_Contextual_Menu_For_Projects :=
+              Boolean'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "in-contextual-menus-for-files" then
+            Target.Properties.In_Contextual_Menu_For_Files :=
+              Boolean'Value (Child.Value.all);
 
          elsif Child.Tag.all = "key" then
             Target.Properties.Key := To_Unbounded_String (Child.Value.all);
@@ -1260,6 +1283,15 @@ package body Build_Configurations is
    begin
       return Target.Model.Uses_Shell;
    end Uses_Shell;
+
+   ------------
+   -- Is_Run --
+   ------------
+
+   function Is_Run (Target : Target_Access) return Boolean is
+   begin
+      return Target.Model.Is_Run;
+   end Is_Run;
 
    ----------
    -- Free --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -103,6 +103,10 @@ private
       Icon_Button      : Gtkada_Combo_Tool_Button;
       Icon_Check       : Gtk_Check_Button;
       Menu_Check       : Gtk_Check_Button;
+
+      Project_Contextual_Menu_Check  : Gtk_Check_Button;
+      File_Contextual_Menu_Check     : Gtk_Check_Button;
+
       Multiple_Targets : Gtk_Entry;
 
       Launch_Combo   : Gtk_Combo_Box;

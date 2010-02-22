@@ -206,6 +206,13 @@ package body Builder_Facility_Module is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
+   type Run_Contextual is new Submenu_Factory_Record with null record;
+   overriding procedure Append_To_Menu
+     (Builder : access Run_Contextual;
+      Object  : access GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -354,6 +361,12 @@ package body Builder_Facility_Module is
    --  Called when project changed. Selects value in the build-mode combobox
    --  previously used for project
 
+   type Contextual_Menu_Type is (Build_Targets, Run_Targets);
+   procedure Append_To_Contextual_Menu
+     (Menu_Type   : Contextual_Menu_Type;
+      Context     : Selection_Context;
+      Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
+
    --------------------
    -- Add_Build_Menu --
    --------------------
@@ -375,6 +388,8 @@ package body Builder_Facility_Module is
       if Menu = null then
          Gtk_New (Menu);
       end if;
+
+      --  Add an item for every target that requires to be in
 
       --  Add "Clean" item
 
@@ -419,6 +434,106 @@ package body Builder_Facility_Module is
       Free (Mains);
    end Add_Build_Menu;
 
+   -------------------------------
+   -- Append_To_Contextual_Menu --
+   -------------------------------
+
+   procedure Append_To_Contextual_Menu
+     (Menu_Type   : Contextual_Menu_Type;
+      Context     : Selection_Context;
+      Menu        : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      M : Gtk_Menu := Gtk_Menu (Menu);
+
+      For_Files   : constant Boolean := Has_File_Information (Context);
+      For_Project : constant Boolean := Has_Project_Information (Context)
+        and then not For_Files
+        and then not Has_Directory_Information (Context);
+
+      C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
+      T : Target_Access;
+
+      procedure Add_Contextual (T : Target_Access);
+      --  Add a contextual menu for T
+
+      procedure Add_Contextual (T : Target_Access) is
+         Mitem   : Dynamic_Menu_Item;
+         Targets : Unbounded_String;
+      begin
+         Targets := Get_Properties (T).Target_Type;
+
+         if Length (Targets) /= 0 then
+            declare
+               Data   : aliased String_Hooks_Args :=
+                 (Hooks_Data with
+                  Length => Length (Targets),
+                  Value  => To_String (Targets));
+               Mains  : Any_Type :=
+                 Run_Hook_Until_Not_Empty
+                   (Get_Kernel,
+                    Compute_Build_Targets_Hook,
+                    Data'Unchecked_Access);
+            begin
+               for J in 1 .. Mains.Length loop
+                  if Mains.List (J).Length /= 0 then
+                     Mitem := new Dynamic_Menu_Item_Record;
+                     Gtk.Menu_Item.Initialize
+                       (Mitem,
+                        Get_Name (T) & ": " & Mains.List (J).Tuple (1).Str);
+                     Prepend (Menu, Mitem);
+                     String_Callback.Connect
+                       (Mitem, Signal_Activate,
+                        On_Button_Or_Menu_Click'Access,
+                        (To_Unbounded_String (Get_Name (T)),
+                         To_Unbounded_String (Mains.List (J).Tuple (2).Str)));
+                  end if;
+               end loop;
+               Destroy (Data);
+               Free (Mains);
+            end;
+         else
+            Mitem := new Dynamic_Menu_Item_Record;
+            Gtk.Menu_Item.Initialize (Mitem, Get_Name (T));
+            Prepend (Menu, Mitem);
+
+            String_Callback.Connect
+              (Mitem, Signal_Activate,
+               On_Button_Or_Menu_Click'Access,
+               (To_Unbounded_String (Get_Name (T)),
+                Null_Unbounded_String));
+         end if;
+
+      end Add_Contextual;
+
+   begin
+      if False then
+         Add_Build_Menu
+           (Menu         => M,
+            Project      => Project_Information (Context),
+            Kernel       => Get_Kernel (Context));
+      end if;
+
+      loop
+         T := Get_Target (C);
+         exit when T = null;
+
+         if (Menu_Type = Run_Targets and then Is_Run (T))
+           or else (Menu_Type = Build_Targets and then not Is_Run (T))
+         then
+            if (For_Files
+                and then Get_Properties (T).In_Contextual_Menu_For_Files)
+              or else
+                (For_Project
+                 and then Get_Properties (T).In_Contextual_Menu_For_Projects)
+            then
+               Add_Contextual (T);
+            end if;
+         end if;
+
+         Next (C);
+      end loop;
+   end Append_To_Contextual_Menu;
+
    --------------------
    -- Append_To_Menu --
    --------------------
@@ -431,14 +546,24 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Object, Builder);
       --  The filter guarantees we are on a File_Selection_Context
-
-      M : Gtk_Menu := Gtk_Menu (Menu);
-
    begin
-      Add_Build_Menu
-        (Menu         => M,
-         Project      => Project_Information (Context),
-         Kernel       => Get_Kernel (Context));
+      Append_To_Contextual_Menu (Build_Targets, Context, Menu);
+   end Append_To_Menu;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   overriding procedure Append_To_Menu
+     (Builder : access Run_Contextual;
+      Object  : access GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object, Builder);
+      --  The filter guarantees we are on a File_Selection_Context
+   begin
+      Append_To_Contextual_Menu (Run_Targets, Context, Menu);
    end Append_To_Menu;
 
    -------------
@@ -2042,8 +2167,12 @@ package body Builder_Facility_Module is
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Build",
-         Filter  => Lookup_Filter (Kernel, "Project only"),
          Submenu => new Builder_Contextual);
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name    => "Run",
+         Submenu => new Run_Contextual);
 
       --  Connect to the File_Saved_Hook
       Add_Hook (Kernel, File_Saved_Hook,

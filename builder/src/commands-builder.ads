@@ -58,18 +58,18 @@ package Commands.Builder is
    --  Target indicates the name of the target being built.
 
    procedure Launch_Build_Command
-     (Kernel        : GPS.Kernel.Kernel_Handle;
-      CL            : Arg_List;
-      Target_Name   : String;
-      Mode_Name     : String;
-      Category_Name : String := Error_Category;
-      Server        : Server_Type;
-      Quiet         : Boolean;
-      Shadow        : Boolean;
-      Synchronous   : Boolean;
-      Use_Shell     : Boolean;
-      New_Console   : Boolean;
-      Directory     : Virtual_File);
+     (Kernel           : GPS.Kernel.Kernel_Handle;
+      CL               : Arg_List;
+      Target_Name      : String;
+      Mode_Name        : String;
+      Category_Name    : String := Error_Category;
+      Server           : Server_Type;
+      Quiet            : Boolean;
+      Shadow           : Boolean;
+      Synchronous      : Boolean;
+      Use_Shell        : Boolean;
+      New_Console_Name : String;
+      Directory        : Virtual_File);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
@@ -77,8 +77,9 @@ package Commands.Builder is
    --  Category_Name is the name of the target category being launched.
    --  If Use_Shell, and if the SHELL environment variable is defined,
    --  then call the command through $SHELL -c "command line".
-   --  If New_Console, create a new interactive console to communicate with
-   --  the process.
+   --  If New_Console_Name is not empty, then this is considered to be a Run
+   --  command rather than a build command, and in this case we send the
+   --  output to a new console named New_Console_Name.
    --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
    --  Synchronous.
 

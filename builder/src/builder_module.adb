@@ -26,13 +26,10 @@ pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT; use GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNAT.Strings;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Accel_Group;            use Gtk.Accel_Group;
-with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -42,89 +39,32 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Timeout;         use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 
 with Projects;                   use Projects;
-with Interactive_Consoles;       use Interactive_Consoles;
 with Language_Handlers;          use Language_Handlers;
 with Entities;                   use Entities;
 with Entities.Queries;           use Entities.Queries;
-with Histories;                  use Histories;
-with Remote;                     use Remote;
 with Build_Command_Manager;
 with Builder_Facility_Module;
-with Std_Dialogs;                use Std_Dialogs;
-with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with Commands;                   use Commands;
 
-with UTF8_Utils;                 use UTF8_Utils;
-
 with Commands.Generic_Asynchronous;
-
-with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 
 package body Builder_Module is
 
-   Me : constant Debug_Handle := Create ("Builder");
-
-   Shell_Env : constant String := Getenv ("SHELL").all;
-
-   Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
-   --  The key in the history for the arguments to the run command.
-   --  WARNING: this constant is shared with gvd-menu.adb, since we want to
-   --  have the same history for the debugger arguments.
-
-   Run_External_Key : constant History_Key := "run_external_terminal";
-   --  The key in the history for the check button "run in external terminal"
-
-   Run_Exec_Dir_Key : constant History_Key := "run_in_executable_directory";
-   --  The key in the history for the check button
-   --  "run in executable directory"
-
-   Run_Menu_Prefix : constant String := "<gps>/Build/Run/";
-   Item_Accel_Path : constant String := "item";
-   --  Prefix used in accel path for items defined in this module
-
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
-
-   type Run_Description is record
-      CL           : Arg_List;
-      Ext_Terminal : Boolean;
-      Directory    : GNATCOLL.VFS.Virtual_File;
-      Title        : GNAT.Strings.String_Access;
-   end record;
-   --  The arguments used to run an executable from the "Run" menu
-
-   procedure Free (Run : in out Run_Description);
-   --  Free the memory associated with Run
-
-   procedure Launch
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Run          : Run_Description);
-   --  Spawn the command described in Run on the Execution_Server.
-   --  Caller must not free Run.
-
-   procedure Set_Command
-     (Run          : in out Run_Description;
-      Ext_Terminal : Boolean;
-      Command      : String);
-   --  Set the command to be run. Gets both exec name and args from Command
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
-      Last_Run_Cmd  : Run_Description;
-      --  The last command spawned from the run menu
-
       Build_Count : Natural := 0;
       --  Number of on-going builds
    end record;
@@ -134,11 +74,6 @@ package body Builder_Module is
    Builder_Module_ID : Builder_Module_ID_Access;
 
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
-
-   type Dynamic_Menu_Item_Record is new Gtk_Menu_Item_Record with null record;
-   type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
-   --  So that items created for the dynamic Make and Run menus have a special
-   --  type, and we only remove these when refreshing the menu
 
    procedure Interrupt_Xrefs_Loading
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -191,29 +126,6 @@ package body Builder_Module is
      (Data_Type => Compute_Xref_Data_Access,
       Free      => Deep_Free);
 
-   ----------
-   -- Misc --
-   ----------
-
-   procedure Free (Ar : in out String_List);
-   --  Free the memory associate with Ar
-
-   procedure Add_Run_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List;
-      Set_Shortcut : Boolean);
-   --  Same as Add_Build_Menu, but for the Run menu
-
-   type Run_Contextual is new Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
-     (Factory : access Run_Contextual;
-      Object  : access GObject_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the contextual menu for Build/ or Run/
-
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -239,10 +151,6 @@ package body Builder_Module is
    procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class);
    --  Load the Xref info in memory, in a background task
 
-   procedure On_Run
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Build->Run menu
-
    procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Interrupt menu
@@ -258,17 +166,6 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Command handler for the "compile" command
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ar : in out String_List) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
 
    ---------------------
    -- Compile_Command --
@@ -557,187 +454,6 @@ package body Builder_Module is
          Block_Exit => False);
    end Load_Xref_In_Memory;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Run : in out Run_Description) is
-   begin
-      Run.Directory := GNATCOLL.VFS.No_File;
-      Free (Run.Title);
-   end Free;
-
-   ------------
-   -- Launch --
-   ------------
-
-   procedure Launch
-     (Kernel : access Kernel_Handle_Record'Class;
-      Run    : Run_Description)
-   is
-      Console : Interactive_Console;
-      Child   : MDI_Child;
-      Success : Boolean;
-
-   begin
-      if Get_Command (Run.CL) = "" then
-         return;
-      end if;
-
-      Console := Create_Interactive_Console
-        (Kernel, Run.Title.all, ANSI_Support => True);
-      Clear (Console);
-      Child := Find_MDI_Child (Get_MDI (Kernel), Console);
-
-      if Child /= null then
-         Raise_Child (Child);
-      end if;
-
-      --  Save command for the future
-
-      if Builder_Module_ID.Last_Run_Cmd /= Run then
-         Free (Builder_Module_ID.Last_Run_Cmd);
-         Builder_Module_ID.Last_Run_Cmd := Run;
-      end if;
-
-      --  Spawn
-
-      Launch_Process
-        (Kernel_Handle (Kernel),
-         CL               => Run.CL,
-         Server           => Execution_Server,
-         Console          => Console,
-         Success          => Success,
-         Directory        => Run.Directory,
-         Use_Ext_Terminal => Run.Ext_Terminal,
-         Show_Exit_Status => True);
-
-      if not Success then
-         Trace (Me, "Problem spawning command");
-      end if;
-   end Launch;
-
-   -----------------
-   -- Set_Command --
-   -----------------
-
-   procedure Set_Command
-     (Run          : in out Run_Description;
-      Ext_Terminal : Boolean;
-      Command      : String) is
-   begin
-      Run.Ext_Terminal := Ext_Terminal;
-
-      if not Ext_Terminal
-        and then Shell_Env /= ""
-        and then Is_Local (Build_Server)
-      then
-         --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
-         --  is local.
-
-         Run.CL := Create (Shell_Env);
-         Append_Argument (Run.CL, "-c", One_Arg);
-         Append_Argument (Run.CL, Command, One_Arg);
-      else
-         Run.CL := Parse_String (Command, Separate_Args);
-      end if;
-   end Set_Command;
-
-   ------------
-   -- On_Run --
-   ------------
-
-   procedure On_Run
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
-   is
-      K            : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Active       : aliased Boolean := False;
-      Use_Exec_Dir : aliased Boolean := False;
-      Run          : Run_Description;
-   begin
-      if Data.File = GNATCOLL.VFS.No_File then
-         declare
-            Command : constant String := Display_Entry_Dialog
-              (Parent         => Get_Current_Window (K),
-               Title          => -"Run Command",
-               Message        => -"Enter the command to run:",
-               Check_Msg      => -"Use external terminal",
-               Key            => Cst_Run_Arguments_History,
-               History        => Get_History (K),
-               Button_Active  => Active'Unchecked_Access,
-               Key_Check      => Run_External_Key);
-
-         begin
-            if Command /= ""
-              and then Command (Command'First) /= ASCII.NUL
-            then
-               Set_Command (Run, Active, Command);
-               Run.Directory := GNATCOLL.VFS.No_File;
-
-               if Is_Local (Execution_Server) then
-                  Run.Title := new String'(-"Run: " & Command);
-               else
-                  Run.Title := new String'
-                    (-"Run on " & Get_Nickname (Execution_Server) & ": " &
-                     Command);
-               end if;
-            end if;
-         end;
-
-      else
-         declare
-            Arguments : constant String := Display_Entry_Dialog
-              (Parent         => Get_Current_Window (K),
-               Title          => -"Arguments Selection",
-               Message        => -"Enter the arguments to your application:",
-               Key            => Cst_Run_Arguments_History,
-               History        => Get_History (K),
-               Check_Msg      => -"Use external terminal",
-               Key_Check      => Run_External_Key,
-               Button_Active  => Active'Unchecked_Access,
-               Check_Msg2     => -"Use exec dir instead of current dir",
-               Key_Check2     => Run_Exec_Dir_Key,
-               Button2_Active => Use_Exec_Dir'Unchecked_Access);
-
-         begin
-            if Arguments = ""
-              or else Arguments (Arguments'First) /= ASCII.NUL
-            then
-               Run.CL := Parse_String
-                 (Command => +Full_Name
-                    (To_Remote (Data.File, Get_Nickname (Execution_Server))),
-                  Text    => Arguments);
-               Run.Ext_Terminal := Active;
-
-               if Use_Exec_Dir then
-                  Run.Directory := Executables_Directory (Data.Project);
-               else
-                  Run.Directory := GNATCOLL.VFS.No_File;
-               end if;
-
-               if Is_Local (Execution_Server) then
-                  Run.Title := new String'
-                    (-"Run: " &
-                     Display_Base_Name (Data.File)
-                     & ' ' & Krunch (Arguments, 12));
-               else
-                  Run.Title := new String'
-                    (-"Run on " & Get_Nickname (Execution_Server) & ": " &
-                     Display_Base_Name (Data.File)
-                     & ' ' & Krunch (Arguments, 12));
-               end if;
-
-            end if;
-         end;
-      end if;
-
-      Launch (K, Run);
-      --  Run must not be freed
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Run;
-
    ------------------------
    -- On_Tools_Interrupt --
    ------------------------
@@ -762,57 +478,6 @@ package body Builder_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Tools_Interrupt;
 
-   ------------------
-   -- Add_Run_Menu --
-   ------------------
-
-   procedure Add_Run_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List;
-      Set_Shortcut : Boolean)
-   is
-      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
-      Mitem : Dynamic_Menu_Item;
-      Tmp   : Boolean;
-      pragma Unreferenced (Tmp);
-   begin
-      if Menu = null then
-         if Mains'Length = 0 then
-            return;
-         end if;
-
-         Gtk_New (Menu);
-      end if;
-
-      for M in reverse Mains'Range loop
-         if Mains (M).all /= "" then
-            declare
-               Exec : constant Filesystem_String :=
-                        Get_Executable_Name (Project, +Mains (M).all);
-            begin
-               Mitem := new Dynamic_Menu_Item_Record;
-               Gtk.Menu_Item.Initialize (Mitem, Unknown_To_UTF8 (+Exec));
-               Prepend (Menu, Mitem);
-               File_Project_Cb.Object_Connect
-                 (Mitem, Signal_Activate, On_Run'Access,
-                  Slot_Object => Kernel,
-                  User_Data   => File_Project_Record'
-                    (Project => Project,
-                     File    => Create_From_Dir
-                       (Executables_Directory (Project), Exec)));
-
-               if Set_Shortcut and then M = Mains'First then
-                  Set_Accel_Path
-                    (Mitem, Run_Menu_Prefix & Item_Accel_Path & Image (M),
-                     Group);
-               end if;
-            end;
-         end if;
-      end loop;
-   end Add_Run_Menu;
-
    ---------------------
    -- On_View_Changed --
    ---------------------
@@ -825,35 +490,6 @@ package body Builder_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_View_Changed;
-
-   --------------------
-   -- Append_To_Menu --
-   --------------------
-
-   overriding procedure Append_To_Menu
-     (Factory : access Run_Contextual;
-      Object  : access GObject_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Factory, Object);
-      --  The filter garantees we are on a File_Selection_Context
-
-      Mains : Argument_List :=
-                Get_Attribute_Value
-                  (Project_Information (Context),
-                   Attribute => Main_Attribute);
-      M     : Gtk_Menu := Gtk_Menu (Menu);
-
-   begin
-      Add_Run_Menu
-        (Menu         => M,
-         Project      => Project_Information (Context),
-         Kernel       => Get_Kernel (Context),
-         Mains        => Mains,
-         Set_Shortcut => False);
-      Free (Mains);
-   end Append_To_Menu;
 
    ---------------------
    -- Register_Module --
@@ -874,12 +510,6 @@ package body Builder_Module is
          Kernel      => Kernel,
          Module_Name => "Builder",
          Priority    => Default_Priority);
-
-      Register_Contextual_Submenu
-        (Kernel,
-         Name    => "Run",
-         Filter  => Lookup_Filter (Kernel, "Project only"),
-         Submenu => new Run_Contextual);
 
       Register_Menu
         (Kernel, Build_Menu, -"Recompute _Xref info", "",

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2008-2009, AdaCore                  --
+--                 Copyright (C) 2008-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -244,6 +244,14 @@ package Build_Configurations is
       In_Menu    : Boolean          := True;
       --  Whether to display an item in the menu
 
+      In_Contextual_Menu_For_Projects : Boolean := False;
+      --  Whether the target should be in contextual menus for contexts that
+      --  have Project information but not File informaion.
+
+      In_Contextual_Menu_For_Files : Boolean := False;
+      --  Whether the target should be in contextual menus for contexts that
+      --  have File information
+
       Read_Only       : Boolean          := False;
       --  When set to True, the target cannot be renamed or removed
 
@@ -326,6 +334,9 @@ package Build_Configurations is
 
    function Uses_Shell (Target : Target_Access) return Boolean;
    --  Return True if the target uses the $SHELL -cmd "command" to build
+
+   function Is_Run (Target : Target_Access) return Boolean;
+   --  Return True if the target belong to a "run" model
 
    function Get_Model (Target : Target_Access) return String;
    --  Return the name of the model for Target
@@ -478,6 +489,9 @@ private
 
       Description          : Unbounded_String;
       --  A one-line description of the target model
+
+      Is_Run               : Boolean := False;
+      --  Whether the model describes "run" actions.
 
       Icon                 : Unbounded_String;
       --  The string contains a stock identifier

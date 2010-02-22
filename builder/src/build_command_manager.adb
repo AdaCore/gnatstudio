@@ -676,12 +676,20 @@ package body Build_Command_Manager is
             Launch_Build_Command
               (Kernel, Full.Args, Target_Name, Mode, "CodePeer",
                Server, Quiet, Shadow,
-               Synchronous, Uses_Shell (T), False, Dir);
+               Synchronous, Uses_Shell (T), "", Dir);
          else
-            Launch_Build_Command
-              (Kernel, Full.Args, Target_Name, Mode, Error_Category,
-               Server, Quiet, Shadow,
-               Synchronous, Uses_Shell (T), Get_Category (T) = "_Run", Dir);
+            if Is_Run (T) then
+               Launch_Build_Command
+                 (Kernel, Full.Args, Target_Name, Mode, Error_Category,
+                  Server, Quiet, Shadow,
+                  Synchronous, Uses_Shell (T),
+                  "Run: " & GNAT.Directory_Operations.Base_Name (Main), Dir);
+            else
+               Launch_Build_Command
+                 (Kernel, Full.Args, Target_Name, Mode, Error_Category,
+                  Server, Quiet, Shadow,
+                  Synchronous, Uses_Shell (T), "", Dir);
+            end if;
          end if;
 
          Unchecked_Free (All_Extra_Args);
