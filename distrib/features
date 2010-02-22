@@ -128,6 +128,12 @@ NF-45-IB10-011 New contextual menu "Close all other editors (2009-11-17)
   When right-clicking on a notebook tab of an editor, a new contextual
   menu entry is shown, to close all other open editors
 
+NF-45-IA28-022 Custom Run/Build contextual menus (2010-02-22)
+
+  It is now possible through the Build->Settings dialog to tell GPS
+  to add menus to build or run certain targets on the contextual menus
+  for files and for projects.
+
 NF-45-IA27-021 Support for perspectives (2009-11-30)
 
   GPS's Multiple Document Interface now supports perspectives. These are
