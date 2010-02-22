@@ -239,16 +239,38 @@ package body GPS.Tree_View.Locations is
             return -1;
 
          elsif A_Column = B_Column then
-            return 0;
+            --  GtkTreeSortModel breaks underling order of equal rows, so
+            --  return result of compare of last indices to save underling
+            --  order.
+
+            declare
+               A_Path    : constant Gtk_Tree_Path := Self.Get_Path (A);
+               B_Path    : constant Gtk_Tree_Path := Self.Get_Path (B);
+               A_Indices : constant Gint_Array := Get_Indices (A_Path);
+               B_Indices : constant Gint_Array := Get_Indices (B_Path);
+
+            begin
+               Path_Free (A_Path);
+               Path_Free (B_Path);
+
+               if A_Indices (A_Indices'Last) < B_Indices (B_Indices'Last) then
+                  return -1;
+
+               elsif A_Indices (A_Indices'Last)
+                       = B_Indices (B_Indices'Last)
+               then
+                  return 0;
+               end if;
+            end;
          end if;
       end if;
 
       return 1;
    end Compare_By_Location;
 
-   -------------------------
-   -- Compare_By_Location --
-   -------------------------
+   ----------------------------
+   -- Compare_By_Subcategory --
+   ----------------------------
 
    function Compare_By_Subcategory
      (Self : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
@@ -294,7 +316,31 @@ package body GPS.Tree_View.Locations is
                   return -1;
 
                elsif A_Column = B_Column then
-                  return 0;
+                  --  GtkTreeSortModel breaks underling order of equal rows, so
+                  --  return result of compare of last indices to save
+                  --  underling order.
+
+                  declare
+                     A_Path    : constant Gtk_Tree_Path := Self.Get_Path (A);
+                     B_Path    : constant Gtk_Tree_Path := Self.Get_Path (B);
+                     A_Indices : constant Gint_Array := Get_Indices (A_Path);
+                     B_Indices : constant Gint_Array := Get_Indices (B_Path);
+
+                  begin
+                     Path_Free (A_Path);
+                     Path_Free (B_Path);
+
+                     if A_Indices (A_Indices'Last)
+                          < B_Indices (B_Indices'Last)
+                     then
+                        return -1;
+
+                     elsif A_Indices (A_Indices'Last)
+                             = B_Indices (B_Indices'Last)
+                     then
+                        return 0;
+                     end if;
+                  end;
                end if;
             end if;
          end if;
