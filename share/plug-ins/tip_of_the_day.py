@@ -178,12 +178,6 @@ computed in memory, and you can get more accurate and complete results
 by going to Edit->Preferences, select the Editor page and set the
 <i>Submenu for dispatching calls</i> preference to <i>Accurate</i>.
 
-Tip: Ada constructs menu
-
-Need to have GPS insert automatically text of Ada constructs? Go to
-Tools->Plug-ins and enable the <i>predef_ada_entity_insertions.py</i> plug-in
-which will add contextual menus in the source editor.
-
 Tip: On the fly auto casing
 
 To enable on the fly automatic casing of your identifiers, go to
