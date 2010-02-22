@@ -33,8 +33,19 @@ package GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String)
+      Text          : String;
+      Weight        : Natural)
       return not null Simple_Message_Access;
+   --  Creates new instance of primary Simple_Message.
+
+   procedure Create_Simple_Message
+     (Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Weight        : Natural);
    --  Creates new instance of primary Simple_Message.
 
    procedure Create_Simple_Message

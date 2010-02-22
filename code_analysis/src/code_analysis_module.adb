@@ -47,8 +47,8 @@ with GPS.Kernel;                             use GPS.Kernel;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;                   use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;                    use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
@@ -1340,8 +1340,9 @@ package body Code_Analysis_Module is
          end if;
       end if;
 
-      Remove_Location_Category (Kernel, Uncovered_Category);
-      Remove_Location_Category (Kernel, Partially_Covered_Category);
+      Get_Messages_Container (Kernel).Remove_Category (Uncovered_Category);
+      Get_Messages_Container (Kernel).Remove_Category
+        (Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 

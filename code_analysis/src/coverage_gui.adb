@@ -22,6 +22,7 @@ with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
+with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Default_Preferences.Enums;
@@ -194,9 +195,10 @@ package body Coverage_GUI is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
-      Remove_Location_Category (Kernel, Uncovered_Category, File_Node.Name);
-      Remove_Location_Category
-        (Kernel, Partially_Covered_Category, File_Node.Name);
+      Get_Messages_Container (Kernel).Remove_File
+        (Coverage_GUI.Uncovered_Category, File_Node.Name);
+      Get_Messages_Container (Kernel).Remove_File
+        (Coverage_GUI.Partially_Covered_Category, File_Node.Name);
    end Clear_File_Locations;
 
    --------------------------------
@@ -284,8 +286,12 @@ package body Coverage_GUI is
       File_Node : Code_Analysis.File_Access;
       Quiet     : Boolean)
    is
+      pragma Unreferenced (Quiet);
+
       File_Added : Boolean := False;
    begin
+      Clear_File_Locations (Kernel, File_Node);
+
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
@@ -296,7 +302,6 @@ package body Coverage_GUI is
                   File_Node.Name,
                   J,
                   File_Node.Lines (J).Contents,
-                  Quiet,
                   File_Added);
             end if;
          end loop;
@@ -403,7 +408,6 @@ package body Coverage_GUI is
                     File_Node.Name,
                     J,
                     File_Node.Lines (J).Contents,
-                    False,
                     Added);
             end if;
          end loop;

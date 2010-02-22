@@ -18,13 +18,13 @@
 -----------------------------------------------------------------------
 --  This package provides specialized Gtk_Tree_View widget to be used
 --  in the locations view. It uses some knownledge of underling model
---  layout, thus can be used only with model from locations window. In
---  addition to GPS_Tree_View it:
+--  layout, thus can be used only with models provided by message
+--  container. In addition to GPS_Tree_View it:
 --
 --   - creates columns and renderers at initialization time;
 --
---   - creates intermediate filter model and connect between lowerst model
---     and view;
+--   - creates intermediate filter and sort models which is connected between
+--     lowerst model and view;
 --
 --   - handle "query-tooltip" request and display tooltip when visible
 --     area of the view is insufficient to display all text of the message;
@@ -46,7 +46,8 @@ with Glib;
 private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
 with Gtk.Tree_Model_Filter;
-with Gtk.Tree_View_Column;
+private with Gtk.Tree_Model_Sort;
+private with Gtk.Tree_View_Column;
 
 package GPS.Tree_View.Locations is
 
@@ -66,6 +67,14 @@ package GPS.Tree_View.Locations is
       Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
       Model  : not null Gtk.Tree_Model.Gtk_Tree_Model);
 
+   procedure Sort_By_Subcategory
+     (Self : not null access GPS_Locations_Tree_View_Record'Class);
+   --  Sets sorting by subcategory mode
+
+   procedure Sort_By_Location
+     (Self : not null access GPS_Locations_Tree_View_Record'Class);
+   --  Sets sorting by location mode
+
    Signal_Action_Clicked   : constant Glib.Signal_Name;
    --  Emitted on click in action column.
    --  procedure Handler
@@ -79,11 +88,6 @@ package GPS.Tree_View.Locations is
    --    (Self : not null access GPS_Locations_Tree_View_Record'Class;
    --     Path : Gtk_Tree_Path;
    --     Iter : Gtk_Tree_Iter);
-
-   function Sorting_Column
-     (Self : not null access GPS_Locations_Tree_View_Record'Class)
-      return Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-   --  This one for use by old implementation only
 
 private
 
@@ -99,6 +103,11 @@ private
       --  of category and file also.
       Text_Renderer           : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       --  Renderer for location and its text
+
+      Filter                  : Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
+      Sort                    : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
+      --  Intermediate models to support filtering and custom sorting of items
+      --  in the view
 
       On_Row_Expanded_Path    : Gtk.Tree_Model.Gtk_Tree_Path;
       On_Row_Expanded_Handler : Glib.Main.G_Source_Id :=

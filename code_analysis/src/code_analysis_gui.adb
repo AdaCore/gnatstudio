@@ -33,6 +33,7 @@ with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
@@ -373,6 +374,7 @@ package body Code_Analysis_GUI is
       Line      : Natural := 1;
       Column    : Natural := 1) is
    begin
+      Do_Not_Goto_First_Location (Kernel);
       List_File_Uncovered_Lines (Kernel, File_Node, Quiet);
       Open_File_Editor
         (Kernel, File_Node.Name, Line,

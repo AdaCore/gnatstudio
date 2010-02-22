@@ -21,6 +21,9 @@
 --  source editor to handle message highlighting. It is good candidate
 --  to be moved to source editor in the future.
 
+private with Ada.Containers.Hashed_Sets;
+private with GPS.Kernel.Styles;
+
 package GPS.Kernel.Messages.Highlighting is
 
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class);
@@ -31,20 +34,49 @@ package GPS.Kernel.Messages.Highlighting is
 
 private
 
+   function Hash
+     (Item : GPS.Kernel.Styles.Style_Access) return Ada.Containers.Hash_Type;
+   --  Returns hash value constructed from style's name
+
+   use type GPS.Kernel.Styles.Style_Access;
+
+   package Style_Sets is
+     new Ada.Containers.Hashed_Sets
+       (GPS.Kernel.Styles.Style_Access, Hash, GPS.Kernel.Styles."=");
+
+   type Style_Set_Access is access all Style_Sets.Set;
+
+   type Key is record
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      File     : GNATCOLL.VFS.Virtual_File;
+   end record;
+
+   function Hash (Item : Key) return Ada.Containers.Hash_Type;
+   --  Returns has value constructed from the category's and file's name
+
+   package Style_Maps is
+     new Ada.Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
+
    --  I826-008 workaround: we manage the set of all styles used per file per
    --  category to unhighlight all occurrences of what styles and avoid
    --  potencial glitches.
-   --  ??? Not implemented yet.
 
    type Highlighting_Manager
      (Kernel : not null access Kernel_Handle_Record'Class) is
-     new Abstract_Listener with null record;
+     new Abstract_Listener with record
+      Map : Style_Maps.Map;
+   end record;
 
    type Highlighting_Manager_Access is access all Highlighting_Manager'Class;
 
    procedure File_Opened
      (Self : not null access Highlighting_Manager;
       File : GNATCOLL.VFS.Virtual_File);
+
+   overriding procedure File_Removed
+     (Self     : not null access Highlighting_Manager;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      File     : GNATCOLL.VFS.Virtual_File);
 
    overriding procedure Message_Property_Changed
      (Self     : not null access Highlighting_Manager;

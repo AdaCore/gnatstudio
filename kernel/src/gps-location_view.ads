@@ -20,10 +20,10 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
+private with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
 with GNAT.Expect;
 with GNAT.Strings;
-
-with GNATCOLL.VFS;
 
 with Gtk.Box;                        use Gtk.Box;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
@@ -33,12 +33,9 @@ with Glib;
 with Glib.Main;
 
 with GPS.Kernel;                     use GPS.Kernel;
-with GPS.Kernel.Styles;              use GPS.Kernel.Styles;
-with GPS.Location_Model;             use GPS.Location_Model;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
+with GPS.Tree_View;                  use GPS.Tree_View;
 with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
-with Basic_Types;                    use Basic_Types;
-with Generic_List;
 
 package GPS.Location_View is
 
@@ -61,7 +58,7 @@ package GPS.Location_View is
    --  Create a new Location_View
 
    procedure Initialize
-     (View   : access Location_View_Record'Class;
+     (Self   : access Location_View_Record'Class;
       Kernel : Kernel_Handle;
       Module : Abstract_Module_ID);
    --  Internal initialization procedure
@@ -73,91 +70,32 @@ package GPS.Location_View is
    --  Allow_Creation is true.
 
    procedure Next_Item
-     (View      : access Location_View_Record'Class;
+     (Self      : access Location_View_Record'Class;
       Backwards : Boolean := False);
    --  If an item is selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.
 
-   procedure Add_Location
-     (View               : access Location_View_Record'Class;
-      Category           : Glib.UTF8_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Positive;
-      Column             : Visible_Column_Type;
-      Length             : Natural;
-      Highlight          : Boolean;
-      Message            : Glib.UTF8_String;
-      Highlight_Category : Style_Access;
-      Remove_Duplicates  : Boolean;
-      Sort_In_File       : Boolean;
-      Look_For_Secondary : Boolean;
-      Parent_Iter        : in out Gtk_Tree_Iter;
-      Category_Created   : out Boolean);
-   --  Add a file locaton in Category (the name of the node in the location
-   --  window).
-   --  File is an absolute file name. If File is not currently open, do not
-   --  create marks for File, but add it to the list of unresolved files
-   --  instead.
-   --  Message is the text to display, in pango markup language.
-   --  If Remove_Duplicates is True, do not insert the entry if it is a
-   --  duplicate.
-   --  If Model is set, append the items to Model, otherwise append them
-   --  to View.Tree.Model.
-   --  If Highlight is true, then the matching line in the source editor will
-   --  be highlighted in the color specified by Highlight_Category.
-   --  If Sort_In_File is True, then all entries for each file will be sorted
-   --  by (line, column). This is slightly slower, and should be set to False
-   --  if you know that you are inserting them sorted already.
-   --  If Look_For_Secondary is true, then we'll look and add secondary
-   --  location references, if any.
-
-   function Model
-     (Self : not null access Location_View_Record'Class)
-      return not null GPS.Location_Model.Location_Model;
-   --  Returns internal model.
-
-   procedure Goto_Location (Self : access Location_View_Record'Class);
-   --  Goto the selected location in the Location_View
+   procedure Expand_Category
+     (Self         : not null access Location_View_Record'Class;
+      Category     : Ada.Strings.Unbounded.Unbounded_String;
+      Goto_First   : Boolean);
+   --  Requests to expand specified category and goto first visible location
 
 private
-   type Location_Record;
-   type Location_Record_Access is access Location_Record;
 
-   procedure Free (X : in out Location_Record_Access);
-   --  Free memory associated to X
-
-   package Location_List is new Generic_List (Location_Record_Access, Free);
-   use Location_List;
-
-   type Location_Record is record
-      Category           : GNAT.Strings.String_Access;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Integer;
-      Column             : Visible_Column_Type;
-      Length             : Integer;
-      Highlight          : Boolean;
-      Message            : GNAT.Strings.String_Access;
-      --  ??? This should be a UTF8_String_Access
-      Highlight_Category : GNAT.Strings.String_Access;
-      --  ??? This should be a UTF8_String_Access
-
-      Children           : List;
+   type Expansion_Request is record
+      Category     : Ada.Strings.Unbounded.Unbounded_String;
+      Goto_First   : Boolean;
    end record;
+
+   package Expansion_Request_Vectors is
+     new Ada.Containers.Vectors (Positive, Expansion_Request);
 
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
 
-      Tree : GPS_Locations_Tree_View;
-      --  Tree view
-
-      Filter        : Gtk_Tree_Model_Filter;
-      --  Tree filter model
-
-      Model         : GPS.Location_Model.Location_Model;
-      --  Underlying model
-
-      Filter_Panel  : Locations_Filter_Panel;
+      Filter_Panel : Locations_Filter_Panel;
 
       Regexp       : GNAT.Expect.Pattern_Matcher_Access;
       Text         : GNAT.Strings.String_Access;
@@ -166,24 +104,15 @@ private
       Sort_By_Category : Boolean := False;
       --  Whether the view should be sorted by category
 
-      Stored_Locations : List;
-
-      --  The following are used for detection of secondary file locations
-      Secondary_File_Pattern : GNAT.Expect.Pattern_Matcher_Access;
-      --  Regexp corresponding to a detection of the secondary file
-      SFF : Natural;
-      --  Index of the secondary file
-      SFC : Natural;
-      --  Index of the secondary column
-      SFL : Natural;
-      --  Index of the secondary line
+      View   : GPS_Locations_Tree_View;
+      Filter : Gtk_Tree_Model_Filter;
+      --  Tree filter model
 
       --  Idle handlers
 
       Idle_Expand_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-      Expand_Path         : Gtk_Tree_Path;
-      --  Category to be expanded.
-      Goto_Expanded       : Boolean := False;
+      Requests            : Expansion_Request_Vectors.Vector;
+      --  Expansion requests.
    end record;
 
 end GPS.Location_View;

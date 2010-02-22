@@ -32,7 +32,8 @@ package GPS.Kernel.Messages.Markup is
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
-      Text      : String)
+      Text      : String;
+      Weight    : Natural)
       return not null Markup_Message_Access;
    --  Creates new instance of Markup_Message.
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,41 +17,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Calendar;                     use Ada.Calendar;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 
-with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
+with GNAT.Calendar.Time_IO;            use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
 with Gtk.Enums;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Templates_Parser;          use Templates_Parser;
+with Gtkada.Dialogs;                   use Gtkada.Dialogs;
+with Templates_Parser;                 use Templates_Parser;
 
-with Basic_Mapper;              use Basic_Mapper;
-with Commands;                  use Commands;
-with Commands.VCS;              use Commands.VCS;
-with Commands.External;         use Commands.External;
-with String_Utils;              use String_Utils;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Intl;                  use GPS.Intl;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
-with String_List_Utils;         use String_List_Utils;
-with Traces;                    use Traces;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with VCS_Module;                use VCS_Module;
-with VCS_Status;                use VCS_Status;
-with VCS_Utils;                 use VCS_Utils;
-with VCS_View;                  use VCS_View;
+with Basic_Mapper;                     use Basic_Mapper;
+with Commands;                         use Commands;
+with Commands.VCS;                     use Commands.VCS;
+with Commands.External;                use Commands.External;
+with String_Utils;                     use String_Utils;
+with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with GPS.Intl;                         use GPS.Intl;
+with Projects;                         use Projects;
+with Projects.Registry;                use Projects.Registry;
+with String_List_Utils;                use String_List_Utils;
+with Traces;                           use Traces;
+with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with VCS_Module;                       use VCS_Module;
+with VCS_Status;                       use VCS_Status;
+with VCS_Utils;                        use VCS_Utils;
+with VCS_View;                         use VCS_View;
 
-with UTF8_Utils;                use UTF8_Utils;
+with UTF8_Utils;                       use UTF8_Utils;
 
 package body Log_Utils is
 
@@ -835,7 +836,7 @@ package body Log_Utils is
       --  Check_Handler as we want to keep the output of multiple check
       --  commands.
 
-      Remove_Location_Category (Kernel, -"Style/Log Check");
+      Get_Messages_Container (Kernel).Remove_Category (-"Style/Log Check");
 
       for J in Files'Range loop
          exit when Cancel_All;

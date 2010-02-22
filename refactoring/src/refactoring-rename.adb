@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,32 +17,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Glib;                   use Glib;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Check_Button;       use Gtk.Check_Button;
-with Gtk.Dialog;             use Gtk.Dialog;
-with Gtk.GEntry;             use Gtk.GEntry;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Tooltips;           use Gtk.Tooltips;
-with Gtk.Widget;             use Gtk.Widget;
+with Glib;                       use Glib;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Dialog;                 use Gtk.Dialog;
+with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Tooltips;               use Gtk.Tooltips;
+with Gtk.Widget;                 use Gtk.Widget;
 
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with Entities.Queries;       use Entities.Queries;
-with Entities;               use Entities;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Locations;   use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel;             use GPS.Kernel;
-with Histories;              use Histories;
-with Refactoring.Performers; use Refactoring.Performers;
-with Traces;                 use Traces;
+with Commands.Interactive;       use Commands, Commands.Interactive;
+with Entities.Queries;           use Entities.Queries;
+with Entities;                   use Entities;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel;                 use GPS.Kernel;
+with Histories;                  use Histories;
+with Refactoring.Performers;     use Refactoring.Performers;
+with Traces;                     use Traces;
 
 package body Refactoring.Rename is
 
@@ -252,15 +253,15 @@ package body Refactoring.Rename is
             Replaced_Length   => Name'Length,
             Only_If_Replacing => Factory.Old_Name)
          then
-            Insert_Location
-              (Kernel,
-               -("Refactoring - rename "
-                 & Factory.Old_Name & " to " & Factory.New_Name),
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               (-"Refactoring - rename ")
+               & Factory.Old_Name & (-" to ") & Factory.New_Name,
                Get_Filename (Refs.Table (L).File),
-               "error, failed to rename entity",
                Refs.Table (L).Line,
                Refs.Table (L).Column,
-               Sort_In_File => True);
+               -"error, failed to rename entity",
+               0);
 
             if Length (Errors) = 0
               or else Refs.Table (L).File /= Errors.Table (Last (Errors))
@@ -270,15 +271,16 @@ package body Refactoring.Rename is
 
          else
             --  Renaming done, insert entry into locations view
-            Insert_Location
-              (Kernel,
-               -("Refactoring - rename "
-                 & Factory.Old_Name & " to " & Factory.New_Name),
+
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               (-"Refactoring - rename ")
+               & Factory.Old_Name & (-" to ") & Factory.New_Name,
                Get_Filename (Refs.Table (L).File),
-               "entity renamed",
                Refs.Table (L).Line,
                Refs.Table (L).Column,
-               Sort_In_File => True);
+               -"entity renamed",
+               0);
          end if;
       end loop;
 

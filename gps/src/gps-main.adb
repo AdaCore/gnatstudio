@@ -17,78 +17,79 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Text_IO;                      use Ada.Text_IO;
 
-with GNAT.Command_Line;         use GNAT.Command_Line;
-with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
+with GNAT.Command_Line;                use GNAT.Command_Line;
+with GNAT.Directory_Operations;        use GNAT, GNAT.Directory_Operations;
 pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Memory;
 with GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
-with Glib.Convert;              use Glib.Convert;
-with Glib.Error;                use Glib.Error;
-with Glib.Messages;             use Glib.Messages;
-with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
+with Glib.Convert;                     use Glib.Convert;
+with Glib.Error;                       use Glib.Error;
+with Glib.Messages;                    use Glib.Messages;
+with Glib.Object;                      use Glib.Object;
+with Glib.Properties;                  use Glib.Properties;
 
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Pixbuf;                       use Gdk.Pixbuf;
 
-with Gtk;                       use Gtk;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Image;                 use Gtk.Image;
-with Gtk.Main;                  use Gtk.Main;
+with Gtk;                              use Gtk;
+with Gtk.Enums;                        use Gtk.Enums;
+with Gtk.Handlers;                     use Gtk.Handlers;
+with Gtk.Image;                        use Gtk.Image;
+with Gtk.Main;                         use Gtk.Main;
 with Gtk.Rc;
-with Gtk.Window;                use Gtk.Window;
-with Gtk_Utils;                 use Gtk_Utils;
+with Gtk.Window;                       use Gtk.Window;
+with Gtk_Utils;                        use Gtk_Utils;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.Intl;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.MDI;                       use Gtkada.MDI;
 
-with Config;                    use Config;
+with Config;                           use Config;
 with DDE;
-with Default_Preferences;       use Default_Preferences;
-with GPS.Callbacks;             use GPS.Callbacks;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with Default_Preferences;              use Default_Preferences;
+with GPS.Callbacks;                    use GPS.Callbacks;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
+with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;                use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Main_Window;
 with GPS.Menu;
-with OS_Utils;                  use OS_Utils;
+with OS_Utils;                         use OS_Utils;
 with Prj_Output;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects;
-with Remote;                    use Remote;
-with Src_Editor_Box;            use Src_Editor_Box;
+with Projects.Editor;                  use Projects.Editor;
+with Projects.Registry;                use Projects;
+with Remote;                           use Remote;
+with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
 with Task_Manager;
-with Traces;                    use Traces;
-with Welcome;                   use Welcome;
-with Welcome_Page;              use Welcome_Page;
+with Traces;                           use Traces;
+with Welcome;                          use Welcome;
+with Welcome_Page;                     use Welcome_Page;
 
 --  Modules registered by GPS
 
@@ -1782,6 +1783,11 @@ procedure GPS.Main is
 
       if Started and then Save_Desktop_On_Exit.Get_Pref then
          Save_Desktop (Kernel);
+      end if;
+
+      if Started then
+         Get_Messages_Container (Kernel).Save;
+         Get_Messages_Container (Kernel).Remove_All_Messages;
       end if;
 
       Prj_Output.Set_Default_Output_Handler (null);

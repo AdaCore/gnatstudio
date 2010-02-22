@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,36 +17,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with GNAT.Strings;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Utils;                   use GNATCOLL.Utils;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
+with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 
-with Projects;                  use Projects;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
+with Projects;                         use Projects;
+with Projects.Editor;                  use Projects.Editor;
+with Projects.Registry;                use Projects.Registry;
 with Projects.Registry.Queries;
 with Basic_Types;
 with Entities;
-with XML_Utils;                 use XML_Utils;
+with XML_Utils;                        use XML_Utils;
 with Prj;
-with Remote;                    use Remote;
-with Traces;                    use Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Remote;                           use Remote;
+with Traces;                           use Traces;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
+with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
+with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 
 package body GPS.Kernel.Project is
 
@@ -659,7 +660,7 @@ package body GPS.Kernel.Project is
          Compute_Predefined_Paths
            (Kernel, Use_Cache => not Is_Local (Build_Server));
 
-         Remove_Location_Category (Kernel, Location_Category);
+         Get_Messages_Container (Kernel).Remove_Category (Location_Category);
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Local_Project,
                Errors             => Report_Error'Unrestricted_Access,
@@ -793,9 +794,8 @@ package body GPS.Kernel.Project is
          Parse_File_Locations
            (Handle,
             S,
-            Category           => "Project",
-            Highlight          => True,
-            Remove_Duplicates  => True);
+            Category  => "Project",
+            Highlight => True);
       end Report_Error;
 
       ----------------------------

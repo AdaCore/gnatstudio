@@ -33,6 +33,7 @@ package body GPS.Kernel.Messages.Markup is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer)
       return not null Message_Access;
@@ -44,6 +45,7 @@ package body GPS.Kernel.Messages.Markup is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
+      Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer)
       return not null Markup_Message_Access;
@@ -58,7 +60,8 @@ package body GPS.Kernel.Messages.Markup is
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
-      Text      : String)
+      Text      : String;
+      Weight    : Natural)
       return not null Markup_Message_Access is
    begin
       return
@@ -69,6 +72,7 @@ package body GPS.Kernel.Messages.Markup is
            Line,
            Column,
            Text,
+           Weight,
            Line,
            Integer (Column));
    end Create_Markup_Message;
@@ -84,6 +88,7 @@ package body GPS.Kernel.Messages.Markup is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
+      Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer)
       return not null Markup_Message_Access
@@ -98,6 +103,7 @@ package body GPS.Kernel.Messages.Markup is
          File,
          Line,
          Column,
+         Weight,
          Actual_Line,
          Actual_Column);
       Result.Text := To_Unbounded_String (Text);
@@ -139,6 +145,7 @@ package body GPS.Kernel.Messages.Markup is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer)
       return not null Message_Access
@@ -155,6 +162,7 @@ package body GPS.Kernel.Messages.Markup is
                 Line,
                 Column,
                 Text,
+                Weight,
                 Actual_Line,
                 Actual_Column));
    end Load;

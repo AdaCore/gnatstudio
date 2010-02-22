@@ -165,6 +165,7 @@ package GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer);
    --  Initialize message and connect it to container
@@ -258,6 +259,11 @@ package GPS.Kernel.Messages is
       Category : Ada.Strings.Unbounded.Unbounded_String;
       File     : GNATCOLL.VFS.Virtual_File) is null;
 
+   procedure File_Removed
+     (Self     : not null access Abstract_Listener;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      File     : GNATCOLL.VFS.Virtual_File) is null;
+
    procedure Message_Added
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) is null;
@@ -277,8 +283,8 @@ package GPS.Kernel.Messages is
 
    Category_Column           : constant Glib.Gint := 0;
    --  Contains name of the category.
-   Subcategory_Column        : constant Glib.Gint := 1;
-   --  Contains name of the subcategory. Not implemented for now.
+   Weight_Column             : constant Glib.Gint := 1;
+   --  Contains weight inside the category.
    File_Column               : constant Glib.Gint := 2;
    --  Contains name of the file in which message's location placed. For
    --  category and subcategory items the value is No_File. Note: for
@@ -398,7 +404,7 @@ private
      abstract new Node_Record (Node_Message) with record
       case Level is
          when Primary =>
-            null;
+            Weight : Natural;
 
          when Secondary =>
             Corresponding_File : GNATCOLL.VFS.Virtual_File;
@@ -460,6 +466,7 @@ private
         File          : GNATCOLL.VFS.Virtual_File;
         Line          : Natural;
         Column        : Basic_Types.Visible_Column_Type;
+        Weight        : Natural;
         Actual_Line   : Integer;
         Actual_Column : Integer)
         return not null Message_Access;

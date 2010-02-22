@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,51 +18,52 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Expect;               use GNAT.Expect;
-with GNAT.Regexp;               use GNAT.Regexp;
-with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Expect;                use GNAT.Expect;
+with GNAT.Regexp;                use GNAT.Regexp;
+with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Strings;
 
-with Glib;                      use Glib;
-with Glib.Unicode;              use Glib.Unicode;
+with Glib;                       use Glib;
+with Glib.Unicode;               use Glib.Unicode;
 
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo;                 use Gtk.Combo;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Table;                 use Gtk.Table;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
-with Gtk.Tooltips;              use Gtk.Tooltips;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Combo;                  use Gtk.Combo;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Table;                  use Gtk.Table;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
+with Gtk.Tooltips;               use Gtk.Tooltips;
+with Gtk.Widget;                 use Gtk.Widget;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Basic_Types;               use Basic_Types;
-with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
+with Basic_Types;                use Basic_Types;
+with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Editors;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GPS.Kernel;                use GPS.Kernel;
-with GUI_Utils;                 use GUI_Utils;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
-with Osint;                     use Osint;
-with Projects;                  use Projects;
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-with Src_Editor_Module;         use Src_Editor_Module;
-with Src_Editor_View;           use Src_Editor_View;
-with Traces;                    use Traces;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
+with GPS.Kernel;                 use GPS.Kernel;
+with GUI_Utils;                  use GUI_Utils;
+with Language;                   use Language;
+with Language_Handlers;          use Language_Handlers;
+with Osint;                      use Osint;
+with Projects;                   use Projects;
+with Src_Editor_Box;             use Src_Editor_Box;
+with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
+with Src_Editor_Module;          use Src_Editor_Module;
+with Src_Editor_View;            use Src_Editor_View;
+with Traces;                     use Traces;
 
 package body Src_Contexts is
 
@@ -729,18 +730,27 @@ package body Src_Contexts is
             Push_Current_Editor_Location_In_History (Kernel);
 
          else
-            Insert_Location
-              (Kernel,
-               Category  => Locations_Category_Name (Look_For),
-               File      => File_Name,
-               Text      => Match.Text,
-               Line      => To_Positive (Match.Begin_Line),
-               Column    => Match.Visible_Begin_Column,
-               Length    => Integer (Match.Visible_End_Column
-                 - Match.Visible_Begin_Column),
-               Highlight => True,
-               Highlight_Category => Search_Results_Style,
-               Has_Markups        => True);
+            declare
+               Message : constant Markup_Message_Access :=
+                 Create_Markup_Message
+                   (Get_Messages_Container (Kernel),
+                    Locations_Category_Name (Look_For),
+                    File_Name,
+                    To_Positive (Match.Begin_Line),
+                    Match.Visible_Begin_Column,
+                    Match.Text,
+                    0);
+
+            begin
+               Message.Set_Highlighting
+                 (Get_Or_Create_Style_Copy
+                    (Kernel_Handle (Kernel),
+                     Get_Name (Search_Results_Style)
+                     & '/' & Locations_Category_Name (Look_For),
+                     Search_Results_Style),
+                  Integer (Match.Visible_End_Column
+                    - Match.Visible_Begin_Column));
+            end;
          end if;
       else
          --  When the location spans on multiple lines, we base the length
@@ -758,17 +768,26 @@ package body Src_Contexts is
             Push_Current_Editor_Location_In_History (Kernel);
 
          else
-            Insert_Location
-              (Kernel,
-               Category  => Locations_Category_Name (Look_For),
-               File      => File_Name,
-               Text      => Match.Text,
-               Line      => To_Positive (Match.Begin_Line),
-               Column    => Match.Visible_Begin_Column,
-               Length    => Match.Pattern_Length,
-               Highlight => True,
-               Highlight_Category => Search_Results_Style,
-               Has_Markups        => True);
+            declare
+               Message : constant Markup_Message_Access :=
+                 Create_Markup_Message
+                   (Get_Messages_Container (Kernel),
+                    Locations_Category_Name (Look_For),
+                    File_Name,
+                    To_Positive (Match.Begin_Line),
+                    Match.Visible_Begin_Column,
+                    Match.Text,
+                    0);
+
+            begin
+               Message.Set_Highlighting
+                 (Get_Or_Create_Style_Copy
+                    (Kernel_Handle (Kernel),
+                     Get_Name (Search_Results_Style)
+                     & '/' & Locations_Category_Name (Look_For),
+                     Search_Results_Style),
+                  Match.Pattern_Length);
+            end;
          end if;
       end if;
    end Highlight_Result;
@@ -2161,8 +2180,8 @@ package body Src_Contexts is
      (Context : access Abstract_Files_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Remove_Location_Category
-        (Kernel, Locations_Category_Name (Context_Look_For (Context)));
+      Get_Messages_Container (Kernel).Remove_Category
+        (Locations_Category_Name (Context_Look_For (Context)));
    end Reset;
 
    ------------

@@ -21,7 +21,7 @@ with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Input_Sources.File;
 
@@ -31,27 +31,29 @@ with Gtk.Menu_Item;
 with Gtk.Object;
 with Gtk.Widget;
 
-with Traces; use Traces;
-
 with Basic_Types;
 with GPS.Editors;
-with GPS.Intl;             use GPS.Intl;
-with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Project;   use GPS.Kernel.Project;
-with GPS.Kernel.Locations; use GPS.Kernel.Locations;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Projects.Registry;    use Projects.Registry;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
+with Projects;                   use Projects;
+with Projects.Registry;          use Projects.Registry;
+with Traces;                     use Traces;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
 with Code_Peer.Message_Review_Dialogs;
 with Code_Peer.Module.Bridge;
-with Code_Peer.Shell_Commands; use Code_Peer.Shell_Commands;
+with Code_Peer.Shell_Commands;   use Code_Peer.Shell_Commands;
 with Commands.Code_Peer;
 with Code_Analysis_GUI;
-with Projects; use Projects;
 
 package body Code_Peer.Module is
 
@@ -1541,8 +1543,8 @@ package body Code_Peer.Module is
 
       --  Cleanup location view
 
-      Remove_Location_Category
-        (Context.Module.Kernel, Code_Peer_Category_Name);
+      Get_Messages_Container (Context.Module.Kernel).Remove_Category
+        (Code_Peer_Category_Name);
 
       --  Cleanup filter criteria
 
@@ -1899,7 +1901,6 @@ package body Code_Peer.Module is
          is
             Message : constant Code_Peer.Message_Access :=
               Code_Peer.Message_Vectors.Element (Position);
-            Review  : GPS.Kernel.Standard_Hooks.Action_Item;
 
             function Probability_Image
               (Message : Code_Peer.Message_Access) return String;
@@ -1978,43 +1979,39 @@ package body Code_Peer.Module is
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
-               Insert_Location
-                 (Kernel       => Self.Kernel,
-                  Category     => Code_Peer_Category_Name,
-                  File         => File.Name,
-                  Text         => Image (Message),
-                  Line         => Message.Line,
-                  Column       =>
-                    Basic_Types.Visible_Column_Type (Message.Column),
-                  Highlight    => True,
-                  Highlight_Category =>
-                    Module.Message_Styles (Message.Current_Probability),
-                  Quiet        => True,
-                  Sort_In_File => True);
+               declare
+                  Primary : constant Simple_Message_Access :=
+                    Create_Simple_Message
+                      (Get_Messages_Container (Self.Kernel),
+                       Code_Peer_Category_Name,
+                       File.Name,
+                       Message.Line,
+                       Basic_Types.Visible_Column_Type (Message.Column),
+                       Image (Message),
+                       0);
+                  Style   : constant Style_Access :=
+                    Module.Message_Styles (Message.Current_Probability);
 
-               Review :=
-                 new GPS.Editors.Line_Information_Record'
-                   (Text               => null,
-                    Tooltip_Text       => new String'("Review message"),
-                    Image              =>
-                      Gtk.Widget.Gtk_Widget
-                        (Self.Kernel.Get_Main_Window).Render_Icon
-                        (Code_Analysis_GUI.Post_Analysis_Cst,
-                         Gtk.Enums.Icon_Size_Menu),
-                    Associated_Command =>
-                    new Commands.Code_Peer.Review_Message_Command'
-                      (Commands.Root_Command with
-                       Code_Peer_Module_Id (Self), Message));
-
-               GPS.Kernel.Standard_Hooks.Add_Location_Action
-                 (Kernel     => Self.Kernel,
-                  Identifier => "CodePeer",
-                  Category   => Code_Peer_Category_Name,
-                  File       => File.Name,
-                  Line       => Message.Line,
-                  Column     => Message.Column,
-                  Message    => Image (Message),
-                  Action     => Review);
+               begin
+                  Primary.Set_Highlighting
+                    (Get_Or_Create_Style_Copy
+                       (Kernel_Handle (Self.Kernel),
+                        Get_Name (Style) & '/' & Code_Peer_Category_Name,
+                        Style));
+                  Primary.Set_Action
+                    (new GPS.Editors.Line_Information_Record'
+                       (Text               => null,
+                        Tooltip_Text       => new String'("Review message"),
+                        Image              =>
+                          Gtk.Widget.Gtk_Widget
+                            (Self.Kernel.Get_Main_Window).Render_Icon
+                            (Code_Analysis_GUI.Post_Analysis_Cst,
+                             Gtk.Enums.Icon_Size_Menu),
+                        Associated_Command =>
+                        new Commands.Code_Peer.Review_Message_Command'
+                          (Commands.Root_Command with
+                           Code_Peer_Module_Id (Self), Message)));
+               end;
             end if;
          end Process_Message;
 
@@ -2040,7 +2037,9 @@ package body Code_Peer.Module is
       end Process_File;
 
    begin
-      Remove_Location_Category (Self.Kernel, Code_Peer_Category_Name);
+      Do_Not_Goto_First_Location (Self.Kernel);
+      Get_Messages_Container (Self.Kernel).Remove_Category
+        (Code_Peer_Category_Name);
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
    end Update_Location_View;

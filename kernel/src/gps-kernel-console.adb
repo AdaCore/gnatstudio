@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -337,19 +337,17 @@ package body GPS.Kernel.Console is
       if CR_Found then
          Insert (Get_Console (Kernel), Contents (Contents'First .. Last));
          Parse_File_Locations_Unknown_Encoding
-           (Kernel            => Kernel,
-            Text              => Contents (Contents'First .. Last),
-            Category          => -"Loaded contents",
-            Highlight         => True,
-            Remove_Duplicates => True);
+           (Kernel    => Kernel,
+            Text      => Contents (Contents'First .. Last),
+            Category  => -"Loaded contents",
+            Highlight => True);
       else
          Insert (Get_Console (Kernel), Contents.all);
          Parse_File_Locations_Unknown_Encoding
-           (Kernel            => Kernel,
-            Text              => Contents.all,
-            Category          => -"Loaded contents",
-            Highlight         => True,
-            Remove_Duplicates => True);
+           (Kernel    => Kernel,
+            Text      => Contents.all,
+            Category  => -"Loaded contents",
+            Highlight => True);
       end if;
 
       Free (Contents);

@@ -122,7 +122,49 @@ package body GPS.Tree_View is
 
    procedure Initialize
      (Self          : not null access GPS_Tree_View_Record'Class;
-      Lowerst_Model : not null Gtk.Tree_Model.Gtk_Tree_Model) is
+      Lowerst_Model : not null Gtk.Tree_Model.Gtk_Tree_Model)
+   is
+      procedure Create_Nodes
+        (Parent_Path : Gtk_Tree_Path;
+         Parent_Iter : Gtk_Tree_Iter;
+         Parent_Node : Node_Access);
+      --  Creates internal nodes for each child node
+
+      ------------------
+      -- Create_Nodes --
+      ------------------
+
+      procedure Create_Nodes
+        (Parent_Path : Gtk_Tree_Path;
+         Parent_Iter : Gtk_Tree_Iter;
+         Parent_Node : Node_Access)
+      is
+         Iter : Gtk_Tree_Iter;
+         Path : Gtk_Tree_Path;
+         Node : Node_Access;
+
+      begin
+         Iter := Lowerst_Model.Children (Parent_Iter);
+         Path := Copy (Parent_Path);
+         Down (Path);
+
+         while Iter /= Null_Iter loop
+            Node :=
+              new Node_Record'(Parent_Node, False, Node_Vectors.Empty_Vector);
+            Parent_Node.Children.Append (Node);
+            Self.On_Lowerst_Model_Row_Inserted (Path, Iter, Node);
+            Create_Nodes (Path, Iter, Node);
+            Lowerst_Model.Next (Iter);
+            Next (Path);
+         end loop;
+
+         Path_Free (Path);
+      end Create_Nodes;
+
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path;
+      Node : Node_Access;
+
    begin
       Gtk.Tree_View.Initialize (Self);
       Self.Root := new Node_Record'(null, False, Node_Vectors.Empty_Vector);
@@ -173,6 +215,23 @@ package body GPS.Tree_View is
             GPS_Tree_View (Self),
             True),
          Self);
+
+      --  Create internal structure for already present nodes in the lowerst
+      --  model
+
+      Iter := Lowerst_Model.Get_Iter_First;
+      Path := Gtk_New_First;
+
+      while Iter /= Null_Iter loop
+         Node := new Node_Record'(Self.Root, False, Node_Vectors.Empty_Vector);
+         Self.Root.Children.Append (Node);
+         Self.On_Lowerst_Model_Row_Inserted (Path, Iter, Node);
+         Create_Nodes (Path, Iter, Node);
+         Lowerst_Model.Next (Iter);
+         Next (Path);
+      end loop;
+
+      Path_Free (Path);
    end Initialize;
 
    ----------------

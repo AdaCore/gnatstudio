@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Hash;
 with Ada.Unchecked_Conversion;
 
 with GPS.Kernel.Hooks;
@@ -25,7 +26,10 @@ with Traces;
 
 package body GPS.Kernel.Messages.Highlighting is
 
+   use Ada.Strings.Unbounded;
    use GPS.Kernel.Styles;
+   use Style_Maps;
+   use Style_Sets;
    use Traces;
 
    type On_File_Edited_Hook_Record
@@ -92,6 +96,65 @@ package body GPS.Kernel.Messages.Highlighting is
       end loop;
    end File_Opened;
 
+   ------------------
+   -- File_Removed --
+   ------------------
+
+   overriding procedure File_Removed
+     (Self     : not null access Highlighting_Manager;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      File     : GNATCOLL.VFS.Virtual_File)
+   is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
+
+      Map_Position : Style_Maps.Cursor := Self.Map.Find ((Category, File));
+      Styles       : Style_Set_Access;
+      Set_Position : Style_Sets.Cursor;
+
+   begin
+      if Has_Element (Map_Position) then
+         Styles := Element (Map_Position);
+         Self.Map.Delete (Map_Position);
+
+         Set_Position := Styles.First;
+
+         while Has_Element (Set_Position) loop
+            Get_Buffer_Factory (Self.Kernel).Get
+              (File, Open_View => False).Remove_Style
+              (Element (Set_Position),
+               0,
+               0,
+               0);
+
+            Next (Set_Position);
+         end loop;
+
+         Free (Styles);
+      end if;
+   end File_Removed;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Item : GPS.Kernel.Styles.Style_Access) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (Get_Name (Item));
+   end Hash;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Item : Key) return Ada.Containers.Hash_Type is
+   begin
+      return
+        Ada.Strings.Hash
+          (To_String (Item.Category) & String (Item.File.Full_Name.all));
+   end Hash;
+
    ---------------
    -- Highlight --
    ---------------
@@ -117,6 +180,26 @@ package body GPS.Kernel.Messages.Highlighting is
               (Message.Get_File, Open_View => False).Apply_Style
               (Message.Get_Highlighting_Style, Message.Get_Editor_Mark.Line);
          end if;
+
+         declare
+            K        : constant Key :=
+                         (Message.Get_Category, Message.Get_File);
+            Position : constant Style_Maps.Cursor := Self.Map.Find (K);
+            Styles   : Style_Set_Access;
+
+         begin
+            if Has_Element (Position) then
+               Styles := Element (Position);
+
+            else
+               Styles := new Style_Sets.Set;
+               Self.Map.Insert (K, Styles);
+            end if;
+
+            if not Styles.Contains (Message.Get_Highlighting_Style) then
+               Styles.Insert (Message.Get_Highlighting_Style);
+            end if;
+         end;
       end if;
    end Highlight;
 

@@ -36,6 +36,7 @@ package body GPS.Kernel.Messages.Classic_Models is
    use Gtk.Widget;
    use GPS.Editors;
    use GPS.Editors.GtkAda;
+   use Node_Vectors;
    use String_Utils;
    use Traces;
 
@@ -194,8 +195,8 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Category_Column =>
             return Glib.GType_String;
 
-         when Subcategory_Column =>
-            return Glib.GType_String;
+         when Weight_Column =>
+            return Glib.GType_Int;
 
          when File_Column =>
             return GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type;
@@ -409,8 +410,39 @@ package body GPS.Kernel.Messages.Classic_Models is
                     (Value, To_String (Message_Access (Node).Get_Category));
             end case;
 
-         when Subcategory_Column =>
-            raise Program_Error;
+         when Weight_Column =>
+            Init (Value, GType_Int);
+
+            case Node.Kind is
+               when Node_Category =>
+                  Set_Int (Value, 0);
+
+               when Node_File =>
+                  declare
+                     Position : Node_Vectors.Cursor := Node.Children.First;
+                     Maximum  : Natural := 0;
+
+                  begin
+                     while Has_Element (Position) loop
+                        Maximum :=
+                          Natural'Max
+                            (Maximum,
+                             Message_Access (Element (Position)).Weight);
+                        Next (Position);
+                     end loop;
+
+                     Set_Int (Value, Gint (Maximum));
+                  end;
+
+               when Node_Message =>
+                  case Message_Access (Node).Level is
+                     when Primary =>
+                        Set_Int (Value, Gint (Message_Access (Node).Weight));
+
+                     when Secondary =>
+                        Set_Int (Value, 0);
+                  end case;
+            end case;
 
          when File_Column =>
             Init (Value, GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type);
@@ -753,8 +785,6 @@ package body GPS.Kernel.Messages.Classic_Models is
      (Self : access Classic_Tree_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      use Node_Vectors;
-
       Position : Node_Vectors.Cursor;
       Node     : Node_Access := Self.Get_Node (Iter);
 

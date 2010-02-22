@@ -17,30 +17,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings;             use Ada.Strings;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with Ada.Strings.Maps;        use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Strings;                      use Ada.Strings;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Strings.Maps;                 use Ada.Strings.Maps;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNAT.Expect;             use GNAT.Expect;
-with GNAT.Regpat;             use GNAT.Regpat;
-with GNAT.String_Split;       use GNAT.String_Split;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with GNAT.Expect;                      use GNAT.Expect;
+with GNAT.Regpat;                      use GNAT.Regpat;
+with GNAT.String_Split;                use GNAT.String_Split;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;                  use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Locations;    use GPS.Kernel.Locations;
-with GPS.Kernel.Styles;       use GPS.Kernel.Styles;
-with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
-with GPS.Intl;                use GPS.Intl;
-with Traces;                  use Traces;
-with Basic_Types;             use Basic_Types;
-with UTF8_Utils;              use UTF8_Utils;
+with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
+with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
+with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Intl;                         use GPS.Intl;
+with Traces;                           use Traces;
+with Basic_Types;                      use Basic_Types;
+with UTF8_Utils;                       use UTF8_Utils;
 
-with Builder_Facility_Module; use Builder_Facility_Module;
+with Builder_Facility_Module;          use Builder_Facility_Module;
 
 package body Commands.Builder is
 
@@ -350,9 +351,7 @@ package body Commands.Builder is
          Highlight          => True,
          Highlight_Category => Error_Category,
          Style_Category     => Style_Category,
-         Warning_Category   => Warning_Category,
-         Quiet              => Quiet,
-         Remove_Duplicates  => True);
+         Warning_Category   => Warning_Category);
 
    exception
       when E : others => Trace (Exception_Handle, E);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2009, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -70,8 +70,9 @@ with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;                use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;                 use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;          use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;               use GPS.Kernel.Properties;
@@ -3242,6 +3243,7 @@ package body Src_Editor_Buffer is
                      Contents : constant String := Glib.Convert.Convert
                        (Str.Contents (Str.Contents'First .. Index),
                         Buffer.Charset.all, "UTF-8", Error);
+
                   begin
                      if Error.all = null then
                         Append (U_Buffer, Contents);
@@ -3249,14 +3251,14 @@ package body Src_Editor_Buffer is
                         --  An error has occurred on this line
                         Has_Errors := True;
 
-                        Insert_Location
-                          (Kernel   => Buffer.Kernel,
-                           Category => Conversion_Error_Message
-                             (Buffer.Charset.all),
-                           File     => Buffer.Filename,
-                           Column   => 0,
-                           Text     => Get_Message (Error.all),
-                           Line     => Positive (Line));
+                        Create_Simple_Message
+                          (Get_Messages_Container (Buffer.Kernel),
+                           Conversion_Error_Message (Buffer.Charset.all),
+                           Buffer.Filename,
+                           Positive (Line),
+                           1,
+                           Get_Message (Error.all),
+                           0);
 
                         Error_Free (Error.all);
                         Error.all := null;
@@ -3541,9 +3543,9 @@ package body Src_Editor_Buffer is
          --  The charset is being changed: remove from the Locations View
          --  the category listing the conversion errors from that charset for
          --  this file.
-         Remove_Location_Category
-           (Buffer.Kernel,
-            Conversion_Error_Message (Buffer.Charset.all),
+
+         Get_Messages_Container (Buffer.Kernel).Remove_File
+           (Conversion_Error_Message (Buffer.Charset.all),
             Buffer.Filename);
 
          GNAT.Strings.Free (Buffer.Charset);
@@ -5325,7 +5327,7 @@ package body Src_Editor_Buffer is
          From, To      : Natural := 0;
          Indent_Params : Indent_Parameters) is
       begin
-         if Indent_Style = Simple then
+         if Indent_Style = Language.Simple then
             Format_Buffer
               (Language_Root (Lang.all)'Access,
                Buffer, Replace, From, To,

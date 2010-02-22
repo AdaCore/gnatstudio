@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,17 +17,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings;          use Ada.Strings;
-with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
-with GNAT.Regpat;          use GNAT.Regpat;
+with Ada.Strings;                use Ada.Strings;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with GNAT.Regpat;                use GNAT.Regpat;
 
-with GPS.Intl;             use GPS.Intl;
-with GPS.Kernel.Locations; use GPS.Kernel.Locations;
-with GPS.Kernel.Styles;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with Code_Analysis_GUI;
 --  ??? Why not replace by Code_Coverage_Gui?
-with Coverage_GUI;
-with String_Utils;         use String_Utils;
+with Coverage_GUI;               use Coverage_GUI;
+with String_Utils;               use String_Utils;
 
 package body Code_Coverage.Gcov is
 
@@ -167,22 +168,27 @@ package body Code_Coverage.Gcov is
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
       Line_Text   : String_Access;
-      Quiet       : Boolean;
       Added       : in out Boolean)
    is
+      Message : Simple_Message_Access;
+
    begin
       if Coverage.Coverage = 0 then
          Added := True;
-         Insert_Location
-           (Kernel             => Kernel,
-            Category           => Coverage_GUI.Uncovered_Category,
-            File               => File,
-            Text               => Line_Text.all,
-            Line               => Line_Number,
-            Column             => 1,
-            Highlight          => True,
-            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style,
-            Quiet              => Quiet);
+         Message :=
+           Create_Simple_Message
+             (Get_Messages_Container (Kernel),
+              Uncovered_Category,
+              File,
+              Line_Number,
+              1,
+              Line_Text.all,
+              0);
+         Message.Set_Highlighting
+           (Get_Or_Create_Style_Copy
+              (Kernel,
+               Get_Name (Builder_Warnings_Style) & '/' & Uncovered_Category,
+               Builder_Warnings_Style));
       end if;
    end Add_Location_If_Uncovered;
 

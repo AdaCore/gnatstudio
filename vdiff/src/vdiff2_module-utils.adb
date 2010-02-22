@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,13 +27,14 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
-with GNATCOLL.Arg_Lists;            use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 
 with Commands;                          use Commands;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
-with GPS.Kernel.Locations;              use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
@@ -45,7 +46,7 @@ with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module;                     use Vdiff2_Module;
-with GPS.Editors; use GPS.Editors;
+with GPS.Editors;                       use GPS.Editors;
 
 package body Vdiff2_Module.Utils is
 
@@ -355,8 +356,8 @@ package body Vdiff2_Module.Utils is
               (Kernel, Item.Files (J), Id_Col_Vdiff);
             Unhighlight_Range (Kernel, Item.Files (J), Fine_Change_Style);
 
-            Remove_Location_Category
-              (Kernel, -"Visual differences", Item.Files (J));
+            Get_Messages_Container (Kernel).Remove_File
+              (-"Visual differences", Item.Files (J));
          end if;
       end loop;
    end Hide_Differences;
@@ -752,14 +753,24 @@ package body Vdiff2_Module.Utils is
          end if;
 
          if The_Range = 1 then
-            Insert_Location
-              (Kernel, -"Visual differences", Highlight_File,
-               "1 line " & Modification, Line, 1);
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Visual differences",
+               Highlight_File,
+               Line,
+               1,
+               "1 line " & Modification,
+               0);
+
          else
-            Insert_Location
-              (Kernel, -"Visual differences", Highlight_File,
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Visual differences",
+               Highlight_File,
+               Line,
+               1,
                Image (The_Range) & " lines " & Modification,
-               Line, 1);
+               0);
          end if;
 
          Free (VStyle);
@@ -843,15 +854,24 @@ package body Vdiff2_Module.Utils is
          end;
 
          if Arr'Length = 1 then
-            Insert_Location
-              (Kernel, -"Visual differences", File,
-               "1 line removed", Natural'Max (Curr_Chunk.Range2.First - 1, 1),
-               1);
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Visual differences",
+               File,
+               Natural'Max (Curr_Chunk.Range2.First - 1, 1),
+               1,
+               "1 line removed",
+               0);
+
          else
-            Insert_Location
-              (Kernel, -"Visual differences", File,
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Visual differences",
+               File,
+               Natural'Max (Curr_Chunk.Range2.First - 1, 1),
+               1,
                Image (Arr'Length) & " lines removed",
-               Natural'Max (Curr_Chunk.Range2.First - 1, 1), 1);
+               0);
          end if;
 
          Unchecked_Free (Arr);
@@ -880,14 +900,24 @@ package body Vdiff2_Module.Utils is
          Buf.Add_File_Information (Id_Col_Vdiff, Arr);
 
          if Arr'Length = 1 then
-            Insert_Location
-              (Kernel, -"Visual differences", File,
-               "1 line added", Curr_Chunk.Range2.First, 1);
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Visual differences",
+               File,
+               Curr_Chunk.Range2.First,
+               1,
+               "1 line added",
+               0);
+
          else
-            Insert_Location
-              (Kernel, -"Visual differences", File,
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Visual differences",
+               File,
+               Curr_Chunk.Range2.First,
+               1,
                Image (Arr'Length) & " lines added",
-               Curr_Chunk.Range2.First, 1);
+               0);
          end if;
 
          Unchecked_Free (Arr);

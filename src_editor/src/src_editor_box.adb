@@ -17,84 +17,85 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Gdk;                       use Gdk;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.GC;                    use Gdk.GC;
-with Gdk.Main;                  use Gdk.Main;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Window;                use Gdk.Window;
+with Gdk;                        use Gdk;
+with Gdk.Event;                  use Gdk.Event;
+with Gdk.GC;                     use Gdk.GC;
+with Gdk.Main;                   use Gdk.Main;
+with Gdk.Pixbuf;                 use Gdk.Pixbuf;
+with Gdk.Types;                  use Gdk.Types;
+with Gdk.Window;                 use Gdk.Window;
 
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
-with Glib;                      use Glib;
+with Glib.Object;                use Glib.Object;
+with Glib.Values;                use Glib.Values;
+with Glib;                       use Glib;
 
-with Gtk;                       use Gtk;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Drawing_Area;          use Gtk.Drawing_Area;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Main;                  use Gtk.Main;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Object;                use Gtk.Object;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk;                        use Gtk;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Dialog;                 use Gtk.Dialog;
+with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Event_Box;              use Gtk.Event_Box;
+with Gtk.Frame;                  use Gtk.Frame;
+with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.Main;                   use Gtk.Main;
+with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Object;                 use Gtk.Object;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Separator;              use Gtk.Separator;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Text_Mark;              use Gtk.Text_Mark;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Widget;                 use Gtk.Widget;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Entities.Queries;          use Entities.Queries;
-with Entities;                  use Entities;
-with Find_Utils;                use Find_Utils;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GUI_Utils;                 use GUI_Utils;
-with Language;                  use Language;
-with Language.Ada;              use Language.Ada;
-with Language_Handlers;         use Language_Handlers;
-with Pango.Layout;              use Pango.Layout;
-with Projects.Registry;         use Projects.Registry;
-with Projects;                  use Projects;
-with Src_Editor_Box.Tooltips;   use Src_Editor_Box.Tooltips;
+with Entities.Queries;           use Entities.Queries;
+with Entities;                   use Entities;
+with Find_Utils;                 use Find_Utils;
+with GPS.Editors;                use GPS.Editors;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GUI_Utils;                  use GUI_Utils;
+with Language;                   use Language;
+with Language.Ada;               use Language.Ada;
+with Language_Handlers;          use Language_Handlers;
+with Pango.Layout;               use Pango.Layout;
+with Projects.Registry;          use Projects.Registry;
+with Projects;                   use Projects;
+with Src_Editor_Box.Tooltips;    use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-with Src_Editor_Module;         use Src_Editor_Module;
-with Src_Editor_View;           use Src_Editor_View;
-with Std_Dialogs;               use Std_Dialogs;
-with String_Utils;              use String_Utils;
-with Tooltips;                  use Tooltips;
-with Traces;                    use Traces;
+with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
+with Src_Editor_Module;          use Src_Editor_Module;
+with Src_Editor_View;            use Src_Editor_View;
+with Std_Dialogs;                use Std_Dialogs;
+with String_Utils;               use String_Utils;
+with Tooltips;                   use Tooltips;
+with Traces;                     use Traces;
 
 package body Src_Editor_Box is
 
@@ -2129,13 +2130,14 @@ package body Src_Editor_Box is
          Kind : constant String := Kind_To_String (Get_Kind (Entity));
          Loc  : constant File_Location := Get_Declaration_Of (Entity);
       begin
-         Insert_Location
-           (Kernel,
-            Category => -"Type Hierarchy for " & Name,
-            File     => Get_Filename (Get_File (Loc)),
-            Text     => Get_Name (Entity).all & " (" & Kind & ')',
-            Line     => Get_Line (Loc),
-            Column   => Get_Column (Loc));
+         Create_Simple_Message
+           (Get_Messages_Container (Kernel),
+            -"Type Hierarchy for " & Name,
+            Get_Filename (Get_File (Loc)),
+            Get_Line (Loc),
+            Get_Column (Loc),
+            Get_Name (Entity).all & " (" & Kind & ')',
+            0);
       end Insert;
 
       Entity      : constant Entity_Information :=

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2009, AdaCore             --
+--                      Copyright (C) 2001-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,8 +59,10 @@ with Entities;                      use Entities;
 with GPS.Intl;                      use GPS.Intl;
 with GPS.Kernel.Console;            use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Locations;          use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
@@ -1108,49 +1110,49 @@ package body Browsers.Call_Graph is
    is
       use Basic_Types;
 
-      Col  : Basic_Types.Visible_Column_Type :=
-        Get_Column (Get_Location (Ref));
-      Line : constant Integer      := Get_Line (Get_Location (Ref));
-      File : constant Virtual_File :=
-               Get_Filename (Get_File (Get_Location (Ref)));
+      Col     : Basic_Types.Visible_Column_Type :=
+                  Get_Column (Get_Location (Ref));
+      Line    : constant Integer      := Get_Line (Get_Location (Ref));
+      File    : constant Virtual_File :=
+                  Get_Filename (Get_File (Get_Location (Ref)));
+      Message : Markup_Message_Access;
+
    begin
       if Col <= 0 then
          Col := 1;
       end if;
 
       if Show_Caller and then Get_Caller (Ref) /= null then
-         Insert_Location
-           (Kernel,
-            Category           => Category,
-            File               => File,
-            Text               => "<b>" & Name & "</b> ["
+         Message :=
+           Create_Markup_Message
+             (Get_Messages_Container (Kernel),
+              Category,
+              File,
+              Line,
+              Col,
+              "<b>" & Name & "</b> ["
               & Kind_To_String (Get_Kind (Ref)) & "] in: "
               & Get_Full_Name (Get_Caller (Ref)),
-            Line               => Line,
-            Column             => Col,
-            Length             => Name'Length,
-            Highlight          => True,
-            Has_Markups        => True,
-            Highlight_Category => Search_Results_Style,
-            Remove_Duplicates  => False,
-            Sort_In_File       => Sort_In_File);
+              0);
 
       else
-         Insert_Location
-           (Kernel,
-            Category           => Category,
-            File               => File,
-            Text               => "<b>" & Name
-              & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
-            Line               => Line,
-            Column             => Col,
-            Length             => Name'Length,
-            Highlight          => True,
-            Highlight_Category => Search_Results_Style,
-            Has_Markups        => True,
-            Remove_Duplicates  => False,
-            Sort_In_File       => Sort_In_File);
+         Message :=
+           Create_Markup_Message
+             (Get_Messages_Container (Kernel),
+              Category,
+              File,
+              Line,
+              Col,
+              "<b>" & Name & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
+              0);
       end if;
+
+      Message.Set_Highlighting
+        (Get_Or_Create_Style_Copy
+           (Kernel_Handle (Kernel),
+            Get_Name (Search_Results_Style) & '/' & Category,
+            Search_Results_Style),
+         Name'Length);
    end Print_Ref;
 
    -------------------------
@@ -1238,7 +1240,7 @@ package body Browsers.Call_Graph is
    begin
       if Info /= null then
          begin
-            Remove_Location_Category (Kernel, Category_Title);
+            Get_Messages_Container (Kernel).Remove_Category (Category_Title);
 
             Ref (Info);
             Data := (Kernel             => Kernel_Handle (Kernel),
@@ -1824,11 +1826,13 @@ package body Browsers.Call_Graph is
       Iter        : Entity_Reference_Iterator;
       Iter2       : Entity_Iterator;
       Entity2     : Entity_Information;
+      Message     : Simple_Message_Access;
+
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
       if All_From_Same_File then
-         Remove_Location_Category (Kernel, Title);
+         Get_Messages_Container (Kernel).Remove_Category (Title);
 
          Find_All_Entities_In_File (Iter => Iter2, File => Local);
          while not At_End (Iter2) loop
@@ -1860,18 +1864,22 @@ package body Browsers.Call_Graph is
                   Destroy (Iter);
 
                else
-                  Insert_Location
-                    (Kernel,
-                     Category     => Title,
-                     File         => Get_Filename
-                       (Get_File (Get_Declaration_Of (Entity2))),
-                     Text         => Get_Name (Entity2).all,
-                     Line         => Get_Line (Get_Declaration_Of (Entity2)),
-                     Column       => Get_Column (Get_Declaration_Of (Entity2)),
-                     Length       => Get_Name (Entity2)'Length,
-                     Highlight    => True,
-                     Highlight_Category => Search_Results_Style,
-                     Remove_Duplicates  => False);
+                  Message :=
+                    Create_Simple_Message
+                      (Get_Messages_Container (Kernel),
+                       Title,
+                       Get_Filename
+                         (Get_File (Get_Declaration_Of (Entity2))),
+                       Get_Line (Get_Declaration_Of (Entity2)),
+                       Get_Column (Get_Declaration_Of (Entity2)),
+                       Get_Name (Entity2).all,
+                       0);
+                  Message.Set_Highlighting
+                    (Get_Or_Create_Style_Copy
+                       (Kernel_Handle (Kernel),
+                        Get_Name (Search_Results_Style) & '/' & Title,
+                        Search_Results_Style),
+                     Get_Name (Entity2)'Length);
                end if;
             end if;
 
@@ -1884,7 +1892,7 @@ package body Browsers.Call_Graph is
          --  Print the declaration of the entity, but only if it is in the
          --  current file, as expected by users.
 
-         Remove_Location_Category (Kernel, Title);
+         Get_Messages_Container (Kernel).Remove_Category (Title);
          Find_All_References
            (Iter          => Iter,
             Entity        => Entity,

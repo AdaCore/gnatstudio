@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2004-2009, AdaCore                  --
+--                 Copyright (C) 2004-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,44 +17,45 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Glib;                             use Glib;
+with Gtk.Box;                          use Gtk.Box;
+with Gtk.Button;                       use Gtk.Button;
+with Gtk.Dialog;                       use Gtk.Dialog;
+with Gtk.Enums;                        use Gtk.Enums;
+with Gtk.Label;                        use Gtk.Label;
+with Gtk.Handlers;                     use Gtk.Handlers;
+with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
+with Gtk.Stock;                        use Gtk.Stock;
+with Gtk.Cell_Renderer;                use Gtk.Cell_Renderer;
+with Gtk.Tree_View;                    use Gtk.Tree_View;
+with Gtk.Tree_View_Column;             use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
+with Gtk.Tree_Model;                   use Gtk.Tree_Model;
+with Gtk.Tree_Store;                   use Gtk.Tree_Store;
+with Gtk.Vbutton_Box;                  use Gtk.Vbutton_Box;
+with Gtk.Widget;                       use Gtk.Widget;
+with Gtk.Window;                       use Gtk.Window;
+with Gtkada.Dialogs;                   use Gtkada.Dialogs;
+with Gtkada.File_Selector;             use Gtkada.File_Selector;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Projects;                  use Projects;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
-with GPS.Intl;                  use GPS.Intl;
-with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
-with Wizards;                   use Wizards;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with GUI_Utils;                 use GUI_Utils;
+with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with Projects;                         use Projects;
+with Projects.Editor;                  use Projects.Editor;
+with Projects.Registry;                use Projects.Registry;
+with GPS.Intl;                         use GPS.Intl;
+with Creation_Wizard;                  use Creation_Wizard;
+with Creation_Wizard.Full;             use Creation_Wizard.Full;
+with Wizards;                          use Wizards;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;              use GNATCOLL.VFS.GtkAda;
+with Commands.Interactive;             use Commands, Commands.Interactive;
+with GUI_Utils;                        use GUI_Utils;
 
 package body Creation_Wizard.Dependencies is
 

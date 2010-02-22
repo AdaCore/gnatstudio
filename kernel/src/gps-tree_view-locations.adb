@@ -27,10 +27,11 @@ with Gdk.Rectangle;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
 with Gtk.Tooltips;
+with Gtk.Tree_Sortable;
 with Gtk.Widget;
 
 with GPS.Intl;
-with GPS.Location_Model;
+with GPS.Kernel.Messages;
 with String_Utils;
 with Traces;
 
@@ -49,10 +50,12 @@ package body GPS.Tree_View.Locations is
    use Gtk.Tooltips;
    use Gtk.Tree_Model;
    use Gtk.Tree_Model_Filter;
+   use Gtk.Tree_Model_Sort;
+   use Gtk.Tree_Sortable;
    use Gtk.Tree_View_Column;
    use Gtk.Widget;
    use GPS.Intl;
-   use GPS.Location_Model;
+   use GPS.Kernel.Messages;
    use String_Utils;
    use Traces;
 
@@ -79,6 +82,18 @@ package body GPS.Tree_View.Locations is
       Column : Gint);
    --  Used by model filter for modify items (to substitute number of child
    --  items in category and file).
+
+   function Compare_By_Location
+     (Self : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A    : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Compares two nodes in locations order
+
+   function Compare_By_Subcategory
+     (Self : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A    : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Compares two nodes in locations order
 
    procedure Action_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
@@ -134,20 +149,6 @@ package body GPS.Tree_View.Locations is
    end Action_Clicked;
 
    ----------------------
-   -- Location_Clicked --
-   ----------------------
-
-   procedure Location_Clicked
-     (Self : not null access GPS_Locations_Tree_View_Record'Class;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
-   begin
-      GPS_Locations_Tree_View_Callbacks.Emit_By_Name
-        (Self, Signal_Location_Clicked, Path, Iter);
-   end Location_Clicked;
-
-   ----------------------
    -- Class_Initialize --
    ----------------------
 
@@ -176,7 +177,9 @@ package body GPS.Tree_View.Locations is
       Gtk_New (Pixbuf_Renderer);
       Self.Action_Column.Pack_Start (Pixbuf_Renderer, False);
       Self.Action_Column.Add_Attribute
-        (Pixbuf_Renderer, Property_Name (Pixbuf_Property), Button_Column);
+        (Pixbuf_Renderer,
+         Property_Name (Pixbuf_Property),
+         Action_Pixbuf_Column);
       Dummy := Self.Append_Column (Self.Action_Column);
 
       --  Text column
@@ -185,18 +188,18 @@ package body GPS.Tree_View.Locations is
       Gtk_New (Pixbuf_Renderer);
       Self.Location_Column.Pack_Start (Pixbuf_Renderer, False);
       Self.Location_Column.Add_Attribute
-        (Pixbuf_Renderer, Property_Name (Pixbuf_Property), Icon_Column);
+        (Pixbuf_Renderer, Property_Name (Pixbuf_Property), Node_Icon_Column);
 
       Gtk_New (Self.Text_Renderer);
       Self.Location_Column.Pack_Start (Self.Text_Renderer, False);
       Self.Location_Column.Add_Attribute
         (Self.Text_Renderer,
          Property_Name (Markup_Property),
-         Base_Name_Column);
+         Node_Markup_Column);
       Self.Location_Column.Add_Attribute
         (Self.Text_Renderer,
          Property_Name (Foreground_Gdk_Property),
-         Color_Column);
+         Node_Foreground_Column);
       Dummy := Self.Append_Column (Self.Location_Column);
       Self.Set_Expander_Column (Self.Location_Column);
 
@@ -212,6 +215,96 @@ package body GPS.Tree_View.Locations is
            (On_Button_Press'Access),
          After => False);
    end Class_Initialize;
+
+   -------------------------
+   -- Compare_By_Location --
+   -------------------------
+
+   function Compare_By_Location
+     (Self : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A    : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      A_Line   : constant Gint := Self.Get_Int (A, Line_Column);
+      A_Column : constant Gint := Self.Get_Int (A, Column_Column);
+      B_Line   : constant Gint := Self.Get_Int (B, Line_Column);
+      B_Column : constant Gint := Self.Get_Int (B, Column_Column);
+
+   begin
+      if A_Line < B_Line then
+         return -1;
+
+      elsif A_Line = B_Line then
+         if A_Column < B_Column then
+            return -1;
+
+         elsif A_Column = B_Column then
+            return 0;
+         end if;
+      end if;
+
+      return 1;
+   end Compare_By_Location;
+
+   -------------------------
+   -- Compare_By_Location --
+   -------------------------
+
+   function Compare_By_Subcategory
+     (Self : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A    : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      Path     : constant Gtk_Tree_Path := Self.Get_Path (A);
+      Depth    : Natural;
+      A_Line   : constant Gint := Self.Get_Int (A, Line_Column);
+      A_Column : constant Gint := Self.Get_Int (A, Column_Column);
+      A_Weight : constant Gint := Self.Get_Int (A, Weight_Column);
+      B_Line   : constant Gint := Self.Get_Int (B, Line_Column);
+      B_Column : constant Gint := Self.Get_Int (B, Column_Column);
+      B_Weight : constant Gint := Self.Get_Int (B, Weight_Column);
+
+   begin
+      Depth := Natural (Get_Depth (Path));
+      Path_Free (Path);
+
+      if Depth = 2 then
+         --  File level node
+
+         if A_Weight > B_Weight then
+            return -1;
+
+         elsif A_Weight = B_Weight then
+            return 0;
+
+         else
+            return 1;
+         end if;
+
+      elsif Depth = 3 then
+         if A_Weight > B_Weight then
+            return -1;
+
+         elsif A_Weight = B_Weight then
+            if A_Line < B_Line then
+               return -1;
+
+            elsif A_Line = B_Line then
+               if A_Column < B_Column then
+                  return -1;
+
+               elsif A_Column = B_Column then
+                  return 0;
+               end if;
+            end if;
+         end if;
+
+         return 1;
+
+      else
+         return 0;
+      end if;
+   end Compare_By_Subcategory;
 
    -------------
    -- Gtk_New --
@@ -233,14 +326,56 @@ package body GPS.Tree_View.Locations is
    procedure Initialize
      (Self   : not null access GPS_Locations_Tree_View_Record'Class;
       Filter : out Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter;
-      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model) is
+      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model)
+   is
+
+      function Columns_Types
+        (Model : not null Gtk_Tree_Model) return GType_Array;
+      --  Returns array filled by column types of given model
+
+      -------------------
+      -- Columns_Types --
+      -------------------
+
+      function Columns_Types
+        (Model : not null Gtk_Tree_Model) return GType_Array
+      is
+         Result : GType_Array (0 .. Guint (Model.Get_N_Columns) - 1);
+
+      begin
+         for J in Result'Range loop
+            Result (J) := Model.Get_Column_Type (Gint (J));
+         end loop;
+
+         return Result;
+      end Columns_Types;
+
    begin
       GPS.Tree_View.Initialize (Self, Model);
       Class_Initialize (Self);
-      Gtk_New (Filter, Model);
-      Filter.Set_Modify_Func (Columns_Types, On_Modify'Access);
-      Self.Set_Source_Model (Gtk_Tree_Model (Filter));
+      Gtk_New_With_Model (Self.Sort, Model);
+      Set_Default_Sort_Func (+Self.Sort, Compare_By_Location'Access);
+      Gtk_New (Self.Filter, Self.Sort);
+      Self.Sort.Unref;
+      Self.Filter.Set_Modify_Func (Columns_Types (Model), On_Modify'Access);
+      Self.Set_Source_Model (Gtk_Tree_Model (Self.Filter));
+
+      Filter := Self.Filter;
    end Initialize;
+
+   ----------------------
+   -- Location_Clicked --
+   ----------------------
+
+   procedure Location_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+   begin
+      GPS_Locations_Tree_View_Callbacks.Emit_By_Name
+        (Self, Signal_Location_Clicked, Path, Iter);
+   end Location_Clicked;
 
    ---------------------
    -- On_Button_Press --
@@ -268,8 +403,8 @@ package body GPS.Tree_View.Locations is
            (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
          if Column /= Self.Action_Column then
-            Self.Get_Cell_Area (Path, Self.Sorting_Column, Cell_Rect);
-            Self.Get_Background_Area (Path, Self.Sorting_Column, Back_Rect);
+            Self.Get_Cell_Area (Path, Self.Location_Column, Cell_Rect);
+            Self.Get_Background_Area (Path, Self.Location_Column, Back_Rect);
 
             --  If we are clicking before the beginning of the cell, allow the
             --  event to pass. This allows clicking on expanders.
@@ -345,9 +480,17 @@ package body GPS.Tree_View.Locations is
       pragma Unreferenced (Self, Iter);
 
    begin
+      --  Automatically expand third level nodes.
+
       if Get_Depth (Path) = 3 then
          Node.Expanded := True;
       end if;
+
+      --  For each added first level node schedule an automatic expansion of
+      --  first and second level nodes. Note: we need to be carefully here,
+      --  because different proxy models can have different filtering
+      --  behavior.
+      --  XXX Not implemented yet.
    end On_Lowerst_Model_Row_Inserted;
 
    ---------------
@@ -368,14 +511,15 @@ package body GPS.Tree_View.Locations is
       Path := Self.Get_Path (Iter);
       Self.Convert_Iter_To_Child_Iter (Aux, Iter);
 
-      if Column = Base_Name_Column
+      if Column = Node_Markup_Column
         and then Get_Depth (Path) < 3
       then
          declare
             Message : constant String :=
-                        Model.Get_String (Aux, Base_Name_Column);
+                        Model.Get_String (Aux, Column);
             Items   : constant Natural :=
-                        Natural (Model.Get_Int (Aux, Number_Of_Items_Column));
+                        Natural
+                          (Model.Get_Int (Aux, Number_Of_Children_Column));
             Img     : constant String := Image (Items);
 
          begin
@@ -463,7 +607,7 @@ package body GPS.Tree_View.Locations is
          return False;
       end if;
 
-      Tooltip.Set_Markup (Model.Get_String (Iter, Base_Name_Column));
+      Tooltip.Set_Markup (Model.Get_String (Iter, Node_Tooltip_Column));
       Self.Set_Tooltip_Row (Tooltip, Path);
 
       Path_Free (Path);
@@ -561,16 +705,25 @@ package body GPS.Tree_View.Locations is
       return Result;
    end Signals_Parameters;
 
-   --------------------
-   -- Sorting_Column --
-   --------------------
+   ----------------------
+   -- Sort_By_Location --
+   ----------------------
 
-   function Sorting_Column
-     (Self : not null access GPS_Locations_Tree_View_Record'Class)
-      return Gtk.Tree_View_Column.Gtk_Tree_View_Column is
+   procedure Sort_By_Location
+     (Self : not null access GPS_Locations_Tree_View_Record'Class) is
    begin
-      return Self.Location_Column;
-   end Sorting_Column;
+      Set_Default_Sort_Func (+Self.Sort, Compare_By_Location'Access);
+   end Sort_By_Location;
+
+   -------------------------
+   -- Sort_By_Subcategory --
+   -------------------------
+
+   procedure Sort_By_Subcategory
+     (Self : not null access GPS_Locations_Tree_View_Record'Class) is
+   begin
+      Set_Default_Sort_Func (+Self.Sort, Compare_By_Subcategory'Access);
+   end Sort_By_Subcategory;
 
    ---------------------------
    -- To_Lowerst_Model_Iter --
@@ -581,13 +734,14 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Aux : Gtk_Tree_Iter;
+      Aux_1 : Gtk_Tree_Iter;
+      Aux_2 : Gtk_Tree_Iter;
 
    begin
-      Gtk_Tree_Model_Filter (Self.Get_Model).Convert_Iter_To_Child_Iter
-        (Aux, Iter);
+      Self.Filter.Convert_Iter_To_Child_Iter (Aux_1, Iter);
+      Self.Sort.Convert_Iter_To_Child_Iter (Aux_2, Aux_1);
 
-      return Aux;
+      return Aux_2;
    end To_Lowerst_Model_Iter;
 
 end GPS.Tree_View.Locations;
