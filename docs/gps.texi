@@ -5634,13 +5634,26 @@ Targets.
   Other custom values may be defined, and then handled via the
   @code{compute_build_targets} hook.
 
-@item Display button in toolbar: when active, a button is displayed in
+@end itemize
+
+The "Display" frame indicates where the launcher for this target should be
+ visible.
+
+@itemize @bullet
+@item in the toolbar: when active, a button is displayed in
   the main toolbar, allowing to quickly launch a Target.
 
-@item Display item in menu: whether to display a menu item corresponding
-  to the Target. By default, Targets in the "File" category are listed
-  directly in the Build menu, and Targets in other categories are listed
-  in a submenu corresponding to the name of the category.
+@item in the main menu: whether to display a menu item corresponding
+  to the Target in the main GPS menu. By default, Targets in the "File"
+  category are listed directly in the Build menu, and Targets in other
+  categories are listed in a submenu corresponding to the name of the category.
+
+@item in contextual menus for projects: whether to display an item in the
+  contextual menu for projects in the Project View
+
+@item in contextual menus for files: whether to display an item in the
+  contextual menus for files, for instance in file items in the Project View
+  or directly on source file editors.
 
 @end itemize
 
@@ -14452,6 +14465,11 @@ following sub-nodes:
 @item <server>
    Optional, defaulting to @code{Build_Server}. Indicates the server used for
    launching Targets of this model. @xref{Remote operations}.
+@item <is-run>
+   Optional, defaulting to @code{False}. A boolean indicating whether this
+   target corresponds to the launching of an executable rather than a build.
+   Targets with such a model are launched through an interactive console in
+   GPS, and their output is not parsed for errors.
 @item <uses-shell>
    Optional, defaulting to @code{False}. A boolean indicating whether Targets
    of this model should be launched via the shell pointed to by the SHELL
@@ -14514,6 +14532,12 @@ Targets are defined in a @code{target} node which has three attributes:
 @item <in-menu>
    Optional, defaulting to @code{True}. A boolean indicating whether the
    Target should have an associated entry in the Build menu.
+@item <in-contextual-menus-for-projects>
+   Optional, defaulting to @code{False}. A boolean indicating whether the
+   Target should have an associated entry in the contextual menu for projects.
+@item <in-contextual-menus-for-files>
+   Optional, defaulting to @code{False}. A boolean indicating whether the
+   Target should have an associated entry in the contextual menu for files.
 @item <read-only>
    Optional, defaulting to @code{False}. A boolean indicating whether the
    Target can be removed by the user.
