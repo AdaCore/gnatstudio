@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 
 with Gtkada.MDI;
 with GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;
 with GPS.Location_View;
 
 package body GPS.Kernel.Messages.View is
@@ -28,6 +29,7 @@ package body GPS.Kernel.Messages.View is
    use Glib.Main;
    use Gtkada.MDI;
    use GPS.Kernel.MDI;
+   use GPS.Kernel.Preferences;
    use GPS.Location_View;
 
    function To_View_Manager is
@@ -48,7 +50,8 @@ package body GPS.Kernel.Messages.View is
    is
    begin
       Get_Or_Create_Location_View (Self.Kernel).Expand_Category
-        (Category, Self.Goto_First_Location);
+        (Category,
+         Self.Goto_First_Location and then Auto_Jump_To_First.Get_Pref);
    end Category_Added;
 
    --------------------------------
