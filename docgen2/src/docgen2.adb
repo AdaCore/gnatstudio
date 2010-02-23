@@ -1519,7 +1519,6 @@ package body Docgen2 is
                      Element (Command.File_Index));
                begin
                   if File /= null then
-                     Update_Contents (File);
                      Command.Construct_Lock := new Update_Lock'
                        (Lock_Updates (File, Ignore_Updates));
                   end if;
