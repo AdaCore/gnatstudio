@@ -465,11 +465,6 @@ a = """<?xml version="1.0"?>
             <radio-entry label="Force 'in'" switch="~d=i" />
             <radio-entry label="Force unmoded" switch="~d=u" />
       </radio>
-      <title line="1" column="3">Order</title>
-      <radio line="1" column="3">
-        <radio-entry label="Declaration" switch="~order=declaration" />
-        <radio-entry label="Alphabetic" switch="~order=alphabetic" />
-      </radio>
 
       <title line="2" column="1">Annotation compression</title>
       <radio line="2" column="1">
