@@ -3455,8 +3455,8 @@ on startup, @xref{The Preferences Dialog}.
 @cindex Ada xrefs heuristics
 
 GPS is able to provide some basic navigation support for Ada sources in the
-absence of information coming from the compiler. It uses an had hoc Ada parser
-parsing the Ada files at startup and attempting to navigate in simple cases.
+absence of information coming from the compiler. It uses a built-in Ada parser
+parsing the Ada files at startup and allowing navigation in simple cases.
 
 In this mode, GPS is able to navigate to an entity body from the declaration,
 and to an entity declaration from the body. In case of other references, GPS
