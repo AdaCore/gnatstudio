@@ -36,7 +36,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001-2009, AdaCore.
+Copyright @copyright{} 2001-2010, AdaCore.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1
@@ -3450,6 +3450,25 @@ depend on the naming scheme specified in your project.
 A preference can be set to have GPS load the cross-information automatically
 on startup, @xref{The Preferences Dialog}.
 @c ??? need to xref to specific pref, this xref is too general
+
+@subsection Ada xrefs heuristics
+@cindex Ada xrefs heuristics
+
+GPS is able to provide some basic navigation support for Ada sources in the
+absence of information coming from the compiler. It uses an had hoc Ada parser
+parsing the Ada files at startup and attempting to navigate in simple cases.
+
+In this mode, GPS is able to navigate to an entity body from the declaration,
+and to an entity declaration from the body. In case of other references, GPS
+will navigate to the declaration on simple cases, namely if the heuristics
+provide an information without ambiguity. In particular, it will may not work
+with overloaded entities.
+
+This heuristics are not used in global reference searching operations or call
+graphs.
+
+Note that this parser is also used to provide the Ada outline view, code
+completion and entity view.
 
 @c --------------------------------------------------------------------
 @node The Navigate Menu
