@@ -3461,10 +3461,10 @@ parsing the Ada files at startup and attempting to navigate in simple cases.
 In this mode, GPS is able to navigate to an entity body from the declaration,
 and to an entity declaration from the body. In case of other references, GPS
 will navigate to the declaration on simple cases, namely if the heuristics
-provide an information without ambiguity. In particular, it will may not work
+provide an information without ambiguity. In particular, it may not work
 with overloaded entities.
 
-This heuristics are not used in global reference searching operations or call
+These heuristics are not used in global reference searching operations or call
 graphs.
 
 Note that this parser is also used to provide the Ada outline view, code
