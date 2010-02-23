@@ -908,7 +908,9 @@ package body Language.Tree.Database is
       --  If update are temporary disabled, mark it and return.
 
       if File.Lock_Depth > 0 then
-         File.Update_Locked := True;
+         if File.Lock_Kind = Defer_Updates then
+            File.Update_Locked := True;
+         end if;
 
          return;
       end if;
@@ -989,13 +991,21 @@ package body Language.Tree.Database is
    -- Lock --
    ----------
 
-   function Lock_Updates (File : Structured_File_Access) return Update_Lock is
+   function Lock_Updates
+     (File : Structured_File_Access;
+      Kind : Lock_Kind_Type := Defer_Updates) return Update_Lock
+   is
+      Last_Lock_Kind : constant Lock_Kind_Type := File.Lock_Kind;
    begin
       if File /= null then
          File.Lock_Depth := File.Lock_Depth + 1;
+         File.Lock_Kind := Kind;
       end if;
 
-      return (Limited_Controlled with File_Locked => File);
+      return
+        (Limited_Controlled with
+         File_Locked => File,
+         Last_Lock_Kind => Last_Lock_Kind);
    end Lock_Updates;
 
    ------------
@@ -1014,6 +1024,8 @@ package body Language.Tree.Database is
             This.File_Locked.Update_Locked := False;
          end if;
 
+         --  Revert to the previous lock kind
+         This.File_Locked.Lock_Kind := This.Last_Lock_Kind;
          This.File_Locked := null;
       end if;
    end Unlock;

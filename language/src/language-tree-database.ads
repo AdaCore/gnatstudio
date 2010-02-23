@@ -246,6 +246,8 @@ package Language.Tree.Database is
       Absolute_Byte_Offset : String_Index_Type;
       Line                 : out Integer;
       Column               : out Visible_Column_Type);
+   --  Computes the line and the column of a string index, given the contents
+   --  of a file.
 
    function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access;
@@ -263,8 +265,16 @@ package Language.Tree.Database is
    --  the file is locked, then it will be delayed until the last lock is
    --  released.
 
-   function Lock_Updates (File : Structured_File_Access) return Update_Lock;
-   --  Locks the file for further updates.
+   type Lock_Kind_Type is (Defer_Updates, Ignore_Updates);
+
+   function Lock_Updates
+     (File : Structured_File_Access; Kind : Lock_Kind_Type := Defer_Updates)
+      return Update_Lock;
+   --  Locks the file for further updates. If Kind is Ignore_Updates, then
+   --  all updates will be ignored when this lock is active, that is to say
+   --  when it's the last lock put on the file. If Kind is Defer_Update, then
+   --  an update will be done when the topmost lock is released, if an update
+   --  has been queried while this lock is active.
 
    procedure Unlock (This : in out Update_Lock);
    --  Unlock the locked file, if any, and release update event if there's no
@@ -645,13 +655,15 @@ private
       Db           : access Construct_Database;
 
       Lock_Depth    : Natural := 0;
+      Lock_Kind     : Lock_Kind_Type := Defer_Updates;
       Update_Locked : Boolean := False;
 
       Ref           : Natural := 0;
    end record;
 
    type Update_Lock is limited new Limited_Controlled with record
-      File_Locked : Structured_File_Access;
+      File_Locked    : Structured_File_Access;
+      Last_Lock_Kind : Lock_Kind_Type;
    end record;
 
    function "=" (Left, Right : Structured_File) return Boolean;

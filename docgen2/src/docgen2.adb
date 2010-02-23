@@ -1521,7 +1521,7 @@ package body Docgen2 is
                   if File /= null then
                      Update_Contents (File);
                      Command.Construct_Lock := new Update_Lock'
-                       (Lock_Updates (File));
+                       (Lock_Updates (File, Ignore_Updates));
                   end if;
                end;
 
@@ -1591,7 +1591,7 @@ package body Docgen2 is
                begin
                   if File /= null then
                      Command.Construct_Lock := new Update_Lock'
-                       (Lock_Updates (File));
+                       (Lock_Updates (File, Ignore_Updates));
                   end if;
                end;
             else
