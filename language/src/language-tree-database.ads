@@ -258,12 +258,12 @@ package Language.Tree.Database is
 
    type Update_Lock is limited new Limited_Controlled with private;
    --  This type is used to avoid updates on a given file for a limited amount
-   --  of time. The lock can be release either explicitely, by doing calls to
+   --  of time. The lock can be released either explicitely, by doing calls to
    --  Unlock, or implicitely, at object finalization. If two or more locks are
    --  taken on a given file, then the system will wait for all of them to
-   --  be released before re-allowing updates. If an updated is queried while
+   --  be released before re-allowing updates. If an update is queried while
    --  the file is locked, then it will be delayed until the last lock is
-   --  released.
+   --  released if lock kind is Defer_Updates, and ignored if Ignore_Updates.
 
    type Lock_Kind_Type is (Defer_Updates, Ignore_Updates);
 
