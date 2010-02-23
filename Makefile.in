@@ -56,6 +56,7 @@ endif
 	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/plug-ins/gnat_switches.py
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/gps_utils/*.py) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - plug-ins/spark/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/images/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
