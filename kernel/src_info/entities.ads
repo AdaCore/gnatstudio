@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Finalization;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Calendar;
@@ -86,6 +87,23 @@ package Entities is
    --    exists, though, there is no call to stat() to make sure it is
    --    up-to-date.
    --  - No_Create_Or_Update: no new LI file is created or updated
+
+   type Construct_Heuristics_Lock is limited
+   new Ada.Finalization.Limited_Controlled with private;
+
+   function Lock_Construct_Heuristics (Db : Entities_Database)
+     return Construct_Heuristics_Lock;
+   --  Deactivate fallbacks to the constructs heuristics when no information
+   --  is found by the ALI. Locks can be stacked. Heuristics will be enabled
+   --  again when the latest lock has been released.
+
+   procedure Unlock_Construct_Heuristics
+     (Lock : in out  Construct_Heuristics_Lock);
+   --  Unlock the fallback to the constructs heuristics. The fallbacks stays
+   --  locked until all locks have been unlocked.
+
+   overriding procedure Finalize (Lock : in out Construct_Heuristics_Lock);
+   --  Same as above, if not already unlocked.
 
    procedure Freeze
      (Db : Entities_Database; Mode : Freeze_Type := No_Create_Or_Update);
@@ -1421,9 +1439,16 @@ private
       Stack           : Freeze_Stack.Simple_Stack;
       Count           : Integer := 0;
 
-      Construct_Db    : Language.Tree.Database.Construct_Database_Access;
+      Construct_Db       : Language.Tree.Database.Construct_Database_Access;
+      Construct_Db_Locks : Integer := 0;
    end record;
    type Entities_Database is access Entities_Database_Record;
+
+   type Construct_Heuristics_Lock is limited
+   new Ada.Finalization.Limited_Controlled with record
+      Previous_Level : Integer;
+      Db : Entities_Database;
+   end record;
 
    type LI_Handler_Record is abstract tagged limited record
       Name_Index : Entities_Search_Tries.Trie_Tree_Access := null;

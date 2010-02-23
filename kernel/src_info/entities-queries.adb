@@ -584,11 +584,11 @@ package body Entities.Queries is
       end if;
 
       if Active (Constructs_Heuristics)
+        and then Db.Construct_Db_Locks = 0
         and then
           (Status = Entity_Not_Found
            or else (Status = Fuzzy_Match and then not Fuzzy_Expected))
       then
---           Put_Line ("HEURISTICS IN FIND"); Flush;
          declare
             Tree_Lang : constant Tree_Language_Access :=
               Tree_Language_Access
@@ -710,26 +710,14 @@ package body Entities.Queries is
       --  If not found, then try using the construct database
 
       if Active (Constructs_Heuristics)
+        and then Start_Loc.File.Db.Construct_Db_Locks = 0
         and then Number_Of_Entities_Found <= 1
       then
---           Put_Line ("HEURISTICS IN BODY"); Flush;
          if Current_Location /= No_File_Location then
             Start_Loc := Current_Location;
          else
             Start_Loc := Entity.Declaration;
          end if;
-
---           declare
---              Tb  : GNAT.Traceback.Tracebacks_Array (1 .. 200);
---              Len : Natural;
---           begin
---              Put_Line (String (Base_Name (Start_Loc.File.Name)));
---              Put_Line (Start_Loc.Line'Img);
---              Put_Line (Start_Loc.Column'Img);
---              GNAT.Traceback.Call_Chain (Tb, Len);
---              Put_Line
---                (GNAT.Traceback.Symbolic.Symbolic_Traceback (Tb (1 .. Len)));
---           end;
 
          declare
             Db : constant Entities_Database  := Start_Loc.File.Db;

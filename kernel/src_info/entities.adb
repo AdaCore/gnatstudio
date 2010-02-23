@@ -1037,6 +1037,44 @@ package body Entities is
       return Db;
    end Create;
 
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Lock : in out Construct_Heuristics_Lock) is
+   begin
+      Unlock_Construct_Heuristics (Lock);
+   end Finalize;
+
+   -------------------------------
+   -- Lock_Construct_Heuristics --
+   -------------------------------
+
+   function Lock_Construct_Heuristics
+     (Db : Entities_Database)
+      return Construct_Heuristics_Lock
+   is
+   begin
+      Db.Construct_Db_Locks := Db.Construct_Db_Locks + 1;
+
+      return (Ada.Finalization.Limited_Controlled with
+              Previous_Level => Db.Construct_Db_Locks - 1, Db => Db);
+   end Lock_Construct_Heuristics;
+
+   ---------------------------------
+   -- Unlock_Construct_Heuristics --
+   ---------------------------------
+
+   procedure Unlock_Construct_Heuristics
+     (Lock : in out Construct_Heuristics_Lock)
+   is
+   begin
+      if Lock.Db /= null then
+         Lock.Db.Construct_Db_Locks := Lock.Previous_Level;
+         Lock.Db := null;
+      end if;
+   end Unlock_Construct_Heuristics;
+
    ------------
    -- Freeze --
    ------------

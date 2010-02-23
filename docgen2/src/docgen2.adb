@@ -53,7 +53,6 @@ with Docgen2.Scripts;        use Docgen2.Scripts;
 with Docgen2.Tags;           use Docgen2.Tags;
 with Docgen2.Utils;          use Docgen2.Utils;
 with Language.Tree.Database; use Language.Tree.Database;
-with Ada.Unchecked_Deallocation;
 
 package body Docgen2 is
 
@@ -124,11 +123,6 @@ package body Docgen2 is
       Gen_Doc_Tear_Down);
    --  The state of the docgen command processing.
 
-   type Update_Lock_Access is access all Update_Lock;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Update_Lock, Update_Lock_Access);
-
    type Docgen_Command is new Commands.Root_Command with record
       State            : Command_State := Analysis_Setup;
       --  The current state of the analysis
@@ -173,9 +167,6 @@ package body Docgen2 is
 
       Current_File     : GNATCOLL.VFS.Virtual_File;
       --  The file currently analysed. Used for user-defined callbacks.
-
-      Construct_Lock : Update_Lock_Access;
-      --  Lock on the current file to avoid analyzing the construct too often
    end record;
    --  Command used for generating the documentation
 
@@ -1513,58 +1504,56 @@ package body Docgen2 is
                              Parent_Iter   => Null_Construct_Tree_Iterator);
                Push (Command.Analysis_Ctxt, Ctxt_Elem);
 
-               declare
-                  File : constant Structured_File_Access := Get_Or_Create
-                    (Command.Kernel.Get_Construct_Database,
-                     Element (Command.File_Index));
-               begin
-                  if File /= null then
-                     Command.Construct_Lock := new Update_Lock'
-                       (Lock_Updates (File, Ignore_Updates));
-                  end if;
-               end;
-
                Command.State := Analyse_File_Constructs;
             end;
 
          when Analyse_File_Constructs =>
-            Freeze (Database);
+            declare
+               Lock : Construct_Heuristics_Lock :=
+                 Lock_Construct_Heuristics (Database);
+            begin
+               Freeze (Database);
 
-            if Command.Analysis_Ctxt.Iter = Null_Construct_Tree_Iterator then
-               --  Current file is analysed. Let's see if it has a single child
-               --  e_info to move comment when appropriate
+               if Command.Analysis_Ctxt.Iter
+                 = Null_Construct_Tree_Iterator
+               then
+                  --  Current file is analysed. Let's see if it has a single
+                  --  child e_info to move comment when appropriate
 
-               --  For this, we pop all values until getting the root context
-               while Current (Command.Analysis_Ctxt).Parent_Iter /=
-                 Null_Construct_Tree_Iterator
-               loop
-                  Pop (Command.Analysis_Ctxt);
-               end loop;
+                  --  For this, we pop all values until getting the root
+                  --  context
+                  while Current (Command.Analysis_Ctxt).Parent_Iter /=
+                    Null_Construct_Tree_Iterator
+                  loop
+                     Pop (Command.Analysis_Ctxt);
+                  end loop;
 
-               declare
-                  Ctxt_Elem  : constant Context_Stack_Element :=
-                                 Current (Command.Analysis_Ctxt);
-                  EInfo      : Entity_Info renames
-                                 Ctxt_Elem.Parent_Entity;
-               begin
-                  if EInfo.Children.Length = 1
-                    and then EInfo.Description /= No_Comment
-                    and then EInfo.Children.First_Element.Description =
-                      No_Comment
-                  then
-                     EInfo.Children.First_Element.all.Description :=
-                       EInfo.Description;
-                     EInfo.Description := No_Comment;
-                  end if;
-               end;
+                  declare
+                     Ctxt_Elem  : constant Context_Stack_Element :=
+                       Current (Command.Analysis_Ctxt);
+                     EInfo      : Entity_Info renames
+                       Ctxt_Elem.Parent_Entity;
+                  begin
+                     if EInfo.Children.Length = 1
+                       and then EInfo.Description /= No_Comment
+                       and then EInfo.Children.First_Element.Description =
+                         No_Comment
+                     then
+                        EInfo.Children.First_Element.all.Description :=
+                          EInfo.Description;
+                        EInfo.Description := No_Comment;
+                     end if;
+                  end;
 
-               Command.State := Analysis_Tear_Down;
-            else
-               --  Analysis of a new construct of the current file.
-               Analyse_Construct (Docgen_Object (Command));
-            end if;
+                  Command.State := Analysis_Tear_Down;
+               else
+                  --  Analysis of a new construct of the current file.
+                  Analyse_Construct (Docgen_Object (Command));
+               end if;
 
-            Thaw (Database);
+               Thaw (Database);
+               Lock.Unlock_Construct_Heuristics;
+            end;
 
          when Analysis_Tear_Down =>
             --  Clean-up analysis context
@@ -1575,24 +1564,8 @@ package body Docgen2 is
             --  And setup for next file analysis
             Next (Command.File_Index);
 
-            if Command.Construct_Lock /= null then
-               Unlock (Command.Construct_Lock.all);
-               Free (Command.Construct_Lock);
-            end if;
-
             if Has_Element (Command.File_Index) then
                Command.State := Analyse_Files;
-
-               declare
-                  File : constant Structured_File_Access := Get_Or_Create
-                    (Command.Kernel.Get_Construct_Database,
-                     Element (Command.File_Index));
-               begin
-                  if File /= null then
-                     Command.Construct_Lock := new Update_Lock'
-                       (Lock_Updates (File, Ignore_Updates));
-                  end if;
-               end;
             else
                Command.State := Gen_Doc_Setup;
             end if;
@@ -1734,11 +1707,6 @@ package body Docgen2 is
 
    overriding procedure Free (X : in out Docgen_Command) is
    begin
-      if X.Construct_Lock /= null then
-         Unlock (X.Construct_Lock.all);
-         Free (X.Construct_Lock);
-      end if;
-
       Free (Commands.Root_Command (X));
    end Free;
 
@@ -1814,7 +1782,13 @@ package body Docgen2 is
          end if;
       end if;
 
-      Parse_All_LI_Information (Kernel, P, False);
+      declare
+         Lock : Construct_Heuristics_Lock :=
+           Lock_Construct_Heuristics (Kernel.Get_Database);
+      begin
+         Parse_All_LI_Information (Kernel, P, False);
+         Lock.Unlock_Construct_Heuristics;
+      end;
 
       declare
          Source_Files  : File_Array_Access := Get_Source_Files (P, Recursive);
