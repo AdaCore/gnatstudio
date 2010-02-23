@@ -1,8 +1,9 @@
-"""This file provides utilities used by the SPARK plug-in for GPS.
-Copyright (c) 2004-2009 Praxis High Integrity Systems Limited
-Copyright (c) 2005-2009 AdaCore
+"""This file provides a fallback for SPARK support in GPS.
+Recent versions of the SPARK toolset typically come with a more up-to-date
+plug-in.
 
-See the GPS documentation for more details.
+Copyright (c) 2004-2009 Praxis High Integrity Systems Limited
+Copyright (c) 2005-2010 AdaCore
 """
 
 
@@ -16,12 +17,6 @@ import re
 import GPS
 from gps_utils import *
 
-# Future work
-# -----------
-
-# Nice-to-haves include:
-#   - Context sensitive navigation in annotations
- 
 spark_console="SPARK Output"
 spark_category="Examiner"
 
