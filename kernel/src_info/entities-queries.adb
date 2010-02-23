@@ -1369,6 +1369,8 @@ package body Entities.Queries is
          end if;
       end Move_To_Next_Entity;
 
+      Lock : Construct_Heuristics_Lock :=
+        Lock_Construct_Heuristics (Iter.Entity.Declaration.File.Db);
    begin
       --  We always return the declaration first
 
@@ -1464,6 +1466,8 @@ package body Entities.Queries is
             Iter.Files_Analyzed.Insert (Get (Iter.Deps).Ordered_Index);
          end if;
       end loop;
+
+      Lock.Unlock_Construct_Heuristics;
    end Next;
 
    ---------
