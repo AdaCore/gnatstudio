@@ -709,16 +709,16 @@ package body Entities.Queries is
 
       --  If not found, then try using the construct database
 
+      if Current_Location /= No_File_Location then
+         Start_Loc := Current_Location;
+      else
+         Start_Loc := Entity.Declaration;
+      end if;
+
       if Active (Constructs_Heuristics)
         and then Start_Loc.File.Db.Construct_Db_Locks = 0
         and then Number_Of_Entities_Found <= 1
       then
-         if Current_Location /= No_File_Location then
-            Start_Loc := Current_Location;
-         else
-            Start_Loc := Entity.Declaration;
-         end if;
-
          declare
             Db : constant Entities_Database  := Start_Loc.File.Db;
 
