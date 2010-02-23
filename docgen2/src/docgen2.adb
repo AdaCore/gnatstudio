@@ -1300,6 +1300,7 @@ package body Docgen2 is
       pragma Unreferenced (Striped);
       use type Ada.Containers.Count_Type;
 
+      Lock : Construct_Heuristics_Lock := Lock_Construct_Heuristics (Database);
    begin
       --  Freeze the database to speed-up the processing of the cross
       --  references. The database has just been updated before the command
@@ -1508,52 +1509,46 @@ package body Docgen2 is
             end;
 
          when Analyse_File_Constructs =>
-            declare
-               Lock : Construct_Heuristics_Lock :=
-                 Lock_Construct_Heuristics (Database);
-            begin
-               Freeze (Database);
+            Freeze (Database);
 
-               if Command.Analysis_Ctxt.Iter
-                 = Null_Construct_Tree_Iterator
-               then
-                  --  Current file is analysed. Let's see if it has a single
-                  --  child e_info to move comment when appropriate
+            if Command.Analysis_Ctxt.Iter
+              = Null_Construct_Tree_Iterator
+            then
+               --  Current file is analysed. Let's see if it has a single
+               --  child e_info to move comment when appropriate
 
-                  --  For this, we pop all values until getting the root
-                  --  context
-                  while Current (Command.Analysis_Ctxt).Parent_Iter /=
-                    Null_Construct_Tree_Iterator
-                  loop
-                     Pop (Command.Analysis_Ctxt);
-                  end loop;
+               --  For this, we pop all values until getting the root
+               --  context
+               while Current (Command.Analysis_Ctxt).Parent_Iter /=
+                 Null_Construct_Tree_Iterator
+               loop
+                  Pop (Command.Analysis_Ctxt);
+               end loop;
 
-                  declare
-                     Ctxt_Elem  : constant Context_Stack_Element :=
-                       Current (Command.Analysis_Ctxt);
-                     EInfo      : Entity_Info renames
-                       Ctxt_Elem.Parent_Entity;
-                  begin
-                     if EInfo.Children.Length = 1
-                       and then EInfo.Description /= No_Comment
-                       and then EInfo.Children.First_Element.Description =
-                         No_Comment
-                     then
-                        EInfo.Children.First_Element.all.Description :=
-                          EInfo.Description;
-                        EInfo.Description := No_Comment;
-                     end if;
-                  end;
+               declare
+                  Ctxt_Elem  : constant Context_Stack_Element :=
+                    Current (Command.Analysis_Ctxt);
+                  EInfo      : Entity_Info renames
+                    Ctxt_Elem.Parent_Entity;
+               begin
+                  if EInfo.Children.Length = 1
+                    and then EInfo.Description /= No_Comment
+                    and then EInfo.Children.First_Element.Description =
+                      No_Comment
+                  then
+                     EInfo.Children.First_Element.all.Description :=
+                       EInfo.Description;
+                     EInfo.Description := No_Comment;
+                  end if;
+               end;
 
-                  Command.State := Analysis_Tear_Down;
-               else
-                  --  Analysis of a new construct of the current file.
-                  Analyse_Construct (Docgen_Object (Command));
-               end if;
+               Command.State := Analysis_Tear_Down;
+            else
+               --  Analysis of a new construct of the current file.
+               Analyse_Construct (Docgen_Object (Command));
+            end if;
 
-               Thaw (Database);
-               Lock.Unlock_Construct_Heuristics;
-            end;
+            Thaw (Database);
 
          when Analysis_Tear_Down =>
             --  Clean-up analysis context
@@ -1691,6 +1686,8 @@ package body Docgen2 is
 
             return Success;
       end case;
+
+      Lock.Unlock_Construct_Heuristics;
 
       return Execute_Again;
 
