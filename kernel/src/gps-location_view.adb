@@ -870,6 +870,7 @@ package body GPS.Location_View is
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
       Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Add (Scrolled, Self.View);
       Self.Pack_Start (Scrolled);
 
