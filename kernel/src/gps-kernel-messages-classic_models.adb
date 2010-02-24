@@ -478,7 +478,7 @@ package body GPS.Kernel.Messages.Classic_Models is
                   Set_Int (Value, -1);
 
                when Node_Message =>
-                  Set_Int (Value, Gint (Message_Access (Node).Line));
+                  Set_Int (Value, Gint (Message_Access (Node).Column));
             end case;
 
          when Text_Column =>
