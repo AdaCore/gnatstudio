@@ -793,7 +793,7 @@ package body GPS.Kernel.Scripts is
             Fuzzy_Expected := Number_Of_Arguments (Data) < 5;
 
             if File = No_Class_Instance then
-               --  ??? MANU Don't know what Handler to pass here, since we do
+               --  ??? Don't know what Handler to pass here, since we do
                --  not have enough information to recognize the context.
                Source := Get_Predefined_File
                  (Get_Database (Kernel),
