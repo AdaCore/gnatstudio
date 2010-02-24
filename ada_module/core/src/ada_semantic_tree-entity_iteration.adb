@@ -340,6 +340,13 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
                It.Content_It :=
                  Next (It.Current_Tree, It.Content_It, Jump_Into);
+            elsif
+              Get_Construct (It.Content_It).Category = Cat_Case_Inside_Record
+            then
+               --  If we are on the case of a record, then jump in:
+
+               It.Content_It :=
+                 Next (It.Current_Tree, It.Content_It, Jump_Into);
             else
                --  Otherwise, jump over.
 
