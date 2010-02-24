@@ -1282,7 +1282,7 @@ package body GVD.Canvas is
          Item_Updated (Get_Canvas (Canvas), Canvas.Selected_Item);
          Canvas.Selected_Component := null;
          Canvas.Selected_Item := null;
-         Traces.Trace (Me, "MANU Unselect_All");
+         Traces.Trace (Me, "Unselect_All");
       end if;
    end Unselect_All;
 
