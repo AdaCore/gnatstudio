@@ -17,6 +17,12 @@ Known Problems fixed in GPS 4.5.0
               GPS will fail to load some resources (e.g. icons).
   Workaround  Launch GPS with no path, or an absolute path.
 
+- J209-021 GPS is slow when replacing many occurences from an editor
+  Problem:    When a lot of occurences have to be replaced through a "replace
+              all" from an editor, GPS may take a lot of time to perform the
+              operation.
+  Workaround: Do the replace operation when the editor is closed.
+
 - IC01-004 Issues with project switching
   Problem:    When switching from a project A to a project B within GPS (for
               instance through the menu Project->Open...), GPS might be unable
