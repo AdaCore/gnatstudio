@@ -175,6 +175,12 @@ NF-45-I810-019 Remote mode now synchronizes files upon save (2009-10-28)
   on the server to immediately have access to them, and also allows faster
   sync operations before GPS launches an action on the remote server.
 
+NF-45-I702-007 Support for interfaces in completion (2010-02-24)
+
+  On completion like I., I being typed after an interface, all primitives will
+  now be offered by the completion, even the ones coming from multiple
+  inheritance.
+
 NF-45-I501-009 New shell function: GPS.version (2010-02-18)
 
   A new function that can be used in plug-ins is provided to query the
