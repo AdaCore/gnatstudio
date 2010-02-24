@@ -206,7 +206,6 @@ Tools
 * Documentation Generation::
 * Metrics::
 * Code Coverage::
-* SPARK Plug-In::
 
 Working in a Cross Environment
 * Customizing your Projects::
@@ -527,8 +526,9 @@ The menu bar gives access to the following items:
 @xref{The Tools Menu}.
 
 @item SPARK
-If the SPARK toolset is installed on your system and available on your PATH,
-then this menu is available. See @ref{The SPARK Menu} for more details.
+If the SPARK toolset is installed on your system and available on your
+PATH, then this menu is available. See
+@code{Help->SPARK->Reference->Using SPARK with GPS} for more details.
 
 @item CodePeer
 If the CodePeer toolset is installed on your system and available on your PATH,
@@ -3330,15 +3330,6 @@ from a macro use to its definition, but the macro content is ignored,
 which means for example that function calls made through macros
 won't be detected.
 
-@item SPARK
-@cindex SPARK
-@cindex SLI
-To generate all the cross-referencing information relevant to SPARK annotations
-in your project, it is necessary to Examine all SPARK source files - e.g.
-using the project's metafile.
-The information will be stored in @file{SLI files}, which are similar to
-@file{ALI files}. GPS will load both ali and sli files when available to
-perform source navigation.
 @end table
 
 @subsection Loading xref info in memory
@@ -8266,7 +8257,6 @@ children nodes this contains the log for the corresponding revision.
 * Documentation Generation::
 * Metrics::
 * Code Coverage::
-* SPARK Plug-In::
 @end menu
 
 @node The Tools Menu
@@ -8913,167 +8903,6 @@ subprogram coverage details are not available for every supported languages.
 To finish, note that if you change the current main project in GPS, using the
 @command{Project->Open} menu for instance, you will also drop every loaded
 coverage information as they are related to the working project.
-
-@c --------------------------------------------------------------------
-@node SPARK Plug-In
-@section SPARK Plug-In
-@cindex SPARK
-@noindent
-@c --------------------------------------------------------------------
-
-GPS includes a plug-in that provides support for the SPARK language and
-toolset.
-
-It is intended for use with Release 7.6.2 or later of the
-SPARK Toolset.  The customization depends on the presence of the
-"brief output" Examiner switch, which is not available
-in earlier releases.
-
-This plug-in will be enabled only if you have spark tools available in
-your PATH variable (e.g. SPARK Examiner, POGs).
-
-Before you start using the SPARK commands you should first set your project
-properties following the guidelines below.
-Note that this section discusses only those settings
-specific to SPARK. For details of the Project menu in general,
-@xref{The Project Menu}.
-
-@itemize
-@item Select @code{Edit Project Properties} from the Project menu.
-
-@item If you want to access SPARK generated files from the GPS project explorer, 
- click the Languages tab and ensure that the following items are ticked:
- Ada, Cmd, Fdl, Index, Listing, Metafile, Plg, Pogs Summary, Prv,
- Rls, Rlu, Rul, Siv, Slg, Vcg, 
- Otherwise, you only need the Ada language selected.
- You may also want to add in your project file the following line for
- each of the languages in the @code{Compiler} package:
-
-@smallexample
-package Compiler is
-   [...]
-   for Driver ("Vcg") use "";
-   for Driver ("Index") use "";
-   ...
-@end smallexample
-
- otherwise if you build with gprbuild, you will get warning messages. Another
- alternative is to specify @code{gnatmake} in the Preferences dialog as the
- mutli-language builder.
-
-@item Similarly, you may want to optionally click the Source Dirs tab and
-enable @code{Include Subdirectories} so that VCG and SIV files are displayed in
-the project explorer.
-
-@item Click the Switches tab and select the Examiner tab.
-This allows you to control the following settings:
-
- @itemize @bullet
- @item the location of the index, warning and target configuration files if
-       required
- @item the directory to which the Examiner should write its output
- @item whether to ignore the default switch file (useful when you want to
-       specify switches that conflict with spark.sw)
- @item the language to be analysed: SPARK83, SPARK95 (default) or RavenSPARK
- @item the flow analysis mode: information flow (default) or data flow only
- @item whether or not to generate VCs
- @item syntax check only mode
- @item the level of error explanation required
- @item the replacement rules for composite constants (see the Generation of VCs
-       for SPARK Programs manual)
- @item the annotation character to be used (default is #)
- @item plain output (for regression analysis)
- @item HTML output
- @item the listing file extension to be used
- @item the report file name to be used
- @end itemize
-
-These options control the switches that will be passed to the SPARK Examiner.
-The actual switch settings are displayed in a text field at the bottom of the
-window and can be edited here directly if desired. For more information on
-the meaning of these settings please refer to the SPARK Examiner User Manual.
-
-@item The tabs for SPARKSimp, Simplifier, SPARKFormat, POGS and SPARKMake allow
-the settings for these tools to be controlled in a similar way to that
-described for the Examiner above. Please refer to the specific user manual
-for each tool to find more information about these settings.
-
-@item When you have finished making changes click @code{OK} to return to the
-main GPS interface.
-
-@end itemize
-
-@anchor{The SPARK Menu}
-The commands available under the SPARK menu are:
-
-@table @b
-@item Examine File
-Runs the SPARK Examiner to analyse the file that is currently selected in the
-editing window. The results of the analysis will be displayed in the SPARK
-Output window. If the Examiner reports any errors or warnings these will be
-listed in the Locations window. Clicking on an error or warning in the
-Locations window will cause the editor window to jump to the source code line
-associated with that error or warning. Note that this command can also be
-invoked by right-clicking anywhere in a SPARK source file in the editing
-window and selecting @code{SPARK->Examine File} or via the @key{F8} key.
-
-@item Examine Metafile
-Note that this command is only available if a metafile is currently selected in
-the editing window. It will invoke the Examiner on the metafile - equivalent to
-supplying the metafile on the command line. Note that this command can also be
-invoked by right-clicking anywhere in a metafile in the editing window and
-selecting @code{SPARK->Examine Metafile}.
-
-@item SPARKFormat File
-This command is enabled if a SPARK source file is selected in the editor window.
-It will reformat the file in-place with SPARKFormat, using any switches set
-under Project Properties. Note that this command can also be invoked by
-right-clicking anywhere in a SPARK source file in the editing window and
-selecting @code{SPARK->SPARKFormat File} or via the @key{F12} key.
-
-@item SPARKFormat Selection
-This command is enabled if a SPARK source file is selected in the editor window.
-It applies SPARKFormat to the selected text only so, for example, an
-individual annotation can be selected and reformatted.
-
-@item Simplify File
-This command is enabled if a .VCG file is open in the editing window. It will
-invoke the SPARK Simplifier on the VCG file, using any switches set under
-Project Properties. Output is sent to the Simplifier Output window.
-The siv file is displayed in the editing window. 
-
-@item Simplify All
-Search under the project directory for all VCG files that require
-simplification and invoke the SPARK Simplifier on them. This is done using the
-SPARKSimp tool, with any switches supplied under the SPARKSimp tab in Project
-Properties. Output is displayed in the SPARKSimp Output window.
-
-@item POGS
-Invokes POGS (Proof ObliGation Summariser). This will scan for proof files 
-in the project's root directory and report the proof status in a file.
-The file name is the project's name with a ".sum" suffix. 
-The default behaviour can be overwritten 
-through @code{Project -> Edit Project Properties -> Switches -> POGS} 
-by specifying the @code{Input Directory} from which POGS scans for proof
-files and the @code{Output File} where it saves the summary file.
-The summary output file is displayed in the editing window. 
-Right-clicking on a VC in the summary file
-invokes a pop-up menu. From this menu you can select @code{SPARK->Show VC} or
-@code{SPARK->Show Simplified VC} to jump directly to the VCG or SIV file
-concerned. POGS can also be invoked via the @key{F11} key.
-
-@item SPARKMake
-This command is enabled if a SPARK source file is selected in the editing
-window. It invokes the SPARKMake tool, using the current file as the 'root'.
-This scans the current directory tree (unless specified otherwise under
-Project Properties) and attempts to produce an index file and metafile for the
-analysis of the current package and all packages (including bodies) that it
-depends on. Project Properties can be used to modify the switches - see the
-SPARKMake User Manual for more details. Note that this command can also be
-invoked by right-clicking anywhere in a SPARK source file in the editing
-window and selecting @code{SPARK->SPARKMake}.
-
-@end table
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment

@@ -1,8 +1,9 @@
-"""This file provides utilities used by the SPARK plug-in for GPS.
-Copyright (c) 2004-2009 Praxis High Integrity Systems Limited
-Copyright (c) 2005-2009 AdaCore
+"""This file provides a fallback for SPARK support in GPS.
+Recent versions of the SPARK toolset typically come with a more up-to-date
+plug-in.
 
-See the GPS documentation for more details.
+Copyright (c) 2004-2009 Praxis High Integrity Systems Limited
+Copyright (c) 2005-2010 AdaCore
 """
 
 
@@ -16,12 +17,7 @@ import re
 import GPS
 from gps_utils import *
 
-# Future work
-# -----------
-
-# Nice-to-haves include:
-#   - Context sensitive navigation in annotations
- 
+spark_module="import spark_default; spark_default"
 spark_console="SPARK Output"
 spark_category="Examiner"
 
@@ -40,6 +36,8 @@ def on_match (process, match, since_last):
   GPS.Console (spark_console).write (since_last + match)
 
 def on_exit (process, status, remaining_output):
+  global focus_file
+
   # Protect e.g. "Flow Error:123:" from being detected as a file reference
   try:
     output = process.output.replace (" Error:"," Error,").replace \
@@ -51,7 +49,6 @@ def on_exit (process, status, remaining_output):
 
   # Take into account new files and directories created by the Examiner,
   # in particular in the project view.
-  global focus_file
   
   if focus_file != "":
     buf = GPS.EditorBuffer.get (GPS.File (focus_file))
@@ -563,23 +560,23 @@ a = """<?xml version="1.0"?>
 
   <action name="Examine file" category="Spark" output="none">
      <filter language="Ada"/>
-     <shell lang="python">spark.examine_file (GPS.File ("%F"))</shell>
+     <shell lang="python">"""+spark_module+""".examine_file (GPS.File ("%F"))</shell>
   </action>
 
   <action name="Simplify file" category="Spark" output="none">
     <filter language="VCG" />
-     <shell lang="python">spark.simplify_file (GPS.File("%F"))</shell>
+     <shell lang="python">"""+spark_module+""".simplify_file (GPS.File("%F"))</shell>
   </action>
 
   <action name="SPARKFormat file" category="Spark" output="none">
      <filter language="Ada" />
-     <shell lang="python">spark.format_file ()</shell>
+     <shell lang="python">"""+spark_module+""".format_file ()</shell>
   </action>
 
   <action name="SPARKFormat selection" category="Spark" output="none">
      <filter language="SPARK" />
      <filter language="Ada" />
-     <shell lang="python">spark.format_selection ()</shell>
+     <shell lang="python">"""+spark_module+""".format_selection ()</shell>
   </action>
 
   <action name="Examine metafile" category="Spark" output="none">
@@ -597,16 +594,16 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="Simplify all" category="Spark" output="none">
-    <shell lang="python">spark.simplify_all ()</shell>
+    <shell lang="python">"""+spark_module+""".simplify_all ()</shell>
   </action>
 
   <action name="POGS" category="Spark" output="none">
-    <shell lang="python">spark.show_pogs_file()</shell>
+    <shell lang="python">"""+spark_module+""".show_pogs_file()</shell>
   </action>
 
   <action name="SPARKMake" category="Spark" output="none">
     <filter language="Ada" />
-    <shell lang="python">spark.sparkmake ()</shell>
+    <shell lang="python">"""+spark_module+""".sparkmake ()</shell>
   </action>
 
  <!-- Set up SPARK menu -->
