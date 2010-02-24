@@ -1433,7 +1433,7 @@ package body Language.Tree is
                Current_Node := Current_Node.Contents.Next;
             end if;
 
-            Index := Sloc_End.Index;
+            Index := Sloc_End.Index + 1;
          end loop;
       end loop;
    end Analyze_Referenced_Identifiers;

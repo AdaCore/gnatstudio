@@ -299,6 +299,11 @@ package body Ada_Semantic_Tree.Type_Tree is
       --  Returned type is not checked except if the flag is true. In that
       --  case, only a name match will be done, and no primitivity test.
 
+      function Find_Overriden_Primitive
+        (Subprogram : Entity_Access) return Ada_Primitive_Access;
+      --  If there is a primitive overriden by the subprogram passed in
+      --  parameter, return it.
+
       --------------------------------
       -- Same_Overriding_Subprogram --
       --------------------------------
@@ -388,14 +393,56 @@ package body Ada_Semantic_Tree.Type_Tree is
          return True;
       end Same_Overriding_Subprogram;
 
+      New_Primitives : Primitive_List.List;
+      --  This variable holds the new primitives declared for this type.
+
+      -------------------------------
+      --  Find_Overriden_Primitive --
+      -------------------------------
+
+      function Find_Overriden_Primitive
+        (Subprogram : Entity_Access) return Ada_Primitive_Access
+      is
+         Return_Is_Primitive : Boolean := False;
+         C : Primitive_List.Cursor := First (New_Primitives);
+      begin
+         if Get_Construct (Subprogram).Category = Cat_Function
+           and then not Get_Construct (Subprogram).Attributes
+           (Ada_Class_Attribute)
+         then
+            if Get_Referenced_Identifiers
+              (To_Construct_Tree_Iterator (Subprogram)) =
+              Get_Identifier (The_Type)
+            then
+               Return_Is_Primitive := True;
+            end if;
+         end if;
+
+         while C /= Primitive_List.No_Element loop
+            if Element (C).Entity = Null_Entity_Persistent_Access
+              and then not
+                (Return_Is_Primitive
+                 xor Element (C).Is_Returned_Primitive)
+              and then Same_Overriding_Subprogram
+                (Get_Entity_Or_Overriden (Element (C)),
+                 Subprogram,
+                 not Return_Is_Primitive)
+            then
+               return Element (C);
+            end if;
+
+            C := Next (C);
+         end loop;
+
+         return null;
+      end Find_Overriden_Primitive;
+
       Type_Info : Ada_Type_Access := Get_Type_Info (Ada_Type_Key, The_Type);
 
       It    : Construct_Tree_Iterator;
       Scope : Construct_Tree_Iterator;
 
       Parent_Types   : Type_List.List;
-      New_Primitives : Primitive_List.List;
-      --  This variable holds the new primitives declared for this type.
 
       Dotted_Notation_Sb : Entity_Persistent_List.List;
 
@@ -529,20 +576,27 @@ package body Ada_Semantic_Tree.Type_Tree is
                           Extract_Dotted_Notation_Sb (Parent_Info);
                         New_Primitive : Ada_Primitive_Access;
                      begin
-                        --  ??? The case where a primitive has multiple parents
-                        --  (because of interfaces) is not yet handled.
-
                         for J in Primitives'Range loop
-                           New_Primitive := new Primitive_Subprogram'
-                             (Entity
-                              => Null_Entity_Persistent_Access,
-                              Overriden_Entities
-                              => new Primitive_Array'(1 => Primitives (J)),
-                              Is_Returned_Primitive =>
-                                Primitives (J).Is_Returned_Primitive,
-                              Refs => 0);
+                           if Find_Overriden_Primitive
+                             (To_Entity_Access (Primitives (J).Entity)) = null
+                           then
+                              --  Add the primitive to the primitive list, only
+                              --  if this is the first occurence of such a
+                              --  primitive. In case the same profile comes
+                              --  from different parents, only consider the
+                              --  first one.
 
-                           Append (New_Primitives, New_Primitive);
+                              New_Primitive := new Primitive_Subprogram'
+                                (Entity
+                                 => Null_Entity_Persistent_Access,
+                                 Overriden_Entities
+                                 => new Primitive_Array'(1 => Primitives (J)),
+                                 Is_Returned_Primitive =>
+                                   Primitives (J).Is_Returned_Primitive,
+                                 Refs => 0);
+
+                              Append (New_Primitives, New_Primitive);
+                           end if;
                         end loop;
 
                         for J in Dotted_Sb'Range loop
@@ -604,7 +658,6 @@ package body Ada_Semantic_Tree.Type_Tree is
 
                Primitive_Info : Ada_Primitive_Access;
                Is_Primitive   : Boolean := False;
-               Return_Is_Primitive : Boolean := False;
                Subprogram     : constant Entity_Access := To_Entity_Access
                  (Get_File (The_Type), It);
                Param_Number   : Integer := 0;
@@ -657,7 +710,6 @@ package body Ada_Semantic_Tree.Type_Tree is
                     (To_Construct_Tree_Iterator (Subprogram)) =
                     Get_Identifier (The_Type)
                   then
-                     Return_Is_Primitive := True;
                      Is_Primitive := True;
                   end if;
                end if;
@@ -666,39 +718,20 @@ package body Ada_Semantic_Tree.Type_Tree is
                   --  If this subprogram is a primitive of the given type,
                   --  then do its analysis and set the primitive annotation.
 
-                  declare
-                     C : Primitive_List.Cursor := First (New_Primitives);
-                  begin
-                     while C /= Primitive_List.No_Element loop
-                        if Element (C).Entity = Null_Entity_Persistent_Access
-                          and then not
-                            (Return_Is_Primitive
-                             xor Element (C).Is_Returned_Primitive)
-                          and then Same_Overriding_Subprogram
-                            (Get_Entity_Or_Overriden (Element (C)),
-                             Subprogram,
-                             not Return_Is_Primitive)
-                        then
-                           Primitive_Info := Element (C);
-
-                           --  If we find it in the already computed
-                           --  primitives, we've already list that subprogram
-                           --  in the dotted list, so we don't want to add
-                           --  it in any case.
-
-                           Add_To_Dotted := False;
-                           exit;
-                        end if;
-
-                        C := Next (C);
-                     end loop;
-                  end;
+                  Primitive_Info := Find_Overriden_Primitive (Subprogram);
 
                   if Primitive_Info = null then
                      --  We are on a new primitive (not inherited)
 
                      Primitive_Info := new Primitive_Subprogram;
                      Append (New_Primitives, Primitive_Info);
+                  else
+                     --  If we find it in the already computed
+                     --  primitives, we've already list that subprogram
+                     --  in the dotted list, so we don't want to add
+                     --  it in any case.
+
+                     Add_To_Dotted := False;
                   end if;
 
                   Primitive_Info.Entity :=

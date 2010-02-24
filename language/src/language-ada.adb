@@ -686,6 +686,7 @@ package body Language.Ada is
       Paren_Depth          : Integer := 0;
       Has_Reference        : Boolean := False;
       Skip_Next_Identifier : Boolean := False;
+      Previous_Is          : Boolean := False;
 
       function Token_Callback
         (Entity         : Language_Entity;
@@ -709,10 +710,31 @@ package body Language.Ada is
                   Buffer (Sloc_Start_Got.Index .. Sloc_End_Got.Index);
       begin
          if Paren_Depth = 0 then
+            if (Construct.Category in Subprogram_Category
+                or else Construct.Category = Cat_Package)
+              and then Previous_Is
+              and then Word /= "new"
+            then
+               --  We hit the "is" keyword on a subprogram body, or a
+               --  package declaration part. There's no more referenced
+               --  entities to find. Stop the anlaysis.
+
+               Success := False;
+
+               return True;
+            end if;
+
             if Entity = Keyword_Text then
+               if Word = "is" then
+                  Previous_Is := True;
+               else
+                  Previous_Is := False;
+               end if;
+
                if Word = "access" or else Word = "new"
                  or else Word = "return" or else Word = "renames"
                  or else Word = "of"
+                 or else Word = "and"
                  or else (Word = "is"
                           and then Construct.Category = Cat_Subtype)
                then
