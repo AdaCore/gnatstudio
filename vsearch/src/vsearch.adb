@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -744,8 +744,16 @@ package body Vsearch is
       Pattern  : constant String := Get_Text (Vsearch.Pattern_Entry);
       C        : Search_Commands.Generic_Asynchronous_Command_Access;
 
+      Search_Category : constant String :=
+        -"Search for: " & Get_Text (Vsearch.Pattern_Entry);
    begin
       if All_Occurrences then
+         --  If there is already a search going on for this category, do not
+         --  launch a new one.
+         if Has_Queue (Vsearch.Kernel, Search_Category) then
+            return;
+         end if;
+
          Vsearch.Find_Next := False;
       end if;
 
@@ -767,7 +775,7 @@ package body Vsearch is
 
             Search_Commands.Create
               (C,
-               -"Searching",
+               Search_Category,
                (Vsearch         => Vsearch,
                 Search_Backward => False,
                 Context         => Vsearch.Last_Search_All_Context,
@@ -776,7 +784,8 @@ package body Vsearch is
                Search_Iterate'Access);
 
             Launch_Background_Command
-              (Vsearch.Kernel, Command_Access (C), True, True, "Search");
+              (Vsearch.Kernel, Command_Access (C), True, True,
+               Search_Category);
 
          else
             Push_State (Vsearch.Kernel, Processing);

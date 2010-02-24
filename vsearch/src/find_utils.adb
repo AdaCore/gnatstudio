@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,6 +29,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Vsearch;                   use Vsearch;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
+with GPS.Intl;                  use GPS.Intl;
 
 package body Find_Utils is
 
@@ -745,9 +747,9 @@ package body Find_Utils is
      (Context : access Search_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Context, Kernel);
    begin
-      null;
+      Get_Messages_Container (Kernel).Remove_Category
+        (-"Search for: " & Context_Look_For (Context));
    end Reset;
 
 end Find_Utils;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2009, AdaCore             --
+--                      Copyright (C) 2003-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,22 +34,22 @@ package GPS.Kernel.Task_Manager is
 
    type Scheduled_Command_Access is access all Scheduled_Command'Class;
 
-   function Name (Command : access Scheduled_Command) return String;
+   overriding function Name (Command : access Scheduled_Command) return String;
 
-   procedure Interrupt (Command : in out Scheduled_Command);
+   overriding procedure Interrupt (Command : in out Scheduled_Command);
 
-   procedure Set_Progress
+   overriding procedure Set_Progress
      (Command : access Scheduled_Command; Progress : Progress_Record);
 
-   function Progress
+   overriding function Progress
      (Command : access Scheduled_Command) return Progress_Record;
 
-   function Execute
+   overriding function Execute
      (Command : access Scheduled_Command) return Command_Return_Type;
 
-   function Undo (This : access Scheduled_Command) return Boolean;
+   overriding function Undo (This : access Scheduled_Command) return Boolean;
 
-   procedure Free (Command : in out Scheduled_Command);
+   overriding procedure Free (Command : in out Scheduled_Command);
    --  See inhertited documentation
 
    procedure Launch_Foreground_Command
@@ -96,6 +96,12 @@ package GPS.Kernel.Task_Manager is
    --  Same as above, but returns the command actually inserted in the task
    --  manager.
 
+   function Has_Queue
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Queue_Id : String) return Boolean;
+   --  Return True if a queue identified by Queue_Id is currently running or
+   --  paused in the task manager.
+
    procedure Interrupt_Queue
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Command_Access);
@@ -121,7 +127,7 @@ package GPS.Kernel.Task_Manager is
       return Command_Access;
    --  Return the command associated to this scheduled command
 
-   function Is_Continuation_Action
+   overriding function Is_Continuation_Action
      (Command : access Scheduled_Command) return Boolean;
    --  Return true is Action is a continuation action, see above
 

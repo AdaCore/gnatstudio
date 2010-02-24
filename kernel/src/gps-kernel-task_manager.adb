@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -558,6 +558,19 @@ package body GPS.Kernel.Task_Manager is
    begin
       Interrupt_Queue (Manager, Command);
    end Interrupt_Queue;
+
+   ---------------
+   -- Has_Queue --
+   ---------------
+
+   function Has_Queue
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Queue_Id : String) return Boolean
+   is
+      Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+   begin
+      return Has_Queue (Manager, Queue_Id);
+   end Has_Queue;
 
    ---------------------
    -- Register_Module --

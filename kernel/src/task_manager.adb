@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -489,6 +489,30 @@ package body Task_Manager is
          end;
       end if;
    end Get_Or_Create_Task_Queue;
+
+   ---------------
+   -- Has_Queue --
+   ---------------
+
+   function Has_Queue
+     (Manager  : Task_Manager_Access;
+      Queue_Id : String) return Boolean
+   is
+      use GNAT.Strings;
+   begin
+      if Manager.Queues = null then
+         return False;
+      end if;
+
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Id /= null
+           and then Manager.Queues (J).Id.all = Queue_Id
+         then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Has_Queue;
 
    -----------------
    -- Add_Command --

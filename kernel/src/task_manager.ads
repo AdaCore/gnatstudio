@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -104,6 +104,12 @@ package Task_Manager is
    function Get_Scheduled_Commands
      (Manager : Task_Manager_Access) return Command_Array;
    --  Return all the commands currently stored in the task manager
+
+   function Has_Queue
+     (Manager  : Task_Manager_Access;
+      Queue_Id : String) return Boolean;
+   --  Return True if a queue identified by Queue_Id is currently running or
+   --  paused in the task manager.
 
 private
 
