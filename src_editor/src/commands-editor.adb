@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2009, AdaCore              --
+--                     Copyright (C) 2003-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -278,13 +278,16 @@ package body Commands.Editor is
 
          case Command.Edition_Mode is
             when Insertion =>
-               Set_Cursor_Position
-                 (Command.Buffer,
-                  Command.Line,
-                  Command.Column,
-                  Centering => Minimal,
-                  Internal  => True);
-               Scroll_To_Cursor_Location (View);
+               if not Avoid_Cursor_Move_On_Changes (Command.Buffer) then
+                  Set_Cursor_Position
+                    (Command.Buffer,
+                     Command.Line,
+                     Command.Column,
+                     Centering => Minimal,
+                     Internal  => True);
+                  Scroll_To_Cursor_Location (View);
+               end if;
+
                Insert
                  (Command.Buffer,
                   Command.Line,
@@ -293,23 +296,25 @@ package body Commands.Editor is
                     (First .. First + Command.Current_Text_Size - 1),
                   False);
 
-               if Command.Direction = Extended then
-                  Set_Cursor_Position
-                    (Command.Buffer,
-                     Command.Cursor_Line,
-                     Command.Cursor_Column,
-                     Centering => Minimal,
-                     Internal  => True);
-                  Scroll_To_Cursor_Location (View);
+               if not Avoid_Cursor_Move_On_Changes (Command.Buffer) then
+                  if Command.Direction = Extended then
+                     Set_Cursor_Position
+                       (Command.Buffer,
+                        Command.Cursor_Line,
+                        Command.Cursor_Column,
+                        Centering => Minimal,
+                        Internal  => True);
+                     Scroll_To_Cursor_Location (View);
 
-               elsif Command.Direction = Backward then
-                  Set_Cursor_Position
-                    (Command.Buffer,
-                     Command.Line,
-                     Command.Column,
-                     Centering => Minimal,
-                     Internal  => True);
-                  Scroll_To_Cursor_Location (View);
+                  elsif Command.Direction = Backward then
+                     Set_Cursor_Position
+                       (Command.Buffer,
+                        Command.Line,
+                        Command.Column,
+                        Centering => Minimal,
+                        Internal  => True);
+                     Scroll_To_Cursor_Location (View);
+                  end if;
                end if;
 
             when Deletion =>
@@ -324,13 +329,15 @@ package body Commands.Editor is
                         Interfaces.C.size_t (Command.Current_Text_Size))),
                   False);
 
-               Set_Cursor_Position
-                 (Command.Buffer,
-                  Command.Line,
-                  Command.Column,
-                  Centering => Minimal,
-                  Internal  => True);
-               Scroll_To_Cursor_Location (View);
+               if not Avoid_Cursor_Move_On_Changes (Command.Buffer) then
+                  Set_Cursor_Position
+                    (Command.Buffer,
+                     Command.Line,
+                     Command.Column,
+                     Centering => Minimal,
+                     Internal  => True);
+                  Scroll_To_Cursor_Location (View);
+               end if;
          end case;
       end if;
 

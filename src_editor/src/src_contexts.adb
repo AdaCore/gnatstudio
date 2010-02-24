@@ -1732,6 +1732,8 @@ package body Src_Contexts is
             --  Replace starting from the end, so as to preserve lines and
             --  columns
 
+            Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), True);
+
             for M in reverse Matches'Range loop
                Replace_Slice
                  (Get_Buffer (Editor),
@@ -1742,6 +1744,7 @@ package body Src_Contexts is
                   Replace_String);
             end loop;
 
+            Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), False);
             Free (Matches);
 
             return True;

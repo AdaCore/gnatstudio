@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -543,6 +543,17 @@ package Src_Editor_Buffer is
    procedure Register_View
      (Buffer : access Source_Buffer_Record; Add : Boolean);
    --  Register or Unregister a view for the buffer
+
+   function Avoid_Cursor_Move_On_Changes
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  When this return true, moving the text cursor should be avoided when
+   --  doing e.g. insert and delete operations. This is particulary usefull
+   --  when batching changes, e.g. doing a replace all.
+
+   procedure Set_Avoid_Cursor_Move_On_Changes
+     (Buffer : access Source_Buffer_Record; Value : Boolean);
+   --  Set wether we should avoid to do cusrot modifications in case of
+   --  additions / deletions.
 
    type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
    function Buffer_List
@@ -1227,6 +1238,10 @@ private
 
       Inserting : Boolean := False;
       --  Used to avoid recursion, when using commands
+
+      No_Cursor_Move_On_Changes : Boolean := False;
+      --  When this is true, we'll avoid moving the cursor when performing
+      --  changes (e.g. addition or deletions).
 
       Do_Not_Move_Cursor : Boolean := False;
       --  Used to disable functions moving the cursor or emit the

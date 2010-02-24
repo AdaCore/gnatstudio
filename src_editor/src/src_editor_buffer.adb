@@ -4816,6 +4816,28 @@ package body Src_Editor_Buffer is
       end if;
    end Register_View;
 
+   ----------------------------------
+   -- Avoid_Cursor_Move_On_Changes --
+   ----------------------------------
+
+   function Avoid_Cursor_Move_On_Changes
+     (Buffer : access Source_Buffer_Record) return Boolean
+   is
+   begin
+      return Buffer.No_Cursor_Move_On_Changes;
+   end Avoid_Cursor_Move_On_Changes;
+
+   --------------------------------------
+   -- Set_Avoid_Cursor_Move_On_Changes --
+   --------------------------------------
+
+   procedure Set_Avoid_Cursor_Move_On_Changes
+     (Buffer : access Source_Buffer_Record; Value : Boolean)
+   is
+   begin
+      Buffer.No_Cursor_Move_On_Changes := Value;
+   end Set_Avoid_Cursor_Move_On_Changes;
+
    ------------------
    -- Add_Controls --
    ------------------
