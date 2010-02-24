@@ -68,18 +68,28 @@ package body GPS.Kernel.Messages.Simple is
       return not null Simple_Message_Access;
    --  Internal create subprogram
 
+   procedure Create_Simple_Message
+     (Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Text          : String;
+      Actual_Line   : Integer;
+      Actual_Column : Integer);
+   --  Creates new instance of secondary Simple_Message. For internal use only.
+
    ---------------------------
    -- Create_Simple_Message --
    ---------------------------
 
    procedure Create_Simple_Message
-     (Container     : not null Messages_Container_Access;
-      Category      : String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
-      Weight        : Natural)
+     (Container : not null Messages_Container_Access;
+      Category  : String;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Natural;
+      Column    : Basic_Types.Visible_Column_Type;
+      Text      : String;
+      Weight    : Natural)
    is
       Aux : constant Simple_Message_Access :=
               Create_Simple_Message
@@ -95,13 +105,13 @@ package body GPS.Kernel.Messages.Simple is
    ---------------------------
 
    function Create_Simple_Message
-     (Container     : not null Messages_Container_Access;
-      Category      : String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
-      Weight        : Natural)
+     (Container : not null Messages_Container_Access;
+      Category  : String;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Natural;
+      Column    : Basic_Types.Visible_Column_Type;
+      Text      : String;
+      Weight    : Natural)
       return not null Simple_Message_Access is
    begin
       return
@@ -172,6 +182,27 @@ package body GPS.Kernel.Messages.Simple is
       Initialize
         (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
       Result.Text := To_Unbounded_String (Text);
+   end Create_Simple_Message;
+
+   ---------------------------
+   -- Create_Simple_Message --
+   ---------------------------
+
+   procedure Create_Simple_Message
+     (Parent : not null Message_Access;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Natural;
+      Column : Basic_Types.Visible_Column_Type;
+      Text   : String) is
+   begin
+      Create_Simple_Message
+        (Parent,
+         File,
+         Line,
+         Column,
+         Text,
+         Line,
+         Integer (Column));
    end Create_Simple_Message;
 
    ----------------
