@@ -15,6 +15,11 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J224-017 Completion for case inside record (2010-02-24)
+
+  Fields declared in a case statement inside a record are now offered in the
+  list of completions.
+
 NF-45-J211-009 Add "Goto Entity" dialog (2010-02-11)
 
   This new dialog allows browsing the entities in the project, with the same
