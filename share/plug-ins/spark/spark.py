@@ -2,7 +2,7 @@
 Recent versions of the SPARK toolset typically come with a more up-to-date
 plug-in.
 
-Copyright (c) 2004-2009 Praxis High Integrity Systems Limited
+Copyright (c) 2004-2010 Altran Praxis Limited
 Copyright (c) 2005-2010 AdaCore
 """
 
@@ -59,7 +59,7 @@ def on_exit (process, status, remaining_output):
 
 @with_save_excursion
 def examine_file (file):
-  """Examine current file through the SPARK examiner. file is an instance
+  """Examine current file through the SPARK Examiner. file is an instance
      of GPS.File"""
   GPS.MDI.save_all (False)
   GPS.Locations.remove_category (spark_category)
@@ -72,7 +72,7 @@ def examine_file (file):
 
 def _spawn_cmd (cmd_name, prj_attr, input=None):
   """
-  Prepare the spark console and spawn a command that sends its output to it.
+  Prepare the SPARK console and spawn a command that sends its output to it.
   See _spawn_spark_tool for a description of the arguments
   """
 
@@ -126,7 +126,7 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
 
 @save_dir
 def show_pogs_file():
-  """Show the pogs file of the current project"""
+  """Show the POGS file of the current project"""
   global focus_file
 
   sw = GPS.Project.root().get_tool_switches_as_string ("pogs")
@@ -155,25 +155,34 @@ def show_pogs_file():
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
 
-def do_pogs_xref (context, simplified):
-  """Jump to the VC referenced in the current line of the POGS output"""
+def do_pogs_xref (context, siv, dpc, zlg):
+  """Jump to the path number referenced in the current line of the POGS output"""
   editor = GPS.EditorBuffer.get()
   curs = editor.current_view().cursor()
   line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-  vc = re.search ("^\s*(\d+)", line).group (1)  # VC rule number
+  number = re.search ("^\|\s*(\d+)", line).group (1)  # path number
 
-  (frm,to) = curs.search ("^File (.*)$", backward=True, regexp=True)
-  vc_file=editor.get_chars (frm+5, to-1)
+  if dpc:
+     (frm,to) = curs.search ("^File (.*)\.dpc$", backward=True, regexp=True)
+     proof_file=editor.get_chars (frm+5, to-1)
+     if zlg:
+        proof_file = proof_file.replace (".dpc", ".zlg")
+  else:
+     (frm,to) = curs.search ("^File (.*)\.vcg$", backward=True, regexp=True)
+     proof_file=editor.get_chars (frm+5, to-1)
+     if siv:
+        proof_file = proof_file.replace (".vcg", ".siv")
 
-  if simplified:
-     vc_file = vc_file.replace (".vcg", ".siv")
-
-  f = GPS.EditorBuffer.get (GPS.File (vc_file))
+  f = GPS.EditorBuffer.get (GPS.File (proof_file))
   loc = GPS.EditorLocation (f, 1, 1)
-  (frm,to) = loc.search ("^(procedure|function)_\S+_" + vc + "\.$", regexp=True)
+  if zlg:
+     (frm,to) = loc.search ("^@@@@@@@@@@  VC: (procedure|function)_\S+_" + number + "\.", regexp=True)
+  else:
+     (frm,to) = loc.search ("^(procedure|function)_\S+_" + number + "\.$", regexp=True)
+     
   GPS.MDI.get_by_child (f.current_view()).raise_window()
 
-  # Goto the VC and then scroll the window down so the selected VC is not at the
+  # Goto the VC or DPC and then scroll the window down so the selected VC or DPC is not at the
   # bottom of the page.
 
   f.current_view().goto (frm)
@@ -181,9 +190,13 @@ def do_pogs_xref (context, simplified):
   f.current_view().center(cursor)
 
 def pogs_xref (context):
-  do_pogs_xref (context, simplified=False)
-def pogs_simplified_xref (context):
-  do_pogs_xref (context, simplified=True)
+  do_pogs_xref (context, siv=False, dpc=False, zlg=False)
+def pogs_siv_xref (context):
+  do_pogs_xref (context, siv=True, dpc=False, zlg=False)
+def pogs_dpc_xref (context):
+  do_pogs_xref (context, siv=False, dpc=True, zlg=False)
+def pogs_zlg_xref (context):
+  do_pogs_xref (context, siv=False, dpc=True, zlg=True)
 
 def has_vc (context):
   """Return TRUE if the current line of the POGS output references a VC"""
@@ -199,8 +212,25 @@ def has_vc (context):
      editor = GPS.EditorBuffer.get()
      curs = editor.current_view().cursor()
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-     context.has_vc = re.search ("\|\s+YES\s+\|", line) != None
+     context.has_vc = re.search ("\|   (S|U|E|I|X|P|C|R|F).   \|", line) != None
      return context.has_vc
+
+def has_dpc (context):
+  """Return TRUE if the current line of the POGS output references a DPC"""
+  try:
+     # Avoid doing the work several times for all entries in the menu
+     return context.has_dpc
+  except:
+     try:
+        if os.path.splitext (context.file().name())[1] != ".sum":
+           return False
+     except:
+        return False  # context.file() does not exist
+     editor = GPS.EditorBuffer.get()
+     curs = editor.current_view().cursor()
+     line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
+     context.has_dpc = re.search ("\|   .(S|U|D|L)   \|", line) != None
+     return context.has_dpc
 
 @save_dir
 def sparkmake ():
@@ -259,7 +289,25 @@ def simplify_file (file):
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
 
-def simplify_all ():
+def zombiescope_file (file):
+  """Run ZombieScope on file, where file is an instance of GPS.File"""
+  global focus_file
+
+  GPS.MDI.save_all (False)
+  GPS.Locations.remove_category (spark_category)
+  sw = file.project().get_tool_switches_as_string ("ZombieScope")
+  relative_filename = file.name().replace(file.project().file().directory(), "")
+  sdp_filename = relative_filename.replace(".dpc", ".sdp")
+
+  cmd = "zombiescope "+sw + " " + relative_filename 
+  GPS.Console (spark_console, accept_input=False).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  # Pass the summary_file to on_exit which raise a window with the file open.
+  focus_file = sdp_filename
+  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.MDI.get (spark_console).raise_window ()
+
+def sparksimp_project ():
   """Simplify all files in the project"""
   GPS.MDI.save_all (False)
   simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
@@ -341,6 +389,21 @@ a = """<?xml version="1.0"?>
     <Spec_Suffix>.cmd</Spec_Suffix>
   </Language>
 
+  <Language>
+    <Name>DPC</Name>
+    <Spec_Suffix>.dpc</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>SDP</Name>
+    <Spec_Suffix>.sdp</Spec_Suffix>
+  </Language>
+
+  <Language>
+    <Name>ZLG</Name>
+    <Spec_Suffix>.zlg</Spec_Suffix>
+  </Language>
+
   <!-- Index and Listing are just set up so that GPS can recognise them -->
 
   <Language>
@@ -386,7 +449,15 @@ a = """<?xml version="1.0"?>
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
       <check column="2" line="2" label="Generate VCs" switch="~vcg" />
+      <check column="2" line="2" label="Generate DPCs" switch="~dpc" />
+      <check column="2" line="2" label="Casing checks" switch="~casing" />
       <check column="2" line="2" label="Syntax check only" switch="~syntax_check" />
+      <combo label="Policy" switch="~policy" separator="="
+             noswitch=" " column="2" line="2" >
+        <combo-entry label="Safety" value="safety" />
+        <combo-entry label="Security" value="security" />
+        <combo-entry label="Off" value=" " />
+      </combo>
       <title line="3" column-span="2">General</title>
       <combo label="Replacement Rules" switch="~rules" separator="="
              noswitch="none" column="1" line="3"
@@ -413,19 +484,23 @@ a = """<?xml version="1.0"?>
 
   <tool name="SPARKSimp">
     <language>Ada</language>
-    <switches lines="3" switch_char="~">
+    <switches columns="2" lines="5" switch_char="~">
       <title line="1">Simplification order</title>
-      <check line="1" label="Simplify all" switch="~a" />
+      <check line="1" label="Process all files" switch="~a" />
       <check line="1" label="Sort files, largest first" switch="~t" />
       <check line="1" label="Reverse sort order" switch="~r" />
       <title line="2">Output</title>
       <check line="2" label="Log output" switch="~l" />
       <check line="2" label="Verbose output" switch="~v" />
       <check line="2" label="Echo Simplifier output" switch="~e" />
-      <title line="3">Process control</title>
-      <check line="3" label="Dry run" switch="~n" />
-      <spin line="3" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
-            tip="Use N processes to run the Simplifier. On a multiprocessor machine simplifications will occur in parallel" />
+      <title line="3">Simplification</title>
+      <check line="3" label="No Simplification" switch="~ns" />
+      <title line="4">ZombieScope</title>
+      <check line="4" label="No ZombieScope" switch="~nz" />
+      <title line="5">Process control</title>
+      <check line="5" label="Dry run" switch="~n" />
+      <spin line="5" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
+            tip="Use N processes to run the Simplifier/ZombieScope. On a multiprocessor machine simplifications will occur in parallel" />
     </switches>
   </tool>
 
@@ -435,6 +510,7 @@ a = """<?xml version="1.0"?>
       <title line="1">Output</title>
       <check line="1" label="No Echo" switch="~noecho" />
       <check line="1" label="Plain Output" switch="~plain" />
+      <check line="1" label="Don't renumber hypotheses" switch="~norenum" />
       <title line="2">Tactics</title>
       <check line="2" label="No Simplification" switch="~nosimplification" />
       <check line="2" label="No Standardisation" switch="~nostand" />
@@ -445,6 +521,15 @@ a = """<?xml version="1.0"?>
       <title line="3">Limits</title>
       <spin line="3" label="Memory Limit" switch="~memory_limit=" min="250000" max="30000000" default="9000000"
             tip="Max PROLOG Heap.  Default 9000000." />
+    </switches>
+  </tool>
+
+  <tool name="ZombieScope">
+    <language>Ada</language>
+    <switches lines="3" switch_char="~">
+      <title line="1">Output</title>
+      <check line="1" label="Plain Output" switch="~plain" />
+      <check line="1" label="Don't renumber hypotheses" switch="~norenum" />
     </switches>
   </tool>
 
@@ -568,6 +653,11 @@ a = """<?xml version="1.0"?>
      <shell lang="python">"""+spark_module+""".simplify_file (GPS.File("%F"))</shell>
   </action>
 
+  <action name="ZombieScope file" category="Spark" output="none">
+    <filter language="DPC" />
+     <shell lang="python">spark.zombiescope_file (GPS.File("%F"))</shell>
+  </action>
+
   <action name="SPARKFormat file" category="Spark" output="none">
      <filter language="Ada" />
      <shell lang="python">"""+spark_module+""".format_file ()</shell>
@@ -593,8 +683,8 @@ a = """<?xml version="1.0"?>
      <shell lang="python">GPS.Project.recompute()</shell>
   </action>
 
-  <action name="Simplify all" category="Spark" output="none">
-    <shell lang="python">"""+spark_module+""".simplify_all ()</shell>
+  <action name="SPARKSimp" category="Spark" output="none">
+    <shell lang="python">"""+spark_module+""".sparksimp_project ()</shell>
   </action>
 
   <action name="POGS" category="Spark" output="none">
@@ -625,8 +715,11 @@ a = """<?xml version="1.0"?>
       <menu action="Simplify file">
         <Title>_Simplify File</Title>
       </menu>
-      <menu action="Simplify all">
-        <Title>Simplify _All</Title>
+      <menu action="ZombieScope file">
+        <Title>_ZombieScope File</Title>
+      </menu>
+      <menu action="SPARKSimp">
+        <Title>SP_ARKSimp</Title>
       </menu>
       <menu action="POGS">
         <Title>P_OGS</Title>
@@ -656,8 +749,16 @@ a = """<?xml version="1.0"?>
     <Title>SPARK/Simplify File</Title>
   </contextual>
 
-  <contextual action="Simplify All" >
-    <Title>SPARK/Simplify All</Title>
+  <contextual action="ZombieScope file" >
+    <Title>SPARK/ZombieScope File</Title>
+  </contextual>
+
+  <contextual action="SPARKSimp" >
+    <Title>SPARK/SPARKSimp</Title>
+  </contextual>
+
+  <contextual action="POGS" >
+    <Title>SPARK/POGS</Title>
   </contextual>
 
   <contextual action="SPARKMake" >
@@ -667,7 +768,7 @@ a = """<?xml version="1.0"?>
   <!-- Shortcut keys -->
 
   <key action="/SPARK/Examine File">F8</key>
-  <key action="/SPARK/Simplify All">F10</key>
+  <key action="/SPARK/SPARKSimp">F10</key>
   <key action="/SPARK/POGS">F11</key>
   <key action="/SPARK/SPARK Format File">F12</key>
 
@@ -681,6 +782,10 @@ b = """<?xml version="1.0"?>
 
    <submenu before="About">
       <title>/Help/SPARK</title>
+   </submenu>
+
+   <submenu>
+      <title>/Help/SPARK/Documentation Index</title>
    </submenu>
 
    <submenu>
@@ -704,24 +809,24 @@ b = """<?xml version="1.0"?>
    </submenu>
 
   <documentation_file>
-     <name>SPARK95.htm</name>
-     <descr>SPARK95 LRM (without RavenSPARK)</descr>
+     <name>Global_Index.htm</name>
+     <descr>Global Documentation Index</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Language/SPARK95 LRM (without RavenSPARK)</menu>
+     <menu before="About">/Help/SPARK/Documentation Index/Global Documentation Index</menu>
   </documentation_file>
 
   <documentation_file>
-     <name>SPARK95_RavenSPARK.htm</name>
-     <descr>SPARK95 LRM (with RavenSPARK)</descr>
+     <name>SPARK_LRM.htm</name>
+     <descr>SPARK Language Reference Manual</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Language/SPARK95 LRM (with RavenSPARK)</menu>
+     <menu before="About">/Help/SPARK/Language/SPARK Language Reference Manual</menu>
   </documentation_file>
 
   <documentation_file>
-     <name>SPARK83.htm</name>
-     <descr>SPARK83 LRM</descr>
+     <name>SPARK83_LRM.htm</name>
+     <descr>SPARK83 Language Reference Manual</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Language/SPARK83 LRM</menu>
+     <menu before="About">/Help/SPARK/Language/SPARK83 Language Reference Manual</menu>
   </documentation_file>
 
   <documentation_file>
@@ -753,6 +858,13 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
+     <name>Zombiescope_UM.htm</name>
+     <descr>ZombieScope User Manual</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Tools/ZombieScope User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
      <name>SPARKMake_UM.htm</name>
      <descr>SPARKMake User Manual</descr>
      <category>Spark</category>
@@ -771,6 +883,13 @@ b = """<?xml version="1.0"?>
      <descr>Checker User Manual</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Tools/Checker User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Release_Note_9.htm</name>
+     <descr>Release Note 9.0</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 9.0</menu>
   </documentation_file>
 
   <documentation_file>
@@ -879,38 +998,59 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
-     <name>Examiner_SRN_OptFlow.htm</name>
-     <descr>Optional Flow Analysis</descr>
+     <name>SPARK_GPS.htm</name>
+     <descr>Using SPARK with GPS</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Release Notes/Optional Flow Analysis</menu>
+     <menu before="About">/Help/SPARK/Reference/Using SPARK with GPS</menu>
   </documentation_file>
 
   <documentation_file>
-     <name>Examiner_SRN_RealRTC.htm</name>
-     <descr>Real-Number RTCs</descr>
+     <name>SPARK_QRG1.htm</name>
+     <descr>Quick Reference Guide 1 - Toolset and Annotations</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Release Notes/Real-Number RTCs</menu>
+     <menu before="About">/Help/SPARK/Reference/Quick Reference Guide 1 - Toolset and Annotations</menu>
   </documentation_file>
 
   <documentation_file>
-     <name>Examiner_GenVCs.htm</name>
-     <descr>Generation of VCs</descr>
+     <name>SPARK_QRG2.htm</name>
+     <descr>Quick Reference Guide 2 - Patterns</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Reference/Generation of VCs</menu>
+     <menu before="About">/Help/SPARK/Reference/Quick Reference Guide 2 - Patterns</menu>
   </documentation_file>
 
   <documentation_file>
-     <name>Examiner_GenRTCs.htm</name>
-     <descr>Generation of RTCs</descr>
+     <name>SPARK_QRG3.htm</name>
+     <descr>Quick Reference Guide 3 - RavenSPARK Patterns</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Reference/Generation of RTCs</menu>
+     <menu before="About">/Help/SPARK/Reference/Quick Reference Guide 3 - RavenSPARK Patterns</menu>
   </documentation_file>
 
   <documentation_file>
-     <name>Examiner_GenPFs.htm</name>
-     <descr>Generation of PFs</descr>
+     <name>SPARK_QRG4.htm</name>
+     <descr>Quick Reference Guide 4 - Proof Guide</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Reference/Generation of PFs</menu>
+     <menu before="About">/Help/SPARK/Reference/Quick Reference Guide 4 - Proof Guide</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>SPARK_QRG5.htm</name>
+     <descr>Quick Reference Guide 5 - Proof Checker Commands</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Reference/Quick Reference Guide 5 - Proof Checker Commands</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>SPARK_QRG6.htm</name>
+     <descr>Quick Reference Guide 6 - Proof Checker Rules</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Reference/Quick Reference Guide 6 - Proof Checker Rules</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Proof_Manual.htm</name>
+     <descr>Proof Manual</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Reference/Proof Manual</menu>
   </documentation_file>
 
   <documentation_file>
@@ -956,5 +1096,11 @@ if spark != "":
      on_activate=pogs_xref,
      filter=has_vc)
   GPS.Contextual ("SPARK/Show Simplified VC").create (
-     on_activate=pogs_simplified_xref,
+     on_activate=pogs_siv_xref,
      filter=has_vc)
+  GPS.Contextual ("SPARK/Show DPC").create (
+     on_activate=pogs_dpc_xref,
+     filter=has_dpc)
+  GPS.Contextual ("SPARK/Show ZLG").create (
+     on_activate=pogs_zlg_xref,
+     filter=has_dpc)
