@@ -989,10 +989,6 @@ package body Builder_Facility_Module is
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
-      if not (D.Quiet or else D.Shadow) then
-         Console.Raise_Console (Kernel);
-      end if;
-
       return True;
    end On_Compilation_Starting;
 
