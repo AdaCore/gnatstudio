@@ -1490,7 +1490,19 @@ package body Ada_Analyzer is
                Start := Tmp;
                Tmp   := End_Of_Word (Tmp);
 
-               if Buffer (Start .. Tmp) = "all" then
+               if Buffer (Start .. Tmp) = "all"
+               --  constructions like sth.procedure often reflect incomplete
+               --  statements, e.g.:
+               --
+               --  use Ada.
+               --  procedure P is
+               --
+               --  retreiving these here improve the general tree balance in
+               --  case of incomplete constructs.
+                 or else Buffer (Start .. Tmp) = "procedure"
+                 or else Buffer (Start .. Tmp) = "function"
+                 or else Buffer (Start .. Tmp) = "package"
+               then
                   return Prev;
                end if;
             end if;
@@ -1968,6 +1980,18 @@ package body Ada_Analyzer is
            or else Reserved = Tok_Protected
            or else Reserved = Tok_Entry
          then
+            if not In_Generic
+              and then
+                (Top_Token.Token = Tok_With
+                 or else Top_Token.Token = Tok_Use)
+            then
+               --  In this case, we're probably parsing code in the process
+               --  of being written, and the use or with clause is not finished
+               --  yet. Close the construct anyway, so that the tree stays
+               --  correctly balanced.
+               Do_Pop := Do_Pop + 1;
+            end if;
+
             if Reserved = Tok_Package then
                Temp.Package_Declaration := True;
 
@@ -2071,6 +2095,14 @@ package body Ada_Analyzer is
 
          elsif Reserved = Tok_With then
             if not In_Generic then
+               if Top_Token.Token = Tok_With
+                   or else Top_Token.Token = Tok_Use
+               then
+                  --  Incomplete clause, pops to preserve tree balance
+
+                  Do_Pop := Do_Pop + 1;
+               end if;
+
                if Top_Token.Token = No_Token then
                   Do_Push := True;
 
@@ -2087,6 +2119,14 @@ package body Ada_Analyzer is
               (Top_Token.Token /= Tok_For
                and then Top_Token.Token /= Tok_Record))
          then
+            if Top_Token.Token = Tok_With
+              or else Top_Token.Token = Tok_Use
+            then
+               --  Incomplete clause, pops to preserve tree balance
+
+               Do_Pop := Do_Pop + 1;
+            end if;
+
             Do_Push := True;
 
          elsif     Reserved = Tok_Is
