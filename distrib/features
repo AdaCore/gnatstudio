@@ -15,6 +15,12 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J225-017 Better handling of incomplete with/use clauses (2010-02-25)
+
+  The outline and smart completion will now work correctly even when the user
+  is in the process of writing use and with clauses, and the file is parsed
+  before the clause is completely written.
+
 NF-45-J224-017 Completion for case inside record (2010-02-24)
 
   Fields declared in a case statement inside a record are now offered in the
@@ -105,10 +111,10 @@ NF-45-IC04-030 Auto-fix for "warning, var is unreferenced" (2009-12-09)
   When the compiler detects that a variable with a pragma unreferenced is
   used, and issue a warning, an auto-fix is now automatically offered.
 
-NF-45-IC01-026 Auto-fix for unexpected tilde or percent in SPARK (2009-12-02)
+NF-45-IC01-026 Auto-fix for  tilde or percent in SPARK (2009-12-02)
 
   Semantic errors 317, 318, 319, 320 and 321 raised by SPARK Examiner complain
-  about an unexpected or misplaced tilde or percent. An auto-fix for such
+  about an  or misplaced tilde or percent. An auto-fix for such
   errors is offered, which consists either in removing the offending tilde or
   percent, or in replacing it correctly.
 
