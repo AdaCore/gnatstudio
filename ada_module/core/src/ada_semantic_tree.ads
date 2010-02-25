@@ -26,6 +26,7 @@ with Generic_Stack;
 with Language.Tree; use Language.Tree;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Glib; use Glib;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 --  base package of all ada semantic tree queries.
 
@@ -207,6 +208,9 @@ package Ada_Semantic_Tree is
    --  Decrement the reference counter of the stack.
 
 private
+
+   Test_Trace : constant Trace_Handle :=
+     Create ("Ada_Semantic_Tree.Test", Off);
 
    type Entity_View_Record is abstract tagged record
       Entity        : Entity_Access;

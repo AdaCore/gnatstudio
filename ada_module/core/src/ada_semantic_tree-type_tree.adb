@@ -44,6 +44,9 @@ package body Ada_Semantic_Tree.Type_Tree is
       Ada_Type : Ada_Type_Access;
    end record;
 
+   procedure Free_Parents_Array (The_Type : Ada_Type_Access);
+   --  Disconect the type from its parents, and free the parent array.
+
    overriding
    procedure Free (Annotation : in out Ada_Type_Annotation);
 
@@ -105,6 +108,35 @@ package body Ada_Semantic_Tree.Type_Tree is
       end if;
    end Free;
 
+   ------------------------
+   -- Free_Parents_Array --
+   ------------------------
+
+   procedure Free_Parents_Array (The_Type : Ada_Type_Access) is
+      Tmp : Entity_Persistent_Access;
+   begin
+      for J in The_Type.Parents'Range loop
+         declare
+            Parent_Info : constant Ada_Type_Access :=
+              Get_Ada_Type (To_Entity_Access (The_Type.Parents (J).Entity));
+         begin
+            if Parent_Info /= null then
+               if Parent_Info.Children.Contains (The_Type.Entity) then
+                  Parent_Info.Children.Delete (The_Type.Entity);
+
+                  --  We just need to decrement the reference counter here, but
+                  --  we don't want to reset the entity. What we really do is
+                  --  to remove the reference from the child list.
+                  Tmp := The_Type.Entity;
+                  Unref (Tmp);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      Free (The_Type.Parents);
+   end Free_Parents_Array;
+
    ----------
    -- Free --
    ----------
@@ -112,11 +144,22 @@ package body Ada_Semantic_Tree.Type_Tree is
    overriding procedure Free (Annotation : in out Ada_Type_Annotation) is
    begin
       if Annotation.Ada_Type /= null then
-         for J in Annotation.Ada_Type.Parents'Range loop
-            Unref (Annotation.Ada_Type.Parents (J).Entity);
-         end loop;
+         Free_Parents_Array (Annotation.Ada_Type);
 
-         Free (Annotation.Ada_Type.Parents);
+         declare
+            C : Entity_Lists_Pck.Cursor :=
+              Annotation.Ada_Type.Children.First;
+            E : Entity_Persistent_Access;
+         begin
+            while C /= Entity_Lists_Pck.No_Element loop
+               E := Element (C);
+               Unref (E);
+               C := Next (C);
+            end loop;
+
+            Annotation.Ada_Type.Children.Clear;
+         end;
+
          Unref (Annotation.Ada_Type.Entity);
 
          for J in Annotation.Ada_Type.Primitives'Range loop
@@ -288,6 +331,9 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       Tree   : Construct_Tree;
 
+      New_Primitives : Primitive_List.List;
+      --  This variable holds the new primitives declared for this type.
+
       function Same_Overriding_Subprogram
         (S_1, S_2             : Entity_Access;
          Check_Returned_Types : Boolean) return Boolean;
@@ -393,9 +439,6 @@ package body Ada_Semantic_Tree.Type_Tree is
          return True;
       end Same_Overriding_Subprogram;
 
-      New_Primitives : Primitive_List.List;
-      --  This variable holds the new primitives declared for this type.
-
       -------------------------------
       --  Find_Overriden_Primitive --
       -------------------------------
@@ -493,6 +536,13 @@ package body Ada_Semantic_Tree.Type_Tree is
 
             Do_Analysis := True;
          end if;
+
+         if Do_Analysis and then Active (Test_Trace) then
+            Trace
+              (Test_Trace,
+               "TYPE OUT OF DATE: "
+               & Get_Construct (Entity_Type).Name.all);
+         end if;
       else
          --  Check if we want to do analysis on this kind of construct
 
@@ -511,6 +561,13 @@ package body Ada_Semantic_Tree.Type_Tree is
          Type_Info := new Ada_Type_Record;
          Type_Info.Entity := To_Entity_Persistent_Access (The_Type);
          Ref (Type_Info.Entity);
+
+         if Active (Test_Trace) then
+            Trace
+              (Test_Trace,
+               "NEW TYPE: "
+               & Get_Construct (Entity_Type).Name.all);
+         end if;
       end if;
 
       if not Do_Analysis then
@@ -524,6 +581,12 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       Type_Info.Analysis_Timestamp := Type_Info.Analysis_Timestamp + 1;
       Type_Info.Enclosing_Unit_Timestamp := This_Unit_Timestamp;
+
+      --  Initialize parent type fields
+
+      if Type_Info.Parents /= null then
+         Free_Parents_Array (Type_Info);
+      end if;
 
       --  First analyze parent types.
 
@@ -605,6 +668,9 @@ package body Ada_Semantic_Tree.Type_Tree is
                         end loop;
                      end;
                   end if;
+
+                  Parent_Info.Children.Insert (Type_Info.Entity);
+                  Ref (Type_Info.Entity);
                end if;
             end if;
 
@@ -614,12 +680,6 @@ package body Ada_Semantic_Tree.Type_Tree is
 
          Ref_Ids := Get_Next_Referenced_Identifiers (Ref_Ids);
       end loop;
-
-      --  Initialize parent type fields
-
-      if Type_Info.Parents /= null then
-         Free (Type_Info.Parents);
-      end if;
 
       Type_Info.Parents :=
         new Timestamp_Entity_Array (1 .. Integer (Length (Parent_Types)));
@@ -1002,6 +1062,68 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       return To_Entity_Access (Local_Primitive.Entity);
    end Get_Entity_Or_Overriden;
+
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array
+   is
+      Result : Entity_Persistent_Array
+        (1 .. Integer (Ada_Type.Children.Length));
+      C : Entity_Lists_Pck.Cursor := Ada_Type.Children.First;
+      J : Integer := 1;
+   begin
+      while C /= Entity_Lists_Pck.No_Element loop
+         Result (J) := Element (C);
+         J := J + 1;
+         C := Next (C);
+      end loop;
+
+      return Result;
+   end Get_Children;
+
+   -----------------
+   -- Get_Parents --
+   -----------------
+
+   function Get_Parents
+     (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array
+   is
+      Result : Entity_Persistent_Array
+        (1 .. Ada_Type.Parents'Last);
+   begin
+      for J in Result'Range loop
+         Result (J) := Ada_Type.Parents (J).Entity;
+      end loop;
+
+      return Result;
+   end Get_Parents;
+
+   -----------------------
+   -- Analyze_All_Types --
+   -----------------------
+
+   procedure Analyze_All_Types (File : Structured_File_Access) is
+      Tree : constant Construct_Tree := Get_Tree (File);
+      It   : Construct_Tree_Iterator := First (Tree);
+   begin
+      while It /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (It).Category = Cat_Class then
+            declare
+               Excluded : Excluded_Stack_Type;
+            begin
+               Ref (Excluded);
+               Perform_Type_Analyzis_If_Needed
+                 (To_Entity_Access (File, It), Excluded);
+               Unref (Excluded);
+            end;
+         end if;
+
+         It := Next (Tree, It, Jump_Into);
+      end loop;
+   end Analyze_All_Types;
 
    ---------
    -- Ref --

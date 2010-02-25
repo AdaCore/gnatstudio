@@ -22,7 +22,8 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Units;     use Ada_Semantic_Tree.Units;
+with Ada.Containers.Ordered_Sets;
 
 package Ada_Semantic_Tree.Type_Tree is
 
@@ -85,6 +86,24 @@ package Ada_Semantic_Tree.Type_Tree is
    --  in the case of multiple interfaces inheritence), one is picked up
    --  randomly.
 
+   function Get_Children
+     (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array;
+   --  Return the children of this type. Note that this subprogram is lazy - it
+   --  will only work with computed information. Information is computed in two
+   --  cases, either when children information is requested, or after an
+   --  Analyze_All_Types has been queried on the file.
+
+   function Get_Parents
+     (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array;
+   --  Return the parents of this type
+
+   procedure Analyze_All_Types (File : Structured_File_Access);
+   --  Analyzes and update all the type information for this file. Normally,
+   --  type information is computed laizyly so that we don't spend time
+   --  processing the information, but this may be needed when doing e.g.
+   --  global searches. Queries of children of a type may not be up to date
+   --  before having called that on every file.
+
 private
 
    type Primitive_Subprogram is record
@@ -122,8 +141,14 @@ private
    procedure Free is new Standard.Ada.Unchecked_Deallocation
      (Timestamp_Entity_Array, Timestamp_Entity_Array_Access);
 
+   package Entity_Lists_Pck is new Ada.Containers.Ordered_Sets
+     (Entity_Persistent_Access);
+
+   use Entity_Lists_Pck;
+
    type Ada_Type_Record is record
       Parents                : Timestamp_Entity_Array_Access;
+      Children               : Entity_Lists_Pck.Set;
 
       Entity                 : Entity_Persistent_Access;
 

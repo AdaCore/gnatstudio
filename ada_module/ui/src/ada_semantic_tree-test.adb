@@ -42,6 +42,8 @@ with Projects.Registry;              use Projects.Registry;
 with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 
+with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
+
 procedure Ada_Semantic_Tree.Test is
 
    procedure Next_Test_Command
@@ -59,6 +61,8 @@ procedure Ada_Semantic_Tree.Test is
 
    New_Registry : aliased Project_Registry;
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
+
+   Test_Trace : constant Trace_Handle := Create ("Ada_Semantic_Tree.Test");
 
    -----------------------
    -- Next_Complete_Tag --
@@ -91,9 +95,11 @@ procedure Ada_Semantic_Tree.Test is
 
       Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
-      Put ("COMMAND " &
-           (+Base_Name (Get_File_Path (File))) & " l" & Integer'Image
-           (Lines_Count (Buffer (Buffer'First .. Looked_Offset))) & ": ");
+      if Buffer (Word_Begin .. Word_End) /= "ECHO" then
+         Put ("COMMAND " &
+              (+Base_Name (Get_File_Path (File))) & " l" & Integer'Image
+              (Lines_Count (Buffer (Buffer'First .. Looked_Offset))) & ": ");
+      end if;
 
       if Buffer (Word_Begin .. Word_End) = "DECLARATION" then
          Put_Line ("GET DECLARATION");
@@ -197,6 +203,8 @@ procedure Ada_Semantic_Tree.Test is
                Position          => Before,
                Categories_Seeked => Null_Category_Array);
          begin
+            Set_Active (Test_Trace, True);
+
             Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
             if Buffer (Word_Begin .. Word_End) = "PRIMITIVES" then
@@ -217,7 +225,56 @@ procedure Ada_Semantic_Tree.Test is
                         & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
                   end loop;
                end;
+            elsif Buffer (Word_Begin .. Word_End) = "CHILDREN" then
+               Put_Line ("GET CHILDREN");
+
+               declare
+                  Children : constant Entity_Persistent_Array := Get_Children
+                    (Get_Ada_Type (To_Entity_Access (File, It)));
+                  Entity     : Entity_Access;
+               begin
+                  for J in Children'Range loop
+                     Entity := To_Entity_Access (Children (J));
+
+                     Put_Line
+                       ("---> CHILD: " & Get_Construct (Entity).Name.all
+                        & " " & (+Base_Name
+                          (Get_File_Path (Get_File (Entity))))
+                        & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
+                  end loop;
+               end;
+            elsif Buffer (Word_Begin .. Word_End) = "PARENTS" then
+               Put_Line ("GET PARENTS");
+
+               declare
+                  Parents : constant Entity_Persistent_Array := Get_Parents
+                    (Get_Ada_Type (To_Entity_Access (File, It)));
+                  Entity     : Entity_Access;
+               begin
+                  for J in Parents'Range loop
+                     Entity := To_Entity_Access (Parents (J));
+
+                     Put_Line
+                       ("---> PARENT: " & Get_Construct (Entity).Name.all
+                        & " " & (+Base_Name
+                          (Get_File_Path (Get_File (Entity))))
+                        & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
+                  end loop;
+               end;
+            elsif Buffer (Word_Begin .. Word_End) = "ANALYZE" then
+               Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
+               Put_Line
+                 ("ANALYZE TYPES FROM " & Buffer (Word_Begin .. Word_End));
+
+               Analyze_All_Types
+                 (Get_Or_Create
+                    (Construct_Db,
+                     GNATCOLL.VFS.Create_From_Dir
+                       (Get_Current_Dir,
+                        Filesystem_String (Buffer (Word_Begin .. Word_End)))));
             end if;
+
+            Set_Active (Test_Trace, False);
          end;
 
       elsif Buffer (Word_Begin .. Word_End) = "REPLACE" then
@@ -392,6 +449,7 @@ procedure Ada_Semantic_Tree.Test is
                when E : others =>
                   Put_Line
                     ("UNEXPECTED EXCEPTION: " & Exception_Information (E));
+                  Put_Line (GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
 
                return True;
             end Callback;
@@ -433,12 +491,10 @@ procedure Ada_Semantic_Tree.Test is
                   then
                      Full_File := Get_Or_Create (Construct_Db, Files.all (J));
 
---                       Set_Profiling (True);
                      Parse_Entities
                        (Lang     => Ada_Lang,
                         Buffer   => Get_Buffer (Full_File).all,
                         Callback => Callback'Unrestricted_Access);
---                       Set_Profiling (False);
 
                      Put_Line (" done.");
                   else
@@ -625,6 +681,21 @@ procedure Ada_Semantic_Tree.Test is
             Iterate ("", First (Tree));
          end;
 
+      elsif Buffer (Word_Begin .. Word_End) = "ECHO" then
+         declare
+            Start_Text : constant Integer := Index;
+            End_Text   : Integer := Start_Text;
+         begin
+            if Buffer (End_Text) /= ASCII.LF then
+               while Buffer (End_Text + 1) /= ASCII.LF loop
+                  End_Text := End_Text + 1;
+               end loop;
+
+               Put_Line (Buffer (Start_Text .. End_Text));
+            else
+               New_Line;
+            end if;
+         end;
       else
          Put_Line ("UNKOWN COMMAND " & Buffer (Word_Begin .. Word_End));
       end if;
@@ -632,6 +703,7 @@ procedure Ada_Semantic_Tree.Test is
    exception
       when E : others =>
          Put_Line ("UNEXPECTED EXCEPTION: " & Exception_Information (E));
+         Put_Line (GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
    end Next_Test_Command;
 
    --------------------
@@ -724,11 +796,9 @@ begin
       pragma Unreferenced (File_Node);
    begin
       --  First, generate the whole database
-      for J in 1 .. 3 loop
-         Clear (Construct_Db);
-         for J in Files.all'Range loop
-            File_Node := Get_Or_Create (Construct_Db, Files.all (J));
-         end loop;
+      Clear (Construct_Db);
+      for J in Files.all'Range loop
+         File_Node := Get_Or_Create (Construct_Db, Files.all (J));
       end loop;
 
       --  Then, execute the tests
@@ -746,4 +816,8 @@ begin
    Destroy (Construct_Db);
    Destroy (New_Registry);
    Projects.Registry.Finalize;
+exception
+   when E : others =>
+      Put_Line ("UNEXPECTED EXCEPTION: " & Exception_Information (E));
+      Put_Line (GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
 end Ada_Semantic_Tree.Test;
