@@ -111,10 +111,10 @@ NF-45-IC04-030 Auto-fix for "warning, var is unreferenced" (2009-12-09)
   When the compiler detects that a variable with a pragma unreferenced is
   used, and issue a warning, an auto-fix is now automatically offered.
 
-NF-45-IC01-026 Auto-fix for  tilde or percent in SPARK (2009-12-02)
+NF-45-IC01-026 Auto-fix for unexpected tilde or percent in SPARK (2009-12-02)
 
   Semantic errors 317, 318, 319, 320 and 321 raised by SPARK Examiner complain
-  about an  or misplaced tilde or percent. An auto-fix for such
+  about an unexpected or misplaced tilde or percent. An auto-fix for such
   errors is offered, which consists either in removing the offending tilde or
   percent, or in replacing it correctly.
 
