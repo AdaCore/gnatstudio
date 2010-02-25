@@ -20,6 +20,8 @@
 with Ada.Strings.Hash;
 with Ada.Unchecked_Conversion;
 
+with GPS.Editors; use GPS.Editors;
+
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;
 with Traces;
@@ -49,6 +51,11 @@ package body GPS.Kernel.Messages.Highlighting is
      (Self    : not null access Highlighting_Manager'Class;
       Message : not null access Abstract_Message'Class);
    --  Highlights location of the message in the source editor.
+
+   procedure Set_Action
+     (Self    : not null access Highlighting_Manager'Class;
+      Message : not null access Abstract_Message'Class);
+   --  Adds an action to the message in the source editor
 
    -------------
    -- Execute --
@@ -155,6 +162,39 @@ package body GPS.Kernel.Messages.Highlighting is
           (To_String (Item.Category) & String (Item.File.Full_Name.all));
    end Hash;
 
+   ----------------
+   -- Set_Action --
+   ----------------
+
+   procedure Set_Action
+     (Self    : not null access Highlighting_Manager'Class;
+      Message : not null access Abstract_Message'Class) is
+   begin
+      if Message.Get_Parent = null
+        and then Message.Get_Highlighting_Style /= null
+      then
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Self.Kernel).Get
+              (Message.Get_File, Open_View => False);
+            Action : constant Action_Item := Message.Get_Action;
+            Arr : Line_Information_Data;
+
+         begin
+            if Action = null then
+               Arr := new Line_Information_Array'
+                 (Message.Get_Editor_Mark.Line => Empty_Line_Information);
+            else
+               Arr := new Line_Information_Array'
+                 (Message.Get_Editor_Mark.Line => Action.all);
+            end if;
+
+            Buffer.Add_File_Information ("Block Information", Arr);
+            Unchecked_Free (Arr);
+         end;
+      end if;
+   end Set_Action;
+
    ---------------
    -- Highlight --
    ---------------
@@ -178,7 +218,8 @@ package body GPS.Kernel.Messages.Highlighting is
          else
             Get_Buffer_Factory (Self.Kernel).Get
               (Message.Get_File, Open_View => False).Apply_Style
-              (Message.Get_Highlighting_Style, Message.Get_Editor_Mark.Line);
+              (Message.Get_Highlighting_Style,
+               Message.Get_Editor_Mark.Line);
          end if;
 
          declare
@@ -215,6 +256,9 @@ package body GPS.Kernel.Messages.Highlighting is
    begin
       if Property = "highlighting" then
          Self.Highlight (Message);
+
+      elsif Property = "action" then
+         Self.Set_Action (Message);
       end if;
    end Message_Property_Changed;
 
@@ -224,15 +268,30 @@ package body GPS.Kernel.Messages.Highlighting is
 
    overriding procedure Message_Removed
      (Self    : not null access Highlighting_Manager;
-      Message : not null access Abstract_Message'Class) is
+      Message : not null access Abstract_Message'Class)
+   is
+      Buffer : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Self.Kernel).Get
+        (Message.Get_File, Open_View => False);
    begin
       if Message.Get_Highlighting_Style /= null then
-         Get_Buffer_Factory (Self.Kernel).Get
-           (Message.Get_File, Open_View => False).Remove_Style
+         Buffer.Remove_Style
            (Message.Get_Highlighting_Style,
             Message.Get_Editor_Mark.Line,
             Message.Get_Editor_Mark.Column,
             Message.Get_Editor_Mark.Column + Message.Get_Highlighting_Length);
+      end if;
+
+      if Message.Get_Action /= null then
+         declare
+            Arr : Line_Information_Data;
+         begin
+            Arr := new Line_Information_Array'
+              (Message.Get_Editor_Mark.Line => Empty_Line_Information);
+
+            Buffer.Add_File_Information ("Block Information", Arr);
+            Unchecked_Free (Arr);
+         end;
       end if;
    end Message_Removed;
 
