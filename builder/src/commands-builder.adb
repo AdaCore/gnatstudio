@@ -464,6 +464,7 @@ package body Commands.Builder is
       if not Shadow
         and then not Quiet
       then
+         Clear (Console);
          Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
       end if;
 
