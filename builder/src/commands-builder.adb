@@ -30,12 +30,18 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;                  use GNAT.Expect.TTY;
 pragma Warnings (On);
 
+with Gtk.Text_View;                    use Gtk.Text_View;
+
+with Gtkada.MDI;                       use Gtkada.MDI;
+
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Intl;                         use GPS.Intl;
 with Traces;                           use Traces;
 with Basic_Types;                      use Basic_Types;
@@ -443,6 +449,9 @@ package body Commands.Builder is
          Show_Output := True;
          Show_Command := True;
          Is_A_Run := True;
+
+         Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
+
       else
          Console := Get_Build_Console (Kernel, Shadow, False);
          Cb      := Build_Callback'Access;
@@ -450,6 +459,12 @@ package body Commands.Builder is
          Show_Output := False;
          Show_Command := True;
          Is_A_Run := False;
+      end if;
+
+      if not Shadow
+        and then not Quiet
+      then
+         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
       end if;
 
       Data := new Build_Callback_Data;
