@@ -272,6 +272,8 @@ package GPS.Kernel.Messages is
      (Self     : not null access Abstract_Listener;
       Message  : not null access Abstract_Message'Class;
       Property : String) is null;
+   --  ??? It would be nice to use a type to represent Properties, rather
+   --  than using strings
 
    procedure Message_Removed
      (Self    : not null access Abstract_Listener;
