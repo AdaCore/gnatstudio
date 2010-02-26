@@ -591,7 +591,7 @@ package body Codefix_Module is
       Err        : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;
-      New_Action.Tooltip_Text := new String'(-"Fix error");
+      New_Action.Tooltip_Text := new String'(Get_Message (Err));
 
       if Get_Number_Of_Fixes (Error) = 1 then
          New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Answer_Xpm);
