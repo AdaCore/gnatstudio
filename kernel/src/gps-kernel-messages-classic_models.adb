@@ -234,6 +234,9 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Number_Of_Children_Column =>
             return Glib.GType_Int;
 
+         when Sort_Order_Hint_Column =>
+            return Glib.GType_Int;
+
          when others =>
             return Glib.GType_Invalid;
       end case;
@@ -632,6 +635,19 @@ package body GPS.Kernel.Messages.Classic_Models is
          when Number_Of_Children_Column =>
             Init (Value, Glib.GType_Int);
             Set_Int (Value, Gint (Node.Message_Count));
+
+         when Sort_Order_Hint_Column =>
+            declare
+               Category_Node : Node_Access := Node;
+
+            begin
+               while Category_Node.Kind /= Node_Category loop
+                  Category_Node := Category_Node.Parent;
+               end loop;
+
+               Init (Value, Glib.GType_Int);
+               Set_Int (Value, Sort_Order_Hint'Pos (Category_Node.Sort_Hint));
+            end;
 
          when others =>
             null;

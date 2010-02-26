@@ -62,6 +62,9 @@ package GPS.Kernel.Messages is
    type Virtual_File_Array is
      array (Positive range <>) of GNATCOLL.VFS.Virtual_File;
 
+   type Sort_Order_Hint is (Chronological, Alphabetical);
+   --  Hint for the view how it must sort items at file level by default.
+
    ----------------------
    -- Abstract Message --
    ----------------------
@@ -236,6 +239,13 @@ package GPS.Kernel.Messages is
       return Gtk.Tree_Model.Gtk_Tree_Model;
    --  Returns Gtk+ model for classic tree representation.
 
+   procedure Set_Sort_Order_Hint
+     (Self     : not null access Messages_Container'Class;
+      Category : String;
+      Hint     : Sort_Order_Hint);
+   --  Sets sort order hint for the specified category. Hint must be set before
+   --  first message in the category is created.
+
    procedure Register_Listener
      (Self     : not null access Messages_Container;
       Listener : not null Listener_Access);
@@ -321,7 +331,9 @@ package GPS.Kernel.Messages is
    Number_Of_Children_Column : constant Glib.Gint := 13;
    --  Contains number of children items. This number is useful for filtering
    --  purpose because it contains unmodified number of children items.
-   Total_Columns             : constant Glib.Gint := 14;
+   Sort_Order_Hint_Column    : constant Glib.Gint := 14;
+   --  Hint to the view how file level nodes must be sorted by default.
+   Total_Columns             : constant Glib.Gint := 15;
    --  Total number of columns.
 
    --------------------------
@@ -388,6 +400,7 @@ private
             Container : Messages_Container_Access;
             Name      : Ada.Strings.Unbounded.Unbounded_String;
             File_Map  : File_Maps.Map;
+            Sort_Hint : Sort_Order_Hint;
 
          when Node_File =>
             File : GNATCOLL.VFS.Virtual_File;
@@ -503,6 +516,13 @@ private
      new Ada.Containers.Hashed_Maps
        (Ada.Tags.Tag, Message_Save_Procedure, Hash, Ada.Tags."=");
 
+   package Sort_Order_Hint_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Strings.Unbounded.Unbounded_String,
+        Sort_Order_Hint,
+        Ada.Strings.Unbounded.Hash,
+        Ada.Strings.Unbounded."=");
+
    type Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
    is tagged limited record
@@ -514,6 +534,7 @@ private
       Savers            : Message_Save_Maps.Map;
       Primary_Loaders   : Primary_Message_Load_Maps.Map;
       Secondary_Loaders : Secondary_Message_Load_Maps.Map;
+      Sort_Order_Hints  : Sort_Order_Hint_Maps.Map;
    end record;
 
    procedure Register_Message_Class

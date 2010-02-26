@@ -52,6 +52,7 @@ package body GPS.Kernel.Messages is
    use Model_Vectors;
    use Node_Vectors;
    use Projects;
+   use Sort_Order_Hint_Maps;
    use Traces;
    use XML_Parsers;
    use XML_Utils;
@@ -630,6 +631,8 @@ package body GPS.Kernel.Messages is
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;
+      Sort_Position     : Sort_Order_Hint_Maps.Cursor;
+      Sort_Hint         : Sort_Order_Hint;
 
    begin
       Self.Message_Count := 0;
@@ -647,6 +650,15 @@ package body GPS.Kernel.Messages is
          Category_Node := Element (Category_Position);
 
       else
+         Sort_Position := Container.Sort_Order_Hints.Find (Category_Name);
+
+         if Has_Element (Sort_Position) then
+            Sort_Hint := Element (Sort_Position);
+
+         else
+            Sort_Hint := Chronological;
+         end if;
+
          Category_Node :=
            new Node_Record'
              (Kind          => Node_Category,
@@ -655,7 +667,8 @@ package body GPS.Kernel.Messages is
               Message_Count => 0,
               Container     => Container,
               Name          => Category_Name,
-              File_Map      => File_Maps.Empty_Map);
+              File_Map      => File_Maps.Empty_Map,
+              Sort_Hint     => Sort_Hint);
          Container.Categories.Append (Category_Node);
          Container.Category_Map.Insert (Category_Name, Category_Node);
 
@@ -906,28 +919,40 @@ package body GPS.Kernel.Messages is
          Category_XML_Node := Project_XML_Node.Child;
 
          while Category_XML_Node /= null loop
-            Category :=
-              To_Unbounded_String
-                (Get_Attribute (Category_XML_Node, "name", "ERROR"));
+            if Category_XML_Node.Tag.all = "sort_order_hint" then
+               Self.Sort_Order_Hints.Insert
+                 (To_Unbounded_String
+                    (Get_Attribute (Category_XML_Node, "category", "")),
+                  Sort_Order_Hint'Value
+                    (Get_Attribute
+                       (Category_XML_Node,
+                        "hint",
+                        Sort_Order_Hint'Image (Chronological))));
 
-            File_XML_Node := Category_XML_Node.Child;
+            elsif Category_XML_Node.Tag.all = "category" then
+               Category :=
+                 To_Unbounded_String
+                   (Get_Attribute (Category_XML_Node, "name", "ERROR"));
 
-            while File_XML_Node /= null loop
-               File := Get_File_Child (File_XML_Node, "name");
+               File_XML_Node := Category_XML_Node.Child;
 
-               Message_XML_Node := File_XML_Node.Child;
+               while File_XML_Node /= null loop
+                  File := Get_File_Child (File_XML_Node, "name");
 
-               while Message_XML_Node /= null loop
-                  if Message_XML_Node.Tag.all = "message" then
-                     Load_Message
-                       (Message_XML_Node, To_String (Category), File);
-                  end if;
+                  Message_XML_Node := File_XML_Node.Child;
 
-                  Message_XML_Node := Message_XML_Node.Next;
+                  while Message_XML_Node /= null loop
+                     if Message_XML_Node.Tag.all = "message" then
+                        Load_Message
+                          (Message_XML_Node, To_String (Category), File);
+                     end if;
+
+                     Message_XML_Node := Message_XML_Node.Next;
+                  end loop;
+
+                  File_XML_Node := File_XML_Node.Next;
                end loop;
-
-               File_XML_Node := File_XML_Node.Next;
-            end loop;
+            end if;
 
             Category_XML_Node := Category_XML_Node.Next;
          end loop;
@@ -1630,8 +1655,11 @@ package body GPS.Kernel.Messages is
       end Save_Node;
 
       Project_File     : constant Virtual_File := Self.Project_File;
+      Sort_Position    : Sort_Order_Hint_Maps.Cursor :=
+                           Self.Sort_Order_Hints.First;
       Root_XML_Node    : Node_Ptr;
       Project_XML_Node : Node_Ptr;
+      Sort_XML_Node    : Node_Ptr;
       Error            : GNAT.Strings.String_Access;
 
    begin
@@ -1668,6 +1696,27 @@ package body GPS.Kernel.Messages is
            new Node'(Tag => new String'("project"), others => <>);
          Add_Child (Root_XML_Node, Project_XML_Node);
          Add_File_Child (Project_XML_Node, "file", Project_File);
+
+         --  Save sort order hints
+
+         while Has_Element (Sort_Position) loop
+            if Element (Sort_Position) /= Chronological then
+               Sort_XML_Node :=
+                 new Node'
+                   (Tag => new String'("sort_order_hint"), others => <>);
+               Set_Attribute
+                 (Sort_XML_Node,
+                  "category",
+                  To_String (Key (Sort_Position)));
+               Set_Attribute
+                 (Sort_XML_Node,
+                  "hint",
+                  Sort_Order_Hint'Image (Element (Sort_Position)));
+               Add_Child (Project_XML_Node, Sort_XML_Node, True);
+            end if;
+
+            Next (Sort_Position);
+         end loop;
 
          --  Save categories
 
@@ -1729,6 +1778,29 @@ package body GPS.Kernel.Messages is
       Notifiers.Notify_Listeners_About_Message_Property_Changed
         (Self.Get_Container, Self, "highlighting");
    end Set_Highlighting;
+
+   -------------------------
+   -- Set_Sort_Order_Hint --
+   -------------------------
+
+   procedure Set_Sort_Order_Hint
+     (Self     : not null access Messages_Container'Class;
+      Category : String;
+      Hint     : Sort_Order_Hint)
+   is
+      Category_Name : constant Unbounded_String :=
+                        To_Unbounded_String (Category);
+      Position      : constant Sort_Order_Hint_Maps.Cursor :=
+                        Self.Sort_Order_Hints.Find (Category_Name);
+
+   begin
+      if Has_Element (Position) then
+         Self.Sort_Order_Hints.Replace_Element (Position, Hint);
+
+      else
+         Self.Sort_Order_Hints.Insert (Category_Name, Hint);
+      end if;
+   end Set_Sort_Order_Hint;
 
    -------------------------
    -- Unregister_Listener --

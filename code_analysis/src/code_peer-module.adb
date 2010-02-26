@@ -2040,6 +2040,8 @@ package body Code_Peer.Module is
       Do_Not_Goto_First_Location (Self.Kernel);
       Get_Messages_Container (Self.Kernel).Remove_Category
         (Code_Peer_Category_Name);
+      Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
+        (Code_Peer_Category_Name, Alphabetical);
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
    end Update_Location_View;
