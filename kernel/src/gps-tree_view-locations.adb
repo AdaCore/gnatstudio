@@ -30,6 +30,7 @@ with Gtk.Tooltips;
 with Gtk.Tree_Sortable;
 with Gtk.Widget;
 
+with GNATCOLL.VFS.GtkAda;
 with GPS.Intl;
 with GPS.Kernel.Messages;
 with String_Utils;
@@ -54,6 +55,8 @@ package body GPS.Tree_View.Locations is
    use Gtk.Tree_Sortable;
    use Gtk.Tree_View_Column;
    use Gtk.Widget;
+   use GNATCOLL.VFS;
+   use GNATCOLL.VFS.GtkAda;
    use GPS.Intl;
    use GPS.Kernel.Messages;
    use String_Utils;
@@ -111,6 +114,46 @@ package body GPS.Tree_View.Locations is
      (Self : not null access GPS_Locations_Tree_View_Record'Class);
    --  Common initialization code to be shared between two implementations
    --  of Initialize.
+
+   type Compare_Function is
+     not null access function
+       (Model : not null access Gtk_Tree_Model_Record'Class;
+        A     : Gtk_Tree_Iter;
+        B     : Gtk_Tree_Iter) return Gint;
+
+   type Compare_Functions is array (Positive range <>) of Compare_Function;
+
+   function Compare
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter;
+      Funcs : Compare_Functions) return Gint;
+   --  General compare function, it compares A and B using Funcs till
+   --  nonequvalence is reported or end of Funcs is reached.
+
+   function Compare_In_Base_Name_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint;
+   --  Compare files of A and B in base name order.
+
+   function Compare_In_Line_Column_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint;
+   --  Compare message of A and B in line:column order.
+
+   function Compare_In_Weight_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint;
+   --  Compare nodes A and B in weight order.
+
+   function Compare_In_Path_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint;
+   --  Compare A and B in path order.
 
    package View_Idles is
      new Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
@@ -216,6 +259,28 @@ package body GPS.Tree_View.Locations is
          After => False);
    end Class_Initialize;
 
+   -------------
+   -- Compare --
+   -------------
+
+   function Compare
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter;
+      Funcs : Compare_Functions) return Gint
+   is
+      Result : Gint := 0;
+
+   begin
+      for J in Funcs'Range loop
+         Result := Funcs (J) (Model, A, B);
+
+         exit when Result /= 0;
+      end loop;
+
+      return Result;
+   end Compare;
+
    -------------------------
    -- Compare_By_Location --
    -------------------------
@@ -225,47 +290,47 @@ package body GPS.Tree_View.Locations is
       A    : Gtk.Tree_Model.Gtk_Tree_Iter;
       B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
-      A_Line   : constant Gint := Self.Get_Int (A, Line_Column);
-      A_Column : constant Gint := Self.Get_Int (A, Column_Column);
-      B_Line   : constant Gint := Self.Get_Int (B, Line_Column);
-      B_Column : constant Gint := Self.Get_Int (B, Column_Column);
+      Path     : constant Gtk_Tree_Path := Self.Get_Path (A);
+      Depth    : Natural;
 
    begin
-      if A_Line < B_Line then
-         return -1;
+      --  GtkTreeSortModel breaks underling order of equal rows, so return
+      --  result of compare of last indices to save underling order.
 
-      elsif A_Line = B_Line then
-         if A_Column < B_Column then
-            return -1;
+      Depth := Natural (Get_Depth (Path));
+      Path_Free (Path);
 
-         elsif A_Column = B_Column then
-            --  GtkTreeSortModel breaks underling order of equal rows, so
-            --  return result of compare of last indices to save underling
-            --  order.
+      if Depth = 2 then
+         --  File level node
 
-            declare
-               A_Path    : constant Gtk_Tree_Path := Self.Get_Path (A);
-               B_Path    : constant Gtk_Tree_Path := Self.Get_Path (B);
-               A_Indices : constant Gint_Array := Get_Indices (A_Path);
-               B_Indices : constant Gint_Array := Get_Indices (B_Path);
+         case Sort_Order_Hint'Val (Self.Get_Int (A, Sort_Order_Hint_Column)) is
+            when Chronological =>
+               return Compare_In_Path_Order (Self, A, B);
 
-            begin
-               Path_Free (A_Path);
-               Path_Free (B_Path);
+            when Alphabetical =>
+               return
+                 Compare
+                   (Self,
+                    A,
+                    B,
+                    (Compare_In_Base_Name_Order'Access,
+                     Compare_In_Path_Order'Access));
+         end case;
 
-               if A_Indices (A_Indices'Last) < B_Indices (B_Indices'Last) then
-                  return -1;
+      elsif Depth = 3 then
+         --  Message level node
 
-               elsif A_Indices (A_Indices'Last)
-                       = B_Indices (B_Indices'Last)
-               then
-                  return 0;
-               end if;
-            end;
-         end if;
+         return
+           Compare
+             (Self,
+              A,
+              B,
+              (Compare_In_Line_Column_Order'Access,
+               Compare_In_Path_Order'Access));
+
+      else
+         return Compare_In_Path_Order (Self, A, B);
       end if;
-
-      return 1;
    end Compare_By_Location;
 
    ----------------------------
@@ -279,78 +344,162 @@ package body GPS.Tree_View.Locations is
    is
       Path     : constant Gtk_Tree_Path := Self.Get_Path (A);
       Depth    : Natural;
-      A_Line   : constant Gint := Self.Get_Int (A, Line_Column);
-      A_Column : constant Gint := Self.Get_Int (A, Column_Column);
-      A_Weight : constant Gint := Self.Get_Int (A, Weight_Column);
-      B_Line   : constant Gint := Self.Get_Int (B, Line_Column);
-      B_Column : constant Gint := Self.Get_Int (B, Column_Column);
-      B_Weight : constant Gint := Self.Get_Int (B, Weight_Column);
 
    begin
+      --  GtkTreeSortModel breaks underling order of equal rows, so return
+      --  result of compare of last indices to save underling order.
+
       Depth := Natural (Get_Depth (Path));
       Path_Free (Path);
 
       if Depth = 2 then
          --  File level node
 
-         if A_Weight > B_Weight then
-            return -1;
+         case Sort_Order_Hint'Val (Self.Get_Int (A, Sort_Order_Hint_Column)) is
+            when Chronological =>
+               return
+                 Compare
+                   (Self,
+                    A,
+                    B,
+                    (Compare_In_Weight_Order'Access,
+                     Compare_In_Path_Order'Access));
 
-         elsif A_Weight = B_Weight then
-            return 0;
-
-         else
-            return 1;
-         end if;
+            when Alphabetical =>
+               return
+                 Compare
+                   (Self,
+                    A,
+                    B,
+                    (Compare_In_Weight_Order'Access,
+                     Compare_In_Base_Name_Order'Access,
+                     Compare_In_Path_Order'Access));
+         end case;
 
       elsif Depth = 3 then
-         if A_Weight > B_Weight then
-            return -1;
+         --  Message level node
 
-         elsif A_Weight = B_Weight then
-            if A_Line < B_Line then
-               return -1;
-
-            elsif A_Line = B_Line then
-               if A_Column < B_Column then
-                  return -1;
-
-               elsif A_Column = B_Column then
-                  --  GtkTreeSortModel breaks underling order of equal rows, so
-                  --  return result of compare of last indices to save
-                  --  underling order.
-
-                  declare
-                     A_Path    : constant Gtk_Tree_Path := Self.Get_Path (A);
-                     B_Path    : constant Gtk_Tree_Path := Self.Get_Path (B);
-                     A_Indices : constant Gint_Array := Get_Indices (A_Path);
-                     B_Indices : constant Gint_Array := Get_Indices (B_Path);
-
-                  begin
-                     Path_Free (A_Path);
-                     Path_Free (B_Path);
-
-                     if A_Indices (A_Indices'Last)
-                          < B_Indices (B_Indices'Last)
-                     then
-                        return -1;
-
-                     elsif A_Indices (A_Indices'Last)
-                             = B_Indices (B_Indices'Last)
-                     then
-                        return 0;
-                     end if;
-                  end;
-               end if;
-            end if;
-         end if;
-
-         return 1;
+         return
+           Compare
+             (Self,
+              A,
+              B,
+              (Compare_In_Line_Column_Order'Access,
+               Compare_In_Path_Order'Access));
 
       else
-         return 0;
+         return Compare_In_Path_Order (Self, A, B);
       end if;
    end Compare_By_Subcategory;
+
+   --------------------------------
+   -- Compare_In_Base_Name_Order --
+   --------------------------------
+
+   function Compare_In_Base_Name_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint
+   is
+      A_Name : constant Filesystem_String :=
+                 Get_File (Model, A, File_Column).Base_Name;
+      B_Name : constant Filesystem_String :=
+                 Get_File (Model, B, File_Column).Base_Name;
+
+   begin
+      if A_Name < B_Name then
+         return -1;
+
+      elsif A_Name = B_Name then
+         return 0;
+
+      else
+         return 1;
+      end if;
+   end Compare_In_Base_Name_Order;
+
+   ----------------------------------
+   -- Compare_In_Line_Column_Order --
+   ----------------------------------
+
+   function Compare_In_Line_Column_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint
+   is
+      A_Line   : constant Gint := Model.Get_Int (A, Line_Column);
+      A_Column : constant Gint := Model.Get_Int (A, Column_Column);
+      B_Line   : constant Gint := Model.Get_Int (B, Line_Column);
+      B_Column : constant Gint := Model.Get_Int (B, Column_Column);
+
+   begin
+      if A_Line < B_Line then
+         return -1;
+
+      elsif A_Line = B_Line then
+         if A_Column < B_Column then
+            return -1;
+
+         elsif A_Column = B_Column then
+            return 0;
+         end if;
+      end if;
+
+      return 1;
+   end Compare_In_Line_Column_Order;
+
+   ---------------------------
+   -- Compare_In_Path_Order --
+   ---------------------------
+
+   function Compare_In_Path_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint
+   is
+      A_Path    : constant Gtk_Tree_Path := Model.Get_Path (A);
+      B_Path    : constant Gtk_Tree_Path := Model.Get_Path (B);
+      A_Indices : constant Gint_Array := Get_Indices (A_Path);
+      B_Indices : constant Gint_Array := Get_Indices (B_Path);
+
+   begin
+      Path_Free (A_Path);
+      Path_Free (B_Path);
+
+      if A_Indices (A_Indices'Last) < B_Indices (B_Indices'Last) then
+         return -1;
+
+      elsif A_Indices (A_Indices'Last) = B_Indices (B_Indices'Last) then
+         return 0;
+
+      else
+         return 1;
+      end if;
+   end Compare_In_Path_Order;
+
+   -----------------------------
+   -- Compare_In_Weight_Order --
+   -----------------------------
+
+   function Compare_In_Weight_Order
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter) return Gint
+   is
+      A_Weight : constant Gint := Model.Get_Int (A, Weight_Column);
+      B_Weight : constant Gint := Model.Get_Int (B, Weight_Column);
+
+   begin
+      if A_Weight > B_Weight then
+         return -1;
+
+      elsif A_Weight = B_Weight then
+         return 0;
+
+      else
+         return 1;
+      end if;
+   end Compare_In_Weight_Order;
 
    -------------
    -- Gtk_New --
