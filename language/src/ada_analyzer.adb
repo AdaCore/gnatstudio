@@ -4180,6 +4180,7 @@ package body Ada_Analyzer is
                         or else Prev_Token = Tok_Private
                         or else Prev_Token = Tok_Record
                         or else Prev_Token = Tok_Generic)
+              and then Prev_Token /= Tok_Dot
             then
                --  This is a variable, a field declaration or a enumeration
                --  literal
