@@ -384,7 +384,8 @@ package body GPS.Tree_View.Locations is
              (Self,
               A,
               B,
-              (Compare_In_Line_Column_Order'Access,
+              (Compare_In_Weight_Order'Access,
+               Compare_In_Line_Column_Order'Access,
                Compare_In_Path_Order'Access));
 
       else
