@@ -1306,6 +1306,7 @@ package body Ada_Analyzer is
                              and then (Token = Tok_New
                                        or else Token = Tok_Access
                                        or else Token = Tok_Separate
+                                       or else Token = Tok_Abstract
                                        or else
                                          (Top_Tok = Tok_Subtype
                                           and then Token /= Tok_Subtype)))
