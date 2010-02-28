@@ -79,7 +79,7 @@ EOF
      echo "  Directory $basedir does not exist."
      printf "  Do you want to create it [Y/n] ? "
      read x
-     if [ " $x" = " n" -o " $x" = " N" ]; then
+     if [ "$x" = "n" -o "$x" = "N" ]; then
         echo "Aborting the installation process"
 	exit
      fi
@@ -89,7 +89,7 @@ EOF
    echo ""
    printf "  Are you now ready to proceed with the installation [Y/n] ? "
    read x
-   if [ " $x" = " n" -o " $x" = " N" ]; then
+   if [ "$x" = "n" -o "$x" = "N" ]; then
       echo "Aborting the installation process"
       exit
    fi
@@ -106,6 +106,7 @@ install_binaries() {
 
   rm -rf $basedir/lib/gps* $basedir/bin/gps*
   rm -f $basedir/share/gps/plug-ins/*.pyc
+  rm -f $basedir/share/gps/plug-ins/spark.py
   rm -f $basedir/share/gps/library/*.py*
   rm -f $basedir/share/gps/library/*.xml
 
