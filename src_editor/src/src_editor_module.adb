@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -370,13 +370,9 @@ package body Src_Editor_Module is
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  Create the module-wide GCs
 
-   package File_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Virtual_File);
-
    procedure On_Editor_Destroy
      (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Virtual_File);
+      Params : Glib.Values.GValues);
    --  Callback to call when an editor is about to be destroyed
 
    procedure Update_Cache_On_Focus
@@ -395,8 +391,7 @@ package body Src_Editor_Module is
 
    procedure On_Editor_Destroy
      (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Virtual_File)
+      Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
       Id : constant Source_Editor_Module :=
@@ -406,22 +401,18 @@ package body Src_Editor_Module is
       E  : Element;
    begin
       if Id /= null then
-         if Editors_Hash.Get (Id.Editors, User) /= No_Element then
-            Editors_Hash.Remove (Id.Editors, User);
-         else
-            Editors_Hash.Get_First (Id.Editors, I);
+         Editors_Hash.Get_First (Id.Editors, I);
+         E := Editors_Hash.Get_Element (I);
+
+         while E /= No_Element loop
+            if E.Child = Child then
+               Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
+            else
+               Editors_Hash.Get_Next (Id.Editors, I);
+            end if;
+
             E := Editors_Hash.Get_Element (I);
-
-            while E /= No_Element loop
-               if E.Child = Child then
-                  Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
-               else
-                  Editors_Hash.Get_Next (Id.Editors, I);
-               end if;
-
-               E := Editors_Hash.Get_Element (I);
-            end loop;
-         end if;
+         end loop;
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1069,9 +1060,9 @@ package body Src_Editor_Module is
 
          Set_Focus_Child (Child);
 
-         File_Callback.Connect
+         Widget_Callback.Connect
            (Child, Signal_Destroy,
-            On_Editor_Destroy'Access, User_Data => Title);
+            On_Editor_Destroy'Access);
 
          --  Emit a "status_changed" signal on the editor, to initialize the
          --  MDI icon and status.
@@ -1336,9 +1327,8 @@ package body Src_Editor_Module is
          --  Make sure the entry in the hash table is removed when the editor
          --  is destroyed.
 
-         File_Callback.Connect
-           (Child, Signal_Destroy, On_Editor_Destroy'Access,
-            User_Data => File);
+         Widget_Callback.Connect
+           (Child, Signal_Destroy, On_Editor_Destroy'Access);
 
          Raise_Child (Child, Focus);
 
