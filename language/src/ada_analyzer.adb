@@ -26,7 +26,11 @@ with Generic_Stack;
 with Indent_Stack;
 with String_Utils;            use String_Utils;
 
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+
 package body Ada_Analyzer is
+
+   Me : constant Trace_Handle := Create ("LANGUAGE.ADA_ANALYZER", On);
 
    use Indent_Stack.Stack;
 
@@ -3048,10 +3052,13 @@ package body Ada_Analyzer is
          ----------------------
 
          procedure Handle_Two_Chars (Second_Char : Character) is
+            Prev_Tmp : constant Integer := Prev_Char (P);
          begin
             Last := P + 2;
 
-            if Is_Blank (Buffer (Prev_Char (P))) then
+            if Prev_Tmp < Buffer'First
+              or else Is_Blank (Buffer (Prev_Tmp))
+            then
                Offs := 2;
                Long := 2;
 
@@ -3782,7 +3789,13 @@ package body Ada_Analyzer is
                         end if;
 
                      when '*' =>
-                        Insert_Spaces := Buffer (Prev_Char (P)) /= '*';
+                        declare
+                           Prev_Tmp : constant Integer := Prev_Char (P);
+                        begin
+                           Insert_Spaces :=
+                             Prev_Tmp >= Buffer'First
+                             and then Buffer (Prev_Tmp) /= '*';
+                        end;
 
                         if Buffer (Next_Char (P)) = '*' then
                            Handle_Two_Chars ('*');
@@ -3843,7 +3856,9 @@ package body Ada_Analyzer is
                      when '=' =>
                         Insert_Spaces := True;
 
-                        if Buffer (P + 1) = '>' then
+                        if P + 1 <= Buffer'Last
+                          and then Buffer (P + 1) = '>'
+                        then
                            Handle_Arrow;
                         else
                            Prev_Token := Tok_Equal;
@@ -3854,7 +3869,8 @@ package body Ada_Analyzer is
                   end case;
 
                   if Spaces (3) = ' ' then
-                     if Is_Blank (Buffer (P + 1))
+                     if P + 1 > Buffer'Last
+                       or else Is_Blank (Buffer (P + 1))
                        or else Last - 1 = End_Of_Line
                      then
                         Long := 2;
@@ -4370,14 +4386,8 @@ package body Ada_Analyzer is
       Clear (Indents);
 
    exception
-      when others =>
-         --  Do not put calls to Put_Line here, these are undesirable, in
-         --  particular under Windows when compiled with -mwindows where this
-         --  will raise Device_Error.
-         --  Also, this is not an unexpected exception: it is somewhat
-         --  expected that exceptions (e.g. Constraint_Error) may be raised,
-         --  and we do not want to behave unexpectedly in such cases.
-
+      when E : others =>
+         Trace (Me, E);
          Clear (Paren_Stack);
          Clear (Tokens);
          Clear (Indents);
