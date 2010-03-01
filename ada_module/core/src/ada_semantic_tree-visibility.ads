@@ -81,4 +81,33 @@ package Ada_Semantic_Tree.Visibility is
    --  Note that getting access to that entity may require additional use or
    --  with clases, or prefix.
 
+   type Clause_Iterator is private;
+
+   function To_Use_Clause_Iterator
+     (Visibility_Info : Visibility_Context) return Clause_Iterator;
+   --  Create a iterator looking at all the use clauses from the context given
+   --  in parameter.
+
+   function Is_Valid (This : Clause_Iterator) return Boolean;
+   --  Return true if the iterator either point to a valid node, or is at end.
+   --  Should always be true.
+
+   procedure Prev (This : in out Clause_Iterator);
+   --  Moves to the previous clause
+
+   function At_End (This : Clause_Iterator) return Boolean;
+   --  Return true if the iterator is before the first clause
+
+   function Resolve_Package (This : Clause_Iterator) return Entity_Access;
+   --  Computes the package name corresponding to the clause pointed by the
+   --  iterator.
+
+private
+
+   type Clause_Iterator is record
+      Current   : Entity_Access;
+      Last_Unit : Entity_Access;
+      --  ??? We currently don't look in parent packages, but should...
+   end record;
+
 end Ada_Semantic_Tree.Visibility;

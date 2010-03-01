@@ -27,6 +27,7 @@ with GNAT.Strings;           use GNAT.Strings;
 
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 package Ada_Semantic_Tree.Entity_Iteration is
 
@@ -48,6 +49,15 @@ package Ada_Semantic_Tree.Entity_Iteration is
    type Semantic_Information is record
       Entity : Entity_Access;
       Kind   : Semantic_Kind := None;
+
+      Generic_Context : Generic_Instance_Information;
+      --  If this entity has been referenced through a generic instance,
+      --  it's accessible via this parameter and can be used later on to
+      --  retreive actual values for generic parameters.
+      --
+      --  WARNING - no ref as been done on this variable, so if the user
+      --  wishes to store it after the iterator is freed, he must first call
+      --  ref
    end record;
    --  This type wrapps an entity access with contexctual semantic information
    --  extracted from the reference found
@@ -174,6 +184,8 @@ private
 
       Dotted_Subprograms       : Entity_Persistent_Array_Access;
       Dotted_Subprograms_Index : Integer;
+
+      Generic_Context : Generic_Instance_Information;
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation

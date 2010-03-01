@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language.Ada;                    use Language.Ada;
-with Ada_Semantic_Tree.Lang;               use Ada_Semantic_Tree.Lang;
-with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Type_Tree;  use Ada_Semantic_Tree.Type_Tree;
+with Language.Ada;                   use Language.Ada;
+with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Type_Tree;    use Ada_Semantic_Tree.Type_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Ada_Semantic_Tree.Entity_Iteration is
@@ -36,27 +36,99 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack)
       return Semantic_Tree_Iterator
    is
-      Result : Semantic_Tree_Iterator;
+      Result        : Semantic_Tree_Iterator;
+      Gen_Info      : Generic_Instance_Information;
+      Real_Sem_Info : Semantic_Information;
+      Inst_Entity   : Entity_Access;
    begin
+      Real_Sem_Info := Info;
+
       if Info.Entity = Null_Entity_Access then
          return Null_Semantic_Tree_Iterator;
       end if;
 
-      Result.Root_Entity := Info;
-      Result.Db := Get_Database (Get_File (Info.Entity));
-      Result.Initial_File := Get_File (Info.Entity);
+      if Is_Generic_Instance (Info.Entity) then
+         Gen_Info := Get_Generic_Instance_Information (Info.Entity);
+      else
+         Gen_Info := Info.Generic_Context;
+      end if;
+
+      if Get_Construct (Info.Entity).Is_Generic_Spec then
+         if Gen_Info = Null_Generic_Instance_Information then
+            --  In this case, we've got a generic spec - but there isn't any
+            --  generic context yet. We need to look at all the know
+            --  instanciations of the enclosing package, and see if there's
+            --  visible through a use clause.
+
+            declare
+               It            : Clause_Iterator :=
+                 To_Use_Clause_Iterator (From_Visibility);
+               Entity        : Entity_Access;
+               Instance_Info : Generic_Instance_Information;
+               Gen_Package   : Entity_Access;
+               Enclosing_Package : Entity_Access;
+            begin
+               Enclosing_Package := To_Entity_Access
+                 (Get_File (Info.Entity),
+                  Get_Parent_Scope
+                    (Get_Tree (Get_File (Info.Entity)),
+                     To_Construct_Tree_Iterator (Info.Entity)));
+
+               while not At_End (It) loop
+                  Entity := Resolve_Package (It);
+
+                  Instance_Info := Get_Generic_Instance_Information (Entity);
+
+                  if Instance_Info /= Null_Generic_Instance_Information then
+                     Gen_Package :=
+                       Get_First_Occurence
+                         (Get_Generic_Package (Instance_Info));
+
+                     if Gen_Package = Enclosing_Package then
+                        Gen_Info := Instance_Info;
+
+                        exit;
+                     end if;
+                  end if;
+
+                  Prev (It);
+               end loop;
+            end;
+         end if;
+
+         if Gen_Info /= Null_Generic_Instance_Information then
+            --  If we're iterating over a generic parameter in the context of
+            --  an instance, then resolve the actual parameter instead of using
+            --  the formal one.
+
+            Inst_Entity :=
+              Get_Actual_For_Generic_Param
+                (Gen_Info, Real_Sem_Info.Entity);
+
+            if Inst_Entity /= Null_Entity_Access then
+               Real_Sem_Info.Entity := Inst_Entity;
+            end if;
+         end if;
+      end if;
+
+      Result.Root_Entity := Real_Sem_Info;
+      Result.Db := Get_Database (Get_File (Real_Sem_Info.Entity));
+      Result.Initial_File := Get_File (Real_Sem_Info.Entity);
       Result.Current_File := Result.Initial_File;
-      Result.Current_Construct := To_Construct_Tree_Iterator (Info.Entity);
+      Result.Current_Construct :=
+        To_Construct_Tree_Iterator (Real_Sem_Info.Entity);
       Result.Step_Has_Started := False;
       Result.References_To_Follow := References_To_Follow;
       Result.From_Visibility := From_Visibility;
+      Result.Generic_Context := Gen_Info;
+      Ref (Result.Generic_Context);
 
       Result.Excluded_Entities := Excluded_Entities;
       Ref (Result.Excluded_Entities);
 
-      Push_Entity (Result.Excluded_Entities, Info.Entity);
+      Push_Entity (Result.Excluded_Entities, Real_Sem_Info.Entity);
 
-      case Get_Construct (Info.Entity).Category is
+      case Get_Construct (Real_Sem_Info.Entity).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
             | Cat_Class .. Cat_Subtype | Subprogram_Category =>
 
@@ -113,10 +185,11 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          if not It.Step_Has_Started then
             It.Sub_It := new Semantic_Tree_Iterator'
               (To_Semantic_Tree_Iterator
-                 ((It.Root_Entity.Entity, None),
+                 ((It.Root_Entity.Entity, None, It.Generic_Context),
                   It.From_Visibility,
                   All_References,
                   It.Excluded_Entities));
+            Ref (It.Generic_Context);
 
             if At_End (It.Sub_It.all) then
                It.Step_Has_Started := False;
@@ -168,12 +241,40 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                   Free (It.Sub_It);
                end if;
 
-               It.Sub_It := new Semantic_Tree_Iterator'
-                 (To_Semantic_Tree_Iterator
-                    ((Get_Entity (It.Decl_It), None),
-                     It.From_Visibility,
-                     Sub_References_Allowed,
-                     It.Excluded_Entities));
+               declare
+                  Generic_Context : Generic_Instance_Information :=
+                    Null_Generic_Instance_Information;
+                  View            : Entity_View;
+               begin
+                  View := Get_View (It.Decl_It);
+
+                  --  ??? these two conditions selects the generic context,
+                  --  either coming from the sub iterator, or the main one.
+                  --  What we probably need to have is the sub iterator
+                  --  "stacking" the two generic contexts somehow instead of
+                  --  replacing the old one by a new one. Not yet clear where
+                  --  that should be done.
+
+                  if View.all in Declaration_View_Record'Class then
+                     Generic_Context :=
+                       Declaration_View_Record (View.all).Generic_Context;
+                  end if;
+
+                  if Generic_Context = Null_Generic_Instance_Information then
+                     Generic_Context := It.Generic_Context;
+                  end if;
+
+                  It.Sub_It := new Semantic_Tree_Iterator'
+                    (To_Semantic_Tree_Iterator
+                       ((Get_Entity (View), None, Generic_Context),
+                        It.From_Visibility,
+                        Sub_References_Allowed,
+                        It.Excluded_Entities));
+
+                  Ref (Generic_Context);
+
+                  Free (View);
+               end;
 
                if At_End (It.Sub_It.all)
                  and then It.Is_All = False
@@ -667,7 +768,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
          when Referenced_Entity | Referenced_Entity_From_Package =>
             if It.Is_All then
-               return (Get_Entity (It.Decl_It), All_Access);
+               return
+                 (Get_Entity (It.Decl_It), All_Access, It.Generic_Context);
             else
                return Get (It.Sub_It.all);
             end if;
@@ -678,24 +780,28 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                To_Entity_Access
                  (File       => It.Current_File,
                   Construct  => It.Content_It),
-               Kind => None);
+               Kind => None,
+               Generic_Context => It.Generic_Context);
 
          when Child_Packages =>
             return
               (Entity => Get (It.Child_Pckg_It),
-               Kind   => None);
+               Kind => None,
+               Generic_Context => It.Generic_Context);
 
          when Tagged_Type_Contents =>
             if It.Parent_It <= It.Parents'Last then
                return
                  (Entity => To_Entity_Access
                     (It.Parent_File, It.Parent_Field),
-                  Kind   => None);
+                  Kind => None,
+                  Generic_Context => It.Generic_Context);
             else
                return
                  (Entity => To_Entity_Access
                     (It.Dotted_Subprograms (It.Dotted_Subprograms_Index)),
-                  Kind   => Prefix_Notation);
+                  Kind => Prefix_Notation,
+                  Generic_Context => It.Generic_Context);
             end if;
 
          when others =>
@@ -711,6 +817,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
    procedure Free (It : in out Semantic_Tree_Iterator) is
    begin
       if It /= Null_Semantic_Tree_Iterator then
+         Unref (It.Generic_Context);
          Pop_Entity (It.Excluded_Entities);
          Unref (It.Excluded_Entities);
 

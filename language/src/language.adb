@@ -413,14 +413,15 @@ package body Language is
       use GNAT.Strings;
    begin
       Simple :=
-        (Category       => Construct.Category,
-         Is_Declaration => Construct.Is_Declaration,
-         Visibility     => Construct.Visibility,
-         Name           => Construct.Name,
-         Sloc_Start     => Construct.Sloc_Start,
-         Sloc_Entity    => Construct.Sloc_Entity,
-         Sloc_End       => Construct.Sloc_End,
-         Attributes     => Construct.Attributes);
+        (Category        => Construct.Category,
+         Is_Declaration  => Construct.Is_Declaration,
+         Is_Generic_Spec => Construct.Is_Generic_Spec,
+         Visibility      => Construct.Visibility,
+         Name            => Construct.Name,
+         Sloc_Start      => Construct.Sloc_Start,
+         Sloc_Entity     => Construct.Sloc_Entity,
+         Sloc_End        => Construct.Sloc_End,
+         Attributes      => Construct.Attributes);
 
       if Full_Copy then
          if Construct.Name /= null then

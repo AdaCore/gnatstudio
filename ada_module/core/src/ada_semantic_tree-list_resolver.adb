@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with Language.Ada;                use Language.Ada;
-with GNAT.Strings;                use GNAT.Strings;
 
 package body Ada_Semantic_Tree.List_Resolver is
 
@@ -75,7 +75,9 @@ package body Ada_Semantic_Tree.List_Resolver is
    ----------------------------------
 
    function Get_List_Profile
-     (Entity : Entity_Access) return List_Profile
+     (Entity : Entity_Access;
+      Kind : Profile_Kind := Regular_Profile)
+      return List_Profile
    is
       Tree  : constant Construct_Tree := Get_Tree (Get_File (Entity));
       Scope : constant Construct_Tree_Iterator :=
@@ -85,20 +87,38 @@ package body Ada_Semantic_Tree.List_Resolver is
       Result_Array : Entity_Array (1 .. Get_Child_Number (Scope));
       Index        : Integer := 1;
    begin
-      if Get_Construct (Entity).Category in Subprogram_Category then
-         while It /= Null_Construct_Tree_Iterator
-           and then Is_Parent_Scope (Scope, It)
-         loop
-            if Get_Construct (It).Category = Cat_Parameter then
-               Result_Array (Index) := To_Entity_Access
-                 (Get_File (Entity), It);
-               Index := Index + 1;
-            else
-               exit;
-            end if;
+      if Get_Construct (Entity).Category in Subprogram_Category
+        or else Get_Construct (Entity).Category = Cat_Package
+      then
+         if Kind = Regular_Profile then
+            while It /= Null_Construct_Tree_Iterator
+              and then Is_Parent_Scope (Scope, It)
+            loop
+               if Get_Construct (It).Category = Cat_Parameter then
+                  Result_Array (Index) := To_Entity_Access
+                    (Get_File (Entity), It);
+                  Index := Index + 1;
+               else
+                  exit;
+               end if;
 
-            It := Next (Tree, It, Jump_Over);
-         end loop;
+               It := Next (Tree, It, Jump_Over);
+            end loop;
+         else
+            while It /= Null_Construct_Tree_Iterator
+              and then Is_Parent_Scope (Scope, It)
+            loop
+               if Get_Construct (It).Is_Generic_Spec then
+                  Result_Array (Index) := To_Entity_Access
+                    (Get_File (Entity), It);
+                  Index := Index + 1;
+               else
+                  exit;
+               end if;
+
+               It := Next (Tree, It, Jump_Over);
+            end loop;
+         end if;
 
          declare
             Result : List_Profile (Index - 1);
@@ -129,6 +149,15 @@ package body Ada_Semantic_Tree.List_Resolver is
       end if;
 
    end Get_List_Profile;
+
+   -----------------
+   -- Get_Formals --
+   -----------------
+
+   function Get_Formals (Profile : List_Profile) return Entity_Array is
+   begin
+      return Profile.Params;
+   end Get_Formals;
 
    --------------------
    -- Get_Subprogram --
@@ -315,6 +344,78 @@ package body Ada_Semantic_Tree.List_Resolver is
       end loop;
    end Append_Actual;
 
+   --------------------
+   -- Append_Actuals --
+   --------------------
+
+   procedure Append_Actuals
+     (Params     : in out Actual_Parameter_Resolver;
+      Buffer     : String_Access;
+      Start_Call : String_Index_Type)
+   is
+      Param_Start, Param_End : String_Index_Type := 0;
+      Paren_Depth : Integer := 0;
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         pragma Unreferenced (Entity, Partial_Entity);
+
+         Word : constant String := Buffer (Sloc_Start.Index .. Sloc_End.Index);
+         Param_Added, Success : Boolean;
+      begin
+         if Paren_Depth = 0 then
+            if Word = "(" then
+               Paren_Depth := 1;
+               Param_Start := String_Index_Type (Sloc_Start.Index + 1);
+            end if;
+
+         elsif Paren_Depth = 1 then
+            if Word = ")" or else Word = "," then
+               Param_End := String_Index_Type (Sloc_End.Index - 1);
+               Append_Actual
+                 (Params      => Params,
+                  Actual      =>
+                  Get_Actual_Parameter
+                      (Buffer      => Buffer,
+                       Param_Start => Param_Start,
+                       Param_End   => Param_End),
+                  Do_Semantic => False,
+                  Param_Added => Param_Added,
+                  Success     => Success);
+
+               if Word = ")" then
+                  return True;
+               else
+                  Param_Start := String_Index_Type (Sloc_End.Index + 1);
+               end if;
+            end if;
+         else
+            if Word = "(" then
+               Paren_Depth := Paren_Depth + 1;
+            elsif Word = ")" then
+               Paren_Depth := Paren_Depth - 1;
+            end if;
+         end if;
+
+         return False;
+      end Callback;
+   begin
+      Parse_Entities
+        (Ada_Lang,
+         Buffer (Integer (Start_Call) .. Buffer'Last),
+         Callback'Unrestricted_Access);
+   end Append_Actuals;
+
    -----------------
    -- Is_Complete --
    -----------------
@@ -393,5 +494,36 @@ package body Ada_Semantic_Tree.List_Resolver is
 
       return False;
    end Any_Named_Formal_Missing;
+
+   -------------------------------
+   -- Get_Expression_For_Formal --
+   -------------------------------
+
+   function Get_Expression_For_Formal
+     (Params : Actual_Parameter_Resolver;
+      Name   : String) return Parsed_Expression
+   is
+      Lower_Name : constant String := To_Lower (Name);
+   begin
+      for J in Params.Profile.Params'Range loop
+         if To_Lower
+           (Get_Construct (Params.Profile.Params (J)).Name.all) = Lower_Name
+         then
+            return Params.Actual_Params (J).Expression;
+         end if;
+      end loop;
+
+      return Null_Parsed_Expression;
+   end Get_Expression_For_Formal;
+
+   -----------------
+   -- Get_Profile --
+   -----------------
+
+   function Get_Profile
+     (Params : Actual_Parameter_Resolver) return List_Profile is
+   begin
+      return Params.Profile;
+   end Get_Profile;
 
 end Ada_Semantic_Tree.List_Resolver;

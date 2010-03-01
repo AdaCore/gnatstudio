@@ -20,6 +20,7 @@
 --  This package provides containers & process used to analyze formal / actual
 --  list of entities, in particular parameters.
 
+with GNAT.Strings; use GNAT.Strings;
 with Glib;
 
 package Ada_Semantic_Tree.List_Resolver is
@@ -53,11 +54,18 @@ package Ada_Semantic_Tree.List_Resolver is
    procedure Free (This : in out List_Profile_Access);
    --  Free the data associated to a List_Profile_Access
 
-   function Get_List_Profile (Entity : Entity_Access) return List_Profile;
+   type Profile_Kind is (Regular_Profile, Generic_Profile);
+
+   function Get_List_Profile
+     (Entity : Entity_Access;
+      Kind : Profile_Kind := Regular_Profile) return List_Profile;
    --  Create and return a list profile out of an entity. If no list profile
    --  can be found, then a special profile with no constraints will be
    --  returned. This is different from an empty profile (which doesn't allow
    --  any actual parameter).
+
+   function Get_Formals (Profile : List_Profile) return Entity_Array;
+   --  Return the list of formal parameters associated with this profile
 
    function Get_Entity (Profile : List_Profile) return Entity_Access;
    --  Return the entity holding this profile.
@@ -81,7 +89,7 @@ package Ada_Semantic_Tree.List_Resolver is
       Param_Start : String_Index_Type;
       Param_End   : String_Index_Type) return Actual_Parameter;
    --  Created an actual parameter out of a piece of code - param start and
-   --  param end has to be set around the entier parameter, including the
+   --  param end has to be set around the entire parameter, including the
    --  name preceded by the arrow if any.
 
    type Actual_Parameter_Resolver (<>) is private;
@@ -115,6 +123,14 @@ package Ada_Semantic_Tree.List_Resolver is
    --  parameter should be freed by the caller. Otherwise, it will get freed
    --  when the resolver is freed.
 
+   procedure Append_Actuals
+     (Params     : in out Actual_Parameter_Resolver;
+      Buffer     : String_Access;
+      Start_Call : String_Index_Type);
+   --  Starting at the location given in parameter, the resolver will look
+   --  at the first open parenthesis, and then set the resolver according to
+   --  the actual parameters found until the closing parenthesis.
+
    function Is_Complete (Params : Actual_Parameter_Resolver) return Boolean;
    --  Return true if all the parameters without default values have been
    --  given a value by the actual list.
@@ -132,6 +148,16 @@ package Ada_Semantic_Tree.List_Resolver is
      (Params : Actual_Parameter_Resolver) return Boolean;
    --  Return true if there is at least one formal parameter waiting for its
    --  actual. This formal has to have a name.
+
+   function Get_Expression_For_Formal
+     (Params : Actual_Parameter_Resolver;
+      Name   : String) return Parsed_Expression;
+   --  Return the expression provided to the parameter of the name given.
+   --  Null_Parsed_Expression if it can't be found.
+
+   function Get_Profile
+     (Params : Actual_Parameter_Resolver) return List_Profile;
+   --  Return the profile associated to this resolver
 
 private
 

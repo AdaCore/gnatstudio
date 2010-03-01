@@ -21,6 +21,7 @@
 --  file, based on the construct tree database
 
 with Ada_Semantic_Tree.List_Resolver; use Ada_Semantic_Tree.List_Resolver;
+with Ada_Semantic_Tree.Generics;      use Ada_Semantic_Tree.Generics;
 
 package Ada_Semantic_Tree.Declarations is
 
@@ -112,5 +113,37 @@ package Ada_Semantic_Tree.Declarations is
 
    function To_Declaration (Entity : Entity_Access) return Entity_View;
    --  Return the declaration view of the entity given in parameter.
+
+   -----------------------------
+   -- Declaration_View_Record --
+   -----------------------------
+
+   type Declaration_View_Record is new Entity_View_Record with record
+      Profile         : List_Profile_Access;
+      Actuals         : Actual_Parameter_Resolver_Access := null;
+      Generic_Context : Generic_Instance_Information;
+   end record;
+
+   overriding function Get_Documentation
+     (E : access Declaration_View_Record) return UTF8_String;
+
+   overriding function Get_Name
+     (E : access Declaration_View_Record) return UTF8_String;
+
+   overriding procedure Fill_Children
+     (E               : access Declaration_View_Record;
+      From_Visibility : Visibility_Context;
+      Name            : String;
+      Is_Partial      : Boolean;
+      Result          : in out Entity_List);
+
+private
+
+   overriding procedure Free (This : in out Declaration_View_Record);
+
+   overriding procedure Deep_Copy (This : in out Declaration_View_Record);
+
+   overriding procedure Configure_View
+     (E : in out Declaration_View_Record; It : Entity_Iterator);
 
 end Ada_Semantic_Tree.Declarations;

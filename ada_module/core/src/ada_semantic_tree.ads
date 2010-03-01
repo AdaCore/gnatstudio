@@ -53,7 +53,7 @@ package Ada_Semantic_Tree is
    --  This type is used to describe the visibility level of an entity, from a
    --  location on the file.
 
-   type Entity_View_Record (<>) is abstract tagged private;
+   type Entity_View_Record is abstract tagged private;
    type Entity_View is access all Entity_View_Record'Class;
    --  This type a view of a declaration, in a given context. It has
    --  information such as formal & actual parameters of the declaration.

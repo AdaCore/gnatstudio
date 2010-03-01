@@ -24,6 +24,7 @@ with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility;    use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Generics;      use Ada_Semantic_Tree.Generics;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 
 package body Ada_Semantic_Tree.Dependency_Tree is
@@ -1120,7 +1121,8 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                   Visibility.Filter := Everything;
 
                   Sem_It := To_Semantic_Tree_Iterator
-                    ((Root, None), Visibility);
+                    ((Root, None, Null_Generic_Instance_Information),
+                     Visibility);
 
                   while not At_End (Sem_It) loop
                      if Get_Construct (Get (Sem_It).Entity).Category

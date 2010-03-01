@@ -25,6 +25,7 @@ with Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Type_Tree;
 with Ada_Semantic_Tree.Interfaces;
 with Ada_Semantic_Tree.Std_Entities;
+with Ada_Semantic_Tree.Generics;
 
 package body Ada_Semantic_Tree.Assistants is
 
@@ -50,6 +51,7 @@ package body Ada_Semantic_Tree.Assistants is
       Ada_Semantic_Tree.Parts.Register_Assistant (Db);
       Ada_Semantic_Tree.Type_Tree.Register_Assistant (Db);
       Ada_Semantic_Tree.Dependency_Tree.Register_Assistant (Db);
+      Ada_Semantic_Tree.Generics.Register_Assistant (Db);
       Ada_Semantic_Tree.Interfaces.Register_Assistant (Db);
       Ada_Semantic_Tree.Std_Entities.Register_Assistant
         (Db, Std_Entities_Files);

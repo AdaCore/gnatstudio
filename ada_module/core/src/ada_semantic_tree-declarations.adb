@@ -34,35 +34,6 @@ package body Ada_Semantic_Tree.Declarations is
 
    use Token_List;
 
-   -----------------------------
-   -- Declaration_View_Record --
-   -----------------------------
-
-   type Declaration_View_Record is new Entity_View_Record with record
-      Profile : List_Profile_Access;
-      Actuals : Actual_Parameter_Resolver_Access := null;
-   end record;
-
-   overriding procedure Free (This : in out Declaration_View_Record);
-
-   overriding procedure Deep_Copy (This : in out Declaration_View_Record);
-
-   overriding procedure Configure_View
-     (E : in out Declaration_View_Record; It : Entity_Iterator);
-
-   overriding function Get_Documentation
-     (E : access Declaration_View_Record) return UTF8_String;
-
-   overriding function Get_Name
-     (E : access Declaration_View_Record) return UTF8_String;
-
-   overriding procedure Fill_Children
-     (E               : access Declaration_View_Record;
-      From_Visibility : Visibility_Context;
-      Name            : String;
-      Is_Partial      : Boolean;
-      Result          : in out Entity_List);
-
    --------------------
    -- Declaration_Id --
    --------------------
@@ -81,6 +52,7 @@ package body Ada_Semantic_Tree.Declarations is
    end record;
 
    type Iteration_Stage is (File_Hierarchy, Database);
+
    type Declaration_Id_Iterator
      is new Entity_List_Pckg.Virtual_List_Component_Iterator
    with record
@@ -154,10 +126,11 @@ package body Ada_Semantic_Tree.Declarations is
      Entity_List_Pckg.Virtual_List_Component
    with record
       From_Visibility : Visibility_Context;
-      Root_Entity    : Entity_Access;
-      Name           : String_Access;
-      Is_Partial     : Boolean;
-      Is_All         : Boolean;
+      Root_Entity     : Entity_Access;
+      Name            : String_Access;
+      Is_Partial      : Boolean;
+      Is_All          : Boolean;
+      Generic_Context : Generic_Instance_Information;
    end record;
 
    type Declaration_Composition_Iterator
@@ -406,12 +379,13 @@ package body Ada_Semantic_Tree.Declarations is
       case It.Stage is
          when File_Hierarchy =>
             Declaration := new Declaration_View_Record'
-              (Confidence    => Public_Library_Visible,
-               Entity        => It.Visible_Constructs (It.Visible_Index),
-               Is_All        => False,
-               From_Prefixed => False,
-               Profile       => null,
-               Actuals       => null
+              (Confidence      => Public_Library_Visible,
+               Entity          => It.Visible_Constructs (It.Visible_Index),
+               Is_All          => False,
+               From_Prefixed   => False,
+               Profile         => null,
+               Actuals         => null,
+               Generic_Context => Null_Generic_Instance_Information
               );
 
             Full_Cell := Get_Last_Visible_Declaration
@@ -431,7 +405,8 @@ package body Ada_Semantic_Tree.Declarations is
                Is_All        => False,
                From_Prefixed => False,
                Profile       => null,
-               Actuals       => null
+               Actuals       => null,
+               Generic_Context => Null_Generic_Instance_Information
               );
       end case;
    end Get;
@@ -975,7 +950,8 @@ package body Ada_Semantic_Tree.Declarations is
                         Is_All        => False,
                         From_Prefixed => False,
                         Actuals       => null,
-                        Profile       => null));
+                        Profile       => null,
+                        Generic_Context => Null_Generic_Instance_Information));
                end if;
 
                Next (C);
@@ -1097,7 +1073,8 @@ package body Ada_Semantic_Tree.Declarations is
 
       It := Declaration_Composition_Iterator'
         (It         => To_Semantic_Tree_Iterator
-           ((List.Root_Entity, Kind), List.From_Visibility),
+           ((List.Root_Entity, Kind, List.Generic_Context),
+            List.From_Visibility),
          Name       => List.Name,
          Is_Partial => List.Is_Partial);
 
@@ -1138,15 +1115,18 @@ package body Ada_Semantic_Tree.Declarations is
    overriding function Get
      (It : Declaration_Composition_Iterator) return Entity_View
    is
-      Info : constant Semantic_Information := Get (It.It);
+      Info : Semantic_Information := Get (It.It);
    begin
+      Ref (Info.Generic_Context);
+
       return new Declaration_View_Record'
-        (Confidence    => Public_Library_Visible,
-         Entity        => Info.Entity,
-         Is_All        => Info.Kind = All_Access,
-         From_Prefixed => Info.Kind = Prefix_Notation,
-         Actuals       => null,
-         Profile       => null);
+        (Confidence      => Public_Library_Visible,
+         Entity          => Info.Entity,
+         Is_All          => Info.Kind = All_Access,
+         From_Prefixed   => Info.Kind = Prefix_Notation,
+         Actuals         => null,
+         Profile         => null,
+         Generic_Context => Info.Generic_Context);
    end Get;
 
    --------------
@@ -1234,6 +1214,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding procedure Free (This : in out Declaration_View_Record) is
    begin
+      Unref (This.Generic_Context);
       Free (Entity_View_Record (This));
 
       Free (This.Profile);
@@ -1257,6 +1238,8 @@ package body Ada_Semantic_Tree.Declarations is
          This.Actuals := new Actual_Parameter_Resolver'
            (Deep_Copy (This.Actuals.all));
       end if;
+
+      Ref (This.Generic_Context);
    end Deep_Copy;
 
    --------------------
@@ -1320,7 +1303,8 @@ package body Ada_Semantic_Tree.Declarations is
             Name            => new String'(Name),
             Is_Partial      => Is_Partial,
             Is_All          => E.Is_All,
-            From_Visibility => From_Visibility));
+            From_Visibility => From_Visibility,
+            Generic_Context => E.Generic_Context));
    end Fill_Children;
 
    ---------------------------

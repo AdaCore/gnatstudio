@@ -598,14 +598,15 @@ package Language is
    --  loop statement, ...).
 
    type Simple_Construct_Information is record
-      Category       : Language_Category;
-      Is_Declaration : Boolean;
-      Visibility     : Construct_Visibility := Visibility_Public;
-      Name           : Strings.String_Access;
-      Sloc_Start     : Source_Location;
-      Sloc_Entity    : Source_Location;
-      Sloc_End       : Source_Location;
-      Attributes     : Construct_Attribute_Map;
+      Category        : Language_Category;
+      Is_Declaration  : Boolean;
+      Is_Generic_Spec : Boolean := False;
+      Visibility      : Construct_Visibility := Visibility_Public;
+      Name            : Strings.String_Access;
+      Sloc_Start      : Source_Location;
+      Sloc_Entity     : Source_Location;
+      Sloc_End        : Source_Location;
+      Attributes      : Construct_Attribute_Map;
    end record;
    --  Same as above, but containing only the needed construct information, no
    --  list constructions.
@@ -931,13 +932,14 @@ private
                             Attributes      => (others => False));
 
    Null_Simple_Construct_Info : constant Simple_Construct_Information :=
-                                  (Category       => Cat_Unknown,
-                                   Is_Declaration => False,
-                                   Visibility     => Visibility_Public,
-                                   Name           => null,
-                                   Sloc_Start     => (0, 0, 0),
-                                   Sloc_Entity    => (0, 0, 0),
-                                   Sloc_End       => (0, 0, 0),
-                                   Attributes     => (others => False));
+                                  (Category        => Cat_Unknown,
+                                   Is_Declaration  => False,
+                                   Is_Generic_Spec => False,
+                                   Visibility      => Visibility_Public,
+                                   Name            => null,
+                                   Sloc_Start      => (0, 0, 0),
+                                   Sloc_Entity     => (0, 0, 0),
+                                   Sloc_End        => (0, 0, 0),
+                                   Attributes      => (others => False));
 
 end Language;

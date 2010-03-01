@@ -163,9 +163,11 @@ package Language.Ada is
                                Ada_Analyzer.Ada_Class_Attribute;
    Ada_Renames_Attribute   : constant Construct_Att_Key :=
                                Ada_Analyzer.Ada_Renames_Attribute;
+   Ada_Generic_Attribute   : constant Construct_Att_Key :=
+                               Ada_Analyzer.Ada_Generic_Attribute;
 
    Ada_Library_Visibility_Attribute : constant Construct_Att_Key :=
-                                        Language.Ada.Ada_Renames_Attribute + 1;
+                                        Language.Ada.Ada_Generic_Attribute + 1;
    --  This attribute is not set by the parser itself - but external
    --  process will need to compute & store this value
 

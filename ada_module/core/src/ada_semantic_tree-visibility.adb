@@ -20,6 +20,7 @@
 with GNAT.Strings;     use GNAT.Strings;
 with GNATCOLL.Utils;   use GNATCOLL.Utils;
 with Language.Ada;     use Language.Ada;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Ada_Semantic_Tree.Visibility is
 
@@ -386,5 +387,116 @@ package body Ada_Semantic_Tree.Visibility is
 
       end case;
    end Is_Accessible;
+
+   ----------------------------
+   -- To_Use_Clause_Iterator --
+   ----------------------------
+
+   function To_Use_Clause_Iterator
+     (Visibility_Info : Visibility_Context) return Clause_Iterator
+   is
+      Tree   : constant Construct_Tree := Get_Tree (Visibility_Info.File);
+      It     : Construct_Tree_Iterator;
+      Result : Clause_Iterator;
+   begin
+      It := Get_Iterator_At
+        (Tree     => Tree,
+         Location => To_Location (Visibility_Info.Offset),
+         Position => Before);
+
+      Result.Current := To_Entity_Access (Visibility_Info.File, It);
+
+      if not Is_Valid (Result) then
+         Prev (Result);
+      end if;
+
+      return Result;
+   end To_Use_Clause_Iterator;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (This : Clause_Iterator) return Boolean is
+   begin
+      return At_End (This)
+        or else Get_Construct (This.Current).Category = Cat_Use;
+   end Is_Valid;
+
+   ----------
+   -- Prev --
+   ----------
+
+   procedure Prev (This : in out Clause_Iterator) is
+      Tree : constant Construct_Tree := Get_Tree (Get_File (This.Current));
+      It   : Construct_Tree_Iterator := To_Construct_Tree_Iterator
+        (This.Current);
+   begin
+      loop
+         It := Prev (Tree, It, Jump_Over);
+
+         exit when It = Null_Construct_Tree_Iterator
+           or else Get_Construct (It).Category = Cat_Use;
+      end loop;
+
+      if It = Null_Construct_Tree_Iterator then
+         --  ??? here, look for potential parents packages
+
+         This.Current := Null_Entity_Access;
+      else
+         This.Current := To_Entity_Access (Get_File (This.Current), It);
+      end if;
+   end Prev;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (This : Clause_Iterator) return Boolean is
+   begin
+      return This.Current = Null_Entity_Access;
+   end At_End;
+
+   ---------------------
+   -- Resolve_Package --
+   ---------------------
+
+   function Resolve_Package (This : Clause_Iterator) return Entity_Access is
+      Expression : Parsed_Expression := Ada_Lang.Parse_Expression_Backward
+        (Buffer       => Get_Construct (This.Current).Name,
+         Start_Offset => String_Index_Type
+           (Get_Construct (This.Current).Name'Last));
+
+      Package_Resolution : Entity_List;
+      Package_It         : Entity_Iterator;
+      Result             : Entity_Access := Null_Entity_Access;
+   begin
+      Package_Resolution := Find_Declarations
+        (Context           =>
+           (From_File,
+            Get_File (This.Current),
+            String_Index_Type (Get_Construct (This.Current).Sloc_Start.Index)),
+         From_Visibility   =>
+           (File                      => Get_File (This.Current),
+            Offset                    =>
+              String_Index_Type
+                (Get_Construct (This.Current).Sloc_Start.Index),
+            Filter                    => Everything,
+            Min_Visibility_Confidence => Use_Visible),
+         Expression        => Expression,
+         Categories        => (1 => Cat_Package));
+
+      Package_It := First (Package_Resolution);
+
+      if not At_End (Package_It) then
+         Result := Get_Entity (Package_It);
+      end if;
+
+      Free (Package_It);
+      Free (Package_Resolution);
+      Free (Expression);
+
+      return Result;
+   end Resolve_Package;
 
 end Ada_Semantic_Tree.Visibility;

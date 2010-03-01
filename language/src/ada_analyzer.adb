@@ -2056,6 +2056,7 @@ package body Ada_Analyzer is
                   --  the actual subprogram or package
 
                   Temp.Sloc := Top_Token.Sloc;
+                  Temp.Attributes (Ada_Generic_Attribute) := True;
                   Do_Pop := Do_Pop + 1;
                end if;
 
