@@ -700,7 +700,17 @@ package body Language.Tree is
       return Boolean
    is
    begin
-      if Iter1.Node.Construct.Name.all = Iter2.Node.Construct.Name.all
+      if Iter1 = Null_Construct_Tree_Iterator then
+         return Iter2 = Null_Construct_Tree_Iterator;
+      end if;
+
+      if ((Iter1.Node.Construct.Name = null
+           and then Iter2.Node.Construct.Name = null)
+          or else not
+            (Iter1.Node.Construct.Name = null
+             xor Iter1.Node.Construct.Name = null)
+          or else Iter1.Node.Construct.Name.all
+          = Iter2.Node.Construct.Name.all)
         and then Iter1.Node.Construct.Category = Iter2.Node.Construct.Category
       then
          if Iter1.Node.Parent_Index = 0
