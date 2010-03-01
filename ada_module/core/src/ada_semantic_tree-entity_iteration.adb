@@ -643,8 +643,10 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
          if It.Parent_It <= It.Parents'Last then
             while It.Parents (It.Parent_It) = Null_Entity_Access
-              or else not Is_Parent_Scope
-              (To_Construct_Tree_Iterator (It.Parent_Entity), It.Parent_Field)
+              or else not Encloses
+                (Get_Tree (Get_File (It.Parent_Entity)),
+                 To_Construct_Tree_Iterator (It.Parent_Entity),
+                 It.Parent_Field)
             loop
                It.Parent_It := It.Parent_It + 1;
 
