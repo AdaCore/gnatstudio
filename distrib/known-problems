@@ -1,11 +1,5 @@
 Known Problems fixed in GPS 4.5.0
 
-- J301-009 Possible instabilities after doing File->Save as and closing editors
-  Problem:    When using File->Save as to change the name of an editor, if you
-              save a file from name A to B, then another file from C to A.
-  Workaround: Use the "File Operations" menu in the Project View to rename
-              files.
-
 - J212-018 Error when editing a project with indexed attributes assignments
   Problem:    When you are editing a project, GPS first tries to normalize
               it. This normalization fails if your project contains an
