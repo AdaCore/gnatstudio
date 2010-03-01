@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.2
 
+- J301-015: Completion of child package lost
+  Problem:    In certain cases, the completion loses the knowledge of the 
+              relationship between parent and child packages, and doesn't
+              manage to correctly complete e.g. with clauses or components
+              coming from private parent parts.
+  Workaround: Restart GPS, or complete manually the code.
+
 - J301-009 Possible instabilities after doing File->Save as and closing editors
   Problem:    When using File->Save as to change the name of an editor, if you
               save a file from name A to B, then another file from C to A.
