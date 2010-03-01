@@ -1215,6 +1215,9 @@ package body Ada_Semantic_Tree.Units is
       Assistant  : Database_Assistant_Access;
       List_Annot : Tree_Annotations_Pckg.Annotation;
    begin
+      Assistant := Get_Assistant
+        (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
+
       Child_It := First (Unit.Children_Units);
 
       while Child_It /= Persistent_Entity_List.No_Element loop
@@ -1222,6 +1225,17 @@ package body Ada_Semantic_Tree.Units is
             Child := Get_Unit_Info
               (Unit.Unit_Key,
                To_Entity_Access (Element (Child_It)));
+
+            Construct_Unit_Tries.Insert
+              (Trie         =>
+                 Ada_Unit_Assistant (Assistant.all).Waiting_For_Parent'Access,
+               Construct_It => To_Construct_Tree_Iterator
+                 (To_Entity_Access (Child.Entity)),
+               Name         => Get_Item
+                 (Child.Name.all, Length (Child.Name.all) - 1),
+               Data         => Child,
+               Lang         => Ada_Tree_Lang,
+               Index        => Child.Waiting_For_Parent_Index);
 
             Unref (Child.Parent);
             Child.Parent := Null_Entity_Persistent_Access;
@@ -1231,9 +1245,6 @@ package body Ada_Semantic_Tree.Units is
       end loop;
 
       Clear (Unit.Children_Units);
-
-      Assistant := Get_Assistant
-        (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
 
       Delete
         (Ada_Unit_Assistant (Assistant.all).Units_Db'Access, Unit.Db_Index);
