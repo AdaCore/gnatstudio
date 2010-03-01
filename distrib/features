@@ -44,6 +44,11 @@ NF-45-J208-007 Partial navigation without compilation (2010-02-19)
   from an entity body, and on simple cases when trying to retrieve the
   declaration from any reference, using e.g. goto declaration or hyperlink.
 
+NF-45-J208-006 Quick fix icons on the side of editors (2010-02-25)
+
+  When compiling, icons that propose automatic code fixing appear on the side
+  of the source editors, in addition to the Locations View.
+
 NF-45-J128-026 Support for generic parameters (2010-02-15)
 
   Generics parameters are now supported in the Ada outline view and smart
