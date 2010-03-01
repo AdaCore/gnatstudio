@@ -991,9 +991,20 @@ package body Ada_Semantic_Tree.Lang is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean
       is
-         pragma Unreferenced (Entity, Partial_Entity, Sloc_Start);
+         pragma Unreferenced (Entity, Partial_Entity);
       begin
          Result := String_Index_Type (Sloc_End.Index);
+
+         --  In case of a composite name, we're actually interrested by the
+         --  first element fed to the analysis.
+
+         for J in Sloc_Start.Index .. Sloc_End.Index loop
+            if Str (J) = '.' then
+               Result := String_Index_Type (J - 1);
+
+               exit;
+            end if;
+         end loop;
 
          return True;
       end Callback;
