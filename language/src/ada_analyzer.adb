@@ -3807,7 +3807,13 @@ package body Ada_Analyzer is
                         end if;
 
                      when '.' =>
-                        Insert_Spaces := Buffer (Next_Char (P)) = '.';
+                        declare
+                           Next_Tmp : constant Natural := Next_Char (P);
+                        begin
+                           Insert_Spaces :=
+                             Next_Tmp <= Buffer'Last
+                             and then Buffer (Next_Tmp) = '.';
+                        end;
 
                         if Insert_Spaces then
                            Handle_Two_Chars ('.');
@@ -3817,43 +3823,61 @@ package body Ada_Analyzer is
                         end if;
 
                      when '<' =>
-                        case Buffer (Next_Char (P)) is
-                           when '=' =>
-                              Insert_Spaces := True;
-                              Prev_Token    := Tok_Less_Equal;
-                              Handle_Two_Chars ('=');
+                        declare
+                           Next_Tmp : constant Natural := Next_Char (P);
+                        begin
+                           if Next_Tmp <= Buffer'Last then
+                              case Buffer (Next_Tmp) is
+                                 when '=' =>
+                                    Insert_Spaces := True;
+                                    Prev_Token    := Tok_Less_Equal;
+                                    Handle_Two_Chars ('=');
 
-                           when '<' =>
-                              Prev_Token    := Tok_Less_Less;
-                              Insert_Spaces := False;
-                              Handle_Two_Chars ('<');
+                                 when '<' =>
+                                    Prev_Token    := Tok_Less_Less;
+                                    Insert_Spaces := False;
+                                    Handle_Two_Chars ('<');
 
-                           when '>' =>
-                              Prev_Token    := Tok_Box;
-                              Insert_Spaces := False;
-                              Handle_Two_Chars ('>');
+                                 when '>' =>
+                                    Prev_Token    := Tok_Box;
+                                    Insert_Spaces := False;
+                                    Handle_Two_Chars ('>');
 
-                           when others =>
+                                 when others =>
+                                    Prev_Token    := Tok_Less;
+                                    Insert_Spaces := True;
+                              end case;
+                           else
                               Prev_Token    := Tok_Less;
                               Insert_Spaces := True;
-                        end case;
+                           end if;
+                        end;
 
                      when '>' =>
-                        case Buffer (Next_Char (P)) is
-                           when '=' =>
-                              Insert_Spaces := True;
-                              Prev_Token    := Tok_Greater_Equal;
-                              Handle_Two_Chars ('=');
+                        declare
+                           Next_Tmp : constant Natural := Next_Char (P);
+                        begin
+                           if Next_Tmp <= Buffer'Last then
+                              case Buffer (Next_Tmp) is
+                                 when '=' =>
+                                    Insert_Spaces := True;
+                                    Prev_Token    := Tok_Greater_Equal;
+                                    Handle_Two_Chars ('=');
 
-                           when '>' =>
-                              Prev_Token    := Tok_Greater_Greater;
-                              Insert_Spaces := False;
-                              Handle_Two_Chars ('>');
+                                 when '>' =>
+                                    Prev_Token    := Tok_Greater_Greater;
+                                    Insert_Spaces := False;
+                                    Handle_Two_Chars ('>');
 
-                           when others =>
+                                 when others =>
+                                    Prev_Token    := Tok_Greater;
+                                    Insert_Spaces := True;
+                              end case;
+                           else
                               Prev_Token    := Tok_Greater;
                               Insert_Spaces := True;
-                        end case;
+                           end if;
+                        end;
 
                      when '=' =>
                         Insert_Spaces := True;
