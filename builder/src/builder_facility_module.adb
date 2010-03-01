@@ -293,6 +293,17 @@ package body Builder_Facility_Module is
       Data   : access Hooks_Data'Class);
    --  Called when a file has been saved
 
+   procedure On_Buffer_Modified
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a buffer has been modified
+
+   procedure File_Saved_Or_Buffer_Modified
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Saved  : Boolean);
+   --  Factor code between On_File_Saved and On_Buffer_Modified
+
    procedure Clear_Compilation_Output
      (Kernel          : Kernel_Handle;
       Category        : String;
@@ -1122,30 +1133,19 @@ package body Builder_Facility_Module is
       Install_Toolbar_Buttons;
    end Refresh_Graphical_Elements;
 
-   -------------------
-   -- On_File_Saved --
-   -------------------
+   -----------------------------------
+   -- File_Saved_Or_Buffer_Modified --
+   -----------------------------------
 
-   procedure On_File_Saved
+   procedure File_Saved_Or_Buffer_Modified
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+      File   : Virtual_File;
+      Saved  : Boolean)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       C         : Build_Configurations.Target_Cursor :=
-                    Get_First_Target (Builder_Module_ID.Registry);
+        Get_First_Target (Builder_Module_ID.Registry);
       T         : Target_Access;
    begin
-      --  Protect against the following recursion:
-      --   a script connects the action Compilation_Starting to the saving
-      --   of a file, and this causes Compile through this procedure.
-      --  This should not happen in GPS, but we protect against this
-      --  possibility occurring in user scripts.
-
-      if Builder_Module_ID.Currently_Saving then
-         return;
-      end if;
-
-      Builder_Module_ID.Currently_Saving := True;
 
       --  We run this hook only when a source file has changed.
       --  For other files (for instance revision logs), we do not want to
@@ -1157,7 +1157,7 @@ package body Builder_Facility_Module is
          P := Get_Project_From_File
            (Registry          => Project_Registry
               (Get_Registry (Get_Kernel).all),
-            Source_Filename   => File_Data.File,
+            Source_Filename   => File,
             Root_If_Not_Found => False);
 
          --  No project was found for the file: this is not a source file, so
@@ -1172,18 +1172,19 @@ package body Builder_Facility_Module is
          T := Get_Target (C);
          exit when T = null;
 
-         if Get_Properties (T).Launch_Mode = On_File_Save then
+         if (Saved and then Get_Properties (T).Launch_Mode = On_File_Save)
+           or else (not Saved
+                    and then Get_Properties (T).Launch_Mode = In_Background)
+         then
             Launch_Target (Kernel       => Kernel_Handle (Kernel),
                            Registry     => Builder_Module_ID.Registry,
                            Target_Name  => Get_Name (T),
                            Mode_Name    => "",
-                           Force_File   => No_File,
-                           --  We do not pass File_Data.File as Force_File,
-                           --  as we do not want to compile, for instance,
-                           --  when the current file has no associated project.
+                           Force_File   => File,
                            Extra_Args   => null,
                            Quiet        => True,
                            Synchronous  => False,
+                           Background   => not Saved,
                            Dialog       => Default,
                            Main         => "");
             --  ??? Should we attempt to compute which is the "relevant" main
@@ -1191,9 +1192,45 @@ package body Builder_Facility_Module is
          end if;
          Next (C);
       end loop;
+   end File_Saved_Or_Buffer_Modified;
 
+   -------------------
+   -- On_File_Saved --
+   -------------------
+
+   procedure On_File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+   begin
+      --  Protect against the following recursion:
+      --   a script connects the action Compilation_Starting to the saving
+      --   of a file, and this causes Compile through this procedure.
+      --  This should not happen in GPS, but we protect against this
+      --  possibility occurring in user scripts.
+
+      if Builder_Module_ID.Currently_Saving then
+         return;
+      end if;
+
+      Builder_Module_ID.Currently_Saving := True;
+      File_Saved_Or_Buffer_Modified (Kernel, File_Data.File, Saved => True);
       Builder_Module_ID.Currently_Saving := False;
    end On_File_Saved;
+
+   ------------------------
+   -- On_Buffer_Modified --
+   ------------------------
+
+   procedure On_Buffer_Modified
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+   begin
+      File_Saved_Or_Buffer_Modified (Kernel, File_Data.File, Saved => False);
+   end On_Buffer_Modified;
 
    -----------------------------
    -- Attempt_Target_Register --
@@ -1326,7 +1363,7 @@ package body Builder_Facility_Module is
          To_String (Data.Target),
          "",
          No_File,
-         null, False, False, Default, To_String (Data.Main));
+         null, False, False, Default, To_String (Data.Main), False);
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -1350,7 +1387,7 @@ package body Builder_Facility_Module is
             "",
             No_File,
             null, False, False, Default,
-            To_String (Target_And_Main (Data.all).Main));
+            To_String (Target_And_Main (Data.all).Main), False);
       end if;
 
    exception
@@ -2174,6 +2211,10 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, File_Saved_Hook,
                 Wrapper (On_File_Saved'Access),
                 Name  => "builder_facility_module.file_saved");
+
+      Add_Hook (Kernel, Buffer_Modified_Hook,
+                Wrapper (On_Buffer_Modified'Access),
+                Name  => "builder_facility_module.file_buffer_modified");
 
       --  Connect to the Compilation_Starting_Hook
 

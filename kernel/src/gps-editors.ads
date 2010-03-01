@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008-2009, AdaCore               --
+--                    Copyright (C) 2008-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -569,12 +569,14 @@ package GPS.Editors is
    procedure Save
      (This        : Editor_Buffer;
       Interactive : Boolean := True;
-      File        : Virtual_File := No_File) is abstract;
+      File        : Virtual_File := No_File;
+      Internal    : Boolean := False) is abstract;
    --  Saves the buffer to the given file. If interactive is true, a dialog is
    --  open to ask for confirmation from the user first, which gives him a
    --  chance to cancel the saving. "interactive" is ignored if file is
    --  specified. When no file is specified, then the buffer will be saved
    --  in the same file as it's currently edited.
+   --  If Internal is True, the file is saved but the editor is not changed.
 
    function Get_Mark
      (This : Editor_Buffer;
@@ -932,7 +934,8 @@ private
    overriding procedure Save
      (This        : Dummy_Editor_Buffer;
       Interactive : Boolean := True;
-      File        : Virtual_File := No_File) is null;
+      File        : Virtual_File := No_File;
+      Internal    : Boolean := False) is null;
 
    overriding function Get_Mark
      (This : Dummy_Editor_Buffer;

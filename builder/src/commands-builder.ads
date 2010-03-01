@@ -19,12 +19,17 @@
 
 --  This package handles build commands
 
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+
 with GPS.Kernel;
 with Glib;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Remote;       use Remote;
 with Interactive_Consoles; use Interactive_Consoles;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GPS.Kernel.Timeout;   use GPS.Kernel.Timeout;
+
+with Extending_Environments; use Extending_Environments;
 
 package Commands.Builder is
 
@@ -36,6 +41,36 @@ package Commands.Builder is
    --  -"Style errors"
    Shadow_Category  : constant String := "Syntax check";
    --  -"Syntax check"
+
+   type Build_Callback_Data is new Callback_Data_Record with record
+      Target_Name   : Unbounded_String;
+      --  The name of the target being built
+
+      Mode_Name     : Unbounded_String;
+      --  The name of the mode being built
+
+      Category_Name : Unbounded_String;
+      --  The name of the category for the target
+
+      Quiet : Boolean := False;
+      --  Whether the target should be Quiet.
+      --  A Quiet target does not cause the cursor to jump to the first
+      --  error found. This is useful for builds that occur on saving, or in
+      --  a background mode.
+
+      Shadow : Boolean := False;
+      --  Whether this is a Shadow build
+
+      Buffer : Unbounded_String;
+      --  Stores the incomplete lines returned by the compilation process
+
+      Background_Env : Extending_Environment;
+      --  The extending environment created for the purpose of running this
+      --  target.
+   end record;
+
+   type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
+   overriding procedure Destroy (Data : in out Build_Callback_Data);
 
    function Target_Name_To_Locations_Category (Name : String) return String;
    --  Return the name of the locations category associated with the build of
@@ -60,12 +95,8 @@ package Commands.Builder is
    procedure Launch_Build_Command
      (Kernel           : GPS.Kernel.Kernel_Handle;
       CL               : Arg_List;
-      Target_Name      : String;
-      Mode_Name        : String;
-      Category_Name    : String := Error_Category;
+      Data             : Build_Callback_Data_Access;
       Server           : Server_Type;
-      Quiet            : Boolean;
-      Shadow           : Boolean;
       Synchronous      : Boolean;
       Use_Shell        : Boolean;
       New_Console_Name : String;

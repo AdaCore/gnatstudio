@@ -195,6 +195,7 @@ package body Builder_Module is
             Quiet       => True,
             Synchronous => True,
             Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Background  => False,
             Main        => "");
 
       elsif Command = "compute_xref_bg" then
@@ -214,6 +215,7 @@ package body Builder_Module is
             Extra_Args  => null,
             Quiet       => True,
             Synchronous => False,
+            Background  => False,
             Dialog      => Build_Command_Manager.Force_No_Dialog,
             Main        => "");
       end if;
@@ -314,6 +316,7 @@ package body Builder_Module is
          Extra_Args  => null,
          Quiet       => True,
          Synchronous => False,
+         Background  => False,
          Dialog      => Build_Command_Manager.Force_No_Dialog,
          Main        => "");
       Xref_Commands.Create

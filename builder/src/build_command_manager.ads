@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008-2009, AdaCore               --
+--                    Copyright (C) 2008-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,6 +57,7 @@ package Build_Command_Manager is
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
       Main        : String;
+      Background  : Boolean;
       Directory   : Virtual_File := No_File);
    --  Launch a build of target named Target_Name
    --  If Mode_Name is not the empty string, then the Mode Mode_Name will be
@@ -73,6 +74,7 @@ package Build_Command_Manager is
    --  Main, if not empty, indicates the main to build.
    --  If Directory is not empty, indicates which directory the target should
    --  be run under. Default is the project's directory.
+   --  If Background, run the compile in the background.
 
    -------------------
    -- Build_Command --

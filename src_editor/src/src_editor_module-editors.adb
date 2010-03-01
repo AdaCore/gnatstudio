@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008-2009, AdaCore               --
+--                    Copyright (C) 2008-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -397,7 +397,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Save
      (This        : Src_Editor_Buffer;
       Interactive : Boolean := True;
-      File        : Virtual_File := No_File);
+      File        : Virtual_File := No_File;
+      Internal    : Boolean := False);
 
    overriding function Get_Mark
      (This : Src_Editor_Buffer;
@@ -1966,7 +1967,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Save
      (This        : Src_Editor_Buffer;
       Interactive : Boolean := True;
-      File        : Virtual_File := No_File)
+      File        : Virtual_File := No_File;
+      Internal    : Boolean := False)
    is
       Success : Boolean;
       pragma Unreferenced (Success);
@@ -1985,6 +1987,7 @@ package body Src_Editor_Module.Editors is
               (This.Contents.Buffer,
                Filename => File,
                Success  => Success,
+               Internal => Internal,
                Force    => not Interactive);
          end if;
       end if;

@@ -231,8 +231,11 @@ package Build_Configurations is
       --  Target should be built when requested by user, never using an
       --  extra dialog.
 
-      On_File_Save
+      On_File_Save,
       --  Target should be built when saving a source file
+
+      In_Background
+      --  Target should be launched whenever a source buffer is modified
      );
 
    type Target_Properties is record

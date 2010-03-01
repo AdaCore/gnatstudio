@@ -41,6 +41,7 @@ with OS_Utils;                    use OS_Utils;
 with Projects.Registry;           use Projects.Registry;
 with Projects;                    use Projects;
 with Remote;                      use Remote;
+with Extending_Environments;      use Extending_Environments;
 with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
@@ -55,9 +56,12 @@ package body Build_Command_Manager is
    Invalid_Argument : exception;
    --  Raised by Expand_Arg below
 
-   type Arg_List_And_Dir is record
+   type Expansion_Result is record
       Args : Arg_List;
+      --  The list of arguments
+
       Dir  : Virtual_File := No_File;
+      --  The directory in which to launch the compilation
    end record;
 
    function Expand_Command_Line
@@ -67,7 +71,9 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Arg_List_And_Dir;
+      Background : Boolean;
+      Simulate   : Boolean;
+      Background_Env : Extending_Environment) return Expansion_Result;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
@@ -81,7 +87,9 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean) return Arg_List_And_Dir;
+      Background : Boolean;
+      Simulate   : Boolean;
+      Background_Env : Extending_Environment) return Expansion_Result;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
@@ -115,8 +123,12 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean) return Arg_List_And_Dir
+      Background : Boolean;
+      Simulate   : Boolean;
+      Background_Env : Extending_Environment) return Expansion_Result
    is
+      Result : Expansion_Result;
+
       function Substitution
         (Param  : String; Quoted : Boolean) return String;
       --  Wrapper around GPS.Kernel.Macros.Substitute
@@ -132,6 +144,12 @@ package body Build_Command_Manager is
       begin
          if Param = "subdir" then
             return +Subdir;
+
+         elsif Background
+           and then not Simulate
+           and then Param = "pp"
+         then
+            return +Get_Project (Background_Env).Full_Name.all;
 
          else
             declare
@@ -159,28 +177,25 @@ package body Build_Command_Manager is
       --  See H926-007.
 
       if Arg = "%X" then
-         return (Parse_String
-                 (Scenario_Variables_Cmd_Line (Kernel, "-X"), Separate_Args),
-                 No_File);
+         Result.Args := Parse_String
+           (Scenario_Variables_Cmd_Line (Kernel, "-X"), Separate_Args);
 
       --  ??? Ditto for %vars
       elsif Arg = "%vars" then
-         return (Parse_String
-                 (Scenario_Variables_Cmd_Line (Kernel, ""), Separate_Args),
-                 No_File);
+         Result.Args := Parse_String
+           (Scenario_Variables_Cmd_Line (Kernel, ""), Separate_Args);
 
       --  ??? Would be nice to support a generic %vars(xxx)
       elsif Arg = "%vars(-D)" then
-         return (Parse_String
-                 (Scenario_Variables_Cmd_Line (Kernel, "-D"), Separate_Args),
-                 No_File);
+         Result.Args := Parse_String
+           (Scenario_Variables_Cmd_Line (Kernel, "-D"), Separate_Args);
 
       --  ??? Ditto for %eL
       elsif Arg = "%eL" then
          if Trusted_Mode.Get_Pref then
-            return (Empty_Command_Line, No_File);
+            return Result;
          else
-            return (Create ("-eL"), No_File);
+            Result.Args := Create ("-eL");
          end if;
 
       --  ??? Ditto for %attr
@@ -216,11 +231,10 @@ package body Build_Command_Manager is
               Get_Project (Get_Kernel (Context));
 
          begin
-            return (Parse_String
+            Result.Args := Parse_String
               (Get_Attribute_Value (Prj, Build (Pkg, Attr),
-                 Default => Arg (K + 1 .. Arg'Last - 1)),
-                 Separate_Args),
-              No_File);
+               Default => Arg (K + 1 .. Arg'Last - 1)),
+               Separate_Args);
          end;
 
       --  ??? Ditto for %switches
@@ -228,11 +242,10 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 9) = "%switches("
         and then Arg (Arg'Last) = ')'
       then
-         return (Create (Get_Attribute_Value
+         Result.Args := Create (Get_Attribute_Value
            (Get_Project (Get_Kernel (Context)),
               Build ("IDE", "Default_Switches"), "",
-              Arg (Arg'First + 10 .. Arg'Last - 1))),
-           No_File);
+              Arg (Arg'First + 10 .. Arg'Last - 1)));
 
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
@@ -252,7 +265,7 @@ package body Build_Command_Manager is
             Langs    : Argument_List := Get_Languages (Prj, Recursive => True);
 
             Multi_Language_Build : Boolean := True;
-            Res      : Arg_List_And_Dir;
+            Res      : Expansion_Result;
          begin
             if Arg /= "%gprbuild"
               and then ((Langs'Length = 1
@@ -324,27 +337,29 @@ package body Build_Command_Manager is
          end;
 
       elsif Arg = "%external" then
-         return (Parse_String
-                 (GPS.Kernel.Preferences.Execute_Command.Get_Pref,
-              Separate_Args),
-           No_File);
+         Result.Args := Parse_String
+           (GPS.Kernel.Preferences.Execute_Command.Get_Pref, Separate_Args);
 
       elsif Arg = "[exec_dir]" then
          declare
             Prj : constant Project_Type :=
               Get_Project (Get_Kernel (Context));
          begin
-            return (Empty_Command_Line, Executables_Directory (Prj));
+            Result.Dir := Executables_Directory (Prj);
          end;
 
       elsif Arg = "%fp" then
-         if Force_File /= No_File then
+         if not Simulate
+           and then not Background
+           and then Force_File /= No_File
+         then
             --  We are launching a compile command involving Force_File:
             --  remove reference to File from the Locations View.
             --  See F830-003.
             Get_Messages_Container (Kernel).Remove_File
               (Error_Category, Force_File);
-            return (Create (+Base_Name (Force_File)), No_File);
+            Result.Args := Create (+Base_Name (Force_File));
+            return Result;
          end if;
 
          declare
@@ -352,7 +367,8 @@ package body Build_Command_Manager is
          begin
             if File = No_File then
                if Simulate then
-                  return (Create ("<current-file>"), No_File);
+                  Result.Args := Create ("<current-file>");
+                  return Result;
 
                else
                   Console.Insert
@@ -364,7 +380,8 @@ package body Build_Command_Manager is
               (Get_Registry (Kernel).all, File, False) = No_Project
             then
                if Simulate then
-                  return (Create ("<current-file>"), No_File);
+                  Result.Args := Create ("<current-file>");
+                  return Result;
 
                else
                   Console.Insert
@@ -375,13 +392,20 @@ package body Build_Command_Manager is
                end if;
 
             else
-               --  We are launching a compile command involving File:
-               --  remove reference to File from the Locations View.
-               --  See F830-003.
-               Get_Messages_Container (Kernel).Remove_File
-                 (Error_Category, File);
+               if Background then
+                  Result.Args := Create
+                    (+Base_Name (Get_File (Background_Env)));
+               else
+                  --  We are launching a compile command involving File:
+                  --  remove reference to File from the Locations View.
+                  --  See F830-003.
+                  if not Simulate then
+                     Get_Messages_Container (Kernel).Remove_File
+                       (Error_Category, File);
+                  end if;
 
-               return (Create (+Base_Name (File)), No_File);
+                  Result.Args := Create (+Base_Name (File));
+               end if;
             end if;
          end;
 
@@ -389,7 +413,7 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 2) = "%TT"
       then
          if Main /= "" then
-            return (Create (Main & Arg (Arg'First + 3 .. Arg'Last)), No_File);
+            Result.Args := Create (Main & Arg (Arg'First + 3 .. Arg'Last));
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
@@ -401,9 +425,9 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 1) = "%T"
       then
          if Main /= "" then
-            return (Create
-                    (GNAT.Directory_Operations.Base_Name (Main)
-                 & Arg (Arg'First + 2 .. Arg'Last)), No_File);
+            Result.Args := Create
+              (GNAT.Directory_Operations.Base_Name (Main)
+               & Arg (Arg'First + 2 .. Arg'Last));
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
@@ -423,10 +447,9 @@ package body Build_Command_Manager is
             begin
                P := Get_Project_From_File
                  (Get_Registry (Kernel).all, Main_Source);
-               return (Create
+               Result.Args := Create
                  (+(Executables_Directory (P).Full_Name.all
-                    & Get_Executable_Name (P, Main_Source))),
-                 No_File);
+                  & Get_Executable_Name (P, Main_Source)));
             end;
          else
             Console.Insert
@@ -436,11 +459,14 @@ package body Build_Command_Manager is
          end if;
 
       else
-         return (Create (GNATCOLL.Templates.Substitute
-           (Str       => Arg,
-            Delimiter => GPS.Kernel.Macros.Special_Character,
-            Callback  => Substitution'Unrestricted_Access)), No_File);
+         Result.Args :=
+           Create (GNATCOLL.Templates.Substitute
+                   (Str       => Arg,
+                    Delimiter => GPS.Kernel.Macros.Special_Character,
+                    Callback  => Substitution'Unrestricted_Access));
       end if;
+
+      return Result;
    end Expand_Arg;
 
    -------------------------
@@ -454,10 +480,12 @@ package body Build_Command_Manager is
       Force_File : Virtual_File;
       Main       : String;
       Subdir     : Filesystem_String;
-      Simulate   : Boolean := False) return Arg_List_And_Dir
+      Background : Boolean;
+      Simulate   : Boolean;
+      Background_Env : Extending_Environment) return Expansion_Result
    is
-      Result : Arg_List_And_Dir;
-      Final  : Arg_List_And_Dir;
+      Result : Expansion_Result;
+      Final  : Expansion_Result;
       Context : constant Selection_Context := Get_Current_Context (Kernel);
 
    begin
@@ -470,7 +498,7 @@ package body Build_Command_Manager is
 
          Result := Expand_Arg
            (Kernel, Context, CL (J).all, Server,
-            Force_File, Main, Subdir, Simulate);
+            Force_File, Main, Subdir, Background, Simulate, Background_Env);
 
          if Result.Dir /= No_File then
             Final.Dir := Result.Dir;
@@ -506,19 +534,21 @@ package body Build_Command_Manager is
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
       Main        : String;
+      Background  : Boolean;
       Directory   : Virtual_File := No_File)
    is
       Prj            : constant Project_Type := Get_Project (Kernel);
       Dir            : Virtual_File := No_File;
       T              : Target_Access;
-      Full           : Arg_List_And_Dir;
+      Full           : Expansion_Result;
       Command_Line   : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
 
       procedure Launch_For_Mode
-        (Mode   : String;
-         Quiet  : Boolean;
-         Shadow : Boolean);
+        (Mode       : String;
+         Quiet      : Boolean;
+         Shadow     : Boolean;
+         Background : Boolean);
       --  Compute and launch the command, for the given mode
 
       ---------------------
@@ -526,13 +556,16 @@ package body Build_Command_Manager is
       ---------------------
 
       procedure Launch_For_Mode
-        (Mode   : String;
-         Quiet  : Boolean;
-         Shadow : Boolean)
+        (Mode       : String;
+         Quiet      : Boolean;
+         Shadow     : Boolean;
+         Background : Boolean)
       is
 
          Subdir : constant Filesystem_String := Get_Mode_Subdir (Mode);
          Server : Server_Type;
+         Data   : Build_Callback_Data_Access;
+         Background_Env : Extending_Environment;
 
          function Expand_Cmd_Line (CL : String) return String;
          --  Callback for Single_Target_Dialog
@@ -545,11 +578,13 @@ package body Build_Command_Manager is
             CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
-            Res       : constant Arg_List_And_Dir :=
+            Res       : constant Expansion_Result :=
                           Expand_Command_Line
                             (Kernel, Mode_Args.all & All_Extra_Args.all,
                              Server,
-                             Force_File, Main, Subdir, Simulate => True);
+                             Force_File, Main, Subdir, Shadow,
+                             Simulate => True,
+                             Background_Env => Background_Env);
 
          begin
             Free (CL_Args);
@@ -574,6 +609,7 @@ package body Build_Command_Manager is
          end if;
 
          if (not Shadow)
+           and then (not Background)
            and then
             (Dialog = Force_Dialog
               or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
@@ -606,13 +642,18 @@ package body Build_Command_Manager is
             begin
                Full := Expand_Command_Line
                  (Kernel, CL_Mode.all & All_Extra_Args.all,
-                  Server, Force_File, Main, Subdir);
+                  Server, Force_File, Main, Subdir, False, False,
+                  Background_Env);
                Free (Command_Line);
                Free (CL_Mode);
             end;
 
          else
             --  Get the unexpanded command line from the target
+            if Background then
+               Background_Env :=
+                 Create_Extending_Environment (Kernel, Force_File, Server);
+            end if;
 
             declare
                CL      : constant Argument_List :=
@@ -638,11 +679,13 @@ package body Build_Command_Manager is
 
                if All_Extra_Args = null then
                   Full := Expand_Command_Line
-                    (Kernel, CL_Mode.all, Server, Force_File, Main, Subdir);
+                    (Kernel, CL_Mode.all, Server, Force_File, Main,
+                     Subdir, Background, False, Background_Env);
                else
                   Full := Expand_Command_Line
                     (Kernel, CL_Mode.all & All_Extra_Args.all,
-                     Server, Force_File, Main, Subdir);
+                     Server, Force_File, Main, Subdir, Background, False,
+                     Background_Env);
                end if;
 
                Free (CL_Mode);
@@ -672,22 +715,28 @@ package body Build_Command_Manager is
          --  but we need to set the category properly, at least for CodePeer
          --  targets???
 
+         Data := new Build_Callback_Data;
+         Data.Target_Name := To_Unbounded_String (Target_Name);
+         Data.Category_Name := To_Unbounded_String (Error_Category);
+         Data.Mode_Name   := To_Unbounded_String (Mode_Name);
+         Data.Quiet := Quiet;
+         Data.Shadow := Shadow;
+         Data.Background_Env := Background_Env;
+
          if Get_Category (T) = "CodePeer" then
+            Data.Category_Name := To_Unbounded_String ("CodePeer");
             Launch_Build_Command
-              (Kernel, Full.Args, Target_Name, Mode, "CodePeer",
-               Server, Quiet, Shadow,
+              (Kernel, Full.Args, Data, Server,
                Synchronous, Uses_Shell (T), "", Dir);
          else
             if Is_Run (T) then
                Launch_Build_Command
-                 (Kernel, Full.Args, Target_Name, Mode, Error_Category,
-                  Server, Quiet, Shadow,
+                 (Kernel, Full.Args, Data, Server,
                   Synchronous, Uses_Shell (T),
                   "Run: " & GNAT.Directory_Operations.Base_Name (Main), Dir);
             else
                Launch_Build_Command
-                 (Kernel, Full.Args, Target_Name, Mode, Error_Category,
-                  Server, Quiet, Shadow,
+                 (Kernel, Full.Args, Data, Server,
                   Synchronous, Uses_Shell (T), "", Dir);
             end if;
          end if;
@@ -714,13 +763,15 @@ package body Build_Command_Manager is
          begin
             for J in Modes'Range loop
                --  All modes after Modes'First are Shadow modes
-               Launch_For_Mode (Modes (J).all, Quiet, J > Modes'First);
+               Launch_For_Mode
+                 (Modes (J).all, Quiet, J > Modes'First,
+                  Background);
             end loop;
 
             Free (Modes);
          end;
       else
-         Launch_For_Mode (Mode_Name, Quiet, False);
+         Launch_For_Mode (Mode_Name, Quiet, False, Background);
       end if;
    end Launch_Target;
 
@@ -746,6 +797,7 @@ package body Build_Command_Manager is
          Quiet        => Command.Quiet,
          Dialog       => Command.Dialog,
          Synchronous  => False,
+         Background   => False,
          Main         => To_String (Command.Main));
       return Success;
    end Execute;
@@ -825,6 +877,7 @@ package body Build_Command_Manager is
          Quiet       => Command.Quiet,
          Dialog      => Command.Dialog,
          Synchronous => False,
+         Background  => False,
          Main        => Mains.List (Command.Main).Tuple (2).Str);
 
       Free (Mains);

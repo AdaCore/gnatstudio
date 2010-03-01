@@ -240,6 +240,7 @@ package body Builder_Facility_Module.Scripts is
                            Synchronous  => Synchronous,
                            Dialog       => Mode,
                            Main         => Main,
+                           Background   => False,
                            Directory    => Dir);
             Free (Extra_Args);
          end;
@@ -267,6 +268,7 @@ package body Builder_Facility_Module.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Background   => False,
                         Main         => "");
 
          Free (Extra_Args);
@@ -285,6 +287,7 @@ package body Builder_Facility_Module.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Background   => False,
                         Main         => "");
 
          Free (Extra_Args);
@@ -300,6 +303,7 @@ package body Builder_Facility_Module.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Background   => False,
                         Main         => "");
 
       elsif Command = "check_semantic" then
@@ -313,6 +317,7 @@ package body Builder_Facility_Module.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Background   => False,
                         Main         => "");
 
       elsif Command = "get_build_mode" then

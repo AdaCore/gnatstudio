@@ -20,7 +20,6 @@
 with Ada.Strings;                      use Ada.Strings;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Strings.Maps;                 use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 with GNAT.Expect;                      use GNAT.Expect;
@@ -38,7 +37,6 @@ with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
-with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
@@ -52,32 +50,6 @@ with Builder_Facility_Module;          use Builder_Facility_Module;
 package body Commands.Builder is
 
    Shell_Env : constant String := Getenv ("SHELL").all;
-
-   type Build_Callback_Data is new Callback_Data_Record with record
-      Target_Name   : Unbounded_String;
-      --  The name of the target being built
-
-      Mode_Name     : Unbounded_String;
-      --  The name of the mode being built
-
-      Category_Name : Unbounded_String;
-      --  The name of the category for the target
-
-      Quiet : Boolean := False;
-      --  Whether the target should be Quiet.
-      --  A Quiet target does not cause the cursor to jump to the first
-      --  error found. This is useful for builds that occur on saving, or in
-      --  a background mode.
-
-      Shadow : Boolean := False;
-      --  Whether this is a Shadow build
-
-      Buffer : Unbounded_String;
-      --  Stores the incomplete lines returned by the compilation process
-   end record;
-
-   type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
-   overriding procedure Destroy (Data : in out Build_Callback_Data);
 
    -----------------------
    -- Local subprograms --
@@ -208,6 +180,8 @@ package body Commands.Builder is
          To_String (Build_Data.Target_Name),
          To_String (Build_Data.Mode_Name),
          Status);
+
+      Destroy (Build_Data.Background_Env);
    end End_Build_Callback;
 
    --------------------
@@ -420,19 +394,14 @@ package body Commands.Builder is
    procedure Launch_Build_Command
      (Kernel           : GPS.Kernel.Kernel_Handle;
       CL               : Arg_List;
-      Target_Name      : String;
-      Mode_Name        : String;
-      Category_Name    : String := Error_Category;
+      Data             : Build_Callback_Data_Access;
       Server           : Server_Type;
-      Quiet            : Boolean;
-      Shadow           : Boolean;
       Synchronous      : Boolean;
       Use_Shell        : Boolean;
       New_Console_Name : String;
       Directory        : Virtual_File)
    is
       Console  : Interactive_Console;
-      Data     : Build_Callback_Data_Access;
       Success  : Boolean;
       Cmd_Name : Unbounded_String;
       Cb       : Output_Callback;
@@ -443,7 +412,7 @@ package body Commands.Builder is
    begin
       if New_Console_Name /= "" then
          Console := Get_Build_Console
-           (Kernel, Shadow, False, New_Console_Name);
+           (Kernel, Data.Shadow, False, New_Console_Name);
          Cb      := null;
          Exit_Cb := null;
          Show_Output := True;
@@ -453,7 +422,7 @@ package body Commands.Builder is
          Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
 
       else
-         Console := Get_Build_Console (Kernel, Shadow, False);
+         Console := Get_Build_Console (Kernel, Data.Shadow, False);
          Cb      := Build_Callback'Access;
          Exit_Cb := End_Build_Callback'Access;
          Show_Output := False;
@@ -461,34 +430,26 @@ package body Commands.Builder is
          Is_A_Run := False;
       end if;
 
-      if not Shadow
-        and then not Quiet
+      if not Data.Shadow
+        and then not Data.Quiet
       then
          Clear (Console);
          Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
       end if;
 
-      Data := new Build_Callback_Data;
-      Data.Target_Name := To_Unbounded_String (Target_Name);
-      Data.Mode_Name := To_Unbounded_String (Mode_Name);
-      Data.Category_Name := To_Unbounded_String (Category_Name);
-      Data.Quiet := Quiet;
-      Data.Shadow := Shadow;
-
       if Is_A_Run
         or else Compilation_Starting
           (Kernel,
            To_String (Data.Target_Name),
-           Quiet  => Quiet,
-           Shadow => Shadow)
+           Quiet  => Data.Quiet,
+           Shadow => Data.Shadow)
       then
-         Append_To_Build_Output (Kernel, To_Display_String (CL), Shadow);
+         Append_To_Build_Output (Kernel, To_Display_String (CL), Data.Shadow);
 
-         if Mode_Name /= "default" then
-            Cmd_Name := To_Unbounded_String
-              (Target_Name & " (" & Mode_Name & ")");
+         if Data.Mode_Name /= "default" then
+            Cmd_Name := Data.Target_Name & " (" & Data.Mode_Name & ")";
          else
-            Cmd_Name := To_Unbounded_String (Target_Name);
+            Cmd_Name := Data.Target_Name;
          end if;
 
          if Use_Shell
@@ -511,7 +472,7 @@ package body Commands.Builder is
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
-               Show_Exit_Status     => not Shadow);
+               Show_Exit_Status     => not Data.Shadow);
 
          else
             Launch_Process
@@ -530,7 +491,7 @@ package body Commands.Builder is
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
-               Show_Exit_Status     => not Shadow);
+               Show_Exit_Status     => not Data.Shadow);
          end if;
 
          --  ??? check value of Success

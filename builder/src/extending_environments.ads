@@ -41,6 +41,8 @@ package Extending_Environments is
       Source : Virtual_File;
       Server : Server_Type) return Extending_Environment;
    --  Create an extending environment needed to build Source.
+   --  The current Source is copied as-is from the current buffer into the
+   --  extending environment.
    --  This environment should be Destroyed when no longer needed.
 
    procedure Destroy (Env : Extending_Environment);
