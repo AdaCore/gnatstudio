@@ -20,7 +20,7 @@
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 
-with GPS.Kernel.Projects; use GPS.Kernel.Projects;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 
 package body Extending_Environments is
 
@@ -53,7 +53,6 @@ package body Extending_Environments is
    is
       Env : Extending_Environment;
       P : Project_Type;
-      F : Virtual_File;
       W : Writable_File;
 
    begin
@@ -69,10 +68,10 @@ package body Extending_Environments is
       --  Create the project file
       P := Get_Project_From_File (Get_Registry (Kernel).all, Source);
 
-      F := Create_From_Dir
+      Env.Project_File := Create_From_Dir
         (Env.Temporary_Dir, "extends_" & Base_Name (Project_Path (P)));
 
-      W := Write_File (F);
+      W := Write_File (Env.Project_File);
       Write (W, "project Extends_" & Project_Name (P)
              & " extends """
              & (+Project_Path (P).Full_Name.all) & """ is"
@@ -86,7 +85,7 @@ package body Extending_Environments is
             Lib_Directory : Virtual_File;
          begin
             Lib_Directory :=
-              Create_From_Dir (Get_Background_Dir, "lib");
+              Create_From_Dir (Env.Temporary_Dir, "lib");
             if not Is_Directory (Lib_Directory) then
                Make_Dir (Lib_Directory);
             end if;
@@ -98,9 +97,14 @@ package body Extending_Environments is
       Close (W);
 
       --  Create the file
+      Env.File := Create_From_Dir (Env.Temporary_Dir, Base_Name (Source));
+
+      Get_Buffer_Factory (Kernel).Get
+        (Source).Save (Interactive => False,
+                       File        => Env.File,
+                       Internal    => True);
 
       return Env;
-
    end Create_Extending_Environment;
 
    -------------
@@ -111,7 +115,9 @@ package body Extending_Environments is
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      Remove_Dir (Env.Temporary_Dir, Recursive => True, Success => Dummy);
+      if Env.Temporary_Dir /= No_File then
+         Remove_Dir (Env.Temporary_Dir, Recursive => True, Success => Dummy);
+      end if;
    end Destroy;
 
 end Extending_Environments;
