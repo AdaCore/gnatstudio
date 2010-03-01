@@ -718,7 +718,7 @@ package body Build_Command_Manager is
          Data := new Build_Callback_Data;
          Data.Target_Name := To_Unbounded_String (Target_Name);
          Data.Category_Name := To_Unbounded_String (Error_Category);
-         Data.Mode_Name   := To_Unbounded_String (Mode_Name);
+         Data.Mode_Name   := To_Unbounded_String (Mode);
          Data.Quiet := Quiet;
          Data.Shadow := Shadow;
          Data.Background_Env := Background_Env;
