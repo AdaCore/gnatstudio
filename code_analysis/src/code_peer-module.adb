@@ -1189,7 +1189,8 @@ package body Code_Peer.Module is
                   Lock_File.Display_Full_Name);
             end if;
          else
-            Console.Insert (Kernel, -"no lock file to delete.");
+            Console.Insert
+              (Kernel, -"no lock file found: " & Lock_File.Display_Full_Name);
          end if;
       end;
 
