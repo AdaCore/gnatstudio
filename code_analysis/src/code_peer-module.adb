@@ -1903,6 +1903,10 @@ package body Code_Peer.Module is
             Message : constant Code_Peer.Message_Access :=
               Code_Peer.Message_Vectors.Element (Position);
 
+            function Is_Warning (Category : String) return Boolean;
+            --  Return whether the given category belongs to warning-style
+            --  messages (e.g. dead code, unused assignments, ...)
+
             function Probability_Image
               (Message : Code_Peer.Message_Access) return String;
             --  Returns an suitable Image correpsonding to Message's
@@ -1935,22 +1939,36 @@ package body Code_Peer.Module is
                end if;
             end Image;
 
+            ----------------
+            -- Is_Warning --
+            ----------------
+
+            function Is_Warning (Category : String) return Boolean is
+            begin
+               return Category = "dead code"
+                 or else
+                   (Category'Length >= 12
+                    and then
+                      (Category (Category'First .. Category'First + 10)
+                         = "mismatched "
+                       or else Category (Category'First .. Category'First + 10)
+                         = "suspicious "
+                       or else Category (Category'First .. Category'First + 4)
+                         = "test "
+                       or else Category (Category'First .. Category'First + 6)
+                         = "unused "
+                       or else Category (Category'First .. Category'First + 11)
+                         = "unprotected "));
+            end Is_Warning;
+
             -----------------------
             -- Probability_Image --
             -----------------------
 
             function Probability_Image
-              (Message : Code_Peer.Message_Access) return String
-            is
-               Category : String renames Message.Category.Name.all;
+              (Message : Code_Peer.Message_Access) return String is
             begin
-               if Category = "dead code"
-                 or else Category = "test predetermined"
-                 or else Category = "suspicious precondition"
-                 or else (Category'Length >= 17
-                          and then Category
-                            (Category'First .. Category'First + 6) = "unused ")
-               then
+               if Is_Warning (Message.Category.Name.all) then
                   return "warning: ";
                end if;
 
