@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.2
 
+- J302-008 Parenthesis highlighting not working at end of comment
+  Problem: Parenthesis or delimiter highlighting does not work when the
+           cursor is positioned right after a closing delimiter wich is at the
+           end of a comment block.
+  Workaround: Add text at the end of the comment, after the closing delimiter.
+
 - J301-015: Completion of child package lost
   Problem:    In certain cases, the completion loses the knowledge of the 
               relationship between parent and child packages, and doesn't
