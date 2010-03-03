@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2009, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -953,6 +953,7 @@ package body Src_Editor_Buffer is
       Found := 0;
       Delimiter := -1;
       Copy (On_Cursor_Iter, Current);
+      Backward_Char (Current, Success);
 
       if Language /= null
         and then Language /= Unknown_Lang
@@ -961,8 +962,6 @@ package body Src_Editor_Buffer is
          --  The current character is in a comment: set the corresponding flag
          Highlight_Within_Comment := True;
       end if;
-
-      Backward_Char (Current, Success);
 
       if Success then
          C := Get_Char (Current);
