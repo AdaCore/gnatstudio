@@ -99,11 +99,12 @@ package body GPS.Kernel.Messages.Hyperlink is
                  new Hyperlink_Message;
 
    begin
-      Initialize
-        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
       Result.Text  := To_Unbounded_String (Text);
       Result.First := First - Offset;
       Result.Last  := Last - Offset;
+
+      Initialize
+        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
    end Create_Hyperlink_Message;
 
    ----------------

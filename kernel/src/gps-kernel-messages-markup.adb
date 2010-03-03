@@ -96,6 +96,8 @@ package body GPS.Kernel.Messages.Markup is
       Result : constant not null Markup_Message_Access := new Markup_Message;
 
    begin
+      Result.Text := To_Unbounded_String (Text);
+
       Initialize
         (Result,
          Container,
@@ -106,7 +108,6 @@ package body GPS.Kernel.Messages.Markup is
          Weight,
          Actual_Line,
          Actual_Column);
-      Result.Text := To_Unbounded_String (Text);
 
       return Result;
    end Create_Markup_Message;

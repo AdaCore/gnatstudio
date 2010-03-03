@@ -147,6 +147,8 @@ package body GPS.Kernel.Messages.Simple is
         new Simple_Message (Primary);
 
    begin
+      Result.Text := To_Unbounded_String (Text);
+
       Initialize
         (Result,
          Container,
@@ -157,7 +159,6 @@ package body GPS.Kernel.Messages.Simple is
          Weight,
          Actual_Line,
          Actual_Column);
-      Result.Text := To_Unbounded_String (Text);
 
       return Result;
    end Create_Simple_Message;
@@ -179,9 +180,10 @@ package body GPS.Kernel.Messages.Simple is
         new Simple_Message (Secondary);
 
    begin
+      Result.Text := To_Unbounded_String (Text);
+
       Initialize
         (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
-      Result.Text := To_Unbounded_String (Text);
    end Create_Simple_Message;
 
    ---------------------------
