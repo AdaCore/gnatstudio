@@ -79,9 +79,11 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
       Word_End := Word_End + 1;
 
-      while Is_Alphanumeric (Buffer (Word_End))
-        or else Buffer (Word_End) = '_'
-        or else Buffer (Word_End) = '-'
+      while Word_End <= Buffer'Last
+        and then
+          (Is_Alphanumeric (Buffer (Word_End))
+           or else Buffer (Word_End) = '_'
+           or else Buffer (Word_End) = '-')
       loop
          Word_End := Word_End + 1;
       end loop;
