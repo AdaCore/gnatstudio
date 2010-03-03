@@ -667,9 +667,10 @@ package body Ada_Semantic_Tree.Type_Tree is
                            Ref (Dotted_Sb (J));
                         end loop;
                      end;
+
+                     Parent_Info.Children.Insert (Type_Info.Entity);
                   end if;
 
-                  Parent_Info.Children.Insert (Type_Info.Entity);
                   Ref (Type_Info.Entity);
                end if;
             end if;
