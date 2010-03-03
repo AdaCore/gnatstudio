@@ -116,22 +116,24 @@ package body Ada_Semantic_Tree.Type_Tree is
       Tmp : Entity_Persistent_Access;
    begin
       for J in The_Type.Parents'Range loop
-         declare
-            Parent_Info : constant Ada_Type_Access :=
-              Get_Ada_Type (To_Entity_Access (The_Type.Parents (J).Entity));
-         begin
-            if Parent_Info /= null then
-               if Parent_Info.Children.Contains (The_Type.Entity) then
-                  Parent_Info.Children.Delete (The_Type.Entity);
+         if Exists (The_Type.Parents (J).Entity) then
+            declare
+               Parent_Info : constant Ada_Type_Access :=
+                 Get_Ada_Type (To_Entity_Access (The_Type.Parents (J).Entity));
+            begin
+               if Parent_Info /= null then
+                  if Parent_Info.Children.Contains (The_Type.Entity) then
+                     Parent_Info.Children.Delete (The_Type.Entity);
 
-                  --  We just need to decrement the reference counter here, but
-                  --  we don't want to reset the entity. What we really do is
-                  --  to remove the reference from the child list.
-                  Tmp := The_Type.Entity;
-                  Unref (Tmp);
+                     --  We just need to decrement the reference counter here,
+                     --  but we don't want to reset the entity. What we really
+                     --  do is to remove the reference from the child list.
+                     Tmp := The_Type.Entity;
+                     Unref (Tmp);
+                  end if;
                end if;
-            end if;
-         end;
+            end;
+         end if;
       end loop;
 
       Free (The_Type.Parents);
@@ -506,29 +508,31 @@ package body Ada_Semantic_Tree.Type_Tree is
       if Type_Info /= null then
          if This_Unit_Timestamp = Type_Info.Enclosing_Unit_Timestamp then
             for J in Type_Info.Parents'Range loop
-               declare
-                  Parent      : Entity_Access;
-                  Parent_Info : Ada_Type_Access;
-               begin
-                  Parent := To_Entity_Access (Type_Info.Parents (J).Entity);
+               if Exists (Type_Info.Parents (J).Entity) then
+                  declare
+                     Parent      : Entity_Access;
+                     Parent_Info : Ada_Type_Access;
+                  begin
+                     Parent := To_Entity_Access (Type_Info.Parents (J).Entity);
 
-                  if not Is_Excluded (Excluded, Parent) then
-                     Perform_Type_Analyzis_If_Needed (Parent, Excluded);
+                     if not Is_Excluded (Excluded, Parent) then
+                        Perform_Type_Analyzis_If_Needed (Parent, Excluded);
 
-                     Parent_Info := Get_Type_Info (Ada_Type_Key, Parent);
+                        Parent_Info := Get_Type_Info (Ada_Type_Key, Parent);
 
-                     --  If there has been an analysis on this parent since
-                     --  last time, perhaps because of the last call to
-                     --  Perform_Type_Analysis, then we'll have to re-analyze
-                     --  this type as well.
+                        --  If there has been an analysis on this parent since
+                        --  last time, perhaps because of the last call to
+                        --  Perform_Type_Analysis, then we'll have to
+                        --  re-analyze this type as well.
 
-                     if Type_Info.Parents (J).Timestamp
-                       /= Parent_Info.Analysis_Timestamp
-                     then
-                        Do_Analysis := True;
+                        if Type_Info.Parents (J).Timestamp
+                          /= Parent_Info.Analysis_Timestamp
+                        then
+                           Do_Analysis := True;
+                        end if;
                      end if;
-                  end if;
-               end;
+                  end;
+               end if;
             end loop;
          else
             --  If this unit hierarchy has changed, in any case, we'll have
