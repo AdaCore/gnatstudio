@@ -202,6 +202,10 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
             Put (Line'Img & ", " & Column'Img & ASCII.CR);
 
+            if Word_End > Buffer'Last then
+               Word_End := Buffer'Last;
+            end if;
+
             Find_Declaration
               (Db              => Entities_Db,
                File_Name       => File,
