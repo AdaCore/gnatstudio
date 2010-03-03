@@ -31,6 +31,13 @@ if codepeer != "":
       <menu before="About">/Help/CodePeer/CodePeer User's Guide</menu>
     </documentation_file>
 
+    <documentation_file>
+      <name>codepeer_tutorial.html</name>
+      <descr>CodePeer Tutorial</descr>
+      <category>CodePeer</category>
+      <menu before="About">/Help/CodePeer/CodePeer Tutorial</menu>
+    </documentation_file>
+
     <action name="codepeer_example_false_tests" category=""
             show-command="false" output="none">
       <shell>Project.load """ + '"' + example_root + \
