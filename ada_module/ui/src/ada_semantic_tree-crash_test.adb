@@ -46,6 +46,15 @@ with Projects.Registry.Queries;
 
 procedure Ada_Semantic_Tree.Crash_Test is
 
+   Result_File : File_Type;
+
+   procedure Log (Str : String);
+
+   procedure Log (Str : String) is
+   begin
+      Put (Result_File, Str);
+   end Log;
+
    procedure Project_Error (Msg : String);
 
    New_Registry : aliased Project_Registry;
@@ -58,8 +67,6 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Index      : in out Natural;
       Word_Begin : out Natural;
       Word_End   : out Natural);
-
-   Result_File : File_Type;
 
    procedure Analyze_File (File : Virtual_File);
 
@@ -75,6 +82,11 @@ procedure Ada_Semantic_Tree.Crash_Test is
    begin
       Word_Begin := Index;
       Skip_Blanks (Buffer.all, Word_Begin);
+
+      if Word_Begin < Buffer'Last and then Buffer (Word_Begin) = '.' then
+         Word_Begin := Word_Begin + 1;
+      end if;
+
       Word_End := Word_Begin;
 
       Word_End := Word_End + 1;
@@ -121,7 +133,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Put ("PHANTOM =" & R.Phantom'Img & ", ");
       Put ("EXCEPTIONS =" & R.Exc'Img & ", ");
       Put ("RESOLUTION = ");
-      F_IO.Put (Float (R.Match) / Float (Total) * 100.0, Exp => 0);
+      F_IO.Put (Float (R.Match) / Float (Total) * 100.0, Exp => 0, Aft => 2);
       Put ("%}");
    end Print;
 
@@ -164,9 +176,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
          end if;
       end "=";
 
-      procedure Put_Entity (E : Entity_Information);
+      procedure Log_Entity (E : Entity_Information);
 
-      procedure Put_Entity (E : Entity_Information) is
+      procedure Log_Entity (E : Entity_Information) is
          ALI_Decl : File_Location;
          ALI_File : Source_File;
       begin
@@ -176,16 +188,16 @@ procedure Ada_Semantic_Tree.Crash_Test is
          Put (Result_File, "E[");
 
          if ALI_File /= null then
-            Put (Result_File,
-                 String (Base_Name (Get_Filename (Get_File (ALI_Decl)))));
+            Log (String (Base_Name (Get_Filename (Get_File (ALI_Decl)))));
          else
-            Put (Result_File, "<null>");
+            Log ("<null>");
          end if;
 
-         Put
-           (Result_File, ":" & Get_Line (ALI_Decl)'Img
+         Log
+           (":" & Get_Line (ALI_Decl)'Img
             & ":" & Get_Column (ALI_Decl)'Img & "]");
-      end Put_Entity;
+      end Log_Entity;
+
    begin
       File_Node := Get_Or_Create (Construct_Db, File);
       Buffer := Get_Buffer (File_Node);
@@ -230,9 +242,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
             then
                Local_Result.Phantom := Local_Result.Phantom + 1;
 
-               Put_Line
-                 (Result_File,
-                  +Base_Name (File) & ":" & Line'Img & ":"
+               Log
+                 ("[" & Buffer (Word_Begin .. Word_End) & "] "
+                  & String (Base_Name (File)) & ":" & Line'Img & ":"
                   & Column'Img & ":E[null],C["
                   & String
                     (Base_Name (Get_File_Path (Get_File (Construct_Entity))))
@@ -240,30 +252,30 @@ procedure Ada_Semantic_Tree.Crash_Test is
                   & Get_Construct
                     (Construct_Entity).Sloc_Entity.Line'Img & ":"
                   & Get_Construct
-                    (Construct_Entity).Sloc_Entity.Column'Img & "]");
+                    (Construct_Entity).Sloc_Entity.Column'Img & "]"
+                  & ASCII.LF);
             elsif Construct_Entity = Null_Entity_Access then
                Local_Result.Unknown := Local_Result.Unknown + 1;
 
-               Put
-                 (Result_File,
-                  +Base_Name (File) & ":" & Line'Img & ":"
+               Log
+                 ("[" & Buffer (Word_Begin .. Word_End) & "] "
+                  & String (Base_Name (File)) & ":" & Line'Img & ":"
                   & Column'Img & ":");
-               Put_Entity (ALI_Entity);
-               Put (Result_File, ",C[null]");
-               New_Line (Result_File);
+               Log_Entity (ALI_Entity);
+               Log (",C[null]");
+               Log ((1 => ASCII.LF));
             else
                if ALI_Entity = Construct_Entity then
                   Local_Result.Match := Local_Result.Match + 1;
                else
                   Local_Result.Diff := Local_Result.Diff + 1;
 
-                  Put
-                    (Result_File,
-                     String (Base_Name (File)) & ":" & Line'Img & ":"
+                  Log
+                    ("[" & Buffer (Word_Begin .. Word_End) & "] "
+                     & String (Base_Name (File)) & ":" & Line'Img & ":"
                      & Column'Img & ":");
-                  Put_Entity (ALI_Entity);
-                  Put (Result_File,
-                       "C["
+                  Log_Entity (ALI_Entity);
+                  Log (",C["
                     & String
                       (Base_Name
                          (Get_File_Path (Get_File (Construct_Entity)))) & ":"
@@ -271,7 +283,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
                       (Construct_Entity).Sloc_Entity.Line'Img & ":"
                     & Get_Construct
                       (Construct_Entity).Sloc_Entity.Column'Img & "]");
-                  New_Line (Result_File);
+                  Log ((1 => ASCII.LF));
                end if;
             end if;
          exception
@@ -309,6 +321,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
    Loaded, Success : Boolean;
 
    Max_Files : Integer := -1;
+   File_To_Analyze : Virtual_File;
    Files_Analyzed : Integer := 0;
    Handler : Language_Handler;
 
@@ -329,6 +342,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
       GNAT.OS_Lib.Free (Gnatls_Args);
    end Compute_Predefined_Paths;
+
 begin
    Projects.Registry.Initialize;
 
@@ -372,47 +386,69 @@ begin
       Lock : Construct_Heuristics_Lock :=
         Lock_Construct_Heuristics (Entities_Db);
       Files     : constant GNATCOLL.VFS.File_Array_Access :=
-                    Get_Source_Files (Get_Root_Project (New_Registry), True);
+        Get_Source_Files (Get_Root_Project (New_Registry), True);
+      Predef_File : constant GNATCOLL.VFS.File_Array :=
+        Get_Predefined_Source_Files (New_Registry);
       File_Node : Structured_File_Access;
 
       pragma Unreferenced (File_Node);
    begin
       --  First, generate the whole database
       Clear (Construct_Db);
+
+      for J in Predef_File'Range loop
+         File_Node := Get_Or_Create (Construct_Db, Predef_File (J));
+      end loop;
+
       for J in Files.all'Range loop
-         File_Node := Get_Or_Create (Construct_Db, Files.all (J));
+         File_Node := Get_Or_Create (Construct_Db, Files (J));
       end loop;
 
       --  Then, execute the tests
 
       if Argument_Count > 1 then
-         Max_Files := Integer'Value (Argument (2));
+         begin
+            Max_Files := Integer'Value (Argument (2));
+         exception
+            when others =>
+               --  In this case, the argument is most probably a file
+
+               File_To_Analyze := Create
+                 (Filesystem_String (Argument (2)), New_Registry);
+         end;
       end if;
 
-      for J in Files.all'Range loop
+      if File_To_Analyze = No_File then
+         for J in Files.all'Range loop
+            Put
+              ("-------------------- "
+               & String (Base_Name (Files.all (J))));
+
+            Put (J'Img & " /");
+
+            if Max_Files = -1 then
+               Put (Files.all'Last'Img);
+            else
+               Put (Max_Files'Img);
+            end if;
+
+            New_Line;
+
+            if Handler.Get_Language_From_File (Files.all (J)) = Ada_Lang then
+               Analyze_File (Files.all (J));
+               Files_Analyzed := Files_Analyzed + 1;
+            end if;
+
+            if Files_Analyzed = Max_Files then
+               exit;
+            end if;
+         end loop;
+      else
          Put
            ("-------------------- "
-            & String (Base_Name (Files.all (J))));
-
-         Put (J'Img & " /");
-
-         if Max_Files = -1 then
-            Put (Files.all'Last'Img);
-         else
-            Put (Max_Files'Img);
-         end if;
-
-         New_Line;
-
-         if Handler.Get_Language_From_File (Files.all (J)) = Ada_Lang then
-            Analyze_File (Files.all (J));
-            Files_Analyzed := Files_Analyzed + 1;
-         end if;
-
-         if Files_Analyzed = Max_Files then
-            exit;
-         end if;
-      end loop;
+            & String (Base_Name (File_To_Analyze)));
+         Analyze_File (File_To_Analyze);
+      end if;
 
       Lock.Unlock_Construct_Heuristics;
    end;
