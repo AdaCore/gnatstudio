@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -159,8 +159,12 @@ package body Annotations is
    procedure Free_Annotation
      (Container : Annotation_Container; Key : Annotation_Key) is
    begin
-      Free (Container.Annotations (Key));
-      Container.Annotations (Key) := Null_Annotation;
+      if Container.Annotations /= null
+        and then Key in Container.Annotations'Range
+      then
+         Free (Container.Annotations (Key));
+         Container.Annotations (Key) := Null_Annotation;
+      end if;
    end Free_Annotation;
 
    ----------

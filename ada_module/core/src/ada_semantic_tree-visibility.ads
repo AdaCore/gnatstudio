@@ -81,12 +81,21 @@ package Ada_Semantic_Tree.Visibility is
    --  Note that getting access to that entity may require additional use or
    --  with clases, or prefix.
 
+   function Is_Visible_From_Clauses
+     (Entity         : Entity_Access;
+      From_Visiblity : Visibility_Context) return Boolean;
+   --  Return true if the entity given in parameter is visible according to the
+   --  visibility given in parameter.
+
    type Clause_Iterator is private;
 
-   function To_Use_Clause_Iterator
-     (Visibility_Info : Visibility_Context) return Clause_Iterator;
+   function To_Clause_Iterator
+     (Visibility_Info : Visibility_Context;
+      Category        : Language_Category) return Clause_Iterator;
    --  Create a iterator looking at all the use clauses from the context given
-   --  in parameter.
+   --  in parameter. Category can be either Cat_Use
+   --  (retreiving all use clauses), Cat_With (retreiving all with clauses) or
+   --  Cat_Unknown (retreiving both)
 
    function Is_Valid (This : Clause_Iterator) return Boolean;
    --  Return true if the iterator either point to a valid node, or is at end.
@@ -98,16 +107,22 @@ package Ada_Semantic_Tree.Visibility is
    function At_End (This : Clause_Iterator) return Boolean;
    --  Return true if the iterator is before the first clause
 
+   function Get_Entity (This : Clause_Iterator) return Entity_Access;
+   --  Return the entity pointed by this clause
+
    function Resolve_Package (This : Clause_Iterator) return Entity_Access;
    --  Computes the package name corresponding to the clause pointed by the
    --  iterator.
+
+   function Resolve_Clause (Entity : Entity_Access) return Entity_Access;
+   --  If the entity is a use or a with clause, return the corresponding
+   --  withed or used entity.
 
 private
 
    type Clause_Iterator is record
       Current   : Entity_Access;
-      Last_Unit : Entity_Access;
-      --  ??? We currently don't look in parent packages, but should...
+      Category  : Language_Category;
    end record;
 
 end Ada_Semantic_Tree.Visibility;

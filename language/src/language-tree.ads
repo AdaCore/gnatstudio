@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Annotations;
+with Ada.Unchecked_Deallocation;
 
 package Language.Tree is
 
@@ -112,6 +113,18 @@ package Language.Tree is
 
    type Category_Array is array (Natural range <>) of Language_Category;
    Null_Category_Array : Category_Array (1 .. 0) := (others => Cat_Unknown);
+
+   type Category_Array_Access is access all Category_Array;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Category_Array, Category_Array_Access);
+
+   function Is_In_Category
+     (Construct : Simple_Construct_Information; Categories : Category_Array)
+      return Boolean;
+   --  Return true if the construct category matches one of the category listed
+   --  in the array. If the array is empty, then will always return True (means
+   --  that we don't care about the category).
 
    type Position_Type is (Start_Construct, Start_Name);
 
@@ -250,6 +263,9 @@ package Language.Tree is
    function Get_Parent_Index (It : Construct_Tree_Iterator) return Integer;
    --  Return the index of the parent iterator in the list of ordered
    --  constructs of the tree, 0 if null iterator.
+
+   function To_String (It : Construct_Tree_Iterator) return String;
+   --  Return a string version of the iterator, for debugging purposes.
 
    --------------------------
    -- Composite_Identifier --

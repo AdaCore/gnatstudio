@@ -69,7 +69,13 @@ package Ada_Semantic_Tree.Units is
       Is_Partial : Boolean) return Unit_Iterator;
    --  Return an iterator iterating over all the units of a given name,
    --  project-wise. If Is_Partial is true, all units starting with the given
-   --  name will be iterated over.
+   --  name will be iterated over. The name of the unit is the name of the
+   --  package, without the dots.
+
+   function Get_Unit
+     (Db : Construct_Database_Access; Name : String) return Unit_Access;
+   --  Return the unit of the given name - which may include dots if it's a
+   --  child unit.
 
    function Get_Units
      (File : Structured_File_Access) return Unit_Iterator;

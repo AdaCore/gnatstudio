@@ -511,9 +511,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
       Clear (Visibility.all);
 
-      if Construct_At_Location = Null_Construct_Tree_Iterator
-        or else Unit_At_Location = Null_Unit_Access
-      then
+      if Unit_At_Location = Null_Unit_Access then
          --  If there is no enclosing construct or enclosing unit, there is
          --  no local construct to be found - return an empty array.
 
@@ -575,8 +573,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
               and then Get_Construct (It).Is_Declaration
               and then
                 (Is_Compilation_Unit (It)
-                 or else Unchecked_Is_In_Scope
-                   (Parts_Assistant, Current_Entity, Entity_At_Location))
+                 or else
+                   (Entity_At_Location /= Null_Entity_Access
+                    and then Unchecked_Is_In_Scope
+                      (Parts_Assistant, Current_Entity, Entity_At_Location)))
             then
                --  We jump into in several cases:
                --    we are on the same direct scope hierarchy

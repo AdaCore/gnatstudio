@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with String_Utils;           use String_Utils;
 
@@ -281,6 +280,28 @@ package body Language.Tree is
    begin
       return Iter.Node.Construct'Access;
    end Get_Construct;
+
+   --------------------
+   -- Is_In_Category --
+   --------------------
+
+   function Is_In_Category
+     (Construct : Simple_Construct_Information; Categories : Category_Array)
+      return Boolean
+   is
+   begin
+      if Categories'Length = 0 then
+         return True;
+      end if;
+
+      for J in Categories'Range loop
+         if Construct.Category = Categories (J) then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Is_In_Category;
 
    ----------------------
    -- Get_Child_Number --
@@ -704,6 +725,10 @@ package body Language.Tree is
          return Iter2 = Null_Construct_Tree_Iterator;
       end if;
 
+      if Iter2 = Null_Construct_Tree_Iterator then
+         return False;
+      end if;
+
       if ((Iter1.Node.Construct.Name = null
            and then Iter2.Node.Construct.Name = null)
           or else not
@@ -720,6 +745,8 @@ package body Language.Tree is
          elsif Iter1.Node.Parent_Index = 0
            and then Iter2.Node.Parent_Index /= 0
          then
+            return False;
+         elsif Iter2.Node.Parent_Index = 0 then
             return False;
          else
             return Is_Same_Entity
@@ -897,6 +924,26 @@ package body Language.Tree is
    begin
       return It.Node.Parent_Index;
    end Get_Parent_Index;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (It : Construct_Tree_Iterator) return String is
+      Name    : access String;
+      No_Name : aliased String := "";
+   begin
+      if It.Node.Construct.Name = null then
+         Name := No_Name'Access;
+      else
+         Name := It.Node.Construct.Name;
+      end if;
+
+      return Name.all & "(" & It.Node.Construct.Category'Img & ")"
+        & " @" & It.Index'Img
+        & "[" & It.Node.Construct.Sloc_Start.Line'Img
+        & "," & It.Node.Construct.Sloc_Start.Column'Img & "]";
+   end To_String;
 
    ---------
    -- "=" --

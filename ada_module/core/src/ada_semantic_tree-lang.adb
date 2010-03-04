@@ -1017,26 +1017,49 @@ package body Ada_Semantic_Tree.Lang is
       return Result;
    end Forward_Expression;
 
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
    overriding function Find_Declaration
      (Lang     : access Ada_Tree_Language;
       File     : Structured_File_Access;
       Line     : Integer;
       Column   : String_Index_Type) return Entity_Access
    is
-      pragma Unreferenced (Lang);
+      Offset : String_Index_Type;
 
-      List : Entity_List := Find_Declarations
-        (Context =>
-           (From_File,
-            File,
-            Forward_Expression
-              (Get_Buffer (File).all,
-               Get_Offset_Of_Line (File, Line) + Column - 1)));
+      List : Entity_List;
 
-      It     : Entity_Iterator := First (List);
+      It     : Entity_Iterator;
       View   : Entity_View;
       Result : Entity_Access := Null_Entity_Access;
+
+      Decl_Construct : Construct_Tree_Iterator;
    begin
+      --  First, check if we're already on a declaration
+
+      Decl_Construct := Get_Iterator_At
+        (Tree      => Get_Tree (File),
+         Location  => To_Location (Line, Column),
+         From_Type => Start_Name);
+
+      if Decl_Construct /= Null_Construct_Tree_Iterator then
+         return Lang.Get_Declaration (To_Entity_Access (File, Decl_Construct));
+      end if;
+
+      --  Otherwise, we're on a reference. Launch a use-seneitive search
+
+      Offset := Forward_Expression
+        (Get_Buffer (File).all,
+         Get_Offset_Of_Line (File, Line) + Column - 1);
+
+      List := Find_Declarations
+        (Context         => (From_File, File, Offset),
+         From_Visibility => (File, Offset, Everything, Use_Visible));
+
+      It := First (List);
+
       if not At_End (It) then
          View := Get_View (It);
 

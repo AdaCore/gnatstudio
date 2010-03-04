@@ -62,7 +62,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
             declare
                It            : Clause_Iterator :=
-                 To_Use_Clause_Iterator (From_Visibility);
+                 To_Clause_Iterator (From_Visibility, Cat_Use);
                Entity        : Entity_Access;
                Instance_Info : Generic_Instance_Information;
                Gen_Package   : Entity_Access;

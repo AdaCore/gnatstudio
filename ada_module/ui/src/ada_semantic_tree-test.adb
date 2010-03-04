@@ -108,8 +108,6 @@ procedure Ada_Semantic_Tree.Test is
 
          declare
             Visibility : Visibility_Confidence := Public_Library_Visible;
-            pragma Unreferenced (Visibility);
-            --  ??? This visibility parameter is currenty not used.
             List : Entity_List;
             It : Entity_Iterator;
             Construct : access Simple_Construct_Information;
@@ -125,7 +123,11 @@ procedure Ada_Semantic_Tree.Test is
 
             List := Find_Declarations
               ((From_File, File, String_Index_Type (Looked_Offset)),
-               From_Visibility   => Null_Visibility_Context,
+               From_Visibility   =>
+                 (File,
+                  String_Index_Type (Looked_Offset),
+                  Everything,
+                  Visibility),
                Expression        => Null_Parsed_Expression,
                Categories        => Null_Category_Array,
                Is_Partial        => False);

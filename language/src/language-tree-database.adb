@@ -1449,6 +1449,39 @@ package body Language.Tree.Database is
       return Get_Construct (Entity.It);
    end Get_Construct;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Entity : Entity_Access) return String is
+   begin
+      if Entity = Null_Entity_Access then
+         return "[null]";
+      else
+         return To_String
+           (Entity.It) & " from " & String (Full_Name (Entity.File.File).all);
+      end if;
+   end To_String;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (Scope : Entity_Access; Entity : Entity_Access) return Boolean
+   is
+   begin
+      if Scope.File = Entity.File then
+         declare
+            Tree : constant Construct_Tree := Get_Tree (Scope.File);
+         begin
+            return Encloses (Tree, Scope.It, Entity.It);
+         end;
+      else
+         return False;
+      end if;
+   end Contains;
+
    ----------
    -- Free --
    ----------

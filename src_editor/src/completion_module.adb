@@ -420,7 +420,7 @@ package body Completion_Module is
                Line_Information (Context),
                Column_Information (Context)),
             Everything,
-            Use_Visible);
+            Public_Library_Visible);
 
          Entity_View_Dialog
            (Kernel,

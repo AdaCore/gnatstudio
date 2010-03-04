@@ -600,26 +600,11 @@ package body Entities.Queries is
                  File => Source.Name);
 
             Result    : Entity_Access;
-            Construct : Construct_Tree_Iterator;
          begin
             Update_Contents (S_File);
 
-            Construct := Get_Iterator_At
-              (Tree      => Get_Tree (S_File),
-               Location  => To_Location
-                 (Line,
-                  To_Line_String_Index (S_File, Line, Column)),
-               From_Type => Start_Name);
-
-            if Construct /= Null_Construct_Tree_Iterator then
-               --  We're already on a construct
-               Result := Tree_Lang.Get_Declaration
-                 (To_Entity_Access (S_File, Construct));
-            else
-               --  Otherwise, search the corresponding declaration
-               Result := Tree_Lang.Find_Declaration
-                 (S_File, Line, To_Line_String_Index (S_File, Line, Column));
-            end if;
+            Result := Tree_Lang.Find_Declaration
+              (S_File, Line, To_Line_String_Index (S_File, Line, Column));
 
             if Result /= Null_Entity_Access then
                --  First, try to see if there's already a similar entity in

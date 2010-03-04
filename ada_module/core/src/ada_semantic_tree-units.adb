@@ -19,6 +19,8 @@
 
 with System; use System;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with GNAT.Strings; use GNAT.Strings;
 
 with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
@@ -165,6 +167,69 @@ package body Ada_Semantic_Tree.Units is
 
       return It;
    end Get_Units;
+
+   --------------
+   -- Get_Unit --
+   --------------
+
+   function Get_Unit
+     (Db : Construct_Database_Access; Name : String) return Unit_Access
+   is
+      Id : constant Composite_Identifier :=
+        To_Composite_Identifier (To_Lower (Name));
+
+      Unit_It   : Unit_Iterator;
+      Root_Unit : Unit_Access;
+
+      function Get_Child
+        (Parent : Unit_Access; Index : Integer) return Unit_Access;
+
+      function Get_Child
+        (Parent : Unit_Access; Index : Integer) return Unit_Access
+      is
+         Cur : Persistent_Entity_List.Cursor;
+         Child_U : Unit_Access;
+      begin
+         if Index > Length (Id) then
+            return Parent;
+         end if;
+
+         Cur := Parent.Children_Units.First;
+
+         while Cur /= Persistent_Entity_List.No_Element loop
+            Child_U := Get_Unit_Access (To_Entity_Access (Element (Cur)));
+
+            if To_Lower (Get_Item (Child_U.Name.all, Index))
+              = Get_Item (Id, Index)
+            then
+               return Get_Child (Child_U, Index + 1);
+            end if;
+
+            Cur := Next (Cur);
+         end loop;
+
+         return Null_Unit_Access;
+      end Get_Child;
+
+   begin
+      if Length (Id) = 0 then
+         return Null_Unit_Access;
+      end if;
+
+      Unit_It := Get_Units (Db, Get_Item (Id, 1), False);
+
+      while not At_End (Unit_It) loop
+         Root_Unit := Get (Unit_It);
+
+         if Length (Root_Unit.Name.all) = 1
+           and then Get_Construct (Get_Entity (Root_Unit)).Is_Declaration
+         then
+            return Get_Child (Root_Unit, 2);
+         end if;
+      end loop;
+
+      return Null_Unit_Access;
+   end Get_Unit;
 
    ---------------
    -- Get_Units --

@@ -341,16 +341,41 @@ package body Ada_Semantic_Tree.Declarations is
          begin
             Potential_Entity := Get (It.Db_Iterator);
 
-            return
-              (It.From_Visibility.Min_Visibility_Confidence
-               < Public_Library_Visible
-               or else Is_Public_Library_Visible (Potential_Entity))
-              and then
-            not Is_In_Parents
+            if not Is_Public_Library_Visible (Potential_Entity) then
+               --  We don't return entities that are not public library visible
+               --  in the case of database searches.
+
+               return False;
+            end if;
+
+            if Is_In_Parents
               (Get_Owning_Unit (Potential_Entity), It.First_Unit)
-              and then not Is_Hidden
-                (It.Hidden_Entities,
-                 Get_Construct (Potential_Entity).Name.all);
+            then
+               --  Entities in the parents of the owning entity have already
+               --  been returned.
+
+               return False;
+            end if;
+
+            if Is_Hidden
+              (It.Hidden_Entities,
+               Get_Construct (Potential_Entity).Name.all)
+            then
+               --  Entities hiddent by things founds in the parent are not
+               --  displayed.
+
+               return False;
+            end if;
+
+            case It.From_Visibility.Min_Visibility_Confidence is
+               when Use_Visible | With_Visible =>
+                  return Is_Visible_From_Clauses
+                    (Potential_Entity, It.From_Visibility);
+
+               when others =>
+                  return True;
+
+            end case;
          end;
       end if;
 
@@ -379,7 +404,7 @@ package body Ada_Semantic_Tree.Declarations is
       case It.Stage is
          when File_Hierarchy =>
             Declaration := new Declaration_View_Record'
-              (Confidence      => Public_Library_Visible,
+              (Confidence      => It.From_Visibility.Min_Visibility_Confidence,
                Entity          => It.Visible_Constructs (It.Visible_Index),
                Is_All          => False,
                From_Prefixed   => False,
@@ -399,7 +424,7 @@ package body Ada_Semantic_Tree.Declarations is
 
          when Database =>
             return new Declaration_View_Record'
-              (Confidence    => Public_Library_Visible,
+              (Confidence    => It.From_Visibility.Min_Visibility_Confidence,
                Entity        => To_Entity_Access
                  (Get_File (It.Db_Iterator), Get_Construct (It.Db_Iterator)),
                Is_All        => False,
@@ -525,13 +550,15 @@ package body Ada_Semantic_Tree.Declarations is
                   Prefix  => Id.all,
                   Context => (others => True),
                   Result  => Tmp);
-            else
+            elsif Previous_Declaration /= Null_Entity_View then
                Fill_Children
                  (E               => Previous_Declaration,
                   Name            => Id.all,
                   Is_Partial      => Partial_Id,
                   From_Visibility => Actual_From_Visibility,
                   Result          => Tmp);
+            else
+               return;
             end if;
 
             if Next (Token) = Token_List.Null_Node then

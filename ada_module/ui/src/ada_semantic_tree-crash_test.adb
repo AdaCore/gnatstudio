@@ -83,9 +83,11 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Word_Begin := Index;
       Skip_Blanks (Buffer.all, Word_Begin);
 
-      if Word_Begin < Buffer'Last and then Buffer (Word_Begin) = '.' then
+      while Word_Begin < Buffer'Last
+        and then not Is_Alphanumeric (Buffer (Word_Begin))
+      loop
          Word_Begin := Word_Begin + 1;
-      end if;
+      end loop;
 
       Word_End := Word_Begin;
 
@@ -447,6 +449,9 @@ begin
          Put
            ("-------------------- "
             & String (Base_Name (File_To_Analyze)));
+
+         New_Line;
+
          Analyze_File (File_To_Analyze);
       end if;
 

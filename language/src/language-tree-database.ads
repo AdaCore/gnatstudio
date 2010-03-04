@@ -319,6 +319,13 @@ package Language.Tree.Database is
      (Entity : Entity_Access) return access Simple_Construct_Information;
    --  Return the construct information referenced by this entity.
 
+   function To_String (Entity : Entity_Access) return String;
+   --  Return a string version of the entity, for debugging purposes.
+
+   function Contains
+     (Scope : Entity_Access; Entity : Entity_Access) return Boolean;
+   --  Return true if the scope given in parameter contains the entity.
+
    ------------------------
    -- Construct_Database --
    ------------------------
