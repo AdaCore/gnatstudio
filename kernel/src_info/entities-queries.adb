@@ -37,9 +37,6 @@ with String_Utils;              use String_Utils;
 with Traces;
 with Ada.Containers; use Ada.Containers;
 with Entities.Construct_Assistant; use Entities.Construct_Assistant;
---  with Ada.Text_IO; use Ada.Text_IO;
-
---  with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
 
 package body Entities.Queries is
 
