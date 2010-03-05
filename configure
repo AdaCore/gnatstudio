@@ -4126,7 +4126,7 @@ case "${host}" in
 	CAN_OUTPUT=False
 	TARGET_LFLAGS='("-luser32", "-lcomdlg32", "-mwindows", "-Wl,--stack=0x5000000")'
 	COLOR_SELECTION="#BEBEBE"
-	EXEC_COMMAND="cmd /c start"
+	EXEC_COMMAND="cmd /c start gps_run.cmd"
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	PRINT_CMD=""
