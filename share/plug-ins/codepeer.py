@@ -102,9 +102,29 @@ if codepeer != "":
       </menu>
     </submenu>
 
+    <target-model name="generate_scil" category="">
+       <description>Generate SCIL files for CodePeer</description>
+       <command-line>
+          <arg>%gnatmake</arg>
+          <arg>-d</arg>
+          <arg>%eL</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+       <icon>gps-build-all</icon>
+       <switches command="%(tool_name)s" columns="1" lines="1">
+         <title column="1" line="1" >Compilation</title>
+         <check label="Progress bar" switch="-d" column="1"
+                tip="Display a progress bar with information about how many files are left to be compiled" />
+         <check label="Ignore representation clauses" switch="-gnatI" column="1"
+                tip="Ignore all representation clauses, useful for generating SCIL for another architecture" />
+       </switches>
+    </target-model>
+
     <builder-mode name="codepeer">
       <description>Build SCIL for code review</description>
       <subdir>codepeer</subdir>
+      <supported-model>generate_scil</supported-model>
       <supported-model>builder</supported-model>
       <supported-model>gnatmake</supported-model>
       <supported-model>gprbuild</supported-model>
@@ -173,14 +193,14 @@ if codepeer != "":
        </switches>
     </target-model>
 
-    <target model="builder" category="CodePeer" name="Generate SCIL">
+    <target model="generate_scil" category="CodePeer" name="Generate SCIL">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>%builder</arg>
+          <arg>%gnatmake</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
