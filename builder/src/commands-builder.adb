@@ -433,7 +433,10 @@ package body Commands.Builder is
       if not Data.Shadow
         and then not Data.Quiet
       then
-         Clear (Console);
+         if Is_A_Run then
+            Clear (Console);
+         end if;
+
          Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
       end if;
 
