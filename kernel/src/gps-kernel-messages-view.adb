@@ -116,7 +116,6 @@ package body GPS.Kernel.Messages.View is
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager));
       Kernel.Locations_View_Manager := To_Address (Manager);
-      Do_Not_Goto_First_Location (Kernel);
    end Register;
 
    ----------------
