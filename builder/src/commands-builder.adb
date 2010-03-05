@@ -437,7 +437,8 @@ package body Commands.Builder is
             Clear (Console);
          end if;
 
-         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console),
+                      Give_Focus => Is_A_Run);
       end if;
 
       if Is_A_Run
