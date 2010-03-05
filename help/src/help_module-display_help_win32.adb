@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,9 +50,17 @@ is
          Nshowcmd     : Integer := SW_SHOW) return Long_Integer;
       pragma Import (Stdcall, ShellExecute, "ShellExecuteA");
 
+      Result : Long_Integer;
    begin
-      return ShellExecute
-        (System.Null_Address, "open" & ASCII.NUL, File & ASCII.NUL) > 32;
+      Result := ShellExecute
+        (System.Null_Address, "open" & ASCII.NUL, File & ASCII.NUL);
+
+      if Result <= 32 then
+         Trace (Me, "ShellExecute failed:" & Long_Integer'Image (Result));
+         return False;
+      else
+         return True;
+      end if;
    end Shell_Open;
 
    ---------------------------
