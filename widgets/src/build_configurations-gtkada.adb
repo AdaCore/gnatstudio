@@ -749,8 +749,6 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 2,
                  Xoptions      => Expand or Fill);
 
-         Pack_Start (Main_Hbox, Options_Frame, True, True, 3);
-
          --  Initialize the options
 
          Set_Active (Box.Launch_Combo,
