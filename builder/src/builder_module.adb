@@ -514,18 +514,18 @@ package body Builder_Module is
          Module_Name => "Builder",
          Priority    => Default_Priority);
 
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
+
       Register_Menu
         (Kernel, Build_Menu, -"Recompute _Xref info", "",
-         On_Compute_Xref'Access, Ref_Item => -"Settings", Add_Before => False);
+         On_Compute_Xref'Access, Ref_Item => -"Settings");
       Register_Menu
         (Kernel, Build_Menu, -"Load Xref info in memory", "",
-         On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings",
-         Add_Before => False);
+         On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings");
 
       Gtk_New (Mitem);
-      Register_Menu
-        (Kernel, Build_Menu, Mitem,
-         Ref_Item => -"Settings", Add_Before => False);
+      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Tools, Mitem);

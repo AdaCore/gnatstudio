@@ -1622,7 +1622,7 @@ package body Builder_Facility_Module is
                         Stock_Image => Get_Icon (Target),
                         Callback    => null,
                         Command     => Interactive_Command_Access (C),
-                        Ref_Item    => -"Settings",
+                        Ref_Item    => -"Run",
                         --  Do not use mnemonics if we are registering a
                         --  main, as this is a file name in this case.
                         Mnemonics   => Main = "");
@@ -1646,13 +1646,7 @@ package body Builder_Facility_Module is
       if not Toplevel_Menu then
          Append (Cat_Path, Category);
 
-         --  Find the menu for the category
-         if Find_Menu_Item
-           (Get_Kernel,
-            Strip_Single_Underscores (To_String (Cat_Path))) = null
-         then
-            --  We have not found a menu item: this means we are about to
-            --  create it, so add it to the list of menu items
+         if not Builder_Module_ID.Menus.Contains (Cat_Path) then
             Builder_Module_ID.Menus.Append (Cat_Path);
          end if;
       end if;
@@ -1720,13 +1714,23 @@ package body Builder_Facility_Module is
       while Has_Element (C) loop
          --  Find_Menu_Item expects menu names stripped of their underscores,
          --  so call Strip_Single_Underscore here.
-         M := Find_Menu_Item
-           (Get_Kernel,
-            Strip_Single_Underscores (To_String (Element (C))));
+         declare
+            Menu_Name : constant String :=
+              Strip_Single_Underscores (To_String (Element (C)));
+         begin
+            M := Find_Menu_Item (Get_Kernel, Menu_Name);
 
-         if M /= null then
-            Destroy (M);
-         end if;
+            if M /= null then
+               --  Always keep /Build/Run in place to have a menu item to
+               --  reference when inserting new items.
+
+               if Menu_Name = -"/Build/Run" then
+                  Remove_Submenu (M);
+               else
+                  Destroy (M);
+               end if;
+            end if;
+         end;
 
          Next (C);
       end loop;
@@ -2185,6 +2189,7 @@ package body Builder_Facility_Module is
       --  Register the menus
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
+      Register_Menu (Kernel, Main_Menu & (-"_Run"));
       Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
                      On_Build_Manager'Access);
 
