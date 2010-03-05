@@ -1504,6 +1504,8 @@ package body Builder_Facility_Module is
                                Name & ": " & Mains.List (1).Tuple (1).Str);
                end if;
 
+               Set_Name (Widget, "toolbar_button_" & Name);
+
                String_Callback.Connect
                  (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
                   On_Button_Or_Menu_Click'Access,
