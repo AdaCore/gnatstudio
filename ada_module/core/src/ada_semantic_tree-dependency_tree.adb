@@ -258,6 +258,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       Offset     : String_Index_Type;
       Name       : Distinct_Identifier;
       Visibility : not null access Visibility_Resolver;
+      Categories : Category_Array;
       Use_Wise   : Boolean := True;
       Is_Partial : Boolean := False)
       return Entity_Array
@@ -370,6 +371,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
         (Entity : Entity_Access; From_Main_Loop : Boolean)
       is
       begin
+         if not Is_In_Category (Get_Construct (Entity).all, Categories) then
+            return;
+         end if;
+
          if Is_Compilation_Unit (To_Construct_Tree_Iterator (Entity)) then
             --  If we're on a compilation unit, then we have to retreive the
             --  unit composite name and consider only the relevant (last) part
@@ -689,6 +694,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             Offset,
             Get_Identifier (Entity),
             Visibility'Access,
+            Null_Category_Array,
             Use_Wise,
             False);
       begin

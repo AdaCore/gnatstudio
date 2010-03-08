@@ -70,6 +70,7 @@ package body Ada_Semantic_Tree.Std_Entities is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
+      Categories      : Category_Array;
       Result          : in out Entity_List);
 
    procedure Get_Possible_ASCII_Entities
@@ -571,9 +572,10 @@ package body Ada_Semantic_Tree.Std_Entities is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
+      Categories      : Category_Array;
       Result          : in out Entity_List)
    is
-      pragma Unreferenced (From_Visibility);
+      pragma Unreferenced (From_Visibility, Categories);
    begin
       if Get_Index (E.Desc).all = "standard" then
          Get_Possible_Standard_Entities (E.Db, Name, Is_Partial, Result, True);

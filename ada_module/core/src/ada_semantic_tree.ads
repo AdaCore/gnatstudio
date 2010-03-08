@@ -136,6 +136,7 @@ package Ada_Semantic_Tree is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
+      Categories      : Category_Array;
       Result          : in out Entity_List) is null;
    --  Adds to result the children of the current entity, given the constrains
    --  in parameter.

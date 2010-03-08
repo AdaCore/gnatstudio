@@ -135,6 +135,7 @@ package Ada_Semantic_Tree.Declarations is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
+      Categories      : Category_Array;
       Result          : in out Entity_List);
 
 private
