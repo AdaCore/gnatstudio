@@ -51,9 +51,9 @@ package Extending_Environments is
 private
 
    type Extending_Environment is record
-      File          : Virtual_File;
-      Project_File  : Virtual_File;
-      Temporary_Dir : Virtual_File;
+      File          : Virtual_File := No_File;
+      Project_File  : Virtual_File := No_File;
+      Temporary_Dir : Virtual_File := No_File;
    end record;
 
 end Extending_Environments;
