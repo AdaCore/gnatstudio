@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 4.5.0
 
+- J302-006: No completion for nested packages on use clauses
+  Problem:    When completing a use clause, nested packages are not offered.
+  Workaround: Manually complete the code. 
+
 - J212-018 Error when editing a project with indexed attributes assignments
   Problem:    When you are editing a project, GPS first tries to normalize
               it. This normalization fails if your project contains an
