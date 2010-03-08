@@ -86,23 +86,6 @@ package body Task_Manager is
       pragma Unreferenced (Result, Return_Type);
 
    begin
-      --  If the Main level is more than 1 (ie, while we are displaying
-      --  dialogs) the Task Manager should not process any command.
-      --
-      --  This is to avoid memory corruption in cases such as:
-      --    - a compile is launched
-      --    - we call End_Build_Callback
-      --    - this in turns runs the compile_finished hook
-      --    - in compile_finished_hook, the user launched a dialog
-      --    - during the run of the dialog the build process terminates,
-      --      effectively running the cleanup command in the Task Manager
-      --    - the cleanup command frees the callback data
-      --    - End_Build_Callback is now working on invalid callback data
-
-      if Glib.Main.Depth > 1 then
-         return True;
-      end if;
-
       Result := Execute_Incremental (Manager, True);
 
       --  The active loop ends when there are no more active queues left
@@ -143,11 +126,6 @@ package body Task_Manager is
       Return_Type : Command_Return_Type;
       pragma Unreferenced (Result, Return_Type);
    begin
-      --  Do not run if the depth is > 1: see comment in Active_Incremental
-      if Glib.Main.Depth > 1 then
-         return True;
-      end if;
-
       Result := Execute_Incremental (Manager, False);
 
       --  The passive loop ends when there are no more queues left
