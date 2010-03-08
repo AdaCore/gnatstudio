@@ -510,10 +510,11 @@ begin
       F_IO.Put (Float (Clock - Start), Exp => 0, Aft => 2);
       Put_Line ("s");
    else
-      Print (Global_Result, False);
-      Put (" IN ");
+      Put ("time: ");
       F_IO.Put (Float (Clock - Start), Exp => 0, Aft => 2);
-      Put_Line ("s");
+      Put (" s (accuracy: ");
+      Print (Global_Result, False);
+      Put_Line (")");
    end if;
 
    Destroy (Construct_Db);
