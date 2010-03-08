@@ -597,9 +597,10 @@ package body Ada_Semantic_Tree.Visibility is
                end;
 
             when Cat_With =>
-               if Get_Construct (Entity).Category = Cat_Package
-                 or else Get_Construct (Entity).Category in
-                 Cat_Procedure .. Cat_Function
+               if (Get_Construct (Entity).Category = Cat_Package
+                   or else Get_Construct (Entity).Category in
+                     Cat_Procedure .. Cat_Function)
+                 and then Get_Unit_Access (Entity) /= Null_Unit_Access
                then
                   declare
                      With_Id : constant Composite_Identifier :=
