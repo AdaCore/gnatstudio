@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -332,6 +332,9 @@ package body GPS.Kernel.Timeout is
 
       Close (Data.D.Descriptor.all, Status);
 
+      --  So that next call to Cleanup does nothing
+      Free (Data.D.Descriptor);
+
       if Data.Console = null then
          Console := Get_Console (Data.D.Kernel);
       end if;
@@ -389,9 +392,6 @@ package body GPS.Kernel.Timeout is
                Trace (Exception_Handle, (E));
          end;
       end if;
-
-      --  So that next call to Cleanup does nothing
-      Free (Data.D.Descriptor);
    end Cleanup;
 
    ----------------
