@@ -171,6 +171,8 @@ package body Commands.Builder is
          Console.Raise_Console (Data.Kernel);
       end if;
 
+      Destroy (Build_Data.Background_Env);
+
       --  ??? should also pass the Status value to Compilation_Finished
       --  and to the corresponding hook
 
@@ -180,8 +182,6 @@ package body Commands.Builder is
          To_String (Build_Data.Target_Name),
          To_String (Build_Data.Mode_Name),
          Status);
-
-      Destroy (Build_Data.Background_Env);
    end End_Build_Callback;
 
    --------------------
@@ -435,10 +435,11 @@ package body Commands.Builder is
       then
          if Is_A_Run then
             Clear (Console);
+            Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console),
+                         Give_Focus => True);
+         else
+            Raise_Console (Kernel);
          end if;
-
-         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console),
-                      Give_Focus => Is_A_Run);
       end if;
 
       if Is_A_Run
