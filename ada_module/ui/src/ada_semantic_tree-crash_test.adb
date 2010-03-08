@@ -17,12 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;                   use Ada.Calendar;
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
-with Ada.Command_Line;               use Ada.Command_Line;
 with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Text_IO;                    use Ada.Text_IO;
 
+with GNAT.OS_Lib;                    use GNAT.OS_Lib;
 with GNAT.Strings;                   use GNAT.Strings;
+with GNAT.Traceback.Symbolic;        use GNAT.Traceback.Symbolic;
+with GNAT.Command_Line;              use GNAT.Command_Line;
 
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
@@ -37,14 +40,16 @@ with Projects.Registry;              use Projects.Registry;
 with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 with Language_Handlers;              use Language_Handlers;
-
-with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
-with Language.Ada; use Language.Ada;
-with ALI_Parser; use ALI_Parser;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Language.Ada;                   use Language.Ada;
+with ALI_Parser;                     use ALI_Parser;
 with Projects.Registry.Queries;
 
 procedure Ada_Semantic_Tree.Crash_Test is
+
+   Project_Name   : GNAT.Strings.String_Access;
+   Unique_Project : Boolean := False;
+   Unique_File    : GNAT.Strings.String_Access;
+   Verbose        : Boolean := False;
 
    Result_File : File_Type;
 
@@ -52,7 +57,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
    procedure Log (Str : String) is
    begin
-      Put (Result_File, Str);
+      if Verbose then
+         Put (Result_File, Str);
+      end if;
    end Log;
 
    procedure Project_Error (Msg : String);
@@ -121,22 +128,29 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Exc     : Integer := 0;
    end record;
 
-   procedure Print (R : Result_Type);
+   procedure Print (R : Result_Type; Verbose : Boolean := True);
 
    Global_Result : Result_Type;
 
-   procedure Print (R : Result_Type) is
+   procedure Print (R : Result_Type; Verbose : Boolean := True) is
       Total : constant Integer :=
         R.Match + R.Diff + R.Unknown + R.Phantom + R.Exc;
    begin
-      Put (" {MATCHES =" & R.Match'Img & ", ");
-      Put ("DIFFS =" & R.Diff'Img & ", ");
-      Put ("UNKNOWN =" & R.Unknown'Img & ", ");
-      Put ("PHANTOM =" & R.Phantom'Img & ", ");
-      Put ("EXCEPTIONS =" & R.Exc'Img & ", ");
-      Put ("RESOLUTION = ");
-      F_IO.Put (Float (R.Match) / Float (Total) * 100.0, Exp => 0, Aft => 2);
-      Put ("%}");
+      if Verbose then
+         Put (" {MATCHES =" & R.Match'Img & ", ");
+         Put ("DIFFS =" & R.Diff'Img & ", ");
+         Put ("UNKNOWN =" & R.Unknown'Img & ", ");
+         Put ("PHANTOM =" & R.Phantom'Img & ", ");
+         Put ("EXCEPTIONS =" & R.Exc'Img & ", ");
+         Put ("RESOLUTION = ");
+         F_IO.Put
+           (Float (R.Match) / Float (Total) * 100.0, Exp => 0, Aft => 2);
+         Put (" %}");
+      else
+         F_IO.Put
+           (Float (R.Match) / Float (Total) * 100.0, Exp => 0, Aft => 2);
+         Put (" %");
+      end if;
    end Print;
 
    procedure Analyze_File (File : Virtual_File) is
@@ -187,7 +201,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
          ALI_Decl := Get_Declaration_Of (E);
          ALI_File := Get_File (ALI_Decl);
 
-         Put (Result_File, "E[");
+         Log ("E[");
 
          if ALI_File /= null then
             Log (String (Base_Name (Get_Filename (Get_File (ALI_Decl)))));
@@ -214,7 +228,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
                Line                 => Line,
                Column               => Column);
 
-            Put (Line'Img & ", " & Column'Img & ASCII.CR);
+            if Verbose then
+               Put (Line'Img & ", " & Column'Img & ASCII.CR);
+            end if;
 
             if Word_End > Buffer'Last then
                Word_End := Buffer'Last;
@@ -300,8 +316,10 @@ procedure Ada_Semantic_Tree.Crash_Test is
          end;
       end loop;
 
-      Print (Local_Result);
-      New_Line;
+      if Verbose then
+         Print (Local_Result);
+         New_Line;
+      end if;
 
       Global_Result.Match := Global_Result.Match + Local_Result.Match;
       Global_Result.Diff := Global_Result.Diff + Local_Result.Diff;
@@ -345,14 +363,41 @@ procedure Ada_Semantic_Tree.Crash_Test is
       GNAT.OS_Lib.Free (Gnatls_Args);
    end Compute_Predefined_Paths;
 
+   Start  : constant Time := Clock;
 begin
+   loop
+      case Getopt ("P: n: f: u v") is
+         when ASCII.NUL =>
+            exit;
+
+         when 'P' =>
+            Project_Name := new String'(Parameter);
+
+         when 'u' =>
+            Unique_Project := True;
+
+         when 'n' =>
+            Max_Files := Integer'Value (Parameter);
+
+         when 'f' =>
+            Unique_File := new String'(Parameter);
+
+         when 'v' =>
+            Verbose := True;
+
+         when others =>
+            raise Program_Error;
+      end case;
+   end loop;
+
    Projects.Registry.Initialize;
 
    Entities_Db := Create (New_Registry'Unchecked_Access, Construct_Db);
 
    Load
      (Registry           => New_Registry,
-      Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Argument (1)),
+      Root_Project_Path  =>
+        Create_From_Dir (Get_Current_Dir, +Project_Name.all),
       Errors             => Project_Error'Unrestricted_Access,
       New_Project_Loaded => Loaded,
       Status             => Success);
@@ -382,6 +427,11 @@ begin
       LI        => ALI_Parser.Create_ALI_Handler
         (Entities_Db, New_Registry));
 
+   if GNAT.Strings."/=" (Unique_File, null) then
+      File_To_Analyze := Create
+        (Filesystem_String (Unique_File.all), New_Registry);
+   end if;
+
    Ada.Text_IO.Create (Result_File, Out_File, "result.txt");
 
    declare
@@ -389,6 +439,8 @@ begin
         Lock_Construct_Heuristics (Entities_Db);
       Files     : constant GNATCOLL.VFS.File_Array_Access :=
         Get_Source_Files (Get_Root_Project (New_Registry), True);
+      Files_To_Analyze : constant GNATCOLL.VFS.File_Array_Access :=
+        Get_Source_Files (Get_Root_Project (New_Registry), not Unique_Project);
       Predef_File : constant GNATCOLL.VFS.File_Array :=
         Get_Predefined_Source_Files (New_Registry);
       File_Node : Structured_File_Access;
@@ -406,38 +458,28 @@ begin
          File_Node := Get_Or_Create (Construct_Db, Files (J));
       end loop;
 
-      --  Then, execute the tests
-
-      if Argument_Count > 1 then
-         begin
-            Max_Files := Integer'Value (Argument (2));
-         exception
-            when others =>
-               --  In this case, the argument is most probably a file
-
-               File_To_Analyze := Create
-                 (Filesystem_String (Argument (2)), New_Registry);
-         end;
-      end if;
-
       if File_To_Analyze = No_File then
-         for J in Files.all'Range loop
-            Put
-              ("-------------------- "
-               & String (Base_Name (Files.all (J))));
+         for J in Files_To_Analyze.all'Range loop
+            File_To_Analyze := Files_To_Analyze (J);
 
-            Put (J'Img & " /");
+            if Verbose then
+               Put
+                 ("-------------------- "
+                  & String (Base_Name (File_To_Analyze)));
 
-            if Max_Files = -1 then
-               Put (Files.all'Last'Img);
-            else
-               Put (Max_Files'Img);
+               Put (J'Img & " /");
+
+               if Max_Files = -1 then
+                  Put (Files_To_Analyze.all'Last'Img);
+               else
+                  Put (Max_Files'Img);
+               end if;
+
+               New_Line;
             end if;
 
-            New_Line;
-
-            if Handler.Get_Language_From_File (Files.all (J)) = Ada_Lang then
-               Analyze_File (Files.all (J));
+            if Handler.Get_Language_From_File (File_To_Analyze) = Ada_Lang then
+               Analyze_File (File_To_Analyze);
                Files_Analyzed := Files_Analyzed + 1;
             end if;
 
@@ -446,11 +488,13 @@ begin
             end if;
          end loop;
       else
-         Put
-           ("-------------------- "
-            & String (Base_Name (File_To_Analyze)));
+         if Verbose then
+            Put
+              ("-------------------- "
+               & String (Base_Name (File_To_Analyze)));
 
-         New_Line;
+            New_Line;
+         end if;
 
          Analyze_File (File_To_Analyze);
       end if;
@@ -458,9 +502,19 @@ begin
       Lock.Unlock_Construct_Heuristics;
    end;
 
-   Put ("GLOBAL: ");
-   Print (Global_Result);
-   New_Line;
+   if Verbose then
+      Put ("GLOBAL: ");
+      Print (Global_Result, True);
+      New_Line;
+      Put ("TIME = ");
+      F_IO.Put (Float (Clock - Start), Exp => 0, Aft => 2);
+      Put_Line ("s");
+   else
+      Print (Global_Result, False);
+      Put (" IN ");
+      F_IO.Put (Float (Clock - Start), Exp => 0, Aft => 2);
+      Put_Line ("s");
+   end if;
 
    Destroy (Construct_Db);
    Destroy (New_Registry);
