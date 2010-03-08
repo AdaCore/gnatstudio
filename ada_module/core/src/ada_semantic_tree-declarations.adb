@@ -508,6 +508,32 @@ package body Ada_Semantic_Tree.Declarations is
          Categories           : Category_Array;
          Result               : in out Entity_List)
       is
+         function Adjust_Categories return Category_Array;
+
+         -----------------------
+         -- Adjust_Categories --
+         -----------------------
+
+         function Adjust_Categories return Category_Array is
+         begin
+            if Categories = Null_Category_Array then
+               return Null_Category_Array;
+            end if;
+
+            if Next (Token) = Token_List.Null_Node then
+               return Categories;
+            end if;
+
+            for J in Categories'Range loop
+               if Categories (J) = Cat_Package then
+                  return Categories;
+               end if;
+            end loop;
+
+            return Categories & (Cat_Package);
+         end Adjust_Categories;
+
+         Actual_Categories  : constant Category_Array := Adjust_Categories;
 
          procedure Handle_Identifier (Id : Distinct_Identifier);
 
@@ -525,7 +551,9 @@ package body Ada_Semantic_Tree.Declarations is
             --  Computes if this identifier is a partial one.
 
          begin
-            if Token = First_Token then
+            if Token = First_Token
+              or else Data (Previous_Token).Tok_Type = Tok_Colon
+            then
                Get_Possible_Standard_Entities
                  (Db         => Db,
                   Prefix     => Id.all,
@@ -538,14 +566,15 @@ package body Ada_Semantic_Tree.Declarations is
                 (Previous_Token /= Token_List.Null_Node
                  and then
                    (Data (Previous_Token).Tok_Type = Tok_Use
-                      or else Data (Previous_Token).Tok_Type = Tok_With))
+                    or else Data (Previous_Token).Tok_Type = Tok_With
+                    or else Data (Previous_Token).Tok_Type = Tok_Colon))
             then
                Get_Possibilities
                  (Id,
                   Partial_Id,
                   Context,
                   Actual_From_Visibility,
-                  Categories,
+                  Actual_Categories,
                   Tmp);
 
             elsif Previous_Token /= Token_List.Null_Node
@@ -570,7 +599,7 @@ package body Ada_Semantic_Tree.Declarations is
                   Name            => Id.all,
                   Is_Partial      => Partial_Id,
                   From_Visibility => Actual_From_Visibility,
-                  Categories      => Categories,
+                  Categories      => Actual_Categories,
                   Result          => Tmp);
             else
                return;
@@ -591,7 +620,7 @@ package body Ada_Semantic_Tree.Declarations is
                          (Token,
                           Next (Token),
                           View,
-                          Categories,
+                          Actual_Categories,
                           Result);
                      end if;
 
@@ -633,14 +662,14 @@ package body Ada_Semantic_Tree.Declarations is
                      Is_Partial      => Next (Token) = Token_List.Null_Node
                                        and then Is_Partial,
                      From_Visibility => Actual_From_Visibility,
-                     Categories      => Categories,
+                     Categories      => Actual_Categories,
                      Result          => Result);
                else
                   Analyze_Token
                     (Token,
                      Next (Token),
                      Previous_Declaration,
-                     Categories,
+                     Actual_Categories,
                      Result);
                end if;
 
@@ -750,7 +779,7 @@ package body Ada_Semantic_Tree.Declarations is
                                 (Current_Token,
                                  Next (Current_Token),
                                  Local_Declaration,
-                                 Categories,
+                                 Actual_Categories,
                                  Result);
                            end if;
                         end if;
@@ -811,7 +840,7 @@ package body Ada_Semantic_Tree.Declarations is
                        (Token,
                         Next (Token),
                         Previous_Declaration,
-                        Categories,
+                        Actual_Categories,
                         Result);
                   else
                      Get_Possibilities
@@ -821,7 +850,7 @@ package body Ada_Semantic_Tree.Declarations is
                          Context.File,
                          Data (Token).Token_First - 1),
                         Actual_From_Visibility,
-                        Categories,
+                        Actual_Categories,
                         Result);
                   end if;
                else
@@ -868,7 +897,7 @@ package body Ada_Semantic_Tree.Declarations is
                     (Token,
                      Next (Token),
                      Previous_Declaration,
-                     Categories,
+                     Actual_Categories,
                      Result);
                else
                   Get_Possible_Pragmas
@@ -884,7 +913,7 @@ package body Ada_Semantic_Tree.Declarations is
                     (Token,
                      Next (Token),
                      Previous_Declaration,
-                     Categories,
+                     Actual_Categories,
                      Result);
                else
                   Get_Possible_Attributes
@@ -892,6 +921,40 @@ package body Ada_Semantic_Tree.Declarations is
                      Prefix  => "",
                      Context => (others => True),
                      Result  => Result);
+               end if;
+
+            when Tok_Colon =>
+               if Next (Token) = Token_List.Null_Node then
+                  --  We don't return the list of types when no identifier
+                  --  is given
+                  return;
+               end if;
+
+               if Is_Partial then
+                  --  If we're looking at a partial expression, e.g. for a
+                  --  completion, we want to retreive packages names as well
+                  --  as that may just be the begining of an entity.
+
+                  Analyze_Token
+                    (Token,
+                     Next (Token),
+                     Previous_Declaration,
+                     (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
+                      Cat_Subtype, Cat_Package),
+                     Result);
+               else
+                  --  If we're looking at a non-partial expression, when the
+                  --  last node looked for has to be a type. Previous elements
+                  --  can be packages, but that will be taken care of by
+                  --  Adjust_Category
+
+                  Analyze_Token
+                    (Token,
+                     Next (Token),
+                     Previous_Declaration,
+                     (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
+                      Cat_Subtype),
+                     Result);
                end if;
 
             when others =>

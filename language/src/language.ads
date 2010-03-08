@@ -789,6 +789,7 @@ package Language is
       Tok_Dot,
       Tok_Open_Parenthesis,
       Tok_Close_Parenthesis,
+      Tok_Colon,
       Tok_Arrow,
 
       --  Words

@@ -831,9 +831,19 @@ package body Language.Ada is
       procedure Skip_String (Offset : in out Natural);
       procedure Skip_Comment_Line (Offset : in out Natural);
 
-      procedure Push_Potential_Keyword (Offset : in out Natural);
-      --  Push a potential keyword that we need to parse, namely with, use
-      --  and pragma
+      procedure Handle_Potential_Keyword
+        (Offset  : in out Natural;
+         Keyword : String;
+         Tok     : Token_Type;
+         Found   : in out Boolean);
+      --  If the previous keyword is the one given in parameter, then it's
+      --  pushed with the appropriate kind. Found is set to true only if the
+      --  keyword is found, otherwise it's left to its initial value.
+
+      procedure Handle_Potential_Keyword
+        (Offset : in out Natural; Ignore : out Boolean);
+      --  Handle a potential keyword - Ignore is true if the keyword should be
+      --  ignored and the analysis continued.
 
       function Check_Prev_Word
         (Offset : Positive; Word : String)
@@ -985,35 +995,55 @@ package body Language.Ada is
          end loop;
       end Skip_Comment_Line;
 
-      ----------------------------
-      -- Push_Potential_Keyword --
-      ----------------------------
+      ------------------------------
+      -- Handle_Potential_Keyword --
+      ------------------------------
 
-      procedure Push_Potential_Keyword (Offset : in out Natural) is
-         With_Str   : constant String := "with";
-         Use_Str    : constant String := "use";
-         Pragma_Str : constant String := "pragma";
+      procedure Handle_Potential_Keyword
+        (Offset  : in out Natural;
+         Keyword : String;
+         Tok     : Token_Type;
+         Found   : in out Boolean)
+      is
       begin
-         if Check_Prev_Word (Offset, With_Str) then
-            Token.Tok_Type := Tok_With;
+         if Check_Prev_Word (Offset, Keyword) then
+            Token.Tok_Type := Tok;
             Token.Token_Last := String_Index_Type (Offset);
-            Offset := Offset - (With_Str'Length - 1);
+            Offset := Offset - (Keyword'Length - 1);
             Token.Token_First := String_Index_Type (Offset);
-            Push (Token, Offset);
-         elsif Check_Prev_Word (Offset, Use_Str) then
-            Token.Tok_Type := Tok_Use;
-            Token.Token_Last := String_Index_Type (Offset);
-            Offset := Offset - (Use_Str'Length - 1);
-            Token.Token_First := String_Index_Type (Offset);
-            Push (Token, Offset);
-         elsif Check_Prev_Word (Offset, Pragma_Str) then
-            Token.Tok_Type := Tok_Pragma;
-            Token.Token_Last := String_Index_Type (Offset);
-            Offset := Offset - (Pragma_Str'Length - 1);
-            Token.Token_First := String_Index_Type (Offset);
-            Push (Token, Offset);
+            Found := True;
          end if;
-      end Push_Potential_Keyword;
+      end Handle_Potential_Keyword;
+
+      procedure Handle_Potential_Keyword
+        (Offset  : in out Natural; Ignore : out Boolean)
+      is
+         Found : Boolean;
+      begin
+         Ignore := False;
+         Found := False;
+
+         Handle_Potential_Keyword (Offset, "with",     Tok_With,   Found);
+         Handle_Potential_Keyword (Offset, "use",      Tok_Use,    Found);
+         Handle_Potential_Keyword (Offset, "pragma",   Tok_Pragma, Found);
+
+         if Found then
+            Push (Token, Offset);
+            return;
+         end if;
+
+         Handle_Potential_Keyword (Offset, "in",       No_Token, Found);
+         Handle_Potential_Keyword (Offset, "out",      No_Token, Found);
+         Handle_Potential_Keyword (Offset, "access",   No_Token, Found);
+         Handle_Potential_Keyword (Offset, "constant", No_Token, Found);
+         Handle_Potential_Keyword (Offset, "aliased",  No_Token, Found);
+
+         Token := Null_Token;
+
+         if Found then
+            Ignore := True;
+         end if;
+      end Handle_Potential_Keyword;
 
       ----------
       -- Push --
@@ -1105,6 +1135,7 @@ package body Language.Ada is
       Blank_Here, Blank_Before : Boolean := False;
       Next_Ind                 : Natural;
       Possible_Arrow           : Boolean := False;
+      Ignore_Id                : Boolean := False;
 
    begin
       Result.Original_Buffer := Buffer;
@@ -1300,6 +1331,11 @@ package body Language.Ada is
                   exit;
                end if;
 
+            when ':' =>
+               Token.Tok_Type := Tok_Colon;
+               Push (Token, Offset);
+               exit;
+
             when ASCII.LF =>
                Push (Token, Offset);
                Blank_Here := True;
@@ -1325,16 +1361,23 @@ package body Language.Ada is
 
                      if Length (Result.Tokens) = 0 and then Blank_Before then
                         Token := Null_Token;
-                        Push_Potential_Keyword (Offset);
-                        exit;
+
+                        Handle_Potential_Keyword (Offset, Ignore_Id);
+
+                        if not Ignore_Id then
+                           exit;
+                        end if;
                      end if;
 
                      if Length (Result.Tokens) > 0
                        and then Head (Result.Tokens).Tok_Type = Tok_Identifier
                      then
-                        Push_Potential_Keyword (Offset);
+                        Handle_Potential_Keyword (Offset, Ignore_Id);
                         Token := Null_Token;
-                        exit;
+
+                        if not Ignore_Id then
+                           exit;
+                        end if;
                      end if;
                   end if;
                else

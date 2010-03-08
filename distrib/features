@@ -15,6 +15,11 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J308-011 Filters when completing variables & parameters (2010-03-08)
+
+  When completing a variable or parameter type, the completion will only
+  offer package and type names.
+
 NF-45-J225-017 Better handling of incomplete with/use clauses (2010-02-25)
 
   The outline and smart completion will now work correctly even when the user

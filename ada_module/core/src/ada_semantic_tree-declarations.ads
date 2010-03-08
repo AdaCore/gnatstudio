@@ -63,7 +63,9 @@ package Ada_Semantic_Tree.Declarations is
       --  A reduced set of categories lokked for. If there is any former
       --  knowledge, setting this variable might improve the search mechanism.
       --  In any case, the declarations mechanism will try to reduce the set
-      --  of categories looked for.
+      --  of categories looked for. Note that this list may not be taken into
+      --  account as-is in all cases, certain constructions imply certain
+      --  category filters - e.g. use claues will imply packages.
 
       Is_Partial                : Boolean := False;
       --  If the expression is partial, then the last construct of the
