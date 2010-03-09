@@ -169,20 +169,18 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Column : Visible_Column_Type;
 
       function Equals
-        (E           : Entity_Information;
+        (E_Location  : File_Location;
          C_File      : Structured_File_Access;
          C_Construct : Simple_Construct_Information) return Boolean;
 
       function Equals
-        (E           : Entity_Information;
+        (E_Location  : File_Location;
          C_File      : Structured_File_Access;
          C_Construct : Simple_Construct_Information) return Boolean
       is
-         ALI_Decl : File_Location;
          ALI_File : Source_File;
       begin
-         ALI_Decl := Get_Declaration_Of (E);
-         ALI_File := Get_File (ALI_Decl);
+         ALI_File := Get_File (E_Location);
 
          if ALI_File = null then
             return False;
@@ -191,9 +189,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
               Get_File_Path (C_File)
               = Get_Filename (ALI_File)
               and then C_Construct.Sloc_Entity.Line
-              = Get_Line (ALI_Decl)
+              = Get_Line (E_Location)
               and then C_Construct.Sloc_Entity.Column
-              = Integer (Get_Column (ALI_Decl));
+              = Integer (Get_Column (E_Location));
          end if;
       end Equals;
 
@@ -303,6 +301,8 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
                   C_Buffer : constant GNAT.Strings.String_Access :=
                     Get_Buffer (Get_File (Construct_Entity));
+                  E_Location : File_Location :=
+                    Get_Declaration_Of (ALI_Entity);
                begin
                   --  The ALI database and the Construct database don't agree
                   --  where names are starting for composite identifers, so
@@ -324,8 +324,19 @@ procedure Ada_Semantic_Tree.Crash_Test is
                      Current_Col := Current_Col + 1;
                   end loop;
 
+                  if Construct.Category = Cat_Parameter then
+                     --  Parameters are not linked in the construct database -
+                     --  all parameter references go to the reference in the
+                     --  body while the ali goes to the spec. If we are on a
+                     --  parameter, adjust the entity and extract the body
+                     --  instead of the spec.
+                     Entities.Queries.Find_Next_Body
+                       (Entity   => ALI_Entity,
+                        Location => E_Location);
+                  end if;
+
                   if Equals
-                    (ALI_Entity, Get_File (Construct_Entity), Construct)
+                    (E_Location, Get_File (Construct_Entity), Construct)
                   then
                      Local_Result.Match := Local_Result.Match + 1;
                   else
