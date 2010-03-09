@@ -189,32 +189,30 @@ procedure Ada_Semantic_Tree.Crash_Test is
               Get_File_Path (C_File)
               = Get_Filename (ALI_File)
               and then C_Construct.Sloc_Entity.Line
-              = Get_Line (E_Location)
+                = Get_Line (E_Location)
               and then C_Construct.Sloc_Entity.Column
-              = Integer (Get_Column (E_Location));
+                = Integer (Get_Column (E_Location));
          end if;
       end Equals;
 
-      procedure Log_Entity (E : Entity_Information);
+      procedure Log_Entity (Decl : File_Location);
 
-      procedure Log_Entity (E : Entity_Information) is
-         ALI_Decl : File_Location;
+      procedure Log_Entity (Decl : File_Location) is
          ALI_File : Source_File;
       begin
-         ALI_Decl := Get_Declaration_Of (E);
-         ALI_File := Get_File (ALI_Decl);
+         ALI_File := Get_File (Decl);
 
          Log ("E[");
 
          if ALI_File /= null then
-            Log (String (Base_Name (Get_Filename (Get_File (ALI_Decl)))));
+            Log (String (Base_Name (Get_Filename (Get_File (Decl)))));
          else
             Log ("<null>");
          end if;
 
          Log
-           (":" & Get_Line (ALI_Decl)'Img
-            & ":" & Get_Column (ALI_Decl)'Img & "]");
+           (":" & Get_Line (Decl)'Img
+            & ":" & Get_Column (Decl)'Img & "]");
       end Log_Entity;
 
    begin
@@ -288,7 +286,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
                  ("[" & Buffer (Word_Begin .. Word_End) & "] "
                   & String (Base_Name (File)) & ":" & Line'Img & ":"
                   & Column'Img & ":");
-               Log_Entity (ALI_Entity);
+               Log_Entity (Get_Declaration_Of (ALI_Entity));
                Log (",C[null]");
                Log ((1 => ASCII.LF));
             else
@@ -324,12 +322,19 @@ procedure Ada_Semantic_Tree.Crash_Test is
                      Current_Col := Current_Col + 1;
                   end loop;
 
-                  if Construct.Category = Cat_Parameter then
+                  if Construct.Category = Cat_Parameter
+                    and then not Equals
+                      (E_Location, Get_File (Construct_Entity), Construct)
+                  then
                      --  Parameters are not linked in the construct database -
                      --  all parameter references go to the reference in the
                      --  body while the ali goes to the spec. If we are on a
                      --  parameter, adjust the entity and extract the body
                      --  instead of the spec.
+                     --  Note that we should do this except if we're analysing
+                     --  the spec parameter (hence, do nothing if we're already
+                     --  at the right location.
+
                      Entities.Queries.Find_Next_Body
                        (Entity   => ALI_Entity,
                         Location => E_Location);
@@ -346,16 +351,14 @@ procedure Ada_Semantic_Tree.Crash_Test is
                        ("[" & Buffer (Word_Begin .. Word_End) & "] "
                         & String (Base_Name (File)) & ":" & Line'Img & ":"
                         & Column'Img & ":");
-                     Log_Entity (ALI_Entity);
+                     Log_Entity (E_Location);
                      Log (",C["
                        & String
                          (Base_Name
                             (Get_File_Path (Get_File (Construct_Entity))))
                        & ":"
-                       & Get_Construct
-                         (Construct_Entity).Sloc_Entity.Line'Img & ":"
-                       & Get_Construct
-                         (Construct_Entity).Sloc_Entity.Column'Img & "]");
+                       & Construct.Sloc_Entity.Line'Img & ":"
+                       & Construct.Sloc_Entity.Column'Img & "]");
                      Log ((1 => ASCII.LF));
                   end if;
                end;
