@@ -1044,16 +1044,15 @@ package body Ada_Semantic_Tree.Lang is
          Location  => To_Location (Line, Column),
          From_Type => Start_Name);
 
-      if Decl_Construct /= Null_Construct_Tree_Iterator then
-         if Get_Construct (Decl_Construct).Category
-           in Cat_Package .. Cat_Literal
-         then
-            return Lang.Get_Declaration
-              (To_Entity_Access (File, Decl_Construct));
-         end if;
+      if Decl_Construct /= Null_Construct_Tree_Iterator
+        and then
+          Get_Construct (Decl_Construct).Category
+            in Cat_Package .. Cat_Literal
+      then
+         return Lang.Get_Declaration (To_Entity_Access (File, Decl_Construct));
       end if;
 
-      --  Otherwise, we're on a reference. Launch a use-seneitive search
+      --  Otherwise, we're on a reference. Launch a use-sensitive search
 
       Offset := Forward_Expression
         (Get_Buffer (File).all,
