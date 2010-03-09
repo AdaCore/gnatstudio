@@ -21,7 +21,8 @@ with GNAT.Strings;     use GNAT.Strings;
 with GNATCOLL.Utils;   use GNATCOLL.Utils;
 with Language.Ada;     use Language.Ada;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 
 package body Ada_Semantic_Tree.Visibility is
 
@@ -701,7 +702,7 @@ package body Ada_Semantic_Tree.Visibility is
          Package_It := First (Package_Resolution);
 
          if not At_End (Package_It) then
-            Result := Get_Entity (Package_It);
+            Result := Get_First_Occurence (Get_Entity (Package_It));
          end if;
 
          Free (Package_It);
