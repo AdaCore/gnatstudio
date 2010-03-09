@@ -182,6 +182,7 @@ package Language.Tree.Database is
 
    overriding function "="
      (Left, Right : Structured_File_Access) return Boolean;
+   pragma Inline ("=");
    --  This function performs a special equality between null pointers and
    --  "null" structured files (not associated with an actual file), which are
    --  always considered to be equal. All others cases are computing the
@@ -201,6 +202,7 @@ package Language.Tree.Database is
 
    function Get_Tree
      (File : Structured_File_Access) return Construct_Tree;
+   pragma Inline (Get_Tree);
    --  Return the complete tree corresponding to this file. It the tree is not
    --  cached, then it will be computed.
 
@@ -300,23 +302,28 @@ package Language.Tree.Database is
    --  Return a consistent order between the two entities.
 
    overriding function "=" (Left, Right : Entity_Access) return Boolean;
+   pragma Inline ("=");
    --  Return true if the two entities actually point to the same construct
 
    function To_Entity_Access
      (File       : Structured_File_Access;
       Construct  : Construct_Tree_Iterator) return Entity_Access;
+   pragma Inline (To_Entity_Access);
    --  Created an entity access out of a construct and an iterator - the
    --  iterator has to come from the tree stored in the file.
 
    function To_Construct_Tree_Iterator
      (Entity : Entity_Access) return Construct_Tree_Iterator;
+   pragma Inline (To_Construct_Tree_Iterator);
    --  Return the construct tree iterator referenced by this entity.
 
    function Get_File (Entity : Entity_Access) return Structured_File_Access;
+   pragma Inline (Get_File);
    --  Return the file where this entity is located.
 
    function Get_Construct
      (Entity : Entity_Access) return access Simple_Construct_Information;
+   pragma Inline (Get_Construct);
    --  Return the construct information referenced by this entity.
 
    function To_String (Entity : Entity_Access) return String;
@@ -383,6 +390,7 @@ package Language.Tree.Database is
 
    function Get_Construct
      (It : Construct_Db_Iterator) return Construct_Tree_Iterator;
+   pragma Inline (Get_Construct);
    --  Return an iterator pointing to the construct stored by the current
    --  database iterator.
 
@@ -439,6 +447,7 @@ package Language.Tree.Database is
    overriding function Get_Identifier
      (Manager : access Construct_Database; Name : String)
       return Distinct_Identifier;
+   pragma Inline (Get_Identifier);
    --  Return the unique identifier for the name given in parameter.
 
    function Get_Identifier (Entity : Entity_Access) return Distinct_Identifier;
@@ -473,6 +482,7 @@ package Language.Tree.Database is
 
    function To_Entity_Access
      (Entity : Entity_Persistent_Access) return Entity_Access;
+   pragma Inline (To_Entity_Access);
    --  Return the entity referenced by this entity access. If the entity is
    --  no longer accessible, then Null_Entity_Access will be returned.
 
@@ -482,6 +492,7 @@ package Language.Tree.Database is
 
    function Get_Construct
      (Entity : Entity_Persistent_Access) return Simple_Construct_Information;
+   pragma Inline (Get_Construct);
    --  Return the construct pointed by this entity, if still available.
 
    procedure Ref (Entity : in out Entity_Persistent_Access);
@@ -496,6 +507,7 @@ package Language.Tree.Database is
    Null_Entity_Persistent_Access : constant Entity_Persistent_Access;
 
    function Exists (Entity : Entity_Persistent_Access) return Boolean;
+   pragma Inline (Exists);
    --  Return true if the entity still exist in the database, false if it has
    --  been removed.
 
@@ -569,6 +581,7 @@ package Language.Tree.Database is
    function Get_Assistant
      (Db : Construct_Database_Access; Name : String)
       return Database_Assistant_Access;
+   pragma Inline (Get_Assistant);
    --  Return the assistant that has been stored at the given name.
 
    function Get_Database
@@ -674,6 +687,7 @@ private
    end record;
 
    function "=" (Left, Right : Structured_File) return Boolean;
+   pragma Inline ("=");
 
    package File_Map is new Ada.Containers.Ordered_Maps
      (Virtual_File, Structured_File_Access);

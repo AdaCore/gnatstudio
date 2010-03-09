@@ -96,10 +96,12 @@ package Ada_Semantic_Tree.Units is
    --  there are major syntax errors or unclosed blocks.
 
    function Get_Start_Entity (Unit : Unit_Access) return Entity_Access;
+   pragma Inline (Get_Start_Entity);
    --  Return the first entity related to this unit. It can be either the
    --  unit itself or the first clause applying to this unit.
 
    function Get_End_Entity (Unit : Unit_Access) return Entity_Access;
+   pragma Inline (Get_End_Entity);
    --  Return the entity located after the last entity related to that unit.
    --  If there's no entity after, then this function returns a
    --  Null_Entity_Access;

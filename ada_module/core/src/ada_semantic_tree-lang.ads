@@ -22,6 +22,7 @@ package Ada_Semantic_Tree.Lang is
    function Is_Enum_Type
      (Tree : Construct_Tree;
       It   : Construct_Tree_Iterator) return Boolean;
+   pragma Inline (Is_Enum_Type);
    --  Return tree if the construct given in parameter is a type enumeration
 
    type Ada_Tree_Language is new Tree_Language with private;
@@ -84,6 +85,7 @@ package Ada_Semantic_Tree.Lang is
    --  The two constructs are assume to be of the same category.
 
    function Is_Compilation_Unit (It : Construct_Tree_Iterator) return Boolean;
+   pragma Inline (Is_Compilation_Unit);
    --  Return true if the iterator given in parameter is a compilation unit
 
    procedure Register_Assistant (Db : Construct_Database_Access);

@@ -30,6 +30,7 @@ package Ada_Semantic_Tree.Visibility is
    --  Return the assistant responsible of doing visibility analysis.
 
    function Is_Public_Library_Visible (Entity : Entity_Access) return Boolean;
+   pragma Inline (Is_Public_Library_Visible);
    --  Return true if the entity given in parameter is public library visible,
    --  false otherwise.
 

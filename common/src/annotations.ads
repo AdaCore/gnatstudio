@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -105,6 +105,7 @@ package Annotations is
      (Container : Annotation_Container;
       Key       : Annotation_Key;
       Result    : out Annotation);
+   pragma Inline (Get_Annotation);
    --  Return the annotation located at the key given in parameter. If such an
    --  annotation doesn't exist, return Null_Annotation.
 

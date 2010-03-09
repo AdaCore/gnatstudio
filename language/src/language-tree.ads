@@ -65,6 +65,7 @@ package Language.Tree is
    function Get_Annotation_Container
      (Tree : Construct_Tree)
       return access Tree_Annotations_Pckg.Annotation_Container;
+   pragma Inline (Get_Annotation_Container);
    --  Return the annotation container holding annotations for the given tree.
 
    -----------------------------
@@ -75,10 +76,15 @@ package Language.Tree is
 
    overriding function "="
      (Left, Right : Construct_Tree_Iterator) return Boolean;
+   pragma Inline ("=");
    function "<" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   pragma Inline ("<");
    function ">" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   pragma Inline (">");
    function "<=" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   pragma Inline ("<=");
    function ">=" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   pragma Inline (">=");
    --  Provided that the two constructs are coming from the same tree, these
    --  function are doing positional comparaison between the iterators.
    --  The result of these functions is unexpectable if the two iterators are
@@ -100,11 +106,13 @@ package Language.Tree is
 
    function Is_Parent_Scope
      (Scope, It : Construct_Tree_Iterator) return Boolean;
+   pragma Inline (Is_Parent_Scope);
    --  Return true if Scope is the direct parent scope of It.
 
    function Get_Construct
      (Iter : Construct_Tree_Iterator)
       return access Simple_Construct_Information;
+   pragma Inline (Get_Construct);
    --  Return the construct pointed by the iterator given in parameter.
    --  The user should not free the fields of the returned
    --  Simple_Construct_Information.The lifetime of the returned
@@ -141,17 +149,22 @@ package Language.Tree is
    --  set "Line, Column" or "Offset" is available, but not both.
 
    function "=" (Left : Text_Location; Right : Source_Location) return Boolean;
+   pragma Inline ("=");
 
    function "<" (Left : Text_Location; Right : Source_Location) return Boolean;
+   pragma Inline ("<");
 
    function "<="
      (Left : Text_Location; Right : Source_Location) return Boolean;
+   pragma Inline ("<=");
 
    function ">"
      (Left : Text_Location; Right : Source_Location) return Boolean;
+   pragma Inline (">");
 
    function ">="
      (Left : Text_Location; Right : Source_Location) return Boolean;
+   pragma Inline (">=");
 
    function To_Location (Offset : String_Index_Type) return Text_Location;
    --  Return a text location for the offset given in parameter.
@@ -190,6 +203,7 @@ package Language.Tree is
       Iter         : Construct_Tree_Iterator;
       Scope_Policy : Scope_Navigation := Jump_Into)
       return Construct_Tree_Iterator;
+   pragma Inline (Next);
    --  Return the next element of the tree. If Scope_Policy is Jump_Over, then
    --  the next function will not enter in any nested block, and will jump
    --  directly to the next element in the current scope. If there is no next
@@ -200,6 +214,7 @@ package Language.Tree is
       Iter         : Construct_Tree_Iterator;
       Scope_Policy : Scope_Navigation := Jump_Into)
       return Construct_Tree_Iterator;
+   pragma Inline (Prev);
    --  Return the previous element of the tree.
    --  If Scope_Policy is Jump_Over, Prev will not enter in any nested block
    --  and will jump directly to the previous element in the current scope.
@@ -249,6 +264,7 @@ package Language.Tree is
    function Get_Annotation_Container
      (Tree : Construct_Tree; It : Construct_Tree_Iterator)
       return access Construct_Annotations_Pckg.Annotation_Container;
+   pragma Inline (Get_Annotation_Container);
    --  Return the annotation container holding annotations for this iterator.
    --  ??? Is the tree really needed here?
 
@@ -261,6 +277,7 @@ package Language.Tree is
    --  the tree, 0 if null iterator.
 
    function Get_Parent_Index (It : Construct_Tree_Iterator) return Integer;
+   pragma Inline (Get_Parent_Index);
    --  Return the index of the parent iterator in the list of ordered
    --  constructs of the tree, 0 if null iterator.
 
@@ -281,6 +298,7 @@ package Language.Tree is
    --  Free the data associated to a composite identifier
 
    function Length (Id : Composite_Identifier) return Natural;
+   pragma Inline (Length);
    --  Return the number of items composing this identifier
 
    function Get_Item
