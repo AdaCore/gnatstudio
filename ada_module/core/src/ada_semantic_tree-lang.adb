@@ -1045,7 +1045,12 @@ package body Ada_Semantic_Tree.Lang is
          From_Type => Start_Name);
 
       if Decl_Construct /= Null_Construct_Tree_Iterator then
-         return Lang.Get_Declaration (To_Entity_Access (File, Decl_Construct));
+         if Get_Construct (Decl_Construct).Category
+           in Cat_Package .. Cat_Literal
+         then
+            return Lang.Get_Declaration
+              (To_Entity_Access (File, Decl_Construct));
+         end if;
       end if;
 
       --  Otherwise, we're on a reference. Launch a use-seneitive search
