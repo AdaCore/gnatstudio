@@ -91,7 +91,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Skip_Blanks (Buffer.all, Word_Begin);
 
       while Word_Begin < Buffer'Last
-        and then not Is_Alphanumeric (Buffer (Word_Begin))
+        and then not
+          (Is_Alphanumeric (Buffer (Word_Begin))
+           or else Buffer (Word_Begin) = '_')
       loop
          Word_Begin := Word_Begin + 1;
       end loop;
@@ -103,8 +105,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
       while Word_End <= Buffer'Last
         and then
           (Is_Alphanumeric (Buffer (Word_End))
-           or else Buffer (Word_End) = '_'
-           or else Buffer (Word_End) = '-')
+           or else Buffer (Word_End) = '_')
       loop
          Word_End := Word_End + 1;
       end loop;
@@ -159,7 +160,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Index     : Integer := 1;
       Buffer    : GNAT.Strings.String_Access;
       Word_Begin, Word_End : Integer;
-      ALI_Entity       : Entity_Information;
+      ALI_Entity  : Entity_Information;
 
       Construct_Entity : Entity_Access;
       Status    : Find_Decl_Or_Body_Query_Status;
@@ -167,30 +168,34 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Line   : Integer;
       Column : Visible_Column_Type;
 
-      function "="
-        (Left : Entity_Information; Right : Entity_Access) return Boolean;
+      function Equals
+        (E           : Entity_Information;
+         C_File      : Structured_File_Access;
+         C_Construct : Simple_Construct_Information) return Boolean;
 
-      function "="
-        (Left : Entity_Information; Right : Entity_Access) return Boolean
+      function Equals
+        (E           : Entity_Information;
+         C_File      : Structured_File_Access;
+         C_Construct : Simple_Construct_Information) return Boolean
       is
          ALI_Decl : File_Location;
          ALI_File : Source_File;
       begin
-         ALI_Decl := Get_Declaration_Of (Left);
+         ALI_Decl := Get_Declaration_Of (E);
          ALI_File := Get_File (ALI_Decl);
 
          if ALI_File = null then
             return False;
          else
             return
-              Get_File_Path (Get_File (Right))
+              Get_File_Path (C_File)
               = Get_Filename (ALI_File)
-              and then Get_Construct (Right).Sloc_Entity.Line
+              and then C_Construct.Sloc_Entity.Line
               = Get_Line (ALI_Decl)
-              and then Get_Construct (Right).Sloc_Entity.Column
+              and then C_Construct.Sloc_Entity.Column
               = Integer (Get_Column (ALI_Decl));
          end if;
-      end "=";
+      end Equals;
 
       procedure Log_Entity (E : Entity_Information);
 
@@ -250,7 +255,13 @@ procedure Ada_Semantic_Tree.Crash_Test is
                Line   => Line,
                Column => String_Index_Type (Column));
 
-            if Status /= Entities.Queries.Success
+            if Buffer (Word_Begin .. Word_End) = "all" then
+               --  Things that we don't care about:
+               --
+               --  all keyword - doesn't correspond to anything in the ALI
+
+               null;
+            elsif Status /= Entities.Queries.Success
               and then Construct_Entity = Null_Entity_Access
             then
                null;
@@ -283,26 +294,60 @@ procedure Ada_Semantic_Tree.Crash_Test is
                Log (",C[null]");
                Log ((1 => ASCII.LF));
             else
-               if ALI_Entity = Construct_Entity then
-                  Local_Result.Match := Local_Result.Match + 1;
-               else
-                  Local_Result.Diff := Local_Result.Diff + 1;
+               declare
+                  Construct : Simple_Construct_Information :=
+                    Get_Construct (Construct_Entity).all;
 
-                  Log
-                    ("[" & Buffer (Word_Begin .. Word_End) & "] "
-                     & String (Base_Name (File)) & ":" & Line'Img & ":"
-                     & Column'Img & ":");
-                  Log_Entity (ALI_Entity);
-                  Log (",C["
-                    & String
-                      (Base_Name
-                         (Get_File_Path (Get_File (Construct_Entity)))) & ":"
-                    & Get_Construct
-                      (Construct_Entity).Sloc_Entity.Line'Img & ":"
-                    & Get_Construct
-                      (Construct_Entity).Sloc_Entity.Column'Img & "]");
-                  Log ((1 => ASCII.LF));
-               end if;
+                  Current_Col   : Integer := Construct.Sloc_Entity.Column;
+                  Current_Index : Integer := Construct.Sloc_Entity.Index;
+
+                  C_Buffer : constant GNAT.Strings.String_Access :=
+                    Get_Buffer (Get_File (Construct_Entity));
+               begin
+                  --  The ALI database and the Construct database don't agree
+                  --  where names are starting for composite identifers, so
+                  --  just adapt it (A.B will start on A for the construct,
+                  --  and B for the database.
+
+                  while Current_Index < C_Buffer'Last loop
+                     if Is_Alphanumeric (C_Buffer (Current_Index))
+                       or else C_Buffer (Current_Index) = '_'
+                     then
+                        null;
+                     elsif C_Buffer (Current_Index) = '.' then
+                        Construct.Sloc_Entity.Column := Current_Col + 1;
+                     else
+                        exit;
+                     end if;
+
+                     Current_Index := Current_Index + 1;
+                     Current_Col := Current_Col + 1;
+                  end loop;
+
+                  if Equals
+                    (ALI_Entity, Get_File (Construct_Entity), Construct)
+                  then
+                     Local_Result.Match := Local_Result.Match + 1;
+                  else
+                     Local_Result.Diff := Local_Result.Diff + 1;
+
+                     Log
+                       ("[" & Buffer (Word_Begin .. Word_End) & "] "
+                        & String (Base_Name (File)) & ":" & Line'Img & ":"
+                        & Column'Img & ":");
+                     Log_Entity (ALI_Entity);
+                     Log (",C["
+                       & String
+                         (Base_Name
+                            (Get_File_Path (Get_File (Construct_Entity))))
+                       & ":"
+                       & Get_Construct
+                         (Construct_Entity).Sloc_Entity.Line'Img & ":"
+                       & Get_Construct
+                         (Construct_Entity).Sloc_Entity.Column'Img & "]");
+                     Log ((1 => ASCII.LF));
+                  end if;
+               end;
             end if;
          exception
             when E : others =>
