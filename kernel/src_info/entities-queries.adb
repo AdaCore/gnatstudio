@@ -584,7 +584,9 @@ package body Entities.Queries is
         and then Db.Construct_Db_Locks = 0
         and then
           (Status = Entity_Not_Found
-           or else (Status = Fuzzy_Match and then not Fuzzy_Expected))
+           or else
+             ((Status = Fuzzy_Match or else Status = Overloaded_Entity_Found)
+               and then not Fuzzy_Expected))
       then
          declare
             Tree_Lang : constant Tree_Language_Access :=
