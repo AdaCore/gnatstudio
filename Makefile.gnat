@@ -87,8 +87,6 @@ GNAT_SOURCES= \
   rident.ads \
   scans.ads \
   scans.adb \
-  scil_ll.ads \
-  scil_ll.adb \
   scng.ads \
   scng.adb \
   sdefault.ads \
