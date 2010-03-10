@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2009, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -183,7 +183,7 @@ package body Projects.Registry.Queries is
          begin
             if S = "Object Search Path:" & ASCII.LF then
                if Active (Me) then
-                  Trace (Me, "Set source path from gnatls to :");
+                  Trace (Me, "Set source path from gnatls to:");
                   for J in Current'Range loop
                      Trace (Me, "  " & Current (J).Display_Full_Name);
                   end loop;
@@ -195,7 +195,7 @@ package body Projects.Registry.Queries is
 
             elsif S = "Project Search Path:" & ASCII.LF then
                if Active (Me) then
-                  Trace (Me, "Set object path from gnatls to :");
+                  Trace (Me, "Set object path from gnatls to:");
                   for J in Current'Range loop
                      Trace (Me, "  " & Current (J).Display_Full_Name);
                   end loop;
@@ -216,7 +216,7 @@ package body Projects.Registry.Queries is
       when Process_Died =>
          if Object_Path_Set then
             if Active (Me) then
-               Trace (Me, "Set project path from gnatls to :");
+               Trace (Me, "Set project path from gnatls to:");
                for J in Current'Range loop
                   Trace (Me, "  " & Current (J).Display_Full_Name);
                end loop;
@@ -226,7 +226,7 @@ package body Projects.Registry.Queries is
 
          else
             if Active (Me) then
-               Trace (Me, "Set object path (2) from gnatls to :");
+               Trace (Me, "Set object path (2) from gnatls to:");
                for J in Current'Range loop
                   Trace (Me, "  " & Current (J).Display_Full_Name);
                end loop;
