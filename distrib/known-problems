@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- J311-010: Mains not listed if number of projects exceeds 127
+  Problem:    If the project tree contains 128 or more projects, the mains
+              might not get listed in the Build->Project submenu.
+  Workaround: Create custom build targets using the Target Configuration
+              dialog (menu Build->Settings).
+
 - J302-006: No completion for nested packages on use clauses
   Problem:    When completing a use clause, nested packages are not offered.
   Workaround: Manually complete the code. 
