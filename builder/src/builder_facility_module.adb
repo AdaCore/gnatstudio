@@ -22,6 +22,8 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
+with Generic_Stack;
+
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 
@@ -84,9 +86,6 @@ package body Builder_Facility_Module is
    --  The maximum number of Mains that we accept to display in the Menus
    --  and toolbar.
 
-   Max_Number_Of_Projects : constant := 128;
-   --  The maximum number of projects that we process when filling the Mains
-
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
    Modes_Trace : constant Debug_Handle :=
                    Create ("Builder.Modes", GNATCOLL.Traces.Off);
@@ -104,6 +103,8 @@ package body Builder_Facility_Module is
 
    Mode_Property : constant String := "Build-Mode";
    --  History to store which mode is selected
+
+   package Projects_Stack is new Generic_Stack (Project_Type);
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -641,16 +642,13 @@ package body Builder_Facility_Module is
          --  Index of the first free element in Result
          Iterator :  Imported_Project_Iterator;
 
-         Projects : Project_Type_Array (1 .. Max_Number_Of_Projects);
-         Index_P  : Natural := 1;
-         --  Index of the first free element in Projects
+         Projects : Projects_Stack.Simple_Stack;
+         The_Project : Project_Type;
       begin
          Iterator := Start (Root_Project);
 
          while Current (Iterator) /= No_Project loop
-            Projects (Index_P) := Current (Iterator);
-            Index_P := Index_P + 1;
-            exit when Index_P > Projects'Last;
+            Projects_Stack.Push (Projects, Current (Iterator));
             Next (Iterator);
          end loop;
 
@@ -659,11 +657,12 @@ package body Builder_Facility_Module is
          --  the majority of cases, users will want to see the mains defined
          --  in the root project first.
 
-         for Proj in reverse 1 .. Index_P - 1 loop
+         while not Projects_Stack.Is_Empty (Projects) loop
+            Projects_Stack.Pop (Projects, The_Project);
             declare
                Mains : Argument_List :=
                  Get_Attribute_Value
-                   (Projects (Proj), Attribute => Main_Attribute);
+                   (The_Project, Attribute => Main_Attribute);
             begin
                for J in Mains'Range loop
                   if Mains (J)'Length > 0 then
@@ -676,7 +675,7 @@ package body Builder_Facility_Module is
 
                      Result (Index) :=
                        new String'
-                         (To_Full_Path (Mains (J).all, Projects (Proj)));
+                         (To_Full_Path (Mains (J).all, The_Project));
 
                      Free (Mains (J));
                      Index := Index + 1;
@@ -686,6 +685,8 @@ package body Builder_Facility_Module is
 
             exit when Index > Result'Last;
          end loop;
+
+         Projects_Stack.Clear (Projects);
 
          return Result (1 .. Index - 1);
       end Get_Root_Mains;
