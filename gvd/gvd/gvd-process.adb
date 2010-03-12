@@ -35,7 +35,6 @@ with System;                     use System;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 
-with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
@@ -45,7 +44,6 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtk;                        use Gtk;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Breakpoints_Editor;         use Breakpoints_Editor;
@@ -128,11 +126,6 @@ package body GVD.Process is
       Command  : String;
       Mode     : Command_Type);
    --  Process a "graph ..." command
-
-   function On_Editor_Text_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "delete_event" signal on the editor text
 
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
@@ -497,19 +490,6 @@ package body GVD.Process is
          Set_Sensitive (Get_Kernel (Proxy.Process), Debug_Available);
       end if;
    end Set_Command_In_Process;
-
-   ---------------------------------
-   -- On_Editor_Text_Delete_Event --
-   ---------------------------------
-
-   function On_Editor_Text_Delete_Event
-     (Object : access GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Object, Params);
-   begin
-      return False;
-   end On_Editor_Text_Delete_Event;
 
    -----------------------
    -- Add_Regexp_Filter --
@@ -970,9 +950,6 @@ package body GVD.Process is
       Process.Window := Window.all'Access;
 
       Gtk_New_Hbox (Process.Editor_Text, Process);
-      Gtkada.Handlers.Object_Return_Callback.Object_Connect
-        (Process.Editor_Text, Gtk.Widget.Signal_Delete_Event,
-         On_Editor_Text_Delete_Event'Access, Process);
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -1023,6 +1000,8 @@ package body GVD.Process is
    begin
       Proc.Debugger_Text := null;
       Close_Debugger (Proc);
+   exception
+      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Console_Destroy;
 
    ---------------
