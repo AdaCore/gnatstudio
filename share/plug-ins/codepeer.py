@@ -102,6 +102,22 @@ if codepeer != "":
       </menu>
     </submenu>
 
+    <action name="codepeer_example_configs" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/configs/configs.gpr"</shell>
+      <shell>Editor.edit "configs.ads"</shell>
+      <shell>Editor.edit "configs.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_configs">
+        <title>Configs</title>
+      </menu>
+    </submenu>
+
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
