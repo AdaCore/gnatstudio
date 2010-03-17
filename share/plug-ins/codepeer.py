@@ -121,7 +121,7 @@ if codepeer != "":
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
-          <arg>%gnatmake</arg>
+          <arg>gnatmake</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
@@ -147,7 +147,7 @@ if codepeer != "":
       <supported-model filter="--subdirs=">gprclean</supported-model>
       <server>Tools_Server</server>
       <substitutions>
-        <substitute src="%builder" dest="%gnatmake"/>
+        <substitute src="%builder" dest="gnatmake"/>
       </substitutions>
       <extra-args>
         <arg>-margs</arg>
@@ -216,7 +216,7 @@ if codepeer != "":
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>%gnatmake</arg>
+          <arg>gnatmake</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
