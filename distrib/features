@@ -147,7 +147,8 @@ NF-45-IB15-005 Apply multiple code fixes at once (2009-11-23)
 
 NF-45-IB13-028 Sort by file name in locations view for CodePeer (2010-03-16)
 
-  CodePeer's messages are sorted by file name in locations view.
+  Messages from CodePeer in the locations view are now sorted by file name
+  so that it's easier to find a specific file in the report.
 
 NF-45-IB10-017 Auto fix for "no space allowed" (2009-11-16)
 
