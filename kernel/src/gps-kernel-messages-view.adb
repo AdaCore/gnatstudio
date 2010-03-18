@@ -67,7 +67,7 @@ package body GPS.Kernel.Messages.View is
    begin
       Manager.Goto_First_Location := False;
 
-      if Manager.Idle_Handler /= No_Source_Id then
+      if Manager.Idle_Handler = No_Source_Id then
          Manager.Idle_Handler := Idles.Idle_Add (On_Idle'Access, Manager);
       end if;
    end Do_Not_Goto_First_Location;
