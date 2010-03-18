@@ -27,6 +27,7 @@ with GPS.Kernel.Messages.Classic_Models;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages.View;
 with GPS.Kernel.Project;
 with Projects;
 with Traces;
@@ -265,6 +266,7 @@ package body GPS.Kernel.Messages is
 
       --  Load messages for opened project
 
+      GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
       Container.Project_File := Project_Path (Get_Project (Kernel));
       Container.Load;
    end Execute;
