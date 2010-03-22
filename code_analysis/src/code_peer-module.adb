@@ -1171,7 +1171,7 @@ package body Code_Peer.Module is
          Lock_File : constant Virtual_File :=
                        Create_From_Dir (Codepeer_Output_Directory
                                          (Get_Project (Kernel)),
-                                        "inspection.lock");
+                                        "inspector.lock");
          Success   : Boolean;
 
       begin
