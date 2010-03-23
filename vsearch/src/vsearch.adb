@@ -192,6 +192,13 @@ package body Vsearch is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Aborts the current search pattern
 
+   procedure On_Project_View_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project view has changed.
+   --  In such a case, we cancel any pending search, since the list of
+   --  source files might have changed and thus we need to restart from
+   --  scratch.
+
    function Key_Press
      (Vsearch : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean;
@@ -1286,6 +1293,16 @@ package body Vsearch is
       when E : others => Trace (Exception_Handle, E);
    end Set_First_Next_Mode_Cb;
 
+   -----------------------------
+   -- On_Project_View_Changed --
+   -----------------------------
+
+   procedure On_Project_View_Changed
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Reset_Search (null, Kernel_Handle (Kernel));
+   end On_Project_View_Changed;
+
    ---------------
    -- Key_Press --
    ---------------
@@ -1750,6 +1767,9 @@ package body Vsearch is
       Add_Hook (Handle, Search_Regexps_Changed_Hook,
                 Wrapper (New_Predefined_Regexp'Access),
                 Name => "vsearch.search_regexps");
+      Add_Hook (Handle, Project_View_Changed_Hook,
+                Wrapper (On_Project_View_Changed'Access),
+                Name => "vsearch.project_view_changed");
 
       --  ??? Should be changed when prefs are changed
       Set_Font_And_Colors (Vsearch.Table, Fixed_Font => False);

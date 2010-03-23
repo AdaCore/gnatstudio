@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.5.0
 
+- J319-001: Continuing search after changing scenario finds wrong files
+  Problem:    If you start a search in "Files From Project", but then change
+              the scenario so that the list of source files changes (or their
+              location), then pressing Next in the dialog might find matching
+              text in a file that is no longer part of the project.
+  Workaround: GPS will now automatically reset the current search, so that the
+              Next button becomes Find. You can achieve the same result by
+              modifying the search pattern after changing the scenario.
+
 - J311-010: Mains not listed if number of projects exceeds 127
   Problem:    If the project tree contains 128 or more projects, the mains
               might not get listed in the Build->Project submenu.
