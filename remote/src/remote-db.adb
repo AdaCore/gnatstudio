@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                 Copyright (C) 2009-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -442,6 +442,8 @@ package body Remote.Db is
          FS := FS_Windows;
       elsif Tmp.all = "unix" then
          FS := FS_Unix;
+      elsif Tmp.all = "unix-case-insensitive" then
+         FS := FS_Unix_Case_Insensitive;
       else
          Console.Insert
            (Kernel, "XML Error for shell " & Shell_Name &
