@@ -1991,8 +1991,7 @@ package body Code_Peer.Module is
             end Probability_Image;
 
          begin
-            if Message.Current_Probability /= Code_Peer.Suppressed
-              and then Self.Filter_Criteria.Lineages (Message.Lifeage)
+            if Self.Filter_Criteria.Lineages (Message.Lifeage)
               and then Self.Filter_Criteria.Probabilities
                          (Message.Current_Probability)
               and then Self.Filter_Criteria.Categories.Contains
@@ -2012,11 +2011,14 @@ package body Code_Peer.Module is
                     Module.Message_Styles (Message.Current_Probability);
 
                begin
-                  Primary.Set_Highlighting
-                    (Get_Or_Create_Style_Copy
-                       (Kernel_Handle (Self.Kernel),
-                        Get_Name (Style) & '/' & Code_Peer_Category_Name,
-                        Style));
+                  if Style /= null then
+                     Primary.Set_Highlighting
+                       (Get_Or_Create_Style_Copy
+                          (Kernel_Handle (Self.Kernel),
+                           Get_Name (Style) & '/' & Code_Peer_Category_Name,
+                           Style));
+                  end if;
+
                   Primary.Set_Action
                     (new GPS.Editors.Line_Information_Record'
                        (Text               => null,
