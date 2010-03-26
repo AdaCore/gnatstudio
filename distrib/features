@@ -15,6 +15,11 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J326-009 Subcategory order in locations view for CodePeer (2010-03-26)
+
+  Sorting by subcategory in locations view now applied to CodePeer messages
+  and display messages in order of its probability.
+
 NF-45-J308-011 Filters when completing variables & parameters (2010-03-08)
 
   When completing a variable or parameter type, the completion will only
