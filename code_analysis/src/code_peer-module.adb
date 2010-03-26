@@ -2006,7 +2006,8 @@ package body Code_Peer.Module is
                        Message.Line,
                        Basic_Types.Visible_Column_Type (Message.Column),
                        Image (Message),
-                       0);
+                       Message_Probability_Level'Pos
+                         (Message.Current_Probability));
                   Style   : constant Style_Access :=
                     Module.Message_Styles (Message.Current_Probability);
 
