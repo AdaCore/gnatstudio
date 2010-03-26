@@ -853,12 +853,21 @@ package body GPS.Kernel.Messages.Classic_Models is
       Path := Self.Create_Path (Node);
       Self.Row_Inserted (Path, Iter);
 
+      Dummy := Up (Path);
+      Iter := Self.Parent (Iter);
+
       if Node.Parent /= null
         and then Node.Parent.Children.Length = 1
       then
-         Dummy := Up (Path);
-         Iter := Self.Parent (Iter);
          Self.Row_Has_Child_Toggled (Path, Iter);
+      end if;
+
+      --  J326-003: when new row at message level is inserted weight of the
+      --  file node can be changed, so we need to notify upper model/view
+      --  about such change.
+
+      if Get_Depth (Path) = 2 then
+         Self.Row_Changed (Path, Iter);
       end if;
 
       Path_Free (Path);
