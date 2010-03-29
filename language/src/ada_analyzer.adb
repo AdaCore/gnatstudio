@@ -2021,10 +2021,13 @@ package body Ada_Analyzer is
                Num_Parens     := 0;
             end if;
 
-            if Prev_Token = Tok_Overriding then
+            if Prev_Token = Tok_Overriding
+              or else (Token = Tok_Package and then Prev_Token = Tok_Private)
+            then
                --  Adjust column of subprogram to take into account possible
                --  [not] overriding at start of the line by using the
                --  first non blank character on the line.
+               --  Ditto for "private package xxx is"
 
                Tmp_Index := Start_Of_Line;
                Skip_Blanks (Buffer, Tmp_Index);
