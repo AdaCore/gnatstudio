@@ -2377,7 +2377,7 @@ package body GVD_Module is
                   Mains : String_List_Access :=
                     Tmp.Attribute_Value (Main_Attribute);
                begin
-                  if Mains /= null then
+                  if Mains /= null and then Mains'Length /= 0 then
                      --  Basenames inherited, but exec_dir is current project
                      Add_Entries (Mains.all, Current_Project);
 
