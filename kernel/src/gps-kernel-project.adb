@@ -411,7 +411,6 @@ package body GPS.Kernel.Project is
          --  predefined paths.
 
          if Use_Cache
-           and then not Is_Local (Build_Server)
            and then Handle.Gnatls_Cache /= null
            and then Handle.Gnatls_Cache.all = Gnatls
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
