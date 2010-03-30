@@ -223,6 +223,11 @@ NF-45-I501-009 New shell function: GPS.version (2010-02-18)
   current GPS version: GPS.version(), which can be useful when e.g. writing
   plug-ins that need to support multiple versions of GPS.
 
+NF-45-I120-044 Preferences for colors of CodePeer plugin (2010-03-30)
+
+  A set of color properties can be used for customize background color for
+  CodePeer's messages and annotations.
+
 NF-45-GA24-019 Smart completion for discriminants (2010-01-26)
 
   The smart completion now offers to complete with record discriminants.
