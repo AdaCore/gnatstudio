@@ -52,7 +52,6 @@ with Commands.Interactive;        use Commands.Interactive;
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
-with Basic_Types;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -90,14 +89,6 @@ package body Builder_Facility_Module is
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
    Modes_Trace : constant Debug_Handle :=
                    Create ("Builder.Modes", GNATCOLL.Traces.Off);
-
-   Build_Main_Target    : constant Unbounded_String :=
-                            To_Unbounded_String ("Build Main");
-   Clean_Project_Target : constant Unbounded_String :=
-                            To_Unbounded_String ("Clean Project");
-   Build_All_Target : constant Unbounded_String :=
-                        To_Unbounded_String ("Build All");
-   --  These target names must be kept in sync with build_targets.xml
 
    Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
@@ -362,13 +353,6 @@ package body Builder_Facility_Module is
    --  So that items created for the dynamic Make and Run menus have a special
    --  type, and we only remove these when refreshing the menu
 
-   procedure Add_Build_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class);
-   --  Add new entries for all the main subprograms of Project and for
-   --  the "Clean" item.
-
    procedure On_Project_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when project changed. Selects value in the build-mode combobox
@@ -380,71 +364,6 @@ package body Builder_Facility_Module is
       Context     : Selection_Context;
       Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   --------------------
-   -- Add_Build_Menu --
-   --------------------
-
-   procedure Add_Build_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class)
-   is
-      Mitem : Dynamic_Menu_Item;
-      Tmp   : Boolean;
-      pragma Unreferenced (Tmp);
-
-      Mains : String_List_Access := Project.Attribute_Value (Main_Attribute);
-   begin
-      if Menu = null then
-         Gtk_New (Menu);
-      end if;
-
-      --  Add an item for every target that requires to be in
-
-      --  Add "Clean" item
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, "Clean");
-      Prepend (Menu, Mitem);
-
-      String_Callback.Connect
-        (Mitem, Signal_Activate,
-         On_Button_Or_Menu_Click'Access,
-         (Clean_Project_Target,
-          To_Unbounded_String ("")));
-
-      --  Add "Build all" item
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, "Build all");
-      Prepend (Menu, Mitem);
-
-      String_Callback.Connect
-        (Mitem, Signal_Activate,
-         On_Button_Or_Menu_Click'Access,
-         (Build_All_Target,
-          To_Unbounded_String ("")));
-
-      --  Add items for the mains
-
-      if Mains /= null then
-         for M in reverse Mains'Range loop
-            if Mains (M).all /= "" then
-               Mitem := new Dynamic_Menu_Item_Record;
-               Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
-               Prepend (Menu, Mitem);
-
-               String_Callback.Connect
-                 (Mitem, Signal_Activate,
-                  On_Button_Or_Menu_Click'Access,
-                  (Build_Main_Target,
-                   To_Unbounded_String (Mains (M).all)));
-            end if;
-         end loop;
-         Free (Mains);
-      end if;
-   end Add_Build_Menu;
-
    -------------------------------
    -- Append_To_Contextual_Menu --
    -------------------------------
@@ -454,8 +373,6 @@ package body Builder_Facility_Module is
       Context     : Selection_Context;
       Menu        : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      M : Gtk_Menu := Gtk_Menu (Menu);
-
       For_Files   : constant Boolean := Has_File_Information (Context);
       For_Project : constant Boolean := Has_Project_Information (Context)
         and then not For_Files
@@ -517,13 +434,6 @@ package body Builder_Facility_Module is
       end Add_Contextual;
 
    begin
-      if False then
-         Add_Build_Menu
-           (Menu         => M,
-            Project      => Project_Information (Context),
-            Kernel       => Get_Kernel (Context));
-      end if;
-
       loop
          T := Get_Target (C);
          exit when T = null;
@@ -593,189 +503,94 @@ package body Builder_Facility_Module is
    ---------------
 
    function Get_Mains (Kernel : Kernel_Handle) return Argument_List is
-      Base_Project : Project_Type;
-
-      Root_Project : constant Project_Type := Get_Project (Kernel);
       Registry     : constant Project_Registry_Access := Get_Registry (Kernel);
+      Root_Project : constant Project_Type := Registry.Tree.Root_Project;
 
-      function To_Full_Path
-        (Basename : String; Project : Project_Type) return String;
+      Result   : Argument_List (1 .. Max_Number_Of_Mains);
+      Index    : Natural := Result'First;
+      Projects : Projects_Stack.Simple_Stack;
+      The_Project : Project_Type;
+      Iterator :  Project_Iterator :=
+        Root_Project.Start (Include_Extended => True);
+      Mains    : String_List_Access;
+
+      function To_Full_Path (Basename : String) return String;
       --  Return the full path of file Basename in project Project.
 
-      function Get_Root_Mains return Argument_List;
-      --  Return the mains contained in the root project and all its
-      --  dependencies.
+      function Is_Already_In_Mains (S : String) return Boolean;
+      --  Return True if S is in Result (for instance a project could use its
+      --  extended project's Main attribute, in which case we would end up
+      --  with duplicates).
+
+      -------------------------
+      -- Is_Already_In_Mains --
+      -------------------------
+
+      function Is_Already_In_Mains (S : String) return Boolean is
+      begin
+         for J in Result'First .. Index - 1 loop
+            if Result (J).all = S then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Is_Already_In_Mains;
 
       ------------------
       -- To_Full_Path --
       ------------------
 
-      function To_Full_Path
-        (Basename : String; Project : Project_Type) return String
-      is
+      function To_Full_Path (Basename : String) return String is
          File : Virtual_File;
       begin
          File := Registry.Tree.Create
            (Filesystem_String (Basename),
-            Use_Object_Path => False,
-            Project         => Project);
+            Use_Object_Path => False);
 
          if File = No_File then
             return Basename;
          end if;
 
-         return +(Full_Name (File).all);
+         return +File.Full_Name.all;
       end To_Full_Path;
 
-      --------------------
-      -- Get_Root_Mains --
-      --------------------
-
-      function Get_Root_Mains return Argument_List is
-         Result   : Argument_List (1 .. Max_Number_Of_Mains);
-         Index    : Natural := 1;
-         --  Index of the first free element in Result
-         Iterator :  Project_Iterator;
-
-         Projects : Projects_Stack.Simple_Stack;
-         The_Project : Project_Type;
-      begin
-         Iterator := Start (Root_Project);
-
-         while Current (Iterator) /= No_Project loop
-            Projects_Stack.Push (Projects, Current (Iterator));
-            Next (Iterator);
-         end loop;
-
-         --  The project Iterator starts with the leaf projects and ends with
-         --  the root project. Reverse the order to be more user-friendly: in
-         --  the majority of cases, users will want to see the mains defined
-         --  in the root project first.
-
-         while not Projects_Stack.Is_Empty (Projects) loop
-            Projects_Stack.Pop (Projects, The_Project);
-            declare
-               Mains : String_List_Access :=
-                 The_Project..Attribute_Value (Main_Attribute);
-            begin
-               if Mains /= null then
-                  for J in Mains'Range loop
-                     if Mains (J)'Length > 0 then
-                        if Index > Result'Last then
-                           for K in J .. Mains'Last loop
-                              Free (Mains (K));
-                           end loop;
-                           exit;
-                        end if;
-
-                     Result (Index) :=
-                       new String'
-                         (To_Full_Path (Mains (J).all, The_Project));
-
-                        Free (Mains (J));
-                        Index := Index + 1;
-                     end if;
-                  end loop;
-
-                  Free (Mains);
-               end if;
-            end;
-
-            exit when Index > Result'Last;
-         end loop;
-
-         Projects_Stack.Clear (Projects);
-
-         return Result (1 .. Index - 1);
-      end Get_Root_Mains;
-
-      Root_Mains : Argument_List := Get_Root_Mains;
-      Base_Mains : String_List_Access;
    begin
-      Base_Project := Extended_Project (Root_Project);
+      --  The project Iterator starts with the leaf projects and ends with
+      --  the root project. Reverse the order to be more user-friendly: in
+      --  the majority of cases, users will want to see the mains defined
+      --  in the root project first.
 
-      if Base_Project = No_Project
-        or else Base_Project = Root_Project
-      then
-         --  The root project is the main project
-         return Root_Mains;
+      while Current (Iterator) /= No_Project loop
+         Projects_Stack.Push (Projects, Current (Iterator));
+         Next (Iterator);
+      end loop;
 
-      else
-         Base_Mains := Base_Project.Attribute_Value (Main_Attribute);
+      while not Projects_Stack.Is_Empty (Projects)
+        and Index <= Result'Last
+      loop
+         Projects_Stack.Pop (Projects, The_Project);
+         Mains := The_Project.Attribute_Value (Main_Attribute);
+         if Mains /= null then
+            for J in Mains'Range loop
+               if Mains (J)'Length > 0 then
+                  Result (Index) := new String'(To_Full_Path (Mains (J).all));
 
-         if Base_Mains = null then
-            return Root_Mains;
-         end if;
-
-         declare
-            Mains : String_List
-              (1 .. Root_Mains'Length + Base_Mains'Length);
-            Index : Natural; --  Points to the first free element in Mains
-
-            function Is_Already_In_Mains (S : String) return Boolean;
-            --  Return True if S is in Loaded_Mains
-
-            -------------------------
-            -- Is_Already_In_Mains --
-            -------------------------
-
-            function Is_Already_In_Mains (S : String) return Boolean is
-            begin
-               for J in Base_Mains'Range loop
-                  if Base_Mains (J).all = S then
-                     return True;
+                  if not Is_Already_In_Mains (Result (Index).all) then
+                     Index := Index + 1;
+                     exit when Index > Result'Last;
+                  else
+                     Free (Result (Index));
                   end if;
-               end loop;
-               return False;
-            end Is_Already_In_Mains;
-
-         begin
-            --  The real Mains is the concatenation of the project mains,
-            --  plus the mains contained in the Extended project and which
-            --  are not in the Loaded mains.
-
-            if Base_Mains = null or else Base_Mains'Length = 0 then
-               return Root_Mains;
-            end if;
-
-            --  Find full paths for files in Base_Mains.
-            for M in 1 .. Base_Mains'Length loop
-               declare
-                  F : constant String :=
-                    To_Full_Path (Base_Mains (M).all, Base_Project);
-               begin
-                  Free (Base_Mains (M));
-                  Base_Mains (M) := new String'(F);
-               end;
-            end loop;
-
-            Mains (1 .. Base_Mains'Length) := Base_Mains.all;
-
-            Index := Base_Mains'Length + 1;
-
-            for K in Root_Mains'Range loop
-               if not Is_Already_In_Mains (Root_Mains (K).all) then
-                  Mains (Index) := new String'(Root_Mains (K).all);
-                  Index := Index + 1;
                end if;
             end loop;
 
-            --  Place the Extended Mains in front, this is a more natural
-            --  order. For instance, if we have defined one main and then
-            --  extended it, we want "F4" to build the extending main.
+            Free (Mains);
+         end if;
+      end loop;
 
-            Free (Root_Mains);
+      Projects_Stack.Clear (Projects);
 
-            declare
-               Result : constant String_List :=
-                 Mains (Base_Mains'Length + 1 .. Index - 1) &
-                 Mains (1 .. Base_Mains'Length);
-            begin
-               Basic_Types.Unchecked_Free (Base_Mains);
-               return Result;
-            end;
-         end;
-      end if;
+      return Result (1 .. Index - 1);
    end Get_Mains;
 
    -----------------
