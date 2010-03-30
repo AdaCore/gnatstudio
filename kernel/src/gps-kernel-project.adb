@@ -174,14 +174,14 @@ package body GPS.Kernel.Project is
       Do_Subdirs_Cleanup (Self);
       Recompute_View (Project_Tree (Self), Errors);
 
+      Compute_Predefined_Paths (Self.Handle);
+
       --  If we are in the process of creating the kernel, no need to do
       --  anything else here
       if Self.Handle.Tooltips = null then
          Pop_State (Kernel_Handle (Self.Handle));
          return;
       end if;
-
-      Compute_Predefined_Paths (Self.Handle);
 
       --  The list of source or ALI files might have changed, so we need to
       --  reset the cache containing LI information, otherwise this cache might
@@ -595,9 +595,11 @@ package body GPS.Kernel.Project is
 
       Entities.Reset (Get_Database (Kernel));
 
-      Kernel.Registry.Tree.Load_Empty_Project;
+      Kernel.Registry.Tree.Load_Empty_Project
+        (Kernel.Registry.Environment, Recompute_View => False);
 
       Run_Hook (Kernel, Project_Changed_Hook);
+      Recompute_View (Kernel);
    end Load_Empty_Project;
 
    ------------------------------
