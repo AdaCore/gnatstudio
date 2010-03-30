@@ -186,8 +186,9 @@ package body Creation_Wizard.Dependencies is
 
    begin
       loop
-         Changed := Importing_Project.Add_Imported_Project
-           (Imported_Project_Location => Imported_Project_Path,
+         Changed := Get_Registry (Kernel).Tree.Add_Imported_Project
+           (Project           => Importing_Project,
+            Imported_Project_Location => Imported_Project_Path,
             Errors            => Report_Error'Unrestricted_Access,
             Use_Base_Name     => Use_Base_Name,
             Use_Relative_Path => Use_Relative_Path,
@@ -234,8 +235,9 @@ package body Creation_Wizard.Dependencies is
                   Is_Limited_With => Is_Limited_With);
                if Imports then
                   Prj.Remove_Imported_Project (Imported);
-                  Changed := Prj.Add_Imported_Project
-                    (Imported_Project_Location => Imported_Project_Path,
+                  Changed := Get_Registry (Kernel).Tree.Add_Imported_Project
+                    (Project           => Prj,
+                     Imported_Project_Location => Imported_Project_Path,
                      Errors            => Report_Error'Unrestricted_Access,
                      Use_Base_Name     => Use_Base_Name,
                      Use_Relative_Path => Use_Relative_Path,

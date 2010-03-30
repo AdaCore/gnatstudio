@@ -1319,8 +1319,9 @@ package body Project_Viewers is
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
             else
-               Error := Project.Add_Imported_Project
-                 (Imported_Project_Location => Create (Project2),
+               Error := Get_Registry (Kernel).Tree.Add_Imported_Project
+                 (Project            => Project,
+                  Imported_Project_Location => Create (Project2),
                   Errors             => Set_Error_Tmp'Unrestricted_Access,
                   Use_Base_Name      => False,
                   Use_Relative_Path  => Relative);

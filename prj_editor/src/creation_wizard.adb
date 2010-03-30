@@ -349,8 +349,9 @@ package body Creation_Wizard is
                  (Imported_Project   => Parent,
                   Use_Relative_Path  => True);
             else
-               Error := Project.Add_Imported_Project
-                 (Imported_Project_Location =>
+               Error := Get_Registry (Kernel).Tree.Add_Imported_Project
+                 (Project           => Project,
+                  Imported_Project_Location =>
                     Create (+Name (Name'First .. J - 1)),
                   Use_Relative_Path => True);
             end if;
