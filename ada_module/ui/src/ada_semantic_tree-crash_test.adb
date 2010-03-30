@@ -27,6 +27,7 @@ with GNAT.Strings;                   use GNAT.Strings;
 with GNAT.Traceback.Symbolic;        use GNAT.Traceback.Symbolic;
 with GNAT.Command_Line;              use GNAT.Command_Line;
 
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
@@ -36,13 +37,11 @@ with Entities.Queries;               use Entities.Queries;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
 with Language;                       use Language;
-with Projects.Registry;              use Projects.Registry;
 with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 with Language_Handlers;              use Language_Handlers;
 with Language.Ada;                   use Language.Ada;
 with ALI_Parser;                     use ALI_Parser;
-with Projects.Registry.Queries;
 
 procedure Ada_Semantic_Tree.Crash_Test is
 
@@ -64,7 +63,8 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
    procedure Project_Error (Msg : String);
 
-   New_Registry : aliased Project_Registry;
+   Tree         : constant Project_Tree_Access := new Project_Tree;
+   New_Registry : Project_Registry_Access := Create (Tree);
 
    Entities_Db  : Entities_Database;
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
@@ -397,8 +397,6 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Put_Line ("Error loading project: " & Msg);
    end Project_Error;
 
-   Loaded, Success : Boolean;
-
    Max_Files : Integer := -1;
    File_To_Analyze : Virtual_File;
    Files_Analyzed : Integer := 0;
@@ -414,10 +412,8 @@ procedure Ada_Semantic_Tree.Crash_Test is
       pragma Unreferenced (GNAT_Version);
 
    begin
-      Projects.Registry.Queries.Compute_Predefined_Paths
-        (New_Registry'Unchecked_Access,
-         GNAT_Version,
-         Gnatls_Args);
+      Projects.Compute_Predefined_Paths
+        (New_Registry, GNAT_Version, Gnatls_Args);
 
       GNAT.OS_Lib.Free (Gnatls_Args);
    end Compute_Predefined_Paths;
@@ -449,25 +445,19 @@ begin
       end case;
    end loop;
 
-   Projects.Registry.Initialize;
+   Entities_Db := Create (New_Registry, Construct_Db);
 
-   Entities_Db := Create (New_Registry'Unchecked_Access, Construct_Db);
-
-   Load
-     (Registry           => New_Registry,
-      Root_Project_Path  =>
+   New_Registry.Tree.Load
+     (Root_Project_Path  =>
         Create_From_Dir (Get_Current_Dir, +Project_Name.all),
-      Errors             => Project_Error'Unrestricted_Access,
-      New_Project_Loaded => Loaded,
-      Status             => Success);
+      Errors             => Project_Error'Unrestricted_Access);
 
    Compute_Predefined_Paths;
-   Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
+   New_Registry.Tree.Recompute_View (Project_Error'Unrestricted_Access);
 
    Language_Handlers.Create_Handler (Handler);
 
-   Set_Registry
-     (Handler, New_Registry'Unchecked_Access);
+   Set_Registry (Handler, New_Registry);
 
    Register_Language_Handler (Entities_Db, Handler);
 
@@ -484,11 +474,11 @@ begin
       Lang      => Ada_Lang,
       Tree_Lang => Ada_Tree_Lang,
       LI        => ALI_Parser.Create_ALI_Handler
-        (Entities_Db, New_Registry));
+        (Entities_Db, New_Registry.all));
 
    if GNAT.Strings."/=" (Unique_File, null) then
-      File_To_Analyze := Create
-        (Filesystem_String (Unique_File.all), New_Registry);
+      File_To_Analyze := New_Registry.Tree.Create
+        (Filesystem_String (Unique_File.all));
    end if;
 
    Ada.Text_IO.Create (Result_File, Out_File, "result.txt");
@@ -497,11 +487,11 @@ begin
       Lock : Construct_Heuristics_Lock :=
         Lock_Construct_Heuristics (Entities_Db);
       Files     : constant GNATCOLL.VFS.File_Array_Access :=
-        Get_Source_Files (Get_Root_Project (New_Registry), True);
+        New_Registry.Tree.Root_Project.Source_Files (True);
       Files_To_Analyze : constant GNATCOLL.VFS.File_Array_Access :=
-        Get_Source_Files (Get_Root_Project (New_Registry), not Unique_Project);
+        New_Registry.Tree.Root_Project.Source_Files (not Unique_Project);
       Predef_File : constant GNATCOLL.VFS.File_Array :=
-        Get_Predefined_Source_Files (New_Registry);
+        New_Registry.Environment.Predefined_Source_Files;
       File_Node : Structured_File_Access;
 
       pragma Unreferenced (File_Node);
@@ -577,8 +567,7 @@ begin
    end if;
 
    Destroy (Construct_Db);
-   Destroy (New_Registry);
-   Projects.Registry.Finalize;
+   Projects.Destroy (New_Registry);
    Close (Result_File);
 exception
    when E : others =>
