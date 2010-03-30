@@ -25,9 +25,10 @@ with Gtk.Menu;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
+private with Default_Preferences;
 with GPS.Kernel;   use GPS.Kernel;
 with GPS.Kernel.Modules;
-with GPS.Kernel.Styles;
+private with GPS.Kernel.Styles;
 with GPS.Kernel.MDI;
 with Code_Analysis;
 
@@ -81,6 +82,10 @@ package Code_Peer.Module is
 
 private
 
+   type Message_Probability_Color_Preference_Array is
+     array (Code_Peer.Message_Probability_Level)
+       of Default_Preferences.Color_Preference;
+
    type Message_Probability_Style_Array is
      array (Code_Peer.Message_Probability_Level)
        of GPS.Kernel.Styles.Style_Access;
@@ -101,7 +106,9 @@ private
       Tree             : Code_Analysis.Code_Analysis_Tree;
       Report_Subwindow : GPS.Kernel.MDI.GPS_MDI_Child;
       Report           : Code_Peer.Summary_Reports.Summary_Report;
+      Annotation_Color : Default_Preferences.Color_Preference;
       Annotation_Style : GPS.Kernel.Styles.Style_Access;
+      Message_Colors   : Message_Probability_Color_Preference_Array;
       Message_Styles   : Message_Probability_Style_Array;
 
       --  Global messages filter

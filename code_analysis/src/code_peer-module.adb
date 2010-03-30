@@ -78,6 +78,8 @@ package body Code_Peer.Module is
      := "CodePeer low messages";
    Informational_Probability_Style_Name : constant String
      := "CodePeer informational messages";
+   Suppressed_Probability_Style_Name    : constant String
+     := "CodePeer suppressed messages";
 
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
@@ -213,6 +215,10 @@ package body Code_Peer.Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Called when a file has been opened
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed
 
    procedure Review
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
@@ -1612,6 +1618,30 @@ package body Code_Peer.Module is
          Trace (Me, E);
    end On_Message_Reviewed;
 
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+
+   begin
+      Module.Annotation_Style.Set_Background
+        (Module.Annotation_Color.Get_Pref);
+      Module.Message_Styles (Code_Peer.High).Set_Background
+        (Module.Message_Colors (Code_Peer.High).Get_Pref);
+      Module.Message_Styles (Code_Peer.Medium).Set_Background
+        (Module.Message_Colors (Code_Peer.Medium).Get_Pref);
+      Module.Message_Styles (Code_Peer.Low).Set_Background
+        (Module.Message_Colors (Code_Peer.Low).Get_Pref);
+      Module.Message_Styles (Code_Peer.Informational).Set_Background
+        (Module.Message_Colors (Code_Peer.Informational).Get_Pref);
+      Module.Message_Styles (Code_Peer.Suppressed).Set_Background
+        (Module.Message_Colors (Code_Peer.Suppressed).Get_Pref);
+   end On_Preferences_Changed;
+
    --------------------------
    -- On_Remove_XML_Review --
    --------------------------
@@ -2063,6 +2093,27 @@ package body Code_Peer.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      procedure Initialize_Style
+        (Style      : out GPS.Kernel.Styles.Style_Access;
+         Name       : String;
+         Preference : Default_Preferences.Color_Preference);
+      --  Initializes style and sets background color from preference.
+
+      ----------------------
+      -- Initialize_Style --
+      ----------------------
+
+      procedure Initialize_Style
+        (Style      : out GPS.Kernel.Styles.Style_Access;
+         Name       : String;
+         Preference : Default_Preferences.Color_Preference) is
+      begin
+         Style :=
+           GPS.Kernel.Styles.Get_Or_Create_Style
+             (GPS.Kernel.Kernel_Handle (Kernel), Name);
+         Style.Set_Background (Preference.Get_Pref);
+      end Initialize_Style;
+
       Submenu_Factory    : GPS.Kernel.Modules.Submenu_Factory;
       Menu               : constant String := -"/_CodePeer";
       Advanced_Menu      : constant String := Menu & (-"/Advanced");
@@ -2196,35 +2247,86 @@ package body Code_Peer.Module is
          Text        => -"Remove _SCIL & DB",
          Callback    => On_Remove_CodePeer'Access);
 
-      Module.Annotation_Style :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), Annotation_Style_Name);
-      GPS.Kernel.Styles.Set_Background (Module.Annotation_Style, "#E9E9E9");
+      Module.Message_Colors (Code_Peer.High) :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Messages-High-Background",
+           -"High probability messages color",
+           -"Plugins/CodePeer",
+           -"Color to use for the background of high probability messages",
+           "#F75D59");
 
-      Module.Message_Styles (Code_Peer.High) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), High_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.High), "#FFCCCC");
+      Module.Message_Colors (Code_Peer.Medium) :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Messages-Medium-Background",
+           -"Medium probability messages color",
+           -"Plugins/CodePeer",
+           -"Color to use for the background of medium probability messages",
+           "#F88017");
 
-      Module.Message_Styles (Code_Peer.Medium) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), Medium_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.Medium), "#FFFFCC");
+      Module.Message_Colors (Code_Peer.Low) :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Messages-Low-Background",
+           -"Low probability messages color",
+           -"Plugins/CodePeer",
+           -"Color to use for the background of low probability messages",
+           "#FFE87C");
 
-      Module.Message_Styles (Code_Peer.Low) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel), Low_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.Low), "#CCFFFF");
+      Module.Message_Colors (Code_Peer.Informational) :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Messages-Informational-Background",
+           -"Informational probability messages color",
+           -"Plugins/CodePeer",
+           -"Color to use for the background of informations probability"
+           & " messages",
+           "#DFDFDF");
 
-      Module.Message_Styles (Code_Peer.Informational) :=
-        GPS.Kernel.Styles.Get_Or_Create_Style
-          (GPS.Kernel.Kernel_Handle (Kernel),
-           Informational_Probability_Style_Name);
-      GPS.Kernel.Styles.Set_Background
-        (Module.Message_Styles (Code_Peer.Informational), "#EFEFEF");
+      Module.Message_Colors (Code_Peer.Suppressed) :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Messages-Suppressed-Background",
+           -"Suppressed probability messages color",
+           -"Plugins/CodePeer",
+           -"Color to use for the background of suppressed probability"
+           & " messages",
+           "#EFEFEF");
+
+      Module.Annotation_Color :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Annotation-Background",
+           -"Annotation background color",
+           -"Plugins/CodePeer",
+           -"Color to use for the background of annotations",
+           "#E9E9E9");
+
+      Initialize_Style
+        (Module.Annotation_Style,
+         Annotation_Style_Name,
+         Module.Annotation_Color);
+      Initialize_Style
+        (Module.Message_Styles (Code_Peer.High),
+         High_Probability_Style_Name,
+         Module.Message_Colors (Code_Peer.High));
+      Initialize_Style
+        (Module.Message_Styles (Code_Peer.Medium),
+         Medium_Probability_Style_Name,
+         Module.Message_Colors (Code_Peer.Medium));
+      Initialize_Style
+        (Module.Message_Styles (Code_Peer.Low),
+         Low_Probability_Style_Name,
+         Module.Message_Colors (Code_Peer.Low));
+      Initialize_Style
+        (Module.Message_Styles (Code_Peer.Informational),
+         Informational_Probability_Style_Name,
+         Module.Message_Colors (Code_Peer.Informational));
+      Initialize_Style
+        (Module.Message_Styles (Code_Peer.Suppressed),
+         Suppressed_Probability_Style_Name,
+         Module.Message_Colors (Code_Peer.Suppressed));
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
@@ -2238,6 +2340,10 @@ package body Code_Peer.Module is
         (Kernel, GPS.Kernel.File_Edited_Hook,
          GPS.Kernel.Hooks.Wrapper (On_File_Edited_Hook'Access),
          Name  => "codepeer.file_edited");
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.Preferences_Changed_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Preferences_Changed'Access),
+         "codepeer.preferences_changed");
    end Register_Module;
 
 end Code_Peer.Module;
