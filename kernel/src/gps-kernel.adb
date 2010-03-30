@@ -124,9 +124,6 @@ package body GPS.Kernel is
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Project_Registry'Class, Project_Registry_Access);
-
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations
 
@@ -1711,8 +1708,7 @@ package body GPS.Kernel is
       --  ??? Already done in remote.db.Destroy
       --  GNAT.Expect.TTY.Remote.Close_All;
 
-      Destroy (Handle.Registry.all);
-      Unchecked_Free (Handle.Registry);
+      Destroy (Handle.Registry);
 
       --  Do not free the contexts. They can still be stored as Data in a
       --  Class_Instance, and this will be finalized later automatically. If

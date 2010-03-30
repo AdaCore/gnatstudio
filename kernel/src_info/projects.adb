@@ -194,15 +194,18 @@ package body Projects is
    -- Destroy --
    -------------
 
-   procedure Destroy (Registry : in out Project_Registry) is
+   procedure Destroy (Registry : in out Project_Registry_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Tree'Class, Project_Tree_Access);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Environment'Class, Project_Environment_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Project_Registry'Class, Project_Registry_Access);
    begin
       Registry.Tree.Unload;
       Unchecked_Free (Registry.Tree);
       Unchecked_Free (Registry.Env);
+      Unchecked_Free (Registry);
 
       GNATCOLL.Projects.Finalize;
    end Destroy;

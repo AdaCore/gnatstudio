@@ -51,7 +51,7 @@ package Projects is
       return GNATCOLL.Projects.Project_Tree_Access;
    --  Return the loaded project tree
 
-   procedure Destroy (Registry : in out Project_Registry);
+   procedure Destroy (Registry : in out Project_Registry_Access);
    --  Destroy the registry
 
    type Project_Type_Array is array (Natural range <>) of Project_Type;
