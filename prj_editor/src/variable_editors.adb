@@ -569,15 +569,18 @@ package body Variable_Editors is
       end if;
 
       if Editor.Var = No_Variable then
+         --  ??? The variable is null, we shouldn't do anything. Maybe the
+         --  above test should be "/="
+
          if External_Default (Editor.Var) /= "" then
-            Get_Registry (Editor.Kernel).Tree.Set_Value
-              (External_Name (Editor.Var), External_Default (Editor.Var));
+            Set_Value (Editor.Var, External_Default (Editor.Var));
          else
             Iter := Get_Iter_First (Editor.Model);
-            Get_Registry (Editor.Kernel).Tree.Set_Value
-              (External_Name (Editor.Var),
-               Get_String (Editor.Model, Iter, Value_Column));
+            Set_Value (Editor.Var,
+                       Get_String (Editor.Model, Iter, Value_Column));
          end if;
+         Get_Registry (Editor.Kernel).Tree.Change_Environment
+           ((1 => Editor.Var));
       end if;
 
       if Changed then

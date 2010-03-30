@@ -1066,7 +1066,7 @@ procedure GPS.Main is
 
          if Debugger_Name /= null then
             Project.Set_Attribute
-              (Scenario  => No_Scenario,
+              (Scenario  => All_Scenarios,
                Attribute => Debugger_Command_Attribute,
                Value     => Debugger_Name.all);
          end if;
@@ -1074,27 +1074,27 @@ procedure GPS.Main is
          --  ??? re-enable this...
 --           if Tools_Host /= null then
 --              Project.Set_Attribute
---                (Scenario  => No_Scenario,
+--                (Scenario  => All_Scenarios,
 --                 Attribute => Remote_Host_Attribute,
 --                 Value     => Tools_Host.all);
 --           end if;
 
          if Target /= null then
             Project.Set_Attribute
-              (Scenario  => No_Scenario,
+              (Scenario  => All_Scenarios,
                Attribute => Program_Host_Attribute,
                Value     => Target.all);
          end if;
 
          if Protocol /= null then
             Project.Set_Attribute
-              (Scenario  => No_Scenario,
+              (Scenario  => All_Scenarios,
                Attribute => Protocol_Attribute,
                Value     => Protocol.all);
          end if;
 
          Project.Set_Attribute
-           (Scenario  => No_Scenario,
+           (Scenario  => All_Scenarios,
             Attribute => Languages_Attribute,
             Values    =>
               (new String'("ada"), new String'("c"), new String'("c++")));

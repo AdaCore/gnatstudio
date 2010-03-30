@@ -963,7 +963,7 @@ package body GPS.Kernel.Project is
          return Concat
            (Current
             & Set_Var & External_Name (Scenario_Vars (Index))
-            & "=" & Handle.Registry.Tree.Value (Scenario_Vars (Index))
+            & "=" & Value (Scenario_Vars (Index))
             & " ",
             Index + 1,
             Set_Var);

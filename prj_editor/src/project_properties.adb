@@ -5172,9 +5172,6 @@ package body Project_Properties is
 
       if Response = Gtk_Response_OK then
          declare
-            Vars         : constant Scenario_Variable_Array :=
-              Scenario_Variables (Kernel);
-            Saved_Values : Argument_List := Get_Current_Scenario (Kernel);
             Prj_Iter     : Scenario_Selectors.Project_Iterator :=
               Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
@@ -5185,21 +5182,6 @@ package body Project_Properties is
                   Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
                begin
                   while not At_End (Scenar_Iter) loop
-                     --  Set the scenario
-                     declare
-                        Curr   : Argument_List := Current (Scenar_Iter);
-                        Is_Env : Boolean := True;
-                     begin
-                        Set_Environment (Kernel, Curr);
-
-                        for V in Vars'Range loop
-                           Is_Env := Is_Env
-                             and then Curr (V).all = Saved_Values (V).all;
-                        end loop;
-
-                        Free (Curr);
-                     end;
-
                      --  First generate for the global page, so that the
                      --  relative paths option is updated appropriately.
 
@@ -5215,7 +5197,7 @@ package body Project_Properties is
                              (Page               =>
                                 Project_Wizard_Page (Editor.XML_Pages (X)),
                               Kernel             => Kernel,
-                              Scenario_Variables => Vars,
+                              Scenario_Variables => Current (Scenar_Iter),
                               Project            => Tmp_Project,
                               Changed            => Changed);
 
@@ -5241,7 +5223,7 @@ package body Project_Properties is
                              (Ed, Current (Prj_Iter),
                               Kernel, Editor.Pages (P),
                               Languages,
-                              Vars,
+                              Current (Scenar_Iter),
                               Ref_Project => Project)
                            then
                               Trace (Me, "Project modified on page " & P'Img
@@ -5257,10 +5239,6 @@ package body Project_Properties is
 
                Next (Prj_Iter);
             end loop;
-
-            --  Restore the scenario
-            Set_Environment (Kernel, Saved_Values);
-            Free (Saved_Values);
          end;
 
          --  Rename the project last, since we need to recompute the view

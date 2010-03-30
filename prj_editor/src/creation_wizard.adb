@@ -388,7 +388,7 @@ package body Creation_Wizard is
          Generate_Project
            (Project_Wizard_Page (Pages (P)),
             Get_Kernel (Wiz),
-            Scenario_Variables => No_Scenario,
+            Scenario_Variables => All_Scenarios,
             Project            => Wiz.Project,
             Changed            => Changed);
       end loop;

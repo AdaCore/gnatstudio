@@ -36,7 +36,6 @@ with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with System;
 with GPS.Intl;                 use GPS.Intl;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with Projects;                 use Projects;
@@ -490,8 +489,7 @@ package body Scenario_Selectors is
               Value  => External_Name (Vars (V)));
 
          declare
-            Current : constant String :=
-              Get_Registry (Selector.Kernel).Tree.Value (Vars (V));
+            Current : constant String := Value (Vars (V));
             Values  : GNAT.Strings.String_List :=
               Get_Registry (Selector.Kernel).Tree.Possible_Values_Of
                 (Vars (V));
@@ -843,51 +841,19 @@ package body Scenario_Selectors is
    -- Current --
    -------------
 
-   function Current (Iter : Scenario_Iterator) return Argument_List is
-      Result : Argument_List (Iter.Current'Range);
+   function Current
+     (Iter : Scenario_Iterator) return Scenario_Variable_Array
+   is
+      Vars : Scenario_Variable_Array := Get_Registry
+        (Iter.Selector.Kernel).Tree.Scenario_Variables;
    begin
-      for R in Result'Range loop
-         Result (R) := new String'
-           (Get_String
-            (Iter.Selector.Model, Iter.Current (R), Var_Name_Column));
+      for R in Vars'Range loop
+         Set_Value
+           (Vars (R),
+            Get_String
+              (Iter.Selector.Model, Iter.Current (R), Var_Name_Column));
       end loop;
-      return Result;
+      return Vars;
    end Current;
-
-   --------------------------
-   -- Get_Current_Scenario --
-   --------------------------
-
-   function Get_Current_Scenario
-      (Kernel    : access Kernel_Handle_Record'Class)
-      return GNAT.OS_Lib.Argument_List
-   is
-      Variables : constant Scenario_Variable_Array :=
-         Scenario_Variables (Kernel);
-      Values : Argument_List (Variables'Range);
-   begin
-      for V in Values'Range loop
-         Values (V) := new String'
-           (Get_Registry (Kernel).Tree.Value (Variables (V)));
-      end loop;
-      return Values;
-   end Get_Current_Scenario;
-
-   ---------------------
-   -- Set_Environment --
-   ---------------------
-
-   procedure Set_Environment
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Values    : GNAT.OS_Lib.Argument_List)
-   is
-      Variables : constant Scenario_Variable_Array :=
-         Scenario_Variables (Kernel);
-   begin
-      for V in Variables'Range loop
-         Get_Registry (Kernel).Tree.Set_Value
-           (External_Name (Variables (V)), Values (V).all);
-      end loop;
-   end Set_Environment;
 
 end Scenario_Selectors;

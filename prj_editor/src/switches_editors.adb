@@ -515,8 +515,6 @@ package body Switches_Editors is
       Files        : GNATCOLL.VFS.File_Array;
       Scenario     : access Scenario_Selector_Record'Class) return Boolean
    is
-      Saved     : GNAT.Strings.String_List := Get_Current_Scenario
-        (Switches.Kernel);
       Scenar    : Scenario_Iterator := Start (Scenario);
       Modified  : Boolean := False;
       Languages : GNAT.Strings.String_List := Project.Languages;
@@ -524,26 +522,16 @@ package body Switches_Editors is
    begin
       --  No scenario variables ?
       while not At_End (Scenar) loop
-         declare
-            Cur : GNAT.Strings.String_List := Current (Scenar);
-         begin
-            Set_Environment (Switches.Kernel, Cur);
-            Modified := Modified or Generate_Project
-              (Switches           => Switches,
-               Languages          => Languages,
-               Scenario_Variables => Scenario_Variables (Switches.Kernel),
-               Project            => Project,
-               Files              => Files);
-            Free (Cur);
-         end;
-
+         Modified := Modified or Generate_Project
+           (Switches           => Switches,
+            Languages          => Languages,
+            Scenario_Variables => Current (Scenar),
+            Project            => Project,
+            Files              => Files);
          Next (Scenar);
       end loop;
 
       Free (Languages);
-
-      Set_Environment (Switches.Kernel, Saved);
-      Free (Saved);
 
       --  ??? Need this to update the icon in the project explorer
       if Modified then

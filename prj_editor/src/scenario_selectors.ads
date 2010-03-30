@@ -25,7 +25,6 @@ with Gtk.Tree_Store;
 with GPS.Kernel;
 with Projects;
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
-with GNAT.OS_Lib;
 
 package Scenario_Selectors is
 
@@ -104,24 +103,9 @@ package Scenario_Selectors is
    function At_End (Iter : Scenario_Iterator) return Boolean;
    --  Return True if there are no more scenario to return
 
-   function Current (Iter : Scenario_Iterator)
-      return GNAT.OS_Lib.Argument_List;
+   function Current (Iter : Scenario_Iterator) return Scenario_Variable_Array;
    --  Return the current scenario. The order of the variables is the same as
    --  in GPS.Kernel.Scenario_Variables.
-   --  The returned value must be freed by the caller.
-
-   function Get_Current_Scenario
-      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNAT.OS_Lib.Argument_List;
-   --  Return the current values of the environment variables in Variables.
-   --  The returned array must be freed by the caller.
-
-   procedure Set_Environment
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Values    : GNAT.OS_Lib.Argument_List);
-   --  Set the value of each variable described in Variables to the value at
-   --  the matching index in Values. This directly modifies the environment
-   --  variables. Values can be the result of Current above.
 
 private
 

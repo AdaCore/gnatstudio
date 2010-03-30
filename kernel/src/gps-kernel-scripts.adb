@@ -652,9 +652,7 @@ package body GPS.Kernel.Scripts is
                      Scenario_Variables (Kernel);
          begin
             for V in Vars'Range loop
-               Set_Return_Value
-                 (Data,
-                  Get_Registry (Kernel).Tree.Value (Vars (V)));
+               Set_Return_Value (Data, Value (Vars (V)));
                Set_Return_Value_Key
                  (Data, External_Name (Vars (V)));
             end loop;
@@ -665,8 +663,11 @@ package body GPS.Kernel.Scripts is
          declare
             Name  : constant String := Nth_Arg (Data, 1);
             Value : constant String := Nth_Arg (Data, 2);
+            Var   : Scenario_Variable :=
+              Get_Registry (Kernel).Tree.Scenario_Variables (Name);
          begin
-            Get_Registry (Kernel).Tree.Set_Value (Name, Value);
+            Set_Value (Var, Value);
+            Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
             Run_Hook (Kernel, Variable_Changed_Hook);
          end;
 

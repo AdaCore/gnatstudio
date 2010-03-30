@@ -257,10 +257,11 @@ package body Scenario_Views is
       User  : Variable_User_Data)
    is
       Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
+      Var   : Scenario_Variable := User.Var;
    begin
       if Value /= "" then
-         Get_Registry (User.View.Kernel).Tree.Set_Value
-           (External_Name (User.Var), Value);
+         Set_Value (Var, Value);
+         Get_Registry (User.View.Kernel).Tree.Change_Environment ((1 => Var));
          User.View.Combo_Is_Open := True;
          Recompute_View (User.View.Kernel);
          User.View.Combo_Is_Open := False;
@@ -335,8 +336,7 @@ package body Scenario_Views is
       if Response = Button_OK then
          Get_Registry (Data.View.Kernel).Tree.Delete_Scenario_Variable
            (External_Name            => External_Name (Data.Var),
-            Keep_Choice              =>
-               Get_Registry (Data.View.Kernel).Tree.Value (Data.Var),
+            Keep_Choice              => Value (Data.Var),
             Delete_Direct_References => False);
          Run_Hook (Data.View.Kernel, Variable_Changed_Hook);
 
@@ -499,9 +499,7 @@ package body Scenario_Views is
 
                   Add_Possible_Values
                     (Kernel, Get_List (Combo), Scenar_Var (J));
-                  Set_Text
-                    (Get_Entry (Combo),
-                     Get_Registry (Kernel).Tree.Value (Scenar_Var (J)));
+                  Set_Text (Get_Entry (Combo), Value (Scenar_Var (J)));
 
                   Scenario_Contextual.Register_Contextual_Menu
                     (Widget       => Event,
