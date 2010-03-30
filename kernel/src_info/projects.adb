@@ -374,7 +374,7 @@ package body Projects is
          begin
             if S = "Object Search Path:" & ASCII.LF then
                if Active (Me) then
-                  Trace (Me, "Set source path from gnatls to :");
+                  Trace (Me, "Set source path from gnatls to:");
                   for J in Current'Range loop
                      Trace (Me, "  " & Current (J).Display_Full_Name);
                   end loop;
@@ -386,7 +386,7 @@ package body Projects is
 
             elsif S = "Project Search Path:" & ASCII.LF then
                if Active (Me) then
-                  Trace (Me, "Set object path from gnatls to :");
+                  Trace (Me, "Set object path from gnatls to:");
                   for J in Current'Range loop
                      Trace (Me, "  " & Current (J).Display_Full_Name);
                   end loop;
@@ -407,7 +407,7 @@ package body Projects is
       when Process_Died =>
          if Object_Path_Set then
             if Active (Me) then
-               Trace (Me, "Set project path from gnatls to :");
+               Trace (Me, "Set project path from gnatls to:");
                for J in Current'Range loop
                   Trace (Me, "  " & Current (J).Display_Full_Name);
                end loop;
@@ -416,7 +416,7 @@ package body Projects is
 
          else
             if Active (Me) then
-               Trace (Me, "Set object path (2) from gnatls to :");
+               Trace (Me, "Set object path (2) from gnatls to:");
                for J in Current'Range loop
                   Trace (Me, "  " & Current (J).Display_Full_Name);
                end loop;
