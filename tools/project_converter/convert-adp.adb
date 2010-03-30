@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                     Copyright (C) 2009-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +19,9 @@
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Projects.Editor;           use Projects, Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
 with Adp_Converter;             use Adp_Converter;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Convert.Adp is
@@ -34,24 +34,23 @@ package body Convert.Adp is
      (Adp_Filename : String;
       Spec_Extension, Body_Extension : GNAT.OS_Lib.String_Access)
    is
+      Tree     : constant Project_Tree_Access := new Project_Tree;
       Project  : Project_Type;
-      Registry : Project_Registry;
+      Registry : constant Project_Registry_Access := Create (Tree);
       Tmp      : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Projects.Registry.Initialize;
-      Load_Empty_Project (Registry);
+      Tree.Load_Empty_Project;
 
-      Project := Create_Project
-        (Registry,
-         Name => Base_Name (Adp_Filename, ".adp"),
+      Project := Tree.Create_Project
+        (Name => Base_Name (Adp_Filename, ".adp"),
          Path => Create (+Dir_Name (Adp_Filename)));
-      Set_Paths_Type (Project, Absolute);
+      --  Set_Paths_Type (Project, Absolute);
       Convert_Adp_File (+Adp_Filename,
-                        Registry       => Registry,
+                        Registry       => Registry.all,
                         Project        => Project,
                         Spec_Extension => Spec_Extension.all,
                         Body_Extension => Body_Extension.all);
-      Tmp := Save_Project (Project);
+      Tmp := Project.Save;
    end Convert_From_Adp_To_Gpr;
 end Convert.Adp;

@@ -1,4 +1,5 @@
 with "shared";
+with "gnatlib/src/gnatcoll";  --  for prj.ads
 project GNAT is
 
    for Source_Dirs use ("gnat");
