@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2109, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with GNAT.OS_Lib;                use GNAT;
 with GNAT.Strings;
 with GNAT.HTable;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 
 with XML_Utils;                  use XML_Utils;
 
@@ -32,7 +33,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with Log_Utils;                  use Log_Utils;
 with Projects;                   use Projects;
-with Projects.Registry;          use Projects.Registry;
 with String_Hash;
 with Traces;                     use Traces;
 with VCS.Unknown_VCS;            use VCS.Unknown_VCS;
@@ -314,8 +314,7 @@ package body VCS_Activities is
             if Get (UID) = Empty_Activity then
                --  Retreive the current root project name
                Set (UID,
-                 (Project_Path
-                    (Get_Root_Project (Get_Registry (Kernel).all)),
+                 (Get_Registry (Kernel).Tree.Root_Project.Project_Path,
                   new String'("New Activity"),
                   No_Class_Instance,
                   UID,
@@ -355,8 +354,7 @@ package body VCS_Activities is
             declare
                File    : Virtual_File renames Files (Files'First);
                Project : constant Project_Type :=
-                           Get_Project_From_File
-                             (Get_Registry (Kernel).all, File);
+                           Get_Registry (Kernel).Tree.Info (File).Project;
             begin
                if Project /= No_Project then
                   VCS := Get_Current_Ref (Kernel, Project);
@@ -606,7 +604,7 @@ package body VCS_Activities is
    is
       F_Activity : constant Activity_Id := Get_File_Activity (File);
       Project    : constant Project_Type :=
-                     Get_Project_From_File (Get_Registry (Kernel).all, File);
+                     Get_Registry (Kernel).Tree.Info (File).Project;
       VCS        : constant VCS_Access := Get_Current_Ref (Kernel, Project);
       Item       : Activity_Record := Get (Activity);
 

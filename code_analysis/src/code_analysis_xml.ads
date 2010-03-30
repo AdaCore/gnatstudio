@@ -22,10 +22,10 @@
 --  of a Code_Analysis tree structure on the standard output.
 --  </description>
 
-with GNATCOLL.VFS;  use GNATCOLL.VFS;
-with XML_Utils;     use XML_Utils;
-with Code_Analysis; use Code_Analysis;
-with Projects;      use Projects;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with XML_Utils;         use XML_Utils;
+with Code_Analysis;     use Code_Analysis;
 
 package Code_Analysis_XML is
 
@@ -37,10 +37,10 @@ package Code_Analysis_XML is
 
    generic
       with procedure On_New_File
-        (Project : Project_Type;
+        (Project : GNATCOLL.Projects.Project_Type;
          File    : GNATCOLL.VFS.Virtual_File);
    procedure Parse_XML
-     (Project  : Project_Type;
+     (Project  : GNATCOLL.Projects.Project_Type;
       Node     : Node_Ptr);
    --  Starts a dominos calling to the xml parsing subprograms
    --  to fill the Code_Analysis tree structure.

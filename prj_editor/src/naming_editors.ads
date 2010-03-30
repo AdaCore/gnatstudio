@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,8 @@
 
 with Gtk.Notebook;
 with GPS.Kernel;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GNAT.Strings;
-with Projects;
 with Gtk.Widget;
 
 package Naming_Editors is
@@ -45,15 +45,15 @@ package Naming_Editors is
    procedure Gtk_New
      (Editor  : out Naming_Editor;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project : Projects.Project_Type);
+      Project : Project_Type);
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
 
    function Create_Project_Entry
      (Editor             : access Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
    --  Return True if the project was changed.
@@ -65,7 +65,7 @@ package Naming_Editors is
    procedure Show_Project_Settings
      (Editor             : access Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View.
    --  Note that only the languages that were given to Gtk_New will be
@@ -78,7 +78,7 @@ package Naming_Editors is
      (Editor    : access Naming_Editor_Record;
       Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages : GNAT.Strings.String_List;
-      Project   : Projects.Project_Type);
+      Project   : Project_Type);
    --  Change the visible pages in editor, based on languages
 
    ----------------------------
@@ -102,9 +102,9 @@ package Naming_Editors is
 
    function Create_Project_Entry
      (Editor             : access Language_Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
       is abstract;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in Editor.
@@ -114,7 +114,7 @@ package Naming_Editors is
    procedure Show_Project_Settings
      (Editor             : access Language_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True) is abstract;
    --  Show the settings used for Project for the specific language.
    --  If Display_Exceptions is False, then the files in the exception list

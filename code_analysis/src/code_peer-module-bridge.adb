@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                     Copyright (C) 2009-2010, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,14 +18,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;       use Ada.Calendar;
-
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Kernel.Console; use GPS.Kernel;
 with GPS.Kernel.Project;
 with GPS.Kernel.Timeout;
 with GPS.Intl;           use GPS.Intl;
-with Projects;
 
 with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 
@@ -76,10 +75,9 @@ package body Code_Peer.Module.Bridge is
      (Module  : Code_Peer.Module.Code_Peer_Module_Id;
       Message : Code_Peer.Message_Access)
    is
-      Project           : constant Projects.Project_Type :=
+      Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File :=
-                            Projects.Object_Path (Project);
+      Object_Directory  : constant Virtual_File := Project.Object_Dir;
       Command_File_Name : constant Virtual_File :=
                             Create_From_Dir
                               (Object_Directory, Add_Audit_File_Name);
@@ -156,10 +154,9 @@ package body Code_Peer.Module.Bridge is
    ----------------
 
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id) is
-      Project           : constant Projects.Project_Type :=
+      Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File :=
-                            Projects.Object_Path (Project);
+      Object_Directory  : constant Virtual_File := Project.Object_Dir;
       Command_File_Name : constant Virtual_File :=
                             Create_From_Dir
                               (Object_Directory,
@@ -258,10 +255,9 @@ package body Code_Peer.Module.Bridge is
    procedure Remove_Inspection_Cache_File
      (Module : Code_Peer.Module.Code_Peer_Module_Id)
    is
-      Project           : constant Projects.Project_Type :=
+      Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File :=
-                            Projects.Object_Path (Project);
+      Object_Directory  : constant Virtual_File := Project.Object_Dir;
       Reply_File_Name   : constant Virtual_File :=
                             Create_From_Dir
                               (Object_Directory, Inspection_Reply_File_Name);
@@ -286,10 +282,9 @@ package body Code_Peer.Module.Bridge is
      (Module  : Code_Peer.Module.Code_Peer_Module_Id;
       Message : Code_Peer.Message_Access)
    is
-      Project            : constant Projects.Project_Type :=
+      Project            : constant Project_Type :=
                              GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory   : constant Virtual_File :=
-                             Projects.Object_Path (Project);
+      Object_Directory   : constant Virtual_File := Project.Object_Dir;
       Command_File_Name  : constant Virtual_File :=
                              Create_From_Dir
                                (Object_Directory, Audit_Request_File_Name);

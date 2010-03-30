@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,7 @@
 with Gtk.Cell_Renderer_Text;
 with Gtk.Tree_Store;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
-with Projects;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GPS.Kernel;
 with Commands.Interactive;
 
@@ -32,7 +32,7 @@ package Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Var    : Projects.Scenario_Variable := Projects.No_Variable;
+      Var    : Scenario_Variable := No_Variable;
       Title  : String);
    --  Create an editor for the variable Var (or for a new variable if
    --  Var is Empty_Node.
@@ -60,7 +60,7 @@ package Variable_Editors is
 private
    type New_Var_Edit_Record is new New_Variable_Editor_Record with record
       Kernel : GPS.Kernel.Kernel_Handle;
-      Var    : Projects.Scenario_Variable;
+      Var    : Scenario_Variable;
       --  Variable being edited (or Empty_Node for a new variable)
 
       Model             : Gtk.Tree_Store.Gtk_Tree_Store;

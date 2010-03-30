@@ -24,7 +24,7 @@ with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with Projects.Registry;
+with Projects;
 
 with Generic_List;
 
@@ -397,11 +397,11 @@ package Codefix.Text_Manager is
 
    procedure Set_Registry
      (Text     : in out Text_Navigator_Abstr;
-      Registry : Projects.Registry.Project_Registry_Access);
+      Registry : Projects.Project_Registry_Access);
 
    function Get_Registry
      (Text : Text_Navigator_Abstr)
-      return Projects.Registry.Project_Registry_Access;
+      return Projects.Project_Registry_Access;
 
    procedure Set_Construct_Database
      (Text : in out Text_Navigator_Abstr;
@@ -740,7 +740,7 @@ private
 
    type Text_Navigator_Abstr is abstract tagged record
       Files        : Ptr_List_Text := new Text_List.List;
-      Registry     : Projects.Registry.Project_Registry_Access;
+      Registry     : Projects.Project_Registry_Access;
       Construct_Db : Construct_Database_Access;
    end record;
 

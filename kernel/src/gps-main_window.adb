@@ -66,7 +66,6 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
-with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
 with User_Interface_Tools;
@@ -1400,7 +1399,7 @@ package body GPS.Main_Window is
       Set_Title
         (Window, GPS_Name (Window) &
          (-" - (") &
-         Project_Name (Get_Project (Window.Kernel)) &
+         Get_Project (Window.Kernel).Name &
          Remote_Str & " project)" & Info_Str);
    end Reset_Title;
 

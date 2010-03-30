@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,12 +22,12 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar; use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;           use GNAT;
 with GNAT.Strings;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
 
-with XML_Utils;          use XML_Utils;
+with XML_Utils;             use XML_Utils;
 
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;
-with Projects.Registry;     use Projects.Registry;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with VCS_View;              use VCS_View;
@@ -317,8 +317,7 @@ package body VCS_Status is
                end Add_Attribute;
 
                Project : constant Project_Type :=
-                           Get_Project_From_File
-                             (Get_Registry (Kernel).all, File);
+                           Get_Registry (Kernel).Tree.Info (File).Project;
                VCS     : constant VCS_Access :=
                            Get_Current_Ref (Kernel, Project);
                Status  : constant Status_Id :=

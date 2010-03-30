@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@ with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Strings;              use GNAT;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
@@ -46,7 +47,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with UTF8_Utils;                use UTF8_Utils;
@@ -805,9 +805,8 @@ package body VCS_Activities_View_API is
          Root_Project : constant Project_Type := Get_Project (Kernel);
          Root_Dir     : constant Filesystem_String :=
                           Format_Pathname
-                            (+Get_Attribute_Value
-                               (Root_Project,
-                                VCS_Patch_Root,
+                            (+Root_Project.Attribute_Value
+                               (VCS_Patch_Root,
                                 Default => +Full_Name
                                   (Project_Directory (Root_Project))));
          Path         : constant Virtual_File := Create (Root_Dir);
@@ -889,8 +888,7 @@ package body VCS_Activities_View_API is
       pragma Unreferenced (Explorer);
 
       Root_Project : constant Virtual_File :=
-                       Project_Path
-                         (Get_Root_Project (Get_Registry (Kernel).all));
+                       Get_Registry (Kernel).Tree.Root_Project.Project_Path;
       VCS          : VCS_Access;
       Activity     : Activity_Id;
       Status       : File_Status_List.List;

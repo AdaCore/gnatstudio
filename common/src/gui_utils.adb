@@ -389,12 +389,16 @@ package body GUI_Utils is
          Menu := Data.Create (Widget, Event);
 
          if Menu /= null then
+            --  ??? Do we need to sink the menu to avoid leaks ?
             Contextual_Callback.Connect
               (Menu, Signal_Unmap_Event,
                Unmap_Menu'Access, Data);
 
             Grab_Focus (Widget);
             Show_All (Menu);
+            --  Do we need to sink the menu to avoid leaks ?
+            --  See http://blogs.gnome.org/xclaesse/2010/02/11/
+            --     common-mistake-with-gtkmenu/
             Popup (Menu,
                    Button        => 3,
                    Activate_Time => Gdk.Event.Get_Time (Event));
@@ -434,6 +438,8 @@ package body GUI_Utils is
          Menu := Data.Create (Widget, Event);
 
          if Menu /= null then
+            --  ??? Do we need to sink the menu to avoid leaks ?
+
             Contextual_Callback.Connect
               (Menu, Signal_Unmap_Event, Unmap_Menu'Access, Data);
 
@@ -577,6 +583,8 @@ package body GUI_Utils is
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
+               --  ??? Do we need to sink the menu to avoid leaks ?
+
                Contextual_Callback.Connect
                  (Menu, Signal_Unmap_Event,
                   Unmap_User_Menu'Unrestricted_Access, User);
@@ -623,6 +631,8 @@ package body GUI_Utils is
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
+               --  ??? Do we need to sink the menu to avoid leaks ?
+
                Contextual_Callback.Connect
                  (Menu, Signal_Unmap_Event,
                   Unmap_User_Menu'Unrestricted_Access, User);

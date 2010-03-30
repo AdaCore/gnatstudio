@@ -78,8 +78,6 @@ with Language_Handlers;          use Language_Handlers;
 with Pixmaps_IDE;                use Pixmaps_IDE;
 with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
-with Projects.Editor;            use Projects.Editor;
-with Projects.Registry;          use Projects.Registry;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
 with Toolchains;                 use Toolchains;
@@ -1783,7 +1781,7 @@ package body GVD.Process is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Kind    : GVD.Types.Debugger_Type;
       File    : GNATCOLL.VFS.Virtual_File;
-      Project : Projects.Project_Type;
+      Project : Project_Type;
       Args    : String) return Visual_Debugger
    is
       Top          : constant GPS_Window :=
@@ -1897,8 +1895,8 @@ package body GVD.Process is
       declare
          Args : GNAT.OS_Lib.Argument_List_Access :=
                   GNAT.OS_Lib.Argument_String_To_List
-                    (Get_Attribute_Value
-                       (Project, Debugger_Command_Attribute,
+                    (Project.Attribute_Value
+                       (Debugger_Command_Attribute,
                         Default => "gdb"));
 
       begin
@@ -1911,10 +1909,8 @@ package body GVD.Process is
             Executable      => Module,
             Debugger_Args   => Args (2 .. Args'Last),
             Executable_Args => Program_Args.all,
-            Remote_Target   =>
-              Get_Attribute_Value (Project, Program_Host_Attribute),
-            Remote_Protocol =>
-              Get_Attribute_Value (Project, Protocol_Attribute),
+            Remote_Target  => Project.Attribute_Value (Program_Host_Attribute),
+            Remote_Protocol => Project.Attribute_Value (Protocol_Attribute),
             Debugger_Name   => Args (1).all,
             Success         => Success);
          GNAT.OS_Lib.Free (Args);
@@ -1963,7 +1959,7 @@ package body GVD.Process is
      (Kernel   : access Kernel_Handle_Record'Class;
       Debugger : access Visual_Debugger_Record'Class)
    is
-      Project : Project_Type := Get_Project (Kernel);
+      Project : constant Project_Type := Get_Project (Kernel);
       Exec    : Virtual_File;
 
    begin
@@ -1992,7 +1988,7 @@ package body GVD.Process is
       end if;
 
       declare
-         List : Argument_List := Get_Attribute_Value (Project, Main_Attribute);
+         List : String_List_Access := Project.Attribute_Value (Main_Attribute);
       begin
          for L in List'Range loop
             if Equal (+List (L).all, Full_Name (Exec)) then
@@ -2008,49 +2004,37 @@ package body GVD.Process is
 
       declare
          Debugger_Name : constant String :=
-                           Get_Attribute_Value
-                             (Project,
-                              Debugger_Command_Attribute, Default => "");
+                           Project.Attribute_Value
+                             (Debugger_Command_Attribute, Default => "");
          Target        : constant String :=
-                           Get_Attribute_Value
-                             (Project, Program_Host_Attribute, Default => "");
+                           Project.Attribute_Value
+                             (Program_Host_Attribute, Default => "");
          Protocol      : constant String :=
-                           Get_Attribute_Value
-                             (Project, Protocol_Attribute, Default => "");
+                           Project.Attribute_Value
+                             (Protocol_Attribute, Default => "");
       begin
-         Unload_Project (Project_Registry (Get_Registry (Kernel).all));
+         Get_Registry (Kernel).Tree.Unload;
 
-         if Exec /= GNATCOLL.VFS.No_File then
-            Project := Create_Project
-              (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_" & (+Base_Name (Exec)), Get_Current_Dir);
-         else
-            Project := Create_Project
-              (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_no_file", Get_Current_Dir);
-         end if;
+         --  Create an empty project, and we'll add properties to it
+
+         Get_Registry (Kernel).Tree.Load_Empty_Project
+           (Get_Registry (Kernel).Environment);
 
          if Debugger_Name /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Debugger_Command_Attribute,
+            Project.Set_Attribute
+              (Attribute          => Debugger_Command_Attribute,
                Value              => Debugger_Name);
          end if;
 
          if Target /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Program_Host_Attribute,
+            Project.Set_Attribute
+              (Attribute          => Program_Host_Attribute,
                Value              => Target);
          end if;
 
          if Protocol /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Protocol_Attribute,
+            Project.Set_Attribute
+              (Attribute          => Protocol_Attribute,
                Value              => Protocol);
          end if;
       end;
@@ -2134,44 +2118,32 @@ package body GVD.Process is
             end;
          end loop;
 
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Source_Dirs_Attribute,
+         Project.Set_Attribute
+           (Attribute          => Source_Dirs_Attribute,
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Source_Files_Attribute,
+         Project.Set_Attribute
+           (Attribute          => Source_Files_Attribute,
             Values             => Bases (Bases'First .. Bases_Index - 1));
          Free (Bases);
-         Update_Attribute_Value_In_Scenario
-           (Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Languages_Attribute,
+         Project.Set_Attribute
+           (Attribute          => Languages_Attribute,
             Values             => Langs (Langs'First .. Lang_Index - 1));
          Free (Langs);
 
          --  Object_Dir, Exec_Dir, Main
 
          if Exec /= GNATCOLL.VFS.No_File then
-            Update_Attribute_Value_In_Scenario
-              (Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Obj_Dir_Attribute,
+            Project.Set_Attribute
+              (Attribute          => Obj_Dir_Attribute,
                Value              => +Dir_Name (Exec));
-            Update_Attribute_Value_In_Scenario
-              (Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Exec_Dir_Attribute,
+            Project.Set_Attribute
+              (Attribute          => Exec_Dir_Attribute,
                Value              => +Dir_Name (Exec));
 
             Main (Main'First) := new String'(+Full_Name (Exec));
-            Update_Attribute_Value_In_Scenario
-              (Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Main_Attribute,
+            Project.Set_Attribute
+              (Attribute          => Main_Attribute,
                Values             => Main);
             Free (Main);
          end if;
@@ -2181,8 +2153,6 @@ package body GVD.Process is
       --  Is the information for this executable already cached? If yes,
       --  we simply reuse it to avoid the need to interact with the debugger.
 
-      Load_Custom_Project
-        (Project_Registry (Get_Registry (Kernel).all), Project);
       Set_Status (Get_Project (Kernel), From_Executable);
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);

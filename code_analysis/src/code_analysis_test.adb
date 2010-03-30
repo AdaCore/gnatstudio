@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ with Code_Coverage;            use Code_Coverage;
 with Code_Coverage.Gcov;       use Code_Coverage.Gcov;
 
 with Projects;                 use Projects;
-with Projects.Registry;        use Projects.Registry;
+with Projects;                 use Projects;
 with Language;                 use Language;
 with Language.Tree;            use Language.Tree;
 with Language.Ada;             use Language.Ada;

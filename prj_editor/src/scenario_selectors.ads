@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2009, AdaCore               --
+--                    Copyright (C) 2002-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with Gtk.Tree_Model;
 with Gtk.Tree_Store;
 with GPS.Kernel;
 with Projects;
+with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNAT.OS_Lib;
 
 package Scenario_Selectors is
@@ -38,7 +39,7 @@ package Scenario_Selectors is
    procedure Gtk_New
      (Selector : out Project_Selector;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Ref_Project : Projects.Project_Type);
+      Ref_Project : Project_Type);
    --  Create a new project selector.
    --  Ref_Project is the project whose settings are shown in the project
    --  properties editor. As a result, it can never be unselected.
@@ -46,7 +47,7 @@ package Scenario_Selectors is
    procedure Initialize
      (Selector : access Project_Selector_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Ref_Project : Projects.Project_Type);
+      Ref_Project : Project_Type);
    --  Internal version of Gtk_New
 
    type Project_Iterator (<>) is private;
@@ -64,7 +65,7 @@ package Scenario_Selectors is
    procedure Next (Iter : in out Project_Iterator);
    --  Move to the next project
 
-   function Current (Iter : Project_Iterator) return Projects.Project_Type;
+   function Current (Iter : Project_Iterator) return Project_Type;
    --  Return the current project, or No_Project if there are no more projects.
 
    -----------------------
@@ -126,7 +127,7 @@ private
 
    type Project_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
       Model       : Gtk.Tree_Store.Gtk_Tree_Store;
-      Ref_Project : Projects.Project_Type;
+      Ref_Project : Project_Type;
       Kernel      : GPS.Kernel.Kernel_Handle;
       Select_All  : Boolean := True;
       Show_As_Hierarchy : Gtk.Check_Button.Gtk_Check_Button;

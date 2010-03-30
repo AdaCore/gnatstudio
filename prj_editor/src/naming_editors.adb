@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +31,6 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with GPS.Kernel;              use GPS.Kernel;
 with Language_Handlers;       use Language_Handlers;
-with Projects;                use Projects;
 with Project_Viewers;         use Project_Viewers;
 with Case_Handling;           use Case_Handling;
 
@@ -134,7 +133,7 @@ package body Naming_Editors is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project : Project_Type)
    is
-      Languages : String_List := Get_Languages (Project);
+      Languages : String_List := Project.Languages;
    begin
       Gtk_New (Editor, Kernel, Languages);
       Set_Visible_Pages (Editor, Kernel, Languages, Project);
@@ -149,7 +148,7 @@ package body Naming_Editors is
      (Editor    : access Naming_Editor_Record;
       Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Languages : String_List;
-      Project   : Projects.Project_Type)
+      Project   : Project_Type)
    is
       Current : constant Gint := Get_Current_Page (Editor);
       Exists  : Boolean;
@@ -198,7 +197,7 @@ package body Naming_Editors is
 
    function Create_Project_Entry
      (Editor             : access Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
@@ -227,10 +226,10 @@ package body Naming_Editors is
    procedure Show_Project_Settings
      (Editor             : access Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      Languages : String_List := Get_Languages (Project);
+      Languages : String_List := Project.Languages;
    begin
       if Editor.Pages /= null then
          for P in Editor.Pages'Range loop

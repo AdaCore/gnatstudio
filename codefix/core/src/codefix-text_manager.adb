@@ -25,7 +25,6 @@ with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
-with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
@@ -1805,7 +1804,7 @@ package body Codefix.Text_Manager is
 
    procedure Set_Registry
      (Text   : in out Text_Navigator_Abstr;
-      Registry : Projects.Registry.Project_Registry_Access) is
+      Registry : Project_Registry_Access) is
    begin
       Text.Registry := Registry;
    end Set_Registry;
@@ -1816,7 +1815,7 @@ package body Codefix.Text_Manager is
 
    function Get_Registry
      (Text : Text_Navigator_Abstr)
-      return Projects.Registry.Project_Registry_Access is
+      return Project_Registry_Access is
    begin
       return Text.Registry;
    end Get_Registry;
@@ -1850,16 +1849,9 @@ package body Codefix.Text_Manager is
 
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : Virtual_File)
-      return Virtual_File
-   is
+      return Virtual_File is
    begin
-      return Create
-        (Name            => Other_File_Base_Name
-           (Get_Project_From_File
-              (Project_Registry (Get_Registry (Text).all), File_Name),
-            File_Name),
-         Registry        => Get_Registry (Text).all,
-         Use_Object_Path => False);
+      return Get_Registry (Text).Tree.Other_File (File_Name);
    end Get_Body_Or_Spec;
 
    --------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2009, AdaCore                 --
+--                  Copyright (C) 2003-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Entities;
-with Projects.Registry;
+with Projects;           use Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 package CPP_Parser is
@@ -28,7 +28,7 @@ package CPP_Parser is
 
    function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry)
+      Registry : Project_Registry)
       return Entities.LI_Handler;
    --  Create a new ALI handler
 

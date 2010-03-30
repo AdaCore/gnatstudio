@@ -22,12 +22,12 @@
 --  subprograms for Code Analysis Module use
 --  </description>
 
-with GNATCOLL.Traces;
 with Glib;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Intl;        use GPS.Intl;
+with GNATCOLL.Projects;
+with GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
-with Projects;        use Projects;
 with Traces;          use Traces;
 with Code_Analysis;   use Code_Analysis;
 
@@ -150,7 +150,7 @@ package Coverage_GUI is
 
    function Have_Gcov_Info
      (Projects : Code_Analysis_Tree;
-      Project  : Project_Type;
+      Project  : GNATCOLL.Projects.Project_Type;
       File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
       return Boolean;
    --  Verify that contextual Project and/or file if any, have associated

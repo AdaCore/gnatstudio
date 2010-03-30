@@ -34,14 +34,13 @@ with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 with SN;                        use SN;
 with SN.Browse;                 use SN.Browse;
 with SN.DB_Structures;          use SN.DB_Structures;
 with SN.Find_Fns;               use SN.Find_Fns;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -158,12 +157,12 @@ package body CPP_Parser is
      (Handler         : access CPP_Handler_Record) return Boolean;
    overriding function Parse_All_LI_Information
      (Handler   : access CPP_Handler_Record;
-      Project   : Projects.Project_Type) return LI_Information_Iterator'Class;
+      Project   : Project_Type) return LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler      : access CPP_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
-      Project      : Projects.Project_Type;
-      Errors       : Projects.Error_Report;
+      Project      : Project_Type;
+      Errors       : Error_Report;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class;
    overriding procedure Parse_File_Constructs
      (Handler   : access CPP_Handler_Record;
@@ -200,7 +199,7 @@ package body CPP_Parser is
       Project         : Project_Type;
       Process_Running : Boolean := False;
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
-      Prj_Iterator    : Projects.Imported_Project_Iterator;
+      Prj_Iterator    : Project_Iterator;
       List_Filename   : GNATCOLL.VFS.Virtual_File;
       Current_Files   : GNATCOLL.VFS.File_Array_Access;
       Current_File    : Natural;
@@ -215,7 +214,7 @@ package body CPP_Parser is
    end record;
    overriding procedure Continue
      (Iterator : in out CPP_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : Error_Report;
       Finished : out Boolean);
    overriding procedure Destroy (Iterator : in out CPP_Handler_Iterator);
    --  See doc for inherited subprograms
@@ -223,7 +222,7 @@ package body CPP_Parser is
    procedure Browse_Project
      (Project     : Project_Type;
       Iterator    : in out CPP_Handler_Iterator'Class;
-      Errors      : Projects.Error_Report;
+      Errors      : Error_Report;
       Single_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Runs cbrowser for all source files of Project.
    --  If Single_File is specified, then only this information for this file
@@ -233,7 +232,7 @@ package body CPP_Parser is
      (Handler      : access CPP_Handler_Record'Class;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Project_Type;
-      Errors       : Projects.Error_Report;
+      Errors       : Error_Report;
       File         : Virtual_File) return LI_Handler_Iterator'Class;
    --  Generate the cbrowser information for a single file. This means that
    --  we will mostly know about entity declaration and bodies, but not about
@@ -257,7 +256,7 @@ package body CPP_Parser is
    --  Reclaim the memory used by the various databases.
 
    function Get_DB_Dir
-     (Project : Projects.Project_Type) return Virtual_File;
+     (Project : Project_Type) return Virtual_File;
    pragma Inline (Get_DB_Dir);
    --  Return the directory that contains the source navigator files
    --  for specified project. If No_Project is given, the empty string is
@@ -546,7 +545,7 @@ package body CPP_Parser is
    ----------------
 
    function Get_DB_Dir
-     (Project : Projects.Project_Type) return Virtual_File
+     (Project : Project_Type) return Virtual_File
    is
       Ret : Virtual_File;
    begin
@@ -554,7 +553,7 @@ package body CPP_Parser is
          return No_File;
       else
          declare
-            Obj_Dir : constant Virtual_File := Object_Path (Project);
+            Obj_Dir : constant Virtual_File := Project.Object_Dir;
          begin
             if Obj_Dir = No_File then
                return No_File;
@@ -599,7 +598,7 @@ package body CPP_Parser is
    is
       Obj_Dir : constant File_Array :=
                   Object_Path
-                    (Get_Root_Project (Handler.Registry), True, False);
+                    (Handler.Registry.Tree.Root_Project, True, False);
       Db_Dir  : constant Filesystem_String :=
                   Name_As_Directory (SN.Browse.DB_Dir_Name);
       Obj     : Natural;
@@ -2787,7 +2786,7 @@ package body CPP_Parser is
          --  contents. Likewise if the object directory itself has changed when
          --  the project view has changed.
          if File_Project = No_Project then
-            Project := Get_Project_From_File (Handler.Registry, File);
+            Project := Handler.Registry.Tree.Info (File).Project;
          else
             Project := File_Project;
          end if;
@@ -2817,13 +2816,11 @@ package body CPP_Parser is
 
       Trace (Me, "Get_Source_Info " & Source_Filename.Display_Full_Name);
 
-      Project := Get_Project_From_File (Handler.Registry, Source_Filename);
+      Project := Handler.Registry.Tree.Info (Source_Filename).Project;
       Source := Load_File (Source_Filename, Project);
 
       if Source /= null then
-         Other_File_Name := Create
-           (Other_File_Base_Name (Project, Source_Filename),
-            Handler.Registry);
+         Other_File_Name := Handler.Registry.Tree.Other_File (Source_Filename);
          Trace (Me, "Get_Source_Info " & Other_File_Name.Display_Full_Name);
 
          if Other_File_Name /= Source_Filename then
@@ -2864,7 +2861,7 @@ package body CPP_Parser is
 
    overriding function Parse_All_LI_Information
      (Handler   : access CPP_Handler_Record;
-      Project   : Projects.Project_Type) return LI_Information_Iterator'Class
+      Project   : Project_Type) return LI_Information_Iterator'Class
    is
       Iter    : CLI_Information_Iterator;
       Files   : chars_ptr_array (1 .. 1);
@@ -2873,8 +2870,7 @@ package body CPP_Parser is
    begin
       Freeze (Handler.Db, Mode => Create_Only);
 
-      Trace (Me, "Parse_All_LI_Information in project "
-             & Project_Name (Project));
+      Trace (Me, "Parse_All_LI_Information in project " & Project.Name);
       Files (1) := New_String
         (+(Get_DB_Dir (Project).Full_Name (True)
          & SN.Browse.DB_File_Name & Table_Extension (F)));
@@ -2969,7 +2965,7 @@ package body CPP_Parser is
 
    function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry) return Entities.LI_Handler
+      Registry : Project_Registry) return Entities.LI_Handler
    is
       CPP : constant CPP_Handler := new CPP_Handler_Record;
    begin
@@ -3004,7 +3000,7 @@ package body CPP_Parser is
    procedure Browse_Project
      (Project     : Project_Type;
       Iterator    : in out CPP_Handler_Iterator'Class;
-      Errors      : Projects.Error_Report;
+      Errors      : Error_Report;
       Single_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
    is
       DB_Dir       : constant Virtual_File := Get_DB_Dir (Project);
@@ -3017,15 +3013,12 @@ package body CPP_Parser is
    begin
       --  Prepare the list of files
 
-      Trace (Me, "Computing the C and C++ sources list for "
-             & Project_Name (Project));
+      Trace (Me, "Computing the C and C++ sources list for " & Project.Name);
 
       Unchecked_Free (Iterator.Current_Files);
 
       if Single_File = GNATCOLL.VFS.No_File then
-         Iterator.Current_Files := Get_Source_Files
-           (Project   => Project,
-            Recursive => False);
+         Iterator.Current_Files := Project.Source_Files (Recursive => False);
       else
          Iterator.Current_Files := new File_Array'(1 => Single_File);
       end if;
@@ -3082,7 +3075,7 @@ package body CPP_Parser is
                                Create_From_Dir
                                  (DB_Dir, Base_Name (File) & (+Xref_Suffix));
          begin
-            if Lang = C_String or else Lang = Cpp_String then
+            if Lang = "c" or else Lang = "c++" then
 
                if File_Time_Stamp (Xref_File_Name) <
                  File_Time_Stamp (File)
@@ -3141,7 +3134,7 @@ package body CPP_Parser is
      (Handler      : access CPP_Handler_Record'Class;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Project_Type;
-      Errors       : Projects.Error_Report;
+      Errors       : Error_Report;
       File         : Virtual_File) return LI_Handler_Iterator'Class
    is
       Iter : CPP_Handler_Iterator;
@@ -3175,8 +3168,8 @@ package body CPP_Parser is
    overriding function Generate_LI_For_Project
      (Handler      : access CPP_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
-      Project      : Projects.Project_Type;
-      Errors       : Projects.Error_Report;
+      Project      : Project_Type;
+      Errors       : Error_Report;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
       Iter : CPP_Handler_Iterator;
@@ -3202,7 +3195,7 @@ package body CPP_Parser is
 
    overriding procedure Continue
      (Iterator : in out CPP_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : Error_Report;
       Finished : out Boolean)
    is
       Process_Alive : Boolean := False;
@@ -3246,7 +3239,7 @@ package body CPP_Parser is
 
             if Iterator.Do_Dbimp then
                Trace (Me, "Starting dbimp on "
-                      & Project_Name (Current (Iterator.Prj_Iterator)));
+                      & Current (Iterator.Prj_Iterator).Name);
                Iterator.State := Process_Xrefs;
 
                SN.Browse.Generate_Xrefs
@@ -3441,7 +3434,7 @@ package body CPP_Parser is
       Result    : out Language.Construct_List)
    is
       Project    : constant Project_Type :=
-                     Get_Project_From_File (Handler.Registry, File_Name);
+                      Handler.Registry.Tree.Info (File_Name).Project;
       Constructs : Language.Construct_List;
       P          : Pair;
       Sym        : FIL_Table;

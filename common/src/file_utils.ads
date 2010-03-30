@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,9 +22,6 @@
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package File_Utils is
-
-   function Is_Absolute_Path_Or_URL (Name : Filesystem_String) return Boolean;
-   --  Return True if Name is an absolute file name on the host, or a URL
 
    function Suffix_Matches
      (File_Name : Filesystem_String;

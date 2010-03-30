@@ -25,9 +25,10 @@ with GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -96,7 +97,7 @@ with Language_Handlers;         use Language_Handlers;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
-with Projects.Registry;         use Projects, Projects.Registry;
+with Projects;                  use Projects;
 with String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
@@ -269,8 +270,7 @@ package body GPS.Kernel is
       Create_Handler (Handler);
       Handle.Lang_Handler := Handler;
 
-      Handle.Registry := new Project_Registry;
-      Load_Empty_Project (Handle.Registry.all);
+      Handle.Registry := Projects.Create;
 
       Set_Registry
         (Language_Handler (Handle.Lang_Handler), Handle.Registry);
@@ -353,7 +353,8 @@ package body GPS.Kernel is
          end if;
       end;
 
-      Set_Trusted_Mode (Get_Registry (Kernel).all, Trusted_Mode.Get_Pref);
+      Get_Registry (Kernel).Environment.Set_Trusted_Mode
+        (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
    end On_Preferences_Changed;
 
    ------------------
@@ -1469,8 +1470,7 @@ package body GPS.Kernel is
       Count, Total : Natural;
    begin
       Start (Iter, Get_Language_Handler (Kernel),
-             Project => Projects.Start
-               (Root_Project => Project, Recursive => Recursive));
+             Project => Project.Start (Recursive => Recursive));
 
       loop
          Next (Iter, Steps => Natural'Last,  --  As much as possible
@@ -2073,8 +2073,9 @@ package body GPS.Kernel is
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Projects.Registry.Create
-        (Name, Get_Registry (Kernel).all, Use_Source_Path, Use_Object_Path);
+      return Get_Registry (Kernel).Tree.Create
+        (Name, Use_Source_Path => Use_Source_Path,
+         Use_Object_Path => Use_Object_Path);
    end Create;
 
    ----------------------
@@ -2087,12 +2088,7 @@ package body GPS.Kernel is
    is
       File : Virtual_File;
    begin
-      Get_Full_Path_From_File
-        (Registry        => Get_Registry (Kernel).all,
-         Filename        => Base_Name (Name),
-         Use_Source_Path => True,
-         Use_Object_Path => True,
-         File            => File);
+      File := Get_Registry (Kernel).Tree.Create (Base_Name (Name));
 
       if File = GNATCOLL.VFS.No_File then
          return Create (Full_Filename => Name);

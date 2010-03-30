@@ -23,7 +23,7 @@ with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.OS_Lib;                use GNAT; use GNAT.OS_Lib;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
@@ -47,7 +47,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 
-with Projects;                   use Projects;
 with Language_Handlers;          use Language_Handlers;
 with Entities;                   use Entities;
 with Entities.Queries;           use Entities.Queries;
@@ -447,7 +446,7 @@ package body Builder_Module is
    begin
       Start (All_LI_Information_Command (C.all).Iter,
              Get_Language_Handler (Kernel),
-             Projects.Start (Get_Project (Kernel), Recursive => True));
+             Get_Project (Kernel).Start (Recursive => True));
       Launch_Background_Command
         (Kernel,
          C,

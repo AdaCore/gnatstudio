@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 
 with Ada.Unchecked_Deallocation; use Ada;
 
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 
@@ -55,7 +56,6 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
-with Projects.Registry;          use Projects.Registry;
 with GUI_Utils;                  use GUI_Utils;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
@@ -338,9 +338,9 @@ package body Project_Explorers_Files is
             File_View_Shows_Only_Project)
          then
             if Is_Directory (D.Files (D.File_Index)) then
-               if not Directory_Belongs_To_Project
-                 (Get_Registry (D.Explorer.Kernel).all,
-                  D.Files (D.File_Index).Full_Name,
+               if not Get_Registry (D.Explorer.Kernel).Tree.
+                 Directory_Belongs_To_Project
+                 (D.Files (D.File_Index).Full_Name,
                   Direct_Only => False)
                then
                   --  Remove from the list
@@ -349,21 +349,12 @@ package body Project_Explorers_Files is
 
             else
                declare
+                  File : constant Virtual_File :=
+                    Get_Registry (D.Explorer.Kernel).Tree.Create
+                       (Name => D.Files (D.File_Index).Base_Dir_Name);
                   P    : constant Project_Type :=
-                           Get_Project_From_File
-                             (Get_Registry (D.Explorer.Kernel).all,
-                              D.Files (D.File_Index).Base_Dir_Name,
-                              Root_If_Not_Found => False);
-                  File : Virtual_File;
+                    Get_Registry (D.Explorer.Kernel).Tree.Info (File).Project;
                begin
-                  Get_Full_Path_From_File
-                    (Registry => Get_Registry (D.Explorer.Kernel).all,
-                     Filename => D.Files (D.File_Index).Base_Dir_Name,
-                     Use_Source_Path => True,
-                     Use_Object_Path => True,
-                     Project         => P,
-                     File            => File);
-
                   --  If not part of a project, then we remove the file
                   if P = No_Project
                     or else File /= D.Files (D.File_Index)
@@ -1027,7 +1018,7 @@ package body Project_Explorers_Files is
       then
          declare
             Inc : constant File_Array :=
-                    Include_Path (Get_Project (Explorer.Kernel), True);
+                    Source_Dirs (Get_Project (Explorer.Kernel), True);
             Obj : constant File_Array :=
                     Object_Path (Get_Project (Explorer.Kernel), True, False);
          begin

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,7 @@ with Ada.Strings.Maps;          use Ada.Strings.Maps;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -58,7 +58,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
-with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -237,7 +237,7 @@ package body VCS_View_API is
      (Project : Project_Type) return Filesystem_String
    is
       Rep_Root : constant Filesystem_String :=
-                   +Get_Attribute_Value (Project, VCS_Repository_Root);
+                   +Project.Attribute_Value (VCS_Repository_Root);
    begin
       if Rep_Root'Length = 0 then
          return "";
@@ -572,8 +572,7 @@ package body VCS_View_API is
       Explorer : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
    begin
       if Has_Project_Information (Context) then
-         On_Remove_Project
-           (Explorer, Project_Name (Project_Information (Context)));
+         On_Remove_Project (Explorer, Project_Information (Context).Name);
       else
          On_Remove_Project (Explorer, "No project");
       end if;
@@ -672,15 +671,12 @@ package body VCS_View_API is
                      --  Check all source directories
 
                      declare
-                        Srcs : File_Array_Access :=
-                                 Source_Dirs (Project, Recursive => False);
+                        Srcs : constant File_Array := Source_Dirs (Project);
                      begin
                         for K in Srcs'Range loop
                            Check (Srcs (K), VCS);
                            exit when VCS /= null;
                         end loop;
-
-                        Unchecked_Free (Srcs);
                      end;
                   end if;
 
@@ -700,14 +696,11 @@ package body VCS_View_API is
       begin
          if Project /= No_Project then
             declare
-               Srcs : File_Array_Access :=
-                        Source_Dirs (Project, Recursive => False);
-               Dir  : constant Virtual_File :=
-                        Greatest_Common_Path (Srcs.all);
+               Srcs : constant File_Array   := Project.Source_Dirs;
+               Dir  : constant Virtual_File := Greatest_Common_Path (Srcs);
                Pdir : constant Virtual_File := Get_Parent (Dir);
             begin
                Check (Get_Parent (Pdir), VCS);
-               Unchecked_Free (Srcs);
             end;
          end if;
       end Check_Root;
@@ -728,15 +721,15 @@ package body VCS_View_API is
       else
          declare
             VCS_Name : constant String :=
-                         Get_Attribute_Value
-                           (Project, VCS_Kind_Attribute,
+                         Project.Attribute_Value
+                           (VCS_Kind_Attribute,
                             Default => Default_VCS.Get_Pref);
          begin
             if To_Lower (VCS_Name) = "auto" then
                Check (Project, VCS);
 
                if VCS = null then
-                  Check (Get_Root_Project (Get_Registry (Kernel).all), VCS);
+                  Check (Get_Registry (Kernel).Tree.Root_Project, VCS);
                end if;
 
                if VCS = null then
@@ -750,8 +743,7 @@ package body VCS_View_API is
                end if;
 
                if VCS = null then
-                  Check_Root
-                    (Get_Root_Project (Get_Registry (Kernel).all), VCS);
+                  Check_Root (Get_Registry (Kernel).Tree.Root_Project, VCS);
                end if;
 
                if VCS = null then
@@ -886,7 +878,7 @@ package body VCS_View_API is
          A_Context : Selection_Context;
       begin
          while Activity /= No_Activity loop
-            if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
+            if Get_Registry (Kernel).Tree.Root_Project.Project_Path
               = Get_Project_Path (Activity)
               and then not Is_Closed (Activity)
             then
@@ -1037,8 +1029,8 @@ package body VCS_View_API is
                   Set_File_Information
                     (L_Context,
                      Files   => (1 => Original),
-                     Project => Get_Project_From_File
-                       (Get_Registry (Kernel).all, Original));
+                     Project =>
+                       Get_Registry (Kernel).Tree.Info (Original).Project);
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
                            & Krunch (+Base_Name (Original)) & ")");
@@ -1607,10 +1599,8 @@ package body VCS_View_API is
          Query_Project_Files
            (Explorer,
             Get_Kernel (Context),
-            Get_Project_From_File
-              (Registry          => Get_Registry (Get_Kernel (Context)).all,
-               Source_Filename   => File_Information (Context),
-               Root_If_Not_Found => True),
+            Get_Registry (Get_Kernel (Context)).Tree.Info
+              (File_Information (Context)).Project (True),
             False, False);
 
       else
@@ -1982,9 +1972,8 @@ package body VCS_View_API is
          --  If the context has a file information, try to find the project
          --  for this file.
 
-         Prj := Get_Project_From_File
-           (Get_Registry (Kernel).all,
-            File_Information (Context), False);
+         Prj := Get_Registry (Kernel)
+           .Tree.Info (File_Information (Context)).Project;
 
          if Prj /= No_Project then
             return Get_Current_Ref (Kernel, Prj);
@@ -2713,11 +2702,9 @@ package body VCS_View_API is
       Open_Explorer (Get_Kernel (Context), Context);
 
       if Has_Project_Information (Context) then
-         Files := Get_Source_Files
-           (Project_Information (Context), Recursive);
+         Files := Project_Information (Context).Source_Files (Recursive);
       else
-         Files := Get_Source_Files
-           (Get_Project (Get_Kernel (Context)), Recursive);
+         Files := Get_Project (Get_Kernel (Context)).Source_Files (Recursive);
       end if;
 
       Update (Ref, Files.all);
@@ -2789,7 +2776,7 @@ package body VCS_View_API is
             Insert
               (Kernel,
                -"Warning: no VCS set in project properties for project "
-               & Project_Name (The_Project));
+               & The_Project.Name);
 
          else
             No_VCS_Defined := False;
@@ -2815,13 +2802,13 @@ package body VCS_View_API is
                   end;
 
                else
-                  Files := Get_Source_Files (The_Project, False);
+                  Files := The_Project.Source_Files (False);
                   Get_Status (Ref, Files.all);
                   Unchecked_Free (Files);
                end if;
 
             else
-               Files := Get_Source_Files (The_Project, False);
+               Files := The_Project.Source_Files (False);
                Status := Local_Get_Status (Ref, Files.all);
                Display_File_Status (Kernel, Status, Ref, False, True);
                File_Status_List.Free (Status);
@@ -2830,8 +2817,7 @@ package body VCS_View_API is
          end if;
       end Query_Status_For_Project;
 
-      Iterator        : Imported_Project_Iterator :=
-                          Start (Project, Recursive);
+      Iterator        : Project_Iterator := Project.Start (Recursive);
       Current_Project : Project_Type := Current (Iterator);
    begin
       while Current_Project /= No_Project loop
@@ -3152,8 +3138,7 @@ package body VCS_View_API is
 
          Kernel        : constant Kernel_Handle := Get_Kernel (Context);
          Project       : constant Project_Type :=
-                           Get_Project_From_File
-                             (Get_Registry (Kernel).all, Filename);
+                           Get_Registry (Kernel).Tree.Info (Filename).Project;
          Root_Branches : constant Filesystem_String :=
            Get_Branches_Root (Project);
          Root_Tags     : constant Filesystem_String := Get_Tags_Root (Project);
@@ -3546,15 +3531,14 @@ package body VCS_View_API is
 
    begin
       declare
-         A : File_Array_Access :=
-               Source_Dirs (Project, Recursive, Has_VCS => True);
+         A : File_Array := Source_Dirs_With_VCS (Project, Recursive);
       begin
          --  The result of Source_Dirs can contain duplicate entries.
          --  We need to remove these duplicates from the final result. The most
          --  efficient way to do this (in O(N*log (N))) is to sort the list and
          --  eliminate duplicates on the sorted list.
 
-         Sort (A.all);
+         Sort (A);
 
          for J in A'Range loop
             --  Remove potential duplicated entries
@@ -3564,8 +3548,6 @@ package body VCS_View_API is
                Append (Result, A (J));
             end if;
          end loop;
-
-         Unchecked_Free (A);
       end;
 
       if Result = null then
@@ -3679,7 +3661,7 @@ package body VCS_View_API is
 
       --  At this point Full must not be null
 
-      Prj := Get_Project_From_File (Get_Registry (Kernel).all, Full, True);
+      Prj := Get_Registry (Kernel).Tree.Info (Full).Project (True);
 
       if Prj = No_Project then
          Insert
@@ -3695,7 +3677,7 @@ package body VCS_View_API is
       if Ref = null then
          Insert
            (Kernel,
-            -"Could not find VCS for project: " & Project_Name (Prj),
+            -"Could not find VCS for project: " & Prj.Name,
             Mode => Error);
          return;
       end if;
@@ -3703,7 +3685,7 @@ package body VCS_View_API is
       if Ref = Unknown_VCS_Reference then
          Insert
            (Kernel,
-              -"There is no VCS associated to project: " & Project_Name (Prj),
+              -"There is no VCS associated to project: " & Prj.Name,
             Mode => Error);
          return;
       end if;

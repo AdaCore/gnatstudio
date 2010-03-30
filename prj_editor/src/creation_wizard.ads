@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2004-2009, AdaCore                  --
+--                 Copyright (C) 2004-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,9 +21,9 @@ with Gtk.GEntry;
 with Gtk.Check_Button;
 with Wizards;
 with GPS.Kernel;
-with Projects;
 with Gtk.Widget;
 with Gtk.Handlers;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 package Creation_Wizard is
@@ -35,8 +35,8 @@ package Creation_Wizard is
    procedure Generate_Project
      (Page               : access Project_Wizard_Page_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean) is abstract;
    --  This function is called when the user has pressed Finish in the wizard.
    --  It should update the project's attributes as per the settings in the
@@ -57,7 +57,7 @@ package Creation_Wizard is
       Title             : String;
       Show_Toc          : Boolean := True;
       Auto_Save_On_Exit : Boolean := True;
-      Project           : Projects.Project_Type := Projects.No_Project);
+      Project           : Project_Type := No_Project);
    --  Create a new project wizard, or edit an existing one if Project is
    --  specified.
    --  All pages added to the wizard must be children of
@@ -70,7 +70,7 @@ package Creation_Wizard is
       Title             : String;
       Show_Toc          : Boolean := True;
       Auto_Save_On_Exit : Boolean := True;
-      Project           : Projects.Project_Type := Projects.No_Project);
+      Project           : Project_Type := No_Project);
    --  Initialize a new project wizard.
 
    function Run
@@ -80,7 +80,7 @@ package Creation_Wizard is
    --  The empty string is returned if the user pressed Cancel.
 
    function Get_Project
-     (Wiz : access Project_Wizard_Record'Class) return Projects.Project_Type;
+     (Wiz : access Project_Wizard_Record'Class) return Project_Type;
    --  Return the project being modified.
    --  Most of the time, this will be null, except when the wizard is used to
    --  edit an existing project.
@@ -130,8 +130,8 @@ private
    overriding procedure Generate_Project
      (Page               : access Name_And_Location_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    --  See inherited doc
 
@@ -144,7 +144,7 @@ private
    end record;
 
    type Project_Wizard_Record is new Wizards.Wizard_Record with record
-      Project : Projects.Project_Type;
+      Project : Project_Type;
       Auto_Save_On_Exit : Boolean;
    end record;
 

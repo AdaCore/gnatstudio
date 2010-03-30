@@ -39,8 +39,7 @@ package body Code_Analysis is
 
    function Less (V1, V2 : Project_Type) return Boolean is
    begin
-      return Ada.Strings.Less_Case_Insensitive
-        (Projects.Project_Name (V1), Projects.Project_Name (V2));
+      return Ada.Strings.Less_Case_Insensitive (V1.Name, V2.Name);
    end Less;
 
    ---------
@@ -61,8 +60,7 @@ package body Code_Analysis is
 
    function Equ  (V1, V2 : Project_Access) return Boolean is
    begin
-      return Ada.Strings.Equal_Case_Insensitive
-        (Project_Name (V1.Name), Project_Name (V2.Name));
+      return Ada.Strings.Equal_Case_Insensitive (V1.Name.Name, V2.Name.Name);
    end Equ;
 
    -------------------------
@@ -204,14 +202,11 @@ package body Code_Analysis is
       function Lt (Op1, Op2 : Natural) return Boolean
       is begin
          if Op1 = 0 then
-            return String'(Project_Name (Tmp.Name)) <
-              String'(Project_Name (Nodes (Op2).Name));
+            return Tmp.Name.Name < Nodes (Op2).Name.Name;
          elsif Op2 = 0 then
-            return String'(Project_Name (Nodes (Op1).Name)) <
-              String'(Project_Name (Tmp.Name));
+            return Nodes (Op1).Name.Name < Tmp.Name.Name;
          else
-            return String'(Project_Name (Nodes (Op1).Name)) <
-              String'(Project_Name (Nodes (Op2).Name));
+            return Nodes (Op1).Name.Name < Nodes (Op2).Name.Name;
          end if;
       end Lt;
 

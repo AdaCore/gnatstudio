@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,7 +44,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Log_Utils;
-with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -896,9 +895,8 @@ package body VCS_Module is
 
             A := First;
             while A /= No_Activity loop
-               if Project_Path
-                 (Get_Root_Project
-                    (Get_Registry (Kernel).all)) = Get_Project_Path (A)
+               if Get_Registry (Kernel).Tree.Root_Project.Project_Path =
+                  Get_Project_Path (A)
                then
                   Set_Return_Value (Data, Image (A));
                end if;
@@ -942,7 +940,8 @@ package body VCS_Module is
       VCS_Menu             : constant String := "/_" & (-"VCS");
       Tools_Menu           : constant String := -"Tools" & '/' & (-"Views");
 
-      VCS_Action_Context   : constant Action_Filter := Action_Filter (Create);
+      VCS_Action_Context   : constant Action_Filter :=
+                               GPS.Kernel.Action_Filter (GPS.Kernel.Create);
 
       Filter               : Action_Filter;
 
@@ -1426,8 +1425,7 @@ package body VCS_Module is
       Ref    : constant VCS_Access :=
                  Get_Current_Ref
                    (Kernel,
-                    Get_Project_From_File
-                      (Get_Registry (Kernel).all, D.File, True));
+                    Get_Registry (Kernel).Tree.Info (D.File).Project (True));
       Status : File_Status_Record;
    begin
       if Ref = null then
@@ -1477,8 +1475,7 @@ package body VCS_Module is
       D        : constant File_Status_Changed_Hooks_Args :=
                    File_Status_Changed_Hooks_Args (Data.all);
       Project  : constant Project_Type :=
-                   Get_Project_From_File
-                     (Get_Registry (Kernel).all, D.File, False);
+                   Get_Registry (Kernel).Tree.Info (D.File).Project;
       Ref      : VCS_Access;
       Status   : Line_Record;
       F_Status : File_Status_List.List;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007-2009, AdaCore                --
+--                   Copyright (C) 2007-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,8 +38,8 @@ with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
-with Projects;                    use Projects;
 with Traces;                      use Traces;
+with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package body Docgen2_Module is
@@ -288,11 +288,10 @@ package body Docgen2_Module is
 
          declare
             Kernel    : constant Kernel_Handle := Get_Kernel (Data);
-            Project   : constant Projects.Project_Type := Get_Data (Data, 1);
+            Project   : constant Project_Type := Get_Data (Data, 1);
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
          begin
-            Trace
-              (Me, "Generating doc for project " & Project_Name (Project));
+            Trace (Me, "Generating doc for project " & Project.Name);
             Generate
               (Kernel,
                Docgen_Module (Docgen_Module_Id).Backend,

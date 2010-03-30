@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2009, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
 with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with System;                   use System;
 
 with Glib;                     use Glib;
@@ -40,8 +40,6 @@ with Casing;                   use Casing;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Prj;
-with Projects;                 use Projects;
-with Projects.Editor;          use Projects.Editor;
 
 with String_Hash;
 
@@ -230,9 +228,9 @@ package body Ada_Naming_Editors is
 
    overriding function Create_Project_Entry
      (Editor             : access Ada_Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Languages);
       Changed    : Boolean := False;
@@ -241,29 +239,21 @@ package body Ada_Naming_Editors is
                      Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
       Cache      : Naming_Hash.String_Hash_Table.Instance;
       Data       : Naming_Data;
-      Cache_Iter : Naming_Hash.String_Hash_Table.Cursor;
-
-      type Array2 is array (Gint'(1) .. 2) of Integer;
-      Lengths : Array2 := (others => -1);
 
       procedure Update_If_Required
-        (Name : Attribute_Pkg; Value : String; Index : String);
+        (Name : Attribute_Pkg_String; Value : String; Index : String);
       --  Update the attribute if necessary
 
-      function List_Changed (List : Associative_Array; Column : Gint)
-         return Boolean;
-      --  True if the list of elements in List is different from the elements
-      --  in column Column of the exceptions list.
-
-      function Rows_Count (Column : Gint) return Natural;
-      --  Return the number of non-blank rows in Column
+      procedure Update_Exceptions (Attr : Attribute_Pkg_String);
+      --  Update the list of exceptions for Attr.
+      --  If there is any change, sets Changed to True.
 
       ------------------------
       -- Update_If_Required --
       ------------------------
 
       procedure Update_If_Required
-        (Name : Attribute_Pkg; Value : String; Index : String)
+        (Name : Attribute_Pkg_String; Value : String; Index : String)
       is
          Modified : Boolean := False;
       begin
@@ -273,9 +263,8 @@ package body Ada_Naming_Editors is
          else
             declare
                Old : constant String :=
-                       Get_Attribute_Value
-                         (Project   => Project,
-                          Attribute => Name,
+                       Project.Attribute_Value
+                         (Attribute => Name,
                           Index     => Index);
             begin
                Modified := Value /= Old
@@ -286,92 +275,97 @@ package body Ada_Naming_Editors is
          if Modified then
             Changed := True;
             if Ada_Scheme then
-               Delete_Attribute
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Name,
-                  Attribute_Index    => Index);
+               Project.Delete_Attribute
+                 (Scenario  => Scenario_Variables,
+                  Attribute => Name,
+                  Index     => Index);
             else
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          => Name,
-                  Value              => Value,
-                  Attribute_Index    => Index);
+               Project.Set_Attribute
+                 (Scenario  => Scenario_Variables,
+                  Attribute => Name,
+                  Value     => Value,
+                  Index     => Index);
             end if;
          end if;
       end Update_If_Required;
 
-      ----------------
-      -- Rows_Count --
-      ----------------
+      -----------------------
+      -- Update_Exceptions --
+      -----------------------
 
-      function Rows_Count (Column : Gint) return Natural is
-         Length : Natural := 0;
-         Iter   : Naming_Hash.String_Hash_Table.Cursor;
-         Data   : Naming_Data;
+      procedure Update_Exceptions (Attr : Attribute_Pkg_String) is
+         Indexes     : GNAT.Strings.String_List :=
+           Project.Attribute_Indexes (Attr);
+         Data        : Naming_Data;
+         Cache_Iter  : Naming_Hash.String_Hash_Table.Cursor;
+         Val         : String_Access;
+
       begin
-         Get_First (Cache, Iter);
-         loop
-            Data := Get_Element (Iter);
-            exit when Data = No_Data;
+         --  Modify existing exceptions (and detect whether there have
+         --  been any changes).
+         --  We reset to null the fields in the cache, so that we can more
+         --  easily find the new values later on.
 
-            if (Column = 1 and then Data.Spec_Name /= null)
-              or else (Column = 2 and then Data.Body_Name /= null)
-            then
-               Length := Length + 1;
+         for Index in Indexes'Range loop
+            Data := Get (Cache, Indexes (Index).all);
+
+            if Attr = Specification_Attribute then
+               Val := Data.Spec_Name;
+               Data.Spec_Name := null;
+            else
+               Val := Data.Body_Name;
+               Data.Body_Name := null;
             end if;
 
-            Get_Next (Cache, Iter);
-         end loop;
-         return Length;
-      end Rows_Count;
+            if Val = null then
+               Changed := True;  --  We had an exception , no longer have one
+               Project.Delete_Attribute (Attr, Index => Indexes (Index).all);
 
-      ------------------
-      -- List_Changed --
-      ------------------
-
-      function List_Changed (List : Associative_Array; Column : Gint)
-         return Boolean
-      is
-         Data : Naming_Data;
-      begin
-         Lengths (Column) := Rows_Count (Column);
-
-         if List'Length /= Lengths (Column) then
-            return True;
-         end if;
-
-         for Elem in List'Range loop
-            declare
-               U     : constant String := Get_String (List (Elem).Index);
-               Value : constant String :=
-                         To_String (Get_Tree (Project), List (Elem).Value);
-            begin
-               Data := Get (Cache, U);
-               if Data = No_Data
-                 or else (Column = 1
-                          and then (Data.Spec_Name = null
-                                    or else Data.Spec_Name.all /= Value))
-                 or else (Column = 2
-                          and then (Data.Body_Name = null
-                                    or else Data.Body_Name.all /= Value))
+            else
+               if Project.Attribute_Value (Attr, Indexes (Index).all) /=
+                 Val.all
                then
-                  return True;
+                  Changed := True;  --  Exception has changed
+                  Project.Set_Attribute
+                    (Attr, Index => Indexes (Index).all, Value => Val.all);
                end if;
-            end;
+            end if;
+
+            Free (Val);
          end loop;
 
-         return False;
-      end List_Changed;
+         --  Then add new exceptions
+
+         Get_First (Cache, Cache_Iter);
+         loop
+            Data := Get_Element (Cache_Iter);
+            exit when Data = No_Data;
+
+            if Attr = Specification_Attribute then
+               Val := Data.Spec_Name;
+            else
+               Val := Data.Body_Name;
+            end if;
+
+            if Val /= null then
+               Changed := True;  --  new exception added
+               Project.Set_Attribute
+                 (Attr, Index => Get_Key (Cache_Iter), Value => Val.all);
+            end if;
+
+            Get_Next (Cache, Cache_Iter);
+         end loop;
+
+         Free (Indexes);
+      end Update_Exceptions;
 
    begin
       Update_If_Required
         (Spec_Suffix_Attribute,
-         Get_Text (Get_Entry (Editor.GUI.Spec_Extension)), Ada_String);
+         Get_Text (Get_Entry (Editor.GUI.Spec_Extension)), "ada");
       Update_If_Required
         (Impl_Suffix_Attribute,
-         Get_Text (Get_Entry (Editor.GUI.Body_Extension)), Ada_String);
+         Get_Text (Get_Entry (Editor.GUI.Body_Extension)), "ada");
       Update_If_Required
         (Separate_Suffix_Attribute,
          Get_Text (Get_Entry (Editor.GUI.Separate_Extension)), "");
@@ -421,73 +415,8 @@ package body Ada_Naming_Editors is
       --  hash table has been created. Much faster than updating the attributes
       --  for nothing.
 
-      for L in Lengths'Range loop
-         if (L = 1 and then List_Changed
-             (Get_Attribute_Value (Project, Specification_Attribute), L))
-           or else (L = 2 and then List_Changed
-             (Get_Attribute_Value (Project, Implementation_Attribute), L))
-         then
-            Changed := True;
-
-            declare
-               Values : Associative_Array_Values (1 .. Lengths (L));
-               Index  : Natural := Values'First;
-               Val    : String_Access;
-               Last   : Integer;
-               Idx    : Integer;
-
-            begin
-               Get_First (Cache, Cache_Iter);
-
-               loop
-                  Data := Get_Element (Cache_Iter);
-                  exit when Data = No_Data;
-
-                  Val := null;
-
-                  if L = 1 and then Data.Spec_Name /= null then
-                     Val := Data.Spec_Name;
-
-                  elsif L = 2 and then Data.Body_Name /= null then
-                     Val := Data.Body_Name;
-                  end if;
-
-                  if Val /= null then
-                     Last := Ada.Strings.Fixed.Index (Val.all, " at ");
-
-                     if Last < Val'First then
-                        Last := Val'Last + 1;
-                        Idx  := 0;
-                     else
-                        Idx  := Integer'Value (Val (Last + 4 .. Val'Last));
-                     end if;
-
-                     Values (Index) :=
-                       (Index => new String'(Get_Key (Cache_Iter)),
-                        Value => new String'(Val (Val'First .. Last - 1)),
-                        At_Index => Idx);
-                     Index := Index + 1;
-                  end if;
-
-                  Get_Next (Cache, Cache_Iter);
-               end loop;
-
-               if L = 1 then
-                  Set_Attribute_Value_In_Scenario
-                    (Project, Scenario_Variables, Specification_Attribute,
-                     Values (Values'First .. Index - 1));
-               else
-                  Set_Attribute_Value_In_Scenario
-                    (Project, Scenario_Variables, Implementation_Attribute,
-                     Values (Values'First .. Index - 1));
-               end if;
-
-               for V in Values'First .. Index - 1 loop
-                  Free (Values (V).Index);
-               end loop;
-            end;
-         end if;
-      end loop;
+      Update_Exceptions (Specification_Attribute);
+      Update_Exceptions (Implementation_Attribute);
 
       Reset (Cache);
 
@@ -501,7 +430,7 @@ package body Ada_Naming_Editors is
    overriding procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True)
    is
       procedure Set_Unit_Spec
@@ -514,26 +443,26 @@ package body Ada_Naming_Editors is
 
       pragma Unreferenced (Kernel);
       Dot_Replacement : constant String :=
-                          Get_Attribute_Value
-                            (Project, Dot_Replacement_Attribute,
+                          Project.Attribute_Value
+                            (Dot_Replacement_Attribute,
                              Default => Default_Gnat_Dot_Replacement);
       Casing          : constant String :=
-                          Get_Attribute_Value
-                            (Project, Casing_Attribute,
+                          Project.Attribute_Value
+                            (Casing_Attribute,
                              Default => -Prj.Image (All_Lower_Case));
       Separate_Suffix : constant String :=
-                          Get_Attribute_Value
-                            (Project, Separate_Suffix_Attribute,
+                          Project.Attribute_Value
+                            (Separate_Suffix_Attribute,
                              Default => Default_Gnat_Separate_Suffix);
       Body_Suffix     : constant String :=
-                          Get_Attribute_Value
-                            (Project, Impl_Suffix_Attribute,
-                             Index   => Ada_String,
+                          Project.Attribute_Value
+                            (Impl_Suffix_Attribute,
+                             Index   => "ada",
                              Default => Default_Gnat_Body_Suffix);
       Spec_Suffix     : constant String :=
-                          Get_Attribute_Value
-                            (Project, Spec_Suffix_Attribute,
-                             Index   => Ada_String,
+                          Project.Attribute_Value
+                            (Spec_Suffix_Attribute,
+                             Index   => "ada",
                              Default => Default_Gnat_Spec_Suffix);
       Id              : Gint;
 
@@ -549,12 +478,11 @@ package body Ada_Naming_Editors is
 
       if Display_Exceptions then
          declare
-            Specs  : constant Associative_Array :=
-                       Get_Attribute_Value
-                         (Project, Specification_Attribute);
-            Bodies : constant Associative_Array :=
-                       Get_Attribute_Value
-                         (Project, Implementation_Attribute);
+            Specs  : GNAT.Strings.String_List :=
+              Project.Attribute_Indexes (Specification_Attribute);
+            Bodies  : GNAT.Strings.String_List :=
+              Project.Attribute_Indexes (Implementation_Attribute);
+
             Iter   : Gtk_Tree_Iter;
          begin
             for S in Specs'Range loop
@@ -562,10 +490,10 @@ package body Ada_Naming_Editors is
                Set_Unit_Spec
                  (Get_Object (Editor.GUI.Exception_List_Model), Iter,
                   Col   => 0,
-                  Unit  => Get_String (Specs (S).Index) & ASCII.NUL,
+                  Unit  => Specs (S).all & ASCII.NUL,
                   Col2  => 1,
-                  Spec  => To_String (Get_Tree (Project), Specs (S).Value)
-                           & ASCII.NUL);
+                  Spec  => Project.Attribute_Value
+                    (Specification_Attribute, Specs (S).all) & ASCII.NUL);
             end loop;
 
             for B in Bodies'Range loop
@@ -574,7 +502,7 @@ package body Ada_Naming_Editors is
                --  needed if C303-008 is implemented (merging the two exception
                --  lists)
                declare
-                  Unit : constant String := Get_String (Bodies (B).Index);
+                  Unit : constant String := Bodies (B).all;
                begin
                   Iter := Get_Iter_First (Editor.GUI.Exception_List_Model);
                   while Iter /= Null_Iter loop
@@ -589,17 +517,23 @@ package body Ada_Naming_Editors is
                   Set_Unit_Spec
                     (Get_Object (Editor.GUI.Exception_List_Model), Iter,
                      Col   => 0,
-                     Unit  => Get_String (Bodies (B).Index) & ASCII.NUL,
+                     Unit  => Bodies (B).all & ASCII.NUL,
                      Col2  => 2,
-                     Spec  => To_String (Get_Tree (Project),
-                                         Bodies (B).Value) & ASCII.NUL);
+                     Spec  => Project.Attribute_Value
+                       (Implementation_Attribute, Bodies (B).all)
+                       & ASCII.NUL);
+
                else
                   Set (Editor.GUI.Exception_List_Model, Iter,
                        Column => 2,
-                       Value  => To_String
-                         (Get_Tree (Project), Bodies (B).Value));
+                       Value  => Project.Attribute_Value
+                         (Implementation_Attribute, Bodies (B).all)
+                         & ASCII.NUL);
                end if;
             end loop;
+
+            Free (Specs);
+            Free (Bodies);
          end;
       end if;
 

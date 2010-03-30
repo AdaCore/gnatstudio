@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2009, AdaCore               --
+--                    Copyright (C) 2004-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,8 +42,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
-with Projects.Editor;           use Projects, Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
 with Traces;                    use Traces;
 with Wizards;                   use Wizards;
 
@@ -64,7 +63,7 @@ package body Creation_Wizard is
       Title             : String;
       Show_Toc          : Boolean := True;
       Auto_Save_On_Exit : Boolean := True;
-      Project           : Projects.Project_Type := Projects.No_Project) is
+      Project           : Project_Type := No_Project) is
    begin
       Wiz := new Project_Wizard_Record;
       Initialize (Wiz, Kernel, Title, Show_Toc, Auto_Save_On_Exit, Project);
@@ -102,7 +101,7 @@ package body Creation_Wizard is
       Title             : String;
       Show_Toc          : Boolean := True;
       Auto_Save_On_Exit : Boolean := True;
-      Project           : Projects.Project_Type := Projects.No_Project) is
+      Project           : Project_Type := No_Project) is
    begin
       Wizards.Initialize
         (Wiz,
@@ -270,8 +269,8 @@ package body Creation_Wizard is
    overriding procedure Generate_Project
      (Page               : access Name_And_Location_Page;
       Kernel             : access Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       Dir            : constant Virtual_File :=
@@ -327,12 +326,11 @@ package body Creation_Wizard is
       if Name'Length > 4
         and then Name (Name'Last - 3 .. Name'Last) = ".gpr"
       then
-         Project := Create_Project
-           (Get_Registry (Kernel).all,
-            Name => Name (Name'First .. Name'Last - 4), Path => Dir);
+         Project := Get_Registry (Kernel).Tree.Create_Project
+           (Name => Name (Name'First .. Name'Last - 4), Path => Dir);
       else
-         Project := Create_Project
-           (Get_Registry (Kernel).all, Name => Name, Path => Dir);
+         Project := Get_Registry (Kernel).Tree.Create_Project
+           (Name => Name, Path => Dir);
       end if;
 
       if Relative_Paths then
@@ -343,21 +341,16 @@ package body Creation_Wizard is
 
       for J in reverse Name'First .. Name'Last - 4 loop
          if Name (J) = '.' then
-            Parent := Get_Project_From_Name
-              (Registry => Get_Registry (Kernel).all,
-               Name     => Get_String (Name (Name'First .. J - 1)));
+            Parent := Get_Registry (Kernel).Tree.Project_From_Name
+              (Name     => Name (Name'First .. J - 1));
 
             if Parent /= No_Project then
-               Error := Add_Imported_Project
-                 (Root_Project       => Get_Project (Kernel),
-                  Project            => Project,
-                  Imported_Project   => Parent,
+               Error := Project.Add_Imported_Project
+                 (Imported_Project   => Parent,
                   Use_Relative_Path  => True);
             else
-               Error := Add_Imported_Project
-                 (Root_Project => Get_Project (Kernel),
-                  Project      => Project,
-                  Imported_Project_Location =>
+               Error := Project.Add_Imported_Project
+                 (Imported_Project_Location =>
                     Create (+Name (Name'First .. J - 1)),
                   Use_Relative_Path => True);
             end if;
@@ -395,7 +388,7 @@ package body Creation_Wizard is
          Generate_Project
            (Project_Wizard_Page (Pages (P)),
             Get_Kernel (Wiz),
-            Scenario_Variables => Projects.No_Scenario,
+            Scenario_Variables => No_Scenario,
             Project            => Wiz.Project,
             Changed            => Changed);
       end loop;
@@ -422,7 +415,7 @@ package body Creation_Wizard is
    -----------------
 
    function Get_Project
-     (Wiz : access Project_Wizard_Record'Class) return Projects.Project_Type is
+     (Wiz : access Project_Wizard_Record'Class) return Project_Type is
    begin
       return Wiz.Project;
    end Get_Project;

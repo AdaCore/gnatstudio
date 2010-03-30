@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2004-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,14 +21,15 @@
 --  files given input data.
 
 with GNAT.Strings;
-with Projects.Registry;
+with Projects;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 package GPR_Creation is
 
    procedure Create_Gpr_Files
-     (Registry          : Projects.Registry.Project_Registry'Class;
-      Root_Project      : Projects.Project_Type;
+     (Registry          : Projects.Project_Registry'Class;
+      Root_Project      : GNATCOLL.Projects.Project_Type;
       Source_Dirs       : GNAT.Strings.String_List;
       Object_Dirs       : GNAT.Strings.String_List;
       Spec_Extension    : String;
@@ -55,8 +55,8 @@ package GPR_Creation is
    --  single search directory is needed.
 
    procedure Create_Gpr_Files
-     (Registry          : Projects.Registry.Project_Registry'Class;
-      Root_Project      : Projects.Project_Type;
+     (Registry          : Projects.Project_Registry'Class;
+      Root_Project      : GNATCOLL.Projects.Project_Type;
       Source_Dirs       : GNATCOLL.VFS.File_Array;
       Object_Dirs       : GNATCOLL.VFS.File_Array;
       Spec_Extension    : String;

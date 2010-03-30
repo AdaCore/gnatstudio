@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2009, AdaCore                --
+--                   Copyright (C) 2002-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,7 +40,6 @@ with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Naming_Editors;             use Naming_Editors;
 with Project_Viewers;            use Project_Viewers;
-with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with Traces;                     use Traces;
 
@@ -69,7 +68,7 @@ package body Cpp_Module is
 
    function Create_GLI_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry)
+      Registry : Projects.Project_Registry)
       return Entities.LI_Handler;
    --  Create a new ALI handler
 
@@ -148,7 +147,7 @@ package body Cpp_Module is
 
    function Create_GLI_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry) return Entities.LI_Handler
+      Registry : Projects.Project_Registry) return Entities.LI_Handler
    is
       CPP : constant GLI_Handler := new GLI_Handler_Record;
    begin
@@ -267,16 +266,14 @@ package body Cpp_Module is
       end if;
 
       Register_Language (Handler, C_Lang, null, LI => LI);
-      Register_Default_Language_Extension
-        (Get_Registry (Kernel).all,
-         Language_Name       => "c",
+      Get_Registry (Kernel).Environment.Register_Default_Language_Extension
+        (Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c");
 
       Register_Language (Handler, Cpp_Lang, null, LI => LI);
-      Register_Default_Language_Extension
-        (Get_Registry (Kernel).all,
-         Language_Name       => "c++",
+      Get_Registry (Kernel).Environment.Register_Default_Language_Extension
+        (Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");
 
@@ -314,9 +311,9 @@ package body Cpp_Module is
       On_Preferences_Changed (Kernel);
 
       Register_Naming_Scheme_Editor
-        (Kernel, C_String, C_Naming_Scheme_Editor'Access);
+        (Kernel, "c", C_Naming_Scheme_Editor'Access);
       Register_Naming_Scheme_Editor
-        (Kernel, Cpp_String, C_Naming_Scheme_Editor'Access);
+        (Kernel, "c++", C_Naming_Scheme_Editor'Access);
 
    exception
       when E : others => Trace (Exception_Handle, E);

@@ -46,7 +46,6 @@ with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 
 with Commands.Interactive;        use Commands.Interactive;
 
@@ -70,7 +69,8 @@ with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
 with GNATCOLL.Traces;
-with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
 
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
@@ -392,10 +392,7 @@ package body Builder_Facility_Module is
       Tmp   : Boolean;
       pragma Unreferenced (Tmp);
 
-      Mains : Argument_List :=
-        Get_Attribute_Value
-          (Project,
-           Attribute => Main_Attribute);
+      Mains : String_List_Access := Project.Attribute_Value (Main_Attribute);
    begin
       if Menu = null then
          Gtk_New (Menu);
@@ -616,14 +613,10 @@ package body Builder_Facility_Module is
       is
          File : Virtual_File;
       begin
-         Get_Full_Path_From_File
-           (Registry.all,
-            Filesystem_String (Basename),
-            Use_Source_Path => True,
+         File := Registry.Tree.Create
+           (Filesystem_String (Basename),
             Use_Object_Path => False,
-            Project         => Project,
-            Create_As_Base_If_Not_Found => False,
-            File            => File);
+            Project         => Project);
 
          if File = No_File then
             return Basename;
@@ -640,7 +633,7 @@ package body Builder_Facility_Module is
          Result   : Argument_List (1 .. Max_Number_Of_Mains);
          Index    : Natural := 1;
          --  Index of the first free element in Result
-         Iterator :  Imported_Project_Iterator;
+         Iterator :  Project_Iterator;
 
          Projects : Projects_Stack.Simple_Stack;
          The_Project : Project_Type;
@@ -660,9 +653,8 @@ package body Builder_Facility_Module is
          while not Projects_Stack.Is_Empty (Projects) loop
             Projects_Stack.Pop (Projects, The_Project);
             declare
-               Mains : Argument_List :=
-                 Get_Attribute_Value
-                   (The_Project, Attribute => Main_Attribute);
+               Mains : String_List_Access :=
+                 The_Project..Attribute_Value (Main_Attribute);
             begin
                for J in Mains'Range loop
                   if Mains (J)'Length > 0 then
@@ -681,6 +673,8 @@ package body Builder_Facility_Module is
                      Index := Index + 1;
                   end if;
                end loop;
+
+               Free (Mains);
             end;
 
             exit when Index > Result'Last;
@@ -703,11 +697,9 @@ package body Builder_Facility_Module is
 
       else
          declare
-            Base_Mains : Argument_List :=
-              Get_Attribute_Value
-                (Base_Project,
-                 Attribute => Main_Attribute);
-            Mains : Argument_List
+            Base_Mains : String_List_Access :=
+              Base_Project.Attribute_Value (Main_Attribute);
+            Mains : String_List
               (1 .. Root_Mains'Length + Base_Mains'Length);
             Index : Natural; --  Points to the first free element in Mains
 
@@ -733,7 +725,7 @@ package body Builder_Facility_Module is
             --  plus the mains contained in the Extended project and which
             --  are not in the Loaded mains.
 
-            if Base_Mains'Length = 0 then
+            if Base_Mains = null or else Base_Mains'Length = 0 then
                return Root_Mains;
             end if;
 
@@ -748,7 +740,7 @@ package body Builder_Facility_Module is
                end;
             end loop;
 
-            Mains (1 .. Base_Mains'Length) := Base_Mains;
+            Mains (1 .. Base_Mains'Length) := Base_Mains.all;
 
             Index := Base_Mains'Length + 1;
 
@@ -765,8 +757,14 @@ package body Builder_Facility_Module is
 
             Free (Root_Mains);
 
-            return Mains (Base_Mains'Length + 1 .. Index - 1) &
-               Mains (1 .. Base_Mains'Length);
+            declare
+               Result : constant String_List :=
+                 Mains (Base_Mains'Length + 1 .. Index - 1) &
+                 Mains (1 .. Base_Mains'Length);
+            begin
+               Free (Base_Mains);
+               return Result;
+            end;
          end;
       end if;
    end Get_Mains;
@@ -1095,7 +1093,7 @@ package body Builder_Facility_Module is
                         Exec : constant Virtual_File :=
                                 Create_From_Dir
                                   (Exec_Dir,
-                                   Get_Executable_Name (Prj, +Mains (J).all));
+                                   Prj.Executable_Name (+Mains (J).all));
                         Base : constant String := String (Exec.Base_Name);
                         Full : constant String := String (Exec.Full_Name.all);
                         Display_Name : constant Any_Type :=
@@ -1155,11 +1153,7 @@ package body Builder_Facility_Module is
       declare
          P : Project_Type;
       begin
-         P := Get_Project_From_File
-           (Registry          => Project_Registry
-              (Get_Registry (Get_Kernel).all),
-            Source_Filename   => File,
-            Root_If_Not_Found => False);
+         P := Get_Registry (Get_Kernel).Tree.Info (File).Project;
 
          --  No project was found for the file: this is not a source file, so
          --  return now.
@@ -1434,9 +1428,8 @@ package body Builder_Facility_Module is
          return;
       end if;
 
-      if Projects.Registry.Get_Mode_Subdir (Reg) /= Get_Mode_Subdir (Mode) then
-         Projects.Registry.Set_Mode_Subdir
-           (Reg, Get_Mode_Subdir (Mode));
+      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Mode) then
+         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Mode));
          Recompute_View (Get_Kernel);
       end if;
 

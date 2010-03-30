@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2009, AdaCore             --
+--                      Copyright (C) 2001-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
@@ -58,7 +59,6 @@ with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
-with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with Traces;                    use Traces;
@@ -565,7 +565,7 @@ package body Custom_Module is
       procedure Parse_Tool_Node (Node : Node_Ptr) is
          Name      : constant String := Get_Attribute (Node, "name");
          Pack      : constant String :=
-                       Get_Attribute (Node, "package", Projects.Ide_Package);
+                       Get_Attribute (Node, "package", Ide_Package);
          Index     : constant String :=
                        To_Lower (Get_Attribute (Node, "index", Name));
          Attribute : constant String :=

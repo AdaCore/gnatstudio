@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,8 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
-with GNATCOLL.Templates;            use GNATCOLL.Templates;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
@@ -68,7 +69,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with System;                    use System;
 with Traces;                    use Traces;

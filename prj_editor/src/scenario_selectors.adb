@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2009, AdaCore             --
+--                      Copyright (C) 2002-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,17 +32,16 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with System;
-with GPS.Intl;               use GPS.Intl;
-with Namet;                    use Namet;
-with Projects.Editor;          use Projects, Projects.Editor;
-with Projects.Registry;        use Projects.Registry;
+with GPS.Intl;                 use GPS.Intl;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with Projects;                 use Projects;
 with Ada.Unchecked_Deallocation;
 with Histories;                use Histories;
-with Prj.Tree;                 use Prj.Tree;
 
 package body Scenario_Selectors is
 
@@ -232,7 +231,7 @@ package body Scenario_Selectors is
       begin
          while It /= Null_Iter loop
             if Get_String (S.Model, It, Project_Name_Column) /=
-              Project_Name (S.Ref_Project)
+              S.Ref_Project.Name
             then
                Set (S.Model, It, Selected_Column, Selected);
             end if;
@@ -264,7 +263,7 @@ package body Scenario_Selectors is
    begin
       while It /= Null_Iter loop
          if Get_String (Selector.Model, It, Project_Name_Column)
-           = Project_Name (Project)
+           = Project.Name
          then
             Set (Selector.Model, It, Selected_Column, Selected);
          end if;
@@ -294,16 +293,8 @@ package body Scenario_Selectors is
 
       --  Can't unselect the reference project
       if Iter /= Null_Iter then
-         declare
-            N : constant String := Get_String
-              (S.Model, Iter, Project_Name_Column);
-         begin
-            Name_Len := N'Length;
-            Name_Buffer (1 .. Name_Len) := N;
-
-            Project := Get_Project_From_Name
-              (Get_Registry (S.Kernel).all, Name_Find);
-         end;
+         Project := Get_Registry (S.Kernel).Tree.Project_From_Name
+           (Get_String (S.Model, Iter, Project_Name_Column));
 
          if Project /= S.Ref_Project then
             Selected := Get_Boolean (S.Model, Iter, Selected_Column);
@@ -327,7 +318,7 @@ package body Scenario_Selectors is
       Project  : Project_Type)
    is
       It       : Gtk_Tree_Iter := Null_Iter;
-      Iterator : Imported_Project_Iterator;
+      Iterator : GNATCOLL.Projects.Project_Iterator;
    begin
       if Get_Active (Selector.Show_As_Hierarchy) then
          --  We need to properly handle limited-with statements in the
@@ -336,7 +327,7 @@ package body Scenario_Selectors is
          --  present in the current tree path.
 
          declare
-            Name : constant String := Project_Name (Project);
+            Name : constant String := Project.Name;
             It2 : Gtk_Tree_Iter;
             Found : Boolean := False;
          begin
@@ -370,7 +361,7 @@ package body Scenario_Selectors is
 
       else
          declare
-            Iterator : Imported_Project_Iterator := Start
+            Iterator : GNATCOLL.Projects.Project_Iterator := Start
               (Project, Recursive => True);
          begin
             while Current (Iterator) /= No_Project loop
@@ -403,7 +394,7 @@ package body Scenario_Selectors is
    begin
       Internal
         (Get_Object (Selector.Model), Iter'Address,
-         Project_Name_Column, Project_Name (Project) & ASCII.NUL,
+         Project_Name_Column, Project.Name & ASCII.NUL,
          Selected_Column,     Boolean'Pos (Selected));
    end Project_Set;
 
@@ -483,12 +474,9 @@ package body Scenario_Selectors is
    procedure Show_Variables
      (Selector : access Scenario_Selector_Record'Class)
    is
-      Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
-        Get_Tree (Project_Registry (Get_Registry (Selector.Kernel).all));
       Vars : constant Scenario_Variable_Array := Scenario_Variables
         (Selector.Kernel);
       Iter, Child : Gtk_Tree_Iter;
-      Value : String_List_Iterator;
    begin
       for V in Vars'Range loop
          Append (Selector.Model, Iter, Null_Iter);
@@ -499,25 +487,28 @@ package body Scenario_Selectors is
          Set (Selector.Model,
               Iter,
               Column => Var_Name_Column,
-              Value  => External_Reference_Of (Vars (V)));
+              Value  => External_Name (Vars (V)));
 
          declare
             Current : constant String :=
-               Value_Of (Get_Registry (Selector.Kernel).all, Vars (V));
+              Get_Registry (Selector.Kernel).Tree.Value (Vars (V));
+            Values  : GNAT.Strings.String_List :=
+              Get_Registry (Selector.Kernel).Tree.Possible_Values_Of
+                (Vars (V));
          begin
-            Value := Value_Of (Tree, Vars (V));
-            while not Done (Value) loop
+            for V in Values'Range loop
                Append (Selector.Model, Child, Iter);
                Set (Selector.Model,
                     Child,
                     Column => Selected_Column,
-                    Value  => Get_String (Data (Tree, Value)) = Current);
+                    Value  => Values (V).all = Current);
                Set (Selector.Model,
                     Child,
                     Column => Var_Name_Column,
-                    Value  => Get_String (Data (Tree, Value)));
-               Value := Next (Tree, Value);
+                    Value  => Values (V).all);
             end loop;
+
+            Free (Values);
          end;
 
       end loop;
@@ -641,15 +632,8 @@ package body Scenario_Selectors is
       begin
          while It /= Null_Iter loop
             if Get_Boolean (Selector.Model, It, Selected_Column) then
-               declare
-                  N : constant String := Get_String
-                    (Selector.Model, It, Project_Name_Column);
-               begin
-                  Name_Len := N'Length;
-                  Name_Buffer (1 .. Name_Len) := N;
-                  Prj := Get_Project_From_Name
-                    (Get_Registry (Selector.Kernel).all, Name_Find);
-               end;
+               Prj := Get_Registry (Selector.Kernel).Tree.Project_From_Name
+                 (Get_String (Selector.Model, It, Project_Name_Column));
 
                for P in Tmp'Range loop
                   if Tmp (P) = Prj then
@@ -884,7 +868,7 @@ package body Scenario_Selectors is
    begin
       for V in Values'Range loop
          Values (V) := new String'
-            (Value_Of (Get_Registry (Kernel).all, Variables (V)));
+           (Get_Registry (Kernel).Tree.Value (Variables (V)));
       end loop;
       return Values;
    end Get_Current_Scenario;
@@ -901,7 +885,8 @@ package body Scenario_Selectors is
          Scenario_Variables (Kernel);
    begin
       for V in Variables'Range loop
-         Set_Value (Get_Registry (Kernel), Variables (V), Values (V).all);
+         Get_Registry (Kernel).Tree.Set_Value
+           (External_Name (Variables (V)), Values (V).all);
       end loop;
    end Set_Environment;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with Basic_Types;        use Basic_Types;
@@ -26,7 +27,6 @@ with Entities;           use Entities;
 with Entities.Queries;   use Entities.Queries;
 with Language_Handlers;  use Language_Handlers;
 with Projects;           use Projects;
-with Projects.Registry;  use Projects.Registry;
 
 package body GPS.Kernel.Contexts is
 
@@ -147,9 +147,8 @@ package body GPS.Kernel.Contexts is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       return Has_File_Information (Context)
-        and then Get_Project_From_File
-          (Get_Registry (Kernel).all, File_Information (Context), False) /=
-          No_Project;
+        and then Get_Registry (Kernel).Tree.Info
+          (File_Information (Context)).Project /= No_Project;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -198,8 +197,8 @@ package body GPS.Kernel.Contexts is
    procedure Set_File_Information
      (Context           : in out Selection_Context;
       Files             : GNATCOLL.VFS.File_Array := Empty_File_Array;
-      Project           : Projects.Project_Type := Projects.No_Project;
-      Importing_Project : Projects.Project_Type := Projects.No_Project;
+      Project           : Project_Type := No_Project;
+      Importing_Project : Project_Type := No_Project;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
@@ -248,14 +247,14 @@ package body GPS.Kernel.Contexts is
    -------------------------
 
    function Project_Information (Context : Selection_Context)
-      return Projects.Project_Type is
+      return Project_Type is
    begin
       if Context.Data.Data.Project = No_Project
         and then Has_File_Information (Context)
       then
-         Context.Data.Data.Project := Get_Project_From_File
-           (Get_Registry (Get_Kernel (Context)).all,
-            File_Information (Context));
+         Context.Data.Data.Project :=
+           Get_Registry (Get_Kernel (Context)).Tree
+           .Info (File_Information (Context)).Project;
       end if;
       return Context.Data.Data.Project;
    end Project_Information;
@@ -380,12 +379,10 @@ package body GPS.Kernel.Contexts is
                then
                   --  This is a reference file, we have no need of it in the
                   --  context. We record then the corresponding file.
-                  Get_Full_Path_From_File
-                    (Get_Registry (Context.Data.Data.Kernel).all,
-                     Name (Name'First + 4 .. Name'Last),
-                     Use_Source_Path => True,
-                     Use_Object_Path => False,
-                     File => Context.Data.Data.Files (K));
+                  Context.Data.Data.Files (K) :=
+                    Get_Registry (Context.Data.Data.Kernel).Tree.Create
+                    (Name (Name'First + 4 .. Name'Last),
+                     Use_Object_Path => False);
                end if;
             end;
          end loop;

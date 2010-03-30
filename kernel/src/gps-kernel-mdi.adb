@@ -52,7 +52,6 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GUI_Utils;                use GUI_Utils;
-with Projects;                 use Projects;
 
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -443,7 +442,7 @@ package body GPS.Kernel.MDI is
       pragma Unreferenced (Tmp, Tmp2);
    begin
       if Force then
-         if Project_Modified (Get_Project (Handle), Recursive => True) then
+         if Get_Project (Handle).Modified (Recursive => True) then
             Tmp := Save_Project
               (Kernel    => Handle,
                Project   => Get_Project (Handle),
@@ -479,7 +478,7 @@ package body GPS.Kernel.MDI is
          end loop;
 
       else
-         if Project_Modified (Get_Project (Handle), Recursive => True) then
+         if Get_Project (Handle).Modified (Recursive => True) then
             Num_Unsaved := Num_Unsaved + 1;
             Append (Model, It, Null_Iter);
             Set (Model, It, 0, True);

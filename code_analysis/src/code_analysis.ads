@@ -31,7 +31,7 @@ with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
-with Projects;                              use Projects;
+with GNATCOLL.Projects;                     use GNATCOLL.Projects;
 with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with GPS.Kernel;
 with GPS.Editors;

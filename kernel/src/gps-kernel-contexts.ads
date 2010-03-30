@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,10 +20,10 @@
 --  This package provides support for the description of the various
 --  contexts and selections in GPS.
 
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Basic_Types;
 with Entities;
-with Projects;
 with String_List_Utils;
 
 package GPS.Kernel.Contexts is
@@ -40,8 +40,10 @@ package GPS.Kernel.Contexts is
    procedure Set_File_Information
      (Context           : in out Selection_Context;
       Files         : GNATCOLL.VFS.File_Array := GNATCOLL.VFS.Empty_File_Array;
-      Project           : Projects.Project_Type := Projects.No_Project;
-      Importing_Project : Projects.Project_Type := Projects.No_Project;
+      Project           : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
+      Importing_Project : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
@@ -93,7 +95,7 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has project information
    function Project_Information
-     (Context : Selection_Context) return Projects.Project_Type;
+     (Context : Selection_Context) return GNATCOLL.Projects.Project_Type;
    --  Return the id of the project to which the file belongs. Note that this
    --  is computed automatically and cached otherwise.
    --  This function will return No_Project if the file stored in the context
@@ -104,7 +106,7 @@ package GPS.Kernel.Contexts is
    --  Return True if Context has information about the project that imports
    --  the one returned by Project_Information.
    function Importing_Project_Information
-     (Context : Selection_Context) return Projects.Project_Type;
+     (Context : Selection_Context) return GNATCOLL.Projects.Project_Type;
    --  Return the project that imports the one returned by Project_Information.
    --  This is never computed automatically, and unless provided by the creator
    --  of the project, this will be left empty.

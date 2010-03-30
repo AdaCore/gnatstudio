@@ -25,7 +25,7 @@ with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Generic_List;
 with Language;             use Language;
 with Language.Tree;        use Language.Tree;
-with Projects.Registry;
+with Projects;
 with GNATCOLL.VFS;
 
 package Codefix.Formal_Errors is
@@ -43,7 +43,7 @@ package Codefix.Formal_Errors is
 
    procedure Initialize
      (This       : in out Error_Message;
-      Registry   : Projects.Registry.Project_Registry_Access;
+      Registry   : Projects.Project_Registry_Access;
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;

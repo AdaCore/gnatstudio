@@ -19,7 +19,6 @@
 
 with Entities.Queries;                 use Entities.Queries;
 with Projects;                         use Projects;
-with Projects.Registry;                use Projects.Registry;
 
 with Basic_Types;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
@@ -58,9 +57,7 @@ package body Docgen2.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
-      return Get_Unit_Part_From_Filename
-        (Get_Project_From_File (Get_Registry (Kernel).all, File), File) =
-        Unit_Spec;
+      return Get_Registry (Kernel).Tree.Info (File).Unit_Part = Unit_Spec;
    end Is_Spec_File;
 
    ----------------

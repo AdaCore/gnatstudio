@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,10 +40,9 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with GNAT.Expect;
-
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with Docgen2_Backend;
 with GPS.Kernel;
-with Projects;
 with GNATCOLL.VFS;
 
 package Docgen2 is
@@ -93,7 +92,7 @@ package Docgen2 is
    procedure Generate
      (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend   : Docgen2_Backend.Backend_Handle;
-      Project   : Projects.Project_Type;
+      Project   : Project_Type;
       Options   : Docgen_Options;
       Recursive : Boolean := False);
    --  <summary>

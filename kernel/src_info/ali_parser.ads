@@ -18,21 +18,22 @@
 -----------------------------------------------------------------------
 
 with Entities;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
-with Projects.Registry;
+with Projects;
 with Language.Tree.Database;
 
 package ALI_Parser is
 
    function Create_ALI_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry)
+      Registry : Projects.Project_Registry)
       return Entities.LI_Handler;
    --  Create a new ALI handler
 
    type ALI_Handler_Record is new Entities.LI_Handler_Record with record
       Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry;
+      Registry : Projects.Project_Registry;
    end record;
    type ALI_Handler is access all ALI_Handler_Record'Class;
    --  Generic ALI handler. Can be overriden for e.g. GCC .gli files.
@@ -47,14 +48,14 @@ package ALI_Parser is
      (Handler : access ALI_Handler_Record) return Boolean;
    overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type)
+      Project   : GNATCOLL.Projects.Project_Type)
       return Entities.LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access
         Language.Tree.Database.Abstract_Language_Handler_Record'Class;
-      Project      : Projects.Project_Type;
-      Errors       : Projects.Error_Report;
+      Project      : GNATCOLL.Projects.Project_Type;
+      Errors       : GNATCOLL.Projects.Error_Report;
       Recursive    : Boolean := False)
       return Entities.LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
@@ -87,6 +88,6 @@ private
          Handler : ALI_Handler;
          Files   : GNATCOLL.VFS.File_Array_Access;  --  in current dir
          Current : Natural;            --  current file
-         Project : Projects.Project_Type;
+         Project : GNATCOLL.Projects.Project_Type;
       end record;
 end ALI_Parser;

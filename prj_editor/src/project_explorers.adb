@@ -22,6 +22,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
@@ -62,8 +63,6 @@ with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
-
-with Namet;                     use Namet;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities;
@@ -1159,10 +1158,10 @@ package body Project_Explorers is
    is
       Is_Leaf   : constant Boolean :=
                     not Has_Imported_Projects (Project)
-                    and then Get_Attribute_Value
-                      (Project, Obj_Dir_Attribute) = ""
+                    and then Project.Attribute_Value
+                      (Obj_Dir_Attribute) = ""
                     and then Source_Dirs (Project)'Length = 0;
-      Node_Text : constant String := Project_Name (Project);
+      Node_Text : constant String := Project.Name;
       Node_Type : Node_Types := Project_Node;
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
@@ -1175,7 +1174,7 @@ package body Project_Explorers is
       if Extending_Project (Project) /= No_Project then
          Node_Type := Extends_Project_Node;
 
-      elsif Project_Modified (Project) then
+      elsif Project.Modified then
          Node_Type := Modified_Project_Node;
       end if;
 
@@ -1215,8 +1214,7 @@ package body Project_Explorers is
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
 
-      Set (Explorer.Tree.Model, N, Project_Column,
-           Gint (Name_Id'(Project_Name (Project))));
+      Set (Explorer.Tree.Model, N, Project_Column, Project.Name);
 
       if not Is_Leaf then
          Append_Dummy_Iter (Explorer.Tree.Model, N);
@@ -1522,8 +1520,7 @@ package body Project_Explorers is
       Project : constant Project_Type :=
                   Get_Project_From_Node
                     (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Files   : File_Array_Access :=
-                  Get_Source_Files (Project, Recursive => False);
+      Files   : File_Array_Access := Project.Source_Files (Recursive => False);
    begin
       Update_Project_Node (Explorer, Files.all, Node);
       Unchecked_Free (Files);
@@ -1543,7 +1540,7 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      Obj  : constant Virtual_File := Object_Path (Project);
+      Obj  : constant Virtual_File := Project.Object_Dir;
       Exec : constant Virtual_File := Executables_Directory (Project);
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;
@@ -1852,8 +1849,8 @@ package body Project_Explorers is
       return Project_Type_Array
    is
       Count : Natural := 0;
-      Iter  : Imported_Project_Iterator :=
-                Start (Project, Recursive => True, Direct_Only => Direct_Only);
+      Iter  : Project_Iterator :=
+        Project.Start (Recursive => True, Direct_Only => Direct_Only);
    begin
       while Current (Iter) /= No_Project loop
          Count := Count + 1;
@@ -1899,7 +1896,7 @@ package body Project_Explorers is
                     Get_Project_From_Node
                       (Explorer.Tree.Model, Explorer.Kernel, Node, False);
 
-      Dirs      : constant Name_Id_Array := Source_Dirs (Project);
+      Dirs      : constant File_Array := Project.Source_Dirs;
 
       N, N2, N3 : Gtk_Tree_Iter;
       Index     : Natural;
@@ -2124,8 +2121,7 @@ package body Project_Explorers is
 
       for D in Dirs'Range loop
          declare
-            Dir : constant Virtual_File :=
-              Create (+Get_Name_String (Dirs (D)));
+            Dir : constant Virtual_File := Dirs (D);
          begin
             Ensure_Directory (Dir);
 
@@ -2207,7 +2203,7 @@ package body Project_Explorers is
                      Files : File_Array_Access := Files_In_Project;
                   begin
                      if Files = null then
-                        Files := Get_Source_Files (Prj, Recursive => False);
+                        Files := Prj.Source_Files (Recursive => False);
                      end if;
 
                      Update_Project_Node (Explorer, Files.all, Node);
@@ -2241,9 +2237,8 @@ package body Project_Explorers is
       if Node_Type = Project_Node
         or else Node_Type = Modified_Project_Node
       then
-         if Project_Modified
-           (Get_Project_From_Node
-              (Explorer.Tree.Model, Explorer.Kernel, Node, False))
+         if Get_Project_From_Node
+           (Explorer.Tree.Model, Explorer.Kernel, Node, False).Modified
          then
             N_Type := Modified_Project_Node;
          else
@@ -2269,7 +2264,6 @@ package body Project_Explorers is
                          (Get_Project (Explorer.Kernel),
                           Direct_Only     => False,
                           Include_Project => True);
-      Name         : Name_Id;
       Found        : Boolean;
       Id           : constant Gint := Freeze_Sort (Explorer.Tree.Model);
 
@@ -2277,18 +2271,21 @@ package body Project_Explorers is
       Iter2 := Get_Iter_First (Explorer.Tree.Model);
 
       while Iter2 /= Null_Iter loop
-         Name := Name_Id
-           (Get_Int (Explorer.Tree.Model, Iter2, Project_Column));
-         Found := False;
+         declare
+            Name : constant String :=
+              Get_String (Explorer.Tree.Model, Iter2, Project_Column);
+         begin
+            Found := False;
 
-         for Im in Imported'Range loop
-            if Imported (Im) /= No_Project
-              and then Project_Name (Imported (Im)) = Name
-            then
-               Imported (Im) := No_Project;
-               Found := True;
-            end if;
-         end loop;
+            for Im in Imported'Range loop
+               if Imported (Im) /= No_Project
+                 and then Imported (Im).Name = Name
+               then
+                  Imported (Im) := No_Project;
+                  Found := True;
+               end if;
+            end loop;
+         end;
 
          if not Found then
             Iter_Copy (Source => Iter2, Dest => Iter3);
@@ -2721,9 +2718,9 @@ package body Project_Explorers is
                        | Extends_Project_Node
                        | Modified_Project_Node =>
                      Next_Or_Child
-                       (Project_Name
-                          (Get_Project_From_Node
-                             (Explorer.Tree.Model, Kernel, Start_Node, False)),
+                       (Get_Project_From_Node
+                          (Explorer.Tree.Model,
+                           Kernel, Start_Node, False).Name,
                         Start_Node,
                         Context.Include_Projects, Tmp, Finish);
 
@@ -2838,7 +2835,7 @@ package body Project_Explorers is
          Increment      : Search_Status)
       is
          Dir  : constant Filesystem_String := Dir_Name (File);
-         Iter : Imported_Project_Iterator;
+         Iter : Project_Iterator;
 
       begin
          Set (C.Matches, +Base_Name (File), Mark_File);
@@ -2857,7 +2854,7 @@ package body Project_Explorers is
             --  matching.
 
             declare
-               N : constant String := Project_Name (Project);
+               N : constant String := Project.Name;
             begin
                Set (C.Matches, N, Get (C.Matches, N) + Increment);
             end;
@@ -2867,7 +2864,7 @@ package body Project_Explorers is
 
             while Current (Iter) /= No_Project loop
                declare
-                  N : constant String := Project_Name (Current (Iter));
+                  N : constant String := Current (Iter).Name;
                begin
                   Set (C.Matches, N, Get (C.Matches, N) + Increment);
                end;
@@ -2882,13 +2879,13 @@ package body Project_Explorers is
       -----------------------
 
       procedure Initialize_Parser is
-         Iter : Imported_Project_Iterator := Start
+         Iter : Project_Iterator := Start
            (Get_Project (Kernel), Recursive => True);
          Project_Marked : Boolean := False;
       begin
          while Current (Iter) /= No_Project loop
 
-            if Match (C, Project_Name (Current (Iter))) /= -1 then
+            if Match (C, Current (Iter).Name) /= -1 then
                Project_Marked := False;
                Mark_File_And_Projects
                  (File           => Project_Path (Current (Iter)),
@@ -2899,9 +2896,7 @@ package body Project_Explorers is
             end if;
 
             declare
-               Sources : File_Array_Access := Get_Source_Files
-                 (Project    => Current (Iter),
-                  Recursive  => False);
+               Sources : File_Array_Access := Current (Iter).Source_Files;
             begin
                Project_Marked := False;
                for S in Sources'Range loop
@@ -3085,7 +3080,7 @@ package body Project_Explorers is
          Include_Files    => False);
       Set_Context
         (Context  => C,
-         Look_For => Project_Name (Project_Information (Context.Context)),
+         Look_For => Project_Information (Context.Context).Name,
          Options  =>
            (Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
             Whole_Word     => True,
@@ -3101,7 +3096,7 @@ package body Project_Explorers is
       if not Found then
          Insert (Kernel,
                  -"Project not found in the explorer: "
-                 & Project_Name (Project_Information (Context.Context)));
+                 & Project_Information (Context.Context).Name);
       end if;
 
       Free (C);

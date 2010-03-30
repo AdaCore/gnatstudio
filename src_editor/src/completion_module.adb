@@ -83,7 +83,6 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
 with Engine_Wrappers;                 use Engine_Wrappers;
 with Projects;                        use Projects;
-with Projects.Registry;               use Projects.Registry;
 with XML_Utils;                       use XML_Utils;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
@@ -1269,11 +1268,10 @@ package body Completion_Module is
    begin
       if Smart_Completion.Get_Pref /= Disabled then
          declare
-            Project_Files : File_Array_Access := Get_Source_Files
-              (Get_Root_Project (Get_Registry (Kernel).all), True);
-
+            Project_Files : File_Array_Access :=
+              Get_Registry (Kernel).Tree.Root_Project.Source_Files (True);
             All_Files : constant File_Array :=
-              Get_Predefined_Source_Files (Get_Registry (Kernel).all)
+              Get_Registry (Kernel).Environment.Predefined_Source_Files
               & Project_Files.all;
 
             Removed_Files, Added_Files : File_Array_Access;

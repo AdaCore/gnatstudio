@@ -24,10 +24,11 @@ with Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with HTables;
+with GNATCOLL.Projects;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with Dynamic_Arrays;
-with Projects.Registry;
+with Projects;
 with Language;
 with Language.Tree;
 with Language.Tree.Database;
@@ -71,7 +72,7 @@ package Entities is
    type Entities_Database is private;
 
    function Create
-     (Registry     : Projects.Registry.Project_Registry_Access;
+     (Registry     : Projects.Project_Registry_Access;
       Construct_Db : Language.Tree.Database.Construct_Database_Access)
       return Entities_Database;
    --  Return a new empty database
@@ -375,7 +376,7 @@ package Entities is
    function Get_Or_Create
      (Db      : Entities_Database;
       File    : GNATCOLL.VFS.Virtual_File;
-      Project : Projects.Project_Type) return LI_File;
+      Project : GNATCOLL.Projects.Project_Type) return LI_File;
    --  Get (or create) a new entry for File in the database. If an entry
    --  already exists, it is returned.
    --  You need to Ref the entry if you intend to keep it in a separate
@@ -388,7 +389,7 @@ package Entities is
    pragma Inline (Set_Time_Stamp);
    --  Update the timestamp that indicates when LI was last parsed
 
-   function Get_Project (LI : LI_File) return Projects.Project_Type;
+   function Get_Project (LI : LI_File) return GNATCOLL.Projects.Project_Type;
    pragma Inline (Get_Project);
    --  Return the project to which LI belongs. This could be No_Project for
    --  runtime files.
@@ -775,7 +776,7 @@ package Entities is
 
    procedure Continue
      (Iterator : in out LI_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : GNATCOLL.Projects.Error_Report;
       Finished : out Boolean) is abstract;
    --  Move to the next source file that must be analyzed, if the previous file
    --  is fully parsed. Nothing is done otherwise.
@@ -812,14 +813,14 @@ package Entities is
 
    function Parse_All_LI_Information
      (Handler          : access LI_Handler_Record;
-      Project          : Projects.Project_Type)
+      Project          : GNATCOLL.Projects.Project_Type)
       return LI_Information_Iterator'Class is abstract;
    --  Prepare the parsing of all the existing LI information for all the files
    --  in Project. This should be called only after Generate_LI_For_Project.
 
    procedure Parse_All_LI_Information
      (Handler          : access LI_Handler_Record'Class;
-      Project          : Projects.Project_Type);
+      Project          : GNATCOLL.Projects.Project_Type);
    --  A version that does all the iteration automatically
 
    procedure Next
@@ -841,8 +842,8 @@ package Entities is
      (Handler      : access LI_Handler_Record;
       Lang_Handler : access
         Language.Tree.Database.Abstract_Language_Handler_Record'Class;
-      Project      : Projects.Project_Type;
-      Errors       : Projects.Error_Report;
+      Project      : GNATCOLL.Projects.Project_Type;
+      Errors       : GNATCOLL.Projects.Error_Report;
       Recursive    : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
@@ -1382,7 +1383,7 @@ private
       Name      : GNATCOLL.VFS.Virtual_File;
       Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
 
-      Project   : Projects.Project_Type;
+      Project   : GNATCOLL.Projects.Project_Type;
 
       Files     : Source_File_List;
       --  All the files for which xref is provided by this LI_File
@@ -1433,7 +1434,7 @@ private
 
       Predefined_File : Source_File;
       Lang            : Language.Tree.Database.Abstract_Language_Handler;
-      Registry        : Projects.Registry.Project_Registry_Access;
+      Registry        : Projects.Project_Registry_Access;
       Frozen          : Freeze_Type := Create_And_Update;
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
       Stack           : Freeze_Stack.Simple_Stack;

@@ -19,6 +19,7 @@
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with GNAT.Strings;
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 pragma Warnings (Off);
@@ -27,13 +28,9 @@ pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 
 with Projects;                         use Projects;
-with Projects.Editor;                  use Projects.Editor;
-with Projects.Registry;                use Projects.Registry;
-with Projects.Registry.Queries;
 with Basic_Types;
 with Entities;
 with XML_Utils;                        use XML_Utils;
-with Prj;
 with Remote;                           use Remote;
 with Traces;                           use Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -67,25 +64,6 @@ package body GPS.Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class);
    --  Recompute the predefined source and object paths upon build server
    --  connection, when this information was previously retrieved from cache.
-
-   type Registry_Error_Handler_Record is new Error_Handler_Record with record
-      Handle : Kernel_Handle;
-      Mode   : Message_Type := Error;
-   end record;
-
-   overriding procedure Report
-     (Handler : access Registry_Error_Handler_Record; Msg : String);
-   --  Used to report an error to the user
-
-   ------------
-   -- Report --
-   ------------
-
-   overriding procedure Report
-     (Handler : access Registry_Error_Handler_Record; Msg : String) is
-   begin
-      Insert (Handler.Handle, Msg, Mode => Handler.Mode);
-   end Report;
 
    -------------------------------
    -- Predefined_Paths_Property --
@@ -251,14 +229,20 @@ package body GPS.Kernel.Project is
      (Handle    : access Kernel_Handle_Record'Class;
       Use_Cache : Boolean := True)
    is
+      procedure Report_Error (Msg : String);
+      --  Report an error that occurred while parsing gnatls output
+
+      procedure Report_Error (Msg : String) is
+      begin
+         Insert (Handle, Msg, Mode => Info);
+      end Report_Error;
+
       Gnatls         : constant String :=
-                         Get_Attribute_Value
-                           (Get_Project (Handle),
-                            Gnatlist_Attribute, Default => "gnatls");
+                         Get_Project (Handle).Attribute_Value
+                           (Gnatlist_Attribute, Default => "gnatls");
       Gnatls_Args    : Argument_List_Access :=
                          Argument_String_To_List (Gnatls & " -v");
-      Langs          : Argument_List := Get_Languages (Get_Project (Handle));
-      Error_Handler  : aliased Registry_Error_Handler_Record;
+      Langs          : Argument_List := Get_Project (Handle).Languages;
       Property       : Predefined_Paths_Property;
       Prop_Access    : Property_Access;
       Property_Index : Property_Index_Type := No_Index;
@@ -305,12 +289,12 @@ package body GPS.Kernel.Project is
                          (+To_Path (Property.Project_Path.all)));
                end if;
 
-               Set_Predefined_Source_Path
-                 (Handle.Registry.all, Property.Source_Path.all);
-               Set_Predefined_Object_Path
-                 (Handle.Registry.all, Property.Object_Path.all);
-               Set_Predefined_Project_Path
-                 (Handle.Registry.all, Property.Project_Path.all);
+               Handle.Registry.Environment.Set_Predefined_Source_Path
+                 (Property.Source_Path.all);
+               Handle.Registry.Environment.Set_Predefined_Object_Path
+                 (Property.Object_Path.all);
+               Handle.Registry.Environment.Set_Predefined_Project_Path
+                 (Property.Project_Path.all);
                Add_Hook
                  (Handle, Build_Server_Connected_Hook,
                   Wrapper (On_Build_Server_Connection'Access),
@@ -321,23 +305,20 @@ package body GPS.Kernel.Project is
             end if;
          end if;
 
-         Error_Handler.Handle := Kernel_Handle (Handle);
-         Error_Handler.Mode   := Info;
-
          Free (Handle.GNAT_Version);
-         Projects.Registry.Queries.Compute_Predefined_Paths
+         Projects.Compute_Predefined_Paths
            (Handle.Registry,
             Handle.GNAT_Version,
             Gnatls_Args,
-            Error_Handler'Unchecked_Access);
+            Report_Error'Unrestricted_Access);
 
          if Property_Index /= No_Index then
             Property.Source_Path := new File_Array'
-              (Get_Predefined_Source_Path (Handle.Registry.all));
+              (Handle.Registry.Environment.Predefined_Source_Path);
             Property.Object_Path := new File_Array'
-              (Get_Predefined_Object_Path (Handle.Registry.all));
+              (Handle.Registry.Environment.Predefined_Object_Path);
             Property.Project_Path := new File_Array'
-              (Get_Predefined_Project_Path (Handle.Registry.all));
+              (Handle.Registry.Environment.Predefined_Project_Path);
             Prop_Access := new Predefined_Paths_Property'(Property);
             Set_Property
               (Handle,
@@ -452,7 +433,7 @@ package body GPS.Kernel.Project is
 
       Entities.Reset (Get_Database (Kernel));
 
-      Load_Empty_Project (Kernel.Registry.all);
+      Kernel.Registry.Tree.Load_Empty_Project;
 
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
@@ -488,10 +469,8 @@ package body GPS.Kernel.Project is
       Reloaded : Boolean;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
-      Reload_If_Needed
-        (Kernel.Registry.all,
-         Report_Error'Unrestricted_Access,
-         Reloaded);
+      Kernel.Registry.Tree.Reload_If_Needed
+        (Reloaded, Report_Error'Unrestricted_Access);
 
       if Reloaded then
          Run_Hook (Kernel, Project_Changed_Hook);
@@ -539,7 +518,6 @@ package body GPS.Kernel.Project is
 
       Same_Project     : Boolean;
       Local_Project    : GNATCOLL.VFS.Virtual_File;
-      Load_Status      : Boolean;
       Previous_Project : Virtual_File;
 
    begin
@@ -571,7 +549,7 @@ package body GPS.Kernel.Project is
       if not Same_Project then
          --  Never save automatically the desktop for the default project
 
-         if Status (Get_Root_Project (Kernel.Registry.all)) = From_File
+         if Status (Kernel.Registry.Tree.Root_Project) = From_File
            and then Save_Desktop_On_Exit.Get_Pref
          then
             Save_Desktop (Kernel);
@@ -661,13 +639,20 @@ package body GPS.Kernel.Project is
            (Kernel, Use_Cache => not Is_Local (Build_Server));
 
          Get_Messages_Container (Kernel).Remove_Category (Location_Category);
-         Load (Registry           => Kernel.Registry.all,
-               Root_Project_Path  => Local_Project,
-               Errors             => Report_Error'Unrestricted_Access,
-               New_Project_Loaded => New_Project_Loaded,
-               Status             => Load_Status);
 
-         if not Load_Status and then not Is_Default then
+         begin
+            New_Project_Loaded := True;
+            Kernel.Registry.Tree.Load
+              (Root_Project_Path  => Local_Project,
+               Env                => Kernel.Registry.Environment,
+               Errors             => Report_Error'Unrestricted_Access);
+
+         exception
+            when Invalid_Project =>
+               New_Project_Loaded := False;
+         end;
+
+         if not New_Project_Loaded then
             --  Check if a remote configuration was applied and failure occured
             if not Is_Local (Build_Server) then
                Report_Error
@@ -691,11 +676,17 @@ package body GPS.Kernel.Project is
                Trace (Me, "Recompute predefined paths");
                Compute_Predefined_Paths (Kernel);
                Trace (Me, "Load the project locally");
-               Load (Registry           => Kernel.Registry.all,
-                     Root_Project_Path  => Local_Project,
+
+               begin
+                  Kernel.Registry.Tree.Load
+                    (Root_Project_Path  => Local_Project,
                      Errors             => Report_Error'Unrestricted_Access,
-                     New_Project_Loaded => New_Project_Loaded,
-                     Status             => Load_Status);
+                     Env                => Kernel.Registry.Environment);
+                  New_Project_Loaded := True;
+
+               exception
+                  when Invalid_Project => null;
+               end;
 
             elsif Previous_Project /= GNATCOLL.VFS.No_File then
                Report_Error (-"Couldn't parse the project "
@@ -706,11 +697,20 @@ package body GPS.Kernel.Project is
                Data.File := Previous_Project;
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
                Compute_Predefined_Paths (Kernel);
-               Load (Registry           => Kernel.Registry.all,
-                     Root_Project_Path  => Previous_Project,
+
+               begin
+                  Kernel.Registry.Tree.Load
+                    (Root_Project_Path  => Previous_Project,
                      Errors             => Report_Error'Unrestricted_Access,
-                     New_Project_Loaded => New_Project_Loaded,
-                     Status             => Load_Status);
+                     Env                => Kernel.Registry.Environment);
+
+                  --  Will no reload the desktop, since this is the same
+                  --  project
+                  New_Project_Loaded := False;
+
+               exception
+                  when Invalid_Project => null;
+               end;
 
             else
                if Empty_Project_On_Failure
@@ -769,7 +769,7 @@ package body GPS.Kernel.Project is
    function Get_Project (Handle : access Kernel_Handle_Record'Class)
       return Project_Type is
    begin
-      return Get_Root_Project (Handle.Registry.all);
+      return Handle.Registry.Tree.Root_Project;
    end Get_Project;
 
    --------------------
@@ -803,19 +803,17 @@ package body GPS.Kernel.Project is
       ----------------------------
 
       procedure Reset_File_If_External (S : in out Entities.Source_File) is
+         Info : constant File_Info :=
+           Handle.Registry.Tree.Info (Entities.Get_Filename (S));
       begin
-         if Get_Project_From_File
-           (Handle.Registry.all,
-            Source_Filename   => Entities.Get_Filename (S),
-            Root_If_Not_Found => False) = No_Project
-         then
+         if Info.Project = No_Project then
             Entities.Reset (S);
          end if;
       end Reset_File_If_External;
 
    begin
       Push_State (Kernel_Handle (Handle), Busy);
-      Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
+      Handle.Registry.Tree.Recompute_View (Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
 
       --  The list of source or ALI files might have changed, so we need to
@@ -869,8 +867,8 @@ package body GPS.Kernel.Project is
 
          return Concat
            (Current
-            & Set_Var & External_Reference_Of (Scenario_Vars (Index))
-            & "=" & Value_Of (Handle.Registry.all, Scenario_Vars (Index))
+            & Set_Var & External_Name (Scenario_Vars (Index))
+            & "=" & Handle.Registry.Tree.Value (Scenario_Vars (Index))
             & " ",
             Index + 1,
             Set_Var);
@@ -890,7 +888,7 @@ package body GPS.Kernel.Project is
    function Scenario_Variables (Kernel : access Kernel_Handle_Record'Class)
       return Scenario_Variable_Array is
    begin
-      return Scenario_Variables (Kernel.Registry.all);
+      return Kernel.Registry.Tree.Scenario_Variables;
    end Scenario_Variables;
 
    ------------------
@@ -902,12 +900,12 @@ package body GPS.Kernel.Project is
       Project   : Project_Type;
       Recursive : Boolean := False) return Boolean
    is
-      Iter     : Imported_Project_Iterator := Start (Project, Recursive);
+      Iter     : Project_Iterator := Project.Start (Recursive);
       Modified : Boolean := False;
       Result   : Boolean := True;
    begin
       while Current (Iter) /= No_Project loop
-         Modified := Modified or else Project_Modified (Current (Iter));
+         Modified := Modified or else Current (Iter).Modified;
          Result := Save_Single_Project (Kernel, Current (Iter)) and Result;
 
          Next (Iter);
@@ -929,7 +927,7 @@ package body GPS.Kernel.Project is
 
    function Save_Single_Project
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Projects.Project_Type) return Boolean
+      Project : Project_Type) return Boolean
    is
       Result : Boolean := True;
 
@@ -950,9 +948,7 @@ package body GPS.Kernel.Project is
       Data : aliased Project_Hooks_Args :=
         (Hooks_Data with Project => Project);
    begin
-      if Save_Project
-        (Project, Report_Error => Report_Error'Unrestricted_Access)
-      then
+      if Project.Save (Errors => Report_Error'Unrestricted_Access) then
          Run_Hook (Kernel, Project_Saved_Hook, Data'Access);
       end if;
 
@@ -965,7 +961,7 @@ package body GPS.Kernel.Project is
 
    function Get_Registry
      (Handle : access Kernel_Handle_Record'Class)
-      return Projects.Registry.Project_Registry_Access is
+      return Projects.Project_Registry_Access is
    begin
       return Handle.Registry;
    end Get_Registry;
@@ -980,35 +976,31 @@ package body GPS.Kernel.Project is
       File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List
    is
-      use type Prj.Variable_Value;
-      Value : Prj.Variable_Value;
+      Value      : String_List_Access;
       Is_Default : Boolean;
    begin
-      Get_Switches
-        (Project,
-         To_Lower (Tool.Project_Package.all),
+      Project.Switches
+        (To_Lower (Tool.Project_Package.all),
          File,
          To_Lower (Tool.Project_Index.all), Value, Is_Default);
 
       --  If no value was found, we might have to return the initial value
-      if Value = Prj.Nil_Variable_Value and then Use_Initial_Value then
+      if Value = null and then Use_Initial_Value then
          if Tool.Initial_Cmd_Line /= null then
-            declare
-               procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-                 (Argument_List, Argument_List_Access);
-               Cmd : Argument_List_Access :=
-                 Argument_String_To_List (Tool.Initial_Cmd_Line.all);
-               Cmd2 : constant Argument_List := Cmd.all;
-            begin
-               Unchecked_Free (Cmd);
-               return Cmd2;
-            end;
+            Value := Argument_String_To_List (Tool.Initial_Cmd_Line.all);
          else
             return (1 .. 0 => null);
          end if;
-      else
-         return To_Argument_List (Get_Tree (Project), Value);
       end if;
+
+      declare
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+           (Argument_List, Argument_List_Access);
+         Cmd : constant Argument_List := Value.all;
+      begin
+         Unchecked_Free (Value);
+         return Cmd;
+      end;
    end Get_Switches;
 
 end GPS.Kernel.Project;

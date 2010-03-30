@@ -17,9 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Projects;          use Projects;
-with Projects.Registry; use Projects.Registry;
-
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with Projects;           use Projects;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
 package body Extending_Environments is
@@ -66,21 +65,19 @@ package body Extending_Environments is
       end if;
 
       --  Create the project file
-      P := Get_Project_From_File (Get_Registry (Kernel).all, Source);
+      P := Get_Registry (Kernel).Tree.Info (Source).Project;
 
       Env.Project_File := Create_From_Dir
         (Env.Temporary_Dir, "extends_" & Base_Name (Project_Path (P)));
 
       W := Write_File (Env.Project_File);
-      Write (W, "project Extends_" & Project_Name (P)
+      Write (W, "project Extends_" & P.Name
              & " extends """
              & (+Project_Path (P).Full_Name.all) & """ is"
              & ASCII.LF);
 
       --  If this is a library project, add a "Library_Dir" attribute
-      if Get_Attribute_Value
-        (P, Library_Name_Attribute) /= ""
-      then
+      if P.Attribute_Value (Library_Name_Attribute) /= "" then
          declare
             Lib_Directory : Virtual_File;
          begin
@@ -93,7 +90,7 @@ package body Extending_Environments is
          end;
       end if;
 
-      Write (W, "end Extends_" & Project_Name (P) & ";");
+      Write (W, "end Extends_" & P.Name & ";");
       Close (W);
 
       --  Create the file

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,20 +40,18 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with GUI_Utils;                use GUI_Utils;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Namet;                    use Namet;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 
-with Projects.Editor;          use Projects, Projects.Editor;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
 with Traces;                   use Traces;
-with Prj.Tree;                 use Prj.Tree;
-with Projects.Registry;        use Projects.Registry;
 
 package body Variable_Editors is
 
@@ -135,9 +133,6 @@ package body Variable_Editors is
       Var    : Scenario_Variable :=  No_Variable;
       Title  : String)
    is
-      Tree            : constant Project_Node_Tree_Ref :=
-                          Get_Tree
-                            (Project_Registry (Get_Registry (Kernel).all));
       Item            : Gtk_List_Item;
       Index           : Natural := 0;
       S               : chars_ptr;
@@ -149,7 +144,6 @@ package body Variable_Editors is
       pragma Unreferenced (Col_Number, Button);
 
       Iter            : Gtk_Tree_Iter;
-      E               : String_List_Iterator;
       Is_Default      : Boolean;
 
    begin
@@ -240,29 +234,29 @@ package body Variable_Editors is
       --  Fill the information for the variable
 
       if Var /= No_Variable then
-         Set_Text (Get_Entry (Editor.Variable_Name),
-                   External_Reference_Of (Var));
+         declare
+            Values : GNAT.Strings.String_List :=
+              Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
+         begin
+            Set_Text (Get_Entry (Editor.Variable_Name), External_Name (Var));
 
-         Is_Default := True;
+            Is_Default := True;
 
-         E := Value_Of (Tree, Var);
-         while not Done (E) loop
-            declare
-               S : constant String := Get_String (Data (Tree, E));
-            begin
+            for E in Values'Range loop
                Append (Editor.Model, Iter, Null_Iter);
-               Is_Default := External_Default (Var) = S;
+               Is_Default := External_Default (Var) = Values (E).all;
 
                Variable_Editor_Set
                  (Editor.Model, Iter,
                   Is_Default  => Is_Default,
-                  Value       => S,
+                  Value       => Values (E).all,
                   Is_Editable => True);
 
                Is_Default := False;
-               E := Next (Tree, E);
-            end;
-         end loop;
+            end loop;
+
+            Free (Values);
+         end;
       end if;
    end Gtk_New;
 
@@ -336,14 +330,10 @@ package body Variable_Editors is
    is
       New_Name : constant String :=
                    Get_Text (Get_Entry (Editor.Variable_Name));
-      Tree     : constant Project_Node_Tree_Ref :=
-                   Get_Tree
-                     (Project_Registry (Get_Registry (Editor.Kernel).all));
       Ada_Name : String (New_Name'Range);
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;
       Index    : Natural;
-      Val_Iter : String_List_Iterator;
       Found    : Boolean;
       Num_Rows : Natural := 0;
       Message  : Message_Dialog_Buttons;
@@ -408,14 +398,14 @@ package body Variable_Editors is
       end if;
 
       if Editor.Var /= No_Variable
-        and then External_Reference_Of (Editor.Var) /= New_Name
+        and then External_Name (Editor.Var) /= New_Name
       then
          declare
             Vars : constant Scenario_Variable_Array :=
               Scenario_Variables (Editor.Kernel);
          begin
             for V in Vars'Range loop
-               if New_Name = External_Reference_Of (Vars (V)) then
+               if New_Name = External_Name (Vars (V)) then
                   Message := Message_Dialog
                     (Msg     => -"There is already a variable with this name",
                      Buttons => Button_OK,
@@ -429,12 +419,10 @@ package body Variable_Editors is
       --  Create the variable if necessary
 
       if Editor.Var = No_Variable then
-         Editor.Var := Create_Environment_Variable
-           (Project   => Get_Project (Editor.Kernel),
-            Name      => Ada_Name,
-            Type_Name => Ada_Name & "_Type",
-            Env_Name  => New_Name);
-         --  ??? Report project as modified for kernel
+         Editor.Var := Get_Project (Editor.Kernel).Create_Scenario_Variable
+           (Name          => Ada_Name,
+            Type_Name     => Ada_Name & "_Type",
+            External_Name => New_Name);
 
       --  Rename the value appropriately (this has to be done separately, so
       --  that the case statements are changed appropriately).
@@ -453,14 +441,13 @@ package body Variable_Editors is
             begin
                if Old_Val /= New_Val then
                   Trace (Me, "Renaming value for variable "
-                         & External_Reference_Of (Editor.Var)
+                         & External_Name (Editor.Var)
                          & " from " & Old_Val & " to " & New_Val);
 
-                  Rename_Value_For_External_Variable
-                    (Get_Project (Editor.Kernel),
-                     Ext_Variable_Name => External_Reference_Of (Editor.Var),
-                     Old_Value_Name => Old_Val,
-                     New_Value_Name => Get_String (New_Val));
+                  Get_Registry (Editor.Kernel).Tree.Rename_Value
+                    (External_Name => External_Name (Editor.Var),
+                     Old_Value     => Old_Val,
+                     New_Value     => New_Val);
                   Changed := True;
                end if;
             end;
@@ -470,38 +457,42 @@ package body Variable_Editors is
 
          --  Delete the values that no longer exist
 
-         Val_Iter := Value_Of (Tree, Editor.Var);
-         while not Done (Val_Iter) loop
-            Found := False;
-            Iter := Get_Iter_First (Editor.Model);
+         declare
+            Values : GNAT.Strings.String_List :=
+              Get_Registry (Editor.Kernel).Tree.Possible_Values_Of
+                (Editor.Var);
+         begin
+            for E in Values'Range loop
+               Found := False;
+               Iter := Get_Iter_First (Editor.Model);
 
-            while Iter /= Null_Iter loop
-               if Get_String (Editor.Model, Iter, Value_Column) =
-                 Get_String (Data (Tree, Val_Iter))
-               then
-                  Found := True;
-                  exit;
+               while Iter /= Null_Iter loop
+                  if Get_String (Editor.Model, Iter, Value_Column) =
+                    Values (E).all
+                  then
+                     Found := True;
+                     exit;
+                  end if;
+
+                  Next (Editor.Model, Iter);
+               end loop;
+
+               if not Found then
+                  Get_Registry (Editor.Kernel).Tree.Remove_Value
+                    (External_Name (Editor.Var), Values (E).all);
+                  Changed := True;
                end if;
-
-               Next (Editor.Model, Iter);
             end loop;
 
-            if not Found then
-               Remove_Value (Get_Project (Editor.Kernel),
-                             External_Reference_Of (Editor.Var),
-                             Get_String (Data (Tree, Val_Iter)));
-               Changed := True;
-            end if;
-
-            Val_Iter := Next (Tree, Val_Iter);
-         end loop;
+            Free (Values);
+         end;
       end if;
 
       --  Add the new values
 
       declare
-         Values     : Name_Id_Array (1 .. Num_Rows);
-         Num_Values : Natural := Values'First - 1;
+         New_Values : GNAT.Strings.String_List (1 .. Num_Rows);
+         Num_Values : Natural := New_Values'First - 1;
       begin
          Iter := Get_Iter_First (Editor.Model);
 
@@ -513,27 +504,24 @@ package body Variable_Editors is
                  (Editor.Model, Iter, Value_Column);
                Default : constant Boolean := Get_Boolean
                  (Editor.Model, Iter, Default_Value_Column);
-               Id      : Name_Id := No_Name;
+               Values  : GNAT.Strings.String_List :=
+                 Get_Registry (Editor.Kernel).Tree.Possible_Values_Of
+                    (Editor.Var);
 
             begin
                if Name /= New_Value_Name then
-                  Val_Iter := Value_Of (Tree, Editor.Var);
-
-                  while not Done (Val_Iter) loop
-                     if Name = Get_String (Data (Tree, Val_Iter)) then
+                  for V in Values'Range loop
+                     if Name = Values (V).all then
                         Found := True;
                         exit;
                      end if;
-
-                     Val_Iter := Next (Tree, Val_Iter);
                   end loop;
 
                   if not Found then
                      Num_Values := Num_Values + 1;
-                     Id := Get_String (Name);
-                     Values (Num_Values) := Id;
+                     New_Values (Num_Values) := new String'(Name);
                      Trace (Me, "Adding new value " & Name & " for "
-                            & External_Reference_Of (Editor.Var));
+                            & External_Name (Editor.Var));
                   end if;
 
                   if Default then
@@ -542,33 +530,29 @@ package body Variable_Editors is
                           External_Default (Editor.Var);
                      begin
                         if Expr = "" or else Expr /= Name then
-                           if Id = No_Name then
-                              Id := Get_String (Name);
-                           end if;
-
                            Changed := True;
 
                            Trace (Me, "Setting default value of "
-                                  & External_Reference_Of (Editor.Var)
+                                  & External_Name (Editor.Var)
                                   & " to " & Name);
-                           Set_Default_Value_For_External_Variable
-                             (Get_Project (Editor.Kernel),
-                              External_Reference_Of (Editor.Var),
-                              Id);
+                           Get_Registry (Editor.Kernel).Tree.Set_Default_Value
+                             (External_Name (Editor.Var), Name);
                         end if;
                      end;
                   end if;
                end if;
+
+               Free (Values);
             end;
 
             Next (Editor.Model, Iter);
          end loop;
 
-         if Num_Values >= Values'First then
-            Add_Scenario_Variable_Values
-              (Get_Project (Editor.Kernel),
-               Editor.Var,
-               Values (Values'First .. Num_Values));
+         if Num_Values >= New_Values'First then
+            Get_Registry (Editor.Kernel).Tree.Add_Values
+              (Editor.Var,
+               New_Values (New_Values'First .. Num_Values));
+            Free (New_Values);
             Changed := True;
          end if;
       end;
@@ -576,25 +560,23 @@ package body Variable_Editors is
       --  Has the variable been renamed ? This should be done last, so that
       --  the previous calls above work with the old name
 
-      if External_Reference_Of (Editor.Var) /= New_Name then
+      if External_Name (Editor.Var) /= New_Name then
          Trace (Me, "Renaming variable "
-                & External_Reference_Of (Editor.Var) & " to " & New_Name);
-         Rename_External_Variable
-           (Get_Project (Editor.Kernel),
-            Variable => Editor.Var,
-            New_Name => Get_String (New_Name));
+                & External_Name (Editor.Var) & " to " & New_Name);
+         Get_Registry (Editor.Kernel).Tree.Change_External_Name
+           (Editor.Var, New_Name);
          Changed := True;
       end if;
 
       if Editor.Var = No_Variable then
          if External_Default (Editor.Var) /= "" then
-            Set_Value (Get_Registry (Editor.Kernel),
-                       Editor.Var, External_Default (Editor.Var));
+            Get_Registry (Editor.Kernel).Tree.Set_Value
+              (External_Name (Editor.Var), External_Default (Editor.Var));
          else
             Iter := Get_Iter_First (Editor.Model);
-            Set_Value
-              (Get_Registry (Editor.Kernel),
-               Editor.Var, Get_String (Editor.Model, Iter, Value_Column));
+            Get_Registry (Editor.Kernel).Tree.Set_Value
+              (External_Name (Editor.Var),
+               Get_String (Editor.Model, Iter, Value_Column));
          end if;
       end if;
 

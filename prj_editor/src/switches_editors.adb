@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,10 +47,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Language_Handlers;         use Language_Handlers;
-with Projects.Editor;           use Projects.Editor;
-with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
-with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
@@ -348,12 +345,8 @@ package body Switches_Editors is
          File_Name : Virtual_File)
       is
          Is_Default_Value : Boolean;
-         Rename_Prj       : Project_Type;
          To_Remove        : Boolean := False;
       begin
-         Rename_Prj :=
-           Find_Project_Of_Package (Project, Tool.Project_Package.all);
-
          --  Language not supported => Ignore the attribute.
          --  We shouldn't remove it, since it might have been added by another
          --  page for a different language (Compiler'Switches is modified by
@@ -378,7 +371,7 @@ package body Switches_Editors is
                declare
                   Default_Args : GNAT.Strings.String_List :=
                     Get_Switches
-                      (Rename_Prj,
+                      (Project,
                        Tool => Tool,
                        Use_Initial_Value => True);
                begin
@@ -400,7 +393,7 @@ package body Switches_Editors is
                   declare
                      Default_Args : GNAT.Strings.String_List :=
                        Get_Switches
-                         (Rename_Prj, Tool,
+                         (Project, Tool,
                           File => File_Name,
                           Use_Initial_Value => Is_Default_Value);
                   begin
@@ -418,12 +411,11 @@ package body Switches_Editors is
                if File_Name /= GNATCOLL.VFS.No_File then
                   Trace (Me, "Removing file-specific switches for "
                          & (+Base_Name (File_Name)));
-                  Delete_Attribute
-                    (Project            => Rename_Prj,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          => Build
-                       (Tool.Project_Package.all, Get_String (Name_Switches)),
-                     Attribute_Index    => +Base_Name (File_Name));
+                  Project.Delete_Attribute
+                    (Scenario  => Scenario_Variables,
+                     Attribute => Attribute_Pkg_List'(Build
+                       (Tool.Project_Package.all, "switches")),
+                     Index     => +Base_Name (File_Name));
                   Changed := True;
                end if;
 
@@ -432,26 +424,22 @@ package body Switches_Editors is
                   if Args'Length /= 0 then
                      Trace (Me, "Changing switches for "
                             & (+Base_Name (File_Name)));
-                     Update_Attribute_Value_In_Scenario
-                       (Project            => Rename_Prj,
-                        Scenario_Variables => Scenario_Variables,
-                        Attribute          => Build
-                          (Tool.Project_Package.all,
-                           Get_String (Name_Switches)),
-                        Values             => Args.all,
-                        Attribute_Index    => +Base_Name (File_Name),
-                        Prepend            => False);
+                     Project.Set_Attribute
+                       (Scenario  => Scenario_Variables,
+                        Attribute => Attribute_Pkg_List'(Build
+                          (Tool.Project_Package.all, "switches")),
+                        Values    => Args.all,
+                        Index     => +Base_Name (File_Name),
+                        Prepend   => False);
                      Changed := True;
                   else
                      Trace (Me, "Removing switches for "
                             & (+Base_Name (File_Name)));
-                     Delete_Attribute
-                       (Project            => Rename_Prj,
-                        Scenario_Variables => Scenario_Variables,
-                        Attribute          => Build
-                          (Tool.Project_Package.all,
-                           Get_String (Name_Switches)),
-                        Attribute_Index    => +Base_Name (File_Name));
+                     Project.Delete_Attribute
+                       (Scenario  => Scenario_Variables,
+                        Attribute => Attribute_Pkg_List'(Build
+                          (Tool.Project_Package.all, "switches")),
+                        Index     => +Base_Name (File_Name));
                      Changed := True;
                   end if;
 
@@ -459,28 +447,24 @@ package body Switches_Editors is
                   Trace (Me, "Changing default switches for "
                          & Tool.Project_Package.all
                          & " " & Tool.Project_Index.all);
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Rename_Prj,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          => Build
-                       (Tool.Project_Package.all,
-                        Get_String (Name_Default_Switches)),
-                     Values             => Args.all,
-                     Attribute_Index    => Tool.Project_Index.all,
-                     Prepend            => False);
+                  Project.Set_Attribute
+                    (Scenario  => Scenario_Variables,
+                     Attribute => Attribute_Pkg_List'(Build
+                       (Tool.Project_Package.all, "default_switches")),
+                     Values    => Args.all,
+                     Index     => Tool.Project_Index.all,
+                     Prepend   => False);
                   Changed := True;
 
                else
                   Trace (Me, "Removing default switches for "
                          & Tool.Project_Package.all & " "
                          & Tool.Project_Index.all);
-                  Delete_Attribute
-                    (Project            => Rename_Prj,
-                     Scenario_Variables => Scenario_Variables,
-                     Attribute          => Build
-                       (Tool.Project_Package.all,
-                        Get_String (Name_Default_Switches)),
-                     Attribute_Index    => Tool.Project_Index.all);
+                  Project.Delete_Attribute
+                    (Scenario  => Scenario_Variables,
+                     Attribute => Attribute_Pkg_List'(Build
+                       (Tool.Project_Package.all, "default_switches")),
+                     Index     => Tool.Project_Index.all);
                   Changed := True;
                end if;
             end if;
@@ -535,7 +519,7 @@ package body Switches_Editors is
         (Switches.Kernel);
       Scenar    : Scenario_Iterator := Start (Scenario);
       Modified  : Boolean := False;
-      Languages : GNAT.Strings.String_List := Get_Languages (Project);
+      Languages : GNAT.Strings.String_List := Project.Languages;
 
    begin
       --  No scenario variables ?
@@ -618,7 +602,7 @@ package body Switches_Editors is
       if Project /= No_Project then
          if Files'Length = 0 then
             declare
-               Langs : GNAT.Strings.String_List := Get_Languages (Project);
+               Langs : GNAT.Strings.String_List := Project.Languages;
             begin
                Set_Visible_Pages (Switches, Langs);
                Free (Langs);
@@ -701,7 +685,7 @@ package body Switches_Editors is
 
    function Edit_Switches_For_Files
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project      : Projects.Project_Type;
+      Project      : Project_Type;
       Files        : File_Array) return Boolean
    is
       Switches  : Switches_Edit;
@@ -731,7 +715,7 @@ package body Switches_Editors is
       else
          Gtk_New (Dialog,
                   Title  => (-"Editing default switches for project ")
-                    & Project_Name (Project),
+                    & Project.Name,
                   Parent => Get_Current_Window (Kernel),
                   Flags  => Modal or Destroy_With_Parent);
       end if;

@@ -17,9 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Entities; use Entities;
+with Entities;           use Entities;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;
-with Projects;
 with Language.Tree.Database; use Language.Tree.Database;
 
 package body Dummy_Parser is
@@ -37,12 +37,12 @@ package body Dummy_Parser is
       return Source_File;
    overriding function Parse_All_LI_Information
      (Handler   : access Dummy_LI_Handler_Record;
-      Project   : Projects.Project_Type) return LI_Information_Iterator'Class;
+      Project   : Project_Type) return LI_Information_Iterator'Class;
    overriding function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
-      Project   : Projects.Project_Type;
-      Errors    : Projects.Error_Report;
+      Project   : Project_Type;
+      Errors    : Error_Report;
       Recursive : Boolean := False)
       return LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
@@ -51,7 +51,7 @@ package body Dummy_Parser is
    overriding procedure Destroy (Iterator : in out Dummy_LI_Handler_Iterator);
    overriding procedure Continue
      (Iterator : in out Dummy_LI_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : Error_Report;
       Finished : out Boolean);
    --  See doc for inherited subprograms
 
@@ -82,7 +82,7 @@ package body Dummy_Parser is
 
    overriding procedure Continue
      (Iterator : in out Dummy_LI_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : Error_Report;
       Finished : out Boolean)
    is
       pragma Unreferenced (Iterator, Errors);
@@ -123,7 +123,7 @@ package body Dummy_Parser is
 
    overriding function Parse_All_LI_Information
      (Handler   : access Dummy_LI_Handler_Record;
-      Project   : Projects.Project_Type) return LI_Information_Iterator'Class
+      Project   : Project_Type) return LI_Information_Iterator'Class
    is
       pragma Unreferenced (Handler, Project);
       Iter : Dummy_LI_Information_Iterator;
@@ -138,8 +138,8 @@ package body Dummy_Parser is
    overriding function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
-      Project   : Projects.Project_Type;
-      Errors    : Projects.Error_Report;
+      Project   : Project_Type;
+      Errors    : Error_Report;
       Recursive : Boolean := False)
       return LI_Handler_Iterator'Class
    is

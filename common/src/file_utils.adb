@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2009, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
---  with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body File_Utils is
 
@@ -157,29 +155,5 @@ package body File_Utils is
 
       return True;
    end Suffix_Matches;
-
-   -----------------------------
-   -- Is_Absolute_Path_Or_URL --
-   -----------------------------
-
-   function Is_Absolute_Path_Or_URL
-     (Name : Filesystem_String) return Boolean
-   is
-      Index : Natural;
-   begin
-      if Is_Absolute_Path (Name) then
-         return True;
-      end if;
-
-      Index := Name'First;
-      while Index <= Name'Last - 3
-        and then Name (Index) /= ':'
-      loop
-         Index := Index + 1;
-      end loop;
-
-      return Index <= Name'Last - 3
-        and then Equal (Name (Index .. Index + 2), "://");
-   end Is_Absolute_Path_Or_URL;
 
 end File_Utils;

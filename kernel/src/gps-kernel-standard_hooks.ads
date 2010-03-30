@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with Basic_Types;
 with GPS.Editors;        use GPS.Editors;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with Entities;
-with Projects;
 
 package GPS.Kernel.Standard_Hooks is
 
@@ -128,7 +127,7 @@ package GPS.Kernel.Standard_Hooks is
 
    Project_Hook_Type : constant Hook_Type := "project_hooks";
    type Project_Hooks_Args is new Hooks_Data with record
-      Project : Projects.Project_Type;
+      Project : GNATCOLL.Projects.Project_Type;
    end record;
    overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2004-2009, AdaCore                  --
+--                 Copyright (C) 2004-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,6 @@ with Adp_Converter;             use Adp_Converter;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with Projects;                  use Projects;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -32,7 +31,7 @@ with Gtk.Label;                 use Gtk.Label;
 with GPS.Intl;                  use GPS.Intl;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Adp is
@@ -45,8 +44,8 @@ package body Creation_Wizard.Adp is
    overriding procedure Generate_Project
      (Page               : access Adp_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    overriding function Create_Content
      (Page : access Adp_Selection_Page;
@@ -98,8 +97,8 @@ package body Creation_Wizard.Adp is
    overriding procedure Generate_Project
      (Page               : access Adp_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Scenario_Variables);

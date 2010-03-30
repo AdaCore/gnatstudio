@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2009, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;   use GNAT;
-with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with GNAT.Strings;      use GNAT;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
@@ -33,7 +34,6 @@ with Gtkada.MDI;     use Gtkada.MDI;
 with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 with Language;       use Language;
-with Projects;
 
 package Project_Explorers_Common is
 
@@ -203,7 +203,7 @@ package Project_Explorers_Common is
      (Model     : Gtk_Tree_Store;
       Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Node      : Gtk_Tree_Iter;
-      Importing : Boolean) return Projects.Project_Type;
+      Importing : Boolean) return Project_Type;
    --  Return the name of the project that Node belongs to. If Importing is
    --  True, we return the importing project, not the one associated with Node.
 

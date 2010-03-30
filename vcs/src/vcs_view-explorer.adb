@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-
-with Namet;                     use Namet;
 
 with Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -47,7 +45,6 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VCS_Activities;            use VCS_Activities;
@@ -56,6 +53,7 @@ with VCS_Utils;                 use VCS_Utils;
 with VCS_View_API;              use VCS_View_API;
 with Ignore_Db;                 use Ignore_Db;
 
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 package body VCS_View.Explorer is
@@ -429,16 +427,15 @@ package body VCS_View.Explorer is
             return R_Iter;
          end Get_Or_Create_Name;
 
-         Project : constant Projects.Project_Type :=
-                     Get_Project_From_File
-                       (Get_Registry (Kernel).all, File, False);
+         Project : constant Project_Type :=
+           Get_Registry (Kernel).Tree.Info (File).Project;
       begin
          if Project = No_Project then
             return Get_Or_Create_Name
               ("No project", GNATCOLL.VFS.No_File, False);
          else
             return Get_Or_Create_Name
-              (Project_Name (Project), Project_Path (Project), True);
+              (Project.Name, Project.Project_Path, True);
          end if;
       end Get_Or_Create_Project_Iter;
 
@@ -874,13 +871,8 @@ package body VCS_View.Explorer is
 
          if Get_Depth (Path) = 1 then
             Iter := Get_Iter (Explorer.Model, Path);
-
-            Name_Len := 0;
-            Add_Str_To_Name_Buffer
+            Project := Get_Registry (Kernel).Tree.Project_From_Name
               (Get_String (Explorer.Model, Iter, Name_Column));
-
-            Project := Get_Project_From_Name
-              (Get_Registry (Kernel).all, Name_Find);
 
             Set_File_Information
               (Context,
@@ -894,12 +886,8 @@ package body VCS_View.Explorer is
 
             Iter := Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));
 
-            Name_Len := 0;
-            Add_Str_To_Name_Buffer
+            Project := Get_Registry (Kernel).Tree.Project_From_Name
               (Get_String (Explorer.Model, Iter, Name_Column));
-
-            Project := Get_Project_From_Name
-              (Get_Registry (Kernel).all, Name_Find);
 
             Set_File_Information
               (Context,

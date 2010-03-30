@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,13 +21,13 @@
 --  This package provides a user level code coverage API
 --  </description>
 
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
-with XML_Utils;   use XML_Utils;
-with Gtk.Tree_Store; use Gtk.Tree_Store;
-with Gtk.Tree_Model; use Gtk.Tree_Model;
-with Language.Tree;  use Language.Tree;
-with Projects;       use Projects;
-with Code_Analysis;  use Code_Analysis;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with XML_Utils;         use XML_Utils;
+with Gtk.Tree_Store;    use Gtk.Tree_Store;
+with Gtk.Tree_Model;    use Gtk.Tree_Model;
+with Language.Tree;     use Language.Tree;
+with Code_Analysis;     use Code_Analysis;
 
 package Code_Coverage is
 

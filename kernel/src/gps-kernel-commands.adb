@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,9 +21,9 @@ with Ada.Unchecked_Deallocation;
 
 with Commands;          use Commands;
 with Projects;          use Projects;
-with Projects.Registry; use Projects.Registry;
 with Task_Manager;      use Task_Manager;
 with Traces;            use Traces;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Commands.Generic_Asynchronous;
@@ -174,7 +174,7 @@ package body GPS.Kernel.Commands is
 
       C              : Generic_Asynchronous_Command_Access;
       Projects_Count : Natural := 0;
-      Iter           : Imported_Project_Iterator :=
+      Iter           : Project_Iterator :=
                          Start (Get_Project (Handle));
 
       Project_Files  : File_Array_Access;
@@ -191,11 +191,10 @@ package body GPS.Kernel.Commands is
       end loop;
 
       if Files = null then
-         Project_Files := Get_Source_Files
-           (Get_Root_Project (Get_Registry (Handle).all), True);
+         Project_Files := Get_Project (Handle).Source_Files (True);
 
          All_Files := new File_Array'
-           (Get_Predefined_Source_Files (Get_Registry (Handle).all)
+           (Get_Registry (Handle).Environment.Predefined_Source_Files
             & Project_Files.all);
          Unchecked_Free (Project_Files);
       else

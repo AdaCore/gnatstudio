@@ -46,8 +46,6 @@ with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with Projects;                         use Projects;
-with Projects.Editor;                  use Projects.Editor;
-with Projects.Registry;                use Projects.Registry;
 with GPS.Intl;                         use GPS.Intl;
 with Creation_Wizard;                  use Creation_Wizard;
 with Creation_Wizard.Full;             use Creation_Wizard.Full;
@@ -75,8 +73,8 @@ package body Creation_Wizard.Dependencies is
    overriding procedure Generate_Project
      (Page               : access Dependency_Project_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    --  See inherited documentation
 
@@ -185,15 +183,12 @@ package body Creation_Wizard.Dependencies is
       Changed           : Import_Project_Error;
       Result            : Message_Dialog_Buttons;
       Must_Recompute    : Boolean := False;
-      Imported_Project  : Project_Type;
 
    begin
       loop
-         Changed := Add_Imported_Project
-           (Root_Project              => Get_Project (Kernel),
-            Project                   => Importing_Project,
-            Imported_Project_Location => Imported_Project_Path,
-            Report_Errors     => Report_Error'Unrestricted_Access,
+         Changed := Importing_Project.Add_Imported_Project
+           (Imported_Project_Location => Imported_Project_Path,
+            Errors            => Report_Error'Unrestricted_Access,
             Use_Base_Name     => Use_Base_Name,
             Use_Relative_Path => Use_Relative_Path,
             Limited_With      => Limited_With);
@@ -218,15 +213,40 @@ package body Creation_Wizard.Dependencies is
 
          exit when Result = Button_Cancel;
 
-         Imported_Project := Load_Or_Find
-           (Get_Registry (Kernel).all, Imported_Project_Path,
-            Errors => null);
+         --  Replace all occurrences of the old project with the new one
 
-         Replace_Project_Occurrences
-           (Root_Project      => Get_Project (Kernel),
-            Project           => Imported_Project,
-            Use_Relative_Path => Use_Relative_Path);
-         Must_Recompute := True;
+         declare
+            Imported : constant Project_Type :=
+              Get_Registry (Kernel).Tree.Project_From_Name
+              (+Imported_Project_Path.Base_Name (Project_File_Extension));
+            Iter : Project_Iterator :=
+              Get_Registry (Kernel).Tree.Root_Project.Start;
+            Prj : Project_Type;
+            Is_Limited_With : Boolean;
+            Imports : Boolean;
+         begin
+            loop
+               Prj := Current (Iter);
+               exit when Prj = No_Project;
+
+               Prj.Project_Imports
+                 (Imported, Imports => Imports,
+                  Is_Limited_With => Is_Limited_With);
+               if Imports then
+                  Prj.Remove_Imported_Project (Imported);
+                  Changed := Prj.Add_Imported_Project
+                    (Imported_Project_Location => Imported_Project_Path,
+                     Errors            => Report_Error'Unrestricted_Access,
+                     Use_Base_Name     => Use_Base_Name,
+                     Use_Relative_Path => Use_Relative_Path,
+                     Limited_With      => Is_Limited_With);
+               end if;
+
+               Next (Iter);
+            end loop;
+
+            Must_Recompute := True;
+         end;
       end loop;
 
       if Changed = Success or else Must_Recompute then
@@ -245,12 +265,11 @@ package body Creation_Wizard.Dependencies is
    is
       Iter             : Gtk_Tree_Iter;
       Project_Path     : constant File_Array :=
-                           Get_Predefined_Project_Path
-                             (Get_Registry (Kernel).all);
+        Get_Registry (Kernel).Environment.Predefined_Project_Path;
       Found            : Boolean;
       Files            : File_Array_Access;
       Imported_Prj     : Project_Type;
-      Imported         : Imported_Project_Iterator;
+      Imported         : Project_Iterator;
 
    begin
       for J in Project_Path'Range loop
@@ -274,9 +293,8 @@ package body Creation_Wizard.Dependencies is
                               Files (K).Base_Name (".gpr");
                   begin
                      if Has_Suffix (Files (K), ".gpr") then
-                        Imported_Prj := Get_Project_From_Name
-                          (Registry => Get_Registry (Kernel).all,
-                           Name     => Get_String (+Base));
+                        Imported_Prj := Get_Registry (Kernel).Tree
+                          .Project_From_Name (+Base);
 
                         --  If the project is already in the tree, do not
                         --  duplicate its entry.
@@ -328,7 +346,7 @@ package body Creation_Wizard.Dependencies is
      (Project : Project_Type;
       Model   : access Gtk_Tree_Store_Record'Class)
    is
-      Imported : Imported_Project_Iterator;
+      Imported : Project_Iterator;
    begin
       Imported := Start (Root_Project => Project, Direct_Only => True);
       while Current (Imported) /= No_Project loop
@@ -363,7 +381,7 @@ package body Creation_Wizard.Dependencies is
       Is_Imported     : Boolean;
       Is_Limited      : Boolean;
       Must_Be_Limited : Boolean := False;
-      Imported_Iter   : Imported_Project_Iterator;
+      Imported_Iter   : Project_Iterator;
    begin
       if Imported /= Project then
          Project_Imports
@@ -385,7 +403,7 @@ package body Creation_Wizard.Dependencies is
             end loop;
 
             Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, Column_Project_Name, Project_Name (Imported));
+            Set (Model, Iter, Column_Project_Name, Imported.Name);
             Set (Model, Iter, Column_Is_Limited,
                  Is_Limited or else Must_Be_Limited);
             Set_File
@@ -668,16 +686,15 @@ package body Creation_Wizard.Dependencies is
    overriding procedure Generate_Project
      (Page               : access Dependency_Project_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       Model    : constant Gtk_Tree_Store :=
                    Gtk_Tree_Store (Get_Model (Page.Tree));
       Iter     : Gtk_Tree_Iter;
       pragma Unreferenced (Scenario_Variables);
-      Imported : Imported_Project_Iterator :=
-                   Start (Project, Direct_Only => True);
+      Imported : Project_Iterator := Project.Start (Direct_Only => True);
       Count    : Natural := 0;
       Found    : Boolean;
    begin
@@ -710,7 +727,7 @@ package body Creation_Wizard.Dependencies is
 
             for P in Projects'Range loop
                if Projects (P) /= No_Project
-                 and then Project_Name (Projects (P)) =
+                 and then Projects (P).Name =
                  Get_String (Model, Iter, Project_Name_Column)
                then
                   Projects (P) := No_Project;

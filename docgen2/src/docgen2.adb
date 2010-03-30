@@ -42,7 +42,6 @@ with Language.Ada;
 with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Templates_Parser;          use Templates_Parser;
@@ -135,7 +134,7 @@ package body Docgen2 is
       Analysis_Ctxt    : Analysis_Context;
       --  The current analysis context
 
-      Project          : Projects.Project_Type;
+      Project          : Project_Type;
       --  The project
 
       Src_Files        : Files_List.Vector;
@@ -1718,14 +1717,9 @@ package body Docgen2 is
       Options : Docgen_Options)
    is
       P          : constant Project_Type :=
-                     Get_Project_From_File
-                       (Registry          => Get_Registry (Kernel).all,
-                        Source_Filename   => File,
-                        Root_If_Not_Found => True);
+                        Get_Registry (Kernel).Tree.Info (File).Project (True);
       Other_File : constant Virtual_File :=
-                     Create
-                       (Other_File_Base_Name (P, File), P);
-
+                        Get_Registry (Kernel).Tree.Other_File (File);
       C          : Docgen_Object;
    begin
       Parse_All_LI_Information (Kernel, P, False);
@@ -1760,12 +1754,12 @@ package body Docgen2 is
    procedure Generate
      (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend   : Docgen2_Backend.Backend_Handle;
-      Project   : Projects.Project_Type;
+      Project   : Project_Type;
       Options   : Docgen_Options;
       Recursive : Boolean := False)
    is
       C       : Docgen_Object;
-      P       : Projects.Project_Type := Project;
+      P       : Project_Type := Project;
       Context : Selection_Context;
 
    begin
@@ -1788,7 +1782,7 @@ package body Docgen2 is
       end;
 
       declare
-         Source_Files  : File_Array_Access := Get_Source_Files (P, Recursive);
+         Source_Files  : File_Array_Access := P.Source_Files (Recursive);
       begin
          C := new Docgen_Command;
 
@@ -3680,7 +3674,7 @@ package body Docgen2 is
      (Object : Docgen_Object) return Virtual_File is
    begin
       return Create_From_Dir
-        (Object_Path (Get_Root_Project (Get_Registry (Object.Kernel).all)),
+        (Get_Registry (Object.Kernel).Tree.Root_Project.Object_Dir,
          +"doc/");
    end Get_Doc_Directory;
 

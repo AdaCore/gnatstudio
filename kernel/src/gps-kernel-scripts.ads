@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2009, AdaCore             --
+--                      Copyright (C) 2003-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,6 @@ with Basic_Types;
 with Entities;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with Projects;
 
 package GPS.Kernel.Scripts is
 
@@ -200,12 +199,12 @@ package GPS.Kernel.Scripts is
    --  Return the class to use for projects. This encapsulates a Project_Type
 
    function Get_Data (Data : Callback_Data'Class; N : Positive)
-      return Projects.Project_Type;
+      return GNATCOLL.Projects.Project_Type;
    --  Retrieve some project information in Instance
 
    function Create_Project
      (Script  : access Scripting_Language_Record'Class;
-      Project : Projects.Project_Type) return Class_Instance;
+      Project : GNATCOLL.Projects.Project_Type) return Class_Instance;
    --  Return a new project
 
    -------------------

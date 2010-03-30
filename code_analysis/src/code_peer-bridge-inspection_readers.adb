@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
-with GPS.Kernel.Project;
-with Projects.Registry;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 
 package body Code_Peer.Bridge.Inspection_Readers is
 
@@ -159,10 +158,8 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
          Project_Node :=
            Code_Analysis.Get_Or_Create
-             (Self.Projects, Projects.Registry.Get_Project_From_File
-                  (GPS.Kernel.Project.Get_Registry (Self.Kernel).all,
-                   File_Name,
-                   False));
+             (Self.Projects,
+              Get_Registry (Self.Kernel).Tree.Info (File_Name).Project);
          Self.File_Node :=
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
          Self.File_Node.Analysis_Data.Code_Peer_Data :=

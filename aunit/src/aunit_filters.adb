@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,14 +18,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with Glib.Convert;            use Glib.Convert;
 
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Language;                use Language;
 with Language.Ada;            use Language.Ada;
 with Projects;                use Projects;
-with Namet;                   use Namet;
 
 package body Aunit_Filters is
 
@@ -45,9 +44,7 @@ package body Aunit_Filters is
       Constructs        : aliased Construct_List;
       Current_Construct : Construct_Access;
       Found             : Boolean := False;
-      Part              : Unit_Part;
-      Unit_Name         : Name_Id;
-      Lang              : Name_Id;
+      Info              : File_Info;
 
    begin
       Package_Name := null;
@@ -58,14 +55,9 @@ package body Aunit_Filters is
          return;
       end if;
 
-      Projects.Get_Unit_Part_And_Name_From_Filename
-        (Filename  => File_Name.Base_Name,
-         Project   => Get_Project (Kernel),
-         Part      => Part,
-         Unit_Name => Unit_Name,
-         Lang      => Lang);
+      Info := Get_Registry (Kernel).Tree.Info (File_Name);
 
-      if Get_String (Lang) /= Ada_String then
+      if Info.Language /= "ada" then
          return;
       end if;
 
@@ -227,23 +219,14 @@ package body Aunit_Filters is
       Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
-      Part      : Unit_Part;
-      Unit_Name : Namet.Name_Id;
-      Lang      : Namet.Name_Id;
+      Info : constant File_Info :=
+        Get_Registry (Filter.Kernel).Tree.Info (File);
    begin
-
-      Projects.Get_Unit_Part_And_Name_From_Filename
-        (Filename  => File.Base_Name,
-         Project   => Get_Project (Filter.Kernel),
-         Part      => Part,
-         Unit_Name => Unit_Name,
-         Lang      => Lang);
-
-      if Get_String (Lang) = "ada" then
+      if Info.Language = "ada" then
          State := Normal;
-         Text  := new String'(Get_String (Unit_Name));
+         Text  := new String'(Info.Unit_Name);
 
-         if Part = Unit_Spec then
+         if Info.Unit_Part = Unit_Spec then
             Pixbuf := Filter.Spec_Pixbuf;
          else
             Pixbuf := Filter.Body_Pixbuf;

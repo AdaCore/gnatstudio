@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@
 with Glib.Object;
 with Gtk.Menu;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel;   use GPS.Kernel;
 with GPS.Kernel.Modules;
@@ -31,7 +32,6 @@ with GPS.Kernel.MDI;
 with Code_Analysis;
 
 private with Code_Peer.Summary_Reports;
-private with Projects;
 
 package Code_Peer.Module is
 
@@ -119,17 +119,17 @@ private
    procedure Update_Location_View (Self : access Module_Id_Record'Class);
 
    function Codepeer_Output_Directory
-     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Returns directory which is used by CodePeer for output inspection
    --  results.
 
    function Codepeer_Database_Directory
-     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Returns directory which is used by CodePeer for store SQLite database
    --  files.
 
    function Codepeer_Library_File_Name
-     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Returns name of the library description file for CodePeer invocation.
 
    function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean;

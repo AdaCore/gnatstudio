@@ -42,9 +42,11 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with XML_Utils;           use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
 
-with Projects.Editor;     use Projects, Projects.Editor;
-with Projects.Registry;   use Projects.Registry;
+with Projects;            use Projects;
 with GNAT.Case_Util;      use GNAT.Case_Util;
+with GNAT.Strings;        use GNAT.Strings;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.Utils;      use GNATCOLL.Utils;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
@@ -53,9 +55,7 @@ with GPS.Kernel.Project;  use GPS.Kernel.Project;
 with Variable_Editors;    use Variable_Editors;
 with GPS.Intl;            use GPS.Intl;
 with GUI_Utils;           use GUI_Utils;
-with String_List_Utils;
-
-with Traces;   use Traces;
+with Traces;              use Traces;
 
 package body Scenario_Views is
 
@@ -259,7 +259,8 @@ package body Scenario_Views is
       Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
    begin
       if Value /= "" then
-         Set_Value (Get_Registry (User.View.Kernel), User.Var, Value);
+         Get_Registry (User.View.Kernel).Tree.Set_Value
+           (External_Name (User.Var), Value);
          User.View.Combo_Is_Open := True;
          Recompute_View (User.View.Kernel);
          User.View.Combo_Is_Open := False;
@@ -275,19 +276,13 @@ package body Scenario_Views is
       List   : access Gtk_List_Record'Class;
       Var    : Scenario_Variable)
    is
-      use String_List_Utils.String_List;
-
-      Values : String_List_Utils.String_List.List :=
-                 Enum_Values_Of (Var, Get_Registry (Kernel).all);
-      Iter   : String_List_Utils.String_List.List_Node :=
-                 First (Values);
+      Values : GNAT.Strings.String_List :=
+        Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
       Item : Gtk_List_Item;
    begin
-      while Iter /= String_List_Utils.String_List.Null_Node loop
-         Gtk_New (Item, Locale_To_UTF8
-                  (String_List_Utils.String_List.Data (Iter)));
+      for Iter in Values'Range loop
+         Gtk_New (Item, Locale_To_UTF8 (Values (Iter).all));
          Add (List, Item);
-         Iter := Next (Iter);
       end loop;
 
       Show_All (List);
@@ -329,7 +324,7 @@ package body Scenario_Views is
 
       Response : constant Message_Dialog_Buttons := Message_Dialog
         (Msg           => (-"Are you sure you want to remove the variable ")
-           & '"' & External_Reference_Of (Data.Var)
+           & '"' & External_Name (Data.Var)
            & """?" & ASCII.LF & (-Message),
          Dialog_Type   => Confirmation,
          Buttons       => Button_OK or Button_Cancel,
@@ -338,18 +333,17 @@ package body Scenario_Views is
          Parent        => Get_Current_Window (Data.View.Kernel));
    begin
       if Response = Button_OK then
-         Delete_External_Variable
-           (Root_Project             => Get_Project (Data.View.Kernel),
-            Ext_Variable_Name        => External_Reference_Of (Data.Var),
+         Get_Registry (Data.View.Kernel).Tree.Delete_Scenario_Variable
+           (External_Name            => External_Name (Data.Var),
             Keep_Choice              =>
-               Value_Of (Get_Registry (Data.View.Kernel).all, Data.Var),
+               Get_Registry (Data.View.Kernel).Tree.Value (Data.Var),
             Delete_Direct_References => False);
          Run_Hook (Data.View.Kernel, Variable_Changed_Hook);
 
          --  Recompute the view so that the explorer is updated graphically
          Recompute_View (Data.View.Kernel);
 
-         Trace (Me, "Delete_Variable: " & External_Reference_Of (Data.Var));
+         Trace (Me, "Delete_Variable: " & External_Name (Data.Var));
       end if;
    end Delete_Variable;
 
@@ -364,7 +358,7 @@ package body Scenario_Views is
       pragma Unreferenced (Event);
       Scenar_Var : constant Scenario_Variable_Array :=
                      Scenario_Variables (User.Kernel);
-      Name       : String := External_Reference_Of (Scenar_Var (User.Index));
+      Name       : String := External_Name (Scenar_Var (User.Index));
       Menu       : Gtk_Menu;
       Item       : Gtk_Menu_Item;
 
@@ -482,7 +476,7 @@ package body Scenario_Views is
                   Row := Guint (J - Scenar_Var'First) + 1;
 
                   declare
-                     Name : String := External_Reference_Of (Scenar_Var (J));
+                     Name : String := External_Name (Scenar_Var (J));
                   begin
                      To_Mixed (Name);
 
@@ -507,7 +501,7 @@ package body Scenario_Views is
                     (Kernel, Get_List (Combo), Scenar_Var (J));
                   Set_Text
                     (Get_Entry (Combo),
-                     Value_Of (Get_Registry (Kernel).all, Scenar_Var (J)));
+                     Get_Registry (Kernel).Tree.Value (Scenar_Var (J)));
 
                   Scenario_Contextual.Register_Contextual_Menu
                     (Widget       => Event,

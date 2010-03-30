@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Combo;                        use Gtk.Combo;
 with Gtk.Enums;                        use Gtk.Enums;
@@ -27,7 +27,6 @@ with Gtk.Label;                        use Gtk.Label;
 with Gtk.GEntry;                       use Gtk.GEntry;
 with Gtk.Size_Group;                   use Gtk.Size_Group;
 with Gtk.Widget;                       use Gtk.Widget;
-with Projects.Editor;                  use Projects, Projects.Editor;
 with Naming_Exceptions;                use Naming_Exceptions;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
@@ -129,7 +128,7 @@ package body Foreign_Naming_Editors is
 
    overriding function Create_Project_Entry
      (Editor             : access Foreign_Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : Argument_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
@@ -141,34 +140,30 @@ package body Foreign_Naming_Editors is
         (Editor.Exceptions, Project, Scenario_Variables);
 
       if Project = No_Project
-        or else Get_Attribute_Value
-          (Project        => Project,
-           Attribute      => Spec_Suffix_Attribute,
+        or else Project.Attribute_Value
+          (Attribute      => Spec_Suffix_Attribute,
            Index          => Editor.Language.all) /=
               Get_Text (Get_Entry (Editor.Spec_Ext))
       then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Spec_Suffix_Attribute,
-            Value              => Get_Text (Get_Entry (Editor.Spec_Ext)),
-            Attribute_Index    => Editor.Language.all);
+         Project.Set_Attribute
+           (Scenario  => Scenario_Variables,
+            Attribute => Spec_Suffix_Attribute,
+            Value     => Get_Text (Get_Entry (Editor.Spec_Ext)),
+            Index     => Editor.Language.all);
          Changed := True;
       end if;
 
       if Project = No_Project
-        or else Get_Attribute_Value
-          (Project        => Project,
-           Attribute      => Impl_Suffix_Attribute,
+        or else Project.Attribute_Value
+          (Attribute      => Impl_Suffix_Attribute,
            Index          => Editor.Language.all) /=
               Get_Text (Get_Entry (Editor.Body_Ext))
       then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Impl_Suffix_Attribute,
-            Value              => Get_Text (Get_Entry (Editor.Body_Ext)),
-            Attribute_Index    => Editor.Language.all);
+         Project.Set_Attribute
+           (Scenario  => Scenario_Variables,
+            Attribute => Impl_Suffix_Attribute,
+            Value     => Get_Text (Get_Entry (Editor.Body_Ext)),
+            Index     => Editor.Language.all);
          Changed := True;
       end if;
 
@@ -182,7 +177,7 @@ package body Foreign_Naming_Editors is
    overriding procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True)
    is
       P : Project_Type := Project;
@@ -199,13 +194,13 @@ package body Foreign_Naming_Editors is
 
       Set_Text
         (Get_Entry (Editor.Spec_Ext),
-         Get_Attribute_Value
-            (P, Spec_Suffix_Attribute,
+         P.Attribute_Value
+            (Spec_Suffix_Attribute,
              Index => Editor.Language.all));
       Set_Text
         (Get_Entry (Editor.Body_Ext),
-         Get_Attribute_Value
-            (P, Impl_Suffix_Attribute,
+         P.Attribute_Value
+            (Impl_Suffix_Attribute,
              Index => Editor.Language.all));
 
       if Display_Exceptions then

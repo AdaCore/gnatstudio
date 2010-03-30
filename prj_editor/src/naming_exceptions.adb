@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                      Copyright (C) 2003-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Glib;                   use Glib;
 with Gdk.Event;              use Gdk.Event;
@@ -38,8 +37,6 @@ with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 
-with Projects;               use Projects;
-with Projects.Editor;        use Projects.Editor;
 with GPS.Intl;               use GPS.Intl;
 with Basic_Types;
 with GUI_Utils;              use GUI_Utils;
@@ -246,8 +243,8 @@ package body Naming_Exceptions is
 
    function Create_Project_Entry
      (Editor             : access Exceptions_Editor_Record;
-      Project            : Projects.Project_Type;
-      Scenario_Variables : Projects.Scenario_Variable_Array)
+      Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array)
       return Boolean
    is
       Num_Rows : constant Gint := N_Children (Editor.Exceptions);
@@ -266,30 +263,27 @@ package body Naming_Exceptions is
          Changed := True;
       else
          declare
-            Old_Exceptions : Argument_List := Get_Attribute_Value
-              (Project   => Project,
-               Attribute => Impl_Exception_Attribute,
+            Old_Exceptions : String_List_Access := Project.Attribute_Value
+              (Attribute => Impl_Exception_Attribute,
                Index     => Editor.Language.all);
          begin
-            Changed := not Basic_Types.Is_Equal (Bodies, Old_Exceptions);
+            Changed := not Basic_Types.Is_Equal (Bodies, Old_Exceptions.all);
             Free (Old_Exceptions);
          end;
       end if;
 
       if Changed then
          if Num_Rows /= 0 then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Impl_Exception_Attribute,
-               Values             => Bodies,
-               Attribute_Index    => Editor.Language.all);
+            Project.Set_Attribute
+              (Scenario  => Scenario_Variables,
+               Attribute => Impl_Exception_Attribute,
+               Values    => Bodies,
+               Index     => Editor.Language.all);
          else
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Impl_Exception_Attribute,
-               Attribute_Index    => Editor.Language.all);
+            Project.Delete_Attribute
+              (Scenario  => Scenario_Variables,
+               Attribute => Impl_Exception_Attribute,
+               Index     => Editor.Language.all);
          end if;
 
          Changed := True;
@@ -304,7 +298,7 @@ package body Naming_Exceptions is
 
    procedure Show_Project_Settings
      (Editor             : access Exceptions_Editor_Record;
-      Project            : Projects.Project_Type)
+      Project            : Project_Type)
    is
       Iter   : Gtk_Tree_Iter := Null_Iter;
       Freeze : Gint;
@@ -313,9 +307,8 @@ package body Naming_Exceptions is
 
       if Project /= No_Project then
          declare
-            Bodies : Argument_List := Get_Attribute_Value
-              (Project,
-               Attribute => Impl_Exception_Attribute,
+            Bodies : String_List_Access := Project.Attribute_Value
+              (Attribute => Impl_Exception_Attribute,
                Index     => Editor.Language.all);
          begin
             Freeze := Freeze_Sort (Editor.Exceptions);

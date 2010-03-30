@@ -25,6 +25,7 @@ with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.Strings;
+with GNATCOLL.Projects;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -53,7 +54,7 @@ with Language.Tree.Database;
 with String_Hash;
 with Default_Preferences;
 with Histories;
-with Projects.Registry;
+with Projects;
 with Switches_Chooser;
 with String_List_Utils;
 with Task_Manager;
@@ -314,7 +315,7 @@ package GPS.Kernel is
 
    procedure Parse_All_LI_Information
      (Kernel    : access Kernel_Handle_Record;
-      Project   : Projects.Project_Type;
+      Project   : GNATCOLL.Projects.Project_Type;
       Recursive : Boolean);
    --  Parse all the LI information in Project, for all the supported
    --  languages. This can be used in cases where there is no obvious way to
@@ -677,7 +678,7 @@ package GPS.Kernel is
    --  General Idle loop for a GObject
 
    type File_Project_Record is record
-      Project : Projects.Project_Type;
+      Project : GNATCOLL.Projects.Project_Type;
       File    : aliased GNATCOLL.VFS.Virtual_File;
    end record;
 
@@ -912,8 +913,10 @@ private
       Files             : GNATCOLL.VFS.File_Array_Access := null;
       --  The current selected files
 
-      Project           : Projects.Project_Type := Projects.No_Project;
-      Importing_Project : Projects.Project_Type := Projects.No_Project;
+      Project           : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
+      Importing_Project : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
 
@@ -1096,7 +1099,7 @@ private
       Tooltips : Gtk.Tooltips.Gtk_Tooltips;
       --  The widget used to register all tooltips
 
-      Registry : Projects.Registry.Project_Registry_Access;
+      Registry : Projects.Project_Registry_Access;
       --  The project registry
 
       Scripts : GNATCOLL.Scripts.Scripts_Repository;

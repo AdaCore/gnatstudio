@@ -22,7 +22,7 @@ with GNAT.Strings;
 with Interfaces.C;
 with Ada.Containers.Ordered_Sets;
 with Language_Handlers;
-with Projects;
+with GNATCOLL.Projects;
 
 package Entities.Queries is
 
@@ -38,7 +38,7 @@ package Entities.Queries is
    procedure Start
      (Iter      : out Recursive_LI_Information_Iterator;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
-      Project   : Projects.Imported_Project_Iterator);
+      Project   : GNATCOLL.Projects.Project_Iterator);
    --  Start parsing all LI information, for all projects returned by Project.
    --  The parsing can be split into small chunks so that the interface can be
    --  refreshed during the processing.
@@ -694,7 +694,10 @@ private
      is new Entities.LI_Information_Iterator with
       record
          Handler      : Language_Handlers.Language_Handler;
-         Project      : Projects.Imported_Project_Iterator; --  current project
+
+         Project      : GNATCOLL.Projects.Project_Iterator;
+         --  current project
+
          Current_Lang : Natural;  --  Current lang in current project
          LI           : LI_Information_Iterator_Access;
          Lang_Count   : Natural;

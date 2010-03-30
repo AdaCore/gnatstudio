@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,9 +46,9 @@ with GPS.Intl;                  use GPS.Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with Projects;                  use Projects;
 with Traces;                    use Traces;
 
 package body Welcome is

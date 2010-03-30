@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,13 +19,11 @@
 
 with Gtk.GEntry;         use Gtk.GEntry;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with Wizards;            use Wizards;
 with GPS.Kernel;         use GPS.Kernel;
 with Project_Viewers;    use Project_Viewers;
 with Project_Properties; use Project_Properties;
-with Projects;           use Projects;
 
 package body Creation_Wizard.Full is
 
@@ -43,8 +41,8 @@ package body Creation_Wizard.Full is
    overriding procedure Generate_Project
      (Page               : access Project_Editor_Page_Wrapper;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    --  See inherited documentation
 
@@ -67,7 +65,7 @@ package body Creation_Wizard.Full is
       Page.Wiz := Wizard (Wiz);
       return Widget_Factory
         (Page         => Page.Page,
-         Project      => Projects.No_Project,
+         Project      => No_Project,
          Full_Project => Project_File,
          Kernel       => Get_Kernel (Wiz));
    end Create_Content;
@@ -79,15 +77,15 @@ package body Creation_Wizard.Full is
    overriding procedure Update_Page
      (Page : access Project_Editor_Page_Wrapper)
    is
-      Languages : String_List := Get_Current_Value
+      Languages : String_List_Access := Get_Current_Value
         (Kernel => Get_Kernel (Page.Wiz),
          Pkg    => "",
          Name   => "languages");
    begin
       Refresh (Page      => Page.Page,
                Widget    => Get_Content (Page),
-               Project   => Projects.No_Project,
-               Languages => Languages);
+               Project   => No_Project,
+               Languages => Languages.all);
       Free (Languages);
    end Update_Page;
 
@@ -98,11 +96,11 @@ package body Creation_Wizard.Full is
    overriding procedure Generate_Project
      (Page               : access Project_Editor_Page_Wrapper;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
-      Languages : String_List := Get_Current_Value
+      Languages : String_List_Access := Get_Current_Value
         (Kernel => Get_Kernel (Page.Wiz),
          Pkg    => "",
          Name   => "languages");
@@ -112,9 +110,9 @@ package body Creation_Wizard.Full is
          Project            => Project,
          Kernel             => Kernel,
          Widget             => Get_Content (Page),
-         Languages          => Languages,
+         Languages          => Languages.all,
          Scenario_Variables => Scenario_Variables,
-         Ref_Project        => Projects.No_Project);
+         Ref_Project        => No_Project);
       Free (Languages);
    end Generate_Project;
 

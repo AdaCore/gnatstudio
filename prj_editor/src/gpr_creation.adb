@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2009, AdaCore              --
+--                     Copyright (C) 2004-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,10 +23,10 @@ with Traces;                    use Traces;
 with HTables;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Projects.Editor;           use Projects, Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
 with String_Utils;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with Projects;                  use Projects;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body GPR_Creation is
 
@@ -82,7 +82,7 @@ package body GPR_Creation is
 
    procedure Process_List
      (Project         : Project_Type;
-      Attribute       : Attribute_Pkg;
+      Attribute       : Attribute_Pkg_List;
       List            : String_List;
       Attribute_Index : String := "");
    --  Create a new GPR attribute in File, with List as its value
@@ -92,7 +92,7 @@ package body GPR_Creation is
 
    procedure Process_Switches
      (Project         : Project_Type;
-      Attribute       : Attribute_Pkg;
+      Attribute       : Attribute_Pkg_List;
       Value           : String;
       Attribute_Index : String := "");
    --  Process a switches attribute, which needs to be splitted in the .gpr
@@ -418,11 +418,9 @@ package body GPR_Creation is
             Get_Next (Src_Files, Iter);
          end loop;
 
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Source_Files_Attribute,
-            Values             => List);
+         Project.Set_Attribute
+           (Attribute => Source_Files_Attribute,
+            Values    => List);
 
          for F in List'Range loop
             Free (List (F));
@@ -436,16 +434,14 @@ package body GPR_Creation is
 
    procedure Process_List
      (Project         : Project_Type;
-      Attribute       : Attribute_Pkg;
+      Attribute       : Attribute_Pkg_List;
       List            : String_List;
       Attribute_Index : String := "") is
    begin
-      Update_Attribute_Value_In_Scenario
-        (Project            => Project,
-         Scenario_Variables => No_Scenario,
-         Attribute          => Attribute,
-         Values             => List,
-         Attribute_Index    => Attribute_Index);
+      Project.Set_Attribute
+        (Attribute => Attribute,
+         Values    => List,
+         Index     => Attribute_Index);
    end Process_List;
 
    ----------------------
@@ -454,7 +450,7 @@ package body GPR_Creation is
 
    procedure Process_Switches
      (Project         : Project_Type;
-      Attribute       : Attribute_Pkg;
+      Attribute       : Attribute_Pkg_List;
       Value           : String;
       Attribute_Index : String := "")
    is
@@ -462,12 +458,10 @@ package body GPR_Creation is
    begin
       if Value /= "" then
          List := GNAT.OS_Lib.Argument_String_To_List (Value);
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Attribute,
-            Values             => List.all,
-            Attribute_Index    => Attribute_Index);
+         Project.Set_Attribute
+           (Attribute => Attribute,
+            Values    => List.all,
+            Index     => Attribute_Index);
          Free (List);
       end if;
    end Process_Switches;
@@ -515,35 +509,27 @@ package body GPR_Creation is
             Linker_Switches, "Ada");
 
          if Cross_Prefix /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Compiler_Command_Attribute,
-               Value              => Cross_Prefix & "gnatmake",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Debugger_Command_Attribute,
-               Value              => Cross_Prefix & "gdb");
+            Project.Set_Attribute
+              (Attribute => Compiler_Command_Attribute,
+               Value     => Cross_Prefix & "gnatmake",
+               Index     => "ada");
+            Project.Set_Attribute
+              (Attribute => Debugger_Command_Attribute,
+               Value     => Cross_Prefix & "gdb");
          end if;
       end if;
 
       if Spec_Extension /= ".ads"
         or else Body_Extension /= ".adb"
       then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Specification_Suffix_Attribute,
-            Value              => Spec_Extension,
-            Attribute_Index    => "Ada");
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Implementation_Suffix_Attribute,
-            Value              => Body_Extension,
-            Attribute_Index    => "Ada");
+         Project.Set_Attribute
+           (Attribute => Specification_Suffix_Attribute,
+            Value     => Spec_Extension,
+            Index     => "ada");
+         Project.Set_Attribute
+           (Attribute => Implementation_Suffix_Attribute,
+            Value     => Body_Extension,
+            Index     => "ada");
       end if;
    end Generate_Project_Attributes;
 
@@ -594,10 +580,8 @@ package body GPR_Creation is
             Current_Dir := D;
 
          else
-            Tmp := Add_Imported_Project
-              (Root_Project      => Root_Project,
-               Project           => Projects (Current_Project),
-               Imported_Project  => Projects (Object_Dirs (D).Project_Num),
+            Tmp := Projects (Current_Project).Add_Imported_Project
+              (Imported_Project  => Projects (Object_Dirs (D).Project_Num),
                Use_Relative_Path => True,
                Limited_With      => True);
             if Tmp /= Success then
@@ -608,11 +592,9 @@ package body GPR_Creation is
          end if;
       end loop;
 
-      Update_Attribute_Value_In_Scenario
-        (Project            => Projects (Current_Project),
-         Scenario_Variables => No_Scenario,
-         Attribute          => Obj_Dir_Attribute,
-         Value              => Obj_Dirs (Current_Dir).all);
+      Projects (Current_Project).Set_Attribute
+        (Attribute => Obj_Dir_Attribute,
+         Value     => Obj_Dirs (Current_Dir).all);
 
       if not All_Source_Dirs then
          declare
@@ -626,11 +608,9 @@ package body GPR_Creation is
                end if;
             end loop;
 
-            Update_Attribute_Value_In_Scenario
-              (Project            => Projects (Current_Project),
-               Scenario_Variables => No_Scenario,
-               Attribute          => Source_Dirs_Attribute,
-               Values             => List (List'First .. Index - 1));
+            Projects (Current_Project).Set_Attribute
+              (Attribute => Source_Dirs_Attribute,
+               Values    => List (List'First .. Index - 1));
          end;
 
       else
@@ -648,7 +628,7 @@ package body GPR_Creation is
    ----------------------
 
    procedure Create_Gpr_Files
-     (Registry          : Projects.Registry.Project_Registry'Class;
+     (Registry          : Project_Registry'Class;
       Root_Project      : Project_Type;
       Source_Dirs       : GNAT.Strings.String_List;
       Object_Dirs       : GNAT.Strings.String_List;
@@ -702,11 +682,9 @@ package body GPR_Creation is
             Dir := Object_Dirs (Object_Dirs'First);
          end if;
 
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Obj_Dir_Attribute,
-            Value              => Dir.all);
+         Project.Set_Attribute
+           (Attribute => Obj_Dir_Attribute,
+            Value     => Dir.all);
 
          Generate_Project_Attributes
            (Project           => Project,
@@ -719,7 +697,7 @@ package body GPR_Creation is
             Cross_Prefix      => Cross_Prefix,
             Spec_Extension    => Spec_Extension,
             Body_Extension    => Body_Extension);
-         Tmp := Save_Project (Project);
+         Tmp := Project.Save;
 
       else
          Single_Obj_Dir := Src_Dirs_Have_Unique_Obj_Dir (Related_To);
@@ -736,9 +714,8 @@ package body GPR_Creation is
             Projects (0) := Root_Project;
 
             for P in 1 .. Object_Dirs'Length - 1 loop
-               Projects (P) := Create_Project
-                 (Registry,
-                  Name => "project" & Image (P),
+               Projects (P) := Registry.Tree.Create_Project
+                 (Name => "project" & Image (P),
                   Path => Project_Directory (Root_Project));
             end loop;
 
@@ -772,7 +749,7 @@ package body GPR_Creation is
                   Spec_Extension    => Spec_Extension,
                   Body_Extension    => Body_Extension);
 
-               Tmp := Save_Project (Projects (P));
+               Tmp := Projects (P).Save;
             end loop;
          end;
       end if;
@@ -782,8 +759,8 @@ package body GPR_Creation is
    end Create_Gpr_Files;
 
    procedure Create_Gpr_Files
-     (Registry          : Projects.Registry.Project_Registry'Class;
-      Root_Project      : Projects.Project_Type;
+     (Registry          : Project_Registry'Class;
+      Root_Project      : Project_Type;
       Source_Dirs       : GNATCOLL.VFS.File_Array;
       Object_Dirs       : GNATCOLL.VFS.File_Array;
       Spec_Extension    : String;

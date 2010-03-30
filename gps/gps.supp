@@ -155,6 +155,36 @@
    fun:XInitExtension
 }
 {
+   gtk+ 2.18
+   Memcheck:Leak
+   fun:malloc
+   fun:realloc
+   fun:g_realloc
+   fun:g_closure_set_meta_marshall
+   fun:g_signal_type_cclosure_new
+   fun:g_signal_new
+}
+{
+   gtk+ 2.18
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_memdup
+   fun:g_signal_newv
+   fun:g_signal_new_valist
+   fun:g_signal_new
+}
+{
+   gtk+ 2.18
+   Memcheck:Leak
+   fun:realloc
+   fun:g_realloc
+   fun:*
+   fun:*
+   fun:g_signal_newv
+   fun:g_signal_new_valist
+}
+{
    from opensuse 11.2
    Memcheck:Leak
    fun:realloc
@@ -164,6 +194,14 @@
    obj:libgtk-x11-*
    obj:libgtk-x11-*
    obj:*engines*
+}
+{
+   gtk+ 2.18
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_slice_alloc
+   fun:pango_coverage_set
 }
 {
    from opensuse 11.2

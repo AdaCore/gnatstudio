@@ -68,7 +68,7 @@ package body Code_Analysis_XML is
      (Project  : Project_Type;
       Node     : Node_Ptr)
    is
-      Iter       : Imported_Project_Iterator;
+      Iter       : Project_Iterator;
       Prj_Child  : Node_Ptr;
       File       : Virtual_File;
       File_Child : Node_Ptr;

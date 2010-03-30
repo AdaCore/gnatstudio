@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2008, AdaCore                --
+--                   Copyright (C) 2002-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,11 +18,11 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget;
-with Projects;
 with GPS.Kernel;
 with Naming_Editors;
 with Naming_Exceptions;
 with GNAT.Strings;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with Gtk.Box;
 with Gtk.Combo;
 
@@ -43,13 +43,13 @@ package Foreign_Naming_Editors is
       return Gtk.Widget.Gtk_Widget;
    overriding function Create_Project_Entry
      (Editor             : access Foreign_Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
    overriding procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True);
    --  See doc for inherited subprogram
 

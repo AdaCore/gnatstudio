@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2008, AdaCore               --
+--                    Copyright (C) 2004-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Selector is
@@ -56,8 +56,8 @@ package body Creation_Wizard.Selector is
    overriding procedure Generate_Project
      (Page               : access Wizard_Selector_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    overriding function Next_Page
      (Page : access Wizard_Selector_Page;
@@ -112,8 +112,8 @@ package body Creation_Wizard.Selector is
    overriding procedure Generate_Project
      (Page               : access Wizard_Selector_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Page, Kernel, Scenario_Variables, Project, Changed);

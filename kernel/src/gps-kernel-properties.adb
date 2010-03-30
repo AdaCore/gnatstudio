@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,12 +22,12 @@ with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with XML_Utils;               use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 with Osint;                      use Osint;
-with Projects;                   use Projects;
 with String_Hash;
 with Traces;                     use Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -362,7 +362,7 @@ package body GPS.Kernel.Properties is
      (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Returns the file name
 
-   function To_String (Prj : Projects.Project_Type) return String;
+   function To_String (Prj : Project_Type) return String;
    --  Returns the project's path
 
    ---------------
@@ -382,7 +382,7 @@ package body GPS.Kernel.Properties is
    -- To_String --
    ---------------
 
-   function To_String (Prj : Projects.Project_Type) return String is
+   function To_String (Prj : Project_Type) return String is
    begin
       return To_String (Project_Path (Prj));
    end To_String;
@@ -408,7 +408,7 @@ package body GPS.Kernel.Properties is
 
    procedure Set_Property
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project    : Projects.Project_Type;
+      Project    : Project_Type;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False) is
@@ -436,7 +436,7 @@ package body GPS.Kernel.Properties is
 
    procedure Get_Property
      (Property : out Property_Record'Class;
-      Project  : Projects.Project_Type;
+      Project  : Project_Type;
       Name     : String;
       Found    : out Boolean) is
    begin
@@ -461,7 +461,7 @@ package body GPS.Kernel.Properties is
 
    procedure Remove_Property
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project  : Projects.Project_Type;
+      Project  : Project_Type;
       Name     : String) is
    begin
       Remove_Property (Kernel, "project", To_String (Project), Name);

@@ -44,7 +44,6 @@ with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with Projects;                   use Projects;
-with Projects.Registry;          use Projects.Registry;
 with Traces;                     use Traces;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
@@ -240,7 +239,7 @@ package body Code_Peer.Module is
 
    procedure Create_Library_File
      (Kernel    : Kernel_Handle;
-      Project   : Projects.Project_Type;
+      Project   : Project_Type;
       Recursive : Boolean;
       File      : Virtual_File := No_File);
    --  Create CodePeer library file. Recursive is True if all project files
@@ -252,11 +251,10 @@ package body Code_Peer.Module is
    -------------------------
 
    function Use_CodePeer_Subdir (Kernel : Kernel_Handle) return Boolean is
-      Object_Directory : constant Virtual_File :=
-                           Projects.Object_Path (Get_Project (Kernel));
+      Obj_Dir : constant File_Array := Get_Project (Kernel).Object_Path;
    begin
       return GNATCOLL.VFS.Is_Directory
-        (Create_From_Dir (Object_Directory, "codepeer"));
+        (Create_From_Dir (Obj_Dir (Obj_Dir'First), "codepeer"));
    end Use_CodePeer_Subdir;
 
    -------------------------
@@ -265,14 +263,15 @@ package body Code_Peer.Module is
 
    procedure Create_Library_File
      (Kernel    : Kernel_Handle;
-      Project   : Projects.Project_Type;
+      Project   : Project_Type;
       Recursive : Boolean;
       File      : Virtual_File := No_File)
    is
       F    : Ada.Text_IO.File_Type;
-      Prj  : Projects.Project_Type;
+      Prj  : Project_Type;
       Objs : constant GNATCOLL.VFS.File_Array :=
-              Projects.Object_Path (Project, True, True);
+              Object_Path (Project, True, True);
+      Info : File_Info;
 
    begin
       Ada.Text_IO.Create
@@ -311,15 +310,16 @@ package body Code_Peer.Module is
               (F, "        Files     => (""*.scil""),");
 
          else
-            Prj := Get_Project_From_File (Get_Registry (Kernel).all, File);
+            Info := Get_Registry (Kernel).Tree.Info (File);
+            Prj := Info.Project;
             Ada.Text_IO.Put_Line
               (F, "Source (Directory => """
-                  & String (Object_Path (Prj).Full_Name.all) & "SCIL"",");
+                  & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
             Ada.Text_IO.Put
               (F, "        Files     => (""");
-            Ada.Text_IO.Put (F, Get_Unit_Name_From_Filename (Prj, File));
+            Ada.Text_IO.Put (F, Info.Unit_Name);
 
-            if Get_Unit_Part_From_Filename (Prj, File) = Unit_Body then
+            if Info.Unit_Part = Unit_Body then
                Ada.Text_IO.Put (F, "__body");
             end if;
 
@@ -348,7 +348,7 @@ package body Code_Peer.Module is
       Mode             : constant String :=
                            Code_Peer.Shell_Commands.Get_Build_Mode
                              (Kernel_Handle (Module.Kernel));
-      Project          : constant Projects.Project_Type :=
+      Project          : constant Project_Type :=
                            Get_Project (Module.Kernel);
       CodePeer_Subdir  : constant Boolean :=
                            Use_CodePeer_Subdir (Kernel_Handle (Module.Kernel));
@@ -371,7 +371,7 @@ package body Code_Peer.Module is
             Force       => Force,
             Build_Mode  => "codepeer",
             Synchronous => False,
-            Dir         => Projects.Object_Path (Project));
+            Dir         => Project.Object_Dir);
       elsif Quick then
          Code_Peer.Shell_Commands.Build_Target_Execute
            (Kernel_Handle (Module.Kernel),
@@ -380,7 +380,7 @@ package body Code_Peer.Module is
             Force       => Force,
             Build_Mode  => "codepeer",
             Synchronous => False,
-            Dir         => Projects.Object_Path (Project));
+            Dir         => Project.Object_Dir);
       else
          Code_Peer.Shell_Commands.Build_Target_Execute
            (Kernel_Handle (Module.Kernel),
@@ -389,7 +389,7 @@ package body Code_Peer.Module is
             Force       => Force,
             Build_Mode  => "codepeer",
             Synchronous => False,
-            Dir         => Projects.Object_Path (Project));
+            Dir         => Project.Object_Dir);
       end if;
 
       if CodePeer_Subdir then
@@ -510,19 +510,19 @@ package body Code_Peer.Module is
    ---------------------------------
 
    function Codepeer_Database_Directory
-     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
         GNATCOLL.VFS.Filesystem_String
           (Ada.Characters.Handling.To_Lower
-               (String (Projects.Project_Path (Project).Base_Name)));
+               (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Projects.Project_Path (Project).File_Extension;
+        Project_Path (Project).File_Extension;
 
    begin
       return
         Create_From_Dir
-          (Projects.Object_Path (Project),
+          (Project.Object_Dir,
            Name (Name'First .. Name'Last - Extension'Length) & ".db");
    end Codepeer_Database_Directory;
 
@@ -531,19 +531,19 @@ package body Code_Peer.Module is
    --------------------------------
 
    function Codepeer_Library_File_Name
-     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
         GNATCOLL.VFS.Filesystem_String
           (Ada.Characters.Handling.To_Lower
-               (String (Projects.Project_Path (Project).Base_Name)));
+               (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Projects.Project_Path (Project).File_Extension;
+        Project_Path (Project).File_Extension;
 
    begin
       return
         Create_From_Dir
-          (Projects.Object_Path (Project),
+          (Project.Object_Dir,
            Name (Name'First .. Name'Last - Extension'Length) & ".library");
    end Codepeer_Library_File_Name;
 
@@ -552,19 +552,19 @@ package body Code_Peer.Module is
    -------------------------------
 
    function Codepeer_Output_Directory
-     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
    is
       Name      : constant Filesystem_String :=
                     Filesystem_String
                       (Ada.Characters.Handling.To_Lower
-                         (String (Projects.Project_Path (Project).Base_Name)));
+                         (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Projects.Project_Path (Project).File_Extension;
+        Project_Path (Project).File_Extension;
 
    begin
       return
         GNATCOLL.VFS.Create_From_Dir
-          (Projects.Object_Path (Project),
+          (Project.Object_Dir,
            Name (Name'First .. Name'Last - Extension'Length) & ".output");
    end Codepeer_Output_Directory;
 
@@ -1094,17 +1094,11 @@ package body Code_Peer.Module is
    begin
       if Module.Tree /= null
         and then Module.Tree.Contains
-          (Projects.Registry.Get_Project_From_File
-               (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
-                D.File,
-                False))
+          (Get_Registry (Module.Kernel).Tree.Info (D.File).Project)
       then
          Project_Node :=
            Module.Tree.Element
-             (Projects.Registry.Get_Project_From_File
-                  (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
-                   D.File,
-                   False));
+             (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
 
          if Project_Node.Files.Contains (D.File) then
             Hide_Annotations (Module, Project_Node.Files.Element (D.File));
@@ -1130,17 +1124,11 @@ package body Code_Peer.Module is
    begin
       if Module.Tree /= null
         and then Module.Tree.Contains
-          (Projects.Registry.Get_Project_From_File
-               (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
-                D.File,
-                False))
+          (Get_Registry (Module.Kernel).Tree.Info (D.File).Project)
       then
          Project_Node :=
            Module.Tree.Element
-             (Projects.Registry.Get_Project_From_File
-                  (GPS.Kernel.Project.Get_Registry (Module.Kernel).all,
-                   D.File,
-                   False));
+             (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
 
          if Project_Node.Files.Contains (D.File) then
             Show_Annotations (Module, Project_Node.Files.Element (D.File));
@@ -1345,7 +1333,7 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget);
       Objs   : constant GNATCOLL.VFS.File_Array :=
-                Projects.Object_Path (Get_Project (Kernel), True, True);
+                Object_Path (Get_Project (Kernel), True, True);
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
 
@@ -1383,7 +1371,7 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget);
       Objs   : constant GNATCOLL.VFS.File_Array :=
-                Projects.Object_Path (Get_Project (Kernel), True, True);
+                Object_Path (Get_Project (Kernel), True, True);
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
 

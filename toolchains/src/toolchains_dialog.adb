@@ -36,7 +36,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Toolchains;                use Toolchains;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Projects;                  use Projects;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with Traces;                    use Traces;
 
 package body Toolchains_Dialog is
@@ -153,9 +153,8 @@ package body Toolchains_Dialog is
                    (Base_Directory => Start_Dir,
                     Parent         => Gtk_Window (Get_Toplevel (Button)));
          Compiler : constant String :=
-                      Projects.Get_Attribute_Value
-                        (GPS.Kernel.Project.Get_Project (Data.D.Kernel),
-                         Projects.Compiler_Command_Attribute,
+                      Get_Project (Data.D.Kernel).Attribute_Value
+                        (Compiler_Command_Attribute,
                          Default => "gnatmake",
                          Index   => "Ada");
          Exec     : Virtual_File;

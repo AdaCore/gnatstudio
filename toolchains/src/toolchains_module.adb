@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008-2009, AdaCore               --
+--                    Copyright (C) 2008-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
@@ -32,8 +33,6 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Toolchains;                use Toolchains;
 with Toolchains_Dialog;         use Toolchains_Dialog;
-with Projects;
-with Projects.Registry;
 with Builder_Facility_Module;
 
 package body Toolchains_Module is
@@ -167,12 +166,9 @@ package body Toolchains_Module is
          --  ??? .xrefs and mode "xref" should not be string literals, but
          --  stored somewhere instead.
          if not Equal
-           (Projects.Registry.Get_Xrefs_Subdir
-              (Get_Registry (Kernel).all),
-            ".xrefs")
+           (Get_Registry (Kernel).Environment.Xrefs_Subdir, ".xrefs")
          then
-            Projects.Registry.Set_Xrefs_Subdir
-              (Get_Registry (Kernel).all, ".xrefs");
+            Get_Registry (Kernel).Environment.Set_Xrefs_Subdir (".xrefs");
             GPS.Kernel.Project.Recompute_View (Kernel);
          end if;
 
@@ -180,13 +176,8 @@ package body Toolchains_Module is
          Builder_Facility_Module.Activate_Mode ("xref", True);
 
       else
-         if not Equal
-           (Projects.Registry.Get_Xrefs_Subdir
-              (Get_Registry (Kernel).all),
-            "")
-         then
-            Projects.Registry.Set_Xrefs_Subdir
-              (Get_Registry (Kernel).all, "");
+         if not Equal (Get_Registry (Kernel).Environment.Xrefs_Subdir, "") then
+            Get_Registry (Kernel).Environment.Set_Xrefs_Subdir ("");
             GPS.Kernel.Project.Recompute_View (Kernel);
          end if;
 
@@ -221,9 +212,8 @@ package body Toolchains_Module is
       Dialog        : Toolchains_Dialog.Dialog;
       Resp          : Gtk_Response_Type;
       Compiler      : constant Filesystem_String :=
-                        +Projects.Get_Attribute_Value
-                          (GPS.Kernel.Project.Get_Project (Kernel),
-                           Projects.Compiler_Command_Attribute,
+                        +Get_Project (Kernel).Attribute_Value
+                          (Compiler_Command_Attribute,
                            Default => "gnatmake",
                            Index   => "Ada");
       Default_Path  : Virtual_File;

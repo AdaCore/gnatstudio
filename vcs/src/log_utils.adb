@@ -42,10 +42,10 @@ with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Intl;                         use GPS.Intl;
 with Projects;                         use Projects;
-with Projects.Registry;                use Projects.Registry;
 with String_List_Utils;                use String_List_Utils;
 with Traces;                           use Traces;
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with VCS_Module;                       use VCS_Module;
 with VCS_Status;                       use VCS_Status;
@@ -841,17 +841,16 @@ package body Log_Utils is
       for J in Files'Range loop
          exit when Cancel_All;
 
-         Project :=
-           Get_Project_From_File (Get_Registry (Kernel).all, Files (J));
+         Project := Get_Registry (Kernel).Tree.Info (Files (J)).Project;
 
          if Project /= No_Project then
             declare
                use GNAT;
 
-               File_Check_Command : constant String := Get_Attribute_Value
-                 (Project, VCS_File_Check);
-               Log_Check_Command  : constant String := Get_Attribute_Value
-                 (Project, VCS_Log_Check);
+               File_Check_Command : constant String := Project.Attribute_Value
+                 (VCS_File_Check);
+               Log_Check_Command  : constant String := Project.Attribute_Value
+                 (VCS_Log_Check);
                Log_File           : Virtual_File;
                File_Args          : String_List.List;
                Log_Args           : String_List.List;

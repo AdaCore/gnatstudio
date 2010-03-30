@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
-with Ada.Text_IO;                      use Ada.Text_IO;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Text_IO;               use Ada.Text_IO;
+with ALI;
 
 with GNAT.Command_Line;                use GNAT.Command_Line;
 with GNAT.Directory_Operations;        use GNAT, GNAT.Directory_Operations;
@@ -30,6 +31,7 @@ with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Memory;
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
@@ -68,7 +70,6 @@ with GPS.Kernel.Custom;                use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
@@ -80,9 +81,7 @@ with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Main_Window;
 with GPS.Menu;
 with OS_Utils;                         use OS_Utils;
-with Prj_Output;
-with Projects.Editor;                  use Projects.Editor;
-with Projects.Registry;                use Projects;
+with Projects;                         use Projects;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
@@ -293,9 +292,6 @@ procedure GPS.Main is
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
 
-   procedure Display_Prj_Messages (S : String);
-   --  Display messages coming from the Prj packages
-
    ---------------------
    -- Clean_Parameter --
    ---------------------
@@ -401,7 +397,6 @@ procedure GPS.Main is
       Free (Tmp2);
 
       OS_Utils.Install_Ctrl_C_Handler (Callbacks.Ctrl_C_Handler'Access);
-      Projects.Registry.Initialize;
 
       --  Reset the environment that was set before GPS was started (since
       --  starting GPS will generally imply a change in LD_LIBRARY_PATH and
@@ -842,7 +837,8 @@ procedure GPS.Main is
                  Create
                    (Normalize_Pathname
                         (Filesystem_String (Parameter (Parser)),
-                         Resolve_Links => not Get_Pref (Trusted_Mode)));
+                         Resolve_Links =>
+                           not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
 
                if not Is_Regular_File (Project_Name) then
                   if Is_Regular_File
@@ -851,7 +847,8 @@ procedure GPS.Main is
                      Project_Name := Create
                        (Normalize_Pathname
                           (Full_Name (Project_Name) & Project_File_Extension,
-                           Resolve_Links => not Get_Pref (Trusted_Mode)));
+                           Resolve_Links =>
+                            not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref));
                      Trace
                        (Me, "Found project: " &
                         Display_Full_Name (Project_Name));
@@ -1019,19 +1016,6 @@ procedure GPS.Main is
          Trace (Exception_Handle, E);
    end Execute_Batch;
 
-   --------------------------
-   -- Display_Prj_Messages --
-   --------------------------
-
-   procedure Display_Prj_Messages (S : String) is
-   begin
-      GPS.Kernel.Console.Insert
-        (GPS_Main.Kernel, S,
-         Mode   => GPS.Kernel.Console.Error,
-         Add_LF => False);
-      Parse_File_Locations (GPS_Main.Kernel, S, -"Project");
-   end Display_Prj_Messages;
-
    ------------------
    -- Finish_Setup --
    ------------------
@@ -1040,7 +1024,7 @@ procedure GPS.Main is
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Idle_Id           : Idle_Handler_Id;
-      Project           : Projects.Project_Type;
+      Project           : Project_Type;
       Screen            : Welcome_Screen;
       Icon              : Gdk_Pixbuf;
       pragma Unreferenced (Data, Idle_Id);
@@ -1081,46 +1065,41 @@ procedure GPS.Main is
          Load_Sources;
 
          if Debugger_Name /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Debugger_Command_Attribute,
-               Value              => Debugger_Name.all);
+            Project.Set_Attribute
+              (Scenario  => No_Scenario,
+               Attribute => Debugger_Command_Attribute,
+               Value     => Debugger_Name.all);
          end if;
 
          --  ??? re-enable this...
 --           if Tools_Host /= null then
---              Update_Attribute_Value_In_Scenario
---                (Project            => Project,
---                 Scenario_Variables => No_Scenario,
---                 Attribute          => Remote_Host_Attribute,
---                 Value              => Tools_Host.all);
+--              Project.Set_Attribute
+--                (Scenario  => No_Scenario,
+--                 Attribute => Remote_Host_Attribute,
+--                 Value     => Tools_Host.all);
 --           end if;
 
          if Target /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Program_Host_Attribute,
-               Value              => Target.all);
+            Project.Set_Attribute
+              (Scenario  => No_Scenario,
+               Attribute => Program_Host_Attribute,
+               Value     => Target.all);
          end if;
 
          if Protocol /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Protocol_Attribute,
-               Value              => Protocol.all);
+            Project.Set_Attribute
+              (Scenario  => No_Scenario,
+               Attribute => Protocol_Attribute,
+               Value     => Protocol.all);
          end if;
 
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Languages_Attribute,
-            Values             =>
+         Project.Set_Attribute
+           (Scenario  => No_Scenario,
+            Attribute => Languages_Attribute,
+            Values    =>
               (new String'("ada"), new String'("c"), new String'("c++")));
 
-         Set_Project_Modified (Project, False);
+         Project.Set_Modified (False);
          Recompute_View (GPS_Main.Kernel);
       end Setup_Debug;
 
@@ -1293,8 +1272,6 @@ procedure GPS.Main is
       --  in the console right away
 
       GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
-      Prj_Output.Set_Default_Output_Handler
-        (Display_Prj_Messages'Unrestricted_Access);
 
       --  Register the locations view before all the modules that register a
       --  highlighting category. Otherwise, when loading the desktop, the
@@ -1623,8 +1600,8 @@ procedure GPS.Main is
             --  We can finally search on ADA_PROJECT_PATH, which is now known
             Project_Name := Locate_Regular_File
               (Base_Name (Project_Name),
-               Projects.Registry.Get_Predefined_Project_Path
-                 (Get_Registry (GPS_Main.Kernel).all));
+               Get_Registry (GPS_Main.Kernel)
+                 .Environment.Predefined_Project_Path);
          end if;
 
          if Project_Name = No_File then
@@ -1790,8 +1767,6 @@ procedure GPS.Main is
          Get_Messages_Container (Kernel).Remove_All_Messages;
       end if;
 
-      Prj_Output.Set_Default_Output_Handler (null);
-
       if Status (Project) = Default then
          Trace (Me, "Remove default project on disk, no longer used");
          Delete (Project_Path (Project), Success);
@@ -1826,8 +1801,18 @@ procedure GPS.Main is
 
       Destroy (Kernel);
 
-      Projects.Registry.Finalize;
       GNATCOLL.Traces.Finalize;
+
+      --  Memory used by the xref database.
+      --  ??? This should be done in the ali_reader package
+
+      ALI.ALIs.Free;
+      ALI.Units.Free;
+      ALI.Withs.Free;
+      ALI.Args.Free;
+      ALI.Linker_Options.Free;
+      ALI.Sdep.Free;
+      ALI.Xref.Free;
 
       --  In case of a normal exit, rename log.<pid> as log to avoid
       --  generating a new log file for each session; this way we still

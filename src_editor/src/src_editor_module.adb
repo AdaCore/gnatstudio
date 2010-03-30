@@ -23,7 +23,8 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
-with GNATCOLL.Arg_Lists;            use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
 with Gdk.Color;                         use Gdk.Color;
@@ -87,7 +88,7 @@ with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
 with Language_Handlers.GUI;             use Language_Handlers.GUI;
-with Projects.Registry;                 use Projects, Projects.Registry;
+with Projects;                          use Projects;
 with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
@@ -911,8 +912,7 @@ package body Src_Editor_Module is
 
       if Pref = From_Project and then
         (Status (Get_Project (User)) /= From_File
-         or else Get_Project_From_File
-           (Get_Registry (User).all, File, False) = No_Project)
+         or else Get_Registry (User).Tree.Info (File).Project = No_Project)
       then
          return null;
       end if;
@@ -1590,12 +1590,11 @@ package body Src_Editor_Module is
                              (Get_History (Kernel).all,
                               Open_From_Path_History);
       List1            : File_Array_Access :=
-                           Get_Source_Files
-                             (Project   => Get_Project (Kernel),
-                              Recursive => True);
+                           Get_Project (Kernel).Source_Files
+                             (Recursive => True);
       List2            : File_Array_Access := new File_Array'
-                           (Get_Predefined_Source_Files
-                              (Get_Registry (Kernel).all));
+                           (Get_Registry (Kernel).Environment
+                            .Predefined_Source_Files);
       Compl            : File_Completion_Factory;
 
    begin
@@ -2511,6 +2510,7 @@ package body Src_Editor_Module is
       W      : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type;
+      Prj    : Project_Type;
    begin
       if W.all in Source_View_Record'Class then
          W := Get_Parent (W);
@@ -2535,19 +2535,22 @@ package body Src_Editor_Module is
                return Expansion & (+Dir_Name (Get_Filename (Box)));
 
             when 'p' =>
-               return Expansion & Project_Name
-                 (Get_Project_From_File
-                  (Get_Registry (Kernel).all,
-                   Get_Filename (Box),
-                   Root_If_Not_Found => True));
+               Prj := Get_Registry (Kernel).Tree.Info
+                 (Get_Filename (Box)).Project;
+               if Prj = No_Project then
+                  Prj := Get_Registry (Kernel).Tree.Root_Project;
+               end if;
+
+               return Expansion & Prj.Name;
 
             when 'P' =>
-               return Expansion &
-               (+Full_Name (Project_Path
-                  (Get_Project_From_File
-                     (Get_Registry (Kernel).all,
-                        Get_Filename (Box),
-                        Root_If_Not_Found => True))));
+               Prj := Get_Registry (Kernel).Tree.Info
+                 (Get_Filename (Box)).Project;
+               if Prj = No_Project then
+                  Prj := Get_Registry (Kernel).Tree.Root_Project;
+               end if;
+
+               return Expansion & (+Prj.Project_Path.Full_Name);
 
             when others =>
                return Invalid_Expansion;
@@ -3563,9 +3566,8 @@ package body Src_Editor_Module is
       if Is_Absolute_Path (File) then
          Full := File;
       else
-         Get_Full_Path_From_File
-           (Get_Registry (Kernel).all, Full_Name (File), True, False,
-            File => Full);
+         Full := Get_Registry (Kernel).Tree.Create
+           (File.Full_Name, Use_Object_Path => False);
          if Full = No_File then
             return null;
          end if;

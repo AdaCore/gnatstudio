@@ -28,7 +28,7 @@
 --
 --  The naming scheme for a language is defined through either the project
 --  itself, or through a default naming scheme registered for custom languages
---  in Projects.Registry.Register_Default_Language_Extension.
+--  in GNATCOLL.Projects.Register_Default_Language_Extension.
 
 with GNAT.OS_Lib;
 
@@ -54,7 +54,7 @@ package Language_Handlers is
 
    procedure Set_Registry
      (Handler  : access Language_Handler_Record;
-      Registry : access Projects.Abstract_Registry'Class);
+      Registry : access Projects.Project_Registry'Class);
    --  Set the top-level project for Handler
 
    -----------------
@@ -143,8 +143,8 @@ package Language_Handlers is
    --  LI is the parser that should be used for cross references for this
    --  language, and can be left to null if no cross-reference is available. It
    --  can also be shared among languages.
-   --  See also Projects.Registry.Register_Default_Language_Extension and
-   --  Projects.Registry.Add_Language_Extension.
+   --  See also Register_Default_Language_Extension and
+   --  Add_Language_Extension.
 
    function Known_Languages
      (Handler : access Language_Handler_Record;
@@ -180,7 +180,7 @@ private
    with record
       Languages : Language_Info_Access;
       Handlers  : Handler_Info_Access;
-      Registry  : Projects.Abstract_Registry_Access;
+      Registry  : Projects.Project_Registry_Access;
    end record;
 
 end Language_Handlers;

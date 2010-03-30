@@ -22,6 +22,7 @@ with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
 with GNAT.Strings;
+with GNATCOLL.Projects;                      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                       use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with Glib;                                   use Glib;
@@ -53,7 +54,6 @@ with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;              use GPS.Kernel.Standard_Hooks;
-with Projects.Registry;                      use Projects.Registry;
 with Projects;                               use Projects;
 with Traces;                                 use Traces;
 with Code_Coverage;                          use Code_Coverage;
@@ -137,7 +137,7 @@ package body Code_Analysis_Module is
    type CB_Data_Record is record
       Kernel   : Kernel_Handle;
       Analysis : Unbounded_String;
-      Project  : Projects.Project_Type;
+      Project  : Project_Type;
       File     : GNATCOLL.VFS.Virtual_File;
    end record;
 
@@ -632,8 +632,8 @@ package body Code_Analysis_Module is
          Cov_File := Get_Data (Cov_Inst);
       end if;
 
-      Prj_Name  := Get_Project_From_File
-        (Get_Registry (Get_Kernel (Data)).all, Src_File);
+      Prj_Name  :=
+        Get_Registry (Get_Kernel (Data)).Tree.Info (Src_File).Project;
       Prj_Node  := Get_Or_Create (Analysis.Projects, Prj_Name);
 
       if not Is_Regular_File (Cov_File) then
@@ -768,10 +768,13 @@ package body Code_Analysis_Module is
          return;
       end if;
 
-      Prj_Name  := Load_Or_Find
-         (Get_Registry (Get_Kernel (Data)).all, Prj_File, Errors => null);
-      Prj_Node  := Get_Or_Create
-        (Analysis.Projects, Prj_Name);
+      --  ??? We used to call Load_Or_Find, which would load the new project if
+      --  it could not be found. That's seems incorrect though, since that
+      --  changed the project the user had loaded
+
+      Prj_Name := Get_Registry (Get_Kernel (Data)).Tree.Project_From_Name
+        (+Prj_File.Base_Name (Suffix => Project_File_Extension));
+      Prj_Node  := Get_Or_Create (Analysis.Projects, Prj_Name);
       Add_Gcov_Project_Info (Get_Kernel (Data), Prj_Node);
 
       --  Build/Refresh Report of Analysis
@@ -834,7 +837,7 @@ package body Code_Analysis_Module is
       Instance : Class_Instance;
       Prj_Name : Project_Type;
       Prj_Node : Project_Access;
-      Prj_Iter : Imported_Project_Iterator;
+      Prj_Iter : Project_Iterator;
    begin
       Instance := Nth_Arg (Data, 1, Code_Analysis_Module_ID.Class);
       Analysis := Get_Or_Create
@@ -870,7 +873,7 @@ package body Code_Analysis_Module is
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance)
    is
-      Prj_Iter : Imported_Project_Iterator;
+      Prj_Iter : Project_Iterator;
       Prj_Node : Project_Access;
 
    begin
@@ -1193,7 +1196,7 @@ package body Code_Analysis_Module is
                --  Find in the list the context's project
                loop
                   exit when Iter = Null_Iter or else
-                  Get_String (Model, Iter, Num_Col) = Project_Name (Project);
+                  Get_String (Model, Iter, Num_Col) = Project.Name;
                   Next (Model, Iter);
                end loop;
             end if;
@@ -1201,7 +1204,7 @@ package body Code_Analysis_Module is
             --  Find in the tree the context's project
             loop
                exit when Iter = Null_Iter or else
-               Get_String (Model, Iter, Num_Col) = Project_Name (Project);
+               Get_String (Model, Iter, Num_Col) = Project.Name;
                Next (Model, Iter);
             end loop;
 
@@ -1376,7 +1379,7 @@ package body Code_Analysis_Module is
             GPS.Kernel.Console.Insert
               (CB_Data.Kernel,
                -"No coverage information to display for "
-               & Project_Name (Prj_Node.Name));
+               & Prj_Node.Name.Name);
 
             return;
          end if;
@@ -1712,7 +1715,7 @@ package body Code_Analysis_Module is
 
          Gtk_New
            (Item, -"Load data for project " &
-            Emphasize (Project_Name (Project_Information (Context))));
+            Emphasize (Project_Information (Context).Name));
          Activate_Pango_Markup (Item);
          Append (Submenu, Item);
          Analysis_CB.Connect
@@ -1727,7 +1730,7 @@ package body Code_Analysis_Module is
 
          Gtk_New
            (Item, -"Remove data of project " &
-            Emphasize (Project_Name (Project_Information (Context))));
+            Emphasize (Project_Information (Context).Name));
          Activate_Pango_Markup (Item);
          Append (Submenu, Item);
          Analysis_CB.Connect

@@ -19,8 +19,8 @@
 
 with Basic_Types;                    use Basic_Types;
 with GNAT.Regpat;                    use GNAT.Regpat;
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
-with Projects.Registry;              use Projects.Registry;
 with Language;                       use Language;
 with Language.Tree;                  use Language.Tree;
 with Language.Ada;                   use Language.Ada;
@@ -1804,9 +1804,8 @@ package body Codefix.GNAT_Parser is
          --  ??? Doesn't seem really clean to use the message as a file name ?
          Set_File
            (Declaration_Cursor,
-            Create
-              (+Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-               Get_Registry (Current_Text).all));
+            Get_Registry (Current_Text).Tree.Create
+             (+Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
       else
          Set_File (Declaration_Cursor, Get_File (Message));
       end if;
@@ -2986,10 +2985,10 @@ package body Codefix.GNAT_Parser is
                   Column => 1);
             else
                Set_File
-                 (Solution_Cursor, Create
+                 (Solution_Cursor,
+                  Get_Registry (Current_Text).Tree.Create
                     (+Get_Message (Preview)
-                       (Matches_Prev (1).First .. Matches_Prev (1).Last),
-                     Get_Registry (Current_Text).all));
+                       (Matches_Prev (1).First .. Matches_Prev (1).Last)));
                Set_Location
                  (Solution_Cursor,
                   Line => Integer'Value
@@ -3102,10 +3101,10 @@ package body Codefix.GNAT_Parser is
                   Column => 1);
             else
                Set_File
-                 (Solution_Cursor, Create
+                 (Solution_Cursor,
+                  Get_Registry (Current_Text).Tree.Create
                     (+Get_Message (Preview)
-                       (Matches_Loc (1).First .. Matches_Loc (1).Last),
-                     Get_Registry (Current_Text).all));
+                       (Matches_Loc (1).First .. Matches_Loc (1).Last)));
                Set_Location
                  (Solution_Cursor,
                   Line => Integer'Value
@@ -3178,10 +3177,8 @@ package body Codefix.GNAT_Parser is
 
       Set_File
         (Decl_Cur,
-         Create
-           (+Get_Message (Message)
-            (Matches (1).First .. Matches (1).Last),
-            Get_Registry (Current_Text).all));
+         Get_Registry (Current_Text).Tree.Create
+           (+Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
       Set_Line (Decl_Cur, Integer'Value (Get_Message (Message)
         (Matches (2).First .. Matches (2).Last)));
@@ -3337,9 +3334,8 @@ package body Codefix.GNAT_Parser is
       else
          Set_File
            (Spec_Cursor,
-            Create
-              (+Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-               Get_Registry (Current_Text).all));
+            Get_Registry (Current_Text).Tree.Create
+             (+Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
       end if;
 
       Solutions := Make_Conformant (Current_Text, Message, Spec_Cursor);
@@ -3414,10 +3410,9 @@ package body Codefix.GNAT_Parser is
          Seek_With := False;
       else
          Set_File
-           (Source_Cursor, Create
-              (+Get_Message (Message)
-                 (Matches (1).First .. Matches (1).Last),
-               Get_Registry (Current_Text).all));
+           (Source_Cursor,
+            Get_Registry (Current_Text).Tree.Create
+             (+Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
          Seek_With := True;
       end if;
 

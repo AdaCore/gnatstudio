@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2003-2009, AdaCore                   --
+--                Copyright (C) 2003-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,8 @@
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
@@ -44,7 +45,6 @@ with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
 with Histories;                  use Histories;
 with Interactive_Consoles;       use Interactive_Consoles;
-with Projects;                   use Projects;
 with String_Utils;               use String_Utils;
 with System;
 with Traces;                     use Traces;
@@ -516,7 +516,7 @@ package body Python_Module is
       Project : constant Project_Type := Get_Data (Data, 1);
    begin
       if Command = "__str__" then
-         Set_Return_Value (Data, Project_Name (Project));
+         Set_Return_Value (Data, Project.Name);
 
       elsif Command = "__repr__" then
          Set_Return_Value (Data, Full_Name (Project_Path (Project)));

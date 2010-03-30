@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,7 +36,7 @@
 
 with GNAT.Strings;
 with XML_Utils;
-with Projects;
+with GNATCOLL.Projects;
 
 package GPS.Kernel.Properties is
 
@@ -167,7 +167,7 @@ package GPS.Kernel.Properties is
 
    procedure Set_Property
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project    : Projects.Project_Type;
+      Project    : GNATCOLL.Projects.Project_Type;
       Name       : String;
       Property   : access Property_Record'Class;
       Persistent : Boolean := False);
@@ -179,7 +179,7 @@ package GPS.Kernel.Properties is
 
    procedure Get_Property
      (Property : out Property_Record'Class;
-      Project  : Projects.Project_Type;
+      Project  : GNATCOLL.Projects.Project_Type;
       Name     : String;
       Found    : out Boolean);
    --  Return the given named property associated with File.
@@ -188,7 +188,7 @@ package GPS.Kernel.Properties is
 
    procedure Remove_Property
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project  : Projects.Project_Type;
+      Project  : GNATCOLL.Projects.Project_Type;
       Name     : String);
    --  Remove the named property (persistent or not) from the file.
 

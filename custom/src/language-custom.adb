@@ -23,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 
 with Glib;
 with Glib.Module;             use Glib.Module;
@@ -38,7 +39,6 @@ with Basic_Types;
 with Entities;
 with Dummy_Parser;              use Dummy_Parser;
 with Language_Handlers;         use Language_Handlers;
-with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Intl;                  use GPS.Intl;
@@ -392,9 +392,8 @@ package body Language.Custom is
 
       Register_Language (Handler, Language_Access (Lang), null,
                          LI => Dummy_Handler);
-      Register_Default_Language_Extension
-        (Get_Registry (Kernel).all,
-         Language_Name       => Get_Name (Lang),
+      Get_Registry (Kernel).Environment.Register_Default_Language_Extension
+        (Language_Name       => Get_Name (Lang),
          Default_Spec_Suffix =>
            Get_String (Get_Field (Top, "Spec_Suffix")),
          Default_Body_Suffix =>
@@ -406,9 +405,8 @@ package body Language.Custom is
       Node := Top.Child;
       while Node /= null loop
          if Node.Tag.all = "Extension" then
-            Add_Language_Extension
-              (Get_Registry (Kernel).all,
-               Language_Name => Get_Name (Lang),
+            Get_Registry (Kernel).Environment.Add_Language_Extension
+              (Language_Name => Get_Name (Lang),
                Extension     => Node.Value.all);
          end if;
 

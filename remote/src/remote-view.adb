@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,7 +60,6 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 
-with Projects;               use Projects;
 with Remote;                 use Remote;
 with Remote.Config_Dialog;   use Remote.Config_Dialog;
 with Remote.Db;              use Remote.Db;
@@ -865,8 +864,8 @@ package body Remote.View is
       --  ??? We used to have a single assignment for Prj and Project below,
       --  but this caused a memory corruption (codegen bug ?), so work around
       --  it for now
-      Prj              : GNATCOLL.VFS.Virtual_File renames
-                           Project_Path (Get_Project (User.View.Kernel));
+      Prj              : constant GNATCOLL.VFS.Virtual_File :=
+                           Get_Project (User.View.Kernel).Object_Dir;
       Reasons          : Ada.Strings.Unbounded.Unbounded_String;
       Failure          : Boolean := False;
       Res              : Message_Dialog_Buttons;

@@ -38,13 +38,13 @@ with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
 with OS_Utils;                    use OS_Utils;
-with Projects.Registry;           use Projects.Registry;
 with Projects;                    use Projects;
 with Remote;                      use Remote;
 with Extending_Environments;      use Extending_Environments;
 with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
-with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
 package body Build_Command_Manager is
 
@@ -192,7 +192,7 @@ package body Build_Command_Manager is
 
       --  ??? Ditto for %eL
       elsif Arg = "%eL" then
-         if Trusted_Mode.Get_Pref then
+         if GPS.Kernel.Preferences.Trusted_Mode.Get_Pref then
             return Result;
          else
             Result.Args := Create ("-eL");
@@ -232,7 +232,7 @@ package body Build_Command_Manager is
 
          begin
             Result.Args := Parse_String
-              (Get_Attribute_Value (Prj, Build (Pkg, Attr),
+              (Prj.Attribute_Value (Build (Pkg, Attr),
                Default => Arg (K + 1 .. Arg'Last - 1)),
                Separate_Args);
          end;
@@ -242,10 +242,10 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 9) = "%switches("
         and then Arg (Arg'Last) = ')'
       then
-         Result.Args := Create (Get_Attribute_Value
-           (Get_Project (Get_Kernel (Context)),
-              Build ("IDE", "Default_Switches"), "",
-              Arg (Arg'First + 10 .. Arg'Last - 1)));
+         Result.Args := Create
+            (Get_Project (Get_Kernel (Context)).Attribute_Value
+              (Build ("IDE", "Default_Switches"), "",
+               Arg (Arg'First + 10 .. Arg'Last - 1)));
 
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
@@ -257,12 +257,12 @@ package body Build_Command_Manager is
             Prj      : constant Project_Type :=
                          Get_Project (Get_Kernel (Context));
             Gnatmake : constant String :=
-                         Get_Attribute_Value
-                           (Prj, Compiler_Command_Attribute,
+                         Prj.Attribute_Value
+                           (Compiler_Command_Attribute,
                             Default => "gnatmake",
                             Index   => "ada");
             First    : Natural := Gnatmake'First;
-            Langs    : Argument_List := Get_Languages (Prj, Recursive => True);
+            Langs    : Argument_List := Prj.Languages (Recursive => True);
 
             Multi_Language_Build : Boolean := True;
             Res      : Expansion_Result;
@@ -329,8 +329,8 @@ package body Build_Command_Manager is
                end if;
             else
                Res.Args := Create
-                 (Get_Attribute_Value
-                    (Prj, GNAT_Attribute, Default => "gnat"));
+                 (Prj.Attribute_Value
+                    (GNAT_Attribute, Default => "gnat"));
                Append_Argument (Res.Args, "clean", One_Arg);
                return Res;
             end if;
@@ -376,8 +376,8 @@ package body Build_Command_Manager is
                   raise Invalid_Argument;
                end if;
 
-            elsif Get_Project_From_File
-              (Get_Registry (Kernel).all, File, False) = No_Project
+            elsif Get_Registry
+              (Kernel).Tree.Info (File).Project = No_Project
             then
                if Simulate then
                   Result.Args := Create ("<current-file>");
@@ -445,11 +445,11 @@ package body Build_Command_Manager is
                  +(Main & Arg (Arg'First + 2 .. Arg'Last));
 
             begin
-               P := Get_Project_From_File
-                 (Get_Registry (Kernel).all, Main_Source);
+               P := Get_Registry (Kernel).Tree.Info
+                  (Get_Registry (Kernel).Tree.Create (Main_Source)).Project;
                Result.Args := Create
                  (+(Executables_Directory (P).Full_Name.all
-                  & Get_Executable_Name (P, Main_Source)));
+                  & P.Executable_Name (Main_Source)));
             end;
          else
             Console.Insert

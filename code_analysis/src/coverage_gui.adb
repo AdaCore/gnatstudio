@@ -20,6 +20,7 @@
 with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
@@ -28,7 +29,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Default_Preferences.Enums;
 
 with Language;                  use Language;
-with Projects.Registry;         use Projects.Registry;
 with Language.Unknown;          use Language.Unknown;
 with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
@@ -61,7 +61,7 @@ package body Coverage_GUI is
       --  get every source files of the project
       --  check if they are associated with gcov info
       --  load their info
-      Src_Files := Get_Source_Files (Prj_Node.Name, Recursive => False);
+      Src_Files := Prj_Node.Name.Source_Files (Recursive => False);
 
       for J in Src_Files'First .. Src_Files'Last loop
          Src_File := Src_Files (J);
@@ -490,7 +490,7 @@ package body Coverage_GUI is
             if Gcov_Root_Env = null then
                --  Look for the gcov file in the object directory of the root
                --  project.
-               Gcov_Root := Object_Path (Get_Project (Kernel));
+               Gcov_Root := Get_Project (Kernel).Object_Dir;
             else
                --  Look for the gcov file in the path pointed by GCOV_ROOT
                Gcov_Root := Create (+Gcov_Root_Env.all);
@@ -512,7 +512,7 @@ package body Coverage_GUI is
 
          when Xcov =>
             return Create_From_Dir
-              (Object_Path (Get_Root_Project (Get_Registry (Kernel).all)),
+              (Object_Dir (Get_Registry (Kernel).Tree.Root_Project),
                Base_Name (Source) & Xcov_Extension_Cst);
       end case;
    end Find_Gcov_File;

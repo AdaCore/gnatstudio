@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,6 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
---  with Osint;                   use Osint;
 
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Frame;               use Gtk.Frame;
@@ -33,8 +32,6 @@ with Gtk.Widget;              use Gtk.Widget;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
 with Naming_Exceptions;       use Naming_Exceptions;
-with Projects.Editor;         use Projects, Projects.Editor;
-with Projects.Registry;       use Projects.Registry;
 
 package body Custom_Naming_Editors is
 
@@ -48,8 +45,8 @@ package body Custom_Naming_Editors is
       Language : String)
    is
       Extensions : String_List :=
-                     Get_Registered_Extensions
-                       (Get_Registry (Kernel).all, Language);
+                     Get_Registry (Kernel).Environment.Registered_Extensions
+                       (Language);
       Label      : Gtk_Label;
       Box        : Gtk_Box;
       Vbox       : Gtk_Box;
@@ -165,7 +162,7 @@ package body Custom_Naming_Editors is
 
    overriding function Create_Project_Entry
      (Editor             : access Custom_Naming_Editor_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
@@ -173,34 +170,30 @@ package body Custom_Naming_Editors is
       Changed : Boolean := False;
    begin
       if Project = No_Project
-        or else Get_Attribute_Value
-          (Project   => Project,
-           Attribute => Spec_Suffix_Attribute,
+        or else Project.Attribute_Value
+          (Attribute => Spec_Suffix_Attribute,
            Index     => To_Lower (Editor.Language.all)) /=
         Get_Text (Editor.Spec_Extension)
       then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Spec_Suffix_Attribute,
-            Value              => Get_Text (Editor.Spec_Extension),
-            Attribute_Index    => To_Lower (Editor.Language.all));
+         Project.Set_Attribute
+           (Scenario  => Scenario_Variables,
+            Attribute => Spec_Suffix_Attribute,
+            Value     => Get_Text (Editor.Spec_Extension),
+            Index     => To_Lower (Editor.Language.all));
          Changed := True;
       end if;
 
       if Project = No_Project
-        or else Get_Attribute_Value
-          (Project   => Project,
-           Attribute => Impl_Suffix_Attribute,
+        or else Project.Attribute_Value
+          (Attribute => Impl_Suffix_Attribute,
            Index     => To_Lower (Editor.Language.all)) /=
         Get_Text (Editor.Impl_Extension)
       then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Impl_Suffix_Attribute,
-            Value              => Get_Text (Editor.Impl_Extension),
-            Attribute_Index    => To_Lower (Editor.Language.all));
+         Project.Set_Attribute
+           (Scenario  => Scenario_Variables,
+            Attribute => Impl_Suffix_Attribute,
+            Value     => Get_Text (Editor.Impl_Extension),
+            Index     => To_Lower (Editor.Language.all));
          Changed := True;
       end if;
 
@@ -215,7 +208,7 @@ package body Custom_Naming_Editors is
    overriding procedure Show_Project_Settings
      (Editor             : access Custom_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Display_Exceptions : Boolean := True)
    is
       P : Project_Type := Project;
@@ -230,14 +223,12 @@ package body Custom_Naming_Editors is
 
       Set_Text
         (Editor.Spec_Extension,
-         Get_Attribute_Value
-            (P, Spec_Suffix_Attribute,
-             Index => To_Lower (Editor.Language.all)));
+         P.Attribute_Value
+            (Spec_Suffix_Attribute, Index => To_Lower (Editor.Language.all)));
       Set_Text
         (Editor.Impl_Extension,
-         Get_Attribute_Value
-            (P, Impl_Suffix_Attribute,
-             Index => To_Lower (Editor.Language.all)));
+         P.Attribute_Value
+            (Impl_Suffix_Attribute, Index => To_Lower (Editor.Language.all)));
 
       if Display_Exceptions then
          Show_Project_Settings (Editor.Exceptions, Project);

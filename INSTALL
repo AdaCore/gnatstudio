@@ -55,9 +55,9 @@ Building/Installing from Subversion
 The instructions to build from subversion are similar to the instructions
 listed above, with a few additional steps:
 
-- You need to create a symbolic link called 'gnat_src' that points to recent
-  GNAT sources (preferably sources as recent as the GPS sources used), e.g.
-  the svn://gcc.gnu.org/svn/gcc/trunk/gcc/ada repository.
+- You need to create a symbolic link called 'gnatlib/gnat_src' that points to
+  recent GNAT sources (preferably sources as recent as the GPS sources used),
+  e.g.  the svn://gcc.gnu.org/svn/gcc/trunk/gcc/ada repository.
 
 - You need to use the SVN version of GtkAda matching GPS sources (same date/tag)
 

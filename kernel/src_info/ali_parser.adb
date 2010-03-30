@@ -24,6 +24,7 @@ with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -33,8 +34,6 @@ with Basic_Types;               use Basic_Types;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
 with Glib.Convert;              use Glib.Convert;
-with Projects.Editor;           use Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Traces;
@@ -53,7 +52,7 @@ package body ALI_Parser is
    type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
    overriding procedure Continue
      (Iterator : in out ALI_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : Error_Report;
       Finished : out Boolean);
    overriding procedure Destroy (Iterator : in out ALI_Handler_Iterator);
    --  See doc for inherited subprograms
@@ -446,7 +445,7 @@ package body ALI_Parser is
       LI      : LI_File;
       Id      : Unit_Id) return Source_File
    is
-      Base_Name : constant String := Get_String (Units.Table (Id).Sfile);
+      Base_Name : constant String := Get_Name_String (Units.Table (Id).Sfile);
       File      : Source_File;
 
    begin
@@ -498,7 +497,7 @@ package body ALI_Parser is
    is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
       Is_Separate : constant Boolean := Dep.Subunit_Name /= No_Name;
-      Base_Name   : constant String := Get_String (Dep.Sfile);
+      Base_Name   : constant String := Get_Name_String (Dep.Sfile);
       --  ??? (UTF8) this seems wrong: what if the filename is not valid UTF8?
       L           : LI_File := LI;
    begin
@@ -553,9 +552,9 @@ package body ALI_Parser is
       Imported_Projects : Project_Type_Array;
       File_To_Compile   : File_Name_Type) return Name_Id
    is
-      Unit_Name : constant String := Get_String (Unit);
+      Unit_Name : constant String := Get_Name_String (Unit);
       Is_Spec   : constant Boolean := Unit_Name (Unit_Name'Last) = 's';
-      Part      : Unit_Part;
+      Part      : Unit_Parts;
    begin
       --  Parse the imported projects in the reverse order, since we must find
       --  the unit in the top-most project, for instance in case it was
@@ -570,14 +569,16 @@ package body ALI_Parser is
       if Imported_Projects (Imported_Projects'First) /= No_Project then
          for P in reverse Imported_Projects'Range loop
             declare
-               N : constant Filesystem_String := Get_Filename_From_Unit
-                 (Imported_Projects (P),
-                  Unit_Name (1 .. Unit_Name'Last - 2),
+               N : constant Filesystem_String :=
+                 Imported_Projects (P).File_From_Unit
+                 (Unit_Name (1 .. Unit_Name'Last - 2),
                   Part,
-                  Language => Ada_String);
+                  Language => "ada");
             begin
                if N'Length > 0 then
-                  return Get_String (+N);
+                  Name_Len := N'Length;
+                  Name_Buffer (1 .. Name_Len) := +N;
+                  return Name_Find;
                end if;
             end;
          end loop;
@@ -587,15 +588,17 @@ package body ALI_Parser is
       --  standard GNAT extensions.
 
       declare
-         Base : constant String := Get_String (File_To_Compile);
+         Base : constant String := Get_Name_String (File_To_Compile);
+         N    : constant String :=
+           +Imported_Projects (Imported_Projects'First).File_From_Unit
+           (Base (Base'First .. Base'Last - 4),
+            Part,
+            Check_Predefined_Library => True,
+            Language => "ada");
       begin
-         return Get_String
-           (+Get_Filename_From_Unit
-              (Imported_Projects (Imported_Projects'First),
-               Base (Base'First .. Base'Last - 4),
-               Part,
-               Check_Predefined_Library => True,
-               Language => Ada_String));
+         Name_Len := N'Length;
+         Name_Buffer (1 .. Name_Len) := N;
+         return Name_Find;
       end;
    end Filename_From_Unit;
 
@@ -673,7 +676,7 @@ package body ALI_Parser is
 
    function Imported_Projects_Count (Project : Project_Type) return Natural is
       Count : Natural := 0;
-      Iter  : Imported_Project_Iterator;
+      Iter  : Project_Iterator;
    begin
       if Project = No_Project then
          return 1;
@@ -696,7 +699,7 @@ package body ALI_Parser is
      (Project  : Project_Type;
       Imported : out Project_Type_Array)
    is
-      Iter : Imported_Project_Iterator;
+      Iter : Project_Iterator;
    begin
       if Project = No_Project then
          Imported (Imported'First) := No_Project;
@@ -864,7 +867,7 @@ package body ALI_Parser is
          if Xref.Table (Current_Ref).Name /= No_Name then
             Primitive := Get_Or_Create
               (Name   => Locale_To_UTF8
-                 (Get_String (Xref.Table (Current_Ref).Name)),
+                 (Get_Name_String (Xref.Table (Current_Ref).Name)),
                File   => Get_Predefined_File (Get_Database (LI), Handler),
                Line   => Predefined_Line,
                Column => Predefined_Column);
@@ -1023,7 +1026,7 @@ package body ALI_Parser is
                then
                   return Get_Or_Create
                     (Name => Locale_To_UTF8
-                       (Get_String (Xref_Entity.Table (Entity).Entity)),
+                       (Get_Name_String (Xref_Entity.Table (Entity).Entity)),
                      File => Sfiles (File_Num).File,
                      Line => Integer (Line),
                      Column => Visible_Column_Type
@@ -1057,7 +1060,8 @@ package body ALI_Parser is
                   then
                      return Get_Or_Create
                        (Name => Locale_To_UTF8
-                          (Get_String (Xref_Entity.Table (Entity).Entity)),
+                          (Get_Name_String
+                             (Xref_Entity.Table (Entity).Entity)),
                         File =>
                           Sfiles (Xref_Section.Table (Sect).File_Num).File,
                         Line => Integer (Xref_Entity.Table (Entity).Line),
@@ -1151,7 +1155,7 @@ package body ALI_Parser is
       if Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity /= No_Name then
          Parent := Get_Or_Create
            (Name   => Locale_To_UTF8
-              (Get_String
+              (Get_Name_String
                  (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity)),
             File   => Get_Predefined_File (Get_Database (LI), Handler),
             Line   => Predefined_Line,
@@ -1537,8 +1541,8 @@ package body ALI_Parser is
             declare
                Last    : Integer := Short_ALI_Filename'Last - Extension'Length;
                Dot_Replacement : constant Filesystem_String :=
-                 +Get_Attribute_Value
-                 (P, Dot_Replacement_Attribute, Default => "-");
+                 +P.Attribute_Value
+                 (Dot_Replacement_Attribute, Default => "-");
             begin
                while LI_Filename = GNATCOLL.VFS.No_File
                  and then Last >= Short_ALI_Filename'First
@@ -1588,7 +1592,7 @@ package body ALI_Parser is
             "DEBUG: Locate_ALI: file not found, checking in predefined path");
          declare
             Predefined_Object_Path : constant File_Array :=
-              Get_Predefined_Object_Path (Handler.Registry);
+              Handler.Registry.Environment.Predefined_Object_Path;
             Last : Integer := Short_ALI_Filename'Last - Extension'Length;
          begin
             Predefined := True;
@@ -1710,7 +1714,7 @@ package body ALI_Parser is
 
       if not Has_Multi_Unit_Src then
          Trace (Me, "Project does not have multi-unit sources: "
-                & Project_Name (Project));
+                & Project.Name);
          --  No need to do any work here, since there are no multi unit sources
          return GNATCOLL.VFS.No_File;
       end if;
@@ -1804,6 +1808,7 @@ package body ALI_Parser is
       Predefined      : out Boolean)
    is
       Ext  : Project_Type;
+      Info : File_Info;
    begin
       if Active (Me) then
          Trace (Me, "DEBUG: LI_Filename_From_Source "
@@ -1811,9 +1816,11 @@ package body ALI_Parser is
                 & " project=" & Display_Full_Name (Project_Path (Project)));
       end if;
 
+      Info := Handler.Registry.Tree.Info (Source_Filename);
+
       --  Do we have a runtime file ?
 
-      case Get_Unit_Part_From_Filename (Project, Source_Filename) is
+      case Info.Unit_Part is
          when Unit_Body | Unit_Separate =>
             Trace (Me, "DEBUG: Unit_Body or separate");
             --  Check the most likely ALI file (<file>.ali)
@@ -1849,8 +1856,7 @@ package body ALI_Parser is
             end if;
 
             declare
-               Unit : constant String := Get_Unit_Name_From_Filename
-                 (Project, Source_Filename);
+               Unit : constant String := Info.Unit_Name;
                Last : Integer := Unit'Last;
             begin
                Trace (Me, "DEBUG: Unit name is " & Unit);
@@ -1871,18 +1877,18 @@ package body ALI_Parser is
                        (Me, "DEBUG: looking for "
                         & (+Get_ALI_Filename
                           (Handler,
-                           Get_Filename_From_Unit
-                             (Project, Unit (Unit'First .. Last - 1),
-                              Unit_Body, Language => Ada_String))));
+                             Project.File_From_Unit
+                             (Unit (Unit'First .. Last - 1),
+                              Unit_Body, Language => "ada"))));
                   end if;
 
                   Locate_ALI
                     (Handler,
                      Get_ALI_Filename
                        (Handler,
-                        Get_Filename_From_Unit
-                          (Project, Unit (Unit'First .. Last - 1), Unit_Body,
-                           Language => Ada_String)),
+                        Project.File_From_Unit
+                          (Unit (Unit'First .. Last - 1), Unit_Body,
+                           Language => "ada")),
                      Source_Filename,
                      Project,
                      LI,
@@ -1908,7 +1914,9 @@ package body ALI_Parser is
             Locate_ALI
               (Handler,
                Get_ALI_Filename
-                 (Handler, Other_File_Base_Name (Project, Source_Filename)),
+                 (Handler,
+                  Handler.Registry.Tree.Other_File
+                    (Source_Filename).Base_Name),
                Source_Filename,
                Project, LI, Predefined);
 
@@ -2055,8 +2063,7 @@ package body ALI_Parser is
       --  Otherwise we have to compute the name of the LI file from scratch.
       --  The call below might result in No_Project for runtime files
 
-      Project := Get_Project_From_File
-        (Handler.Registry, Source_Filename, Root_If_Not_Found => False);
+      Project := Handler.Registry.Tree.Info (Source_Filename).Project;
 
       LI_Filename_From_Source
         (Handler, Source_Filename, Project, LI_Name, Predefined);
@@ -2065,7 +2072,7 @@ package body ALI_Parser is
          if Active (Me) then
             Trace (Me, "No LI found for "
                    & Display_Full_Name (Source_Filename)
-                   & " in project " & Project_Name (Project));
+                   & " in project " & Project.Name);
          end if;
 
          if File_Has_No_LI_Report /= null then
@@ -2125,7 +2132,7 @@ package body ALI_Parser is
 
    overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type) return LI_Information_Iterator'Class
+      Project   : Project_Type) return LI_Information_Iterator'Class
    is
       Iter     : ALI_Information_Iterator;
       Tmp      : File_Array_Access;
@@ -2135,7 +2142,7 @@ package body ALI_Parser is
       Freeze (Handler.Db, Mode => Create_Only);
 
       Trace (Me, "Parse_All_LI_Information in project "
-             & Project_Name (Project));
+             & Project.Name);
 
       --  Find all the files to parse immediately. This provides an accurate
       --  count of the total number of files to process, which is useful for
@@ -2251,8 +2258,8 @@ package body ALI_Parser is
    overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
-      Project      : Projects.Project_Type;
-      Errors       : Projects.Error_Report;
+      Project      : Project_Type;
+      Errors       : Error_Report;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Handler, Project, Recursive, Lang_Handler, Errors);
@@ -2267,7 +2274,7 @@ package body ALI_Parser is
 
    function Create_ALI_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Registry.Project_Registry) return Entities.LI_Handler
+      Registry : Project_Registry) return Entities.LI_Handler
    is
       ALI : constant ALI_Handler := new ALI_Handler_Record;
    begin
@@ -2282,7 +2289,7 @@ package body ALI_Parser is
 
    overriding procedure Continue
      (Iterator : in out ALI_Handler_Iterator;
-      Errors   : Projects.Error_Report;
+      Errors   : Error_Report;
       Finished : out Boolean)
    is
       pragma Unreferenced (Iterator, Errors);

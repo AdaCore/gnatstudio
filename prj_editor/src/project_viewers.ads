@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,12 +18,12 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 with Gtk.Widget;
 
 with GPS.Kernel;
-with Projects;
 with Naming_Editors;
 
 package Project_Viewers is
@@ -47,7 +47,7 @@ package Project_Viewers is
 
    function Widget_Factory
      (Page         : access Project_Editor_Page_Record;
-      Project      : Projects.Project_Type;
+      Project      : Project_Type;
       Full_Project : GNATCOLL.VFS.Virtual_File;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
@@ -68,12 +68,12 @@ package Project_Viewers is
 
    function Project_Editor
      (Page               : access Project_Editor_Page_Record;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Widget             : access Gtk.Widget.Gtk_Widget_Record'Class;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Ref_Project        : Projects.Project_Type) return Boolean is abstract;
+      Scenario_Variables : Scenario_Variable_Array;
+      Ref_Project        : Project_Type) return Boolean is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was
    --  created through a Project_Editor_Page_Factor.
    --
@@ -98,7 +98,7 @@ package Project_Viewers is
    procedure Refresh
      (Page      : access Project_Editor_Page_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Projects.Project_Type := Projects.No_Project;
+      Project   : Project_Type := No_Project;
       Languages : GNAT.Strings.String_List);
    --  Refresh the contents of Widget, that was created by Widget_Factory.
    --  Since Project_View is still the one when the project creation wizard or

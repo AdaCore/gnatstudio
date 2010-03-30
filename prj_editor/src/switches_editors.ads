@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,11 +25,11 @@
 --  edit them through an interactive command line.
 --  </description>
 
-with Gtk.Notebook;     use Gtk.Notebook;
+with Gtk.Notebook;             use Gtk.Notebook;
 with GNAT.Strings;
 with GPS.Kernel;
-with Projects;
 with Switches_Chooser.Gtkada;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Commands.Interactive;
 
@@ -85,9 +85,9 @@ package Switches_Editors is
 
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
-      Project            : Projects.Project_Type;
+      Project            : Project_Type;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Scenario_Variables : Scenario_Variable_Array;
       Files              : GNATCOLL.VFS.File_Array)
       return Boolean;
    --  Generate the information in Project to represent the status of Switches.
@@ -114,7 +114,7 @@ package Switches_Editors is
 
    function Edit_Switches_For_Files
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project      : Projects.Project_Type;
+      Project      : Project_Type;
       Files        : GNATCOLL.VFS.File_Array) return Boolean;
    --  Edit the switches for a list of files. All the files will be assigned
    --  the same switches.
@@ -122,7 +122,7 @@ package Switches_Editors is
    --  Return true if the switches were modified.
 
    procedure Set_Switches
-     (Editor : access Switches_Edit_Record; Project : Projects.Project_Type);
+     (Editor : access Switches_Edit_Record; Project : Project_Type);
    --  Set the initial value for the switches, based on the contents
    --  of Project_View. If a page doesn't exist in Editor, it will not be
    --  automatically created.
@@ -150,7 +150,7 @@ private
    type Switches_Edit_Record is new Gtk_Notebook_Record with record
       Kernel   : GPS.Kernel.Kernel_Handle;
       Files    : GNATCOLL.VFS.File_Array_Access;
-      Project  : Projects.Project_Type;
+      Project  : Project_Type;
       Pages    : Page_Array_Access;
    end record;
 

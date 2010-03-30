@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2009, AdaCore             --
+--                      Copyright (C) 2005-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,8 +39,6 @@ with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
-with Projects.Editor;          use Projects.Editor;
-with Projects.Registry;        use Projects.Registry;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 with Wizards;                  use Wizards;
@@ -56,8 +54,8 @@ package body Creation_Wizard.Extending is
    overriding procedure Generate_Project
      (Page               : access Extending_Sources_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    overriding function Create_Content
      (Page : access Extending_Sources_Page;
@@ -117,13 +115,11 @@ package body Creation_Wizard.Extending is
       Frame    : Gtk_Frame;
       Label    : Gtk_Label;
       Scrolled : Gtk_Scrolled_Window;
-      PIter    : Imported_Project_Iterator;
+      PIter    : Project_Iterator;
       TIter    : Gtk_Tree_Iter;
       FIter    : Gtk_Tree_Iter;
       Project  : Project_Type;
       Model    : Gtk_Tree_Store;
-      File     : GNATCOLL.VFS.Virtual_File;
-      File_Index : Positive;
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
 
@@ -168,21 +164,21 @@ package body Creation_Wizard.Extending is
 
          Append (Model, TIter, Null_Iter);
          Set (Model, TIter, 0, False);
-         Set (Model, TIter, 1, Project_Name (Project));
+         Set (Model, TIter, 1, Project.Name);
          Set_File (Model, TIter, 2, No_File);
 
-         File_Index := 1;
-         loop
-            File := Get_Source_File (Project, File_Index);
-            exit when File = GNATCOLL.VFS.No_File;
+         declare
+            Sources : File_Array_Access := Project.Source_Files;
+         begin
+            for F in Sources'Range loop
+               Append (Model, FIter, TIter);
+               Set (Model, FIter, 0, False);
+               Set (Model, FIter, 1, +Sources (F).Base_Name);
+               Set_File (Model, FIter, 2, Sources (F));
+            end loop;
 
-            Append (Model, FIter, TIter);
-            Set (Model, FIter, 0, False);
-            Set (Model, FIter, 1, +Base_Name (File));
-            Set_File (Model, FIter, 2, File);
-
-            File_Index := File_Index + 1;
-         end loop;
+            Unchecked_Free (Sources);
+         end;
 
          Next (PIter);
       end loop;
@@ -197,8 +193,8 @@ package body Creation_Wizard.Extending is
    overriding procedure Generate_Project
      (Page               : access Extending_Sources_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       Parent   : Project_Type := Get_Project (Kernel);
@@ -206,7 +202,6 @@ package body Creation_Wizard.Extending is
       Model    : Gtk_Tree_Store;
       File     : GNATCOLL.VFS.Virtual_File;
       Prj      : Project_Type;
-      P        : Integer;
       Projects : Project_Type_Array (1 .. Page.Projects_Count) :=
         (others => No_Project);
       Files    : array (1 .. Page.Projects_Count) of File_Array_Access;
@@ -251,35 +246,34 @@ package body Creation_Wizard.Extending is
          Parent := Extended_Project (Parent);
       end loop;
 
-      Set_Extended_Project
-        (Project, Parent,
+      Project.Set_Extended_Project
+        (Parent,
          Extend_All         => True,
          Use_Relative_Paths => True);
 
-      Update_Attribute_Value_In_Scenario
-        (Project,
-         Scenario_Variables => Scenario_Variables,
-         Attribute          => Source_Files_Attribute,
-         Values             => (1 .. 0 => null));
+      Project.Set_Attribute
+        (Scenario  => Scenario_Variables,
+         Attribute => Source_Files_Attribute,
+         Values    => (1 .. 0 => null));
 
       --  Find the list of source files that are modified
 
       Model := Gtk_Tree_Store (Get_Model (Page.Files));
       PIter := Get_Iter_First (Model);
       while PIter /= Null_Iter loop
-         Prj := Get_Project_From_Name
-           (Get_Registry (Kernel).all,
-            Get_String (Get_String (Model, PIter, 1)));
+         Prj := Get_Registry (Kernel).Tree.Project_From_Name
+           (Get_String (Model, PIter, 1));
 
          --  If the project is selected, import all its source files
          if Get_Boolean (Model, PIter, 0) then
-            P := 1;
-            loop
-               File := Get_Source_File (Prj, P);
-               exit when File = GNATCOLL.VFS.No_File;
-               Add_File (Prj, File);
-               P := P + 1;
-            end loop;
+            declare
+               Sources : File_Array_Access := Prj.Source_Files;
+            begin
+               for P in Sources'Range loop
+                  Add_File (Prj, Sources (P));
+               end loop;
+               Unchecked_Free (Sources);
+            end;
          end if;
 
          FIter := Children (Model, PIter);
@@ -327,7 +321,7 @@ package body Creation_Wizard.Extending is
       Recompute    : Boolean)
    is
       Extended   : Project_Type;
-      Iter       : Imported_Project_Iterator := Start (Root_Project);
+      Iter       : Project_Iterator := Start (Root_Project);
       File_Names : Argument_List (Files'Range);
       Success    : Boolean;
       pragma Warnings (Off, Success);
@@ -345,21 +339,17 @@ package body Creation_Wizard.Extending is
       Extended := Current (Iter);
 
       if Extended = No_Project then
-         Extended := Create_Project
-           (Get_Registry (Kernel).all,
-            Name => Project_Name (File_Project) & "_Extending",
+         Extended := Get_Registry (Kernel).Tree.Create_Project
+           (Name => File_Project.Name & "_Extending",
             Path => Project_Directory (Root_Project));
 
-         Set_Extended_Project
-           (Project            => Extended,
-            Extended           => File_Project,
+         Extended.Set_Extended_Project
+           (Extended           => File_Project,
             Extend_All         => False,
             Use_Relative_Paths => True);
 
-         Error := Add_Imported_Project
-           (Root_Project,
-            Root_Project,
-            Imported_Project  => Extended,
+         Error := Root_Project.Add_Imported_Project
+           (Imported_Project  => Extended,
             Use_Relative_Path => True);
 
          Created := True;
@@ -369,12 +359,10 @@ package body Creation_Wizard.Extending is
          File_Names (F) := new String'(+Base_Name (Files (F)));
       end loop;
 
-      Update_Attribute_Value_In_Scenario
-        (Extended,
-         Scenario_Variables => No_Scenario,
-         Attribute          => Source_Files_Attribute,
-         Values             => File_Names,
-         Prepend            => not Created);
+      Extended.Set_Attribute
+        (Attribute => Source_Files_Attribute,
+         Values    => File_Names,
+         Prepend   => not Created);
 
       Free (File_Names);
 
@@ -386,7 +374,7 @@ package body Creation_Wizard.Extending is
          end loop;
       end if;
 
-      Success := Save_Project (Extended);
+      Success := Extended.Save;
 
       if Recompute then
          Recompute_View (Kernel);
@@ -407,7 +395,7 @@ package body Creation_Wizard.Extending is
       File     : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
       Project  : constant Project_Type :=
-        Get_Project_From_File (Get_Registry (Kernel).all, File);
+        Get_Registry (Kernel).Tree.Info (File).Project;
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
@@ -447,8 +435,7 @@ package body Creation_Wizard.Extending is
       if Extended_Project (Get_Project (Kernel)) /= No_Project then
          File := File_Information (Context);
          if File /= GNATCOLL.VFS.No_File then
-            Project := Get_Project_From_File
-              (Get_Registry (Kernel).all, File);
+            Project := Get_Registry (Kernel).Tree.Info (File).Project;
 
             --  If the file doesn't already belong to an extending project
             if Project /= No_Project

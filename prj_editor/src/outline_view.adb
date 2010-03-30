@@ -63,8 +63,8 @@ with GPS.Kernel;                use GPS.Kernel;
 with Histories;                 use Histories;
 with GUI_Utils;                 use GUI_Utils;
 with Project_Explorers_Common;  use Project_Explorers_Common;
-with Projects;                  use Projects;
 with Tooltips;                  use Tooltips;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Traces;                    use Traces;
 
@@ -411,7 +411,7 @@ package body Outline_View is
 
       Set_File_Information
         (Context => Context,
-         Project => Projects.No_Project,
+         Project => No_Project,
          Files   => (1 => Outline.File),
          Line    => Line);
 

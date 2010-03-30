@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2009, AdaCore               --
+--                    Copyright (C) 2002-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,11 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -36,7 +35,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Projects;                  use Projects;
-with Projects.Editor;           use Projects.Editor;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -89,14 +87,13 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
 
-   procedure Check_Prj
-     (Project  : Projects.Project_Type;
-      File_In  : GNATCOLL.VFS.Virtual_File;
-      Success  : out Boolean;
-      Prj_List : out Unbounded_String);
-   --  Check if the project contains File_In directory or file.
-   --  If Success, then Prj_List will contain a printable list of (sub)projects
-   --  referencing File_In.
+   function Check_Prj
+     (Tree     : access Project_Tree'Class;
+      File_In  : GNATCOLL.VFS.Virtual_File) return Project_Type;
+   --  Check if the file or directory File_In belongs to at least one of the
+   --  projects in the tree (either as a source file, or as one of the source
+   --  directories). If it doesn, returning the first matching project.
+   --  Otherwise returns No_Project.
 
    --------------------------
    -- VFS_Command_Handler --
@@ -300,75 +297,45 @@ package body VFS_Module is
    -- Check_Prj --
    ---------------
 
-   procedure Check_Prj
-     (Project  : Projects.Project_Type;
-      File_In  : GNATCOLL.VFS.Virtual_File;
-      Success  : out Boolean;
-      Prj_List : out Unbounded_String)
+   function Check_Prj
+     (Tree     : access Project_Tree'Class;
+      File_In  : GNATCOLL.VFS.Virtual_File) return Project_Type
    is
-      Iter  : Projects.Imported_Project_Iterator :=
-                Projects.Start (Project, Include_Extended => False);
-      Prj   : Projects.Project_Type;
-      First : Boolean := True;
-      Found : Boolean;
+      Iter  : Project_Iterator;
+      Prj   : Project_Type;
 
    begin
-      Prj_List := To_Unbounded_String ("");
-      Success  := False;
-
-      loop
-         Prj := Projects.Current (Iter);
-
-         exit when Prj = Projects.No_Project;
-
-         Projects.Next (Iter);
-
-         Found := False;
-
-         --  Check directories
-         if Is_Directory (File_In)
-           and then Projects.Editor.Contains_Path (Prj, File_In)
+      if Is_Directory (File_In) then
+         if Tree.Directory_Belongs_To_Project
+           (File_In.Full_Name, Direct_Only => False)
          then
-            Success := True;
-            Found := True;
-
-         --  Check files
-         elsif not Is_Directory (File_In) then
-
-            --  First check if the file is a project file
-            if File_In = Project_Path (Prj) then
-               Success := True;
-               Found := True;
-
-            --  Then check if the file is a source file
-            else
-               declare
-                  Files : File_Array_Access :=
-                            Projects.Get_Source_Files
-                              (Prj, Recursive => False);
-               begin
-                  for J in Files'Range loop
-                     if Files (J) = File_In then
-                        Success := True;
-                        Found := True;
-                        exit;
-                     end if;
-                  end loop;
-
-                  Unchecked_Free (Files);
-               end;
-            end if;
+            return Tree.Root_Project;   --   ??? Not accurate
+         else
+            return No_Project;
          end if;
 
-         if Found then
-            if not First then
-               Prj_List := Prj_List & ", ";
-            end if;
+      else
+         --  Do we have a source file ?
+         Prj := Tree.Info (File_In).Project;
+         if Prj /= No_Project then
+            return Prj;
+         end if;
+      end if;
 
-            First := False;
-            Prj_List := Prj_List & "'" & Project_Name (Prj) & "'";
+      Iter := Start (Tree.Root_Project, Include_Extended => False);
+      loop
+         Prj := Current (Iter);
+         exit when Prj = No_Project;
+
+         Next (Iter);
+
+         --  First check if the file is a project file
+         if File_In = Project_Path (Prj) then
+            return Prj;
          end if;
       end loop;
+
+      return No_Project;
    end Check_Prj;
 
    -------------
@@ -385,7 +352,7 @@ package body VFS_Module is
       Success : Boolean;
       Res     : Gtkada.Dialogs.Message_Dialog_Buttons;
       File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      List    : Unbounded_String;
+      Project : Project_Type;
 
    begin
       Trace (Me, "deleting "
@@ -452,15 +419,14 @@ package body VFS_Module is
       --  Need also to update project/file views
       if Success then
          Get_Kernel (Context.Context).File_Deleted (File);
-         Check_Prj
-           (Get_Project (Get_Kernel (Context.Context)),
-            File, Success, List);
+         Project := Check_Prj
+           (Get_Registry (Get_Kernel (Context.Context)).Tree, File);
 
-         if Success then
+         if Project /= No_Project then
             Res := Gtkada.Dialogs.Message_Dialog
-              (-"A file or directory belonging to the project(s) " &
-               To_String (List) &
-               (-" has been deleted.") & ASCII.LF &
+              (-"A file or directory belonging to the project "
+               & Project.Name
+               & (-" has been deleted.") & ASCII.LF &
                (-"The project might require modifications."),
                Gtkada.Dialogs.Warning,
                Gtkada.Dialogs.Button_Yes);
@@ -487,7 +453,6 @@ package body VFS_Module is
       Success  : Boolean;
       Button   : Gtkada.Dialogs.Message_Dialog_Buttons;
       Is_Dir   : Boolean;
-      Prj_List : Unbounded_String;
 
       procedure Actual_Rename
         (File_In     : GNATCOLL.VFS.Virtual_File;
@@ -506,28 +471,28 @@ package body VFS_Module is
       procedure Rename_In_Prj
         (File_In, File_Out : Virtual_File; Success : out Boolean)
       is
-         Project  : constant Projects.Project_Type :=
+         Project  : constant Project_Type :=
                       Get_Project (Get_Kernel (Context.Context));
          Relative : Boolean;
-         Iter     : Projects.Imported_Project_Iterator :=
-                      Projects.Start (Project,
+         Iter     : Project_Iterator :=
+                      Start (Project,
                                       Include_Extended => False);
-         Prj      : Projects.Project_Type;
+         Prj      : Project_Type;
       begin
          Success     := False;
 
          loop
-            Prj := Projects.Current (Iter);
+            Prj := Current (Iter);
 
-            exit when Prj = Projects.No_Project;
+            exit when Prj = No_Project;
 
-            Projects.Next (Iter);
+            Next (Iter);
             Relative :=
               Get_Paths_Type (Prj) = Projects.Relative
               or else (Get_Paths_Type (Prj) = From_Pref
                        and then Generate_Relative_Paths.Get_Pref);
 
-            Success := Success or else Projects.Editor.Rename_Path
+            Success := Success or else Rename_Path
               (Prj, File_In, File_Out, Relative);
          end loop;
       end Rename_In_Prj;
@@ -542,6 +507,7 @@ package body VFS_Module is
          Prj_Changed : out Boolean)
       is
          Renamed : Virtual_File := No_File;
+         Project : Project_Type;
       begin
          if Is_Directory (File_In) then
             declare
@@ -604,17 +570,16 @@ package body VFS_Module is
          Get_Kernel (Context.Context).File_Renamed (File_In, Renamed);
 
          --  First check if file_in is defined in the projects
-         Check_Prj
-           (Get_Project (Get_Kernel (Context.Context)),
-            File_In, Prj_Changed, Prj_List);
+         Project := Check_Prj
+           (Get_Registry (Get_Kernel (Context.Context)).Tree, File_In);
 
-         if Prj_Changed then
+         if Project /= No_Project then
             if Is_Directory (File_In) then
                --  We need to change the paths defined in the projects
 
                Button := Gtkada.Dialogs.Message_Dialog
-                 (-("The directory is referenced in the project(s) ") &
-                  To_String (Prj_List) & ASCII.LF &
+                 (-("The directory is referenced in the project ")
+                  & Project.Name & ASCII.LF &
                   (-("Do you want GPS to modify these projects to " &
                      "reference its new name ?")),
                   Gtkada.Dialogs.Confirmation,
@@ -628,8 +593,8 @@ package body VFS_Module is
                end if;
             else
                Button := Gtkada.Dialogs.Message_Dialog
-                 (-("The file is referenced in the project(s) ") &
-                  To_String (Prj_List) & ASCII.LF &
+                 (-("The file is referenced in the project ") &
+                  Project.Name & ASCII.LF &
                   (-"The project(s) might require manual modifications."),
                   Gtkada.Dialogs.Warning,
                   Button_OK);
@@ -677,8 +642,7 @@ package body VFS_Module is
       Dir         : constant Virtual_File :=
                       Directory_Information (Context.Context);
       File        : GNATCOLL.VFS.Virtual_File;
-      Prj_Changed : Boolean;
-      Prj_List    : Unbounded_String;
+      Project     : Project_Type;
 
    begin
       if Command.Create_Dir then
@@ -732,11 +696,10 @@ package body VFS_Module is
       end if;
 
       GPS.Kernel.File_Saved (Get_Kernel (Context.Context), File);
-      Check_Prj
-        (Get_Project (Get_Kernel (Context.Context)),
-         Dir, Prj_Changed, Prj_List);
+      Project := Check_Prj
+        (Get_Registry (Get_Kernel (Context.Context)).Tree, Dir);
 
-      if Prj_Changed then
+      if Project /= No_Project then
          Recompute_View (Get_Kernel (Context.Context));
       end if;
 

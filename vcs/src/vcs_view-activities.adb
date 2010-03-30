@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,13 +40,12 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
-with Projects.Registry;         use Projects.Registry;
-with Projects;                  use Projects;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 package body VCS_View.Activities is
@@ -362,7 +361,7 @@ package body VCS_View.Activities is
       Explorer     : constant VCS_Activities_View_Access :=
         Get_Activities_Explorer (Kernel, False, False);
       Root_Project : constant Virtual_File :=
-        Project_Path (Get_Root_Project (Get_Registry (Kernel).all));
+        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
 
       function Get_Activity_Iter (File : Virtual_File) return Gtk_Tree_Iter;
       --  Return the activity tree iter for the given file. Use Activity if set

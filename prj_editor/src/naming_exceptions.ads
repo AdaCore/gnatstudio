@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2003-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,8 +22,8 @@
 --  and bodies
 
 with Gtk.Box;
-with Projects;
 with GNAT.Strings;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with Gtk.GEntry;
 with Gtk.Tree_View;
 with Gtk.Tree_Store;
@@ -41,11 +40,11 @@ package Naming_Exceptions is
 
    function Create_Project_Entry
      (Editor             : access Exceptions_Editor_Record;
-      Project            : Projects.Project_Type;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
+      Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
    procedure Show_Project_Settings
      (Editor             : access Exceptions_Editor_Record;
-      Project            : Projects.Project_Type);
+      Project            : Project_Type);
    --  See doc for homonym subprograms in naming_editors.ads
 
 private

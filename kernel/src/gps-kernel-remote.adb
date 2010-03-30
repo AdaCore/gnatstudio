@@ -485,7 +485,7 @@ package body GPS.Kernel.Remote is
    begin
       Trace (Me, "Reloading the project");
       Remote_Module.Project_Reloading := True;
-      Load_Project (Data.Kernel, Project_Path (Get_Project (Data.Kernel)));
+      Load_Project (Data.Kernel, Get_Project (Data.Kernel).Project_Path);
       Remote_Module.Project_Reloading := False;
       return False;
 
@@ -508,7 +508,7 @@ package body GPS.Kernel.Remote is
          return True;
       end if;
 
-      The_File := Project_Path (Get_Project (Remote_Module.Kernel));
+      The_File := Get_Project (Remote_Module.Kernel).Project_Path;
       Get_Property (Property, The_File, "servers_config", Found);
 
       if not Found then
@@ -554,7 +554,7 @@ package body GPS.Kernel.Remote is
          return;
       end if;
 
-      The_File := Project_Path (Get_Project (Remote_Module.Kernel));
+      The_File := Get_Project (Remote_Module.Kernel).Project_Path;
       Get_Property (Property, The_File, "servers_config", Found);
 
       if Found then
@@ -622,7 +622,7 @@ package body GPS.Kernel.Remote is
 
          if Prj_File = GNATCOLL.VFS.No_File then
             Load_Data.File := To_Remote
-              (Project_Path (Get_Project (Kernel)),
+              (Get_Project (Kernel).Project_Path,
                Get_Nickname (Build_Server));
          else
             Load_Data.File := To_Remote

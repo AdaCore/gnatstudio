@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with Glib;                     use Glib;
 with Glib.Object;
 
 with GPS.Intl;                 use GPS.Intl;
-with Projects;                 use Projects;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Coverage;            use Code_Coverage;
 with GNATCOLL.VFS;
@@ -245,7 +244,7 @@ package body Code_Analysis_Tree_Model is
       Gtk.Tree_Store.Set
         (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.Prj_Pixbuf));
       Gtk.Tree_Store.Set (Model, Iter, Name_Col,
-                          UTF8_String (String'(Project_Name (Prj_Node.Name))));
+                          UTF8_String (Prj_Node.Name.Name));
       Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
       Fill_Iter (Model, Iter, Prj_Node.Analysis_Data, Bin_Mode);
 

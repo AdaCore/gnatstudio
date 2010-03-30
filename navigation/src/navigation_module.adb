@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2009, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;               use GNAT.Strings;
 
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -36,13 +37,13 @@ with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
 
-with Projects;                   use Projects;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;       use GPS.Kernel.Locations;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
@@ -924,10 +925,9 @@ package body Navigation_Module is
 
       if Has_File_Information (Context) then
          declare
-            Other_File : constant Virtual_File := Create
-              (Other_File_Base_Name
-                 (Project_Information (Context), File_Information (Context)),
-               Project_Information (Context));
+            Other_File : constant Virtual_File :=
+              Get_Registry (Kernel).Tree.Other_File
+                (File_Information (Context));
          begin
             if Dir_Name (Other_File) /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0);

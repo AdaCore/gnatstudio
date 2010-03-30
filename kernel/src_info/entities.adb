@@ -22,6 +22,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -33,7 +34,6 @@ with Language;                   use Language;
 with Language.Tree.Database;     use Language.Tree.Database;
 with Language_Handlers;          use Language_Handlers;
 with Language_Utils;             use Language_Utils;
-with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with String_Utils;
 with Remote;                     use Remote;
@@ -1022,7 +1022,7 @@ package body Entities is
    ------------
 
    function Create
-     (Registry     : Projects.Registry.Project_Registry_Access;
+     (Registry     : Project_Registry_Access;
       Construct_Db : Language.Tree.Database.Construct_Database_Access)
       return Entities_Database
    is
@@ -1423,13 +1423,10 @@ package body Entities is
             GNATCOLL.VFS.No_File, Handler, LI, Allow_Create);
 
       else
-         Get_Full_Path_From_File
-           (Db.Registry.all,
-            Base_Name,
+         File := Db.Registry.Tree.Create
+           (Base_Name,
             Use_Source_Path => True,
-            Use_Object_Path => False,
-            Create_As_Base_If_Not_Found => True,
-            File            => File);
+            Use_Object_Path => False);
 
          return Internal_Get_Or_Create
            (Db, File, File, Handler, LI, Allow_Create);
@@ -1684,7 +1681,7 @@ package body Entities is
    function Get_Or_Create
      (Db      : Entities_Database;
       File    : GNATCOLL.VFS.Virtual_File;
-      Project : Projects.Project_Type) return LI_File
+      Project : Project_Type) return LI_File
    is
       L : LI_File_Item := Get (Db.LIs, File);
    begin
@@ -2093,7 +2090,7 @@ package body Entities is
    -- Get_Project --
    -----------------
 
-   function Get_Project (LI : LI_File) return Projects.Project_Type is
+   function Get_Project (LI : LI_File) return Project_Type is
    begin
       return LI.Project;
    end Get_Project;
@@ -3098,7 +3095,7 @@ package body Entities is
 
    procedure Parse_All_LI_Information
      (Handler          : access LI_Handler_Record'Class;
-      Project          : Projects.Project_Type)
+      Project          : Project_Type)
    is
       Iter : LI_Information_Iterator'Class :=
         Parse_All_LI_Information (Handler, Project);

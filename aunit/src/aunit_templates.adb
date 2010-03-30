@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,10 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-
-with Projects;                  use Projects;
-
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
@@ -66,19 +64,17 @@ package body AUnit_Templates is
                         Get_Template_File_Name
                           (Kernel, Base_Template & ".adb");
       Spec_Filename : constant Filesystem_String :=
-                        Projects.Get_Filename_From_Unit
-                          (Get_Project (Kernel),
-                           Unit_Name       => Name,
+                        Get_Project (Kernel).File_From_Unit
+                          (Unit_Name       => Name,
                            Part            => Unit_Spec,
                            File_Must_Exist => False,
-                           Language        => "Ada");
+                           Language        => "ada");
       Body_Filename : constant Filesystem_String :=
-                        Projects.Get_Filename_From_Unit
-                          (Get_Project (Kernel),
-                           Unit_Name       => Name,
+                        Get_Project (Kernel).File_From_Unit
+                          (Unit_Name       => Name,
                            Part            => Unit_Body,
                            File_Must_Exist => False,
-                           Language        => "Ada");
+                           Language        => "ada");
       Spec_File     : constant Virtual_File :=
                         Create_From_Dir (Directory_Name, Spec_Filename);
       Body_File     : constant Virtual_File :=

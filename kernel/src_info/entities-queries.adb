@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -32,7 +33,6 @@ with Language;                  use Language;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;
 with Ada.Containers; use Ada.Containers;
@@ -1528,7 +1528,7 @@ package body Entities.Queries is
       Include_Self          : Boolean := False;
       Single_Source_File    : Boolean := False)
    is
-      Importing : Imported_Project_Iterator;
+      Importing : Project_Iterator;
       Project   : Project_Type;
       Count     : Natural;
       pragma Unreferenced (Count);
@@ -1570,14 +1570,12 @@ package body Entities.Queries is
                   File                  => File);
 
       else
-         Project := Get_Project_From_File
-           (File.Db.Registry.all, Get_Filename (File),
-            Root_If_Not_Found => False);
+         Project := File.Db.Registry.Tree.Info (Get_Filename (File)).Project;
 
          if Project = No_Project then
             --  Project not found ? We'll have to parse all projects, since
             --  it might be from the GNAT runtime.
-            Project := Get_Root_Project (File.Db.Registry.all);
+            Project := File.Db.Registry.Tree.Root_Project;
             Importing := Start (Project, Recursive => True);
          else
             Importing := Find_All_Projects_Importing
@@ -3519,7 +3517,7 @@ package body Entities.Queries is
    procedure Start
      (Iter      : out Recursive_LI_Information_Iterator;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
-      Project   : Projects.Imported_Project_Iterator) is
+      Project   : Project_Iterator) is
    begin
       Iter.Project := Project;
       Iter.Handler      := Language_Handler (Handler);
@@ -3622,7 +3620,7 @@ package body Entities.Queries is
 
          if P /= No_Project then
             Trace (Me, "Parse all LI information: switching to project "
-                   & Project_Name (P));
+                   & P.Name);
          end if;
       end loop;
 

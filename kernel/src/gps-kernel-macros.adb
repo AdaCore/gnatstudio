@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,9 +24,8 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Entities;                use Entities;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with Projects;                use Projects;
-with Projects.Registry;       use Projects.Registry;
 with String_Utils;            use String_Utils;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
 
@@ -236,7 +235,7 @@ package body GPS.Kernel.Macros is
          if Importing_Project_Information (Context) /=
            Project_Information (Context)
          then
-            return Project_Name (Importing_Project_Information (Context));
+            return Importing_Project_Information (Context).Name;
          end if;
 
       elsif Param = "ek" then
@@ -244,15 +243,14 @@ package body GPS.Kernel.Macros is
            (Krunch (Entity_Name_Information (Context)));
 
       elsif Param = "gnatmake" then
-         return Get_Attribute_Value
-                  (Get_Project (Get_Kernel (Context)),
-                   Compiler_Command_Attribute,
+         return Get_Project (Get_Kernel (Context)).Attribute_Value
+                  (Compiler_Command_Attribute,
                    Default => "gnatmake",
                    Index   => "Ada");
 
       elsif Param = "o" or else Param = "O" then
          return String_Utils.Protect
-           (String (Full_Name (Object_Path
+           (String (Full_Name (Object_Dir
               (Project_From_Param (Param, Context))).all),
             Protect_Quotes      => Quoted,
             Protect_Backslashes => For_Shell);
@@ -280,13 +278,13 @@ package body GPS.Kernel.Macros is
 
          if Param = "p" or else Param = "P" then
             return String_Utils.Protect
-              (Project_Name (Project),
+              (Project.Name,
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
 
          elsif Param = "Pl" then
             return String_Utils.Protect
-              (To_Lower (Project_Name (Project)),
+              (To_Lower (Project.Name),
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
 
@@ -318,30 +316,27 @@ package body GPS.Kernel.Macros is
 
                      File       : File_Type;
                      Files_List : File_Array_Access;
-                     List       : File_Array_Access;
 
                   begin
                      Create (File);
 
                      if List_Dirs then
-                        List := Source_Dirs (Project, Recurse);
-
-                        if List /= null then
+                        declare
+                           List : constant File_Array :=
+                             Project.Source_Dirs (Recurse);
+                        begin
                            for K in List'Range loop
                               Put_Line
                                 (File,
-                                 +Full_Name
-                                   (To_Remote
-                                      (List (K),
-                                       Get_Nickname (Server))));
+                                 +To_Remote
+                                   (List (K),
+                                    Get_Nickname (Server)).Full_Name);
                            end loop;
-
-                           Unchecked_Free (List);
-                        end if;
+                        end;
                      end if;
 
                      if List_Sources then
-                        Files_List := Get_Source_Files (Project, Recurse);
+                        Files_List := Project.Source_Files (Recurse);
                         if Files_List /= null then
                            for K in Files_List'Range loop
                               Put_Line
@@ -373,13 +368,13 @@ package body GPS.Kernel.Macros is
                      use GNAT.Strings;
 
                      Result     : Unbounded_String;
-                     List       : File_Array_Access;
                      Files_List : File_Array_Access;
                   begin
                      if List_Dirs then
-                        List := Source_Dirs (Project, Recurse);
-
-                        if List /= null then
+                        declare
+                           List : constant File_Array :=
+                             Project.Source_Dirs (Recurse);
+                        begin
                            for K in List'Range loop
                               Append
                                 (Result, '"' &
@@ -388,13 +383,11 @@ package body GPS.Kernel.Macros is
                                        Get_Nickname (Server)).Full_Name) &
                                  """ ");
                            end loop;
-
-                           Unchecked_Free (List);
-                        end if;
+                        end;
                      end if;
 
                      if List_Sources then
-                        Files_List := Get_Source_Files (Project, Recurse);
+                        Files_List := Project.Source_Files (Recurse);
                         if Files_List /= null then
                            for K in Files_List'Range loop
                               Append
@@ -430,26 +423,22 @@ package body GPS.Kernel.Macros is
 
    function Project_From_Param
      (Param   : String;
-      Context : GPS.Kernel.Selection_Context) return Project_Type
-   is
-      Project : Project_Type := No_Project;
+      Context : GPS.Kernel.Selection_Context) return Project_Type is
    begin
       if Param (Param'First) in 'O' .. 'P' then
-         Project := Get_Project (Get_Kernel (Context));
+         return Get_Project (Get_Kernel (Context));
 
       elsif Has_Project_Information (Context) then
-         Project := Project_Information (Context);
+         return Project_Information (Context);
 
       elsif Has_File_Information (Context) then
          --  Since the editor doesn't provide the project, we emulate it
          --  here
-         Project := Get_Project_From_File
-           (Project_Registry (Get_Registry (Get_Kernel (Context)).all),
-            File_Information (Context),
-            Root_If_Not_Found => False);
+         return Get_Registry (Get_Kernel (Context)).Tree.Info
+           (File_Information (Context)).Project;
       end if;
 
-      return Project;
+      return No_Project;
    end Project_From_Param;
 
    ------------------------------

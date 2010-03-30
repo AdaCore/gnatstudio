@@ -22,6 +22,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -84,7 +85,6 @@ with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
 with Pango.Layout;               use Pango.Layout;
-with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with Src_Editor_Box.Tooltips;    use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer.Line_Information;
@@ -1776,17 +1776,11 @@ package body Src_Editor_Box is
       if Has_File_Information (Context) then
          declare
             File       : constant Virtual_File := File_Information (Context);
-            Project    : constant Project_Type :=
-                           Get_Project_From_File
-                             (Get_Registry (Kernel).all, File);
-            Other_File : constant Filesystem_String :=
-                           Other_File_Base_Name (Project, File);
+            Other_File : constant Virtual_File :=
+              Get_Registry (Kernel).Tree.Other_File (File);
          begin
-            if not Equal (Other_File, "")
-              and then not Equal (Other_File, Base_Name (File))
-            then
-               return True;
-            end if;
+            return Other_File /= No_File
+              and then Other_File /= File;
          end;
       end if;
       return False;
@@ -1894,16 +1888,11 @@ package body Src_Editor_Box is
       pragma Unreferenced (Command);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
       File       : constant Virtual_File := File_Information (Context.Context);
-      Project    : constant Project_Type :=
-                     Get_Project_From_File
-                       (Get_Registry (Kernel).all, File);
       Other_File : constant Virtual_File :=
-                     Create
-                       (Other_File_Base_Name (Project, File), Project);
+        Get_Registry (Kernel).Tree.Other_File (File);
    begin
       Trace (Me, "Goto_Other_File_Command File="
              & Display_Full_Name (File)
-             & " Project=" & Project_Name (Project)
              & " Other_File=" & Display_Full_Name (Other_File));
 
       if Other_File /= GNATCOLL.VFS.No_File then
@@ -2373,7 +2362,7 @@ package body Src_Editor_Box is
       Constructs    : Construct_List;
       Info          : Construct_Access;
       New_Base_Name : Filesystem_String_Access;
-      Part          : Projects.Unit_Part;
+      Part          : Unit_Parts;
 
       Buffer        : GNAT.Strings.String_Access;
 
@@ -2419,18 +2408,17 @@ package body Src_Editor_Box is
                --  Info.Name is a valid Ada unit name
 
                if Info.Is_Declaration then
-                  Part := Projects.Unit_Spec;
+                  Part := Unit_Spec;
                else
-                  Part := Projects.Unit_Body;
+                  Part := Unit_Body;
                end if;
 
                New_Base_Name := new Filesystem_String'
-                 (Projects.Get_Filename_From_Unit
-                    (Project         => Get_Project (Editor.Kernel),
-                     Unit_Name       => To_Lower (Info.Name.all),
+                 (Get_Project (Editor.Kernel).File_From_Unit
+                    (Unit_Name       => To_Lower (Info.Name.all),
                      Part            => Part,
                      File_Must_Exist => False,
-                     Language        => Ada_String));
+                     Language        => "ada"));
             end if;
 
             Free (Constructs);

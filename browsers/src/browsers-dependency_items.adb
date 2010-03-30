@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,7 +40,8 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 with Entities.Queries;       use Entities.Queries;
 with Entities;               use Entities;
 with Fname;                  use Fname;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -53,7 +54,6 @@ with GPS.Kernel;             use GPS.Kernel;
 with Histories;              use Histories;
 with Namet;                  use Namet;
 with Pango.Layout;           use Pango.Layout;
-with Projects.Registry;      use Projects.Registry;
 with Projects;               use Projects;
 with Traces;                 use Traces;
 with XML_Utils;              use XML_Utils;
@@ -1225,15 +1225,15 @@ package body Browsers.Dependency_Items is
    function Project_Of
      (Item : access File_Item_Record'Class) return Project_Type
    is
-      File_Name : constant Virtual_File := Get_Filename (Get_Source (Item));
-      P         : Project_Type;
+      File : constant Virtual_File := Get_Filename (Get_Source (Item));
+      P    : Project_Type;
    begin
-      P := Get_Project_From_File
-        (Get_Registry (Get_Kernel (Get_Browser (Item))).all, File_Name);
+      P := Get_Registry
+        (Get_Kernel (Get_Browser (Item))).Tree.Info (File).Project;
 
       if P = No_Project then
          Trace (Me, "Project_Of return No_Project for "
-                & Display_Full_Name (File_Name));
+                & Display_Full_Name (File));
       end if;
 
       return P;
@@ -1248,16 +1248,13 @@ package body Browsers.Dependency_Items is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       B          : constant Dependency_Browser :=
                      Dependency_Browser
-                       (Get_Widget (Open_Dependency_Browser
-                        (Get_Kernel (Context.Context))));
+                       (Get_Widget (Open_Dependency_Browser (Kernel)));
       Other_File : constant Virtual_File :=
-                     Create
-                       (Other_File_Base_Name
-                          (Project_Information (Context.Context),
-                           File_Information (Context.Context)),
-                        Project_Information (Context.Context));
+        Get_Registry (Kernel).Tree.Other_File
+           (File_Information (Context.Context));
       Item       : File_Item;
    begin
       if Other_File /= GNATCOLL.VFS.No_File then

@@ -29,7 +29,7 @@ with Codefix.Text_Manager.Spark_Commands;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 with Language.Tree.Database;            use Language.Tree.Database;
-with Projects.Registry;                 use Projects.Registry;
+with Projects;                          use Projects;
 with Traces;                            use Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
@@ -70,10 +70,9 @@ package body Codefix.Formal_Errors is
          end if;
 
          Set_File
-           (This, Create
+           (This, Registry.Tree.Create
               (+Error_Line
-                 (Matches (File_Index).First .. Matches (File_Index).Last),
-               Registry.all));
+                 (Matches (File_Index).First .. Matches (File_Index).Last)));
 
          if Matches (Line_Index) /= No_Match then
             Line := Integer'Value

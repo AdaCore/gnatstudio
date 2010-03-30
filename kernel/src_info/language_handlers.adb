@@ -23,7 +23,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Bubble_Sort_G;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
-with Namet;                     use Namet;
 
 with Case_Handling;             use Case_Handling;
 with Entities;                  use Entities;
@@ -32,7 +31,6 @@ with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
-with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -68,9 +66,9 @@ package body Language_Handlers is
 
    procedure Set_Registry
      (Handler  : access Language_Handler_Record;
-      Registry : access Projects.Abstract_Registry'Class) is
+      Registry : access Project_Registry'Class) is
    begin
-      Handler.Registry := Abstract_Registry_Access (Registry);
+      Handler.Registry := Project_Registry_Access (Registry);
    end Set_Registry;
 
    -----------------------------
@@ -162,7 +160,6 @@ package body Language_Handlers is
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return String
    is
-      Lang  : Name_Id;
       Prop  : String_Property;
       Found : Boolean := False;
    begin
@@ -173,15 +170,7 @@ package body Language_Handlers is
       if Found then
          return Prop.Value.all;
       else
-         Lang := Get_Language_From_File_From_Project
-           (Project_Registry'Class (Handler.Registry.all),
-            Source_Filename);
-
-         if Lang = No_Name then
-            return "";
-         else
-            return Get_String (Lang);
-         end if;
+         return Handler.Registry.Tree.Info (Source_Filename).Language;
       end if;
    end Get_Language_From_File;
 

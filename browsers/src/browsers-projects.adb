@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2009, AdaCore             --
+--                      Copyright (C) 2001-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;                   use Glib;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Menu;               use Gtk.Menu;
@@ -26,6 +27,7 @@ with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Pango.Layout;
 
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -34,9 +36,7 @@ with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
-with Projects.Registry;      use Projects.Registry;
 with Browsers.Canvas;        use Browsers.Canvas;
-with Namet;                  use Namet;
 with Prj;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
@@ -85,7 +85,7 @@ package body Browsers.Projects is
 
    type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
       record
-         Name : Namet.Name_Id;
+         Name : Ada.Strings.Unbounded.Unbounded_String;
       end record;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
@@ -107,7 +107,7 @@ package body Browsers.Projects is
    procedure Gtk_New
      (V       : out Browser_Project_Vertex_Access;
       Browser : access Project_Browser_Record'Class;
-      Project : Standard.Projects.Project_Type);
+      Project : Project_Type);
    --  Create a new project vertex
 
    ----------
@@ -162,7 +162,7 @@ package body Browsers.Projects is
 
    function Find_Project
      (Browser      : access Project_Browser_Record'Class;
-      Project_Name : Name_Id) return Browser_Project_Vertex_Access;
+      Project_Name : String) return Browser_Project_Vertex_Access;
    --  Return the first item representing Project_Name
 
    function Add_Project_If_Not_Present
@@ -194,8 +194,8 @@ package body Browsers.Projects is
    function Project_Of (Item : access Browser_Project_Vertex'Class)
       return Project_Type is
    begin
-      return Get_Project_From_Name
-        (Get_Registry (Get_Kernel (Get_Browser (Item))).all, Item.Name);
+      return Get_Registry (Get_Kernel (Get_Browser (Item))).Tree
+        .Project_From_Name (To_String (Item.Name));
    end Project_Of;
 
    ------------------
@@ -204,7 +204,7 @@ package body Browsers.Projects is
 
    function Find_Project
      (Browser      : access Project_Browser_Record'Class;
-      Project_Name : Name_Id) return Browser_Project_Vertex_Access
+      Project_Name : String) return Browser_Project_Vertex_Access
    is
       Iter : Item_Iterator := Start (Get_Canvas (Browser));
       Item : Canvas_Item;
@@ -227,7 +227,7 @@ package body Browsers.Projects is
       Project : Project_Type) return Browser_Project_Vertex_Access
    is
       V : Browser_Project_Vertex_Access :=
-            Find_Project (Browser, Project_Name (Project));
+        Find_Project (Browser, Project.Name);
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
@@ -281,10 +281,10 @@ package body Browsers.Projects is
    begin
       V := new Browser_Project_Vertex;
       Initialize (V, Browser,
-                  Project_Name (Project) & Prj.Project_File_Extension,
+                  Project.Name & Prj.Project_File_Extension,
                   On_Examine_Ancestor_Hierarchy'Access,
                   On_Examine_Prj_Hierarchy'Access);
-      V.Name := Project_Name (Project);
+      V.Name := To_Unbounded_String (Project.Name);
 
       Set_Children_Shown (V, not Has_Imported_Projects (Project));
    end Gtk_New;
@@ -313,7 +313,7 @@ package body Browsers.Projects is
         (Local : Project_Type; Src : Browser_Project_Vertex_Access)
       is
          Dest : Browser_Project_Vertex_Access;
-         Iter : Imported_Project_Iterator;
+         Iter : Project_Iterator;
       begin
          Set_Children_Shown (Src, True);
 
@@ -347,11 +347,10 @@ package body Browsers.Projects is
       Src : Browser_Project_Vertex_Access;
       Item_Was_Present : Boolean;
    begin
-      Trace (Me, "Examine_Project_Hierarchy for "
-             & Project_Name (Project));
+      Trace (Me, "Examine_Project_Hierarchy for " & Project.Name);
       Push_State (Kernel, Busy);
 
-      Src := Find_Project (Browser, Project_Name (Project));
+      Src := Find_Project (Browser, Project.Name);
       Item_Was_Present := Src /= null;
 
       if Src = null then
@@ -394,10 +393,9 @@ package body Browsers.Projects is
    is
       Kernel    : constant Kernel_Handle := Get_Kernel (Browser);
       Src, Dest : Browser_Project_Vertex_Access;
-      Iter      : Imported_Project_Iterator;
+      Iter      : Project_Iterator;
    begin
-      Trace (Me, "Examine_Ancestor_Project_Hierarchy for "
-             & Project_Name (Project));
+      Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
       Push_State (Kernel, Busy);
 
       Dest := Add_Project_If_Not_Present (Browser, Project);
@@ -702,7 +700,7 @@ package body Browsers.Projects is
          --  encountered the current selection.
 
          if First_Match = null or else Saw_Selected then
-            if Match (Context, Get_String (It.Name)) /= -1 then
+            if Match (Context, To_String (It.Name)) /= -1 then
                First_Match := Canvas_Item (It);
 
                exit when Saw_Selected;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Projects.Registry; use Projects.Registry;
+with Projects; use Projects;
 
 package Codefix.Error_Lists is
 

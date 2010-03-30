@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -25,8 +25,8 @@
 
 with Gtk.Box;
 with Gtk.GEntry;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GPS.Kernel;
-with Projects;
 with GNAT.Strings;
 with Commands.Interactive;
 with Creation_Wizard;
@@ -35,7 +35,7 @@ with Wizards;
 package Project_Properties is
 
    procedure Edit_Properties
-     (Project : Projects.Project_Type;
+     (Project : Project_Type;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Edit the properties for Project_View.
 
@@ -70,7 +70,7 @@ package Project_Properties is
    function Attribute_Editors_Page_Box
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Wiz              : Wizards.Wizard;
-      Project          : Projects.Project_Type;
+      Project          : Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
       Nth_Page         : Integer;
@@ -98,7 +98,7 @@ package Project_Properties is
       Pkg    : String;
       Name   : String;
       Index  : String := "")
-      return GNAT.Strings.String_List;
+      return GNAT.Strings.String_List_Access;
    --  Return the value of the attribute as currently edited.
    --  The returned value must be freed by the caller.
    --  ??? Relies on global variables, would be nice to eliminate through the
@@ -111,8 +111,8 @@ private
 
    procedure Generate_Project
      (Editor             : access Root_Attribute_Editor_Record;
-      Project            : Projects.Project_Type;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean) is abstract;
    --  Generate the project entry for the attribute edited by the attribute.
    --  Project_Changed is set to True if the project is modified, unmodified

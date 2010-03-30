@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---               Copyright (C) 2000-2009, AdaCore                    --
+--               Copyright (C) 2000-2010, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,8 +34,8 @@ with GPS.Main_Window;
 with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Histories;
-with Projects;
 pragma Elaborate_All (GVD.Histories);
+with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 with Interactive_Consoles; use Interactive_Consoles;
@@ -159,7 +159,7 @@ package GVD.Process is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Kind    : GVD.Types.Debugger_Type;
       File    : GNATCOLL.VFS.Virtual_File;
-      Project : Projects.Project_Type;
+      Project : Project_Type;
       Args    : String) return Visual_Debugger;
    --  Spawn a new debugger on File (taking into account the settings from
    --  Project). Args are passed to the executable File.

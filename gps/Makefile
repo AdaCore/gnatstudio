@@ -25,7 +25,8 @@ all:
 	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
 	$(MAKE) -s -C ../kernel/src_info/sn
-	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -P../gnatlib/src/gnatcoll
+	$(MAKE) -s -C ../gnatlib do_links
+	$(GPRBUILD) ${GPRBUILD_FLAGS} -m -p -ws -P../gnatlib/src/gnatcoll
 	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -XTP_TASKING=No_Tasking \
 	  ${GPRBUILD_BUILD_TYPE_FLAGS} -Pgps
 
@@ -37,8 +38,7 @@ endif
 
 do_links:
 	-@$(foreach f,$(GNAT_SOURCES), \
-	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
-	@(cd ../gnat && gnatmake -q xsnamest && ./xsnamest && mv snames.ns snames.ads && mv snames.nb snames.adb)
+	  $(LN) ../gnatlib/gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
 clean:
 ifeq ($(OS),Windows_NT)

@@ -44,7 +44,6 @@ with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Toolchains;                use Toolchains;
 with Traces;                    use Traces;
-with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -554,7 +553,7 @@ package body External_Editor_Module is
          if Path /= No_File then
             Substitute
               (Args,
-               P => Project_Name (Get_Project (Kernel)),
+               P => Get_Project (Kernel).Name,
                E => Clients
                  (External_Editor_Module_Id.Client).Server_Start_Command.all);
 
@@ -650,7 +649,7 @@ package body External_Editor_Module is
 
       Substitute
         (Args,
-         P => Project_Name (Get_Project (Kernel)),
+         P => Get_Project (Kernel).Name,
          F => +File.Full_Name,
          C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
          L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),

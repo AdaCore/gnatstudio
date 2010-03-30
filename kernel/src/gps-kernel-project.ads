@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,7 +44,8 @@
 --  the view changes.
 
 with GNAT.OS_Lib;
-with Projects.Registry;
+with Projects;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 package GPS.Kernel.Project is
@@ -96,7 +97,7 @@ package GPS.Kernel.Project is
 
    function Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Projects.Project_Type;
+      Project   : GNATCOLL.Projects.Project_Type;
       Recursive : Boolean := False) return Boolean;
    --  Save Project to a file. If Recursive is True, all the imported projects
    --  are saved at the same time.
@@ -109,14 +110,15 @@ package GPS.Kernel.Project is
 
    function Save_Single_Project
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Projects.Project_Type) return Boolean;
+      Project : GNATCOLL.Projects.Project_Type) return Boolean;
    --  Save project, but none of its imported projects. As opposed to
    --  Save_Project, the project doesn't need to have an associated view in
    --  this procedure.
    --  Return True if the project could be successfully saved
 
    function Get_Project
-     (Handle : access Kernel_Handle_Record'Class) return Projects.Project_Type;
+     (Handle : access Kernel_Handle_Record'Class)
+      return GNATCOLL.Projects.Project_Type;
    --  Return the current project tree. This tree can be fully manipulated, and
    --  extended. However, you should reevaluate the view after you have
    --  finished your changes, so as to report the changes to all the other
@@ -124,7 +126,7 @@ package GPS.Kernel.Project is
 
    function Get_Registry
      (Handle : access Kernel_Handle_Record'Class)
-      return Projects.Registry.Project_Registry_Access;
+      return Projects.Project_Registry_Access;
    --  Return the projects registry
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class);
@@ -143,7 +145,7 @@ package GPS.Kernel.Project is
 
    function Scenario_Variables
      (Kernel : access Kernel_Handle_Record'Class)
-      return Projects.Scenario_Variable_Array;
+      return GNATCOLL.Projects.Scenario_Variable_Array;
    --  Return a list of all the scenario variables. This list is cached, so
    --  that future calls are fast.
    --  See also the signal "variable_changed" for the kernel.
@@ -161,7 +163,7 @@ package GPS.Kernel.Project is
    ----------------
 
    function Get_Switches
-     (Project           : Projects.Project_Type;
+     (Project           : GNATCOLL.Projects.Project_Type;
       Tool              : Tool_Properties_Record;
       File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,11 +18,9 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;
-
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-
-with GPS.Intl; use GPS.Intl;
-with Projects;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GPS.Intl;          use GPS.Intl;
 
 package body Code_Peer.Summary_Models is
 
@@ -163,7 +161,6 @@ package body Code_Peer.Summary_Models is
       Value  : out Glib.Values.GValue)
    is
       use type Code_Analysis.Tree_Models.Subprogram_Item_Access;
-      use type Projects.Project_Type;
 
       type Count_Kinds is (Base, Added, Removed, Current);
 
@@ -415,12 +412,12 @@ package body Code_Peer.Summary_Models is
             elsif Project_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
 
-               if Project_Node.Node.Name = Projects.No_Project then
+               if Project_Node.Node.Name = No_Project then
                   Glib.Values.Set_String (Value, -"RTL and removed");
 
                else
                   Glib.Values.Set_String
-                    (Value, Projects.Project_Name (Project_Node.Node.Name));
+                    (Value, Project_Node.Node.Name.Name);
                end if;
 
             else

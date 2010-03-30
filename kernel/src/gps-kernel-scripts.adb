@@ -26,6 +26,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
 
 with GNATCOLL.Memory;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
@@ -64,8 +65,6 @@ with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
-with Projects.Editor;         use Projects.Editor;
-with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
 with Remote;                  use Remote;
 with String_List_Utils;
@@ -654,9 +653,10 @@ package body GPS.Kernel.Scripts is
          begin
             for V in Vars'Range loop
                Set_Return_Value
-                 (Data, Value_Of (Get_Registry (Kernel).all, Vars (V)));
+                 (Data,
+                  Get_Registry (Kernel).Tree.Value (Vars (V)));
                Set_Return_Value_Key
-                 (Data, External_Reference_Of (Vars (V)));
+                 (Data, External_Name (Vars (V)));
             end loop;
          end;
 
@@ -666,7 +666,7 @@ package body GPS.Kernel.Scripts is
             Name  : constant String := Nth_Arg (Data, 1);
             Value : constant String := Nth_Arg (Data, 2);
          begin
-            Set_Value (Get_Registry (Kernel), Name, Value);
+            Get_Registry (Kernel).Tree.Set_Value (Name, Value);
             Run_Hook (Kernel, Variable_Changed_Hook);
          end;
 
@@ -688,18 +688,13 @@ package body GPS.Kernel.Scripts is
                declare
                   use String_List_Utils.String_List;
 
-                  Name   : constant String := External_Reference_Of (Vars (V));
-                  Values : String_List_Utils.String_List.List :=
-                             Enum_Values_Of
-                               (Vars (V), Get_Registry (Kernel).all);
-                  Iter   : String_List_Utils.String_List.List_Node :=
-                             First (Values);
+                  Name   : constant String := External_Name (Vars (V));
+                  Values : String_List :=
+                    Get_Registry (Kernel).Tree.Possible_Values_Of (Vars (V));
                begin
-                  while Iter /= String_List_Utils.String_List.Null_Node loop
-                     Set_Return_Value
-                       (Data, String_List_Utils.String_List.Data (Iter));
+                  for Iter in Values'Range loop
+                     Set_Return_Value (Data, Values (Iter).all);
                      Set_Return_Value_Key (Data, Name, True);
-                     Iter := Next (Iter);
                   end loop;
 
                   Free (Values);
@@ -930,8 +925,9 @@ package body GPS.Kernel.Scripts is
    procedure Create_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Info   : Virtual_File;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Info    : Virtual_File;
+      Project : Project_Type;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
@@ -1010,13 +1006,13 @@ package body GPS.Kernel.Scripts is
       elsif Command = "project" then
          Name_Parameters (Data, File_Project_Parameters);
          Info := Nth_Arg (Data, 1);
-         Set_Return_Value
-           (Data, Create_Project
-            (Get_Script (Data),
-             Get_Project_From_File
-             (Registry         => Project_Registry (Get_Registry (Kernel).all),
-              Source_Filename   => Info,
-              Root_If_Not_Found => Nth_Arg (Data, 2, True))));
+         Project := Get_Registry (Kernel).Tree.Info (Info).Project;
+
+         if Project = No_Project and then Nth_Arg (Data, 2, True) then
+            Project := Get_Project (Kernel);
+         end if;
+
+         Set_Return_Value (Data, Create_Project (Get_Script (Data), Project));
 
       elsif Command = "directory" then
          Info := Nth_Arg (Data, 1);
@@ -1029,22 +1025,11 @@ package body GPS.Kernel.Scripts is
               (Get_Language_Handler (Kernel), Info));
 
       elsif Command = "other_file" then
-         declare
-            Other   : Virtual_File;
-            Project : Project_Type;
-         begin
-            Info := Nth_Arg (Data, 1);
-
-            Project := Get_Project_From_File
-              (Project_Registry (Get_Registry (Kernel).all),
-               Info,
-               Root_If_Not_Found => True);
-            Other := Create
-              (Other_File_Base_Name (Project, Info), Project,
-               Use_Object_Path => False);
-
-            Set_Return_Value (Data, Create_File (Get_Script (Data), Other));
-         end;
+         Info  := Nth_Arg (Data, 1);
+         Set_Return_Value
+           (Data,
+            Create_File (Get_Script (Data),
+                         Get_Registry (Kernel).Tree.Other_File (Info)));
 
       elsif Command = "entities" then
          Name_Parameters (Data, File_Entities_Parameters);
@@ -1115,9 +1100,8 @@ package body GPS.Kernel.Scripts is
       else
          if Command = Constructor_Method then
             Name_Parameters (Data, Project_Cmd_Parameters);
-            Project  := Get_Project_From_Name
-              (Project_Registry (Get_Registry (Kernel).all),
-               Get_String (Nth_Arg (Data, 2)));
+            Project  := Get_Registry (Kernel).Tree.Project_From_Name
+              (Nth_Arg (Data, 2));
 
             if Project = No_Project then
                Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
@@ -1128,7 +1112,7 @@ package body GPS.Kernel.Scripts is
 
          elsif Command = "name" then
             Project := Get_Data (Data, 1);
-            Set_Return_Value (Data, Project_Name (Project));
+            Set_Return_Value (Data, Project.Name);
 
          elsif Command = "file" then
             Project := Get_Data (Data, 1);
@@ -1138,7 +1122,7 @@ package body GPS.Kernel.Scripts is
 
          elsif Command = "ancestor_deps" then
             declare
-               Iter : Imported_Project_Iterator;
+               Iter : Project_Iterator;
                P    : Project_Type;
             begin
                Project := Get_Data (Data, 1);
@@ -1159,7 +1143,7 @@ package body GPS.Kernel.Scripts is
             Name_Parameters (Data, (1 => Recursive_Cst'Access));
             declare
                Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-               Iter : Imported_Project_Iterator;
+               Iter : Project_Iterator;
                P    : Project_Type;
             begin
                Project := Get_Data (Data, 1);
@@ -1331,10 +1315,8 @@ package body GPS.Kernel.Scripts is
               (Data,
                Create_Project
                  (Get_Script (Data),
-                  Get_Project_From_File
-                    (Project_Registry (Get_Registry (Kernel).all),
-                     File_Information (Context),
-                     Root_If_Not_Found => False)));
+                  Get_Registry (Kernel).Tree.Info
+                     (File_Information (Context)).Project));
 
          else
             Set_Error_Msg (Data, -"No project stored in the context");

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -89,10 +89,10 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
 with Process_Proxies;           use Process_Proxies;
-with Projects;                  use Projects;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors; use GPS.Editors;
 
@@ -2306,12 +2306,9 @@ package body GVD_Module is
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
       Mitem             : Gtk_Menu_Item;
       Loaded_Project    : constant Project_Type := Get_Project (Kernel);
-      Loaded_Mains      : Argument_List :=
-                            Get_Attribute_Value
-                              (Loaded_Project,
-                               Attribute    => Main_Attribute);
-      Iter              : Imported_Project_Iterator :=
-                            Start (Loaded_Project);
+      Loaded_Mains      : String_List_Access :=
+                            Loaded_Project.Attribute_Value (Main_Attribute);
+      Iter              : Project_Iterator := Loaded_Project.Start;
       Current_Project   : Project_Type := Current (Iter);
       Tmp               : Project_Type;
       Debuggable_Suffix : GNAT.Strings.String_Access := Get_Debuggable_Suffix;
@@ -2326,7 +2323,7 @@ package body GVD_Module is
          for M in reverse Mains'Range loop
             declare
                Exec : constant Filesystem_String :=
-                 Get_Executable_Name (Prj, +Mains (M).all);
+                 Prj.Executable_Name (+Mains (M).all);
             begin
                Gtk_New (Mitem, +Exec);
                --  ??? What if Exec is not utf-8 ?
@@ -2379,12 +2376,12 @@ package body GVD_Module is
             Tmp := Current_Project;
             while Tmp /= No_Project loop
                declare
-                  Mains : Argument_List :=
-                    Get_Attribute_Value (Tmp, Attribute => Main_Attribute);
+                  Mains : String_List_Access :=
+                    Tmp.Attribute_Value (Main_Attribute);
                begin
                   if Mains'Length /= 0 then
                      --  Basenames inherited, but exec_dir is current project
-                     Add_Entries (Mains, Current_Project);
+                     Add_Entries (Mains.all, Current_Project);
 
                      --  Stop looking in inherited project, since the attribute
                      --  has been overridden.
@@ -2392,6 +2389,8 @@ package body GVD_Module is
                   else
                      Tmp := Extended_Project (Tmp);
                   end if;
+
+                  Free (Mains);
                end;
             end loop;
          end if;

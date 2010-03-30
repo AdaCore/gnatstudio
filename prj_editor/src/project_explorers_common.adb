@@ -44,10 +44,9 @@ with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
 with Language.Icons;            use Language.Icons;
 with Language_Handlers;         use Language_Handlers;
-with Projects.Registry;         use Projects, Projects.Registry;
+with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Namet;                     use Namet;
 
 package body Project_Explorers_Common is
 
@@ -67,7 +66,7 @@ package body Project_Explorers_Common is
          User_Data_Column     => GType_Pointer,
          Line_Column          => GType_Int,
          Column_Column        => GType_Int,
-         Project_Column       => GType_Int,
+         Project_Column       => GType_String,
          Category_Column      => GType_Int,
          Up_To_Date_Column    => GType_Boolean,
          Entity_Base_Column   => GType_String,
@@ -880,7 +879,6 @@ package body Project_Explorers_Common is
       Parent_Iter : Gtk_Tree_Iter;
       Node_Type   : Node_Types;
       Project     : Project_Type;
-      N           : Name_Id;
    begin
       if Importing then
          Parent_Iter := Parent (Model, Node);
@@ -904,10 +902,14 @@ package body Project_Explorers_Common is
       end loop;
 
       if Parent_Iter /= Null_Iter then
-         N := Name_Id (Get_Int (Model, Parent_Iter, Project_Column));
-         Assert (Me, N /= No_Name,
-                 "Get_Project_From_Node: no project found");
-         Project := Get_Project_From_Name (Get_Registry (Kernel).all, N);
+         declare
+            N : constant String :=
+              Get_String (Model, Parent_Iter, Project_Column);
+         begin
+            Assert (Me, N /= "",
+                    "Get_Project_From_Node: no project found");
+            Project := Get_Registry (Kernel).Tree.Project_From_Name (N);
+         end;
 
       else
          --  Should we fall back on Get_Project_From_File ?

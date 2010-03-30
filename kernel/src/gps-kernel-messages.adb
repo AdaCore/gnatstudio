@@ -29,7 +29,6 @@ with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;
 with GPS.Kernel.Project;
-with Projects;
 with Traces;
 with XML_Parsers;
 with XML_Utils;
@@ -267,7 +266,7 @@ package body GPS.Kernel.Messages is
       --  Load messages for opened project
 
       GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
-      Container.Project_File := Project_Path (Get_Project (Kernel));
+      Container.Project_File := Get_Project (Kernel).Project_Path;
       Container.Load;
    end Execute;
 
@@ -892,7 +891,7 @@ package body GPS.Kernel.Messages is
                             Create_From_Dir
                               (Self.Kernel.Home_Dir, Messages_File_Name);
       Project_File      : constant Virtual_File :=
-                            Project_Path (Get_Project (Self.Kernel));
+                            Get_Project (Self.Kernel).Project_Path;
       Root_XML_Node     : Node_Ptr;
       Project_XML_Node  : Node_Ptr;
       Category_XML_Node : Node_Ptr;

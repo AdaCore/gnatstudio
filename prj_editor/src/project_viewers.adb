@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,12 +66,10 @@ with GPS.Kernel;                   use GPS.Kernel;
 with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
 with Naming_Editors;               use Naming_Editors;
-with Namet;                        use Namet;
-with Prj;
 with Project_Properties;           use Project_Properties;
-with Projects.Editor;              use Projects, Projects.Editor;
-with Projects.Registry;            use Projects.Registry;
+with Projects;                     use Projects;
 with Remote;                       use Remote;
+with String_Utils;                 use String_Utils;
 with Switches_Editors;             use Switches_Editors;
 with System;
 with Traces;                       use Traces;
@@ -86,12 +84,13 @@ package body Project_Viewers is
    type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
 
    type Naming_Page is record
-      Language : Name_Id;
+      Language : String_Access;
       Creator  : Naming_Scheme_Editor_Creator;
    end record;
 
    type Naming_Pages_Array is array (Natural range <>) of Naming_Page;
    type Naming_Pages_Array_Access is access Naming_Pages_Array;
+   procedure Free (Arr : in out Naming_Pages_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Naming_Pages_Array, Naming_Pages_Array_Access);
 
@@ -155,7 +154,7 @@ package body Project_Viewers is
       View_Changed_Blocked : Boolean := False;
       --  True if the hook for "project_view_changed" should be ignored
 
-      Current_Project : Projects.Project_Type;
+      Current_Project : Project_Type;
       --  The project to which the files currently in the viewer belong. This
       --  indicates which project file should be normalized when a modification
       --  takes place.
@@ -176,7 +175,7 @@ package body Project_Viewers is
 
    procedure Show_Project
      (Viewer              : access Project_Viewer_Record'Class;
-      Project_Filter      : Projects.Project_Type;
+      Project_Filter      : Project_Type;
       Directory_Filter    : Virtual_File := GNATCOLL.VFS.No_File);
    --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
@@ -359,6 +358,21 @@ package body Project_Viewers is
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Arr : in out Naming_Pages_Array_Access) is
+   begin
+      if Arr /= null then
+         for A in Arr'Range loop
+            Free (Arr (A).Language);
+         end loop;
+
+         Unchecked_Free (Arr);
+      end if;
+   end Free;
+
    -------------
    -- Destroy --
    -------------
@@ -378,7 +392,7 @@ package body Project_Viewers is
          Unchecked_Free (Module.Project_Editor_Pages);
       end if;
 
-      Unchecked_Free (Module.Naming_Pages);
+      Free (Module.Naming_Pages);
 
       Destroy (Module_ID_Record (Module));
    end Destroy;
@@ -405,11 +419,11 @@ package body Project_Viewers is
                           (Get_Language_Handler (Viewer.Kernel)),
                         File_Name);
       Color      : Gdk_Color;
-      Value      : Prj.Variable_Value;
+      Value      : String_List_Access;
       Is_Default : Boolean;
    begin
-      Get_Switches
-        (Viewer.Current_Project, Compiler_Package, File_Name,
+      Viewer.Current_Project.Switches
+        (Compiler_Package, File_Name,
          Language, Value, Is_Default);
 
       if Is_Default then
@@ -421,9 +435,9 @@ package body Project_Viewers is
       Internal (Get_Object (Viewer.Model), Iter'Address,
                 Compiler_Switches_Column,
                 Locale_To_UTF8
-                  (To_String (Get_Tree (Viewer.Current_Project), Value))
-                  & ASCII.NUL,
+                  (Argument_List_To_String (Value.all)),
                 Compiler_Color_Column, Color);
+      Free (Value);
    end Project_Viewers_Set;
 
    -----------------
@@ -533,7 +547,7 @@ package body Project_Viewers is
       if Directory = GNATCOLL.VFS.No_File then
          Set_Title (Child,
                     Title => -"Editing switches for project "
-                    & Project_Name (Project),
+                    & Project.Name,
                     Short_Title => Project_Switches_Name);
       else
          Set_Title (Child,
@@ -743,7 +757,7 @@ package body Project_Viewers is
       Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Files : File_Array_Access :=
-                Get_Source_Files (Project_Filter, Recursive => False);
+        Project_Filter.Source_Files (Recursive => False);
    begin
       Viewer.Current_Project := Project_Filter;
 
@@ -1181,9 +1195,9 @@ package body Project_Viewers is
          Name_Parameters (Data, Add_Predefined_Parameters);
          declare
             Old_Src : constant File_Array :=
-                        Get_Predefined_Source_Path (Get_Registry (Kernel).all);
+              Get_Registry (Kernel).Environment.Predefined_Source_Path;
             Old_Obj : constant File_Array :=
-                        Get_Predefined_Object_Path (Get_Registry (Kernel).all);
+              Get_Registry (Kernel).Environment.Predefined_Object_Path;
             New_Src : constant File_Array :=
                         Remove_Redundant_Directories
                           (Old_Src,
@@ -1194,13 +1208,13 @@ package body Project_Viewers is
                            From_Path (+Nth_Arg (Data, 2, "")));
          begin
             if New_Src'Length /= 0 then
-               Set_Predefined_Source_Path
-                 (Get_Registry (Kernel).all, New_Src & Old_Src);
+               Get_Registry (Kernel).Environment.Set_Predefined_Source_Path
+                 (New_Src & Old_Src);
             end if;
 
             if Old_Obj'Length /= 0 then
-               Set_Predefined_Object_Path
-                 (Get_Registry (Kernel).all, New_Obj & Old_Obj);
+               Get_Registry (Kernel).Environment.Set_Predefined_Object_Path
+                 (New_Obj & Old_Obj);
             end if;
          end;
       end if;
@@ -1241,12 +1255,11 @@ package body Project_Viewers is
                   Args (Index - 1) := new String'(Nth_Arg (Data, Index));
                end loop;
 
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables (Kernel),
-                  Attribute          => Main_Attribute,
-                  Values             => Args,
-                  Prepend            => True);
+               Project.Set_Attribute
+                 (Scenario  => Scenario_Variables (Kernel),
+                  Attribute => Main_Attribute,
+                  Values    => Args,
+                  Prepend   => True);
                Recompute_View (Kernel);
                Free (Args);
             end if;
@@ -1258,7 +1271,7 @@ package body Project_Viewers is
 
          begin
             Set_Return_Value
-              (Data, Get_Executable_Name (Project, Main.Full_Name.all));
+              (Data, Project.Executable_Name (Main.Full_Name.all));
          end;
 
       elsif Command = "rename" then
@@ -1266,17 +1279,15 @@ package body Project_Viewers is
          declare
             Name : constant String := Nth_Arg (Data, 2);
             Path : constant Filesystem_String :=
-                     Nth_Arg (Data, 3, Project_Directory (Project).Full_Name);
+              Nth_Arg (Data, 3, Project_Directory (Project).Full_Name);
          begin
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
             else
-               Rename_And_Move
-                 (Root_Project  => Get_Project (Kernel),
-                  Project       => Project,
-                  New_Name      => Name,
-                  New_Path      => Create (Path),
-                  Report_Errors => Set_Error_Tmp'Unrestricted_Access);
+               Project.Rename_And_Move
+                 (New_Name  => Name,
+                  Directory => Create (Path),
+                  Errors    => Set_Error_Tmp'Unrestricted_Access);
                Run_Hook (Kernel, Project_Changed_Hook);
             end if;
          end;
@@ -1308,13 +1319,11 @@ package body Project_Viewers is
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
             else
-               Error := Add_Imported_Project
-                 (Root_Project              => Get_Project (Kernel),
-                  Project                   => Project,
-                  Imported_Project_Location => Create (Project2),
-                  Report_Errors           => Set_Error_Tmp'Unrestricted_Access,
-                  Use_Base_Name             => False,
-                  Use_Relative_Path         => Relative);
+               Error := Project.Add_Imported_Project
+                 (Imported_Project_Location => Create (Project2),
+                  Errors             => Set_Error_Tmp'Unrestricted_Access,
+                  Use_Base_Name      => False,
+                  Use_Relative_Path  => Relative);
             end if;
          end;
 
@@ -1322,9 +1331,8 @@ package body Project_Viewers is
          Name_Parameters (Data, Sources_Cmd_Parameters);
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Sources   : File_Array_Access := Get_Source_Files
-              (Project    => Project,
-               Recursive  => Recursive);
+            Sources   : File_Array_Access := Project.Source_Files
+              (Recursive  => Recursive);
          begin
             Set_Return_Value_As_List (Data);
             for S in Sources'Range loop
@@ -1337,8 +1345,8 @@ package body Project_Viewers is
       elsif Command = "languages" then
          Name_Parameters (Data, Languages_Cmd_Parameters);
          declare
-            Langs : GNAT.Strings.String_List := Get_Languages
-              (Project => Project, Recursive => Nth_Arg (Data, 2, False));
+            Langs : GNAT.Strings.String_List := Project.Languages
+              (Recursive => Nth_Arg (Data, 2, False));
          begin
             Set_Return_Value_As_List (Data);
             for L in Langs'Range loop
@@ -1351,8 +1359,8 @@ package body Project_Viewers is
          Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Dirs      : File_Array_Access := Source_Dirs
-              (Project, Recursive => Recursive);
+            Dirs      : constant File_Array := Project.Source_Dirs
+              (Recursive => Recursive);
          begin
             Set_Return_Value_As_List (Data);
 
@@ -1360,8 +1368,6 @@ package body Project_Viewers is
                --  ??? We should return the Virtual_File object instead
                Set_Return_Value (Data, Dirs (D).Full_Name);
             end loop;
-
-            Unchecked_Free (Dirs);
          end;
 
       elsif Command = "object_dirs" then
@@ -1369,7 +1375,7 @@ package body Project_Viewers is
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
             Object    : constant File_Array :=
-                          Object_Path (Project, Recursive, False);
+              Object_Path (Project, Recursive, False);
          begin
             Set_Return_Value_As_List (Data);
 
@@ -1383,15 +1389,15 @@ package body Project_Viewers is
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
             Dir     : constant Virtual_File :=
-                        Create
-                          (Normalize_Pathname
-                             (Nth_Arg (Data, 2),
-                              Directory =>
-                                Full_Name (Project_Directory (Project)),
-                              Resolve_Links => False));
+              Create
+                (Normalize_Pathname
+                     (Nth_Arg (Data, 2),
+                      Directory =>
+                        Full_Name (Project_Directory (Project)),
+                      Resolve_Links => False));
             Dirs    : GNAT.Strings.String_List (1 .. 1);
-            Sources : File_Array_Access :=
-                        Source_Dirs (Project, Recursive => False);
+            Sources : constant File_Array :=
+              Project.Source_Dirs (Recursive => False);
             Found   : Boolean := False;
 
          begin
@@ -1409,18 +1415,15 @@ package body Project_Viewers is
                end loop;
 
                if not Found then
-                  Update_Attribute_Value_In_Scenario
-                    (Project            => Project,
-                     Scenario_Variables =>
-                       Scenario_Variables (Get_Kernel (Data)),
-                     Attribute          => Source_Dirs_Attribute,
-                     Values             => Dirs,
-                     Attribute_Index    => "",
-                     Prepend            => True);
+                  Project.Set_Attribute
+                    (Scenario  => Scenario_Variables (Get_Kernel (Data)),
+                     Attribute => Source_Dirs_Attribute,
+                     Values    => Dirs,
+                     Index     => "",
+                     Prepend   => True);
                end if;
 
                Free (Dirs);
-               Unchecked_Free (Sources);
             end if;
          end;
 
@@ -1429,8 +1432,8 @@ package body Project_Viewers is
          declare
             Dir : Virtual_File :=
               Create (Nth_Arg (Data, 2), Get_Nickname (Build_Server));
-            Dirs : GNAT.Strings.String_List := Get_Attribute_Value
-              (Project, Source_Dirs_Attribute);
+            Dirs : String_List_Access := Project.Attribute_Value
+              (Source_Dirs_Attribute);
             Index : Natural := Dirs'Last;
          begin
             if not Is_Editable (Project) then
@@ -1463,14 +1466,14 @@ package body Project_Viewers is
                   end;
                end loop;
 
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
-                  Attribute          => Source_Dirs_Attribute,
-                  Values             => Dirs (Dirs'First .. Index),
-                  Attribute_Index    => "");
-               Free (Dirs (Dirs'First .. Index));
+               Project.Set_Attribute
+                 (Scenario  => Scenario_Variables (Get_Kernel (Data)),
+                  Attribute => Source_Dirs_Attribute,
+                  Values    => Dirs (Dirs'First .. Index),
+                  Index     => "");
             end if;
+
+            Free (Dirs);
          end;
 
       end if;
@@ -1651,17 +1654,17 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Kernel);
       Tmp  : Naming_Pages_Array_Access;
-      Lang : constant Name_Id := Get_String (To_Lower (Language));
+      Lang : constant String := To_Lower (Language);
    begin
       if Prj_Editor_Module_ID /= null then
          if Prj_Editor_Module_ID.Naming_Pages = null then
             Prj_Editor_Module_ID.Naming_Pages :=
-              new Naming_Pages_Array'(1 => (Lang, Creator));
+              new Naming_Pages_Array'(1 => (new String'(Lang), Creator));
 
          else
             Tmp := Prj_Editor_Module_ID.Naming_Pages;
             Prj_Editor_Module_ID.Naming_Pages := new Naming_Pages_Array'
-              (Tmp.all & Naming_Page'(Lang, Creator));
+              (Tmp.all & Naming_Page'(new String'(Lang), Creator));
             Unchecked_Free (Tmp);
          end if;
       else
@@ -1677,11 +1680,11 @@ package body Project_Viewers is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String) return Naming_Editors.Language_Naming_Editor
    is
-      Lang : constant Name_Id := Get_String (To_Lower (Language));
+      Lang : constant String := To_Lower (Language);
    begin
       if Prj_Editor_Module_ID.Naming_Pages /= null then
          for Num in Prj_Editor_Module_ID.Naming_Pages'Range loop
-            if Prj_Editor_Module_ID.Naming_Pages (Num).Language = Lang then
+            if Prj_Editor_Module_ID.Naming_Pages (Num).Language.all = Lang then
                return Prj_Editor_Module_ID.Naming_Pages (Num).Creator
                  (Kernel, Language);
             end if;

@@ -38,7 +38,7 @@ with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
 with Language;                       use Language;
 with Namet;                          use Namet;
-with Projects.Registry;              use Projects.Registry;
+with Projects;                       use Projects;
 with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 
@@ -771,7 +771,7 @@ procedure Ada_Semantic_Tree.Test is
 
    Loaded, Success : Boolean;
 begin
-   Projects.Registry.Initialize;
+   Projects.Initialize;
 
    Db := Create (New_Registry'Unchecked_Access, Construct_Db);
 

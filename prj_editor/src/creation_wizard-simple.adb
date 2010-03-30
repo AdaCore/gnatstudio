@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2009, AdaCore               --
+--                    Copyright (C) 2004-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,8 +36,8 @@ package body Creation_Wizard.Simple is
    overriding procedure Generate_Project
      (Page               : access Dirs_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    overriding function Create_Content
      (Page : access Dirs_Selection_Page;
@@ -54,8 +54,8 @@ package body Creation_Wizard.Simple is
    overriding procedure Generate_Project
      (Page               : access Obj_Dirs_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean);
    --  See inherited documentation
 
@@ -138,8 +138,8 @@ package body Creation_Wizard.Simple is
    overriding procedure Generate_Project
      (Page               : access Dirs_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Page, Project, Kernel, Scenario_Variables, Changed);
@@ -154,8 +154,8 @@ package body Creation_Wizard.Simple is
    overriding procedure Generate_Project
      (Page               : access Obj_Dirs_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project            : in out Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Scenario_Variables);

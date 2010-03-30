@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -51,7 +52,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Language;                  use Language;
-with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Src_Contexts;              use Src_Contexts;
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -688,7 +688,7 @@ package body Src_Editor_Module.Shell is
       Name_Parameters (Data, File_Search_Parameters);
       Recursive := Nth_Arg (Data, 5, True);
       Common_Search_Command_Handler
-        (Data, Get_Source_Files (Project, Recursive));
+        (Data, Project.Source_Files (Recursive));
    end Project_Search_Command_Handler;
 
    --------------------------
@@ -953,11 +953,9 @@ package body Src_Editor_Module.Shell is
          begin
             if Command = "close" then
                if not Is_Absolute_Path (Filename) then
-                  Get_Full_Path_From_File
-                    (Get_Registry (Kernel).all,
-                     Full_Name (Filename),
-                     True, False,
-                     File => Filename);
+                  Filename := Get_Registry (Kernel).Tree.Create
+                    (Full_Name (Filename),
+                     Use_Object_Path => False);
                end if;
 
                Close_File_Editors (Kernel, Filename);

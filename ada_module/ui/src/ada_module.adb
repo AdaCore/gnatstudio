@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2009, AdaCore              --
+--                     Copyright (C) 2002-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
 with ALI_Parser;               use ALI_Parser;
 with Entities;                 use Entities;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language.Ada;             use Language.Ada;
 with Ada_Semantic_Tree.Lang;   use Ada_Semantic_Tree.Lang;
@@ -33,7 +34,7 @@ with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
 with Ada_Naming_Editors;       use Ada_Naming_Editors;
-with Projects.Registry;        use Projects.Registry;
+with Projects;                 use Projects;
 with Case_Handling;            use Case_Handling;
 
 package body Ada_Module is
@@ -135,7 +136,7 @@ package body Ada_Module is
    begin
       Register_Language (Handler, Ada_Lang, Ada_Tree_Lang, LI => LI);
       Register_Default_Language_Extension
-        (Get_Registry (Kernel).all,
+        (Get_Registry (Kernel).Environment.all,
          Language_Name       => "Ada",
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");

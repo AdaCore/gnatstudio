@@ -58,7 +58,6 @@ with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Osint;                      use Osint;
-with Projects;                   use Projects;
 with Src_Editor_Box;             use Src_Editor_Box;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
@@ -1290,7 +1289,7 @@ package body Src_Contexts is
       Context.Scope      := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
       Context.Begin_Line      := 0;
-      Set_File_List (Context, Get_Source_Files (Get_Project (Kernel), True));
+      Set_File_List (Context, Get_Project (Kernel).Source_Files (True));
       return Search_Context_Access (Context);
    end Files_From_Project_Factory;
 
