@@ -587,19 +587,24 @@ package body ALI_Parser is
       --  We end up here for the runtime files, so we just try to append the
       --  standard GNAT extensions.
 
-      declare
-         Base : constant String := Get_Name_String (File_To_Compile);
-         N    : constant String :=
-           +Imported_Projects (Imported_Projects'First).File_From_Unit
-           (Base (Base'First .. Base'Last - 4),
-            Part,
-            Check_Predefined_Library => True,
-            Language => "ada");
-      begin
-         Name_Len := N'Length;
-         Name_Buffer (1 .. Name_Len) := N;
+      if File_To_Compile = Namet.No_File then
+         Name_Len := 0;
          return Name_Find;
-      end;
+      else
+         declare
+            Base : constant String := Get_Name_String (File_To_Compile);
+            N    : constant String :=
+              +Imported_Projects (Imported_Projects'First).File_From_Unit
+              (Base (Base'First .. Base'Last - 4),
+               Part,
+               Check_Predefined_Library => True,
+               Language => "ada");
+         begin
+            Name_Len := N'Length;
+            Name_Buffer (1 .. Name_Len) := N;
+            return Name_Find;
+         end;
+      end if;
    end Filename_From_Unit;
 
    ----------------------------

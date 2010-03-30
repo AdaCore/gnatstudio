@@ -54,13 +54,19 @@ package body GNAT.Expect.TTY is
    begin
       --  If we haven't already closed the process
       if Descriptor.Process /= System.Null_Address then
-         Close (Descriptor.Input_Fd);
+         if Descriptor.Input_Fd /= Invalid_FD then
+            Close (Descriptor.Input_Fd);
+         end if;
 
-         if Descriptor.Error_Fd /= Descriptor.Output_Fd then
+         if Descriptor.Error_Fd /= Descriptor.Output_Fd
+           and then Descriptor.Error_Fd /= Invalid_FD
+         then
             Close (Descriptor.Error_Fd);
          end if;
 
-         Close (Descriptor.Output_Fd);
+         if Descriptor.Output_Fd /= Invalid_FD then
+            Close (Descriptor.Output_Fd);
+         end if;
 
          --  Send a Ctrl-C to the process first. This way, if the
          --  launched process is a "sh" or "cmd", the child processes

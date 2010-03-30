@@ -24,10 +24,9 @@ with GNATCOLL.VFS;
 
 package Projects is
 
-   type GPS_Project_Tree is new Project_Tree with private;
-   type GPS_Project_Tree_Access is access GPS_Project_Tree'Class;
-
    type GPS_Project_Environment is new Project_Environment with null record;
+
+   type GPS_Project_Data is new GNATCOLL.Projects.Project_Data with private;
 
    type Project_Registry is tagged private;
    type Project_Registry_Access is access all Project_Registry'Class;
@@ -37,8 +36,10 @@ package Projects is
    function Is_Valid_Project_Name (Name : String) return Boolean;
    --  Return True if Name is a valid project name
 
-   function Create return Project_Registry_Access;
-   --  Create a new project registry
+   function Create
+     (Tree : not null access GNATCOLL.Projects.Project_Tree'Class)
+      return Project_Registry_Access;
+   --  Create a new project registry (associated with a custom tree)
 
    function Environment
      (Self : Project_Registry)
@@ -106,21 +107,19 @@ package Projects is
    --  GNAT version that is used.
 
 private
-   type GPS_Project_Tree is new Project_Tree with null record;
-
-   overriding function Data_Factory
-     (Self : GPS_Project_Tree) return Project_Data_Access;
-   --  See inherited documentation
-
    type Project_Registry is tagged record
       Env  : GNATCOLL.Projects.Project_Environment_Access;
-      Tree : Projects.GPS_Project_Tree_Access;
+      Tree : GNATCOLL.Projects.Project_Tree_Access;
    end record;
 
-   overriding procedure Recompute_View
-     (Self   : in out GPS_Project_Tree;
-      Errors : Error_Report := null);
-   --  See inherited documentation
+   type GPS_Project_Data is new GNATCOLL.Projects.Project_Data with record
+      Paths_Type : Paths_Type_Information := From_Pref;
+      --  True if the paths in the project file should be stored as relative
+      --  paths.
+
+      Status : Project_Status := From_File;
+   end record;
+   type GPS_Project_Data_Access is access all GPS_Project_Data'Class;
 
    overriding procedure Set_Object_Subdir
      (Self   : in out GPS_Project_Environment;

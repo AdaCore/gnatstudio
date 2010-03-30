@@ -1100,6 +1100,7 @@ procedure GPS.Main is
               (new String'("ada"), new String'("c"), new String'("c++")));
 
          Project.Set_Modified (False);
+
          Recompute_View (GPS_Main.Kernel);
       end Setup_Debug;
 

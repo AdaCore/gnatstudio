@@ -34,6 +34,8 @@ with XML_Utils;                        use XML_Utils;
 with Remote;                           use Remote;
 with Traces;                           use Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with Prj;
+with Types;                            use Types;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
@@ -45,6 +47,7 @@ with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with Gtk.Tooltips;                     use Gtk.Tooltips;
 
 package body GPS.Kernel.Project is
 
@@ -64,6 +67,160 @@ package body GPS.Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class);
    --  Recompute the predefined source and object paths upon build server
    --  connection, when this information was previously retrieved from cache.
+
+   type GPS_Project_Tree is new Project_Tree with record
+      Handle : Kernel_Handle;
+   end record;
+
+   overriding function Data_Factory
+     (Self : GPS_Project_Tree) return Project_Data_Access;
+   overriding procedure Recompute_View
+     (Self   : in out GPS_Project_Tree;
+      Errors : Error_Report := null);
+   --  See inherited documentation
+
+   procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class);
+   --  Cleanup empty subdirs created when opening a project with prj.subdirs
+   --  set.
+
+   ------------------------
+   -- Do_Subdirs_Cleanup --
+   ------------------------
+
+   procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class) is
+   begin
+      --  Nothing to do if Prj.Subdirs is not set
+      if Prj.Subdirs = null then
+         return;
+      end if;
+
+      declare
+         Objs    : constant File_Array :=
+           Root_Project (Tree).Object_Path (Recursive => True);
+         Success : Boolean;
+      begin
+         for J in Objs'Range loop
+            declare
+               Dir : Virtual_File renames Objs (J);
+            begin
+               if Dir.Is_Directory then
+                  --  Remove emtpy directories (this call won't remove the dir
+                  --  if files or subdirectories are in it.
+                  Dir.Remove_Dir (Success => Success);
+               end if;
+            end;
+         end loop;
+      end;
+   end Do_Subdirs_Cleanup;
+
+   ---------------------
+   -- Create_Registry --
+   ---------------------
+
+   procedure Create_Registry (Handle : access Kernel_Handle_Record'Class) is
+      Tree : constant Project_Tree_Access := new GPS_Project_Tree;
+   begin
+      GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
+      Handle.Registry := Projects.Create (Tree => Tree);
+
+      --  We are in a special mode here, with no tooltips (ie we are in the
+      --  process of creating the kernel).
+      --  This is used to disable some aspects of Recompute_View, in particular
+      --  the hooks, since it is too early to call them
+      Assert (Me, Handle.Tooltips = null,
+              "Tooltips should not exist when loading project");
+      Tree.Load_Empty_Project (Env => Handle.Registry.Environment);
+   end Create_Registry;
+
+   ------------------
+   -- Data_Factory --
+   ------------------
+
+   overriding function Data_Factory
+     (Self : GPS_Project_Tree) return Project_Data_Access
+   is
+      pragma Unreferenced (Self);
+   begin
+      return new GPS_Project_Data;
+   end Data_Factory;
+
+   --------------------
+   -- Recompute_View --
+   --------------------
+
+   overriding procedure Recompute_View
+     (Self   : in out GPS_Project_Tree;
+      Errors : Error_Report := null)
+   is
+      procedure Reset_File_If_External (S : in out Entities.Source_File);
+      --  Reset the xref info for a source file that no longer belongs to the
+      --  project.
+
+      ----------------------------
+      -- Reset_File_If_External --
+      ----------------------------
+
+      procedure Reset_File_If_External (S : in out Entities.Source_File) is
+         Info : constant File_Info := Self.Info (Entities.Get_Filename (S));
+      begin
+         if Info.Project = No_Project then
+            Entities.Reset (S);
+         end if;
+      end Reset_File_If_External;
+
+   begin
+      Push_State (Self.Handle, Busy);
+
+      Do_Subdirs_Cleanup (Self);
+      Recompute_View (Project_Tree (Self), Errors);
+
+      --  If we are in the process of creating the kernel, no need to do
+      --  anything else here
+      if Self.Handle.Tooltips = null then
+         Pop_State (Kernel_Handle (Self.Handle));
+         return;
+      end if;
+
+      Compute_Predefined_Paths (Self.Handle);
+
+      --  The list of source or ALI files might have changed, so we need to
+      --  reset the cache containing LI information, otherwise this cache might
+      --  contain dangling references to projects that have been freed. We used
+      --  to do this only when loading a new project, but in fact that is not
+      --  sufficient: when we look up xref info for a source file, if we
+      --  haven't reset the cache we might get a reply pointing to a source
+      --  file in a directory that is no longer part of the project in the new
+      --  scenario.
+      --
+      --  In fact, we only reset the info for those source files that are no
+      --  longer part of the project. This might take longer than dropping the
+      --  whole database since in the former case we need to properly handle
+      --  refcounting whereas Reset takes a shortcut. It is still probably
+      --  cleaner to only reset what's needed.
+
+      Entities.Foreach_Source_File
+        (Get_Database (Self.Handle), Reset_File_If_External'Access);
+
+      Run_Hook (Self.Handle, Project_View_Changed_Hook);
+      Pop_State (Kernel_Handle (Self.Handle));
+   end Recompute_View;
+
+   --------------------
+   -- Recompute_View --
+   --------------------
+
+   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
+      procedure Report_Error (S : String);
+      procedure Report_Error (S : String) is
+      begin
+         Console.Insert (Handle, S, Mode => Console.Error, Add_LF => False);
+         Parse_File_Locations (Handle, S, Location_Category);
+      end Report_Error;
+
+   begin
+      Get_Registry (Handle).Tree.Recompute_View
+        (Errors => Report_Error'Unrestricted_Access);
+   end Recompute_View;
 
    -------------------------------
    -- Predefined_Paths_Property --
@@ -436,7 +593,6 @@ package body GPS.Kernel.Project is
       Kernel.Registry.Tree.Load_Empty_Project;
 
       Run_Hook (Kernel, Project_Changed_Hook);
-      Recompute_View (Kernel);
    end Load_Empty_Project;
 
    ------------------------------
@@ -632,6 +788,10 @@ package body GPS.Kernel.Project is
          --  output of gnatls, so that users can possibly change the
          --  environment variables like ADA_PROJECT_PATH before reloading the
          --  project (FB07-010)
+         --  This call to Compute_Predefined_Paths is needed before even
+         --  loading the project, in case it depends on some predefined
+         --  projects. The loading of the project will call it a second time
+         --  once we know the "gnat" attribute.
 
          Trace (Me, "Recompute predefined paths -- Local builder server ? "
                 & Boolean'Image (Is_Local (Build_Server)));
@@ -645,7 +805,8 @@ package body GPS.Kernel.Project is
             Kernel.Registry.Tree.Load
               (Root_Project_Path  => Local_Project,
                Env                => Kernel.Registry.Environment,
-               Errors             => Report_Error'Unrestricted_Access);
+               Errors             => Report_Error'Unrestricted_Access,
+               Recompute_View     => False);
 
          exception
             when Invalid_Project =>
@@ -750,6 +911,7 @@ package body GPS.Kernel.Project is
          end if;
 
          Run_Hook (Kernel, Project_Changed_Hook);
+
          Recompute_View (Kernel);
 
          Pop_State (Kernel_Handle (Kernel));
@@ -771,72 +933,6 @@ package body GPS.Kernel.Project is
    begin
       return Handle.Registry.Tree.Root_Project;
    end Get_Project;
-
-   --------------------
-   -- Recompute_View --
-   --------------------
-
-   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
-      procedure Report_Error (S : String);
-      --  Handler called when the project parser finds an error
-
-      procedure Reset_File_If_External (S : in out Entities.Source_File);
-      --  Reset the xref info for a source file that no longer belongs to the
-      --  project.
-
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error (S : String) is
-      begin
-         Console.Insert (Handle, S, Mode => Console.Error);
-         Parse_File_Locations
-           (Handle,
-            S,
-            Category  => "Project",
-            Highlight => True);
-      end Report_Error;
-
-      ----------------------------
-      -- Reset_File_If_External --
-      ----------------------------
-
-      procedure Reset_File_If_External (S : in out Entities.Source_File) is
-         Info : constant File_Info :=
-           Handle.Registry.Tree.Info (Entities.Get_Filename (S));
-      begin
-         if Info.Project = No_Project then
-            Entities.Reset (S);
-         end if;
-      end Reset_File_If_External;
-
-   begin
-      Push_State (Kernel_Handle (Handle), Busy);
-      Handle.Registry.Tree.Recompute_View (Report_Error'Unrestricted_Access);
-      Compute_Predefined_Paths (Handle);
-
-      --  The list of source or ALI files might have changed, so we need to
-      --  reset the cache containing LI information, otherwise this cache might
-      --  contain dangling references to projects that have been freed. We used
-      --  to do this only when loading a new project, but in fact that is not
-      --  sufficient: when we look up xref info for a source file, if we
-      --  haven't reset the cache we might get a reply pointing to a source
-      --  file in a directory that is no longer part of the project in the new
-      --  scenario.
-      --
-      --  In fact, we only reset the info for those source files that are no
-      --  longer part of the project. This might take longer than dropping the
-      --  whole database since in the former case we need to properly handle
-      --  refcounting whereas Reset takes a shortcut. It is still probably
-      --  cleaner to only reset what's needed.
-
-      Entities.Foreach_Source_File
-        (Get_Database (Handle), Reset_File_If_External'Access);
-
-      Run_Hook (Handle, Project_View_Changed_Hook);
-      Pop_State (Kernel_Handle (Handle));
-   end Recompute_View;
 
    ---------------------------------
    -- Scenario_Variables_Cmd_Line --

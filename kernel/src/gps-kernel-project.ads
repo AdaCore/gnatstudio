@@ -124,6 +124,9 @@ package GPS.Kernel.Project is
    --  finished your changes, so as to report the changes to all the other
    --  tools.
 
+   procedure Create_Registry (Handle : access Kernel_Handle_Record'Class);
+   --  Create the project registry. This needs to be called exactly once.
+
    function Get_Registry
      (Handle : access Kernel_Handle_Record'Class)
       return Projects.Project_Registry_Access;

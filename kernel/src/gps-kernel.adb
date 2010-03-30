@@ -270,8 +270,7 @@ package body GPS.Kernel is
       Create_Handler (Handler);
       Handle.Lang_Handler := Handler;
 
-      Handle.Registry := Projects.Create;
-
+      Create_Registry (Handle);
       Set_Registry
         (Language_Handler (Handle.Lang_Handler), Handle.Registry);
 

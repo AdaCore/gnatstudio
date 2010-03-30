@@ -24,11 +24,9 @@ with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Opt;                        use Opt;
-with Prj;
 with Namet;                      use Namet;
 with Scans;                      use Scans;
 with Snames;                     use Snames;
-with Types;                      use Types;
 with GPS.Intl;                   use GPS.Intl;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
@@ -57,19 +55,6 @@ package body Projects is
    --  won't be called a second time, but it's better to hide messages about
    --  gnatls being not found to users rather than confuse them for the case
    --  above (cross-gnatls only).
-
-   type GPS_Project_Data is new GNATCOLL.Projects.Project_Data with record
-      Paths_Type : Paths_Type_Information := From_Pref;
-      --  True if the paths in the project file should be stored as relative
-      --  paths.
-
-      Status : Project_Status := From_File;
-   end record;
-   type GPS_Project_Data_Access is access all GPS_Project_Data'Class;
-
-   procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class);
-   --  Cleanup empty subdirs created when opening a project with prj.subdirs
-   --  set.
 
    -----------------------
    -- Project_Name_Hash --
@@ -129,18 +114,6 @@ package body Projects is
    begin
       GPS_Project_Data_Access (Project.Data).Status := Status;
    end Set_Status;
-
-   ------------------
-   -- Data_Factory --
-   ------------------
-
-   overriding function Data_Factory
-     (Self : GPS_Project_Tree) return Project_Data_Access
-   is
-      pragma Unreferenced (Self);
-   begin
-      return new GPS_Project_Data;
-   end Data_Factory;
 
    --------------------------
    -- Source_Dirs_With_VCS --
@@ -214,7 +187,7 @@ package body Projects is
 
    function Tree (Self : Project_Registry) return Project_Tree_Access is
    begin
-      return Project_Tree_Access (Self.Tree);
+      return Self.Tree;
    end Tree;
 
    -------------
@@ -223,7 +196,7 @@ package body Projects is
 
    procedure Destroy (Registry : in out Project_Registry) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (GPS_Project_Tree'Class, GPS_Project_Tree_Access);
+        (Project_Tree'Class, Project_Tree_Access);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Environment'Class, Project_Environment_Access);
    begin
@@ -233,49 +206,6 @@ package body Projects is
 
       GNATCOLL.Projects.Finalize;
    end Destroy;
-
-   ------------------------
-   -- Do_Subdirs_Cleanup --
-   ------------------------
-
-   procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class) is
-   begin
-      --  Nothing to do if Prj.Subdirs is not set
-      if Prj.Subdirs = null then
-         return;
-      end if;
-
-      declare
-         Objs    : constant File_Array :=
-           Root_Project (Tree).Object_Path (Recursive => True);
-         Success : Boolean;
-      begin
-         for J in Objs'Range loop
-            declare
-               Dir : Virtual_File renames Objs (J);
-            begin
-               if Dir.Is_Directory then
-                  --  Remove emtpy directories (this call won't remove the dir
-                  --  if files or subdirectories are in it.
-                  Dir.Remove_Dir (Success => Success);
-               end if;
-            end;
-         end loop;
-      end;
-   end Do_Subdirs_Cleanup;
-
-   --------------------
-   -- Recompute_View --
-   --------------------
-
-   overriding procedure Recompute_View
-     (Self   : in out GPS_Project_Tree;
-      Errors : Error_Report := null)
-   is
-   begin
-      Do_Subdirs_Cleanup (Self);
-      Recompute_View (Project_Tree (Self), Errors);
-   end Recompute_View;
 
    -----------------------
    -- Set_Object_Subdir --
@@ -297,13 +227,14 @@ package body Projects is
    -- Create --
    ------------
 
-   function Create return Project_Registry_Access is
+   function Create
+     (Tree : not null access Project_Tree'Class)
+      return Project_Registry_Access
+   is
       Reg : constant Project_Registry_Access := new Project_Registry;
    begin
-      Reg.Tree := new GPS_Project_Tree;
+      Reg.Tree := Project_Tree_Access (Tree);
       Reg.Env  := new GPS_Project_Environment;
-
-      Reg.Tree.Load_Empty_Project (Env => Reg.Env);
       return Reg;
    end Create;
 
