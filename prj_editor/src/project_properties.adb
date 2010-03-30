@@ -1542,12 +1542,17 @@ package body Project_Properties is
                     (Attribute_Pkg_String'(Build (Pkg, Attr)),
                      "", Index);
                begin
-                  if List'Length = 0
+                  if List = null
                     and then Var /= ""
                   then
                      --  Did we have a string attribute in fact ?
                      Set_Return_Attribute (Var, As_List);
+
                   else
+                     if List = null then
+                        List := new GNAT.Strings.String_List'(1 .. 0 => null);
+                     end if;
+
                      Set_Return_Attribute (List.all, As_List);
                   end if;
 
