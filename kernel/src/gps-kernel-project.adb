@@ -406,7 +406,13 @@ package body GPS.Kernel.Project is
       Success        : Boolean;
 
    begin
-      if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
+      --  If we never computed the predefined paths before, we always do it at
+      --  least once, since this is needed to find the predefined projects.
+      --  Otherwise we only do it if Ada is a supported language.
+
+      if Handle.Gnatls_Cache = null
+        or else Basic_Types.Contains (Langs, "ada", Case_Sensitive => False)
+      then
          --  If the gnatls commands hasn't changed, no need to recompute the
          --  predefined paths.
 

@@ -1959,7 +1959,7 @@ package body GVD.Process is
      (Kernel   : access Kernel_Handle_Record'Class;
       Debugger : access Visual_Debugger_Record'Class)
    is
-      Project : constant Project_Type := Get_Project (Kernel);
+      Project : Project_Type := Get_Project (Kernel);
       Exec    : Virtual_File;
 
    begin
@@ -2017,8 +2017,19 @@ package body GVD.Process is
 
          --  Create an empty project, and we'll add properties to it
 
-         Get_Registry (Kernel).Tree.Load_Empty_Project
-           (Get_Registry (Kernel).Environment);
+         if Exec /= GNATCOLL.VFS.No_File then
+            Get_Registry (Kernel).Tree.Load_Empty_Project
+              (Get_Registry (Kernel).Environment,
+               Name           => "debugger_" & (+Base_Name (Exec)),
+               Recompute_View => False);
+         else
+            Get_Registry (Kernel).Tree.Load_Empty_Project
+              (Get_Registry (Kernel).Environment,
+               Name           => "debugger_no_file",
+               Recompute_View => False);
+         end if;
+
+         Project := Get_Registry (Kernel).Tree.Root_Project;
 
          if Debugger_Name /= "" then
             Project.Set_Attribute
@@ -2118,14 +2129,31 @@ package body GVD.Process is
             end;
          end loop;
 
+         Traces.Trace (Me, "Setting Source_Dirs:");
+         for D in Dirs'First .. Dirs_Index - 1 loop
+            Traces.Trace (Me, "   " & Dirs (D).all);
+         end loop;
+
          Project.Set_Attribute
            (Attribute          => Source_Dirs_Attribute,
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
+
+         Traces.Trace (Me, "Setting Source_Files:");
+         for B in Bases'First .. Bases_Index - 1 loop
+            Traces.Trace (Me, "   " & Bases (B).all);
+         end loop;
+
          Project.Set_Attribute
            (Attribute          => Source_Files_Attribute,
             Values             => Bases (Bases'First .. Bases_Index - 1));
          Free (Bases);
+
+         Traces.Trace (Me, "Setting Languages:");
+         for L in Langs'First .. Lang_Index - 1 loop
+            Traces.Trace (Me, "   " & Langs (L).all);
+         end loop;
+
          Project.Set_Attribute
            (Attribute          => Languages_Attribute,
             Values             => Langs (Langs'First .. Lang_Index - 1));
@@ -2153,7 +2181,8 @@ package body GVD.Process is
       --  Is the information for this executable already cached? If yes,
       --  we simply reuse it to avoid the need to interact with the debugger.
 
-      Set_Status (Get_Project (Kernel), From_Executable);
+      Project.Set_Modified (False);
+      Set_Status (Project, From_Executable);
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
    end Load_Project_From_Executable;
