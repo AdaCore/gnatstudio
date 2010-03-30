@@ -2965,12 +2965,12 @@ package body CPP_Parser is
 
    function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Project_Registry) return Entities.LI_Handler
+      Registry : Project_Registry'Class) return Entities.LI_Handler
    is
       CPP : constant CPP_Handler := new CPP_Handler_Record;
    begin
       CPP.Db            := Db;
-      CPP.Registry      := Registry;
+      CPP.Registry      := Project_Registry (Registry);
       CPP.DBIMP_Path    := No_File;
       CPP.CBrowser_Path := No_File;
       return LI_Handler (CPP);

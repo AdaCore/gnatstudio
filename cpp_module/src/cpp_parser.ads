@@ -28,7 +28,7 @@ package CPP_Parser is
 
    function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Project_Registry)
+      Registry : Project_Registry'Class)
       return Entities.LI_Handler;
    --  Create a new ALI handler
 

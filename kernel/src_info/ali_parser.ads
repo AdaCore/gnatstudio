@@ -27,7 +27,7 @@ package ALI_Parser is
 
    function Create_ALI_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry)
+      Registry : Projects.Project_Registry'Class)
       return Entities.LI_Handler;
    --  Create a new ALI handler
 

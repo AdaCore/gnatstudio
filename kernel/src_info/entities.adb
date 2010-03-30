@@ -1427,6 +1427,9 @@ package body Entities is
            (Base_Name,
             Use_Source_Path => True,
             Use_Object_Path => False);
+         if File = No_File then
+            File := Create_From_Base (Base_Name);
+         end if;
 
          return Internal_Get_Or_Create
            (Db, File, File, Handler, LI, Allow_Create);

@@ -2279,12 +2279,12 @@ package body ALI_Parser is
 
    function Create_ALI_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Project_Registry) return Entities.LI_Handler
+      Registry : Project_Registry'Class) return Entities.LI_Handler
    is
       ALI : constant ALI_Handler := new ALI_Handler_Record;
    begin
       ALI.Db       := Db;
-      ALI.Registry := Registry;
+      ALI.Registry := Project_Registry (Registry);
       return LI_Handler (ALI);
    end Create_ALI_Handler;
 
