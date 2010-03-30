@@ -339,6 +339,17 @@ package body Code_Peer.Module is
       Ada.Text_IO.Close (F);
    end Create_Library_File;
 
+   ---------------
+   -- Get_Color --
+   ---------------
+
+   function Get_Color
+     (Probability : Code_Peer.Message_Probability_Level)
+      return Gdk.Color.Gdk_Color is
+   begin
+      return Module.Message_Colors (Probability).Get_Pref;
+   end Get_Color;
+
    ------------
    -- Review --
    ------------

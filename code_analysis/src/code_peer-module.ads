@@ -25,6 +25,7 @@ with Gtk.Menu;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
+with Gdk.Color;
 private with Default_Preferences;
 with GPS.Kernel;   use GPS.Kernel;
 with GPS.Kernel.Modules;
@@ -79,6 +80,10 @@ package Code_Peer.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module
+
+   function Get_Color
+     (Probability : Code_Peer.Message_Probability_Level)
+      return Gdk.Color.Gdk_Color;
 
 private
 

@@ -18,9 +18,12 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;
+with Gdk.Color;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Intl;          use GPS.Intl;
+
+with Code_Peer.Module;
 
 package body Code_Peer.Summary_Models is
 
@@ -111,19 +114,16 @@ package body Code_Peer.Summary_Models is
             | Low_Deltas_Count_Column
             | Low_Removed_Count_Column
             | Low_Current_Count_Column
-            | Low_Current_Color_Column
             | Medium_Base_Count_Column
             | Medium_Added_Count_Column
             | Medium_Deltas_Count_Column
             | Medium_Removed_Count_Column
             | Medium_Current_Count_Column
-            | Medium_Current_Color_Column
             | High_Base_Count_Column
             | High_Added_Count_Column
             | High_Deltas_Count_Column
             | High_Removed_Count_Column
             | High_Current_Count_Column
-            | High_Current_Color_Column
             | Suppressed_Base_Count_Column
             | Suppressed_Added_Count_Column
             | Suppressed_Deltas_Count_Column
@@ -131,6 +131,12 @@ package body Code_Peer.Summary_Models is
             | Suppressed_Current_Count_Column
               =>
             return Glib.GType_String;
+
+         when High_Current_Color_Column
+            | Medium_Current_Color_Column
+            | Low_Current_Color_Column
+            =>
+            return Gdk.Color.Gdk_Color_Type;
 
          when others =>
             return Glib.GType_Invalid;
@@ -477,8 +483,8 @@ package body Code_Peer.Summary_Models is
             Set_Count_Image (Code_Peer.Low, Current);
 
          when Low_Current_Color_Column =>
-            Glib.Values.Init (Value, Glib.GType_String);
-            Glib.Values.Set_String (Value, "#CCFFFF");
+            Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
+            Gdk.Color.Set_Value (Value, Code_Peer.Module.Get_Color (Low));
 
          when Medium_Base_Count_Column =>
             Set_Count_Image (Code_Peer.Medium, Base);
@@ -496,8 +502,8 @@ package body Code_Peer.Summary_Models is
             Set_Count_Image (Code_Peer.Medium, Current);
 
          when Medium_Current_Color_Column =>
-            Glib.Values.Init (Value, Glib.GType_String);
-            Glib.Values.Set_String (Value, "#FFFFCC");
+            Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
+            Gdk.Color.Set_Value (Value, Code_Peer.Module.Get_Color (Medium));
 
          when High_Base_Count_Column =>
             Set_Count_Image (Code_Peer.High, Base);
@@ -515,8 +521,8 @@ package body Code_Peer.Summary_Models is
             Set_Count_Image (Code_Peer.High, Current);
 
          when High_Current_Color_Column =>
-            Glib.Values.Init (Value, Glib.GType_String);
-            Glib.Values.Set_String (Value, "#FFCCCC");
+            Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
+            Gdk.Color.Set_Value (Value, Code_Peer.Module.Get_Color (High));
 
          when Suppressed_Base_Count_Column =>
             Set_Count_Image (Code_Peer.Suppressed, Base);

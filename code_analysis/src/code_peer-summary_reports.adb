@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -555,7 +555,7 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Summary_Models.High_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background",
+         "cell_background_gdk",
          Code_Peer.Summary_Models.High_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -589,7 +589,7 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Summary_Models.Medium_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background",
+         "cell_background_gdk",
          Code_Peer.Summary_Models.Medium_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -623,7 +623,7 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Summary_Models.Low_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background",
+         "cell_background_gdk",
          Code_Peer.Summary_Models.Low_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
