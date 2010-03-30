@@ -896,32 +896,16 @@ package body Project_Properties is
       Attribute_Index : String := "") return Boolean
    is
       Lower_Attribute_Index : String := Attribute_Index;
-      Result                : Boolean;
    begin
       if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
       end if;
 
-      if not Attr.Is_List then
-         Result := Project.Attribute_Value
-           (Attribute => Build (Package_Name   => Attr.Pkg.all,
-                                Attribute_Name => Attr.Name.all),
-            Default   => "@@",
-            Index     => Lower_Attribute_Index) /= "@@";
-         return Result;
-
-      else
-         declare
-            Current : String_List_Access := Project.Attribute_Value
-              (Attribute => Build (Package_Name   => Attr.Pkg.all,
-                                   Attribute_Name => Attr.Name.all),
-               Index     => Lower_Attribute_Index);
-         begin
-            Result := Current /= null;
-            Free (Current);
-            return Result;
-         end;
-      end if;
+      return Project.Has_Attribute
+        (Attribute_Pkg_String'
+           (Build (Package_Name   => Attr.Pkg.all,
+                   Attribute_Name => Attr.Name.all)),
+         Index => Lower_Attribute_Index);
    end Attribute_Exists;
 
    ----------------------------
@@ -1008,7 +992,7 @@ package body Project_Properties is
             end if;
 
             if Active (Me) then
-               Trace (Me, "Change for attribute "
+               Trace (Me, "Change for string attribute "
                       & Attr.Pkg.all & "'" & Attr.Name.all
                       & " (" & Lower_Attribute_Index
                       & ") Old=""" & Old_Value
@@ -1044,30 +1028,38 @@ package body Project_Properties is
       end if;
 
       declare
-         Old_Values : String_List_Access := Project.Attribute_Value
-           (Attribute => Attribute,
-            Index     => Lower_Attribute_Index);
+         Old_Values : String_List_Access :=
+           Get_Current_Value
+             (Kernel        => Kernel,
+              Project       => Project,
+              Attr          => Attr,
+              Ignore_Editor => True,
+              Index         => Lower_Attribute_Index);
+
       begin
-         if Old_Values /= null then
+         if (Old_Values = null or else Old_Values'Length = 0)
+           and then Values'Length = 0
+         then
+            Equal := True;
+
+         elsif Old_Values /= null then
             Equal := Is_Equal
               (Values, Old_Values.all, Case_Sensitive => False,
                Ordered => Attr.Ordered_List);
+
          else
-            declare
-               Default : String_List_Access :=
-                 Get_Current_Value
-                   (Kernel       => Kernel,
-                    Project      => Project,
-                    Attr         => Attr,
-                    Index        => Lower_Attribute_Index,
-                    Default_Only => True);
-            begin
-               Equal := Default /= null
-                 and then Is_Equal
-                   (Values, Default.all, Case_Sensitive => False,
+            Old_Values :=
+              Get_Current_Value
+                (Kernel       => Kernel,
+                 Project      => Project,
+                 Attr         => Attr,
+                 Index        => Lower_Attribute_Index,
+                 Default_Only => True);
+
+            Equal := Old_Values /= null
+              and then Is_Equal
+                (Values, Old_Values.all, Case_Sensitive => False,
                     Ordered => Attr.Ordered_List);
-               Free (Default);
-            end;
          end if;
 
          if not Equal then
@@ -1078,7 +1070,7 @@ package body Project_Properties is
                Index     => Lower_Attribute_Index);
 
             if Active (Me) then
-               Trace (Me, "Change for attribute "
+               Trace (Me, "Change for list attribute "
                       & Attr.Pkg.all & "'" & Attr.Name.all & "("
                       & Lower_Attribute_Index & ")");
             end if;
@@ -3883,6 +3875,8 @@ package body Project_Properties is
                   Index     => Lower_Attribute_Index);
             begin
                if Current /= null and then Current'Length /= 0 then
+                  Trace (Me, "MANU Value defined for " & Attr.Name.all
+                         & " length=" & Current'Length'Img);
                   return Current;
                end if;
                Free (Current);

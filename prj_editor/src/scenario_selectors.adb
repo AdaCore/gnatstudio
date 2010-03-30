@@ -436,7 +436,6 @@ package body Scenario_Selectors is
 
       Gtk_New (View);
       Add (Selector, View);
-      --  Set_Mode (Get_Selection (View), Selection_None);
 
       Gtk_New (Selector.Model, Var_Column_Types);
       Set_Model (View, Gtk_Tree_Model (Selector.Model));
@@ -473,8 +472,8 @@ package body Scenario_Selectors is
    procedure Show_Variables
      (Selector : access Scenario_Selector_Record'Class)
    is
-      Vars : constant Scenario_Variable_Array := Scenario_Variables
-        (Selector.Kernel);
+      Vars : constant Scenario_Variable_Array :=
+        Get_Registry (Selector.Kernel).Tree.Scenario_Variables;
       Iter, Child : Gtk_Tree_Iter;
    begin
       for V in Vars'Range loop
@@ -492,18 +491,18 @@ package body Scenario_Selectors is
             Current : constant String := Value (Vars (V));
             Values  : GNAT.Strings.String_List :=
               Get_Registry (Selector.Kernel).Tree.Possible_Values_Of
-                (Vars (V));
+              (Vars (V));
          begin
-            for V in Values'Range loop
+            for Val in Values'Range loop
                Append (Selector.Model, Child, Iter);
                Set (Selector.Model,
                     Child,
                     Column => Selected_Column,
-                    Value  => Values (V).all = Current);
+                    Value  => Values (Val).all = Current);
                Set (Selector.Model,
                     Child,
                     Column => Var_Name_Column,
-                    Value  => Values (V).all);
+                    Value  => Values (Val).all);
             end loop;
 
             Free (Values);
