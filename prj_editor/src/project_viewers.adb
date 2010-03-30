@@ -1437,7 +1437,7 @@ package body Project_Viewers is
               (Source_Dirs_Attribute);
             Index : Natural := Dirs'Last;
          begin
-            if not Is_Editable (Project) then
+            if not Is_Editable (Project) or else Dirs = null then
                Set_Error_Msg (Data, -"Project is not editable");
             else
                if not Is_Absolute_Path (Dir) then

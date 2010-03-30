@@ -23,6 +23,7 @@ with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Calendar;                  use Ada.Calendar;
 
 with GNAT.OS_Lib;
+with GNATCOLL.Projects;             use GNATCOLL.Projects;
 
 with Glib.Unicode;                    use Glib.Unicode;
 
@@ -39,7 +40,6 @@ with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;               use Projects;
-with Projects.Registry;      use Projects.Registry;
 with Entities;               use Entities;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
@@ -286,7 +286,8 @@ procedure Completion.Test is
    -- Get_New_Construct_Extractor --
    ---------------------------------
 
-   New_Registry : aliased Project_Registry;
+   Tree         : constant Project_Tree_Access := new Project_Tree;
+   New_Registry : constant Project_Registry_Access := Create (Tree);
    Construct_Db : Construct_Database_Access := new Construct_Database;
    Db           : Entities_Database;
    pragma Unreferenced (Db);
@@ -300,9 +301,6 @@ procedure Completion.Test is
       begin
          Text_IO.Put_Line ("Error loading project: " & Msg);
       end Project_Error;
-
-      Loaded  : Boolean;
-      Success : Boolean;
 
       Current_File : Structured_File_Access;
 
@@ -324,20 +322,15 @@ procedure Completion.Test is
       end;
 
       if Project /= "" then
-         Db := Create (New_Registry'Unchecked_Access, Construct_Db);
+         Db := Create (New_Registry, Construct_Db);
 
-         Load
-           (Registry           => New_Registry,
-            Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Project),
-            Errors             => Project_Error'Unrestricted_Access,
-            New_Project_Loaded => Loaded,
-            Status             => Success);
-
-         Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
+         Tree.Load
+           (Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Project),
+            Errors             => Project_Error'Unrestricted_Access);
 
          declare
             Files : constant GNATCOLL.VFS.File_Array_Access :=
-              Get_Source_Files (Get_Root_Project (New_Registry), True);
+               Tree.Root_Project.Source_Files (Recursive => True);
          begin
             for J in Files.all'Range loop
                declare
@@ -621,8 +614,6 @@ begin
 
    Set_Max_Time;
 
-   Projects.Registry.Initialize;
-
    Given_File := Create_From_Base (+Argument (1));
 
    if Argument (2) = "parse" then
@@ -659,7 +650,6 @@ begin
    Flush;
 
    Free (Construct_Db);
-   Projects.Registry.Finalize;
 
 exception
    when E : others =>

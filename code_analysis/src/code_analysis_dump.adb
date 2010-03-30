@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,11 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;   use Ada.Text_IO;
-
-with Code_Coverage; use Code_Coverage;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Projects;      use Projects;
+with Ada.Text_IO;       use Ada.Text_IO;
+with Code_Coverage;     use Code_Coverage;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 package body Code_Analysis_Dump is
 
@@ -41,7 +40,7 @@ package body Code_Analysis_Dump is
    procedure Dump_Project (Cursor : Project_Maps.Cursor) is
       Project_Node : constant Project_Access := Project_Maps.Element (Cursor);
    begin
-      Put ("Project " & Project_Name (Project_Node.Name));
+      Put ("Project " & Project_Node.Name.Name);
 
       if Project_Node.Analysis_Data.Coverage_Data /= null then
          Dump_Prj_Coverage (Project_Node.Analysis_Data.Coverage_Data);

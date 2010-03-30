@@ -917,7 +917,7 @@ package body Project_Properties is
                                    Attribute_Name => Attr.Name.all),
                Index     => Lower_Attribute_Index);
          begin
-            Result := Current'Length /= 0;
+            Result := Current /= null;
             Free (Current);
             return Result;
          end;
@@ -1048,7 +1048,7 @@ package body Project_Properties is
            (Attribute => Attribute,
             Index     => Lower_Attribute_Index);
       begin
-         if Old_Values'Length /= 0 then
+         if Old_Values /= null then
             Equal := Is_Equal
               (Values, Old_Values.all, Case_Sensitive => False,
                Ordered => Attr.Ordered_List);
@@ -1062,9 +1062,10 @@ package body Project_Properties is
                     Index        => Lower_Attribute_Index,
                     Default_Only => True);
             begin
-               Equal := Is_Equal
-                 (Values, Default.all, Case_Sensitive => False,
-                  Ordered => Attr.Ordered_List);
+               Equal := Default /= null
+                 and then Is_Equal
+                   (Values, Default.all, Case_Sensitive => False,
+                    Ordered => Attr.Ordered_List);
                Free (Default);
             end;
          end if;
@@ -1472,8 +1473,7 @@ package body Project_Properties is
       --  other type will also be tested.
       --  As_List indicates the format of the returned value
 
-      procedure Set_Return_Attribute
-        (List : in out Argument_List; As_List : Boolean);
+      procedure Set_Return_Attribute (List : Argument_List; As_List : Boolean);
       --  Sets the contents of List into the return value.
 
       procedure Set_Return_Attribute
@@ -1485,7 +1485,7 @@ package body Project_Properties is
       --------------------------
 
       procedure Set_Return_Attribute
-        (List : in out Argument_List; As_List : Boolean)
+        (List : Argument_List; As_List : Boolean)
       is
          Result : Unbounded_String;
       begin
@@ -1570,7 +1570,7 @@ package body Project_Properties is
                         List : String_List_Access := Project.Attribute_Value
                           (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
                      begin
-                        if List'Length /= 0 then
+                        if List /= null then
                            Set_Return_Attribute (List.all, As_List);
                         else
                            Set_Return_Attribute (Val, As_List);
@@ -1593,7 +1593,12 @@ package body Project_Properties is
                List : String_List_Access := Get_Current_Value
                  (Kernel, Project, Descr, Index);
             begin
-               Set_Return_Attribute (List.all, As_List);
+               if List /= null then
+                  Set_Return_Attribute (List.all, As_List);
+               else
+                  Set_Return_Attribute
+                    (Argument_List'(1 .. 0 => null), As_List);
+               end if;
                Free (List);
             end;
          else
@@ -1729,7 +1734,7 @@ package body Project_Properties is
             Found          : Boolean := False;
             First_Added    : Boolean := False;
          begin
-            if not Is_Editable (Project) then
+            if not Is_Editable (Project) or else List = null then
                Set_Error_Msg (Data, -"Project is not editable");
             else
                for J in 5 .. Number_Of_Arguments (Data) loop
@@ -3255,46 +3260,48 @@ package body Project_Properties is
                  Attr    => Description,
                  Index   => Attribute_Index);
          begin
-            for V in Value'Range loop
-               Append (Editor.Model, Iter, Null_Iter);
+            if Value /= null then
+               for V in Value'Range loop
+                  Append (Editor.Model, Iter, Null_Iter);
 
-               declare
-                  Val : String renames Value (V).all;
-               begin
-                  if Val'Length > 3
-                    and then
-                      (Val (Val'Last - 2 .. Val'Last) = "/**"
-                       or else Val (Val'Last - 2 .. Val'Last) = "\**")
-                  then
-                     Set (Editor.Model, Iter, 0,
-                       Normalize_Pathname
-                         (Val (Val'First .. Val'Last - 3),
-                          Directory     => Get_Text (Path_Widget),
-                          Resolve_Links => False));
-                     Set (Editor.Model, Iter, 1, True);
+                  declare
+                     Val : String renames Value (V).all;
+                  begin
+                     if Val'Length > 3
+                       and then
+                         (Val (Val'Last - 2 .. Val'Last) = "/**"
+                          or else Val (Val'Last - 2 .. Val'Last) = "\**")
+                     then
+                        Set (Editor.Model, Iter, 0,
+                          Normalize_Pathname
+                            (Val (Val'First .. Val'Last - 3),
+                             Directory     => Get_Text (Path_Widget),
+                             Resolve_Links => False));
+                        Set (Editor.Model, Iter, 1, True);
 
-                  elsif Attr.Typ = Attribute_As_String then
-                     Set (Editor.Model, Iter, 0, Val);
-                     Set (Editor.Model, Iter, 1, False);
+                     elsif Attr.Typ = Attribute_As_String then
+                        Set (Editor.Model, Iter, 0, Val);
+                        Set (Editor.Model, Iter, 1, False);
 
-                  elsif Description.Base_Name_Only then
-                     Set (Editor.Model, Iter, 0, Base_Name (Val));
-                     Set (Editor.Model, Iter, 1, False);
+                     elsif Description.Base_Name_Only then
+                        Set (Editor.Model, Iter, 0, Base_Name (Val));
+                        Set (Editor.Model, Iter, 1, False);
 
-                  else
-                     Set
-                       (Editor.Model, Iter, 0,
-                        Normalize_Pathname
-                          (Val,
-                           Directory     => Get_Text (Path_Widget),
-                           Resolve_Links => False));
-                     Set (Editor.Model, Iter, 1, False);
-                  end if;
+                     else
+                        Set
+                          (Editor.Model, Iter, 0,
+                           Normalize_Pathname
+                             (Val,
+                              Directory     => Get_Text (Path_Widget),
+                              Resolve_Links => False));
+                        Set (Editor.Model, Iter, 1, False);
+                     end if;
 
-                  Set (Editor.Model, Iter, 2, Val);
-               end;
-            end loop;
-            Free (Value);
+                     Set (Editor.Model, Iter, 2, Val);
+                  end;
+               end loop;
+               Free (Value);
+            end if;
          end;
 
       else

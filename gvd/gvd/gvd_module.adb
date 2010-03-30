@@ -2306,8 +2306,6 @@ package body GVD_Module is
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
       Mitem             : Gtk_Menu_Item;
       Loaded_Project    : constant Project_Type := Get_Project (Kernel);
-      Loaded_Mains      : String_List_Access :=
-                            Loaded_Project.Attribute_Value (Main_Attribute);
       Iter              : Project_Iterator := Loaded_Project.Start;
       Current_Project   : Project_Type := Current (Iter);
       Tmp               : Project_Type;
@@ -2379,7 +2377,7 @@ package body GVD_Module is
                   Mains : String_List_Access :=
                     Tmp.Attribute_Value (Main_Attribute);
                begin
-                  if Mains'Length /= 0 then
+                  if Mains /= null then
                      --  Basenames inherited, but exec_dir is current project
                      Add_Entries (Mains.all, Current_Project);
 
@@ -2399,7 +2397,6 @@ package body GVD_Module is
          Current_Project := Current (Iter);
       end loop;
 
-      Free (Loaded_Mains);
       Free (Debuggable_Suffix);
 
       --  Specific entry to start the debugger without any main program

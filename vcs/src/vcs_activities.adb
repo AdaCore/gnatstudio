@@ -604,7 +604,7 @@ package body VCS_Activities is
    is
       F_Activity : constant Activity_Id := Get_File_Activity (File);
       Project    : constant Project_Type :=
-                     Get_Registry (Kernel).Tree.Info (File).Project;
+                     Get_Registry (Kernel).Tree.Info (File).Project (True);
       VCS        : constant VCS_Access := Get_Current_Ref (Kernel, Project);
       Item       : Activity_Record := Get (Activity);
 

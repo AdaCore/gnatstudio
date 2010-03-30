@@ -52,6 +52,7 @@ with Commands.Interactive;        use Commands.Interactive;
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
+with Basic_Types;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -426,21 +427,22 @@ package body Builder_Facility_Module is
 
       --  Add items for the mains
 
-      for M in reverse Mains'Range loop
-         if Mains (M).all /= "" then
-            Mitem := new Dynamic_Menu_Item_Record;
-            Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
-            Prepend (Menu, Mitem);
+      if Mains /= null then
+         for M in reverse Mains'Range loop
+            if Mains (M).all /= "" then
+               Mitem := new Dynamic_Menu_Item_Record;
+               Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
+               Prepend (Menu, Mitem);
 
-            String_Callback.Connect
-              (Mitem, Signal_Activate,
-               On_Button_Or_Menu_Click'Access,
-               (Build_Main_Target,
-                To_Unbounded_String (Mains (M).all)));
-         end if;
-      end loop;
-
-      Free (Mains);
+               String_Callback.Connect
+                 (Mitem, Signal_Activate,
+                  On_Button_Or_Menu_Click'Access,
+                  (Build_Main_Target,
+                   To_Unbounded_String (Mains (M).all)));
+            end if;
+         end loop;
+         Free (Mains);
+      end if;
    end Add_Build_Menu;
 
    -------------------------------
@@ -656,25 +658,27 @@ package body Builder_Facility_Module is
                Mains : String_List_Access :=
                  The_Project..Attribute_Value (Main_Attribute);
             begin
-               for J in Mains'Range loop
-                  if Mains (J)'Length > 0 then
-                     if Index > Result'Last then
-                        for K in J .. Mains'Last loop
-                           Free (Mains (K));
-                        end loop;
-                        exit;
-                     end if;
+               if Mains /= null then
+                  for J in Mains'Range loop
+                     if Mains (J)'Length > 0 then
+                        if Index > Result'Last then
+                           for K in J .. Mains'Last loop
+                              Free (Mains (K));
+                           end loop;
+                           exit;
+                        end if;
 
                      Result (Index) :=
                        new String'
                          (To_Full_Path (Mains (J).all, The_Project));
 
-                     Free (Mains (J));
-                     Index := Index + 1;
-                  end if;
-               end loop;
+                        Free (Mains (J));
+                        Index := Index + 1;
+                     end if;
+                  end loop;
 
-               Free (Mains);
+                  Free (Mains);
+               end if;
             end;
 
             exit when Index > Result'Last;
@@ -685,7 +689,8 @@ package body Builder_Facility_Module is
          return Result (1 .. Index - 1);
       end Get_Root_Mains;
 
-      Root_Mains   : Argument_List := Get_Root_Mains;
+      Root_Mains : Argument_List := Get_Root_Mains;
+      Base_Mains : String_List_Access;
    begin
       Base_Project := Extended_Project (Root_Project);
 
@@ -696,9 +701,13 @@ package body Builder_Facility_Module is
          return Root_Mains;
 
       else
+         Base_Mains := Base_Project.Attribute_Value (Main_Attribute);
+
+         if Base_Mains = null then
+            return Root_Mains;
+         end if;
+
          declare
-            Base_Mains : String_List_Access :=
-              Base_Project.Attribute_Value (Main_Attribute);
             Mains : String_List
               (1 .. Root_Mains'Length + Base_Mains'Length);
             Index : Natural; --  Points to the first free element in Mains
@@ -762,7 +771,7 @@ package body Builder_Facility_Module is
                  Mains (Base_Mains'Length + 1 .. Index - 1) &
                  Mains (1 .. Base_Mains'Length);
             begin
-               Free (Base_Mains);
+               Basic_Types.Unchecked_Free (Base_Mains);
                return Result;
             end;
          end;

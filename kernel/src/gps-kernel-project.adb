@@ -1086,12 +1086,15 @@ package body GPS.Kernel.Project is
          To_Lower (Tool.Project_Index.all), Value, Is_Default);
 
       --  If no value was found, we might have to return the initial value
-      if Value = null and then Use_Initial_Value then
-         if Tool.Initial_Cmd_Line /= null then
-            Value := Argument_String_To_List (Tool.Initial_Cmd_Line.all);
-         else
-            return (1 .. 0 => null);
-         end if;
+      if Value = null
+        and then Use_Initial_Value
+        and then Tool.Initial_Cmd_Line /= null
+      then
+         Value := Argument_String_To_List (Tool.Initial_Cmd_Line.all);
+      end if;
+
+      if Value = null then
+         return (1 .. 0 => null);
       end if;
 
       declare

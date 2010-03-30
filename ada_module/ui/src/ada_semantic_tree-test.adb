@@ -24,6 +24,7 @@ with Ada.Text_IO;                    use Ada.Text_IO;
 
 with GNAT.Strings;                   use GNAT.Strings;
 
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
@@ -37,8 +38,6 @@ with Language.Ada;                   use Language.Ada;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
 with Language;                       use Language;
-with Namet;                          use Namet;
-with Projects;                       use Projects;
 with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 
@@ -59,7 +58,8 @@ procedure Ada_Semantic_Tree.Test is
 
    procedure Analyze_File (File : GNATCOLL.VFS.Virtual_File);
 
-   New_Registry : aliased Project_Registry;
+   Tree         : constant Project_Tree_Access := new Project_Tree;
+   New_Registry : constant Project_Registry_Access := Create (Tree);
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
 
    Test_Trace : constant Trace_Handle := Create ("Ada_Semantic_Tree.Test");
@@ -292,7 +292,7 @@ procedure Ada_Semantic_Tree.Test is
             Put (Buffer (Word_Begin .. Word_End));
 
             File_Modified :=
-              Create (+Buffer (Word_Begin .. Word_End), New_Registry);
+              Tree.Create (+Buffer (Word_Begin .. Word_End));
 
             File_W := Write_File (File_Modified);
 
@@ -318,8 +318,7 @@ procedure Ada_Semantic_Tree.Test is
 
          Put_Line ("ANALYZE " & Buffer (Word_Begin .. Word_End));
 
-         Analyze_File
-           (Create (+Buffer (Word_Begin .. Word_End), New_Registry));
+         Analyze_File (Tree.Create (+Buffer (Word_Begin .. Word_End)));
 
       elsif Buffer (Word_Begin .. Word_End) = "DIFF" then
          declare
@@ -457,9 +456,7 @@ procedure Ada_Semantic_Tree.Test is
             end Callback;
 
             Files     : constant GNATCOLL.VFS.File_Array_Access :=
-                          Get_Source_Files
-                            (Get_Root_Project (New_Registry), True);
-            Lang_Name : Namet.Name_Id;
+                          Tree.Root_Project.Source_Files (Recursive => True);
 
          begin
             if Buffer (Word_Begin .. Word_End) = "ALL_N_DECLARATIONS" then
@@ -485,23 +482,23 @@ procedure Ada_Semantic_Tree.Test is
 
                   Flush;
 
-                  Lang_Name := Get_Language_From_File_From_Project
-                    (New_Registry, Files.all (J));
+                  declare
+                     Lang_Name : constant String :=
+                        Tree.Info (Files (J)).Language;
+                  begin
+                     if To_Lower (Lang_Name) = "ada" then
+                        Full_File := Get_Or_Create
+                           (Construct_Db, Files.all (J));
+                        Parse_Entities
+                          (Lang     => Ada_Lang,
+                           Buffer   => Get_Buffer (Full_File).all,
+                           Callback => Callback'Unrestricted_Access);
 
-                  if Lang_Name /= No_Name
-                    and then To_Lower (Get_Name_String (Lang_Name)) = "ada"
-                  then
-                     Full_File := Get_Or_Create (Construct_Db, Files.all (J));
-
-                     Parse_Entities
-                       (Lang     => Ada_Lang,
-                        Buffer   => Get_Buffer (Full_File).all,
-                        Callback => Callback'Unrestricted_Access);
-
-                     Put_Line (" done.");
-                  else
-                     Put_Line (" skipped.");
-                  end if;
+                        Put_Line (" done.");
+                     else
+                        Put_Line (" skipped.");
+                     end if;
+                  end;
                end loop;
 
             else
@@ -512,7 +509,7 @@ procedure Ada_Semantic_Tree.Test is
 
                Full_File := Get_Or_Create
                  (Get_Database (File),
-                  Create (+Buffer (Word_Begin .. Word_End), New_Registry));
+                  Tree.Create (+Buffer (Word_Begin .. Word_End)));
 
                Put_Line
                  ("---> ANALYZE " & (+Base_Name (Get_File_Path (Full_File))));
@@ -766,23 +763,12 @@ procedure Ada_Semantic_Tree.Test is
       Put_Line ("Error loading project: " & Msg);
    end Project_Error;
 
-   Db           : Entities_Database;
+   Db : constant Entities_Database := Create (New_Registry, Construct_Db);
    pragma Unreferenced (Db);
-
-   Loaded, Success : Boolean;
 begin
-   Projects.Initialize;
-
-   Db := Create (New_Registry'Unchecked_Access, Construct_Db);
-
-   Load
-     (Registry           => New_Registry,
-      Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Argument (1)),
-      Errors             => Project_Error'Unrestricted_Access,
-      New_Project_Loaded => Loaded,
-      Status             => Success);
-
-   Recompute_View (New_Registry, Project_Error'Unrestricted_Access);
+   Tree.Load
+     (Root_Project_Path => Create_From_Dir (Get_Current_Dir, +Argument (1)),
+      Errors            => Project_Error'Unrestricted_Access);
 
    Initialize
      (Construct_Db, new File_Buffer_Provider, new Ada_Language_Handler);
@@ -792,7 +778,7 @@ begin
 
    declare
       Files     : constant GNATCOLL.VFS.File_Array_Access :=
-                    Get_Source_Files (Get_Root_Project (New_Registry), True);
+                    Tree.Root_Project.Source_Files (True);
       File_Node : Structured_File_Access;
 
       pragma Unreferenced (File_Node);
@@ -806,8 +792,7 @@ begin
       --  Then, execute the tests
 
       if Argument_Count > 1 then
-         Analyze_File
-           (Create (+Argument (2), New_Registry));
+         Analyze_File (Tree.Create (+Argument (2)));
       else
          for J in Files.all'Range loop
             Analyze_File (Files.all (J));
@@ -816,8 +801,6 @@ begin
    end;
 
    Destroy (Construct_Db);
-   Destroy (New_Registry);
-   Projects.Registry.Finalize;
 exception
    when E : others =>
       Put_Line ("UNEXPECTED EXCEPTION: " & Exception_Information (E));

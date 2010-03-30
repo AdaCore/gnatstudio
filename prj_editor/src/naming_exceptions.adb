@@ -267,7 +267,8 @@ package body Naming_Exceptions is
               (Attribute => Impl_Exception_Attribute,
                Index     => Editor.Language.all);
          begin
-            Changed := not Basic_Types.Is_Equal (Bodies, Old_Exceptions.all);
+            Changed := Old_Exceptions /= null
+              and then not Basic_Types.Is_Equal (Bodies, Old_Exceptions.all);
             Free (Old_Exceptions);
          end;
       end if;
@@ -311,15 +312,16 @@ package body Naming_Exceptions is
               (Attribute => Impl_Exception_Attribute,
                Index     => Editor.Language.all);
          begin
-            Freeze := Freeze_Sort (Editor.Exceptions);
-            for B in Bodies'Range loop
-               Append (Editor.Exceptions, Iter, Null_Iter);
-               Set (Editor.Exceptions, Iter, 0, Bodies (B).all);
-               Set (Editor.Exceptions, Iter, 1, True);
-            end loop;
-
-            Thaw_Sort (Editor.Exceptions, Freeze);
-            Free (Bodies);
+            if Bodies /= null then
+               Freeze := Freeze_Sort (Editor.Exceptions);
+               for B in Bodies'Range loop
+                  Append (Editor.Exceptions, Iter, Null_Iter);
+                  Set (Editor.Exceptions, Iter, 0, Bodies (B).all);
+                  Set (Editor.Exceptions, Iter, 1, True);
+               end loop;
+               Thaw_Sort (Editor.Exceptions, Freeze);
+               Free (Bodies);
+            end if;
          end;
       end if;
    end Show_Project_Settings;

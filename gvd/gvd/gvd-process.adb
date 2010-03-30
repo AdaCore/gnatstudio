@@ -1990,13 +1990,15 @@ package body GVD.Process is
       declare
          List : String_List_Access := Project.Attribute_Value (Main_Attribute);
       begin
-         for L in List'Range loop
-            if Equal (+List (L).all, Full_Name (Exec)) then
-               Free (List);
-               return;
-            end if;
-         end loop;
-         Free (List);
+         if List /= null then
+            for L in List'Range loop
+               if Equal (+List (L).all, Full_Name (Exec)) then
+                  Free (List);
+                  return;
+               end if;
+            end loop;
+            Free (List);
+         end if;
       end;
 
       --  No handling of desktop is done here, we want to leave all windows

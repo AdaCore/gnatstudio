@@ -26,12 +26,11 @@ with Code_Analysis_Dump;       use Code_Analysis_Dump;
 with Code_Coverage;            use Code_Coverage;
 with Code_Coverage.Gcov;       use Code_Coverage.Gcov;
 
-with Projects;                 use Projects;
-with Projects;                 use Projects;
 with Language;                 use Language;
 with Language.Tree;            use Language.Tree;
 with Language.Ada;             use Language.Ada;
 with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Glib;                     use Glib;
 with Gtk.Main;                 use Gtk.Main;
@@ -119,9 +118,7 @@ procedure Code_Analysis_Test is
       Src_File_Name : Virtual_File;
       Cov_File_Name : Virtual_File;
       File_Contents : GNAT.Strings.String_Access;
-      Registry      : constant Project_Registry_Access := new Project_Registry;
-      Loaded        : Boolean;
-      Status        : Boolean;
+      Tree          : constant Project_Tree_Access := new Project_Tree;
       Project_Node  : Project_Access;
       File_Node     : Code_Analysis.File_Access;
       P_File       : constant Virtual_File := Create_From_Base (+Project_File);
@@ -130,15 +127,10 @@ procedure Code_Analysis_Test is
       Src_File_Name := Create
         (+File_Name (File_Name'First .. File_Name'Last - 5));
 
-      Initialize; --  From Projects.Registry
-      Load
-        (Registry           => Registry.all,
-         Root_Project_Path  => P_File,
-         Errors             => Project_Error'Unrestricted_Access,
-         New_Project_Loaded => Loaded,
-         Status             => Status);
-      Project_Node  := Get_Or_Create
-        (Projects, Load_Or_Find (Registry.all, P_File, Errors => null));
+      Tree.Load
+        (Root_Project_Path  => P_File,
+         Errors             => Project_Error'Unrestricted_Access);
+      Project_Node  := Get_Or_Create (Projects, Tree.Root_Project);
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -181,8 +173,7 @@ procedure Code_Analysis_Test is
       Project_Node  : Project_Access;
       pragma Unreferenced (Project_Node);
    begin
-      Project_Node  := Build_Structure
-        (Projects, File_Name, Project_File);
+      Project_Node  := Build_Structure (Projects, File_Name, Project_File);
       Dump_Text (Projects);
    end Build_Display_Destroy;
 
@@ -200,12 +191,12 @@ procedure Code_Analysis_Test is
       Cov_File_Name : Virtual_File;
       File_Contents : GNAT.Strings.String_Access;
       File_Node     : Code_Analysis.File_Access;
-      Registry      : Project_Registry;
-      Project_Name  : Project_Type;
+      Tree          : constant Project_Tree_Access := new Project_Tree;
       Project_Node  : Project_Access;
       Time_Before   : Time;
       Time_After    : Time;
       Measure       : Duration;
+      Success       : Import_Project_Error;
       Timeout       : exception;
       Create_Max    : constant Duration := 13.0;
       Request_Max   : constant Duration := 2.0;
@@ -225,19 +216,18 @@ procedure Code_Analysis_Test is
       end Build_Msg;
    begin
       Time_Before := Clock;
-      Initialize;  --  from Projects.Registry
-      Load_Empty_Project (Registry);
+      Tree.Load_Empty_Project;
 
       for J in 0 .. Integer'Value (Project_Num) loop
-         Project_Name  := Load_Or_Find
-           (Registry,
-            Create_From_Base
-               (+(Project_File (Project_File'First .. Project_File'Last - 4)
-                & "_"
-                & Integer'Image (J) (2)
-                & ".gpr")),
-            Errors => null);
-         Project_Node  := Get_Or_Create (Projects, Project_Name);
+         Success := Tree.Add_Imported_Project
+           (Tree.Root_Project,
+            GNATCOLL.VFS.Create
+              (+(Project_File (Project_File'First .. Project_File'Last - 4)
+                 & "_" & Integer'Image (J) (2) & ".gpr")));
+         if Success /= Import_Project_Error'(Success) then
+            raise Timeout with "Error importing project" & J'Img;
+         end if;
+         Project_Node  := Get_Or_Create (Projects, Tree.Root_Project);
 
          for JJ in 0 .. Integer'Value (File_Num) loop
             Cov_File_Name := Create (+File_Name);
@@ -259,16 +249,18 @@ procedure Code_Analysis_Test is
          raise Timeout with Build_Msg ("Creation alarm:", Measure, Create_Max);
       end if;
 
-      Project_Name  := Load_Or_Find
-        (Registry,
-         Create_From_Base
-           (+(Project_File (Project_File'First .. Project_File'Last - 4)
-              & "_"
-              & Integer'Image (5) (2)
-              & ".gpr")),
-         Errors => null);
+      Success := Tree.Add_Imported_Project
+        (Tree.Root_Project,
+         Create
+          (+(Project_File (Project_File'First .. Project_File'Last - 4)
+             & "_" & Integer'Image (5) (2) & ".gpr")));
+
+      if Success /= Import_Project_Error'(Success) then
+         raise Timeout with "Error importing project for requests";
+      end if;
+
       Time_Before   := Clock;
-      Project_Node  := Element (Projects.Find (Project_Name));
+      Project_Node  := Element (Projects.Find (Tree.Root_Project));
       VFS_File_Name := Create (+File_Name
                                      (File_Name'First .. File_Name'Last - 5)
                                      & (+Integer'Image (50)));
