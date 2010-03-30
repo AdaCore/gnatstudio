@@ -2066,11 +2066,19 @@ package body GPS.Kernel is
      (Name            : Filesystem_String;
       Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File
+   is
+      File : GNATCOLL.VFS.Virtual_File;
    begin
-      return Get_Registry (Kernel).Tree.Create
+      File := Get_Registry (Kernel).Tree.Create
         (Name, Use_Source_Path => Use_Source_Path,
          Use_Object_Path => Use_Object_Path);
+
+      if File = GNATCOLL.VFS.No_File then
+         File := GNATCOLL.VFS.Create_From_Base (Base_Name => Name);
+      end if;
+
+      return File;
    end Create;
 
    ----------------------
