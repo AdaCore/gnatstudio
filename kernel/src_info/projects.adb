@@ -103,7 +103,11 @@ package body Projects is
 
    function Status (Project : Project_Type) return Project_Status is
    begin
-      return GPS_Project_Data_Access (Project.Data).Status;
+      if Project.Data = null then
+         return Empty;
+      else
+         return GPS_Project_Data_Access (Project.Data).Status;
+      end if;
    end Status;
 
    ----------------
