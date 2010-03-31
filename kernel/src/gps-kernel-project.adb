@@ -685,7 +685,7 @@ package body GPS.Kernel.Project is
 
    begin
       --  Are we reloading the same project ?
-      if Status (Get_Project (Kernel)) = From_File
+      if Get_Registry (Kernel).Tree.Status = From_File
         and then Project_Path (Get_Project (Kernel)) = Project
       then
          Same_Project := True;
@@ -694,7 +694,7 @@ package body GPS.Kernel.Project is
       end if;
 
       if Get_Project (Kernel) /= No_Project
-        and then Projects.Status (Get_Project (Kernel)) = From_File
+        and then Get_Registry (Kernel).Tree.Status = From_File
       then
          Previous_Project := Project_Path (Get_Project (Kernel));
       else
@@ -712,7 +712,7 @@ package body GPS.Kernel.Project is
       if not Same_Project then
          --  Never save automatically the desktop for the default project
 
-         if Status (Kernel.Registry.Tree.Root_Project) = From_File
+         if Kernel.Registry.Tree.Status = From_File
            and then Save_Desktop_On_Exit.Get_Pref
          then
             Save_Desktop (Kernel);
@@ -908,7 +908,7 @@ package body GPS.Kernel.Project is
 
          elsif Is_Default then
             --  Successful load of default project
-            Set_Status (Get_Project (Kernel), Projects.Default);
+            Get_Registry (Kernel).Tree.Set_Status (Default);
          end if;
 
          if not New_Project_Loaded then

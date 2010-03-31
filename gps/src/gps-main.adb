@@ -1058,7 +1058,7 @@ procedure GPS.Main is
          else
             Load_Empty_Project (GPS_Main.Kernel);
             Project := Get_Project (GPS_Main.Kernel);
-            Set_Status (Project, From_Executable);
+            Get_Registry (GPS_Main.Kernel).Tree.Set_Status (From_Executable);
          end if;
 
          --  Project will be overriden when the executable is loaded
@@ -1768,7 +1768,7 @@ procedure GPS.Main is
          Get_Messages_Container (Kernel).Remove_All_Messages;
       end if;
 
-      if Status (Project) = Default then
+      if Get_Registry (Kernel).Tree.Status = Default then
          Trace (Me, "Remove default project on disk, no longer used");
          Delete (Project_Path (Project), Success);
       end if;

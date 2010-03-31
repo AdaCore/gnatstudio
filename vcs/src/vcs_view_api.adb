@@ -709,7 +709,7 @@ package body VCS_View_API is
       VCS : VCS_Access;
 
    begin
-      if Status (Project) = Empty then
+      if Get_Registry (Kernel).Tree.Status = Empty then
          --  Special case the empty project which is loaded initialy. We really
          --  do not want any VCS support for this project.
 

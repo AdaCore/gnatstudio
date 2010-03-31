@@ -97,28 +97,6 @@ package body Projects is
       return GPS_Project_Data_Access (Project.Data).Paths_Type;
    end Get_Paths_Type;
 
-   ------------
-   -- Status --
-   ------------
-
-   function Status (Project : Project_Type) return Project_Status is
-   begin
-      if Project.Data = null then
-         return Empty;
-      else
-         return GPS_Project_Data_Access (Project.Data).Status;
-      end if;
-   end Status;
-
-   ----------------
-   -- Set_Status --
-   ----------------
-
-   procedure Set_Status (Project : Project_Type; Status : Project_Status) is
-   begin
-      GPS_Project_Data_Access (Project.Data).Status := Status;
-   end Set_Status;
-
    --------------------------
    -- Source_Dirs_With_VCS --
    --------------------------

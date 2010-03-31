@@ -84,20 +84,6 @@ package Projects is
      (Project : Project_Type) return Paths_Type_Information;
    --  Indicate how the types are stored internally for the project
 
-   type Project_Status is (From_File, Default, From_Executable, Empty);
-   --  How the project was created: either read from a file, automatically
-   --  created from a directory, automatically created from an executable
-   --  (debugger case), or default empty project. An actual project file exists
-   --  on disk only in the From_File or Default cases.
-
-   function Status (Project : Project_Type) return Project_Status;
-   --  Return true if the project is a default project, ie not associated with
-   --  a physical file on the disk.
-
-   procedure Set_Status (Project : Project_Type; Status : Project_Status);
-   --  Indicate whether the project is a default project.
-   --  You shouldn't use this function unless you are creating a new project.
-
    procedure Compute_Predefined_Paths
      (Registry     : Project_Registry_Access;
       GNAT_Version : out GNAT.Strings.String_Access;
@@ -116,8 +102,6 @@ private
       Paths_Type : Paths_Type_Information := From_Pref;
       --  True if the paths in the project file should be stored as relative
       --  paths.
-
-      Status : Project_Status := From_File;
    end record;
    type GPS_Project_Data_Access is access all GPS_Project_Data'Class;
 

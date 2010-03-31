@@ -755,7 +755,7 @@ package body GPS.Kernel is
       function Get_Project_Name return Virtual_File is
          Project : constant Project_Type := Get_Project (Handle);
       begin
-         if Status (Project) /= From_File then
+         if Get_Registry (Handle).Tree.Status /= From_File then
             return GNATCOLL.VFS.No_File;
          else
             return Project_Path (Project);
@@ -957,7 +957,7 @@ package body GPS.Kernel is
       Main_Window.Desktop_Loaded := True;
 
       if For_Project = GNATCOLL.VFS.No_File
-        and then Status (Project) = From_File
+        and then Get_Registry (Handle).Tree.Status = From_File
       then
          Project_Name := Project_Path (Project);
       end if;

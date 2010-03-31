@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
@@ -44,7 +45,6 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Interactive_Consoles;       use Interactive_Consoles;
-with Projects;                   use Projects;
 with String_Utils;               use String_Utils;
 with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
@@ -504,7 +504,7 @@ package body GPS.Kernel.Remote is
       Found    : Boolean;
 
    begin
-      if Status (Get_Project (Remote_Module.Kernel)) /= From_File then
+      if Get_Registry (Remote_Module.Kernel).Tree.Status /= From_File then
          return True;
       end if;
 
@@ -548,7 +548,7 @@ package body GPS.Kernel.Remote is
       Set_Prop : Boolean;
 
    begin
-      if Status (Get_Project (Remote_Module.Kernel)) /= From_File then
+      if Get_Registry (Remote_Module.Kernel).Tree.Status /= From_File then
          --  ??? do we want to be able to set a default config for the default
          --  project ?
          return;

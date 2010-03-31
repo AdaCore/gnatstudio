@@ -911,7 +911,7 @@ package body Src_Editor_Module is
       end if;
 
       if Pref = From_Project and then
-        (Status (Get_Project (User)) /= From_File
+        (Get_Registry (User).Tree.Status /= From_File
          or else Get_Registry (User).Tree.Info (File).Project = No_Project)
       then
          return null;

@@ -214,7 +214,9 @@ package body GPS.Menu is
       Project : constant Project_Type := Get_Project (Kernel);
       Path    : constant Virtual_File := Project_Path (Project);
    begin
-      if Status (Project) = From_File and then Path /= No_File then
+      if Get_Registry (Kernel).Tree.Status = From_File
+        and then Path /= No_File
+      then
          Add_To_History
            (Kernel, Project_History_Key,
             --  ??? What if the file is not utf8 ? The saved xml file might

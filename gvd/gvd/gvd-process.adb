@@ -1967,7 +1967,7 @@ package body GVD.Process is
       --  Do nothing unless the current project was already generated from an
       --  executable.
 
-      if Status (Project) /= From_Executable then
+      if Get_Registry (Kernel).Tree.Status /= From_Executable then
          return;
       end if;
 
@@ -2185,7 +2185,7 @@ package body GVD.Process is
       --  we simply reuse it to avoid the need to interact with the debugger.
 
       Project.Set_Modified (False);
-      Set_Status (Project, From_Executable);
+      Get_Registry (Kernel).Tree.Set_Status (From_Executable);
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
    end Load_Project_From_Executable;
