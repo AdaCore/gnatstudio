@@ -695,7 +695,8 @@ package body GVD.Process is
                             (Create
                                (+Process.Current_Output
                                   (File_First .. File_Last),
-                                Get_Nickname (Debug_Server)));
+                                Get_Nickname (Debug_Server),
+                                Normalize => True));
          begin
             Load_File (Process.Editor_Text, File_Name);
          end;

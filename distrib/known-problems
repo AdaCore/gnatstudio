@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.5.0
 
+- J331-011: Files not normalized when opened from debugger view
+  Problem:    From the call stack view, if GPS opens a new editor when clicking
+              on a frame, then the corresponding file might not contain a
+              normalized path, and contextual menus in the editor might not
+              contain all expected menus.
+  Workaround: Close the editor and open a new one from the project view or
+              using shift+F3.
+
 - J319-001: Continuing search after changing scenario finds wrong files
   Problem:    If you start a search in "Files From Project", but then change
               the scenario so that the list of source files changes (or their
@@ -17,7 +25,7 @@ Known Problems fixed in GPS 4.5.0
 
 - J302-006: No completion for nested packages on use clauses
   Problem:    When completing a use clause, nested packages are not offered.
-  Workaround: Manually complete the code. 
+  Workaround: Manually complete the code.
 
 - J212-018 Error when editing a project with indexed attributes assignments
   Problem:    When you are editing a project, GPS first tries to normalize
