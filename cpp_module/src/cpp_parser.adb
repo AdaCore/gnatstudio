@@ -2821,7 +2821,12 @@ package body CPP_Parser is
 
       if Source /= null then
          Other_File_Name := Handler.Registry.Tree.Other_File (Source_Filename);
-         Trace (Me, "Get_Source_Info " & Other_File_Name.Display_Full_Name);
+
+         if Active (Me) then
+            Trace (Me, "Get_Source_Info ("
+                   & Source_Filename.Display_Full_Name
+                   & ") other file is " & Other_File_Name.Display_Full_Name);
+         end if;
 
          if Other_File_Name /= Source_Filename then
             Other_File := Load_File (Other_File_Name);
