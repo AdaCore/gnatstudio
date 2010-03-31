@@ -4752,7 +4752,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-  "gnat/sdefault/sdefault.adb" ) CONFIG_FILES="$CONFIG_FILES gnat/sdefault/sdefault.adb" ;;
+  "gnatlib/gnat/sdefault/sdefault.adb" ) CONFIG_FILES="$CONFIG_FILES gnatlib/gnat/sdefault/sdefault.adb" ;;
   "docs/Makefile" ) CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
   "common/src/config.ads" ) CONFIG_FILES="$CONFIG_FILES common/src/config.ads" ;;
