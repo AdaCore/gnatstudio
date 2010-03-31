@@ -28,6 +28,7 @@ with GNAT.Traceback.Symbolic;        use GNAT.Traceback.Symbolic;
 with GNAT.Command_Line;              use GNAT.Command_Line;
 
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
@@ -420,6 +421,8 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
    Start  : constant Time := Clock;
 begin
+   GNATCOLL.Traces.Parse_Config_File;
+
    loop
       case Getopt ("P: n: f: u v") is
          when ASCII.NUL =>
@@ -447,12 +450,13 @@ begin
 
    Entities_Db := Create (New_Registry, Construct_Db);
 
+   Compute_Predefined_Paths;
    New_Registry.Tree.Load
      (Root_Project_Path  =>
         Create_From_Dir (Get_Current_Dir, +Project_Name.all),
+      Env                => New_Registry.Environment,
       Errors             => Project_Error'Unrestricted_Access);
 
-   Compute_Predefined_Paths;
    New_Registry.Tree.Recompute_View (Project_Error'Unrestricted_Access);
 
    Language_Handlers.Create_Handler (Handler);
