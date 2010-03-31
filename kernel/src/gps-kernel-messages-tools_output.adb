@@ -464,6 +464,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                   Weight := 2;
                   C := Highlight_Category;
                end if;
+            else
+               Weight := 0;
             end if;
 
             Add_Tool_Message
