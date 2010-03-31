@@ -1532,7 +1532,7 @@ package body Project_Properties is
                     (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
                   Var  : constant String := Project.Attribute_Value
                     (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                     "", Index);
+                     Default => "", Index => Index);
                begin
                   if List = null
                     and then Var /= ""
@@ -1554,7 +1554,8 @@ package body Project_Properties is
             else
                declare
                   Val : constant String := Project.Attribute_Value
-                    (Attribute_Pkg_String'(Build (Pkg, Attr)), "", Index);
+                    (Attribute_Pkg_String'(Build (Pkg, Attr)),
+                     Default => "", Index => Index);
                begin
                   if Val = "" then
                      --  Did we have a list attribute in fact ?

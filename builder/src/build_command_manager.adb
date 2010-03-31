@@ -244,8 +244,8 @@ package body Build_Command_Manager is
       then
          Result.Args := Create
             (Get_Project (Get_Kernel (Context)).Attribute_Value
-              (Build ("IDE", "Default_Switches"), "",
-               Arg (Arg'First + 10 .. Arg'Last - 1)));
+              (Build ("IDE", "Default_Switches"), Default => "",
+               Index => Arg (Arg'First + 10 .. Arg'Last - 1)));
 
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"

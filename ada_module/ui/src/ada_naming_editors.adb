@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with System;                   use System;
@@ -64,25 +66,30 @@ package body Ada_Naming_Editors is
       Body_Name : GNAT.Strings.String_Access;
       Spec_Name : GNAT.Strings.String_Access;
    end record;
-   No_Data : constant Naming_Data := (null, null);
+   type Naming_Data_Access is access all Naming_Data;
 
-   procedure Free (Data : in out Naming_Data);
+   procedure Free (Data : in out Naming_Data_Access);
    --  Free the memory occupied by Data
 
    package Naming_Hash is new String_Hash
-     (Data_Type => Naming_Data,
+     (Data_Type => Naming_Data_Access,
       Free_Data => Free,
-      Null_Ptr  => No_Data);
+      Null_Ptr  => null);
    use Naming_Hash.String_Hash_Table;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Data : in out Naming_Data) is
+   procedure Free (Data : in out Naming_Data_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Naming_Data, Naming_Data_Access);
    begin
-      Free (Data.Body_Name);
-      Free (Data.Spec_Name);
+      if Data /= null then
+         Free (Data.Body_Name);
+         Free (Data.Spec_Name);
+         Unchecked_Free (Data);
+      end if;
    end Free;
 
    -------------
@@ -296,9 +303,11 @@ package body Ada_Naming_Editors is
       procedure Update_Exceptions (Attr : Attribute_Pkg_String) is
          Indexes     : GNAT.Strings.String_List :=
            Project.Attribute_Indexes (Attr);
-         Data        : Naming_Data;
+         Data        : Naming_Data_Access;
          Cache_Iter  : Naming_Hash.String_Hash_Table.Cursor;
          Val         : String_Access;
+         Last        : Natural;
+         Idx         : Integer;
 
       begin
          --  Modify existing exceptions (and detect whether there have
@@ -309,12 +318,16 @@ package body Ada_Naming_Editors is
          for Index in Indexes'Range loop
             Data := Get (Cache, Indexes (Index).all);
 
-            if Attr = Specification_Attribute then
-               Val := Data.Spec_Name;
-               Data.Spec_Name := null;
+            if Data /= null then
+               if Attr = Specification_Attribute then
+                  Val := Data.Spec_Name;
+                  Data.Spec_Name := null;  --  modify in place in htable
+               else
+                  Val := Data.Body_Name;
+                  Data.Body_Name := null;
+               end if;
             else
-               Val := Data.Body_Name;
-               Data.Body_Name := null;
+               Val := null;
             end if;
 
             if Val = null then
@@ -322,12 +335,25 @@ package body Ada_Naming_Editors is
                Project.Delete_Attribute (Attr, Index => Indexes (Index).all);
 
             else
-               if Project.Attribute_Value (Attr, Indexes (Index).all) /=
-                 Val.all
+               if Project.Attribute_Value
+                 (Attribute => Attr, Index => Indexes (Index).all)
+                 /= Val.all
                then
+                  Last := Ada.Strings.Fixed.Index (Val.all, " at ");
+
+                  if Last < Val'First then
+                     Last := Val'Last + 1;
+                     Idx  := 0;
+                  else
+                     Idx  := Integer'Value (Val (Last + 4 .. Val'Last));
+                  end if;
+
                   Changed := True;  --  Exception has changed
                   Project.Set_Attribute
-                    (Attr, Index => Indexes (Index).all, Value => Val.all);
+                    (Attr,
+                     Index    => Indexes (Index).all,
+                     Value    => Val (Val'First .. Last - 1),
+                     At_Index => Idx);
                end if;
             end if;
 
@@ -339,7 +365,7 @@ package body Ada_Naming_Editors is
          Get_First (Cache, Cache_Iter);
          loop
             Data := Get_Element (Cache_Iter);
-            exit when Data = No_Data;
+            exit when Data = null;
 
             if Attr = Specification_Attribute then
                Val := Data.Spec_Name;
@@ -349,8 +375,21 @@ package body Ada_Naming_Editors is
 
             if Val /= null then
                Changed := True;  --  new exception added
+
+               Last := Ada.Strings.Fixed.Index (Val.all, " at ");
+
+               if Last < Val'First then
+                  Last := Val'Last + 1;
+                  Idx  := 0;
+               else
+                  Idx  := Integer'Value (Val (Last + 4 .. Val'Last));
+               end if;
+
                Project.Set_Attribute
-                 (Attr, Index => Get_Key (Cache_Iter), Value => Val.all);
+                 (Attr,
+                  Index    => Get_Key (Cache_Iter),
+                  Value    => Val (Val'First .. Last - 1),
+                  At_Index => Idx);
             end if;
 
             Get_Next (Cache, Cache_Iter);
@@ -401,7 +440,7 @@ package body Ada_Naming_Editors is
                Data.Body_Name := null;
             end if;
 
-            Set (Cache, U, Data);
+            Set (Cache, U, new Naming_Data'(Data));
          end;
 
          Next (Editor.GUI.Exception_List_Model, Iter);
@@ -493,7 +532,8 @@ package body Ada_Naming_Editors is
                   Unit  => Specs (S).all & ASCII.NUL,
                   Col2  => 1,
                   Spec  => Project.Attribute_Value
-                    (Specification_Attribute, Specs (S).all) & ASCII.NUL);
+                    (Specification_Attribute,
+                     Index => Specs (S).all) & ASCII.NUL);
             end loop;
 
             for B in Bodies'Range loop
@@ -520,14 +560,14 @@ package body Ada_Naming_Editors is
                      Unit  => Bodies (B).all & ASCII.NUL,
                      Col2  => 2,
                      Spec  => Project.Attribute_Value
-                       (Implementation_Attribute, Bodies (B).all)
+                       (Implementation_Attribute, Index => Bodies (B).all)
                        & ASCII.NUL);
 
                else
                   Set (Editor.GUI.Exception_List_Model, Iter,
                        Column => 2,
                        Value  => Project.Attribute_Value
-                         (Implementation_Attribute, Bodies (B).all)
+                         (Implementation_Attribute, Index => Bodies (B).all)
                          & ASCII.NUL);
                end if;
             end loop;
