@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.4.2
 
+- J331-011: Files not normalized when opened from debugger view
+  Problem:    From the call stack view, if GPS opens a new editor when clicking
+              on a frame, then the corresponding file might not contain a
+              normalized path, and contextual menus in the editor might not
+              contain all expected menus.
+  Workaround: Close the editor and open a new one from the project view or
+              using shift+F3.
+
 - J302-008 Parenthesis highlighting not working at end of comment
   Problem: Parenthesis or delimiter highlighting does not work when the
            cursor is positioned right after a closing delimiter wich is at the
@@ -7,7 +15,7 @@ Known Problems fixed in GPS 4.4.2
   Workaround: Add text at the end of the comment, after the closing delimiter.
 
 - J301-015: Completion of child package lost
-  Problem:    In certain cases, the completion loses the knowledge of the 
+  Problem:    In certain cases, the completion loses the knowledge of the
               relationship between parent and child packages, and doesn't
               manage to correctly complete e.g. with clauses or components
               coming from private parent parts.

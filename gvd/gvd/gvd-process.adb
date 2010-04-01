@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -716,7 +716,8 @@ package body GVD.Process is
                             (Create
                                (+Process.Current_Output
                                   (File_First .. File_Last),
-                                Get_Nickname (Debug_Server)));
+                                Get_Nickname (Debug_Server),
+                                Normalize => True));
          begin
             Load_File (Process.Editor_Text, File_Name);
          end;
