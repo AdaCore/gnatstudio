@@ -22,6 +22,7 @@ with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Exceptions;                 use Ada.Exceptions;
 with Ada.Text_IO;                    use Ada.Text_IO;
 
+with GNAT.Directory_Operations;      use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                    use GNAT.OS_Lib;
 with GNAT.Strings;                   use GNAT.Strings;
 with GNAT.Traceback.Symbolic;        use GNAT.Traceback.Symbolic;
@@ -453,7 +454,8 @@ begin
    Compute_Predefined_Paths;
    New_Registry.Tree.Load
      (Root_Project_Path  =>
-        Create_From_Dir (Get_Current_Dir, +Project_Name.all),
+        Create (+Normalize_Pathname
+           (Project_Name.all, GNAT.Directory_Operations.Get_Current_Dir)),
       Env                => New_Registry.Environment,
       Errors             => Project_Error'Unrestricted_Access);
 
