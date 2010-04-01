@@ -990,7 +990,7 @@ package body VCS_Module is
          Wrapper (On_Project_Changing'Access), "vcs.project_changing");
 
       Add_Hook
-        (Kernel, Project_Changed_Hook,
+        (Kernel, Project_View_Changed_Hook,
          Wrapper (On_Project_Changed'Access), "vcs.project_changed");
 
       Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
