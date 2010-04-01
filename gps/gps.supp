@@ -4692,3 +4692,402 @@
   obj:*/libgobject-2.0.so.0
   fun:g_type_register_static
 }
+
+
+
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:gdk_pixbuf_new
+  fun:*
+  fun:*
+  fun:gdk_pixbuf_new_from_file
+  fun:gtk_icon_set_render_icon
+  fun:gtk_widget_render_icon
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:gdk_pixbuf_copy
+  fun:gdk_pixbuf_add_alpha
+  fun:*
+  fun:gtk_style_render_icon
+  fun:gtk_icon_set_render_icon
+  fun:gtk_widget_render_icon
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slice_alloc0
+  fun:g_type_create_instance
+  fun:*
+  fun:g_object_newv
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:*
+  fun:*
+  fun:gtk_rc_get_style
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slice_alloc0
+  fun:g_type_create_instance
+  fun:*
+  fun:g_object_newv
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:theme_create_rc_style
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slice_alloc0
+  fun:g_type_create_instance
+  fun:*
+  fun:g_object_newv
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slice_alloc0
+  fun:g_type_create_instance
+  fun:*
+  fun:g_object_newv
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:realloc
+  fun:g_realloc
+  fun:*
+  fun:g_array_insert_vals
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_*
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:realloc
+  fun:g_realloc
+  fun:*
+  fun:g_array_insert_vals
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_*
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:realloc
+  fun:g_realloc
+  fun:*
+  fun:g_array_insert_vals
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_*
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slice_alloc0
+  fun:g_type_create_instance
+  fun:*
+  fun:g_object_newv
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:*
+  fun:*
+  fun:gdk_display_open
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:*alloc
+  fun:*malloc*
+  fun:*
+  fun:*
+  fun:*
+  fun:gdk_display_open
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:calloc
+  fun:g_malloc0
+  fun:*
+  fun:*
+  fun:gdk_display_open
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:realloc
+  fun:g_realloc
+  fun:*
+  fun:*
+  fun:g_type_class_ref
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:calloc
+  fun:g_malloc0
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:*alloc
+  fun:g_malloc*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:*alloc
+  fun:g_malloc*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  openSUSE 11.2
+  Memcheck:Leak
+  fun:calloc
+  fun:g_malloc0
+  fun:g_hash_table_new_full
+  fun:*
+  fun:*
+  fun:*
+  fun:*
+  fun:gtk_rc_reparse_all_for_settings
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:*
+  fun:__nss_database_lookup
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_hash_table_new_full
+  fun:pango_ot_ruleset_get_for_description
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:realloc
+  fun:g_realloc
+  fun:g_object_weak_ref
+  fun:pango_ot_ruleset_new
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_type_module_register_type
+  fun:script_engine_init
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slist_prepend
+  fun:g_type_module_register_type
+  fun:script_engine_init
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:*
+  fun:pango_ot_ruleset_get_for_description
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_strdup
+  fun:g_module_open
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:realloc
+  fun:g_realloc
+  fun:*
+  fun:g_type_register_static
+}
+{
+  OpenSUSE 11.2
+  Memcheck:Leak
+  fun:malloc
+  fun:realloc
+  fun:g_realloc
+  fun:*
+  fun:g_type_register_fundamental
+}
+
+{
+  Is this a leak ???
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_strdup
+  fun:g_param_spec_internal
+  fun:g_param_spec_int
+  fun:*
+  fun:g_type_class_ref
+  fun:g_object_newv
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:gtk__progress_bar__initialize
+  fun:gtk__progress_bar__gtk_new
+  fun:gps__main_window__initialize
+}
+{
+  Is this a leak ???
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:pango_find_map
+  fun:*
+  fun:pango_itemize_with_base_dir
+  fun:*
+  fun:*
+  fun:pango_layout_get_pixel_extents
+}
+{
+  Is this a leak ???
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_strdup
+  fun:pango_find_map
+  fun:*
+  fun:pango_itemize_with_base_dir
+  fun:*
+  fun:*
+  fun:pango_layout_get_pixel_extents
+}
+{
+  Is this a leak ???
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slist_prepend
+  fun:*
+  fun:pango_find_map
+  fun:*
+  fun:*
+  fun:pango_itemize_with_base_dir
+  fun:*
+  fun:*
+  fun:pango_layout_get_pixel_extents
+}
+{
+  Is this a leak ???
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  fun:g_slice_alloc
+  fun:g_slist_copy
+  fun:*
+  fun:g_type_class_ref
+  fun:g_object_new_valist
+  fun:g_object_new
+  fun:gtk_scrolled_window_set_vadjustment
+}
+

@@ -1264,6 +1264,7 @@ package body Custom_Module is
                         Add_Alternate_Sources;
 
                         Add (Factory, Id, Set);
+                        Unref (Set);
 
                         declare
                            Stock : Gtk_Stock_Item;
