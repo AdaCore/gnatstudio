@@ -894,49 +894,36 @@ package body Builder_Facility_Module is
 
       elsif Kind = "executable" then
          declare
-            Mains    : Argument_List := Get_Mains (Kernel_Handle (Kernel));
-            Prj      : constant Project_Type :=
-              Get_Project (Kernel_Handle (Kernel));
-            Exec_Dir : constant Virtual_File := Executables_Directory (Prj);
-
+            Mains : Argument_List := Get_Mains (Kernel_Handle (Kernel));
+            Result : Any_Type (List_Type, Mains'Length);
          begin
-            --  ??? Get_Mains may return mains from subprojects, so this code
-            --  is wrong. Instead we should implement a Get_Executables
-            --  function.
-
-            if Exec_Dir = No_File then
-               Free (Mains);
-               return Empty_Any_Type;
-            else
+            for J in Mains'Range loop
                declare
-                  Result : Any_Type (List_Type, Mains'Length);
-                  pragma Warnings (Off, Result);
+                  P    : constant Project_Type :=
+                    Get_Registry (Kernel).Tree.Info
+                    (Get_Registry (Kernel).Tree.Create
+                     (+Mains (J).all)).Project;
+                  Exec : constant Virtual_File :=
+                    Create_From_Dir
+                      (Executables_Directory (P),
+                       P.Executable_Name (+Mains (J).all));
+                  Base : constant String := String (Exec.Base_Name);
+                  Full : constant String := String (Exec.Full_Name.all);
+                  Display_Name : constant Any_Type :=
+                    (String_Type, Base'Length, Base);
+                  Full_Name    : constant Any_Type :=
+                    (String_Type, Full'Length, Full);
+
                begin
-                  for J in Mains'Range loop
-                     declare
-                        Exec : constant Virtual_File :=
-                                Create_From_Dir
-                                  (Exec_Dir,
-                                   Prj.Executable_Name (+Mains (J).all));
-                        Base : constant String := String (Exec.Base_Name);
-                        Full : constant String := String (Exec.Full_Name.all);
-                        Display_Name : constant Any_Type :=
-                                        (String_Type, Base'Length, Base);
-                        Full_Name    : constant Any_Type :=
-                                        (String_Type, Full'Length, Full);
-
-                     begin
-                        Result.List (1 + J - Mains'First) := new Any_Type'
-                          ((Tuple_Type, 2,
-                           Tuple => (1 => new Any_Type'(Display_Name),
-                                     2 => new Any_Type'(Full_Name))));
-                     end;
-                  end loop;
-
-                  Free (Mains);
-                  return Result;
+                  Result.List (1 + J - Mains'First) := new Any_Type'
+                    ((Tuple_Type, 2,
+                     Tuple => (1 => new Any_Type'(Display_Name),
+                               2 => new Any_Type'(Full_Name))));
                end;
-            end if;
+            end loop;
+
+            Free (Mains);
+            return Result;
          end;
 
       else
