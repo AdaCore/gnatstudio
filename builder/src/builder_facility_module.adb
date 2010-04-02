@@ -543,9 +543,19 @@ package body Builder_Facility_Module is
       function To_Full_Path (Basename : String) return String is
          File : Virtual_File;
       begin
-         File := Registry.Tree.Create
-           (Filesystem_String (Basename),
-            Use_Object_Path => False);
+         if GNAT.Directory_Operations.File_Extension (Basename) = "" then
+            --  The project files used to support the form
+            --     for Main use ("basename");
+            --  If this is the case here, add ".adb" to get the real name of
+            --  the source unit.
+            File := Registry.Tree.Create
+              (Filesystem_String (Basename & ".adb"),
+               Use_Object_Path => False);
+         else
+            File := Registry.Tree.Create
+              (Filesystem_String (Basename),
+               Use_Object_Path => False);
+         end if;
 
          if File = No_File then
             return Basename;
