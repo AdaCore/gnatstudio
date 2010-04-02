@@ -439,19 +439,7 @@ package body Build_Command_Manager is
         and then Arg (Arg'First .. Arg'First + 1) = "%E"
       then
          if Main /= "" then
-            declare
-               P           : Project_Type;
-               Main_Source : constant Filesystem_String :=
-                 +(Main & Arg (Arg'First + 2 .. Arg'Last));
-
-            begin
-               P := Get_Registry (Kernel).Tree.Info
-                 (Get_Registry (Kernel).Tree.Create
-                   (Main_Source)).Project (Root_If_Not_Found => True);
-               Result.Args := Create
-                 (+(Executables_Directory (P).Full_Name.all
-                  & P.Executable_Name (Main_Source)));
-            end;
+            Result.Args := Create (Main);
          else
             Console.Insert
               (Kernel, -"Could not determine the executable name for main.",
