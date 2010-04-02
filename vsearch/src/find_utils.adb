@@ -737,6 +737,8 @@ package body Find_Utils is
 
       Line   := Best_Line;
       Column := Best_Column;
+
+      Free (Context);
    end Find_Closest_Match;
 
    -----------
