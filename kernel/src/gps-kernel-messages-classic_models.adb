@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 
@@ -51,6 +52,10 @@ package body GPS.Kernel.Messages.Classic_Models is
    function Create_Path
      (Self : not null access constant Classic_Tree_Model_Record'Class;
       Node : not null Node_Access) return Gtk_Tree_Path;
+
+   procedure On_Destroy (Data : System.Address; Model : System.Address);
+   pragma Convention (C, On_Destroy);
+   --  Called when the model is being destroyed
 
    Non_Leaf_Color_Name : constant String := "blue";
    --  Name of the color to be used for category and file names
@@ -691,6 +696,25 @@ package body GPS.Kernel.Messages.Classic_Models is
    end Has_Child;
 
    ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Data : System.Address;
+      Model  : System.Address)
+   is
+      pragma Unreferenced (Data);
+      Stub : Glib.Object.GObject_Record;
+      M : constant Classic_Tree_Model :=
+        Classic_Tree_Model (Glib.Object.Get_User_Data (Model, Stub));
+   begin
+      if M /= null and then M.Category_Pixbuf /= null then
+         Unref (M.Category_Pixbuf);
+         Unref (M.File_Pixbuf);
+      end if;
+   end On_Destroy;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -706,16 +730,7 @@ package body GPS.Kernel.Messages.Classic_Models is
       Alloc_Color
         (Get_Default_Colormap, Self.Non_Leaf_Color, False, True, Success);
 
-      --  Create puxbufs for category and file nodes
-      --  XXX Don't work because customization is not done at the point of
-      --  kernel initialization.
-
-      Self.Category_Pixbuf :=
-        Self.Container.Kernel.Get_Main_Window.Render_Icon
-          ("gps-box", Gtk.Enums.Icon_Size_Menu);
-      Self.File_Pixbuf :=
-        Self.Container.Kernel.Get_Main_Window.Render_Icon
-          ("gps-file", Gtk.Enums.Icon_Size_Menu);
+      Glib.Object.Weak_Ref (Self, On_Destroy'Access);
    end Initialize;
 
    -------------------
