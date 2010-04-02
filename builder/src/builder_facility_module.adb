@@ -933,7 +933,17 @@ package body Builder_Facility_Module is
             end loop;
 
             Free (Mains);
+
             return Result;
+
+         exception
+            when GNATCOLL.VFS.VFS_Invalid_File_Error =>
+               Free (Mains);
+               Log
+                 (-"Could not determine executable names for the mains",
+                  Error);
+
+               return Empty_Any_Type;
          end;
 
       else
