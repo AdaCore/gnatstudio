@@ -446,7 +446,8 @@ package body Build_Command_Manager is
 
             begin
                P := Get_Registry (Kernel).Tree.Info
-                  (Get_Registry (Kernel).Tree.Create (Main_Source)).Project;
+                 (Get_Registry (Kernel).Tree.Create
+                   (Main_Source)).Project (Root_If_Not_Found => True);
                Result.Args := Create
                  (+(Executables_Directory (P).Full_Name.all
                   & P.Executable_Name (Main_Source)));
