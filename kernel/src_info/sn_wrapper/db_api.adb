@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2002-2008, AdaCore                   --
+--                Copyright (C) 2002-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,10 @@ package body DB_API is
    use type System.Address;
 
    procedure Internal_Free (DB : DB_File);
-   pragma Import (C, Internal_Free, "free");
+   pragma Import (C, Internal_Free, "ada_db_free");
+
+   procedure Internal_Close (DB : DB_File);
+   pragma Import (C, Internal_Close, "ada_db_close");
 
    function Last_ErrNo (DB : DB_File) return C.int;
    pragma Import (C, Last_ErrNo, "ada_get_last_errno");
@@ -73,6 +76,7 @@ package body DB_API is
       if DB = null then
          Success := False;
       elsif Last_ErrNo (DB) /= 0 then
+         Internal_Close (DB);
          Internal_Free (DB);
          DB      := null;
          Success := False;
@@ -95,8 +99,6 @@ package body DB_API is
    -----------
 
    procedure Close (DB : in out DB_File; Success : out Boolean) is
-      procedure Internal_Close (DB : DB_File);
-      pragma Import (C, Internal_Close, "ada_db_close");
    begin
       Success := True;
 
@@ -105,8 +107,6 @@ package body DB_API is
 
          if Last_ErrNo (DB) /= 0 then
             Success := False;
-            DB := null;
-            return;
          end if;
 
          Internal_Free (DB);

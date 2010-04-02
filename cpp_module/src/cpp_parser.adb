@@ -3298,6 +3298,7 @@ package body CPP_Parser is
          Iterator.List_Filename := No_File;
       end if;
 
+      Close (Iterator.PD);
       Unchecked_Free (Iterator.Current_Files);
    end Destroy;
 
@@ -3307,6 +3308,10 @@ package body CPP_Parser is
 
    overriding procedure Destroy (Handler : in out CPP_Handler_Record) is
    begin
+      if Is_Open (Handler.SN_Table (FIL)) then
+         Close_DB_Files (Handler'Access);
+      end if;
+
       Handler.DBIMP_Path := No_File;
       Handler.CBrowser_Path := No_File;
    end Destroy;

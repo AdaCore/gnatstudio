@@ -115,6 +115,8 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
 
   file->dbi = -1;
   file->pos = POS_FIRST;
+  file->key_p = 0;
+  file->dbc = num_of_files - 1;
 
   for (i = 0; i < num_of_files; i++) {
     file->db[i] = dbopen(file_names[i], O_RDONLY, 0644, DB_BTREE, 0);
@@ -133,10 +135,15 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
 
   file->last_errno = 0; /* reset error flag if there is
   * at least one open file */
-  file->dbc = num_of_files - 1;
-  file->key_p = 0;
 
   return file;
+}
+
+void ada_db_free (DB_File* file) {
+   if (file) {
+      /* fname and db are freed when calling ada_db_close */
+      free (file);
+   }
 }
 
 /*************************************************************************
