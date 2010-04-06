@@ -2054,10 +2054,9 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Suppressed-Background",
-           -"Suppressed ranking messages color",
+           -"Suppressed messages color",
            -"Plugins/CodePeer",
-           -"Color to use for the background of suppressed ranking"
-           & " messages",
+           -"Color to use for the background of suppressed messages",
            "#EFEFEF");
 
       Module.Annotation_Color :=
