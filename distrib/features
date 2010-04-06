@@ -36,6 +36,11 @@ NF-45-J225-017 Better handling of incomplete with/use clauses (2010-02-25)
   is in the process of writing use and with clauses, and the file is parsed
   before the clause is completely written.
 
+NF-45-J225-012 Completion for generic instances (2010-04-06)
+
+  The smart complete is now able to follow generic instances, and to propose
+  completions even when formal generic parameters are involved.
+
 NF-45-J224-017 Completion for case inside record (2010-02-24)
 
   Fields declared in a case statement inside a record are now offered in the
@@ -74,7 +79,7 @@ NF-45-J120-032 Better external run under Windows (2010-03-05)
   Under Windows, running commands under an external terminal now keeps the
   terminal open after execution.
 
-NF-45-J113-016 Completion triggered on "with", "use" and "pragma" (2009-01-13)
+NF-45-J113-016 Completion triggered on "with", "use" and "pragma" (2010-01-13)
 
   The smart completion is now automatically trigerred when inserting a space
   after the keywords "with", "use" and "pragma".
