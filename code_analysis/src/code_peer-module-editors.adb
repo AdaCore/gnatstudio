@@ -329,12 +329,14 @@ package body Code_Peer.Module.Editors is
                   exit Projects when Buffers.Is_Empty;
                   exit;
                end if;
+
+               Next (Buffer_Position);
             end loop;
 
-            Code_Analysis.File_Maps.Next (File_Position);
+            Next (File_Position);
          end loop;
 
-         Code_Analysis.Project_Maps.Next (Project_Position);
+         Next (Project_Position);
       end loop Projects;
    end Show_Annotations_In_Opened_Editors;
 
