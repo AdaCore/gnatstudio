@@ -1693,8 +1693,7 @@ package body Code_Peer.Module is
 
             function Probability_Image
               (Message : Code_Peer.Message_Access) return String;
-            --  Returns an suitable Image correpsonding to Message's
-            --  probability
+            --  Returns an suitable Image correpsonding to Message's ranking
 
             function Image
               (Message : Code_Peer.Message_Access) return String;
@@ -2017,7 +2016,7 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-High-Background",
-           -"High ranking messages color",
+           -"Color for 'high' messages",
            -"Plugins/CodePeer",
            -"Color to use for the background of high ranking messages",
            "#F75D59");
@@ -2026,7 +2025,7 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Medium-Background",
-           -"Medium ranking messages color",
+           -"Color for 'medium' messages",
            -"Plugins/CodePeer",
            -"Color to use for the background of medium ranking messages",
            "#F88017");
@@ -2035,7 +2034,7 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Low-Background",
-           -"Low ranking messages color",
+           -"Color for 'low' messages",
            -"Plugins/CodePeer",
            -"Color to use for the background of low ranking messages",
            "#FFE87C");
@@ -2044,26 +2043,26 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Informational-Background",
-           -"Informational ranking messages color",
+           -"Color for 'informational' messages",
            -"Plugins/CodePeer",
-           -"Color to use for the background of informations ranking"
-           & " messages",
+           -"Color to use for the background of information messages",
            "#DFDFDF");
 
       Module.Message_Colors (Code_Peer.Suppressed) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Suppressed-Background",
-           -"Suppressed messages color",
+           -"Color for 'suppressed' messages",
            -"Plugins/CodePeer",
-           -"Color to use for the background of suppressed messages",
+           -"Color to use for the background of suppressed messages"
+           & " messages",
            "#EFEFEF");
 
       Module.Annotation_Color :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Annotation-Background",
-           -"Annotation background color",
+           -"Color for annotations background",
            -"Plugins/CodePeer",
            -"Color to use for the background of annotations",
            "#E9E9E9");
