@@ -258,6 +258,10 @@ package Language.Tree.Database is
    procedure Update_Contents (File : Structured_File_Access);
    --  This function will re-analyze the full contents of the file
 
+   function Is_Null (File : Structured_File_Access) return Boolean;
+   --  Return true if the file is null, which can be either because the pointer
+   --  is null, or becase the file refered to is No_File.
+
    type Update_Lock is limited new Limited_Controlled with private;
    --  This type is used to avoid updates on a given file for a limited amount
    --  of time. The lock can be released either explicitely, by doing calls to

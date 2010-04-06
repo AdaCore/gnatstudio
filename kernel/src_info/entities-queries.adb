@@ -600,37 +600,44 @@ package body Entities.Queries is
 
             Result    : Entity_Access;
          begin
-            Update_Contents (S_File);
+            if not Is_Null (S_File) then
+               --  In some cases, the references are extracted from a place
+               --  where there is still an ALI file, but no more source file.
+               --  This will issue a null Structured_File_Access, which is what
+               --  we're protecting the following code by the above condition.
 
-            Result := Tree_Lang.Find_Declaration
-              (S_File, Line, To_Line_String_Index (S_File, Line, Column));
+               Update_Contents (S_File);
 
-            if Result /= Null_Entity_Access then
-               --  First, try to see if there's already a similar entity in
-               --  the database. If that's the case, it's better to use it than
-               --  the dummy one created from the construct.
+               Result := Tree_Lang.Find_Declaration
+                 (S_File, Line, To_Line_String_Index (S_File, Line, Column));
 
-               Entity := Get_Or_Create
-                 (Name   => Get_Construct (Result).Name.all,
-                  File     => Get_Or_Create
-                    (Db    => Db,
-                     File  => Get_File_Path (Get_File (Result))),
-                  Line   => Get_Construct (Result).Sloc_Entity.Line,
-                  Column => To_Visible_Column
-                    (Get_File (Result),
-                     Get_Construct (Result).Sloc_Entity.Line,
-                     String_Index_Type
-                       (Get_Construct (Result).Sloc_Entity.Column)),
-                  Allow_Create => False);
+               if Result /= Null_Entity_Access then
+                  --  First, try to see if there's already a similar entity in
+                  --  the database. If that's the case, it's better to use it
+                  --  than the dummy one created from the construct.
 
-               --  If we don't have any regular entity for the location found,
-               --  then create a dummy one linked to the construct.
+                  Entity := Get_Or_Create
+                    (Name   => Get_Construct (Result).Name.all,
+                     File     => Get_Or_Create
+                       (Db    => Db,
+                        File  => Get_File_Path (Get_File (Result))),
+                     Line   => Get_Construct (Result).Sloc_Entity.Line,
+                     Column => To_Visible_Column
+                       (Get_File (Result),
+                        Get_Construct (Result).Sloc_Entity.Line,
+                        String_Index_Type
+                          (Get_Construct (Result).Sloc_Entity.Column)),
+                     Allow_Create => False);
 
-               if Entity = null then
-                  Entity := To_LI_Entity (Result);
+                  --  If we don't have any regular entity for the location
+                  --  found, then create a dummy one linked to the construct.
+
+                  if Entity = null then
+                     Entity := To_LI_Entity (Result);
+                  end if;
+
+                  Status := Fuzzy_Match;
                end if;
-
-               Status := Fuzzy_Match;
             end if;
          end;
       end if;

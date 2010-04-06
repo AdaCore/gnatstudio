@@ -578,7 +578,7 @@ package body Language.Tree.Database is
      (File : Structured_File_Access) return GNAT.Strings.String_Access
    is
    begin
-      if File = null then
+      if Is_Null (File) then
          return Empty_String'Access;
       elsif File.Cache_Buffer = null then
          File.Cache_Buffer := Get_Buffer (File.Db.Provider, File.File);
@@ -766,6 +766,15 @@ package body Language.Tree.Database is
       Internal_Update_Contents (File, False);
    end Update_Contents;
 
+   -------------
+   -- Is_Null --
+   -------------
+
+   function Is_Null (File : Structured_File_Access) return Boolean is
+   begin
+      return File = null or else File.File = No_File;
+   end Is_Null;
+
    ------------------------------
    -- Internal_Update_Contents --
    ------------------------------
@@ -905,6 +914,12 @@ package body Language.Tree.Database is
       end Diff_Callback;
 
    begin
+      --  If the file is null, nothing to update
+
+      if Is_Null (File) then
+         return;
+      end if;
+
       --  If update are temporary disabled, mark it and return.
 
       if File.Lock_Depth > 0 then
