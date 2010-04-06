@@ -28,6 +28,7 @@ with Language.Tree.Database;         use Language.Tree.Database;
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 package body Codefix.GNAT_Parser is
    use Cursor_Lists;
@@ -3653,6 +3654,7 @@ package body Codefix.GNAT_Parser is
       List := Find_Declarations
         (Context    =>
            (From_File,
+            Null_Instance_Info,
             File,
             --  Retreive the offset where to start looking from. Line offset
             --  should be precise enough, no need to retreive the exact

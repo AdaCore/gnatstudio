@@ -230,11 +230,9 @@ package body Ada_Semantic_Tree is
    function Get_View (It : Entity_Iterator) return Entity_View is
       E : Entity_View;
    begin
-      --  In order to have an homogeneic result, we create a copy of the view.
-      --  This way, the caller will
-      --  always be responsible of freeing the result.
-
-      E := Deep_Copy (Get (It.It));
+      --  This assumes that a copy of the data is done below, by the sub
+      --  iterator
+      E := Get (It.It);
 
       Configure_View (E.all, It);
 

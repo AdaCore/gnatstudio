@@ -29,7 +29,7 @@ with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
-package Ada_Semantic_Tree.Entity_Iteration is
+private package Ada_Semantic_Tree.Entity_Iteration is
 
    type Semantic_Tree_Iterator is private;
    --  This iterator is a special kind of iterator able to iterate over the
@@ -50,7 +50,7 @@ package Ada_Semantic_Tree.Entity_Iteration is
       Entity : Entity_Access;
       Kind   : Semantic_Kind := None;
 
-      Generic_Context : Generic_Instance_Information;
+      Generic_Context : Instance_Info;
       --  If this entity has been referenced through a generic instance,
       --  it's accessible via this parameter and can be used later on to
       --  retreive actual values for generic parameters.
@@ -185,7 +185,7 @@ private
       Dotted_Subprograms       : Entity_Persistent_Array_Access;
       Dotted_Subprograms_Index : Integer;
 
-      Generic_Context : Generic_Instance_Information;
+      Generic_Context : Instance_Info;
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation

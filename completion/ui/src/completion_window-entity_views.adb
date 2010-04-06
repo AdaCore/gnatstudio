@@ -31,6 +31,7 @@ with Completion_Window;  use Completion_Window;
 
 with Language.Ada;                   use Language.Ada;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -263,7 +264,9 @@ package body Completion_Window.Entity_Views is
 
       List := Find_Declarations
         (Context           =>
-           (From_Database, Get_Construct_Database (View.Explorer.Kernel)),
+           (From_Database,
+            Null_Instance_Info,
+            Get_Construct_Database (View.Explorer.Kernel)),
          From_Visibility   => View.Visibility,
          Is_Partial        => True,
          Expression        => Expression);

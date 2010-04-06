@@ -451,6 +451,7 @@ package Language.Tree.Database is
    --  Return the unique identifier for the name given in parameter.
 
    function Get_Identifier (Entity : Entity_Access) return Distinct_Identifier;
+   pragma Inline (Get_Identifier);
    --  Return the identifier of this entity.
 
    procedure Analyze_File_Differences

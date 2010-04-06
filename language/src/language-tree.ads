@@ -130,6 +130,7 @@ package Language.Tree is
    function Is_In_Category
      (Construct : Simple_Construct_Information; Categories : Category_Array)
       return Boolean;
+   pragma Inline (Is_In_Category);
    --  Return true if the construct category matches one of the category listed
    --  in the array. If the array is empty, then will always return True (means
    --  that we don't care about the category).
@@ -537,8 +538,8 @@ private
 
    Null_Construct_Tree_Record : constant Construct_Tree_Record :=
      (0,
-      Contents     => (others => Null_Construct_Tree_Node),
-      Annotations  => Tree_Annotations_Pckg.Null_Annotation_Container);
+      Contents    => (others => Null_Construct_Tree_Node),
+      Annotations => Tree_Annotations_Pckg.Null_Annotation_Container);
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array
      (1 .. 0) := (others => Null_Construct_Tree_Iterator);

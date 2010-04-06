@@ -37,7 +37,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       return Semantic_Tree_Iterator
    is
       Result        : Semantic_Tree_Iterator;
-      Gen_Info      : Generic_Instance_Information;
+      Gen_Info      : Instance_Info;
       Real_Sem_Info : Semantic_Information;
       Inst_Entity   : Entity_Access;
    begin
@@ -48,13 +48,17 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       end if;
 
       if Is_Generic_Instance (Info.Entity) then
-         Gen_Info := Get_Generic_Instance_Information (Info.Entity);
+         Gen_Info := Get_Generic_Instance_Information (Info.Entity)
+           & Info.Generic_Context;
       else
          Gen_Info := Info.Generic_Context;
       end if;
 
-      if Get_Construct (Info.Entity).Is_Generic_Spec then
-         if Gen_Info = Null_Generic_Instance_Information then
+      --  Loop over all of the generic definitions to find the first actual
+      --  parameter
+
+      while Get_Construct (Real_Sem_Info.Entity).Is_Generic_Spec loop
+         if Gen_Info = Null_Instance_Info then
             --  In this case, we've got a generic spec - but there isn't any
             --  generic context yet. We need to look at all the know
             --  instanciations of the enclosing package, and see if there's
@@ -64,39 +68,47 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                It            : Clause_Iterator :=
                  To_Clause_Iterator (From_Visibility, Cat_Use);
                Entity        : Entity_Access;
-               Instance_Info : Generic_Instance_Information;
+               Instance      : Instance_Info;
                Gen_Package   : Entity_Access;
                Enclosing_Package : Entity_Access;
             begin
                Enclosing_Package := To_Entity_Access
-                 (Get_File (Info.Entity),
+                 (Get_File (Real_Sem_Info.Entity),
                   Get_Parent_Scope
-                    (Get_Tree (Get_File (Info.Entity)),
-                     To_Construct_Tree_Iterator (Info.Entity)));
+                    (Get_Tree (Get_File (Real_Sem_Info.Entity)),
+                     To_Construct_Tree_Iterator (Real_Sem_Info.Entity)));
 
                while not At_End (It) loop
                   Entity := Resolve_Package (It);
 
-                  Instance_Info := Get_Generic_Instance_Information (Entity);
+                  Instance := Get_Generic_Instance_Information (Entity);
 
-                  if Instance_Info /= Null_Generic_Instance_Information then
+                  if Instance /= Null_Instance_Info then
                      Gen_Package :=
                        Get_First_Occurence
-                         (Get_Generic_Package (Instance_Info));
+                         (Get_Generic_Package (Instance));
 
                      if Gen_Package = Enclosing_Package then
-                        Gen_Info := Instance_Info;
+                        Gen_Info := Get_Generic_Context (It)
+                          & Instance
+                          & Info.Generic_Context;
 
                         exit;
                      end if;
                   end if;
+
+                  --  If this instance info is not used, then free it by a
+                  --  ref / unref sequence
+
+                  Ref (Instance);
+                  Unref (Instance);
 
                   Prev (It);
                end loop;
             end;
          end if;
 
-         if Gen_Info /= Null_Generic_Instance_Information then
+         if Gen_Info /= Null_Instance_Info then
             --  If we're iterating over a generic parameter in the context of
             --  an instance, then resolve the actual parameter instead of using
             --  the formal one.
@@ -107,9 +119,13 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
             if Inst_Entity /= Null_Entity_Access then
                Real_Sem_Info.Entity := Inst_Entity;
+            else
+               exit;
             end if;
+         else
+            exit;
          end if;
-      end if;
+      end loop;
 
       Result.Root_Entity := Real_Sem_Info;
       Result.Db := Get_Database (Get_File (Real_Sem_Info.Entity));
@@ -189,7 +205,6 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                   It.From_Visibility,
                   All_References,
                   It.Excluded_Entities));
-            Ref (It.Generic_Context);
 
             if At_End (It.Sub_It.all) then
                It.Step_Has_Started := False;
@@ -242,8 +257,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                end if;
 
                declare
-                  Generic_Context : Generic_Instance_Information :=
-                    Null_Generic_Instance_Information;
+                  Generic_Context : Instance_Info :=
+                    Null_Instance_Info;
                   View            : Entity_View;
                begin
                   View := Get_View (It.Decl_It);
@@ -260,7 +275,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                        Declaration_View_Record (View.all).Generic_Context;
                   end if;
 
-                  if Generic_Context = Null_Generic_Instance_Information then
+                  if Generic_Context = Null_Instance_Info then
                      Generic_Context := It.Generic_Context;
                   end if;
 
@@ -270,8 +285,6 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                         It.From_Visibility,
                         Sub_References_Allowed,
                         It.Excluded_Entities));
-
-                  Ref (Generic_Context);
 
                   Free (View);
                end;
@@ -328,6 +341,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
                   It.Decl_List := Find_Declarations
                     ((From_File,
+                      It.Generic_Context,
                       It.Current_File,
                      String_Index_Type
                        (Get_Construct (It.Current_Construct).Sloc_End.Index)),

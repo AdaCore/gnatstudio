@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
+
 with Ada_Semantic_Tree.List_Resolver; use Ada_Semantic_Tree.List_Resolver;
 
 package Ada_Semantic_Tree.Generics is
@@ -25,34 +27,37 @@ package Ada_Semantic_Tree.Generics is
    --  This assistant has to be registered to the database before any of the
    --  queries in this file can work.
 
-   type Generic_Instance_Information is private;
+   type Instance_Info is private;
+   --  Represents a generic context. The information store in this type can't
+   --  be kept after a construct database update.
 
-   Null_Generic_Instance_Information : constant Generic_Instance_Information;
+   Null_Instance_Info : constant Instance_Info;
 
-   procedure Ref (This : in out Generic_Instance_Information);
+   function "&"
+     (Left, Right : Instance_Info)
+      return Instance_Info;
+   --  Return a new generic instance information resulting of the concatenation
+   --  of the parameters. If one of the two parameters is null, then the other
+   --  one will be returned without modifications.
+
+   procedure Ref (This : Instance_Info);
    --  Adds 1 to the reference counter.
 
-   procedure Unref (This : in out Generic_Instance_Information);
+   procedure Unref (This : in out Instance_Info);
    --  Removes 1 from the reference counter. Frees the instance when reaches 0.
 
    type Generic_Instance_Array is array
-     (Integer range <>) of Generic_Instance_Information;
+     (Integer range <>) of Instance_Info;
 
    function Is_Generic_Instance (Entity : Entity_Access) return Boolean;
    --  Return true if the entity given in parameter is a generic instance
 
    function Get_Generic_Instance_Information
-     (Entity : Entity_Access) return Generic_Instance_Information;
+     (Entity : Entity_Access) return Instance_Info;
    --  Return the generic instance information corresponding to this instance.
    --  Return Null_Generic_Instance_Information if this is not an instance.
    --  This information is not persistent, and the data store will be invalid
    --  after changes done in the construct database.
-
-   function Get_Generic_Instances
-     (Entity     : Entity_Access;
-      Visibility : Visibility_Context) return Generic_Instance_Array;
-   --  Return the generic instances that can be found for this entity from
-   --  the visibility information given in parameter.
 
    function Is_Viewed_From_Generic
      (Entity : Entity_Access; Visibility : Visibility_Context) return Boolean;
@@ -64,29 +69,76 @@ package Ada_Semantic_Tree.Generics is
    --  Return true if the entity is declared in a generic entity.
 
    function Get_Actual_For_Generic_Param
-     (Info   : Generic_Instance_Information;
-      Formal : Entity_Access) return Entity_Access;
+     (Info   : Instance_Info; Formal : Entity_Access) return Entity_Access;
    --  Return the actual entity for this formal, according to the generic
    --  instance information
 
-   function Get_Generic_Package
-     (Info : Generic_Instance_Information)
-      return Entity_Access;
+   function Get_Generic_Package (Info : Instance_Info) return Entity_Access;
    --  Return the generic package instantiated by this information
+   --  ??? see where to remove calls to that guy...
+
+   function Get_Generic_Package (Info : Entity_Access) return Entity_View;
+   --  Same as above, but computes only the generic package without retreiving
+   --  the entire generic context.
+
+   type Persistent_Instance_Info is private;
+   --  Type for a generic instance information able to outlive database update.
+
+   Null_Persistent_Instance_Info : constant Persistent_Instance_Info;
+
+   function To_Persistent
+     (Instance : Instance_Info) return Persistent_Instance_Info;
+   --  Generate an persistent generic information from an active one. This
+   --  can then be stored and kept across database updates.
+
+   function To_Active
+     (Instance : Persistent_Instance_Info) return Instance_Info;
+   --  Generate an active generic information from a persistent one.
+
+   function Is_Up_To_Date
+     (This : Persistent_Instance_Info) return Boolean;
+   --  Return true if the information is up to date, false if it points to
+   --  certain entites that doesn't exist anymore.
+
+   procedure Free (This : in out Persistent_Instance_Info);
+   --  Frees the memory associated to this persistent entity information
 
 private
 
-   type Generic_Instance_Information_Record is record
+   type Instance_Info_Record;
+   type Persistent_Instance_Info_Record;
+
+   type Instance_Info is
+     access all Instance_Info_Record;
+   type Persistent_Instance_Info is
+     access all Persistent_Instance_Info_Record;
+
+   package Generic_Info_List is new Ada.Containers.Doubly_Linked_Lists
+     (Instance_Info);
+   package Persistent_Generic_Info_List is new
+     Ada.Containers.Doubly_Linked_Lists (Persistent_Instance_Info);
+
+   type Instance_Info_Record is record
       Instance_Package : Entity_Access;
       Generic_Package  : Entity_Access;
       Resolver         : Actual_Parameter_Resolver_Access;
       Refs             : Integer := 0;
+
+      Pre_Contexts  : Generic_Info_List.List;
+      Post_Contexts : Generic_Info_List.List;
    end record;
 
-   type Generic_Instance_Information is
-     access all Generic_Instance_Information_Record;
+   type Persistent_Instance_Info_Record is record
+      Instance_Package : Entity_Persistent_Access;
+      Generic_Package  : Entity_Persistent_Access;
 
-   Null_Generic_Instance_Information : constant Generic_Instance_Information :=
+      Pre_Contexts  : Persistent_Generic_Info_List.List;
+      Post_Contexts : Persistent_Generic_Info_List.List;
+   end record;
+
+   Null_Instance_Info : constant Instance_Info :=
      null;
+
+   Null_Persistent_Instance_Info : constant Persistent_Instance_Info := null;
 
 end Ada_Semantic_Tree.Generics;

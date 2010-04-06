@@ -50,6 +50,7 @@ package body Ada_Semantic_Tree.Declarations is
       Offset          : String_Index_Type;
       From_Visibility : Visibility_Context;
       Categories      : Category_Array_Access;
+      Generic_Context : Instance_Info;
    end record;
 
    type Iteration_Stage is (File_Hierarchy, Database);
@@ -65,6 +66,7 @@ package body Ada_Semantic_Tree.Declarations is
       From_Visibility : Visibility_Context;
       Hidden_Entities : aliased Visibility_Resolver;
       Categories      : Category_Array_Access;
+      Generic_Context : Instance_Info;
 
       --  Data needed by the first iteration stage (current file)
 
@@ -78,6 +80,8 @@ package body Ada_Semantic_Tree.Declarations is
 
       Construct_Db : Construct_Database_Access;
       Db_Iterator  : Construct_Db_Iterator;
+      Visible_From : Entity_Access;
+      Valid        : Boolean := False;
    end record;
 
    overriding
@@ -100,6 +104,10 @@ package body Ada_Semantic_Tree.Declarations is
    function Get
      (It : Declaration_Id_Iterator) return Entity_View;
    --  Return the element contained in this iterator
+
+   procedure Computes_Visibility (It : in out Declaration_Id_Iterator'Class);
+   --  Computes the visibility of the entity pointed by the iterator if needed,
+   --  and the validity if possible...
 
    function Is_Valid (It : Declaration_Id_Iterator'Class) return Boolean;
 
@@ -134,7 +142,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       Is_All          : Boolean;
       Categories      : Category_Array_Access;
-      Generic_Context : Generic_Instance_Information;
+      Generic_Context : Instance_Info;
    end record;
 
    type Declaration_Composition_Iterator
@@ -240,6 +248,8 @@ package body Ada_Semantic_Tree.Declarations is
       Result.From_Visibility := List.From_Visibility;
       Result.Construct_Db := List.Construct_Db;
       Result.Categories := List.Categories;
+      Result.Generic_Context := List.Generic_Context;
+      Ref (Result.Generic_Context);
 
       if List.First_File /= null then
          Result.Stage := File_Hierarchy;
@@ -268,6 +278,8 @@ package body Ada_Semantic_Tree.Declarations is
          Result.Db_Iterator := Start
            (Result.Construct_Db, Result.Name.all, Result.Is_Partial);
       end if;
+
+      Computes_Visibility (Result);
 
       if not Is_Valid (Result) then
          Next (Result);
@@ -319,9 +331,82 @@ package body Ada_Semantic_Tree.Declarations is
             end if;
          end if;
 
+         Computes_Visibility (It);
          exit when Is_Valid (It);
       end loop;
    end Next;
+
+   -------------------------
+   -- Computes_Visibility --
+   -------------------------
+
+   procedure Computes_Visibility (It : in out Declaration_Id_Iterator'Class) is
+      Potential_Entity : Entity_Access;
+   begin
+      if At_End (It) then
+         return;
+      end if;
+
+      if It.Stage = Database then
+         Potential_Entity := Get (It.Db_Iterator);
+         It.Visible_From := Null_Entity_Access;
+
+         if not Is_Public_Library_Visible (Potential_Entity) then
+            --  We don't return entities that are not public library visible
+            --  in the case of database searches.
+
+            It.Valid := False;
+
+            return;
+         end if;
+
+         if not Is_In_Category
+           (Get_Construct (Potential_Entity).all, It.Categories.all)
+         then
+            It.Valid := False;
+
+            return;
+         end if;
+
+         if Is_In_Parents
+           (Get_Owning_Unit (Potential_Entity), It.First_Unit)
+         then
+            --  Entities in the parents of the owning entity have already
+            --  been returned.
+
+            It.Valid := False;
+
+            return;
+         end if;
+
+         if Is_Hidden
+           (It.Hidden_Entities,
+            Get_Construct (Potential_Entity).Name.all)
+         then
+            --  Entities hiddent by things founds in the parent are not
+            --  displayed.
+
+            It.Valid := False;
+
+            return;
+         end if;
+
+         case It.From_Visibility.Min_Visibility_Confidence is
+            when Use_Visible | With_Visible =>
+               It.Visible_From := Is_Visible_From_Clauses
+                 (Potential_Entity, It.From_Visibility);
+               It.Valid := It.Visible_From /= Null_Entity_Access;
+
+               return;
+
+            when others =>
+               It.Valid := True;
+
+               return;
+
+         end case;
+      end if;
+   end Computes_Visibility;
 
    --------------
    -- Is_Valid --
@@ -343,53 +428,7 @@ package body Ada_Semantic_Tree.Declarations is
          end if;
 
       elsif It.Stage = Database then
-         declare
-            Potential_Entity : Entity_Access;
-         begin
-            Potential_Entity := Get (It.Db_Iterator);
-
-            if not Is_Public_Library_Visible (Potential_Entity) then
-               --  We don't return entities that are not public library visible
-               --  in the case of database searches.
-
-               return False;
-            end if;
-
-            if not Is_In_Category
-              (Get_Construct (Potential_Entity).all, It.Categories.all)
-            then
-               return False;
-            end if;
-
-            if Is_In_Parents
-              (Get_Owning_Unit (Potential_Entity), It.First_Unit)
-            then
-               --  Entities in the parents of the owning entity have already
-               --  been returned.
-
-               return False;
-            end if;
-
-            if Is_Hidden
-              (It.Hidden_Entities,
-               Get_Construct (Potential_Entity).Name.all)
-            then
-               --  Entities hiddent by things founds in the parent are not
-               --  displayed.
-
-               return False;
-            end if;
-
-            case It.From_Visibility.Min_Visibility_Confidence is
-               when Use_Visible | With_Visible =>
-                  return Is_Visible_From_Clauses
-                    (Potential_Entity, It.From_Visibility);
-
-               when others =>
-                  return True;
-
-            end case;
-         end;
+         return It.Valid;
       end if;
 
       return True;
@@ -413,9 +452,12 @@ package body Ada_Semantic_Tree.Declarations is
    is
       Declaration : Entity_View;
       Full_Cell   : Entity_Access;
+      Context     : Instance_Info;
    begin
       case It.Stage is
          when File_Hierarchy =>
+            Ref (It.Generic_Context);
+
             Declaration := new Declaration_View_Record'
               (Confidence      => It.From_Visibility.Min_Visibility_Confidence,
                Entity          => It.Visible_Constructs (It.Visible_Index),
@@ -423,7 +465,7 @@ package body Ada_Semantic_Tree.Declarations is
                From_Prefixed   => False,
                Profile         => null,
                Actuals         => null,
-               Generic_Context => Null_Generic_Instance_Information
+               Generic_Context => It.Generic_Context
               );
 
             Full_Cell := Get_Last_Visible_Declaration
@@ -436,15 +478,19 @@ package body Ada_Semantic_Tree.Declarations is
             return Declaration;
 
          when Database =>
+            Context := It.Generic_Context
+              & Get_Generic_Instance_Information (It.Visible_From);
+            Ref (Context);
+
             return new Declaration_View_Record'
-              (Confidence    => It.From_Visibility.Min_Visibility_Confidence,
-               Entity        => To_Entity_Access
+              (Confidence      => It.From_Visibility.Min_Visibility_Confidence,
+               Entity          => To_Entity_Access
                  (Get_File (It.Db_Iterator), Get_Construct (It.Db_Iterator)),
-               Is_All        => False,
-               From_Prefixed => False,
-               Profile       => null,
-               Actuals       => null,
-               Generic_Context => Null_Generic_Instance_Information
+               Is_All          => False,
+               From_Prefixed   => False,
+               Profile         => null,
+               Actuals         => null,
+               Generic_Context => Context
               );
       end case;
    end Get;
@@ -455,6 +501,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding procedure Free (List : in out Declaration_Id_List) is
    begin
+      Unref (List.Generic_Context);
       Free (List.Categories);
    end Free;
 
@@ -467,6 +514,7 @@ package body Ada_Semantic_Tree.Declarations is
       Free (It.Visible_Constructs);
       Free (It.Db_Iterator);
       Free (It.Hidden_Entities);
+      Unref (It.Generic_Context);
    end Free;
 
    -----------------------
@@ -847,6 +895,7 @@ package body Ada_Semantic_Tree.Declarations is
                        (Null_Distinct_Identifier,
                         Is_Partial,
                         (From_File,
+                         Null_Instance_Info,
                          Context.File,
                          Data (Token).Token_First - 1),
                         Actual_From_Visibility,
@@ -877,6 +926,7 @@ package body Ada_Semantic_Tree.Declarations is
                        (Null_Distinct_Identifier,
                         Is_Partial,
                         (From_File,
+                         Null_Instance_Info,
                          Context.File,
                          Data (Token).Token_First - 1),
                         Actual_From_Visibility,
@@ -1096,7 +1146,8 @@ package body Ada_Semantic_Tree.Declarations is
                         From_Prefixed => False,
                         Actuals       => null,
                         Profile       => null,
-                        Generic_Context => Null_Generic_Instance_Information));
+                        Generic_Context => Context.Generic_Context));
+                  Ref (Context.Generic_Context);
                end if;
 
                Next (C);
@@ -1117,7 +1168,9 @@ package body Ada_Semantic_Tree.Declarations is
                Is_Partial      => Is_Partial,
                From_Visibility => From_Visibility,
                Categories      => new Category_Array'(Categories),
+               Generic_Context => Context.Generic_Context,
                others          => <>);
+            Ref (Context.Generic_Context);
 
             case Context.Context_Type is
                when From_File =>
@@ -1151,7 +1204,8 @@ package body Ada_Semantic_Tree.Declarations is
       return Visibility_Confidence
    is
       Decls : Entity_List := Find_Declarations
-        (Context           => (From_File, File, Offset),
+        (Context           =>
+           (From_File, Null_Instance_Info, File, Offset),
          From_Visibility   => From_Visibility,
          Expression        => Expression,
          Categories        => Null_Category_Array,
@@ -1262,7 +1316,7 @@ package body Ada_Semantic_Tree.Declarations is
    overriding function Get
      (It : Declaration_Composition_Iterator) return Entity_View
    is
-      Info : Semantic_Information := Get (It.It);
+      Info : constant Semantic_Information := Get (It.It);
    begin
       Ref (Info.Generic_Context);
 
@@ -1348,6 +1402,7 @@ package body Ada_Semantic_Tree.Declarations is
    begin
       Free (List.Categories);
       Free (List.Name);
+      Unref (List.Generic_Context);
    end Free;
 
    ----------
@@ -1449,6 +1504,8 @@ package body Ada_Semantic_Tree.Declarations is
       Result          : in out Entity_List)
    is
    begin
+      Ref (E.Generic_Context);
+
       Append
         (Result.Contents,
          Declaration_Composition_List'

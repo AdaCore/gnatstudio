@@ -19,6 +19,8 @@
 
 --  This package computes various visibility information on trees.
 
+with Ada_Semantic_Tree.Generics; use Ada_Semantic_Tree.Generics;
+
 package Ada_Semantic_Tree.Visibility is
 
    procedure Register_Assistant (Db : Construct_Database_Access);
@@ -84,9 +86,9 @@ package Ada_Semantic_Tree.Visibility is
 
    function Is_Visible_From_Clauses
      (Entity         : Entity_Access;
-      From_Visiblity : Visibility_Context) return Boolean;
-   --  Return true if the entity given in parameter is visible according to the
-   --  visibility given in parameter.
+      From_Visiblity : Visibility_Context) return Entity_Access;
+   --  Return the with or use clause from which the entity is visible if there
+   --  is such a clause, according visibility given in parameter.
 
    type Clause_Iterator is private;
 
@@ -114,6 +116,11 @@ package Ada_Semantic_Tree.Visibility is
    function Resolve_Package (This : Clause_Iterator) return Entity_Access;
    --  Computes the package name corresponding to the clause pointed by the
    --  iterator.
+
+   function Get_Generic_Context
+     (This : Clause_Iterator) return Instance_Info;
+   --  If this clause points to a generic instance, retreives the corresponding
+   --  generic context.
 
    function Resolve_Clause (Entity : Entity_Access) return Entity_Access;
    --  If the entity is a use or a with clause, return the corresponding

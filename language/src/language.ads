@@ -893,6 +893,9 @@ package Language is
      (Expression : Parsed_Expression; Token : Token_Record) return String;
    --  Return the name of the element pointed by the token
 
+   function To_String (Expression : Parsed_Expression) return String;
+   --  Returns a string with the contents of the expresion
+
 private
    type Language_Root is abstract tagged limited record
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;

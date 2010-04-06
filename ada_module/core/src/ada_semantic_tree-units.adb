@@ -224,9 +224,15 @@ package body Ada_Semantic_Tree.Units is
          if Length (Root_Unit.Name.all) = 1
            and then Get_Construct (Get_Entity (Root_Unit)).Is_Declaration
          then
+            Free (Unit_It);
+
             return Get_Child (Root_Unit, 2);
          end if;
+
+         Next (Unit_It);
       end loop;
+
+      Free (Unit_It);
 
       return Null_Unit_Access;
    end Get_Unit;
@@ -937,12 +943,16 @@ package body Ada_Semantic_Tree.Units is
       Db_Assistant : Database_Assistant_Access;
       Unit_Key     : Construct_Annotations_Pckg.Annotation_Key;
    begin
-      Db_Assistant := Get_Assistant
-        (Get_Database (Get_File (Unit)), Ada_Unit_Assistant_Id);
+      if Unit /= Null_Entity_Access then
+         Db_Assistant := Get_Assistant
+           (Get_Database (Get_File (Unit)), Ada_Unit_Assistant_Id);
 
-      Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
+         Unit_Key := Ada_Unit_Assistant (Db_Assistant.all).Unit_Key;
 
-      return Get_Unit_Info (Unit_Key, Unit);
+         return Get_Unit_Info (Unit_Key, Unit);
+      else
+         return Null_Unit_Access;
+      end if;
    end Get_Unit_Access;
 
    -------------------

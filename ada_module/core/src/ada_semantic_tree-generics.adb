@@ -20,45 +20,73 @@
 with Language.Ada;                    use Language.Ada;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Units;         use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Cache;         use Ada_Semantic_Tree.Cache;
 with Ada.Unchecked_Deallocation;
 
 package body Ada_Semantic_Tree.Generics is
 
-   Generic_Assistant_Id : constant String := "ADA_GENERIC_ASSISTANT";
+   procedure Append_Context
+     (Info  : Instance_Info;
+      Added : Instance_Info);
 
-   type Generic_Db_Assistant is new Database_Assistant with record
-      Instance_Key : Construct_Annotations_Pckg.Annotation_Key;
+   procedure Prepend_Context
+     (Info  : Instance_Info;
+      Added : Instance_Info);
+
+   function Make_Generic_Instance (E : Entity_Access) return Instance_Info;
+
+   type Instanciated_Package is new Cached_Information with record
+      Generic_Package : Entity_Persistent_Access;
+      Generic_Context : Persistent_Instance_Info;
    end record;
 
-   function Make_Generic_Instance
-     (E : Entity_Access) return Generic_Instance_Information;
+   overriding procedure Free (This : in out Instanciated_Package);
 
    ------------------------
    -- Register_Assistant --
    ------------------------
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
-      use Language.Tree.Construct_Annotations_Pckg;
-
-      Instance_Key : Construct_Annotations_Pckg.Annotation_Key;
    begin
-      Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all,
-         Instance_Key);
-
-      Register_Assistant
-        (Db,
-         Generic_Assistant_Id,
-         new Generic_Db_Assistant'
-           (Database_Assistant with
-            Instance_Key => Instance_Key));
+      null;
    end Register_Assistant;
+
+   ---------
+   -- "&" --
+   ---------
+
+   function "&" (Left, Right : Instance_Info) return Instance_Info
+   is
+      Result : Instance_Info;
+   begin
+      if Left = Null_Instance_Info
+        and then Right = Null_Instance_Info
+      then
+         return Null_Instance_Info;
+      end if;
+
+      if Left = Null_Instance_Info then
+         return Right;
+      end if;
+
+      if Right = Null_Instance_Info then
+         return Left;
+      end if;
+
+      Result := new Instance_Info_Record;
+
+      Prepend_Context (Result, Left);
+      Append_Context (Result, Right);
+
+      return Result;
+   end "&";
 
    ---------
    -- Ref --
    ---------
 
-   procedure Ref (This : in out Generic_Instance_Information) is
+   procedure Ref (This : Instance_Info) is
    begin
       if This /= null then
          This.Refs := This.Refs + 1;
@@ -69,14 +97,37 @@ package body Ada_Semantic_Tree.Generics is
    -- Unref --
    -----------
 
-   procedure Unref (This : in out Generic_Instance_Information) is
+   procedure Unref (This : in out Instance_Info) is
+      use Generic_Info_List;
+
       procedure Free is new Ada.Unchecked_Deallocation
-        (Generic_Instance_Information_Record, Generic_Instance_Information);
+        (Instance_Info_Record, Instance_Info);
+
+      Cur : Generic_Info_List.Cursor;
+      Tmp : Instance_Info;
    begin
       if This /= null then
          This.Refs := This.Refs - 1;
 
          if This.Refs <= 0 then
+            Cur := This.Pre_Contexts.First;
+
+            while Cur /= No_Element loop
+               Tmp := Element (Cur);
+               Unref (Tmp);
+
+               Cur := Next (Cur);
+            end loop;
+
+            Cur := This.Post_Contexts.First;
+
+            while Cur /= No_Element loop
+               Tmp := Element (Cur);
+               Unref (Tmp);
+
+               Cur := Next (Cur);
+            end loop;
+
             Free (This.Resolver);
             Free (This);
          end if;
@@ -87,62 +138,47 @@ package body Ada_Semantic_Tree.Generics is
    -- Make_Generic_Instance --
    ---------------------------
 
-   function Make_Generic_Instance
-     (E : Entity_Access) return Generic_Instance_Information
-   is
-      Id : aliased UTF8_String := Get_Identifier
-        (Get_Referenced_Identifiers (To_Construct_Tree_Iterator (E))).all;
-      Expression : Parsed_Expression :=
-        Ada_Lang.Parse_Expression_Backward
-        (Id'Unchecked_Access, String_Index_Type (Id'Last));
-      Generic_Resolution : Entity_List;
-      It                 : Entity_Iterator;
-      Generic_Package    : Entity_Access;
-
-      Result : Generic_Instance_Information := null;
+   function Make_Generic_Instance (E : Entity_Access) return Instance_Info is
+      View : Entity_View;
+      Generic_Package : Entity_Access;
+      Result          : Instance_Info := null;
    begin
-      Generic_Resolution := Find_Declarations
-        (Context           =>
-           (From_File,
-            Get_File (E),
-            String_Index_Type (Get_Construct (E).Sloc_Start.Index)),
-         From_Visibility   =>
-           (File                      => Get_File (E),
-            Offset                    =>
-              String_Index_Type (Get_Construct (E).Sloc_Start.Index),
-            Filter                    => Everything,
-            Min_Visibility_Confidence => Use_Visible),
-         Expression        => Expression,
-         Categories        => (1 => Cat_Package));
+      View := Get_Generic_Package (E);
 
-      It := First (Generic_Resolution);
-
-      --  We only consider the first matching resolution, ignore the other
-      --  potential ones.
-
-      if not At_End (It) then
-         Generic_Package := Get_First_Occurence (Get_Entity (It));
+      if View /= Null_Entity_View then
+         Generic_Package := Get_First_Occurence (Get_Entity (View));
 
          declare
             Profile : constant List_Profile :=
               Get_List_Profile (Generic_Package, Generic_Profile);
          begin
-            Result := new Generic_Instance_Information_Record;
+            Result := new Instance_Info_Record;
+
             Result.Instance_Package := E;
             Result.Generic_Package := Generic_Package;
             Result.Resolver := new Actual_Parameter_Resolver'
               (Get_Actual_Parameter_Resolver (Profile));
 
+            if View.all in Declaration_View_Record'Class then
+               if Declaration_View_Record
+                 (View.all).Generic_Context
+                 /= Null_Instance_Info
+               then
+                  Prepend_Context
+                    (Result,
+                     Declaration_View_Record
+                       (View.all).Generic_Context);
+               end if;
+            end if;
+
             Append_Actuals
               (Result.Resolver.all,
                Get_Buffer (Get_File (E)),
                String_Index_Type (Get_Construct (E).Sloc_Start.Index));
+
+            Free (View);
          end;
       end if;
-
-      Free (It);
-      Free (Generic_Resolution);
-      Free (Expression);
 
       return Result;
    end Make_Generic_Instance;
@@ -162,38 +198,22 @@ package body Ada_Semantic_Tree.Generics is
    --------------------------------------
 
    function Get_Generic_Instance_Information
-     (Entity : Entity_Access) return Generic_Instance_Information
+     (Entity : Entity_Access) return Instance_Info
    is
    begin
       if Is_Generic_Instance (Entity) then
-         --  ??? see how to cache that information - or if we need to...
          return Make_Generic_Instance (Entity);
       else
          return null;
       end if;
    end Get_Generic_Instance_Information;
 
-   ---------------------------
-   -- Get_Generic_Instances --
-   ---------------------------
-
-   function Get_Generic_Instances
-     (Entity     : Entity_Access;
-      Visibility : Visibility_Context) return Generic_Instance_Array
-   is
-      pragma Unreferenced (Entity, Visibility);
-      R : Generic_Instance_Array (1 .. 0);
-   begin
-      return R;
-   end Get_Generic_Instances;
-
    ----------------------------
    -- Is_Viewed_From_Generic --
    ----------------------------
 
    function Is_Viewed_From_Generic
-     (Entity : Entity_Access; Visibility : Visibility_Context)
-      return Boolean
+     (Entity : Entity_Access; Visibility : Visibility_Context) return Boolean
    is
       pragma Unreferenced (Entity, Visibility);
    begin
@@ -242,77 +262,413 @@ package body Ada_Semantic_Tree.Generics is
    ----------------------------------
 
    function Get_Actual_For_Generic_Param
-     (Info   : Generic_Instance_Information;
-      Formal : Entity_Access) return Entity_Access
+     (Info   : Instance_Info; Formal : Entity_Access) return Entity_Access
    is
-      Formals : constant Entity_Array :=
-        Get_Formals (Get_Profile (Info.Resolver.all));
+      use Generic_Info_List;
+
       Result : Entity_Access := Null_Entity_Access;
+      Cur : Generic_Info_List.Cursor;
    begin
-      for J in Formals'Range loop
-         if Formals (J) = Formal then
-            declare
-               Actual_Expression : constant Parsed_Expression :=
-                 Get_Expression_For_Formal
-                   (Info.Resolver.all, Get_Construct (Formals (J)).Name.all);
-               Actual_Resolution : Entity_List;
-               Actual_It         : Entity_Iterator;
-            begin
-               if Actual_Expression /= Null_Parsed_Expression then
-                  Actual_Resolution :=
-                    Find_Declarations
-                      (Context           =>
-                           (From_File,
-                            Get_File (Info.Instance_Package),
-                            String_Index_Type
-                              (Get_Construct
-                                 (Info.Instance_Package).Sloc_Start.Index)),
-                       From_Visibility   =>
-                         (File                 =>
-                            Get_File (Info.Instance_Package),
-                          Offset               =>
-                            String_Index_Type
-                              (Get_Construct
-                                   (Info.Instance_Package).Sloc_Start.Index),
-                          Filter                    => Everything,
-                          Min_Visibility_Confidence => Use_Visible),
-                       Expression        => Actual_Expression,
-                       Categories        =>
-                         (Cat_Class,
-                          Cat_Structure,
-                          Cat_Case_Inside_Record,
-                          Cat_Union,
-                          Cat_Type,
-                          Cat_Subtype));
-               end if;
+      Cur := Info.Pre_Contexts.First;
 
-               Actual_It := First (Actual_Resolution);
+      while Cur /= No_Element loop
+         Result := Get_Actual_For_Generic_Param (Element (Cur), Formal);
 
-               if not At_End (Actual_It) then
-                  Result := Get_Entity (Actual_It);
-               end if;
-
-               Free (Actual_It);
-               Free (Actual_Resolution);
-            end;
-
-            exit;
+         if Result /= Null_Entity_Access then
+            return Result;
          end if;
+
+         Cur := Next (Cur);
       end loop;
 
-      return Result;
+      if Info.Resolver /= null then
+         declare
+            Formals : constant Entity_Array :=
+              Get_Formals (Get_Profile (Info.Resolver.all));
+         begin
+            for J in Formals'Range loop
+               if Formals (J) = Formal then
+                  declare
+                     Actual_Expression : constant Parsed_Expression :=
+                       Get_Expression_For_Formal
+                         (Info.Resolver.all,
+                          Get_Construct (Formals (J)).Name.all);
+                     Actual_Resolution : Entity_List;
+                     Actual_It         : Entity_Iterator;
+                  begin
+                     if Actual_Expression /= Null_Parsed_Expression then
+                        Actual_Resolution :=
+                          Find_Declarations
+                            (Context           =>
+                                 (From_File,
+                                  Null_Instance_Info,
+                                  Get_File (Info.Instance_Package),
+                                  String_Index_Type
+                                    (Get_Construct
+                                       (Info.Instance_Package).
+                                       Sloc_Start.Index)),
+                             From_Visibility   =>
+                               (File                 =>
+                                  Get_File (Info.Instance_Package),
+                                Offset               =>
+                                  String_Index_Type
+                                    (Get_Construct
+                                         (Info.Instance_Package).
+                                         Sloc_Start.Index),
+                                Filter                    => Everything,
+                                Min_Visibility_Confidence => Use_Visible),
+                             Expression        => Actual_Expression,
+                             Categories        =>
+                               (Cat_Class,
+                                Cat_Structure,
+                                Cat_Case_Inside_Record,
+                                Cat_Union,
+                                Cat_Type,
+                                Cat_Subtype));
+                     end if;
+
+                     Actual_It := First (Actual_Resolution);
+
+                     if not At_End (Actual_It) then
+                        Result := Get_Entity (Actual_It);
+                     end if;
+
+                     Free (Actual_It);
+                     Free (Actual_Resolution);
+                  end;
+
+                  exit;
+               end if;
+            end loop;
+         end;
+      end if;
+
+      if Result /= Null_Entity_Access then
+         return Result;
+      end if;
+
+      Cur := Info.Post_Contexts.First;
+
+      while Cur /= No_Element loop
+         Result := Get_Actual_For_Generic_Param
+           (Element (Cur), Formal);
+
+         if Result /= Null_Entity_Access then
+            return Result;
+         end if;
+
+         Cur := Next (Cur);
+      end loop;
+
+      return Null_Entity_Access;
    end Get_Actual_For_Generic_Param;
 
    -------------------------
    -- Get_Generic_Package --
    -------------------------
 
-   function Get_Generic_Package
-     (Info : Generic_Instance_Information)
-      return Entity_Access
+   function Get_Generic_Package (Info : Instance_Info) return Entity_Access
    is
    begin
-      return Info.Generic_Package;
+      if Info /= null then
+         return Info.Generic_Package;
+      else
+         return Null_Entity_Access;
+      end if;
    end Get_Generic_Package;
+
+   -------------------------
+   -- Get_Generic_Package --
+   -------------------------
+
+   function Get_Generic_Package (Info : Entity_Access) return Entity_View is
+      Result : Entity_View;
+      Cached : Cache_Access := Get_Cache (Info);
+   begin
+      if Cached /= null then
+         Result := new Declaration_View_Record'
+           (Entity          =>
+              To_Entity_Access
+                (Instanciated_Package (Cached.all).Generic_Package),
+            Generic_Context =>
+              To_Active
+                (Instanciated_Package (Cached.all).Generic_Context),
+            others => <>);
+
+         Ref (Declaration_View_Record (Result.all).Generic_Context);
+
+         return Result;
+      end if;
+
+      declare
+         Id : aliased UTF8_String := Get_Identifier
+           (Get_Referenced_Identifiers
+              (To_Construct_Tree_Iterator (Info))).all;
+         Expression : Parsed_Expression :=
+           Ada_Lang.Parse_Expression_Backward
+             (Id'Unchecked_Access, String_Index_Type (Id'Last));
+         Generic_Resolution : Entity_List;
+         It                 : Entity_Iterator;
+      begin
+         Generic_Resolution := Find_Declarations
+           (Context           =>
+              (From_File,
+               Null_Instance_Info,
+               Get_File (Info),
+               String_Index_Type (Get_Construct (Info).Sloc_Start.Index)),
+            From_Visibility   =>
+              (File                      => Get_File (Info),
+               Offset                    =>
+                 String_Index_Type (Get_Construct (Info).Sloc_Start.Index),
+               Filter                    => Everything,
+               Min_Visibility_Confidence => Use_Visible),
+            Expression        => Expression,
+            Categories        => (1 => Cat_Package));
+
+         It := First (Generic_Resolution);
+
+         --  We only consider the first matching resolution, ignore the other
+         --  potential ones.
+
+         if not At_End (It) then
+            Result := Get_View (It);
+         else
+            Result := Null_Entity_View;
+         end if;
+
+         Free (It);
+         Free (Generic_Resolution);
+         Free (Expression);
+
+         if Result /= null then
+            Cached := new Instanciated_Package'
+              (Cached_Information with
+               Generic_Package => To_Entity_Persistent_Access (Result.Entity),
+               Generic_Context => Null_Persistent_Instance_Info);
+
+            if Result.all in Declaration_View_Record'Class then
+               Instanciated_Package (Cached.all).Generic_Context :=
+                 To_Persistent
+                   (Declaration_View_Record (Result.all).Generic_Context);
+            end if;
+
+            Ref (Instanciated_Package (Cached.all).Generic_Package);
+
+            Set_Cache (Info, Cached);
+         end if;
+
+         return Result;
+      end;
+   end Get_Generic_Package;
+
+   --------------------
+   -- Append_Context --
+   --------------------
+
+   procedure Append_Context (Info  : Instance_Info; Added : Instance_Info)
+   is
+   begin
+      if Added /= Null_Instance_Info then
+         Info.Post_Contexts.Append (Added);
+         Ref (Added);
+      end if;
+   end Append_Context;
+
+   ---------------------
+   -- Prepend_Context --
+   ---------------------
+
+   procedure Prepend_Context (Info  : Instance_Info; Added : Instance_Info) is
+   begin
+      if Added /= Null_Instance_Info then
+         Info.Pre_Contexts.Prepend (Added);
+         Ref (Added);
+      end if;
+   end Prepend_Context;
+
+   -------------------
+   -- To_Persistent --
+   -------------------
+
+   function To_Persistent
+     (Instance : Instance_Info) return Persistent_Instance_Info
+   is
+      use Generic_Info_List;
+
+      Result : Persistent_Instance_Info;
+      Cur : Generic_Info_List.Cursor;
+   begin
+      if Instance = Null_Instance_Info then
+         return null;
+      end if;
+
+      Result := new Persistent_Instance_Info_Record'
+        (Instance_Package =>
+           To_Entity_Persistent_Access (Instance.Instance_Package),
+         Generic_Package  =>
+           To_Entity_Persistent_Access (Instance.Generic_Package),
+         others => <>);
+
+      Ref (Result.Instance_Package);
+      Ref (Result.Generic_Package);
+
+      Cur := Instance.Pre_Contexts.First;
+
+      while Cur /= No_Element loop
+         Result.Pre_Contexts.Append (To_Persistent (Element (Cur)));
+         Cur := Next (Cur);
+      end loop;
+
+      Cur := Instance.Post_Contexts.First;
+
+      while Cur /= No_Element loop
+         Result.Post_Contexts.Append (To_Persistent (Element (Cur)));
+         Cur := Next (Cur);
+      end loop;
+
+      return Result;
+   end To_Persistent;
+
+   ---------------
+   -- To_Active --
+   ---------------
+
+   function To_Active
+     (Instance : Persistent_Instance_Info) return Instance_Info
+   is
+      use Persistent_Generic_Info_List;
+
+      Result : Instance_Info;
+      Cur : Persistent_Generic_Info_List.Cursor;
+   begin
+      if Instance = null then
+         return Null_Instance_Info;
+      end if;
+
+      Result := new Instance_Info_Record'
+        (Instance_Package =>
+           To_Entity_Access (Instance.Instance_Package),
+         Generic_Package  =>
+           To_Entity_Access (Instance.Generic_Package),
+         others => <>);
+
+      Result.Resolver := new Actual_Parameter_Resolver'
+        (Get_Actual_Parameter_Resolver
+           (Get_List_Profile (Result.Generic_Package, Generic_Profile)));
+
+      if Result.Instance_Package /= Null_Entity_Access then
+         Append_Actuals
+           (Result.Resolver.all,
+            Get_Buffer (Get_File (Result.Instance_Package)),
+            String_Index_Type
+              (Get_Construct (Result.Instance_Package).Sloc_Start.Index));
+      end if;
+
+      Cur := Instance.Pre_Contexts.First;
+
+      while Cur /= No_Element loop
+         Prepend_Context (Result, To_Active (Element (Cur)));
+         Cur := Next (Cur);
+      end loop;
+
+      Cur := Instance.Post_Contexts.First;
+
+      while Cur /= No_Element loop
+         Append_Context (Result, To_Active (Element (Cur)));
+         Cur := Next (Cur);
+      end loop;
+
+      return Result;
+   end To_Active;
+
+   -------------------
+   -- Is_Up_To_Date --
+   -------------------
+
+   function Is_Up_To_Date
+     (This : Persistent_Instance_Info) return Boolean
+   is
+      use Persistent_Generic_Info_List;
+
+      Cur : Persistent_Generic_Info_List.Cursor;
+   begin
+      if not Exists (This.Instance_Package)
+        or else not Exists (This.Generic_Package)
+      then
+         return False;
+      end if;
+
+      Cur := This.Pre_Contexts.First;
+
+      while Cur /= No_Element loop
+         if not Is_Up_To_Date (Element (Cur)) then
+            return False;
+         end if;
+
+         Cur := Next (Cur);
+      end loop;
+
+      Cur := This.Post_Contexts.First;
+
+      while Cur /= No_Element loop
+         if not Is_Up_To_Date (Element (Cur)) then
+            return False;
+         end if;
+
+         Cur := Next (Cur);
+      end loop;
+
+      return True;
+   end Is_Up_To_Date;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Persistent_Instance_Info) is
+      use Persistent_Generic_Info_List;
+
+      Info : Persistent_Instance_Info;
+      Cur : Persistent_Generic_Info_List.Cursor;
+
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
+        (Persistent_Instance_Info_Record,
+         Persistent_Instance_Info);
+   begin
+      if This = null then
+         return;
+      end if;
+
+      Cur := This.Pre_Contexts.First;
+
+      while Cur /= No_Element loop
+         Info := Element (Cur);
+         Free (Info);
+         Cur := Next (Cur);
+      end loop;
+
+      Cur := This.Post_Contexts.First;
+
+      while Cur /= No_Element loop
+         Info := Element (Cur);
+         Free (Info);
+         Cur := Next (Cur);
+      end loop;
+
+      Unref (This.Instance_Package);
+      Unref (This.Generic_Package);
+
+      Internal_Free (This);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (This : in out Instanciated_Package) is
+   begin
+      Free (This.Generic_Context);
+      Unref (This.Generic_Package);
+   end Free;
 
 end Ada_Semantic_Tree.Generics;

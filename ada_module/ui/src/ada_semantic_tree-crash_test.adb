@@ -54,6 +54,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
    Result_File : File_Type;
 
+   Line_To_Test   : Integer := -1;
+   Column_To_Test : Visible_Column_Type := -1;
+
    procedure Log (Str : String);
 
    procedure Log (Str : String) is
@@ -161,7 +164,6 @@ procedure Ada_Semantic_Tree.Crash_Test is
       File_Node : Structured_File_Access;
       Index     : Integer := 1;
       Buffer    : GNAT.Strings.String_Access;
-      Word_Begin, Word_End : Integer;
       ALI_Entity  : Entity_Information;
 
       Construct_Entity : Entity_Access;
@@ -174,6 +176,8 @@ procedure Ada_Semantic_Tree.Crash_Test is
         (E_Location  : File_Location;
          C_File      : Structured_File_Access;
          C_Construct : Simple_Construct_Information) return Boolean;
+
+      procedure Test_Loc (Index : in out Integer);
 
       function Equals
         (E_Location  : File_Location;
@@ -217,165 +221,176 @@ procedure Ada_Semantic_Tree.Crash_Test is
             & ":" & Get_Column (Decl)'Img & "]");
       end Log_Entity;
 
+      procedure Test_Loc (Index : in out Integer) is
+         Word_Begin, Word_End : Integer;
+      begin
+         Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
+
+         To_Line_Column
+           (File                 => File_Node,
+            Absolute_Byte_Offset => String_Index_Type (Word_Begin),
+            Line                 => Line,
+            Column               => Column);
+
+         if Verbose then
+            Put (Line'Img & ", " & Column'Img & ASCII.CR);
+         end if;
+
+         if Word_End > Buffer'Last then
+            Word_End := Buffer'Last;
+         end if;
+
+         Find_Declaration
+           (Db              => Entities_Db,
+            File_Name       => File,
+            Entity_Name     => Buffer (Word_Begin .. Word_End),
+            Line            => Line,
+            Column          => Column,
+            Entity          => ALI_Entity,
+            Status          => Status,
+            Check_Decl_Only => False);
+         Construct_Entity := Ada_Tree_Lang.Find_Declaration
+           (File   => File_Node,
+            Line   => Line,
+            Column => String_Index_Type (Column));
+
+         if Buffer (Word_Begin .. Word_End) = "all" then
+            --  Things that we don't care about:
+            --
+            --  all keyword - doesn't correspond to anything in the ALI
+
+            null;
+         elsif Status /= Entities.Queries.Success
+           and then Construct_Entity = Null_Entity_Access
+         then
+            null;
+         elsif
+           Status /= Entities.Queries.Success
+           and then Construct_Entity /= Null_Entity_Access
+         then
+            Local_Result.Phantom := Local_Result.Phantom + 1;
+
+            Log
+              ("[" & Buffer (Word_Begin .. Word_End) & "] "
+               & String (Base_Name (File)) & ":" & Line'Img & ":"
+               & Column'Img & ":E[null],C["
+               & String
+                 (Base_Name (Get_File_Path (Get_File (Construct_Entity))))
+               & ":"
+               & Get_Construct
+                 (Construct_Entity).Sloc_Entity.Line'Img & ":"
+               & Get_Construct
+                 (Construct_Entity).Sloc_Entity.Column'Img & "]"
+               & ASCII.LF);
+         elsif Construct_Entity = Null_Entity_Access then
+            Local_Result.Unknown := Local_Result.Unknown + 1;
+
+            Log
+              ("[" & Buffer (Word_Begin .. Word_End) & "] "
+               & String (Base_Name (File)) & ":" & Line'Img & ":"
+               & Column'Img & ":");
+            Log_Entity (Get_Declaration_Of (ALI_Entity));
+            Log (",C[null]");
+            Log ((1 => ASCII.LF));
+         else
+            declare
+               Construct : Simple_Construct_Information :=
+                 Get_Construct (Construct_Entity).all;
+
+               Current_Col   : Integer := Construct.Sloc_Entity.Column;
+               Current_Index : Integer := Construct.Sloc_Entity.Index;
+
+               C_Buffer : constant GNAT.Strings.String_Access :=
+                 Get_Buffer (Get_File (Construct_Entity));
+               E_Location : File_Location :=
+                 Get_Declaration_Of (ALI_Entity);
+            begin
+               --  The ALI database and the Construct database don't agree
+               --  where names are starting for composite identifers, so
+               --  just adapt it (A.B will start on A for the construct,
+               --  and B for the database.
+
+               while Current_Index < C_Buffer'Last loop
+                  if Is_Alphanumeric (C_Buffer (Current_Index))
+                    or else C_Buffer (Current_Index) = '_'
+                  then
+                     null;
+                  elsif C_Buffer (Current_Index) = '.' then
+                     Construct.Sloc_Entity.Column := Current_Col + 1;
+                  else
+                     exit;
+                  end if;
+
+                  Current_Index := Current_Index + 1;
+                  Current_Col := Current_Col + 1;
+               end loop;
+
+               if Construct.Category = Cat_Parameter
+                 and then not Equals
+                   (E_Location, Get_File (Construct_Entity), Construct)
+               then
+                  --  Parameters are not linked in the construct database -
+                  --  all parameter references go to the reference in the
+                  --  body while the ali goes to the spec. If we are on a
+                  --  parameter, adjust the entity and extract the body
+                  --  instead of the spec.
+                  --  Note that we should do this except if we're analysing
+                  --  the spec parameter (hence, do nothing if we're already
+                  --  at the right location.
+
+                  Entities.Queries.Find_Next_Body
+                    (Entity   => ALI_Entity,
+                     Location => E_Location);
+               end if;
+
+               if Equals
+                 (E_Location, Get_File (Construct_Entity), Construct)
+               then
+                  Local_Result.Match := Local_Result.Match + 1;
+               else
+                  Local_Result.Diff := Local_Result.Diff + 1;
+
+                  Log
+                    ("[" & Buffer (Word_Begin .. Word_End) & "] "
+                     & String (Base_Name (File)) & ":" & Line'Img & ":"
+                     & Column'Img & ":");
+                  Log_Entity (E_Location);
+                  Log (",C["
+                    & String
+                      (Base_Name
+                         (Get_File_Path (Get_File (Construct_Entity))))
+                    & ":"
+                    & Construct.Sloc_Entity.Line'Img & ":"
+                    & Construct.Sloc_Entity.Column'Img & "]");
+                  Log ((1 => ASCII.LF));
+               end if;
+            end;
+         end if;
+      exception
+         when E : others =>
+            Put_Line
+              (Result_File,
+               "UNEXPECTED EXCEPTION: " & Exception_Information (E));
+            Put_Line
+              (Result_File,
+               GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
+            Local_Result.Exc := Local_Result.Exc + 1;
+      end Test_Loc;
+
    begin
       File_Node := Get_Or_Create (Construct_Db, File);
       Buffer := Get_Buffer (File_Node);
 
-      while Index < Buffer'Last loop
-         Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
+      if Line_To_Test = -1 then
+         while Index < Buffer'Last loop
+            Test_Loc (Index);
+         end loop;
+      else
+         Index := Integer
+           (To_String_Index (File_Node, Line_To_Test, Column_To_Test));
 
-         begin
-            To_Line_Column
-              (File                 => File_Node,
-               Absolute_Byte_Offset => String_Index_Type (Word_Begin),
-               Line                 => Line,
-               Column               => Column);
-
-            if Verbose then
-               Put (Line'Img & ", " & Column'Img & ASCII.CR);
-            end if;
-
-            if Word_End > Buffer'Last then
-               Word_End := Buffer'Last;
-            end if;
-
-            Find_Declaration
-              (Db              => Entities_Db,
-               File_Name       => File,
-               Entity_Name     => Buffer (Word_Begin .. Word_End),
-               Line            => Line,
-               Column          => Column,
-               Entity          => ALI_Entity,
-               Status          => Status,
-               Check_Decl_Only => False);
-            Construct_Entity := Ada_Tree_Lang.Find_Declaration
-              (File   => File_Node,
-               Line   => Line,
-               Column => String_Index_Type (Column));
-
-            if Buffer (Word_Begin .. Word_End) = "all" then
-               --  Things that we don't care about:
-               --
-               --  all keyword - doesn't correspond to anything in the ALI
-
-               null;
-            elsif Status /= Entities.Queries.Success
-              and then Construct_Entity = Null_Entity_Access
-            then
-               null;
-            elsif
-              Status /= Entities.Queries.Success
-              and then Construct_Entity /= Null_Entity_Access
-            then
-               Local_Result.Phantom := Local_Result.Phantom + 1;
-
-               Log
-                 ("[" & Buffer (Word_Begin .. Word_End) & "] "
-                  & String (Base_Name (File)) & ":" & Line'Img & ":"
-                  & Column'Img & ":E[null],C["
-                  & String
-                    (Base_Name (Get_File_Path (Get_File (Construct_Entity))))
-                  & ":"
-                  & Get_Construct
-                    (Construct_Entity).Sloc_Entity.Line'Img & ":"
-                  & Get_Construct
-                    (Construct_Entity).Sloc_Entity.Column'Img & "]"
-                  & ASCII.LF);
-            elsif Construct_Entity = Null_Entity_Access then
-               Local_Result.Unknown := Local_Result.Unknown + 1;
-
-               Log
-                 ("[" & Buffer (Word_Begin .. Word_End) & "] "
-                  & String (Base_Name (File)) & ":" & Line'Img & ":"
-                  & Column'Img & ":");
-               Log_Entity (Get_Declaration_Of (ALI_Entity));
-               Log (",C[null]");
-               Log ((1 => ASCII.LF));
-            else
-               declare
-                  Construct : Simple_Construct_Information :=
-                    Get_Construct (Construct_Entity).all;
-
-                  Current_Col   : Integer := Construct.Sloc_Entity.Column;
-                  Current_Index : Integer := Construct.Sloc_Entity.Index;
-
-                  C_Buffer : constant GNAT.Strings.String_Access :=
-                    Get_Buffer (Get_File (Construct_Entity));
-                  E_Location : File_Location :=
-                    Get_Declaration_Of (ALI_Entity);
-               begin
-                  --  The ALI database and the Construct database don't agree
-                  --  where names are starting for composite identifers, so
-                  --  just adapt it (A.B will start on A for the construct,
-                  --  and B for the database.
-
-                  while Current_Index < C_Buffer'Last loop
-                     if Is_Alphanumeric (C_Buffer (Current_Index))
-                       or else C_Buffer (Current_Index) = '_'
-                     then
-                        null;
-                     elsif C_Buffer (Current_Index) = '.' then
-                        Construct.Sloc_Entity.Column := Current_Col + 1;
-                     else
-                        exit;
-                     end if;
-
-                     Current_Index := Current_Index + 1;
-                     Current_Col := Current_Col + 1;
-                  end loop;
-
-                  if Construct.Category = Cat_Parameter
-                    and then not Equals
-                      (E_Location, Get_File (Construct_Entity), Construct)
-                  then
-                     --  Parameters are not linked in the construct database -
-                     --  all parameter references go to the reference in the
-                     --  body while the ali goes to the spec. If we are on a
-                     --  parameter, adjust the entity and extract the body
-                     --  instead of the spec.
-                     --  Note that we should do this except if we're analysing
-                     --  the spec parameter (hence, do nothing if we're already
-                     --  at the right location.
-
-                     Entities.Queries.Find_Next_Body
-                       (Entity   => ALI_Entity,
-                        Location => E_Location);
-                  end if;
-
-                  if Equals
-                    (E_Location, Get_File (Construct_Entity), Construct)
-                  then
-                     Local_Result.Match := Local_Result.Match + 1;
-                  else
-                     Local_Result.Diff := Local_Result.Diff + 1;
-
-                     Log
-                       ("[" & Buffer (Word_Begin .. Word_End) & "] "
-                        & String (Base_Name (File)) & ":" & Line'Img & ":"
-                        & Column'Img & ":");
-                     Log_Entity (E_Location);
-                     Log (",C["
-                       & String
-                         (Base_Name
-                            (Get_File_Path (Get_File (Construct_Entity))))
-                       & ":"
-                       & Construct.Sloc_Entity.Line'Img & ":"
-                       & Construct.Sloc_Entity.Column'Img & "]");
-                     Log ((1 => ASCII.LF));
-                  end if;
-               end;
-            end if;
-         exception
-            when E : others =>
-               Put_Line
-                 (Result_File,
-                  "UNEXPECTED EXCEPTION: " & Exception_Information (E));
-               Put_Line
-                 (Result_File,
-                  GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
-               Local_Result.Exc := Local_Result.Exc + 1;
-         end;
-      end loop;
+         Test_Loc (Index);
+      end if;
 
       if Verbose then
          Print (Local_Result);
@@ -387,7 +402,6 @@ procedure Ada_Semantic_Tree.Crash_Test is
       Global_Result.Unknown := Global_Result.Unknown + Local_Result.Unknown;
       Global_Result.Phantom := Global_Result.Phantom + Local_Result.Phantom;
       Global_Result.Exc := Global_Result.Exc + Local_Result.Exc;
-
    end Analyze_File;
 
    -------------------
@@ -439,7 +453,31 @@ begin
             Max_Files := Integer'Value (Parameter);
 
          when 'f' =>
-            Unique_File := new String'(Parameter);
+            declare
+               Loc : constant String := Parameter;
+               Last_Col : Integer := Loc'First;
+            begin
+               for J in Loc'Range loop
+                  if Loc (J) = ':' then
+                     if GNAT.Strings."=" (Unique_File, null) then
+                        Unique_File := new String'(Loc (Loc'First .. J - 1));
+                        Put_Line (Unique_File.all);
+                        Last_Col := J;
+                     else
+                        Line_To_Test :=
+                          Integer'Value (Loc (Last_Col + 1 .. J - 1));
+                        Column_To_Test :=
+                          Visible_Column_Type'Value (Loc (J + 1 .. Loc'Last));
+
+                        exit;
+                     end if;
+                  end if;
+               end loop;
+
+               if GNAT.Strings."=" (Unique_File, null) then
+                  Unique_File := new String'(Loc);
+               end if;
+            end;
 
          when 'v' =>
             Verbose := True;
@@ -483,8 +521,7 @@ begin
         (Entities_Db, New_Registry.all));
 
    if GNAT.Strings."/=" (Unique_File, null) then
-      File_To_Analyze := New_Registry.Tree.Create
-        (Filesystem_String (Unique_File.all));
+      File_To_Analyze := New_Registry.Tree.Create (+Unique_File.all);
    end if;
 
    Ada.Text_IO.Create (Result_File, Out_File, "result.txt");
@@ -573,6 +610,7 @@ begin
    end if;
 
    Destroy (Construct_Db);
+   Destroy (Entities_Db);
    Projects.Destroy (New_Registry);
    Close (Result_File);
 exception

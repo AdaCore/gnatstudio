@@ -25,6 +25,7 @@ with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 package body Ada_Semantic_Tree.Type_Tree is
 
@@ -608,6 +609,7 @@ package body Ada_Semantic_Tree.Type_Tree is
             Decl_List   : Entity_List :=
               Find_Declarations
                 ((From_File,
+                  Null_Instance_Info,
                   Get_File (The_Type),
                   String_Index_Type (Get_Construct (The_Type).Sloc_End.Index)),
                  Expression        => Expression,

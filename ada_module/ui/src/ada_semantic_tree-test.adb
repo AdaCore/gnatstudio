@@ -33,6 +33,7 @@ with Ada_Semantic_Tree.Interfaces;   use Ada_Semantic_Tree.Interfaces;
 with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Type_Tree;    use Ada_Semantic_Tree.Type_Tree;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 with Entities;                       use Entities;
 with Language.Ada;                   use Language.Ada;
 with Language.Tree.Database;         use Language.Tree.Database;
@@ -122,7 +123,10 @@ procedure Ada_Semantic_Tree.Test is
             end if;
 
             List := Find_Declarations
-              ((From_File, File, String_Index_Type (Looked_Offset)),
+              ((From_File,
+                Null_Instance_Info,
+                File,
+                String_Index_Type (Looked_Offset)),
                From_Visibility   =>
                  (File,
                   String_Index_Type (Looked_Offset),
@@ -417,7 +421,6 @@ procedure Ada_Semantic_Tree.Test is
 
                List : Entity_List;
                It   : Entity_Iterator;
-               --  Construct : Simple_Construct_Information
             begin
                if Verbose then
                   Put ("[" & Sloc_End.Line'Img & ":" & Sloc_End.Column'Img);
@@ -425,7 +428,10 @@ procedure Ada_Semantic_Tree.Test is
                end if;
 
                List := Find_Declarations
-                 ((From_File, Full_File, String_Index_Type (Sloc_End.Index)),
+                 ((From_File,
+                   Null_Instance_Info,
+                   Full_File,
+                   String_Index_Type (Sloc_End.Index)),
                   From_Visibility   => Null_Visibility_Context,
                   Expression        => Null_Parsed_Expression,
                   Categories        => Null_Category_Array,
@@ -541,7 +547,10 @@ procedure Ada_Semantic_Tree.Test is
                End_Offset   => String_Index_Type (Word_Begin));
 
             List : constant Entity_List := Find_Declarations
-              (Context           => (From_Database, Construct_Db),
+              (Context           =>
+                 (From_Database,
+                  Null_Instance_Info,
+                  Construct_Db),
                From_Visibility   => Null_Visibility_Context,
                Expression        => Expression,
                Is_Partial        => False);
@@ -603,7 +612,9 @@ procedure Ada_Semantic_Tree.Test is
             It : Entity_Iterator;
          begin
             List := Find_Declarations
-              ((From_Database, Construct_Db),
+              ((From_Database,
+                Null_Instance_Info,
+                Construct_Db),
                Expression        =>
                  Parse_Expression_Backward
                    (Ada_Lang,

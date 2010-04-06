@@ -1121,24 +1121,27 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                Result := Null_Entity_Access;
 
                declare
-                  Sem_It : Semantic_Tree_Iterator;
+                  Sem_It     : Semantic_Tree_Iterator;
+                  Sem_Entity : Entity_Access;
                   Visibility : Visibility_Context := Null_Visibility_Context;
                begin
                   Visibility.Filter := Everything;
 
                   Sem_It := To_Semantic_Tree_Iterator
-                    ((Root, None, Null_Generic_Instance_Information),
+                    ((Root, None, Null_Instance_Info),
                      Visibility);
 
                   while not At_End (Sem_It) loop
-                     if Get_Construct (Get (Sem_It).Entity).Category
+                     Sem_Entity := Get (Sem_It).Entity;
+
+                     if Get_Construct (Sem_Entity).Category
                        = Cat_Package
                        and then Equal
-                         (Get_Construct (Get (Sem_It).Entity).Name.all,
+                         (Get_Construct (Sem_Entity).Name.all,
                           Get_Item (Id, J),
                           False)
                      then
-                        Result := Get (Sem_It).Entity;
+                        Result := Sem_Entity;
 
                         exit;
                      end if;

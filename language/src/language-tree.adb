@@ -592,15 +592,25 @@ package body Language.Tree is
             end if;
          end loop;
       elsif Position = Specified then
-         for J in 1 .. Tree.Contents'Last loop
-            if Is_On (Tree.Contents (J).Construct)
-              and then Match_Category (Tree.Contents (J).Construct.Category)
-            then
-               return (Tree.Contents (J)'Access, J);
-            elsif Is_After (Tree.Contents (J).Construct) then
-               return Null_Construct_Tree_Iterator;
-            end if;
-         end loop;
+         declare
+            It : Construct_Tree_Iterator := First (Tree);
+         begin
+            while It /= Null_Construct_Tree_Iterator loop
+               if Is_On (It.Node.Construct)
+                 and then Match_Category (It.Node.Construct.Category)
+               then
+                  return It;
+               end if;
+
+               if Location < It.Node.Construct.Sloc_Entity then
+                  return Null_Construct_Tree_Iterator;
+               elsif Location >= It.Node.Construct.Sloc_Start then
+                  It := Next (Tree, It, Jump_Into);
+               else
+                  It := Next (Tree, It, Jump_Over);
+               end if;
+            end loop;
+         end;
       elsif Position = Enclosing then
          declare
             It : Construct_Tree_Iterator := First (Tree);
@@ -1075,7 +1085,7 @@ package body Language.Tree is
          return (0, 0, "", (others => 0), (others => 0));
       end if;
 
-      --  First, compute the size of the result.
+      --  Compute the size of the result.
 
       loop
          Skip_Blanks (Identifier, Index_In_Id);
@@ -1139,57 +1149,6 @@ package body Language.Tree is
          Result.Position_End := Tmp.Position_End (1 .. Number_Of_Parts);
 
          return Result;
---           Number_Of_Parts := 0;
---           Number_Of_Chars := 0;
---
---           loop
---              Skip_Blanks (Identifier, Index_In_Id);
---
---              Word_Begin := Index_In_Id;
---              Word_End   := Word_Begin;
---
---              if Identifier (Index_In_Id) = '"' then
---                 Word_End := Word_End + 1;
---                 Skip_To_Char (Identifier, Word_End, '"');
---                 Word_End := Word_End + 1;
---              else
---                 Skip_Word (Identifier, Word_End);
---              end if;
---
---              Index_In_Id := Word_End;
---              Word_End := Word_End - 1;
---
---              Result.Identifier
---                (Number_Of_Chars + 1 ..
---                   Number_Of_Chars + 1 + Word_End - Word_Begin) :=
---                  Identifier (Word_Begin .. Word_End);
---              Result.Position_Start (Number_Of_Parts + 1) := Number_Of_Chars
---           + 1;
---              Result.Position_End (Number_Of_Parts + 1) :=
---                Number_Of_Chars + 1 + Word_End - Word_Begin;
---
---              Number_Of_Parts := Number_Of_Parts + 1;
---              Number_Of_Chars := Number_Of_Chars + Word_End - Word_Begin + 1;
---
---              Skip_Blanks (Identifier, Index_In_Id);
---
---              if Index_In_Id > Identifier'Last
---                or else Identifier (Index_In_Id) /= '.'
---              then
---                 exit;
---              end if;
---
---              if Index_In_Id < Identifier'Last then
---                 Index_In_Id := Index_In_Id + 1;
---              else
---                 exit;
---              end if;
---
---              Result.Identifier (Number_Of_Chars + 1) := '.';
---              Number_Of_Chars := Number_Of_Chars + 1;
---           end loop;
---
---           return Result;
       end;
    end To_Composite_Identifier;
 

@@ -22,6 +22,7 @@ with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 package body Completion.Ada.Constructs_Extractor is
 
@@ -598,7 +599,10 @@ package body Completion.Ada.Constructs_Extractor is
            (Visibility,
             Completion_Resolver_Access (Resolver),
             Find_Declarations
-              ((From_File, Resolver.Current_File, Offset),
+              ((From_File,
+                Null_Instance_Info,
+                Resolver.Current_File,
+                Offset),
                From_Visibility           => Visibility,
                Expression                => Expression,
                Categories                => Null_Category_Array,

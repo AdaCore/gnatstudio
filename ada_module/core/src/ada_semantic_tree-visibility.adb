@@ -20,16 +20,19 @@
 with GNAT.Strings;     use GNAT.Strings;
 with GNATCOLL.Utils;   use GNATCOLL.Utils;
 with Language.Ada;     use Language.Ada;
+with String_Utils;     use String_Utils;
+with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Cache;        use Ada_Semantic_Tree.Cache;
 
 package body Ada_Semantic_Tree.Visibility is
 
    Ada_Visibility_Id : constant String := "ADA_LIB_VISIBILITY";
 
    type Ada_Visibibility_Assistant is new Database_Assistant with record
-      Clause_Key : Construct_Annotations_Pckg.Annotation_Key;
+      null;
    end record;
 
    overriding procedure File_Updated
@@ -38,15 +41,17 @@ package body Ada_Semantic_Tree.Visibility is
       Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
+   type Clause_Val is new Cached_Information
+   with record
+      Unit            : Entity_Persistent_Access;
+      Generic_Context : Persistent_Instance_Info :=
+        Null_Persistent_Instance_Info;
+   end record;
+
    function Resolve_Clause
      (Assistant : Ada_Visibibility_Assistant'Class;
       Entity    : Entity_Access)
-      return Entity_Access;
-
-   type Clause_Val is new Construct_Annotations_Pckg.General_Annotation_Record
-   with record
-      Unit : Entity_Persistent_Access;
-   end record;
+      return Clause_Val'Class;
 
    overriding procedure Free (This : in out Clause_Val);
 
@@ -56,17 +61,9 @@ package body Ada_Semantic_Tree.Visibility is
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
       use Construct_Annotations_Pckg;
-
-      Clause_Key : Construct_Annotations_Pckg.Annotation_Key;
    begin
-      Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all,
-         Clause_Key);
-
       Register_Assistant
-        (Db, Ada_Visibility_Id,
-         new Ada_Visibibility_Assistant'
-           (Database_Assistant with Clause_Key));
+        (Db, Ada_Visibility_Id, new Ada_Visibibility_Assistant);
    end Register_Assistant;
 
    -------------------
@@ -101,7 +98,7 @@ package body Ada_Semantic_Tree.Visibility is
       Old_Tree  : Construct_Tree;
       Kind      : Update_Kind)
    is
-      pragma Unreferenced (Old_Tree);
+      pragma Unreferenced (Old_Tree, Assistant);
 
       --  We're doing this analyzis right after file update - because it
       --  doesn't seem to be an expensive one and there's no reason to delay
@@ -118,8 +115,6 @@ package body Ada_Semantic_Tree.Visibility is
          Parameters_Only : Boolean := False);
 
       procedure Mark_Scope_Not_Vible (Scope : Construct_Tree_Iterator);
-
-      procedure Remove_Clause_Annotations;
 
       ---------------
       -- Add_Scope --
@@ -202,24 +197,6 @@ package body Ada_Semantic_Tree.Visibility is
          end loop;
       end Mark_Scope_Not_Vible;
 
-      -------------------------------
-      -- Remove_Clause_Annotations --
-      -------------------------------
-
-      procedure Remove_Clause_Annotations is
-         It : Construct_Tree_Iterator := First (Tree);
-      begin
-         while It /= Null_Construct_Tree_Iterator loop
-            if Get_Construct (It).Category in Cat_With .. Cat_Use then
-               Construct_Annotations_Pckg.Free_Annotation
-                 (Get_Annotation_Container (Tree, It).all,
-                  Assistant.Clause_Key);
-            end if;
-
-            It := Next (Tree, It, Jump_Into);
-         end loop;
-      end Remove_Clause_Annotations;
-
    begin
       case Kind is
          when Minor_Change | Removed =>
@@ -227,7 +204,6 @@ package body Ada_Semantic_Tree.Visibility is
 
          when Full_Change | Structural_Change =>
             Add_Scope (Null_Construct_Tree_Iterator);
-            Remove_Clause_Annotations;
 
       end case;
    end File_Updated;
@@ -561,13 +537,29 @@ package body Ada_Semantic_Tree.Visibility is
       return Resolve_Clause (This.Current);
    end Resolve_Package;
 
+   -------------------------
+   -- Get_Generic_Context --
+   -------------------------
+
+   function Get_Generic_Context
+     (This : Clause_Iterator) return Instance_Info
+   is
+      Assistant : constant Database_Assistant_Access :=
+        Get_Assistant (Get_Database (Get_File (This.Current)));
+   begin
+      return To_Active
+        (Resolve_Clause
+           (Ada_Visibibility_Assistant
+              (Assistant.all), This.Current).Generic_Context);
+   end Get_Generic_Context;
+
    -----------------------------
    -- Is_Visible_From_Clauses --
    -----------------------------
 
    function Is_Visible_From_Clauses
      (Entity         : Entity_Access;
-      From_Visiblity : Visibility_Context) return Boolean
+      From_Visiblity : Visibility_Context) return Entity_Access
    is
       Assistant    : constant Database_Assistant_Access :=
         Get_Assistant (Get_Database (Get_File (Entity)));
@@ -579,9 +571,59 @@ package body Ada_Semantic_Tree.Visibility is
 
       Clause : Entity_Access;
 
-      Entity_Id : constant Composite_Identifier :=
-        To_Composite_Identifier
-          (Get_Identifier (To_Construct_Tree_Iterator (Entity)).all);
+      Entity_Id : constant Distinct_Identifier :=
+        Get_Identifier (To_Construct_Tree_Iterator (Entity));
+
+      function Is_Prefix_Of (Prefix, Full : String) return Boolean;
+      --  Return if Prefix is the prefix of full, ignoring spaces and taking
+      --  into account dots.
+
+      function Is_Prefix_Of (Prefix, Full : String) return Boolean is
+         Prefix_Id, Full_Id : Integer;
+      begin
+         Prefix_Id := Prefix'First;
+         Full_Id := Full'First;
+
+         while Full_Id <= Full'Last
+           and then Prefix_Id <= Prefix'Last
+         loop
+            Skip_Blanks (Prefix, Prefix_Id);
+            Skip_Blanks (Full, Full_Id);
+
+            if Full_Id > Full'Last then
+               return Prefix_Id > Prefix'Last;
+            end if;
+
+            while Prefix_Id <= Prefix'Last
+              and then Full_Id <= Full'Last
+              and then not Is_Blank (Full (Full_Id))
+              and then not Is_Blank (Prefix (Prefix_Id))
+            loop
+               if Prefix (Prefix_Id) /= Full (Full_Id) then
+                  return False;
+               end if;
+
+               Prefix_Id := Prefix_Id + 1;
+               Full_Id := Full_Id + 1;
+            end loop;
+
+            if Full_Id < Full'Last
+              and then Full (Full_Id) = '.'
+              and then Prefix_Id > Prefix'Last
+            then
+               --  In this case, full is of the form A.B.C, and Prefix is
+               --  of the form A.B
+
+               return True;
+            end if;
+
+            Full_Id := Full_Id + 1;
+            Prefix_Id := Prefix_Id + 1;
+         end loop;
+
+         return True;
+      end Is_Prefix_Of;
+
    begin
       while not At_End (Clause_It) loop
          Clause := Get_Entity (Clause_It);
@@ -589,11 +631,23 @@ package body Ada_Semantic_Tree.Visibility is
          case Get_Construct (Clause).Category is
             when Cat_Use =>
                declare
-                  Unit : constant Entity_Access :=
-                    Resolve_Clause (My_Assistant, Clause);
+                  Unit : Entity_Access :=
+                    To_Entity_Access
+                      (Resolve_Clause (My_Assistant, Clause).Unit);
+                  View : Entity_View;
+                  Use_Clause : Entity_Access;
                begin
+                  if Is_Generic_Instance (Unit) then
+                     Use_Clause := Unit;
+                     View := Get_Generic_Package (Unit);
+                     Unit := Get_First_Occurence (Get_Entity (View));
+                     Free (View);
+                  else
+                     Use_Clause := Unit;
+                  end if;
+
                   if Contains (Unit, Entity) then
-                     return True;
+                     return Use_Clause;
                   end if;
                end;
 
@@ -601,22 +655,16 @@ package body Ada_Semantic_Tree.Visibility is
                if (Get_Construct (Entity).Category = Cat_Package
                    or else Get_Construct (Entity).Category in
                      Cat_Procedure .. Cat_Function)
-                 and then Get_Unit_Access (Entity) /= Null_Unit_Access
+                 and then Is_Compilation_Unit
+                   (To_Construct_Tree_Iterator (Entity))
                then
-                  declare
-                     With_Id : constant Composite_Identifier :=
-                       To_Composite_Identifier
-                         (Get_Identifier
-                              (To_Construct_Tree_Iterator (Clause)).all);
-                  begin
-                     if Length (With_Id) >= Length (Entity_Id) then
-                        if Get_Slice
-                          (With_Id, 1, Length (Entity_Id)) = Entity_Id
-                        then
-                           return True;
-                        end if;
-                     end if;
-                  end;
+                  if Is_Prefix_Of
+                    (Entity_Id.all, Get_Identifier
+                       (To_Construct_Tree_Iterator (Clause)).all)
+                  then
+                     return To_Entity_Access
+                       (Resolve_Clause (My_Assistant, Clause).Unit);
+                  end if;
                end if;
 
             when others =>
@@ -627,7 +675,7 @@ package body Ada_Semantic_Tree.Visibility is
          Prev (Clause_It);
       end loop;
 
-      return False;
+      return Null_Entity_Access;
    end Is_Visible_From_Clauses;
 
    --------------------
@@ -638,8 +686,9 @@ package body Ada_Semantic_Tree.Visibility is
       Assistant : constant Database_Assistant_Access :=
         Get_Assistant (Get_Database (Get_File (Entity)));
    begin
-      return Resolve_Clause
-        (Ada_Visibibility_Assistant (Assistant.all), Entity);
+      return To_Entity_Access
+        (Resolve_Clause
+           (Ada_Visibibility_Assistant (Assistant.all), Entity).Unit);
    end Resolve_Clause;
 
    --------------------
@@ -649,31 +698,35 @@ package body Ada_Semantic_Tree.Visibility is
    function Resolve_Clause
      (Assistant : Ada_Visibibility_Assistant'Class;
       Entity    : Entity_Access)
-      return Entity_Access
+      return Clause_Val'Class
    is
+      pragma Unreferenced (Assistant);
+
       use Construct_Annotations_Pckg;
 
-      function Resolve_With return Entity_Access;
-      function Resolve_Use return Entity_Access;
+      procedure Resolve_With;
+      procedure Resolve_Use;
+
+      Clause : Clause_Val;
 
       ------------------
       -- Resolve_With --
       ------------------
 
-      function Resolve_With return Entity_Access is
+      procedure Resolve_With is
          Unit : constant Unit_Access :=
            Get_Unit
              (Get_Database (Get_File (Entity)),
               Get_Construct (Entity).Name.all);
       begin
-         return Get_Entity (Unit);
+         Clause.Unit := To_Entity_Persistent_Access (Get_Entity (Unit));
       end Resolve_With;
 
       -----------------
       -- Resolve_Use --
       -----------------
 
-      function Resolve_Use return Entity_Access is
+      procedure Resolve_Use is
          Expression : Parsed_Expression := Ada_Lang.Parse_Expression_Backward
            (Buffer       => Get_Construct (Entity).Name,
             Start_Offset => String_Index_Type
@@ -681,11 +734,12 @@ package body Ada_Semantic_Tree.Visibility is
 
          Package_Resolution : Entity_List;
          Package_It         : Entity_Iterator;
-         Result             : Entity_Access := Null_Entity_Access;
+         View               : Entity_View;
       begin
          Package_Resolution := Find_Declarations
            (Context           =>
               (From_File,
+               Null_Instance_Info,
                Get_File (Entity),
                String_Index_Type
                  (Get_Construct (Entity).Sloc_Start.Index - 1)),
@@ -702,37 +756,39 @@ package body Ada_Semantic_Tree.Visibility is
          Package_It := First (Package_Resolution);
 
          if not At_End (Package_It) then
-            Result := Get_First_Occurence (Get_Entity (Package_It));
+            View := Get_View (Package_It);
+            Clause.Unit := To_Entity_Persistent_Access
+              (Get_First_Occurence (Get_Entity (View)));
+
+            if View.all in Declaration_View_Record'Class then
+               Clause.Generic_Context :=
+                 To_Persistent
+                   (Declaration_View_Record (View.all).Generic_Context);
+            end if;
+
+            Free (View);
          end if;
 
          Free (Package_It);
          Free (Package_Resolution);
          Free (Expression);
-
-         return Result;
       end Resolve_Use;
 
-      Annot  : Annotation;
-      Clause : Clause_Val;
+      Clause_Info : Cache_Access;
    begin
-      Get_Annotation
-        (Get_Annotation_Container
-           (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator (Entity)).all,
-         Assistant.Clause_Key,
-         Annot);
+      Clause_Info := Get_Cache (Entity);
 
-      if Annot /= Null_Annotation then
-         Clause := Clause_Val (Annot.Other_Val.all);
+      if Clause_Info /= null then
+         Clause := Clause_Val (Clause_Info.all);
       end if;
 
       if not Exists (Clause.Unit) then
          case Get_Construct (Entity).Category is
             when Cat_With =>
-               Clause.Unit := To_Entity_Persistent_Access (Resolve_With);
+               Resolve_With;
 
             when Cat_Use =>
-               Clause.Unit := To_Entity_Persistent_Access (Resolve_Use);
+               Resolve_Use;
 
             when others =>
                null;
@@ -741,17 +797,10 @@ package body Ada_Semantic_Tree.Visibility is
 
          Ref (Clause.Unit);
 
-         Annot := (Other_Kind, new Clause_Val'(Clause));
-
-         Set_Annotation
-           (Get_Annotation_Container
-              (Get_Tree (Get_File (Entity)),
-               To_Construct_Tree_Iterator (Entity)).all,
-            Assistant.Clause_Key,
-            Annot);
+         Set_Cache (Entity, new Clause_Val'(Clause));
       end if;
 
-      return To_Entity_Access (Clause.Unit);
+      return Clause;
    end Resolve_Clause;
 
    ----------
@@ -760,6 +809,7 @@ package body Ada_Semantic_Tree.Visibility is
 
    overriding procedure Free (This : in out Clause_Val) is
    begin
+      Free (This.Generic_Context);
       Unref (This.Unit);
    end Free;
 

@@ -29,6 +29,7 @@ with Language.Ada;                   use Language.Ada;
 with Language.Documentation;         use Language.Documentation;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
 with String_Utils;            use String_Utils;
 
@@ -1059,7 +1060,8 @@ package body Ada_Semantic_Tree.Lang is
          Get_Offset_Of_Line (File, Line) + Column - 1);
 
       List := Find_Declarations
-        (Context         => (From_File, File, Offset),
+        (Context         =>
+           (From_File, Null_Instance_Info, File, Offset),
          From_Visibility => (File, Offset, Everything, Use_Visible));
 
       It := First (List);

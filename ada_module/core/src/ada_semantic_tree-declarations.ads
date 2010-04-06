@@ -28,6 +28,9 @@ package Ada_Semantic_Tree.Declarations is
    type Search_Context_Type is (From_Database, From_File);
 
    type Search_Context (Context_Type : Search_Context_Type) is record
+      Generic_Context : Instance_Info :=
+        Null_Instance_Info;
+
       case Context_Type is
          when From_Database =>
             Db : Construct_Database_Access;
@@ -123,7 +126,7 @@ package Ada_Semantic_Tree.Declarations is
    type Declaration_View_Record is new Entity_View_Record with record
       Profile         : List_Profile_Access;
       Actuals         : Actual_Parameter_Resolver_Access := null;
-      Generic_Context : Generic_Instance_Information;
+      Generic_Context : Instance_Info;
    end record;
 
    overriding function Get_Documentation

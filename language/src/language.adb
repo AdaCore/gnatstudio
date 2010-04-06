@@ -1275,13 +1275,81 @@ package body Language is
    function Get_Name
      (Expression : Parsed_Expression; Token : Token_Record) return String is
    begin
-      if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
-         return Expression.Original_Buffer
-           (Natural (Token.Token_First) .. Natural (Token.Token_Last));
-      else
-         return "";
-      end if;
+      case Token.Tok_Type is
+         when No_Token =>
+            return "";
+
+         when Tok_Dot =>
+            return ".";
+
+         when Tok_Open_Parenthesis =>
+            return "(";
+
+         when Tok_Close_Parenthesis =>
+            return ")";
+
+         when Tok_Colon =>
+            return " : ";
+
+         when Tok_Arrow =>
+            return "=>";
+
+         when Tok_Identifier | Tok_Expression =>
+            if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
+               return Expression.Original_Buffer
+                 (Natural (Token.Token_First) .. Natural (Token.Token_Last));
+            else
+               return "";
+            end if;
+
+         when Tok_All =>
+            return "all";
+
+         when Tok_Tick =>
+            return "'";
+
+         when Tok_With =>
+            return "with ";
+
+         when Tok_Use =>
+            return "use ";
+
+         when Tok_Pragma =>
+            return "pragma ";
+
+      end case;
    end Get_Name;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Expression : Parsed_Expression) return String is
+      use Token_List;
+
+      Length : Natural := 0;
+      Iter   : Token_List.List_Node := First (Expression.Tokens);
+   begin
+      while Iter /= Null_Node loop
+         Length := Length + Get_Name (Expression, Data (Iter))'Length;
+         Iter := Next (Iter);
+      end loop;
+
+      return Result : String (1 .. Length) do
+         Iter := First (Expression.Tokens);
+         Length := Result'First;
+
+         while Iter /= Null_Node loop
+            declare
+               N : constant String := Get_Name (Expression, Data (Iter));
+            begin
+               Result (Length .. Length + N'Length - 1) := N;
+               Length := Length + N'Length;
+            end;
+            Iter := Next (Iter);
+         end loop;
+      end return;
+   end To_String;
 
    -----------------------------------------
    -- Parse_Expression_Backward_To_String --
@@ -1294,8 +1362,6 @@ package body Language is
       End_Offset        : String_Index_Type := 0;
       Simple_Expression : Boolean := False) return String
    is
-      use Token_List;
-
       --  Buffer is always passed by reference in GNAT, so it is safe to take
       --  a Unchecked_Access on it
       Expr : Parsed_Expression :=
@@ -1305,28 +1371,8 @@ package body Language is
            Start_Offset,
            End_Offset,
            Simple_Expression);
-      Length : Natural := 0;
-      Iter   : Token_List.List_Node := First (Expr.Tokens);
    begin
-      while Iter /= Null_Node loop
-         Length := Length + Get_Name (Expr, Data (Iter))'Length;
-         Iter := Next (Iter);
-      end loop;
-
-      return Result : String (1 .. Length) do
-         Iter := First (Expr.Tokens);
-         Length := Result'First;
-
-         while Iter /= Null_Node loop
-            declare
-               N : constant String := Get_Name (Expr, Data (Iter));
-            begin
-               Result (Length .. Length + N'Length - 1) := N;
-               Length := Length + N'Length;
-            end;
-            Iter := Next (Iter);
-         end loop;
-
+      return Result : constant String := To_String (Expr) do
          Free (Expr);
       end return;
    end Parse_Expression_Backward_To_String;
