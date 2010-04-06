@@ -691,9 +691,18 @@ package body Entities.Queries is
          It := Next (It);
       end loop;
 
-      --  If not found, then try using the construct database
+      --  If no entity is found at this stage, we'll try to find one using the
+      --  construct database.
 
-      if Current_Location /= No_File_Location then
+      --  In order to locate the reference to look from, we check if there is a
+      --  file associated to the input location. In certain cases, this
+      --  location is computed from a context that does not have file
+      --  information, so for safety purpose, we check that the file exist
+      --  (there's nothing we can do at the completion level without a file).
+      --  If there's no file, then the context has been partially provided (or
+      --  not at all) so we start from the declaration of the entity.
+
+      if Current_Location.File /= null then
          Start_Loc := Current_Location;
       else
          Start_Loc := Entity.Declaration;
