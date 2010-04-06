@@ -27,8 +27,8 @@ NF-45-J308-011 Filters when completing variables & parameters (2010-03-08)
 
 NF-45-J302-046 Load CodePeer annotations in open editors (2010-04-06)
 
-  CodePeer annotations are added automatically for all open editors when
-  CodePeer report is opened/reopened.
+  CodePeer annotations are now displayed automatically for all open editors
+  when the CodePeer report is displayed.
 
 NF-45-J225-017 Better handling of incomplete with/use clauses (2010-02-25)
 
