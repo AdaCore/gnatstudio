@@ -44,14 +44,6 @@ package Code_Peer.Module is
    type Code_Peer_Module_Id is access all Module_Id_Record'Class;
    --  ??? missing comments on all types and procedures of this package
 
-   procedure Show_Annotations
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access);
-
-   procedure Hide_Annotations
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access);
-
    procedure Load
      (Self : access Module_Id_Record'Class;
       File : Virtual_File);
@@ -148,5 +140,24 @@ private
    --  Returns True if 'codepeer' directory is present in the current object
    --  directory. This means we need to switch build target to 'codepeer'
    --  before doing any operations.
+
+   --  Style names to be used by children packages
+
+   Annotation_Style_Name                : constant String
+     := "CodePeer editor annotations";
+   High_Probability_Style_Name          : constant String
+     := "CodePeer high messages";
+   Medium_Probability_Style_Name        : constant String
+     := "CodePeer medium messages";
+   Low_Probability_Style_Name           : constant String
+     := "CodePeer low messages";
+   Informational_Probability_Style_Name : constant String
+     := "CodePeer informational messages";
+   Suppressed_Probability_Style_Name    : constant String
+     := "CodePeer suppressed messages";
+
+   Module : Code_Peer_Module_Id;
+   --  Global variable for store CodePeer plugin module. Used in the main menu
+   --  callbacks.
 
 end Code_Peer.Module;

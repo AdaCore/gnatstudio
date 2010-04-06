@@ -18,9 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;
-with Ada.Strings.Fixed;
 with Ada.Text_IO;
-with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Input_Sources.File;
@@ -50,6 +48,7 @@ with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
 with Code_Peer.Message_Review_Dialogs;
 with Code_Peer.Module.Bridge;
+with Code_Peer.Module.Editors;
 with Code_Peer.Shell_Commands;   use Code_Peer.Shell_Commands;
 with Commands.Code_Peer;
 with Code_Analysis_GUI;
@@ -67,19 +66,6 @@ package body Code_Peer.Module is
       File    : Code_Analysis.File_Access;
       Message : Code_Peer.Message_Access;
    end record;
-
-   Annotation_Style_Name                : constant String
-     := "CodePeer editor annotations";
-   High_Probability_Style_Name          : constant String
-     := "CodePeer high messages";
-   Medium_Probability_Style_Name        : constant String
-     := "CodePeer medium messages";
-   Low_Probability_Style_Name           : constant String
-     := "CodePeer low messages";
-   Informational_Probability_Style_Name : constant String
-     := "CodePeer informational messages";
-   Suppressed_Probability_Style_Name    : constant String
-     := "CodePeer suppressed messages";
 
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
@@ -206,16 +192,6 @@ package body Code_Peer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
-   procedure On_File_Closed_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
-   --  Called when a file has been closed
-
-   procedure On_File_Edited_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
-   --  Called when a file has been opened
-
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
@@ -238,10 +214,6 @@ package body Code_Peer.Module is
    --  should be set to False in this case.
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
-
-   Module : Code_Peer_Module_Id;
-   --  Global variable for store CodePeer plugin module. Used in the main menu
-   --  callbacks.
 
    procedure Create_Library_File
      (Kernel    : Kernel_Handle;
@@ -585,54 +557,6 @@ package body Code_Peer.Module is
            Name (Name'First .. Name'Last - Extension'Length) & ".output");
    end Codepeer_Output_Directory;
 
-   ----------------------
-   -- Hide_Annotations --
-   ----------------------
-
-   procedure Hide_Annotations
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access)
-   is
-      procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor);
-
-      Kernel : constant GPS.Kernel.Kernel_Handle := Self.Get_Kernel;
-      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get
-          (File.Name, False, False, False);
-
-      -------------
-      -- Process --
-      -------------
-
-      procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
-
-         procedure Free is
-           new Ada.Unchecked_Deallocation
-             (GPS.Editors.Editor_Mark'Class, Editor_Mark_Access);
-
-         Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                             Code_Analysis.Subprogram_Maps.Element (Position);
-         Data            : Code_Peer.Subprogram_Data'Class
-         renames Code_Peer.Subprogram_Data'Class
-           (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
-
-      begin
-         if Data.Mark /= null
-           and then Data.Mark.Is_Present
-         then
-            Buffer.Remove_Special_Lines (Data.Mark.all, Data.Special_Lines);
-         end if;
-
-         Free (Data.Mark);
-         Data.Special_Lines := 0;
-      end Process;
-
-   begin
-      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-         File.Subprograms.Iterate (Process'Access);
-      end if;
-   end Hide_Annotations;
-
    ----------
    -- Load --
    ----------
@@ -732,6 +656,7 @@ package body Code_Peer.Module is
          --  Update location view
 
          Self.Update_Location_View;
+         Editors.Show_Annotations_In_Opened_Editors (Self);
 
          --  Raise report window
 
@@ -1092,66 +1017,6 @@ package body Code_Peer.Module is
               (Kernel_Handle (Module.Kernel), Mode);
          end if;
    end On_Edit_Log;
-
-   -------------------------
-   -- On_File_Closed_Hook --
-   -------------------------
-
-   procedure On_File_Closed_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
-   is
-      pragma Unreferenced (Kernel);
-
-      use type Code_Analysis.Code_Analysis_Tree;
-
-      D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Project_Node : Code_Analysis.Project_Access;
-
-   begin
-      if Module.Tree /= null
-        and then Module.Tree.Contains
-          (Get_Registry (Module.Kernel).Tree.Info (D.File).Project)
-      then
-         Project_Node :=
-           Module.Tree.Element
-             (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
-
-         if Project_Node.Files.Contains (D.File) then
-            Hide_Annotations (Module, Project_Node.Files.Element (D.File));
-         end if;
-      end if;
-   end On_File_Closed_Hook;
-
-   -------------------------
-   -- On_File_Edited_Hook --
-   -------------------------
-
-   procedure On_File_Edited_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
-   is
-      pragma Unreferenced (Kernel);
-
-      use type Code_Analysis.Code_Analysis_Tree;
-
-      D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Project_Node : Code_Analysis.Project_Access;
-
-   begin
-      if Module.Tree /= null
-        and then Module.Tree.Contains
-          (Get_Registry (Module.Kernel).Tree.Info (D.File).Project)
-      then
-         Project_Node :=
-           Module.Tree.Element
-             (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
-
-         if Project_Node.Files.Contains (D.File) then
-            Show_Annotations (Module, Project_Node.Files.Element (D.File));
-         end if;
-      end if;
-   end On_File_Edited_Hook;
 
    --------------------
    -- On_Remove_Lock --
@@ -1525,7 +1390,7 @@ package body Code_Peer.Module is
                   Code_Analysis.File_Maps.Element (Position);
 
       begin
-         Context.Module.Hide_Annotations (File);
+         Editors.Hide_Annotations (Context.Module, File);
       end Process_File;
 
       ---------------------
@@ -1582,7 +1447,7 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Hide_Annotations (Context.File);
+      Editors.Hide_Annotations (Context.Module, Context.File);
 
    exception
       when E : others =>
@@ -1700,7 +1565,7 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Show_Annotations (Context.File);
+      Editors.Show_Annotations (Context.Module, Context.File);
 
    exception
       when E : others =>
@@ -1788,116 +1653,6 @@ package body Code_Peer.Module is
             (Code_Peer_Module_Id (Self), null, null, Message));
       end if;
    end Review_Message;
-
-   ----------------------
-   -- Show_Annotations --
-   ----------------------
-
-   procedure Show_Annotations
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access)
-   is
-
-      procedure Process_Subprogram
-        (Position : Code_Analysis.Subprogram_Maps.Cursor);
-
-      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Self.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
-
-      ------------------------
-      -- Process_Subprogram --
-      ------------------------
-
-      procedure Process_Subprogram
-        (Position : Code_Analysis.Subprogram_Maps.Cursor)
-      is
-
-         procedure Process_Annotation
-           (Position : Code_Peer.Annotation_Vectors.Cursor);
-
-         procedure Process_Annotations
-           (Position : Code_Peer.Annotation_Maps.Cursor);
-
-         Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                             Code_Analysis.Subprogram_Maps.Element (Position);
-         Data            : Code_Peer.Subprogram_Data'Class
-           renames Code_Peer.Subprogram_Data'Class
-           (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
-         Indent          : constant String :=
-                             Ada.Strings.Fixed."*"
-                               (Subprogram_Node.Column - 1, ' ');
-
-         ------------------------
-         -- Process_Annotation --
-         ------------------------
-
-         procedure Process_Annotation
-           (Position : Code_Peer.Annotation_Vectors.Cursor)
-         is
-            Annotation : constant Code_Peer.Annotation_Access :=
-                           Code_Peer.Annotation_Vectors.Element (Position);
-
-         begin
-            Buffer.Add_Special_Line
-              (Subprogram_Node.Line,
-               Indent & "--    " & Annotation.Text.all,
-               Annotation_Style_Name);
-            Data.Special_Lines := Data.Special_Lines + 1;
-         end Process_Annotation;
-
-         -------------------------
-         -- Process_Annotations --
-         -------------------------
-
-         procedure Process_Annotations
-           (Position : Code_Peer.Annotation_Maps.Cursor)
-         is
-            Key     : constant Code_Peer.Annotation_Category_Access :=
-                        Code_Peer.Annotation_Maps.Key (Position);
-            Element : constant Code_Peer.Annotation_Vector_Access :=
-                        Code_Peer.Annotation_Maps.Element (Position);
-
-         begin
-            Buffer.Add_Special_Line
-              (Subprogram_Node.Line,
-               Indent & "--  " & Key.Text.all & ":",
-               Annotation_Style_Name);
-            Data.Special_Lines := Data.Special_Lines + 1;
-
-            Element.Iterate (Process_Annotation'Access);
-
-            Buffer.Add_Special_Line
-              (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
-            Data.Special_Lines := Data.Special_Lines + 1;
-         end Process_Annotations;
-
-      begin
-         Data.Mark :=
-           new GPS.Editors.Editor_Mark'Class'
-             (Buffer.Add_Special_Line
-                  (Subprogram_Node.Line,
-                   Indent & "--",
-                   Annotation_Style_Name));
-         Data.Special_Lines := Data.Special_Lines + 1;
-
-         Buffer.Add_Special_Line
-           (Subprogram_Node.Line,
-            Indent & "--  Subprogram: " & Subprogram_Node.Name.all,
-            Annotation_Style_Name);
-         Data.Special_Lines := Data.Special_Lines + 1;
-
-         Buffer.Add_Special_Line
-           (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
-         Data.Special_Lines := Data.Special_Lines + 1;
-
-         Data.Annotations.Iterate (Process_Annotations'Access);
-      end Process_Subprogram;
-
-   begin
-      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-         File.Subprograms.Iterate (Process_Subprogram'Access);
-      end if;
-   end Show_Annotations;
 
    --------------------------
    -- Update_Location_View --
@@ -2344,17 +2099,11 @@ package body Code_Peer.Module is
          GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
          Name => "codepeer.compilation_finished");
       GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.File_Closed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_File_Closed_Hook'Access),
-         Name  => "codepeer.file_closed");
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.File_Edited_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_File_Edited_Hook'Access),
-         Name  => "codepeer.file_edited");
-      GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Preferences_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Preferences_Changed'Access),
          "codepeer.preferences_changed");
+
+      Editors.Register_Module (Kernel);
    end Register_Module;
 
 end Code_Peer.Module;
