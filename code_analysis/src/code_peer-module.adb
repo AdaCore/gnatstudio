@@ -2017,36 +2017,36 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-High-Background",
-           -"High probability messages color",
+           -"High ranking messages color",
            -"Plugins/CodePeer",
-           -"Color to use for the background of high probability messages",
+           -"Color to use for the background of high ranking messages",
            "#F75D59");
 
       Module.Message_Colors (Code_Peer.Medium) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Medium-Background",
-           -"Medium probability messages color",
+           -"Medium ranking messages color",
            -"Plugins/CodePeer",
-           -"Color to use for the background of medium probability messages",
+           -"Color to use for the background of medium ranking messages",
            "#F88017");
 
       Module.Message_Colors (Code_Peer.Low) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Low-Background",
-           -"Low probability messages color",
+           -"Low ranking messages color",
            -"Plugins/CodePeer",
-           -"Color to use for the background of low probability messages",
+           -"Color to use for the background of low ranking messages",
            "#FFE87C");
 
       Module.Message_Colors (Code_Peer.Informational) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Informational-Background",
-           -"Informational probability messages color",
+           -"Informational ranking messages color",
            -"Plugins/CodePeer",
-           -"Color to use for the background of informations probability"
+           -"Color to use for the background of informations ranking"
            & " messages",
            "#DFDFDF");
 
@@ -2054,9 +2054,9 @@ package body Code_Peer.Module is
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Suppressed-Background",
-           -"Suppressed probability messages color",
+           -"Suppressed ranking messages color",
            -"Plugins/CodePeer",
-           -"Color to use for the background of suppressed probability"
+           -"Color to use for the background of suppressed ranking"
            & " messages",
            "#EFEFEF");
 
