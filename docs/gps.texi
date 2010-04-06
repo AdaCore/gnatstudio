@@ -2535,7 +2535,6 @@ will be "B =>, C => )".
 Limitations:
 
 @table @bullet
-@item Completion does not work with generics.
 
 @item This feature is currently only available for Ada.
 Using the smart completion on non Ada files behaves as the identifier completion does.
