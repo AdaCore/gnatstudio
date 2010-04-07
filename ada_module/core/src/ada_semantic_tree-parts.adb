@@ -209,7 +209,9 @@ package body Ada_Semantic_Tree.Parts is
 
       function Can_Have_Parts (Category : Language_Category) return Boolean is
       begin
-         return Category in Cat_Package .. Cat_Variable;
+         return Category in Cat_Package .. Cat_Variable
+           or else Category = Cat_Parameter
+           or else Category = Cat_Discriminant;
       end Can_Have_Parts;
 
       -------------------

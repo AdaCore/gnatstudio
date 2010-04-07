@@ -302,7 +302,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
                C_Buffer : constant GNAT.Strings.String_Access :=
                  Get_Buffer (Get_File (Construct_Entity));
-               E_Location : File_Location :=
+               E_Location : constant File_Location :=
                  Get_Declaration_Of (ALI_Entity);
             begin
                --  The ALI database and the Construct database don't agree
@@ -324,24 +324,6 @@ procedure Ada_Semantic_Tree.Crash_Test is
                   Current_Index := Current_Index + 1;
                   Current_Col := Current_Col + 1;
                end loop;
-
-               if Construct.Category = Cat_Parameter
-                 and then not Equals
-                   (E_Location, Get_File (Construct_Entity), Construct)
-               then
-                  --  Parameters are not linked in the construct database -
-                  --  all parameter references go to the reference in the
-                  --  body while the ali goes to the spec. If we are on a
-                  --  parameter, adjust the entity and extract the body
-                  --  instead of the spec.
-                  --  Note that we should do this except if we're analysing
-                  --  the spec parameter (hence, do nothing if we're already
-                  --  at the right location.
-
-                  Entities.Queries.Find_Next_Body
-                    (Entity   => ALI_Entity,
-                     Location => E_Location);
-               end if;
 
                if Equals
                  (E_Location, Get_File (Construct_Entity), Construct)
