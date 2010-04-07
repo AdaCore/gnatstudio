@@ -387,7 +387,7 @@ package body Outline_View.Model is
       end if;
 
       while It /= Null_Construct_Tree_Iterator
-        and then Get_Parent_Scope (Get_Tree (File), It) = Parent
+        and then Is_Parent_Scope (Parent, It)
       loop
          if Construct_Filter (Model.Filter, Get_Construct (It)) then
             Dummy := Sort_And_Add (Model, Root, It);

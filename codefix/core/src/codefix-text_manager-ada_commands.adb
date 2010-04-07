@@ -1249,9 +1249,7 @@ package body Codefix.Text_Manager.Ada_Commands is
         Get_Iterator_At
           (Tree, (False, Get_Line (Source_Position), 1), Position => After);
    begin
-      while Get_Parent_Scope (Tree, It)
-        /= Null_Construct_Tree_Iterator
-      loop
+      while not Is_Parent_Scope (Null_Construct_Tree_Iterator, It) loop
          It := Get_Parent_Scope (Tree, It);
       end loop;
 
@@ -1944,8 +1942,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  the scope.
 
       while Prev_It /= Null_Construct_Tree_Iterator
-        and then Get_Parent_Scope (Tree, Prev_It)
-        = Get_Parent_Scope (Tree, Sb_It)
+        and then Is_Parent_Scope (Get_Parent_Scope (Tree, Sb_It), Prev_It)
       loop
          if Get_Construct (Prev_It).Category in Subprogram_Category then
             if To_Lower (Get_Construct (Prev_It).Name.all) >
@@ -1953,8 +1950,8 @@ package body Codefix.Text_Manager.Ada_Commands is
             then
                Prev_Entity := Prev (Tree, Prev_It, Jump_Over);
 
-               if Get_Parent_Scope (Tree, Prev_Entity)
-                 /= Get_Parent_Scope (Tree, Sb_It)
+               if not Is_Parent_Scope
+                 (Get_Parent_Scope (Tree, Sb_It), Prev_Entity)
                then
                   --  If we're out of the parent scope, then this is not
                   --  the previous entity.

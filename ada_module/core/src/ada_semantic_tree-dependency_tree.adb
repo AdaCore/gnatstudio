@@ -977,10 +977,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                          (File       => Get_File (Name_It),
                           Construct  => Get_Construct (Name_It));
 
-                     if Get_Parent_Scope
-                       (Get_Tree (Get_File (Entity)),
+                     if Is_Parent_Scope
+                       (Null_Construct_Tree_Iterator,
                         To_Construct_Tree_Iterator (Entity))
-                       = Null_Construct_Tree_Iterator
                      then
                         --  If the name is a root name, then that's it
                         if Length

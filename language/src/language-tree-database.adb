@@ -75,8 +75,8 @@ package body Language.Tree.Database is
                --  construct found is in fact unreacheable. It is the actual
                --  one.
 
-               if Get_Parent_Scope (Tree, It)
-                 /= Get_Parent_Scope (Tree, Last_Relevant_Construct)
+               if not Is_Parent_Scope
+                 (Get_Parent_Scope (Tree, Last_Relevant_Construct), It)
                then
                   Last_Relevant_Construct := It;
                end if;
