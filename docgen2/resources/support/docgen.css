@@ -175,9 +175,9 @@ div#leftSideInside a:hover .button2
    background: transparent url(../support/images/rightsidebottom.png) no-repeat bottom;
    font-size: 0.8em;
 }
-div#rightSide div#rightSideInside
+div#rightSideInside
 {
-   width: 205px;
+   width: 193px;
    padding-top: 10px;
    padding-left: 12px;
    margin: 0px;
