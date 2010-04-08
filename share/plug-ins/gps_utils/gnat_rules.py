@@ -221,7 +221,7 @@ class gnatMakeProc:
       return xmlCompiler;
 
    def __add_switch_callback (self, process, matched, unmatched):
-      if unmatched == "\n":
+      if unmatched.startswith("\n"):
         line = self.msg
         self.msg = ""
         if re.search ("^ +[-]gnatwxx", line):
