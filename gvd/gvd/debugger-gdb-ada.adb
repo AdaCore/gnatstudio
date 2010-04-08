@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                                  GPS                              --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2009, AdaCore             --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -465,7 +465,8 @@ package body Debugger.Gdb.Ada is
          --  A type we do not expect
 
          when others =>
-            raise Unexpected_Type;
+            raise Unexpected_Type
+              with "cannot parse type " & Type_Str (Index .. Type_Str'Last);
       end case;
    end Parse_Type;
 
