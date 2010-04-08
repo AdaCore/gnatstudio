@@ -490,7 +490,7 @@ procedure Ada_Semantic_Tree.Test is
 
                   declare
                      Lang_Name : constant String :=
-                        Tree.Info (Files (J)).Language;
+                                   Tree.Info (Files (J)).Language;
                   begin
                      if To_Lower (Lang_Name) = "ada" then
                         Full_File := Get_Or_Create

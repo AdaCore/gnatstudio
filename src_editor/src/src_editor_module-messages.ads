@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2010, AdaCore                      --
+--                    Copyright (C) 2010, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,8 +36,11 @@ package Src_Editor_Module.Messages is
 
 private
 
+   use Ada;
+   use Ada.Strings.Unbounded;
+
    function Hash
-     (Item : GPS.Styles.Style_Access) return Ada.Containers.Hash_Type;
+     (Item : GPS.Styles.Style_Access) return Containers.Hash_Type;
    --  Returns hash value constructed from style's name
 
    package Style_Sets is
@@ -47,19 +50,20 @@ private
    type Style_Set_Access is access all Style_Sets.Set;
 
    type Key is record
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : Unbounded_String;
       File     : GNATCOLL.VFS.Virtual_File;
    end record;
 
-   function Hash (Item : Key) return Ada.Containers.Hash_Type;
+   function Hash (Item : Key) return Containers.Hash_Type;
    --  Returns has value constructed from the category's and file's name
 
    package Style_Maps is
-     new Ada.Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
+     new Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
 
    type Highlighting_Manager
-     (Kernel : not null access Kernel_Handle_Record'Class) is
-     new Abstract_Listener with record
+     (Kernel : not null access Kernel_Handle_Record'Class)
+     is new Abstract_Listener
+   with record
       Map : Style_Maps.Map;
    end record;
    --  I826-008 workaround: we manage the set of all styles used per file per
@@ -73,7 +77,7 @@ private
 
    overriding procedure File_Removed
      (Self     : not null access Highlighting_Manager;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : Unbounded_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
    overriding procedure Message_Property_Changed

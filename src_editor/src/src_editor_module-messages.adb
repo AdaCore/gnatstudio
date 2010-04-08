@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2010, AdaCore                      --
+--                    Copyright (C) 2010, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,6 @@ use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module.Messages is
 
-   use Ada.Strings.Unbounded;
    use Style_Maps;
    use Style_Sets;
    use Traces;
@@ -54,7 +53,7 @@ package body Src_Editor_Module.Messages is
    procedure Highlight
      (Self    : not null access Highlighting_Manager'Class;
       Message : not null access Abstract_Message'Class);
-   --  Highlights location of the message in the source editor.
+   --  Highlights location of the message in the source editor
 
    procedure Set_Action
      (Self    : not null access Highlighting_Manager'Class;
@@ -117,9 +116,9 @@ package body Src_Editor_Module.Messages is
       File : GNATCOLL.VFS.Virtual_File)
    is
       Controller : constant Messages_Container_Access :=
-        Get_Messages_Container (Self.Kernel);
+                     Get_Messages_Container (Self.Kernel);
       Categories : constant Unbounded_String_Array :=
-        Controller.Get_Categories;
+                     Controller.Get_Categories;
 
    begin
       for J in Categories'Range loop
@@ -141,11 +140,11 @@ package body Src_Editor_Module.Messages is
 
    overriding procedure File_Removed
      (Self     : not null access Highlighting_Manager;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : Unbounded_String;
       File     : GNATCOLL.VFS.Virtual_File)
    is
       procedure Free is
-        new Ada.Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
+        new Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
 
       Map_Position : Style_Maps.Cursor := Self.Map.Find ((Category, File));
       Styles       : Style_Set_Access;
@@ -178,19 +177,19 @@ package body Src_Editor_Module.Messages is
    ----------
 
    function Hash
-     (Item : GPS.Styles.Style_Access) return Ada.Containers.Hash_Type is
+     (Item : GPS.Styles.Style_Access) return Containers.Hash_Type is
    begin
-      return Ada.Strings.Hash (Get_Name (Item));
+      return Strings.Hash (Get_Name (Item));
    end Hash;
 
    ----------
    -- Hash --
    ----------
 
-   function Hash (Item : Key) return Ada.Containers.Hash_Type is
+   function Hash (Item : Key) return Containers.Hash_Type is
    begin
       return
-        Ada.Strings.Hash
+        Strings.Hash
           (To_String (Item.Category) & String (Item.File.Full_Name.all));
    end Hash;
 
@@ -209,9 +208,7 @@ package body Src_Editor_Module.Messages is
 
       if B /= null then
          Add_File_Information
-           (B,
-            Message.Get_Category,
-            (1 => Message_Access (Message)));
+           (B, Message.Get_Category, (1 => Message_Access (Message)));
       end if;
    end Message_Added;
 
@@ -232,9 +229,7 @@ package body Src_Editor_Module.Messages is
          --  ??? Here we re-add all messages, but we could simply recompute the
          --  width of the column info
          Add_File_Information
-           (B,
-            Message.Get_Category,
-            (1 => Message_Access (Message)));
+           (B, Message.Get_Category, (1 => Message_Access (Message)));
       end if;
    end Set_Action;
 
@@ -268,7 +263,7 @@ package body Src_Editor_Module.Messages is
 
          declare
             K        : constant Key :=
-              (Message.Get_Category, Message.Get_File);
+                         (Message.Get_Category, Message.Get_File);
             Position : constant Style_Maps.Cursor := Self.Map.Find (K);
             Styles   : Style_Set_Access;
 
@@ -295,8 +290,7 @@ package body Src_Editor_Module.Messages is
    overriding procedure Message_Property_Changed
      (Self     : not null access Highlighting_Manager;
       Message  : not null access Abstract_Message'Class;
-      Property : String)
-   is
+      Property : String) is
    begin
       if Property = "highlighting" then
          Self.Highlight (Message);
@@ -315,10 +309,9 @@ package body Src_Editor_Module.Messages is
       Message : not null access Abstract_Message'Class)
    is
       Buffer : constant Editor_Buffer'Class :=
-        Get_Buffer_Factory (Self.Kernel).Get
-        (Message.Get_File, Open_View => False);
-
-      B : Source_Buffer;
+                 Get_Buffer_Factory (Self.Kernel).Get
+                 (Message.Get_File, Open_View => False);
+      B      : Source_Buffer;
 
    begin
       B := Get (Self.Kernel, Message.Get_File);
@@ -329,7 +322,6 @@ package body Src_Editor_Module.Messages is
             Message.Get_Editor_Mark.Line,
             Message.Get_Editor_Mark.Column,
             Message.Get_Editor_Mark.Column + Message.Get_Highlighting_Length);
-         null;
       end if;
 
       if B /= null then
@@ -342,16 +334,16 @@ package body Src_Editor_Module.Messages is
    --------------
 
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class) is
-      Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      function To_Address is
-        new Ada.Unchecked_Conversion
-          (Highlighting_Manager_Access, System.Address);
 
+      function To_Address is
+        new Unchecked_Conversion (Highlighting_Manager_Access, System.Address);
+
+      Id      : constant Source_Editor_Module :=
+                  Source_Editor_Module (Src_Editor_Module_Id);
       Manager : constant Highlighting_Manager_Access :=
-        new Highlighting_Manager (Kernel);
+                  new Highlighting_Manager (Kernel);
       Hook    : constant On_File_Edited_Hook :=
-        new On_File_Edited_Hook_Record (Manager);
+                  new On_File_Edited_Hook_Record (Manager);
 
    begin
       Get_Messages_Container (Kernel).Register_Listener
@@ -372,19 +364,17 @@ package body Src_Editor_Module.Messages is
    procedure Unregister
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-
       function To_Highlighting_Manager is
-        new Ada.Unchecked_Conversion
-          (System.Address, Highlighting_Manager_Access);
+        new Unchecked_Conversion (System.Address, Highlighting_Manager_Access);
 
       procedure Free is
-        new Ada.Unchecked_Deallocation
+        new Unchecked_Deallocation
           (Highlighting_Manager'Class, Highlighting_Manager_Access);
 
+      Id      : constant Source_Editor_Module :=
+                  Source_Editor_Module (Src_Editor_Module_Id);
       Manager : Highlighting_Manager_Access :=
-        To_Highlighting_Manager (Id.Highlighting_Manager);
+                  To_Highlighting_Manager (Id.Highlighting_Manager);
 
    begin
       Get_Messages_Container (Kernel).Unregister_Listener

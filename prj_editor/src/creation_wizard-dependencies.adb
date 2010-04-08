@@ -187,12 +187,12 @@ package body Creation_Wizard.Dependencies is
    begin
       loop
          Changed := Get_Registry (Kernel).Tree.Add_Imported_Project
-           (Project           => Importing_Project,
+           (Project                   => Importing_Project,
             Imported_Project_Location => Imported_Project_Path,
-            Errors            => Report_Error'Unrestricted_Access,
-            Use_Base_Name     => Use_Base_Name,
-            Use_Relative_Path => Use_Relative_Path,
-            Limited_With      => Limited_With);
+            Errors                    => Report_Error'Unrestricted_Access,
+            Use_Base_Name             => Use_Base_Name,
+            Use_Relative_Path         => Use_Relative_Path,
+            Limited_With              => Limited_With);
 
          exit when Changed /= Project_Already_Exists;
 

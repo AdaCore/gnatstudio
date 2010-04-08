@@ -506,16 +506,16 @@ package body Builder_Facility_Module is
       Registry     : constant Project_Registry_Access := Get_Registry (Kernel);
       Root_Project : constant Project_Type := Registry.Tree.Root_Project;
 
-      Result   : Argument_List (1 .. Max_Number_Of_Mains);
-      Index    : Natural := Result'First;
-      Projects : Projects_Stack.Simple_Stack;
-      The_Project : Project_Type;
-      Iterator :  Project_Iterator :=
-        Root_Project.Start (Include_Extended => True);
-      Mains    : String_List_Access;
+      Result       : Argument_List (1 .. Max_Number_Of_Mains);
+      Index        : Natural := Result'First;
+      Projects     : Projects_Stack.Simple_Stack;
+      The_Project  : Project_Type;
+      Iterator     : Project_Iterator :=
+                       Root_Project.Start (Include_Extended => True);
+      Mains        : String_List_Access;
 
       function To_Full_Path (Basename : String) return String;
-      --  Return the full path of file Basename in project Project.
+      --  Return the full path of file Basename in project Project
 
       function Is_Already_In_Mains (S : String) return Boolean;
       --  Return True if S is in Result (for instance a project could use its
