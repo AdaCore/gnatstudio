@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J406-019: Docgen does not see documentation of nested generics
+  Problem:    In case of a nested generic package of subprogram, the GPS
+              documentation generator won't interprete comments before the
+              generic keyword as the construct's documentation.
+  Workaround: Place the construct's documentation after the construct's
+              definition
+
 - J319-001: Continuing search after changing scenario finds wrong files
   Problem:    If you start a search in "Files From Project", but then change
               the scenario so that the list of source files changes (or their
