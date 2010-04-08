@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -376,7 +376,6 @@ package body Docgen2.Entities is
       Start_Index : Natural;
       End_Index   : Natural;
       Pkg_Found   : Boolean;
-      Entity_Kind : constant E_Kind := Get_Kind (Entity);
 
       function Is_Token
         (Token : String; Start_Index : Natural) return Boolean;
@@ -404,18 +403,6 @@ package body Docgen2.Entities is
       --  We assume Index is initialized, as the Ada parser does so.
       Start_Index := Construct.Sloc_Start.Index;
       End_Index := Construct.Sloc_Start.Index - 1;
-
-      if Entity_Kind.Is_Generic then
-         --  Look for 'generic' beforee Sloc_Start.Index
-         for J in reverse File_Buffer'First ..
-           Construct.Sloc_Start.Index - 6
-         loop
-            if Is_Token ("generic", J) then
-               Start_Index := J;
-               exit;
-            end if;
-         end loop;
-      end if;
 
       --  If we have an instantiation or a renaming, then output the full
       --  printout
