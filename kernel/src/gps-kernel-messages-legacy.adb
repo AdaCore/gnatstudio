@@ -25,11 +25,81 @@ package body GPS.Kernel.Messages.Legacy is
    use File_Maps;
    use Node_Vectors;
 
+   --------------------
+   -- Category_Count --
+   --------------------
+
+   function Category_Count
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Category : String) return Natural
+   is
+      Container         : constant Messages_Container_Access :=
+        Get_Messages_Container (Kernel);
+      Category_Position : constant Category_Maps.Cursor :=
+        Container.Category_Map.Find (To_Unbounded_String (Category));
+
+   begin
+      if Has_Element (Category_Position) then
+         return Natural (Element (Category_Position).Children.Length);
+
+      else
+         return 0;
+      end if;
+   end Category_Count;
+
+   --------------------
+   -- Get_Message_At --
+   --------------------
+
+   function Get_Message_At
+     (Self     : not null access constant Messages_Container'Class;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Natural;
+      Column   : Basic_Types.Visible_Column_Type)
+      return Message_Access
+   is
+      Category_Position : constant Category_Maps.Cursor :=
+        Self.Category_Map.Find (To_Unbounded_String (Category));
+      File_Position     : File_Maps.Cursor;
+      Message_Position  : Node_Vectors.Cursor;
+      Message           : Node_Access;
+
+   begin
+      if not Has_Element (Category_Position) then
+         return null;
+      end if;
+
+      File_Position := Element (Category_Position).File_Map.Find (File);
+
+      if not Has_Element (File_Position) then
+         return null;
+      end if;
+
+      Message_Position := Element (File_Position).Children.Last;
+      --  Go from the last message to first one to satisfy subprogram's
+      --  semantic.
+
+      while Has_Element (Message_Position) loop
+         Message := Element (Message_Position);
+
+         if Message.Line = Line
+           and then (Column = 0 or else Message.Column = Column)
+         then
+            return Message_Access (Message);
+         end if;
+
+         Previous (Message_Position);
+      end loop;
+
+      return null;
+   end Get_Message_At;
+
    ---------------------
-   -- Add_Action_Item --
+   -- Set_Action_Item --
    ---------------------
 
-   procedure Add_Action_Item
+   procedure Set_Action_Item
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Category  : String;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -104,76 +174,6 @@ package body GPS.Kernel.Messages.Legacy is
       if Message_Node /= null then
          Message_Node.Set_Action (Action_Item (Action));
       end if;
-   end Add_Action_Item;
-
-   --------------------
-   -- Category_Count --
-   --------------------
-
-   function Category_Count
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Category : String) return Natural
-   is
-      Container         : constant Messages_Container_Access :=
-        Get_Messages_Container (Kernel);
-      Category_Position : constant Category_Maps.Cursor :=
-        Container.Category_Map.Find (To_Unbounded_String (Category));
-
-   begin
-      if Has_Element (Category_Position) then
-         return Natural (Element (Category_Position).Children.Length);
-
-      else
-         return 0;
-      end if;
-   end Category_Count;
-
-   --------------------
-   -- Get_Message_At --
-   --------------------
-
-   function Get_Message_At
-     (Self     : not null access constant Messages_Container'Class;
-      Category : String;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Natural;
-      Column   : Basic_Types.Visible_Column_Type)
-      return Message_Access
-   is
-      Category_Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find (To_Unbounded_String (Category));
-      File_Position     : File_Maps.Cursor;
-      Message_Position  : Node_Vectors.Cursor;
-      Message           : Node_Access;
-
-   begin
-      if not Has_Element (Category_Position) then
-         return null;
-      end if;
-
-      File_Position := Element (Category_Position).File_Map.Find (File);
-
-      if not Has_Element (File_Position) then
-         return null;
-      end if;
-
-      Message_Position := Element (File_Position).Children.Last;
-      --  Go from the last message to first one to satisfy subprogram's
-      --  semantic.
-
-      while Has_Element (Message_Position) loop
-         Message := Element (Message_Position);
-
-         if Message.Line = Line
-           and then (Column = 0 or else Message.Column = Column)
-         then
-            return Message_Access (Message);
-         end if;
-
-         Previous (Message_Position);
-      end loop;
-
-      return null;
-   end Get_Message_At;
+   end Set_Action_Item;
 
 end GPS.Kernel.Messages.Legacy;

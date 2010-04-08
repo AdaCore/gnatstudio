@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -240,59 +240,6 @@ package body GPS.Kernel.Standard_Hooks is
       General_Line_Information
         (Kernel, File, Identifier, Info, Normalize => Normalize);
    end Add_Line_Information;
-
-   -------------------------
-   -- Add_Location_Action --
-   -------------------------
-
-   procedure Add_Location_Action
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Identifier : String;
-      Category   : String;
-      File       : Virtual_File;
-      Line       : Integer;
-      Column     : Integer;
-      Message    : UTF8_String;
-      Action     : Action_Item)
-   is
-      Data : aliased Location_Hooks_Args :=
-               (Hooks_Data with
-                Ident_Length => Identifier'Length,
-                Identifier   => Identifier,
-                Cat_Length   => Category'Length,
-                Category     => Category,
-                File         => File,
-                Line         => Line,
-                Column       => Column,
-                Mes_Length   => Message'Length,
-                Message      => Message,
-                Action       => Action);
-   begin
-      if not Run_Hook_Until_Success
-        (Kernel, Location_Action_Hook, Data'Unchecked_Access,
-         Set_Busy => False)
-      then
-         Trace (Me, "No location viewer registered.");
-      end if;
-   end Add_Location_Action;
-
-   ----------------------------
-   -- Remove_Location_Action --
-   ----------------------------
-
-   procedure Remove_Location_Action
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Identifier : String;
-      Category   : String;
-      File       : Virtual_File;
-      Line       : Integer;
-      Column     : Integer;
-      Message    : UTF8_String) is
-   begin
-      Add_Location_Action
-        (Kernel, Identifier,
-         Category, File, Line, Column, Message, null);
-   end Remove_Location_Action;
 
    ------------------------
    -- Clear_Highlighting --
@@ -1183,8 +1130,6 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, Location_Hook_Type,
          Args_Creator => From_Callback_Data_Location'Access);
-      Register_Hook_Return_Boolean
-        (Kernel, Location_Action_Hook, Location_Hook_Type);
 
       Register_Hook_Data_Type
         (Kernel, Html_Hook_Type,

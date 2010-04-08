@@ -48,6 +48,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -70,7 +71,6 @@ package body Codefix_Module is
 
    Me          : constant Debug_Handle := Create ("Codefix_Module");
 
-   Location_Button_Name     : constant String := "Codefix";
    Codefix_Class_Name       : constant String := "Codefix";
    Codefix_Error_Class_Name : constant String := "CodefixError";
 
@@ -277,14 +277,14 @@ package body Codefix_Module is
       Validate_And_Commit
         (Session.Corrector.all, Session.Current_Text.all, Error, Command);
 
-      Remove_Location_Action
-        (Kernel     => Kernel,
-         Identifier => Location_Button_Name,
-         Category   => Session.Category.all,
-         File       => Get_File (Err),
-         Line       => Get_Line (Err),
-         Column     => Natural (Get_Column (Err)),
-         Message    => Get_Message (Err));
+      GPS.Kernel.Messages.Legacy.Set_Action_Item
+        (Kernel,
+         Session.Category.all,
+         Get_File (Err),
+         Get_Line (Err),
+         Natural (Get_Column (Err)),
+         Get_Message (Err),
+         null);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -568,14 +568,14 @@ package body Codefix_Module is
    is
       Err : constant Error_Message := Get_Error_Message (Error);
    begin
-      Remove_Location_Action
-        (Kernel     => Kernel,
-         Identifier => Location_Button_Name,
-         Category   => Session.Category.all,
-         File       => Get_File (Err),
-         Line       => Get_Line (Err),
-         Column     => Natural (Get_Column (Err)),
-         Message    => Get_Message (Err));
+      GPS.Kernel.Messages.Legacy.Set_Action_Item
+        (Kernel,
+         Session.Category.all,
+         Get_File (Err),
+         Get_Line (Err),
+         Natural (Get_Column (Err)),
+         Get_Message (Err),
+         null);
    end Remove_Pixmap;
 
    --------------------------------
@@ -609,15 +609,14 @@ package body Codefix_Module is
       Codefix_Command (New_Action.Associated_Command.all).Kernel :=
         Kernel_Handle (Kernel);
 
-      Add_Location_Action
-        (Kernel     => Kernel,
-         Identifier => Location_Button_Name,
-         Category   => Session.Category.all,
-         File       => Get_File (Err),
-         Line       => Get_Line (Err),
-         Column     => Natural (Get_Column (Err)),
-         Message    => Get_Message (Err),
-         Action     => New_Action);
+      GPS.Kernel.Messages.Legacy.Set_Action_Item
+        (Kernel,
+         Session.Category.all,
+         Get_File (Err),
+         Get_Line (Err),
+         Natural (Get_Column (Err)),
+         Get_Message (Err),
+         New_Action);
    end Create_Pixmap_And_Category;
 
    --------------------

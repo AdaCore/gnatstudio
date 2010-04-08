@@ -55,7 +55,4 @@ package GPS.Kernel.Locations is
    --  Same as above, but the encoding for Text is unknown so we first try to
    --  convert it to UTF8
 
-   procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register hooks.
-
 end GPS.Kernel.Locations;

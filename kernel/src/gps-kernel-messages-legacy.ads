@@ -24,7 +24,7 @@ with GPS.Kernel.Standard_Hooks;
 
 package GPS.Kernel.Messages.Legacy is
 
-   procedure Add_Action_Item
+   procedure Set_Action_Item
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Category : String;
       File     : GNATCOLL.VFS.Virtual_File;
@@ -32,8 +32,9 @@ package GPS.Kernel.Messages.Legacy is
       Column   : Natural;
       Message  : String;
       Action   : GPS.Kernel.Standard_Hooks.Action_Item);
-   --  Add an action item to be associated to a specified location.
-   --  If Action is null, the action item will be removed from that location.
+   --  Associates an action item to the primary message at the specified
+   --  location. If Action is null, the action item will be removed from
+   --  that location.
 
    function Category_Count
      (Kernel   : not null access Kernel_Handle_Record'Class;

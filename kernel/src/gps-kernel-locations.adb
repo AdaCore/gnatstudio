@@ -21,44 +21,15 @@ with Gtk.Tree_Model;            use Gtk.Tree_Model;
 
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel.Console;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Tools_Output;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Location_View;         use GPS.Location_View;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Locations is
-
-   -----------
-   -- Hooks --
-   -----------
-
-   function Location_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class) return Boolean;
-   --  Called when the user executes Location_Action_Hook
-
-   -------------------
-   -- Location_Hook --
-   -------------------
-
-   function Location_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class) return Boolean
-   is
-      D : constant GPS.Kernel.Standard_Hooks.Location_Hooks_Args :=
-            GPS.Kernel.Standard_Hooks.Location_Hooks_Args (Data.all);
-
-   begin
-      GPS.Kernel.Messages.Legacy.Add_Action_Item
-        (Kernel, D.Category, D.File, D.Line, D.Column, D.Message, D.Action);
-
-      return True;
-   end Location_Hook;
 
    ---------------
    -- Next_Item --
@@ -154,20 +125,6 @@ package body GPS.Kernel.Locations is
          end if;
       end if;
    end Parse_File_Locations_Unknown_Encoding;
-
-   --------------
-   -- Register --
-   --------------
-
-   procedure Register
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
-   begin
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel,
-         GPS.Kernel.Standard_Hooks.Location_Action_Hook,
-         GPS.Kernel.Hooks.Wrapper (Location_Hook'Access),
-         Name => "location_view.location");
-   end Register;
 
    ------------------------------
    -- Remove_Location_Category --
