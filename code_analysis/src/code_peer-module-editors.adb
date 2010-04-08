@@ -216,11 +216,13 @@ package body Code_Peer.Module.Editors is
                            Code_Peer.Annotation_Vectors.Element (Position);
 
          begin
-            Buffer.Add_Special_Line
-              (Subprogram_Node.Line,
-               Indent & "--    " & Annotation.Text.all,
-               Annotation_Style_Name);
-            Data.Special_Lines := Data.Special_Lines + 1;
+            if Annotation.Lifeage in Added .. Unchanged then
+               Buffer.Add_Special_Line
+                 (Subprogram_Node.Line,
+                  Indent & "--    " & Annotation.Text.all,
+                  Annotation_Style_Name);
+               Data.Special_Lines := Data.Special_Lines + 1;
+            end if;
          end Process_Annotation;
 
          -------------------------
