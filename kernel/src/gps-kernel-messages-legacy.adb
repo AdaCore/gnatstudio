@@ -38,13 +38,15 @@ package body GPS.Kernel.Messages.Legacy is
       Message   : String;
       Action    : GPS.Kernel.Standard_Hooks.Action_Item)
    is
-      Container         : constant Messages_Container_Access :=
+      Container          : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
-      Category_Position : Category_Maps.Cursor;
-      Category_Node     : Node_Access;
-      File_Position     : File_Maps.Cursor;
-      File_Node         : Node_Access;
-      Message_Node      : Message_Access;
+      Category_Position  : Category_Maps.Cursor;
+      Category_Node      : Node_Access;
+      File_Position      : File_Maps.Cursor;
+      File_Node          : Node_Access;
+      Message_Position   : Node_Vectors.Cursor;
+      Message_Node       : Message_Access;
+      Secondary_Position : Node_Vectors.Cursor;
 
    begin
       --  Resolve category node
@@ -70,15 +72,34 @@ package body GPS.Kernel.Messages.Legacy is
 
       --  Look for message at the specified position with spceified text
 
-      for J in 1 .. Natural (File_Node.Children.Length) loop
-         Message_Node := Message_Access (File_Node.Children.Element (J));
+      Message_Position := File_Node.Children.First;
 
-         exit when Message_Node.Line = Line
+      Primary_Messages_Loop :
+      while Has_Element (Message_Position) loop
+         Message_Node := Message_Access (Element (Message_Position));
+
+         if Message_Node.Line = Line
            and then Message_Node.Column = Visible_Column_Type (Column)
-           and then Message_Node.Get_Text = Message;
+         then
+            exit Primary_Messages_Loop when Message_Node.Get_Text = Message;
+
+            --  Looking around secondary messages.
+
+            Secondary_Position := Message_Node.Children.First;
+
+            while Has_Element (Secondary_Position) loop
+               exit Primary_Messages_Loop when
+                 Message_Access (Element (Secondary_Position)).Get_Text
+                   = Message;
+
+               Next (Secondary_Position);
+            end loop;
+
+         end if;
 
          Message_Node := null;
-      end loop;
+         Next (Message_Position);
+      end loop Primary_Messages_Loop;
 
       if Message_Node /= null then
          Message_Node.Set_Action (Action_Item (Action));
