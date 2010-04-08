@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -200,14 +200,18 @@ package body Src_Editor_Box.Tooltips is
 
             if Line_Info /= null then
                for K in Line_Info'Range loop
-                  if Line_Info (K).Info /= null
-                    and then Line_Info (K).Info.Tooltip_Text /= null
+                  if Line_Info (K).Message /= null
+                    and then Get_Action (Line_Info (K).Message) /= null
+                    and then Get_Action (Line_Info (K).Message).Tooltip_Text
+                    /= null
                   then
                      if Content /= Null_Unbounded_String then
                         Append (Content, ASCII.LF);
                      end if;
 
-                     Append (Content, Line_Info (K).Info.Tooltip_Text.all);
+                     Append
+                       (Content,
+                        Get_Action (Line_Info (K).Message).Tooltip_Text.all);
                      Has_Info := True;
                   end if;
                end loop;

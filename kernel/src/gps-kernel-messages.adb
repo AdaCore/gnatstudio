@@ -29,6 +29,7 @@ with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;
 with GPS.Kernel.Project;
+with GPS.Kernel.Styles; use GPS.Kernel.Styles;
 with Traces;
 with XML_Parsers;
 with XML_Utils;
@@ -47,7 +48,7 @@ package body GPS.Kernel.Messages is
    use GPS.Editors;
    use GPS.Kernel.Hooks;
    use GPS.Kernel.Project;
-   use GPS.Kernel.Styles;
+   use GPS.Styles;
    use Listener_Vectors;
    use Model_Vectors;
    use Node_Vectors;
@@ -73,19 +74,22 @@ package body GPS.Kernel.Messages is
 
       procedure Notify_Listeners_About_Category_Added
         (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String);
+         Category : Ada.Strings.Unbounded.Unbounded_String;
+         Flags    : Message_Flags);
       --  Calls listeners to notify about add of the category
 
       procedure Notify_Listeners_About_File_Added
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File);
+         File     : GNATCOLL.VFS.Virtual_File;
+         Flags    : Message_Flags);
       --  Calls listeners to notify about add of the file
 
       procedure Notify_Listeners_About_File_Removed
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File);
+         File     : GNATCOLL.VFS.Virtual_File;
+         Flags    : Message_Flags);
       --  Calls listeners to notify about remove of the file
 
       procedure Notify_Listeners_About_Message_Added
@@ -105,19 +109,22 @@ package body GPS.Kernel.Messages is
       --  Calls listeners to notify about remove of message
 
       procedure Notify_Models_About_Category_Added
-        (Self : not null access constant Messages_Container'Class;
-         Node : not null access Node_Record'Class);
+        (Self  : not null access constant Messages_Container'Class;
+         Node  : not null access Node_Record'Class;
+         Flags : Message_Flags);
       --  Calls models to notify about add of the category
 
       procedure Notify_Models_About_File_Added
-        (Self : not null access constant Messages_Container'Class;
-         Node : not null access Node_Record'Class);
+        (Self  : not null access constant Messages_Container'Class;
+         Node  : not null access Node_Record'Class;
+         Flags : Message_Flags);
       --  Calls models to notify about add of the file
 
       procedure Notify_Models_About_File_Removed
         (Self   : not null access constant Messages_Container'Class;
          Parent : not null access Node_Record'Class;
-         Index  : Positive);
+         Index  : Positive;
+         Flags  : Message_Flags);
       --  Calls models to notify about remove of the file
 
       procedure Notify_Models_About_Message_Added
@@ -133,7 +140,8 @@ package body GPS.Kernel.Messages is
       procedure Notify_Models_About_Message_Removed
         (Self   : not null access constant Messages_Container'Class;
          Parent : not null access Node_Record'Class;
-         Index  : Positive);
+         Index  : Positive;
+         Flags  : Message_Flags);
       --  Calls models to notify about remove of the message
 
    end Notifiers;
@@ -182,12 +190,41 @@ package body GPS.Kernel.Messages is
    function To_Messages_Container_Access is
      new Unchecked_Conversion (System.Address, Messages_Container_Access);
 
-   procedure Free is
-     new Ada.Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
        (GPS.Editors.Line_Information_Record, Action_Item);
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match (A, B : Message_Flags) return Boolean is
+
+   begin
+      for K in Message_Visibility_Kind loop
+         if A (K) and then B (K) then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Match;
+
+   ----------------------------
+   -- New_Messages_Container --
+   ----------------------------
+
+   function New_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return not null Messages_Container_Access
+   is
+      Result : constant Messages_Container_Access :=
+                 new Messages_Container (Kernel);
+   begin
+      return Result;
+   end New_Messages_Container;
 
    -------------------------------
    -- Create_Messages_Container --
@@ -208,6 +245,7 @@ package body GPS.Kernel.Messages is
       --  Creates Gtk+ model
 
       Gtk_New (Model, Result);
+      Model.Flags := (Editor_Side => False, Locations => True);
       Result.Models.Append (Messages_Model_Access (Model));
 
       --  Register simple message load/save procedures
@@ -282,6 +320,9 @@ package body GPS.Kernel.Messages is
    begin
       Self.Mark.Delete;
       Free (Self.Mark);
+      if Self.Action /= null then
+         GPS.Editors.Free (Self.Action.all);
+      end if;
       Free (Self.Action);
    end Finalize;
 
@@ -483,7 +524,7 @@ package body GPS.Kernel.Messages is
 
    function Get_Highlighting_Style
      (Self : not null access constant Abstract_Message'Class)
-      return GPS.Kernel.Styles.Style_Access is
+      return GPS.Styles.Style_Access is
    begin
       return Self.Style;
    end Get_Highlighting_Style;
@@ -494,7 +535,7 @@ package body GPS.Kernel.Messages is
 
    function Get_Line
      (Self : not null access constant Abstract_Message'Class)
-      return Positive is
+      return Natural is
    begin
       return Self.Line;
    end Get_Line;
@@ -620,7 +661,8 @@ package body GPS.Kernel.Messages is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
    is
       pragma Assert (Category /= "");
       pragma Assert (File /= No_File);
@@ -640,6 +682,7 @@ package body GPS.Kernel.Messages is
       Self.Line := Line;
       Self.Column := Column;
       Self.Weight := Weight;
+      Self.Flags  := Flags;
       Self.Mark :=
         new Editor_Mark'Class'
           (Container.Kernel.Get_Buffer_Factory.New_Mark
@@ -664,6 +707,7 @@ package body GPS.Kernel.Messages is
            new Node_Record'
              (Kind          => Node_Category,
               Parent        => null,
+              Flags         => Flags,
               Children      => Node_Vectors.Empty_Vector,
               Message_Count => 0,
               Container     => Container,
@@ -676,9 +720,9 @@ package body GPS.Kernel.Messages is
          --  Notify models and listeners
 
          Notifiers.Notify_Models_About_Category_Added
-           (Container, Category_Node);
+           (Container, Category_Node, Flags);
          Notifiers.Notify_Listeners_About_Category_Added
-           (Container, Category_Name);
+           (Container, Category_Name, Flags);
       end if;
 
       --  Resolve file node, create new one when there is no existent node
@@ -693,6 +737,7 @@ package body GPS.Kernel.Messages is
            new Node_Record'
              (Kind          => Node_File,
               Parent        => Category_Node,
+              Flags         => Flags,
               Children      => Node_Vectors.Empty_Vector,
               Message_Count => 0,
               File          => File);
@@ -701,9 +746,10 @@ package body GPS.Kernel.Messages is
 
          --  Notify models and listeners
 
-         Notifiers.Notify_Models_About_File_Added (Container, File_Node);
+         Notifiers.Notify_Models_About_File_Added
+           (Container, File_Node, Flags);
          Notifiers.Notify_Listeners_About_File_Added
-           (Container, Category_Name, File);
+           (Container, Category_Name, File, Flags);
       end if;
 
       --  Connect message with file node
@@ -732,11 +778,13 @@ package body GPS.Kernel.Messages is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
-      Actual_Column : Integer) is
+      Actual_Column : Integer;
+      Flags         : Message_Flags) is
    begin
       Self.Corresponding_File := File;
       Self.Line := Line;
       Self.Column := Column;
+      Self.Flags := Flags;
       Self.Message_Count := 0;
       Self.Mark :=
         new Editor_Mark'Class'
@@ -795,6 +843,10 @@ package body GPS.Kernel.Messages is
          Weight        : constant Natural :=
                            Natural'Value
                              (Get_Attribute (XML_Node, "weight", "0"));
+
+         Flags : constant Message_Flags :=
+           From_Int (Integer'Value (Get_Attribute (XML_Node, "flags", "0")));
+
          Actual_Line   : constant Integer :=
                            Integer'Value
                              (Get_Attribute
@@ -828,7 +880,8 @@ package body GPS.Kernel.Messages is
             Column,
             Weight,
             Actual_Line,
-            Actual_Column);
+            Actual_Column,
+            Flags);
 
          if Style_Name /= "" then
             Style := Get_Or_Create_Style (Self.Kernel, Style_Name, True);
@@ -868,7 +921,11 @@ package body GPS.Kernel.Messages is
                              (Get_Attribute (XML_Node, "line", ""));
          Column        : constant Visible_Column_Type :=
                            Visible_Column_Type'Value
-                             (Get_Attribute (XML_Node, "column", ""));
+             (Get_Attribute (XML_Node, "column", ""));
+
+         Flags : constant Message_Flags :=
+           From_Int (Integer'Value (Get_Attribute (XML_Node, "flags", "0")));
+
          Actual_Line   : constant Integer :=
                            Integer'Value
                              (Get_Attribute
@@ -884,7 +941,8 @@ package body GPS.Kernel.Messages is
 
       begin
          Self.Secondary_Loaders.Element (Class)
-           (XML_Node, Parent, File, Line, Column, Actual_Line, Actual_Column);
+           (XML_Node, Parent, File, Line, Column, Actual_Line, Actual_Column,
+            Flags);
       end Load_Message;
 
       Messages_File     : constant Virtual_File :=
@@ -970,14 +1028,17 @@ package body GPS.Kernel.Messages is
 
       procedure Notify_Listeners_About_Category_Added
         (Self     : not null access constant Messages_Container'Class;
-         Category : Ada.Strings.Unbounded.Unbounded_String)
+         Category : Ada.Strings.Unbounded.Unbounded_String;
+         Flags    : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
          while Has_Element (Listener_Position) loop
             begin
-               Element (Listener_Position).Category_Added (Category);
+               if Match (Element (Listener_Position).Flags, Flags) then
+                  Element (Listener_Position).Category_Added (Category);
+               end if;
 
             exception
                when E : others =>
@@ -995,14 +1056,17 @@ package body GPS.Kernel.Messages is
       procedure Notify_Listeners_About_File_Added
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File)
+         File     : GNATCOLL.VFS.Virtual_File;
+         Flags    : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
          while Has_Element (Listener_Position) loop
             begin
-               Element (Listener_Position).File_Added (Category, File);
+               if Match (Element (Listener_Position).Flags, Flags) then
+                  Element (Listener_Position).File_Added (Category, File);
+               end if;
 
             exception
                when E : others =>
@@ -1020,14 +1084,17 @@ package body GPS.Kernel.Messages is
       procedure Notify_Listeners_About_File_Removed
         (Self     : not null access constant Messages_Container'Class;
          Category : Ada.Strings.Unbounded.Unbounded_String;
-         File     : GNATCOLL.VFS.Virtual_File)
+         File     : GNATCOLL.VFS.Virtual_File;
+         Flags    : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
       begin
          while Has_Element (Listener_Position) loop
             begin
-               Element (Listener_Position).File_Removed (Category, File);
+               if Match (Element (Listener_Position).Flags, Flags) then
+                  Element (Listener_Position).File_Removed (Category, File);
+               end if;
 
             exception
                when E : others =>
@@ -1051,7 +1118,9 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               Element (Listener_Position).Message_Added (Message);
+               if Match (Element (Listener_Position).Flags, Message.Flags) then
+                  Element (Listener_Position).Message_Added (Message);
+               end if;
 
             exception
                when E : others =>
@@ -1076,8 +1145,10 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               Element (Listener_Position).Message_Property_Changed
-                 (Message, Property);
+               if Match (Element (Listener_Position).Flags, Message.Flags) then
+                  Element (Listener_Position).Message_Property_Changed
+                    (Message, Property);
+               end if;
 
             exception
                when E : others =>
@@ -1101,7 +1172,9 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               Element (Listener_Position).Message_Removed (Message);
+               if Match (Element (Listener_Position).Flags, Message.Flags) then
+                  Element (Listener_Position).Message_Removed (Message);
+               end if;
 
             exception
                when E : others =>
@@ -1117,14 +1190,20 @@ package body GPS.Kernel.Messages is
       ----------------------------------------
 
       procedure Notify_Models_About_Category_Added
-        (Self : not null access constant Messages_Container'Class;
-         Node : not null access Node_Record'Class)
+        (Self  : not null access constant Messages_Container'Class;
+         Node  : not null access Node_Record'Class;
+         Flags : Message_Flags)
       is
          Model_Position : Model_Vectors.Cursor := Self.Models.First;
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).Category_Added (Node_Access (Node));
+            if Match (Element (Model_Position).Flags,
+                      Flags)
+            then
+               Element (Model_Position).Category_Added (Node_Access (Node));
+            end if;
+
             Next (Model_Position);
          end loop;
       end Notify_Models_About_Category_Added;
@@ -1134,14 +1213,20 @@ package body GPS.Kernel.Messages is
       ------------------------------------
 
       procedure Notify_Models_About_File_Added
-        (Self : not null access constant Messages_Container'Class;
-         Node : not null access Node_Record'Class)
+        (Self  : not null access constant Messages_Container'Class;
+         Node  : not null access Node_Record'Class;
+         Flags : Message_Flags)
       is
          Model_Position : Model_Vectors.Cursor := Self.Models.First;
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).File_Added (Node_Access (Node));
+            if Match (Element (Model_Position).Flags,
+                      Flags)
+            then
+               Element (Model_Position).File_Added (Node_Access (Node));
+            end if;
+
             Next (Model_Position);
          end loop;
       end Notify_Models_About_File_Added;
@@ -1153,14 +1238,17 @@ package body GPS.Kernel.Messages is
       procedure Notify_Models_About_File_Removed
         (Self   : not null access constant Messages_Container'Class;
          Parent : not null access Node_Record'Class;
-         Index  : Positive)
+         Index  : Positive;
+         Flags  : Message_Flags)
       is
          Model_Position : Model_Vectors.Cursor := Self.Models.First;
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).File_Removed
-              (Node_Access (Parent), Index);
+            if Match (Element (Model_Position).Flags, Flags) then
+               Element (Model_Position).File_Removed
+                 (Node_Access (Parent), Index);
+            end if;
             Next (Model_Position);
          end loop;
       end Notify_Models_About_File_Removed;
@@ -1177,7 +1265,13 @@ package body GPS.Kernel.Messages is
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).Message_Added (Message_Access (Message));
+            if Match (Element (Model_Position).Flags,
+                      Message.Flags)
+            then
+               Element
+                 (Model_Position).Message_Added (Message_Access (Message));
+            end if;
+
             Next (Model_Position);
          end loop;
       end Notify_Models_About_Message_Added;
@@ -1194,8 +1288,10 @@ package body GPS.Kernel.Messages is
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).Message_Property_Changed
-              (Message_Access (Message));
+            if Match (Element (Model_Position).Flags, Message.Flags) then
+               Element (Model_Position).Message_Property_Changed
+                 (Message_Access (Message));
+            end if;
             Next (Model_Position);
          end loop;
       end Notify_Models_About_Message_Property_Changed;
@@ -1207,14 +1303,18 @@ package body GPS.Kernel.Messages is
       procedure Notify_Models_About_Message_Removed
         (Self   : not null access constant Messages_Container'Class;
          Parent : not null access Node_Record'Class;
-         Index  : Positive)
+         Index  : Positive;
+         Flags  : Message_Flags)
       is
          Model_Position : Model_Vectors.Cursor := Self.Models.First;
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).Message_Removed
-              (Node_Access (Parent), Index);
+            if Match (Element (Model_Position).Flags, Flags) then
+               Element (Model_Position).Message_Removed
+                 (Node_Access (Parent), Index);
+            end if;
+
             Next (Model_Position);
          end loop;
       end Notify_Models_About_Message_Removed;
@@ -1227,12 +1327,14 @@ package body GPS.Kernel.Messages is
 
    procedure Register_Listener
      (Self     : not null access Messages_Container;
-      Listener : not null Listener_Access)
+      Listener : not null Listener_Access;
+      Flags    : Message_Flags)
    is
       Listener_Position : constant Listener_Vectors.Cursor :=
                             Self.Listeners.Find (Listener);
 
    begin
+      Listener.Flags := Flags;
       if not Has_Element (Listener_Position) then
          Self.Listeners.Append (Listener);
       end if;
@@ -1324,18 +1426,21 @@ package body GPS.Kernel.Messages is
          end;
       end loop;
 
-      Self.Category_Map.Delete (Category_Position);
-      Self.Categories.Delete (Category_Index);
-
       declare
          Model_Position : Model_Vectors.Cursor := Self.Models.First;
 
       begin
          while Has_Element (Model_Position) loop
-            Element (Model_Position).Category_Removed (Category_Index);
+            if Match (Element (Model_Position).Flags, Category_Node.Flags) then
+               Element (Model_Position).Category_Removed (Category_Index);
+            end if;
+
             Next (Model_Position);
          end loop;
       end;
+
+      Self.Category_Map.Delete (Category_Position);
+      Self.Categories.Delete (Category_Index);
 
       Free (Category_Node);
    end Remove_Category;
@@ -1376,6 +1481,7 @@ package body GPS.Kernel.Messages is
       Recursive     : Boolean)
    is
       Category_Node : Node_Access := File_Node.Parent;
+      Flags         : constant Message_Flags := File_Node.Flags;
 
    begin
       --  Remove messages
@@ -1393,7 +1499,7 @@ package body GPS.Kernel.Messages is
       --  Notify listeners
 
       Notifiers.Notify_Listeners_About_File_Removed
-        (Self, Category_Node.Name, File_Node.File);
+        (Self, Category_Node.Name, File_Node.File, (True, True));
 
       --  Delete file's node
 
@@ -1404,7 +1510,7 @@ package body GPS.Kernel.Messages is
       --  Nofity models
 
       Notifiers.Notify_Models_About_File_Removed
-        (Self, Category_Node, File_Index);
+        (Self, Category_Node, File_Index, Flags);
 
       --  Remove category when there are no files for it
 
@@ -1470,7 +1576,8 @@ package body GPS.Kernel.Messages is
 
       Parent    : Node_Access := Message.Parent;
       Index     : constant Positive :=
-                    Parent.Children.Find_Index (Node_Access (Message));
+        Parent.Children.Find_Index (Node_Access (Message));
+      Flags     : constant Message_Flags := Message.Flags;
 
    begin
       while not Message.Children.Is_Empty loop
@@ -1486,7 +1593,9 @@ package body GPS.Kernel.Messages is
       Notifiers.Notify_Listeners_About_Message_Removed (Self, Message);
       Message.Decrement_Message_Counters;
       Parent.Children.Delete (Index);
-      Notifiers.Notify_Models_About_Message_Removed (Self, Parent, Index);
+
+      Notifiers.Notify_Models_About_Message_Removed
+        (Self, Parent, Index, Flags);
 
       Message.Finalize;
       Free (Message);
@@ -1585,6 +1694,18 @@ package body GPS.Kernel.Messages is
                   "column",
                   Trim
                     (Visible_Column_Type'Image (Current_Node.Column), Both));
+
+               declare
+                  Flags_Int : constant Integer := To_Int (Current_Node.Flags);
+               begin
+                  --  No need to emit a flag node if it is going to be 0, since
+                  --  this is the default. Saves some bytes in the XML files.
+                  if Flags_Int /= 0 then
+                     Set_Attribute
+                       (XML_Node,
+                        "flags", Trim (Integer'Image (Flags_Int), Both));
+                  end if;
+               end;
 
                if Current_Node.Mark.Line /= Current_Node.Line then
                   Set_Attribute
@@ -1755,7 +1876,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
-      Style  : GPS.Kernel.Styles.Style_Access;
+      Style  : GPS.Styles.Style_Access;
       Length : Positive) is
    begin
       Self.Style := Style;
@@ -1771,7 +1892,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self  : not null access Abstract_Message'Class;
-      Style : GPS.Kernel.Styles.Style_Access) is
+      Style : GPS.Styles.Style_Access) is
    begin
       Self.Style := Style;
       Self.Length := 0;
@@ -1819,5 +1940,40 @@ package body GPS.Kernel.Messages is
          Self.Listeners.Delete (Listener_Position);
       end if;
    end Unregister_Listener;
+
+   ------------
+   -- To_Int --
+   ------------
+
+   function To_Int (Flags : Message_Flags) return Integer is
+      Int : Integer := 0;
+
+   begin
+      for K in Message_Visibility_Kind loop
+         if not Flags (K) then
+            Int := Int + 2** (Message_Visibility_Kind'Pos (K));
+         end if;
+      end loop;
+
+      return Int;
+   end To_Int;
+
+   --------------
+   -- From_Int --
+   --------------
+
+   function From_Int (Int : Integer) return Message_Flags is
+      Flags : Message_Flags := (Editor_Side => True, Locations => True);
+      type T is mod 2**32;
+      B : constant T := T (Int);
+   begin
+      for K in Message_Visibility_Kind loop
+         if (B and 2**Message_Visibility_Kind'Pos (K)) = 1 then
+            Flags (K) := False;
+         end if;
+      end loop;
+
+      return Flags;
+   end From_Int;
 
 end GPS.Kernel.Messages;

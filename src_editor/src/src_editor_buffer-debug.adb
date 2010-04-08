@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -65,7 +65,7 @@ package body Src_Editor_Buffer.Debug is
    function To_String (Info : Line_Info_Width_Array_Access) return String;
    function To_String (Info : Line_Data_Record) return String;
    function To_String (X : GNAT.Strings.String_Access) return String;
-   function To_String (X : Line_Information_Access) return String;
+   function To_String (X : Message_Access) return String;
    function To_String (X : Gdk_Pixbuf) return String;
    function To_String (X : Command_Access) return String;
    --  Utility functions
@@ -125,15 +125,15 @@ package body Src_Editor_Buffer.Debug is
    -- To_String --
    ---------------
 
-   function To_String (X : Line_Information_Access) return String is
+   function To_String (X : Message_Access) return String is
    begin
-      if X = null then
+      if X = null or X.Get_Action = null then
          return "NULL";
       else
-         return "Text: " & To_String (X.Text) & ", "
-           & "Tooltip: " & To_String (X.Tooltip_Text) & ", "
-           & "Image: " & To_String (X.Image) & ", "
-           & "Command: " & To_String (X.Associated_Command);
+         return "Text: " & To_String (X.Get_Action.Text) & ", "
+           & "Tooltip: " & To_String (X.Get_Action.Tooltip_Text) & ", "
+           & "Image: " & To_String (X.Get_Action.Image) & ", "
+           & "Command: " & To_String (X.Get_Action.Associated_Command);
       end if;
    end To_String;
 
@@ -164,7 +164,7 @@ package body Src_Editor_Buffer.Debug is
 
       for J in Info'Range loop
          Res := Res & "#"
-           & To_String (Info (J).Info) & ", " & I (Info (J).Width)
+           & To_String (Info (J).Message) & ", " & I (Info (J).Width)
            & "#";
       end loop;
 

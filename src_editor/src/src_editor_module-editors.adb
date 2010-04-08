@@ -37,7 +37,9 @@ with Pango.Enums;               use Pango.Enums;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
@@ -2177,7 +2179,30 @@ package body Src_Editor_Module.Editors is
          return;
       end if;
 
-      Add_File_Information (This.Contents.Buffer, Identifier, Info);
+      declare
+         Messages : Message_Array (Info'Range);
+         Simple   : Simple_Message_Access;
+         Action   : GPS.Kernel.Messages.Action_Item;
+      begin
+         for J in Info'Range loop
+            Simple := Create_Simple_Message
+              (Container => Source_Module_Container,
+               Category  => Identifier,
+               File      => This.File,
+               Line      => J,
+               Column    => 0,
+               Text      => "",
+               Weight    => 0,
+               Flags     => (Editor_Side => True, Locations => False));
+            Action := new Line_Information_Record;
+            Action.all := Info (J);
+            Simple.Set_Action (Action);
+
+            Messages (J) := Message_Access (Simple);
+         end loop;
+
+         Add_File_Information (This.Contents.Buffer, Identifier, Messages);
+      end;
    end Add_File_Information;
 
    --------------------

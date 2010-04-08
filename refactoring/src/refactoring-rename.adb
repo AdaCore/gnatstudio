@@ -261,7 +261,8 @@ package body Refactoring.Rename is
                Refs.Table (L).Line,
                Refs.Table (L).Column,
                -"error, failed to rename entity",
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
 
             if Length (Errors) = 0
               or else Refs.Table (L).File /= Errors.Table (Last (Errors))
@@ -280,7 +281,8 @@ package body Refactoring.Rename is
                Refs.Table (L).Line,
                Refs.Table (L).Column,
                -"entity renamed",
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
          end if;
       end loop;
 

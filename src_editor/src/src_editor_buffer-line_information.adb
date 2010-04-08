@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,6 +38,8 @@ with Commands.Editor;          use Commands.Editor;
 with GPS.Editors;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with Src_Editor_Module;        use Src_Editor_Module;
@@ -48,9 +50,6 @@ with Language.Ada;             use Language.Ada;
 package body Src_Editor_Buffer.Line_Information is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Buffer.Line_Information");
-
-   Block_Info_Column : constant String := "Block Information";
-   --  Identifier for the block information column
 
    procedure Free (Info : in out Line_Information_Access);
    --  Free memory associated with Info
@@ -88,12 +87,32 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_Side_Information
      (Buffer         : access Source_Buffer_Record'Class;
       Identifier     : String;
-      Info           : Line_Information_Data;
+      Messages       : Message_Array;
       At_Buffer_Line : Buffer_Line_Type);
    --  Factor code between Add_File_Information and Add_Special_Lines.
    --  If At_Buffer_Line is 0, insert the information at the editable lines
    --  indicated by the indexes of Info. Otherwise, add them at the buffer
    --  lines starting at At_Buffer_Line.
+
+   function Column_For_Identifier
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String) return Integer;
+   --  Return the index of the column corresponding to Identifier in the side
+   --  information column.
+
+   procedure Put_Message
+     (Buffer        : access Source_Buffer_Record'Class;
+      Editable_Line : Editable_Line_Type;
+      Column        : Integer;
+      Width         : Integer;
+      Message       : Message_Access;
+      Remove_Old    : Boolean);
+   --  Add Message in the column in Buffer.
+   --  Message can be null.
+   --  Remove other messages.
+   --  Width is the computed width of the message.
+   --  If Remove_Old is True, old messages at the pointed line/column will be
+   --  removed.
 
    -------------------------
    -- Foreach_Hidden_Line --
@@ -241,9 +260,9 @@ package body Src_Editor_Buffer.Line_Information is
 
                D.Side_Info_Data
                  (D.Side_Info_Data'Last) :=
-                 (Info  => null,
-                  Width => Width,
-                  Set   => not Every_Line);
+                 (Message  => null,
+                  Width    => Width,
+                  Set      => not Every_Line);
             end;
          end if;
       end Process_Data;
@@ -533,11 +552,148 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_File_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Info       : Line_Information_Data)
+      Messages   : Message_Array)
    is
    begin
-      Add_Side_Information (Buffer, Identifier, Info, 0);
+      Add_Side_Information (Buffer, Identifier, Messages, 0);
    end Add_File_Information;
+
+   ---------------------
+   -- Remove_Messages --
+   ---------------------
+
+   procedure Remove_Messages
+     (Buffer     : access Source_Buffer_Record'Class;
+      Messages   : Message_Array)
+   is
+      Editable_Line : Editable_Line_Type;
+      BL            : Buffer_Line_Type;
+      Column        : Integer;
+
+   begin
+      for J in Messages'Range loop
+         for K in Messages'Range loop
+            Column := Column_For_Identifier
+              (Buffer, Messages (K).Get_Category);
+            Editable_Line := Editable_Line_Type
+              (Messages (K).Get_Editor_Mark.Line);
+
+            if Editable_Line /= 0 then
+               case Buffer.Editable_Lines (Editable_Line).Where is
+               when In_Buffer =>
+                  BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+
+                  if Buffer.Line_Data (BL).Side_Info_Data (Column).Message =
+                    Messages (K)
+                  then
+                     Buffer.Line_Data (BL).Side_Info_Data (Column).Message :=
+                       null;
+                     Buffer.Line_Data (BL).Side_Info_Data (Column).Width := 0;
+                     Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
+                  end if;
+
+               when In_Mark =>
+                  if Buffer.Editable_Lines
+                    (Editable_Line).UL.Data.Side_Info_Data (Column).Message =
+                    Messages (K)
+                  then
+                     Buffer.Editable_Lines
+                       (Editable_Line).UL.Data.Side_Info_Data (Column).Message
+                       := null;
+                     Buffer.Editable_Lines
+                       (Editable_Line).UL.Data.Side_Info_Data (Column).Width
+                       := 0;
+                     Buffer.Editable_Lines
+                       (Editable_Line).UL.Data.Side_Info_Data
+                       (Column).Set := True;
+                  end if;
+               end case;
+            end if;
+         end loop;
+
+      end loop;
+   end Remove_Messages;
+
+   ---------------------------
+   -- Column_For_Identifier --
+   ---------------------------
+
+   function Column_For_Identifier
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String) return Integer
+   is
+      Columns_Config : Columns_Config_Access;
+      Column : Integer := -1;
+   begin
+      Columns_Config := Buffer.Editable_Line_Info_Columns;
+
+      if Columns_Config /= null and then Columns_Config.all /= null then
+         for J in Columns_Config.all'Range loop
+            if Columns_Config.all (J).Identifier.all = Identifier then
+               Column := J;
+               exit;
+
+            elsif Columns_Config.all (J).Identifier.all = Default_Column then
+               --  This branch will make sure that we have a column
+               --  corresponding to the default column if there is no column
+               --  for Identifier.
+               Column := J;
+            end if;
+         end loop;
+      end if;
+
+      return Column;
+   end Column_For_Identifier;
+
+   ---------------------------
+   -- Add_Extra_Information --
+   ---------------------------
+
+   procedure Add_Extra_Information
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Info       : Line_Information_Data)
+   is
+      Found  : Boolean := False;
+   begin
+
+      --  Look for an existing entry
+
+      if Buffer.Extra_Information = null then
+         Buffer.Extra_Information := new Extra_Information_Array'
+           (1 => new Extra_Information_Record'
+              (Identifier => new String'(Identifier),
+               Info    => new Line_Information_Record'(Info (Info'First))));
+
+      else
+         for J in Buffer.Extra_Information'Range loop
+            if Buffer.Extra_Information (J).Identifier.all = Identifier then
+               Free (Buffer.Extra_Information (J).Info);
+               Buffer.Extra_Information (J).Info :=
+                 new Line_Information_Record'(Info (Info'First));
+               Found := True;
+               exit;
+            end if;
+         end loop;
+
+         if not Found then
+            declare
+               A : Extra_Information_Array
+                 (1 .. Buffer.Extra_Information'Last + 1);
+            begin
+               A (1 .. Buffer.Extra_Information'Last) :=
+                 Buffer.Extra_Information.all;
+               A (Buffer.Extra_Information'Last + 1) :=
+                 new Extra_Information_Record'
+                   (Info       => new Line_Information_Record'
+                        (Info (Info'First)),
+                    Identifier => new String'(Identifier));
+            end;
+         end if;
+      end if;
+
+      Buffer_Information_Changed (Buffer);
+   end Add_Extra_Information;
 
    --------------------------
    -- Add_Side_Information --
@@ -546,67 +702,24 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_Side_Information
      (Buffer         : access Source_Buffer_Record'Class;
       Identifier     : String;
-      Info           : Line_Information_Data;
+      Messages       : Message_Array;
       At_Buffer_Line : Buffer_Line_Type)
    is
       Column : Integer := -1;
       Num    : Gint := 1;
       Height : Gint;
       Width  : Gint := -1;
-      Widths : array (Info'Range) of Gint;
+      Widths : array (Messages'Range) of Gint;
       Layout : Pango_Layout;
-      Found  : Boolean := False;
+
+      Old_Msg : Message_Access;
 
       Editable_Line : Editable_Line_Type;
       BL : Buffer_Line_Type;
 
       Columns_Config : Columns_Config_Access;
-
+      Action : GPS.Kernel.Messages.Action_Item;
    begin
-      --  Test if we are adding extra information, or line information
-
-      if Info'First < 0 then
-         --  Look for an existing entry
-
-         if Buffer.Extra_Information = null then
-            Buffer.Extra_Information := new Extra_Information_Array'
-              (1 => new Extra_Information_Record'
-                 (Identifier => new String'(Identifier),
-                  Info    => new Line_Information_Record'(Info (Info'First))));
-
-         else
-            for J in Buffer.Extra_Information'Range loop
-               if Buffer.Extra_Information (J).Identifier.all = Identifier then
-                  Free (Buffer.Extra_Information (J).Info);
-                  Buffer.Extra_Information (J).Info :=
-                    new Line_Information_Record'(Info (Info'First));
-                  Found := True;
-                  exit;
-               end if;
-            end loop;
-
-            if not Found then
-               declare
-                  A : Extra_Information_Array
-                    (1 .. Buffer.Extra_Information'Last + 1);
-               begin
-                  A (1 .. Buffer.Extra_Information'Last) :=
-                    Buffer.Extra_Information.all;
-                  A (Buffer.Extra_Information'Last + 1) :=
-                    new Extra_Information_Record'
-                      (Info       => new Line_Information_Record'
-                           (Info (Info'First)),
-                       Identifier => new String'(Identifier));
-               end;
-            end if;
-         end if;
-
-         Buffer_Information_Changed (Buffer);
-         return;
-      end if;
-
-      --  If we reach this point, the info corresponds to line information
-
       Layout := Create_Pango_Layout
         (Gtk_Widget (Get_Main_Window (Buffer.Kernel)));
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
@@ -617,88 +730,68 @@ package body Src_Editor_Buffer.Line_Information is
       --  in Src_Editor_View.Redraw_Columns, since that function is
       --  called a great number of times.
 
-      for J in Info'Range loop
+      for J in Messages'Range loop
          Widths (J) := -1;
 
-         if Info (J).Text /= null then
-            Set_Markup (Layout, String'(Info (J).Text.all));
-            Get_Pixel_Size (Layout, Num, Height);
+         Action := Get_Action (Messages (J));
 
-            if Num = 0 then
-               Num := 1;
+         if Action /= null then
+            if Action.Text /= null then
+               Set_Markup (Layout, String'(Action.Text.all));
+               Get_Pixel_Size (Layout, Num, Height);
+
+               if Num = 0 then
+                  Num := 1;
+               end if;
+
+               Widths (J) := Num;
+
+               if Num > Width then
+                  Width := Num;
+               end if;
             end if;
 
-            Widths (J) := Num;
+            if Action.Image /= Null_Pixbuf then
+               Num := Get_Width (Action.Image);
 
-            if Num > Width then
-               Width := Num;
-            end if;
-         end if;
+               Widths (J) := Num;
 
-         if Info (J).Image /= Null_Pixbuf then
-            Num := Get_Width (Info (J).Image);
-
-            Widths (J) := Num;
-
-            if Num > Width then
-               Width := Num;
+               if Num > Width then
+                  Width := Num;
+               end if;
             end if;
          end if;
       end loop;
 
       --  Get the column that corresponds to Identifier
 
-      Columns_Config := Buffer.Editable_Line_Info_Columns;
-
-      if Columns_Config /= null and then Columns_Config.all /= null then
-         for J in Columns_Config.all'Range loop
-            if Columns_Config.all (J).Identifier.all = Identifier then
-               Column := J;
-               exit;
-            end if;
-         end loop;
-      end if;
-
-      --  The column has not been found: exit
-
-      if Column = -1 then
-         return;
-      end if;
+      Column := Column_For_Identifier (Buffer, Identifier);
 
       --  The column has been found: update the stored data
 
       if At_Buffer_Line = 0 then
-         for K in Info'Range loop
-            Editable_Line := Editable_Line_Type (K);
-
-            if Editable_Line /= 0 then
-               case Buffer.Editable_Lines (Editable_Line).Where is
-               when In_Buffer =>
-                  BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-                  Buffer.Line_Data (BL).Side_Info_Data (Column).Info :=
-                    new Line_Information_Record'(Info (K));
-                  Buffer.Line_Data (BL).Side_Info_Data (Column).Width :=
-                    Integer (Widths (K));
-                  Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
-
-               when In_Mark =>
-                  Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data (Column).Info :=
-                    new Line_Information_Record'(Info (K));
-                  Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data (Column).Width :=
-                    Integer (Widths (K));
-                  Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data
-                    (Column).Set := True;
-               end case;
-            end if;
+         for K in Messages'Range loop
+            Editable_Line := Editable_Line_Type (Get_Line (Messages (K)));
+            Put_Message
+              (Buffer        => Buffer,
+               Editable_Line => Editable_Line,
+               Column        => Column,
+               Width         => Integer (Widths (K)),
+               Message       => Messages (K),
+               Remove_Old    => False);
          end loop;
       else
-         for K in Info'Range loop
-            BL := At_Buffer_Line + Buffer_Line_Type (K - Info'First);
-            Buffer.Line_Data (BL).Side_Info_Data (Column).Info :=
-              new Line_Information_Record'(Info (K));
+         for K in Messages'Range loop
+            BL := At_Buffer_Line + Buffer_Line_Type
+              (Messages (K).Get_Line - Messages (Messages'First).Get_Line);
+
+            Old_Msg := Buffer.Line_Data (BL).Side_Info_Data (Column).Message;
+            if Old_Msg /= null then
+               Old_Msg.Remove;
+            end if;
+
+            Buffer.Line_Data (BL).Side_Info_Data (Column).Message :=
+              Messages (K);
             Buffer.Line_Data (BL).Side_Info_Data (Column).Width :=
               Integer (Widths (K));
             Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
@@ -707,6 +800,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  If the line info width is bigger than the column width, resize the
       --  column and all columns.
+
+      Columns_Config := Buffer.Editable_Line_Info_Columns;
 
       if Integer (Width) > Columns_Config.all (Column).Width then
          Columns_Config.all (Column).Width := Integer (Width);
@@ -820,31 +915,36 @@ package body Src_Editor_Buffer.Line_Information is
       ---------------
 
       procedure Draw_Info (Starting_X : Gint) is
+         Action : GPS.Kernel.Messages.Action_Item;
       begin
-         if Line_Info.Info /= null then
-            if Line_Info.Info.Text /= null then
-               Set_Markup (Layout, Line_Info.Info.Text.all);
+         if Line_Info.Message /= null then
+            Action := Line_Info.Message.Get_Action;
 
-               Draw_Layout
-                 (Drawable => Drawable,
-                  GC       => GC,
-                  X        => Starting_X,
-                  Y        => Y_Pix_In_Window,
-                  Layout   => Layout);
-            end if;
+            if Action /= null then
+               if Action.Text /= null then
+                  Set_Markup (Layout, Action.Text.all);
 
-            if Line_Info.Info.Image /= Null_Pixbuf then
-               Render_To_Drawable
-                 (Pixbuf   => Line_Info.Info.Image,
-                  Drawable => Drawable,
-                  GC       => GC,
-                  Src_X    => 0,
-                  Src_Y    => 0,
-                  Dest_X   => Starting_X,
-                  Dest_Y   => Y_Pix_In_Window + (Line_Height -
-                    Get_Height (Line_Info.Info.Image)) / 2,
-                  Width    => -1,
-                  Height   => -1);
+                  Draw_Layout
+                    (Drawable => Drawable,
+                     GC       => GC,
+                     X        => Starting_X,
+                     Y        => Y_Pix_In_Window,
+                     Layout   => Layout);
+               end if;
+
+               if Action.Image /= Null_Pixbuf then
+                  Render_To_Drawable
+                    (Pixbuf   => Action.Image,
+                     Drawable => Drawable,
+                     GC       => GC,
+                     Src_X    => 0,
+                     Src_Y    => 0,
+                     Dest_X   => Starting_X,
+                     Dest_Y   => Y_Pix_In_Window + (Line_Height -
+                         Get_Height (Action.Image)) / 2,
+                     Width    => -1,
+                     Height   => -1);
+               end if;
             end if;
          end if;
       end Draw_Info;
@@ -908,8 +1008,10 @@ package body Src_Editor_Buffer.Line_Information is
    is
       BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
       Result : Command_Return_Type;
+
       pragma Unreferenced (Result);
 
+      Command : Command_Access;
    begin
       Set_Cursor_Position
         (Buffer, Gint (Line - 1), 0, GPS.Editors.Minimal, False);
@@ -920,24 +1022,23 @@ package body Src_Editor_Buffer.Line_Information is
               (BL.all (Col).Width + BL.all (Col).Starting_X +
                  Buffer.Line_Numbers_Width)
             then
-               if Buffer.Line_Data (Line).Side_Info_Data (Col).Info /= null
+               if Buffer.Line_Data (Line).Side_Info_Data (Col).Message /= null
                  and then Buffer.Line_Data (Line).Side_Info_Data
-                 (Col).Info.Associated_Command /= null
+                 (Col).Message.Get_Action /= null
+                 and then Buffer.Line_Data (Line).Side_Info_Data
+                 (Col).Message.Get_Action.Associated_Command /= null
                then
+                  Command := Buffer.Line_Data (Line).Side_Info_Data
+                    (Col).Message.Get_Action.Associated_Command;
                   --  Set the Base_Line field of the command right before
                   --  executing it, if appropriate.
-                  if Buffer.Line_Data (Line).Side_Info_Data
-                    (Col).Info.Associated_Command.all in
+                  if Command.all in
                     Base_Editor_Command_Type'Class
                   then
-                     Base_Editor_Command_Type
-                       (Buffer.Line_Data (Line).Side_Info_Data
-                        (Col).Info.Associated_Command.all).Base_Line := Line;
+                     Base_Editor_Command_Type (Command.all).Base_Line := Line;
                   end if;
 
-                  Result := Execute
-                    (Buffer.Line_Data
-                       (Line).Side_Info_Data (Col).Info.Associated_Command);
+                  Result := Execute (Command);
                end if;
 
                return;
@@ -1029,12 +1130,38 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Modifying_Real_Lines := False;
 
-      if Info /= null then
-         Add_Side_Information
-           (Buffer         => Buffer,
-            Identifier     => Column_Id,
-            Info           => Info,
-            At_Buffer_Line => Line);
+      if Info /= null
+        and then Info'Length /= 0
+      then
+         declare
+            Messages : Message_Array (Info'Range);
+            Simple   : Simple_Message_Access;
+            Action   : GPS.Kernel.Messages.Action_Item;
+         begin
+            for J in Info'Range loop
+               Simple := Create_Simple_Message
+                 (Container => Source_Module_Container,
+                  Category  => Default_Column,
+                  File      => Buffer.Filename,
+                  Line      => 0,
+                  Column    => 0,
+                  Text      => "",
+                  Weight    => 0,
+                  Flags     => (Editor_Side => True, Locations => False));
+               Action := new Line_Information_Record;
+               --  ??? Who frees this?
+               Action.all := Info (J);
+               Simple.Set_Action (Action);
+
+               Messages (J) := Message_Access (Simple);
+            end loop;
+
+            Add_Side_Information
+              (Buffer         => Buffer,
+               Identifier     => Column_Id,
+               Messages       => Messages,
+               At_Buffer_Line => Line);
+         end;
       end if;
 
       return Mark;
@@ -1084,6 +1211,79 @@ package body Src_Editor_Buffer.Line_Information is
       return M;
    end Add_Special_Lines;
 
+   -----------------
+   -- Put_Message --
+   -----------------
+
+   procedure Put_Message
+     (Buffer        : access Source_Buffer_Record'Class;
+      Editable_Line : Editable_Line_Type;
+      Column        : Integer;
+      Width         : Integer;
+      Message       : Message_Access;
+      Remove_Old    : Boolean)
+   is
+      Old_Msg : Message_Access;
+   begin
+      case Buffer.Editable_Lines (Editable_Line).Where is
+         when In_Buffer =>
+            declare
+               B : constant Buffer_Line_Type :=
+                 Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+            begin
+               if Buffer.Line_Data (B).Side_Info_Data
+                 /= null
+               then
+                  if Remove_Old then
+                     Old_Msg := Buffer.Line_Data
+                       (B).Side_Info_Data (Column).Message;
+
+                     if Old_Msg /= null
+                       and then Old_Msg /= Message
+                     then
+                        Old_Msg.Remove;
+                     end if;
+                  end if;
+
+                  Free (Buffer.Line_Data (B).Side_Info_Data
+                        (Column));
+
+                  Buffer.Line_Data (B).Side_Info_Data
+                    (Column) :=
+                    (Message => Message,
+                     Width   => Width,
+                     Set     => True);
+               end if;
+            end;
+
+         when In_Mark =>
+            if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
+              /= null
+            then
+               if Remove_Old then
+                  Old_Msg := Buffer.Editable_Lines
+                    (Editable_Line).UL.Data.Side_Info_Data
+                    (Column).Message;
+
+                  if Old_Msg /= null
+                    and then Old_Msg /= Message
+                  then
+                     Old_Msg.Remove;
+                  end if;
+               end if;
+
+               Free (Buffer.Editable_Lines
+                     (Editable_Line).UL.Data.Side_Info_Data (Column));
+
+               Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
+                 (Column) :=
+                 (Message => Message,
+                  Width => Width,
+                  Set   => True);
+            end if;
+      end case;
+   end Put_Message;
+
    -----------------------
    -- Add_Block_Command --
    -----------------------
@@ -1094,14 +1294,16 @@ package body Src_Editor_Buffer.Line_Information is
       Command       : Command_Access;
       Image         : Gdk_Pixbuf)
    is
-      Width : Integer;
       BL    : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
+      Message : Simple_Message_Access;
+      Width   : Integer;
+      Action  : GPS.Kernel.Messages.Action_Item;
    begin
       --  Create the line information column.
       --  ??? This should not occur every time.
 
       if Buffer.Block_Highlighting_Column = -1 then
-         Create_Line_Information_Column (Buffer, Block_Info_Column, False);
+         Create_Line_Information_Column (Buffer, Default_Column, False);
          Buffer.Block_Highlighting_Column := BL.all'Last;
       end if;
 
@@ -1111,47 +1313,28 @@ package body Src_Editor_Buffer.Line_Information is
          Width := Integer (Get_Width (Image));
       end if;
 
-      case Buffer.Editable_Lines (Editable_Line).Where is
-         when In_Buffer =>
-            declare
-               B : constant Buffer_Line_Type :=
-                 Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-            begin
-               if Buffer.Line_Data (B).Side_Info_Data
-                 /= null
-               then
-                  Free (Buffer.Line_Data (B).Side_Info_Data
-                        (Buffer.Block_Highlighting_Column));
-                  Buffer.Line_Data (B).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column) :=
-                    (Info  => new Line_Information_Record'
-                       (Text               => null,
-                        Tooltip_Text       => null,
-                        Image              => Image,
-                        Associated_Command => Command),
-                     Width => Width,
-                     Set   => True);
-               end if;
-            end;
+      if Action /= null
+        or else Command /= null
+      then
+         Message := Create_Simple_Message
+           (Source_Module_Container,
+            Category => Default_Column,
+            File     => Buffer.Filename,
+            Line     => 0,
+            Column   => 0,
+            Text     => "",
+            Weight   => 0,
+            Flags    => (Editor_Side => True, Locations => False));
 
-         when In_Mark =>
-            if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
-              /= null
-            then
-               Free (Buffer.Editable_Lines
-                     (Editable_Line).UL.Data.Side_Info_Data
-                     (Buffer.Block_Highlighting_Column));
-               Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
-                 (Buffer.Block_Highlighting_Column) :=
-                 (Info  => new Line_Information_Record'
-                    (Text               => null,
-                     Tooltip_Text       => null,
-                     Image              => Image,
-                     Associated_Command => Command),
-                  Width => Width,
-                  Set   => True);
-            end if;
-      end case;
+         Action := new GPS.Editors.Line_Information_Record;
+         Action.Image := Image;
+         Action.Associated_Command := Command;
+
+         Message.Set_Action (Action);
+      end if;
+
+      Put_Message (Buffer, Editable_Line, Buffer.Block_Highlighting_Column,
+                   Width, Message_Access (Message), True);
 
       if Command /= null then
          BL.all (Buffer.Block_Highlighting_Column).Width := Width;
@@ -1930,11 +2113,14 @@ package body Src_Editor_Buffer.Line_Information is
             begin
                if Buffer.Line_Data (BL).Side_Info_Data /= null
                  and then Buffer.Line_Data (BL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column).Info /= null
+                 (Buffer.Block_Highlighting_Column).Message /= null
+                 and then Buffer.Line_Data (BL).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column).Message.Get_Action /= null
                then
                   Command :=
                     Buffer.Line_Data (BL).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+                    (Buffer.Block_Highlighting_Column
+                    ).Message.Get_Action.Associated_Command;
 
                   if Command /= null
                     and then Command.all in Hide_Editable_Lines_Type'Class
@@ -2033,11 +2219,14 @@ package body Src_Editor_Buffer.Line_Information is
 
             if Buffer.Line_Data (BL).Side_Info_Data /= null
               and then Buffer.Line_Data (BL).Side_Info_Data
-                         (Buffer.Block_Highlighting_Column).Info /= null
+              (Buffer.Block_Highlighting_Column).Message /= null
+              and then Buffer.Line_Data (BL).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Message.Get_Action /= null
             then
                Command :=
                  Buffer.Line_Data (BL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+                 (Buffer.Block_Highlighting_Column
+                 ).Message.Get_Action.Associated_Command;
 
                if Command /= null
                  and then
@@ -2121,11 +2310,14 @@ package body Src_Editor_Buffer.Line_Information is
       for Line in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (Line).Side_Info_Data /= null
            and then Buffer.Line_Data (Line).Side_Info_Data
-           (Buffer.Block_Highlighting_Column).Info /= null
+           (Buffer.Block_Highlighting_Column).Message /= null
+           and then Buffer.Line_Data (Line).Side_Info_Data
+           (Buffer.Block_Highlighting_Column).Message.Get_Action /= null
          then
             Command :=
               Buffer.Line_Data (Line).Side_Info_Data
-              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+              (Buffer.Block_Highlighting_Column
+              ).Message.Get_Action.Associated_Command;
 
             if Command /= null then
                if Command.all in Hide_Editable_Lines_Type'Class
@@ -2148,7 +2340,7 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       if not Other_Command_Found then
-         Remove_Line_Information_Column (Buffer, Block_Info_Column);
+
          Buffer.Block_Highlighting_Column := -1;
       end if;
    end Remove_Block_Folding_Commands;

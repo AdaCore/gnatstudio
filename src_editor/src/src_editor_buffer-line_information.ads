@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,12 +40,24 @@ package Src_Editor_Buffer.Line_Information is
       Identifier : String);
    --  Remove a column from the side information in Buffer
 
+   procedure Add_Extra_Information
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Info       : Line_Information_Data);
+   --  Add extra information in the buffer. Extra information is for example
+   --  the VCS status information displayed at the bottom of editors.
+
    procedure Add_File_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Info       : GPS.Editors.Line_Information_Data);
+      Messages   : Message_Array);
    --  Add the line information to the Buffer.
    --  User must not free Info.
+
+   procedure Remove_Messages
+     (Buffer     : access Source_Buffer_Record'Class;
+      Messages   : Message_Array);
+   --  Remove messages from Buffer
 
    procedure Free_File_Information
      (Buffer : access Source_Buffer_Record'Class);

@@ -81,7 +81,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Highlighting;
 with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -305,7 +304,6 @@ package body GPS.Kernel is
       --  Create the message container
 
       Handle.Messages_Container := Create_Messages_Container (Handle);
-      GPS.Kernel.Messages.Highlighting.Register (Handle);
       GPS.Kernel.Messages.View.Register (Handle);
 
       On_Preferences_Changed (Handle);
@@ -1731,7 +1729,6 @@ package body GPS.Kernel is
 
       Free (Handle.Logs_Mapper);
       GPS.Kernel.Messages.View.Unregister (Handle);
-      GPS.Kernel.Messages.Highlighting.Unregister (Handle);
       Free_Modules (Handle);
       Free_Messages_Container (Handle);
       Unref (Handle.Tooltips);

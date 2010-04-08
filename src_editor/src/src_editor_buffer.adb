@@ -71,7 +71,6 @@ with GPS.Kernel.Console;                  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;                 use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;          use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
@@ -153,7 +152,8 @@ package body Src_Editor_Buffer is
            4 => New_String (String (Signal_Line_Highlights_Changed)),
            5 => New_String (String (Signal_Status_Changed)),
            6 => New_String (String (Signal_Filename_Changed)),
-           7 => New_String (String (Signal_Buffer_Information_Changed)));
+           7 => New_String (String (Signal_Buffer_Information_Changed)),
+           8 => New_String (String (Signal_Closed)));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
@@ -163,7 +163,8 @@ package body Src_Editor_Buffer is
                           4 => (GType_None, GType_None),
                           5 => (GType_None, GType_None),
                           6 => (GType_None, GType_None),
-                          7 => (GType_None, GType_None));
+                          7 => (GType_None, GType_None),
+                          8 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -1367,11 +1368,7 @@ package body Src_Editor_Buffer is
       procedure Free (X : in out Line_Info_Width_Array) is
       begin
          for J in X'Range loop
-            if X (J).Info /= null then
-               Free (X (J).Info.all);
-            end if;
-
-            Unchecked_Free (X (J).Info);
+            X (J).Message := null;
          end loop;
       end Free;
 
@@ -2683,6 +2680,10 @@ package body Src_Editor_Buffer is
       Buffer.First_Removed_Line := 0;
 
       End_Action (Buffer);
+
+      --  Create the default column for line information (block folding,
+      --  compiler error messages, etc).
+      Create_Line_Information_Column (Buffer, Default_Column, False);
    end Initialize;
 
    -------------------
@@ -3257,7 +3258,8 @@ package body Src_Editor_Buffer is
                            Positive (Line),
                            1,
                            Get_Message (Error.all),
-                           0);
+                           0,
+                          (Editor_Side => True, Locations => True));
 
                         Error_Free (Error.all);
                         Error.all := null;
@@ -4806,6 +4808,8 @@ package body Src_Editor_Buffer is
       end if;
 
       if Buffer.Number_Of_Views = 0 then
+         Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
+
          if Buffer.Filename /= GNATCOLL.VFS.No_File then
             File_Closed (Buffer.Kernel, Buffer.Filename);
 
@@ -6108,9 +6112,8 @@ package body Src_Editor_Buffer is
 
    procedure Free (X : in out Line_Info_Width) is
    begin
-      if X.Info /= null then
-         Free (X.Info.all);
-         Unchecked_Free (X.Info);
+      if X.Message /= null then
+         X.Message := null;
       end if;
    end Free;
 

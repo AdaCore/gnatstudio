@@ -69,6 +69,7 @@ with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
+with GPS.Styles;                    use GPS.Styles;
 with GPS.Kernel;                    use GPS.Kernel;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
@@ -1133,7 +1134,8 @@ package body Browsers.Call_Graph is
               "<b>" & Name & "</b> ["
               & Kind_To_String (Get_Kind (Ref)) & "] in: "
               & Get_Full_Name (Get_Caller (Ref)),
-              0);
+              0,
+              (Editor_Side => True, Locations => True));
 
       else
          Message :=
@@ -1144,7 +1146,8 @@ package body Browsers.Call_Graph is
               Line,
               Col,
               "<b>" & Name & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
-              0);
+              0,
+              (Editor_Side => True, Locations => True));
       end if;
 
       Message.Set_Highlighting
@@ -1873,7 +1876,9 @@ package body Browsers.Call_Graph is
                        Get_Line (Get_Declaration_Of (Entity2)),
                        Get_Column (Get_Declaration_Of (Entity2)),
                        Get_Name (Entity2).all,
-                       0);
+                       0,
+                       (Editor_Side => True,
+                        Locations   => True));
                   Message.Set_Highlighting
                     (Get_Or_Create_Style_Copy
                        (Kernel_Handle (Kernel),

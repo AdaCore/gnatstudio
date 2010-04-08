@@ -54,6 +54,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Styles;                 use GPS.Styles;
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
@@ -738,7 +739,8 @@ package body Src_Contexts is
                     To_Positive (Match.Begin_Line),
                     Match.Visible_Begin_Column,
                     Match.Text,
-                    0);
+                    0,
+                    (Editor_Side => True, Locations => True));
 
             begin
                Message.Set_Highlighting
@@ -776,7 +778,8 @@ package body Src_Contexts is
                     To_Positive (Match.Begin_Line),
                     Match.Visible_Begin_Column,
                     Match.Text,
-                    0);
+                    0,
+                    (Editor_Side => True, Locations => True));
 
             begin
                Message.Set_Highlighting

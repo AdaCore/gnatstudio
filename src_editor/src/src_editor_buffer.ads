@@ -48,7 +48,8 @@ with Commands;                  use Commands;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
+with GPS.Styles;                use GPS.Styles;
 with Language;
 with Src_Highlighting;
 
@@ -658,9 +659,9 @@ package Src_Editor_Buffer is
    --  The following is related to information to be put in the side column
 
    type Line_Info_Width is record
-      Info  : Line_Information_Access;
-      Width : Integer := 0;
-      Set   : Boolean := False;
+      Message : Message_Access;
+      Width   : Integer := 0;
+      Set     : Boolean := False;
    end record;
 
    type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
@@ -827,6 +828,10 @@ package Src_Editor_Buffer is
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
    --    Emitted when the filename has been changed.
    --
+   --  - "closed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the buffer is closing
+   --
    --  </signals>
 
    Signal_Cursor_Position_Changed           : constant Signal_Name :=
@@ -843,6 +848,8 @@ package Src_Editor_Buffer is
                                                 "status_changed";
    Signal_Filename_Changed                  : constant Signal_Name :=
                                                 "filename_changed";
+   Signal_Closed                            : constant Signal_Name :=
+                                                "closed";
 
    function Get_Buffer_Line
      (Buffer : access Source_Buffer_Record;
@@ -1474,5 +1481,8 @@ private
      (Object : System.Address;
       Name   : Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
+
+   Default_Column : constant String := "Block Information";
+   --  Identifier for the block information column
 
 end Src_Editor_Buffer;

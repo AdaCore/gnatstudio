@@ -25,6 +25,7 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
+with GPS.Styles;                 use GPS.Styles;
 with Code_Analysis_GUI;
 --  ??? Why not replace by Code_Coverage_Gui?
 with Coverage_GUI;               use Coverage_GUI;
@@ -183,7 +184,8 @@ package body Code_Coverage.Gcov is
               Line_Number,
               1,
               Line_Text.all,
-              0);
+              0,
+              (Editor_Side => True, Locations => True));
          Message.Set_Highlighting
            (Get_Or_Create_Style_Copy
               (Kernel,

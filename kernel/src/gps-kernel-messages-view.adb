@@ -114,7 +114,8 @@ package body GPS.Kernel.Messages.View is
 
    begin
       Get_Messages_Container (Kernel).Register_Listener
-        (Listener_Access (Manager));
+        (Listener_Access (Manager),
+         (Editor_Side => False, Locations => True));
       Kernel.Locations_View_Manager := To_Address (Manager);
    end Register;
 

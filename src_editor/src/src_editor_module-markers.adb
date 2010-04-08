@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2009, AdaCore                --
+--                   Copyright (C) 2005-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,10 +53,10 @@ package body Src_Editor_Module.Markers is
    --  no longer attached to a buffer. This is called only when the mark
    --  is explicitly removed from the buffer.
 
-   procedure On_Changed
+   procedure On_Closed
      (Buffer  : access GObject_Record'Class;
       Marker : File_Marker);
-   --  Called when a mark was set or moved in the buffer
+   --  Called when buffer is about to close
 
    procedure Update_Marker_Location
      (Marker : access File_Marker_Record'Class);
@@ -215,18 +215,18 @@ package body Src_Editor_Module.Markers is
       M.Buffer := null;
    end On_Destroy_Buffer;
 
-   ----------------
-   -- On_Changed --
-   ----------------
+   ---------------
+   -- On_Closed --
+   ---------------
 
-   procedure On_Changed
+   procedure On_Closed
      (Buffer : access GObject_Record'Class;
       Marker : File_Marker)
    is
       pragma Unreferenced (Buffer);
    begin
       Update_Marker_Location (Marker);
-   end On_Changed;
+   end On_Closed;
 
    -------------
    -- Destroy --
@@ -345,8 +345,8 @@ package body Src_Editor_Module.Markers is
                    On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
 
          Marker.Cid := Markers_Callback.Connect
-           (Marker.Buffer, Signal_Changed,
-            Markers_Callback.To_Marshaller (On_Changed'Access),
+           (Source_Buffer (Marker.Buffer), Signal_Closed,
+            Markers_Callback.To_Marshaller (On_Closed'Access),
             File_Marker (Marker));
       end if;
    end Create_Text_Mark;
@@ -435,8 +435,8 @@ package body Src_Editor_Module.Markers is
          Kernel  => Kernel_Handle (Kernel));
 
       Marker.Cid := Markers_Callback.Connect
-        (Marker.Buffer, Signal_Changed,
-         Markers_Callback.To_Marshaller (On_Changed'Access), Marker);
+        (Source_Buffer (Marker.Buffer), Signal_Changed,
+         Markers_Callback.To_Marshaller (On_Closed'Access), Marker);
       Weak_Ref (Marker.Buffer, On_Destroy_Buffer'Access, Convert (Marker));
 
       --  No need to add an extra Ref to the mark, its reference already
@@ -664,6 +664,8 @@ package body Src_Editor_Module.Markers is
    begin
       if Right.all in File_Marker_Record'Class then
          FM := File_Marker (Right);
+         Update_Marker_Location (Left);
+         Update_Marker_Location (FM);
          return (FM.File = Left.File) and then
            (FM.Line = Left.Line);
       else

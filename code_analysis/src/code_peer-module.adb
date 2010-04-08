@@ -41,6 +41,7 @@ with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
+with GPS.Styles;                 use GPS.Styles;
 with Projects;                   use Projects;
 with Traces;                     use Traces;
 
@@ -1790,7 +1791,9 @@ package body Code_Peer.Module is
                        Basic_Types.Visible_Column_Type (Message.Column),
                        Image (Message),
                        Message_Probability_Level'Pos
-                         (Message.Current_Probability));
+                         (Message.Current_Probability),
+                       (Editor_Side => True,
+                        Locations   => True));
                   Style   : constant Style_Access :=
                     Module.Message_Styles (Message.Current_Probability);
 
@@ -1859,7 +1862,7 @@ package body Code_Peer.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       procedure Initialize_Style
-        (Style      : out GPS.Kernel.Styles.Style_Access;
+        (Style      : out GPS.Styles.Style_Access;
          Name       : String;
          Preference : Default_Preferences.Color_Preference);
       --  Initializes style and sets background color from preference.
@@ -1869,7 +1872,7 @@ package body Code_Peer.Module is
       ----------------------
 
       procedure Initialize_Style
-        (Style      : out GPS.Kernel.Styles.Style_Access;
+        (Style      : out GPS.Styles.Style_Access;
          Name       : String;
          Preference : Default_Preferences.Color_Preference) is
       begin

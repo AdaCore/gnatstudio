@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with System;
 
 with Ada.Containers.Doubly_Linked_Lists;
 
@@ -37,8 +39,9 @@ with Gtkada.MDI;         use Gtkada.MDI;
 
 with Commands.Controls;  use Commands.Controls;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Kernel.Styles;  use GPS.Kernel.Styles;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Styles;         use GPS.Styles;
 with GPS.Kernel;         use GPS.Kernel;
 with Generic_List;
 with HTables;
@@ -203,6 +206,18 @@ package Src_Editor_Module is
    function Get_Highlighters return List_Of_Highlighters.List;
    --  Return the list of registered highlighters
 
+   --------------
+   -- Messages --
+   --------------
+
+   --  The source editor module has its own messages container with no
+   --  listeners registered, for handling efficiently messages that should
+   --  never be listed in places other than the editors (for instance the
+   --  debugger "dots" on which you can click to add breakpoints)
+
+   function Source_Module_Container return Messages_Container_Access;
+   --  Return the source editor module's message container
+
 private
 
    ------------------------
@@ -300,6 +315,9 @@ private
 
       Editors               : Editors_Hash.Instance;
 
+      Highlighting_Manager : System.Address := System.Null_Address;
+      --  The highlighting manager
+
       --  The following fields are related to the current search
 
       Search_Context        : Src_Contexts.Files_Project_Context_Access;
@@ -309,6 +327,10 @@ private
       --  The following fields are related to hyper mode
 
       Highlighters          : List_Of_Highlighters.List;
+
+      --  The message container
+
+      Container : Messages_Container_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

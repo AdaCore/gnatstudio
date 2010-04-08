@@ -34,7 +34,8 @@ package GPS.Kernel.Messages.Hyperlink is
       Column : Basic_Types.Visible_Column_Type;
       Text   : String;
       First  : Positive;
-      Last   : Natural);
+      Last   : Natural;
+      Flags  : Message_Flags);
    --  Creates new instance of secondary Simple_Message.
 
    procedure Register (Container : not null access Messages_Container'Class);

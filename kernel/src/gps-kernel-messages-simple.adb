@@ -39,7 +39,8 @@ package body GPS.Kernel.Messages.Simple is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Message_Access;
    --  Loads additional data from the XML node and creates primary simple
    --  message.
@@ -51,7 +52,8 @@ package body GPS.Kernel.Messages.Simple is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
-      Actual_Column : Integer);
+      Actual_Column : Integer;
+      Flags         : Message_Flags);
    --  Loads additional data from the XML node and creates secondary simple
    --  message.
 
@@ -64,7 +66,8 @@ package body GPS.Kernel.Messages.Simple is
       Text          : String;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Simple_Message_Access;
    --  Internal create subprogram
 
@@ -75,7 +78,8 @@ package body GPS.Kernel.Messages.Simple is
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
       Actual_Line   : Integer;
-      Actual_Column : Integer);
+      Actual_Column : Integer;
+      Flags         : Message_Flags);
    --  Creates new instance of secondary Simple_Message. For internal use only.
 
    ---------------------------
@@ -89,11 +93,12 @@ package body GPS.Kernel.Messages.Simple is
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
-      Weight    : Natural)
+      Weight    : Natural;
+      Flags     : Message_Flags)
    is
       Aux : constant Simple_Message_Access :=
               Create_Simple_Message
-                (Container, Category, File, Line, Column, Text, Weight);
+                (Container, Category, File, Line, Column, Text, Weight, Flags);
       pragma Unreferenced (Aux);
 
    begin
@@ -111,7 +116,8 @@ package body GPS.Kernel.Messages.Simple is
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
-      Weight    : Natural)
+      Weight    : Natural;
+      Flags     : Message_Flags)
       return not null Simple_Message_Access is
    begin
       return
@@ -124,7 +130,8 @@ package body GPS.Kernel.Messages.Simple is
            Text,
            Weight,
            Line,
-           Integer (Column));
+           Integer (Column),
+           Flags);
    end Create_Simple_Message;
 
    ---------------------------
@@ -140,7 +147,8 @@ package body GPS.Kernel.Messages.Simple is
       Text          : String;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Simple_Message_Access
    is
       Result : constant not null Simple_Message_Access :=
@@ -158,7 +166,8 @@ package body GPS.Kernel.Messages.Simple is
          Column,
          Weight,
          Actual_Line,
-         Actual_Column);
+         Actual_Column,
+         Flags);
 
       return Result;
    end Create_Simple_Message;
@@ -174,7 +183,8 @@ package body GPS.Kernel.Messages.Simple is
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
    is
       Result : constant not null Simple_Message_Access :=
         new Simple_Message (Secondary);
@@ -183,7 +193,8 @@ package body GPS.Kernel.Messages.Simple is
       Result.Text := To_Unbounded_String (Text);
 
       Initialize
-        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
+        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column,
+         Flags);
    end Create_Simple_Message;
 
    ---------------------------
@@ -195,7 +206,8 @@ package body GPS.Kernel.Messages.Simple is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
-      Text   : String) is
+      Text   : String;
+      Flags  : Message_Flags) is
    begin
       Create_Simple_Message
         (Parent,
@@ -204,7 +216,8 @@ package body GPS.Kernel.Messages.Simple is
          Column,
          Text,
          Line,
-         Integer (Column));
+         Integer (Column),
+         Flags);
    end Create_Simple_Message;
 
    ----------------
@@ -243,7 +256,8 @@ package body GPS.Kernel.Messages.Simple is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Message_Access
    is
       Text : constant String := Get_Attribute (XML_Node, "text", "");
@@ -260,7 +274,8 @@ package body GPS.Kernel.Messages.Simple is
                 Text,
                 Weight,
                 Actual_Line,
-                Actual_Column));
+                Actual_Column,
+                Flags));
    end Load;
 
    ----------
@@ -274,7 +289,8 @@ package body GPS.Kernel.Messages.Simple is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
    is
       Text : constant String := Get_Attribute (XML_Node, "text", "");
 
@@ -286,7 +302,8 @@ package body GPS.Kernel.Messages.Simple is
          Column,
          Text,
          Actual_Line,
-         Actual_Column);
+         Actual_Column,
+         Flags);
    end Load;
 
    --------------

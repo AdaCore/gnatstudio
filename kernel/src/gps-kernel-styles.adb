@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2009, AdaCore                 --
+--                  Copyright (C) 2005-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,13 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
-with Ada.Unchecked_Deallocation;
 
-with Gdk;                    use Gdk;
 with Gtk.Widget;             use Gtk.Widget;
-with Gtk.Window;             use Gtk.Window;
 
-with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -36,7 +32,7 @@ with XML_Parsers;
 
 package body GPS.Kernel.Styles is
 
-   Me : constant Debug_Handle := Create ("Styles");
+   Me : constant Debug_Handle := Create ("GPS.Kernel.Styles");
 
    use GNAT.Strings;
    use Style_Htable.String_Hash_Table;
@@ -48,10 +44,6 @@ package body GPS.Kernel.Styles is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
-
-   procedure Allocate_Color
-     (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC);
-   --  Allocates the low-level structures for Color.
 
    procedure Initialize_Predefined_Styles (Kernel : Kernel_Handle);
    --  Initialize the GPS predefined styles.
@@ -143,55 +135,6 @@ package body GPS.Kernel.Styles is
       Set_Background (Builder_Style_Style,    Style_Src_Highlight.Get_Pref);
    end Preferences_Changed;
 
-   --------------------
-   -- Allocate_Color --
-   --------------------
-
-   procedure Allocate_Color
-     (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC)
-   is
-      Success : Boolean;
-      Widget  : Gtk_Widget;
-      Tops    : Gtk.Widget.Widget_List.Glist;
-   begin
-      Color := Null_Color;
-      GC    := Null_GC;
-
-      if Name = "" then
-         Trace (Me, "Color field not filled");
-         return;
-      end if;
-
-      begin
-         Color := Parse (Name);
-      exception
-         when Wrong_Color =>
-            Trace (Me, "Could not parse color " & Name);
-            return;
-      end;
-
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-      if not Success then
-         Trace (Me, "Could not allocate color " & Name);
-         return;
-      end if;
-
-      Tops := List_Toplevels;
-      Widget := Widget_List.Get_Data (Tops);
-      Widget_List.Free (Tops);
-
-      if Widget = null
-        or else not Realized_Is_Set (Widget)
-      then
-         Trace (Me, "Cannot create GC: toplevel window not realized");
-         return;
-      end if;
-
-      Gdk_New (GC, Get_Window (Widget));
-      Set_Foreground (GC, Color);
-   end Allocate_Color;
-
    -----------
    -- Reset --
    -----------
@@ -200,34 +143,6 @@ package body GPS.Kernel.Styles is
    begin
       Reset (X.Table);
    end Reset;
-
-   -----------------------
-   -- Get_Background_GC --
-   -----------------------
-
-   function Get_Background_GC
-     (Style : not null access Style_Record) return Gdk.GC.Gdk_GC is
-   begin
-      if Style.Bg_GC = null then
-         Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
-      end if;
-
-      return Style.Bg_GC;
-   end Get_Background_GC;
-
-   --------------------------
-   -- Get_Background_Color --
-   --------------------------
-
-   function Get_Background_Color
-     (Style : not null access Style_Record) return Gdk_Color is
-   begin
-      if Style.Bg_GC = null then
-         Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
-      end if;
-
-      return Style.Bg_Color;
-   end Get_Background_Color;
 
    -----------------
    -- Save_Styles --
@@ -387,31 +302,6 @@ package body GPS.Kernel.Styles is
       when E : others => Trace (Exception_Handle, E);
    end Load_Styles;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Style : in out Style_Record) is
-   begin
-      Free (Style.Name);
-      Free (Style.Description);
-      Free (Simple_Style_Record (Style));
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Style : in out Style_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Style_Record'Class, Style_Access);
-   begin
-      if Style /= null then
-         Free (Style.all);
-         Unchecked_Free (Style);
-      end if;
-   end Free;
-
    -------------------------
    -- Get_Or_Create_Style --
    -------------------------
@@ -475,44 +365,5 @@ package body GPS.Kernel.Styles is
 
       return Style;
    end Get_Or_Create_Style_Copy;
-
-   --------------------
-   -- Set_Foreground --
-   --------------------
-
-   overriding procedure Set_Foreground
-     (Style : not null access Style_Record; Color : String) is
-   begin
-      Set_Foreground (Simple_Style_Record (Style.all)'Access, Color);
-      Style.Fg_Color := Null_Color;
-      Style.Fg_GC    := Null_GC;
-   end Set_Foreground;
-
-   --------------------
-   -- Set_Background --
-   --------------------
-
-   overriding procedure Set_Background
-     (Style : not null access Style_Record; Color : String) is
-   begin
-      Set_Background (Simple_Style_Record (Style.all)'Access, Color);
-      Style.Bg_Color := Null_Color;
-      Style.Bg_GC    := Null_GC;
-   end Set_Background;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Style : Style_Access) return String is
-   begin
-      if Style /= null
-        and then Style.Name /= null
-      then
-         return Style.Name.all;
-      end if;
-
-      return "";
-   end Get_Name;
 
 end GPS.Kernel.Styles;

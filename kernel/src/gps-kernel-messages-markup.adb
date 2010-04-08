@@ -35,7 +35,8 @@ package body GPS.Kernel.Messages.Markup is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Message_Access;
 
    function Create_Markup_Message
@@ -47,7 +48,8 @@ package body GPS.Kernel.Messages.Markup is
       Text          : String;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Markup_Message_Access;
 
    ---------------------------
@@ -61,7 +63,8 @@ package body GPS.Kernel.Messages.Markup is
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
-      Weight    : Natural)
+      Weight    : Natural;
+      Flags     : Message_Flags)
       return not null Markup_Message_Access is
    begin
       return
@@ -74,7 +77,8 @@ package body GPS.Kernel.Messages.Markup is
            Text,
            Weight,
            Line,
-           Integer (Column));
+           Integer (Column),
+           Flags);
    end Create_Markup_Message;
 
    ---------------------------
@@ -90,7 +94,8 @@ package body GPS.Kernel.Messages.Markup is
       Text          : String;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Markup_Message_Access
    is
       Result : constant not null Markup_Message_Access := new Markup_Message;
@@ -107,7 +112,8 @@ package body GPS.Kernel.Messages.Markup is
          Column,
          Weight,
          Actual_Line,
-         Actual_Column);
+         Actual_Column,
+         Flags);
 
       return Result;
    end Create_Markup_Message;
@@ -148,7 +154,8 @@ package body GPS.Kernel.Messages.Markup is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
       return not null Message_Access
    is
       Text : constant String := Get_Attribute (XML_Node, "text", "");
@@ -165,7 +172,8 @@ package body GPS.Kernel.Messages.Markup is
                 Text,
                 Weight,
                 Actual_Line,
-                Actual_Column));
+                Actual_Column,
+                Flags));
    end Load;
 
    --------------

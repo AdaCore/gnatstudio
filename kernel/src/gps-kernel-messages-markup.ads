@@ -33,7 +33,8 @@ package GPS.Kernel.Messages.Markup is
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
-      Weight    : Natural)
+      Weight    : Natural;
+      Flags     : Message_Flags)
       return not null Markup_Message_Access;
    --  Creates new instance of Markup_Message.
 

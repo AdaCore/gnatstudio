@@ -71,11 +71,24 @@ package body GPS.Kernel.Messages.Classic_Models is
      (Self  : not null access Classic_Tree_Model_Record;
       Index : Positive)
    is
-      Path : constant Gtk_Tree_Path := Gtk_New;
-
+      Path  : constant Gtk_Tree_Path := Gtk_New;
+      Ind   : Natural := 0;
    begin
-      Append_Index (Path, Gint (Index) - 1);
-      Self.Row_Deleted (Path);
+      for J in Self.Container.Categories.First_Index
+        .. Self.Container.Categories.Last_Index
+      loop
+         if Match (Self.Flags,
+                   Self.Container.Categories.Element (J).Flags)
+         then
+            Ind := Ind + 1;
+         end if;
+
+         if Ind = Index then
+            Append_Index (Path, Gint (Ind) - 1);
+            Self.Row_Deleted (Path);
+         end if;
+      end loop;
+
       Path_Free (Path);
    end Category_Removed;
 
@@ -142,13 +155,23 @@ package body GPS.Kernel.Messages.Classic_Models is
    is
       Aux    : Node_Access := Node;
       Result : constant Gtk_Tree_Path := Gtk_New;
-      Index  : Natural;
+      Index  : Natural := 1;
 
    begin
       while Aux /= null loop
          if Aux.Parent = null then
-            Index := Self.Container.Categories.Find_Index (Aux);
+            Index := 1;
+            for J in Self.Container.Categories.First_Index
+              .. Self.Container.Categories.Last_Index
+            loop
+               exit when Self.Container.Categories.Element (J) = Aux;
 
+               if Match (Self.Container.Categories.Element (J).Flags,
+                         Self.Flags)
+               then
+                  Index := Index + 1;
+               end if;
+            end loop;
          else
             Index := Aux.Parent.Children.Find_Index (Aux);
          end if;
@@ -257,19 +280,28 @@ package body GPS.Kernel.Messages.Classic_Models is
    is
       Indices : constant Gint_Array := Get_Indices (Path);
       Node    : Node_Access;
-
+      Index   : Natural;
+      Count   : Natural;
    begin
       for J in Indices'Range loop
          if J = 0 then
-            if Indices (J) < Gint (Self.Container.Categories.Length) then
-               Node :=
-                 Self.Container.Categories.Element (Natural (Indices (J)) + 1);
+            Index := Self.Container.Categories.First_Index;
+            Count := 0;
+            Node  := null;
 
-            else
-               Node := null;
+            while Index <= Self.Container.Categories.Last_Index loop
+               if Match (Self.Container.Categories.Element (Index).Flags,
+                         Self.Flags)
+               then
+                  if Gint (Count) = Indices (0) then
+                     Node := Self.Container.Categories.Element (Index);
+                     exit;
+                  end if;
+                  Count := Count + 1;
+               end if;
 
-               exit;
-            end if;
+               Index := Index + 1;
+            end loop;
 
          else
             if Indices (J) < Gint (Node.Children.Length) then

@@ -40,7 +40,8 @@ package body GPS.Kernel.Messages.Hyperlink is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
-      Actual_Column : Integer);
+      Actual_Column : Integer;
+      Flags         : Message_Flags);
 
    procedure Create_Hyperlink_Message
      (Parent        : not null Message_Access;
@@ -51,7 +52,8 @@ package body GPS.Kernel.Messages.Hyperlink is
       First         : Positive;
       Last          : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer);
+      Actual_Column : Integer;
+      Flags         : Message_Flags);
    --  Internal create subprogram
 
    ------------------------------
@@ -65,7 +67,8 @@ package body GPS.Kernel.Messages.Hyperlink is
       Column : Basic_Types.Visible_Column_Type;
       Text   : String;
       First  : Positive;
-      Last   : Natural) is
+      Last   : Natural;
+      Flags  : Message_Flags) is
    begin
       Create_Hyperlink_Message
         (Parent,
@@ -76,7 +79,8 @@ package body GPS.Kernel.Messages.Hyperlink is
          First,
          Last,
          Line,
-         Integer (Column));
+         Integer (Column),
+         Flags);
    end Create_Hyperlink_Message;
 
    ------------------------------
@@ -92,7 +96,8 @@ package body GPS.Kernel.Messages.Hyperlink is
       First         : Positive;
       Last          : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
    is
       Offset : constant Natural := Text'First - 1;
       Result : constant not null Hyperlink_Message_Access :=
@@ -104,7 +109,8 @@ package body GPS.Kernel.Messages.Hyperlink is
       Result.Last  := Last - Offset;
 
       Initialize
-        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column);
+        (Result, Parent, File, Line, Column, Actual_Line, Actual_Column,
+         Flags);
    end Create_Hyperlink_Message;
 
    ----------------
@@ -153,7 +159,8 @@ package body GPS.Kernel.Messages.Hyperlink is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
-      Actual_Column : Integer)
+      Actual_Column : Integer;
+      Flags         : Message_Flags)
    is
       Text  : constant String := Get_Attribute (XML_Node, "text", "");
       First : constant Positive :=
@@ -171,7 +178,8 @@ package body GPS.Kernel.Messages.Hyperlink is
          First,
          Last,
          Actual_Line,
-         Actual_Column);
+         Actual_Column,
+         Flags);
    end Load;
 
    --------------

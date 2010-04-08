@@ -760,7 +760,8 @@ package body Vdiff2_Module.Utils is
                Line,
                1,
                "1 line " & Modification,
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
 
          else
             Create_Simple_Message
@@ -770,7 +771,8 @@ package body Vdiff2_Module.Utils is
                Line,
                1,
                Image (The_Range) & " lines " & Modification,
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
          end if;
 
          Free (VStyle);
@@ -861,7 +863,8 @@ package body Vdiff2_Module.Utils is
                Natural'Max (Curr_Chunk.Range2.First - 1, 1),
                1,
                "1 line removed",
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
 
          else
             Create_Simple_Message
@@ -871,7 +874,8 @@ package body Vdiff2_Module.Utils is
                Natural'Max (Curr_Chunk.Range2.First - 1, 1),
                1,
                Image (Arr'Length) & " lines removed",
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
          end if;
 
          Unchecked_Free (Arr);
@@ -907,7 +911,8 @@ package body Vdiff2_Module.Utils is
                Curr_Chunk.Range2.First,
                1,
                "1 line added",
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
 
          else
             Create_Simple_Message
@@ -917,7 +922,8 @@ package body Vdiff2_Module.Utils is
                Curr_Chunk.Range2.First,
                1,
                Image (Arr'Length) & " lines added",
-               0);
+               0,
+               (Editor_Side => True, Locations => True));
          end if;
 
          Unchecked_Free (Arr);

@@ -74,7 +74,6 @@ with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -2126,7 +2125,9 @@ package body Src_Editor_Box is
             Get_Line (Loc),
             Get_Column (Loc),
             Get_Name (Entity).all & " (" & Kind & ')',
-            0);
+            0,
+            (Editor_Side => True,
+             Locations   => True));
       end Insert;
 
       Entity      : constant Entity_Information :=
@@ -2650,9 +2651,9 @@ package body Src_Editor_Box is
    procedure Add_File_Information
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
-      Info       : GPS.Editors.Line_Information_Data) is
+      Messages   : Message_Array) is
    begin
-      Add_File_Information (Editor.Source_Buffer, Identifier, Info);
+      Add_File_Information (Editor.Source_Buffer, Identifier, Messages);
    end Add_File_Information;
 
    ------------------------------------

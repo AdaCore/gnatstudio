@@ -24,6 +24,7 @@ with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Preferences;
+with GPS.Kernel.Styles;
 with String_Utils;
 
 package body GPS.Kernel.Messages.Tools_Output is
@@ -37,6 +38,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    use GPS.Kernel.Messages.Simple;
    use GPS.Kernel.Preferences;
    use GPS.Kernel.Styles;
+   use GPS.Styles;
    use Node_Vectors;
    use String_Utils;
 
@@ -70,7 +72,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
       Weight             : Natural;
-      Highlight_Category : GPS.Kernel.Styles.Style_Access;
+      Highlight_Category : GPS.Styles.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean)
    is
@@ -152,7 +154,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                       Line,
                       Column,
                       Text,
-                      Weight));
+                      Weight,
+                      (Editor_Side => True, Locations => True)));
 
             if Highlight_Category /= null then
                Highlight_Style :=
@@ -181,7 +184,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                Loc.Column,
                Text,
                Loc.First,
-               Loc.Last);
+               Loc.Last,
+               (Editor_Side => True, Locations => True));
             Node := Next (Node);
          end loop;
 
@@ -263,9 +267,9 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text               : UTF8_String;
       Category           : Glib.UTF8_String;
       Highlight          : Boolean := False;
-      Highlight_Category : GPS.Kernel.Styles.Style_Access := null;
-      Style_Category     : GPS.Kernel.Styles.Style_Access := null;
-      Warning_Category   : GPS.Kernel.Styles.Style_Access := null)
+      Highlight_Category : GPS.Styles.Style_Access := null;
+      Style_Category     : GPS.Styles.Style_Access := null;
+      Warning_Category   : GPS.Styles.Style_Access := null)
    is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -294,9 +298,9 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text                    : UTF8_String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Kernel.Styles.Style_Access := null;
-      Style_Category          : GPS.Kernel.Styles.Style_Access := null;
-      Warning_Category        : GPS.Kernel.Styles.Style_Access := null;
+      Highlight_Category      : GPS.Styles.Style_Access := null;
+      Style_Category          : GPS.Styles.Style_Access := null;
+      Warning_Category        : GPS.Styles.Style_Access := null;
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
       Line_Index_In_Regexp    : Integer;
@@ -390,7 +394,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Line          : Natural := 1;
       Column        : Basic_Types.Visible_Column_Type := 1;
       Weight        : Natural;
-      C             : GPS.Kernel.Styles.Style_Access;
+      C             : GPS.Styles.Style_Access;
 
       -----------------
       -- Get_Message --

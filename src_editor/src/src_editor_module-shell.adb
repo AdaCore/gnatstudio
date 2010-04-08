@@ -50,6 +50,7 @@ with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Language;                  use Language;
 with Projects;                  use Projects;
@@ -773,19 +774,15 @@ package body Src_Editor_Module.Shell is
             Info  : Line_Info_Width_Array_Access;
             Box   : Source_Editor_Box;
 
-            procedure Print_Line_Info (Info : Line_Information_Access);
+            procedure Print_Line_Info (Info : Line_Information_Record);
 
             ---------------------
             -- Print_Line_Info --
             ---------------------
 
-            procedure Print_Line_Info (Info : Line_Information_Access) is
+            procedure Print_Line_Info (Info : Line_Information_Record) is
                Print : Unbounded_String;
             begin
-               if Info = null then
-                  return;
-               end if;
-
                if Info.Text = null then
                   Print := Print & "[no text], ";
                else
@@ -817,7 +814,11 @@ package body Src_Editor_Module.Shell is
                Set_Return_Value_As_List (Data);
 
                for J in Info'Range loop
-                  Print_Line_Info (Info (J).Info);
+                  if Info (J).Message /= null
+                    and then Info (J).Message.Get_Action /= null
+                  then
+                     Print_Line_Info (Info (J).Message.Get_Action.all);
+                  end if;
                end loop;
             end if;
          end;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2009, AdaCore             --
+--                      Copyright (C) 2003-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.Styles;      use GPS.Kernel.Styles;
 
 package body Src_Editor_Module.Line_Highlighting is
 

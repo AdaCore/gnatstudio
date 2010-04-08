@@ -29,7 +29,8 @@ with Gdk.Color;
 private with Default_Preferences;
 with GPS.Kernel;   use GPS.Kernel;
 with GPS.Kernel.Modules;
-private with GPS.Kernel.Styles;
+with GPS.Styles;
+
 with GPS.Kernel.MDI;
 with Code_Analysis;
 
@@ -85,7 +86,7 @@ private
 
    type Message_Probability_Style_Array is
      array (Code_Peer.Message_Probability_Level)
-       of GPS.Kernel.Styles.Style_Access;
+       of GPS.Styles.Style_Access;
 
    type CodePeer_Action is
      (None, Run_All, Run_Project, Run_File, Quick_Run, Load_UI);
@@ -103,8 +104,8 @@ private
       Tree             : Code_Analysis.Code_Analysis_Tree;
       Report_Subwindow : GPS.Kernel.MDI.GPS_MDI_Child;
       Report           : Code_Peer.Summary_Reports.Summary_Report;
+      Annotation_Style : GPS.Styles.Style_Access;
       Annotation_Color : Default_Preferences.Color_Preference;
-      Annotation_Style : GPS.Kernel.Styles.Style_Access;
       Message_Colors   : Message_Probability_Color_Preference_Array;
       Message_Styles   : Message_Probability_Style_Array;
 

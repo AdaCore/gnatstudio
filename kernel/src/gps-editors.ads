@@ -29,6 +29,7 @@ with Commands;
 with GNAT.Strings;     use GNAT.Strings;
 with Language;         use Language;
 with Ada.Unchecked_Deallocation;
+with GPS.Styles; use GPS.Styles;
 
 package GPS.Editors is
 
@@ -96,39 +97,6 @@ package GPS.Editors is
 
    package Overlay_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Overlay'Class);
-
-   ------------
-   -- Styles --
-   ------------
-   --  See description for Editor_Overlay
-
-   type Simple_Style_Record is tagged limited private;
-   type Simple_Style_Access is access all Simple_Style_Record'Class;
-   pragma No_Strict_Aliasing (Simple_Style_Access);
-
-   procedure Set_Foreground
-     (Style : not null access Simple_Style_Record; Color : String);
-   procedure Set_Background
-     (Style : not null access Simple_Style_Record; Color : String);
-   --  Set the foreground or background color for Style. Color must be a
-   --  recognized color. (Either a simple color, or "#RRGGBB");
-
-   function Get_Foreground
-     (Style : not null access Simple_Style_Record) return String;
-   function Get_Background
-     (Style : not null access Simple_Style_Record) return String;
-   --  Return the background color used for the style
-
-   procedure Set_In_Speedbar
-     (Style       : not null access Simple_Style_Record;
-      In_Speedbar : Boolean);
-   function In_Speedbar
-     (Style       : not null access Simple_Style_Record) return Boolean;
-   --  Set or get whether a mark should be put in the speedbar when this style
-   --  is used within the line
-
-   procedure Free (Style : in out Simple_Style_Record);
-   --  Free style.
 
    ---------------------
    -- Editor_Location --
@@ -732,12 +700,6 @@ private
 
    Empty_Line_Information : constant Line_Information_Record :=
                               (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
-
-   type Simple_Style_Record is tagged limited record
-      Foreground : GNAT.Strings.String_Access;
-      Background : GNAT.Strings.String_Access;
-      Speedbar   : Boolean := False;
-   end record;
 
    -------------------------
    -- Nil_Editor_Location --

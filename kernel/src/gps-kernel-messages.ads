@@ -40,8 +40,7 @@ private with Ada.Tags;
 with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
 with GNATCOLL.VFS;
-with GPS.Editors;
-with GPS.Kernel.Styles;
+with GPS.Styles;
 
 package GPS.Kernel.Messages is
 
@@ -50,7 +49,19 @@ package GPS.Kernel.Messages is
    type Messages_Container_Access is
      access all Messages_Container'Class;
 
-   type Abstract_Listener is abstract tagged limited null record;
+   type Message_Visibility_Kind is
+     (Editor_Side, --  Messages displayed on the side of editors
+      Locations    --  Messages displayed in the locations view
+     );
+
+   type Message_Flags is array (Message_Visibility_Kind) of Boolean;
+   --  A list of potential locations where a message should be shown.
+
+   function To_Int (Flags : Message_Flags) return Integer;
+   function From_Int (Int : Integer) return Message_Flags;
+   --  Utility functions to load/save flags to XML
+
+   type Abstract_Listener is abstract tagged limited private;
 
    type Listener_Access is access all Abstract_Listener'Class;
 
@@ -94,7 +105,7 @@ package GPS.Kernel.Messages is
 
    function Get_Line
      (Self : not null access constant Abstract_Message'Class)
-      return Positive;
+      return Natural;
    --  Returns the line number of the original location of the message
 
    function Get_Column
@@ -132,19 +143,19 @@ package GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
-      Style  : GPS.Kernel.Styles.Style_Access;
+      Style  : GPS.Styles.Style_Access;
       Length : Positive);
    --  Set highlighting style and span to be used in the editor to highlight
    --  corresponding location.
 
    procedure Set_Highlighting
      (Self  : not null access Abstract_Message'Class;
-      Style : GPS.Kernel.Styles.Style_Access);
+      Style : GPS.Styles.Style_Access);
    --  Set style for line highlightinh in the editor.
 
    function Get_Highlighting_Style
      (Self : not null access constant Abstract_Message'Class)
-      return GPS.Kernel.Styles.Style_Access;
+      return GPS.Styles.Style_Access;
    --  Returns highlighting style to be used by source editor to highlight
    --  message.
 
@@ -170,7 +181,8 @@ package GPS.Kernel.Messages is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer);
+      Actual_Column : Integer;
+      Flags         : Message_Flags);
    --  Initialize message and connect it to container
 
    procedure Initialize
@@ -180,7 +192,8 @@ package GPS.Kernel.Messages is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Actual_Line   : Integer;
-      Actual_Column : Integer);
+      Actual_Column : Integer;
+      Flags         : Message_Flags);
    --  Initialize message and connect it to parent message
 
    procedure Finalize (Self : not null access Abstract_Message);
@@ -196,6 +209,11 @@ package GPS.Kernel.Messages is
      (Kernel : not null access Kernel_Handle_Record'Class)
       return not null Messages_Container_Access;
    --  Returns messages conntainer for the specified instance of the kernel.
+
+   function New_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return not null Messages_Container_Access;
+   --  Create a new empty messages container, with no models and no listeners
 
    function Get_Categories
      (Self : not null access constant Messages_Container'Class)
@@ -248,8 +266,11 @@ package GPS.Kernel.Messages is
 
    procedure Register_Listener
      (Self     : not null access Messages_Container;
-      Listener : not null Listener_Access);
+      Listener : not null Listener_Access;
+      Flags    : Message_Flags);
    --  Register listener. It do nothing when listener is already registered.
+   --  This listener will only receive messages the flags of which have one
+   --  "True" field in common with Flags.
 
    procedure Unregister_Listener
      (Self     : not null access Messages_Container;
@@ -361,6 +382,10 @@ package GPS.Kernel.Messages is
 
 private
 
+   type Abstract_Listener is abstract tagged limited record
+      Flags : Message_Flags;
+   end record;
+
    type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
 
    type Node_Record is tagged;
@@ -394,6 +419,7 @@ private
       Parent        : Node_Access;
       Children      : Node_Vectors.Vector;
       Message_Count : Natural;
+      Flags         : Message_Flags;
 
       case Kind is
          when Node_Category =>
@@ -410,13 +436,14 @@ private
             Column : Basic_Types.Visible_Column_Type;
             Mark   : Editor_Mark_Access;
             Action : Action_Item;
-            Style  : GPS.Kernel.Styles.Style_Access;
+            Style  : GPS.Styles.Style_Access;
             Length : Natural := 0;
       end case;
    end record;
 
    type Abstract_Message (Level : Message_Levels) is
-     abstract new Node_Record (Node_Message) with record
+     abstract new Node_Record (Node_Message)
+   with record
       case Level is
          when Primary =>
             Weight : Natural;
@@ -433,7 +460,9 @@ private
    type Abstract_Messages_Tree_Model_Record
      (Container : not null access Messages_Container'Class) is
          abstract new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record
-            with null record;
+   with record
+      Flags : Message_Flags;
+   end record;
 
    procedure Category_Added
      (Self     : not null access Abstract_Messages_Tree_Model_Record;
@@ -444,8 +473,8 @@ private
       Index : Positive) is null;
 
    procedure File_Added
-     (Self : not null access Abstract_Messages_Tree_Model_Record;
-      File : not null Node_Access) is null;
+     (Self     : not null access Abstract_Messages_Tree_Model_Record;
+      File     : not null Node_Access) is null;
 
    procedure File_Removed
      (Self     : not null access Abstract_Messages_Tree_Model_Record;
@@ -483,7 +512,8 @@ private
         Column        : Basic_Types.Visible_Column_Type;
         Weight        : Natural;
         Actual_Line   : Integer;
-        Actual_Column : Integer)
+        Actual_Column : Integer;
+        Flags         : Message_Flags)
         return not null Message_Access;
 
    type Secondary_Message_Load_Procedure is
@@ -494,7 +524,8 @@ private
         Line          : Natural;
         Column        : Basic_Types.Visible_Column_Type;
         Actual_Line   : Integer;
-        Actual_Column : Integer);
+        Actual_Column : Integer;
+        Flags         : Message_Flags);
 
    package Model_Vectors is
      new Ada.Containers.Vectors (Positive, Messages_Model_Access);
@@ -544,5 +575,9 @@ private
       Primary_Load   : Primary_Message_Load_Procedure;
       Secondary_Load : Secondary_Message_Load_Procedure);
    --  Registers save and load procedures for the specified class of messages
+
+   function Match (A, B : Message_Flags) return Boolean;
+   pragma Inline (Match);
+   --  Return True if A and B have one "True" field in common
 
 end GPS.Kernel.Messages;

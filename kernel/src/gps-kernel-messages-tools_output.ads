@@ -29,9 +29,9 @@ package GPS.Kernel.Messages.Tools_Output is
       Text                    : UTF8_String;
       Category                : Glib.UTF8_String;
       Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Kernel.Styles.Style_Access := null;
-      Style_Category          : GPS.Kernel.Styles.Style_Access := null;
-      Warning_Category        : GPS.Kernel.Styles.Style_Access := null);
+      Highlight_Category      : GPS.Styles.Style_Access := null;
+      Style_Category          : GPS.Styles.Style_Access := null;
+      Warning_Category        : GPS.Styles.Style_Access := null);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
@@ -43,9 +43,9 @@ package GPS.Kernel.Messages.Tools_Output is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Kernel.Styles.Style_Access := null;
-      Style_Category          : GPS.Kernel.Styles.Style_Access := null;
-      Warning_Category        : GPS.Kernel.Styles.Style_Access := null;
+      Highlight_Category      : GPS.Styles.Style_Access := null;
+      Style_Category          : GPS.Styles.Style_Access := null;
+      Warning_Category        : GPS.Styles.Style_Access := null;
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
       Line_Index_In_Regexp    : Integer;
@@ -73,7 +73,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
       Weight             : Natural;
-      Highlight_Category : GPS.Kernel.Styles.Style_Access;
+      Highlight_Category : GPS.Styles.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean);
    --  Looking for same message in the messages container and add it into the

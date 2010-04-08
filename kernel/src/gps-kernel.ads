@@ -1190,9 +1190,6 @@ private
       Messages_Container : System.Address := System.Null_Address;
       --  The message container for this instance of kernel
 
-      Highlighting_Manager : System.Address := System.Null_Address;
-      --  The highlighting manager
-
       Locations_View_Manager : System.Address := System.Null_Address;
       --  The locations view manager
    end record;
