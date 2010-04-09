@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2009, AdaCore             --
+--                      Copyright (C) 2004-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -214,6 +214,23 @@ package body Expect_Interface is
    --  of the call, no matter what was sent to On_Match in the meantime. It is
    --  the responsability of the caller to free Output
 
+   function Internal_Strip_CR (S : String) return String;
+   --  In this package, only the last character of a string can contain the
+   --  CR character
+
+   -----------------------
+   -- Internal_Strip_CR --
+   -----------------------
+
+   function Internal_Strip_CR (S : String) return String is
+   begin
+      if S'Length > 0 and then S (S'Last) = ASCII.CR then
+         return S (S'First .. S'Last - 1);
+      else
+         return S;
+      end if;
+   end Internal_Strip_CR;
+
    ----------
    -- Name --
    ----------
@@ -320,7 +337,7 @@ package body Expect_Interface is
             if Result /= Expect_Timeout then
                if Command.Strip_CR then
                   Output_Cb (Custom_Action_Access (Command),
-                             Strip_CR (Expect_Out (Command.Pd.all)));
+                             Internal_Strip_CR (Expect_Out (Command.Pd.all)));
                else
                   Output_Cb (Custom_Action_Access (Command),
                              Expect_Out (Command.Pd.all));
@@ -339,7 +356,7 @@ package body Expect_Interface is
          if not Command.In_Expect and then Command.Pd /= null then
             if Command.Strip_CR then
                Output_Cb (Custom_Action_Access (Command),
-                          Strip_CR (Expect_Out (Command.Pd.all)));
+                          Internal_Strip_CR (Expect_Out (Command.Pd.all)));
             else
                Output_Cb (Custom_Action_Access (Command),
                           Expect_Out (Command.Pd.all));
@@ -704,7 +721,8 @@ package body Expect_Interface is
 
          if Action.Strip_CR then
             declare
-               Str : constant String := Strip_CR (Expect_Out (Action.Pd.all));
+               Str : constant String :=
+                       Internal_Strip_CR (Expect_Out (Action.Pd.all));
             begin
                Output_Cb (Action, Str);
                Concat (Output, Str);
