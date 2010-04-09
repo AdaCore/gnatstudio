@@ -949,7 +949,10 @@ package body Entities.Queries is
              (Iter.Entity.Declaration,
               Iter.In_File, Iter.Start_Line, Iter.Last_Line));
 
-      if not Iter.Decl_Returned then
+      if not Iter.Decl_Returned
+        and then (Iter.In_File = null
+                  or else Iter.In_File = Iter.Entity.Declaration.File)
+      then
          Update_Xref (Iter.Entity.Declaration.File);
       end if;
 

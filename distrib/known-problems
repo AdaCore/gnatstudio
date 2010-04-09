@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- J409-002: dispatching.py plugin loads too many ALI files
+  Problem:    When it recomputes the list of dispatching calls, this plugin
+              will in fact reload more .ali files than are really needed,
+              thus slowing things down.
+  Workaround: It might be faster if you use Build/Load Xref In Memory
+
 - J406-019: Docgen does not see documentation of nested generics
   Problem:    In case of a nested generic package of subprogram, the GPS
               documentation generator won't interprete comments before the
