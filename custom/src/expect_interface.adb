@@ -214,22 +214,21 @@ package body Expect_Interface is
    --  of the call, no matter what was sent to On_Match in the meantime. It is
    --  the responsability of the caller to free Output
 
-   function Internal_Strip_CR (S : String) return String;
-   --  In this package, only the last character of a string can contain the
-   --  CR character
+   function Strip_CR_Last (S : String) return String;
+   --  Strip last character if it's a CR.
 
-   -----------------------
-   -- Internal_Strip_CR --
-   -----------------------
+   -------------------
+   -- Strip_CR_Last --
+   -------------------
 
-   function Internal_Strip_CR (S : String) return String is
+   function Strip_CR_Last (S : String) return String is
    begin
       if S'Length > 0 and then S (S'Last) = ASCII.CR then
          return S (S'First .. S'Last - 1);
       else
          return S;
       end if;
-   end Internal_Strip_CR;
+   end Strip_CR_Last;
 
    ----------
    -- Name --
@@ -336,8 +335,9 @@ package body Expect_Interface is
             Expect (Command.Pd.all, Result, All_Match, Timeout => 1);
             if Result /= Expect_Timeout then
                if Command.Strip_CR then
-                  Output_Cb (Custom_Action_Access (Command),
-                             Internal_Strip_CR (Expect_Out (Command.Pd.all)));
+                  Output_Cb
+                    (Custom_Action_Access (Command),
+                     Strip_CR (Strip_CR_Last (Expect_Out (Command.Pd.all))));
                else
                   Output_Cb (Custom_Action_Access (Command),
                              Expect_Out (Command.Pd.all));
@@ -355,8 +355,9 @@ package body Expect_Interface is
 
          if not Command.In_Expect and then Command.Pd /= null then
             if Command.Strip_CR then
-               Output_Cb (Custom_Action_Access (Command),
-                          Internal_Strip_CR (Expect_Out (Command.Pd.all)));
+               Output_Cb
+                 (Custom_Action_Access (Command),
+                  Strip_CR (Strip_CR_Last (Expect_Out (Command.Pd.all))));
             else
                Output_Cb (Custom_Action_Access (Command),
                           Expect_Out (Command.Pd.all));
@@ -722,7 +723,7 @@ package body Expect_Interface is
          if Action.Strip_CR then
             declare
                Str : constant String :=
-                       Internal_Strip_CR (Expect_Out (Action.Pd.all));
+                       Strip_CR (Strip_CR_Last (Expect_Out (Action.Pd.all)));
             begin
                Output_Cb (Action, Str);
                Concat (Output, Str);
