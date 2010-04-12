@@ -214,22 +214,6 @@ package body Expect_Interface is
    --  of the call, no matter what was sent to On_Match in the meantime. It is
    --  the responsability of the caller to free Output
 
-   function Strip_CR_Last (S : String) return String;
-   --  Strip last character if it's a CR.
-
-   -------------------
-   -- Strip_CR_Last --
-   -------------------
-
-   function Strip_CR_Last (S : String) return String is
-   begin
-      if S'Length > 0 and then S (S'Last) = ASCII.CR then
-         return S (S'First .. S'Last - 1);
-      else
-         return S;
-      end if;
-   end Strip_CR_Last;
-
    ----------
    -- Name --
    ----------
@@ -290,7 +274,7 @@ package body Expect_Interface is
    is
       Res       : Boolean;
       Result    : Expect_Match;
-      All_Match : constant Pattern_Matcher := Compile (".+", Single_Line);
+      All_Match : constant Pattern_Matcher := Compile (".+\n", Single_Line);
    begin
       if not Command.Started then
          Command.Started := True;
@@ -337,7 +321,7 @@ package body Expect_Interface is
                if Command.Strip_CR then
                   Output_Cb
                     (Custom_Action_Access (Command),
-                     Strip_CR (Strip_CR_Last (Expect_Out (Command.Pd.all))));
+                     Strip_CR (Expect_Out (Command.Pd.all)));
                else
                   Output_Cb (Custom_Action_Access (Command),
                              Expect_Out (Command.Pd.all));
@@ -357,7 +341,7 @@ package body Expect_Interface is
             if Command.Strip_CR then
                Output_Cb
                  (Custom_Action_Access (Command),
-                  Strip_CR (Strip_CR_Last (Expect_Out (Command.Pd.all))));
+                  Strip_CR (Expect_Out (Command.Pd.all)));
             else
                Output_Cb (Custom_Action_Access (Command),
                           Expect_Out (Command.Pd.all));
@@ -713,7 +697,7 @@ package body Expect_Interface is
          --  we can also periodically process gtk+ events
 
          if Pattern = "" then
-            Expect (Action.Pd.all, Result, ".+", Timeout => 5);
+            Expect (Action.Pd.all, Result, ".+\n", Timeout => 5);
          else
             Expect (Action.Pd.all, Result, Regexp, Timeout => 5);
          end if;
@@ -723,7 +707,7 @@ package body Expect_Interface is
          if Action.Strip_CR then
             declare
                Str : constant String :=
-                       Strip_CR (Strip_CR_Last (Expect_Out (Action.Pd.all)));
+                       Strip_CR (Expect_Out (Action.Pd.all));
             begin
                Output_Cb (Action, Str);
                Concat (Output, Str);
