@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -718,47 +718,41 @@ package body Language.Tree.Database is
                New_Tree.Contents (New_Obj.Index).Annotations :=
                  File.Tree.Contents (Old_Obj.Index).Annotations;
 
-               --  If we're in a structural change, there may have been object
-               --  inserted / removed before this construct, so we have to
-               --  update the index and the persistent entity.
+               --  Update the construct wrapper if the construct is stored
+               --  in the database.
 
-               if Current_Update_Kind = Structural_Change then
-                  --  Update the construct wrapper if the construct is stored
-                  --  in the database.
-
-                  if New_Db_Data_Tree (New_Obj.Index) /=
-                    Construct_Db_Trie.Null_Construct_Trie_Index
-                  then
-                     Replace
-                       (File.Db.Entities_Db'Access,
-                        New_Db_Data_Tree (New_Obj.Index),
-                        New_Obj,
-                        (File => File));
-                  end if;
-
-                  --  Update the persistent annotation if any
-
-                  declare
-                     use Construct_Annotations_Pckg;
-
-                     Annotations : constant access Annotation_Container :=
-                       Get_Annotation_Container (New_Tree, New_Obj);
-                     Persistent_Annotation : Annotation (Other_Kind);
-                  begin
-                     if Is_Set
-                       (Annotations.all, File.Db.Persistent_Entity_Key)
-                     then
-                        Get_Annotation
-                          (Annotations.all,
-                           File.Db.Persistent_Entity_Key,
-                           Persistent_Annotation);
-
-                        Entity_Persistent_Annotation
-                          (Persistent_Annotation.Other_Val.all).Info.Index :=
-                          New_Obj.Index;
-                     end if;
-                  end;
+               if New_Db_Data_Tree (New_Obj.Index) /=
+                 Construct_Db_Trie.Null_Construct_Trie_Index
+               then
+                  Replace
+                    (File.Db.Entities_Db'Access,
+                     New_Db_Data_Tree (New_Obj.Index),
+                     New_Obj,
+                     (File => File));
                end if;
+
+               --  Update the persistent annotation if any
+
+               declare
+                  use Construct_Annotations_Pckg;
+
+                  Annotations : constant access Annotation_Container :=
+                    Get_Annotation_Container (New_Tree, New_Obj);
+                  Persistent_Annotation : Annotation (Other_Kind);
+               begin
+                  if Is_Set
+                    (Annotations.all, File.Db.Persistent_Entity_Key)
+                  then
+                     Get_Annotation
+                       (Annotations.all,
+                        File.Db.Persistent_Entity_Key,
+                        Persistent_Annotation);
+
+                     Entity_Persistent_Annotation
+                       (Persistent_Annotation.Other_Val.all).Info.Index :=
+                       New_Obj.Index;
+                  end if;
+               end;
          end case;
       end Diff_Callback;
 
