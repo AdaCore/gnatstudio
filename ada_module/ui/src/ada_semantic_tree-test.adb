@@ -158,6 +158,41 @@ procedure Ada_Semantic_Tree.Test is
             Free (List);
          end;
 
+      elsif Buffer (Word_Begin .. Word_End) = "TREE_DECLARATION" then
+         Put_Line ("GET DECLARATION FROM LANGUAGE TREE");
+
+         declare
+            Line      : Integer;
+            Column    : Visible_Column_Type;
+            Decl      : Entity_Access;
+            Construct : access Simple_Construct_Information;
+         begin
+            To_Line_Column
+              (File                 => File,
+               Absolute_Byte_Offset => String_Index_Type (Looked_Offset),
+               Line                 => Line,
+               Column               => Column);
+
+            Decl := Ada_Tree_Lang.Find_Declaration
+              (File   => File,
+               Line   => Line,
+               Column => To_Line_String_Index (File, Line, Column));
+
+            if Decl /= Null_Entity_Access then
+               Construct := Get_Construct
+                 (To_Construct_Tree_Iterator (Decl));
+
+               Put_Line
+                 ("---> DECLARATION "
+                  & (+Base_Name (Get_File_Path (Get_File (Decl))))
+                  & ":" & Construct.Sloc_Start.Line'Img
+                  & ":" & Construct.Sloc_Start.Column'Img
+                  & ": " & Construct.Name.all);
+            else
+               Put_Line ("---> DECLARATION [null]");
+            end if;
+         end;
+
       elsif Buffer (Word_Begin .. Word_End) = "RELATION" then
          Put_Line ("GET RELATION");
 
