@@ -240,8 +240,8 @@ package Language.Tree.Database is
      (File   : Structured_File_Access;
       Line   : Integer;
       Column : Visible_Column_Type) return String_Index_Type;
-   --  Return the offset from Line and Column in File, considering that the
-   --  line is a string starting at 1.
+   --  Return the offset from the beginning of the file, according to Line and
+   --  Column in File, considering that the line is a string starting at 1.
 
    procedure To_Line_Column
      (File                 : Structured_File_Access;

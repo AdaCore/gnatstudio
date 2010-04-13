@@ -24,7 +24,6 @@ with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility;    use Ada_Semantic_Tree.Visibility;
-with Ada_Semantic_Tree.Generics;      use Ada_Semantic_Tree.Generics;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 
 package body Ada_Semantic_Tree.Dependency_Tree is
@@ -34,8 +33,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    type Dependency_Info_Annotation is new
      Construct_Annotations_Pckg.General_Annotation_Record
    with record
-      Entity : Entity_Persistent_Access;
+      Info : Clause_Info;
    end record;
+
+   overriding procedure Free (This : in out Dependency_Info_Annotation);
 
    type Dependency_Assistant is new Database_Assistant with record
       null;
@@ -805,7 +806,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          return Null_Entity_Access;
       else
          return To_Entity_Access
-           (Dependency_Info_Annotation (Obj.Other_Val.all).Entity);
+           (Dependency_Info_Annotation (Obj.Other_Val.all).Info.Entity);
       end if;
    end Get_Dep_Entity;
 
@@ -817,6 +818,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
      (Units                 : Unit_Array_Access;
       First_Index_To_Update : Integer)
    is
+      Db           : Construct_Database_Access;
       It           : Construct_Tree_Iterator;
       Tree         : Construct_Tree;
       Dependencies : Dependency_Assocation.Map;
@@ -845,8 +847,11 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          function Is_Parent
            (Parent, Child : Entity_Access) return Boolean;
 
-         function Get_Unit
-           (Construct : Simple_Construct_Information) return Entity_Access;
+         procedure Resolve_Use_Clause
+           (Construct        : Simple_Construct_Information;
+            Unit             : out Entity_Access;
+            Generic_Instance : out Instance_Info);
+         --  Finds a unit that corresponds to a use clause
 
          function Is_Parent
            (Parent, Child : Entity_Access) return Boolean
@@ -863,12 +868,14 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                  (Child_Name, 1, Length (Child_Name) - 1), Parent_Name, False);
          end Is_Parent;
 
-         --------------
-         -- Get_Unit --
-         --------------
+         ------------------------
+         -- Resolve_Use_Clause --
+         ------------------------
 
-         function Get_Unit
-           (Construct : Simple_Construct_Information) return Entity_Access
+         procedure Resolve_Use_Clause
+           (Construct        : Simple_Construct_Information;
+            Unit             : out Entity_Access;
+            Generic_Instance : out Instance_Info)
          is
             Id : constant Composite_Identifier :=
               To_Composite_Identifier (Construct.Name.all);
@@ -881,8 +888,6 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             Potential_Packages : Entity_List.List;
             Entity_Iterator    : Entity_List.Cursor;
 
-            Result : Entity_Access;
-
             type Scope_Info_Array is array
               (Integer range <>) of Scope_Info_Access;
 
@@ -893,10 +898,27 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
             Ordered_Length : Integer := 0;
             Length_Increment : Integer;
+
+            function Self_Name (S : String) return String;
+            --  Return the name without the prefix if any
+
+            function Self_Name (S : String) return String is
+            begin
+               for J in reverse S'Range loop
+                  if S (J) = '.' then
+                     return S (J + 1 .. S'Last);
+                  end if;
+               end loop;
+
+               return S;
+            end Self_Name;
+
          begin
+            Unit := Null_Entity_Access;
+            Generic_Instance := Null_Instance_Info;
 
             if Length (Id) = 0 then
-               return Null_Entity_Access;
+               return;
             end if;
 
             --  Set the order of the deps from which we've got to look for,
@@ -977,9 +999,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                          (File       => Get_File (Name_It),
                           Construct  => Get_Construct (Name_It));
 
-                     if Is_Parent_Scope
-                       (Null_Construct_Tree_Iterator,
-                        To_Construct_Tree_Iterator (Entity))
+                     if Is_Public_Library_Visible (Entity)
+                       and then Is_Parent_Scope
+                         (Null_Construct_Tree_Iterator,
+                          To_Construct_Tree_Iterator (Entity))
                      then
                         --  If the name is a root name, then that's it
                         if Length
@@ -1062,14 +1085,28 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                      while Use_Iterator /= Entity_List.No_Element loop
                         if Element (Use_Iterator) /= Null_Entity_Access then
                            declare
-                              Root_It : constant Construct_Tree_Iterator :=
-                                To_Construct_Tree_Iterator
-                                  (Element (Use_Iterator));
-                              Tree : constant Construct_Tree :=
-                                Get_Tree (Get_File (Element (Use_Iterator)));
-                              Nested_It : Construct_Tree_Iterator := Next
-                                (Tree, Root_It, Jump_Into);
+                              Actual_Package : Entity_Access;
+                              Root_It        : Construct_Tree_Iterator;
+                              Tree           : Construct_Tree;
+                              Nested_It      : Construct_Tree_Iterator;
+                              Gen_Info       : Instance_Info;
                            begin
+                              Actual_Package := Element (Use_Iterator);
+
+                              if Is_Generic_Instance (Actual_Package) then
+                                 Gen_Info := Get_Generic_Instance_Information
+                                   (Actual_Package);
+                                 Actual_Package :=
+                                   Get_Generic_Package (Gen_Info);
+                              end if;
+
+                              --  ??? how about package renamings here?
+
+                              Root_It := To_Construct_Tree_Iterator
+                                (Actual_Package);
+                              Tree := Get_Tree (Get_File (Actual_Package));
+                              Nested_It := Next (Tree, Root_It, Jump_Into);
+
                               while Nested_It /= Null_Construct_Tree_Iterator
                                 and then Is_Parent_Scope (Root_It, Nested_It)
                               loop
@@ -1083,8 +1120,13 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                                     Root :=
                                       To_Entity_Access
                                         (File       => Get_File
-                                             (Element (Use_Iterator)),
+                                             (Actual_Package),
                                          Construct  => Nested_It);
+
+                                    if Gen_Info /= Null_Instance_Info then
+                                       Generic_Instance :=
+                                         Generic_Instance & Gen_Info;
+                                    end if;
 
                                     exit Unit_Loop_3;
                                  end if;
@@ -1092,6 +1134,12 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                                  Nested_It := Next
                                    (Tree, Nested_It, Jump_Over);
                               end loop;
+
+                              --  Delete the generic info - not going
+                              --  to be used here.
+
+                              Ref (Gen_Info);
+                              Unref (Gen_Info);
                            end;
                         end if;
 
@@ -1105,19 +1153,24 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             --  package, return null.
 
             if Root = Null_Entity_Access then
-               return Null_Entity_Access;
+               return;
             end if;
 
             --  For all remaining items of the clause name
 
-            Result := Root;
+            Unit := Root;
+
+            if Is_Generic_Instance (Unit) then
+               Generic_Instance :=
+                 Generic_Instance & Get_Generic_Instance_Information (Unit);
+            end if;
 
             for J in 2 .. Length (Id) loop
                --  ??? We probably could save some time here by re-using the
                --  dependency structure that we've just built instead of
                --  recomputing everything trough a semantic iterator...
 
-               Result := Null_Entity_Access;
+               Unit := Null_Entity_Access;
 
                declare
                   Sem_It     : Semantic_Tree_Iterator;
@@ -1136,11 +1189,11 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                      if Get_Construct (Sem_Entity).Category
                        = Cat_Package
                        and then Equal
-                         (Get_Construct (Sem_Entity).Name.all,
+                         (Self_Name (Get_Construct (Sem_Entity).Name.all),
                           Get_Item (Id, J),
                           False)
                      then
-                        Result := Sem_Entity;
+                        Unit := Sem_Entity;
 
                         exit;
                      end if;
@@ -1151,31 +1204,50 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                   Free (Sem_It);
                end;
 
-               if Result = Null_Entity_Access then
-                  return Result;
+               if Unit = Null_Entity_Access then
+                  return;
                end if;
 
-               Root := Result;
+               Root := Unit;
+
+               if Is_Generic_Instance (Unit) then
+                  Generic_Instance :=
+                    Generic_Instance & Get_Generic_Instance_Information (Unit);
+               end if;
             end loop;
+         end Resolve_Use_Clause;
 
-            return Result;
-         end Get_Unit;
-
-         Unit : Entity_Access;
+         Unit     : Entity_Access;
+         Instance : Instance_Info;
+         P_Unit   : Entity_Persistent_Access;
       begin
-         if Get_Construct (It).Category = Cat_With
-           or else Get_Construct (It).Category = Cat_Use
+         if (Get_Construct (It).Category = Cat_With
+             or else Get_Construct (It).Category = Cat_Use)
+           and then Get_Construct (It).Name /= null
          then
-            Unit := Get_Unit (Get_Construct (It).all);
+            if Get_Construct (It).Category = Cat_With then
+               Unit := Get_Entity (Get_Unit (Db, Get_Construct (It).Name.all));
+            elsif Get_Construct (It).Category = Cat_Use then
+               Resolve_Use_Clause (Get_Construct (It).all, Unit, Instance);
+            end if;
 
             if Unit /= Null_Entity_Access then
+               P_Unit := To_Entity_Persistent_Access (Unit);
+               Ref (P_Unit);
+
                Construct_Annotations_Pckg.Set_Annotation
                  (Get_Annotation_Container (Tree, It).all,
                   Ref_Key,
                   (Kind      => Construct_Annotations_Pckg.Other_Kind,
                    Other_Val =>
                    new Dependency_Info_Annotation'
-                     (Entity => To_Entity_Persistent_Access (Unit))));
+                     (Info =>
+                        (Entity          => P_Unit,
+                         Generic_Context => To_Persistent (Instance)))));
+
+               --  This ref / unref will delete the instance
+               Ref (Instance);
+               Unref (Instance);
 
                if Get_Construct (It).Category = Cat_With then
                   Append (Current_Scope.With_Clauses, Unit);
@@ -1253,6 +1325,12 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       New_It : Construct_Tree_Iterator;
       End_Entity : Entity_Access;
    begin
+      if Units'Length = 0 then
+         return;
+      end if;
+
+      Db := Get_Database (Get_File (Get_Entity (Units (Units'First))));
+
       --  First, put the proper update flags. It's fundamental that these data
       --  are set before any further analysis, as we may need to resolve
       --  declaration on internal packages (generics or renamed) which may lead
@@ -1287,33 +1365,33 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                   --  known reference to the list.
 
                   case Get_Construct (It).Category is
-                  when Cat_Use =>
-                     Prepend
-                       (Current_Scope.Use_Clauses,
-                        Get_Dep_Entity
-                          (Ref_Key,
+                     when Cat_Use =>
+                        Prepend
+                          (Current_Scope.Use_Clauses,
+                           Get_Dep_Entity
+                             (Ref_Key,
+                              To_Entity_Access
+                                (Get_File (Get_Start_Entity (Units (J))),
+                                 It)));
+
+                     when Cat_With =>
+                        Prepend
+                          (Current_Scope.With_Clauses,
+                           Get_Dep_Entity
+                             (Ref_Key,
+                              To_Entity_Access
+                                (Get_File (Get_Start_Entity (Units (J))),
+                                 It)));
+
+                     when Cat_Package =>
+                        Prepend
+                          (Current_Scope.Visible_Nested_Packages,
                            To_Entity_Access
                              (Get_File (Get_Start_Entity (Units (J))),
-                              It)));
+                              It));
 
-                  when Cat_With =>
-                     Prepend
-                       (Current_Scope.With_Clauses,
-                        Get_Dep_Entity
-                          (Ref_Key,
-                           To_Entity_Access
-                             (Get_File (Get_Start_Entity (Units (J))),
-                              It)));
-
-                  when Cat_Package =>
-                     Prepend
-                       (Current_Scope.Visible_Nested_Packages,
-                        To_Entity_Access
-                          (Get_File (Get_Start_Entity (Units (J))),
-                           It));
-
-                  when others =>
-                     null;
+                     when others =>
+                        null;
                   end case;
                else
                   --  Otherwise, use the target use resolution
@@ -1327,6 +1405,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                       and then Get_Construct (It).Category in
                         Cat_Package .. Cat_Entry))
                  and then not Is_Compilation_Unit (It)
+                 and then Has_Children (It)
                then
                   --  We stack a dep scope of there are possible items on it,
                   --  if it's not a compil unit (stacked by the enclosing loop)
@@ -1359,18 +1438,21 @@ package body Ada_Semantic_Tree.Dependency_Tree is
 
                --  Then analyze the new iterator, if it's out the parent, we
                --  need to unroll the scopes until we reach the current one.
-
                if New_It /= Null_Construct_Tree_Iterator then
-                  while Current_Scope /= null
-                    and then not Encloses
-                      (To_Construct_Tree_Iterator (Current_Scope.Entity),
-                       String_Index_Type
-                         (Get_Construct (New_It).Sloc_Start.Index))
-                  loop
-                     Current_Scope := Current_Scope.Parent;
+                  if not Is_Parent_Scope
+                    (Get_Parent_Scope (Tree, It), New_It)
+                  then
+                     while Current_Scope /= null
+                       and then not Encloses
+                         (To_Construct_Tree_Iterator (Current_Scope.Entity),
+                          String_Index_Type
+                            (Get_Construct (New_It).Sloc_Start.Index))
+                     loop
+                        Current_Scope := Current_Scope.Parent;
 
-                     Max_Depth := Max_Depth - 1;
-                  end loop;
+                        Max_Depth := Max_Depth - 1;
+                     end loop;
+                  end if;
                end if;
 
                It := New_It;
@@ -1672,5 +1754,91 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       Free (It.Ordered_Results);
       Free (It.Used_Packages);
    end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (This : in out Dependency_Info_Annotation) is
+   begin
+      Unref (This.Info.Entity);
+      Free (This.Info.Generic_Context);
+   end Free;
+
+   ---------------------
+   -- Get_Clause_Info --
+   ---------------------
+
+   function Get_Clause_Info (Entity : Entity_Access) return Clause_Info is
+      use Construct_Annotations_Pckg;
+
+      Ref_Key : constant Construct_Annotations_Pckg.Annotation_Key :=
+        Get_Ref_Key
+          (Get_Database (Get_File (Entity)));
+
+      Obj : Construct_Annotations_Pckg.Annotation;
+   begin
+      Get_Annotation
+        (Get_Annotation_Container
+           (Get_Tree (Get_File (Entity)),
+            To_Construct_Tree_Iterator (Entity)).all,
+         Ref_Key,
+         Obj);
+
+      if Obj = Construct_Annotations_Pckg.Null_Annotation then
+         return (Null_Entity_Persistent_Access, Null_Persistent_Instance_Info);
+      else
+         return Dependency_Info_Annotation (Obj.Other_Val.all).Info;
+      end if;
+   end Get_Clause_Info;
+
+   ----------------
+   -- Get_Target --
+   ----------------
+
+   function Get_Target (Clause : Clause_Info) return Entity_Access is
+   begin
+      return To_Entity_Access (Clause.Entity);
+   end Get_Target;
+
+   -------------------------
+   -- Get_Generic_Context --
+   -------------------------
+
+   function Get_Generic_Context (Clause : Clause_Info) return Instance_Info is
+   begin
+      return To_Active (Clause.Generic_Context);
+   end Get_Generic_Context;
+
+   ---------------------------------------------
+   -- Update_Dependency_Information_If_Needed --
+   ---------------------------------------------
+
+   procedure Update_Dependency_Information_If_Needed (Unit : Unit_Access) is
+      Last_Timestamp : Integer := 0;
+      Units : Unit_Array_Access;
+   begin
+      Units := Get_Parents_List (Unit);
+
+      --  See if we need to recompute with / use info somewhere.
+
+      for J in Units'Range loop
+         if not Has_Updated_Dependencies (Units (J))
+           or else
+             (J > Units'First
+              and then Get_Dependency_Timestamp (Units (J)) < Last_Timestamp)
+         then
+            --  If there's at least one file not up to date, then we've got
+            --  to recompute the whole dependency hierarchy.
+
+            Update_Dependency_Information (Units, J);
+            exit;
+         end if;
+
+         Last_Timestamp := Get_Current_Timestamp (Units (J));
+      end loop;
+
+      Free (Units);
+   end Update_Dependency_Information_If_Needed;
 
 end Ada_Semantic_Tree.Dependency_Tree;

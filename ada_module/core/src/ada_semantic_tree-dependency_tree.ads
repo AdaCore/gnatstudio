@@ -26,8 +26,10 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 
 with GNAT.Strings; use GNAT.Strings;
 
+with Ada_Semantic_Tree.Generics; use Ada_Semantic_Tree.Generics;
+with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
+
 private with Ada.Unchecked_Deallocation;
-private with Ada_Semantic_Tree.Units;
 
 package Ada_Semantic_Tree.Dependency_Tree is
 
@@ -120,13 +122,31 @@ package Ada_Semantic_Tree.Dependency_Tree is
    procedure Free (It : in out Local_Visible_Construct_Iterator);
    --  Free the data associated to this iterator.
 
+   type Clause_Info is private;
+   --  Represents the information of a use or with clause
+
+   function Get_Clause_Info (Entity : Entity_Access) return Clause_Info;
+   --  If this entity points to a use or with clause, return the clause
+   --  information.
+
+   function Get_Target (Clause : Clause_Info) return Entity_Access;
+   --  Returns the target package of this clause, e.g. the withed or used
+   --  package.
+
+   function Get_Generic_Context (Clause : Clause_Info) return Instance_Info;
+   --  Return the generic context associated to this clause if the clause is
+   --  coming from an instantiation.
+
+   procedure Update_Dependency_Information_If_Needed (Unit : Unit_Access);
+   --  Update the with / use clause information from the unit if a unit of the
+   --  hierarchy has changed.
+
 private
 
    package Entity_List is new
      Ada.Containers.Doubly_Linked_Lists (Entity_Access);
 
    use Entity_List;
-   use Ada_Semantic_Tree.Units;
 
    type Unit_Array is array (Integer range <>) of Unit_Access;
 
@@ -183,6 +203,12 @@ private
 
    type Visibility_Resolver is record
       Hiding_Entities : Named_Entities_Access;
+   end record;
+
+   type Clause_Info is record
+      Entity : Entity_Persistent_Access;
+      Generic_Context : Persistent_Instance_Info :=
+        Null_Persistent_Instance_Info;
    end record;
 
 end Ada_Semantic_Tree.Dependency_Tree;

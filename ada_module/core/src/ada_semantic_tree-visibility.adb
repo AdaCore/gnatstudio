@@ -22,10 +22,10 @@ with GNATCOLL.Utils;   use GNATCOLL.Utils;
 with Language.Ada;     use Language.Ada;
 with String_Utils;     use String_Utils;
 with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Cache;        use Ada_Semantic_Tree.Cache;
+with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 
 package body Ada_Semantic_Tree.Visibility is
 
@@ -47,11 +47,6 @@ package body Ada_Semantic_Tree.Visibility is
       Generic_Context : Persistent_Instance_Info :=
         Null_Persistent_Instance_Info;
    end record;
-
-   function Resolve_Clause
-     (Assistant : Ada_Visibibility_Assistant'Class;
-      Entity    : Entity_Access)
-      return Clause_Val'Class;
 
    overriding procedure Free (This : in out Clause_Val);
 
@@ -141,8 +136,21 @@ package body Ada_Semantic_Tree.Visibility is
             end if;
 
             if Get_Construct (It).Visibility = Visibility_Public then
-               Get_Construct (It).Attributes
-                 (Ada_Library_Visibility_Attribute) := True;
+               if Get_Construct (It).Category = Cat_Package
+                 or else Get_Construct (It).Category in Subprogram_Category
+               then
+                  --  In case of packages or subprograms, only the declaration
+                  --  can be marked as public library visible. This applies in
+                  --  particular to compilation units, where we need to mark
+                  --  only the delcaration as visible, and not the completion.
+
+                  Get_Construct (It).Attributes
+                    (Ada_Library_Visibility_Attribute) :=
+                    Get_Construct (It).Is_Declaration;
+               else
+                  Get_Construct (It).Attributes
+                    (Ada_Library_Visibility_Attribute) := True;
+               end if;
 
                if not Parameters_Only then
                   if (Get_Construct (It).Category = Cat_Package
@@ -544,13 +552,8 @@ package body Ada_Semantic_Tree.Visibility is
    function Get_Generic_Context
      (This : Clause_Iterator) return Instance_Info
    is
-      Assistant : constant Database_Assistant_Access :=
-        Get_Assistant (Get_Database (Get_File (This.Current)));
    begin
-      return To_Active
-        (Resolve_Clause
-           (Ada_Visibibility_Assistant
-              (Assistant.all), This.Current).Generic_Context);
+      return Get_Generic_Context (Get_Clause_Info (This.Current));
    end Get_Generic_Context;
 
    -----------------------------
@@ -561,11 +564,6 @@ package body Ada_Semantic_Tree.Visibility is
      (Entity         : Entity_Access;
       From_Visiblity : Visibility_Context) return Entity_Access
    is
-      Assistant    : constant Database_Assistant_Access :=
-        Get_Assistant (Get_Database (Get_File (Entity)));
-      My_Assistant : Ada_Visibibility_Assistant renames
-        Ada_Visibibility_Assistant (Assistant.all);
-
       Clause_It : Clause_Iterator := To_Clause_Iterator
         (From_Visiblity, Cat_Unknown);
 
@@ -625,6 +623,8 @@ package body Ada_Semantic_Tree.Visibility is
       end Is_Prefix_Of;
 
    begin
+      Update_Dependency_Information_If_Needed (Get_Owning_Unit (Entity));
+
       while not At_End (Clause_It) loop
          Clause := Get_Entity (Clause_It);
 
@@ -632,8 +632,7 @@ package body Ada_Semantic_Tree.Visibility is
             when Cat_Use =>
                declare
                   Unit : Entity_Access :=
-                    To_Entity_Access
-                      (Resolve_Clause (My_Assistant, Clause).Unit);
+                    Get_Target (Get_Clause_Info (Clause));
                   View : Entity_View;
                   Use_Clause : Entity_Access;
                begin
@@ -662,8 +661,7 @@ package body Ada_Semantic_Tree.Visibility is
                     (Entity_Id.all, Get_Identifier
                        (To_Construct_Tree_Iterator (Clause)).all)
                   then
-                     return To_Entity_Access
-                       (Resolve_Clause (My_Assistant, Clause).Unit);
+                     return Get_Target (Get_Clause_Info (Clause));
                   end if;
                end if;
 
@@ -683,124 +681,8 @@ package body Ada_Semantic_Tree.Visibility is
    --------------------
 
    function Resolve_Clause (Entity : Entity_Access) return Entity_Access is
-      Assistant : constant Database_Assistant_Access :=
-        Get_Assistant (Get_Database (Get_File (Entity)));
    begin
-      return To_Entity_Access
-        (Resolve_Clause
-           (Ada_Visibibility_Assistant (Assistant.all), Entity).Unit);
-   end Resolve_Clause;
-
-   --------------------
-   -- Resolve_Clause --
-   --------------------
-
-   function Resolve_Clause
-     (Assistant : Ada_Visibibility_Assistant'Class;
-      Entity    : Entity_Access)
-      return Clause_Val'Class
-   is
-      pragma Unreferenced (Assistant);
-
-      use Construct_Annotations_Pckg;
-
-      procedure Resolve_With;
-      procedure Resolve_Use;
-
-      Clause : Clause_Val;
-
-      ------------------
-      -- Resolve_With --
-      ------------------
-
-      procedure Resolve_With is
-         Unit : constant Unit_Access :=
-           Get_Unit
-             (Get_Database (Get_File (Entity)),
-              Get_Construct (Entity).Name.all);
-      begin
-         Clause.Unit := To_Entity_Persistent_Access (Get_Entity (Unit));
-      end Resolve_With;
-
-      -----------------
-      -- Resolve_Use --
-      -----------------
-
-      procedure Resolve_Use is
-         Expression : Parsed_Expression := Ada_Lang.Parse_Expression_Backward
-           (Buffer       => Get_Construct (Entity).Name,
-            Start_Offset => String_Index_Type
-              (Get_Construct (Entity).Name'Last));
-
-         Package_Resolution : Entity_List;
-         Package_It         : Entity_Iterator;
-         View               : Entity_View;
-      begin
-         Package_Resolution := Find_Declarations
-           (Context           =>
-              (From_File,
-               Null_Instance_Info,
-               Get_File (Entity),
-               String_Index_Type
-                 (Get_Construct (Entity).Sloc_Start.Index - 1)),
-            From_Visibility   =>
-              (File                      => Get_File (Entity),
-               Offset                    =>
-                 String_Index_Type
-                   (Get_Construct (Entity).Sloc_Start.Index - 1),
-               Filter                    => Everything,
-               Min_Visibility_Confidence => Use_Visible),
-            Expression        => Expression,
-            Categories        => (1 => Cat_Package));
-
-         Package_It := First (Package_Resolution);
-
-         if not At_End (Package_It) then
-            View := Get_View (Package_It);
-            Clause.Unit := To_Entity_Persistent_Access
-              (Get_First_Occurence (Get_Entity (View)));
-
-            if View.all in Declaration_View_Record'Class then
-               Clause.Generic_Context :=
-                 To_Persistent
-                   (Declaration_View_Record (View.all).Generic_Context);
-            end if;
-
-            Free (View);
-         end if;
-
-         Free (Package_It);
-         Free (Package_Resolution);
-         Free (Expression);
-      end Resolve_Use;
-
-      Clause_Info : Cache_Access;
-   begin
-      Clause_Info := Get_Cache (Entity);
-
-      if Clause_Info /= null then
-         Clause := Clause_Val (Clause_Info.all);
-      end if;
-
-      if not Exists (Clause.Unit) then
-         case Get_Construct (Entity).Category is
-            when Cat_With =>
-               Resolve_With;
-
-            when Cat_Use =>
-               Resolve_Use;
-
-            when others =>
-               null;
-
-         end case;
-
-         Ref (Clause.Unit);
-
-         Set_Cache (Entity, new Clause_Val'(Clause));
-      end if;
-
-      return Clause;
+      return Get_Target (Get_Clause_Info (Entity));
    end Resolve_Clause;
 
    ----------
