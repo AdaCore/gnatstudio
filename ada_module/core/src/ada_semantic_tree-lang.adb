@@ -978,7 +978,7 @@ package body Ada_Semantic_Tree.Lang is
    function Forward_Expression
      (Str : String; Index : String_Index_Type) return String_Index_Type
    is
-      Result : String_Index_Type;
+      Result : String_Index_Type := String_Index_Type (Str'First);
 
       function Callback
         (Entity         : Language_Entity;
