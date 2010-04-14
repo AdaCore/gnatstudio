@@ -509,6 +509,10 @@ package body Ada_Semantic_Tree.Visibility is
                end loop;
 
                This.Current := To_Entity_Access (Unit_File, Last_It);
+
+               if not Is_Valid (This) then
+                  Prev (This);
+               end if;
             end;
          else
             This.Current := Null_Entity_Access;
