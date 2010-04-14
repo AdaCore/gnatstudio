@@ -351,11 +351,9 @@ procedure Ada_Semantic_Tree.Crash_Test is
       exception
          when E : others =>
             Put_Line
-              (Result_File,
-               "UNEXPECTED EXCEPTION: " & Exception_Information (E));
+              ("UNEXPECTED EXCEPTION: " & Exception_Information (E));
             Put_Line
-              (Result_File,
-               GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
+              (GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
             Local_Result.Exc := Local_Result.Exc + 1;
       end Test_Loc;
 
