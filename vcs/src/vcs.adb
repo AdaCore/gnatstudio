@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -207,6 +207,17 @@ package body VCS is
       Launch_Background_Command
         (Rep.Kernel, Command_Access (C), False, True, Name (VCS_Access (Rep)));
    end Check_Files;
+
+   ---------------------
+   -- Create_From_VCS --
+   ---------------------
+
+   function Create_From_VCS
+     (Ref  : access VCS_Record;
+      Name : String) return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Create (Filesystem_String (Name), Ref.Kernel);
+   end Create_From_VCS;
 
    ----------------------------
    -- Get_Identified_Actions --

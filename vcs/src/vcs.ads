@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -468,6 +468,13 @@ package VCS is
    --  The result should always have in first position the Unknown status,
    --  which is common to all VCS, and then the status considered as
    --  "up-to-date".
+
+   function Create_From_VCS
+     (Ref  : access VCS_Record;
+      Name : String) return GNATCOLL.VFS.Virtual_File;
+   --  Create a file instance out of a name coming from the external VCS. This
+   --  is useful when the external VCS does not correspond to the native
+   --  platform (like Cygwin on Windows based OS).
 
 private
 

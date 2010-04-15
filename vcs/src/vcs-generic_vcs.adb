@@ -186,6 +186,25 @@ package body VCS.Generic_VCS is
       end if;
    end Administrative_Directory;
 
+   ---------------------
+   -- Create_From_VCS --
+   ---------------------
+
+   overriding function Create_From_VCS
+     (Ref  : access Generic_VCS_Record;
+      Name : String) return GNATCOLL.VFS.Virtual_File is
+   begin
+      if Ref.Absolute_Names and then Ref.Path_Style = Cygwin then
+         --  Then make sure that the PATH is converted back from Cygwin if
+         --  necessary.
+         return Create
+           (Format_Pathname
+              (Filesystem_String (Name), Style => System_Default), Ref.Kernel);
+      else
+         return Create (Filesystem_String (Name), Ref.Kernel);
+      end if;
+   end Create_From_VCS;
+
    -------------
    -- Execute --
    -------------
