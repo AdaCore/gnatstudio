@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2169,12 +2169,12 @@ package body VCS.Generic_VCS is
       File : GNATCOLL.VFS.Virtual_File;
       Text : String)
    is
-      Kernel  : Kernel_Handle renames Rep.Kernel;
-      Parser  : constant Status_Parser_Record := Rep.Revision_Parser;
-      S       : String renames Text;
-      Matches : Match_Array (0 .. Parser.Matches_Num);
-      Script  : Scripting_Language;
-      Start   : Integer := S'First;
+      Kernel   : Kernel_Handle renames Rep.Kernel;
+      Parser   : constant Status_Parser_Record := Rep.Revision_Parser;
+      S        : String renames Text;
+      Matches  : Match_Array (0 .. Parser.Matches_Num);
+      Script   : Scripting_Language;
+      Start    : Integer := S'First;
       Commands : Command_Access;
    begin
       if Parser.Regexp = null then
@@ -2191,12 +2191,12 @@ package body VCS.Generic_VCS is
          exit when Matches (0) = No_Match;
 
          declare
-            Rev : constant String :=
-                    S (Matches (Parser.Repository_Rev_Index).First
-                       .. Matches (Parser.Repository_Rev_Index).Last);
-            Sym : constant String :=
-                    S (Matches (Parser.Sym_Index).First
-                       .. Matches (Parser.Sym_Index).Last);
+            Rev     : constant String :=
+                        S (Matches (Parser.Repository_Rev_Index).First
+                           .. Matches (Parser.Repository_Rev_Index).Last);
+            Sym     : constant String :=
+                        S (Matches (Parser.Sym_Index).First
+                           .. Matches (Parser.Sym_Index).Last);
             Command : Custom_Command_Access;
          begin
             Create

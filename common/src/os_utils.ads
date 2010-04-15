@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -85,8 +85,8 @@ package OS_Utils is
    --  difference is for the Cygwin mode. In this case the drive prefix is
    --  converted to the cygwin equivalent (/cygdrive/<drive>).
 
-   function Is_Cygwin_Path (Path : GNATCOLL.VFS.Filesystem_String)
-                            return Boolean;
+   function Is_Cygwin_Path
+     (Path : GNATCOLL.VFS.Filesystem_String) return Boolean;
    pragma Inline (Is_Cygwin_Path);
    --  Return true if Path start with /cygdrive/<drive>/
 

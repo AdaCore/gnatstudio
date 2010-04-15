@@ -802,8 +802,7 @@ package body VCS_Module is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr
+      User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
       N : Node_Ptr;
