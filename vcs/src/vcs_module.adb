@@ -1319,12 +1319,11 @@ package body VCS_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Ref    : VCS_Access;
+      Kernel         : constant Kernel_Handle := Get_Kernel (Data);
+      Ref            : VCS_Access;
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
-      File           : constant GNATCOLL.VFS.Virtual_File :=
-                         Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
+      File           : GNATCOLL.VFS.Virtual_File;
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
 
@@ -1334,6 +1333,8 @@ package body VCS_Module is
                  & VCS_Identifier);
          return;
       end if;
+
+      File := Ref.Create_From_VCS (Nth_Arg (Data, 2));
 
       Parse_Annotations (Ref, File, S);
    exception
@@ -1349,12 +1350,11 @@ package body VCS_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Ref    : VCS_Access;
+      Kernel         : constant Kernel_Handle := Get_Kernel (Data);
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
-      File           : constant GNATCOLL.VFS.Virtual_File :=
-                         Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
+      Ref            : VCS_Access;
+      File           : GNATCOLL.VFS.Virtual_File;
       Escaped        : String (S'First .. S'First + S'Length * 2);
       Last           : Integer := S'First;
    begin
@@ -1366,6 +1366,8 @@ package body VCS_Module is
                  & VCS_Identifier);
          return;
       end if;
+
+      File := Ref.Create_From_VCS (Nth_Arg (Data, 2));
 
       for J in S'Range loop
          if S (J) = '%' then
@@ -1391,12 +1393,11 @@ package body VCS_Module is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Ref    : VCS_Access;
+      Kernel         : constant Kernel_Handle := Get_Kernel (Data);
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
-      File           : constant GNATCOLL.VFS.Virtual_File :=
-                         Create (Nth_Arg (Data, 2), Kernel);
       S              : constant String := Nth_Arg (Data, 3);
+      Ref            : VCS_Access;
+      File           : GNATCOLL.VFS.Virtual_File;
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
 
@@ -1406,6 +1407,8 @@ package body VCS_Module is
                  & VCS_Identifier);
          return;
       end if;
+
+      File := Ref.Create_From_VCS (Nth_Arg (Data, 2));
 
       Parse_Revision (Ref, File, S);
    exception
