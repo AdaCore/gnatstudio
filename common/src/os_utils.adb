@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -251,6 +251,8 @@ package body OS_Utils is
      (Path  : Filesystem_String;
       Style : Path_Style := System_Default) return Filesystem_String
    is
+      use type Config.Host_Type;
+
       function Cygwin_To_Dos
         (Path : Filesystem_String) return Filesystem_String;
       --  Convert the /cygdrive/<drive>/ prefix to the DOS <drive>:\ equivalent
@@ -275,10 +277,25 @@ package body OS_Utils is
 
    begin
       case Style is
-         when UNIX | System_Default =>
+         when UNIX =>
             return Format_Pathname
               (Path,
                Directory_Operations.Path_Style'Val (Path_Style'Pos (Style)));
+
+         when System_Default =>
+            if Config.Host = Config.Windows then
+               --  If we are running on Windows, then make sure that a
+               --  conversion to the System_Default does convert from Cygwin
+               --  PATH.
+               return Format_Pathname
+                 (Cygwin_To_Dos (Path), Directory_Operations.DOS);
+
+            else
+               return Format_Pathname
+                 (Path,
+                  Directory_Operations.Path_Style'Val
+                    (Path_Style'Pos (Style)));
+            end if;
 
          when DOS =>
             declare
