@@ -556,7 +556,6 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                It.Package_Body := It.Current_Construct;
                It.Package_Body_File := It.Current_File;
                It.Package_Body_Tree := It.Current_Tree;
-               It.Current_File := It.Current_File;
 
                declare
                   Spec : Entity_Access;
