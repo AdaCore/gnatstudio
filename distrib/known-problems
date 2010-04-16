@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.2
 
+- J416-007: F12 does not call SPARKFormat
+  Problem:    When using the SPARK toolset, using F12 no longer performs a
+              SPARKFormat on the current file.
+  Workaround: Use the menu item instead of the keyshortcut.
+
 - J331-011: Files not normalized when opened from debugger view
   Problem:    From the call stack view, if GPS opens a new editor when clicking
               on a frame, then the corresponding file might not contain a
@@ -8,7 +13,7 @@ Known Problems fixed in GPS 4.4.2
   Workaround: Close the editor and open a new one from the project view or
               using shift+F3.
 
-- J302-008 Parenthesis highlighting not working at end of comment
+- J302-008: Parenthesis highlighting not working at end of comment
   Problem: Parenthesis or delimiter highlighting does not work when the
            cursor is positioned right after a closing delimiter wich is at the
            end of a comment block.
@@ -21,7 +26,7 @@ Known Problems fixed in GPS 4.4.2
               coming from private parent parts.
   Workaround: Restart GPS, or complete manually the code.
 
-- J301-009 Possible instabilities after doing File->Save as and closing editors
+- J301-009: Possible instabilities after doing File->Save as and closing editors
   Problem:    When using File->Save as to change the name of an editor, if you
               save a file from name A to B, then another file from C to A.
   Workaround: Use the "File Operations" menu in the Project View to rename
