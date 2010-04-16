@@ -1246,6 +1246,22 @@ package body Language.Ada is
             when ')' =>
                Push (Token, Offset);
 
+               if Length (Result.Tokens) /= 0
+                 and then Data (First (Result.Tokens)).Tok_Type /= Tok_Dot
+                 and then Data (First (Result.Tokens)).Tok_Type
+                 /= Tok_Open_Parenthesis
+               then
+                  --  On a closing parenthesis, the only accepted following
+                  --  tokens are the open parenthesis (array index) or the
+                  --  dot (component index). Things such as:
+                  --
+                  --  if X (A) in B
+                  --
+                  --  should stop the analysis
+
+                  exit;
+               end if;
+
                Token.Tok_Type := Tok_Close_Parenthesis;
                Push (Token, Offset);
 
