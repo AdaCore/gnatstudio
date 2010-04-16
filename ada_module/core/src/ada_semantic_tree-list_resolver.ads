@@ -126,10 +126,12 @@ package Ada_Semantic_Tree.List_Resolver is
    procedure Append_Actuals
      (Params     : in out Actual_Parameter_Resolver;
       Buffer     : String_Access;
-      Start_Call : String_Index_Type);
+      Start_Call : String_Index_Type;
+      Success    : out Boolean);
    --  Starting at the location given in parameter, the resolver will look
    --  at the first open parenthesis, and then set the resolver according to
    --  the actual parameters found until the closing parenthesis.
+   --  If some actuals couldn't be added, then success is false
 
    function Is_Complete (Params : Actual_Parameter_Resolver) return Boolean;
    --  Return true if all the parameters without default values have been

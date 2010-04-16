@@ -975,8 +975,9 @@ package body Ada_Semantic_Tree.Lang is
 
    type Reference_To_Analyze is record
       Index_Start : String_Index_Type := 0;
-      Index_End : String_Index_Type := 0;
-      Has_Arrow : Boolean := False;
+      Index_End  : String_Index_Type := 0;
+      Has_Arrow  : Boolean := False;
+      Paren_Loc  : String_Index_Type := 0;
    end record;
 
    function Forward_Expression
@@ -1028,6 +1029,8 @@ package body Ada_Semantic_Tree.Lang is
                when others =>
                   if Str (Sloc_Start.Index .. Sloc_End.Index) = "=>" then
                      Result.Has_Arrow := True;
+                  elsif Str (Sloc_Start.Index .. Sloc_End.Index) = "(" then
+                     Result.Paren_Loc := String_Index_Type (Sloc_Start.Index);
                   end if;
 
                   return True;
@@ -1058,11 +1061,38 @@ package body Ada_Semantic_Tree.Lang is
 
       List : Entity_List;
 
-      It     : Entity_Iterator;
-      View   : Entity_View;
-      Result : Entity_Access := Null_Entity_Access;
+      It                 : Entity_Iterator;
+      View               : Entity_View;
+      Prev_Matching_View : Entity_View;
+      Result             : Entity_Access := Null_Entity_Access;
 
       Decl_Construct : Construct_Tree_Iterator;
+
+      function Actual_Structure_Matches (E : Entity_Access) return Boolean;
+      --  Return true if the structure of the actual parameter (number, and
+      --  names if any) match the formal parameters of the entity
+
+      function Actual_Structure_Matches (E : Entity_Access) return Boolean is
+         Formal_Profile : constant List_Profile :=  Get_List_Profile (E);
+         Actual_Call    : Actual_Parameter_Resolver :=
+           Get_Actual_Parameter_Resolver (Formal_Profile);
+         Success : Boolean := True;
+      begin
+         if Ref.Paren_Loc /= 0 then
+            Append_Actuals
+              (Actual_Call,
+               Get_Buffer (File),
+               Ref.Paren_Loc,
+               Success);
+         end if;
+
+         if Success and then Is_Complete (Actual_Call) then
+            return True;
+         else
+            return False;
+         end if;
+      end Actual_Structure_Matches;
+
    begin
       --  First, check if we're already on a declaration
 
@@ -1172,19 +1202,63 @@ package body Ada_Semantic_Tree.Lang is
 
       It := First (List);
 
-      if not At_End (It) then
+      while not At_End (It) loop
          View := Get_View (It);
+
+         if Prev_Matching_View /= Null_Entity_View then
+            --  In this case, there is already a match. If they are both
+            --  subprograms, check if we can resolve the ambiguity. In all
+            --  other cases, we just exit without a result.
+
+            if Get_Construct (Get_Entity (View)).Category not in
+              Subprogram_Category
+              or else Get_Construct
+                (Get_Entity (Prev_Matching_View)).Category not in
+              Subprogram_Category
+            then
+               Free (View);
+               Free (Prev_Matching_View);
+
+               exit;
+            end if;
+
+            if Actual_Structure_Matches (Get_Entity (View)) then
+               if Actual_Structure_Matches
+                 (Get_Entity (Prev_Matching_View))
+               then
+                  --  The two view match the actual structure given, we can't
+                  --  decide which one is OK, so don't offer a result.
+
+                  Free (View);
+                  Free (Prev_Matching_View);
+                  exit;
+               else
+                  Free (Prev_Matching_View);
+                  Prev_Matching_View := View;
+               end if;
+            else
+               --  If the first view doesn't match, we assume that the
+               --  currently matching one works
+
+               Free (View);
+            end if;
+         else
+            Prev_Matching_View := View;
+         end if;
 
          Next (It);
 
          if At_End (It) then
-            --  In this case, there is a unique match. Return it.
+            --  In this case, there is no more match to check. Return the last
+            --  matching one.
 
-            Result := Get_First_Occurence (Get_Entity (View));
+            Result := Get_First_Occurence (Get_Entity (Prev_Matching_View));
+
+            Free (Prev_Matching_View);
+
+            exit;
          end if;
-
-         Free (View);
-      end if;
+      end loop;
 
       Free (It);
       Free (List);

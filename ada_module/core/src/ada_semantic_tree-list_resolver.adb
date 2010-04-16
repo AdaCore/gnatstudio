@@ -351,7 +351,8 @@ package body Ada_Semantic_Tree.List_Resolver is
    procedure Append_Actuals
      (Params     : in out Actual_Parameter_Resolver;
       Buffer     : String_Access;
-      Start_Call : String_Index_Type)
+      Start_Call : String_Index_Type;
+      Success    : out Boolean)
    is
       Param_Start, Param_End : String_Index_Type := 0;
       Paren_Depth : Integer := 0;
@@ -371,7 +372,7 @@ package body Ada_Semantic_Tree.List_Resolver is
          pragma Unreferenced (Entity, Partial_Entity);
 
          Word : constant String := Buffer (Sloc_Start.Index .. Sloc_End.Index);
-         Param_Added, Success : Boolean;
+         Param_Added : Boolean;
       begin
          if Paren_Depth = 0 then
             if Word = "(" then
@@ -393,6 +394,10 @@ package body Ada_Semantic_Tree.List_Resolver is
                   Param_Added => Param_Added,
                   Success     => Success);
 
+               if not Success then
+                  return True;
+               end if;
+
                if Word = ")" then
                   return True;
                else
@@ -410,6 +415,8 @@ package body Ada_Semantic_Tree.List_Resolver is
          return False;
       end Callback;
    begin
+      Success := True;
+
       Parse_Entities
         (Ada_Lang,
          Buffer (Integer (Start_Call) .. Buffer'Last),

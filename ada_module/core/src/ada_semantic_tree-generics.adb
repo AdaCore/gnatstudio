@@ -151,6 +151,7 @@ package body Ada_Semantic_Tree.Generics is
          declare
             Profile : constant List_Profile :=
               Get_List_Profile (Generic_Package, Generic_Profile);
+            Success : Boolean;
          begin
             Result := new Instance_Info_Record;
 
@@ -174,7 +175,8 @@ package body Ada_Semantic_Tree.Generics is
             Append_Actuals
               (Result.Resolver.all,
                Get_Buffer (Get_File (E)),
-               String_Index_Type (Get_Construct (E).Sloc_Start.Index));
+               String_Index_Type (Get_Construct (E).Sloc_Start.Index),
+               Success);
 
             Free (View);
          end;
@@ -540,6 +542,7 @@ package body Ada_Semantic_Tree.Generics is
 
       Result : Instance_Info;
       Cur : Persistent_Generic_Info_List.Cursor;
+      Success : Boolean;
    begin
       if Instance = null then
          return Null_Instance_Info;
@@ -561,7 +564,8 @@ package body Ada_Semantic_Tree.Generics is
            (Result.Resolver.all,
             Get_Buffer (Get_File (Result.Instance_Package)),
             String_Index_Type
-              (Get_Construct (Result.Instance_Package).Sloc_Start.Index));
+              (Get_Construct (Result.Instance_Package).Sloc_Start.Index),
+            Success);
       end if;
 
       Cur := Instance.Pre_Contexts.First;
