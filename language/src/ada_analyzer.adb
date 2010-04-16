@@ -1795,9 +1795,20 @@ package body Ada_Analyzer is
                     Subprogram_Category | Cat_Pragma
                =>
                   --  Adjust the Sloc_End to the next semicolon for enclosing
-                  --  entities and variable declarations.
+                  --  entities and variable declarations. In case if loops,
+                  --  adjust the end of the source location to the end of the
+                  --  identifier.
 
-                  Look_For (Constructs.Current.Sloc_End, ';');
+                  if Prev_Token /= Tok_For then
+                     Look_For (Constructs.Current.Sloc_End, ';');
+                  else
+                     Constructs.Current.Sloc_End.Column :=
+                       Constructs.Current.Sloc_End.Column +
+                         Value.Ident_Len - 1;
+                     Constructs.Current.Sloc_End.Index :=
+                       Constructs.Current.Sloc_End.Index +
+                         Value.Ident_Len - 1;
+                  end if;
 
                when others =>
                   null;
@@ -4209,6 +4220,9 @@ package body Ada_Analyzer is
             end if;
 
             if (Top_Token.In_Declaration
+                or else
+                  (Top_Token.Token = Tok_For
+                   and then Prev_Token = Tok_For)
                 or else Top_Token.Type_Declaration
                 or else Top_Token.Attributes (Ada_Record_Attribute)
                 or else Is_Parameter
@@ -4226,7 +4240,8 @@ package body Ada_Analyzer is
                         or else Prev_Token = Tok_Is
                         or else Prev_Token = Tok_Private
                         or else Prev_Token = Tok_Record
-                        or else Prev_Token = Tok_Generic)
+                        or else Prev_Token = Tok_Generic
+                        or else Prev_Token = Tok_For)
               and then Prev_Token /= Tok_Dot
             then
                --  This is a variable, a field declaration or a enumeration
@@ -4255,6 +4270,10 @@ package body Ada_Analyzer is
                     Top_Token.Type_Definition_Section;
                   Val.Is_Generic_Param := In_Generic;
                   Push (Tokens, Val);
+
+                  if Prev_Token = Tok_For then
+                     Pop (Tokens);
+                  end if;
                end;
             end if;
 
