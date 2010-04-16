@@ -556,6 +556,11 @@ package body Ada_Semantic_Tree.Declarations is
          Categories           : Category_Array;
          Result               : in out Entity_List)
       is
+         --  Adjust the categories - we always add Cat_Package to the list of
+         --  categories we're looking for, as any category can be found
+         --  prefixed by a package name and there is no way to ensure that
+         --  the token is the last of the instruction (even if it may be the
+         --  last of the list).
          function Adjust_Categories return Category_Array;
 
          -----------------------
@@ -566,10 +571,6 @@ package body Ada_Semantic_Tree.Declarations is
          begin
             if Categories = Null_Category_Array then
                return Null_Category_Array;
-            end if;
-
-            if Next (Token) = Token_List.Null_Node then
-               return Categories;
             end if;
 
             for J in Categories'Range loop
@@ -980,32 +981,13 @@ package body Ada_Semantic_Tree.Declarations is
                   return;
                end if;
 
-               if Is_Partial then
-                  --  If we're looking at a partial expression, e.g. for a
-                  --  completion, we want to retreive packages names as well
-                  --  as that may just be the begining of an entity.
-
-                  Analyze_Token
-                    (Token,
-                     Next (Token),
-                     Previous_Declaration,
-                     (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
-                      Cat_Subtype, Cat_Package),
-                     Result);
-               else
-                  --  If we're looking at a non-partial expression, when the
-                  --  last node looked for has to be a type. Previous elements
-                  --  can be packages, but that will be taken care of by
-                  --  Adjust_Category
-
-                  Analyze_Token
-                    (Token,
-                     Next (Token),
-                     Previous_Declaration,
-                     (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
-                      Cat_Subtype),
-                     Result);
-               end if;
+               Analyze_Token
+                 (Token,
+                  Next (Token),
+                  Previous_Declaration,
+                  (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
+                   Cat_Subtype, Cat_Package),
+                  Result);
 
             when others =>
                null;
