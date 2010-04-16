@@ -25,11 +25,12 @@ with GNAT.Strings;
 with Glib.Convert;            use Glib.Convert;
 
 with Diffing;
-with Language.Ada;                   use Language.Ada;
-with Language.Documentation;         use Language.Documentation;
-with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
+with Language.Ada;                    use Language.Ada;
+with Language.Documentation;          use Language.Documentation;
+with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Generics;      use Ada_Semantic_Tree.Generics;
+with Ada_Semantic_Tree.List_Resolver; use Ada_Semantic_Tree.List_Resolver;
 
 with String_Utils;            use String_Utils;
 
@@ -972,13 +973,19 @@ package body Ada_Semantic_Tree.Lang is
    -- Find_Declaration --
    ----------------------
 
-   function Forward_Expression
-     (Str : String; Index : String_Index_Type) return String_Index_Type;
+   type Reference_To_Analyze is record
+      Index_Start : String_Index_Type := 0;
+      Index_End : String_Index_Type := 0;
+      Has_Arrow : Boolean := False;
+   end record;
 
    function Forward_Expression
-     (Str : String; Index : String_Index_Type) return String_Index_Type
+     (Str : String; Index : String_Index_Type) return Reference_To_Analyze;
+
+   function Forward_Expression
+     (Str : String; Index : String_Index_Type) return Reference_To_Analyze
    is
-      Result : String_Index_Type := String_Index_Type (Str'First);
+      Result : Reference_To_Analyze;
 
       function Callback
         (Entity         : Language_Entity;
@@ -992,22 +999,41 @@ package body Ada_Semantic_Tree.Lang is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean
       is
-         pragma Unreferenced (Entity, Partial_Entity);
+         pragma Unreferenced (Partial_Entity);
       begin
-         Result := String_Index_Type (Sloc_End.Index);
+         if Result.Index_Start = 0 then
+            Result.Index_Start := String_Index_Type (Sloc_Start.Index);
+            Result.Index_End := String_Index_Type (Sloc_End.Index);
 
-         --  In case of a composite name, we're actually interrested by the
-         --  first element fed to the analysis.
+            --  In case of a composite name, we're actually interrested by the
+            --  first element fed to the analysis.
 
-         for J in Sloc_Start.Index .. Sloc_End.Index loop
-            if Str (J) = '.' then
-               Result := String_Index_Type (J - 1);
+            for J in Sloc_Start.Index .. Sloc_End.Index loop
+               if Str (J) = '.' then
+                  Result.Index_End := String_Index_Type (J - 1);
 
-               exit;
-            end if;
-         end loop;
+                  exit;
+               end if;
+            end loop;
 
-         return True;
+            return False;
+         else
+            case Entity is
+               when  Annotated_Keyword_Text
+                  | Comment_Text
+                  | Annotated_Comment_Text =>
+
+                  return False;
+
+               when others =>
+                  if Str (Sloc_Start.Index .. Sloc_End.Index) = "=>" then
+                     Result.Has_Arrow := True;
+                  end if;
+
+                  return True;
+
+            end case;
+         end if;
       end Callback;
    begin
       Parse_Entities
@@ -1028,7 +1054,7 @@ package body Ada_Semantic_Tree.Lang is
       Line     : Integer;
       Column   : String_Index_Type) return Entity_Access
    is
-      Offset : String_Index_Type;
+      Ref : Reference_To_Analyze;
 
       List : Entity_List;
 
@@ -1055,14 +1081,94 @@ package body Ada_Semantic_Tree.Lang is
 
       --  Otherwise, we're on a reference. Launch a use-sensitive search
 
-      Offset := Forward_Expression
+      Ref := Forward_Expression
         (Get_Buffer (File).all,
          Get_Offset_Of_Line (File, Line) + Column - 1);
 
+      if Ref.Has_Arrow then
+         --  If there is an arrow, we assume that we're working on a call and
+         --  will resolve the parameter.
+
+         declare
+            use Token_List;
+
+            Analyzed_Expression : Parsed_Expression :=
+              Parse_Expression_Backward
+                (Lang              => Ada_Lang,
+                 Buffer            => Get_Buffer (File),
+                 Start_Offset      => Ref.Index_End);
+
+            Enclosing_Call : Parsed_Expression;
+
+            Call_Line   : Integer;
+            Call_Column : Visible_Column_Type;
+            Call_Index  : String_Index_Type := 0;
+            Call_Entity : Entity_Access;
+
+            Call_Node   : Token_List.List_Node;
+         begin
+            if First (Analyzed_Expression.Tokens) /= Token_List.Null_Node then
+               Enclosing_Call :=
+                 Parse_Expression_Backward
+                   (Lang              => Ada_Lang,
+                    Buffer            => Get_Buffer (File),
+                    Start_Offset      => Token_List.Data
+                      (Token_List.First
+                         (Analyzed_Expression.Tokens)).Token_First - 1);
+
+               Call_Node := Token_List.First (Enclosing_Call.Tokens);
+            else
+               Call_Node := Token_List.Null_Node;
+            end if;
+
+            while Call_Node /= Token_List.Null_Node loop
+               if Data (Call_Node).Tok_Type = Tok_Open_Parenthesis then
+                  exit;
+               end if;
+
+               Call_Index := Data (Call_Node).Token_First;
+               Call_Node := Next (Call_Node);
+            end loop;
+
+            if Call_Index /= 0 then
+               To_Line_Column
+                 (File                 => File,
+                  Absolute_Byte_Offset => Call_Index,
+                  Line                 => Call_Line,
+                  Column               => Call_Column);
+
+               Call_Index := To_Line_String_Index
+                 (File, Call_Line, Call_Column);
+
+               Call_Entity := Lang.Find_Declaration
+                 (File, Call_Line, Call_Index);
+
+               if Call_Entity /= Null_Entity_Access then
+                  declare
+                     Profile : constant List_Profile :=
+                       Get_List_Profile (Call_Entity);
+                     Formals : constant Entity_Array := Get_Formals (Profile);
+                     Looked_Name : constant String :=
+                       To_Lower (To_String (Analyzed_Expression));
+                  begin
+                     for J in Formals'Range loop
+                        if Looked_Name = Get_Identifier (Formals (J)).all then
+                           return Formals (J);
+                        end if;
+                     end loop;
+                  end;
+               end if;
+            end if;
+
+            Free (Analyzed_Expression);
+            Free (Enclosing_Call);
+         end;
+      end if;
+
       List := Find_Declarations
         (Context         =>
-           (From_File, Null_Instance_Info, File, Offset),
-         From_Visibility => (File, Offset, Everything, Use_Visible));
+           (From_File, Null_Instance_Info, File, Ref.Index_End),
+         From_Visibility => (File, Ref.Index_End, Everything, Use_Visible));
 
       It := First (List);
 
