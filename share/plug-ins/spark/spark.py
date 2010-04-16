@@ -770,7 +770,7 @@ a = """<?xml version="1.0"?>
   <key action="/SPARK/Examine File">F8</key>
   <key action="/SPARK/SPARKSimp">F10</key>
   <key action="/SPARK/POGS">F11</key>
-  <key action="/SPARK/SPARK Format File">F12</key>
+  <key action="/SPARK/SPARKFormat file">F12</key>
 
 </SPARK>
 
