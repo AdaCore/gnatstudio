@@ -50,7 +50,7 @@ package body GVD.Menu is
             Message       => -"Enter an expression to display:",
             Key           => "gvd_display_expression_dialog",
             Check_Msg     => -"Expression is a subprogram call",
-            History       => Get_History (GPS_Window (Debugger.Window).Kernel),
+            History       => Get_History (Debugger.Window.Kernel),
             Key_Check     => "expression_subprogram_debugger",
             Button_Active => Is_Func'Unchecked_Access);
 

@@ -805,8 +805,7 @@ package body GVD.Canvas is
       when E : Constraint_Error => Traces.Trace (Exception_Handle, E);
          --  Usually because Find_Item returned a null value
          GVD.Trace.Output_Error
-           (GPS_Window (Process.Window).Kernel,
-            (-" Error while processing: ") & Cmd);
+           (Process.Window.Kernel, (-" Error while processing: ") & Cmd);
    end Process_Graph_Cmd;
 
    -------------------------
@@ -1819,8 +1818,7 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
 
-      Top  : constant GPS_Window :=
-        GPS_Window (Get_Process (Item.Canvas).Window);
+      Top  : constant GPS_Window := Get_Process (Item.Canvas).Window;
       View : GVD_Memory_View;
 
    begin

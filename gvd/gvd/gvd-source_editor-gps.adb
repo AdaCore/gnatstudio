@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -121,7 +121,7 @@ package body GVD.Source_Editor.GPS is
      (Editor  : access GEdit_Record;
       Process : Glib.Object.GObject)
    is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := Editor.Window.Kernel;
       Line   : constant Integer :=
                  Get_Current_Source_Line (Visual_Debugger (Process));
 
@@ -178,7 +178,7 @@ package body GVD.Source_Editor.GPS is
      (Editor    : access GEdit_Record;
       File_Name : GNATCOLL.VFS.Virtual_File)
    is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := Editor.Window.Kernel;
       File   : Virtual_File;
    begin
       if File_Name = GNATCOLL.VFS.No_File then
@@ -222,7 +222,7 @@ package body GVD.Source_Editor.GPS is
       Line    : Natural;
       Process : Glib.Object.GObject)
    is
-      Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel  : constant Kernel_Handle := Editor.Window.Kernel;
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
 
       Prev_Current_Line : constant Integer := Get_Current_Source_Line (Tab);
@@ -277,7 +277,7 @@ package body GVD.Source_Editor.GPS is
      (Editor  : access GEdit_Record;
       Message : String)
    is
-      Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel  : constant Kernel_Handle := Editor.Window.Kernel;
    begin
       Editor.Current_File := GNATCOLL.VFS.No_File;
       Console.Insert (Kernel, Message);
@@ -295,7 +295,7 @@ package body GVD.Source_Editor.GPS is
       Br      : GVD.Types.Breakpoint_Array;
       Process : Glib.Object.GObject)
    is
-      Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel  : constant Kernel_Handle := Editor.Window.Kernel;
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -516,7 +516,7 @@ package body GVD.Source_Editor.GPS is
    ---------------------
 
    procedure Free_Debug_Info (Editor : access GEdit_Record) is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := Editor.Window.Kernel;
    begin
       Free (Editor.Current_Breakpoints);
 

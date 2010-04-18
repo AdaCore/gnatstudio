@@ -1019,7 +1019,7 @@ package body GVD.Process is
       Debugger_Name   : String := "";
       Success         : out Boolean)
    is
-      Window  : constant GPS_Window := GPS_Window (Process.Window);
+      Window  : constant GPS_Window := Process.Window;
       Buttons : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
       Widget  : Gtk_Menu_Item;
