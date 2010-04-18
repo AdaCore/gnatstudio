@@ -790,8 +790,7 @@ package body Browsers.Projects is
         (Kernel, "Show recursive projects imported",
          Label  => -"Show projects imported by %p recursively",
          Action => Command,
-         Filter => Action_Filter
-           (Create (Module => Project_Browser_Module_Name)));
+         Filter => Create (Module => Project_Browser_Module_Name));
 
       --  ??? Set_Sensitive (Mitem, not Parents_Shown (Item));
       Command := new Imported_By_Command;
