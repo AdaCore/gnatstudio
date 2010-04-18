@@ -528,8 +528,8 @@ package body Docgen2_Module is
         (Kernel, "Generate file documentation",
          Label  => "Documentation/Generate for %f",
          Action => Command,
-         Filter => Action_Filter (Lookup_Filter (Kernel, "File") and
-                                  Create (Language => "ada")));
+         Filter => Lookup_Filter (Kernel, "File")
+                     and Create (Language => "ada"));
 
       Register_Menu
         (Kernel, Tools, "_Documentation", Callback => null,
