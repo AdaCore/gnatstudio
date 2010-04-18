@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2009, AdaCore               --
+--                    Copyright (C) 2002-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -185,7 +185,7 @@ package body Codefix.GPS_Io is
       Text_Has_Changed (This);
 
       if Get_Line (Cursor) /= 0 then
-         Actual_Start_Line := Integer (Cursor.Get_Line);
+         Actual_Start_Line := Cursor.Get_Line;
          Actual_Start_Column := Integer (Cursor.Get_Column);
       else
          Actual_Start_Line := 1;
