@@ -1055,7 +1055,7 @@ package body Remote.Db is
       elsif Db.Machines.Contains (Nickname)
         or else Db.Sys_Machines.Contains (Nickname)
       then
-         Machine := Machine_Access (Db.Get_Machine (Nickname));
+         Machine := Db.Get_Machine (Nickname);
 
          return Machine.Shell /= null
            and then Machine.Access_Tool /= null;
