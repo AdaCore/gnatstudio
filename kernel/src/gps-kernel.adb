@@ -270,8 +270,7 @@ package body GPS.Kernel is
       Handle.Gnatls_Server := new String'("");
 
       Create_Registry (Handle);
-      Set_Registry
-        (Language_Handler (Handle.Lang_Handler), Handle.Registry);
+      Set_Registry (Handle.Lang_Handler, Handle.Registry);
 
       --  Note: we do not compute the view of this project yet. This will be
       --  done only if no other project was loaded from the command line, which
@@ -724,7 +723,7 @@ package body GPS.Kernel is
          return No_Context;
       end if;
 
-      Module := Module_ID (Get_Module_From_Child (Child));
+      Module := Get_Module_From_Child (Child);
 
       if Module /= null then
          Context.Data.Data := new Selection_Context_Data_Record;
