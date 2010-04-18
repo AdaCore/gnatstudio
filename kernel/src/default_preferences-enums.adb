@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,8 +49,7 @@ package body Default_Preferences.Enums is
    is
       C     : constant Gtk_Combo := Gtk_Combo (Combo);
    begin
-      Enum_Preference (Data.Pref).Enum_Value :=
-        Integer (Get_Index_In_List (C));
+      Enum_Preference (Data.Pref).Enum_Value := Get_Index_In_List (C);
    end Enum_Changed;
 
    ------------------
