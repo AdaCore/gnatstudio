@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2006-2009, AdaCore                     --
+--                     Copyright (C) 2006-2010, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1110,7 +1110,8 @@ package body GNAT.Expect.TTY.Remote is
    exception
       when Process_Died | Invalid_Process =>
          if Fd /= null then
-            Close (Process_Descriptor'Class (Fd.all), Status);
+            Close (Fd.all, Status);
+
             if Status = 0 then
                Success := True;
             else
