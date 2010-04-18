@@ -655,7 +655,7 @@ package body GPS.Main_Window is
         (Main_Window, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Main_Window, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Kernel_Handle (Main_Window.Kernel));
+         Drag_Data_Received'Access, Main_Window.Kernel);
 
       --  Set the generic user interface
       User_Interface_Tools.Set_User_Interface
