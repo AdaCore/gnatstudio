@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2009, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1556,7 +1556,7 @@ package body Src_Editor_View is
       Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
-      Source : constant Source_View := Source_View (Hook.View);
+      Source : constant Source_View := Hook.View;
       Layout : Pango_Layout;
       Color  : Gdk_Color;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
