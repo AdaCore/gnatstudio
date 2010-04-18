@@ -554,7 +554,7 @@ package body Vsearch is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      Vsearch  : constant Vsearch_Access := Vsearch_Access (Data.Vsearch);
+      Vsearch  : constant Vsearch_Access := Data.Vsearch;
       Button   : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
