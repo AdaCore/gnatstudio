@@ -643,7 +643,7 @@ package body Completion.Ada.Constructs_Extractor is
    is
       Result : Construct_Iterator_Wrapper;
    begin
-      Result.Resolver := Completion_Resolver_Access (Db_Construct.Resolver);
+      Result.Resolver := Db_Construct.Resolver;
       Result.Iter := First (Db_Construct.List);
       Result.Context := Db_Construct.Context;
 
