@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -299,8 +299,7 @@ package body Refactoring.Subprograms is
       Method_Decl : String;
       Method_Body : String)
    is
-      Languages  : constant Language_Handler :=
-        Language_Handler (Get_Language_Handler (Kernel));
+      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
       Handler    : constant LI_Handler :=
         Get_LI_Handler_From_File (Languages, In_File);
       Constructs : Construct_List;
