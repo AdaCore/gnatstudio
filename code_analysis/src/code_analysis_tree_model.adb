@@ -68,7 +68,7 @@ package body Code_Analysis_Tree_Model is
    begin
       Append (Model, Iter, Parent);
       Set (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.Subp_Pixbuf));
-      Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
+      Set (Model, Iter, Name_Col, Subp_Node.Name.all);
       Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
@@ -90,7 +90,7 @@ package body Code_Analysis_Tree_Model is
    begin
       Append (Model, Iter, Null_Iter);
       Set (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.Subp_Pixbuf));
-      Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
+      Set (Model, Iter, Name_Col, Subp_Node.Name.all);
       Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);

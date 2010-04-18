@@ -489,7 +489,7 @@ package body Code_Analysis_GUI is
 
          declare
             Node : constant Node_Access := Code_Analysis.Node_Access
-              (Node_Set.Get (Gtk_Tree_Store (View.Model), Iter, Node_Col));
+              (Node_Set.Get (View.Model, Iter, Node_Col));
          begin
             if Node.all in Code_Analysis.Project'Class then
                --  So we are on a project node
@@ -501,8 +501,7 @@ package body Code_Analysis_GUI is
                --  So we are on a file node
                --  Context receive project and file information
                Prj_Node := Project_Access
-                 (Project_Set.Get
-                    (Gtk_Tree_Store (View.Model), Iter, Prj_Col));
+                 (Project_Set.Get (View.Model, Iter, Prj_Col));
                Set_File_Information
                  (Context,
                   Files   => (1 => Code_Analysis.File_Access (Node).Name),
@@ -512,11 +511,9 @@ package body Code_Analysis_GUI is
                --  So we are on a subprogram node
                --  Context receive project, file and entity information
                File_Node := Code_Analysis.File_Access
-                 (File_Set.Get (Gtk_Tree_Store (View.Model),
-                  Iter, File_Col));
+                 (File_Set.Get (View.Model, Iter, File_Col));
                Prj_Node  := Project_Access
-                 (Project_Set.Get (Gtk_Tree_Store (View.Model),
-                  Iter, Prj_Col));
+                 (Project_Set.Get (View.Model, Iter, Prj_Col));
                Set_File_Information
                  (Context, (1 => File_Node.Name), Prj_Node.Name);
                Set_Entity_Information
