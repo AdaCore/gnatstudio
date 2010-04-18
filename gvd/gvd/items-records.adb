@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -916,7 +916,7 @@ package body Items.Records is
      (Iter : Record_Iterator) return Generic_Type_Access is
    begin
       if Iter.Variant = Natural'Last then
-         return Generic_Type_Access (Iter.Item.Fields (Iter.Field).Value);
+         return Iter.Item.Fields (Iter.Field).Value;
       else
          return Generic_Type_Access
            (Iter.Item.Fields (Iter.Field).Variant_Part (Iter.Variant));
