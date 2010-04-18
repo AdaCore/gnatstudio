@@ -571,7 +571,7 @@ package body Src_Editor_Module.Markers is
                    (Find_Editor (Marker.Kernel, Marker.File));
       begin
          if Box /= null then
-            return Get_Subprogram_Name (Box, Editable_Line_Type (Marker.Line));
+            return Get_Subprogram_Name (Box, Marker.Line);
          else
             return "";
          end if;
