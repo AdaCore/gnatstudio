@@ -120,7 +120,7 @@ package body GPS.Menu is
         (-"Select a directory",
          History           => Get_History (Kernel),
          Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-         Parent            => Gtk_Window (Get_Current_Window (Kernel)));
+         Parent            => Get_Current_Window (Kernel));
 
       if Dir /= No_File then
          Change_Dir (Dir);
