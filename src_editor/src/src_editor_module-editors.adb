@@ -1092,7 +1092,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function Offset (This : Src_Editor_Location) return Natural is
    begin
-      return Integer (This.Offset);
+      return This.Offset;
    end Offset;
 
    ------------

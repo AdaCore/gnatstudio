@@ -723,7 +723,7 @@ package body Src_Contexts is
             Open_File_Editor
               (Kernel,
                File_Name,
-               Natural (Match.Begin_Line),
+               Match.Begin_Line,
                Match.Visible_Begin_Column,
                Match.Visible_End_Column,
                Focus => Give_Focus);
@@ -761,7 +761,7 @@ package body Src_Contexts is
             Open_File_Editor
               (Kernel,
                File_Name,
-               Natural (Match.Begin_Line),
+               Match.Begin_Line,
                Match.Visible_Begin_Column,
                Match.Visible_Begin_Column
                + Visible_Column_Type (Match.Pattern_Length),

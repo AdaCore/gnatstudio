@@ -1025,7 +1025,7 @@ package body Completion_Module is
             Data.Constructs_Resolver := New_Construct_Completion_Resolver
                  (Get_Construct_Database (Kernel),
                   Get_Filename (Buffer),
-                  GNAT.Strings.String_Access (Data.The_Text));
+                  Data.The_Text);
 
             Register_Resolver
               (Data.Manager, Completion_Module.Completion_History);
@@ -1052,7 +1052,7 @@ package body Completion_Module is
                  Create_Context
                    (Data.Manager,
                     Get_Filename (Buffer),
-                    GNAT.Strings.String_Access (Data.The_Text),
+                    Data.The_Text,
                     Get_Language (Buffer),
                     String_Index_Type (Get_Byte_Index (It))));
             Trace (Me_Adv, "Getting completions done");
