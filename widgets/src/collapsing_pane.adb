@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2006-2008, AdaCore                --
+--                   Copyright (C) 2006-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -317,7 +317,7 @@ package body Collapsing_Pane is
          declare
             Win : Gtk_Widget;
          begin
-            Win := Gtk_Widget (Get_Toplevel (Pane));
+            Win := Get_Toplevel (Pane);
 
             if Win /= null and then Win.all in Gtk_Window_Record'Class then
                Resize (Gtk_Window (Win), -1, -1);
