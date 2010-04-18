@@ -179,7 +179,7 @@ package body GPS.Kernel.Project is
       --  If we are in the process of creating the kernel, no need to do
       --  anything else here
       if Self.Handle.Tooltips = null then
-         Pop_State (Kernel_Handle (Self.Handle));
+         Pop_State (Self.Handle);
          return;
       end if;
 
@@ -202,7 +202,7 @@ package body GPS.Kernel.Project is
         (Get_Database (Self.Handle), Reset_File_If_External'Access);
 
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
-      Pop_State (Kernel_Handle (Self.Handle));
+      Pop_State (Self.Handle);
    end Recompute_View;
 
    --------------------

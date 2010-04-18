@@ -2648,8 +2648,7 @@ package body GPS.Kernel.Scripts is
          Context.Data.Data.Instances := new Instance_List'(Null_Instance_List);
       end if;
 
-      Instance :=
-        Get (Instance_List (Context.Data.Data.Instances.all), Script);
+      Instance := Get (Context.Data.Data.Instances.all, Script);
 
       if Instance = No_Class_Instance then
          Trace (Me, "Create a new instance for the current context");
@@ -2794,7 +2793,7 @@ package body GPS.Kernel.Scripts is
       case Prop.Typ is
          when Contexts =>
             if Prop.Context.Data.Data /= null then
-               return Instance_List_Access (Prop.Context.Data.Data.Instances);
+               return Prop.Context.Data.Data.Instances;
             end if;
 
          when Files | Entities | Projects | File_Locations | Debug_Handles =>
