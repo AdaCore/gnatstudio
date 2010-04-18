@@ -237,7 +237,7 @@ procedure Completion.Test is
    procedure Parse_File (File : Virtual_File) is
       Result      : Parsed_Expression;
 
-      Buffer : constant String_Access := String_Access (Read_File (File));
+      Buffer : constant String_Access := Read_File (File);
 
       procedure Display (List  : Token_List.List);
       procedure Display (Token : Token_Record);
@@ -371,7 +371,7 @@ procedure Completion.Test is
       Start_Date  : Time;
       Time_Passed : Duration;
 
-      Buffer : constant String_Access := String_Access (Read_File (File));
+      Buffer : constant String_Access := Read_File (File);
 
    begin
       Tag_Index := 1;
@@ -429,7 +429,8 @@ procedure Completion.Test is
 
       Start_Date  : Time;
       Time_Passed : Duration;
-      Buffer      : constant String_Access := String_Access (Read_File (File));
+      Buffer      : constant String_Access := Read_File (File);
+
    begin
       Tag_Index := 1;
 
@@ -478,7 +479,8 @@ procedure Completion.Test is
 
       Start_Date  : Time;
       Time_Passed : Duration;
-      Buffer      : constant String_Access := String_Access (Read_File (File));
+      Buffer      : constant String_Access := Read_File (File);
+
    begin
       Tag_Index := 1;
 
@@ -533,11 +535,12 @@ procedure Completion.Test is
       Start_Date  : Time;
       Time_Passed : Duration;
 
-      Buffer  : constant String_Access := String_Access (Read_File (File));
+      Buffer  : constant String_Access := Read_File (File);
 
       History_Resolver : Completion_History_Access;
 
       Apply_Number : Integer := -1;
+
    begin
       Start_Date := Clock;
 
