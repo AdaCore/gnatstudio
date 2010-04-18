@@ -415,9 +415,7 @@ package body Project_Viewers is
                      Get_File (Viewer.Model, Iter, File_Column);
       Language   : constant String :=
                      Get_Language_From_File
-                       (Language_Handler
-                          (Get_Language_Handler (Viewer.Kernel)),
-                        File_Name);
+                       (Get_Language_Handler (Viewer.Kernel), File_Name);
       Color      : Gdk_Color;
       Value      : String_List_Access;
       Is_Default : Boolean;
@@ -1799,9 +1797,8 @@ package body Project_Viewers is
         (Kernel, "Add configuration variable",
          Action => Command,
          Label  => "Project/Add configuration variable",
-         Filter => Action_Filter
-           ((Create (Module => "Explorer") and Filter2)
-            or Create (Module => "Scenario_View")));
+         Filter => (Create (Module => "Explorer") and Filter2)
+                   or Create (Module => "Scenario_View"));
 
       Filter := Lookup_Filter (Kernel, "Project and file");
       Register_Contextual_Menu

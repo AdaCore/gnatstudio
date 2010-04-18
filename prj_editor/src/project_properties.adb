@@ -2922,7 +2922,7 @@ package body Project_Properties is
       Files : constant GNATCOLL.VFS.File_Array := Select_Files_Or_Directories
         (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
          Project        => Ed.Project,
-         Default        => +Get_Text (Gtk_Entry (Ed.Ent)),
+         Default        => +Get_Text (Ed.Ent),
          Project_Path   => +Get_Text (Ed.Path_Widget),
          --  ??? What if the filesystem path is non-UTF8?
          As_Directory   => Ed.As_Directory,
@@ -2930,7 +2930,7 @@ package body Project_Properties is
          Allow_Multiple => False);
    begin
       for F in Files'Range loop
-         Set_Text (Gtk_Entry (Ed.Ent), Display_Full_Name (Files (F)));
+         Set_Text (Ed.Ent, Display_Full_Name (Files (F)));
          --  ??? What if the filesystem path is non-UTF8?
       end loop;
    end Select_File;

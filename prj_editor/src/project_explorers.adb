@@ -2389,8 +2389,8 @@ package body Project_Explorers is
       Child    : MDI_Child;
       C2       : MDI_Explorer_Child;
    begin
-      Child := MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Record'Tag));
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
 
       if Child = null then
          Gtk_New (Explorer, Kernel);
@@ -2787,7 +2787,7 @@ package body Project_Explorers is
       function Check_Entities (File : Virtual_File) return Boolean is
          use type Entities.LI_Handler;
          Languages  : constant Language_Handler :=
-                        Language_Handler (Get_Language_Handler (Kernel));
+                        Get_Language_Handler (Kernel);
          Handler    : constant Entities.LI_Handler :=
                         Get_LI_Handler_From_File (Languages, File);
          Constructs : Construct_List;
@@ -3142,18 +3142,16 @@ package body Project_Explorers is
       Register_Contextual_Menu
         (Kernel, "Locate file in explorer",
          Action => Command,
-         Filter => Action_Filter
-           (Lookup_Filter (Kernel, "In project")
-            and not Create (Module => Explorer_Module_Name)),
+         Filter => Lookup_Filter (Kernel, "In project")
+                     and not Create (Module => Explorer_Module_Name),
          Label  => "Locate in Project View: %f");
 
       Command := new Locate_Project_In_Explorer_Command;
       Register_Contextual_Menu
         (Kernel, "Locate project in explorer",
          Action => Command,
-         Filter => Action_Filter
-           (Lookup_Filter (Kernel, "Project only")
-            and not Create (Module => Explorer_Module_Name)),
+         Filter => Lookup_Filter (Kernel, "Project only")
+                     and not Create (Module => Explorer_Module_Name),
          Label  => "Locate in Project View: %p");
 
       Register_Menu
