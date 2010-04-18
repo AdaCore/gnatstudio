@@ -40,7 +40,6 @@ with Debugger.Gdb.C;            use Debugger.Gdb.C;
 with Debugger.Gdb.Cpp;          use Debugger.Gdb.Cpp;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Main_Window;           use GPS.Main_Window;
 with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
