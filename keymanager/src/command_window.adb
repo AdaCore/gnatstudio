@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2009, AdaCore                  --
+--                 Copyright (C) 2006-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -425,8 +425,7 @@ package body Command_Window is
          Applies_To := Gtk_Widget (Get_Main_Window (Kernel));
          Set_Transient_For (Window, Gtk_Window (Applies_To));
       else
-         Applies_To := Gtk_Widget
-           (Get_Widget (Get_Focus_Child (Get_MDI (Kernel))));
+         Applies_To := Get_Widget (Get_Focus_Child (Get_MDI (Kernel)));
          Set_Transient_For (Window, Gtk_Window (Get_Toplevel (Applies_To)));
       end if;
 
