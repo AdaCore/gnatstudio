@@ -262,7 +262,7 @@ package body Navigation_Module is
             Module.Current_Marker := Module.Markers'Last;
          end if;
 
-         Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
+         Module.Markers (Module.Current_Marker) := D.Marker;
          Module.Last_Marker := Module.Current_Marker;
          Refresh_Location_Buttons (Kernel);
       else
