@@ -211,8 +211,7 @@ package body Cpp_Module is
    procedure Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Handler : constant Language_Handler :=
-                  Language_Handler (Get_Language_Handler (Kernel));
+      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
    begin
       CPP_Parser.On_Project_View_Changed
         (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name));
@@ -231,8 +230,7 @@ package body Cpp_Module is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (LI_Handler_Record'Class, LI_Handler);
 
-      Handler : constant Language_Handler :=
-                  Language_Handler (Get_Language_Handler (Kernel));
+      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
       LI      : LI_Handler;
 
    begin
