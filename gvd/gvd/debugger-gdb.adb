@@ -315,7 +315,7 @@ package body Debugger.Gdb is
             return;
          else
             Output_Error
-              (GPS_Window (Process.Window).Kernel,
+              (Process.Window.Kernel,
                (-"Language unknown, defaulting to C: ") & Lang);
 
             --  We need to check whether we already have C defined:
