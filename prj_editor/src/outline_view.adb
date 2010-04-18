@@ -1009,7 +1009,7 @@ package body Outline_View is
       Register_Contextual_Menu
         (Kernel, "Outline View Refresh",
          Action => Command,
-         Filter => Action_Filter (Create (Module => Outline_View_Module_Name)),
+         Filter => Create (Module => Outline_View_Module_Name),
          Label  => -"Refresh");
 
       GPS.Kernel.Register_Desktop_Functions
