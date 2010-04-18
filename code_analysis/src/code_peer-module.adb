@@ -1926,8 +1926,8 @@ package body Code_Peer.Module is
          Parent_Path => Menu,
          Text        => -"Analyze _File",
          Callback    => On_Analyze_File'Access,
-         Filter      => Action_Filter (Lookup_Filter (Kernel, "File")
-                          and Create (Language => "ada")));
+         Filter      => Lookup_Filter (Kernel, "File")
+                          and Create (Language => "ada"));
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
@@ -1979,8 +1979,8 @@ package body Code_Peer.Module is
          Parent_Path => Advanced_Menu,
          Text        => -"_Text Listing",
          Callback    => On_Edit_Text_Listing'Access,
-         Filter      => Action_Filter (Lookup_Filter (Kernel, "File")
-                          and Create (Language => "ada")));
+         Filter      => Lookup_Filter (Kernel, "File")
+                          and Create (Language => "ada"));
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
