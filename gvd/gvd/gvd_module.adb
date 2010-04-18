@@ -1269,8 +1269,7 @@ package body GVD_Module is
                  Title          => -"Run/Start",
                  Message        => Cmd_Msg.all,
                  Key            => Cst_Run_Arguments_History,
-                 History        => Get_History
-                   (GPS_Window (Process.Window).Kernel),
+                 History        => Get_History (Process.Window.Kernel),
                  Check_Msg      => Msg1.all,
                  Check_Msg2     => Msg2.all,
                  Button_Active  => Button1,
@@ -1560,9 +1559,7 @@ package body GVD_Module is
       Top  : constant GPS_Window :=
                GPS_Window (Get_Main_Window (Get_Kernel (Context.Context)));
       Edit : constant GEdit :=
-               GEdit
-                 (Get_Source
-                    (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
+               GEdit (Get_Source (Get_Current_Process (Top).Editor_Text));
       Name : constant Virtual_File := Get_Current_File (Edit);
    begin
       if Name /= GNATCOLL.VFS.No_File then
@@ -2498,7 +2495,7 @@ package body GVD_Module is
 
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
 
-      Filter := Action_Filter (Debugger_Filter and Printable_Filter);
+      Filter := Debugger_Filter and Printable_Filter;
       Command := new Print_Variable_Command;
       Register_Contextual_Menu
         (Kernel, "Debug print variable",
@@ -2514,8 +2511,7 @@ package body GVD_Module is
          Action => Command,
          Filter => Filter);
 
-      Filter := Action_Filter
-        (Debugger_Filter and Printable_Filter and Access_Filter);
+      Filter := Debugger_Filter and Printable_Filter and Access_Filter;
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := False;
       Print_Variable_Command (Command.all).Dereference := True;
@@ -2541,21 +2537,21 @@ package body GVD_Module is
         (Kernel, "Debug set value",
          Label  => -"Debug/Set value of %S",
          Action => Command,
-         Filter => Action_Filter (Debugger_Filter and Printable_Filter));
+         Filter => Debugger_Filter and Printable_Filter);
 
       Command := new View_Memory_Command;
       Register_Contextual_Menu
         (Kernel, "Debug view memory",
          Label  => -"Debug/View memory at address of %S",
          Action => Command,
-         Filter => Action_Filter (Debugger_Filter and Printable_Filter));
+         Filter => Debugger_Filter and Printable_Filter);
 
       Command := new Set_Breakpoint_Command;
       Register_Contextual_Menu
         (Kernel, "Debug set subprogram breakpoint",
          Label  => -"Debug/Set breakpoint on %e",
          Action => Command,
-         Filter => Action_Filter (Debugger_Filter and Subprogram_Filter));
+         Filter => Debugger_Filter and Subprogram_Filter);
 
       Command := new Set_Breakpoint_Command;
       Set_Breakpoint_Command (Command.all).On_Line := True;
