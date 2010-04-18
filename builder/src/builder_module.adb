@@ -232,7 +232,7 @@ package body Builder_Module is
       pragma Warnings (Off, Xref_Data);
       D            : Compute_Xref_Data_Access renames Xref_Data;
       Handler      : constant Language_Handler :=
-                       Language_Handler (Get_Language_Handler (D.Kernel));
+                       Get_Language_Handler (D.Kernel);
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       Not_Finished : Boolean;
       LI           : LI_Handler;
