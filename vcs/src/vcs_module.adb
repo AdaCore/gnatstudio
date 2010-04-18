@@ -939,8 +939,7 @@ package body VCS_Module is
       VCS_Menu             : constant String := "/_" & (-"VCS");
       Tools_Menu           : constant String := -"Tools" & '/' & (-"Views");
 
-      VCS_Action_Context   : constant Action_Filter :=
-                               GPS.Kernel.Action_Filter (GPS.Kernel.Create);
+      VCS_Action_Context   : constant Action_Filter := GPS.Kernel.Create;
 
       Filter               : Action_Filter;
 
