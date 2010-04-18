@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2009, AdaCore             --
+--                      Copyright (C) 2004-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -472,8 +472,8 @@ package body Casing_Exceptions is
 
       Empty_Filter := new Empty_Filter_Record;
 
-      Filter := Action_Filter
-        (Create (Module => Src_Editor_Module_Name) and not Empty_Filter);
+      Filter :=
+        Create (Module => Src_Editor_Module_Name) and not Empty_Filter;
 
       Command := new Change_Case_Command (Lower);
       Label   := new Contextual_Label_Record;
@@ -519,35 +519,35 @@ package body Casing_Exceptions is
          Label  => -"Casing/");
 
       Substring_Filter   := new Substring_Filter_Record;
-      Full_String_Filter := Action_Filter (not Substring_Filter);
+      Full_String_Filter := not Substring_Filter;
 
       Command := new Add_Exception_Command (True, Remove => False);
       Register_Contextual_Menu
         (Kernel, "Add substring casing exception",
          Label  => -"Casing/Add substring exception for %s",
          Action => Command,
-         Filter => Action_Filter (Filter and Substring_Filter));
+         Filter => Filter and Substring_Filter);
 
       Command := new Add_Exception_Command (True, Remove => True);
       Register_Contextual_Menu
         (Kernel, "Remove substring casing exception",
          Label  => -"Casing/Remove substring exception for %s",
          Action => Command,
-         Filter => Action_Filter (Filter and Substring_Filter));
+         Filter => Filter and Substring_Filter);
 
       Command := new Add_Exception_Command (False, Remove => False);
       Register_Contextual_Menu
         (Kernel, "Add casing exception",
          Label  => -"Casing/Add exception for %s",
          Action => Command,
-         Filter => Action_Filter (Filter and Full_String_Filter));
+         Filter => Filter and Full_String_Filter);
 
       Command := new Add_Exception_Command (False, Remove => True);
       Register_Contextual_Menu
         (Kernel, "Remove casing exception",
          Label  => -"Casing/Remove exception for %s",
          Action => Command,
-         Filter => Action_Filter (Filter and Full_String_Filter));
+         Filter => Filter and Full_String_Filter);
    end Register_Module;
 
    -------------
