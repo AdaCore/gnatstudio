@@ -2807,22 +2807,20 @@ package body Src_Editor_Module is
         (Kernel, "Goto declaration of entity",
          Action => Command,
          Label  => -"Goto declaration of %e",
-         Filter => Action_Filter
-           ((not Is_Dispatching)
+         Filter => (not Is_Dispatching)
             and ((not Line_Numbers_Area_Filter
               and Create (Module => Src_Editor_Module_Name))
-              or Has_Type)));
+              or Has_Type));
 
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu
         (Kernel, "Goto dispatching declaration of entity",
          Label   => -"Goto declarations of %e",
          Submenu => Submenu,
-         Filter  => Action_Filter
-           (Is_Dispatching
+         Filter  => Is_Dispatching
             and ((not Line_Numbers_Area_Filter
               and Create (Module => Src_Editor_Module_Name))
-              or Has_Type)));
+              or Has_Type));
 
       Command := new Goto_Next_Body_Command;
       Filter  := new Has_Body_Filter;
@@ -2868,8 +2866,8 @@ package body Src_Editor_Module is
          Name   => "Edit file",
          Label  => "Edit %f",
          Action => Command,
-         Filter => Action_Filter (Lookup_Filter (Kernel, "File")
-           and not Create (Module => Src_Editor_Module_Name)));
+         Filter => Lookup_Filter (Kernel, "File")
+           and not Create (Module => Src_Editor_Module_Name));
 
       Command := new Editor_Properties_Command;
       Register_Contextual_Menu
