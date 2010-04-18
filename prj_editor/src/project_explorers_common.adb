@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -180,8 +180,7 @@ package body Project_Explorers_Common is
       Set (Model, Iter, Node_Type_Column, Gint (Node_Types'Pos (File_Node)));
       Set (Model, Iter, Up_To_Date_Column, False);
 
-      Lang := Get_Language_From_File
-        (Language_Handler (Get_Language_Handler (Kernel)), File);
+      Lang := Get_Language_From_File (Get_Language_Handler (Kernel), File);
 
       if Lang /= Unknown_Lang then
          Append_Dummy_Iter (Model, Iter);
@@ -375,8 +374,7 @@ package body Project_Explorers_Common is
       Node      : Gtk_Tree_Iter;
       File_Name : GNATCOLL.VFS.Virtual_File)
    is
-      Languages  : constant Language_Handler :=
-                     Language_Handler (Get_Language_Handler (Kernel));
+      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
 
       N, N2      : Gtk_Tree_Iter;
       Iter       : Gtk_Tree_Iter;
