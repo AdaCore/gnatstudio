@@ -95,8 +95,7 @@ package body Aunit_Filters is
             if Index + 8 <= Current_Construct.Sloc_End.Index then
                Found := True;
                F_Type := Test_Case;
-               Suite_Name := GNAT.Strings.String_Access
-                 (Current_Construct.Name);
+               Suite_Name := Current_Construct.Name;
             end if;
          end if;
 
@@ -115,8 +114,7 @@ package body Aunit_Filters is
             if Index + 16 <= Current_Construct.Sloc_End.Index then
                Found := True;
                F_Type := Test_Suite;
-               Suite_Name := GNAT.Strings.String_Access
-                 (Current_Construct.Name);
+               Suite_Name := Current_Construct.Name;
             end if;
          end if;
 
