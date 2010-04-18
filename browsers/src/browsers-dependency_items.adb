@@ -1057,8 +1057,8 @@ package body Browsers.Dependency_Items is
       Tools   : constant String := '/' & (-"Tools") & '/' & (-"Browsers");
       Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
-                  Action_Filter ((not Lookup_Filter (Kernel, "Entity"))
-                                   and Lookup_Filter (Kernel, "In project"));
+                  (not Lookup_Filter (Kernel, "Entity"))
+                  and Lookup_Filter (Kernel, "In project");
 
    begin
       Dependency_Browser_Module_ID := new Dependency_Browser_Module;
@@ -1093,8 +1093,8 @@ package body Browsers.Dependency_Items is
         (Kernel, "Analyze deps for other file",
          Label  => -"Analyze other file (spec or body)",
          Action => Command,
-         Filter => Action_Filter
-           (Create (Module => Dependency_Browser_Module_Name)) and Filter);
+         Filter =>
+           Create (Module => Dependency_Browser_Module_Name) and Filter);
 
       Register_Menu (Kernel, Tools, -"_Dependency", "",
                      On_Dependency_Browser'Access);
