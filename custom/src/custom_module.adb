@@ -397,8 +397,7 @@ package body Custom_Module is
          if Command.Pass_Context then
             Set_Nth_Arg
               (C, 1, Create_Context
-                 (Get_Script (Command.On_Activate.all),
-                  Selection_Context (Context.Context)));
+                 (Get_Script (Command.On_Activate.all), Context.Context));
          end if;
 
          Tmp := Execute (Command.On_Activate, C);
@@ -461,8 +460,7 @@ package body Custom_Module is
       pragma Unreferenced (Level);
 
       Kernel  : constant Kernel_Handle := Get_Kernel (Module.all);
-      Handler : constant Language_Handler := Language_Handler
-        (Get_Language_Handler (Kernel));
+      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
 
       procedure Add_Child
         (Parent_Path  : String;
@@ -681,12 +679,12 @@ package body Custom_Module is
                      end if;
                   end if;
                else
-                  Filter := Action_Filter
-                    (Create
-                       (Language   => Lang,
-                        Shell      => Shell,
-                        Shell_Lang => Shell_Lang,
-                        Module     => Module));
+                  Filter :=
+                    Create
+                      (Language   => Lang,
+                       Shell      => Shell,
+                       Shell_Lang => Shell_Lang,
+                       Module     => Module);
                   Set_Error_Message (Filter, Get_Attribute (Node, "error"));
                end if;
             end;
@@ -703,9 +701,9 @@ package body Custom_Module is
                   if Filter = null then
                      Filter := Filter_Tmp;
                   elsif Node.Tag.all = "filter_and" then
-                     Filter := Action_Filter (Filter and Filter_Tmp);
+                     Filter := Filter and Filter_Tmp;
                   elsif Node.Tag.all = "filter_or" then
-                     Filter := Action_Filter (Filter or Filter_Tmp);
+                     Filter := Filter or Filter_Tmp;
                   end if;
                end if;
 
@@ -756,8 +754,7 @@ package body Custom_Module is
               or else Child.Tag.all = "filter_or"
             then
                if Filter_A /= null then
-                  Filter_A := Action_Filter
-                    (Filter_A or Parse_Filter_Node (Child, Name));
+                  Filter_A := Filter_A or Parse_Filter_Node (Child, Name);
                else
                   Filter_A := Parse_Filter_Node (Child, Name);
                end if;
@@ -797,7 +794,7 @@ package body Custom_Module is
                declare
                   Error : constant String := Get_Error_Message (Filter_A);
                begin
-                  Filter_A := Action_Filter (Filter_A and Implicit_Filter);
+                  Filter_A := Filter_A and Implicit_Filter;
                   Set_Error_Message (Filter_A, Error);
                end;
             else
