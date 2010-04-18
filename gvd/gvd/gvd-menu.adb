@@ -20,7 +20,6 @@
 with Debugger;             use Debugger;
 with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel;           use GPS.Kernel;
-with GPS.Main_Window;      use GPS.Main_Window;
 with GVD.Process;          use GVD.Process;
 with GVD;                  use GVD;
 with Histories;            use Histories;

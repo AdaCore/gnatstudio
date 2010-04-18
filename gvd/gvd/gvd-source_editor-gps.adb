@@ -74,7 +74,7 @@ package body GVD.Source_Editor.GPS is
    overriding procedure Highlight_Current_Line
      (Editor : access GEdit_Record)
    is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := Editor.Window.Kernel;
    begin
       if Editor.Current_File = GNATCOLL.VFS.No_File then
          return;
