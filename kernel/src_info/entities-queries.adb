@@ -590,9 +590,8 @@ package body Entities.Queries is
       then
          declare
             Tree_Lang : constant Tree_Language_Access :=
-              Tree_Language_Access
-                (Get_Tree_Language_From_File
-                     (Language_Handler (Db.Lang), Source.Name));
+                         Get_Tree_Language_From_File
+                           (Language_Handler (Db.Lang), Source.Name);
             S_File : constant Structured_File_Access :=
               Get_Or_Create
                 (Db   => Db.Construct_Db,
@@ -723,10 +722,8 @@ package body Entities.Queries is
             Db : constant Entities_Database  := Start_Loc.File.Db;
 
             Tree_Lang : constant Tree_Language_Access :=
-              Tree_Language_Access
-                (Get_Tree_Language_From_File
-                     (Language_Handler (Db.Lang),
-                      Start_Loc.File.Name));
+                         Get_Tree_Language_From_File
+                           (Language_Handler (Db.Lang), Start_Loc.File.Name);
             S_File : constant Structured_File_Access :=
               Get_Or_Create
                 (Db   => Db.Construct_Db,
