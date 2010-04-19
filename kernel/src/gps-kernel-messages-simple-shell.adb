@@ -19,32 +19,49 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Gtk.Enums;  use Gtk.Enums;
+with Gtk.Widget; use Gtk.Widget;
+
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+
+with Commands;    use Commands;
 with Basic_Types; use Basic_Types;
+with GPS.Editors; use GPS.Editors;
+with Commands.Interactive;
 
 package body GPS.Kernel.Messages.Simple.Shell is
 
    Class         : constant String := "Message";
    Message_Class : Class_Type;
 
+   Action_Cst  : aliased constant String := "action";
+   Tooltip_Cst : aliased constant String := "tooltip";
+   Image_Cst   : aliased constant String := "image";
+
    type Message_Property_Record is new Instance_Property_Record with record
       Message : Message_Access;
    end record;
-
-   --------------
-   -- Set_Data --
-   --------------
+   type Message_Property_Access is access all Message_Property_Record'Class;
 
    procedure Set_Data
      (Instance : Class_Instance;
       Message  : Message_Access);
    --  Set data in Instance to Message
 
+   function Get_Message (Instance : Class_Instance) return Message_Access;
+   --  Return Message stored in Instance
+
    procedure Message_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the Message commands
+
+   procedure Accessors
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the simple Message commands which simply access the fields
+   --  of a message or run parameterless commands
 
    --------------
    -- Set_Data --
@@ -54,10 +71,58 @@ package body GPS.Kernel.Messages.Simple.Shell is
      (Instance : Class_Instance;
       Message  : Message_Access) is
    begin
-      Set_Data (Instance, "message",
+      Set_Data (Instance, Class,
                 Message_Property_Record'
                   (Message => Message));
    end Set_Data;
+
+   -----------------
+   -- Get_Message --
+   -----------------
+
+   function Get_Message (Instance : Class_Instance) return Message_Access is
+      Prop : Message_Property_Access;
+   begin
+      if Instance /= No_Class_Instance then
+         Prop := Message_Property_Access
+           (Instance_Property'(Get_Data (Instance, Class)));
+
+         if Prop /= null then
+            return Prop.Message;
+         end if;
+      end if;
+
+      return null;
+   end Get_Message;
+
+   ---------------
+   -- Accessors --
+   ---------------
+
+   procedure Accessors
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Message : constant Message_Access := Get_Message
+        (Nth_Arg (Data, 1, Message_Class));
+   begin
+      if Command = "get_line" then
+         Set_Return_Value (Data, Message.Get_Line);
+
+      elsif Command = "get_column" then
+         Set_Return_Value (Data, Integer (Message.Get_Column));
+
+      elsif Command = "get_file" then
+         Set_Return_Value
+           (Data, Create_File (Get_Script (Data), Message.Get_File));
+
+      elsif Command = "get_category" then
+         Set_Return_Value (Data, Message.Get_Category);
+
+      elsif Command = "remove" then
+         Message.Remove;
+      end if;
+
+   end Accessors;
 
    -----------------------------
    -- Message_Command_Handler --
@@ -81,7 +146,7 @@ package body GPS.Kernel.Messages.Simple.Shell is
             Line     : constant Natural := Nth_Arg (Data, 4);
             Column   : constant Natural := Nth_Arg (Data, 5);
             Text     : constant String := Nth_Arg (Data, 6);
-            Flags    : constant Integer := Nth_Arg (Data, 7);
+            Flags    : constant Integer := Nth_Arg (Data, 7, 0);
             Message  : constant Simple_Message_Access :=
               Create_Simple_Message
                 (Container => Container,
@@ -96,6 +161,49 @@ package body GPS.Kernel.Messages.Simple.Shell is
             Message_Inst := Nth_Arg (Data, 1, Message_Class);
             Set_Data (Message_Inst, Message_Access (Message));
          end;
+
+      elsif Command = "set_action" then
+         Name_Parameters
+           (Data,
+            (1 => Action_Cst'Access,
+             2 => Image_Cst'Access,
+             3 => Tooltip_Cst'Access));
+
+         declare
+            Action_Str   : constant String := Nth_Arg (Data, 2, "");
+            Image_Str    : constant String := Nth_Arg (Data, 3);
+            Tooltip_Str  : constant String := Nth_Arg (Data, 4);
+            Action       : Action_Item;
+            The_Action   : Action_Record_Access;
+            Command      : Command_Access := null;
+
+            use type Commands.Interactive.Interactive_Command_Access;
+         begin
+            if Action_Str /= "" then
+               The_Action := Lookup_Action (Kernel, Action_Str);
+
+               if The_Action = null
+                 or else The_Action.Command = null
+               then
+                  Set_Error_Msg (Data, "Could not find action for "
+                                 & Action_Str);
+               else
+                  Command := Command_Access (The_Action.Command);
+               end if;
+            end if;
+
+            Action := new Line_Information_Record'
+              (Text         => null,
+               Tooltip_Text => new String'(Tooltip_Str),
+               Image        => Render_Icon
+                 (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
+                  Stock_Id => Image_Str,
+                  Size     => Icon_Size_Menu),
+               Associated_Command => Command);
+
+            Get_Message (Nth_Arg (Data, 1, Message_Class)).Set_Action (Action);
+         end;
+
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
 
@@ -181,38 +289,39 @@ package body GPS.Kernel.Messages.Simple.Shell is
       Message_Class := New_Class (Kernel, Class);
 
       Register_Command
-        (Kernel, Constructor_Method, 6, 6, Message_Command_Handler'Access,
+        (Kernel, Constructor_Method, 5, 6, Message_Command_Handler'Access,
          Message_Class, False);
 
       Register_Command
         (Kernel, "list", 0, 2, Message_Command_Handler'Access,
          Message_Class, True);
 
-      --  ??? To be implemented
---        Register_Command
---          (Kernel, "get_file", 0, 0, Message_Command_Handler'Access,
---           Message_Class);
---
---        Register_Command
---          (Kernel, "get_line", 0, 0, Message_Command_Handler'Access,
---           Message_Class);
---
---        Register_Command
---          (Kernel, "get_column", 0, 0, Message_Command_Handler'Access,
---           Message_Class);
---
---        Register_Command
---          (Kernel, "get_category", 0, 0, Message_Command_Handler'Access,
---           Message_Class);
---
---        Register_Command
---          (Kernel, "get_action", 0, 0, Message_Command_Handler'Access,
---           Message_Class);
---
---        Register_Command
---          (Kernel, "set_action", 3, 3, Message_Command_Handler'Access,
---           Message_Class);
---
+      Register_Command
+        (Kernel, "get_file", 0, 0, Accessors'Access,
+         Message_Class);
+
+      Register_Command
+        (Kernel, "get_line", 0, 0, Accessors'Access,
+         Message_Class);
+
+      Register_Command
+        (Kernel, "get_column", 0, 0, Accessors'Access,
+         Message_Class);
+
+      Register_Command
+        (Kernel, "get_category", 0, 0, Accessors'Access,
+         Message_Class);
+
+      Register_Command
+        (Kernel, "remove", 0, 0, Accessors'Access,
+         Message_Class);
+
+      Register_Command
+        (Kernel, "set_action", 3, 3, Message_Command_Handler'Access,
+         Message_Class);
+      --  ??? It would be nice to add a function that would allow passing
+      --  of a python subprogram directly.
+
    end Register_Commands;
 
 end GPS.Kernel.Messages.Simple.Shell;
