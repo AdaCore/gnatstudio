@@ -2867,6 +2867,8 @@ package body Ada_Analyzer is
             Offset_Align : Natural;
             First_Paren  : Natural;
             Colon_Token  : Token_Stack.Generic_Type_Access;
+            P_Char       : constant Character := Buffer (Prev_Char (P));
+            N_Char       : constant Character := Buffer (Next_Char (P));
 
          begin
             Prev_Token := Tok_Colon;
@@ -2912,6 +2914,14 @@ package body Ada_Analyzer is
                end;
             end if;
 
+            if P_Char in '0' .. '9'
+              and then (N_Char in '0' .. '9' or else N_Char = ';')
+            then
+               --  Special case 16:12: obsolete format (equivalent to
+               --  16#12#).
+               Insert_Spaces := False;
+            end if;
+
             --  Auto align colons in declarations (parameters, variables, ...)
 
             if Local_Top_Token.Align_Colon = 0
@@ -2923,15 +2933,13 @@ package body Ada_Analyzer is
             Align_Colon := Local_Top_Token.Align_Colon;
 
             if Format_Operators then
-               if Buffer (Next_Char (P)) = ' '
-                 or else Last - 1 = End_Of_Line
-               then
+               if N_Char = ' ' or else Last - 1 = End_Of_Line then
                   Long := 2;
                else
                   Long := 3;
                end if;
 
-               if Buffer (Prev_Char (P)) = ' ' then
+               if P_Char = ' ' then
                   Offs := 2;
                   Long := Long - 1;
                else
