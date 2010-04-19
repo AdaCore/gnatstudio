@@ -827,8 +827,20 @@ package body Language.Ada is
       Last_Token_On_Line : Token_List.List_Node;
       Prev_Tick          : Boolean := False;
 
-      procedure Handle_Expression (Offset : in out Natural; Skip : Boolean);
-      procedure Skip_String (Offset : in out Natural);
+      procedure Handle_Expression
+        (Offset            : in out Natural;
+         Skip              : Boolean;
+         Incomplete_String : out Boolean);
+      --  Handle the expression given in parameter. Sets Incomplete_String to
+      --  True if an incomplete string has been encountered.
+
+      procedure Skip_String
+        (Offset            : in out Natural;
+         Incomplete_String : out Boolean);
+      --  Assuming offset is on a closing double quote, skips to before the
+      --  corresponding openning double quote. If such openning double quote
+      --  can't be found, Incomplete_String is set to True, false otherwise.
+
       procedure Skip_Comment_Line (Offset : in out Natural);
 
       procedure Handle_Potential_Keyword
@@ -863,16 +875,25 @@ package body Language.Ada is
       -- Skip_Expression --
       ---------------------
 
-      procedure Handle_Expression (Offset : in out Natural; Skip : Boolean) is
-         Local_Token : Token_Record := Token;
+      procedure Handle_Expression
+        (Offset            : in out Natural;
+         Skip              : Boolean;
+         Incomplete_String : out Boolean)
+      is
+         Local_Token     : Token_Record := Token;
       begin
+         Incomplete_String := False;
          Local_Token.Token_Last := String_Index_Type (Offset);
 
          while Offset > Offset_Limit loop
             case Buffer (Offset) is
                when ')' =>
                   Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-                  Handle_Expression (Offset, True);
+                  Handle_Expression (Offset, True, Incomplete_String);
+
+                  if Incomplete_String then
+                     exit;
+                  end if;
 
                when ',' =>
                   if not Skip then
@@ -883,8 +904,11 @@ package body Language.Ada is
                   end if;
 
                when '"' =>
-                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-                  Skip_String (Offset);
+                  Skip_String (Offset, Incomplete_String);
+
+                  if Incomplete_String then
+                     exit;
+                  end if;
 
                when ''' =>
                   Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
@@ -918,15 +942,29 @@ package body Language.Ada is
       -- Skip_String --
       -----------------
 
-      procedure Skip_String (Offset : in out Natural) is
+      procedure Skip_String
+        (Offset            : in out Natural;
+         Incomplete_String : out Boolean)
+      is
+         Close_Found : Boolean := False;
       begin
-         while Offset > Offset_Limit + 1 loop
+         Incomplete_String := True;
+
+         while Offset > Offset_Limit loop
             case Buffer (Offset) is
                when '"' =>
-                  if Buffer (Offset - 1) /= '"' then
-                     exit;
+                  if Close_Found then
+                     if Offset - 1 = Offset_Limit
+                       or else Buffer (Offset - 1) /= '"'
+                     then
+                        Incomplete_String := False;
+
+                        exit;
+                     else
+                        Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+                     end if;
                   else
-                     Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+                     Close_Found := True;
                   end if;
 
                when ASCII.LF =>
@@ -939,7 +977,6 @@ package body Language.Ada is
             end case;
 
             Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-
          end loop;
       end Skip_String;
 
@@ -948,17 +985,16 @@ package body Language.Ada is
       -----------------------
 
       procedure Skip_Comment_Line (Offset : in out Natural) is
-         Local_Offset : Natural := Offset;
-         Prev_Offset  : Natural;
+         Local_Offset      : Natural := Offset;
+         Prev_Offset       : Natural;
+         Incomplete_String : Boolean := False;
       begin
          Local_Offset := UTF8_Find_Prev_Char (Buffer.all, Local_Offset);
 
          while Local_Offset > Offset_Limit loop
             case Buffer (Local_Offset) is
                when '"' =>
-                  Local_Offset := UTF8_Find_Prev_Char
-                    (Buffer.all, Local_Offset);
-                  Skip_String (Local_Offset);
+                  Skip_String (Local_Offset, Incomplete_String);
 
                when ''' =>
                   Local_Offset := UTF8_Find_Prev_Char
@@ -1136,7 +1172,7 @@ package body Language.Ada is
       Next_Ind                 : Natural;
       Possible_Arrow           : Boolean := False;
       Ignore_Id                : Boolean := False;
-
+      Incomplete_String        : Boolean := False;
    begin
       Result.Original_Buffer := Buffer;
 
@@ -1238,7 +1274,11 @@ package body Language.Ada is
 
                if Length (Result.Tokens) = 0 then
                   Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-                  Handle_Expression (Offset, False);
+                  Handle_Expression (Offset, False, Incomplete_String);
+
+                  if Incomplete_String then
+                     exit;
+                  end if;
                else
                   exit;
                end if;
@@ -1266,7 +1306,11 @@ package body Language.Ada is
                Push (Token, Offset);
 
                Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-               Handle_Expression (Offset, False);
+               Handle_Expression (Offset, False, Incomplete_String);
+
+               if Incomplete_String then
+                  exit;
+               end if;
 
             when '(' =>
                Push (Token, Offset);
@@ -1318,9 +1362,11 @@ package body Language.Ada is
                   Token.Tok_Type := Tok_Identifier;
                   Token.Token_Last := String_Index_Type (Offset);
 
-                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+                  Skip_String (Offset, Incomplete_String);
 
-                  Skip_String (Offset);
+                  if Incomplete_String then
+                     exit;
+                  end if;
 
                   Token.Token_First := String_Index_Type (Offset);
 
@@ -1408,6 +1454,34 @@ package body Language.Ada is
       end loop;
 
       Push (Token, Offset);
+
+      --  Check if we're on an incomplete string - see if there's a double
+      --  quote before the begining of the line marking it.
+
+      if not Incomplete_String then
+         while Offset >= Buffer'First
+           and then Buffer (Offset) /= ASCII.LF
+         loop
+            if Buffer (Offset) = '"' then
+               Skip_String (Offset, Incomplete_String);
+
+               if Incomplete_String then
+                  exit;
+               end if;
+            end if;
+
+            Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+         end loop;
+      end if;
+
+      --  If an incomplete string has been detected anytime in the process,
+      --  we're actually inside it. There's no result to provide in that
+      --  situation.
+
+      if Incomplete_String then
+         Free (Result.Tokens);
+         Token := Null_Token;
+      end if;
 
       --  On the simple mode, if the returned identifier starts with something
       --  different thank Tok_Identifier, then we return only the last item
