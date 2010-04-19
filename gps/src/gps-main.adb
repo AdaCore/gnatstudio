@@ -70,6 +70,7 @@ with GPS.Kernel.Custom;                use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple.Shell;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
@@ -1290,6 +1291,7 @@ procedure GPS.Main is
       end if;
 
       Register_Default_Script_Commands (GPS_Main.Kernel);
+      GPS.Kernel.Messages.Simple.Shell.Register_Commands (GPS_Main.Kernel);
 
       --  Register this very early so that other modules can access remote
       --  files. Note that we need the scripting capabilities to be initialized
