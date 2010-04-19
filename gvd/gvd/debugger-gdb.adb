@@ -4122,7 +4122,8 @@ package body Debugger.Gdb is
    overriding procedure Open_Processes (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.Remote_Protocol /= null
-        and then Debugger.Remote_Protocol.all = "wtx"
+        and then (Debugger.Remote_Protocol.all = "wtx"
+                  or else Debugger.Remote_Protocol.all = "dfw")
       then
          Debugger.WTX_List :=
             new String'
