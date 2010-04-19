@@ -184,6 +184,7 @@ package GPS.Kernel.Messages is
       Actual_Column : Integer;
       Flags         : Message_Flags);
    --  Initialize message and connect it to container
+   --  ??? Need doc for Weight, Actual_Line, Actual_Column, not trivial
 
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
