@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.2
 
+- J416-004: Debug->Attach does not list tasks under VxWorks 6
+  Problem:    Under Vxworks 6, GPS does not list the target tasks when using
+              Debug->Attach menu.
+  Workaround: On the debugger console, use the command "info wtx threads"
+              to get the list of tasks.
+
 - J420-002: Unix installation removes gps_codepeer_bridge
   Problem:    If you install first CodePeer and then GPS under the same
               location, the gps_codepeer_bridge executable is removed.
