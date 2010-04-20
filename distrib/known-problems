@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.2
 
+- J420-002: Unix installation removes gps_codepeer_bridge
+  Problem:    If you install first CodePeer and then GPS under the same
+              location, the gps_codepeer_bridge executable is removed.
+  Workaround: Install CodePeer after installing GPS.
+
 - J416-007: F12 does not call SPARKFormat
   Problem:    When using the SPARK toolset, using F12 no longer performs a
               SPARKFormat on the current file.
@@ -232,7 +237,7 @@ Known Problems fixed in GPS 4.4.1
               profiles does not work.
   Workaround: Manually fix the code.
 
-- F430-001 Search whole word give wrong result when text is selected
+- F430-001: Search whole word give wrong result when text is selected
   Problem:    When a portion of word is selected, e.g. Something is selected
               as a part of the word A_Something, doing a search whole word may
               not be completely accurate for that selection, and will e.g.
