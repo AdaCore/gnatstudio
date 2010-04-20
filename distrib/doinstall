@@ -104,7 +104,7 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd $basedir
 
-  rm -rf $basedir/lib/gps* $basedir/bin/gps*
+  rm -rf $basedir/lib/gps* $basedir/bin/gps $basedir/bin/gps_exe
   rm -f $basedir/share/gps/plug-ins/*.pyc
   rm -f $basedir/share/gps/plug-ins/spark.py
   rm -f $basedir/share/gps/library/*.py*
