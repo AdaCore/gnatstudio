@@ -1775,7 +1775,11 @@ package body Code_Peer.Module is
             end Probability_Image;
 
          begin
-            if Self.Filter_Criteria.Lineages (Message.Lifeage)
+            --  Note: "Removed" messages don't have location information, so
+            --  must be never shown in locations view.
+
+            if Message.Lifeage /= Removed
+              and then Self.Filter_Criteria.Lineages (Message.Lifeage)
               and then Self.Filter_Criteria.Probabilities
                          (Message.Current_Probability)
               and then Self.Filter_Criteria.Categories.Contains
