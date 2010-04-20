@@ -1,19 +1,19 @@
 Known Problems fixed in GPS 4.5.0
 
-- J409-002: dispatching.py plugin loads too many ALI files
+- J409-002 dispatching.py plugin loads too many ALI files
   Problem:    When it recomputes the list of dispatching calls, this plugin
               will in fact reload more .ali files than are really needed,
               thus slowing things down.
   Workaround: It might be faster if you use Build/Load Xref In Memory
 
-- J406-019: Docgen does not see documentation of nested generics
+- J406-019 Docgen does not see documentation of nested generics
   Problem:    In case of a nested generic package of subprogram, the GPS
               documentation generator won't interprete comments before the
               generic keyword as the construct's documentation.
   Workaround: Place the construct's documentation after the construct's
               definition
 
-- J319-001: Continuing search after changing scenario finds wrong files
+- J319-001 Continuing search after changing scenario finds wrong files
   Problem:    If you start a search in "Files From Project", but then change
               the scenario so that the list of source files changes (or their
               location), then pressing Next in the dialog might find matching
@@ -22,13 +22,13 @@ Known Problems fixed in GPS 4.5.0
               Next button becomes Find. You can achieve the same result by
               modifying the search pattern after changing the scenario.
 
-- J311-010: Mains not listed if number of projects exceeds 127
+- J311-010 Mains not listed if number of projects exceeds 127
   Problem:    If the project tree contains 128 or more projects, the mains
               might not get listed in the Build->Project submenu.
   Workaround: Create custom build targets using the Target Configuration
               dialog (menu Build->Settings).
 
-- J302-006: No completion for nested packages on use clauses
+- J302-006 No completion for nested packages on use clauses
   Problem:    When completing a use clause, nested packages are not offered.
   Workaround: Manually complete the code.
 
