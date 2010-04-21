@@ -1295,7 +1295,7 @@ package body Code_Peer.Module is
    begin
       Module.Action := None;
 
-      if Hook_Data.Status /= 0
+      if (Hook_Data.Status /= 0 and then Action not in CodePeer_Action_Run)
         or else Action = None
         or else Hook_Data.Category /= "CodePeer"
       then

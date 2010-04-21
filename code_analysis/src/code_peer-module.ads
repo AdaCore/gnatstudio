@@ -98,6 +98,9 @@ private
    --   - Quick_Run: run "Run CodePeer Quickly" target
    --   - Load_UI: load CodePeer UI
 
+   subtype CodePeer_Action_Run is CodePeer_Action range Run_All .. Quick_Run;
+   --  Used to identify 'Run xxx' actions
+
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
