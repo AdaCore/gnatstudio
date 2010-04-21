@@ -1775,17 +1775,33 @@ package body Code_Peer.Module is
             end Probability_Image;
 
          begin
-            --  Note: "Removed" messages don't have location information, so
-            --  must be never shown in locations view.
-
-            if Message.Lifeage /= Removed
-              and then Self.Filter_Criteria.Lineages (Message.Lifeage)
+            if Self.Filter_Criteria.Lineages (Message.Lifeage)
               and then Self.Filter_Criteria.Probabilities
                          (Message.Current_Probability)
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
                declare
+                  function Flags return GPS.Kernel.Messages.Message_Flags;
+                  --  Returns set of flags depending from lifeage of the
+                  --  message. "Removed" messages are displayed only in
+                  --  locations view, others displayed in both locations view
+                  --  end editor.
+
+                  -----------
+                  -- Flags --
+                  -----------
+
+                  function Flags return GPS.Kernel.Messages.Message_Flags is
+                  begin
+                     if Message.Lifeage = Removed then
+                        return (Editor_Side => False, Locations => True);
+
+                     else
+                        return (Editor_Side => True, Locations => True);
+                     end if;
+                  end Flags;
+
                   Primary : constant Simple_Message_Access :=
                     Create_Simple_Message
                       (Get_Messages_Container (Self.Kernel),
@@ -1796,13 +1812,17 @@ package body Code_Peer.Module is
                        Image (Message),
                        Message_Probability_Level'Pos
                          (Message.Current_Probability),
-                       (Editor_Side => True,
-                        Locations   => True));
+                       Flags);
                   Style   : constant Style_Access :=
                     Module.Message_Styles (Message.Current_Probability);
 
                begin
-                  if Style /= null then
+                  --  "Removed" messages are not highlighted in the source
+                  --  editor.
+
+                  if Style /= null
+                    and then Message.Lifeage /= Removed
+                  then
                      Primary.Set_Highlighting
                        (Get_Or_Create_Style_Copy
                           (Kernel_Handle (Self.Kernel),
