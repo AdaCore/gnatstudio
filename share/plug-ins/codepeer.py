@@ -118,6 +118,22 @@ if codepeer != "":
       </menu>
     </submenu>
 
+    <action name="codepeer_example_radar" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/radar/radar.gpr"</shell>
+      <shell>Editor.edit "radar.ads"</shell>
+      <shell>Editor.edit "radar.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_radar">
+        <title>Radar</title>
+      </menu>
+    </submenu>
+
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
