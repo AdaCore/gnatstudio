@@ -30,6 +30,9 @@ package body Code_Peer.Bridge.Inspection_Readers is
    Message_Tag             : constant String := "message";
    Annotation_Tag          : constant String := "annotation";
 
+   Identifier_Attribute    : constant String := "identifier";
+   Previous_Attribute      : constant String := "previous";
+
    ----------
    -- Hash --
    ----------
@@ -126,7 +129,12 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
    begin
       if Qname = Inspection_Tag then
-         null;
+         Code_Peer.Project_Data'Class
+           (Self.Root_Inspection.all).Current_Inspection :=
+           Natural'Value (Attrs.Get_Value (Identifier_Attribute));
+         Code_Peer.Project_Data'Class
+           (Self.Root_Inspection.all).Baseline_Inspection :=
+           Natural'Value (Attrs.Get_Value (Previous_Attribute));
 
       elsif Qname = Message_Category_Tag then
          Message_Category :=

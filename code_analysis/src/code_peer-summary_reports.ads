@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with Glib;
-with Gtk.Paned;
+private with Gtk.Label;
+with Gtk.Box;
 private with Gtk.Tree_Model_Filter;
 private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
@@ -32,7 +33,7 @@ private with Code_Peer.Categories_Criteria_Editors;
 
 package Code_Peer.Summary_Reports is
 
-   type Summary_Report_Record is new Gtk.Paned.Gtk_Hpaned_Record with private;
+   type Summary_Report_Record is new Gtk.Box.Gtk_Vbox_Record with private;
 
    type Summary_Report is access all Summary_Report_Record'Class;
 
@@ -71,8 +72,10 @@ package Code_Peer.Summary_Reports is
 
 private
 
-   type Summary_Report_Record is new Gtk.Paned.Gtk_Hpaned_Record with record
+   type Summary_Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
       Kernel              : GPS.Kernel.Kernel_Handle;
+      Baseline_Inspection : Gtk.Label.Gtk_Label;
+      Current_Inspection  : Gtk.Label.Gtk_Label;
       Tree                : Code_Analysis.Code_Analysis_Tree;
       Analysis_Model      : Code_Peer.Summary_Models.Summary_Model;
       Analysis_Sort_Model : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;

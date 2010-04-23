@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Latin_1;
+with Ada.Strings.Fixed;
 with Interfaces.C.Strings;
 with System.Address_To_Access_Conversions;
 
@@ -25,15 +26,14 @@ with Glib.Object;
 with Glib.Values;
 with Gdk.Event;
 with Gdk.Pixbuf;
-with Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Object;
+with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
 with Gtk.Toggle_Button;
@@ -49,6 +49,9 @@ with GPS.Kernel.Project;
 with Code_Analysis_GUI;
 
 package body Code_Peer.Summary_Reports is
+
+   use Ada.Strings;
+   use Ada.Strings.Fixed;
 
    use type Glib.Signal_Name;
 
@@ -426,6 +429,8 @@ package body Code_Peer.Summary_Reports is
    is
       use Gtk.Tree_Model_Sort;
 
+      Inspections_Box : Gtk.Box.Gtk_Hbox;
+      Panel           : Gtk.Paned.Gtk_Hpaned;
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
@@ -441,8 +446,15 @@ package body Code_Peer.Summary_Reports is
       Dummy           : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
+      Project_Data : Code_Peer.Project_Data'Class renames
+        Code_Peer.Project_Data'Class
+          (Code_Analysis.Get_Or_Create
+               (Tree,
+                GPS.Kernel.Project.Get_Project
+                  (Kernel)).Analysis_Data.Code_Peer_Data.all);
+
    begin
-      Gtk.Paned.Initialize_Hpaned (Self);
+      Gtk.Box.Initialize_Vbox (Self);
       Glib.Object.Initialize_Class_Record
         (Self,
          Signals,
@@ -470,8 +482,29 @@ package body Code_Peer.Summary_Reports is
           (Kernel.Get_Main_Window).Render_Icon
           (Code_Analysis_GUI.Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
 
+      --  Baseline and current inspections' ids
+
+      Gtk.Box.Gtk_New_Hbox (Inspections_Box, True);
+      Self.Pack_Start (Inspections_Box, False);
+
+      Gtk.Label.Gtk_New (Self.Baseline_Inspection, "baseline");
+      Self.Baseline_Inspection.Set_Alignment (0.1, 0.0);
+      Self.Baseline_Inspection.Set_Label
+        ("Baseline inspection #"
+         & Trim (Natural'Image (Project_Data.Baseline_Inspection), Both));
+      Inspections_Box.Pack_Start (Self.Baseline_Inspection);
+      Gtk.Label.Gtk_New (Self.Current_Inspection, "current");
+      Self.Current_Inspection.Set_Alignment (0.9, 0.0);
+      Self.Current_Inspection.Set_Label
+        ("Current inspection #"
+         & Trim (Natural'Image (Project_Data.Current_Inspection), Both));
+      Inspections_Box.Pack_End (Self.Current_Inspection);
+
+      Gtk.Paned.Gtk_New_Hpaned (Panel);
+      Self.Pack_Start (Panel);
+
       Gtk.Paned.Gtk_New_Vpaned (Report_Pane);
-      Self.Pack1 (Report_Pane, Resize => True);
+      Panel.Pack1 (Report_Pane, Resize => True);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
@@ -481,12 +514,7 @@ package body Code_Peer.Summary_Reports is
       Code_Peer.Summary_Models.Gtk_New
         (Self.Analysis_Model,
          Tree,
-         Code_Peer.Project_Data'Class
-           (Code_Analysis.Get_Or_Create
-              (Tree,
-               GPS.Kernel.Project.Get_Project
-                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    Message_Categories,
+         Project_Data.Message_Categories,
          Project_Icon,
          File_Icon,
          Subprogram_Icon);
@@ -639,13 +667,7 @@ package body Code_Peer.Summary_Reports is
       Report_Pane.Pack2 (Scrolled);
 
       Code_Peer.Entity_Messages_Models.Gtk_New
-        (Self.Messages_Model,
-         Code_Peer.Project_Data'Class
-           (Code_Analysis.Get_Or_Create
-              (Tree,
-               GPS.Kernel.Project.Get_Project
-                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    Message_Categories);
+        (Self.Messages_Model, Project_Data.Message_Categories);
       Gtk.Tree_Model_Filter.Gtk_New
         (Self.Messages_Filter, Self.Messages_Model);
       Summary_Report_Visible_Funcs.Set_Visible_Func
@@ -707,7 +729,7 @@ package body Code_Peer.Summary_Reports is
 
       Gtk.Box.Gtk_New_Vbox (Filter_Box);
       Filter_Box.Set_Size_Request (Width => 250);
-      Self.Pack2 (Filter_Box);
+      Panel.Pack2 (Filter_Box);
 
       Gtk.Check_Button.Gtk_New (Check, -"Show all subprograms");
 --      Filter_Box.Pack_Start (Check, False);

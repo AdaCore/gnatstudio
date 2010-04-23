@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -111,6 +111,8 @@ package Code_Peer is
      (Annotation_Category_Access, Less);
 
    type Project_Data is new Code_Analysis.Code_Peer_Data_Root with record
+      Current_Inspection    : Natural;
+      Baseline_Inspection   : Natural;
       Message_Categories    : Message_Category_Sets.Set;
       Annotation_Categories : Annotation_Category_Sets.Set;
    end record;
