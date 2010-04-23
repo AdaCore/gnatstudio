@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <GPS>
-  <perspectives state=" 0" height=" 600" width=" 800">
+  <perspectives state=" 0" height=" 768" width=" 1024">
     <perspective name="Default">
       <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL">
         <Pane width=" 20%" Orientation="ORIENTATION_VERTICAL">
