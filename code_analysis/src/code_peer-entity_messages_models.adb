@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -94,14 +94,13 @@ package body Code_Peer.Entity_Messages_Models is
 
       procedure Set_Integer_Image (Item : Natural);
 
-      procedure Set_Count_Image (Level : Code_Peer.Message_Probability_Level);
+      procedure Set_Count_Image (Level : Code_Peer.Message_Ranking_Level);
 
       ---------------------
       -- Set_Count_Image --
       ---------------------
 
-      procedure Set_Count_Image
-        (Level : Code_Peer.Message_Probability_Level) is
+      procedure Set_Count_Image (Level : Code_Peer.Message_Ranking_Level) is
       begin
          Glib.Values.Init (Value, Glib.GType_String);
 

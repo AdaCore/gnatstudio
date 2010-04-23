@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,8 +26,7 @@ package Code_Peer.Utilities is
       Current : Natural := 0;
    end record;
 
-   type Messages_Counts is
-     array (Code_Peer.Message_Probability_Level) of Counts;
+   type Messages_Counts is array (Code_Peer.Message_Ranking_Level) of Counts;
 
    function "+"
      (Left : Messages_Counts; Right : Messages_Counts) return Messages_Counts;
@@ -58,28 +57,28 @@ package Code_Peer.Utilities is
 
    function Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
-      Level      : Code_Peer.Message_Probability_Level;
+      Level      : Code_Peer.Message_Ranking_Level;
       Category   : Code_Peer.Message_Category_Access) return Natural;
    --  Computes number of the subprogram's messages with specified
    --  probability level and category.
 
    function Compute_Messages_Count
      (File     : Code_Analysis.File_Access;
-      Level    : Code_Peer.Message_Probability_Level;
+      Level    : Code_Peer.Message_Ranking_Level;
       Category : Code_Peer.Message_Category_Access) return Natural;
    --  Computes number of the file's messages with specified probability
    --  level and category.
 
    function Compute_Messages_Count
      (Project  : Code_Analysis.Project_Access;
-      Level    : Code_Peer.Message_Probability_Level;
+      Level    : Code_Peer.Message_Ranking_Level;
       Category : Code_Peer.Message_Category_Access) return Natural;
    --  Computes number of the project's messages with specified probability
    --  level and category.
 
    function Compute_Messages_Count
      (Tree     : Code_Analysis.Code_Analysis_Tree;
-      Level    : Code_Peer.Message_Probability_Level;
+      Level    : Code_Peer.Message_Ranking_Level;
       Category : Code_Peer.Message_Category_Access) return Natural;
    --  Computes number of the whole tree messages with specified probability
    --  level and category.

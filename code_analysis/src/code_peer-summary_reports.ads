@@ -91,7 +91,7 @@ private
                               (Added     => True,
                                Unchanged => True,
                                Removed   => False);
-      Show_Probabilities  : Message_Probability_Level_Flags :=
+      Show_Probabilities  : Message_Ranking_Level_Flags :=
                               (Informational => False,
                                Suppressed    => False,
                                Low           => False,

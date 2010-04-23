@@ -182,11 +182,10 @@ package body Code_Peer.Summary_Models is
       procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean);
 
       procedure Set_Count_Image
-        (Level : Code_Peer.Message_Probability_Level;
+        (Level : Code_Peer.Message_Ranking_Level;
          Kind  : Count_Kinds);
 
-      procedure Set_Deltas_Image
-        (Level : Code_Peer.Message_Probability_Level);
+      procedure Set_Deltas_Image (Level : Code_Peer.Message_Ranking_Level);
 
       procedure Set_Deltas_Image (Added : Natural; Removed : Natural);
 
@@ -195,7 +194,7 @@ package body Code_Peer.Summary_Models is
       ---------------------
 
       procedure Set_Count_Image
-        (Level : Code_Peer.Message_Probability_Level;
+        (Level : Code_Peer.Message_Ranking_Level;
          Kind  : Count_Kinds)
       is
       begin
@@ -287,8 +286,7 @@ package body Code_Peer.Summary_Models is
       -- Set_Deltas_Image --
       ----------------------
 
-      procedure Set_Deltas_Image
-        (Level   : Code_Peer.Message_Probability_Level) is
+      procedure Set_Deltas_Image (Level : Code_Peer.Message_Ranking_Level) is
       begin
          if Subprogram_Node /= null then
             Set_Deltas_Image

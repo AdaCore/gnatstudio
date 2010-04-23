@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +30,7 @@ package body Code_Peer.Bridge.Commands is
       Output_Directory    : Virtual_File;
       Message_Id          : Positive;
       Probability_Changed : Boolean;
-      New_Probability     : Code_Peer.Message_Probability_Level;
+      New_Ranking         : Code_Peer.Message_Ranking_Level;
       Comment             : String)
    is
       Database_Node  : XML_Utils.Node_Ptr :=
@@ -55,7 +55,7 @@ package body Code_Peer.Bridge.Commands is
          XML_Utils.Set_Attribute
            (Add_Audit_Node,
             "probability",
-            Code_Peer.Message_Probability_Level'Image (New_Probability));
+            Code_Peer.Message_Ranking_Level'Image (New_Ranking));
       end if;
 
       XML_Utils.Add_Child (Database_Node, Add_Audit_Node);

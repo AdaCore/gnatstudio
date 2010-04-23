@@ -1138,9 +1138,9 @@ package body Code_Peer.Summary_Reports is
       Criteria : in out Code_Peer.Message_Filter_Criteria)
    is
    begin
-      Criteria.Categories    := Self.Categories_Editor.Get_Visible_Categories;
-      Criteria.Probabilities := Self.Show_Probabilities;
-      Criteria.Lineages      := Self.Show_Lifeage;
+      Criteria.Categories := Self.Categories_Editor.Get_Visible_Categories;
+      Criteria.Rankings   := Self.Show_Probabilities;
+      Criteria.Lineages   := Self.Show_Lifeage;
    end Update_Criteria;
 
 end Code_Peer.Summary_Reports;

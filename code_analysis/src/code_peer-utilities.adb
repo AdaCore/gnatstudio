@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,7 @@ package body Code_Peer.Utilities is
       Result : Messages_Counts;
 
    begin
-      for J in Code_Peer.Message_Probability_Level'Range loop
+      for J in Code_Peer.Message_Ranking_Level'Range loop
          Result (J).Base := Left (J).Base + Right (J).Base;
          Result (J).Added := Left (J).Added + Right (J).Added;
          Result (J).Removed := Left (J).Removed + Right (J).Removed;
@@ -62,22 +62,22 @@ package body Code_Peer.Utilities is
          if Categories.Contains (Message.Category) then
             case Message.Lifeage is
                when Added =>
-                  Counts (Message.Current_Probability).Added :=
-                    Counts (Message.Current_Probability).Added + 1;
-                  Counts (Message.Current_Probability).Current :=
-                    Counts (Message.Current_Probability).Current + 1;
+                  Counts (Message.Current_Ranking).Added :=
+                    Counts (Message.Current_Ranking).Added + 1;
+                  Counts (Message.Current_Ranking).Current :=
+                    Counts (Message.Current_Ranking).Current + 1;
 
                when Unchanged =>
-                  Counts (Message.Current_Probability).Base :=
-                    Counts (Message.Current_Probability).Base + 1;
-                  Counts (Message.Current_Probability).Current :=
-                    Counts (Message.Current_Probability).Current + 1;
+                  Counts (Message.Current_Ranking).Base :=
+                    Counts (Message.Current_Ranking).Base + 1;
+                  Counts (Message.Current_Ranking).Current :=
+                    Counts (Message.Current_Ranking).Current + 1;
 
                when Removed =>
-                  Counts (Message.Current_Probability).Base :=
-                    Counts (Message.Current_Probability).Base + 1;
-                  Counts (Message.Current_Probability).Removed :=
-                    Counts (Message.Current_Probability).Removed + 1;
+                  Counts (Message.Current_Ranking).Base :=
+                    Counts (Message.Current_Ranking).Base + 1;
+                  Counts (Message.Current_Ranking).Removed :=
+                    Counts (Message.Current_Ranking).Removed + 1;
             end case;
          end if;
       end Process;
@@ -192,7 +192,7 @@ package body Code_Peer.Utilities is
 
    function Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
-      Level      : Code_Peer.Message_Probability_Level;
+      Level      : Code_Peer.Message_Ranking_Level;
       Category   : Code_Peer.Message_Category_Access) return Natural
    is
       Result : Natural := 0;
@@ -208,7 +208,7 @@ package body Code_Peer.Utilities is
                      Message_Vectors.Element (Position);
 
       begin
-         if Message.Current_Probability = Level
+         if Message.Current_Ranking = Level
            and then Message.Category = Category
          then
             Result := Result + 1;
@@ -229,7 +229,7 @@ package body Code_Peer.Utilities is
 
    function Compute_Messages_Count
      (File     : Code_Analysis.File_Access;
-      Level    : Code_Peer.Message_Probability_Level;
+      Level    : Code_Peer.Message_Ranking_Level;
       Category : Code_Peer.Message_Category_Access) return Natural
    is
       Result : Natural := 0;
@@ -261,7 +261,7 @@ package body Code_Peer.Utilities is
 
    function Compute_Messages_Count
      (Project  : Code_Analysis.Project_Access;
-      Level    : Code_Peer.Message_Probability_Level;
+      Level    : Code_Peer.Message_Ranking_Level;
       Category : Code_Peer.Message_Category_Access) return Natural
    is
       Result : Natural := 0;
@@ -293,7 +293,7 @@ package body Code_Peer.Utilities is
 
    function Compute_Messages_Count
      (Tree     : Code_Analysis.Code_Analysis_Tree;
-      Level    : Code_Peer.Message_Probability_Level;
+      Level    : Code_Peer.Message_Ranking_Level;
       Category : Code_Peer.Message_Category_Access) return Natural
    is
       Result : Natural := 0;

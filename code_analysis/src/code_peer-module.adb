@@ -317,10 +317,9 @@ package body Code_Peer.Module is
    ---------------
 
    function Get_Color
-     (Probability : Code_Peer.Message_Probability_Level)
-      return Gdk.Color.Gdk_Color is
+     (Ranking : Code_Peer.Message_Ranking_Level) return Gdk.Color.Gdk_Color is
    begin
-      return Module.Message_Colors (Probability).Get_Pref;
+      return Module.Message_Colors (Ranking).Get_Pref;
    end Get_Color;
 
    ------------
@@ -1756,7 +1755,7 @@ package body Code_Peer.Module is
                   return "warning: ";
                end if;
 
-               case Message.Current_Probability is
+               case Message.Current_Ranking is
                   when Code_Peer.High =>
                      return "high: ";
 
@@ -1776,12 +1775,12 @@ package body Code_Peer.Module is
 
          begin
             if Self.Filter_Criteria.Lineages (Message.Lifeage)
-              and then Self.Filter_Criteria.Probabilities
-                         (Message.Current_Probability)
+              and then Self.Filter_Criteria.Rankings (Message.Current_Ranking)
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
                declare
+
                   function Flags return GPS.Kernel.Messages.Message_Flags;
                   --  Returns set of flags depending from lifeage of the
                   --  message. "Removed" messages are displayed only in
@@ -1810,11 +1809,10 @@ package body Code_Peer.Module is
                        Message.Line,
                        Basic_Types.Visible_Column_Type (Message.Column),
                        Image (Message),
-                       Message_Probability_Level'Pos
-                         (Message.Current_Probability),
+                       Message_Ranking_Level'Pos (Message.Current_Ranking),
                        Flags);
                   Style   : constant Style_Access :=
-                    Module.Message_Styles (Message.Current_Probability);
+                    Module.Message_Styles (Message.Current_Ranking);
 
                begin
                   --  "Removed" messages are not highlighted in the source

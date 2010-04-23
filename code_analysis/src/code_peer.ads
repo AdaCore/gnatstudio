@@ -30,7 +30,7 @@ package Code_Peer is
 
    type Lifeage_Kinds is (Added, Unchanged, Removed);
 
-   type Message_Probability_Level is
+   type Message_Ranking_Level is
      (Suppressed, Informational, Low, Medium, High);
 
    type Message_Category is record
@@ -51,7 +51,7 @@ package Code_Peer is
 
       case Probability_Changed is
          when True =>
-            Probability : Message_Probability_Level;
+            Ranking : Message_Ranking_Level;
 
          when False =>
             null;
@@ -64,16 +64,16 @@ package Code_Peer is
      new Ada.Containers.Vectors (Positive, Audit_Record_Access);
 
    type Message is record
-      Id                   : Natural;
-      Lifeage              : Lifeage_Kinds;
-      Line                 : Positive;
-      Column               : Positive;
-      Category             : Message_Category_Access;
-      Computed_Probability : Message_Probability_Level;
-      Current_Probability  : Message_Probability_Level;
-      Text                 : GNAT.Strings.String_Access;
-      Audit_Loaded         : Boolean;
-      Audit                : Audit_Vectors.Vector;
+      Id               : Natural;
+      Lifeage          : Lifeage_Kinds;
+      Line             : Positive;
+      Column           : Positive;
+      Category         : Message_Category_Access;
+      Computed_Ranking : Message_Ranking_Level;
+      Current_Ranking  : Message_Ranking_Level;
+      Text             : GNAT.Strings.String_Access;
+      Audit_Loaded     : Boolean;
+      Audit            : Audit_Vectors.Vector;
    end record;
 
    type Message_Access is access all Message;
@@ -154,16 +154,16 @@ package Code_Peer is
      new Ada.Containers.Hashed_Sets
           (Code_Analysis.File_Access, Hash, Code_Analysis."=");
 
-   type Message_Probability_Level_Flags is
-     array (Message_Probability_Level) of Boolean;
+   type Message_Ranking_Level_Flags is
+     array (Message_Ranking_Level) of Boolean;
 
    type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
 
    type Message_Filter_Criteria is record
-      Files         : File_Sets.Set;
-      Categories    : Message_Category_Sets.Set;
-      Probabilities : Message_Probability_Level_Flags;
-      Lineages      : Lifeage_Kinds_Flags;
+      Files      : File_Sets.Set;
+      Categories : Message_Category_Sets.Set;
+      Rankings   : Message_Ranking_Level_Flags;
+      Lineages   : Lifeage_Kinds_Flags;
    end record;
 
    function Less

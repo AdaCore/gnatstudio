@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -114,8 +114,8 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
                 (Probability_Changed => True,
                  Timestamp           =>
                    new String'(Attrs.Get_Value ("timestamp")),
-                 Probability         =>
-                   Code_Peer.Message_Probability_Level'Value
+                 Ranking         =>
+                   Code_Peer.Message_Ranking_Level'Value
                      (Attrs.Get_Value ("probability")),
                  Comment             => null);
 

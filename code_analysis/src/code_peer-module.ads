@@ -75,17 +75,16 @@ package Code_Peer.Module is
    --  Register the module
 
    function Get_Color
-     (Probability : Code_Peer.Message_Probability_Level)
-      return Gdk.Color.Gdk_Color;
+     (Ranking : Code_Peer.Message_Ranking_Level) return Gdk.Color.Gdk_Color;
 
 private
 
-   type Message_Probability_Color_Preference_Array is
-     array (Code_Peer.Message_Probability_Level)
+   type Message_Ranking_Color_Preference_Array is
+     array (Code_Peer.Message_Ranking_Level)
        of Default_Preferences.Color_Preference;
 
-   type Message_Probability_Style_Array is
-     array (Code_Peer.Message_Probability_Level)
+   type Message_Ranking_Style_Array is
+     array (Code_Peer.Message_Ranking_Level)
        of GPS.Styles.Style_Access;
 
    type CodePeer_Action is
@@ -109,8 +108,8 @@ private
       Report           : Code_Peer.Summary_Reports.Summary_Report;
       Annotation_Style : GPS.Styles.Style_Access;
       Annotation_Color : Default_Preferences.Color_Preference;
-      Message_Colors   : Message_Probability_Color_Preference_Array;
-      Message_Styles   : Message_Probability_Style_Array;
+      Message_Colors   : Message_Ranking_Color_Preference_Array;
+      Message_Styles   : Message_Ranking_Style_Array;
 
       --  Global messages filter
 

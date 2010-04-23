@@ -109,7 +109,7 @@ package body Code_Peer.Module.Bridge is
             Codepeer_Output_Directory (Project),
             Message.Id,
             True,
-            Message.Audit.First_Element.Probability,
+            Message.Audit.First_Element.Ranking,
             Message.Audit.First_Element.Comment.all);
 
       else

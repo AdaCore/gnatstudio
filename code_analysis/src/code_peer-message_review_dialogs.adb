@@ -125,15 +125,15 @@ package body Code_Peer.Message_Review_Dialogs is
 
       procedure Process_Audit (Position : Code_Peer.Audit_Vectors.Cursor);
 
-      function Probability_Image
-        (Probability : Code_Peer.Message_Probability_Level) return String;
+      function Ranking_Image
+        (Probability : Code_Peer.Message_Ranking_Level) return String;
 
-      -----------------------
-      -- Probability_Image --
-      -----------------------
+      -------------------
+      -- Ranking_Image --
+      -------------------
 
-      function Probability_Image
-        (Probability : Code_Peer.Message_Probability_Level) return String is
+      function Ranking_Image
+        (Probability : Code_Peer.Message_Ranking_Level) return String is
       begin
          case Probability is
             when Code_Peer.Informational =>
@@ -151,7 +151,7 @@ package body Code_Peer.Message_Review_Dialogs is
             when Code_Peer.Suppressed =>
                return "Suppressed";
          end case;
-      end Probability_Image;
+      end Ranking_Image;
 
       -------------------
       -- Process_Audit --
@@ -172,7 +172,7 @@ package body Code_Peer.Message_Review_Dialogs is
             Store.Set
               (Iter,
                History_Model_Probability_Column,
-               Probability_Image (Audit.Probability));
+               Ranking_Image (Audit.Ranking));
 
          else
             Store.Set
@@ -207,7 +207,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Gtk.GEntry.Gtk_New (Text_Entry);
       Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Probability_Image (Message.Computed_Probability));
+      Text_Entry.Set_Text (Ranking_Image (Message.Computed_Ranking));
       Table.Attach (Text_Entry, 1, 2, 0, 1);
 
       Gtk.Label.Gtk_New (Label, "Current ranking");
@@ -215,7 +215,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Gtk.GEntry.Gtk_New (Text_Entry);
       Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Probability_Image (Message.Current_Probability));
+      Text_Entry.Set_Text (Ranking_Image (Message.Current_Ranking));
       Table.Attach (Text_Entry, 1, 2, 1, 2);
 
       --  New probability combobox and underling model
@@ -248,7 +248,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
-         Message_Probability_Level'Pos (Low));
+         Message_Ranking_Level'Pos (Low));
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"Medium");
@@ -256,7 +256,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
-         Message_Probability_Level'Pos (Medium));
+         Message_Ranking_Level'Pos (Medium));
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"High");
@@ -264,7 +264,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
-         Message_Probability_Level'Pos (High));
+         Message_Ranking_Level'Pos (High));
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"Not an error");
@@ -272,7 +272,7 @@ package body Code_Peer.Message_Review_Dialogs is
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
-         Message_Probability_Level'Pos (Suppressed));
+         Message_Ranking_Level'Pos (Suppressed));
 
       --  Comment field
 
@@ -395,10 +395,10 @@ package body Code_Peer.Message_Review_Dialogs is
       --  Add new record and change message probability
 
       if Probability_Changed then
-         New_Record.Probability :=
-           Code_Peer.Message_Probability_Level'Val
+         New_Record.Ranking :=
+           Code_Peer.Message_Ranking_Level'Val
              (Model.Get_Int (Iter, Probability_Model_New_Level_Column));
-         Self.Message.Current_Probability := New_Record.Probability;
+         Self.Message.Current_Ranking := New_Record.Ranking;
       end if;
 
       Self.Comment_Buffer.Get_Start_Iter (Start_Iter);
