@@ -761,6 +761,13 @@ package body GPS.Kernel.Messages is
 
       Self.Increment_Message_Counters;
 
+      --  Update flags of category and file nodes
+
+      for K in Message_Visibility_Kind loop
+         File_Node.Flags (K) := File_Node.Flags (K) or Self.Flags (K);
+         Category_Node.Flags (K) := Category_Node.Flags (K) or Self.Flags (K);
+      end loop;
+
       --  Notify models and listeners
 
       Notifiers.Notify_Models_About_Message_Added (Container, Self);
@@ -1951,7 +1958,7 @@ package body GPS.Kernel.Messages is
    begin
       for K in Message_Visibility_Kind loop
          if not Flags (K) then
-            Int := Int + 2** (Message_Visibility_Kind'Pos (K));
+            Int := Int + 2**(Message_Visibility_Kind'Pos (K));
          end if;
       end loop;
 
@@ -1968,7 +1975,7 @@ package body GPS.Kernel.Messages is
       B : constant T := T (Int);
    begin
       for K in Message_Visibility_Kind loop
-         if (B and 2**Message_Visibility_Kind'Pos (K)) = 1 then
+         if (B and 2**Message_Visibility_Kind'Pos (K)) /= 0 then
             Flags (K) := False;
          end if;
       end loop;
