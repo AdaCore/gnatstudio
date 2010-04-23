@@ -571,6 +571,10 @@ package body Src_Editor_Buffer.Line_Information is
       Column        : Integer;
 
    begin
+      --   ??? This function should absolutely search for Messages if they are
+      --   not found in the expected locations, to avoid dangling pointers!
+      --   It would be nice to store the line information data in an annotation
+      --   so we can get rid of the loop in the default case.
       for J in Messages'Range loop
          for K in Messages'Range loop
             Column := Column_For_Identifier
@@ -630,8 +634,7 @@ package body Src_Editor_Buffer.Line_Information is
       if Columns_Config /= null and then Columns_Config.all /= null then
          for J in Columns_Config.all'Range loop
             if Columns_Config.all (J).Identifier.all = Identifier then
-               Column := J;
-               exit;
+               return Column;
 
             elsif Columns_Config.all (J).Identifier.all = Default_Column then
                --  This branch will make sure that we have a column
