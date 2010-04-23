@@ -173,7 +173,18 @@ package body GPS.Kernel.Messages.Classic_Models is
                end if;
             end loop;
          else
-            Index := Aux.Parent.Children.Find_Index (Aux);
+            Index := 1;
+            for J in Aux.Parent.Children.First_Index
+              .. Aux.Parent.Children.Last_Index
+            loop
+               exit when Aux.Parent.Children.Element (J) = Aux;
+
+               if Match (Aux.Parent.Children.Element (J).Flags,
+                         Self.Flags)
+               then
+                  Index := Index + 1;
+               end if;
+            end loop;
          end if;
 
          Prepend_Index (Result, Gint (Index) - 1);
@@ -304,7 +315,9 @@ package body GPS.Kernel.Messages.Classic_Models is
             end loop;
 
          else
-            if Indices (J) < Gint (Node.Children.Length) then
+            if Node /= null
+              and then Indices (J) < Gint (Node.Children.Length)
+            then
                Node := Node.Children.Element (Natural (Indices (J)) + 1);
 
             else
@@ -895,9 +908,37 @@ package body GPS.Kernel.Messages.Classic_Models is
       pragma Unreferenced (Dummy);
 
    begin
+      Path := Self.Create_Path (Node);
+
+      --  Verify that the parent node exists.
+      --  The parent might not exist in the following case:
+      --     - the category/file nodes do not exist
+      --     - we insert a message visible only in the editors
+      --     - we then insert a message visible in the locations view
+
+      --  ??? Possible optimization: instead of doing this lookup for all
+      --  messages, we could do this at the higher level: whenever a message is
+      --  added and this causes a change of flags in the category or file level
+      --  then re-add the category or file node to the models that need it
+
+      declare
+         Parent  : Gtk_Tree_Path;
+      begin
+         Parent := Copy (Path);
+
+         if Up (Parent) then
+            if Get_Iter (Self, Path) = Null_Iter then
+               if Node.Parent /= null then
+                  Node_Added (Self, Node.Parent);
+               end if;
+            end if;
+         end if;
+
+         Path_Free (Parent);
+      end;
+
       Self.Stamp := Self.Stamp + 1;
       Iter := Self.Create_Iter (Node);
-      Path := Self.Create_Path (Node);
       Self.Row_Inserted (Path, Iter);
 
       Dummy := Up (Path);
