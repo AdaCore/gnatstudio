@@ -126,6 +126,9 @@ package body GPS.Kernel.Messages.Shell is
       elsif Command = "get_category" then
          Set_Return_Value (Data, Message.Get_Category);
 
+      elsif Command = "get_text" then
+         Set_Return_Value (Data, To_String (Message.Get_Text));
+
       elsif Command = "remove" then
          Message.Remove;
       end if;
@@ -189,7 +192,7 @@ package body GPS.Kernel.Messages.Shell is
          declare
             Action_Str   : constant String := Nth_Arg (Data, 2, "");
             Image_Str    : constant String := Nth_Arg (Data, 3);
-            Tooltip_Str  : constant String := Nth_Arg (Data, 4);
+            Tooltip_Str  : constant String := Nth_Arg (Data, 4, "");
             Action       : Action_Item;
             The_Action   : Action_Record_Access;
             Command      : Command_Access := null;
@@ -222,6 +225,11 @@ package body GPS.Kernel.Messages.Shell is
          end;
 
       elsif Command = "list" then
+         Name_Parameters
+           (Data,
+            (1 => Category_Cst'Access,
+             2 => File_Cst'Access));
+
          Set_Return_Value_As_List (Data);
 
          declare
@@ -322,6 +330,10 @@ package body GPS.Kernel.Messages.Shell is
          Message_Class);
 
       Register_Command
+        (Kernel, "get_text", 0, 0, Accessors'Access,
+         Message_Class);
+
+      Register_Command
         (Kernel, "get_column", 0, 0, Accessors'Access,
          Message_Class);
 
@@ -334,7 +346,7 @@ package body GPS.Kernel.Messages.Shell is
          Message_Class);
 
       Register_Command
-        (Kernel, "set_action", 3, 3, Message_Command_Handler'Access,
+        (Kernel, "set_action", 1, 3, Message_Command_Handler'Access,
          Message_Class);
       --  ??? It would be nice to add a function that would allow passing
       --  of a python subprogram directly.

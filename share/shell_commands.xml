@@ -6084,5 +6084,82 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      </description>
   </shell_doc>
 
+    <!--#################################################################
+      ## Message class
+      #################################################################-->
+
+  <shell_doc name="GPS.Message">
+     <description>This class is used to manipulate GPS messages: build errors,
+     editor annotations, etc.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.__init__">
+      <param name="self">An instance of Message</param>
+      <param name="category">A String indicating the message category</param>
+      <param name="file">A File indicating the file</param>
+      <param name="line">An integer indicating the line</param>
+      <param name="column">An integer indicating the column</param>
+      <param name="text">A pango markup String containg the message text</param>
+      <param name="flags">An integer representing the location of the message</param>
+
+      <description>Add a Message in GPS.</description>
+
+
+     <example lang="python">
+     # Create a message
+
+     m=GPS.Message ("default", GPS.File("gps-main.adb"), 1841, 20, "test message", 0)
+
+     # Remove the message
+     m.remove()
+
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.list">
+     <param name="file">(optional) a GPS File. Specifying this parameter
+     restricts the output to messages for this file only.</param>
+     <param name="category">(optional) a String. Specifying this parameter
+     restricts the output to messages for this category only</param>
+     <description>Return a list of all messages currently stored in GPS.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.get_category">
+     <description>Return the message's category.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.get_file">
+     <description>Return the message's file.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.get_line">
+     <description>Return the message's line.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.get_column">
+     <description>Return the message's column.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.get_text">
+     <description>Return the message's text.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.remove">
+     <description>Remove the message from GPS.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Message.set_action">
+     <param name="action">A String corresponding to a registered GPS action.
+     </param>
+     <param name="image">A String corresponding to the id of a registered GPS
+     image. See icons.xml for an example of how to register icons in GPS.
+     </param>
+     <param name="tooltip">A string (optional) which contains the tooltip to
+     display when the mouse is on the icon.</param>
+     <description>Add an action item to the message. This will add an icon to
+     the message, and clicking on this icon will execute action.</description>
+  </shell_doc>
 
 </docs>
