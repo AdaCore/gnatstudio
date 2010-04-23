@@ -6162,4 +6162,23 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      the message, and clicking on this icon will execute action.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.set_subprogram">
+     <param name="subprogram">A subprogram in the scripting language.
+     This subprogram takes as a parameter one message.
+     </param>
+     <param name="image">A String corresponding to the id of a registered GPS
+     image. See icons.xml for an example of how to register icons in GPS.
+     </param>
+     <param name="tooltip">A string (optional) which contains the tooltip to
+     display when the mouse is on the icon.</param>
+     <description>Add an action item to the message. This will add an icon to
+     the message, and clicking on this icon will execute the subprogram, with
+     the messaged passed as parameter of the subprogram.</description>
+
+     <example lang="python">
+     # This adds a "close" button to all the messages
+     [msg.set_subprogram (lambda m : m.remove(), "gtk-close", "") for msg in GPS.Message.list()]
+     </example>
+  </shell_doc>
+
 </docs>

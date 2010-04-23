@@ -30,6 +30,7 @@ with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Commands;    use Commands;
 with Basic_Types; use Basic_Types;
 with GPS.Editors; use GPS.Editors;
+
 with Commands.Interactive;
 
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
@@ -39,20 +40,34 @@ package body GPS.Kernel.Messages.Shell is
    Class         : constant String := "Message";
    Message_Class : Class_Type;
 
-   Action_Cst   : aliased constant String := "action";
-   Tooltip_Cst  : aliased constant String := "tooltip";
-   Image_Cst    : aliased constant String := "image";
-   Category_Cst : aliased constant String := "category";
-   Line_Cst     : aliased constant String := "line";
-   Column_Cst   : aliased constant String := "column";
-   File_Cst     : aliased constant String := "file";
-   Text_Cst     : aliased constant String := "text";
-   Flags_Cst    : aliased constant String := "flags";
+   Action_Cst     : aliased constant String := "action";
+   Subprogram_Cst : aliased constant String := "subprogram";
+   Tooltip_Cst    : aliased constant String := "tooltip";
+   Image_Cst      : aliased constant String := "image";
+   Category_Cst   : aliased constant String := "category";
+   Line_Cst       : aliased constant String := "line";
+   Column_Cst     : aliased constant String := "column";
+   File_Cst       : aliased constant String := "file";
+   Text_Cst       : aliased constant String := "text";
+   Flags_Cst      : aliased constant String := "flags";
 
    type Message_Property_Record is new Instance_Property_Record with record
       Message : Message_Access;
    end record;
    type Message_Property_Access is access all Message_Property_Record'Class;
+
+   type Subprogram_Command_Record is new Root_Command with record
+      Sub  : Subprogram_Type;
+      Inst : Class_Instance;
+   end record;
+   type Subprogram_Command is access all Subprogram_Command_Record'Class;
+
+   overriding function Execute
+     (Command : access Subprogram_Command_Record) return Command_Return_Type;
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
 
    procedure Set_Data
      (Instance : Class_Instance;
@@ -70,6 +85,28 @@ package body GPS.Kernel.Messages.Shell is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the simple Message commands which simply access the fields
    --  of a message or run parameterless commands
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Subprogram_Command_Record) return Command_Return_Type
+   is
+      C : Callback_Data'Class :=
+        Create (Get_Script (Command.Sub.all), Arguments_Count => 1);
+      Tmp : Boolean;
+   begin
+      Set_Nth_Arg (C, 1, Command.Inst);
+      Tmp := Execute (Command.Sub, C);
+      Free (C);
+
+      if Tmp then
+         return Success;
+      else
+         return Failure;
+      end if;
+   end Execute;
 
    --------------
    -- Set_Data --
@@ -224,6 +261,35 @@ package body GPS.Kernel.Messages.Shell is
             Get_Message (Nth_Arg (Data, 1, Message_Class)).Set_Action (Action);
          end;
 
+      elsif Command = "set_subprogram" then
+         Name_Parameters
+           (Data,
+            (1 => Subprogram_Cst'Access,
+             2 => Image_Cst'Access,
+             3 => Tooltip_Cst'Access));
+
+         declare
+            Image_Str    : constant String := Nth_Arg (Data, 3);
+            Tooltip_Str  : constant String := Nth_Arg (Data, 4, "");
+            Command      : Subprogram_Command;
+            Action       : Action_Item;
+         begin
+            Command := new Subprogram_Command_Record;
+            Command.Sub  := Nth_Arg (Data, 2);
+            Command.Inst := Nth_Arg (Data, 1, Message_Class);
+
+            Action := new Line_Information_Record'
+              (Text         => null,
+               Tooltip_Text => new String'(Tooltip_Str),
+               Image        => Render_Icon
+                 (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
+                  Stock_Id => Image_Str,
+                  Size     => Icon_Size_Menu),
+               Associated_Command => Command_Access (Command));
+
+            Get_Message (Nth_Arg (Data, 1, Message_Class)).Set_Action (Action);
+         end;
+
       elsif Command = "list" then
          Name_Parameters
            (Data,
@@ -348,8 +414,10 @@ package body GPS.Kernel.Messages.Shell is
       Register_Command
         (Kernel, "set_action", 1, 3, Message_Command_Handler'Access,
          Message_Class);
-      --  ??? It would be nice to add a function that would allow passing
-      --  of a python subprogram directly.
+
+      Register_Command
+        (Kernel, "set_subprogram", 1, 3, Message_Command_Handler'Access,
+         Message_Class);
 
    end Register_Commands;
 
