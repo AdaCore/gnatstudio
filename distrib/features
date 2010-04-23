@@ -34,6 +34,12 @@ NF-45-J302-046 Load CodePeer annotations in open editors (2010-04-06)
   CodePeer annotations are now displayed automatically for all open editors
   when the CodePeer report is displayed.
 
+NF-45-J302-017 Shell/Python interfacing to messaging system (2010-04-23)
+
+  There is a possibility of manipulating GPS messages through GPS Shell or
+  Python. Messages can be created and removed through this API, and it is also
+  possible to add actions to each message.
+
 NF-45-J225-017 Better handling of incomplete with/use clauses (2010-02-25)
 
   The outline and smart completion will now work correctly even when the user
