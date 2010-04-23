@@ -7,7 +7,7 @@
 $expand_hierarchies = 1;
 
 $output ="../share/plug-ins/runtime.xml";
-$impunit="../gnat_src/impunit.adb";
+$impunit="../gnatlib/gnat_src/impunit.adb";
 
 open (OUT, '>' . $output);
 open (IMPUNIT, $impunit);
