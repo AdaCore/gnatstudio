@@ -461,9 +461,8 @@ package body Src_Editor_Box is
             then
                Console.Insert
                  (Kernel,
-                  -("The cross-reference information and the destination file "
-                    & "do not match, the cursor was set at the closest "
-                    & "reference to ") & Get_Name (Entity).all);
+                  -("xref info mismatch, cursor was set at closest ref to ")
+                    & Get_Name (Entity).all);
             end if;
 
             --  Search for the closest reference to entity, and highlight the
