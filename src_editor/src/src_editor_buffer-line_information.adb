@@ -1265,8 +1265,8 @@ package body Src_Editor_Buffer.Line_Information is
                B : constant Buffer_Line_Type :=
                  Buffer.Editable_Lines (Editable_Line).Buffer_Line;
             begin
-               if Buffer.Line_Data (B).Side_Info_Data
-                 /= null
+               if B in Buffer.Line_Data'Range
+                 and then Buffer.Line_Data (B).Side_Info_Data /= null
                then
                   if Remove_Old then
                      Old_Msg := Buffer.Line_Data
