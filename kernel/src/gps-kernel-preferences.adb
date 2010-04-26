@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -417,6 +417,16 @@ package body GPS.Kernel.Preferences is
            & " the category."),
          Default => True,
          Page    => "General");
+
+      Hyper_Mode := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Hyper-Mode",
+         Default => True,
+         Doc     =>
+         -("Whether to allow hyper links to appear in editors when the"
+          & " Control key is pressed."),
+         Label   => -"Hyper links",
+         Page    => -"General");
 
       Tooltip_Color := Create
         (Manager => Kernel.Preferences,

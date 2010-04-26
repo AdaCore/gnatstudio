@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2009, AdaCore                        --
+--                Copyright (C) 2009-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,8 @@ with Gtk.Object; use Gtk.Object;
 
 with Traces; use Traces;
 with GNATCOLL.Traces;
+
+with GPS.Kernel.Preferences;
 
 package body GPS.Kernel.Hyper_Mode is
 
@@ -243,6 +245,10 @@ package body GPS.Kernel.Hyper_Mode is
    is
       Data : Hyper_Mode_Data;
    begin
+      if not GPS.Kernel.Preferences.Hyper_Mode.Get_Pref then
+         return;
+      end if;
+
       Data := new Hyper_Mode_Data_Record;
 
       Data.Kernel := Kernel;

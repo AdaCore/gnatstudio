@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -135,6 +135,7 @@ package GPS.Kernel.Preferences is
    Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;
    Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
    Auto_Jump_To_First     : Boolean_Preference;
+   Hyper_Mode             : Boolean_Preference;
    Tooltip_Color          : Color_Preference;
 
    -- Messages --
