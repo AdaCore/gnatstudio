@@ -3810,6 +3810,8 @@ Note that for efficiency, GPS may create hyperlinks for some entities which
 have no associated cross reference. In this case, clicking will have no
 effect, even though an hyperlink may have been displayed.
 
+This behavior is controlled by the @code{Hyper links} preference.
+
 @c --------------------------------------------------------------------
 @node Project Handling
 @chapter Project Handling
@@ -9640,6 +9642,11 @@ immediately open.
 Whether using the @code{Next Tag} and @code{Previous Tag} actions/menus
 should wrap around to the beginning when reaching the end of the category.
 The default is to wrap around, as was done in previous GPS versions.
+
+@item Hyper links
+@cindex hyper mode
+Whether to display hyper links in the editors when the Control key is pressed.
+@xref{Navigating with hyperlinks}
 
 @item Clipboard size
 @cindex clipboard
