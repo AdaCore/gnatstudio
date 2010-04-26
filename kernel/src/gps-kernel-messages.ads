@@ -16,8 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  There are three user visible entities in the centralized messages
---  container: message, container and listener.
+--  There are four user visible entities in the centralized messages
+--  container: message, message's note, container and listener.
 --
 --  Abstract_Message is a root tagged type for all kinds of messages.
 --  Each module can provide own types of messages which need to be
@@ -35,7 +35,7 @@ private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
-private with Ada.Tags;
+with Ada.Tags;
 
 with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
@@ -75,6 +75,10 @@ package GPS.Kernel.Messages is
 
    type Sort_Order_Hint is (Chronological, Alphabetical);
    --  Hint for the view how it must sort items at file level by default.
+
+   type Abstract_Note is abstract tagged limited null record;
+
+   type Note_Access is access all Abstract_Note'Class;
 
    ----------------------
    -- Abstract Message --
@@ -172,6 +176,26 @@ package GPS.Kernel.Messages is
    procedure Remove (Self : not null access Abstract_Message'Class);
    --  Removes message and deallocate it.
 
+   function Has_Note
+     (Self : not null access constant Abstract_Message'Class;
+      Tag  : Ada.Tags.Tag) return Boolean;
+   --  Returns True when note of the given tagged type is allosicated with the
+   --  messages, otherwise returns False.
+
+   function Get_Note
+     (Self : not null access constant Abstract_Message'Class;
+      Tag  : Ada.Tags.Tag) return not null Note_Access;
+   --  Returns note with the givent tagged type. Raises Constraint_Error when
+   --  there is no note of the given tagged type associated with the message.
+
+   procedure Set_Note
+     (Self : not null access Abstract_Message'Class;
+      Note : not null Note_Access);
+   --  Sets note for the message. Any number of notes can be associated with
+   --  the message, but each note must have own tagged type. If the note of the
+   --  same tagged type already associated with the message it is destroyed
+   --  and replaced by given one.
+
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
@@ -201,6 +225,13 @@ package GPS.Kernel.Messages is
    --  Called to release resources occupied by the message before memory for
    --  message will be released. Derived types can override it to do additional
    --  actions, but must call this subprogram always to avoid memory leaks.
+
+   -------------------
+   -- Abstract_Note --
+   -------------------
+
+   procedure Finalize (Self : not null access Abstract_Note) is null;
+   --  Called to release resources occupied by the note.
 
    ------------------------
    -- Messages Container --
@@ -409,6 +440,16 @@ private
         GNATCOLL.VFS.Full_Name_Hash,
         GNATCOLL.VFS."=");
 
+   function Hash (Item : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
+   --  Hash function.
+
+   package Note_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag,
+        Note_Access,
+        Hash,
+        Ada.Tags."=");
+
    type Node_Kinds is (Node_Category, Node_File, Node_Message);
 
    --  Declaration of Node_Record as tagged type with discriminant versus
@@ -439,6 +480,7 @@ private
             Action : Action_Item;
             Style  : GPS.Styles.Style_Access;
             Length : Natural := 0;
+            Notes  : Note_Maps.Map;
       end case;
    end record;
 
@@ -533,8 +575,6 @@ private
 
    package Listener_Vectors is
      new Ada.Containers.Vectors (Positive, Listener_Access);
-
-   function Hash (Item : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
 
    package Primary_Message_Load_Maps is
      new Ada.Containers.Hashed_Maps

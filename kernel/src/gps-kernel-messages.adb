@@ -52,6 +52,7 @@ package body GPS.Kernel.Messages is
    use Listener_Vectors;
    use Model_Vectors;
    use Node_Vectors;
+   use Note_Maps;
    use Projects;
    use Sort_Order_Hint_Maps;
    use Traces;
@@ -196,35 +197,8 @@ package body GPS.Kernel.Messages is
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
-   -----------
-   -- Match --
-   -----------
-
-   function Match (A, B : Message_Flags) return Boolean is
-
-   begin
-      for K in Message_Visibility_Kind loop
-         if A (K) and then B (K) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
-   end Match;
-
-   ----------------------------
-   -- New_Messages_Container --
-   ----------------------------
-
-   function New_Messages_Container
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return not null Messages_Container_Access
-   is
-      Result : constant Messages_Container_Access :=
-                 new Messages_Container (Kernel);
-   begin
-      return Result;
-   end New_Messages_Container;
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Abstract_Note'Class, Note_Access);
 
    -------------------------------
    -- Create_Messages_Container --
@@ -317,12 +291,32 @@ package body GPS.Kernel.Messages is
       procedure Free is
         new Ada.Unchecked_Deallocation (Editor_Mark'Class, Editor_Mark_Access);
 
+      Position : Note_Maps.Cursor := Self.Notes.First;
+      Aux      : Note_Access;
+
    begin
+      --  Destroy notes.
+
+      while Has_Element (Position) loop
+         Aux := Element (Position);
+         Finalize (Aux);
+         Free (Aux);
+         Next (Position);
+      end loop;
+
+      Self.Notes.Clear;
+
+      --  Delete editor's mark.
+
       Self.Mark.Delete;
       Free (Self.Mark);
+
+      --  Destroy action item.
+
       if Self.Action /= null then
          GPS.Editors.Free (Self.Action.all);
       end if;
+
       Free (Self.Action);
    end Finalize;
 
@@ -606,6 +600,26 @@ package body GPS.Kernel.Messages is
       return To_Messages_Container_Access (Kernel.Messages_Container);
    end Get_Messages_Container;
 
+   --------------
+   -- Get_Note --
+   --------------
+
+   function Get_Note
+     (Self : not null access constant Abstract_Message'Class;
+      Tag  : Ada.Tags.Tag) return not null Note_Access
+   is
+      Position : constant Note_Maps.Cursor := Self.Notes.Find (Tag);
+
+   begin
+      if Has_Element (Position) then
+         return Element (Position);
+
+      else
+         raise Constraint_Error
+           with "There is no note assiciated with message";
+      end if;
+   end Get_Note;
+
    ----------------
    -- Get_Parent --
    ----------------
@@ -622,6 +636,17 @@ package body GPS.Kernel.Messages is
             return Message_Access (Self.Parent);
       end case;
    end Get_Parent;
+
+   --------------
+   -- Has_Note --
+   --------------
+
+   function Has_Note
+     (Self : not null access constant Abstract_Message'Class;
+      Tag  : Ada.Tags.Tag) return Boolean is
+   begin
+      return Self.Notes.Contains (Tag);
+   end Has_Note;
 
    ----------
    -- Hash --
@@ -1026,6 +1051,40 @@ package body GPS.Kernel.Messages is
 
       Free (Root_XML_Node);
    end Load;
+
+   -----------
+   -- Match --
+   -----------
+
+   function Match (A, B : Message_Flags) return Boolean is
+
+   begin
+      for K in Message_Visibility_Kind loop
+         if A (K) and then B (K) then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Match;
+
+   ----------------------------
+   -- New_Messages_Container --
+   ----------------------------
+
+   function New_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return not null Messages_Container_Access
+   is
+      Result : constant Messages_Container_Access :=
+                 new Messages_Container (Kernel);
+   begin
+      return Result;
+   end New_Messages_Container;
+
+   ---------------
+   -- Notifiers --
+   ---------------
 
    package body Notifiers is
 
@@ -1907,6 +1966,29 @@ package body GPS.Kernel.Messages is
       Notifiers.Notify_Listeners_About_Message_Property_Changed
         (Self.Get_Container, Self, "highlighting");
    end Set_Highlighting;
+
+   --------------
+   -- Set_Note --
+   --------------
+
+   procedure Set_Note
+     (Self : not null access Abstract_Message'Class;
+      Note : not null Note_Access)
+   is
+      Position : constant Note_Maps.Cursor := Self.Notes.Find (Note'Tag);
+      Aux      : Note_Access;
+
+   begin
+      if Has_Element (Position) then
+         Aux := Element (Position);
+         Finalize (Aux);
+         Free (Aux);
+         Self.Notes.Replace_Element (Position, Note);
+
+      else
+         Self.Notes.Insert (Note'Tag, Note);
+      end if;
+   end Set_Note;
 
    -------------------------
    -- Set_Sort_Order_Hint --
