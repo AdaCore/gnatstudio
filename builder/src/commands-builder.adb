@@ -461,23 +461,31 @@ package body Commands.Builder is
            and then Shell_Env /= ""
            and then Is_Local (Server)
          then
-            Launch_Process
-              (Kernel,
-               CL                   => CL,
-               Server               => Server,
-               Console              => Console,
-               Show_Command         => Show_Command,
-               Show_Output          => Show_Output,
-               Callback_Data        => Data.all'Access,
-               Success              => Success,
-               Line_By_Line         => False,
-               Directory            => Directory,
-               Callback             => Cb,
-               Exit_Cb              => Exit_Cb,
-               Show_In_Task_Manager => True,
-               Name_In_Task_Manager => To_String (Cmd_Name),
-               Synchronous          => Synchronous,
-               Show_Exit_Status     => not Data.Shadow);
+            declare
+               CL2 : Arg_List;
+            begin
+               Append_Argument (CL2, Shell_Env, One_Arg);
+               Append_Argument (CL2, "-c", One_Arg);
+               Append_Argument (CL2, To_Display_String (CL), One_Arg);
+
+               Launch_Process
+                 (Kernel,
+                  CL                   => CL2,
+                  Server               => Server,
+                  Console              => Console,
+                  Show_Command         => Show_Command,
+                  Show_Output          => Show_Output,
+                  Callback_Data        => Data.all'Access,
+                  Success              => Success,
+                  Line_By_Line         => False,
+                  Directory            => Directory,
+                  Callback             => Cb,
+                  Exit_Cb              => Exit_Cb,
+                  Show_In_Task_Manager => True,
+                  Name_In_Task_Manager => To_String (Cmd_Name),
+                  Synchronous          => Synchronous,
+                  Show_Exit_Status     => not Data.Shadow);
+            end;
 
          else
             Launch_Process
