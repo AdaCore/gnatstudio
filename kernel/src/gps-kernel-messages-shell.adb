@@ -168,8 +168,20 @@ package body GPS.Kernel.Messages.Shell is
 
       elsif Command = "remove" then
          Message.Remove;
-      end if;
 
+      elsif Command = "execute_action" then
+         declare
+            Action  : constant Action_Item := Message.Get_Action;
+            Success : Command_Return_Type;
+            pragma Unreferenced (Success);
+         begin
+            if Action /= null
+              and then Action.Associated_Command /= null
+            then
+               Success := Execute (Action.Associated_Command);
+            end if;
+         end;
+      end if;
    end Accessors;
 
    -----------------------------
@@ -388,28 +400,22 @@ package body GPS.Kernel.Messages.Shell is
          Message_Class, True);
 
       Register_Command
-        (Kernel, "get_file", 0, 0, Accessors'Access,
-         Message_Class);
+        (Kernel, "get_file", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
-        (Kernel, "get_line", 0, 0, Accessors'Access,
-         Message_Class);
+        (Kernel, "get_line", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
-        (Kernel, "get_text", 0, 0, Accessors'Access,
-         Message_Class);
+        (Kernel, "get_text", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
-        (Kernel, "get_column", 0, 0, Accessors'Access,
-         Message_Class);
+        (Kernel, "get_column", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
-        (Kernel, "get_category", 0, 0, Accessors'Access,
-         Message_Class);
+        (Kernel, "get_category", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
-        (Kernel, "remove", 0, 0, Accessors'Access,
-         Message_Class);
+        (Kernel, "remove", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
         (Kernel, "set_action", 1, 3, Message_Command_Handler'Access,
@@ -418,6 +424,9 @@ package body GPS.Kernel.Messages.Shell is
       Register_Command
         (Kernel, "set_subprogram", 1, 3, Message_Command_Handler'Access,
          Message_Class);
+
+      Register_Command
+        (Kernel, "execute_action", 0, 0, Accessors'Access, Message_Class);
 
    end Register_Commands;
 
