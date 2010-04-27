@@ -196,7 +196,6 @@ Tools
 * Documentation Generation::
 * Metrics::
 * Code Coverage::
-* SPARK Plug-In::
 
 Working in a Cross Environment
 * Customizing your Projects::
@@ -9476,7 +9475,7 @@ The default is to wrap around, as was done in previous GPS versions.
 @item Hyper links
 @cindex hyper mode
 Whether to display hyper links in the editors when the Control key is pressed.
-@xref{Navigating with hyperlinks}
+@xref{Navigating with hyperlinks}.
 
 @item Clipboard size
 @cindex clipboard
