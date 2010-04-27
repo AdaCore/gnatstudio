@@ -6150,6 +6150,11 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      <description>Remove the message from GPS.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.execute_action">
+     <description>If the message has an associated action, execute it.
+     </description>
+  </shell_doc>
+
   <shell_doc name="GPS.Message.set_action">
      <param name="action">A String corresponding to a registered GPS action.
      </param>
