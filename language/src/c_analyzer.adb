@@ -1422,7 +1422,8 @@ package body C_Analyzer is
                         Val.Curly_Level := Curly_Level;
                         Val.Paren_Level := Paren_Level;
                         Val.Sloc.Line   := Line;
-                        Val.Sloc.Column := Index - Line_Start (Buffer, Index);
+                        Val.Sloc.Column :=
+                          Index - Line_Start (Buffer, Index) + 1;
                         Val.Sloc.Index  := Index;
                         Indent := Indent + Indent_Level;
                         Push (Tokens, Val);
