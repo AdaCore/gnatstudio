@@ -280,7 +280,12 @@ package body Src_Editor_Buffer.Line_Information is
                   Set      => not Every_Line);
 
                --  Regenerate notes for each message in this side info data
-               for J in D.Side_Info_Data'Range loop
+               --  There is no need to check for messages at
+               --  D.Side_Info_Data'Last since we have just initialized it to
+               --  null.
+               for J in D.Side_Info_Data'First
+                 .. D.Side_Info_Data'Last - 1
+               loop
                   M := D.Side_Info_Data (J).Message;
 
                   if M /= null
