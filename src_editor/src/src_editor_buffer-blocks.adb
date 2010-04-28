@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -151,7 +151,8 @@ package body Src_Editor_Buffer.Blocks is
                        (Buffer,
                         Editable_Line_Type (Current.Sloc_Start.Line),
                         Command_Access (Command),
-                        Hide_Block_Pixbuf);
+                        Hide_Block_Pixbuf,
+                        False);
                   end if;
                end;
             end if;

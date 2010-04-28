@@ -308,8 +308,10 @@ package body GPS.Kernel.Messages is
 
       --  Delete editor's mark.
 
-      Self.Mark.Delete;
-      Free (Self.Mark);
+      if Self.Mark /= null then
+         Self.Mark.Delete;
+         Free (Self.Mark);
+      end if;
 
       --  Destroy action item.
 
@@ -448,7 +450,11 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return GPS.Editors.Editor_Mark'Class is
    begin
-      return Self.Mark.all;
+      if Self.Mark /= null then
+         return Self.Mark.all;
+      else
+         return Nil_Editor_Mark;
+      end if;
    end Get_Editor_Mark;
 
    --------------
@@ -708,10 +714,12 @@ package body GPS.Kernel.Messages is
       Self.Column := Column;
       Self.Weight := Weight;
       Self.Flags  := Flags;
-      Self.Mark :=
-        new Editor_Mark'Class'
-          (Container.Kernel.Get_Buffer_Factory.New_Mark
-               (File, Actual_Line, Actual_Column));
+      if Container.Create_Marks then
+         Self.Mark :=
+           new Editor_Mark'Class'
+             (Container.Kernel.Get_Buffer_Factory.New_Mark
+                  (File, Actual_Line, Actual_Column));
+      end if;
 
       --  Resolve category node, create new one when there is no existent node
 
@@ -818,10 +826,13 @@ package body GPS.Kernel.Messages is
       Self.Column := Column;
       Self.Flags := Flags;
       Self.Message_Count := 0;
-      Self.Mark :=
-        new Editor_Mark'Class'
-          (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
-               (File, Actual_Line, Actual_Column));
+
+      if Parent.Get_Container.Create_Marks then
+         Self.Mark :=
+           new Editor_Mark'Class'
+             (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
+                  (File, Actual_Line, Actual_Column));
+      end if;
 
       Self.Parent := Node_Access (Parent);
       Parent.Children.Append (Node_Access (Self));
@@ -1073,12 +1084,13 @@ package body GPS.Kernel.Messages is
    ----------------------------
 
    function New_Messages_Container
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return not null Messages_Container_Access
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Create_Marks : Boolean) return not null Messages_Container_Access
    is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
    begin
+      Result.Create_Marks := Create_Marks;
       return Result;
    end New_Messages_Container;
 
@@ -1773,14 +1785,17 @@ package body GPS.Kernel.Messages is
                   end if;
                end;
 
-               if Current_Node.Mark.Line /= Current_Node.Line then
+               if Current_Node.Mark /= null
+                 and then Current_Node.Mark.Line /= Current_Node.Line
+               then
                   Set_Attribute
                     (XML_Node,
                      "actual_line",
                      Trim (Integer'Image (Current_Node.Mark.Line), Both));
                end if;
 
-               if Current_Node.Mark.Column
+               if Current_Node.Mark /= null
+                 and then Current_Node.Mark.Column
                  /= Integer (Current_Node.Column)
                then
                   Set_Attribute
@@ -1989,6 +2004,25 @@ package body GPS.Kernel.Messages is
          Self.Notes.Insert (Note'Tag, Note);
       end if;
    end Set_Note;
+
+   -----------------
+   -- Remove_Note --
+   -----------------
+
+   procedure Remove_Note
+     (Self : not null access Abstract_Message'Class;
+      Tag  : Ada.Tags.Tag)
+   is
+      Position : constant Note_Maps.Cursor := Self.Notes.Find (Tag);
+      Aux      : Note_Access;
+   begin
+      if Has_Element (Position) then
+         Aux := Element (Position);
+         Finalize (Aux);
+         Free (Aux);
+         Self.Notes.Delete (Tag);
+      end if;
+   end Remove_Note;
 
    -------------------------
    -- Set_Sort_Order_Hint --

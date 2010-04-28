@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
---                              AdaCore                              --
+--                  Copyright (C) 2005-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,11 +18,17 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;
+with GPS.Editors; use GPS.Editors;
 
 package Src_Editor_Module.Shell is
 
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the commands with the shells
+
+   function Create_Editor_Mark
+     (Script : access Scripting_Language_Record'Class;
+      Mark   : Editor_Mark'Class) return Class_Instance;
+   --  Return an instance of EditorMark encapsulating Mark
 
 end Src_Editor_Module.Shell;

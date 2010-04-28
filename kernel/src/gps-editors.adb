@@ -421,6 +421,20 @@ package body GPS.Editors is
       return "";
    end Name;
 
+   ---------------------
+   -- Create_Instance --
+   ---------------------
+
+   overriding function Create_Instance
+     (This   : Dummy_Editor_Mark;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance
+   is
+      pragma Unreferenced (This, Script);
+   begin
+      return No_Class_Instance;
+   end Create_Instance;
+
    ------------------
    -- Forward_Word --
    ------------------

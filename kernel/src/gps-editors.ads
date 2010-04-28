@@ -24,6 +24,7 @@ with System;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Finalization; use Ada.Finalization;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with Commands;
 with GNAT.Strings;     use GNAT.Strings;
@@ -277,6 +278,12 @@ package GPS.Editors is
    procedure Move
      (This : Editor_Mark; Location : Editor_Location'Class) is abstract;
    --  Move the mark to a different location
+
+   function Create_Instance
+     (This   : Editor_Mark;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance is abstract;
+   --  Return an Class_Instance for the mark
 
    ----------------------
    -- Line information --
@@ -806,6 +813,11 @@ private
      (This : Dummy_Editor_Mark; Location : Editor_Location'Class) is null;
 
    overriding function Name (This : Dummy_Editor_Mark) return String;
+
+   overriding function Create_Instance
+     (This   : Dummy_Editor_Mark;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance;
 
    Nil_Editor_Mark : constant Editor_Mark'Class :=
      Dummy_Editor_Mark'(Controlled with others => <>);

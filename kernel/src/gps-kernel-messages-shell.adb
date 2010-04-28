@@ -160,6 +160,10 @@ package body GPS.Kernel.Messages.Shell is
          Set_Return_Value
            (Data, Create_File (Get_Script (Data), Message.Get_File));
 
+      elsif Command = "get_mark" then
+         Set_Return_Value
+           (Data, Message.Get_Editor_Mark.Create_Instance (Get_Script (Data)));
+
       elsif Command = "get_category" then
          Set_Return_Value (Data, Message.Get_Category);
 
@@ -401,6 +405,9 @@ package body GPS.Kernel.Messages.Shell is
 
       Register_Command
         (Kernel, "get_file", 0, 0, Accessors'Access, Message_Class);
+
+      Register_Command
+        (Kernel, "get_mark", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
         (Kernel, "get_line", 0, 0, Accessors'Access, Message_Class);

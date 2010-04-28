@@ -43,7 +43,6 @@ with Gtk.Text_Tag;              use Gtk.Text_Tag;
 with Casing_Exceptions;         use Casing_Exceptions;
 with Commands;                  use Commands;
 with Find_Utils;                use Find_Utils;
-with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
@@ -247,11 +246,6 @@ package body Src_Editor_Module.Shell is
       View   : Editor_View'Class) return Class_Instance;
    --  Return an instance of EditorView encapsulating View. Result must be
    --  freed unless you assign it to a Callback_Data.
-
-   function Create_Editor_Mark
-     (Script : access Scripting_Language_Record'Class;
-      Mark   : Editor_Mark'Class) return Class_Instance;
-   --  Return an instance of EditorMark encapsulating Mark
 
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;

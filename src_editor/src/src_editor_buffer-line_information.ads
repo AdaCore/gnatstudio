@@ -168,8 +168,11 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Image         : Gdk_Pixbuf);
+      Image         : Gdk_Pixbuf;
+      Overwrite     : Boolean);
    --  Add a command in the block column information
+   --  If Overwrite is true, this takes precedence over any message previously
+   --  present in this location.
 
    procedure Fold_All (Buffer : access Source_Buffer_Record'Class);
    --  Fold all top-level foldable blocks

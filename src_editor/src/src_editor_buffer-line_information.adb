@@ -51,6 +51,12 @@ package body Src_Editor_Buffer.Line_Information is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
+   type Line_Info_Note_Record is new Abstract_Note with record
+      Data : Line_Info_Width_Array_Access;
+      --  The data which contains Message in the source editor side info.
+   end record;
+   type Line_Info_Note is access all Line_Info_Note_Record'Class;
+
    procedure Free (Info : in out Line_Information_Access);
    --  Free memory associated with Info
 
@@ -103,16 +109,22 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Put_Message
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
+      Buffer_Line   : Buffer_Line_Type;
       Column        : Integer;
       Width         : Integer;
       Message       : Message_Access;
-      Remove_Old    : Boolean);
+      Remove_Old    : Boolean;
+      Override_Old  : Boolean);
    --  Add Message in the column in Buffer.
+   --  Either Editable_Line or Buffer_Line must be null: if Editable_Line is
+   --  null, put the message at Buffer_Line, and vice versa.
    --  Message can be null.
    --  Remove other messages.
    --  Width is the computed width of the message.
    --  If Remove_Old is True, old messages at the pointed line/column will be
    --  removed.
+   --  If Override_Old is True, the new message will replace the old message,
+   --  otherwise the old message takes precedence and will not be removed
 
    -------------------------
    -- Foreach_Hidden_Line --
@@ -234,7 +246,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Process_Data
         (Buffer : access Source_Buffer_Record'Class;
-         D      : in out Line_Data_Record) is
+         D      : in out Line_Data_Record)
+      is
+         M    : Message_Access;
+         Note : Line_Info_Note;
          pragma Unreferenced (Buffer);
       begin
          if D.Side_Info_Data = null then
@@ -263,6 +278,20 @@ package body Src_Editor_Buffer.Line_Information is
                  (Message  => null,
                   Width    => Width,
                   Set      => not Every_Line);
+
+               --  Regenerate notes for each message in this side info data
+               for J in D.Side_Info_Data'First
+                 .. D.Side_Info_Data'Last
+               loop
+                  M := D.Side_Info_Data (J).Message;
+                  if M /= null
+                    and then M.Has_Note (Line_Info_Note_Record'Tag)
+                  then
+                     Note := new Line_Info_Note_Record;
+                     Note.Data := D.Side_Info_Data;
+                     M.Set_Note (Note_Access (Note));
+                  end if;
+               end loop;
             end;
          end if;
       end Process_Data;
@@ -408,7 +437,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Process_Data
         (Buffer : access Source_Buffer_Record'Class;
-         D      : in out Line_Data_Record) is
+         D      : in out Line_Data_Record)
+      is
+         M    : Message_Access;
+         Note : Line_Info_Note;
          pragma Unreferenced (Buffer);
       begin
          if D.Side_Info_Data /= null then
@@ -417,6 +449,17 @@ package body Src_Editor_Buffer.Line_Information is
             then
                Trace (Me, "Inconsistent line data");
                return;
+            end if;
+
+            --  If there is a message in the column being removed, remove the
+            --  associated note
+
+            M := D.Side_Info_Data (Column).Message;
+
+            if M /= null
+              and then M.Has_Note (Line_Info_Note_Record'Tag)
+            then
+               M.Remove_Note (Line_Info_Note_Record'Tag);
             end if;
 
             declare
@@ -431,6 +474,20 @@ package body Src_Editor_Buffer.Line_Information is
 
                D.Side_Info_Data := new Line_Info_Width_Array'(A);
             end;
+
+            --  Regenerate notes for each message in this side info data
+            for J in D.Side_Info_Data'First
+              .. D.Side_Info_Data'Last
+            loop
+               M := D.Side_Info_Data (J).Message;
+               if M /= null
+                 and then M.Has_Note (Line_Info_Note_Record'Tag)
+               then
+                  Note := new Line_Info_Note_Record;
+                  Note.Data := D.Side_Info_Data;
+                  M.Set_Note (Note_Access (Note));
+               end if;
+            end loop;
          end if;
       end Process_Data;
 
@@ -566,86 +623,24 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer     : access Source_Buffer_Record'Class;
       Messages   : Message_Array)
    is
-      Editable_Line : Editable_Line_Type;
-      BL            : Buffer_Line_Type;
       Column        : Integer;
+      Note          : Line_Info_Note;
    begin
-      --   ??? This function should absolutely search for Messages if they are
-      --   not found in the expected locations, to avoid dangling pointers!
-      --   It would be nice to store the line information data in an annotation
-      --   so we can get rid of the loop in the default case.
+      for K in Messages'Range loop
+         if Has_Note (Messages (K), Line_Info_Note_Record'Tag) then
+            Note := Line_Info_Note
+              (Messages (K).Get_Note (Line_Info_Note_Record'Tag));
 
-      for J in Messages'Range loop
-         for K in Messages'Range loop
             Column := Column_For_Identifier
               (Buffer, Messages (K).Get_Category);
-            Editable_Line := Editable_Line_Type
-              (Messages (K).Get_Editor_Mark.Line);
 
-            if Editable_Line /= 0 then
-               case Buffer.Editable_Lines (Editable_Line).Where is
-               when In_Buffer =>
-                  BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-
-                  if Buffer.Line_Data (BL).Side_Info_Data (Column).Message =
-                    Messages (K)
-                  then
-                     Buffer.Line_Data (BL).Side_Info_Data (Column).Message :=
-                       null;
-                     Buffer.Line_Data (BL).Side_Info_Data (Column).Width := 0;
-                     Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
-                  else
-                     --  ??? Not elegant, code duplication
-                     for C in Buffer.Line_Data (BL).Side_Info_Data'Range loop
-                        if Buffer.Line_Data (BL).Side_Info_Data (C).Message
-                          = Messages (K)
-                        then
-                           Buffer.Line_Data (BL).Side_Info_Data (C).Message :=
-                             null;
-                           Buffer.Line_Data (BL).Side_Info_Data (C).Width := 0;
-                           Buffer.Line_Data (BL).Side_Info_Data
-                             (C).Set := True;
-                        end if;
-                     end loop;
-                  end if;
-
-               when In_Mark =>
-                  if Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data (Column).Message =
-                    Messages (K)
-                  then
-                     Buffer.Editable_Lines
-                       (Editable_Line).UL.Data.Side_Info_Data (Column).Message
-                       := null;
-                     Buffer.Editable_Lines
-                       (Editable_Line).UL.Data.Side_Info_Data (Column).Width
-                       := 0;
-                     Buffer.Editable_Lines
-                       (Editable_Line).UL.Data.Side_Info_Data
-                       (Column).Set := True;
-                  else
-                     for C in Buffer.Editable_Lines
-                       (Editable_Line).UL.Data.Side_Info_Data'Range
-                     loop
-                        if Buffer.Editable_Lines
-                          (Editable_Line).UL.Data.Side_Info_Data (C).Message =
-                          Messages (K)
-                        then
-                           Buffer.Editable_Lines
-                             (Editable_Line).UL.Data.Side_Info_Data (C).Message
-                             := null;
-                           Buffer.Editable_Lines
-                             (Editable_Line).UL.Data.Side_Info_Data (C).Width
-                             := 0;
-                           Buffer.Editable_Lines
-                             (Editable_Line).UL.Data.Side_Info_Data
-                             (C).Set := True;
-                        end if;
-                     end loop;
-                  end if;
-               end case;
+            if Note.Data (Column).Message = Messages (K) then
+               Note.Data (Column).Message := null;
+               Note.Data (Column).Width := 0;
+               Note.Data (Column).Set := True;
             end if;
-         end loop;
+
+         end if;
       end loop;
    end Remove_Messages;
 
@@ -746,8 +741,6 @@ package body Src_Editor_Buffer.Line_Information is
       Widths : array (Messages'Range) of Gint;
       Layout : Pango_Layout;
 
-      Old_Msg : Message_Access;
-
       Editable_Line : Editable_Line_Type;
       BL : Buffer_Line_Type;
 
@@ -809,26 +802,26 @@ package body Src_Editor_Buffer.Line_Information is
             Put_Message
               (Buffer        => Buffer,
                Editable_Line => Editable_Line,
+               Buffer_Line   => 0,
                Column        => Column,
                Width         => Integer (Widths (K)),
                Message       => Messages (K),
-               Remove_Old    => False);
+               Remove_Old    => True,
+               Override_Old  => True);
          end loop;
       else
          for K in Messages'Range loop
             BL := At_Buffer_Line + Buffer_Line_Type
               (Messages (K).Get_Line - Messages (Messages'First).Get_Line);
-
-            Old_Msg := Buffer.Line_Data (BL).Side_Info_Data (Column).Message;
-            if Old_Msg /= null then
-               Old_Msg.Remove;
-            end if;
-
-            Buffer.Line_Data (BL).Side_Info_Data (Column).Message :=
-              Messages (K);
-            Buffer.Line_Data (BL).Side_Info_Data (Column).Width :=
-              Integer (Widths (K));
-            Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
+            Put_Message
+              (Buffer        => Buffer,
+               Editable_Line => 0,
+               Buffer_Line   => BL,
+               Column        => Column,
+               Width         => Integer (Widths (K)),
+               Message       => Messages (K),
+               Remove_Old    => True,
+               Override_Old  => True);
          end loop;
       end if;
 
@@ -1252,14 +1245,19 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Put_Message
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
+      Buffer_Line   : Buffer_Line_Type;
       Column        : Integer;
       Width         : Integer;
       Message       : Message_Access;
-      Remove_Old    : Boolean)
+      Remove_Old    : Boolean;
+      Override_Old  : Boolean)
    is
-      Old_Msg : Message_Access;
+      Old_Msg  : Message_Access;
+      Note     : Line_Info_Note;
+      The_Data : Line_Info_Width_Array_Access;
    begin
-      case Buffer.Editable_Lines (Editable_Line).Where is
+      if Buffer_Line = 0 then
+         case Buffer.Editable_Lines (Editable_Line).Where is
          when In_Buffer =>
             declare
                B : constant Buffer_Line_Type :=
@@ -1268,25 +1266,7 @@ package body Src_Editor_Buffer.Line_Information is
                if B in Buffer.Line_Data'Range
                  and then Buffer.Line_Data (B).Side_Info_Data /= null
                then
-                  if Remove_Old then
-                     Old_Msg := Buffer.Line_Data
-                       (B).Side_Info_Data (Column).Message;
-
-                     if Old_Msg /= null
-                       and then Old_Msg /= Message
-                     then
-                        Old_Msg.Remove;
-                     end if;
-                  end if;
-
-                  Free (Buffer.Line_Data (B).Side_Info_Data
-                        (Column));
-
-                  Buffer.Line_Data (B).Side_Info_Data
-                    (Column) :=
-                    (Message => Message,
-                     Width   => Width,
-                     Set     => True);
+                  The_Data := Buffer.Line_Data (B).Side_Info_Data;
                end if;
             end;
 
@@ -1294,28 +1274,52 @@ package body Src_Editor_Buffer.Line_Information is
             if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
               /= null
             then
-               if Remove_Old then
-                  Old_Msg := Buffer.Editable_Lines
-                    (Editable_Line).UL.Data.Side_Info_Data
-                    (Column).Message;
-
-                  if Old_Msg /= null
-                    and then Old_Msg /= Message
-                  then
-                     Old_Msg.Remove;
-                  end if;
-               end if;
-
-               Free (Buffer.Editable_Lines
-                     (Editable_Line).UL.Data.Side_Info_Data (Column));
-
-               Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
-                 (Column) :=
-                 (Message => Message,
-                  Width => Width,
-                  Set   => True);
+               The_Data := Buffer.Editable_Lines
+                 (Editable_Line).UL.Data.Side_Info_Data;
             end if;
-      end case;
+         end case;
+      else
+         The_Data := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
+      end if;
+
+      if Remove_Old or else not Override_Old then
+         if The_Data /= null then
+            Old_Msg := The_Data (Column).Message;
+         end if;
+      end if;
+
+      if Remove_Old
+        and then not Override_Old
+        and then Old_Msg /= null
+        and then Old_Msg /= Message
+      then
+         Old_Msg.Remove;
+      end if;
+
+      if Override_Old
+        or else Old_Msg = null
+      then
+         if Old_Msg /= null
+           and then Old_Msg.Has_Note (Line_Info_Note_Record'Tag)
+         then
+            Old_Msg.Remove_Note (Line_Info_Note_Record'Tag);
+         end if;
+
+         if The_Data /= null then
+            Free (The_Data (Column));
+
+            if Message /= null then
+               Note := new Line_Info_Note_Record;
+               Note.Data := The_Data;
+               Message.Set_Note (Note_Access (Note));
+            end if;
+
+            The_Data (Column) :=
+              (Message => Message,
+               Width   => Width,
+               Set     => True);
+         end if;
+      end if;
    end Put_Message;
 
    -----------------------
@@ -1326,7 +1330,8 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Image         : Gdk_Pixbuf)
+      Image         : Gdk_Pixbuf;
+      Overwrite     : Boolean)
    is
       BL    : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
       Message : Simple_Message_Access;
@@ -1367,8 +1372,8 @@ package body Src_Editor_Buffer.Line_Information is
          Message.Set_Action (Action);
       end if;
 
-      Put_Message (Buffer, Editable_Line, Buffer.Block_Highlighting_Column,
-                   Width, Message_Access (Message), True);
+      Put_Message (Buffer, Editable_Line, 0, Buffer.Block_Highlighting_Column,
+                   Width, Message_Access (Message), False, Overwrite);
 
       if Command /= null then
          BL.all (Buffer.Block_Highlighting_Column).Width := Width;
@@ -1544,7 +1549,6 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
 
          if Buffer.Modifying_Editable_Lines then
-
             for J in 0 .. EN - 1 loop
                Editable_Lines (Ref_Editable_Line + J) :=
                  (Where       => In_Buffer,
@@ -1578,6 +1582,7 @@ package body Src_Editor_Buffer.Line_Information is
       Number : constant Buffer_Line_Type := End_Line - Start_Line;
       EN     : Editable_Line_Type := Editable_Line_Type (Number);
 
+      M : Message_Access;
    begin
       if End_Line <= Start_Line then
          return;
@@ -1594,6 +1599,21 @@ package body Src_Editor_Buffer.Line_Information is
             end if;
          end loop;
       end if;
+
+      for J in Start_Line .. Start_Line + Number - 1 loop
+         if Buffer_Lines (J).Side_Info_Data /= null then
+            for Col in Buffer_Lines (J).Side_Info_Data'Range loop
+               M := Buffer_Lines (J).Side_Info_Data (Col).Message;
+               if M /= null
+                 and then M.Has_Note (Line_Info_Note_Record'Tag)
+               then
+                  M.Remove_Note (Line_Info_Note_Record'Tag);
+               end if;
+            end loop;
+            --   ??? We should probably free the memory associated with
+            --   side_info_data here.
+         end if;
+      end loop;
 
       for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
          Buffer_Lines (J) := Buffer_Lines (J + Number);
@@ -1909,7 +1929,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Add_Block_Command
         (Buffer, Line_Start, Command_Access (Command),
-         Unhide_Block_Pixbuf);
+         Unhide_Block_Pixbuf, True);
 
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
@@ -2091,7 +2111,7 @@ package body Src_Editor_Buffer.Line_Information is
       Add_Block_Command
         (Buffer, Start_Line,
          Command_Access (Command),
-         Hide_Block_Pixbuf);
+         Hide_Block_Pixbuf, False);
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
 
@@ -2363,7 +2383,7 @@ package body Src_Editor_Buffer.Line_Information is
                      Add_Block_Command
                        (Buffer,
                         Buffer.Line_Data (Line).Editable_Line,
-                        null, null);
+                        null, null, False);
                   end if;
                end if;
             end if;

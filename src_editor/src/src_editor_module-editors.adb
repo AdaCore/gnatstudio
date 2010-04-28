@@ -48,6 +48,7 @@ use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
+with Src_Editor_Module.Shell;
 with Commands;                  use Commands;
 with Find_Utils;                use Find_Utils;
 with Language;                  use Language;
@@ -276,6 +277,11 @@ package body Src_Editor_Module.Editors is
       Open : Boolean) return Editor_Location'Class;
 
    overriding function Name (This : Src_Editor_Mark) return String;
+
+   overriding function Create_Instance
+     (This   : Src_Editor_Mark;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance;
 
    overriding procedure Move
      (This : Src_Editor_Mark; Location : Editor_Location'Class);
@@ -2604,6 +2610,18 @@ package body Src_Editor_Module.Editors is
       end if;
       return "";
    end Name;
+
+   ---------------------
+   -- Create_Instance --
+   ---------------------
+
+   overriding function Create_Instance
+     (This   : Src_Editor_Mark;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance is
+   begin
+      return Src_Editor_Module.Shell.Create_Editor_Mark (Script, This);
+   end Create_Instance;
 
    ------------
    -- Search --

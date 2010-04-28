@@ -6142,6 +6142,11 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      <description>Return the message's column.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.get_mark">
+     <description>Return an EditorMark which was created with the message and
+     keeps track of the location when the file is edited.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Message.get_text">
      <description>Return the message's text.</description>
   </shell_doc>

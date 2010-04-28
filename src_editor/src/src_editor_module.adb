@@ -2668,7 +2668,7 @@ package body Src_Editor_Module is
       --  Create the messages container
 
       Source_Editor_Module (Src_Editor_Module_Id).Container :=
-        New_Messages_Container (Kernel);
+        New_Messages_Container (Kernel, False);
 
       --  Commands
 
