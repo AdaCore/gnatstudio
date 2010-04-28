@@ -280,10 +280,9 @@ package body Src_Editor_Buffer.Line_Information is
                   Set      => not Every_Line);
 
                --  Regenerate notes for each message in this side info data
-               for J in D.Side_Info_Data'First
-                 .. D.Side_Info_Data'Last
-               loop
+               for J in D.Side_Info_Data'Range loop
                   M := D.Side_Info_Data (J).Message;
+
                   if M /= null
                     and then M.Has_Note (Line_Info_Note_Record'Tag)
                   then
@@ -476,10 +475,9 @@ package body Src_Editor_Buffer.Line_Information is
             end;
 
             --  Regenerate notes for each message in this side info data
-            for J in D.Side_Info_Data'First
-              .. D.Side_Info_Data'Last
-            loop
+            for J in D.Side_Info_Data'Range loop
                M := D.Side_Info_Data (J).Message;
+
                if M /= null
                  and then M.Has_Note (Line_Info_Note_Record'Tag)
                then
