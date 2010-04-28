@@ -358,8 +358,15 @@ package body Project_Explorers_Common is
       Set (Model, N, Icon_Column,
            Glib.Object.GObject (Entity_Icon_Of (Construct)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
-      Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
-      Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
+
+      if Construct.Sloc_Entity.Line /= 0 then
+         Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
+         Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
+      else
+         Set (Model, N, Line_Column, Gint (Construct.Sloc_Start.Line));
+         Set (Model, N, Column_Column, Gint (Construct.Sloc_Start.Column));
+      end if;
+
       Set (Model, N, Up_To_Date_Column, True);
       return N;
    end Append_Entity_Node;
