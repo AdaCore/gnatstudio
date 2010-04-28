@@ -348,14 +348,6 @@ package body Src_Editor_Buffer is
    --  ??? This function should be removed in the long term, replaced by
    --  the version of Get_Iter_At_Screen_Position that supports blank lines.
 
-   procedure Set_Line_Highlighting
-     (Editor       : access Source_Buffer_Record;
-      Line         : Buffer_Line_Type;
-      Style        : Style_Access;
-      Set          : Boolean;
-      Highlight_In : Highlight_Location_Array);
-   --  Common function for [Add|Remove]_Line_Highlighting
-
    procedure Register_Cursor_Timeout
      (Buffer : access Source_Buffer_Record'Class);
    --  Indicate that the cursor has moved, and that a timeout should be

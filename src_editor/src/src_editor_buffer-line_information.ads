@@ -219,6 +219,21 @@ package Src_Editor_Buffer.Line_Information is
    --  If the style was created so that a mark should be put in the speedbar,
    --  this function also takes care of this.
 
+   procedure Highlight_Message
+     (Buffer        : access Source_Buffer_Record'Class;
+      Editable_Line : Editable_Line_Type;
+      Buffer_Line   : Buffer_Line_Type;
+      Message       : Message_Access);
+   --  Highlight Message in the editor.
+   --  Editable_Line and Buffer_Line can be left to 0, in which case the
+   --  relevant data will be extracted from the message.
+
+   procedure Remove_Message_Highlighting
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : Message_Access;
+      Style   : Style_Access);
+   --  Remove highlighting associated with Message
+
    function Get_Line
      (Buffer   : access Source_Buffer_Record'Class;
       Position : Gtk.Text_Mark.Gtk_Text_Mark) return Editable_Line_Type;

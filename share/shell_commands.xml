@@ -6160,6 +6160,11 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      </description>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.set_style">
+     <param>An instance of Style</param>
+     <description>Set the style of the message.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Message.set_action">
      <param name="action">A String corresponding to a registered GPS action.
      </param>
@@ -6189,6 +6194,78 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      # This adds a "close" button to all the messages
      [msg.set_subprogram (lambda m : m.remove(), "gtk-close", "") for msg in GPS.Message.list()]
      </example>
+  </shell_doc>
+
+    <!--#################################################################
+      ## Style class
+      #################################################################-->
+
+  <shell_doc name="GPS.Style">
+     <description>This class is used to manipulate GPS Styles, which are used
+     for instance to represent graphical attributes given to Messages.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.__init__">
+      <param name="self">An instance of Style</param>
+      <param name="name">A String indicating the name of the Style</param>
+      <param name="create">A File indicating the file</param>
+
+      <description>Create a Style</description>
+
+      <example lang="python">
+         # Create a new style
+         s=GPS.Style("my new style")
+
+         # Set the background color to yellow
+         s.set_background ("#ffff00")
+
+         # Apply the style to all the messages
+         [m.set_style(s) for m in GPS.Message.list()]
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.list">
+     <description>Return a list of all styles currently registered in GPS.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.get_name">
+     <description>Return the name of the style.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.get_background">
+     <description>Return a String describing the background of the style.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.get_foreground">
+     <description>Return a String describing the foreground of the style.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.get_in_speedbar">
+     <description>Return a Boolean indicating whether this style is shown in
+     the speedbar.
+     </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.set_background">
+      <param>A string representing a color, for instance "blue" or "#0000ff"
+      </param>
+     <description>Set the background of style to the given color.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.set_foreground">
+      <param>A string representing a color, for instance "blue" or "#0000ff"
+      </param>
+     <description>Set the foreground of style to the given color.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Style.set_in_speedbar">
+     <param>A Boolean</param>
+     <description>Whether this style should appear in the speedbar.
+     </description>
   </shell_doc>
 
 </docs>

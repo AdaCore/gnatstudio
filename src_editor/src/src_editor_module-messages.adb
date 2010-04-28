@@ -50,11 +50,6 @@ package body Src_Editor_Module.Messages is
    --  Callback for the "file_edited" hook. Redirects call to highlighting
    --  manager.
 
-   procedure Highlight
-     (Self    : not null access Highlighting_Manager'Class;
-      Message : not null access Abstract_Message'Class);
-   --  Highlights location of the message in the source editor
-
    procedure Set_Action
      (Self    : not null access Highlighting_Manager'Class;
       Message : not null access Abstract_Message'Class);
@@ -120,6 +115,7 @@ package body Src_Editor_Module.Messages is
       Categories : constant Unbounded_String_Array :=
                      Controller.Get_Categories;
 
+      B : Source_Buffer;
    begin
       for J in Categories'Range loop
          declare
@@ -127,9 +123,19 @@ package body Src_Editor_Module.Messages is
               Controller.Get_Messages (Categories (J), File);
 
          begin
-            for J in Messages'Range loop
-               Self.Highlight (Messages (J));
-            end loop;
+            --  Lookup B only once
+            if B = null then
+               B := Get (Self.Kernel, File);
+
+               --  If we could not find an editor at this stage, return.
+               if B = null then
+                  return;
+               end if;
+            end if;
+
+            if Messages'Length > 0 then
+               Add_File_Information (B, To_String (Categories (J)), Messages);
+            end if;
          end;
       end loop;
    end File_Opened;
@@ -233,56 +239,6 @@ package body Src_Editor_Module.Messages is
       end if;
    end Set_Action;
 
-   ---------------
-   -- Highlight --
-   ---------------
-
-   procedure Highlight
-     (Self    : not null access Highlighting_Manager'Class;
-      Message : not null access Abstract_Message'Class) is
-   begin
-      --  ??? Possible optimization: we should be able to highlight without
-      --  going through the buffer API here.
-      if Message.Get_Parent = null
-        and then Message.Get_Highlighting_Style /= null
-      then
-         if Message.Get_Highlighting_Length /= 0 then
-            Get_Buffer_Factory (Self.Kernel).Get
-              (Message.Get_File, Open_View => False).Apply_Style
-              (Message.Get_Highlighting_Style,
-               Message.Get_Editor_Mark.Line,
-               Message.Get_Editor_Mark.Column,
-               Message.Get_Editor_Mark.Column
-               + Message.Get_Highlighting_Length);
-         else
-            Get_Buffer_Factory (Self.Kernel).Get
-              (Message.Get_File, Open_View => False).Apply_Style
-              (Message.Get_Highlighting_Style,
-               Message.Get_Editor_Mark.Line);
-         end if;
-
-         declare
-            K        : constant Key :=
-                         (Message.Get_Category, Message.Get_File);
-            Position : constant Style_Maps.Cursor := Self.Map.Find (K);
-            Styles   : Style_Set_Access;
-
-         begin
-            if Has_Element (Position) then
-               Styles := Style_Maps.Element (Position);
-
-            else
-               Styles := new Style_Sets.Set;
-               Self.Map.Insert (K, Styles);
-            end if;
-
-            if not Styles.Contains (Message.Get_Highlighting_Style) then
-               Styles.Insert (Message.Get_Highlighting_Style);
-            end if;
-         end;
-      end if;
-   end Highlight;
-
    ------------------------------
    -- Message_Property_Changed --
    ------------------------------
@@ -290,10 +246,23 @@ package body Src_Editor_Module.Messages is
    overriding procedure Message_Property_Changed
      (Self     : not null access Highlighting_Manager;
       Message  : not null access Abstract_Message'Class;
-      Property : String) is
+      Property : String)
+ is
+      B : Source_Buffer;
    begin
       if Property = "highlighting" then
-         Self.Highlight (Message);
+         B := Get (Self.Kernel, Message.Get_File);
+         if B = null then
+            --  This can happen, for instance when loading GPS. In which case
+            --  we can return safely, since the messages will be added as part
+            --  of On_File_Opened.
+            return;
+         end if;
+
+         Highlight_Message (Buffer        => B,
+                            Editable_Line => 0,
+                            Buffer_Line   => 0,
+                            Message       => Message_Access (Message));
 
       elsif Property = "action" then
          Self.Set_Action (Message);
@@ -308,21 +277,10 @@ package body Src_Editor_Module.Messages is
      (Self    : not null access Highlighting_Manager;
       Message : not null access Abstract_Message'Class)
    is
-      Buffer : constant Editor_Buffer'Class :=
-                 Get_Buffer_Factory (Self.Kernel).Get
-                 (Message.Get_File, Open_View => False);
       B      : Source_Buffer;
 
    begin
       B := Get (Self.Kernel, Message.Get_File);
-
-      if Message.Get_Highlighting_Style /= null then
-         Buffer.Remove_Style
-           (Message.Get_Highlighting_Style,
-            Message.Get_Editor_Mark.Line,
-            Message.Get_Editor_Mark.Column,
-            Message.Get_Editor_Mark.Column + Message.Get_Highlighting_Length);
-      end if;
 
       if B /= null then
          Remove_Messages (B, (1 => Message_Access (Message)));

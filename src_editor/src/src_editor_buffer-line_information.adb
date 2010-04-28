@@ -54,6 +54,9 @@ package body Src_Editor_Buffer.Line_Information is
    type Line_Info_Note_Record is new Abstract_Note with record
       Data : Line_Info_Width_Array_Access;
       --  The data which contains Message in the source editor side info.
+
+      Style : Style_Access := null;
+      --  The style used to highlight this message
    end record;
    type Line_Info_Note is access all Line_Info_Note_Record'Class;
 
@@ -293,6 +296,7 @@ package body Src_Editor_Buffer.Line_Information is
                   then
                      Note := new Line_Info_Note_Record;
                      Note.Data := D.Side_Info_Data;
+                     Note.Style := M.Get_Highlighting_Style;
                      M.Set_Note (Note_Access (Note));
                   end if;
                end loop;
@@ -487,6 +491,7 @@ package body Src_Editor_Buffer.Line_Information is
                  and then M.Has_Note (Line_Info_Note_Record'Tag)
                then
                   Note := new Line_Info_Note_Record;
+                  Note.Style := M.Get_Highlighting_Style;
                   Note.Data := D.Side_Info_Data;
                   M.Set_Note (Note_Access (Note));
                end if;
@@ -643,6 +648,8 @@ package body Src_Editor_Buffer.Line_Information is
                Note.Data (Column).Set := True;
             end if;
 
+            Remove_Message_Highlighting
+              (Buffer, Messages (K), Messages (K).Get_Highlighting_Style);
          end if;
       end loop;
    end Remove_Messages;
@@ -1241,6 +1248,127 @@ package body Src_Editor_Buffer.Line_Information is
       return M;
    end Add_Special_Lines;
 
+   ---------------------------------
+   -- Remove_Message_Highlighting --
+   ---------------------------------
+
+   procedure Remove_Message_Highlighting
+     (Buffer  : access Source_Buffer_Record'Class;
+      Message : Message_Access;
+      Style   : Style_Access)
+   is
+      From_Column, To_Column : Visible_Column_Type;
+      Line                   : Editable_Line_Type;
+   begin
+      Line := Editable_Line_Type (Message.Get_Editor_Mark.Line);
+      From_Column := Visible_Column_Type (Message.Get_Editor_Mark.Column);
+      To_Column   := From_Column +
+        Visible_Column_Type (Message.Get_Highlighting_Length);
+
+      if From_Column = To_Column then
+         Remove_Line_Highlighting (Buffer, Line, Style);
+      else
+         Highlight_Range (Buffer, Style, Line, From_Column, To_Column, True);
+      end if;
+   end Remove_Message_Highlighting;
+
+   -----------------------
+   -- Highlight_Message --
+   -----------------------
+
+   procedure Highlight_Message
+     (Buffer        : access Source_Buffer_Record'Class;
+      Editable_Line : Editable_Line_Type;
+      Buffer_Line   : Buffer_Line_Type;
+      Message       : Message_Access)
+   is
+      Style    : Style_Access;
+      Length   : Natural;
+      EL       : Editable_Line_Type := 0; --  The actual buffer line
+      BL       : Buffer_Line_Type := 0;   --  The actual editable line
+
+      procedure Compute_EL;
+      --  Compute EL
+
+      procedure Compute_BL;
+      --  Compute BL
+
+      ----------------
+      -- Compute_BL --
+      ----------------
+
+      procedure Compute_BL is
+      begin
+         if BL = 0 then
+            if Buffer_Line /= 0 then
+               BL := Buffer_Line;
+            else
+               Compute_EL;
+               BL := Buffer.Editable_Lines (EL).Buffer_Line;
+            end if;
+         end if;
+      end Compute_BL;
+
+      ----------------
+      -- Compute_EL --
+      ----------------
+
+      procedure Compute_EL is
+      begin
+         if EL = 0 then
+            if Editable_Line /= 0 then
+               EL := Editable_Line;
+            else
+               EL := Editable_Line_Type (Message.Get_Editor_Mark.Line);
+            end if;
+         end if;
+      end Compute_EL;
+
+      Note : Line_Info_Note;
+   begin
+      Style := Message.Get_Highlighting_Style;
+
+      --  Remove previous style if needed
+      if Message.Has_Note (Line_Info_Note_Record'Tag) then
+         Note := Line_Info_Note (Message.Get_Note (Line_Info_Note_Record'Tag));
+         if Note.Style /= null then
+            Remove_Message_Highlighting (Buffer, Message, Note.Style);
+         end if;
+
+         --  Record new style in message note
+         Note.Style := Style;
+      end if;
+
+      --  Highlight if needed
+      if Style /= null then
+         Length := Message.Get_Highlighting_Length;
+
+         if Length = 0 then
+            Compute_BL;
+
+            Set_Line_Highlighting
+              (Editor       => Buffer,
+               Line         => BL,
+               Style        => Style,
+               Set          => True,
+               Highlight_In =>
+                 (Highlight_Speedbar => Style.In_Speedbar,
+                  Highlight_Editor   => True));
+         else
+            Compute_EL;
+
+            Highlight_Range
+              (Buffer    => Buffer,
+               Style     => Style,
+               Line      => EL,
+               Start_Col => Message.Get_Column,
+               End_Col   =>
+                 Message.Get_Column + Visible_Column_Type (Length),
+               Remove    => False);
+         end if;
+      end if;
+   end Highlight_Message;
+
    -----------------
    -- Put_Message --
    -----------------
@@ -1258,20 +1386,19 @@ package body Src_Editor_Buffer.Line_Information is
       Old_Msg  : Message_Access;
       Note     : Line_Info_Note;
       The_Data : Line_Info_Width_Array_Access;
+
+      BL       : Buffer_Line_Type;
+
    begin
       if Buffer_Line = 0 then
          case Buffer.Editable_Lines (Editable_Line).Where is
          when In_Buffer =>
-            declare
-               B : constant Buffer_Line_Type :=
-                 Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-            begin
-               if B in Buffer.Line_Data'Range
-                 and then Buffer.Line_Data (B).Side_Info_Data /= null
-               then
-                  The_Data := Buffer.Line_Data (B).Side_Info_Data;
-               end if;
-            end;
+            BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+            if BL in Buffer.Line_Data'Range
+              and then Buffer.Line_Data (BL).Side_Info_Data /= null
+            then
+               The_Data := Buffer.Line_Data (BL).Side_Info_Data;
+            end if;
 
          when In_Mark =>
             if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
@@ -1279,10 +1406,12 @@ package body Src_Editor_Buffer.Line_Information is
             then
                The_Data := Buffer.Editable_Lines
                  (Editable_Line).UL.Data.Side_Info_Data;
+               BL := 0;
             end if;
          end case;
       else
          The_Data := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
+         BL := Buffer_Line;
       end if;
 
       if Remove_Old or else not Override_Old then
@@ -1314,6 +1443,7 @@ package body Src_Editor_Buffer.Line_Information is
             if Message /= null then
                Note := new Line_Info_Note_Record;
                Note.Data := The_Data;
+               Note.Style := Message.Get_Highlighting_Style;
                Message.Set_Note (Note_Access (Note));
             end if;
 
@@ -1321,6 +1451,11 @@ package body Src_Editor_Buffer.Line_Information is
               (Message => Message,
                Width   => Width,
                Set     => True);
+
+            Highlight_Message (Buffer        => Buffer,
+                               Editable_Line => Editable_Line,
+                               Buffer_Line   => BL,
+                               Message       => Message);
          end if;
       end if;
    end Put_Message;

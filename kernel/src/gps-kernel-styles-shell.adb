@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package body GPS.Kernel.Styles.Shell is
@@ -44,9 +42,6 @@ package body GPS.Kernel.Styles.Shell is
      (Instance : Class_Instance;
       Style    : Style_Access);
    --  Set data in Instance to Style
-
-   function Get_Style (Instance : Class_Instance) return Style_Access;
-   --  Return Style stored in Instance
 
    procedure Style_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -192,11 +187,11 @@ package body GPS.Kernel.Styles.Shell is
       Register_Command
         (Kernel, "get_name", 0, 0, Accessors'Access, Style_Class);
       Register_Command
-        (Kernel, "set_foreground", 0, 0, Accessors'Access, Style_Class);
+        (Kernel, "set_foreground", 1, 1, Accessors'Access, Style_Class);
       Register_Command
-        (Kernel, "set_background", 0, 0, Accessors'Access, Style_Class);
+        (Kernel, "set_background", 1, 1, Accessors'Access, Style_Class);
       Register_Command
-        (Kernel, "set_in_speedbar", 0, 0, Accessors'Access, Style_Class);
+        (Kernel, "set_in_speedbar", 1, 1, Accessors'Access, Style_Class);
    end Register_Commands;
 
 end GPS.Kernel.Styles.Shell;

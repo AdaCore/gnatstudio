@@ -709,6 +709,14 @@ package Src_Editor_Buffer is
    pragma Pack (Highlight_Location_Array);
    --  The various locations where a highlight can be made visible
 
+   procedure Set_Line_Highlighting
+     (Editor       : access Source_Buffer_Record;
+      Line         : Buffer_Line_Type;
+      Style        : Style_Access;
+      Set          : Boolean;
+      Highlight_In : Highlight_Location_Array);
+   --  Common function for [Add|Remove]_Line_Highlighting
+
    procedure Add_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
       Line         : Editable_Line_Type;

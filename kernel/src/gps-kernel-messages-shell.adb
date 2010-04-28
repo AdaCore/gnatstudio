@@ -34,6 +34,7 @@ with GPS.Editors; use GPS.Editors;
 with Commands.Interactive;
 
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Styles.Shell;    use GPS.Kernel.Styles.Shell;
 
 package body GPS.Kernel.Messages.Shell is
 
@@ -173,6 +174,18 @@ package body GPS.Kernel.Messages.Shell is
       elsif Command = "remove" then
          Message.Remove;
 
+      elsif Command = "set_style" then
+         declare
+            Length : constant Natural := Message.Get_Highlighting_Length;
+         begin
+            if Length /= 0 then
+               Message.Set_Highlighting
+                 (Get_Style (Nth_Arg (Data, 2)), Length);
+            else
+               Message.Set_Highlighting
+                 (Get_Style (Nth_Arg (Data, 2)), Length);
+            end if;
+         end;
       elsif Command = "execute_action" then
          declare
             Action  : constant Action_Item := Message.Get_Action;
@@ -431,6 +444,9 @@ package body GPS.Kernel.Messages.Shell is
       Register_Command
         (Kernel, "set_subprogram", 1, 3, Message_Command_Handler'Access,
          Message_Class);
+
+      Register_Command
+        (Kernel, "set_style", 1, 1, Accessors'Access, Message_Class);
 
       Register_Command
         (Kernel, "execute_action", 0, 0, Accessors'Access, Message_Class);
