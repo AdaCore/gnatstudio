@@ -2249,7 +2249,7 @@ package body Src_Editor_Buffer.Line_Information is
       Add_Block_Command
         (Buffer, Start_Line,
          Command_Access (Command),
-         Hide_Block_Pixbuf, False);
+         Hide_Block_Pixbuf, True);
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
 
