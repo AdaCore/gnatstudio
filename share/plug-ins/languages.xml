@@ -246,7 +246,7 @@
   </Language>
 
   <Language>
-    <Name>Assembler</Name>
+    <Name>Asm</Name>
     <Body_Suffix>.s</Body_Suffix>
   </Language>
 
