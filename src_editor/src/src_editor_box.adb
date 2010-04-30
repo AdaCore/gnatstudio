@@ -2573,14 +2573,12 @@ package body Src_Editor_Box is
                         & ASCII.LF & ASCII.LF
                         & (-"Click on Ignore to keep this editing session.")
                         & ASCII.LF
-                        & (-"Click on New to create a new file and")
-                        & ASCII.LF
-                        & (-"discard your current changes."),
+                        & (-"Click on Close to remove the file buffer."),
                         Dialog_Type   => Confirmation,
                         Title         => -"File removed from disk",
                         Justification => Justify_Left,
                         Parent        => Get_Current_Window (Editor.Kernel));
-                     Button := Add_Button (Dialog, -"New", Gtk_Response_No);
+                     Button := Add_Button (Dialog, -"Close", Gtk_Response_No);
                   end if;
 
                   Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
@@ -2618,28 +2616,19 @@ package body Src_Editor_Box is
 
                when Gtk_Response_No =>
                   if not Exists then
-                     --  Create an empty file that will be reloaded
-                     declare
-                        F : Virtual_File;
-                        W : Writable_File;
-                     begin
-                        F := Create_From_UTF8
-                          (String
-                             (Full_Name
-                                (Get_Filename (Editor.Source_Buffer)).all));
-                        W := Write_File (F);
-                        Write (W, "");
-                        Close (W);
-                     end;
-                  end if;
+                     Close_File_Editors
+                       (Editor.Kernel,
+                        Get_Filename (Editor.Source_Buffer));
 
-                  Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
-                  Load_File
-                    (Editor.Source_Buffer,
-                     Filename        => Get_Filename (Editor.Source_Buffer),
-                     Lang_Autodetect => True,
-                     Success         => Success);
-                  Set_Cursor_Location (Editor, Line, Column, False);
+                  else
+                     Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
+                     Load_File
+                       (Editor.Source_Buffer,
+                        Filename        => Get_Filename (Editor.Source_Buffer),
+                        Lang_Autodetect => True,
+                        Success         => Success);
+                     Set_Cursor_Location (Editor, Line, Column, False);
+                  end if;
 
                when others =>
                   null;
