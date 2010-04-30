@@ -2571,7 +2571,7 @@ package body Src_Editor_Box is
                         & ASCII.LF
                         & (-"Click on New to create a new file and")
                         & ASCII.LF
-                        & (-"and discard your current changes."),
+                        & (-"discard your current changes."),
                         Dialog_Type   => Confirmation,
                         Title         => -"File removed from disk",
                         Justification => Justify_Left,
