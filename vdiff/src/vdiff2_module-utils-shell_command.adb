@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -62,8 +62,8 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ----------
 
    procedure Edit
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : Virtual_File)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       CL : Arg_List := Create ("Editor.edit");
    begin

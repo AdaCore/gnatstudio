@@ -618,15 +618,15 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Id     : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
+      Id    : constant Source_Editor_Module :=
+                Source_Editor_Module (Src_Editor_Module_Id);
       D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
-      Box    : Source_Editor_Box;
+      Box   : Source_Editor_Box;
 
-      I      : Editors_Hash.Cursor;
-      E      : Element;
+      I     : Editors_Hash.Cursor;
+      E     : Element;
    begin
       --  Insert the saved file in the Recent menu
 
@@ -881,12 +881,12 @@ package body Src_Editor_Module is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       User   : Kernel_Handle) return Node_Ptr
    is
-      N, Child  : Node_Ptr;
-      Line      : Editable_Line_Type;
-      Column    : Character_Offset_Type;
-      Editor    : Source_Editor_Box;
-      File      : Virtual_File;
-      Pref      : Editor_Desktop_Policy;
+      N, Child : Node_Ptr;
+      Line     : Editable_Line_Type;
+      Column   : Character_Offset_Type;
+      Editor   : Source_Editor_Box;
+      File     : Virtual_File;
+      Pref     : Editor_Desktop_Policy;
 
    begin
       if Widget.all not in Source_Editor_Box_Record'Class then
@@ -996,7 +996,7 @@ package body Src_Editor_Module is
               Get_Source_Box_From_MDI (MDI_Child (Child));
    begin
       --  Update the cache, so that the view is used when possible, since it
-      --  was the last open in any case
+      --  was the last open in any case.
 
       if Id = null then
          return;

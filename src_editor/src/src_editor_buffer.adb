@@ -2046,8 +2046,7 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Get_Last_Status
-     (Buffer : access Source_Buffer_Record'Class)
-      return Status_Type is
+     (Buffer : access Source_Buffer_Record'Class) return Status_Type is
    begin
       return Buffer.Current_Status;
    end Get_Last_Status;
@@ -4920,13 +4919,12 @@ package body Src_Editor_Buffer is
    -----------------------
 
    function Needs_To_Be_Saved
-     (Buffer : access Source_Buffer_Record'Class)
-      return Boolean is
+     (Buffer : access Source_Buffer_Record'Class) return Boolean is
    begin
       --  Only modified and non-empty unsaved buffers need to be saved
       return Get_Status (Buffer) = Modified
         or else (Get_Status (Buffer) = Unsaved
-                   and then Get_Char_Count (Buffer) > 0);
+                 and then Get_Char_Count (Buffer) > 0);
    end Needs_To_Be_Saved;
 
    ----------------

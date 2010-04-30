@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -243,8 +243,7 @@ package body Commands.VCS is
       use String_List;
    begin
       for J in Command.Filenames'Range loop
-         File_Changed_On_Disk
-           (Command.Kernel, Command.Filenames (J));
+         File_Changed_On_Disk (Command.Kernel, Command.Filenames (J));
       end loop;
 
       Command_Finished (Command, True);
