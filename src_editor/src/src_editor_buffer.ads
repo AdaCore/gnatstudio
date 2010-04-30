@@ -591,6 +591,10 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
    --  Return True if the buffer needs to be saved
 
+   function Has_Been_Saved
+     (Buffer : access Source_Buffer_Record'Class) return Boolean;
+   --  Return True if the buffer has been saved sucessfully on disk
+
    type Constructs_State_Type is
      (Not_Parsed,
       --  The constructs are not parsed

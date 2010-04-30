@@ -4931,6 +4931,16 @@ package body Src_Editor_Buffer is
                  and then Get_Char_Count (Buffer) > 0);
    end Needs_To_Be_Saved;
 
+   --------------------
+   -- Has_Been_Saved --
+   --------------------
+
+   function Has_Been_Saved
+     (Buffer : access Source_Buffer_Record'Class) return Boolean is
+   begin
+      return Buffer.Save_Complete;
+   end Has_Been_Saved;
+
    ----------------
    -- Get_Status --
    ----------------

@@ -1105,7 +1105,11 @@ package body Src_Editor_Box is
          --  and the file on disk has been modified, the idle callback is
          --  called in a loop, and that takes 100% of CPU (G227-035).
          B.Check_Timestamp_Registered :=
-           not Check_Timestamp_And_Diff (B.Source_Buffer, Update => False);
+           not Check_Timestamp_And_Diff (B.Source_Buffer, Update => False)
+           or else
+             (not Is_Regular_File (Get_Filename (B.Source_Buffer))
+              and then B.Source_Buffer.Has_Been_Saved
+              and then B.Source_Buffer.Get_Writable);
          return B.Check_Timestamp_Registered;
       end if;
 
@@ -2515,6 +2519,9 @@ package body Src_Editor_Box is
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
 
+      Exists   : constant Boolean :=
+                   Is_Regular_File
+                     (Get_Filename (Editor.Source_Buffer));
       Response : Gtk_Response_Type;
       Success  : Boolean;
       Line     : Editable_Line_Type;
@@ -2525,6 +2532,9 @@ package body Src_Editor_Box is
          if Always_Reload
            or else not Check_Timestamp_And_Diff
              (Editor.Source_Buffer, Update => True)
+           or else (not Exists
+                    and then Editor.Source_Buffer.Has_Been_Saved
+                    and then Editor.Source_Buffer.Get_Writable)
          then
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
@@ -2536,22 +2546,40 @@ package body Src_Editor_Box is
                  (Editor.Kernel, File_Changed_Detected_Hook,
                   Data'Unchecked_Access)
                then
-                  Dialog := Create_Gtk_Dialog
-                    (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
-                     & (-" changed on disk.")
-                     & ASCII.LF & ASCII.LF
-                     & (-"Click on Ignore to keep this editing session.")
-                     & ASCII.LF
-                     & (-"Click on Reload to reload the file from disk")
-                     & ASCII.LF
-                     & (-"and discard your current changes."),
-                     Dialog_Type   => Confirmation,
-                     Title         => -"File changed on disk",
-                     Justification => Justify_Left,
-                     Parent        => Get_Current_Window (Editor.Kernel));
+                  if Exists then
+                     Dialog := Create_Gtk_Dialog
+                       (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
+                        & (-" changed on disk.")
+                        & ASCII.LF & ASCII.LF
+                        & (-"Click on Ignore to keep this editing session.")
+                        & ASCII.LF
+                        & (-"Click on Reload to reload the file from disk")
+                        & ASCII.LF
+                        & (-"and discard your current changes."),
+                        Dialog_Type   => Confirmation,
+                        Title         => -"File changed on disk",
+                        Justification => Justify_Left,
+                        Parent        => Get_Current_Window (Editor.Kernel));
+                     Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
+
+                  else
+                     Dialog := Create_Gtk_Dialog
+                       (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
+                        & (-" removed from disk.")
+                        & ASCII.LF & ASCII.LF
+                        & (-"Click on Ignore to keep this editing session.")
+                        & ASCII.LF
+                        & (-"Click on New to create a new file and")
+                        & ASCII.LF
+                        & (-"and discard your current changes."),
+                        Dialog_Type   => Confirmation,
+                        Title         => -"File removed from disk",
+                        Justification => Justify_Left,
+                        Parent        => Get_Current_Window (Editor.Kernel));
+                     Button := Add_Button (Dialog, -"New", Gtk_Response_No);
+                  end if;
 
                   Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
-                  Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);
 
                   --  Ungrab the pointer if needed, to avoid freezing the
                   --  interface if the user is e.g. moving the GPS window
@@ -2565,9 +2593,42 @@ package body Src_Editor_Box is
 
             case Response is
                when Gtk_Response_Yes =>
-                  null;
+                  if not Exists then
+                     --  Re-create the file from current buffer content
+                     declare
+                        F : Virtual_File;
+                        W : Writable_File;
+                        C : GNAT.Strings.String_Access :=
+                              Get_String (Editor.Source_Buffer);
+                     begin
+                        F := Create_From_UTF8
+                          (String
+                             (Full_Name
+                                (Get_Filename (Editor.Source_Buffer)).all));
+                        W := Write_File (F);
+                        Write (W, C.all);
+                        Close (W);
+                        Free (C);
+                     end;
+                  end if;
 
                when Gtk_Response_No =>
+                  if not Exists then
+                     --  Create an empty file that will be reloaded
+                     declare
+                        F : Virtual_File;
+                        W : Writable_File;
+                     begin
+                        F := Create_From_UTF8
+                          (String
+                             (Full_Name
+                                (Get_Filename (Editor.Source_Buffer)).all));
+                        W := Write_File (F);
+                        Write (W, "");
+                        Close (W);
+                     end;
+                  end if;
+
                   Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
                   Load_File
                     (Editor.Source_Buffer,
