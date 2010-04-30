@@ -310,7 +310,8 @@
       <shell>File "%1"</shell>
       <shell>Editor.edit "%2"</shell>
       <shell>Editor.set_title %3 "%4 [$2]" "%4 [$2]"</shell>
-      <shell>VCS.set_reference %4 "$3"</shell>
+      <shell>Editor.set_writable %4 FALSE</shell>
+      <shell>VCS.set_reference %5 "$3"</shell>
 
       <external check-password="true">cvs -f diff -r$1 -r$2 "$3"</external>
 
@@ -318,9 +319,9 @@
         <shell>dump "%1" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 "$3" null %8 %2 "%10 [$1]"</shell>
+        <shell>Hook.run %1 "$3" null %9 %2 "%11 [$1]"</shell>
         <shell>delete "%4"</shell>
-        <shell>delete "%11"</shell>
+        <shell>delete "%12"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
    </action>
