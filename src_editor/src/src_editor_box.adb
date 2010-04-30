@@ -1110,6 +1110,8 @@ package body Src_Editor_Box is
              (not Is_Regular_File (Get_Filename (B.Source_Buffer))
               and then B.Source_Buffer.Has_Been_Saved
               and then B.Source_Buffer.Get_Writable);
+         --  The above part is to detect a writable file that has been saved at
+         --  some point (so was existing on disk) but removed somehow.
          return B.Check_Timestamp_Registered;
       end if;
 
@@ -2535,6 +2537,8 @@ package body Src_Editor_Box is
            or else (not Exists
                     and then Editor.Source_Buffer.Has_Been_Saved
                     and then Editor.Source_Buffer.Get_Writable)
+         --  The above part is to detect a writable file that has been saved at
+         --  some point (so was existing on disk) but removed somehow.
          then
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
