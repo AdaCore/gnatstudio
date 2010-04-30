@@ -3014,6 +3014,9 @@ package body Src_Editor_Buffer is
       if Contents = null then
          Trace (Me, "Load_File: Couldn't read contents of "
                 & Filename.Display_Full_Name);
+         --  The file does not exist on disk, this is a new file that has never
+         --  been saved.
+         Buffer.Save_Complete := False;
          Success := False;
          return;
       end if;
@@ -4667,6 +4670,7 @@ package body Src_Editor_Buffer is
 
       if not Is_Regular_File (Name) then
          Buffer.Saved_Position := -1;
+         Buffer.Save_Complete := False;
       end if;
    end Set_Filename;
 
