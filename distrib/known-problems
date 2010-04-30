@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J422-030: Removed files not properly detected
+  Problem:    A file removed outside GPS was not properly detected. Now a
+              dialog is raised asking if a new empty file must be created
+              or if the current buffer content is to be saved.
+  Workaround: Delete the file from within GPS using the Project Explorer's
+              contextual menu.
+
 - J409-002: dispatching.py plugin loads too many ALI files
   Problem:    When it recomputes the list of dispatching calls, this plugin
               will in fact reload more .ali files than are really needed,
