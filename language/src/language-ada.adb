@@ -1483,24 +1483,45 @@ package body Language.Ada is
          Token := Null_Token;
       end if;
 
-      --  On the simple mode, if the returned identifier starts with something
-      --  different thank Tok_Identifier, then we return only the last item
-      --  as something is likely to be wrong. This is specifically useful in
-      --  the display menu of the debugger - we may move this out to some
-      --  specific filter at some point.
+      --  On the simple mode, we only return an expression that may correspond
+      --  to a value or a variable reference
 
       if Simple_Expression and then not Is_Empty (Result.Tokens) then
-         if Data (First (Result.Tokens)).Tok_Type /= Tok_Identifier then
-            declare
-               Garbage : Token_List.List := Result.Tokens;
-            begin
-               Result.Tokens := Null_List;
+         declare
+            It          : Token_List.List_Node;
+            Last_Simple : Token_List.List_Node := Token_List.Null_Node;
+         begin
+            It := Last (Result.Tokens);
 
-               Append (Result.Tokens, Data (Last (Garbage)));
+            if Token_List.Data (It).Tok_Type = Tok_Identifier
+              or else Token_List.Data (It).Tok_Type = Tok_All
+            then
+               while It /= Token_List.Null_Node loop
+                  case Token_List.Data (It).Tok_Type is
+                     when Tok_Identifier
+                        | Tok_Dot
+                        | Tok_All
+                        | Tok_Expression
+                        | Tok_Close_Parenthesis
+                        | Tok_Open_Parenthesis =>
 
-               Free (Garbage);
-            end;
-         end if;
+                        Last_Simple := It;
+                     when others =>
+
+                        exit;
+                  end case;
+
+                  It := Prev (Result.Tokens, It);
+               end loop;
+            end if;
+
+            if Last_Simple /= First (Result.Tokens) then
+               Remove_Nodes
+                 (Result.Tokens,
+                  Token_List.Null_Node,
+                  Prev (Result.Tokens, Last_Simple));
+            end if;
+         end;
       end if;
 
       return Result;
