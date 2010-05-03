@@ -109,7 +109,17 @@ package body GPS.Kernel.Messages.Classic_Models is
             Node := null;
 
          else
-            Node := Self.Container.Categories.First_Element;
+            for J in Self.Container.Categories.First_Index
+              .. Self.Container.Categories.Last_Index
+            loop
+               if Match (Self.Flags,
+                         Self.Container.Categories.Element (J).Flags)
+               then
+
+                  Node := Self.Container.Categories.Element (J);
+                  exit;
+               end if;
+            end loop;
          end if;
 
       else
@@ -117,7 +127,17 @@ package body GPS.Kernel.Messages.Classic_Models is
             Node := null;
 
          else
-            Node := Node.Children.First_Element;
+            Node := null;
+            for J in Node.Children.First_Index
+              .. Node.Children.Last_Index
+            loop
+               if Match (Self.Flags,
+                         Node.Children.Element (J).Flags)
+               then
+                  Node := Node.Children.Element (J);
+                  exit;
+               end if;
+            end loop;
          end if;
       end if;
 
@@ -205,6 +225,7 @@ package body GPS.Kernel.Messages.Classic_Models is
    is
       Path  : constant Gtk_Tree_Path := Self.Create_Path (Category);
       Dummy : Boolean;
+      Found : Boolean;
       pragma Unreferenced (Dummy);
 
    begin
@@ -214,6 +235,21 @@ package body GPS.Kernel.Messages.Classic_Models is
       if Category.Children.Is_Empty then
          Dummy := Up (Path);
          Self.Row_Has_Child_Toggled (Path, Self.Create_Iter (Category));
+      else
+         Found := False;
+         for J in Category.Children.First_Index
+           .. Category.Children.Last_Index
+         loop
+            if Match (Self.Flags, Category.Children.Element (J).Flags) then
+               Found := True;
+               exit;
+            end if;
+         end loop;
+
+         if Found then
+            Dummy := Up (Path);
+            Self.Row_Has_Child_Toggled (Path, Self.Create_Iter (Category));
+         end if;
       end if;
 
       Path_Free (Path);
@@ -318,7 +354,24 @@ package body GPS.Kernel.Messages.Classic_Models is
             if Node /= null
               and then Indices (J) < Gint (Node.Children.Length)
             then
-               Node := Node.Children.Element (Natural (Indices (J)) + 1);
+               Index := Node.Children.First_Index;
+               Count := 0;
+               while Index <= Node.Children.Last_Index loop
+                  if Match (Self.Flags,
+                            Node.Children.Element (Index).Flags)
+                  then
+                     if Gint (Count) = Indices (J) then
+                        Node := Node.Children.Element (Index);
+                        exit;
+                     end if;
+                     Count := Count + 1;
+                  end if;
+                  Index := Index + 1;
+                  if Index > Node.Children.Last_Index then
+                     Node := null;
+                     exit;
+                  end if;
+               end loop;
 
             else
                Node := null;
@@ -733,10 +786,33 @@ package body GPS.Kernel.Messages.Classic_Models is
 
    begin
       if Node = null then
-         return not Self.Container.Categories.Is_Empty;
-
+         if Self.Container.Categories.Is_Empty then
+            return False;
+         else
+            for J in Self.Container.Categories.First_Index
+              .. Self.Container.Categories.Last_Index
+            loop
+               if Match (Self.Flags,
+                         Self.Container.Categories.Element (J).Flags)
+               then
+                  return True;
+               end if;
+            end loop;
+            return False;
+         end if;
       else
-         return not Node.Children.Is_Empty;
+         if Node.Children.Is_Empty then
+            return False;
+         else
+            for J in Node.Children.First_Index ..
+              Node.Children.Last_Index
+            loop
+               if Match (Self.Flags, Node.Children.Element (J).Flags) then
+                  return True;
+               end if;
+            end loop;
+            return False;
+         end if;
       end if;
    end Has_Child;
 
@@ -819,6 +895,7 @@ package body GPS.Kernel.Messages.Classic_Models is
    is
       Path  : constant Gtk_Tree_Path := Self.Create_Path (File);
       Dummy : Boolean;
+      Found : Boolean;
       pragma Unreferenced (Dummy);
 
    begin
@@ -828,6 +905,21 @@ package body GPS.Kernel.Messages.Classic_Models is
       if File.Children.Is_Empty then
          Dummy := Up (Path);
          Self.Row_Has_Child_Toggled (Path, Self.Create_Iter (File));
+      else
+         Found := False;
+         for J in File.Children.First_Index .. File.Children.Last_Index loop
+            if Match (Self.Flags,
+                      File.Children.Element (J).Flags)
+            then
+               Found := True;
+               exit;
+            end if;
+         end loop;
+
+         if Found then
+            Dummy := Up (Path);
+            Self.Row_Has_Child_Toggled (Path, Self.Create_Iter (File));
+         end if;
       end if;
 
       Path_Free (Path);
@@ -842,14 +934,32 @@ package body GPS.Kernel.Messages.Classic_Models is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint
    is
-      Node : constant Node_Access := Self.Get_Node (Iter);
-
+      Node  : constant Node_Access := Self.Get_Node (Iter);
+      Count : Natural := 0;
    begin
       if Node = null then
-         return Gint (Self.Container.Categories.Length);
+         for J in Self.Container.Categories.First_Index
+           .. Self.Container.Categories.Last_Index
+         loop
+            if Match (Self.Flags,
+                      Self.Container.Categories.Element (J).Flags)
+            then
+               Count := Count + 1;
+            end if;
+         end loop;
+
+         return Gint (Count);
 
       else
-         return Gint (Node.Children.Length);
+         for J in Node.Children.First_Index .. Node.Children.Last_Index loop
+            if Match (Self.Flags,
+                      Node.Children.Element (J).Flags)
+            then
+               Count := Count + 1;
+            end if;
+         end loop;
+
+         return Gint (Count);
       end if;
    end N_Children;
 
@@ -948,6 +1058,8 @@ package body GPS.Kernel.Messages.Classic_Models is
         and then Node.Parent.Children.Length = 1
       then
          Self.Row_Has_Child_Toggled (Path, Iter);
+         --  ??? We need to emit this also if it is the first child inserted
+         --  that matches flags
       end if;
 
       --  J326-003: when new row at message level is inserted weight of the
@@ -970,20 +1082,40 @@ package body GPS.Kernel.Messages.Classic_Models is
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Node : Node_Access := Self.Get_Node (Parent);
+      Node  : Node_Access := Self.Get_Node (Parent);
+      Count : Gint := 0;
 
    begin
       if Node = null then
          if N < Gint (Self.Container.Categories.Length) then
-            Node := Self.Container.Categories.Element (Natural (N) + 1);
-
+            for J in Self.Container.Categories.First_Index
+              .. Self.Container.Categories.Last_Index
+            loop
+               if Match (Self.Flags,
+                         Self.Container.Categories.Element (J).Flags)
+               then
+                  if Count = N then
+                     Node := Self.Container.Categories.Element (J);
+                     exit;
+                  end if;
+                  Count := Count + 1;
+               end if;
+            end loop;
          else
             Node := null;
          end if;
 
       else
          if N < Gint (Node.Children.Length) then
-            Node := Node.Children.Element (Natural (N) + 1);
+            for J in Node.Children.First_Index .. Node.Children.Last_Index loop
+               if Match (Self.Flags,
+                         Node.Children.Element (J).Flags) then
+                  if Count = N then
+                     Node := Node.Children.Element (J);
+                     exit;
+                  end if;
+               end if;
+            end loop;
 
          else
             Node := null;
