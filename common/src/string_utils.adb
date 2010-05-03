@@ -209,7 +209,6 @@ package body String_Utils is
       Tab_Width     : Integer := 8)
    is
       Current_Col   : Natural := 1;
-      Start_Line    : constant Natural := Index;
    begin
       while Current_Col < Columns
         and then Index <= Buffer'Last
@@ -219,7 +218,7 @@ package body String_Utils is
            and then Buffer (Index) = ASCII.HT
          then
             Current_Col := Current_Col
-              + Tab_Width - ((Current_Col - Start_Line) mod Tab_Width);
+              + Tab_Width - ((Current_Col - 1) mod Tab_Width);
          else
             Current_Col := Current_Col + 1;
          end if;
@@ -227,6 +226,36 @@ package body String_Utils is
          Index := Index + 1;
       end loop;
    end Skip_To_Column;
+
+   -------------------
+   -- Skip_To_Index --
+   -------------------
+
+   procedure Skip_To_Index
+     (Buffer        : String;
+      Columns       : out Natural;
+      Index_In_Line : Natural;
+      Index         : in out Natural;
+      Tab_Width     : Integer := 8)
+   is
+      Start_Of_Line : constant Integer := Index;
+   begin
+      Columns := 1;
+
+      loop
+         exit when Index - Start_Of_Line + 1 >= Index_In_Line;
+
+         if Index <= Buffer'Last
+           and then Buffer (Index) = ASCII.HT
+         then
+            Columns := Columns + Tab_Width - ((Columns - 1) mod Tab_Width);
+         else
+            Columns := Columns + 1;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+   end Skip_To_Index;
 
    ----------------
    -- Line_Start --

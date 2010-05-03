@@ -62,6 +62,15 @@ package String_Utils is
    --  Skip_Lines for instance), jump to the specific column on that line.
    --  This procedure handles tabulations.
 
+   procedure Skip_To_Index
+     (Buffer        : String;
+      Columns       : out Natural;
+      Index_In_Line : Natural;
+      Index         : in out Natural;
+      Tab_Width     : Integer := 8);
+   --  Assuming Index points to the begining of a line, move the index by
+   --  "Index_In_Line" characters, and give the new column value.
+
    procedure Skip_Hexa_Digit
      (Type_Str : String;
       Index    : in out Natural);
