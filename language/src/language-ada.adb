@@ -1394,6 +1394,7 @@ package body Language.Ada is
                end if;
 
             when ':' =>
+               Push (Token, Offset);
                Token.Tok_Type := Tok_Colon;
                Push (Token, Offset);
                exit;
