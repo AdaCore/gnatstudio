@@ -33,16 +33,17 @@ with Completion.History;              use Completion.History;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
-with Language;               use Language;
-with String_Utils;           use String_Utils;
-with Language.Ada;           use Language.Ada;
-with Language.Tree;          use Language.Tree;
-with Language.Tree.Database; use Language.Tree.Database;
+with Language;                use Language;
+with String_Utils;            use String_Utils;
+with Language.Ada;            use Language.Ada;
+with Language.Tree;           use Language.Tree;
+with Language.Tree.Database;  use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
-with Projects;               use Projects;
-with Entities;               use Entities;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
+with Projects;                use Projects;
+with Entities;                use Entities;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
+with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
 
 procedure Completion.Test is
    use Standard.Ada;
@@ -275,11 +276,24 @@ procedure Completion.Test is
       end Display;
 
    begin
+      Put_Line ("*** COMPLETE RESULT ***");
       Result := Parse_Expression_Backward
         (Ada_Lang,
          Buffer,
-         String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)));
+         String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)),
+         0,
+         False);
       Display (Result.Tokens);
+      Free (Result);
+      Put_Line ("*** SIMPLE RESULT ***");
+      Result := Parse_Expression_Backward
+        (Ada_Lang,
+         Buffer,
+         String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)),
+         0,
+         True);
+      Display (Result.Tokens);
+      Free (Result);
    end Parse_File;
 
    ---------------------------------
@@ -656,5 +670,6 @@ begin
 
 exception
    when E : others =>
-      Put_Line ("Unexpected exception: " & Exception_Information (E));
+      Put_Line ("UNEXPECTED EXCEPTION: " & Exception_Information (E));
+      Put_Line (GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
 end Completion.Test;
