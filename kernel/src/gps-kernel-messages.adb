@@ -403,17 +403,6 @@ package body GPS.Kernel.Messages is
       end case;
    end Get_Category;
 
-   ----------------------------
-   -- Get_Classic_Tree_Model --
-   ----------------------------
-
-   function Get_Classic_Tree_Model
-     (Self : not null access constant Messages_Container'Class)
-      return Gtk.Tree_Model.Gtk_Tree_Model is
-   begin
-      return Gtk.Tree_Model.Gtk_Tree_Model (Self.Models.First_Element);
-   end Get_Classic_Tree_Model;
-
    ----------------
    -- Get_Column --
    ----------------
@@ -424,6 +413,22 @@ package body GPS.Kernel.Messages is
    begin
       return Self.Column;
    end Get_Column;
+
+   ----------------
+   -- Get_Weight --
+   ----------------
+
+   function Get_Weight
+     (Self : not null access constant Abstract_Message'Class)
+      return Natural is
+   begin
+      case Self.Level is
+         when Primary =>
+            return Self.Weight;
+         when Secondary =>
+            return 0;
+      end case;
+   end Get_Weight;
 
    -------------------
    -- Get_Container --
@@ -2046,6 +2051,27 @@ package body GPS.Kernel.Messages is
          Self.Sort_Order_Hints.Insert (Category_Name, Hint);
       end if;
    end Set_Sort_Order_Hint;
+
+   -------------------------
+   -- Get_Sort_Order_Hint --
+   -------------------------
+
+   function Get_Sort_Order_Hint
+     (Self     : not null access Messages_Container'Class;
+      Category : String) return Sort_Order_Hint
+   is
+      Category_Name : constant Unbounded_String :=
+        To_Unbounded_String (Category);
+      Position      : constant Sort_Order_Hint_Maps.Cursor :=
+        Self.Sort_Order_Hints.Find (Category_Name);
+
+   begin
+      if Has_Element (Position) then
+         return Element (Position);
+      else
+         return Alphabetical;
+      end if;
+   end Get_Sort_Order_Hint;
 
    -------------------------
    -- Unregister_Listener --

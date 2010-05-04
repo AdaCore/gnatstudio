@@ -32,6 +32,7 @@ with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
 with Glib;
 with Glib.Main;
 
+with GPS.Kernel.Messages;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
 with GPS.Tree_View;                  use GPS.Tree_View;
@@ -113,6 +114,9 @@ private
       Idle_Expand_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Requests            : Expansion_Request_Vectors.Vector;
       --  Expansion requests.
+
+      --  Message listener
+      Listener : GPS.Kernel.Messages.Listener_Access;
    end record;
 
 end GPS.Location_View;

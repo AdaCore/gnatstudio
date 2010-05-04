@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with Ada.Strings.Fixed;
 with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regpat;                use GNAT.Regpat;
@@ -63,6 +64,8 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with XML_Utils;                        use XML_Utils;
 with Traces;                           use Traces;
+
+with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 
 package body GPS.Location_View is
 
@@ -565,6 +568,10 @@ package body GPS.Location_View is
       V : constant Location_View := Location_View (View);
 
    begin
+      --  Disconnect the listener
+
+      Unregister (V.Kernel, Locations_Listener_Access (V.Listener));
+
       Get_Messages_Container (V.Kernel).Remove_All_Messages;
 
       if V.Idle_Expand_Handler /= No_Source_Id then
@@ -858,12 +865,16 @@ package body GPS.Location_View is
 
       Self.Kernel := Kernel;
 
+      --  Initialize the listener
+
+      Self.Listener := Listener_Access (Register (Kernel));
+
       --  Initialize the tree view
 
       Gtk_New
         (Self.View,
          Self.Filter,
-         Get_Classic_Tree_Model (Get_Messages_Container (Kernel)));
+         Get_Model (Locations_Listener_Access (Self.Listener)));
       Visible_Funcs.Set_Visible_Func
         (Self.Filter, Is_Visible'Access, Location_View (Self));
       Self.Filter.Unref;

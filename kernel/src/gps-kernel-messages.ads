@@ -37,7 +37,6 @@ with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
 
-with Gtk.Tree_Model;
 private with Gtkada.Abstract_Tree_Model;
 with GNATCOLL.VFS;
 with GPS.Styles;
@@ -116,6 +115,12 @@ package GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return Basic_Types.Visible_Column_Type;
    --  Returns the column number of the original location of the message
+
+   function Get_Weight
+     (Self : not null access constant Abstract_Message'Class)
+      return Natural;
+   --  Return the weight of the message
+   --  ??? What is message weight?
 
    function Get_Text
      (Self : not null access constant Abstract_Message)
@@ -291,17 +296,17 @@ package GPS.Kernel.Messages is
    --  Removes all messages for specified file in the specified category.
    --  Do nothing when there is no such category or file.
 
-   function Get_Classic_Tree_Model
-     (Self : not null access constant Messages_Container'Class)
-      return Gtk.Tree_Model.Gtk_Tree_Model;
-   --  Returns Gtk+ model for classic tree representation.
-
    procedure Set_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
       Category : String;
       Hint     : Sort_Order_Hint);
    --  Sets sort order hint for the specified category. Hint must be set before
    --  first message in the category is created.
+
+   function Get_Sort_Order_Hint
+     (Self     : not null access Messages_Container'Class;
+      Category : String) return Sort_Order_Hint;
+   --  Get the sort order hint for this category
 
    procedure Register_Listener
      (Self     : not null access Messages_Container;
