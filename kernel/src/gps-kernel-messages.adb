@@ -23,7 +23,6 @@ with Ada.Unchecked_Conversion;
 with Glib.Convert;
 
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Messages.Classic_Models;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
@@ -50,7 +49,6 @@ package body GPS.Kernel.Messages is
    use GPS.Kernel.Project;
    use GPS.Styles;
    use Listener_Vectors;
-   use Model_Vectors;
    use Node_Vectors;
    use Note_Maps;
    use Projects;
@@ -108,42 +106,6 @@ package body GPS.Kernel.Messages is
         (Self    : not null access constant Messages_Container'Class;
          Message : not null access Abstract_Message'Class);
       --  Calls listeners to notify about remove of message
-
-      procedure Notify_Models_About_Category_Added
-        (Self  : not null access constant Messages_Container'Class;
-         Node  : not null access Node_Record'Class;
-         Flags : Message_Flags);
-      --  Calls models to notify about add of the category
-
-      procedure Notify_Models_About_File_Added
-        (Self  : not null access constant Messages_Container'Class;
-         Node  : not null access Node_Record'Class;
-         Flags : Message_Flags);
-      --  Calls models to notify about add of the file
-
-      procedure Notify_Models_About_File_Removed
-        (Self   : not null access constant Messages_Container'Class;
-         Parent : not null access Node_Record'Class;
-         Index  : Positive;
-         Flags  : Message_Flags);
-      --  Calls models to notify about remove of the file
-
-      procedure Notify_Models_About_Message_Added
-        (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class);
-      --  Calls models to notify about add of the message
-
-      procedure Notify_Models_About_Message_Property_Changed
-        (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class);
-      --  Calls models to notify about change of message's property
-
-      procedure Notify_Models_About_Message_Removed
-        (Self   : not null access constant Messages_Container'Class;
-         Parent : not null access Node_Record'Class;
-         Index  : Positive;
-         Flags  : Message_Flags);
-      --  Calls models to notify about remove of the message
 
    end Notifiers;
 
@@ -208,20 +170,11 @@ package body GPS.Kernel.Messages is
      (Kernel : not null access Kernel_Handle_Record'Class)
       return System.Address
    is
-      use GPS.Kernel.Messages.Classic_Models;
-
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
-      Model  : Classic_Tree_Model;
       Hook   : Project_Changed_Hook_Access;
 
    begin
-      --  Creates Gtk+ model
-
-      Gtk_New (Model, Result);
-      Model.Flags := (Editor_Side => False, Locations => True);
-      Result.Models.Append (Messages_Model_Access (Model));
-
       --  Register simple message load/save procedures
 
       GPS.Kernel.Messages.Simple.Register (Result);
@@ -338,11 +291,6 @@ package body GPS.Kernel.Messages is
 
    begin
       Container.Remove_All_Messages;
-
-      while not Container.Models.Is_Empty loop
-         Container.Models.Last_Element.Unref;
-         Container.Models.Delete_Last;
-      end loop;
 
       Free (Container);
    end Free_Messages_Container;
@@ -755,10 +703,8 @@ package body GPS.Kernel.Messages is
          Container.Categories.Append (Category_Node);
          Container.Category_Map.Insert (Category_Name, Category_Node);
 
-         --  Notify models and listeners
+         --  Notify listeners
 
-         Notifiers.Notify_Models_About_Category_Added
-           (Container, Category_Node, Flags);
          Notifiers.Notify_Listeners_About_Category_Added
            (Container, Category_Name, Flags);
       end if;
@@ -782,10 +728,8 @@ package body GPS.Kernel.Messages is
          Category_Node.Children.Append (File_Node);
          Category_Node.File_Map.Insert (File, File_Node);
 
-         --  Notify models and listeners
+         --  Notify listeners
 
-         Notifiers.Notify_Models_About_File_Added
-           (Container, File_Node, Flags);
          Notifiers.Notify_Listeners_About_File_Added
            (Container, Category_Name, File, Flags);
       end if;
@@ -806,9 +750,8 @@ package body GPS.Kernel.Messages is
          Category_Node.Flags (K) := Category_Node.Flags (K) or Self.Flags (K);
       end loop;
 
-      --  Notify models and listeners
+      --  Notify listeners
 
-      Notifiers.Notify_Models_About_Message_Added (Container, Self);
       Notifiers.Notify_Listeners_About_Message_Added (Container, Self);
    end Initialize;
 
@@ -846,9 +789,8 @@ package body GPS.Kernel.Messages is
 
       Self.Increment_Message_Counters;
 
-      --  Notify models and listeners
+      --  Notify listeners
 
-      Notifiers.Notify_Models_About_Message_Added (Parent.Get_Container, Self);
       Notifiers.Notify_Listeners_About_Message_Added
         (Parent.Get_Container, Self);
    end Initialize;
@@ -1267,141 +1209,6 @@ package body GPS.Kernel.Messages is
             Next (Listener_Position);
          end loop;
       end Notify_Listeners_About_Message_Removed;
-
-      ----------------------------------------
-      -- Notify_Models_About_Category_Added --
-      ----------------------------------------
-
-      procedure Notify_Models_About_Category_Added
-        (Self  : not null access constant Messages_Container'Class;
-         Node  : not null access Node_Record'Class;
-         Flags : Message_Flags)
-      is
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags,
-                      Flags)
-            then
-               Element (Model_Position).Category_Added (Node_Access (Node));
-            end if;
-
-            Next (Model_Position);
-         end loop;
-      end Notify_Models_About_Category_Added;
-
-      ------------------------------------
-      -- Notify_Models_About_File_Added --
-      ------------------------------------
-
-      procedure Notify_Models_About_File_Added
-        (Self  : not null access constant Messages_Container'Class;
-         Node  : not null access Node_Record'Class;
-         Flags : Message_Flags)
-      is
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags,
-                      Flags)
-            then
-               Element (Model_Position).File_Added (Node_Access (Node));
-            end if;
-
-            Next (Model_Position);
-         end loop;
-      end Notify_Models_About_File_Added;
-
-      --------------------------------------
-      -- Notify_Models_About_File_Removed --
-      --------------------------------------
-
-      procedure Notify_Models_About_File_Removed
-        (Self   : not null access constant Messages_Container'Class;
-         Parent : not null access Node_Record'Class;
-         Index  : Positive;
-         Flags  : Message_Flags)
-      is
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags, Flags) then
-               Element (Model_Position).File_Removed
-                 (Node_Access (Parent), Index);
-            end if;
-            Next (Model_Position);
-         end loop;
-      end Notify_Models_About_File_Removed;
-
-      ---------------------------------------
-      -- Notify_Models_About_Message_Added --
-      ---------------------------------------
-
-      procedure Notify_Models_About_Message_Added
-        (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class)
-      is
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags,
-                      Message.Flags)
-            then
-               Element
-                 (Model_Position).Message_Added (Message_Access (Message));
-            end if;
-
-            Next (Model_Position);
-         end loop;
-      end Notify_Models_About_Message_Added;
-
-      --------------------------------------------------
-      -- Notify_Models_About_Message_Property_Changed --
-      --------------------------------------------------
-
-      procedure Notify_Models_About_Message_Property_Changed
-        (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class)
-      is
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags, Message.Flags) then
-               Element (Model_Position).Message_Property_Changed
-                 (Message_Access (Message));
-            end if;
-            Next (Model_Position);
-         end loop;
-      end Notify_Models_About_Message_Property_Changed;
-
-      -----------------------------------------
-      -- Notify_Models_About_Message_Removed --
-      -----------------------------------------
-
-      procedure Notify_Models_About_Message_Removed
-        (Self   : not null access constant Messages_Container'Class;
-         Parent : not null access Node_Record'Class;
-         Index  : Positive;
-         Flags  : Message_Flags)
-      is
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags, Flags) then
-               Element (Model_Position).Message_Removed
-                 (Node_Access (Parent), Index);
-            end if;
-
-            Next (Model_Position);
-         end loop;
-      end Notify_Models_About_Message_Removed;
-
    end Notifiers;
 
    -----------------------
@@ -1509,19 +1316,6 @@ package body GPS.Kernel.Messages is
          end;
       end loop;
 
-      declare
-         Model_Position : Model_Vectors.Cursor := Self.Models.First;
-
-      begin
-         while Has_Element (Model_Position) loop
-            if Match (Element (Model_Position).Flags, Category_Node.Flags) then
-               Element (Model_Position).Category_Removed (Category_Index);
-            end if;
-
-            Next (Model_Position);
-         end loop;
-      end;
-
       Self.Category_Map.Delete (Category_Position);
       Self.Categories.Delete (Category_Index);
 
@@ -1564,7 +1358,6 @@ package body GPS.Kernel.Messages is
       Recursive     : Boolean)
    is
       Category_Node : Node_Access := File_Node.Parent;
-      Flags         : constant Message_Flags := File_Node.Flags;
 
    begin
       --  Remove messages
@@ -1589,11 +1382,6 @@ package body GPS.Kernel.Messages is
       Category_Node.File_Map.Delete (File_Position);
       Category_Node.Children.Delete (File_Index);
       Free (File_Node);
-
-      --  Nofity models
-
-      Notifiers.Notify_Models_About_File_Removed
-        (Self, Category_Node, File_Index, Flags);
 
       --  Remove category when there are no files for it
 
@@ -1660,7 +1448,6 @@ package body GPS.Kernel.Messages is
       Parent    : Node_Access := Message.Parent;
       Index     : constant Positive :=
         Parent.Children.Find_Index (Node_Access (Message));
-      Flags     : constant Message_Flags := Message.Flags;
 
    begin
       while not Message.Children.Is_Empty loop
@@ -1676,9 +1463,6 @@ package body GPS.Kernel.Messages is
       Notifiers.Notify_Listeners_About_Message_Removed (Self, Message);
       Message.Decrement_Message_Counters;
       Parent.Children.Delete (Index);
-
-      Notifiers.Notify_Models_About_Message_Removed
-        (Self, Parent, Index, Flags);
 
       Message.Finalize;
       Free (Message);
@@ -1953,7 +1737,6 @@ package body GPS.Kernel.Messages is
 
       Notifiers.Notify_Listeners_About_Message_Property_Changed
         (Container, Self, "action");
-      Notifiers.Notify_Models_About_Message_Property_Changed (Container, Self);
    end Set_Action;
 
    ----------------------

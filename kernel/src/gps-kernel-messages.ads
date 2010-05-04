@@ -37,7 +37,6 @@ with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
 
-private with Gtkada.Abstract_Tree_Model;
 with GNATCOLL.VFS;
 with GPS.Styles;
 
@@ -508,50 +507,6 @@ private
       end case;
    end record;
 
-   --------------------------
-   -- Abstract Gtk+ models --
-   --------------------------
-
-   type Abstract_Messages_Tree_Model_Record
-     (Container : not null access Messages_Container'Class) is
-         abstract new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record
-   with record
-      Flags : Message_Flags;
-   end record;
-
-   procedure Category_Added
-     (Self     : not null access Abstract_Messages_Tree_Model_Record;
-      Category : not null Node_Access) is null;
-
-   procedure Category_Removed
-     (Self  : not null access Abstract_Messages_Tree_Model_Record;
-      Index : Positive) is null;
-
-   procedure File_Added
-     (Self     : not null access Abstract_Messages_Tree_Model_Record;
-      File     : not null Node_Access) is null;
-
-   procedure File_Removed
-     (Self     : not null access Abstract_Messages_Tree_Model_Record;
-      Category : not null Node_Access;
-      Index    : Positive) is null;
-
-   procedure Message_Added
-     (Self    : not null access Abstract_Messages_Tree_Model_Record;
-      Message : not null Message_Access) is null;
-
-   procedure Message_Property_Changed
-     (Self    : not null access Abstract_Messages_Tree_Model_Record;
-      Message : not null Message_Access) is null;
-
-   procedure Message_Removed
-     (Self  : not null access Abstract_Messages_Tree_Model_Record;
-      File  : not null Node_Access;
-      Index : Positive) is null;
-
-   type Messages_Model_Access is
-     access all Abstract_Messages_Tree_Model_Record'Class;
-
    type Message_Save_Procedure is
      access procedure
        (Message_Node : not null Message_Access;
@@ -582,9 +537,6 @@ private
         Actual_Column : Integer;
         Flags         : Message_Flags);
 
-   package Model_Vectors is
-     new Ada.Containers.Vectors (Positive, Messages_Model_Access);
-
    package Listener_Vectors is
      new Ada.Containers.Vectors (Positive, Listener_Access);
 
@@ -613,7 +565,6 @@ private
       Project_File      : GNATCOLL.VFS.Virtual_File;
       Category_Map      : Category_Maps.Map;
       Categories        : Node_Vectors.Vector;
-      Models            : Model_Vectors.Vector;
       Listeners         : Listener_Vectors.Vector;
       Savers            : Message_Save_Maps.Map;
       Primary_Loaders   : Primary_Message_Load_Maps.Map;
