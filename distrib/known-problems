@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.5.0
 
+- J422-045: Prefix completion doesn't work with one parameter functions
+  Problem:    When completing a function with only one parameter, prefix
+              notation does not work properly.
+  Workaround: Manually complete the code.
+
 - J422-030: Removed files not properly detected
   Problem:    A file removed outside GPS was not properly detected. Now a
               dialog is raised asking if a new empty file must be created
