@@ -243,13 +243,13 @@ private
    type Entity_List is record
       Contents        : Entity_List_Pckg.Virtual_List;
       Excluded_List   : Excluded_Stack_Type;
-      From_Visibility : Visibility_Context;
+      From_Visibility : Visibility_Context := Null_Visibility_Context;
    end record;
 
    type Entity_Iterator is record
       It              : Entity_List_Pckg.Virtual_List_Iterator;
       Excluded_List   : Excluded_Stack_Type;
-      From_Visibility : Visibility_Context;
+      From_Visibility : Visibility_Context := Null_Visibility_Context;
    end record;
 
    package Excluded_Stack_Pckg is new Generic_Stack (Entity_Access);
