@@ -21,6 +21,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with Language.Ada;                use Language.Ada;
+with Ada_Semantic_Tree.Type_Tree; use Ada_Semantic_Tree.Type_Tree;
+with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
 package body Ada_Semantic_Tree.List_Resolver is
 
@@ -70,25 +72,69 @@ package body Ada_Semantic_Tree.List_Resolver is
       Internal (This);
    end Free;
 
+   ----------------------------
+   -- Is_Entity_With_Profile --
+   ----------------------------
+
+   function Is_Entity_With_Profile
+     (Entity       : Entity_Access;
+      Visible_From : Visibility_Context) return Boolean
+   is
+      Used_Entity : Entity_Access;
+   begin
+      if Get_Construct (Entity).Category in Subprogram_Category then
+         return True;
+      else
+         Used_Entity := Get_Last_Visible_Declaration
+           (Entity, Visible_From.File, Visible_From.Offset);
+
+         return Get_Construct (Used_Entity).Category in Type_Category
+           or else Get_Construct (Used_Entity).Attributes (Array_Attribute);
+      end if;
+   end Is_Entity_With_Profile;
+
    ----------------------------------
    -- Get_Formal_Parameter_Profile --
    ----------------------------------
 
    function Get_List_Profile
-     (Entity : Entity_Access;
-      Kind : Profile_Kind := Regular_Profile)
+     (Entity       : Entity_Access;
+      Visible_From : Visibility_Context;
+      Kind         : Profile_Kind := Regular_Profile)
       return List_Profile
    is
-      Tree  : constant Construct_Tree := Get_Tree (Get_File (Entity));
+      function Compute_Entity_To_Analyse return Entity_Access;
+
+      function Compute_Entity_To_Analyse return Entity_Access is
+      begin
+         if Get_Construct (Entity).Category in Type_Category then
+            --  In the case of types, we only consider the most visible view
+            --  in order to take into account possibly hidden fileds.
+
+            return Get_Last_Visible_Declaration
+              (Entity, Visible_From.File, Visible_From.Offset);
+         else
+            --  For other entities, the body is not visible, so consider only
+            --  the given declaration
+
+            return Entity;
+         end if;
+      end Compute_Entity_To_Analyse;
+
+      Used_Entity : constant Entity_Access := Compute_Entity_To_Analyse;
+
+      Tree  : constant Construct_Tree := Get_Tree (Get_File (Used_Entity));
       Scope : constant Construct_Tree_Iterator :=
-        To_Construct_Tree_Iterator (Entity);
+        To_Construct_Tree_Iterator (Used_Entity);
       It    : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
 
       Result_Array : Entity_Array (1 .. Get_Child_Number (Scope));
       Index        : Integer := 1;
+      Ada_Type     : Ada_Type_Access;
+      Private_Root : Ada_Type_Access;
    begin
-      if Get_Construct (Entity).Category in Subprogram_Category
-        or else Get_Construct (Entity).Category = Cat_Package
+      if Get_Construct (Used_Entity).Category in Subprogram_Category
+        or else Get_Construct (Used_Entity).Category = Cat_Package
       then
          if Kind = Regular_Profile then
             while It /= Null_Construct_Tree_Iterator
@@ -96,7 +142,7 @@ package body Ada_Semantic_Tree.List_Resolver is
             loop
                if Get_Construct (It).Category = Cat_Parameter then
                   Result_Array (Index) := To_Entity_Access
-                    (Get_File (Entity), It);
+                    (Get_File (Used_Entity), It);
                   Index := Index + 1;
                else
                   exit;
@@ -110,7 +156,7 @@ package body Ada_Semantic_Tree.List_Resolver is
             loop
                if Get_Construct (It).Is_Generic_Spec then
                   Result_Array (Index) := To_Entity_Access
-                    (Get_File (Entity), It);
+                    (Get_File (Used_Entity), It);
                   Index := Index + 1;
                else
                   exit;
@@ -127,27 +173,69 @@ package body Ada_Semantic_Tree.List_Resolver is
 
             return Result;
          end;
-      else
-         if Get_Construct (Entity).Attributes (Ada_Array_Attribute) then
-            declare
-               Result : List_Profile (1);
-            begin
-               Result.Extra_Params_Allowed := True;
-               Result.Params (1) := Null_Entity_Access;
+      elsif Get_Construct (Entity).Attributes (Ada_Array_Attribute) then
+         declare
+            Result : List_Profile (1);
+         begin
+            Result.Extra_Params_Allowed := True;
+            Result.Params (1) := Null_Entity_Access;
 
-               return Result;
-            end;
-         else
-            declare
-               Result : List_Profile (0);
-            begin
-               Result.Extra_Params_Allowed := True;
+            return Result;
+         end;
+      elsif Get_Construct (Entity).Category in Type_Category then
+         if Kind = Regular_Profile then
+            Ada_Type := Get_Ada_Type (Used_Entity);
 
-               return Result;
-            end;
+            if Ada_Type /= Null_Ada_Type_Access then
+               --  This is a tagged type, use the hierarchy information
+
+               Private_Root := First_Private_Parent
+                 (Ada_Type, Visible_From);
+
+               declare
+                  Fields : constant Entity_Array :=
+                    (Get_Fields_From (Ada_Type, Private_Root));
+                  Result : List_Profile (Fields'Length);
+               begin
+                  Result.Params := Fields;
+                  Result.Aggregate_Parent := Get_Entity (Private_Root);
+
+                  return Result;
+               end;
+            else
+               --  This is a simple record type, just traverse the tree
+
+               for J in 1 .. Language.Tree.Get_Child_Number (Scope) loop
+                  if Get_Construct (It).Category = Cat_Field
+                    or else Get_Construct (It).Category = Cat_Discriminant
+                  then
+                     Result_Array (Index) := Get_First_Occurence
+                       (To_Entity_Access
+                          (Get_File (Used_Entity), It));
+                     Index := Index + 1;
+                  end if;
+
+                  It := Next (Tree, It, Jump_Into);
+               end loop;
+
+               declare
+                  Result : List_Profile (Index - 1);
+               begin
+                  Result.Params := Result_Array (1 .. Index - 1);
+
+                  return Result;
+               end;
+            end if;
          end if;
       end if;
 
+      declare
+         Result : List_Profile (0);
+      begin
+         Result.Extra_Params_Allowed := True;
+
+         return Result;
+      end;
    end Get_List_Profile;
 
    -----------------
@@ -179,6 +267,17 @@ package body Ada_Semantic_Tree.List_Resolver is
    begin
       return Profile.Params'Length;
    end Get_Number_Of_Formals;
+
+   --------------------------
+   -- Get_Aggregate_Parent --
+   --------------------------
+
+   function Get_Aggregate_Parent
+     (Params : List_Profile) return Entity_Access
+   is
+   begin
+      return Params.Aggregate_Parent;
+   end Get_Aggregate_Parent;
 
    ----------
    -- Free --

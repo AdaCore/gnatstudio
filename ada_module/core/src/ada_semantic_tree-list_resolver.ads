@@ -56,13 +56,22 @@ package Ada_Semantic_Tree.List_Resolver is
 
    type Profile_Kind is (Regular_Profile, Generic_Profile);
 
+   function Is_Entity_With_Profile
+     (Entity       : Entity_Access;
+      Visible_From : Visibility_Context) return Boolean;
+   --  Return true if the entity is expected to have a "profile", (subprograms,
+   --  arrays, records) false otherwise.
+
    function Get_List_Profile
-     (Entity : Entity_Access;
-      Kind : Profile_Kind := Regular_Profile) return List_Profile;
+     (Entity       : Entity_Access;
+      Visible_From : Visibility_Context;
+      Kind         : Profile_Kind := Regular_Profile) return List_Profile;
    --  Create and return a list profile out of an entity. If no list profile
    --  can be found, then a special profile with no constraints will be
    --  returned. This is different from an empty profile (which doesn't allow
    --  any actual parameter).
+   --  Visibility may be required e.g. for types "profiles", typically used in
+   --  aggregates.
 
    function Get_Formals (Profile : List_Profile) return Entity_Array;
    --  Return the list of formal parameters associated with this profile
@@ -72,6 +81,10 @@ package Ada_Semantic_Tree.List_Resolver is
 
    function Get_Number_Of_Formals (Profile : List_Profile) return Integer;
    --  Return the total number of formals declared in this profile.
+
+   function Get_Aggregate_Parent (Params : List_Profile) return Entity_Access;
+   --  If the list represents a aggregate of a tagged type, this returns the
+   --  last private parent that has to be given to the aggregate, if any.
 
    --  Actual parameters --
 
@@ -173,6 +186,8 @@ private
       --  params than expected (since we currently don't analyze array
       --  dimensions). This is a workaround - the implementation will be
       --  more precise in the future.
+
+      Aggregate_Parent : Entity_Access;
    end record;
 
    type Actual_Parameter is record

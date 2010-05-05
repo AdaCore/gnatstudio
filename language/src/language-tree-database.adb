@@ -649,31 +649,18 @@ package body Language.Tree.Database is
    -----------------------
 
    function To_Visible_Column
-     (File         : Structured_File_Access;
+     (File        : Structured_File_Access;
       Line        : Integer;
       Line_Offset : String_Index_Type) return Visible_Column_Type
    is
-      Tab_Width : constant := 8;
-
-      Str : constant GNAT.Strings.String_Access := Get_Buffer (File);
-      Current_Index : String_Index_Type  := Get_Offset_Of_Line (File, Line);
-      Current_Col   : Visible_Column_Type := 1;
+      Current_Col   : Visible_Column_Type;
+      Index : Integer := Integer (Get_Offset_Of_Line (File, Line));
    begin
-      loop
-         exit when Current_Index - Get_Offset_Of_Line (File, Line) + 1
-           >= Line_Offset;
-
-         if Natural (Current_Index) <= Str'Last
-           and then Str (Natural (Current_Index)) = ASCII.HT
-         then
-            Current_Col := Current_Col + Visible_Column_Type (Tab_Width) -
-              ((Current_Col - 1) mod Visible_Column_Type (Tab_Width));
-         else
-            Current_Col := Current_Col + 1;
-         end if;
-
-         Current_Index := Current_Index + 1;
-      end loop;
+      Skip_To_Index
+        (Buffer        => Get_Buffer (File).all,
+         Columns       => Integer (Current_Col),
+         Index_In_Line => Integer (Line_Offset),
+         Index         => Index);
 
       return Current_Col;
    end To_Visible_Column;

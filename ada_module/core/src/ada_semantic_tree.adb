@@ -175,8 +175,9 @@ package body Ada_Semantic_Tree is
       Result : Entity_Iterator;
    begin
       Result :=
-        (It            => Entity_List_Pckg.First (List.Contents),
-         Excluded_List => List.Excluded_List);
+        (It              => Entity_List_Pckg.First (List.Contents),
+         Excluded_List   => List.Excluded_List,
+         From_Visibility => List.From_Visibility);
 
       while not Is_Valid (Result) loop
          Next (Result);

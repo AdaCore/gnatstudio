@@ -231,8 +231,19 @@ package body Completion.Ada.Constructs_Extractor is
             Missing_Formals : constant Formal_Parameter_Array :=
               Get_Missing_Formals (Proposal.Actual_Params.all);
             Construct : access Simple_Construct_Information;
+            Aggregate_Extension : Entity_Access;
+            Aggregate_Length : Integer := 0;
          begin
             if Missing_Formals'Length > 0 then
+               Aggregate_Extension :=
+                 Get_Aggregate_Parent
+                   (Get_Profile (Proposal.Actual_Params.all));
+
+               if Aggregate_Extension /= Null_Entity_Access then
+                  Aggregate_Length :=
+                    Get_Construct (Aggregate_Extension).Name.all'Length + 6;
+               end if;
+
                for J in Missing_Formals'Range loop
                   Construct := Get_Construct (Missing_Formals (J));
 
@@ -244,11 +255,20 @@ package body Completion.Ada.Constructs_Extractor is
                declare
                   Buffer : String
                     (1 .. Missing_Formals'Length
-                     * (Max_Size_Name + 6) - 1) :=
+                     * (Max_Size_Name + 6) + Aggregate_Length - 1) :=
                     (others => ' ');
 
                   Index : Integer := 1;
                begin
+                  if Aggregate_Extension /= Null_Entity_Access then
+                     Buffer
+                       (Index .. Index + Aggregate_Length - 1) :=
+                       Get_Construct
+                         (Aggregate_Extension).Name.all & " with" & ASCII.LF;
+
+                     Index := Index + Aggregate_Length;
+                  end if;
+
                   for J in Missing_Formals'Range loop
                      Construct := Get_Construct (Missing_Formals (J));
 

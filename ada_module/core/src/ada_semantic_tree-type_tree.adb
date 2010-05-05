@@ -496,11 +496,18 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       This_Unit : constant Unit_Access := Get_Owning_Unit (The_Type);
 
-      This_Unit_Timestamp : constant Unit_Hierarchy_Timestamp :=
-        Get_Unit_Hierarchy_Timestamp (This_Unit);
+      This_Unit_Timestamp : Unit_Hierarchy_Timestamp;
 
       Do_Analysis : Boolean := False;
    begin
+      if This_Unit = Null_Unit_Access then
+         --  In case of malformed units, it may not be possible to retreive the
+         --  enclosing unit of a type. In this case, avoid the analysis.
+
+         return;
+      end if;
+
+      This_Unit_Timestamp := Get_Unit_Hierarchy_Timestamp (This_Unit);
       Push_Entity (Excluded, The_Type);
 
       --  First, if there's already a computed information, check if it's up
@@ -606,18 +613,21 @@ package body Ada_Semantic_Tree.Type_Tree is
             Expression : Parsed_Expression := Parse_Expression_Backward
               (Ada_Lang, Get_Identifier (Ref_Ids));
 
-            Decl_List   : Entity_List :=
-              Find_Declarations
-                ((From_File,
-                  Null_Instance_Info,
-                  Get_File (The_Type),
-                  String_Index_Type (Get_Construct (The_Type).Sloc_End.Index)),
-                 Expression        => Expression,
-                 Excluded_Entities => Excluded);
-            It          : Entity_Iterator := First (Decl_List);
+            Decl_List   : Entity_List;
+            It          : Entity_Iterator;
             Parent_Type : Entity_Access;
             Parent_Info : Ada_Type_Access;
          begin
+            Decl_List :=
+              Find_Declarations
+                ((From_File,
+                 Null_Instance_Info,
+                 Get_File (The_Type),
+                 String_Index_Type (Get_Construct (The_Type).Sloc_End.Index)),
+                 Expression        => Expression,
+                 Excluded_Entities => Excluded);
+            It := First (Decl_List);
+
             Free (Expression);
 
             --  ??? We should have more visiblity constraints here, and do
@@ -950,7 +960,11 @@ package body Ada_Semantic_Tree.Type_Tree is
 
    function Get_Entity (Ada_Type : Ada_Type_Access) return Entity_Access is
    begin
-      return To_Entity_Access (Ada_Type.Entity);
+      if Ada_Type /= null and then Exists (Ada_Type.Entity) then
+         return To_Entity_Access (Ada_Type.Entity);
+      else
+         return Null_Entity_Access;
+      end if;
    end Get_Entity;
 
    ------------------------
@@ -1108,6 +1122,86 @@ package body Ada_Semantic_Tree.Type_Tree is
       return Result;
    end Get_Parents;
 
+   --------------------------
+   -- First_Private_Parent --
+   --------------------------
+
+   function First_Private_Parent
+     (Ada_Type        : Ada_Type_Access;
+      From_Visibility : Visibility_Context) return Ada_Type_Access
+   is
+      Parent : Ada_Type_Access;
+   begin
+      if Ada_Type /= Null_Ada_Type_Access then
+         if not Is_Accessible
+           (To_Entity_Access (Ada_Type.Entity),
+            From_Visibility.File, From_Visibility.Offset)
+         then
+            return Ada_Type;
+         else
+            Parent := Get_Tagged_Parent (Ada_Type);
+
+            if Parent /= Null_Ada_Type_Access then
+               return First_Private_Parent (Parent, From_Visibility);
+            else
+               return Null_Ada_Type_Access;
+            end if;
+         end if;
+      else
+         return Null_Ada_Type_Access;
+      end if;
+   end First_Private_Parent;
+
+   ---------------------
+   -- Get_Fields_From --
+   ---------------------
+
+   function Get_Fields_From
+     (Ada_Type       : Ada_Type_Access;
+      Starting_After : Ada_Type_Access) return Entity_Array
+   is
+   begin
+      if Ada_Type /= Null_Ada_Type_Access
+        and then  Starting_After /= Ada_Type
+      then
+         declare
+            Entity : constant Entity_Access :=
+              To_Entity_Access (Ada_Type.Entity);
+            File   : constant Structured_File_Access := Get_File (Entity);
+            Tree   : constant Construct_Tree := Get_Tree (File);
+
+            Result : Entity_Array
+              (1 .. Get_Child_Number (To_Construct_Tree_Iterator (Entity)));
+
+            Result_It : Integer := 1;
+            Scope : constant Construct_Tree_Iterator :=
+              To_Construct_Tree_Iterator (Entity);
+            It : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
+
+            Parent : Ada_Type_Access;
+         begin
+
+            for J in Result'Range loop
+               if Get_Construct (It).Category = Cat_Field
+                 or else Get_Construct (It).Category = Cat_Discriminant
+               then
+                  Result (Result_It) := To_Entity_Access (File, It);
+                  Result_It := Result_It + 1;
+               end if;
+
+               It := Next (Tree, It, Jump_Into);
+            end loop;
+
+            Parent := Get_Tagged_Parent (Ada_Type);
+
+            return Get_Fields_From (Parent, Starting_After)
+              & Result (1 .. Result_It - 1);
+         end;
+      end if;
+
+      return Entity_Array'(1 .. 0 => Null_Entity_Access);
+   end Get_Fields_From;
+
    -----------------------
    -- Analyze_All_Types --
    -----------------------
@@ -1141,7 +1235,7 @@ package body Ada_Semantic_Tree.Type_Tree is
       Sb.Refs := Sb.Refs + 1;
    end Ref;
 
-   -----------
+   ----------
    -- Unref --
    -----------
 

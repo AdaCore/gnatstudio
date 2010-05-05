@@ -97,6 +97,19 @@ package Ada_Semantic_Tree.Type_Tree is
      (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array;
    --  Return the parents of this type
 
+   function First_Private_Parent
+     (Ada_Type        : Ada_Type_Access;
+      From_Visibility : Visibility_Context) return Ada_Type_Access;
+   --  Return the first parent not visible from the current context - null if
+   --  the whole hierarchy is visible.
+
+   function Get_Fields_From
+     (Ada_Type       : Ada_Type_Access;
+      Starting_After : Ada_Type_Access) return Entity_Array;
+   --  Return fields from Ada_Type, ignoring the ones from Starting_After and
+   --  its parents (if not null). This is typically usefull when computing
+   --  extension aggregates.
+
    procedure Analyze_All_Types (File : Structured_File_Access);
    --  Analyzes and update all the type information for this file. Normally,
    --  type information is computed laizyly so that we don't spend time

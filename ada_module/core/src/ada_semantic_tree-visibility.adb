@@ -381,6 +381,10 @@ package body Ada_Semantic_Tree.Visibility is
       --  Otherwise, we've got to have visibility on the proper hidden package
       --  part
 
+      if From_File = null then
+         return False;
+      end if;
+
       Rel := Get_Location_Relation
         (Tree_To     => Get_Tree (Get_File (Entity)),
          Object_To   => Get_Parent_Scope

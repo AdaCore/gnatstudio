@@ -241,13 +241,15 @@ private
    use Entity_List_Pckg;
 
    type Entity_List is record
-      Contents      : Entity_List_Pckg.Virtual_List;
-      Excluded_List : Excluded_Stack_Type;
+      Contents        : Entity_List_Pckg.Virtual_List;
+      Excluded_List   : Excluded_Stack_Type;
+      From_Visibility : Visibility_Context;
    end record;
 
    type Entity_Iterator is record
-      It            : Entity_List_Pckg.Virtual_List_Iterator;
-      Excluded_List : Excluded_Stack_Type;
+      It              : Entity_List_Pckg.Virtual_List_Iterator;
+      Excluded_List   : Excluded_Stack_Type;
+      From_Visibility : Visibility_Context;
    end record;
 
    package Excluded_Stack_Pckg is new Generic_Stack (Entity_Access);
@@ -264,6 +266,6 @@ private
    Null_Excluded_Stack : constant Excluded_Stack_Type := null;
 
    Null_Entity_List : constant Entity_List :=
-     (Entity_List_Pckg.Null_Virtual_List, null);
+     (Entity_List_Pckg.Null_Virtual_List, null, Null_Visibility_Context);
 
 end Ada_Semantic_Tree;

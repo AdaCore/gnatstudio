@@ -662,18 +662,51 @@ package body Ada_Semantic_Tree.Declarations is
 
                while not At_End (Tmp_It) loop
                   declare
-                     View : Entity_View := Get_View (Tmp_It);
+                     E    : constant Entity_Access := Get_Entity (Tmp_It);
+                     View : Entity_View;
+                     Param_Added : Boolean := False;
+                     Success     : Boolean := False;
                   begin
-                     if not Is_Excluded (Excluded_Entities, View.Entity) then
+                     --  It's important to retrive first the entity and then
+                     --  the view, because the view may end up in recusrive
+                     --  calls.
+
+                     if not Is_Excluded (Excluded_Entities, E) then
+                        View := Get_View (Tmp_It);
+
+                        if Is_Entity_With_Profile
+                          (E, Actual_From_Visibility)
+                        then
+                           Set_Actuals
+                             (View, new Actual_Parameter_Resolver'
+                                (Get_Actual_Parameter_Resolver
+                                   (Get_Profile (View).all)));
+
+                           if View.From_Prefixed then
+                              --  If we go from a prefixed notation, then the
+                              --  first actual parameter is coming from the
+                              --  prefix.
+
+                              Append_Actual
+                                (Declaration_View_Record
+                                   (View.all).Actuals.all,
+                                 Get_Actual_Parameter
+                                   (Get_Buffer (Context.File), 0, 0),
+                                 False,
+                                 Param_Added,
+                                 Success);
+                           end if;
+                        end if;
+
                         Analyze_Token
                          (Token,
                           Next (Token),
                           View,
                           Actual_Categories,
                           Result);
-                     end if;
 
-                     Free (View);
+                        Free (View);
+                     end if;
                   end;
 
                   Next (Tmp_It);
@@ -689,7 +722,13 @@ package body Ada_Semantic_Tree.Declarations is
             when Tok_Dot =>
                --  ??? We could factorize that in a "Are actuals consistent"
                --  subprogram.
-               if Get_Profile (Previous_Declaration) /= null
+
+               if (Get_Construct (Get_Entity (Previous_Declaration)).Category
+                    in Subprogram_Category
+                  or else Get_Construct
+                    (Get_Entity (Previous_Declaration)).Attributes
+                      (Array_Attribute))
+                 and then Get_Profile (Previous_Declaration) /= null
                  and then
                    ((Get_Actual_Parameters (Previous_Declaration) = null
                      and then
@@ -701,6 +740,10 @@ package body Ada_Semantic_Tree.Declarations is
                          Is_Complete
                            (Get_Actual_Parameters (Previous_Declaration).all)))
                then
+                  --  If we have to do profile matching (the previous entry
+                  --  is a subprogram or an array) and the profile doesn't
+                  --  match, then stop the analysis.
+
                   return;
                end if;
 
@@ -744,6 +787,22 @@ package body Ada_Semantic_Tree.Declarations is
                   return;
                end if;
 
+               if Get_Construct
+                 (Get_Entity (Previous_Declaration)).Category in Type_Category
+                 and then
+                   not Get_Construct
+                     (Get_Entity (Previous_Declaration)).Attributes
+                 (Ada_Array_Attribute)
+               then
+                  --  If the previous entity is a type (and not an array), make
+                  --  sure that we're on a qualified aggregate case and not
+                  --  a conversion.
+
+                  if Data (Previous_Token).Tok_Type /= Tok_Tick then
+                     return;
+                  end if;
+               end if;
+
                declare
                   Current_Token : Token_List.List_Node := Next (Token);
                   Success : Boolean := False;
@@ -757,26 +816,20 @@ package body Ada_Semantic_Tree.Declarations is
                   New_Param   : Actual_Parameter;
                   Param_Added : Boolean := False;
                begin
+                  --  At this stage, actuals might be missing, e.g. if we're on
+                  --  an array. So create dummy actuals if that's the case.
+
+                  if Declaration_View_Record
+                    (Local_Declaration.all).Actuals = null
+                  then
+                     Set_Actuals
+                       (Local_Declaration, new Actual_Parameter_Resolver'
+                          (Get_Actual_Parameter_Resolver
+                             (Get_Profile (Local_Declaration).all)));
+                  end if;
+
                   --  Perform the analysis of the actual parameters.
                   --  Reset any former value of the actual parameters.
-
-                  Set_Actuals
-                    (Local_Declaration, new Actual_Parameter_Resolver'
-                       (Get_Actual_Parameter_Resolver
-                          (Get_Profile (Previous_Declaration).all)));
-
-                  if Local_Declaration.From_Prefixed then
-                     --  If we go from a prefixed notation, then the first
-                     --  actual parameter is coming from the prefix.
-
-                     Append_Actual
-                       (Declaration_View_Record
-                          (Local_Declaration.all).Actuals.all,
-                        Get_Actual_Parameter (Get_Buffer (Context.File), 0, 0),
-                        False,
-                        Param_Added,
-                        Success);
-                  end if;
 
                   while Current_Token /= Token_List.Null_Node loop
                      if Data (Current_Token).Tok_Type = Tok_Expression then
@@ -879,34 +932,35 @@ package body Ada_Semantic_Tree.Declarations is
                end;
 
             when Tok_With =>
-               pragma Assert (Token = First_Token);
+               if Token = First_Token then
+                  if Context.Context_Type = From_File then
+                     Actual_From_Visibility.Filter := All_Accessible_Units;
 
-               if Context.Context_Type = From_File then
-                  Actual_From_Visibility.Filter := All_Accessible_Units;
-
-                  if Next (Token) /= Token_List.Null_Node then
-                     Analyze_Token
-                       (Token,
-                        Next (Token),
-                        Previous_Declaration,
-                        Actual_Categories,
-                        Result);
+                     if Next (Token) /= Token_List.Null_Node then
+                        Analyze_Token
+                          (Token,
+                           Next (Token),
+                           Previous_Declaration,
+                           Actual_Categories,
+                           Result);
+                     else
+                        Get_Possibilities
+                          (Null_Distinct_Identifier,
+                           Is_Partial,
+                           (From_File,
+                            Null_Instance_Info,
+                            Context.File,
+                            Data (Token).Token_First - 1),
+                           Actual_From_Visibility,
+                           Actual_Categories,
+                           Result);
+                     end if;
                   else
-                     Get_Possibilities
-                       (Null_Distinct_Identifier,
-                        Is_Partial,
-                        (From_File,
-                         Null_Instance_Info,
-                         Context.File,
-                         Data (Token).Token_First - 1),
-                        Actual_From_Visibility,
-                        Actual_Categories,
-                        Result);
-                  end if;
-               else
-                  --  There no database-wide search starting with a with token
+                     --  There no database-wide search starting with a with
+                     --  token
 
-                  return;
+                     return;
+                  end if;
                end if;
 
             when Tok_Use =>
@@ -1038,6 +1092,8 @@ package body Ada_Semantic_Tree.Declarations is
 
          Actual_From_Visibility.Filter := Everything;
       end if;
+
+      Result.From_Visibility := Actual_From_Visibility;
 
       declare
          Analyzed_Token : Token_List.List_Node;
@@ -1438,10 +1494,10 @@ package body Ada_Semantic_Tree.Declarations is
    overriding procedure Configure_View
      (E : in out Declaration_View_Record; It : Entity_Iterator)
    is
-      pragma Unreferenced (It);
    begin
       if E.Profile = null then
-         E.Profile := new List_Profile'(Get_List_Profile (E.Entity));
+         E.Profile := new List_Profile'
+           (Get_List_Profile (E.Entity, It.From_Visibility));
       end if;
    end Configure_View;
 

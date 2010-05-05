@@ -150,7 +150,10 @@ package body Ada_Semantic_Tree.Generics is
 
          declare
             Profile : constant List_Profile :=
-              Get_List_Profile (Generic_Package, Generic_Profile);
+              Get_List_Profile
+                (Generic_Package,
+                 Null_Visibility_Context,
+                 Generic_Profile);
             Success : Boolean;
          begin
             Result := new Instance_Info_Record;
@@ -557,7 +560,10 @@ package body Ada_Semantic_Tree.Generics is
 
       Result.Resolver := new Actual_Parameter_Resolver'
         (Get_Actual_Parameter_Resolver
-           (Get_List_Profile (Result.Generic_Package, Generic_Profile)));
+           (Get_List_Profile
+              (Result.Generic_Package,
+               Null_Visibility_Context,
+               Generic_Profile)));
 
       if Result.Instance_Package /= Null_Entity_Access then
          Append_Actuals
