@@ -20,6 +20,10 @@ NF-45-J426-027 Shell/Python interfacing to GPS styles (2010-04-28)
   It is now possible to manipulate through GPS Shell and/or Python the colors
   and properties used when displaying messages in the editors.
 
+NF-45-J419-013 Completion on qualified aggregates (2010-05-05)
+
+  Smart completion now offers to complete qualified aggregates.
+
 NF-45-J416-020 Loop indexes offered in completion (2010-04-16)
 
   Loop variables are now offered by the smart completion.
