@@ -38,7 +38,6 @@ with Commands.Editor;          use Commands.Editor;
 with GPS.Editors;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer;        use Src_Editor_Buffer;
@@ -57,11 +56,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Style : Style_Access := null;
       --  The style used to highlight this message
+
+      End_Mark : Gtk_Text_Mark;
+      --  The mark indicating the end of the message highlighting, if relevant
    end record;
    type Line_Info_Note is access all Line_Info_Note_Record'Class;
-
-   procedure Free (Info : in out Line_Information_Access);
-   --  Free memory associated with Info
 
    procedure Remove_Line_Information_Column
      (Buffer : access Source_Buffer_Record'Class;
@@ -114,10 +113,7 @@ package body Src_Editor_Buffer.Line_Information is
       Editable_Line : Editable_Line_Type;
       Buffer_Line   : Buffer_Line_Type;
       Column        : Integer;
-      Width         : Integer;
-      Message       : Message_Access;
-      Remove_Old    : Boolean;
-      Override_Old  : Boolean);
+      Message       : Message_Access);
    --  Add Message in the column in Buffer.
    --  Either Editable_Line or Buffer_Line must be null: if Editable_Line is
    --  null, put the message at Buffer_Line, and vice versa.
@@ -128,6 +124,14 @@ package body Src_Editor_Buffer.Line_Information is
    --  removed.
    --  If Override_Old is True, the new message will replace the old message,
    --  otherwise the old message takes precedence and will not be removed
+
+   procedure Highlight_Range
+     (Buffer     : access Source_Buffer_Record'Class;
+      Style      : Style_Access;
+      Line       : Editable_Line_Type;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Remove     : Boolean := False);
 
    -------------------------
    -- Foreach_Hidden_Line --
@@ -206,7 +210,8 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Line_Numbers_Width := 2;
 
          if BL.all = null then
-            Create_Line_Information_Column (Buffer, "", True);
+            Create_Line_Information_Column
+              (Buffer, Default_Column, True, Empty_Line_Information);
          end if;
 
          loop
@@ -261,8 +266,8 @@ package body Src_Editor_Buffer.Line_Information is
 
             for K in Columns_Config.all'Range loop
                D.Side_Info_Data (K) :=
-                 (null,
-                  Width => -1,
+                 (Message_List.Empty_List,
+                  Action => null,
                   Set   => not Columns_Config.all (K).Every_Line);
             end loop;
 
@@ -270,6 +275,7 @@ package body Src_Editor_Buffer.Line_Information is
             declare
                A : Line_Info_Width_Array
                  (D.Side_Info_Data'First .. D.Side_Info_Data'Last + 1);
+               C : Message_List.Cursor;
             begin
                A (A'First .. A'Last - 1) := D.Side_Info_Data.all;
 
@@ -278,8 +284,8 @@ package body Src_Editor_Buffer.Line_Information is
 
                D.Side_Info_Data
                  (D.Side_Info_Data'Last) :=
-                 (Message  => null,
-                  Width    => Width,
+                 (Messages => Message_List.Empty_List,
+                  Action   => null,
                   Set      => not Every_Line);
 
                --  Regenerate notes for each message in this side info data
@@ -289,16 +295,21 @@ package body Src_Editor_Buffer.Line_Information is
                for J in D.Side_Info_Data'First
                  .. D.Side_Info_Data'Last - 1
                loop
-                  M := D.Side_Info_Data (J).Message;
+                  C := D.Side_Info_Data (J).Messages.First;
 
-                  if M /= null
-                    and then M.Has_Note (Line_Info_Note_Record'Tag)
-                  then
-                     Note := new Line_Info_Note_Record;
-                     Note.Data := D.Side_Info_Data;
-                     Note.Style := M.Get_Highlighting_Style;
-                     M.Set_Note (Note_Access (Note));
-                  end if;
+                  while Message_List.Has_Element (C) loop
+                     M := Message_List.Element (C);
+
+                     if M /= null
+                       and then M.Has_Note (Line_Info_Note_Record'Tag)
+                     then
+                        Note := Line_Info_Note
+                          (M.Get_Note (Line_Info_Note_Record'Tag));
+                        Note.Data := D.Side_Info_Data;
+                     end if;
+
+                     Message_List.Next (C);
+                  end loop;
                end loop;
             end;
          end if;
@@ -417,9 +428,27 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Create_Line_Information_Column
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Every_Line : Boolean) is
+      Every_Line : Boolean;
+      Data       : Line_Information_Record)
+   is
+      Width  : Gint := 10;
+      Height : Gint;
+      Layout : Pango_Layout;
+
    begin
-      Get_Column_For_Identifier (Buffer, Identifier, -1, Every_Line);
+      if Data.Text /= null then
+         Layout := Create_Pango_Layout
+           (Gtk_Widget (Get_Main_Window (Buffer.Kernel)));
+         Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
+         Set_Markup (Layout, String'(Data.Text.all));
+         Get_Pixel_Size (Layout, Width, Height);
+
+      elsif Data.Image /= Null_Pixbuf then
+         Width := Get_Width (Data.Image);
+      end if;
+
+      Get_Column_For_Identifier
+        (Buffer, Identifier, Integer (Width), Every_Line);
       Side_Column_Configuration_Changed (Buffer);
    end Create_Line_Information_Column;
 
@@ -449,6 +478,7 @@ package body Src_Editor_Buffer.Line_Information is
       is
          M    : Message_Access;
          Note : Line_Info_Note;
+         C    : Message_List.Cursor;
          pragma Unreferenced (Buffer);
       begin
          if D.Side_Info_Data /= null then
@@ -459,16 +489,17 @@ package body Src_Editor_Buffer.Line_Information is
                return;
             end if;
 
-            --  If there is a message in the column being removed, remove the
-            --  associated note
+            --  If there are messages in the column being removed, remove the
+            --  messages
 
-            M := D.Side_Info_Data (Column).Message;
+            C := D.Side_Info_Data (Column).Messages.First;
 
-            if M /= null
-              and then M.Has_Note (Line_Info_Note_Record'Tag)
-            then
-               M.Remove_Note (Line_Info_Note_Record'Tag);
-            end if;
+            while Message_List.Has_Element (C) loop
+               M := Message_List.Element (C);
+
+               M.Remove;
+               C := D.Side_Info_Data (Column).Messages.First;
+            end loop;
 
             declare
                A : Line_Info_Width_Array
@@ -485,16 +516,21 @@ package body Src_Editor_Buffer.Line_Information is
 
             --  Regenerate notes for each message in this side info data
             for J in D.Side_Info_Data'Range loop
-               M := D.Side_Info_Data (J).Message;
+               C := D.Side_Info_Data (J).Messages.First;
 
-               if M /= null
-                 and then M.Has_Note (Line_Info_Note_Record'Tag)
-               then
-                  Note := new Line_Info_Note_Record;
-                  Note.Style := M.Get_Highlighting_Style;
-                  Note.Data := D.Side_Info_Data;
-                  M.Set_Note (Note_Access (Note));
-               end if;
+               while Message_List.Has_Element (C) loop
+                  M := Message_List.Element (C);
+
+                  if M /= null
+                    and then M.Has_Note (Line_Info_Note_Record'Tag)
+                  then
+                     Note := Line_Info_Note
+                       (M.Get_Note (Line_Info_Note_Record'Tag));
+                     Note.Data := D.Side_Info_Data;
+                  end if;
+
+                  Message_List.Next (C);
+               end loop;
             end loop;
          end if;
       end Process_Data;
@@ -582,17 +618,6 @@ package body Src_Editor_Buffer.Line_Information is
       Side_Column_Configuration_Changed (Buffer);
    end Remove_Line_Information_Column;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Info : in out Line_Information_Access) is
-   begin
-      GNAT.Strings.Free (Info.Text);
-      GNAT.Strings.Free (Info.Tooltip_Text);
-      Unchecked_Free (Info);
-   end Free;
-
    ---------------------------
    -- Free_File_Information --
    ---------------------------
@@ -633,6 +658,7 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Column        : Integer;
       Note          : Line_Info_Note;
+      Pos           : Message_List.Cursor;
    begin
       for K in Messages'Range loop
          if Has_Note (Messages (K), Line_Info_Note_Record'Tag) then
@@ -642,16 +668,20 @@ package body Src_Editor_Buffer.Line_Information is
             Column := Column_For_Identifier
               (Buffer, Messages (K).Get_Category);
 
-            if Note.Data (Column).Message = Messages (K) then
-               Note.Data (Column).Message := null;
-               Note.Data (Column).Width := 0;
-               Note.Data (Column).Set := True;
+            Pos := Note.Data (Column).Messages.Find (Messages (K));
+
+            if Message_List.Has_Element (Pos) then
+               Note.Data (Column).Messages.Delete (Pos);
             end if;
 
             Remove_Message_Highlighting
               (Buffer, Messages (K), Messages (K).Get_Highlighting_Style);
+
+            Messages (K).Remove_Note (Line_Info_Note_Record'Tag);
          end if;
       end loop;
+
+      Side_Column_Configuration_Changed (Buffer);
    end Remove_Messages;
 
    ---------------------------
@@ -741,64 +771,71 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_Side_Information
      (Buffer         : access Source_Buffer_Record'Class;
       Identifier     : String;
+      Data           : Line_Information_Array;
+      At_Buffer_Line : Buffer_Line_Type)
+   is
+      Editable_Line : Editable_Line_Type;
+      BL            : Buffer_Line_Type;
+      The_Data      : Line_Info_Width_Array_Access;
+      Column : Integer := -1;
+   begin
+      Column := Column_For_Identifier (Buffer, Identifier);
+
+      for J in Data'Range loop
+         if At_Buffer_Line = 0 then
+            Editable_Line := Editable_Line_Type (J);
+
+            case Buffer.Editable_Lines (Editable_Line).Where is
+            when In_Buffer =>
+               BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+               if BL in Buffer.Line_Data'Range
+                 and then Buffer.Line_Data (BL).Side_Info_Data /= null
+               then
+                  The_Data := Buffer.Line_Data (BL).Side_Info_Data;
+               end if;
+
+            when In_Mark =>
+               if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
+                 /= null
+               then
+                  The_Data := Buffer.Editable_Lines
+                    (Editable_Line).UL.Data.Side_Info_Data;
+                  BL := 0;
+               end if;
+            end case;
+         else
+            The_Data := Buffer.Line_Data
+              (At_Buffer_Line + Buffer_Line_Type (J - Data'First))
+              .Side_Info_Data;
+         end if;
+
+         if The_Data /= null then
+            if The_Data (Column).Action /= null then
+               Free (The_Data (Column).Action);
+            end if;
+
+            The_Data (Column).Action := new Line_Information_Record'(Data (J));
+         end if;
+      end loop;
+
+      Side_Column_Configuration_Changed (Buffer);
+   end Add_Side_Information;
+
+   --------------------------
+   -- Add_Side_Information --
+   --------------------------
+
+   procedure Add_Side_Information
+     (Buffer         : access Source_Buffer_Record'Class;
+      Identifier     : String;
       Messages       : Message_Array;
       At_Buffer_Line : Buffer_Line_Type)
    is
       Column : Integer := -1;
-      Num    : Gint := 1;
-      Height : Gint;
-      Width  : Gint := -1;
-      Widths : array (Messages'Range) of Gint;
-      Layout : Pango_Layout;
 
       Editable_Line : Editable_Line_Type;
-      BL : Buffer_Line_Type;
-
-      Columns_Config : Columns_Config_Access;
-      Action : GPS.Kernel.Messages.Action_Item;
+      BL            : Buffer_Line_Type;
    begin
-      Layout := Create_Pango_Layout
-        (Gtk_Widget (Get_Main_Window (Buffer.Kernel)));
-      Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
-
-      --  Compute the maximum width of the items to add.
-      --  We compute this width once and for all and in advance,
-      --  because is is quite expensive, and we don't want to do it
-      --  in Src_Editor_View.Redraw_Columns, since that function is
-      --  called a great number of times.
-
-      for J in Messages'Range loop
-         Widths (J) := -1;
-
-         Action := Get_Action (Messages (J));
-
-         if Action /= null then
-            if Action.Text /= null then
-               Set_Markup (Layout, String'(Action.Text.all));
-               Get_Pixel_Size (Layout, Num, Height);
-
-               if Num = 0 then
-                  Num := 1;
-               end if;
-
-               Widths (J) := Num;
-
-               if Num > Width then
-                  Width := Num;
-               end if;
-            end if;
-
-            if Action.Image /= Null_Pixbuf then
-               Num := Get_Width (Action.Image);
-
-               Widths (J) := Num;
-
-               if Num > Width then
-                  Width := Num;
-               end if;
-            end if;
-         end if;
-      end loop;
 
       --  Get the column that corresponds to Identifier
 
@@ -814,10 +851,7 @@ package body Src_Editor_Buffer.Line_Information is
                Editable_Line => Editable_Line,
                Buffer_Line   => 0,
                Column        => Column,
-               Width         => Integer (Widths (K)),
-               Message       => Messages (K),
-               Remove_Old    => True,
-               Override_Old  => True);
+               Message       => Messages (K));
          end loop;
       else
          for K in Messages'Range loop
@@ -828,32 +862,11 @@ package body Src_Editor_Buffer.Line_Information is
                Editable_Line => 0,
                Buffer_Line   => BL,
                Column        => Column,
-               Width         => Integer (Widths (K)),
-               Message       => Messages (K),
-               Remove_Old    => True,
-               Override_Old  => True);
+               Message       => Messages (K));
          end loop;
       end if;
 
-      --  If the line info width is bigger than the column width, resize the
-      --  column and all columns.
-
-      Columns_Config := Buffer.Editable_Line_Info_Columns;
-
-      if Integer (Width) > Columns_Config.all (Column).Width then
-         Columns_Config.all (Column).Width := Integer (Width);
-
-         for J in Column + 1 .. Columns_Config.all'Last loop
-            Columns_Config.all (J).Starting_X :=
-              Columns_Config.all (J - 1).Starting_X
-              + Columns_Config.all (J - 1).Width + 1;
-         end loop;
-
-         Recalculate_Side_Column_Width (Buffer);
-      end if;
-
-      Side_Column_Changed (Buffer);
-      Unref (Layout);
+      Side_Column_Configuration_Changed (Buffer);
    end Add_Side_Information;
 
    -------------------------
@@ -952,37 +965,33 @@ package body Src_Editor_Buffer.Line_Information is
       ---------------
 
       procedure Draw_Info (Starting_X : Gint) is
-         Action : GPS.Kernel.Messages.Action_Item;
+         Action : Line_Information_Record;
       begin
-         if Line_Info.Message /= null then
-            Action := Line_Info.Message.Get_Action;
+         Action := Get_Relevant_Action (Line_Info);
 
-            if Action /= null then
-               if Action.Text /= null then
-                  Set_Markup (Layout, Action.Text.all);
+         if Action.Text /= null then
+            Set_Markup (Layout, Action.Text.all);
 
-                  Draw_Layout
-                    (Drawable => Drawable,
-                     GC       => GC,
-                     X        => Starting_X,
-                     Y        => Y_Pix_In_Window,
-                     Layout   => Layout);
-               end if;
+            Draw_Layout
+              (Drawable => Drawable,
+               GC       => GC,
+               X        => Starting_X,
+               Y        => Y_Pix_In_Window,
+               Layout   => Layout);
+         end if;
 
-               if Action.Image /= Null_Pixbuf then
-                  Render_To_Drawable
-                    (Pixbuf   => Action.Image,
-                     Drawable => Drawable,
-                     GC       => GC,
-                     Src_X    => 0,
-                     Src_Y    => 0,
-                     Dest_X   => Starting_X,
-                     Dest_Y   => Y_Pix_In_Window + (Line_Height -
-                         Get_Height (Action.Image)) / 2,
-                     Width    => -1,
-                     Height   => -1);
-               end if;
-            end if;
+         if Action.Image /= Null_Pixbuf then
+            Render_To_Drawable
+              (Pixbuf   => Action.Image,
+               Drawable => Drawable,
+               GC       => GC,
+               Src_X    => 0,
+               Src_Y    => 0,
+               Dest_X   => Starting_X,
+               Dest_Y   => Y_Pix_In_Window + (Line_Height -
+                   Get_Height (Action.Image)) / 2,
+               Width    => -1,
+               Height   => -1);
          end if;
       end Draw_Info;
 
@@ -1015,7 +1024,6 @@ package body Src_Editor_Buffer.Line_Information is
 
                Draw_Info
                  (Gint (Buffer.Line_Numbers_Width
-                  + BL.all (Col).Width - Line_Info.Width
                   + BL.all (Col).Starting_X));
             end loop;
 
@@ -1033,6 +1041,38 @@ package body Src_Editor_Buffer.Line_Information is
          Current_Line := Current_Line + 1;
       end loop Drawing_Loop;
    end Draw_Line_Info;
+
+   ----------------
+   -- Get_Action --
+   ----------------
+
+   function Get_Relevant_Action
+     (Data : Line_Info_Width) return Line_Information_Record
+   is
+      C : Message_List.Cursor;
+      Action : GPS.Kernel.Messages.Action_Item;
+   begin
+
+      --  First look for an action in the messages
+      C := Data.Messages.First;
+
+      while Message_List.Has_Element (C) loop
+         Action := Message_List.Element (C).Get_Action;
+         if Action /= null then
+            return Action.all;
+         end if;
+
+         Message_List.Next (C);
+      end loop;
+
+      --  Next look in the action itself
+      if Data.Action /= null then
+         return Data.Action.all;
+      end if;
+
+      --  Finally return an empty line information
+      return Empty_Line_Information;
+   end Get_Relevant_Action;
 
    --------------
    -- On_Click --
@@ -1059,20 +1099,16 @@ package body Src_Editor_Buffer.Line_Information is
               (BL.all (Col).Width + BL.all (Col).Starting_X +
                  Buffer.Line_Numbers_Width)
             then
-               if Buffer.Line_Data (Line).Side_Info_Data (Col).Message /= null
-                 and then Buffer.Line_Data (Line).Side_Info_Data
-                 (Col).Message.Get_Action /= null
-                 and then Buffer.Line_Data (Line).Side_Info_Data
-                 (Col).Message.Get_Action.Associated_Command /= null
-               then
-                  Command := Buffer.Line_Data (Line).Side_Info_Data
-                    (Col).Message.Get_Action.Associated_Command;
-                  --  Set the Base_Line field of the command right before
-                  --  executing it, if appropriate.
+               Command := Get_Relevant_Action
+                 (Buffer.Line_Data
+                    (Line).Side_Info_Data (Col)).Associated_Command;
+
+               if Command /= null then
                   if Command.all in
                     Base_Editor_Command_Type'Class
                   then
-                     Base_Editor_Command_Type (Command.all).Base_Line := Line;
+                     Base_Editor_Command_Type
+                       (Command.all).Base_Line := Line;
                   end if;
 
                   Result := Execute (Command);
@@ -1170,35 +1206,11 @@ package body Src_Editor_Buffer.Line_Information is
       if Info /= null
         and then Info'Length /= 0
       then
-         declare
-            Messages : Message_Array (Info'Range);
-            Simple   : Simple_Message_Access;
-            Action   : GPS.Kernel.Messages.Action_Item;
-         begin
-            for J in Info'Range loop
-               Simple := Create_Simple_Message
-                 (Container => Source_Module_Container,
-                  Category  => Default_Column,
-                  File      => Buffer.Filename,
-                  Line      => 0,
-                  Column    => 0,
-                  Text      => "",
-                  Weight    => 0,
-                  Flags     => (Editor_Side => True, Locations => False));
-               Action := new Line_Information_Record;
-               --  ??? Who frees this?
-               Action.all := Info (J);
-               Simple.Set_Action (Action);
-
-               Messages (J) := Message_Access (Simple);
-            end loop;
-
-            Add_Side_Information
-              (Buffer         => Buffer,
-               Identifier     => Column_Id,
-               Messages       => Messages,
-               At_Buffer_Line => Line);
-         end;
+         Add_Side_Information
+           (Buffer         => Buffer,
+            Identifier     => Column_Id,
+            Data           => Info.all,
+            At_Buffer_Line => Line);
       end if;
 
       return Mark;
@@ -1257,18 +1269,57 @@ package body Src_Editor_Buffer.Line_Information is
       Message : Message_Access;
       Style   : Style_Access)
    is
-      From_Column, To_Column : Visible_Column_Type;
+
+      From_Column, To_Column : Visible_Column_Type := 0;
       Line                   : Editable_Line_Type;
+      End_Iter               : Gtk_Text_Iter;
+      Start_Iter             : Gtk_Text_Iter;
+      Note                   : Line_Info_Note;
+
+      Result    : Boolean;
+      Has_Iters : Boolean := False;
    begin
       Line := Editable_Line_Type (Message.Get_Editor_Mark.Line);
       From_Column := Visible_Column_Type (Message.Get_Editor_Mark.Column);
-      To_Column   := From_Column +
-        Visible_Column_Type (Message.Get_Highlighting_Length);
+
+      --  Determine the To_Column:
+      --  If there is an End_Mark associated with the message, remove the
+      --  highlighting all the way to the End_Mark then remove the End_Mark
+
+      if Message.Has_Note (Line_Info_Note_Record'Tag) then
+         Note := Line_Info_Note (Message.Get_Note (Line_Info_Note_Record'Tag));
+
+         if Note.End_Mark /= null then
+            Get_Iter_At_Mark (Buffer, End_Iter, Note.End_Mark);
+
+            Get_Iter_At_Screen_Position
+              (Buffer, Start_Iter, Line, From_Column);
+
+            if Ends_Line (Start_Iter) then
+               Backward_Char (Start_Iter, Result);
+            end if;
+
+            Delete_Mark (Buffer, Note.End_Mark);
+
+            Has_Iters := True;
+            Note.End_Mark := null;
+         end if;
+      end if;
+
+      if To_Column = 0 then
+         To_Column   := From_Column +
+           Visible_Column_Type (Message.Get_Highlighting_Length);
+      end if;
 
       if From_Column = To_Column then
          Remove_Line_Highlighting (Buffer, Line, Style);
       else
-         Highlight_Range (Buffer, Style, Line, From_Column, To_Column, True);
+         if Has_Iters then
+            Highlight_Range (Buffer, Style, Line, Start_Iter, End_Iter, True);
+         else
+            Highlight_Range
+              (Buffer, Style, Line, From_Column, To_Column, True);
+         end if;
       end if;
    end Remove_Message_Highlighting;
 
@@ -1284,6 +1335,7 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Style    : Style_Access;
       Length   : Natural;
+      End_Col  : Visible_Column_Type;
       EL       : Editable_Line_Type := 0; --  The actual buffer line
       BL       : Buffer_Line_Type := 0;   --  The actual editable line
 
@@ -1357,13 +1409,24 @@ package body Src_Editor_Buffer.Line_Information is
          else
             Compute_EL;
 
+            End_Col := Message.Get_Column + Visible_Column_Type (Length);
+            --  We are going to highlight a given range: store in the message
+            --  note.
+
+            if Note /= null then
+               --  It should never happen that note=null here, that would mean
+               --  that the message is not properly entered in the database
+               Note.End_Mark := Create_Mark (Buffer => Buffer,
+                                             Line   => EL,
+                                             Column => End_Col);
+            end if;
+
             Highlight_Range
               (Buffer    => Buffer,
                Style     => Style,
                Line      => EL,
                Start_Col => Message.Get_Column,
-               End_Col   =>
-                 Message.Get_Column + Visible_Column_Type (Length),
+               End_Col   => End_Col,
                Remove    => False);
          end if;
       end if;
@@ -1378,12 +1441,8 @@ package body Src_Editor_Buffer.Line_Information is
       Editable_Line : Editable_Line_Type;
       Buffer_Line   : Buffer_Line_Type;
       Column        : Integer;
-      Width         : Integer;
-      Message       : Message_Access;
-      Remove_Old    : Boolean;
-      Override_Old  : Boolean)
+      Message       : Message_Access)
    is
-      Old_Msg  : Message_Access;
       Note     : Line_Info_Note;
       The_Data : Line_Info_Width_Array_Access;
 
@@ -1414,43 +1473,15 @@ package body Src_Editor_Buffer.Line_Information is
          BL := Buffer_Line;
       end if;
 
-      if Remove_Old or else not Override_Old then
-         if The_Data /= null then
-            Old_Msg := The_Data (Column).Message;
-         end if;
-      end if;
+      if The_Data /= null then
+         if Message /= null then
+            Note := new Line_Info_Note_Record;
+            Note.Data := The_Data;
+            Note.Style := Message.Get_Highlighting_Style;
+            Message.Set_Note (Note_Access (Note));
 
-      if Remove_Old
-        and then not Override_Old
-        and then Old_Msg /= null
-        and then Old_Msg /= Message
-      then
-         Old_Msg.Remove;
-      end if;
-
-      if Override_Old
-        or else Old_Msg = null
-      then
-         if Old_Msg /= null
-           and then Old_Msg.Has_Note (Line_Info_Note_Record'Tag)
-         then
-            Old_Msg.Remove_Note (Line_Info_Note_Record'Tag);
-         end if;
-
-         if The_Data /= null then
-            Free (The_Data (Column));
-
-            if Message /= null then
-               Note := new Line_Info_Note_Record;
-               Note.Data := The_Data;
-               Note.Style := Message.Get_Highlighting_Style;
-               Message.Set_Note (Note_Access (Note));
-            end if;
-
-            The_Data (Column) :=
-              (Message => Message,
-               Width   => Width,
-               Set     => True);
+            The_Data (Column).Messages.Prepend (Message);
+            The_Data (Column).Set := True;
 
             Highlight_Message (Buffer        => Buffer,
                                Editable_Line => Editable_Line,
@@ -1468,63 +1499,20 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Image         : Gdk_Pixbuf;
-      Overwrite     : Boolean)
+      Image         : Gdk_Pixbuf)
    is
-      BL    : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-      Message : Simple_Message_Access;
-      Width   : Integer;
-      Action  : GPS.Kernel.Messages.Action_Item;
    begin
-      --  Create the line information column.
-      --  ??? This should not occur every time.
-
-      if Buffer.Block_Highlighting_Column = -1 then
-         Create_Line_Information_Column (Buffer, Default_Column, False);
-         Buffer.Block_Highlighting_Column := BL.all'Last;
-      end if;
-
-      if Image = null then
-         Width := 0;
-      else
-         Width := Integer (Get_Width (Image));
-      end if;
-
-      if Action /= null
-        or else Command /= null
-      then
-         Message := Create_Simple_Message
-           (Source_Module_Container,
-            Category => Default_Column,
-            File     => Buffer.Filename,
-            Line     => 0,
-            Column   => 0,
-            Text     => "",
-            Weight   => 0,
-            Flags    => (Editor_Side => True, Locations => False));
-
-         Action := new GPS.Editors.Line_Information_Record;
-         Action.Image := Image;
-         Action.Associated_Command := Command;
-
-         Message.Set_Action (Action);
-      end if;
-
-      Put_Message (Buffer, Editable_Line, 0, Buffer.Block_Highlighting_Column,
-                   Width, Message_Access (Message), False, Overwrite);
-
-      if Command /= null then
-         BL.all (Buffer.Block_Highlighting_Column).Width := Width;
-
-         for J in Buffer.Block_Highlighting_Column + 1 .. BL.all'Last loop
-            BL.all (J).Starting_X :=
-              BL.all (J - 1).Starting_X
-              + BL.all (J - 1).Width + 1;
-         end loop;
-
-         Recalculate_Side_Column_Width (Buffer);
-         Side_Column_Configuration_Changed (Buffer);
-      end if;
+      Add_Side_Information
+        (Buffer,
+         Default_Column,
+         --  ??? optimization: should use the integer value for column here:
+         --  buffer.block_highlighting_column
+         Line_Information_Array'(Integer (Editable_Line)
+           => (Text => null,
+               Tooltip_Text => null,
+               Image        => Image,
+               Associated_Command => Command)),
+         0);
    end Add_Block_Command;
 
    -----------------
@@ -1720,7 +1708,6 @@ package body Src_Editor_Buffer.Line_Information is
       Number : constant Buffer_Line_Type := End_Line - Start_Line;
       EN     : Editable_Line_Type := Editable_Line_Type (Number);
 
-      M : Message_Access;
    begin
       if End_Line <= Start_Line then
          return;
@@ -1741,15 +1728,8 @@ package body Src_Editor_Buffer.Line_Information is
       for J in Start_Line .. Start_Line + Number - 1 loop
          if Buffer_Lines (J).Side_Info_Data /= null then
             for Col in Buffer_Lines (J).Side_Info_Data'Range loop
-               M := Buffer_Lines (J).Side_Info_Data (Col).Message;
-               if M /= null
-                 and then M.Has_Note (Line_Info_Note_Record'Tag)
-               then
-                  M.Remove_Note (Line_Info_Note_Record'Tag);
-               end if;
+               Free (Buffer_Lines (J).Side_Info_Data (Col), True);
             end loop;
-            --   ??? We should probably free the memory associated with
-            --   side_info_data here.
          end if;
       end loop;
 
@@ -2067,7 +2047,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Add_Block_Command
         (Buffer, Line_Start, Command_Access (Command),
-         Unhide_Block_Pixbuf, True);
+         Unhide_Block_Pixbuf);
 
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
@@ -2249,7 +2229,7 @@ package body Src_Editor_Buffer.Line_Information is
       Add_Block_Command
         (Buffer, Start_Line,
          Command_Access (Command),
-         Hide_Block_Pixbuf, True);
+         Hide_Block_Pixbuf);
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
 
@@ -2286,6 +2266,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  rely on it.
 
       Prev_State : constant Constructs_State_Type := Buffer.Constructs_State;
+
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
@@ -2303,34 +2284,35 @@ package body Src_Editor_Buffer.Line_Information is
                BL : constant Buffer_Line_Type :=
                  Buffer.Editable_Lines (Line).Buffer_Line;
             begin
-               if Buffer.Line_Data (BL).Side_Info_Data /= null
-                 and then Buffer.Line_Data (BL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column).Message /= null
-                 and then Buffer.Line_Data (BL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column).Message.Get_Action /= null
-               then
-                  Command :=
-                    Buffer.Line_Data (BL).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column
-                    ).Message.Get_Action.Associated_Command;
-
-                  if Command /= null
-                    and then Command.all in Hide_Editable_Lines_Type'Class
+               if Buffer.Line_Data (BL).Side_Info_Data /= null then
+                  if Buffer.Line_Data (BL).Side_Info_Data
+                    (Buffer.Block_Highlighting_Column).Action /= null
                   then
-                     if First_Line_Found then
-                        Base_Editor_Command (Command).Base_Line :=
-                          Buffer.Editable_Lines (Line).Buffer_Line;
+                     Command := Buffer.Line_Data (BL).Side_Info_Data
+                       (Buffer.Block_Highlighting_Column)
+                       .Action.Associated_Command;
 
-                        Line := Line +
-                          Hide_Editable_Lines_Type (Command.all).Number - 1;
+                     if Command /= null
+                       and then Command.all in
+                         Hide_Editable_Lines_Type'Class
+                     then
+                        if First_Line_Found then
+                           Base_Editor_Command (Command).Base_Line :=
+                             Buffer.Editable_Lines (Line).Buffer_Line;
 
-                        Result := Execute (Command);
+                           Line := Line +
+                             Hide_Editable_Lines_Type
+                               (Command.all).Number - 1;
 
-                        --  even though lines have been deleted, constructs
-                        --  info hasn't changed.
-                        Buffer.Constructs_State := Prev_State;
-                     else
-                        First_Line_Found := True;
+                           Result := Execute (Command);
+
+                           --  even though lines have been deleted,
+                           --  constructs info hasn't changed.
+                           Buffer.Constructs_State := Prev_State;
+
+                        else
+                           First_Line_Found := True;
+                        end if;
                      end if;
                   end if;
                end if;
@@ -2398,6 +2380,7 @@ package body Src_Editor_Buffer.Line_Information is
       Command        : Command_Access;
       Returned       : Command_Return_Type;
       BL             : Buffer_Line_Type;
+      Action         : Line_Information_Access;
 
       pragma Unreferenced (Returned);
    begin
@@ -2409,29 +2392,28 @@ package body Src_Editor_Buffer.Line_Information is
          if Buffer.Editable_Lines (L).Where = In_Buffer then
             BL := Buffer.Editable_Lines (L).Buffer_Line;
 
-            if Buffer.Line_Data (BL).Side_Info_Data /= null
-              and then Buffer.Line_Data (BL).Side_Info_Data
-              (Buffer.Block_Highlighting_Column).Message /= null
-              and then Buffer.Line_Data (BL).Side_Info_Data
-              (Buffer.Block_Highlighting_Column).Message.Get_Action /= null
-            then
-               Command :=
-                 Buffer.Line_Data (BL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column
-                 ).Message.Get_Action.Associated_Command;
+            if Buffer.Line_Data (BL).Side_Info_Data /= null then
+               Action := Buffer.Line_Data (BL).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column).Action;
 
-               if Command /= null
-                 and then
-                   ((Fold and then
-                       Command.all in Hide_Editable_Lines_Type'Class)
-                    or else
-                      (not Fold and then
-                         Command.all in Unhide_Editable_Lines_Type'Class))
-               then
-                  Base_Editor_Command (Command).Base_Line :=
-                     Buffer.Editable_Lines (L).Buffer_Line;
-                  Returned := Execute (Command);
-                  return True;
+               if Action /= null then
+                  Command := Action.Associated_Command;
+
+                  if Command /= null
+                    and then
+                      ((Fold and then
+                          Command.all in Hide_Editable_Lines_Type'Class)
+                       or else
+                         (not Fold and then
+                            Command.all in
+                              Unhide_Editable_Lines_Type'Class))
+                  then
+                     Base_Editor_Command (Command).Base_Line :=
+                       Buffer.Editable_Lines (L).Buffer_Line;
+                     Returned := Execute (Command);
+                     return True;
+                  end if;
+
                end if;
             end if;
 
@@ -2491,7 +2473,7 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer                 : access Source_Buffer_Record'Class;
       Remove_Unfold_Commands : Boolean := True)
    is
-      Command : Command_Access;
+      Action  : Line_Information_Access;
 
    begin
       if Buffer.Block_Highlighting_Column = -1 then
@@ -2499,29 +2481,23 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       for Line in Buffer.Line_Data'Range loop
-         if Buffer.Line_Data (Line).Side_Info_Data /= null
-           and then Buffer.Line_Data (Line).Side_Info_Data
-           (Buffer.Block_Highlighting_Column).Message /= null
-           and then Buffer.Line_Data (Line).Side_Info_Data
-           (Buffer.Block_Highlighting_Column).Message.Get_Action /= null
-         then
-            Command :=
-              Buffer.Line_Data (Line).Side_Info_Data
-              (Buffer.Block_Highlighting_Column
-              ).Message.Get_Action.Associated_Command;
+         if Buffer.Line_Data (Line).Side_Info_Data /= null then
+            Action := Buffer.Line_Data (Line).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Action;
 
-            if Command /= null then
-               if Command.all in Hide_Editable_Lines_Type'Class
-                 or else
-                   (Remove_Unfold_Commands
-                    and then Command.all in
-                      Unhide_Editable_Lines_Type'Class)
-               then
-                  if Buffer.Line_Data (Line).Editable_Line /= 0 then
-                     Add_Block_Command
-                       (Buffer,
-                        Buffer.Line_Data (Line).Editable_Line,
-                        null, null, False);
+            if Action /= null then
+               if Action.Associated_Command /= null then
+                  if Action.Associated_Command.all in
+                    Hide_Editable_Lines_Type'Class
+                    or else
+                      (Remove_Unfold_Commands
+                       and then Action.Associated_Command.all in
+                         Unhide_Editable_Lines_Type'Class)
+                  then
+                     Free (Buffer.Line_Data (Line).Side_Info_Data
+                           (Buffer.Block_Highlighting_Column).Action);
+                     Buffer.Line_Data (Line).Side_Info_Data
+                           (Buffer.Block_Highlighting_Column).Action := null;
                   end if;
                end if;
             end if;
@@ -2546,30 +2522,17 @@ package body Src_Editor_Buffer.Line_Information is
    ---------------------
 
    procedure Highlight_Range
-     (Buffer    : access Source_Buffer_Record'Class;
-      Style     : Style_Access;
-      Line      : Editable_Line_Type;
-      Start_Col : Visible_Column_Type;
-      End_Col   : Visible_Column_Type;
-      Remove    : Boolean := False)
+     (Buffer     : access Source_Buffer_Record'Class;
+      Style      : Style_Access;
+      Line       : Editable_Line_Type;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Remove     : Boolean := False)
    is
-      Start_Iter, End_Iter : Gtk_Text_Iter;
-      Result               : Boolean;
-      The_Line             : Gint;
-      Color                : Gdk_Color;
       Tag                  : Gtk_Text_Tag;
+      Color                : Gdk_Color;
       New_Tag              : Boolean := False;
    begin
-      --  Here we test whether the buffer is in destruction. If it is the case
-      --  we simply return since it is not worth taking care of unhighlighting
-      --  lines. Furthermore this prevents GPS from crashing when we close a
-      --  source file used in a visual diff while the reference file is still
-      --  being displayed.
-
-      if Buffer.In_Destruction then
-         return;
-      end if;
-
       --  Get the text tag, create it if necessary
 
       Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
@@ -2595,6 +2558,54 @@ package body Src_Editor_Buffer.Line_Information is
 
       if New_Tag then
          Add (Get_Tag_Table (Buffer), Tag);
+      end if;
+
+      --  Highlight/Unhighlight the text
+
+      if Remove then
+         Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
+      else
+         Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
+      end if;
+
+      if Line /= 0 then
+         if Style.In_Speedbar then
+            if Remove then
+               Remove_Line_Highlighting (Buffer, Line, Style);
+            else
+               Add_Line_Highlighting
+                 (Buffer, Line, Style,
+                  Highlight_In => (Highlight_Speedbar => True,
+                                   others             => False));
+            end if;
+         end if;
+      end if;
+   end Highlight_Range;
+
+   ---------------------
+   -- Highlight_Range --
+   ---------------------
+
+   procedure Highlight_Range
+     (Buffer    : access Source_Buffer_Record'Class;
+      Style     : Style_Access;
+      Line      : Editable_Line_Type;
+      Start_Col : Visible_Column_Type;
+      End_Col   : Visible_Column_Type;
+      Remove    : Boolean := False)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Result               : Boolean;
+      The_Line             : Gint;
+   begin
+      --  Here we test whether the buffer is in destruction. If it is the case
+      --  we simply return since it is not worth taking care of unhighlighting
+      --  lines. Furthermore this prevents GPS from crashing when we close a
+      --  source file used in a visual diff while the reference file is still
+      --  being displayed.
+
+      if Buffer.In_Destruction then
+         return;
       end if;
 
       --  Get the boundaries of text to (un)highlight
@@ -2634,26 +2645,12 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end if;
 
-      --  Highlight/Unhighlight the text
-
-      if Remove then
-         Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
-      else
-         Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
-      end if;
-
-      if Line /= 0 then
-         if Style.In_Speedbar then
-            if Remove then
-               Remove_Line_Highlighting (Buffer, Line, Style);
-            else
-               Add_Line_Highlighting
-                 (Buffer, Line, Style,
-                  Highlight_In => (Highlight_Speedbar => True,
-                                   others             => False));
-            end if;
-         end if;
-      end if;
+      Highlight_Range (Buffer     => Buffer,
+                       Style      => Style,
+                       Line       => Line,
+                       Start_Iter => Start_Iter,
+                       End_Iter   => End_Iter,
+                       Remove     => Remove);
    end Highlight_Range;
 
    --------------
@@ -2744,5 +2741,20 @@ package body Src_Editor_Buffer.Line_Information is
 
       return Result;
    end Flatten_Area;
+
+   ---------------
+   -- Free_Note --
+   ---------------
+
+   procedure Free_Note (Message : Message_Access) is
+   begin
+      if Message = null then
+         return;
+      end if;
+
+      if Message.Has_Note (Line_Info_Note_Record'Tag) then
+         Message.Remove_Note (Line_Info_Note_Record'Tag);
+      end if;
+   end Free_Note;
 
 end Src_Editor_Buffer.Line_Information;

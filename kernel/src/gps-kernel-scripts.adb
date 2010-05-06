@@ -250,6 +250,7 @@ package body GPS.Kernel.Scripts is
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
    Server_Cst     : aliased constant String := "remote_server";
+   Fast_Cst       : aliased constant String := "fast";
 
    Create_Link_Args         : constant Cst_Argument_List :=
      (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
@@ -264,7 +265,8 @@ package body GPS.Kernel.Scripts is
                                 (1 => Nth_Cst'Access);
    Entity_Cmd_Parameters    : constant Cst_Argument_List :=
                                 (Name_Cst'Access, File_Cst'Access,
-                                 Line_Cst'Access, Col_Cst'Access);
+                                 Line_Cst'Access, Col_Cst'Access,
+                                 Fast_Cst'Access);
    File_Cmd_Parameters      : constant Cst_Argument_List :=
                                 (1 => Name_Cst'Access,
                                  2 => Local_Cst'Access);
@@ -779,7 +781,8 @@ package body GPS.Kernel.Scripts is
                                 Allow_Null => True);
             L      : Integer := Nth_Arg (Data, 4, Default => 1);
             C      : Visible_Column_Type :=
-                       Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
+              Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
+            Fast   : constant Boolean := Nth_Arg (Data, 6, Default => False);
             Status : Find_Decl_Or_Body_Query_Status;
             F      : Virtual_File;
             Source : Source_File;
@@ -814,7 +817,8 @@ package body GPS.Kernel.Scripts is
                Closest_Ref       => Ref,
                Entity            => Entity,
                Status            => Status,
-               Fuzzy_Expected    => Fuzzy_Expected);
+               Fuzzy_Expected    => Fuzzy_Expected,
+               Fast              => Fast);
 
             if Status /= Success and then Status /= Fuzzy_Match then
                Set_Error_Msg (Data, -"Entity not found");
@@ -2053,7 +2057,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command

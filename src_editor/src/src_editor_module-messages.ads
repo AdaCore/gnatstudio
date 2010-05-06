@@ -26,6 +26,8 @@ with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
 private with GPS.Styles;
 
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+
 package Src_Editor_Module.Messages is
 
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class);

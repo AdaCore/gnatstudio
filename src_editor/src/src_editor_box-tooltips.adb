@@ -47,6 +47,7 @@ use Src_Editor_Buffer.Line_Information;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Editors;               use GPS.Editors;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
@@ -194,24 +195,20 @@ package body Src_Editor_Box.Tooltips is
             Width, Height : Gint := 0;
             GC            : Gdk.Gdk_GC;
             Has_Info      : Boolean := False;
+            Action        : Line_Information_Record;
 
          begin
             --  Concatenate the tooltip information for all columns
 
             if Line_Info /= null then
                for K in Line_Info'Range loop
-                  if Line_Info (K).Message /= null
-                    and then Get_Action (Line_Info (K).Message) /= null
-                    and then Get_Action (Line_Info (K).Message).Tooltip_Text
-                    /= null
-                  then
+                  Action := Get_Relevant_Action (Line_Info (K));
+                  if Action.Tooltip_Text /= null then
                      if Content /= Null_Unbounded_String then
                         Append (Content, ASCII.LF);
                      end if;
 
-                     Append
-                       (Content,
-                        Get_Action (Line_Info (K).Message).Tooltip_Text.all);
+                     Append (Content, Action.Tooltip_Text.all);
                      Has_Info := True;
                   end if;
                end loop;

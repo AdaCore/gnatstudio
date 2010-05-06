@@ -1375,7 +1375,7 @@ package body GPS.Kernel.Messages is
       --  Notify listeners
 
       Notifiers.Notify_Listeners_About_File_Removed
-        (Self, Category_Node.Name, File_Node.File, (True, True));
+        (Self, Category_Node.Name, File_Node.File, File_Node.Flags);
 
       --  Delete file's node
 

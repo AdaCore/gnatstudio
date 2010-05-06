@@ -2710,19 +2710,6 @@ package body Src_Editor_Box is
    end Add_File_Information;
 
    ------------------------------------
-   -- Create_Line_Information_Column --
-   ------------------------------------
-
-   procedure Create_Line_Information_Column
-     (Editor     : access Source_Editor_Box_Record;
-      Identifier : String;
-      Every_Line : Boolean) is
-   begin
-      Create_Line_Information_Column
-        (Editor.Source_Buffer, Identifier, Every_Line);
-   end Create_Line_Information_Column;
-
-   ------------------------------------
    -- Remove_Line_Information_Column --
    ------------------------------------
 

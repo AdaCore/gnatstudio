@@ -151,8 +151,7 @@ package body Src_Editor_Buffer.Blocks is
                        (Buffer,
                         Editable_Line_Type (Current.Sloc_Start.Line),
                         Command_Access (Command),
-                        Hide_Block_Pixbuf,
-                        False);
+                        Hide_Block_Pixbuf);
                   end if;
                end;
             end if;

@@ -77,7 +77,8 @@ package Entities.Queries is
       Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Status          : out Find_Decl_Or_Body_Query_Status;
-      Check_Decl_Only : Boolean := False);
+      Check_Decl_Only : Boolean := False;
+      Fast            : Boolean := False);
    procedure Find_Declaration
      (Db              : Entities_Database;
       File_Name       : GNATCOLL.VFS.Virtual_File;
@@ -87,7 +88,8 @@ package Entities.Queries is
       Entity          : out Entity_Information;
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
-      Check_Decl_Only : Boolean := False);
+      Check_Decl_Only : Boolean := False;
+      Fast            : Boolean := False);
    procedure Find_Declaration
      (Db              : Entities_Database;
       Source          : Source_File;
@@ -99,7 +101,8 @@ package Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False;
       Handler         : LI_Handler := null;
-      Fuzzy_Expected  : Boolean := False);
+      Fuzzy_Expected  : Boolean := False;
+      Fast : Boolean := False);
    --  Find the entity that is referenced at the given location.
    --  If Entity_Name is unspecified, GPS will no take this into account
    --  If Check_Decl_Only is True, then only declarations are checked, not

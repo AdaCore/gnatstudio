@@ -32,8 +32,10 @@ package Src_Editor_Buffer.Line_Information is
    procedure Create_Line_Information_Column
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Every_Line : Boolean);
+      Every_Line : Boolean;
+      Data       : Line_Information_Record);
    --  Add a column corresponding to Identifier in Buffer
+   --  Data is used to determine the size of the column.
 
    procedure Remove_Line_Information_Column
      (Buffer     : access Source_Buffer_Record'Class;
@@ -52,6 +54,14 @@ package Src_Editor_Buffer.Line_Information is
       Identifier : String;
       Messages   : Message_Array);
    --  Add the line information to the Buffer.
+   --  User must not free Info.
+
+   procedure Add_Side_Information
+     (Buffer         : access Source_Buffer_Record'Class;
+      Identifier     : String;
+      Data           : Line_Information_Array;
+      At_Buffer_Line : Buffer_Line_Type);
+   --  Same as above.
    --  User must not free Info.
 
    procedure Remove_Messages
@@ -168,11 +178,9 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Image         : Gdk_Pixbuf;
-      Overwrite     : Boolean);
+      Image         : Gdk_Pixbuf);
    --  Add a command in the block column information
-   --  If Overwrite is true, this takes precedence over any message previously
-   --  present in this location.
+   --  If Command is null, remove the previous messages rather than adding one.
 
    procedure Fold_All (Buffer : access Source_Buffer_Record'Class);
    --  Fold all top-level foldable blocks
@@ -274,5 +282,12 @@ package Src_Editor_Buffer.Line_Information is
    procedure Side_Column_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "side_column_changed" signal
+
+   procedure Free_Note (Message : Message_Access);
+   --  Free note associated with Message
+
+   function Get_Relevant_Action
+     (Data : Line_Info_Width) return Line_Information_Record;
+   --  Convenience function to get the relevant action in Data at column Column
 
 end Src_Editor_Buffer.Line_Information;

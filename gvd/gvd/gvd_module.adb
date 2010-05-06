@@ -637,6 +637,7 @@ package body GVD_Module is
         (Kernel,
          File,
          "Current Line",
+         Empty_Line_Information,
          --  ??? That should be centralized somewhere !!!
          Every_Line    => False);
 
@@ -645,6 +646,7 @@ package body GVD_Module is
         (Kernel,
          File,
          Breakpoints_Column_Id,
+         Empty_Line_Information,
          Every_Line    => True);
    end Create_Debugger_Columns;
 

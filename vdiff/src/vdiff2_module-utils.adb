@@ -644,9 +644,11 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Create_Line_Information_Column
-        (Kernel, Item.Files (1), Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (1), Id_Col_Vdiff,
+         Empty_Line_Information, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.Files (2), Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (2), Id_Col_Vdiff,
+         Empty_Line_Information, True, True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -931,7 +933,8 @@ package body Vdiff2_Module.Utils is
 
    begin
       Create_Line_Information_Column
-        (Kernel, Item.Files (3 - Ref), Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (3 - Ref), Id_Col_Vdiff,
+         Empty_Line_Information, True, True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -1006,11 +1009,14 @@ package body Vdiff2_Module.Utils is
         (1 .. Get_File_Last_Line (Kernel, Item.Files (3)));
 
       Create_Line_Information_Column
-        (Kernel, Item.Files (1), Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (1), Id_Col_Vdiff, Empty_Line_Information,
+         True, True);
       Create_Line_Information_Column
-        (Kernel, Item.Files (2), Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (2), Id_Col_Vdiff, Empty_Line_Information,
+         True, True);
       Create_Line_Information_Column
-        (Kernel, Item.Files (3), Id_Col_Vdiff, True, True);
+        (Kernel, Item.Files (3), Id_Col_Vdiff, Empty_Line_Information,
+         True, True);
 
       Res := Simplify (Item.List, Item.Ref_File);
       Curr_Node := First (Res);

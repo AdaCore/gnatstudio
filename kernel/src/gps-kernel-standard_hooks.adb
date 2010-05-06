@@ -194,12 +194,14 @@ package body GPS.Kernel.Standard_Hooks is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : Virtual_File;
       Identifier : String;
+      Info       : Line_Information_Record;
       Every_Line : Boolean := True;
       Normalize  : Boolean := True)
    is
       A_Access : Line_Information_Data;
    begin
       A_Access := new Line_Information_Array (0 .. 0);
+      A_Access (0) := Info;
 
       General_Line_Information
         (Kernel,

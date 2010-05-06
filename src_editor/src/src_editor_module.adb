@@ -84,7 +84,6 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
-with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -2248,9 +2247,10 @@ package body Src_Editor_Module is
       if Child /= null then
          if D.Info'First = 0 then
             Create_Line_Information_Column
-              (Source_Editor_Box (Get_Widget (Child)),
+              (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
                D.Identifier,
-               D.Every_Line);
+               D.Every_Line,
+               D.Info (0));
 
          elsif D.Info'Length = 0 then
             Remove_Line_Information_Column
@@ -2267,34 +2267,9 @@ package body Src_Editor_Module is
                --  ??? Source duplicated in src_editor_buffer-line_information
                --  (Add_Blank_Lines)
 
-               declare
-                  Messages : Message_Array (1 .. D.Info'Length);
-                  Simple   : Simple_Message_Access;
-                  Action   : GPS.Kernel.Messages.Action_Item;
-               begin
-                  for J in D.Info'Range loop
-                     Simple := Create_Simple_Message
-                       (Container => Source_Module_Container,
-                        Category  => D.Identifier,
-                        File      => D.File,
-                        Line      => J,
-                        Column    => 0,
-                        Text      => "",
-                        Weight    => 0,
-                        Flags     =>
-                          (Editor_Side => True, Locations => False));
-                     Action := new Line_Information_Record;
-                     Action.all := D.Info (J);
-                     Simple.Set_Action (Action);
-
-                     Messages (1 + J - D.Info'First) :=
-                       Message_Access (Simple);
-                  end loop;
-
-                  Add_File_Information
-                    (Source_Editor_Box
-                       (Get_Widget (Child)), D.Identifier, Messages);
-               end;
+               Add_Side_Information
+                 (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
+                  D.Identifier, D.Info.all, 0);
             end if;
          end if;
 
@@ -2664,11 +2639,6 @@ package body Src_Editor_Module is
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Register_Filter (Kernel, Src_Action_Context, "Source editor");
-
-      --  Create the messages container
-
-      Source_Editor_Module (Src_Editor_Module_Id).Container :=
-        New_Messages_Container (Kernel, False);
 
       --  Commands
 
@@ -3564,15 +3534,6 @@ package body Src_Editor_Module is
 
       Src_Editor_Module.Messages.Unregister (Get_Kernel (Id));
 
-      declare
-         procedure Free is
-           new Ada.Unchecked_Deallocation
-             (Messages_Container'Class, Messages_Container_Access);
-      begin
-         Id.Container.Remove_All_Messages;
-         Free (Id.Container);
-      end;
-
       Src_Editor_Module_Id := null;
    end Destroy;
 
@@ -3918,16 +3879,5 @@ package body Src_Editor_Module is
       Free (Self.Alternate);
       Unchecked_Free (Self.Pattern);
    end Free;
-
-   -----------------------------
-   -- Source_Module_Container --
-   -----------------------------
-
-   function Source_Module_Container return Messages_Container_Access is
-      Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-   begin
-      return Id.Container;
-   end Source_Module_Container;
 
 end Src_Editor_Module;

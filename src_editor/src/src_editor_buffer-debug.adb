@@ -163,9 +163,16 @@ package body Src_Editor_Buffer.Debug is
       end if;
 
       for J in Info'Range loop
-         Res := Res & "#"
-           & To_String (Info (J).Message) & ", " & I (Info (J).Width)
-           & "#";
+         if Info (J).Messages.Is_Empty then
+            Res := Res & "#"
+              & ", "
+              & "#";
+         else
+            Res := Res & "#"
+              & To_String (Info (J).Messages.First_Element)
+              & ", "
+              & "#";
+         end if;
       end loop;
 
       return To_String (Res);

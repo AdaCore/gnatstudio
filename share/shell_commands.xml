@@ -1326,6 +1326,7 @@ This is different than setting instance properties through Python's standard mec
       <param name="file" default="None">An instance of GPS.File, in which the entity is referenced</param>
       <param name="line" default="1">An integer, the line at which the entity is referenced</param>
       <param name="column" default="1">An integer, the column at which the entity is referenced</param>
+      <param name="fast" default="false">A boolean, if true then use only an ad-hoc parser to get the entity</param>
       <description>Initializes a new instance of the Entity class, from any reference to the entity. The file parameter should only be omitted for a predefined entity of the language. This will only work for languages for which a cross-reference engine has been defined</description>
       <example lang="python">
           GPS.Entity ("foo", GPS.File ("a.adb"), 10, 23).declaration().file().name()
@@ -6162,7 +6163,11 @@ The package gps_utils.py provides a somewhat more convenient python interface to
 
   <shell_doc name="GPS.Message.set_style">
      <param>An instance of Style</param>
-     <description>Set the style of the message.</description>
+     <param>An Integer</param>
+     <description>Set the style of the message. The second parameter indicates
+     the length in number of characters to highlight. If 0, then highlight the
+     whole line. If left out, this means the length of the message highlighting
+     is not modified.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Message.set_action">

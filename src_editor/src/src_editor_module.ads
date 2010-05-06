@@ -39,7 +39,6 @@ with Gtkada.MDI;         use Gtkada.MDI;
 
 with Commands.Controls;  use Commands.Controls;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with GPS.Styles;         use GPS.Styles;
 with GPS.Kernel;         use GPS.Kernel;
@@ -206,18 +205,6 @@ package Src_Editor_Module is
    function Get_Highlighters return List_Of_Highlighters.List;
    --  Return the list of registered highlighters
 
-   --------------
-   -- Messages --
-   --------------
-
-   --  The source editor module has its own messages container with no
-   --  listeners registered, for handling efficiently messages that should
-   --  never be listed in places other than the editors (for instance the
-   --  debugger "dots" on which you can click to add breakpoints)
-
-   function Source_Module_Container return Messages_Container_Access;
-   --  Return the source editor module's message container
-
 private
 
    ------------------------
@@ -327,10 +314,6 @@ private
       --  The following fields are related to hyper mode
 
       Highlighters          : List_Of_Highlighters.List;
-
-      --  The message container
-
-      Container : Messages_Container_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

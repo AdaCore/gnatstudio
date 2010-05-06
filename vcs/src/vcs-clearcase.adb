@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1724,6 +1724,16 @@ package body VCS.ClearCase is
          Command_Head,
          Annotation_Output_Handler'Access,
          -"ClearCase: Querying annotations");
+
+      Create_Line_Information_Column
+        (Kernel        => Rep.Kernel,
+         File          => File,
+         Info          => (Text => new String'((1 .. 40 => ' ')),
+                           Tooltip_Text => null,
+                           Image => null,
+                           Associated_Command => null),
+         Identifier    => Annotation_Id,
+         Every_Line    => False);
 
       Launch_Background_Command
         (Rep.Kernel,

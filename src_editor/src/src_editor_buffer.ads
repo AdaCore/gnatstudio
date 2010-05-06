@@ -637,6 +637,9 @@ package Src_Editor_Buffer is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Information_Record, Line_Information_Access);
 
+   procedure Free (Info : in out Line_Information_Access);
+   --  Free memory associated with Info
+
    --  The following is related to extra information associated to the buffer,
    --  such as VCS status of the file.
 
@@ -660,12 +663,15 @@ package Src_Editor_Buffer is
      (Buffer : Source_Buffer) return Extra_Information_Array_Access;
    --  Return the extra information associated with the buffer
 
+   package Message_List is new Ada.Containers.Doubly_Linked_Lists
+     (Message_Access);
+
    --  The following is related to information to be put in the side column
 
    type Line_Info_Width is record
-      Message : Message_Access;
-      Width   : Integer := 0;
-      Set     : Boolean := False;
+      Messages : Message_List.List;
+      Action   : Line_Information_Access;
+      Set      : Boolean := False;
    end record;
 
    type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
@@ -1150,7 +1156,7 @@ private
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
    --  The line terminator style of the given buffer
 
-   procedure Free (X : in out Line_Info_Width);
+   procedure Free (X : in out Line_Info_Width; Free_Messages : Boolean);
    --  Free memory associated to X
 
    --------------------

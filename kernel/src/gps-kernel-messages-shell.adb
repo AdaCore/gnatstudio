@@ -176,11 +176,15 @@ package body GPS.Kernel.Messages.Shell is
 
       elsif Command = "set_style" then
          declare
-            Length : constant Natural := Message.Get_Highlighting_Length;
+            Length     : Integer := Nth_Arg (Data, 3, -1);
          begin
-            if Length /= 0 then
-               Message.Set_Highlighting
-                 (Get_Style (Nth_Arg (Data, 2)), Length);
+            if Length = -1 then
+               --  Reuse the previous length of the message
+               Length := Message.Get_Highlighting_Length;
+            end if;
+
+            if Length = 0 then
+               Message.Set_Highlighting (Get_Style (Nth_Arg (Data, 2)));
             else
                Message.Set_Highlighting
                  (Get_Style (Nth_Arg (Data, 2)), Length);
@@ -446,7 +450,7 @@ package body GPS.Kernel.Messages.Shell is
          Message_Class);
 
       Register_Command
-        (Kernel, "set_style", 1, 1, Accessors'Access, Message_Class);
+        (Kernel, "set_style", 1, 2, Accessors'Access, Message_Class);
 
       Register_Command
         (Kernel, "execute_action", 0, 0, Accessors'Access, Message_Class);

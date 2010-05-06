@@ -1645,13 +1645,16 @@ package body GPS.Kernel is
       Entity            : out Entities.Entity_Information;
       Closest_Ref       : out Entities.Entity_Reference;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Fuzzy_Expected    : Boolean := False)
+      Fuzzy_Expected    : Boolean := False;
+      Fast              : Boolean := False)
    is
    begin
       Find_Declaration
         (Kernel.Database, File, Entity_Name,
          Line, Column, Entity, Closest_Ref,
-         Status, Fuzzy_Expected => Fuzzy_Expected);
+         Status,
+         Fuzzy_Expected => Fuzzy_Expected,
+         Fast => Fast);
 
       --  ??? Should have the preference for the handling of fuzzy matches:
       --   - consider it as a no match: set Status to Entity_Not_Found;

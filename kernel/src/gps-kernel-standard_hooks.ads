@@ -337,10 +337,14 @@ package GPS.Kernel.Standard_Hooks is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
+      Info       : Line_Information_Record;
       Every_Line : Boolean := True;
       Normalize  : Boolean := True);
    --  Request the creation of a column on the side of some editors.
    --  See File_Line_Action_Hook
+   --  Info is used to determine the size of the column: it can contain either
+   --  an image or some markup. If Empty_Line_Information is given, the column
+   --  will have the default size needed to contain one icon.
 
    procedure Remove_Line_Information_Column
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;

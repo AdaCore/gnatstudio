@@ -256,7 +256,7 @@ package body Coverage_GUI is
          end loop;
 
          Create_Line_Information_Column
-           (Kernel, File_Node.Name, CodeAnalysis_Cst);
+           (Kernel, File_Node.Name, CodeAnalysis_Cst, Empty_Line_Information);
          Add_Line_Information
            (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
          Unchecked_Free (Line_Info);

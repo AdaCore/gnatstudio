@@ -417,12 +417,6 @@ package Src_Editor_Box is
       Messages   : Message_Array);
    --  See GPS.Kernel.Modules for more information
 
-   procedure Create_Line_Information_Column
-     (Editor     : access Source_Editor_Box_Record;
-      Identifier : String;
-      Every_Line : Boolean);
-   --  See GPS.Kernel.Modules for more information
-
    procedure Remove_Line_Information_Column
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String);

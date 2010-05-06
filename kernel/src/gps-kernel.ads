@@ -341,11 +341,15 @@ package GPS.Kernel is
       Entity            : out Entities.Entity_Information;
       Closest_Ref       : out Entities.Entity_Reference;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Fuzzy_Expected    : Boolean := False);
+      Fuzzy_Expected    : Boolean := False;
+      Fast              : Boolean := False);
    --  Find the declaration of the given entity in the file.
    --  If Ask_If_Overloaded is True and there are several possible matches for
    --  the entiy (for instance because the xref info is not up-to-date), an
    --  interactive dialog is opened.
+   --  If Fast is True, get the entity information only from the
+   --  constructs database, do not attempt to refine the search using the ALI
+   --  database.
 
    --------------
    -- Contexts --

@@ -1870,7 +1870,7 @@ package body VCS.Generic_VCS is
                return Str (Str'First .. Str'First + Width - 1);
 
             else
-               return (Width - Str'Length) * ' ' & Str;
+               return Str & (Width - Str'Length) * ' ';
             end if;
          end Field;
 
@@ -1878,14 +1878,14 @@ package body VCS.Generic_VCS is
 
       begin
          if N_Rev = Last_Rev then
-            return "   . . .   ";
+            return "             . . . ";
 
          else
             Last_Rev := N_Rev;
-            return "<span size=""small"">" & "<span underline=""single"" "
+            return Date & ' ' & Field (Author, 10)
+              & "<span size=""small"">" & "<span underline=""single"" "
               & "foreground=""blue"">"
-              & Rev & "</span>" & ASCII.HT
-              & Field (Author, 10) & ' ' & Field (Date) & " </span>";
+              & Rev & "</span></span>";
          end if;
       end Build_Text_Info;
 
@@ -1932,6 +1932,7 @@ package body VCS.Generic_VCS is
 
       declare
          use Ada.Strings.Unbounded;
+         Max_Length : Integer := 0;
          A : Line_Information_Array (1 .. Max);
       begin
          loop
@@ -1963,6 +1964,9 @@ package body VCS.Generic_VCS is
                   A (Line).Text := new String'
                     (Build_Text_Info
                        (Rev, To_String (Author), To_String (Date)));
+
+                  Max_Length := Integer'Max
+                    (Max_Length, Rev'Length + 12 + Length (Date));
 
                   if Parser.Pattern /= null then
                      declare
@@ -2003,6 +2007,16 @@ package body VCS.Generic_VCS is
             Line  := Line + 1;
             Start := Matches (0).Last + 1;
          end loop;
+
+         Create_Line_Information_Column
+           (Kernel        => Kernel,
+            File          => File,
+            Info          => (Text => new String'((1 .. Max_Length => ' ')),
+                              Tooltip_Text => null,
+                              Image => null,
+                              Associated_Command => null),
+            Identifier    => Annotation_Id,
+            Every_Line    => False);
 
          Add_Line_Information
            (Kernel,

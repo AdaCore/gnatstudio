@@ -1344,6 +1344,31 @@ package body Src_Editor_Buffer is
       end if;
    end Destroy_Hook;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Info : in out Line_Information_Access) is
+   begin
+      if Info = null then
+         return;
+      end if;
+
+      if Info.Text /= null then
+         GNAT.Strings.Free (Info.Text);
+      end if;
+
+      if Info.Tooltip_Text /= null then
+         GNAT.Strings.Free (Info.Tooltip_Text);
+      end if;
+
+      if Info.Associated_Command /= null then
+         Unref (Info.Associated_Command);
+      end if;
+
+      Unchecked_Free (Info);
+   end Free;
+
    --------------------
    -- Buffer_Destroy --
    --------------------
@@ -1360,7 +1385,7 @@ package body Src_Editor_Buffer is
       procedure Free (X : in out Line_Info_Width_Array) is
       begin
          for J in X'Range loop
-            X (J).Message := null;
+            Free (X (J), Free_Messages => False);
          end loop;
       end Free;
 
@@ -2674,7 +2699,10 @@ package body Src_Editor_Buffer is
 
       --  Create the default column for line information (block folding,
       --  compiler error messages, etc).
-      Create_Line_Information_Column (Buffer, Default_Column, False);
+      Create_Line_Information_Column
+        (Buffer, Default_Column, False, Empty_Line_Information);
+      Buffer.Block_Highlighting_Column :=
+        Buffer.Editable_Line_Info_Columns.all'Last;
    end Initialize;
 
    -------------------
@@ -4910,8 +4938,8 @@ package body Src_Editor_Buffer is
 
             for K in Columns_Config'Range loop
                Buffer.Line_Data (Line).Side_Info_Data (K) :=
-                 (null,
-                  Width => -1,
+                 (Message_List.Empty_List,
+                  Action => null,
                   Set   => not Columns_Config (K).Every_Line);
             end loop;
          end if;
@@ -6114,10 +6142,20 @@ package body Src_Editor_Buffer is
    -- Free --
    ----------
 
-   procedure Free (X : in out Line_Info_Width) is
+   procedure Free (X : in out Line_Info_Width; Free_Messages : Boolean) is
+      C : Message_List.Cursor;
    begin
-      if X.Message /= null then
-         X.Message := null;
+      Free (X.Action);
+
+      if Free_Messages then
+         C := X.Messages.First;
+
+         while Message_List.Has_Element (C) loop
+            Free_Note (Message_List.Element (C));
+            Message_List.Next (C);
+         end loop;
+
+         X.Messages.Clear;
       end if;
    end Free;
 

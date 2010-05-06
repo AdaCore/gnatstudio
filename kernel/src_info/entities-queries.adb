@@ -451,13 +451,14 @@ package body Entities.Queries is
       Column          : Basic_Types.Visible_Column_Type;
       Entity          : out Entity_Information;
       Status          : out Find_Decl_Or_Body_Query_Status;
-      Check_Decl_Only : Boolean := False)
+      Check_Decl_Only : Boolean := False;
+      Fast : Boolean := False)
    is
       Ref : Entity_Reference;
    begin
       Find_Declaration
         (Db, File_Name, Entity_Name, Line, Column, Entity, Ref, Status,
-         Check_Decl_Only);
+         Check_Decl_Only, Fast);
    end Find_Declaration;
 
    ----------------------
@@ -473,7 +474,8 @@ package body Entities.Queries is
       Entity          : out Entity_Information;
       Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
-      Check_Decl_Only : Boolean := False)
+      Check_Decl_Only : Boolean := False;
+      Fast : Boolean := False)
    is
       Handler : constant LI_Handler := Get_LI_Handler (Db, File_Name);
       Source  : Source_File;
@@ -496,7 +498,7 @@ package body Entities.Queries is
          if Source /= null then
             Find_Declaration
               (Db, Source, Entity_Name, Line, Column, Entity, Closest_Ref,
-               Status, Check_Decl_Only, Handler);
+               Status, Check_Decl_Only, Handler, Fast);
             return;
          end if;
       end if;
@@ -519,7 +521,8 @@ package body Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False;
       Handler         : LI_Handler := null;
-      Fuzzy_Expected  : Boolean := False)
+      Fuzzy_Expected  : Boolean := False;
+      Fast            : Boolean := False)
    is
       H       : LI_Handler := Handler;
       Updated : Source_File;
@@ -585,8 +588,9 @@ package body Entities.Queries is
         and then
           (Status = Entity_Not_Found
            or else
-             ((Status = Fuzzy_Match or else Status = Overloaded_Entity_Found)
-               and then not Fuzzy_Expected))
+             ((Status = Fuzzy_Match
+               or else Status = Overloaded_Entity_Found)
+              and then not Fuzzy_Expected))
       then
          declare
             Tree_Lang : constant Tree_Language_Access :=
@@ -615,18 +619,20 @@ package body Entities.Queries is
                   --  the database. If that's the case, it's better to use it
                   --  than the dummy one created from the construct.
 
-                  Entity := Get_Or_Create
-                    (Name   => Get_Construct (Result).Name.all,
-                     File     => Get_Or_Create
-                       (Db    => Db,
-                        File  => Get_File_Path (Get_File (Result))),
-                     Line   => Get_Construct (Result).Sloc_Entity.Line,
-                     Column => To_Visible_Column
-                       (Get_File (Result),
-                        Get_Construct (Result).Sloc_Entity.Line,
-                        String_Index_Type
-                          (Get_Construct (Result).Sloc_Entity.Column)),
-                     Allow_Create => False);
+                  if not Fast then
+                     Entity := Get_Or_Create
+                       (Name   => Get_Construct (Result).Name.all,
+                        File     => Get_Or_Create
+                          (Db    => Db,
+                           File  => Get_File_Path (Get_File (Result))),
+                        Line   => Get_Construct (Result).Sloc_Entity.Line,
+                        Column => To_Visible_Column
+                          (Get_File (Result),
+                           Get_Construct (Result).Sloc_Entity.Line,
+                           String_Index_Type
+                             (Get_Construct (Result).Sloc_Entity.Column)),
+                        Allow_Create => False);
+                  end if;
 
                   --  If we don't have any regular entity for the location
                   --  found, then create a dummy one linked to the construct.

@@ -47,6 +47,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
@@ -808,12 +809,18 @@ package body Src_Editor_Module.Shell is
                Set_Return_Value_As_List (Data);
 
                for J in Info'Range loop
-                  if Info (J).Message /= null
-                    and then Info (J).Message.Get_Action /= null
+                  if not Info (J).Messages.Is_Empty
+                    and then Info (J).Messages.First_Element.Get_Action /= null
                   then
-                     Print_Line_Info (Info (J).Message.Get_Action.all);
+                     Print_Line_Info
+                       (Info (J).Messages.First_Element.Get_Action.all);
+                  end if;
+
+                  if Info (J).Action /= null then
+                     Print_Line_Info (Info (J).Action.all);
                   end if;
                end loop;
+
             end if;
          end;
 

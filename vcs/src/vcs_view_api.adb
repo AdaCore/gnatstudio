@@ -2429,12 +2429,6 @@ package body VCS_View_API is
             Open_File_Editor (Get_Kernel (Context), Files (J));
          end if;
 
-         Create_Line_Information_Column
-           (Kernel        => Get_Kernel (Context),
-            File          => Files (J),
-            Identifier    => Annotation_Id,
-            Every_Line    => False);
-
          Annotate (Get_Current_Ref (Context), Files (J));
       end loop;
 
