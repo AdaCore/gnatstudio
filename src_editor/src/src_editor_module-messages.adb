@@ -50,11 +50,6 @@ package body Src_Editor_Module.Messages is
    --  Callback for the "file_edited" hook. Redirects call to highlighting
    --  manager.
 
-   procedure Set_Action
-     (Self    : not null access Highlighting_Manager'Class;
-      Message : not null access Abstract_Message'Class);
-   --  Adds an action to the message in the source editor
-
    function Get
      (Kernel : access Kernel_Handle_Record'Class;
       File   : Virtual_File) return Source_Buffer;
@@ -218,27 +213,6 @@ package body Src_Editor_Module.Messages is
       end if;
    end Message_Added;
 
-   ----------------
-   -- Set_Action --
-   ----------------
-
-   procedure Set_Action
-     (Self    : not null access Highlighting_Manager'Class;
-      Message : not null access Abstract_Message'Class)
-   is
-      B : Source_Buffer;
-
-   begin
-      B := Get (Self.Kernel, Message.Get_File);
-
-      if B /= null then
-         --  ??? Here we re-add all messages, but we could simply recompute the
-         --  width of the column info
-         Add_File_Information
-           (B, Message.Get_Category, (1 => Message_Access (Message)));
-      end if;
-   end Set_Action;
-
    ------------------------------
    -- Message_Property_Changed --
    ------------------------------
@@ -264,8 +238,7 @@ package body Src_Editor_Module.Messages is
                             Buffer_Line   => 0,
                             Message       => Message_Access (Message));
 
-      elsif Property = "action" then
-         Self.Set_Action (Message);
+         --  ??? We should refresh the message when property is "action"
       end if;
    end Message_Property_Changed;
 
@@ -284,6 +257,14 @@ package body Src_Editor_Module.Messages is
 
       if B /= null then
          Remove_Messages (B, (1 => Message_Access (Message)));
+      else
+         --  It is possible that B = null, for instance if a container decides
+         --  to remove the messages in reaction to a "file_closed" event.
+         --  (This is the case for the vdiff view, for instance).
+         --  In this case, all we have to do is remove the note contained in
+         --  the message
+
+         Free_Note (Message_Access (Message));
       end if;
    end Message_Removed;
 
