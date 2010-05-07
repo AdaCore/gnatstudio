@@ -1285,6 +1285,70 @@ package body GPS.Kernel.Messages is
       end loop;
    end Remove_All_Messages;
 
+   -------------------------
+   -- Remove_All_Messages --
+   -------------------------
+
+   procedure Remove_All_Messages
+     (Self  : not null access Messages_Container'Class;
+      Flags : Message_Flags)
+   is
+      Cat_Node     : Node_Access;
+      File_Cursor  : File_Maps.Cursor;
+      Cat_Cursor   : Category_Maps.Cursor;
+      File_Node    : Node_Access;
+      Msg_Node     : Node_Access;
+
+      One_Msg_Left  : Boolean;
+      One_File_Left : Boolean;
+   begin
+      Cat_Cursor := Self.Category_Map.First;
+
+      while Category_Maps.Has_Element (Cat_Cursor) loop
+         Cat_Node := Category_Maps.Element (Cat_Cursor);
+
+         File_Cursor := Cat_Node.File_Map.First;
+
+         One_File_Left := False;
+         while File_Maps.Has_Element (File_Cursor) loop
+            File_Node := File_Maps.Element (File_Cursor);
+
+            One_Msg_Left := False;
+            for M in reverse File_Node.Children.First_Index
+              .. File_Node.Children.Last_Index
+            loop
+               Msg_Node := File_Node.Children.Element (M);
+
+               if Match (Msg_Node.Flags, Flags) then
+                  Remove_Message (Self, Message_Access (Msg_Node), False);
+               else
+                  One_Msg_Left := True;
+               end if;
+            end loop;
+
+            if not One_Msg_Left then
+               Remove_File (Self,
+                            File_Cursor,
+                            Cat_Node.Children.Find_Index (File_Node),
+                            File_Node,
+                            False);
+            else
+               One_File_Left := True;
+               File_Maps.Next (File_Cursor);
+            end if;
+         end loop;
+
+         if not One_File_Left then
+            Remove_Category (Self,
+                             Cat_Cursor,
+                             Self.Categories.Find_Index (Cat_Node),
+                             Cat_Node);
+         else
+            Next (Cat_Cursor);
+         end if;
+      end loop;
+   end Remove_All_Messages;
+
    ---------------------
    -- Remove_Category --
    ---------------------

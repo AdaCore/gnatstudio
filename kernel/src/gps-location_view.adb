@@ -1180,7 +1180,8 @@ package body GPS.Location_View is
         Get_Messages_Container (Get_Kernel (Context.Context));
 
    begin
-      Container.Remove_All_Messages;
+      Container.Remove_All_Messages
+        ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
 
       return Commands.Success;
    end Execute;

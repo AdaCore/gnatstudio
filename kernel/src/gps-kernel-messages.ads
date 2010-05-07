@@ -282,6 +282,11 @@ package GPS.Kernel.Messages is
      (Self : not null access Messages_Container'Class);
    --  Removes all messages.
 
+   procedure Remove_All_Messages
+     (Self  : not null access Messages_Container'Class;
+      Flags : Message_Flags);
+   --  Removes all messages that match Flags
+
    procedure Remove_Category
      (Self     : not null access Messages_Container'Class;
       Category : String);
