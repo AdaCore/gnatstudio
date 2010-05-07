@@ -1024,6 +1024,11 @@ package Src_Editor_Buffer is
    --  Leave the current undo-redo group. This needs to be called once for each
    --  call to Enter_Current_Group.
 
+   function Get_Timestamp
+     (Buffer : access Source_Buffer_Record'Class) return Integer;
+   --  Return the logical timestamp in Buffer. This logical timestamp is
+   --  increased with every modification in Buffer.
+
 private
 
    procedure Set_Cursor_Position
@@ -1493,6 +1498,8 @@ private
       Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
       Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The begin and end of the highlighted section
+
+      Logical_Timestamp : Integer := -1;
    end record;
 
    procedure Emit_By_Name

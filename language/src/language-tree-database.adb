@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Calendar;          use Ada.Calendar;
 
 with Glib.Convert; use Glib.Convert;
 
@@ -483,6 +484,28 @@ package body Language.Tree.Database is
       return Entity;
    end Find_Next_Part;
 
+   -------------------
+   -- Get_Timestamp --
+   -------------------
+
+   overriding function Get_Timestamp
+     (Provider : access File_Buffer_Provider;
+      File     : GNATCOLL.VFS.Virtual_File) return Integer
+   is
+      pragma Unreferenced (Provider);
+      Stamp : Time;
+      Y     : Year_Number;
+      M     : Month_Number;
+      D     : Day_Number;
+      S     : Day_Duration;
+   begin
+      Stamp := File.File_Time_Stamp;
+
+      Split (Stamp, Y, M, D, S);
+
+      return D * 86400 + Integer (S);
+   end Get_Timestamp;
+
    ----------------
    -- Get_Buffer --
    ----------------
@@ -894,6 +917,7 @@ package body Language.Tree.Database is
          end case;
       end Diff_Callback;
 
+      Timestamp : Integer;
    begin
       --  If the file is null, nothing to update
 
@@ -911,76 +935,89 @@ package body Language.Tree.Database is
          return;
       end if;
 
-      --  Phase 1 : analyze the new tree
+      --  Check whether we are up-to-date.
+      Timestamp := File.Db.Provider.Get_Timestamp (File.File);
 
-      Buffer := Get_Buffer (File.Db.Provider, File.File);
+      if File.Timestamp = -1
+        or else Timestamp = -1
+        or else File.Timestamp /= Timestamp
+      then
+         File.Timestamp := Timestamp;
+         --  We are not up-to-date: compute the constructs
 
-      --  ??? We are assuming that Buffer is encoded in UTF8, is this the case?
-      Parse_Constructs (File.Lang, Buffer.all, Constructs);
-      New_Tree := To_Construct_Tree (Constructs'Access, True);
+         --  Phase 1 : analyze the new tree
 
-      Analyze_Referenced_Identifiers
-        (Buffer.all, File.Lang, File.Db, New_Tree);
-      Analyze_Constructs_Identifiers (File.Db, New_Tree);
-      New_Db_Data_Tree := new Construct_Db_Data_Array
-        (1 .. New_Tree.Contents'Length);
-      New_Db_Data_Tree.all :=
-        (others => Construct_Db_Trie.Null_Construct_Trie_Index);
+         Buffer := Get_Buffer (File.Db.Provider, File.File);
 
-      --  Phase 2 : replace previous content by the new one
+         --  ??? We are assuming that Buffer is encoded in UTF8, is this the
+         --  case?
+         Parse_Constructs (File.Lang, Buffer.all, Constructs);
+         New_Tree := To_Construct_Tree (Constructs'Access, True);
 
-      if Is_New_File then
-         Current_Update_Kind := Full_Change;
+         Analyze_Referenced_Identifiers
+           (Buffer.all, File.Lang, File.Db, New_Tree);
+         Analyze_Constructs_Identifiers (File.Db, New_Tree);
+         New_Db_Data_Tree := new Construct_Db_Data_Array
+           (1 .. New_Tree.Contents'Length);
+         New_Db_Data_Tree.all :=
+           (others => Construct_Db_Trie.Null_Construct_Trie_Index);
+
+         --  Phase 2 : replace previous content by the new one
+
+         if Is_New_File then
+            Current_Update_Kind := Full_Change;
+
+            declare
+               It : Construct_Tree_Iterator := First (New_Tree);
+            begin
+               while It /= Null_Construct_Tree_Iterator loop
+                  Add_New_Construct_If_Needed (It);
+
+                  It := Next (New_Tree, It, Jump_Into);
+               end loop;
+            end;
+         else
+            Current_Update_Kind := Minor_Change;
+            New_Tree.Annotations := File.Tree.Annotations;
+
+            Diff
+              (File.Tree_Lang,
+               File.Tree,
+               New_Tree,
+               Diff_Callback'Unrestricted_Access);
+
+            File.Tree.Annotations :=
+              Tree_Annotations_Pckg.Null_Annotation_Container;
+
+            Free (File.Cache_Buffer);
+            Unchecked_Free (File.Db_Data_Tree);
+            Free (File.Line_Starts);
+
+            Old_Tree := File.Tree;
+         end if;
+
+         Free (Constructs);
+         Free (Buffer);
+
+         File.Tree := New_Tree;
+         File.Db_Data_Tree := New_Db_Data_Tree;
+
+         --  Notify database assistants
 
          declare
-            It : Construct_Tree_Iterator := First (New_Tree);
+            Cur : Database_Listeners.Cursor;
          begin
-            while It /= Null_Construct_Tree_Iterator loop
-               Add_New_Construct_If_Needed (It);
+            Cur := First (File.Db.Listeners);
 
-               It := Next (New_Tree, It, Jump_Into);
+            while Cur /= Database_Listeners.No_Element loop
+               File_Updated
+                 (Element (Cur), File, Old_Tree, Current_Update_Kind);
+               Cur := Next (Cur);
             end loop;
          end;
-      else
-         Current_Update_Kind := Minor_Change;
-         New_Tree.Annotations := File.Tree.Annotations;
 
-         Diff
-           (File.Tree_Lang,
-            File.Tree,
-            New_Tree,
-            Diff_Callback'Unrestricted_Access);
-
-         File.Tree.Annotations :=
-           Tree_Annotations_Pckg.Null_Annotation_Container;
-
-         Free (File.Cache_Buffer);
-         Unchecked_Free (File.Db_Data_Tree);
-         Free (File.Line_Starts);
-
-         Old_Tree := File.Tree;
+         Free (Old_Tree);
       end if;
-
-      Free (Constructs);
-      Free (Buffer);
-
-      File.Tree := New_Tree;
-      File.Db_Data_Tree := New_Db_Data_Tree;
-
-      --  Notify database assistants
-
-      declare
-         Cur : Database_Listeners.Cursor;
-      begin
-         Cur := First (File.Db.Listeners);
-
-         while Cur /= Database_Listeners.No_Element loop
-            File_Updated (Element (Cur), File, Old_Tree, Current_Update_Kind);
-            Cur := Next (Cur);
-         end loop;
-      end;
-
-      Free (Old_Tree);
    end Internal_Update_Contents;
 
    ----------

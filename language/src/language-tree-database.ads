@@ -156,6 +156,12 @@ package Language.Tree.Database is
 
    type Buffer_Provider_Access is access all Buffer_Provider'Class;
 
+   function Get_Timestamp
+     (Provider : access Buffer_Provider;
+      File     : GNATCOLL.VFS.Virtual_File) return Integer is abstract;
+   --  Return a logical timestamp indicating the state of the buffer, so that
+   --  clients can be spared the expensive calls to Get_Buffer
+
    function Get_Buffer
      (Provider : access Buffer_Provider;
       File     : GNATCOLL.VFS.Virtual_File) return String_Access is abstract;
@@ -168,6 +174,11 @@ package Language.Tree.Database is
    --  Free the access type
 
    type File_Buffer_Provider is new Buffer_Provider with private;
+
+   overriding function Get_Timestamp
+     (Provider : access File_Buffer_Provider;
+      File     : GNATCOLL.VFS.Virtual_File) return Integer;
+   --  See documentation of overriden declaration
 
    overriding function Get_Buffer
      (Provider : access File_Buffer_Provider;
@@ -669,6 +680,11 @@ private
       File      : Virtual_File;
       Lang      : Language_Access;
       Tree_Lang : Tree_Language_Access;
+
+      Timestamp : Integer := -1;
+      --  A logical timestamp which is used to invalidate
+      --  Tree only when the buffer has changed since
+      --  last time it was calculated.
 
       Tree         : Construct_Tree;
       Db_Data_Tree : Construct_Db_Data_Access;

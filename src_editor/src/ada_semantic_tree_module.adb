@@ -47,6 +47,33 @@ package body Ada_Semantic_Tree_Module is
       File     : Virtual_File) return String_Access;
    --  Return the buffer from the editor if any, from the file otherwise.
 
+   overriding function Get_Timestamp
+     (Provider : access GPS_Buffer_Provider;
+      File     : Virtual_File) return Integer;
+
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   overriding function Get_Timestamp
+     (Provider : access GPS_Buffer_Provider;
+      File     : Virtual_File) return Integer
+   is
+      Editor : Gtkada.MDI.MDI_Child;
+   begin
+      if Is_Open (Provider.Kernel, File) then
+         Editor := Find_Editor (Provider.Kernel, File);
+
+         if Editor /= null then
+            return
+              Get_Timestamp
+                (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))));
+         end if;
+      end if;
+
+      return -1;
+   end Get_Timestamp;
+
    ----------------
    -- Get_Buffer --
    ----------------

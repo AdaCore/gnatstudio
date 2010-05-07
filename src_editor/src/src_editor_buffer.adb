@@ -470,6 +470,11 @@ package body Src_Editor_Buffer is
    --  Disable the "paste-done" signal introduced in gtk+ 2.18, which breaks
    --  the handling of multiple views
 
+   procedure Update_Logical_Timestamp
+     (Buffer : access Source_Buffer_Record'Class);
+   pragma Inline (Update_Logical_Timestamp);
+   --  Update the logical timestamp
+
    -----------
    -- Hooks --
    -----------
@@ -1555,6 +1560,8 @@ package body Src_Editor_Buffer is
       Iter   : Gtk_Text_Iter;
       Number : Buffer_Line_Type := 0;
    begin
+      Update_Logical_Timestamp (Buffer);
+
       Get_Text_Iter (Nth (Params, 1), Iter);
 
       if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
@@ -1796,6 +1803,8 @@ package body Src_Editor_Buffer is
    is
       Start_Iter : Gtk_Text_Iter;
    begin
+      Update_Logical_Timestamp (Buffer);
+
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
 
       if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
@@ -6896,5 +6905,29 @@ package body Src_Editor_Buffer is
          end;
       end if;
    end Get_Typed_Chars;
+
+   -------------------
+   -- Get_Timestamp --
+   -------------------
+
+   function Get_Timestamp
+     (Buffer : access Source_Buffer_Record'Class) return Integer is
+   begin
+      return Buffer.Logical_Timestamp;
+   end Get_Timestamp;
+
+   ------------------------------
+   -- Update_Logical_Timestamp --
+   ------------------------------
+
+   procedure Update_Logical_Timestamp
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      if Buffer.Logical_Timestamp = Integer'Last then
+         Buffer.Logical_Timestamp := 0;
+      else
+         Buffer.Logical_Timestamp := Buffer.Logical_Timestamp + 1;
+      end if;
+   end Update_Logical_Timestamp;
 
 end Src_Editor_Buffer;
