@@ -499,6 +499,12 @@ package body Language.Tree.Database is
       D     : Day_Number;
       S     : Day_Duration;
    begin
+      --  ??? Temporarily deactivate getting of time stamps for files on disk
+      --  while this is being investigated.
+      if True then
+         return -1;
+      end if;
+
       Stamp := File.File_Time_Stamp;
 
       Split (Stamp, Y, M, D, S);
@@ -546,7 +552,7 @@ package body Language.Tree.Database is
    procedure Unref (File : Structured_File_Access) is
    begin
       if File /= null then
-         File.Ref := File.Ref + 1;
+         File.Ref := File.Ref - 1;
       end if;
    end Unref;
 
