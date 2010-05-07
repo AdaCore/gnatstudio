@@ -13,14 +13,14 @@ from gps_utils import *
 
 # Constants
 
-LINES_IN_ONE_BATCH=5 # Number of lines to process in one batch
-TIMEOUT=100          # Interval (in milliseconds) between two batches
+LINES_IN_ONE_BATCH=2 # Number of lines to process in one batch
+TIMEOUT=50           # Interval (in milliseconds) between two batches
 
 default_colors =  {
   "label"      : "lightblue",
   "literal"    : "lightblue",
-  "object"     : "#aeffa5",
-  "subprogram" : "#ffbf70",
+  "object"     : "#ffbeee",
+  "subprogram" : "#ffcf90",
   "packgage/namespace" : "lightgreen",
   "type"               : "lightgreen",
   "unknown"    : "lightblue" }
@@ -230,7 +230,7 @@ def on_gps_started (hook_name):
 
     # Create preferences
     for k in default_colors:
-        pref_name = "Plugins/occurrences/color_" + k.replace("/", "_")
+        pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
 
         # Create styles
 
