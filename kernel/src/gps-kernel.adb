@@ -1661,10 +1661,15 @@ package body GPS.Kernel is
       --   - consider it as overloaded entity: same as below;
       --   - use the closest match: nothing to do.
 
-      if Ask_If_Overloaded
-        and then Status = Overloaded_Entity_Found
-      then
-         Select_Entity_Declaration (Kernel, File, Entity_Name, Entity, Status);
+      if Status = Overloaded_Entity_Found then
+         if Fast then
+            --  In Fast mode we consider that the overloaded entity is as good
+            --  as a success.
+            Status := Success;
+         elsif Ask_If_Overloaded then
+            Select_Entity_Declaration
+              (Kernel, File, Entity_Name, Entity, Status);
+         end if;
       end if;
    end Find_Declaration_Or_Overloaded;
 
