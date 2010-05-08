@@ -524,8 +524,7 @@ package body Code_Peer.Module is
    is
       Name      : constant GNATCOLL.VFS.Filesystem_String :=
         GNATCOLL.VFS.Filesystem_String
-          (Ada.Characters.Handling.To_Lower
-               (String (Project_Path (Project).Base_Name)));
+          (String (Project_Path (Project).Base_Name));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
         Project_Path (Project).File_Extension;
 

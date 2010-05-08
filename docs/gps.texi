@@ -11472,7 +11472,7 @@ GPS.Project.root().name()
 @end smallexample
 
 @item %Pb
-The basename of the root project file, all lower case.
+The basename of the root project file.
 
 @item %Pl
 The name of the root project, all lower case.

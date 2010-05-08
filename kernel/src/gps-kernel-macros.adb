@@ -291,7 +291,7 @@ package body GPS.Kernel.Macros is
          elsif Param = "Pb" then
             declare
                Name      : constant String :=
-                 To_Lower (String (Project_Path (Project).Base_Name));
+                 String (Project_Path (Project).Base_Name);
                Extension : constant String :=
                  String (Project_Path (Project).File_Extension);
 
