@@ -343,6 +343,9 @@ procedure Ada_Semantic_Tree.Test is
               (Create_From_Dir
                  (Get_Current_Dir, +Buffer (Word_Begin .. Word_End)));
 
+            --  Introduce a delay so that the timestamp of the file differs
+            --  between two consecutive writes
+            delay (1.0);
             Write (File_W, Contents.all);
 
             Free (Contents);
