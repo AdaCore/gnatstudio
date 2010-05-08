@@ -184,7 +184,7 @@ if codepeer != "":
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-lib</arg>
-          <arg>%Pl.library</arg>
+          <arg>%Pb.library</arg>
        </command-line>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="3" lines="5">
@@ -270,7 +270,7 @@ if codepeer != "":
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-lib</arg>
-          <arg>%Pl.library</arg>
+          <arg>%Pb.library</arg>
        </command-line>
     </target>
 
@@ -294,7 +294,7 @@ if codepeer != "":
           <arg>30</arg>
           <arg>-no-html-output</arg>
           <arg>-lib</arg>
-          <arg>%Pl.library</arg>
+          <arg>%Pb.library</arg>
        </command-line>
     </target>
 
@@ -311,7 +311,7 @@ if codepeer != "":
           <arg>-background</arg>
           <arg>-output-only</arg>
           <arg>-lib</arg>
-          <arg>%Pl.library</arg>
+          <arg>%Pb.library</arg>
        </command-line>
     </target>
 """)

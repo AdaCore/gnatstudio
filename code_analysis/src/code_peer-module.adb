@@ -530,6 +530,10 @@ package body Code_Peer.Module is
         Project_Path (Project).File_Extension;
 
    begin
+      --  J506-031: File name must be synchronized with the name used to run
+      --  'codepeer' from the builder module (see codepeer.py for builder
+      --  models definition).
+
       return
         Create_From_Dir
           (Project.Object_Dir,

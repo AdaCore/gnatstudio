@@ -288,6 +288,17 @@ package body GPS.Kernel.Macros is
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
 
+         elsif Param = "Pb" then
+            declare
+               Name      : constant String :=
+                 To_Lower (String (Project_Path (Project).Base_Name));
+               Extension : constant String :=
+                 String (Project_Path (Project).File_Extension);
+
+            begin
+               return Name (Name'First .. Name'Last - Extension'Length);
+            end;
+
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
               (+To_Remote
