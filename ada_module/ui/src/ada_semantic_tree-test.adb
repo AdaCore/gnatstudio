@@ -344,8 +344,9 @@ procedure Ada_Semantic_Tree.Test is
                  (Get_Current_Dir, +Buffer (Word_Begin .. Word_End)));
 
             --  Introduce a delay so that the timestamp of the file differs
-            --  between two consecutive writes
-            delay (1.0);
+            --  between two consecutive writes. A minimum delay of 2 seconds
+            --  is needed under Windows.
+            delay 2.1;
             Write (File_W, Contents.all);
 
             Free (Contents);
