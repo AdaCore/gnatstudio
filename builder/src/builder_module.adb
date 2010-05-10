@@ -313,7 +313,7 @@ package body Builder_Module is
          "Build All", "xref",
          GNATCOLL.VFS.No_File,
          Extra_Args  => null,
-         Quiet       => True,
+         Quiet       => False,
          Synchronous => False,
          Background  => False,
          Dialog      => Build_Command_Manager.Force_No_Dialog,
