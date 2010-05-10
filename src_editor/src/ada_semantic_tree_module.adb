@@ -51,9 +51,9 @@ package body Ada_Semantic_Tree_Module is
      (Provider : access GPS_Buffer_Provider;
       File     : Virtual_File) return Integer;
 
-   ----------------
-   -- Get_Buffer --
-   ----------------
+   -------------------
+   -- Get_Timestamp --
+   -------------------
 
    overriding function Get_Timestamp
      (Provider : access GPS_Buffer_Provider;
