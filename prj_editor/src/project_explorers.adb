@@ -1281,7 +1281,16 @@ package body Project_Explorers is
          It   : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
          It2  : Gtk_Tree_Iter;
          Path : Gtk_Tree_Path;
+         Prj  : Project_Type := Project;
       begin
+         case Get_Node_Type (Exp.Tree.Model, Iter) is
+            when Project_Node | Modified_Project_Node | Extends_Project_Node =>
+               Prj := Get_Project_From_Node
+                 (Exp.Tree.Model, Exp.Kernel, Iter, False);
+            when others =>
+               null;
+         end case;
+
          while It /= Null_Iter loop
             Iter_Copy (Source => It, Dest => It2);
             Next (Exp.Tree.Model, It2);
@@ -1302,12 +1311,12 @@ package body Project_Explorers is
                   | Extends_Project_Node =>
                   Process_Node
                     (It, Get_Project_From_Node
-                     (Exp.Tree.Model, Exp.Kernel, It, False));
+                       (Exp.Tree.Model, Exp.Kernel, It, False));
 
                when Directory_Node
                  | Obj_Directory_Node
-                 | Exec_Directory_Node =>
-                  Update_Directory_Node_Text (Exp, Project, It);
+                  | Exec_Directory_Node =>
+                  Update_Directory_Node_Text (Exp, Prj, It);
 
                when others =>
                   null;

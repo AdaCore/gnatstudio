@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.5.0
 
+- J507-011: Project View broken when toggling Show Absolute Path
+  Problem:    If you toggle (from the contextual menu) the display of
+              absolute paths twice (to get back to displaying relative
+              paths), the paths are displayed relative to the current
+              directory rather than relative to the project the directory
+              belongs to. This is when Show Flat View is enabled
+  Workaround: Restart GPS after setting your preferred setup
+
 - J422-045: Prefix completion doesn't work with one parameter functions
   Problem:    When completing a function with only one parameter, prefix
               notation does not work properly.
