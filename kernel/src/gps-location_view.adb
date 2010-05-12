@@ -639,6 +639,12 @@ package body GPS.Location_View is
       Location_View_Callbacks.Object_Connect
         (Check, Signal_Activate, On_Filter_Panel_Activated'Access, Explorer);
 
+      Gtk_New (Check, -"Sort by subcategory");
+      Set_Active (Check, Explorer.Sort_By_Category);
+      Append (Menu, Check);
+      Location_View_Callbacks.Object_Connect
+        (Check, Signal_Activate, On_Toggle_Sort'Access, Explorer);
+
       if Model = null
         or else Iter = Null_Iter
       then
@@ -646,12 +652,6 @@ package body GPS.Location_View is
 
          return;
       end if;
-
-      Gtk_New (Check, -"Sort by subcategory");
-      Set_Active (Check, Explorer.Sort_By_Category);
-      Append (Menu, Check);
-      Location_View_Callbacks.Object_Connect
-        (Check, Signal_Activate, On_Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
