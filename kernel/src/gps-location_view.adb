@@ -625,6 +625,12 @@ package body GPS.Location_View is
    begin
       Get_Selected (Get_Selection (Explorer.View), Model, Iter);
 
+      Gtk_New (Check, -"Filter panel");
+      Set_Active (Check, Explorer.Filter_Panel.Mapped_Is_Set);
+      Append (Menu, Check);
+      Location_View_Callbacks.Object_Connect
+        (Check, Signal_Activate, On_Filter_Panel_Activated'Access, Explorer);
+
       if Model = null
         or else Iter = Null_Iter
       then
@@ -632,12 +638,6 @@ package body GPS.Location_View is
 
          return;
       end if;
-
-      Gtk_New (Check, -"Filter panel");
-      Set_Active (Check, Explorer.Filter_Panel.Mapped_Is_Set);
-      Append (Menu, Check);
-      Location_View_Callbacks.Object_Connect
-        (Check, Signal_Activate, On_Filter_Panel_Activated'Access, Explorer);
 
       Gtk_New (Check, -"Sort by subcategory");
       Set_Active (Check, Explorer.Sort_By_Category);
