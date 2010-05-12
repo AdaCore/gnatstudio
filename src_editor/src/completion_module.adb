@@ -1079,7 +1079,8 @@ package body Completion_Module is
             Data.End_Mark := Create_Mark
               (Buffer       => Buffer,
                Mark_Name    => "",
-               Where        => It);
+               Where        => It,
+               Left_Gravity => False);
 
             To_Replace := Get_Completed_String (Data.Result)'Length;
 
