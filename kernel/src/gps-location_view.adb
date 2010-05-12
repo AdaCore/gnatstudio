@@ -46,7 +46,6 @@ with Gtkada.Handlers;                  use Gtkada.Handlers;
 with Gtkada.MDI;                       use Gtkada.MDI;
 
 with Basic_Types;                      use Basic_Types;
-with Commands.Interactive;             use Commands.Interactive;
 with Commands;                         use Commands;
 with Default_Preferences;              use Default_Preferences;
 with GPS.Editors.GtkAda;               use GPS.Editors, GPS.Editors.GtkAda;
@@ -171,12 +170,8 @@ package body GPS.Location_View is
    procedure On_Collapse_All (Self : access Location_View_Record'Class);
    --  Collapse all categories in the Location View
 
-   type Clear_Locations_View_Command is new Interactive_Command
-      with null record;
-   overriding function Execute
-     (Command : access Clear_Locations_View_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Remove everything in the Location_View
+   procedure On_Clear_Locations (Self : access Location_View_Record'Class);
+   --  Remove all locations from the view
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
@@ -406,6 +401,19 @@ package body GPS.Location_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Expand_Category;
+
+   ------------------------
+   -- On_Clear_Locations --
+   ------------------------
+
+   procedure On_Clear_Locations (Self : access Location_View_Record'Class) is
+      Container : constant Messages_Container_Access :=
+                    Get_Messages_Container (Self.Kernel);
+
+   begin
+      Container.Remove_All_Messages
+        ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
+   end On_Clear_Locations;
 
    ---------------------
    -- On_Collapse_All --
@@ -719,6 +727,11 @@ package body GPS.Location_View is
          Gtk_New (Mitem);
          Append (Menu, Mitem);
       end if;
+
+      Gtk_New (Mitem, -"Clear locations");
+      Append (Menu, Mitem);
+      Location_View_Callbacks.Object_Connect
+        (Mitem, Signal_Activate, On_Clear_Locations'Access, Explorer);
 
       Path_Free (Path);
    end Context_Func;
@@ -1166,26 +1179,6 @@ package body GPS.Location_View is
       return null;
    end Save_Desktop;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Clear_Locations_View_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-
-      Container : constant Messages_Container_Access :=
-        Get_Messages_Container (Get_Kernel (Context.Context));
-
-   begin
-      Container.Remove_All_Messages
-        ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
-
-      return Commands.Success;
-   end Execute;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1194,7 +1187,7 @@ package body GPS.Location_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Module_Name : constant String := "Location View";
-      Command     : Interactive_Command_Access;
+
    begin
       Location_View_Module_Id := new Location_View_Module;
       Register_Module
@@ -1204,14 +1197,6 @@ package body GPS.Location_View is
 
       GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-
-      Command := new Clear_Locations_View_Command;
-      Register_Contextual_Menu
-        (Kernel,
-         Name   => "Clear Locations View",
-         Label  => -"Clear Locations View",
-         Filter => Create (Module => Module_Name),
-         Action => Command);
    end Register_Module;
 
    -----------------------
