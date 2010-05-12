@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -841,6 +841,10 @@ package body Switches_Chooser.Gtkada is
             "   %gprclean: clean tool (e.g. gnat clean, gprclean)" &
             ASCII.LF &
             "   %attr(Pkg'Name[,def]): replaced by given project attribute" &
+            ASCII.LF &
+            "   %baseattr(Pkg'Name[,def]): base name of an attribute" &
+            ASCII.LF &
+            "   %dirattr(Pkg'Name[,def]): dirname of an attribute" &
             ASCII.LF &
             "   %switches(tool): replaced by IDE'Default_Switches(tool)" &
             ASCII.LF &

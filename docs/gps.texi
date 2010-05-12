@@ -11588,6 +11588,14 @@ Note: This macro is only available in the commands defined in the Build
 Manager and Build Launcher dialogs, and only supports single string attributes,
 not lists.
 
+@item %dirattr(Package'Name[,default])
+Replaced by the directory part of an attribute. The attribute is specified
+as in @code{%attr} above.
+
+@item %baseattr(Package'Name[,default])
+Replaced by the base name of an attribute. The attribute is specified
+as in @code{%attr} above.
+
 @item %vars
 Replaced by a list of switches of the form @code{<variable>=<value>}, where
 <variable> is the name of a scenario variable and <value> its current

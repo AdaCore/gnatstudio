@@ -15,6 +15,12 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J511-031 New build macros %baseattr and %dirattr (2010-05-12)
+
+  These two macros can be used to extract the directory part or the base
+  name from an attribute in a project. For instance, it could be used to
+  change to that directory before spawning the build command.
+
 NF-45-J426-027 Shell/Python interfacing to GPS styles (2010-04-28)
 
   It is now possible to manipulate through GPS Shell and/or Python the colors

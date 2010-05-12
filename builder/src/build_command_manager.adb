@@ -23,6 +23,7 @@ with Ada.Strings.Fixed;
 with GNAT.Directory_Operations;
 
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
@@ -133,6 +134,25 @@ package body Build_Command_Manager is
         (Param  : String; Quoted : Boolean) return String;
       --  Wrapper around GPS.Kernel.Macros.Substitute
 
+      function Get_Attr_Value (Arg : String; Skip : Natural) return String;
+      --  return the name of the attribute contained in Arg
+
+      function Get_Index (A, B : Natural) return Natural;
+      --  Return A if A /= 0, B otherwise
+
+      ---------------
+      -- Get_Index --
+      ---------------
+
+      function Get_Index (A, B : Natural) return Natural is
+      begin
+         if A = 0 then
+            return B;
+         else
+            return A;
+         end if;
+      end Get_Index;
+
       ------------------
       -- Substitution --
       ------------------
@@ -170,6 +190,22 @@ package body Build_Command_Manager is
          end if;
       end Substitution;
 
+      --------------------
+      -- Get_Attr_Value --
+      --------------------
+
+      function Get_Attr_Value (Arg : String; Skip : Natural) return String is
+         J    : constant Natural := Get_Index
+           (Ada.Strings.Fixed.Index (Arg, "'"), Arg'First + Skip);
+         K    : constant Natural := Get_Index
+           (Ada.Strings.Fixed.Index (Arg (J .. Arg'Last), ","), Arg'Last);
+         Pkg  : constant String := Arg (Arg'First + Skip + 1 .. J - 1);
+         Attr : constant String := Arg (J + 1 .. K - 1);
+      begin
+         return Get_Project (Get_Kernel (Context)).Attribute_Value
+           (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
+      end Get_Attr_Value;
+
    begin
       --  ??? Special case for "%X"
       --  We are implementing a special case here since GPS.Kernel.Macros
@@ -199,49 +235,23 @@ package body Build_Command_Manager is
          end if;
 
       --  ??? Ditto for %attr
-      elsif Arg'Length > 7
-        and then Arg (Arg'First .. Arg'First + 5) = "%attr("
-        and then Arg (Arg'Last) = ')'
-      then
-         declare
-            function Get_Index (A, B : Natural) return Natural;
-            --  Return A if A /= 0, B otherwise
+      elsif Starts_With (Arg, "%attr(") and then Arg (Arg'Last) = ')' then
+         Result.Args := Parse_String (Get_Attr_Value (Arg, 5), Separate_Args);
 
-            ---------------
-            -- Get_Index --
-            ---------------
+      elsif Starts_With (Arg, "%dirattr(") and then Arg (Arg'Last) = ')' then
+         Result.Args := Parse_String (Get_Attr_Value (Arg, 8), Separate_Args);
+         Set_Nth_Arg
+           (Result.Args, 0,
+            GNAT.Directory_Operations.Dir_Name (Nth_Arg (Result.Args, 0)));
 
-            function Get_Index (A, B : Natural) return Natural is
-            begin
-               if A = 0 then
-                  return B;
-               else
-                  return A;
-               end if;
-            end Get_Index;
-
-            J    : constant Natural :=
-              Get_Index (Ada.Strings.Fixed.Index (Arg, "'"), Arg'First + 5);
-            K    : constant Natural :=
-              Get_Index (Ada.Strings.Fixed.Index (Arg (J .. Arg'Last), ","),
-                         Arg'Last);
-            Pkg  : constant String := Arg (Arg'First + 6 .. J - 1);
-            Attr : constant String := Arg (J + 1 .. K - 1);
-            Prj  : constant Project_Type :=
-              Get_Project (Get_Kernel (Context));
-
-         begin
-            Result.Args := Parse_String
-              (Prj.Attribute_Value (Build (Pkg, Attr),
-               Default => Arg (K + 1 .. Arg'Last - 1)),
-               Separate_Args);
-         end;
+      elsif Starts_With (Arg, "%baseattr(") and then Arg (Arg'Last) = ')' then
+         Result.Args := Parse_String (Get_Attr_Value (Arg, 9), Separate_Args);
+         Set_Nth_Arg
+           (Result.Args, 0,
+            GNAT.Directory_Operations.Base_Name (Nth_Arg (Result.Args, 0)));
 
       --  ??? Ditto for %switches
-      elsif Arg'Length > 12
-        and then Arg (Arg'First .. Arg'First + 9) = "%switches("
-        and then Arg (Arg'Last) = ')'
-      then
+      elsif Starts_With (Arg, "%switches(") and then Arg (Arg'Last) = ')' then
          Result.Args := Create
             (Get_Project (Get_Kernel (Context)).Attribute_Value
               (Build ("IDE", "Default_Switches"), Default => "",
@@ -409,9 +419,7 @@ package body Build_Command_Manager is
             end if;
          end;
 
-      elsif Arg'Length > 2
-        and then Arg (Arg'First .. Arg'First + 2) = "%TT"
-      then
+      elsif Starts_With (Arg, "%TT") then
          if Main /= "" then
             Result.Args := Create (Main & Arg (Arg'First + 3 .. Arg'Last));
          else
@@ -421,9 +429,7 @@ package body Build_Command_Manager is
             raise Invalid_Argument;
          end if;
 
-      elsif Arg'Length > 1
-        and then Arg (Arg'First .. Arg'First + 1) = "%T"
-      then
+      elsif Starts_With (Arg, "%T") then
          if Main /= "" then
             Result.Args := Create
               (GNAT.Directory_Operations.Base_Name (Main)
@@ -435,9 +441,7 @@ package body Build_Command_Manager is
             raise Invalid_Argument;
          end if;
 
-      elsif Arg'Length > 1
-        and then Arg (Arg'First .. Arg'First + 1) = "%E"
-      then
+      elsif Starts_With (Arg, "%E") then
          if Main /= "" then
             Result.Args := Create (Main);
          else
