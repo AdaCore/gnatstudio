@@ -1725,13 +1725,15 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end if;
 
-      for J in Start_Line .. Start_Line + Number - 1 loop
-         if Buffer_Lines (J).Side_Info_Data /= null then
-            for Col in Buffer_Lines (J).Side_Info_Data'Range loop
-               Free (Buffer_Lines (J).Side_Info_Data (Col), True);
-            end loop;
-         end if;
-      end loop;
+      if Buffer.Modifying_Editable_Lines then
+         for J in Start_Line .. Start_Line + Number - 1 loop
+            if Buffer_Lines (J).Side_Info_Data /= null then
+               for Col in Buffer_Lines (J).Side_Info_Data'Range loop
+                  Free (Buffer_Lines (J).Side_Info_Data (Col), True);
+               end loop;
+            end if;
+         end loop;
+      end if;
 
       for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
          Buffer_Lines (J) := Buffer_Lines (J + Number);
