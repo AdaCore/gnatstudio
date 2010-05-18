@@ -117,6 +117,9 @@ private
 
       --  Message listener
       Listener : GPS.Kernel.Messages.Listener_Access;
+
+      Do_Not_Delete_Messages_On_Exit : Boolean := False;
+      --  Protection against reentrancy
    end record;
 
 end GPS.Location_View;

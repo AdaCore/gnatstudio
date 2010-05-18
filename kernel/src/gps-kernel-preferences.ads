@@ -238,6 +238,7 @@ package GPS.Kernel.Preferences is
 
    -- Location View --
    Locations_Wrap            : Boolean_Preference;
+   Locations_Auto_Close      : Boolean_Preference;
 
    --  Debugger preferences are registered in GVD.Preferences
 

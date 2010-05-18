@@ -287,36 +287,6 @@ package body GPS.Location_View.Listener is
       Node := New_Category_Node (Self, Category);
    end Category_Added;
 
---     ----------------------
---     -- Category_Removed --
---     ----------------------
---
---     overriding procedure Category_Removed
---       (Self  : not null access Classic_Tree_Model_Record;
---        Index : Positive)
---     is
---        Path  : constant Gtk_Tree_Path := Gtk_New;
---        Ind   : Natural := 0;
---     begin
---        for J in Self.Container.Categories.First_Index
---          .. Self.Container.Categories.Last_Index
---        loop
---           if Match (Self.Flags,
---                     Self.Container.Categories.Element (J).Flags)
---           then
---              Ind := Ind + 1;
---           end if;
---
---           if Ind = Index then
---              Append_Index (Path, Gint (Ind) - 1);
---              Self.Row_Deleted (Path);
---              exit;
---           end if;
---        end loop;
---
---        Path_Free (Path);
---     end Category_Removed;
-
    --------------
    -- Children --
    --------------
@@ -434,12 +404,17 @@ package body GPS.Location_View.Listener is
       if Cat_Node.Children.Is_Empty then
          --  Remove the category node
          Dummy := Up (Path);
-         Self.Model.Row_Deleted (Path);
 
          Self.Model.Categories.Delete
            (Self.Model.Categories.Find_Index (Cat_Node));
 
          Recursive_Free (Cat_Node);
+         Self.Model.Row_Deleted (Path);
+
+         --  Note: after the call to Row_Deleted above, the locations view
+         --  might have been destroyed (if the preference "Auto close Locations
+         --  view" is enabled). Therefore, do not make any reference to Self
+         --  or Self.Model below this line in this subprogram.
       end if;
 
       Path_Free (Path);

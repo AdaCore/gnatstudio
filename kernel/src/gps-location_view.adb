@@ -156,6 +156,10 @@ package body GPS.Location_View is
    --  Opens editor, moves text cursor to the location of the message and
    --  raises editor's window when specified node is a message node.
 
+   procedure On_Row_Deleted
+     (Self : access Location_View_Record'Class);
+   --  Called when a row has been delete in the model
+
    procedure On_Remove_Category
      (Self : access Location_View_Record'Class);
    --  Remove the selected category in the Location_View
@@ -580,7 +584,10 @@ package body GPS.Location_View is
 
       Unregister (V.Kernel, Locations_Listener_Access (V.Listener));
 
-      Get_Messages_Container (V.Kernel).Remove_All_Messages;
+      if not V.Do_Not_Delete_Messages_On_Exit then
+         Get_Messages_Container (V.Kernel).Remove_All_Messages
+           ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
+      end if;
 
       if V.Idle_Expand_Handler /= No_Source_Id then
          Glib.Main.Remove (V.Idle_Expand_Handler);
@@ -888,6 +895,14 @@ package body GPS.Location_View is
         (Self.View,
          Self.Filter,
          Get_Model (Locations_Listener_Access (Self.Listener)));
+
+      Location_View_Callbacks.Object_Connect
+        (Get_Model (Locations_Listener_Access (Self.Listener)),
+         Signal_Row_Deleted,
+         Location_View_Callbacks.To_Marshaller (On_Row_Deleted'Access),
+         Location_View (Self),
+         True);
+
       Visible_Funcs.Set_Visible_Func
         (Self.Filter, Is_Visible'Access, Location_View (Self));
       Self.Filter.Unref;
@@ -1497,5 +1512,22 @@ package body GPS.Location_View is
          return Found;
       end if;
    end Is_Visible;
+
+   --------------------
+   -- On_Row_Deleted --
+   --------------------
+
+   procedure On_Row_Deleted
+     (Self : access Location_View_Record'Class) is
+   begin
+      if Locations_Auto_Close.Get_Pref then
+         if Self.View.Get_Model.Get_Iter_First = Null_Iter then
+            Self.Do_Not_Delete_Messages_On_Exit := True;
+            Destroy (Self);
+         end if;
+      end if;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Row_Deleted;
 
 end GPS.Location_View;

@@ -1212,9 +1212,8 @@ search operation for example, the first entry of that category is
 automatically selected, and the corresponding editor opened. This behavior
 can be controlled through a preference @code{Jump To First Location}.
 
-Closing the Locations View will also remove all locations from GPS and the
-corresponding editors.
-
+Closing the Locations view will remove from the editors locations that
+are also visible in the Locations view.
 If the Locations View is present when exiting GPS and the desktop is saved,
 the locations will be saved as part of the desktop for the current project,
 and will be loaded the next time GPS is started on the same project.
@@ -9471,6 +9470,11 @@ immediately open.
 Whether using the @code{Next Tag} and @code{Previous Tag} actions/menus
 should wrap around to the beginning when reaching the end of the category.
 The default is to wrap around, as was done in previous GPS versions.
+
+@item Auto close Locations view
+@cindex location
+Whether the Locations view should be closed automatically when it becomes
+empty.
 
 @item Hyper links
 @cindex hyper mode

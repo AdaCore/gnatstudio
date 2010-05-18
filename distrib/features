@@ -99,6 +99,12 @@ NF-45-J208-006 Quick fix icons on the side of editors (2010-02-25)
   When compiling, icons that propose automatic code fixing appear on the side
   of the source editors, in addition to the Locations View.
 
+NF-45-J205-016 Preference to automatically close Locations view (2010-05-18)
+
+  A new preference "Auto close Locations view" is present in the General
+  section. When this preference is enabled, GPS will automatically close the
+  Locations view when it becomes empty.
+
 NF-45-J128-026 Support for generic parameters (2010-02-15)
 
   Generics parameters are now supported in the Ada outline view and smart

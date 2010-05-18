@@ -418,6 +418,15 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Page    => "General");
 
+      Locations_Auto_Close := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Locations-Auto-Close",
+         Label   => -"Auto close Locations view",
+         Doc     => -("Whether the Locations view should be closed "
+             & "automatically when it becomes empty."),
+         Default => False,
+         Page    => "General");
+
       Hyper_Mode := Create
         (Manager => Kernel.Preferences,
          Name    => "Hyper-Mode",
