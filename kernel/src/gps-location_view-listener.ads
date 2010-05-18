@@ -57,16 +57,6 @@ private package GPS.Location_View.Listener is
       return Gtk.Tree_Model.Gtk_Tree_Model;
    --  Return the model associated with the listener
 
---     procedure Initialize
---       (Self : access Classic_Tree_Model_Record'Class);
---     --  Initialize object and connect it with messages container of the
---     --  specified kernel.
-
---     procedure Gtk_New
---       (Object    : out Classic_Tree_Model;
---        Container : not null access Messages_Container'Class);
-   --  Allocates new object.
-
 private
    type Node_Record is tagged;
    type Node_Access is access all Node_Record'Class;
