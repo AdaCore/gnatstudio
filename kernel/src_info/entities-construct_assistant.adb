@@ -121,6 +121,72 @@ package body Entities.Construct_Assistant is
               Trie_Tree_Index              => 0,
               Is_Dummy                     => True);
 
+         --  Make a simple association between construct categories and entity
+         --  categories. This association is know to be unaccurate, but is
+         --  helpful when trying to categorize entities.
+
+         case Get_Construct (E).Category is
+            when Cat_Package
+              | Cat_Namespace =>
+
+               New_Entity.Kind.Kind := Package_Kind;
+
+            when Cat_Task
+               | Cat_Procedure
+               | Cat_Function
+               | Cat_Method
+               | Cat_Constructor
+               | Cat_Destructor
+               | Cat_Protected
+               | Cat_Entry =>
+
+               New_Entity.Kind.Kind := Procedure_Kind;
+
+            when Cat_Class
+               | Cat_Structure
+               | Cat_Case_Inside_Record
+               | Cat_Union
+               | Cat_Type
+               | Cat_Subtype =>
+
+               New_Entity.Kind.Kind := Class;
+               New_Entity.Kind.Is_Type := True;
+
+            when Cat_Variable
+               | Cat_Local_Variable
+               | Cat_Parameter
+               | Cat_Discriminant
+               | Cat_Field =>
+
+               New_Entity.Kind.Kind := Signed_Integer;
+
+            when Cat_Literal =>
+
+               New_Entity.Kind.Kind := Enumeration_Literal;
+
+            when Cat_With
+               | Cat_Use
+               | Cat_Include =>
+
+               New_Entity.Kind.Kind := Include_File;
+
+            when Cat_Unknown
+               | Cat_Representation_Clause
+               | Cat_Loop_Statement
+               | Cat_If_Statement
+               | Cat_Case_Statement
+               | Cat_Select_Statement
+               | Cat_Accept_Statement
+               | Cat_Declare_Block
+               | Cat_Return_Block
+               | Cat_Simple_Block
+               | Cat_Exception_Handler
+               | Cat_Pragma
+               | Cat_Custom =>
+
+               New_Entity.Kind.Kind := Unresolved_Entity;
+         end case;
+
          Ref (New_Entity.Declaration.File);
 
          LI_Annotation (Construct_Annotation.Other_Val.all).LI_Entity :=

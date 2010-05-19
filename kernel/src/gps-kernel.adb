@@ -1645,16 +1645,14 @@ package body GPS.Kernel is
       Entity            : out Entities.Entity_Information;
       Closest_Ref       : out Entities.Entity_Reference;
       Status            : out Entities.Queries.Find_Decl_Or_Body_Query_Status;
-      Fuzzy_Expected    : Boolean := False;
-      Fast              : Boolean := False)
+      Fuzzy_Expected    : Boolean := False)
    is
    begin
       Find_Declaration
         (Kernel.Database, File, Entity_Name,
          Line, Column, Entity, Closest_Ref,
          Status,
-         Fuzzy_Expected => Fuzzy_Expected,
-         Fast => Fast);
+         Fuzzy_Expected => Fuzzy_Expected);
 
       --  ??? Should have the preference for the handling of fuzzy matches:
       --   - consider it as a no match: set Status to Entity_Not_Found;
@@ -1662,11 +1660,7 @@ package body GPS.Kernel is
       --   - use the closest match: nothing to do.
 
       if Status = Overloaded_Entity_Found then
-         if Fast then
-            --  In Fast mode we consider that the overloaded entity is as good
-            --  as a success.
-            Status := Success;
-         elsif Ask_If_Overloaded then
+         if Ask_If_Overloaded then
             Select_Entity_Declaration
               (Kernel, File, Entity_Name, Entity, Status);
          end if;

@@ -67,7 +67,7 @@ class LocationHighlighter:
 
             # GPS.Entity might raise an exception: catch it
             try:
-                e=GPS.Entity(self.entity_name, self.file, line, index+1, fast=True)
+                e=GPS.Entity("", self.file, line, index+1)
             except:
                 e=None
 
@@ -199,8 +199,7 @@ def on_location_changed(hook, file, line, column):
 
         try:
             entity = GPS.Entity(
-            context.entity().name(), loc.file(), loc.line(), loc.column(),
-                fast=True)
+            context.entity().name(), loc.file(), loc.line(), loc.column())
         except:
             entity = None
 

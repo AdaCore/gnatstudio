@@ -782,7 +782,6 @@ package body GPS.Kernel.Scripts is
             L      : Integer := Nth_Arg (Data, 4, Default => 1);
             C      : Visible_Column_Type :=
               Visible_Column_Type (Nth_Arg (Data, 5, Default => 1));
-            Fast   : constant Boolean := Nth_Arg (Data, 6, Default => False);
             Status : Find_Decl_Or_Body_Query_Status;
             F      : Virtual_File;
             Source : Source_File;
@@ -817,8 +816,7 @@ package body GPS.Kernel.Scripts is
                Closest_Ref       => Ref,
                Entity            => Entity,
                Status            => Status,
-               Fuzzy_Expected    => Fuzzy_Expected,
-               Fast              => Fast);
+               Fuzzy_Expected    => Fuzzy_Expected);
 
             if Status /= Success and then Status /= Fuzzy_Match then
                Set_Error_Msg (Data, -"Entity not found");
