@@ -1312,6 +1312,10 @@ package body GPS.Kernel.Messages is
 
       One_Msg_Left  : Boolean;
       One_File_Left : Boolean;
+
+      Categories_To_Remove : Unbounded_String_Array
+        (1 .. Integer (Self.Categories.Length));
+      Free_Index_In_Categories : Natural := 1;
    begin
       Cat_Cursor := Self.Category_Map.First;
 
@@ -1320,43 +1324,66 @@ package body GPS.Kernel.Messages is
 
          File_Cursor := Cat_Node.File_Map.First;
 
-         One_File_Left := False;
-         while File_Maps.Has_Element (File_Cursor) loop
-            File_Node := File_Maps.Element (File_Cursor);
+         declare
+            Files_To_Remove     : File_Array
+              (1 .. Integer (Cat_Node.Children.Length));
+            Free_Index_In_Files : Natural := 1;
+         begin
+            One_File_Left := False;
+            while File_Maps.Has_Element (File_Cursor) loop
+               File_Node := File_Maps.Element (File_Cursor);
 
-            One_Msg_Left := False;
-            for M in reverse File_Node.Children.First_Index
-              .. File_Node.Children.Last_Index
-            loop
-               Msg_Node := File_Node.Children.Element (M);
+               One_Msg_Left := False;
+               for M in reverse File_Node.Children.First_Index
+                 .. File_Node.Children.Last_Index
+               loop
+                  Msg_Node := File_Node.Children.Element (M);
 
-               if Match (Msg_Node.Flags, Flags) then
-                  Remove_Message (Self, Message_Access (Msg_Node), False);
+                  if Match (Msg_Node.Flags, Flags) then
+                     Remove_Message (Self, Message_Access (Msg_Node), False);
+                  else
+                     One_Msg_Left := True;
+                  end if;
+               end loop;
+
+               if not One_Msg_Left then
+                  Files_To_Remove (Free_Index_In_Files) := File_Node.File;
+                  Free_Index_In_Files := Free_Index_In_Files + 1;
                else
-                  One_Msg_Left := True;
+                  One_File_Left := True;
                end if;
+
+               File_Maps.Next (File_Cursor);
             end loop;
 
-            if not One_Msg_Left then
+            --  Remove all files that need removing in this category
+
+            for F in 1 .. Free_Index_In_Files - 1 loop
+               File_Cursor := Cat_Node.File_Map.Find (Files_To_Remove (F));
+               File_Node := Element (File_Cursor);
                Remove_File (Self,
                             File_Cursor,
                             Cat_Node.Children.Find_Index (File_Node),
                             File_Node,
                             False);
-            else
-               One_File_Left := True;
-               File_Maps.Next (File_Cursor);
-            end if;
-         end loop;
+            end loop;
+         end;
 
          if not One_File_Left then
-            Remove_Category (Self,
-                             Cat_Cursor,
-                             Self.Categories.Find_Index (Cat_Node),
-                             Cat_Node);
-         else
-            Next (Cat_Cursor);
+            Categories_To_Remove (Free_Index_In_Categories) := Cat_Node.Name;
+            Free_Index_In_Categories := Free_Index_In_Categories + 1;
          end if;
+
+         Next (Cat_Cursor);
+      end loop;
+
+      for C in 1 .. Free_Index_In_Categories - 1 loop
+         Cat_Cursor := Self.Category_Map.Find (Categories_To_Remove (C));
+         Cat_Node   := Element (Cat_Cursor);
+         Remove_Category (Self,
+                          Cat_Cursor,
+                          Self.Categories.Find_Index (Cat_Node),
+                          Cat_Node);
       end loop;
    end Remove_All_Messages;
 
