@@ -334,6 +334,17 @@ package body GPS.Kernel.Messages is
       return To_String (Self.Get_Category);
    end Get_Category;
 
+   ---------------
+   -- Get_Flags --
+   ---------------
+
+   function Get_Flags
+     (Self : not null access constant Abstract_Message'Class)
+      return Message_Flags is
+   begin
+      return Self.Flags;
+   end Get_Flags;
+
    ------------------
    -- Get_Category --
    ------------------

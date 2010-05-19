@@ -6131,6 +6131,12 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      <description>Return the message's category.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.get_flags">
+     <description>Return an integer which represents the location of the
+      message
+     </description>
+  </shell_doc>
+
   <shell_doc name="GPS.Message.get_file">
      <description>Return the message's file.</description>
   </shell_doc>

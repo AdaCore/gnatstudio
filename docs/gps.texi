@@ -2331,6 +2331,10 @@ displayed to choose the name and location of the file.
 Open a file selector to load the contents of a file in the Messages
 window. Source locations are identified and loaded in @ref{The Locations View}.
 
+@item Export Locations to editor
+@cindex export locations
+List the contents of the Locations view in a standard text editor.
+
 @end table
 
 @item Close

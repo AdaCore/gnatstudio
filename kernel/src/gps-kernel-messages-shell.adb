@@ -168,6 +168,9 @@ package body GPS.Kernel.Messages.Shell is
       elsif Command = "get_category" then
          Set_Return_Value (Data, Message.Get_Category);
 
+      elsif Command = "get_flags" then
+         Set_Return_Value (Data, To_Int (Message.Get_Flags));
+
       elsif Command = "get_text" then
          Set_Return_Value (Data, To_String (Message.Get_Text));
 
@@ -437,6 +440,9 @@ package body GPS.Kernel.Messages.Shell is
 
       Register_Command
         (Kernel, "get_category", 0, 0, Accessors'Access, Message_Class);
+
+      Register_Command
+        (Kernel, "get_flags", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
         (Kernel, "remove", 0, 0, Accessors'Access, Message_Class);

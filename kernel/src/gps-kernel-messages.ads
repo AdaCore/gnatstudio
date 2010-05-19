@@ -101,6 +101,10 @@ package GPS.Kernel.Messages is
    function Get_Category
      (Self : not null access constant Abstract_Message'Class) return String;
 
+   function Get_Flags
+     (Self : not null access constant Abstract_Message'Class)
+      return Message_Flags;
+
    function Get_File
      (Self : not null access constant Abstract_Message'Class)
       return GNATCOLL.VFS.Virtual_File;

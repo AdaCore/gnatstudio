@@ -15,6 +15,12 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J514-023 Possibility to export Locations view to an editor (2010-05-18)
+
+  A new menu File->Messages->Export Locations to editor exports the contents
+  of the Locations view to an editor. This is useful to print the contents
+  of the Locations view or save it for future reference, for instance.
+
 NF-45-J511-031 New build macros %baseattr and %dirattr (2010-05-12)
 
   These two macros can be used to extract the directory part or the base
