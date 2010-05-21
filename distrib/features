@@ -244,7 +244,7 @@ NF-45-IA13-016 New menu /File/Close All Editors Except Current (2009-10-14)
 
   This menu closes all editors except the one that currently has the focus.
 
-NF-45-IA11-001 Smart completion now complete formal profiles (2010-05-21)
+NF-45-IA11-001 Smart completion now completes formal profiles (2010-05-21)
 
   The smart completion mechanism now completes automatically formal profiles
   on generic instantiations.
