@@ -86,7 +86,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                   if Instance /= Null_Instance_Info then
                      Gen_Package :=
                        Get_First_Occurence
-                         (Get_Generic_Package (Instance));
+                         (Get_Generic_Entity (Instance));
 
                      if Gen_Package = Enclosing_Package then
                         Gen_Info := Get_Generic_Context (It)

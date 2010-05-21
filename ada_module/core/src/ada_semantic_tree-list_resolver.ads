@@ -43,6 +43,9 @@ package Ada_Semantic_Tree.List_Resolver is
    --  called on a given formal, it involves an expensive declaration
    --  resolution. The result is then cached.
 
+   function To_Entity_Access (Param : Formal_Parameter) return Entity_Access;
+   --  Converts the formal parameter to the corresponding entity.
+
    type Formal_Parameter_Array is array (Integer range <>) of Formal_Parameter;
 
    type List_Profile (<>) is private;

@@ -112,8 +112,8 @@ private
       Actual_Params : Actual_Parameter_Resolver_Access;
       --  ??? maybe this can be retreived directly from the view...
 
-      View : Entity_View;
-      Is_In_Call    : Boolean;
+      View       : Entity_View;
+      Is_In_Call : Boolean;
    end record;
 
    overriding

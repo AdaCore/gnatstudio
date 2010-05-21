@@ -731,10 +731,7 @@ package body Completion.Ada.Constructs_Extractor is
          end if;
       else
          It.Current_Decl := To_Declaration
-              (To_Entity_Access
-                 (Get_File (Get_Entity (It.Iter)),
-                  Get_Construct_Tree_Iterator
-                    (It.Params_Array (It.Params_It))));
+           (To_Entity_Access (It.Params_Array (It.Params_It)));
       end if;
    end Next;
 

@@ -143,7 +143,7 @@ package body Ada_Semantic_Tree.Generics is
       Generic_Package : Entity_Access;
       Result          : Instance_Info := null;
    begin
-      View := Get_Generic_Package (E);
+      View := Get_Generic_Entity (E);
 
       if View /= Null_Entity_View then
          Generic_Package := Get_First_Occurence (Get_Entity (View));
@@ -194,7 +194,9 @@ package body Ada_Semantic_Tree.Generics is
 
    function Is_Generic_Instance (Entity : Entity_Access) return Boolean is
    begin
-      return Get_Construct (Entity).Category = Cat_Package
+      return
+        (Get_Construct (Entity).Category = Cat_Package
+         or else Get_Construct (Entity).Category in Subprogram_Category)
         and then Get_Construct (Entity).Attributes (Ada_New_Attribute);
    end Is_Generic_Instance;
 
@@ -372,7 +374,7 @@ package body Ada_Semantic_Tree.Generics is
    -- Get_Generic_Package --
    -------------------------
 
-   function Get_Generic_Package (Info : Instance_Info) return Entity_Access
+   function Get_Generic_Entity (Info : Instance_Info) return Entity_Access
    is
    begin
       if Info /= null then
@@ -380,13 +382,13 @@ package body Ada_Semantic_Tree.Generics is
       else
          return Null_Entity_Access;
       end if;
-   end Get_Generic_Package;
+   end Get_Generic_Entity;
 
    -------------------------
    -- Get_Generic_Package --
    -------------------------
 
-   function Get_Generic_Package (Info : Entity_Access) return Entity_View is
+   function Get_Generic_Entity (Info : Entity_Access) return Entity_View is
       Result : Entity_View;
       Cached : Cache_Access := Get_Cache (Info);
    begin
@@ -428,7 +430,7 @@ package body Ada_Semantic_Tree.Generics is
                Filter                    => Everything,
                Min_Visibility_Confidence => Use_Visible),
             Expression        => Expression,
-            Categories        => (1 => Cat_Package));
+            Categories        => (1 => Get_Construct (Info).Category));
 
          It := First (Generic_Resolution);
 
@@ -464,7 +466,7 @@ package body Ada_Semantic_Tree.Generics is
 
          return Result;
       end;
-   end Get_Generic_Package;
+   end Get_Generic_Entity;
 
    --------------------
    -- Append_Context --

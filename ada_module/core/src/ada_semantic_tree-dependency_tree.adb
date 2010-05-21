@@ -1097,7 +1097,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                                  Gen_Info := Get_Generic_Instance_Information
                                    (Actual_Package);
                                  Actual_Package :=
-                                   Get_Generic_Package (Gen_Info);
+                                   Get_Generic_Entity (Gen_Info);
                               end if;
 
                               --  ??? how about package renamings here?

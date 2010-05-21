@@ -646,7 +646,7 @@ package body Ada_Semantic_Tree.Visibility is
                begin
                   if Is_Generic_Instance (Unit) then
                      Use_Clause := Unit;
-                     View := Get_Generic_Package (Unit);
+                     View := Get_Generic_Entity (Unit);
                      Unit := Get_First_Occurence (Get_Entity (View));
                      Free (View);
                   else

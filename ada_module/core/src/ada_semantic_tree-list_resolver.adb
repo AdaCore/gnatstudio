@@ -61,6 +61,15 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Null_Entity_Access;
    end Get_Type;
 
+   ----------------------
+   -- To_Entity_Access --
+   ----------------------
+
+   function To_Entity_Access (Param : Formal_Parameter) return Entity_Access is
+   begin
+      return Entity_Access (Param);
+   end To_Entity_Access;
+
    ----------
    -- Free --
    ----------
@@ -140,7 +149,11 @@ package body Ada_Semantic_Tree.List_Resolver is
             while It /= Null_Construct_Tree_Iterator
               and then Is_Parent_Scope (Scope, It)
             loop
-               if Get_Construct (It).Category = Cat_Parameter then
+               if Get_Construct (It).Is_Generic_Spec then
+                  --  We skip potential generic parameters preceding real
+                  --  parameters.
+                  null;
+               elsif Get_Construct (It).Category = Cat_Parameter then
                   Result_Array (Index) := To_Entity_Access
                     (Get_File (Used_Entity), It);
                   Index := Index + 1;

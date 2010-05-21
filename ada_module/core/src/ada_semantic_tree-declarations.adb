@@ -1494,10 +1494,28 @@ package body Ada_Semantic_Tree.Declarations is
    overriding procedure Configure_View
      (E : in out Declaration_View_Record; It : Entity_Iterator)
    is
+      Gen_Inst : Instance_Info;
    begin
       if E.Profile = null then
-         E.Profile := new List_Profile'
-           (Get_List_Profile (E.Entity, It.From_Visibility));
+         if Is_Generic_Instance (E.Entity) then
+            Gen_Inst := Get_Generic_Instance_Information (E.Entity);
+            Ref (Gen_Inst);
+
+            E.Profile := new List_Profile'
+              (Get_List_Profile (Get_Generic_Entity (Gen_Inst),
+               It.From_Visibility));
+
+            Unref (Gen_Inst);
+         elsif Get_Construct
+           (E.Entity).Attributes (Ada_Generic_Attribute)
+         then
+            E.Profile := new List_Profile'
+              (Get_List_Profile
+                 (E.Entity, It.From_Visibility, Generic_Profile));
+         else
+            E.Profile := new List_Profile'
+              (Get_List_Profile (E.Entity, It.From_Visibility));
+         end if;
       end if;
    end Configure_View;
 

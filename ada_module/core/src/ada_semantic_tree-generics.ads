@@ -73,11 +73,11 @@ package Ada_Semantic_Tree.Generics is
    --  Return the actual entity for this formal, according to the generic
    --  instance information
 
-   function Get_Generic_Package (Info : Instance_Info) return Entity_Access;
-   --  Return the generic package instantiated by this information
+   function Get_Generic_Entity (Info : Instance_Info) return Entity_Access;
+   --  Return the generic entity instantiated by this information
    --  ??? see where to remove calls to that guy...
 
-   function Get_Generic_Package (Info : Entity_Access) return Entity_View;
+   function Get_Generic_Entity (Info : Entity_Access) return Entity_View;
    --  Same as above, but computes only the generic package without retreiving
    --  the entire generic context.
 
