@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J520-004: Launching of external Python-based build or scripts fails
+  Problem:    GPS internally sets the PYTHONHOME and PYTHONPATH variables to
+              point to its packaged Python libraries. This might be a problem
+              when launching python-based build commands or external scripts.
+  Workaround: Create a wrapper around the python-based build commands or
+              scripts to unset the PYTHONHOME and PYTHONPATH variables.
+
 - J507-011: Project View broken when toggling Show Absolute Path
   Problem:    If you toggle (from the contextual menu) the display of
               absolute paths twice (to get back to displaying relative
