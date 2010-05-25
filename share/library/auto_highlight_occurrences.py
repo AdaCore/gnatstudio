@@ -195,11 +195,8 @@ def on_location_changed(hook, file, line, column):
     context=GPS.current_context()
 
     if context.__class__ == GPS.EntityContext:
-        loc=context.location()
-
         try:
-            entity = GPS.Entity(
-            context.entity().name(), loc.file(), loc.line(), loc.column())
+            entity = context.entity()
         except:
             entity = None
 
