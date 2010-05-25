@@ -242,6 +242,10 @@ procedure GPS.Main is
    Debugger_Name          : String_Access;
    Startup_Dir            : String_Access;
    About_Contents         : String_Access;
+
+   Python_Home : String_Access;
+   Python_Path : String_Access;
+
    Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
@@ -381,7 +385,6 @@ procedure GPS.Main is
       File        : File_Type;
       Charset     : String_Access;
       Make_Root   : String_Access;
-      Python_Home : String_Access;
       Tmp, Tmp2   : String_Access;
 
       Ignored     : Log_Handler_Id;
@@ -495,27 +498,22 @@ procedure GPS.Main is
       end if;
 
       Python_Home := Getenv ("PYTHONHOME");
-
       if Python_Home.all = "" then
          Setenv ("PYTHONHOME", +Prefix_Dir.Full_Name);
       end if;
 
-      Free (Python_Home);
-
       --  Python startup path
 
-      Tmp := Getenv ("PYTHONPATH");
-      if Tmp.all = "" then
+      Python_Path := Getenv ("PYTHONPATH");
+      if Python_Path.all = "" then
          Setenv ("PYTHONPATH",
                  +Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
       else
          Setenv ("PYTHONPATH",
                  +To_Path
-                   (From_Path (+Tmp.all) &
+                   (From_Path (+Python_Path.all) &
                     (1 => Create_From_Dir (Prefix_Dir, "share/gps/python"))));
       end if;
-
-      Free (Tmp);
 
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
@@ -1691,6 +1689,12 @@ procedure GPS.Main is
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
       Idle_Id := Idle_Add (On_GPS_Started'Access);
+
+      Setenv ("PYTHONHOME", Python_Home.all);
+      Free (Python_Home);
+      Setenv ("PYTHONPATH", Python_Path.all);
+      Free (Python_Path);
+
       return False;
    end Finish_Setup;
 
