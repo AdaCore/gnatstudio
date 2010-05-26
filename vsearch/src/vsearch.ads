@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +19,7 @@
 
 with Find_Utils;        use Find_Utils;
 with GPS.Kernel;        use GPS.Kernel;
+with Glib.Object;
 with Gtk.Button;        use Gtk.Button;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Widget;        use Gtk.Widget;
@@ -32,6 +32,7 @@ with Gtk.Combo;         use Gtk.Combo;
 with Collapsing_Pane;   use Collapsing_Pane;
 with Gdk.Pixbuf;
 with GNAT.Strings;
+with Histories;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -56,26 +57,61 @@ package Vsearch is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   procedure Register_Search_Function
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : Find_Utils.Search_Module_Data);
-   --  See Find_Utils.Register_Search_Function;
-
    procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Register the preferences associated to the search functions
 
-   function Search_Context_From_Module
-     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
-      Handle : access Kernel_Handle_Record'Class)
-      return Find_Utils.Search_Module_Data;
-   --  See Find_Utils.Context_From_Module;
+   ---------------------
+   -- Search contexts --
+   ---------------------
 
-   procedure Set_Last_Of_Module
-     (Handle      : access Kernel_Handle_Record'Class;
-      Search_Data : Find_Utils.Search_Module_Data);
-   --  The Search_Data given in parameter is set as beign the last one selected
-   --  by the user, and will be the next one shown for the corresponding
-   --  module.
+   procedure Register_Search_Function
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Label             : String;
+      Factory           : Find_Utils.Module_Search_Context_Factory;
+      Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
+      Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
+      Last_In_Module    : Histories.History_Key := "";
+      Mask              : Find_Utils.Search_Options_Mask :=
+        Find_Utils.All_Options);
+   --  Register a new search function.
+   --  This will be available under the title Label in the search combo box.
+   --  This procedure immediately emits the kernel signal
+   --  "search_functions_changed".
+   --  The search function registered is the one that will be returned by
+   --  default when the preference to "save the state of the search context"
+   --  is disabled.
+   --
+   --  If Extra_Information is not null, then it will be displayed every time
+   --  this label is selected. It can be used for instance to ask for more
+   --  information like a list of files to search.
+   --  Whenever the data in Extra_Information changes, or for some reason the
+   --  current status of GPS no longer permits the search, you should raise the
+   --  kernel signal Search_Reset_Signal (or call Reset_Search below).
+   --
+   --  When the user then selects "Find", the function Factory is called to
+   --  create the factory. The options and searched string or regexp will be
+   --  set automatically on return of Factory, so you do not need to handle
+   --  this.
+   --  Mask indicates what options are relevant for that module. Options that
+   --  are not set will be greyed out.
+   --  If Supports_Replace if false, then the button will be greyed out.
+   --
+   --  Id can be left null. If not null, it will be used to set the default
+   --  search context when the search dialog is popped up (the first
+   --  search_module_data that matches the current module is used).
+   --  Last_In_Module is a boolean history key. When a given module has several
+   --  search functions, only one of them should have this history set to
+   --  true. This is the last selected search function for this module, and
+   --  this is the one supposed to be automatically selected when opening the
+   --  search view in this context. When this is equals to "", no key is
+   --  supposed to be assocated with the data. The history entry is created
+   --  automatically if needed
+
+   procedure Reset_Search
+     (Object : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
+   --  callback function. Object is ignored, and can be anything.
 
    ---------------------
    -- Search Patterns --

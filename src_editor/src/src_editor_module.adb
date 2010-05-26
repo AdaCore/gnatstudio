@@ -109,6 +109,7 @@ with Src_Printing;
 with String_Utils;                      use String_Utils;
 with UTF8_Utils;                        use UTF8_Utils;
 with Traces;                            use Traces;
+with Vsearch;                           use Vsearch;
 
 package body Src_Editor_Module is
 
@@ -3216,73 +3217,38 @@ package body Src_Editor_Module is
       Gtk_New (Selector, Kernel);
       Gtk_New (Extra, Kernel);
 
-      declare
-         Name  : constant String := -"Current File";
-         Name2 : constant String := -"Files From Project";
-         Name3 : constant String := -"Files...";
-         Name4 : constant String := -"Open Files";
-
-         Search_Context_Current_File       : constant History_Key :=
-           "src_ctxt_sch_1  ";
-         Search_Context_Files_From_Project : constant History_Key :=
-           "src_ctxt_sch_2  ";
-         Search_Context_Files              : constant History_Key :=
-           "src_ctxt_sch_3  ";
-         Search_Context_Open_Files         : constant History_Key :=
-           "src_ctxt_sch_4  ";
-      begin
-         Register_Search_Function
-           (Kernel => Kernel,
-            Data   =>
-              (Length            => Name2'Length,
-               Label             => Name2,
-               Factory           => Files_From_Project_Factory'Access,
-               Extra_Information => Gtk_Widget (Selector),
-               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
-               Mask              => All_Options and not Search_Backward,
-               Last_Of_Module    => Search_Context_Files_From_Project));
-         Register_Search_Function
-           (Kernel => Kernel,
-            Data   =>
-              (Length            => Name3'Length,
-               Label             => Name3,
-               Factory           => Files_Factory'Access,
-               Extra_Information => Gtk_Widget (Extra),
-               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
-               Mask              => All_Options and not Search_Backward,
-               Last_Of_Module    => Search_Context_Files));
-         Register_Search_Function
-           (Kernel => Kernel,
-            Data   =>
-              (Length            => Name4'Length,
-               Label             => Name4,
-               Factory           => Open_Files_Factory'Access,
-               Extra_Information => Gtk_Widget (Selector),
-               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
-               Mask              => All_Options and not Search_Backward,
-               Last_Of_Module    => Search_Context_Open_Files));
-         Register_Search_Function
-           (Kernel => Kernel,
-            Data   =>
-              (Length            => Name'Length,
-               Label             => Name,
-               Factory           => Current_File_Factory'Access,
-               Extra_Information => Gtk_Widget (Selector),
-               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
-               Mask              => All_Options,
-               Last_Of_Module    => Search_Context_Current_File));
-
-         Create_New_Boolean_Key_If_Necessary
-           (Get_History (Kernel).all, Search_Context_Current_File, True);
-         Create_New_Boolean_Key_If_Necessary
-           (Get_History (Kernel).all,
-            Search_Context_Files_From_Project,
-            False);
-         Create_New_Boolean_Key_If_Necessary
-           (Get_History (Kernel).all, Search_Context_Files, False);
-         Create_New_Boolean_Key_If_Necessary
-           (Get_History (Kernel).all, Search_Context_Open_Files, False);
-      end;
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Files From Project",
+         Factory           => Files_From_Project_Factory'Access,
+         Extra_Information => Selector,
+         Id                => Src_Editor_Module_Id,
+         Mask              => All_Options and not Search_Backward,
+         Last_In_Module    => "src_ctxt_sch_2  ");
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Files...",
+         Factory           => Files_Factory'Access,
+         Extra_Information => Extra,
+         Id                => Src_Editor_Module_Id,
+         Mask              => All_Options and not Search_Backward,
+         Last_In_Module    => "src_ctxt_sch_3  ");
+      Register_Search_Function
+        (Kernel => Kernel,
+         Label             => -"Open Files",
+         Factory           => Open_Files_Factory'Access,
+         Extra_Information => Selector,
+         Id                => Src_Editor_Module_Id,
+         Mask              => All_Options and not Search_Backward,
+         Last_In_Module    => "src_ctxt_sch_4  ");
+      Register_Search_Function
+        (Kernel => Kernel,
+         Label             => -"Current File",
+         Factory           => Current_File_Factory'Access,
+         Extra_Information => Selector,
+         Id                => Src_Editor_Module_Id,
+         Mask              => All_Options,
+         Last_In_Module    => "src_ctxt_sch_1  ");
 
       --  Register the aliases special entities
 

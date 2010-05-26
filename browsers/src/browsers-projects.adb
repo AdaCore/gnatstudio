@@ -42,6 +42,7 @@ with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
 with XML_Utils;              use XML_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
+with Vsearch;                use Vsearch;
 
 package body Browsers.Projects is
 
@@ -802,16 +803,13 @@ package body Browsers.Projects is
          Action => Command,
          Filter => Lookup_Filter (Kernel, "Project only"));
 
-      Find_Utils.Register_Search_Function
-        (Kernel => Kernel,
-         Data   => (Length            => Name'Length,
-                    Label             => Name,
-                    Factory           => Browser_Search_Factory'Access,
-                    Extra_Information => null,
-                    Id      => Abstract_Module_ID (Project_Browser_Module_ID),
-                    Mask              => All_Options and not Supports_Replace
-                      and not Search_Backward and not All_Occurrences,
-                    Last_Of_Module => No_Search_History_Key));
+      Register_Search_Function
+        (Kernel  => Kernel,
+         Label   => Name,
+         Factory => Browser_Search_Factory'Access,
+         Id      => Abstract_Module_ID (Project_Browser_Module_ID),
+         Mask    => All_Options and not Supports_Replace
+            and not Search_Backward and not All_Occurrences);
    end Register_Module;
 
 end Browsers.Projects;

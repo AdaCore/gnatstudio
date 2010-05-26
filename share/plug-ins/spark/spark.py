@@ -65,6 +65,9 @@ def examine_file (file):
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("Examiner")
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
+  dir = os.path.dirname (file.name())
+  GPS.cd (dir)
+  GPS.Console ().write ("current dir=%s" % dir)
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)

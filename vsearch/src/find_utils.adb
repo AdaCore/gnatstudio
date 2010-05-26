@@ -28,7 +28,6 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Vsearch;                   use Vsearch;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Intl;                  use GPS.Intl;
 
@@ -49,17 +48,6 @@ package body Find_Utils is
    function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
    pragma Inline (End_Of_Line);
    --  Return the index for the end of the line containing Pos
-
-   procedure Register_Search_Function
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : Search_Module_Data)
-      renames Vsearch.Register_Search_Function;
-
-   function Search_Context_From_Module
-     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
-      Handle : access Kernel_Handle_Record'Class)
-      return Find_Utils.Search_Module_Data
-      renames Vsearch.Search_Context_From_Module;
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -613,22 +601,6 @@ package body Find_Utils is
    begin
       return False;
    end Replace;
-
-   ------------------
-   -- Reset_Search --
-   ------------------
-
-   procedure Reset_Search
-     (Object : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
-   is
-      pragma Unreferenced (Object);
-   begin
-      Run_Hook (Kernel, Search_Reset_Hook);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Reset_Search;
 
    -----------------
    -- Get_Options --

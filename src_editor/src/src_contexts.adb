@@ -64,6 +64,7 @@ with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
 with Traces;                     use Traces;
+with Vsearch;                    use Vsearch;
 
 package body Src_Contexts is
 
@@ -2518,7 +2519,7 @@ package body Src_Contexts is
                -"Restrict the scope of the search");
 
       Kernel_Callback.Connect
-        (Get_Entry (Combo), Signal_Changed, Reset_Search'Access,
+        (Get_Entry (Combo), Signal_Changed, Vsearch.Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Initialize_Scope_Combo;
 

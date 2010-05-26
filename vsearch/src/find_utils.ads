@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,10 +49,9 @@
 with GNATCOLL.Boyer_Moore;
 with GNAT.Strings;
 with GNAT.Regpat;
+with Glib;
 with GPS.Kernel;
-with Glib.Object;
 with Gtk.Widget;
-with Histories;
 
 with Basic_Types; use Basic_Types;
 
@@ -320,74 +319,6 @@ package Find_Utils is
    --  It shouldn't set the general information like the pattern and the
    --  replacement pattern, since these are set automatically.
 
-   --------------------------------
-   -- Registering search modules --
-   --------------------------------
-
-   No_Search_History_Key : constant Histories.History_Key (1 .. 16) :=
-     (others => ' ');
-
-   type Search_Module_Data (Length : Natural) is record
-      Mask              : Search_Options_Mask;
-      Factory           : Module_Search_Context_Factory;
-      Extra_Information : Gtk.Widget.Gtk_Widget;
-      Id                : GPS.Kernel.Abstract_Module_ID;
-      Label             : String (1 .. Length);
-
-      Last_Of_Module    : Histories.History_Key (1 .. 16) :=
-        No_Search_History_Key;
-      --  This is a boolean history key. When a given module has several search
-      --  functions, only one of them should have this preference set to true.
-      --  This is the last selected search function for this module, and this
-      --  is the one supposed to be automatically selected when opening the
-      --  search view in this context. When this is equals to
-      --  No_Search_History_Key no key is supposed to be assocated with the
-      --  data.
-   end record;
-   --  If Extra_Information is not null, then it will be displayed every time
-   --  this label is selected. It can be used for instance to ask for more
-   --  information like a list of files to search.
-   --  Whenever the data in Extra_Information changes, or for some reason the
-   --  current status of GPS no longer permits the search, you should raise the
-   --  kernel signal Search_Reset_Signal (or call Reset_Search below).
-   --
-   --  When the user then selects "Find", the function Factory is called to
-   --  create the factory. The options and searched string or regexp will be
-   --  set automatically on return of Factory, so you do not need to handle
-   --  this.
-   --  Mask indicates what options are relevant for that module. Options that
-   --  are not set will be greyed out.
-   --  If Supports_Replace if false, then the button will be greyed out.
-   --
-   --  Id can be left null. If not null, it will be used to set the default
-   --  search context when the search dialog is popped up (the first
-   --  search_module_data that matches the current module is used).
-
-   No_Search : constant Search_Module_Data;
-
-   procedure Register_Search_Function
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data              : Search_Module_Data);
-   --  Register a new search function.
-   --  This will be available under the title Label in the search combo box.
-   --  This emits the kernel signal "search_functions_changed".
-   --  The search function registered is the one that will be returned by
-   --  default when the preference to "save the state of the search context"
-   --  is disabled.
-
-   procedure Reset_Search
-     (Object : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
-   --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
-   --  callback function. Object is ignored, and can be anything.
-
-   function Search_Context_From_Module
-     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
-      Handle : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Find_Utils.Search_Module_Data;
-   --  Return the first search context that matches Id, or No_Search if there
-   --  is none.
-
 private
 
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
@@ -395,15 +326,6 @@ private
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
    No_Result : constant Match_Result := (0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-
-   No_Search : constant Search_Module_Data :=
-     (Length            => 0,
-      Label             => "",
-      Mask              => 0,
-      Factory           => null,
-      Id                => null,
-      Extra_Information => null,
-      Last_Of_Module    => No_Search_History_Key);
 
    type Root_Search_Context is tagged limited record
       Options        : Search_Options;

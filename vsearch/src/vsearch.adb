@@ -100,12 +100,42 @@ package body Vsearch is
        & " you can keep typing Enter to go to the next search, but can't"
        & " modify the editor directly");
 
+   type History_Key_Access is access all History_Key;
+
+   type Search_Module_Data is record
+      Mask              : Search_Options_Mask;
+      Factory           : Module_Search_Context_Factory;
+      Extra_Information : Gtk.Widget.Gtk_Widget;
+      Id                : GPS.Kernel.Abstract_Module_ID;
+      Label             : String_Access;
+      Last_Of_Module    : History_Key_Access;
+   end record;
+
+   No_Search : constant Search_Module_Data :=
+     (Label             => null,
+      Mask              => 0,
+      Factory           => null,
+      Id                => null,
+      Extra_Information => null,
+      Last_Of_Module    => null);
+
+   procedure Set_Last_Of_Module
+     (Handle      : access Kernel_Handle_Record'Class;
+      Search_Data : Search_Module_Data);
+   --  The Search_Data given in parameter is set as beign the last one selected
+   --  by the user, and will be the next one shown for the corresponding
+   --  module.
+
+   function Search_Context_From_Module
+     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
+      Handle : access Kernel_Handle_Record'Class) return Search_Module_Data;
+   --  Return the first search context that matches Id, or No_Search if there
+   --  is none.
+
    procedure Free (Data : in out Search_Module_Data);
    --  Free the memory associated with Data
 
-   package Search_Modules_List is new Generic_List
-     (Find_Utils.Search_Module_Data);
-
+   package Search_Modules_List is new Generic_List (Search_Module_Data);
    use Search_Modules_List;
 
    Search_Module_Name : constant String := "Search";
@@ -226,10 +256,13 @@ package body Vsearch is
    --  No_Search is returned if no such module was found.
 
    function Get_Or_Create_Vsearch
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Raise_Widget : Boolean := False;
-      Float_Widget : Boolean := True) return Vsearch_Access;
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Raise_Widget  : Boolean := False;
+      Float_Widget  : Boolean := True;
+      Reset_Entries : Boolean := False) return Vsearch_Access;
    --  Return a valid vsearch widget, creating one if necessary.
+   --  If Reset_Entries is True, the fields in the dialog are reset depending
+   --  on the current module.
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -306,6 +339,8 @@ package body Vsearch is
    --  Called when the option frame is toggled.
 
    procedure Search_Menu_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure Search_Menu_All_Files_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for the menu Edit->Search
 
@@ -519,10 +554,15 @@ package body Vsearch is
    ----------
 
    procedure Free (Data : in out Search_Module_Data) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (History_Key, History_Key_Access);
    begin
       if Data.Extra_Information /= null then
          Unref (Data.Extra_Information);
       end if;
+
+      Free (Data.Label);
+      Unchecked_Free (Data.Last_Of_Module);
    end Free;
 
    -------------
@@ -1461,8 +1501,7 @@ package body Vsearch is
          begin
             exit when Data = No_Search;
 
-            Add_Unique_Combo_Entry
-              (Vsearch.Context_Combo, Data.Label);
+            Add_Unique_Combo_Entry (Vsearch.Context_Combo, Data.Label.all);
 
             Last_Id := Data.Id;
             Num := Num + 1;
@@ -1471,7 +1510,7 @@ package body Vsearch is
 
       Set_Text
         (Get_Entry (Vsearch.Context_Combo),
-         Search_Context_From_Module (Last_Id, Kernel).Label);
+         Search_Context_From_Module (Last_Id, Kernel).Label.all);
    end Search_Functions_Changed;
 
    -------------
@@ -1836,8 +1875,14 @@ package body Vsearch is
    function Get_Or_Create_Vsearch
      (Kernel       : access Kernel_Handle_Record'Class;
       Raise_Widget : Boolean := False;
-      Float_Widget : Boolean := True) return Vsearch_Access
+      Float_Widget : Boolean := True;
+      Reset_Entries : Boolean := False) return Vsearch_Access
    is
+      --  We must create the search dialog only after we have found the current
+      --  context, otherwise it would return the context of the search widget
+      --  itself
+      Module   : constant Module_ID := Get_Current_Module (Kernel);
+
       Child   : GPS_MDI_Child;
       Success : Boolean;
 
@@ -1952,8 +1997,52 @@ package body Vsearch is
          Raise_Child (Child);
       end if;
 
+      if Reset_Entries then
+         --  ??? Temporarily: reset the entry. The correct fix would be to
+         --  separate the find and replace tabs, so that having a default
+         --  entry in this combo doesn't look strange when the combo is
+         --  insensitive.
+
+         declare
+            Vsearch  : constant Vsearch_Access := Vsearch_Module_Id.Search;
+         begin
+            Set_Text (Get_Entry (Vsearch.Replace_Combo), "");
+
+            if Module /= null then
+               declare
+                  Search : constant Search_Module_Data :=
+                    Search_Context_From_Module (Module, Vsearch.Kernel);
+               begin
+                  if Search /= No_Search then
+                     Set_Text
+                       (Get_Entry (Vsearch.Context_Combo), Search.Label.all);
+                  end if;
+               end;
+            end if;
+
+            Grab_Focus (Vsearch.Pattern_Entry);
+         end;
+      end if;
+
       return Vsearch_Module_Id.Search;
    end Get_Or_Create_Vsearch;
+
+   ------------------------------
+   -- Search_Menu_All_Files_Cb --
+   ------------------------------
+
+   procedure Search_Menu_All_Files_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Vsearch : Vsearch_Access;
+      pragma Unreferenced (Widget, Vsearch);
+   begin
+      Vsearch := Get_Or_Create_Vsearch
+        (Kernel, Raise_Widget => True, Reset_Entries => True);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Search_Menu_All_Files_Cb;
 
    --------------------
    -- Search_Menu_Cb --
@@ -1962,34 +2051,11 @@ package body Vsearch is
    procedure Search_Menu_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Vsearch : Vsearch_Access;
-      Module  : constant Module_ID := Get_Current_Module (Kernel);
+      pragma Unreferenced (Widget, Vsearch);
    begin
-      --  We must create the search dialog only after we have found the current
-      --  context, otherwise it would return the context of the search widget
-      --  itself
-
-      Vsearch := Get_Or_Create_Vsearch (Kernel, Raise_Widget => True);
-
-      --  ??? Temporarily: reset the entry. The correct fix would be to
-      --  separate the find and replace tabs, so that having a default
-      --  entry in this combo doesn't look strange when the combo is
-      --  insensitive.
-      Set_Text (Get_Entry (Vsearch.Replace_Combo), "");
-
-      if Module /= null then
-         declare
-            Search : constant Search_Module_Data :=
-              Search_Context_From_Module (Module, Vsearch.Kernel);
-         begin
-            if Search /= No_Search then
-               Set_Text (Get_Entry (Vsearch.Context_Combo), Search.Label);
-            end if;
-         end;
-      end if;
-
-      Grab_Focus (Vsearch.Pattern_Entry);
+      Vsearch := Get_Or_Create_Vsearch
+        (Kernel, Raise_Widget => True, Reset_Entries => True);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -2034,9 +2100,29 @@ package body Vsearch is
    ------------------------------
 
    procedure Register_Search_Function
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : Search_Module_Data) is
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Label             : String;
+      Factory           : Find_Utils.Module_Search_Context_Factory;
+      Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
+      Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
+      Last_In_Module    : Histories.History_Key := "";
+      Mask              : Search_Options_Mask := All_Options)
+   is
+      Data : Search_Module_Data :=
+        Search_Module_Data'
+          (Label             => new String'(Label),
+           Factory           => Factory,
+           Extra_Information => Gtk_Widget (Extra_Information),
+           Id                => Abstract_Module_ID (Id),
+           Last_Of_Module    => null,
+           Mask              => Mask);
    begin
+      if Last_In_Module /= "" then
+         Data.Last_Of_Module := new History_Key'(Last_In_Module);
+         Create_New_Boolean_Key_If_Necessary
+           (Get_History (Kernel).all, Last_In_Module, False);
+      end if;
+
       Prepend (Vsearch_Module_Id.Search_Modules, Data);
 
       if Data.Extra_Information /= null then
@@ -2083,7 +2169,7 @@ package body Vsearch is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
       while List /= Null_Node loop
-         if Data (List).Label = Label then
+         if Data (List).Label.all = Label then
             return Data (List);
          end if;
 
@@ -2100,7 +2186,7 @@ package body Vsearch is
    function Search_Context_From_Module
      (Id     : access Abstract_Module_ID_Record'Class;
       Handle : access Kernel_Handle_Record'Class)
-      return Find_Utils.Search_Module_Data
+      return Search_Module_Data
    is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
 
@@ -2112,9 +2198,9 @@ package body Vsearch is
 
             if (not Get_Pref (Keep_Previous_Search_Context))
               or else
-                (Data (List).Last_Of_Module /= No_Search_History_Key
+                (Data (List).Last_Of_Module /= null
                  and then Get_History
-                   (Get_History (Handle).all, Data (List).Last_Of_Module))
+                   (Get_History (Handle).all, Data (List).Last_Of_Module.all))
             then
                return Data (List);
             end if;
@@ -2136,7 +2222,7 @@ package body Vsearch is
 
    procedure Set_Last_Of_Module
      (Handle      : access Kernel_Handle_Record'Class;
-      Search_Data : Find_Utils.Search_Module_Data)
+      Search_Data : Search_Module_Data)
    is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
@@ -2146,18 +2232,19 @@ package body Vsearch is
 
       while List /= Null_Node loop
          if Data (List).Id = Search_Data.Id then
-            if Data (List).Last_Of_Module /= No_Search_History_Key then
+            if Data (List).Last_Of_Module /= null then
                Set_History
-                 (Get_History (Handle).all, Data (List).Last_Of_Module, False);
+                 (Get_History (Handle).all,
+                  Data (List).Last_Of_Module.all, False);
             end if;
          end if;
 
          List := Next (List);
       end loop;
 
-      if Search_Data.Last_Of_Module /= No_Search_History_Key then
+      if Search_Data.Last_Of_Module /= null then
          Set_History
-           (Get_History (Handle).all, Search_Data.Last_Of_Module, True);
+           (Get_History (Handle).all, Search_Data.Last_Of_Module.all, True);
       end if;
    end Set_Last_Of_Module;
 
@@ -2342,6 +2429,12 @@ package body Vsearch is
          Ref_Item => Find_All,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
 
+      Register_Menu
+        (Kernel, Navigate, -"_Find or Replace in All Files...",
+         Stock_Find, Search_Menu_All_Files_Cb'Access,
+         Ref_Item => Find_All,
+         Accel_Key => GDK_F, Accel_Mods => Control_Mask or Shift_Mask);
+
       Vsearch_Module_Id.Next_Menu_Item := Register_Menu
         (Kernel, Navigate, -"Find _Next",
          "", Search_Next_Cb'Access,
@@ -2431,5 +2524,21 @@ package body Vsearch is
    begin
       Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;
    end Preferences_Changed;
+
+   ------------------
+   -- Reset_Search --
+   ------------------
+
+   procedure Reset_Search
+     (Object : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+   begin
+      Run_Hook (Kernel, Search_Reset_Hook);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Reset_Search;
 
 end Vsearch;

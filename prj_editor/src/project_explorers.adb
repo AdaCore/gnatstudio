@@ -88,6 +88,7 @@ with String_Utils;              use String_Utils;
 with Tooltips;
 with Traces;                    use Traces;
 with XML_Utils;                 use XML_Utils;
+with Vsearch;                   use Vsearch;
 
 package body Project_Explorers is
 
@@ -3224,20 +3225,14 @@ package body Project_Explorers is
          Filter => Entity_Node_Filter,
          Name   => "Explorer_Entity_Node");
 
-      declare
-         Name : constant String := -"Project View";
-      begin
-         Find_Utils.Register_Search_Function
-           (Kernel            => Kernel,
-            Data => (Length            => Name'Length,
-                     Label             => Name,
-                     Factory           => Explorer_Search_Factory'Access,
-                     Extra_Information => Gtk_Widget (Extra),
-                     Id             => Abstract_Module_ID (Explorer_Module_ID),
-                     Mask              => All_Options and not Supports_Replace
-                       and not Search_Backward and not All_Occurrences,
-                     Last_Of_Module => No_Search_History_Key));
-      end;
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Project View",
+         Factory           => Explorer_Search_Factory'Access,
+         Extra_Information => Extra,
+         Id                => Explorer_Module_ID,
+         Mask              => All_Options and not Supports_Replace
+         and not Search_Backward and not All_Occurrences);
    end Register_Module;
 
    ----------
