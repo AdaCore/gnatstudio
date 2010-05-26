@@ -9,7 +9,7 @@ Known Problems fixed in GPS 4.5.0
 
 - J520-002: Sorting source files in project editor
   Problem:    The list of source files in the project editor is not sorted,
-              making it harder to locate a file
+              making it harder to locate a file.
   Workaround: Once you have selected a file, you can use ctrl-F to search
               for other files in the list
 
@@ -18,7 +18,9 @@ Known Problems fixed in GPS 4.5.0
               absolute paths twice (to get back to displaying relative
               paths), the paths are displayed relative to the current
               directory rather than relative to the project the directory
-              belongs to. This is when Show Flat View is enabled
+              belongs to. In addition, not all directories are properly
+              refreshed in some cases, and you might end up with a mixture
+              of absolute and relative paths.
   Workaround: Restart GPS after setting your preferred setup
 
 - J422-045: Prefix completion doesn't work with one parameter functions

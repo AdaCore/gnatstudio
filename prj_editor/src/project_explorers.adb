@@ -1280,42 +1280,27 @@ package body Project_Explorers is
 
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type) is
          It   : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
-         It2  : Gtk_Tree_Iter;
-         Path : Gtk_Tree_Path;
          Prj  : Project_Type := Project;
       begin
          case Get_Node_Type (Exp.Tree.Model, Iter) is
             when Project_Node | Modified_Project_Node | Extends_Project_Node =>
                Prj := Get_Project_From_Node
                  (Exp.Tree.Model, Exp.Kernel, Iter, False);
-            when others =>
+
+            when Directory_Node | Obj_Directory_Node | Exec_Directory_Node
+                 | File_Node | Category_Node | Entity_Node =>
                null;
          end case;
 
          while It /= Null_Iter loop
-            Iter_Copy (Source => It, Dest => It2);
-            Next (Exp.Tree.Model, It2);
-
-            --  Storing an iter (It2) here is not enough because
-            --  Update_Directory_Node_Text may invalidate it. This is why we
-            --  use a Gtk_Tree_Path instead.
-
-            if It2 = Null_Iter then
-               Path := null;
-            else
-               Path := Get_Path (Exp.Tree.Model, It2);
-            end if;
-
             case Get_Node_Type (Exp.Tree.Model, It) is
                when Project_Node
                   | Modified_Project_Node
                   | Extends_Project_Node =>
-                  Process_Node
-                    (It, Get_Project_From_Node
-                       (Exp.Tree.Model, Exp.Kernel, It, False));
+                  Process_Node (It, No_Project);
 
                when Directory_Node
-                 | Obj_Directory_Node
+                  | Obj_Directory_Node
                   | Exec_Directory_Node =>
                   Update_Directory_Node_Text (Exp, Prj, It);
 
@@ -1323,20 +1308,20 @@ package body Project_Explorers is
                   null;
             end case;
 
-            exit when Path = null;
-
-            It := Get_Iter (Exp.Tree.Model, Path);
-            Path_Free (Path);
+            Next (Exp.Tree.Model, It);
          end loop;
       end Process_Node;
 
       Iter : Gtk_Tree_Iter := Get_Iter_First (Exp.Tree.Model);
+      Sort : constant Gint := Freeze_Sort (Exp.Tree.Model);
    begin
       --  There can be multiple toplevel nodes in the case of the flat view
       while Iter /= Null_Iter loop
          Process_Node (Iter, Get_Project (Exp.Kernel));
          Next (Exp.Tree.Model, Iter);
       end loop;
+
+      Thaw_Sort (Exp.Tree.Model, Sort);
    end Update_Absolute_Paths;
 
    -----------------
