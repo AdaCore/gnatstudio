@@ -13,6 +13,12 @@ Known Problems fixed in GPS 4.5.0
   Workaround: Once you have selected a file, you can use ctrl-F to search
               for other files in the list
 
+- J511-019: Renaming an entity displays dialog asking to save the file
+  Problem:    If you rename an entity through the "Refactoring" contextual
+              menu, you get prompted for each file whether to save it.
+  Workaround: Do not ask for auto-saving, but instead select the menu
+              /File/Save More/All after the refactoring is performed
+
 - J507-011: Project View broken when toggling Show Absolute Path
   Problem:    If you toggle (from the contextual menu) the display of
               absolute paths twice (to get back to displaying relative

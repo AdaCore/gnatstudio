@@ -33,6 +33,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with Entities.Queries;           use Entities.Queries;
 with Entities;                   use Entities;
+with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -58,6 +59,7 @@ package body Refactoring.Rename is
    Name_Cst               : aliased constant String := "name";
    Include_Overriding_Cst : aliased constant String := "include_overriding";
    Make_Writable_Cst      : aliased constant String := "make_writable";
+   Auto_Save_Cst          : aliased constant String := "auto_save";
 
    type Rename_Entity_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -212,6 +214,7 @@ package body Refactoring.Rename is
 
       Name   : constant String := Get_Name (Entity).all;
       Errors : File_Arrays.Instance := File_Arrays.Empty_Instance;
+      Was_Open : Boolean;
 
       procedure Terminate_File (File : Virtual_File);
       --  Finish the processing for a given file
@@ -224,7 +227,10 @@ package body Refactoring.Rename is
       begin
          Finish_Undo_Group (Kernel, File);
          if Factory.Auto_Save then
-            Get_Buffer_Factory (Kernel).Get (File).Save (True);
+            Get_Buffer_Factory (Kernel).Get (File).Save (Interactive => False);
+            if not Was_Open then
+               Get_Buffer_Factory (Kernel).Get (File).Close;
+            end if;
          end if;
       end Terminate_File;
 
@@ -239,6 +245,10 @@ package body Refactoring.Rename is
             if L /= Last (Refs) then
                Terminate_File (Get_Filename (Refs.Table (L + 1).File));
             end if;
+
+            Was_Open := Get_Buffer_Factory (Kernel).Get
+              (File  => Get_Filename (Refs.Table (L).File),
+               Force => False, Open_View => False) /= Nil_Editor_Buffer;
 
             Start_Undo_Group (Kernel, Get_Filename (Refs.Table (L).File));
          end if;
@@ -381,26 +391,22 @@ package body Refactoring.Rename is
       if Command = "rename" then
          Name_Parameters (Data, (1 => Name_Cst'Access,
                                  2 => Include_Overriding_Cst'Access,
-                                 3 => Make_Writable_Cst'Access));
+                                 3 => Make_Writable_Cst'Access,
+                                 4 => Auto_Save_Cst'Access));
          declare
-            Entity              : constant Entity_Information :=
-                                    Get_Data (Data, 1);
-            New_Name            : constant String :=
-                                    Nth_Arg (Data, 2);
-            Include_Overridding : constant Boolean :=
-                                    Nth_Arg (Data, 3, True);
-            Make_Writable       : constant Boolean :=
-                                    Nth_Arg (Data, 4, False);
+            Entity         : constant Entity_Information := Get_Data (Data, 1);
+            New_Name            : constant String  := Nth_Arg (Data, 2);
+            Include_Overridding : constant Boolean := Nth_Arg (Data, 3, True);
+            Make_Writable       : constant Boolean := Nth_Arg (Data, 4, False);
+            Auto_Save           : constant Boolean := Nth_Arg (Data, 5, False);
             Refactor            : constant Renaming_Performer :=
-                                    new Renaming_Performer_Record'
-                                      (Refactor_Performer_Record with
-                                       New_Name_Length => New_Name'Length,
-                                       New_Name        => New_Name,
-                                       Old_Name_Length =>
-                                         Get_Name (Entity)'Length,
-                                       Old_Name        =>
-                                         Get_Name (Entity).all,
-                                       Auto_Save       => False);
+              new Renaming_Performer_Record'
+                (Refactor_Performer_Record with
+                 New_Name_Length => New_Name'Length,
+                 New_Name        => New_Name,
+                 Old_Name_Length => Get_Name (Entity)'Length,
+                 Old_Name        => Get_Name (Entity).all,
+                 Auto_Save       => Auto_Save);
          begin
             Get_All_Locations
               (Get_Kernel (Data),
@@ -430,7 +436,7 @@ package body Refactoring.Rename is
          Filter => Lookup_Filter (Kernel, "Entity"),
          Action => C);
       Register_Command
-        (Kernel, "rename", 1, 3, Entity_Command_Handler'Access,
+        (Kernel, "rename", 1, 4, Entity_Command_Handler'Access,
          Get_Entity_Class (Kernel));
    end Register_Refactoring;
 
