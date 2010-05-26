@@ -75,6 +75,7 @@ with Commands;                use Commands;
 with Commands.Generic_Asynchronous;
 
 package body Vsearch is
+   Me : constant Debug_Handle := Create ("Vsearch");
 
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
@@ -84,6 +85,10 @@ package body Vsearch is
    Select_On_Match_Hist_Key    : constant History_Key := "select_on_match";
    Close_On_Match_Hist_Key     : constant History_Key := "close_on_match";
    --  The key for the histories.
+
+   Last_Function_In_Module_Key : constant History_Key := "search_function_";
+   --  The prefix used to store the name of the last search function used for
+   --  each module. The name of the module is appended to form the real key.
 
    Ask_Confirmation_For_Replace_All : Boolean_Preference;
    Keep_Previous_Search_Context     : Boolean_Preference;
@@ -100,15 +105,12 @@ package body Vsearch is
        & " you can keep typing Enter to go to the next search, but can't"
        & " modify the editor directly");
 
-   type History_Key_Access is access all History_Key;
-
    type Search_Module_Data is record
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
-      Id                : GPS.Kernel.Abstract_Module_ID;
+      Id                : Module_ID;
       Label             : String_Access;
-      Last_Of_Module    : History_Key_Access;
    end record;
 
    No_Search : constant Search_Module_Data :=
@@ -116,8 +118,7 @@ package body Vsearch is
       Mask              => 0,
       Factory           => null,
       Id                => null,
-      Extra_Information => null,
-      Last_Of_Module    => null);
+      Extra_Information => null);
 
    procedure Set_Last_Of_Module
      (Handle      : access Kernel_Handle_Record'Class;
@@ -127,7 +128,7 @@ package body Vsearch is
    --  module.
 
    function Search_Context_From_Module
-     (Id     : access GPS.Kernel.Abstract_Module_ID_Record'Class;
+     (Id     : not null access Module_ID_Record'Class;
       Handle : access Kernel_Handle_Record'Class) return Search_Module_Data;
    --  Return the first search context that matches Id, or No_Search if there
    --  is none.
@@ -554,15 +555,12 @@ package body Vsearch is
    ----------
 
    procedure Free (Data : in out Search_Module_Data) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (History_Key, History_Key_Access);
    begin
       if Data.Extra_Information /= null then
          Unref (Data.Extra_Information);
       end if;
 
       Free (Data.Label);
-      Unchecked_Free (Data.Last_Of_Module);
    end Free;
 
    -------------
@@ -1492,7 +1490,7 @@ package body Vsearch is
    is
       Vsearch : constant Vsearch_Access := Vsearch_Module_Id.Search;
       Num     : Positive := 1;
-      Last_Id : GPS.Kernel.Abstract_Module_ID;
+      Last_Id : Module_ID;
    begin
       loop
          declare
@@ -2105,22 +2103,25 @@ package body Vsearch is
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
       Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Last_In_Module    : Histories.History_Key := "";
       Mask              : Search_Options_Mask := All_Options)
    is
-      Data : Search_Module_Data :=
+      Data : constant Search_Module_Data :=
         Search_Module_Data'
           (Label             => new String'(Label),
            Factory           => Factory,
            Extra_Information => Gtk_Widget (Extra_Information),
-           Id                => Abstract_Module_ID (Id),
-           Last_Of_Module    => null,
+           Id                => Module_ID (Id),
            Mask              => Mask);
    begin
-      if Last_In_Module /= "" then
-         Data.Last_Of_Module := new History_Key'(Last_In_Module);
-         Create_New_Boolean_Key_If_Necessary
-           (Get_History (Kernel).all, Last_In_Module, False);
+      if Id /= null then
+         Create_New_Key_If_Necessary
+           (Get_History (Kernel).all,
+            Last_Function_In_Module_Key & History_Key (Get_Name (Data.Id)),
+            Key_Type => Strings);
+         Set_Max_Length
+           (Get_History (Kernel).all,
+            1,   --  Only the last one is interesting
+            Last_Function_In_Module_Key & History_Key (Get_Name (Data.Id)));
       end if;
 
       Prepend (Vsearch_Module_Id.Search_Modules, Data);
@@ -2184,24 +2185,32 @@ package body Vsearch is
    --------------------------------
 
    function Search_Context_From_Module
-     (Id     : access Abstract_Module_ID_Record'Class;
+     (Id     : not null access Module_ID_Record'Class;
       Handle : access Kernel_Handle_Record'Class)
       return Search_Module_Data
    is
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
-
       Last_Matching_Node : List_Node := Null_Node;
+      Key : constant History_Key :=
+        Last_Function_In_Module_Key & History_Key (Get_Name (Module_ID (Id)));
+      Last_Selected : constant String_List_Access :=
+        Get_History (Get_History (Handle).all, Key);
+
    begin
       while List /= Null_Node loop
-         if Data (List).Id = Abstract_Module_ID (Id) then
+         if Data (List).Id = Module_ID (Id) then
             Last_Matching_Node := List;
 
-            if (not Get_Pref (Keep_Previous_Search_Context))
-              or else
-                (Data (List).Last_Of_Module /= null
-                 and then Get_History
-                   (Get_History (Handle).all, Data (List).Last_Of_Module.all))
+            if not Get_Pref (Keep_Previous_Search_Context)
+              or else Last_Selected = null
+              or else Last_Selected (Last_Selected'First).all =
+                 Data (List).Label.all
             then
+               if Active (Me) then
+                  Trace (Me, "Get last search function for module "
+                         & String (Key) & ": " & Data (List).Label.all);
+               end if;
+
                return Data (List);
             end if;
          end if;
@@ -2222,30 +2231,24 @@ package body Vsearch is
 
    procedure Set_Last_Of_Module
      (Handle      : access Kernel_Handle_Record'Class;
-      Search_Data : Search_Module_Data)
-   is
-      List : List_Node := First (Vsearch_Module_Id.Search_Modules);
+      Search_Data : Search_Module_Data) is
    begin
-      if not Get_Pref (Keep_Previous_Search_Context) then
+      if not Get_Pref (Keep_Previous_Search_Context)
+        or else Search_Data.Id = null
+      then
          return;
       end if;
 
-      while List /= Null_Node loop
-         if Data (List).Id = Search_Data.Id then
-            if Data (List).Last_Of_Module /= null then
-               Set_History
-                 (Get_History (Handle).all,
-                  Data (List).Last_Of_Module.all, False);
-            end if;
-         end if;
-
-         List := Next (List);
-      end loop;
-
-      if Search_Data.Last_Of_Module /= null then
-         Set_History
-           (Get_History (Handle).all, Search_Data.Last_Of_Module.all, True);
+      if Active (Me) then
+         Trace (Me, "Set last search function for module "
+                & Get_Name (Search_Data.Id)
+                & " to " & Search_Data.Label.all);
       end if;
+
+      Add_To_History
+        (Get_History (Handle).all,
+         Last_Function_In_Module_Key & History_Key (Get_Name (Search_Data.Id)),
+         Search_Data.Label.all);
    end Set_Last_Of_Module;
 
    -----------------------------

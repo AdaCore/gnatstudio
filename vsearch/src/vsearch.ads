@@ -32,7 +32,6 @@ with Gtk.Combo;         use Gtk.Combo;
 with Collapsing_Pane;   use Collapsing_Pane;
 with Gdk.Pixbuf;
 with GNAT.Strings;
-with Histories;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -70,7 +69,6 @@ package Vsearch is
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
       Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Last_In_Module    : Histories.History_Key := "";
       Mask              : Find_Utils.Search_Options_Mask :=
         Find_Utils.All_Options);
    --  Register a new search function.
@@ -99,13 +97,6 @@ package Vsearch is
    --  Id can be left null. If not null, it will be used to set the default
    --  search context when the search dialog is popped up (the first
    --  search_module_data that matches the current module is used).
-   --  Last_In_Module is a boolean history key. When a given module has several
-   --  search functions, only one of them should have this history set to
-   --  true. This is the last selected search function for this module, and
-   --  this is the one supposed to be automatically selected when opening the
-   --  search view in this context. When this is equals to "", no key is
-   --  supposed to be assocated with the data. The history entry is created
-   --  automatically if needed
 
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;

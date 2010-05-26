@@ -3223,32 +3223,28 @@ package body Src_Editor_Module is
          Factory           => Files_From_Project_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward,
-         Last_In_Module    => "src_ctxt_sch_2  ");
+         Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files...",
          Factory           => Files_Factory'Access,
          Extra_Information => Extra,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward,
-         Last_In_Module    => "src_ctxt_sch_3  ");
+         Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel => Kernel,
          Label             => -"Open Files",
          Factory           => Open_Files_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward,
-         Last_In_Module    => "src_ctxt_sch_4  ");
+         Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel => Kernel,
          Label             => -"Current File",
          Factory           => Current_File_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options,
-         Last_In_Module    => "src_ctxt_sch_1  ");
+         Mask              => All_Options);
 
       --  Register the aliases special entities
 
