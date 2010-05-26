@@ -3194,6 +3194,22 @@ package body Project_Properties is
            (Button, Gtk.Button.Signal_Clicked, Remove_String_From_List'Access,
             Slot_Object => Editor);
 
+         Gtk_New (Editor.Model, (0 => GType_String,   --  display name
+                                 1 => GType_Boolean,  --  recursive ?
+                                 2 => GType_String)); --  relative name
+
+         Gtk_New (Editor.View, Editor.Model);
+         Set_Headers_Visible (Editor.View, Editor.As_Directory);
+         Add (Scrolled, Editor.View);
+
+         Gtk_New (Text);
+         Gtk_New (Col);
+         Set_Resizable (Col, True);
+         Set_Title (Col, -"Directory");
+         Col_Number := Append_Column (Editor.View, Col);
+         Pack_Start (Col, Text, True);
+         Add_Attribute (Col, Text, "text", 0);
+
          if Description.Ordered_List then
             Gtk_New (Button);
             Pack_Start (Box, Button, Expand => False);
@@ -3210,23 +3226,10 @@ package body Project_Properties is
             Widget_Callback.Object_Connect
               (Button, Gtk.Button.Signal_Clicked, Move_String_Down'Access,
                Slot_Object => Editor);
+         else
+            Set_Sort_Column_Id (Col, 0);
+            Clicked (Col);
          end if;
-
-         Gtk_New (Editor.Model, (0 => GType_String,   --  display name
-                                 1 => GType_Boolean,  --  recursive ?
-                                 2 => GType_String)); --  relative name
-
-         Gtk_New (Editor.View, Editor.Model);
-         Set_Headers_Visible (Editor.View, Editor.As_Directory);
-         Add (Scrolled, Editor.View);
-
-         Gtk_New (Text);
-         Gtk_New (Col);
-         Set_Resizable (Col, True);
-         Set_Title (Col, -"Directory");
-         Col_Number := Append_Column (Editor.View, Col);
-         Pack_Start (Col, Text, True);
-         Add_Attribute (Col, Text, "text", 0);
 
          if Editor.As_Directory then
             Gtk_New (Toggle);
@@ -3876,8 +3879,6 @@ package body Project_Properties is
                   Index     => Lower_Attribute_Index);
             begin
                if Current /= null and then Current'Length /= 0 then
-                  Trace (Me, "MANU Value defined for " & Attr.Name.all
-                         & " length=" & Current'Length'Img);
                   return Current;
                end if;
                Free (Current);
