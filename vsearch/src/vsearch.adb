@@ -20,6 +20,7 @@
 with System;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
+with Commands.Interactive;     use Commands.Interactive;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types;                use Gdk.Types;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
@@ -49,6 +50,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.Types;             use Gtkada.Types;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
@@ -179,6 +181,18 @@ package body Vsearch is
 
    package Search_User_Data is new User_Data (Search_User_Data_Record);
 
+   type Search_Specific_Context is new Interactive_Command with record
+      Context : String_Access;
+   end record;
+   overriding procedure Free (Action : in out Search_Specific_Context);
+   overriding function Execute
+     (Action  : access Search_Specific_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  A command that opens the search dialog and presets the Look In field to
+   --  a specific function. If Context is null, then the previous context is
+   --  preserve if the preference Keep_Previous_Search_Context is set,
+   --  otherwise the context is reset depending on the current module.
+
    Search_User_Data_Quark : constant String := "gps-search_user";
 
    type Idle_Search_Data is record
@@ -260,10 +274,12 @@ package body Vsearch is
      (Kernel        : access Kernel_Handle_Record'Class;
       Raise_Widget  : Boolean := False;
       Float_Widget  : Boolean := True;
-      Reset_Entries : Boolean := False) return Vsearch_Access;
+      Reset_Entries : Boolean := False;
+      Context       : String_Access := null) return Vsearch_Access;
    --  Return a valid vsearch widget, creating one if necessary.
    --  If Reset_Entries is True, the fields in the dialog are reset depending
-   --  on the current module.
+   --  on the current module. Context indicates the value that should be
+   --  set for "Look In". If null, this will be set based on the current module
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -338,12 +354,6 @@ package body Vsearch is
 
    procedure On_Toggled (Object : access Gtk_Widget_Record'Class);
    --  Called when the option frame is toggled.
-
-   procedure Search_Menu_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   procedure Search_Menu_All_Files_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for the menu Edit->Search
 
    procedure Search_Next_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1871,10 +1881,11 @@ package body Vsearch is
    ---------------------------
 
    function Get_Or_Create_Vsearch
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Raise_Widget : Boolean := False;
-      Float_Widget : Boolean := True;
-      Reset_Entries : Boolean := False) return Vsearch_Access
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Raise_Widget  : Boolean := False;
+      Float_Widget  : Boolean := True;
+      Reset_Entries : Boolean := False;
+      Context       : String_Access := null) return Vsearch_Access
    is
       --  We must create the search dialog only after we have found the current
       --  context, otherwise it would return the context of the search widget
@@ -2006,16 +2017,21 @@ package body Vsearch is
          begin
             Set_Text (Get_Entry (Vsearch.Replace_Combo), "");
 
-            if Module /= null then
-               declare
-                  Search : constant Search_Module_Data :=
-                    Search_Context_From_Module (Module, Vsearch.Kernel);
-               begin
-                  if Search /= No_Search then
-                     Set_Text
-                       (Get_Entry (Vsearch.Context_Combo), Search.Label.all);
-                  end if;
-               end;
+            if Context = null then
+               if Module /= null then
+                  declare
+                     Search : constant Search_Module_Data :=
+                       Search_Context_From_Module (Module, Vsearch.Kernel);
+                  begin
+                     if Search /= No_Search then
+                        Set_Text
+                          (Get_Entry (Vsearch.Context_Combo),
+                           Search.Label.all);
+                     end if;
+                  end;
+               end if;
+            else
+               Set_Text (Get_Entry (Vsearch.Context_Combo), Context.all);
             end if;
 
             Grab_Focus (Vsearch.Pattern_Entry);
@@ -2024,40 +2040,6 @@ package body Vsearch is
 
       return Vsearch_Module_Id.Search;
    end Get_Or_Create_Vsearch;
-
-   ------------------------------
-   -- Search_Menu_All_Files_Cb --
-   ------------------------------
-
-   procedure Search_Menu_All_Files_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Vsearch : Vsearch_Access;
-      pragma Unreferenced (Widget, Vsearch);
-   begin
-      Vsearch := Get_Or_Create_Vsearch
-        (Kernel, Raise_Widget => True, Reset_Entries => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Search_Menu_All_Files_Cb;
-
-   --------------------
-   -- Search_Menu_Cb --
-   --------------------
-
-   procedure Search_Menu_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Vsearch : Vsearch_Access;
-      pragma Unreferenced (Widget, Vsearch);
-   begin
-      Vsearch := Get_Or_Create_Vsearch
-        (Kernel, Raise_Widget => True, Reset_Entries => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Search_Menu_Cb;
 
    --------------------
    -- Search_Next_Cb --
@@ -2093,6 +2075,41 @@ package body Vsearch is
       when E : others => Trace (Exception_Handle, E);
    end Search_Previous_Cb;
 
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Action : in out Search_Specific_Context) is
+   begin
+      Free (Action.Context);
+   end Free;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Action  : access Search_Specific_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Vsearch : Vsearch_Access;
+      pragma Unreferenced (Vsearch);
+   begin
+      if Action.Context = null then
+         null;
+      else
+         null;
+      end if;
+
+      Vsearch := Get_Or_Create_Vsearch
+        (Get_Kernel (Context.Context),
+         Raise_Widget  => True,
+         Reset_Entries => True,
+         Context       => Action.Context);
+
+      return Success;
+   end Execute;
+
    ------------------------------
    -- Register_Search_Function --
    ------------------------------
@@ -2112,6 +2129,7 @@ package body Vsearch is
            Extra_Information => Gtk_Widget (Extra_Information),
            Id                => Module_ID (Id),
            Mask              => Mask);
+      Command : Interactive_Command_Access;
    begin
       if Id /= null then
          Create_New_Key_If_Necessary
@@ -2130,6 +2148,17 @@ package body Vsearch is
          Ref (Data.Extra_Information);
          Sink (Data.Extra_Information);
       end if;
+
+      Command := new Search_Specific_Context'
+        (Interactive_Command with Context => new String'(Label));
+
+      Register_Action
+        (Kernel,
+         Name        => -"Search in context: " & Label,
+         Command     => Command,
+         Description => -("Open the search dialog, and preset the ""Look In"""
+           & " field to """ & Label & """"),
+         Category    => -"Search");
 
       Run_Hook (Kernel, Search_Functions_Changed_Hook);
    end Register_Search_Function;
@@ -2405,6 +2434,8 @@ package body Vsearch is
       pragma Import (C, open_options_xpm, "unfold_block_xpm");
       close_options_xpm  : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       pragma Import (C, close_options_xpm, "fold_block_xpm");
+
+      Command : Interactive_Command_Access;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
       Register_Module
@@ -2426,17 +2457,26 @@ package body Vsearch is
       Register_Menu
         (Kernel, Navigate, null, Ref_Item => -"Edit", Add_Before => False);
 
+      Command := new Search_Specific_Context'
+        (Interactive_Command with Context => null);
+      Register_Action
+        (Kernel,
+         Name        => -"Search",
+         Command     => Command,
+         Description => -("Open the search dialog. If you have selected the"
+           & " preference Search/Preserve Search Context, the same context"
+           & " will be selected, otherwise the context is reset depending on"
+           & " the active window"),
+         Category    => -"Search");
       Register_Menu
-        (Kernel, Navigate, -"_Find or Replace...",
-         Stock_Find, Search_Menu_Cb'Access,
-         Ref_Item => Find_All,
-         Accel_Key => GDK_F, Accel_Mods => Control_Mask);
-
-      Register_Menu
-        (Kernel, Navigate, -"_Find or Replace in All Files...",
-         Stock_Find, Search_Menu_All_Files_Cb'Access,
-         Ref_Item => Find_All,
-         Accel_Key => GDK_F, Accel_Mods => Control_Mask or Shift_Mask);
+        (Kernel,
+         Parent_Path => Navigate,
+         Text        => -"_Find or Replace...",
+         Stock_Image => Stock_Find,
+         Callback    => null,
+         Command     => Command,
+         Ref_Item    => Find_All,
+         Accel_Key   => GDK_F, Accel_Mods => Control_Mask);
 
       Vsearch_Module_Id.Next_Menu_Item := Register_Menu
         (Kernel, Navigate, -"Find _Next",

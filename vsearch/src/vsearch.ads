@@ -69,15 +69,11 @@ package Vsearch is
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
       Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask              : Find_Utils.Search_Options_Mask :=
-        Find_Utils.All_Options);
+      Mask        : Find_Utils.Search_Options_Mask := Find_Utils.All_Options);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
    --  This procedure immediately emits the kernel signal
    --  "search_functions_changed".
-   --  The search function registered is the one that will be returned by
-   --  default when the preference to "save the state of the search context"
-   --  is disabled.
    --
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
@@ -90,9 +86,10 @@ package Vsearch is
    --  create the factory. The options and searched string or regexp will be
    --  set automatically on return of Factory, so you do not need to handle
    --  this.
+   --
    --  Mask indicates what options are relevant for that module. Options that
-   --  are not set will be greyed out.
-   --  If Supports_Replace if false, then the button will be greyed out.
+   --  are not set will be greyed out. If Supports_Replace if false, then the
+   --  button will be greyed out.
    --
    --  Id can be left null. If not null, it will be used to set the default
    --  search context when the search dialog is popped up (the first

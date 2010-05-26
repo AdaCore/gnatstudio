@@ -5280,6 +5280,21 @@ Search in the project browser (@pxref{The Project Browser}).
 
 @end table
 
+The default value for @code{Look In} is set through various means: by
+default, GPS will select a context that matches the currently selected
+window. For instance, if you are in an editor and open the search dialog,
+the context will be set to @code{Current File}. But if the project view is
+the active window, the context will be set to @code{Project View}.
+Optionally, GPS can remember the last context that was set (see the preference
+@code{Search/Preserve Search Context}. If this is set, and an editor is
+selected, GPS will remember whether the last time you started a search from
+an editor you decided to search in @code{Current File} or @code{Files From
+Project} for instance.
+
+Finally, you can create key shortcuts (through the @code{/Edit/Key Shortcuts}
+menu, in the @code{Search} category) to open the search dialog and set the
+context to a specific value.
+
 @end table
 
 The second part of the window is a row of buttons, to start the search

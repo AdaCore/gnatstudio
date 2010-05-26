@@ -15,6 +15,12 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J519-008 New key shortcuts to open search dialog (2010-05-26)
+
+  Through the /Edit/Key Shortcuts dialog (in the Search category), it is
+  now possible to define your own key shortcuts to open the search dialog
+  with a preserve search context (current file, files from project,...)
+
 NF-45-J514-023 Possibility to export Locations view to an editor (2010-05-18)
 
   A new menu File->Messages->Export Locations to editor exports the contents
