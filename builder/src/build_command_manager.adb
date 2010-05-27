@@ -398,6 +398,21 @@ package body Build_Command_Manager is
                     (Kernel, -"Could not determine the project for file: "
                      & Display_Full_Name (File),
                      Mode => Console.Error);
+
+                  --  Do not normalize through VFS so as to preserve the state
+                  --  of the file (since otherwise we would cache the
+                  --  normalized value)
+                  if File.Display_Full_Name /=
+                    Normalize_Pathname
+                      (File.Display_Full_Name, Resolve_Links => True)
+                    and then GPS.Kernel.Preferences.Trusted_Mode.Get_Pref
+                  then
+                     Console.Insert
+                       (Kernel, -("You should"
+                        & " disable the preference Fast Project Loading for"
+                        & " full support of symbolic links"));
+                  end if;
+
                   raise Invalid_Argument;
                end if;
 
