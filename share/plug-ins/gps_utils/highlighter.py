@@ -229,7 +229,7 @@ class Text_Highlighter (Highlighter):
   def do_highlight (self, buffer, overlay, start, end):
      """Do the highlighting in the range of text"""
      while True:
-        start = start.search (self.text, regexp=True, dialog_on_failure=False,
+        start = start.search (self.text, regexp=False, dialog_on_failure=False,
                              whole_word=self.whole_word)
         if not start or start[0] > end:
            return

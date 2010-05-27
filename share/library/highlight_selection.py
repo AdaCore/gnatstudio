@@ -39,6 +39,10 @@ def on_location_changed (hook, file, line, column):
    start = buffer.selection_start ()
    end   = buffer.selection_end ()
 
+   # Only highlight when text is on a single line
+   if start.line() != end.line():
+      return
+
    try:
       # Remove highlighting for the previous selection
       buffer.selection_highlighter.stop ()

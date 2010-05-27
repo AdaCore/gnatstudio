@@ -38,8 +38,12 @@ def on_gps_started (hook_name):
 @interactive ("Editor", filter="Source editor", name="mark occurrences",
               menu="/Navigate/Mark Occurrences In File")
 def mark_selected ():
-   """Mark all the occurrences of the selected element in the current editor"""
+   """Mark all the occurrences of the selected element in the current editor.
+      Does nothing if multiple lines are selected"""
    buffer = GPS.EditorBuffer.get()
+   if buffer.selection_start().line != buffer.selection_end().line:
+      return
+
    selection = buffer.get_chars (buffer.selection_start(), buffer.selection_end() - 1)
    context=GPS.current_context()
 
@@ -47,7 +51,7 @@ def mark_selected ():
       selection=context.entity().name()
 
    if selection != "":
-      for m in buffer.file().search (selection):
+      for m in buffer.file().search (selection, regexp=False):
          GPS.Locations.add ("Local occurrences", m.file(), m.line(), m.column(),
               selection, highlight="dynamic occurrences", length=len(selection))
 
