@@ -264,13 +264,10 @@ class contextualMenu (GPS.Contextual):
          self.file = context.file()
          if self.file.language().lower() != "ada":
             return False
-         srcs = GPS.Project.root().sources (recursive = True)
-         found = False
-         for f in srcs:
-            if f.name().lower() == self.file.name().lower():
-               found = True
-               break
-         return found
+
+         # Does this file belong to the project tree ?
+         return self.file.project (False) != None
+
       except:
          try:
            self.desttype = "dir"
