@@ -77,6 +77,7 @@ with XML_Utils;                     use XML_Utils;
 with Traces;                        use Traces;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with Generic_List;
+with Ada.Strings.Fixed;
 
 package body Browsers.Call_Graph is
 
@@ -108,11 +109,13 @@ package body Browsers.Call_Graph is
    Show_Kind_Cst        : aliased constant String := "show_kind";
    In_File_Cst          : aliased constant String := "in_file";
    Dispatching_Calls_Cst : aliased constant String := "dispatching_calls";
+   Kind_In_Cst          : aliased constant String := "kind_in";
    References_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Include_Implicit_Cst'Access,
       2 => Synchronous_Cst'Access,
       3 => Show_Kind_Cst'Access,
-      4 => In_File_Cst'Access);
+      4 => In_File_Cst'Access,
+      5 => Kind_In_Cst'Access);
 
    type Filters_Buttons is array (Reference_Kind) of Gtk_Check_Button;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
@@ -1497,6 +1500,8 @@ package body Browsers.Call_Graph is
             Inst_In_File     : constant Class_Instance :=
               Nth_Arg (Data, 5, Get_File_Class (Get_Kernel (Data)),
                        Allow_Null => True);
+            Only_If_Kind     : constant String :=
+              ',' & Nth_Arg (Data, 6, "") & ',';
             In_File          : Source_File := null;
             Instance         : Class_Instance;
             Launched_Command : Scheduled_Command_Access;
@@ -1509,8 +1514,16 @@ package body Browsers.Call_Graph is
                   File => Get_Data (Inst_In_File));
             end if;
 
-            Filter := Real_References_Filter;
-            Filter (Implicit) := Nth_Arg (Data, 2, False);
+            if Only_If_Kind = ",," then
+               Filter := Real_References_Filter;
+               Filter (Implicit) := Nth_Arg (Data, 2, False);
+            else
+               for F in Filter'Range loop
+                  Filter (F) := Ada.Strings.Fixed.Index
+                    (',' & Kind_To_String (F) & ',', Only_If_Kind) >= 1;
+               end loop;
+            end if;
+
             Find_All_References
               (Ref_Command.Iter,
                Entity                => Entity,
@@ -2266,7 +2279,7 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "references",
          Class        => Get_Entity_Class (Kernel),
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "calls",
