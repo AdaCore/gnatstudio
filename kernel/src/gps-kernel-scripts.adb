@@ -482,10 +482,16 @@ package body GPS.Kernel.Scripts is
      (Data : Callback_Data'Class; N : Positive) return Project_Type
    is
       Class : constant Class_Type := Get_Project_Class (Get_Kernel (Data));
-      Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
-      Value : constant Instance_Property :=
-        Get_Data (Inst, Project_Class_Name);
+      Inst  : constant Class_Instance :=
+        Nth_Arg (Data, N, Class, Allow_Null => True);
+      Value : Instance_Property;
+
    begin
+      if Inst = No_Class_Instance then
+         return No_Project;
+      end if;
+
+      Value := Get_Data (Inst, Project_Class_Name);
       if Value = null then
          return No_Project;
       else
