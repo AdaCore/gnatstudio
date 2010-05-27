@@ -909,26 +909,44 @@ package body Builder_Facility_Module is
          begin
             for J in Mains'Range loop
                declare
-                  P    : constant Project_Type :=
+                  P    : Project_Type :=
                     Get_Registry (Kernel).Tree.Info
                     (Get_Registry (Kernel).Tree.Create
                      (+Mains (J).all)).Project;
-                  Exec : constant Virtual_File :=
-                    Create_From_Dir
-                      (Executables_Directory (P),
-                       P.Executable_Name (+Mains (J).all));
-                  Base : constant String := String (Exec.Base_Name);
-                  Full : constant String := String (Exec.Full_Name.all);
-                  Display_Name : constant Any_Type :=
-                    (String_Type, Base'Length, Base);
-                  Full_Name    : constant Any_Type :=
-                    (String_Type, Full'Length, Full);
-
                begin
-                  Result.List (1 + J - Mains'First) := new Any_Type'
-                    ((Tuple_Type, 2,
-                     Tuple => (1 => new Any_Type'(Display_Name),
-                               2 => new Any_Type'(Full_Name))));
+                  if P = No_Project then
+                     --  Catch potential case of a project using the old
+                     --  scheme and specifying Mains without the extensions.
+                     --  In this case, fall back on the root project.
+
+                     if GNAT.Directory_Operations.File_Extension
+                       (Mains (J).all) = ""
+                     then
+                        Log (-"Main specified without an extension: "
+                             & Mains (J).all,
+                             Info);
+                        P := Get_Registry (Kernel).Tree.Root_Project;
+                     end if;
+                  end if;
+
+                  declare
+                     Exec : constant Virtual_File :=
+                       Create_From_Dir
+                         (Executables_Directory (P),
+                          P.Executable_Name (+Mains (J).all));
+                     Base : constant String := String (Exec.Base_Name);
+                     Full : constant String := String (Exec.Full_Name.all);
+                     Display_Name : constant Any_Type :=
+                       (String_Type, Base'Length, Base);
+                     Full_Name    : constant Any_Type :=
+                       (String_Type, Full'Length, Full);
+
+                  begin
+                     Result.List (1 + J - Mains'First) := new Any_Type'
+                       ((Tuple_Type, 2,
+                        Tuple => (1 => new Any_Type'(Display_Name),
+                                  2 => new Any_Type'(Full_Name))));
+                  end;
                end;
             end loop;
 
