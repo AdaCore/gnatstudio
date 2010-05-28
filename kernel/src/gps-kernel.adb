@@ -87,7 +87,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
@@ -297,11 +297,9 @@ package body GPS.Kernel is
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
 
-      --  Load the styles
-      Load_Styles (Handle, Create_From_Dir (Handle.Home_Dir, "styles.xml"));
+      GPS.Kernel.Styles.Init (Handle);
 
       --  Create the message container
-
       Handle.Messages_Container := Create_Messages_Container (Handle);
       GPS.Kernel.Messages.View.Register (Handle);
 
@@ -1680,10 +1678,6 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Root_Table'Class, Root_Table_Access);
    begin
-      Save_Styles
-        (Kernel_Handle (Handle),
-         Create_From_Dir (Handle.Home_Dir, "styles.xml"));
-
       Reset_Properties (Handle);
 
       Save (Handle.History.all,

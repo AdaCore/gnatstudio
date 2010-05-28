@@ -22,17 +22,10 @@ with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with Gtk.Widget;             use Gtk.Widget;
 
 with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Traces;                 use Traces;
-
-with XML_Utils;              use XML_Utils;
-with XML_Parsers;
 
 package body GPS.Kernel.Styles is
-
-   Me : constant Debug_Handle := Create ("GPS.Kernel.Styles");
 
    use GNAT.Strings;
    use Style_Htable.String_Hash_Table;
@@ -93,22 +86,22 @@ package body GPS.Kernel.Styles is
       Init (Search_Results_Style,
             -"Search results",
             -"Color used to highlight the search results",
-            Bg => "light blue", Speedbar => True);
+            Bg => Search_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Errors_Style,
             -"Builder results",
             -"Color used to highlight the build errors",
-            Bg => "red", Speedbar => True);
+            Bg => Error_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Warnings_Style,
             -"Builder warnings",
             -"Color used to highlight the build warnings",
-            Bg => "orange", Speedbar => True);
+            Bg => Warning_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Style_Style,
             -"Style errors",
             -"Color used to highlight the style errors",
-            Bg => "yellow", Speedbar => True);
+            Bg => Style_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Shadow_Style,
             -"Syntax check",
@@ -143,164 +136,6 @@ package body GPS.Kernel.Styles is
    begin
       Reset (X.Table);
    end Reset;
-
-   -----------------
-   -- Save_Styles --
-   -----------------
-
-   procedure Save_Styles
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File)
-   is
-      Main, Node, Child : Node_Ptr;
-      Iter    : Style_Htable.String_Hash_Table.Cursor;
-      Info    : Style_Access;
-      Success : Boolean;
-
-   begin
-      Main := new XML_Utils.Node;
-      Main.Tag := new String'("Styles");
-
-      Get_First (Style_Htable_Access (Kernel.Styles).Table, Iter);
-
-      loop
-         Info := Get_Element (Iter);
-         exit when Info = null;
-
-         Node := new XML_Utils.Node;
-         Node.Tag := new String'("style");
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("name");
-         Child.Value := new String'(Get_Key (Iter));
-         Add_Child (Node, Child, True);
-
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("desc");
-         if Info.Description /= null then
-            Child.Value := new String'(Info.Description.all);
-         end if;
-         Add_Child (Node, Child, True);
-
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("fg");
-
-         if Get_Foreground (Info) /= "" then
-            Child.Value := new String'(Get_Foreground (Info));
-         end if;
-         Add_Child (Node, Child, True);
-
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("bg");
-         if Get_Background (Info) /= "" then
-            Child.Value := new String'(Get_Background (Info));
-         end if;
-         Add_Child (Node, Child, True);
-
-         if In_Speedbar (Info) then
-            Child := new XML_Utils.Node;
-            Child.Tag := new String'("in_speedbar");
-            Child.Value := new String'("true");
-            Add_Child (Node, Child, True);
-         end if;
-
-         Add_Child (Main, Node, True);
-
-         Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
-      end loop;
-
-      Print (Main, File, Success);
-
-      Free (Main);
-
-      if not Success then
-         Report_Preference_File_Error (Kernel, File);
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            "Could not save the configuration file " &
-            File.Display_Full_Name &
-            ASCII.LF &
-            "Please verify that you have write access to this file.",
-            Mode => GPS.Kernel.Console.Error);
-         Raise_Console (Kernel);
-      end if;
-   end Save_Styles;
-
-   -----------------
-   -- Load_Styles --
-   -----------------
-
-   procedure Load_Styles
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File)
-   is
-      F, Node : Node_Ptr;
-      Err     : GNAT.Strings.String_Access;
-
-      procedure Read_Style (N : Node_Ptr);
-      --  Read one Style from N.
-
-      ----------------
-      -- Read_Style --
-      ----------------
-
-      procedure Read_Style (N : Node_Ptr) is
-         Name        : constant String := Get_Field (N, "name").all;
-         In_Speedbar : constant XML_Utils.String_Ptr :=
-                         Get_Field (N, "in_speedbar");
-         Style       : constant Style_Access :=
-                         Get_Or_Create_Style (Kernel, Name, True);
-
-      begin
-         Free (Style.Description);
-         Style.Description := new String'(Get_Field (N, "desc").all);
-         Set_Foreground (Style, Get_Field (N, "fg").all);
-         Set_Background (Style, Get_Field (N, "bg").all);
-
-         if In_Speedbar /= null then
-            Set_In_Speedbar (Style, Boolean'Value (In_Speedbar.all));
-         end if;
-
-      exception
-         when E : others =>
-            Trace (Exception_Handle, E);
-      end Read_Style;
-
-   begin
-      if Kernel.Styles = null then
-         Kernel.Styles := new Style_Htable_Record;
-      end if;
-
-      if Is_Regular_File (File) then
-         XML_Parsers.Parse (File, F, Err);
-
-         if F /= null then
-            Node := F.Child;
-
-            if F.Tag.all = "Styles" then
-               Trace (Me, "Loading styles");
-
-               while Node /= null loop
-                  if Node.Tag.all = "style" then
-                     Read_Style (Node);
-                  end if;
-
-                  Node := Node.Next;
-               end loop;
-            end if;
-
-         else
-            Trace (Me, "Error while parsing styles file " & Err.all);
-            GNAT.Strings.Free (Err);
-         end if;
-
-         Free (F);
-      end if;
-
-      Initialize_Predefined_Styles (Kernel);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Load_Styles;
 
    -------------------------
    -- Get_Or_Create_Style --
@@ -365,5 +200,18 @@ package body GPS.Kernel.Styles is
 
       return Style;
    end Get_Or_Create_Style_Copy;
+
+   ----------
+   -- Init --
+   ----------
+
+   procedure Init (Kernel : Kernel_Handle) is
+   begin
+      if Kernel.Styles = null then
+         Kernel.Styles := new Style_Htable_Record;
+      end if;
+
+      Initialize_Predefined_Styles (Kernel);
+   end Init;
 
 end GPS.Kernel.Styles;

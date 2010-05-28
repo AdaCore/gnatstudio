@@ -26,16 +26,6 @@ with GPS.Styles; use GPS.Styles;
 
 package GPS.Kernel.Styles is
 
-   procedure Save_Styles
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File);
-   --  Save the currently registered Styles to File.
-
-   procedure Load_Styles
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File);
-   --  Load the currently registered Styles from File.
-
    function Get_Or_Create_Style
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String;
@@ -49,6 +39,9 @@ package GPS.Kernel.Styles is
       From_Style : Style_Access) return Style_Access;
    --  Lookups the style Name. Creates new style as copy of Style when it
    --  doesn't exists.
+
+   procedure Init (Kernel : Kernel_Handle);
+   --  Initialize the data structures used to store styles
 
 private
    package Style_Htable is new String_Hash (Style_Access, Free, null);
