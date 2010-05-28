@@ -904,31 +904,24 @@ package body Builder_Facility_Module is
 
       elsif Kind = "executable" then
          declare
-            Mains : Argument_List := Get_Mains (Kernel_Handle (Kernel));
+            Mains  : Argument_List := Get_Mains (Kernel_Handle (Kernel));
             Result : Any_Type (List_Type, Mains'Length);
+            P      : Project_Type;
          begin
             for J in Mains'Range loop
-               declare
-                  P    : Project_Type :=
-                    Get_Registry (Kernel).Tree.Info
-                    (Get_Registry (Kernel).Tree.Create
-                     (+Mains (J).all)).Project;
-               begin
-                  if P = No_Project then
-                     --  Catch potential case of a project using the old
-                     --  scheme and specifying Mains without the extensions.
-                     --  In this case, fall back on the root project.
+               --  ??? Not efficient: in Get_Mains, we started from the project
+               --  to get the list of mains, and now for each of those main we
+               --  are looking for the project.
+               P := Get_Registry (Kernel).Tree.Info
+                 (Get_Registry (Kernel).Tree.Create (+Mains (J).all)).Project;
 
-                     if GNAT.Directory_Operations.File_Extension
-                       (Mains (J).all) = ""
-                     then
-                        Log (-"Main specified without an extension: "
-                             & Mains (J).all,
-                             Info);
-                        P := Get_Registry (Kernel).Tree.Root_Project;
-                     end if;
-                  end if;
-
+               if P = No_Project then
+                  Log
+                    (-"Could not find the project for """
+                     & Mains (J).all & """", Error);
+               elsif Executables_Directory (P) = GNATCOLL.VFS.No_File then
+                  Log (-"Project """ & P.Name & """ has no exec_dir", Error);
+               else
                   declare
                      Exec : constant Virtual_File :=
                        Create_From_Dir
@@ -947,7 +940,7 @@ package body Builder_Facility_Module is
                         Tuple => (1 => new Any_Type'(Display_Name),
                                   2 => new Any_Type'(Full_Name))));
                   end;
-               end;
+               end if;
             end loop;
 
             Free (Mains);
