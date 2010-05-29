@@ -919,8 +919,12 @@ package body Builder_Facility_Module is
                   Log
                     (-"Could not find the project for """
                      & Mains (J).all & """", Error);
+                  Free (Mains);
+                  return Empty_Any_Type;
                elsif Executables_Directory (P) = GNATCOLL.VFS.No_File then
                   Log (-"Project """ & P.Name & """ has no exec_dir", Error);
+                  Free (Mains);
+                  return Empty_Any_Type;
                else
                   declare
                      Exec : constant Virtual_File :=
