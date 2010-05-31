@@ -1164,6 +1164,22 @@ private
    procedure Free (X : in out Line_Info_Width; Free_Messages : Boolean);
    --  Free memory associated to X
 
+   --------------------------
+   -- Recursion protection --
+   --------------------------
+
+   function Inserting
+     (Buffer : access Source_Buffer_Record'Class) return Boolean;
+   --  Return True if we are inserting internally
+
+   procedure Start_Inserting
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Call this to notify the buffer that we are starting to insert internally
+
+   procedure End_Inserting
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Call this to notify the buffer that we have stopped inserting internally
+
    --------------------
    -- Universal line --
    --------------------
@@ -1266,8 +1282,10 @@ private
       --  helping performance-wise, since a  lot of subprograms use it.
       --  This must always be a valid text mark.
 
-      Inserting : Boolean := False;
-      --  Used to avoid recursion, when using commands
+      Inserting_Count : Natural := 0;
+      --  If >= 1, this means we are modifying text due to internal operation
+      --  Used to avoid recursion, when using commands.
+      --  Do not reference directly, see section "Recursion protection" above
 
       No_Cursor_Move_On_Changes : Boolean := False;
       --  When this is true, we'll avoid moving the cursor when performing

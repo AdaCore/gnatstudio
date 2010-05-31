@@ -3064,77 +3064,85 @@ package body Src_Editor_Buffer is
 
       --  Insert the new text
 
-      Buffer.Inserting := True;
+      Buffer.Start_Inserting;
+      declare
+      begin
 
-      if Lang_Autodetect then
-         Set_Language
-           (Buffer, Get_Language_From_File
-              (Get_Language_Handler (Buffer.Kernel), Filename));
-      end if;
+         if Lang_Autodetect then
+            Set_Language
+              (Buffer, Get_Language_From_File
+                 (Get_Language_Handler (Buffer.Kernel), Filename));
+         end if;
 
-      Strip_CR_And_NUL (Contents.all, Last, CR_Found, NUL_Found);
-      Set_Charset (Buffer, Get_File_Charset (Filename));
+         Strip_CR_And_NUL (Contents.all, Last, CR_Found, NUL_Found);
+         Set_Charset (Buffer, Get_File_Charset (Filename));
 
-      if NUL_Found then
-         Console.Insert
-           (Buffer.Kernel,
-            (-"Warning: NUL characters stripped from ")
-            & Display_Full_Name (Filename), Mode => Console.Error);
-      end if;
+         if NUL_Found then
+            Console.Insert
+              (Buffer.Kernel,
+               (-"Warning: NUL characters stripped from ")
+               & Display_Full_Name (Filename), Mode => Console.Error);
+         end if;
 
-      UTF8 := Glib.Convert.Convert
-        (Contents (Contents'First .. Last), "UTF-8",
-         Buffer.Charset.all,
-         Ignore'Unchecked_Access, Length'Unchecked_Access);
-
-      if UTF8 = Gtkada.Types.Null_Ptr then
-         --  In case conversion failed, use a default encoding so that we can
-         --  at least show something in the editor
-         Set_Charset (Buffer, "ISO-8859-1");
          UTF8 := Glib.Convert.Convert
            (Contents (Contents'First .. Last), "UTF-8",
             Buffer.Charset.all,
             Ignore'Unchecked_Access, Length'Unchecked_Access);
-      end if;
 
-      GNAT.Strings.Free (Contents);
-      UTF8_Validate
-        (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
+         if UTF8 = Gtkada.Types.Null_Ptr then
+            --  In case conversion failed, use a default encoding so that we
+            --  can at least show something in the editor
+            Set_Charset (Buffer, "ISO-8859-1");
+            UTF8 := Glib.Convert.Convert
+              (Contents (Contents'First .. Last), "UTF-8",
+               Buffer.Charset.all,
+               Ignore'Unchecked_Access, Length'Unchecked_Access);
+         end if;
 
-      if not Valid then
-         Length := First_Invalid - 1;
-         Console.Insert
-           (Buffer.Kernel,
-            (-"Warning: invalid characters stripped from ")
-            & Display_Full_Name (Filename), Mode => Console.Error);
-      end if;
+         GNAT.Strings.Free (Contents);
+         UTF8_Validate
+           (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
 
-      Insert_At_Cursor (Buffer, UTF8, Gint (Length));
-      g_free (UTF8);
+         if not Valid then
+            Length := First_Invalid - 1;
+            Console.Insert
+              (Buffer.Kernel,
+               (-"Warning: invalid characters stripped from ")
+               & Display_Full_Name (Filename), Mode => Console.Error);
+         end if;
 
-      --  Highlight the newly inserted text
+         Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+         g_free (UTF8);
 
-      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
-         Get_Bounds (Buffer, F, L);
-         Buffer.Highlight_Needed := True;
-         Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
-         Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
-         Process_Highlight_Region (Source_Buffer (Buffer));
-      end if;
+         --  Highlight the newly inserted text
 
-      if CR_Found then
-         Buffer.Line_Terminator := CR_LF;
-      else
-         Buffer.Line_Terminator := LF;
-      end if;
+         if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
+            Get_Bounds (Buffer, F, L);
+            Buffer.Highlight_Needed := True;
+            Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
+            Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
+            Process_Highlight_Region (Source_Buffer (Buffer));
+         end if;
 
-      if Recovering then
-         Buffer.Saved_Position := -1;
-      else
-         Buffer.Saved_Position := 0;
-      end if;
+         if CR_Found then
+            Buffer.Line_Terminator := CR_LF;
+         else
+            Buffer.Line_Terminator := LF;
+         end if;
 
-      Buffer.Inserting := False;
+         if Recovering then
+            Buffer.Saved_Position := -1;
+         else
+            Buffer.Saved_Position := 0;
+         end if;
+
+         Buffer.End_Inserting;
+      exception
+         when others =>
+            Buffer.End_Inserting;
+            raise;
+      end;
+
       Buffer.Modified_Auto := False;
 
       Buffer.Timestamp := File_Time_Stamp (Filename);
@@ -4149,7 +4157,6 @@ package body Src_Editor_Buffer is
       Enable_Undo : Boolean := True)
    is
       Iter                     : Gtk_Text_Iter;
-      Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
@@ -4159,14 +4166,14 @@ package body Src_Editor_Buffer is
       end if;
 
       if not Enable_Undo then
-         Buffer.Inserting := True;
+         Buffer.Start_Inserting;
       end if;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
       Insert (Buffer, Iter, Text);
 
       if not Enable_Undo then
-         Buffer.Inserting := Previous_Inserting_Value;
+         Buffer.End_Inserting;
       end if;
 
       Register_Edit_Timeout (Buffer);
@@ -4212,7 +4219,6 @@ package body Src_Editor_Buffer is
       Iter                     : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
       Result                   : Boolean;
-      Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
@@ -4221,7 +4227,7 @@ package body Src_Editor_Buffer is
       end if;
 
       if not Enable_Undo then
-         Buffer.Inserting := True;
+         Buffer.Start_Inserting;
       end if;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
@@ -4272,7 +4278,7 @@ package body Src_Editor_Buffer is
       Delete_Interactive (Buffer, Iter, End_Iter, True, Result);
 
       if not Enable_Undo then
-         Buffer.Inserting := Previous_Inserting_Value;
+         Buffer.End_Inserting;
       end if;
 
       Register_Edit_Timeout (Buffer);
@@ -4320,7 +4326,6 @@ package body Src_Editor_Buffer is
    is
       Start_Iter               : Gtk_Text_Iter;
       End_Iter                 : Gtk_Text_Iter;
-      Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
 
    begin
       Assert (Me, Is_Valid_Position (Buffer, Start_Line, Start_Column),
@@ -4333,7 +4338,7 @@ package body Src_Editor_Buffer is
       end if;
 
       if not Enable_Undo then
-         Buffer.Inserting := True;
+         Buffer.Start_Inserting;
       end if;
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
@@ -4348,7 +4353,7 @@ package body Src_Editor_Buffer is
       Insert (Buffer, Start_Iter, Text);
 
       if not Enable_Undo then
-         Buffer.Inserting := Previous_Inserting_Value;
+         Buffer.End_Inserting;
       end if;
 
       Register_Edit_Timeout (Buffer);
@@ -4649,7 +4654,7 @@ package body Src_Editor_Buffer is
       Command     : Command_Access;
       User_Action : Action_Type) is
    begin
-      Buffer.Inserting := True;
+      Buffer.Start_Inserting;
 
       if Buffer.Saved_Position > Get_Position (Buffer.Queue) then
          Buffer.Saved_Position := -1;
@@ -4672,7 +4677,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Enqueue (Buffer.Queue, Command);
-      Buffer.Inserting := False;
+      Buffer.End_Inserting;
    end Enqueue;
 
    ----------------
@@ -6929,5 +6934,35 @@ package body Src_Editor_Buffer is
          Buffer.Logical_Timestamp := Buffer.Logical_Timestamp + 1;
       end if;
    end Update_Logical_Timestamp;
+
+   ---------------
+   -- Inserting --
+   ---------------
+
+   function Inserting
+     (Buffer : access Source_Buffer_Record'Class) return Boolean is
+   begin
+      return Buffer.Inserting_Count >= 1;
+   end Inserting;
+
+   ---------------------
+   -- Start_Inserting --
+   ---------------------
+
+   procedure Start_Inserting
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Inserting_Count := Buffer.Inserting_Count + 1;
+   end Start_Inserting;
+
+   -------------------
+   -- End_Inserting --
+   -------------------
+
+   procedure End_Inserting
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Inserting_Count := Buffer.Inserting_Count - 1;
+   end End_Inserting;
 
 end Src_Editor_Buffer;

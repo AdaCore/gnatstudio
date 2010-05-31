@@ -1158,9 +1158,9 @@ package body Src_Editor_Buffer.Line_Information is
       Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
 
       Buffer.Modifying_Editable_Lines := False;
-      Buffer.Inserting := True;
+      Buffer.Start_Inserting;
       Insert (Buffer, Iter, Text & ASCII.LF);
-      Buffer.Inserting := False;
+      Buffer.End_Inserting;
       Buffer.Modifying_Editable_Lines := True;
 
       Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
@@ -1816,6 +1816,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Begin_Tag   : Gtk_Text_Iter;
       Success     : Boolean;
+
    begin
       if Buffer.In_Destruction then
          return;
@@ -1855,9 +1856,9 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Blank_Lines := Buffer.Blank_Lines - Natural (Real_Number);
 
       Buffer.Modifying_Editable_Lines := False;
-      Buffer.Inserting := True;
+      Buffer.Start_Inserting;
       Delete (Buffer, Iter, End_Iter);
-      Buffer.Inserting := False;
+      Buffer.End_Inserting;
       Buffer.Modifying_Editable_Lines := True;
 
       if Shift then
@@ -2014,11 +2015,11 @@ package body Src_Editor_Buffer.Line_Information is
                Forward_Char (End_Iter, Result);
 
                Buffer.Modifying_Editable_Lines := False;
-               Buffer.Inserting := True;
+               Buffer.Start_Inserting;
                Buffer.Blocks_Timeout_Registered := True;
                Delete (Buffer, Start_Iter, End_Iter);
                Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
-               Buffer.Inserting := False;
+               Buffer.End_Inserting;
                Buffer.Modifying_Editable_Lines := True;
             end if;
 
@@ -2124,14 +2125,14 @@ package body Src_Editor_Buffer.Line_Information is
                Current := Current + 1;
 
                Buffer.Modifying_Editable_Lines := False;
-               Buffer.Inserting := True;
+               Buffer.Start_Inserting;
                Buffer.Blocks_Timeout_Registered := True;
 
                Insert (Buffer, Iter,
                        Editable_Lines (Current).Text.all & ASCII.LF);
 
                Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
-               Buffer.Inserting := False;
+               Buffer.End_Inserting;
                Buffer.Modifying_Editable_Lines := True;
 
                --  Modify editable line structure
