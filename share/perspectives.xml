@@ -19,7 +19,7 @@
           </Notebook>
         </Pane>
         <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL" >
-          <central height=" 80%" />
+          <central height=" 80%"  />
           <Notebook height=" 20%" Tabs="POS_BOTTOM" >
             <Child Raised="True" Group=" 107" State="NORMAL" >
               <Message_Window />
