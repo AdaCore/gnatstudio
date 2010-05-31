@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- J528-029: Potential source editor corruption with block folding and undo/redo
+  Problem:    When using block folding, if an undo/redo operation affects the
+              contents of a folded block, the operation might cause loss of
+              data or loss of synchronization in the undo/redo cycle.
+  Workaround: Deactivate Block Folding in the Editor section of the Preferences
+
 - J520-004: Launching of external Python-based build or scripts fails
   Problem:    GPS internally sets the PYTHONHOME and PYTHONPATH variables to
               point to its packaged Python libraries. This might be a problem
