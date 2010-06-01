@@ -531,6 +531,7 @@ package body Refactoring.Subprograms is
          end if;
 
          if Get_Scope (Scopes, Context.Line_End) /= Context.Parent then
+            Trace (Me, "Selected code does not belong to a single subprogram");
             Insert
               (Kernel,
                -"The selected code does not belong to a single subprogram",
@@ -655,6 +656,7 @@ package body Refactoring.Subprograms is
                               if Caller /= null
                                 and then Is_Subprogram (Caller)
                               then
+                                 Trace (Me, "Call to nested subprogram");
                                  Insert
                                    (Kernel,
                                     Text => -"A call to the nested subprogram "
@@ -711,7 +713,8 @@ package body Refactoring.Subprograms is
       Thaw (Get_Database (Kernel));
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Exception_Handle, E);
          Thaw (Get_Database (Kernel));
          raise;
    end Compute_Context_Entities;
@@ -731,6 +734,7 @@ package body Refactoring.Subprograms is
       Iter       : Text_Ranges.Cursor;
    begin
       if Context = Invalid_Context then
+         Trace (Me, "Extract_Method: Invalid context");
          return Failure;
       end if;
 
@@ -786,10 +790,14 @@ package body Refactoring.Subprograms is
             Finish_Undo_Group (Kernel, Context.File);
             return Success;
          else
+            Trace (Me,
+                   "Extract_Method: Error inserting call to new subprogram");
             Finish_Undo_Group (Kernel, Context.File);
             return Failure;
          end if;
       else
+         Trace (Me,
+                "Extract_Method: Couldn't compute body of new subprogram");
          return Failure;
       end if;
 
