@@ -166,6 +166,16 @@ package body Refactoring.Subprograms is
    --  Insert the new method decl and body in In_File, if possible before the
    --  line Before_Line.
 
+   procedure Prepare_Code
+     (Code          : String;
+      Comment_Start : out Natural;
+      Comment_End   : out Natural;
+      Code_Start    : out Natural;
+      Code_End      : out Natural);
+   --  Prepares the extracted code for pretty printing to its new location.
+   --  In particular, this skips leading and trailing white spaces, and if the
+   --  code starts with a comment it separates the comment from the code
+
    ---------
    -- ">" --
    ---------
@@ -176,6 +186,42 @@ package body Refactoring.Subprograms is
         or else (Range1.Start = Range2.Start
                  and then Range1.Lines > Range2.Lines);
    end ">";
+
+   ------------------
+   -- Prepare_Code --
+   ------------------
+
+   procedure Prepare_Code
+     (Code          : String;
+      Comment_Start : out Natural;
+      Comment_End   : out Natural;
+      Code_Start    : out Natural;
+      Code_End      : out Natural)
+   is
+      Lines_Skipped : Natural;
+   begin
+      Code_Start := Code'First;
+      Skip_Blanks (Code, Code_Start);
+
+      Comment_Start := Code_Start;
+      Comment_End   := Comment_Start - 1;
+
+      while Code_Start < Code'Last
+        and then Code (Code_Start .. Code_Start + 1) = "--"
+      loop
+         Skip_Lines (Code, 1, Code_Start, Lines_Skipped);
+         Comment_End := Code_Start;
+
+         Skip_Blanks (Code, Code_Start);
+      end loop;
+
+      if Comment_End > Comment_Start then
+         Skip_Blanks (Code, Comment_End, Step => -1);
+      end if;
+
+      Code_End := Code'Last;
+      Skip_Blanks (Code, Code_End, Step => -1);
+   end Prepare_Code;
 
    -------------------------------
    -- Generate_Extracted_Method --
@@ -201,11 +247,22 @@ package body Refactoring.Subprograms is
       Entity              : Entity_Information;
       Typ                 : Entity_Information;
       First_Out_Param     : Entity_Information;
-      Editor              : constant Editor_Buffer'Class :=
-        Get_Buffer_Factory (Kernel).Get (Context.File);
       Flags               : Extracted_Entity_Flags;
       Declaration_Added   : Boolean;
+
+      Editor              : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (Context.File);
+      Code : constant String :=
+        Editor.Get_Chars
+          (Editor.New_Location (Context.Line_Start, 1),
+           Editor.New_Location (Context.Line_End, 1).End_Of_Line);
+
+      Code_Start, Code_End : Integer;
+      Comment_Start, Comment_End : Integer;
+
    begin
+      Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
+
       for P in Extracted_Entity_Arrays.First .. Last (Context.Entities) loop
          Entity := Context.Entities.Table (P).Entity;
          Flags  := Context.Entities.Table (P).Flags;
@@ -336,6 +393,12 @@ package body Refactoring.Subprograms is
 
       Result := Decl;
       Append (Decl, ";" & ASCII.LF);
+
+      if Comment_Start < Comment_End then
+         Append (Decl, Code (Comment_Start .. Comment_End));
+         Append (Decl, ASCII.LF);
+      end if;
+
       Append (Result, ASCII.LF & "is" & ASCII.LF);
 
       for L in Entity_Information_Arrays.First .. Last (Local_Vars) loop
@@ -391,10 +454,8 @@ package body Refactoring.Subprograms is
       end if;
 
       Append (Result, "begin" & ASCII.LF & "   ");
-      Append (Result, String'
-        (Editor.Get_Chars
-           (Editor.New_Location (Context.Line_Start, 1),
-            Editor.New_Location (Context.Line_End, 1).End_Of_Line)));
+      Append (Result, Code (Code_Start .. Code_End));
+      Append (Result, ASCII.LF);
 
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
