@@ -1897,4 +1897,18 @@ package body Language.Tree.Database is
         or else Tmp_Acc (Left) = Tmp_Acc (Right);
    end "=";
 
+   ----------------------------
+   -- Find_Reference_Details --
+   ----------------------------
+
+   overriding function Find_Reference_Details
+     (Lang   : access Unknown_Tree_Language;
+      File   : Structured_File_Access;
+      Index  : String_Index_Type) return Entity_Reference_Details
+   is
+      pragma Unreferenced (Lang, File, Index);
+   begin
+      return Invalid_Reference;
+   end Find_Reference_Details;
+
 end Language.Tree.Database;

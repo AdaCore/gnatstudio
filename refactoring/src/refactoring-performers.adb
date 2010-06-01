@@ -373,6 +373,8 @@ package body Refactoring.Performers is
       Loc_End   : constant Editor_Location'Class :=
         Editor.New_Location (Line_End, 1).End_Of_Line;
    begin
+      --  ??? Removing the final newline (Loc_End.Forward_Char(1)) results in
+      --  removing the first char of the next line
       Editor.Delete (Loc_Start, Loc_End);
    end Delete_Text;
 

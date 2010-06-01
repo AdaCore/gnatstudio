@@ -111,6 +111,31 @@ package Language.Tree.Database is
    --  information he has is accurate enough or not. By default, just
    --  return an null entity.
 
+   type Entity_Reference_Details is record
+      Index_Start : String_Index_Type := 0;
+      Index_End   : String_Index_Type := 0;
+      --  The entity name appears between Index_Start .. Index_End
+
+      Is_Named_Parameter : Boolean := False;
+      --  Whether the entity is the name of a parameter in the call to a
+      --  subprogram, as in "Subp (Entity => 1)".
+      --  This will always be False for languages that do not support this
+      --  feature.
+
+      Parenthesis_Loc    : String_Index_Type := 0;
+      --  Location of the parenthesis following the entity (for instance in a
+      --  function call, or an Ada aggregate)
+   end record;
+   --  Details about a reference to an entity in a source file
+
+   Invalid_Reference : constant Entity_Reference_Details;
+
+   function Find_Reference_Details
+     (Lang   : access Tree_Language;
+      File   : Structured_File_Access;
+      Index  : String_Index_Type) return Entity_Reference_Details is abstract;
+   --  Return details about an entity reference within the given file
+
    function Find_Next_Part
      (Lang   : access Tree_Language;
       Entity : Entity_Access) return Entity_Access;
@@ -609,6 +634,8 @@ package Language.Tree.Database is
 
 private
 
+   Invalid_Reference : constant Entity_Reference_Details := (0, 0, False, 0);
+
    type Tree_Language is abstract
    new Abstract_Tree_Language with null record;
 
@@ -646,6 +673,11 @@ private
    --     <-  here is the offset
 
    type Unknown_Tree_Language is new Tree_Language with null record;
+
+   overriding function Find_Reference_Details
+     (Lang   : access Unknown_Tree_Language;
+      File   : Structured_File_Access;
+      Index  : String_Index_Type) return Entity_Reference_Details;
 
    Unknown_Tree_Lang : constant Tree_Language_Access :=
      new Unknown_Tree_Language;

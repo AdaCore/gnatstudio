@@ -371,6 +371,21 @@ package Entities.Queries is
    function Get_Total_Progress (Iter : Dependency_Iterator) return Integer;
    --  Return the progress indicators for the iterator
 
+   ------------
+   -- Scopes --
+   ------------
+
+   type Lines_To_Scope (<>) is private;
+
+   function Compute_Scopes (File : Source_File) return Lines_To_Scope;
+   --  Compute the entities to which each line in the file belongs to. By
+   --  retrieving the entity associated with a line, you will know the
+   --  inner-most enclosing subprogram.
+
+   function Get_Scope
+     (Scopes : Lines_To_Scope; Line : Integer) return Entity_Information;
+   --  Return the inner-most enclosing subprogram for a line in the file
+
    -------------
    -- Callers --
    -------------
@@ -710,5 +725,15 @@ private
 
          Start        : Ada.Calendar.Time;
       end record;
+
+   type Entity_Info_Array is array (Natural range <>) of Entity_Information;
+   type Lines_To_Scope (Line_Max : Natural) is record
+      --  We need two tables to memorize the entity enclosing a given
+      --  line: in the case of "procedure A (B : Integer)", the caller
+      --  of A is the package, whereas the caller of B is A itself.
+
+      Line_Info     : Entity_Info_Array (1 .. Line_Max);
+      Info_For_Decl : Entity_Info_Array (1 .. Line_Max);
+   end record;
 
 end Entities.Queries;

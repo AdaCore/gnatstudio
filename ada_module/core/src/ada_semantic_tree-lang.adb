@@ -969,24 +969,18 @@ package body Ada_Semantic_Tree.Lang is
       return Get_First_Occurence (Entity);
    end Get_Declaration;
 
-   ----------------------
-   -- Find_Declaration --
-   ----------------------
+   ----------------------------
+   -- Find_Reference_Details --
+   ----------------------------
 
-   type Reference_To_Analyze is record
-      Index_Start : String_Index_Type := 0;
-      Index_End  : String_Index_Type := 0;
-      Has_Arrow  : Boolean := False;
-      Paren_Loc  : String_Index_Type := 0;
-   end record;
-
-   function Forward_Expression
-     (Str : String; Index : String_Index_Type) return Reference_To_Analyze;
-
-   function Forward_Expression
-     (Str : String; Index : String_Index_Type) return Reference_To_Analyze
+   overriding function Find_Reference_Details
+     (Lang   : access Ada_Tree_Language;
+      File   : Structured_File_Access;
+      Index  : String_Index_Type) return Entity_Reference_Details
    is
-      Result : Reference_To_Analyze;
+      pragma Unreferenced (Lang);
+      Str    : constant GNAT.Strings.String_Access := Get_Buffer (File);
+      Result : Entity_Reference_Details := Invalid_Reference;
 
       function Callback
         (Entity         : Language_Entity;
@@ -1028,9 +1022,10 @@ package body Ada_Semantic_Tree.Lang is
 
                when others =>
                   if Str (Sloc_Start.Index .. Sloc_End.Index) = "=>" then
-                     Result.Has_Arrow := True;
+                     Result.Is_Named_Parameter := True;
                   elsif Str (Sloc_Start.Index .. Sloc_End.Index) = "(" then
-                     Result.Paren_Loc := String_Index_Type (Sloc_Start.Index);
+                     Result.Parenthesis_Loc :=
+                       String_Index_Type (Sloc_Start.Index);
                   end if;
 
                   return True;
@@ -1045,7 +1040,7 @@ package body Ada_Semantic_Tree.Lang is
          Callback'Unrestricted_Access);
 
       return Result;
-   end Forward_Expression;
+   end Find_Reference_Details;
 
    ----------------------
    -- Find_Declaration --
@@ -1057,7 +1052,7 @@ package body Ada_Semantic_Tree.Lang is
       Line     : Integer;
       Column   : String_Index_Type) return Entity_Access
    is
-      Ref : Reference_To_Analyze;
+      Ref : Entity_Reference_Details;
 
       List : Entity_List;
 
@@ -1079,11 +1074,11 @@ package body Ada_Semantic_Tree.Lang is
            Get_Actual_Parameter_Resolver (Formal_Profile);
          Success : Boolean := True;
       begin
-         if Ref.Paren_Loc /= 0 then
+         if Ref.Parenthesis_Loc /= 0 then
             Append_Actuals
               (Actual_Call,
                Get_Buffer (File),
-               Ref.Paren_Loc,
+               Ref.Parenthesis_Loc,
                Success);
          end if;
 
@@ -1112,11 +1107,10 @@ package body Ada_Semantic_Tree.Lang is
 
       --  Otherwise, we're on a reference. Launch a use-sensitive search
 
-      Ref := Forward_Expression
-        (Get_Buffer (File).all,
-         Get_Offset_Of_Line (File, Line) + Column - 1);
+      Ref := Find_Reference_Details
+        (Lang, File, Get_Offset_Of_Line (File, Line) + Column - 1);
 
-      if Ref.Has_Arrow then
+      if Ref.Is_Named_Parameter then
          --  If there is an arrow, we assume that we're working on a call and
          --  will resolve the parameter.
 

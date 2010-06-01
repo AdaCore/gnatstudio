@@ -31,42 +31,32 @@ package Ada_Semantic_Tree.Lang is
 
    overriding function Get_Language
      (Tree : access Ada_Tree_Language) return Language_Access;
-   --  See inherited documentation
-
    overriding function Get_Name_Index
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return String;
-   --  See inherited documentation
-
+   overriding function Find_Reference_Details
+     (Lang   : access Ada_Tree_Language;
+      File   : Structured_File_Access;
+      Index  : String_Index_Type) return Entity_Reference_Details;
    overriding function Get_Documentation
      (Lang   : access Ada_Tree_Language;
       Entity : Entity_Access) return String;
-   --  See inherited documentation
-
    overriding function Get_Profile
      (Lang     : access Ada_Tree_Language;
       Entity   : Entity_Access;
       Max_Size : Natural) return String;
-   --  See inherited documentation
-
    overriding procedure Diff
      (Lang               : access Ada_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
       Callback           : Diff_Callback);
-   --  See inherited documentation
-
    overriding function Get_Declaration
      (Lang   : access Ada_Tree_Language;
       Entity : Entity_Access) return Entity_Access;
-   --  See inherited documentation
-
    overriding function Find_Declaration
      (Lang     : access Ada_Tree_Language;
       File     : Structured_File_Access;
       Line     : Integer;
       Column   : String_Index_Type) return Entity_Access;
-   --  See inherited documentation
-
    overriding function Find_Next_Part
      (Lang   : access Ada_Tree_Language;
       Entity : Entity_Access) return Entity_Access;

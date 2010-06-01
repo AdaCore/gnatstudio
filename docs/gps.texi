@@ -2961,7 +2961,7 @@ replace all unnamed parameters by named parameters, as in:
    Call (Param1 => 1, Param2 => 2);
 @end smallexample
 
-@item Extract Method
+@item Extract Subprogram
 This refactoring is used to move some code from one place to a separate
 subprogram. The goal is to simplify the original subprogram, by moving part of
 its code elsewhere.

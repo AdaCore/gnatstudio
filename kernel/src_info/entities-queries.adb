@@ -2270,14 +2270,11 @@ package body Entities.Queries is
       end loop;
    end Compute_All_Call_Graphs;
 
-   --------------------------------
-   -- Compute_Callers_And_Called --
-   --------------------------------
+   --------------------
+   -- Compute_Scopes --
+   --------------------
 
-   procedure Compute_Callers_And_Called (File : Source_File) is
-      type Entity_Info_Array is array (Natural range <>) of Entity_Information;
-      --  Matches a line number with the inner-most enclosing entity
-
+   function Compute_Scopes (File : Source_File) return Lines_To_Scope is
       procedure Add_To_Tree
         (Tree : in out Scope_Tree_Access;
          EL   : Entity_Information_List_Access);
@@ -2291,24 +2288,6 @@ package body Entities.Queries is
          Info             : in out Entity_Info_Array;
          Info_For_Decl    : in out Entity_Info_Array);
       --  Set the information in Info based on Tree
-
-      procedure Process_All_Entities_Refs
-        (Info           : Entity_Info_Array;
-         Info_For_Decl  : Entity_Info_Array;
-         For_Entities   : Entity_Information_List_Access;
-         Add_Deps       : Boolean);
-      --  We now have in Lines the inner-most entity at that scope, used
-      --  for computing the parent for specific references.
-      --  Traverse all the entities in For_Entities, for all
-      --  references in File, and set their caller.
-      --  If Add_Deps is True, then a dependency is added between File and
-      --  the declaration file of the entities.
-
-      procedure Process_All_Refs
-        (Info          : Entity_Info_Array;
-         Entity        : Entity_Information;
-         Info_For_Decl : Entity_Info_Array);
-      --  Process a list of references as in Process_All_Entities_Refs
 
       -----------------
       -- Add_To_Tree --
@@ -2425,6 +2404,132 @@ package body Entities.Queries is
          end loop;
       end Fill_Table;
 
+      Tree     : Scope_Tree_Access;
+      Line_Max : Integer := 0;
+      T        : Scope_Tree_Access;
+      Iter     : Entities_Hash.Cursor;
+      UEI      : Entity_Informations;
+
+   begin
+      if File = null then
+         return Lines_To_Scope'
+           (Line_Max => 0, Line_Info => <>, Info_For_Decl => <>);
+      end if;
+
+      Update_Xref (File);
+
+      Get_First (File.Entities, Iter);
+
+      loop
+         UEI := Get_Element (Iter);
+         exit when UEI = null;
+         Add_To_Tree (Tree, UEI.List);
+         Get_Next (File.Entities, Iter);
+      end loop;
+
+      Get_First (File.All_Entities, Iter);
+
+      loop
+         UEI := Get_Element (Iter);
+         exit when UEI = null;
+         Add_To_Tree (Tree, UEI.List);
+         Get_Next (File.All_Entities, Iter);
+      end loop;
+
+      if Active (Callers_Me) then
+         Dump (Tree, "");
+      end if;
+
+      if Tree /= null then
+         T := Tree;
+         while T.Sibling /= null loop
+            T := T.Sibling;
+         end loop;
+
+         if T.Sibling /= null then
+            Line_Max := T.Sibling.End_Line;
+         else
+            Line_Max := T.End_Line;
+         end if;
+
+         declare
+            Result : Lines_To_Scope (Line_Max);
+            Last          : Integer;
+         begin
+            Fill_Table
+              (Tree             => Tree,
+               Line_Start       => 1,
+               Enclosing_Entity => null,
+               Line_Last        => Last,
+               Info             => Result.Line_Info,
+               Info_For_Decl    => Result.Info_For_Decl);
+
+            Free (Tree);
+
+            if Active (Me) then
+               Trace (Me, "Compute_Scopes for "
+                      & Display_Full_Name (Get_Filename (File)));
+               for L in Result.Line_Info'Range loop
+                  if Result.Line_Info (L) /= null then
+                     if Result.Info_For_Decl (L) /= null then
+                        Trace (Callers_Me, "Line" & L'Img & " "
+                               & Get_Name (Result.Line_Info (L)).all
+                               & " Decl="
+                               & Get_Name (Result.Info_For_Decl (L)).all);
+                     else
+                        Trace (Callers_Me, "Line" & L'Img & " "
+                               & Get_Name (Result.Line_Info (L)).all
+                               & " Decl=<null>");
+                     end if;
+                  end if;
+               end loop;
+            end if;
+
+            return Result;
+         end;
+      end if;
+
+      return Lines_To_Scope'
+        (Line_Max => 0, Line_Info => <>, Info_For_Decl => <>);
+   end Compute_Scopes;
+
+   ---------------
+   -- Get_Scope --
+   ---------------
+
+   function Get_Scope
+     (Scopes : Lines_To_Scope; Line : Integer) return Entity_Information is
+   begin
+      if Line in Scopes.Line_Info'Range then
+         return Scopes.Line_Info (Line);
+      else
+         return null;
+      end if;
+   end Get_Scope;
+
+   --------------------------------
+   -- Compute_Callers_And_Called --
+   --------------------------------
+
+   procedure Compute_Callers_And_Called (File : Source_File) is
+      procedure Process_All_Entities_Refs
+        (Info           : Entity_Info_Array;
+         Info_For_Decl  : Entity_Info_Array;
+         For_Entities   : Entity_Information_List_Access;
+         Add_Deps       : Boolean);
+      --  We now have in Lines the inner-most entity at that scope, used
+      --  for computing the parent for specific references.
+      --  Traverse all the entities in For_Entities, for all
+      --  references in File, and set their caller.
+      --  If Add_Deps is True, then a dependency is added between File and
+      --  the declaration file of the entities.
+
+      procedure Process_All_Refs
+        (Info          : Entity_Info_Array;
+         Entity        : Entity_Information;
+         Info_For_Decl : Entity_Info_Array);
+      --  Process a list of references as in Process_All_Entities_Refs
+
       -------------------------------
       -- Process_All_Entities_Refs --
       -------------------------------
@@ -2529,132 +2634,39 @@ package body Entities.Queries is
          end loop;
       end Process_All_Refs;
 
-      Tree     : Scope_Tree_Access;
-      Line_Max : Integer := 0;
-      T        : Scope_Tree_Access;
-
    begin
       if File = null or else File.Scope_Tree_Computed then
          return;
       end if;
 
-      Update_Xref (File);
-
       declare
+         Info : constant Lines_To_Scope := Compute_Scopes (File);
          Iter : Entities_Hash.Cursor;
          UEI  : Entity_Informations;
+
       begin
          Get_First (File.Entities, Iter);
 
          loop
             UEI := Get_Element (Iter);
             exit when UEI = null;
-            Add_To_Tree (Tree, UEI.List);
+            Process_All_Entities_Refs
+              (Info.Line_Info, Info.Info_For_Decl,
+               UEI.List, Add_Deps => False);
             Get_Next (File.Entities, Iter);
          end loop;
-      end;
 
-      declare
-         Iter : Entities_Hash.Cursor;
-         UEI  : Entity_Informations;
-      begin
          Get_First (File.All_Entities, Iter);
 
          loop
             UEI := Get_Element (Iter);
             exit when UEI = null;
-            Add_To_Tree (Tree, UEI.List);
+            Process_All_Entities_Refs
+              (Info.Line_Info, Info.Info_For_Decl,
+               UEI.List, Add_Deps => True);
             Get_Next (File.All_Entities, Iter);
          end loop;
       end;
-
-      if Active (Callers_Me) then
-         Dump (Tree, "");
-      end if;
-
-      if Tree /= null then
-         T := Tree;
-         while T.Sibling /= null loop
-            T := T.Sibling;
-         end loop;
-
-         if T.Sibling /= null then
-            Line_Max := T.Sibling.End_Line;
-         else
-            Line_Max := T.End_Line;
-         end if;
-
-         declare
-            --  We need two tables to memorize the entity enclosing a given
-            --  line: in the case of "procedure A (B : Integer)", the caller
-            --  of A is the package, whereas the caller of B is A itself.
-
-            Line_Info     : Entity_Info_Array (1 .. Line_Max);
-            Info_For_Decl : Entity_Info_Array (1 .. Line_Max);
-            Last          : Integer;
-         begin
-            Fill_Table
-              (Tree             => Tree,
-               Line_Start       => 1,
-               Enclosing_Entity => null,
-               Line_Last        => Last,
-               Info             => Line_Info,
-               Info_For_Decl    => Info_For_Decl);
-
-            Free (Tree);
-
-            if Active (Me) then
-               Trace (Me, "Compute_Callers_And_Called for "
-                      & Display_Full_Name (Get_Filename (File)));
-               for L in Line_Info'Range loop
-                  if Line_Info (L) /= null then
-                     if Info_For_Decl (L) /= null then
-                        Trace (Callers_Me, "Line" & L'Img & " "
-                               & Get_Name (Line_Info (L)).all
-                               & " Decl="
-                               & Get_Name (Info_For_Decl (L)).all);
-                     else
-                        Trace (Callers_Me, "Line" & L'Img & " "
-                               & Get_Name (Line_Info (L)).all
-                               & " Decl=<null>");
-                     end if;
-                  end if;
-               end loop;
-            end if;
-
-            declare
-               Iter : Entities_Hash.Cursor;
-               UEI  : Entity_Informations;
-            begin
-               Get_First (File.Entities, Iter);
-
-               loop
-                  UEI := Get_Element (Iter);
-                  exit when UEI = null;
-                  Process_All_Entities_Refs
-                    (Line_Info, Info_For_Decl,
-                     UEI.List, Add_Deps => False);
-                  Get_Next (File.Entities, Iter);
-               end loop;
-            end;
-
-            declare
-               Iter : Entities_Hash.Cursor;
-               UEI  : Entity_Informations;
-            begin
-               Get_First (File.All_Entities, Iter);
-
-               loop
-                  UEI := Get_Element (Iter);
-                  exit when UEI = null;
-                  Process_All_Entities_Refs
-                    (Line_Info, Info_For_Decl,
-                     UEI.List, Add_Deps => True);
-                  Get_Next (File.All_Entities, Iter);
-               end loop;
-            end;
-         end;
-      end if;
 
       File.Scope_Tree_Computed := True;
    end Compute_Callers_And_Called;

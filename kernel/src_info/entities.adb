@@ -1252,6 +1252,10 @@ package body Entities is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (LI_File_Item_Record, LI_File_Item);
    begin
+      if Active (Assert_Me) then
+         Trace (Assert_Me, "Free LI_File " & E.File.Name.Display_Full_Name);
+      end if;
+
       Unref (E.File);
 
       if Active (Debug_Me) then
@@ -1267,6 +1271,7 @@ package body Entities is
 
    procedure Reset (Db : Entities_Database) is
    begin
+      Trace (Assert_Me, "Reset entities database");
       Db.Predefined_File := null;
 
       --  Reset Lis first, since this will indirectly change a field in the
