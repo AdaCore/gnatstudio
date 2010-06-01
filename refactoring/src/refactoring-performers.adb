@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -398,18 +398,15 @@ package body Refactoring.Performers is
       Get_Buffer_Factory (Kernel).Get (File).Finish_Undo_Group;
    end Finish_Undo_Group;
 
-   -----------------------
-   -- Get_Initial_Value --
-   -----------------------
+   ---------------------
+   -- Get_Declaration --
+   ---------------------
 
-   function Get_Initial_Value
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String is
+   function Get_Declaration
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity      : Entities.Entity_Information) return String is
    begin
-      --  These cannot have an initial value, so we save time
-      if Is_Container (Get_Kind (Entity).Kind)
-        or else Get_Kind (Entity).Is_Type
-      then
+      if Get_Kind (Entity).Is_Type then
          return "";
       end if;
 
@@ -424,17 +421,45 @@ package body Refactoring.Performers is
          Last  : Natural;
       begin
          Skip_To_Char (Text, Index, ':');
-         Index := Index + 1;
+         Last := Index;
+         Skip_To_Char (Text, Last, ';');
+
+         return Text (Index .. Last);
+      end;
+   end Get_Declaration;
+
+   -----------------------
+   -- Get_Initial_Value --
+   -----------------------
+
+   function Get_Initial_Value
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information) return String is
+   begin
+      --  These cannot have an initial value, so we save time
+      if Is_Container (Get_Kind (Entity).Kind) then
+         return "";
+      end if;
+
+      declare
+         Text  : constant String := Get_Declaration (Kernel, Entity);
+         Index : Natural := Text'First + 1;  --  skip ':'
+      begin
+         if Text = "" then
+            return "";
+         end if;
 
          while Index < Text'Last loop
             if Text (Index .. Index + 1) = ":=" then
                Index := Index + 2;
                Skip_Blanks (Text, Index);
-               Last := Index;
-               Skip_To_Char (Text, Last, ';');
 
-               Trace (Me, "   " & Text (Index .. Last - 1));
-               return Text (Index .. Last - 1);
+               if Active (Me) then
+                  Trace (Me, "  Initial value of "
+                         & Get_Name (Entity).all & " is "
+                         & Text (Index .. Text'Last - 1));
+               end if;
+               return Text (Index .. Text'Last - 1);
 
             elsif Text (Index) = ';'
               or else Text (Index) = ')'

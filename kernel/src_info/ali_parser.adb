@@ -870,9 +870,15 @@ package body ALI_Parser is
    begin
       if Xref.Table (Current_Ref).Rtype = Array_Index_Reference then
          if Xref.Table (Current_Ref).Name /= No_Name then
+            --  In the ALI file, the predefined entities are always lower-cased
+            --  when in fact the entity name in GPS is expected to have its
+            --  proper casing. For most users, capitalization is more suitable
+            --  than all lower-case
+
             Primitive := Get_Or_Create
               (Name   => Locale_To_UTF8
-                 (Get_Name_String (Xref.Table (Current_Ref).Name)),
+                 (Capitalize
+                    (Get_Name_String (Xref.Table (Current_Ref).Name))),
                File   => Get_Predefined_File (Get_Database (LI), Handler),
                Line   => Predefined_Line,
                Column => Predefined_Column);
@@ -1158,10 +1164,16 @@ package body ALI_Parser is
       Parent : Entity_Information;
    begin
       if Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity /= No_Name then
+         --  In the ALI file, the predefined entities are always lower-cased
+         --  when in fact the entity name in GPS is expected to have its
+         --  proper casing. For most users, capitalization is more suitable
+         --  than all lower-case
+
          Parent := Get_Or_Create
            (Name   => Locale_To_UTF8
-              (Get_Name_String
-                 (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity)),
+              (Capitalize
+                 (Get_Name_String
+                    (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity))),
             File   => Get_Predefined_File (Get_Database (LI), Handler),
             Line   => Predefined_Line,
             Column => Predefined_Column);

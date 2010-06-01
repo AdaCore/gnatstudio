@@ -47,7 +47,7 @@ with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body Refactoring.Subprograms is
 
---   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
+   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
 
    type Extract_Method_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -152,14 +152,14 @@ package body Refactoring.Subprograms is
          Decl := To_Unbounded_String (ASCII.LF & "procedure ");
       end if;
 
-      Decl := Decl & Name;
+      Append (Decl, Name);
 
       --  Do we have at least one parameter left ?
 
       if In_Params_Count + In_Out_Params_Count > 0
         or else Out_Params_Count > 1
       then
-         Decl := Decl & ASCII.LF & "   (";
+         Append (Decl, ASCII.LF & "   (");
          for P in Parameter_Arrays.First .. Last (Params) loop
 
             --  Do not emit anything if there is a single out parameter, since
@@ -168,8 +168,8 @@ package body Refactoring.Subprograms is
               or else Out_Params_Count /= 1
               or else In_Out_Params_Count /= 0
             then
-               Decl := Decl
-                 & Get_Name (Params.Table (P).Parameter).all & " : ";
+               Append
+                 (Decl, Get_Name (Params.Table (P).Parameter).all & " : ");
                Typ := Get_Type_Of (Params.Table (P).Parameter);
                if Typ = null then
                   Insert (Kernel,
@@ -182,16 +182,16 @@ package body Refactoring.Subprograms is
                end if;
 
                if Params.Table (P).PType = Out_Parameter then
-                  Decl := Decl & "out ";
+                  Append (Decl, "out ");
                elsif Params.Table (P).PType = In_Out_Parameter then
-                  Decl := Decl & "in out ";
+                  Append (Decl, "in out ");
                elsif Options.Use_In_Keyword then
-                  Decl := Decl & "in ";
+                  Append (Decl, "in ");
                end if;
 
-               Decl := Decl & Get_Name (Typ).all;
+               Append (Decl, Get_Name (Typ).all);
                if P /= Last (Params) then
-                  Decl := Decl & ";" & ASCII.LF & "    ";
+                  Append (Decl, ";" & ASCII.LF & "    ");
                end if;
             end if;
          end loop;
@@ -206,51 +206,60 @@ package body Refactoring.Subprograms is
       end if;
 
       Result := Decl;
-      Decl   := Decl & ";" & ASCII.LF;
-
-      Result := Result & ASCII.LF & "is" & ASCII.LF;
+      Append (Decl, ";" & ASCII.LF);
+      Append (Result, ASCII.LF & "is" & ASCII.LF);
 
       for L in Entity_Information_Arrays.First .. Last (Local_Vars) loop
-         Result := Result
-           & "   " & Get_Name (Local_Vars.Table (L)).all & " : ";
-         Typ := Get_Type_Of (Local_Vars.Table (L));
-         if Typ = null then
-            Insert (Kernel,
-                    Text => -"Couldn't find the type of "
-                      & Get_Name (Local_Vars.Table (L)).all,
-                    Mode => Error);
-            Method_Decl := Null_Unbounded_String;
-            Method_Body := Null_Unbounded_String;
-            return;
-         end if;
+         Append (Result, "   " & Get_Name (Local_Vars.Table (L)).all & " ");
 
-         Result := Result & Get_Name (Typ).all & ";" & ASCII.LF;
+         declare
+            Decl : constant String :=
+              Get_Declaration (Kernel, Local_Vars.Table (L));
+         begin
+            if Decl /= "" then
+               --  ??? Should remove previous declaration
+
+               Append (Result, Decl);
+            else
+               Typ := Get_Type_Of (Local_Vars.Table (L));
+               if Typ = null then
+                  Insert (Kernel,
+                          Text => -"Couldn't find the type of "
+                          & Get_Name (Local_Vars.Table (L)).all,
+                          Mode => Error);
+                  Method_Decl := Null_Unbounded_String;
+                  Method_Body := Null_Unbounded_String;
+                  return;
+               end if;
+
+               Append (Result, ": " & Get_Name (Typ).all & ";");
+            end if;
+            Append (Result, ASCII.LF);
+         end;
       end loop;
 
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
       then
          Typ := Get_Type_Of (First_Out_Param);
-         Result := Result & "   " & Get_Name (First_Out_Param).all
-           & " : " & Get_Name (Typ).all & ";" & ASCII.LF;
+         Append (Result, "   " & Get_Name (First_Out_Param).all
+                 & " : " & Get_Name (Typ).all & ";" & ASCII.LF);
       end if;
 
-      Result := Result & "begin" & ASCII.LF & "   ";
-
-      Result := Result
-        & String'
+      Append (Result, "begin" & ASCII.LF & "   ");
+      Append (Result, String'
         (Editor.Get_Chars
            (Editor.New_Location (Line_Start, 1),
-            Editor.New_Location (Line_End, 1).End_Of_Line));
+            Editor.New_Location (Line_End, 1).End_Of_Line)));
 
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
       then
-         Result := Result & "   return "
-           & Get_Name (First_Out_Param).all & ";" & ASCII.LF;
+         Append (Result, "   return "
+           & Get_Name (First_Out_Param).all & ";" & ASCII.LF);
       end if;
 
-      Result := Result & "end " & Name & ";" & ASCII.LF;
+      Append (Result, "end " & Name & ";" & ASCII.LF);
 
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
@@ -259,30 +268,30 @@ package body Refactoring.Subprograms is
            (Get_Name (First_Out_Param).all & " := ");
       end if;
 
-      Method_Call := Method_Call & Name;
+      Append (Method_Call, Name);
       if In_Params_Count + In_Out_Params_Count > 0
         or else Out_Params_Count > 1
       then
-         Method_Call := Method_Call & " (";
+         Append (Method_Call, " (");
 
          for P in Parameter_Arrays.First .. Last (Params) loop
             if Params.Table (P).PType /= Out_Parameter
               or else Out_Params_Count /= 1
               or else In_Out_Params_Count /= 0
             then
-               Method_Call := Method_Call
-                 & Get_Name (Params.Table (P).Parameter).all;
+               Append (Method_Call,
+                       Get_Name (Params.Table (P).Parameter).all);
 
                if P /= Last (Params) then
-                  Method_Call := Method_Call & ", ";
+                  Append (Method_Call, ", ");
                end if;
             end if;
          end loop;
 
-         Method_Call := Method_Call & ")";
+         Append (Method_Call, ")");
       end if;
 
-      Method_Call := Method_Call & ";" & ASCII.LF;
+      Append (Method_Call, ";" & ASCII.LF);
       Method_Decl := Decl;
       Method_Body := Result;
    end Generate_Extracted_Method;
@@ -352,60 +361,80 @@ package body Refactoring.Subprograms is
       Ref_Iter : Entity_Reference_Iterator;
       Iter     : Entity_Iterator;
       Entity, Caller   : Entity_Information;
-      Ref      : Entity_Reference;
-      Location : File_Location;
+      Ref : Entity_Reference;
+      Decl, Location : File_Location;
       Source   : constant Source_File := Get_Or_Create
         (Get_Database (Kernel), File);
       Is_Modified     : Boolean;
       Is_Read         : Boolean;
-      Has_Ref_Before, Has_Ref_After : Boolean;
+      Has_Ref_Before, Has_Write_Before, Has_Ref_After : Boolean;
       Local_Vars      : Entity_Information_Arrays.Instance;
       Params          : Parameter_Arrays.Instance;
       Is_Global       : Boolean;
-      Is_Param        : Boolean;
       Method_Decl, Method_Body, Method_Call : Unbounded_String;
 
    begin
       Find_All_Entities_In_File (Iter, Source);
+
+      Freeze (Get_Database (Kernel), Mode => No_Create_Or_Update);
+
       while not At_End (Iter) loop
          Entity := Get (Iter);
 
-         Caller    := Get_Caller (Declaration_As_Reference (Entity));
-         Is_Global := Caller = null
-           or else not Is_Subprogram (Caller);
+         Decl := Get_Declaration_Of (Entity);
 
+         --  An entity is "global" (ie does not need an entry in the parameter
+         --  list) if it is defined in another file, or in the current file at
+         --  library level. The call to Get_Caller requires parsing an ALI file
+         --  so doing it systematically means parsing a lot more ALI files than
+         --  really necessary.
+
+         Is_Global := Get_Filename (Decl.File) /= File;
          if not Is_Global then
-            Is_Modified     := False;
-            Is_Read         := False;
-            Has_Ref_Before  := False;
-            Has_Ref_After   := False;
-            Is_Param        := Is_Parameter_Of (Entity) /= null;
+            Caller    := Get_Caller (Declaration_As_Reference (Entity));
+            Is_Global := Caller = null
+              or else not Is_Subprogram (Caller);
+         end if;
 
+         --  Do not generate parameters for global variables, or subprogram
+         --  parameters (as in "Foo (Title => ...)", where Title should not
+         --  become a parameter of the extracted method.
+         if not Is_Global and then Is_Parameter_Of (Entity) = null then
+            Is_Modified      := False;
+            Is_Read          := False;
+            Has_Ref_Before   := False;
+            Has_Write_Before := False;
+            Has_Ref_After    := False;
+
+            --  ??? Could use In_Scope to speed up the search, since the
+            --  extracted code will in reality belong to a single subprogram
             Find_All_References (Ref_Iter, Entity, In_File => Source);
             while not At_End (Ref_Iter) loop
                Ref := Get (Ref_Iter);
                Location := Get_Location (Ref);
 
-               if Location.Line >= Line_Start
-                 and then Location.Line <= Line_End
-               then
-                  if Is_Read_Reference (Get_Kind (Ref)) then
-                     Is_Read := True;
-                  end if;
+               --  No need to look into further references later in the file
+               if Location.Line > Line_End then
+                  Has_Ref_After := True;
+                  exit;
+               end if;
 
-                  if Is_Write_Reference (Get_Kind (Ref)) then
-                     Is_Modified := True;
-                  end if;
-               elsif Get_Location (Ref) /= Get_Declaration_Of (Entity) then
-                  if Location.Line < Line_Start then
-                     Has_Ref_Before := True;
-                  else
-                     Has_Ref_After := True;
-                  end if;
+               if Location.Line >= Line_Start then
+                  Is_Read := Is_Read
+                    or else Is_Read_Reference (Get_Kind (Ref));
+                  Is_Modified := Is_Modified
+                    or else Is_Write_Reference (Get_Kind (Ref));
+
+               elsif Location.Line /= Decl.Line then
+                  Has_Write_Before := Has_Write_Before
+                    or else Is_Write_Reference (Get_Kind (Ref));
+
+                  Has_Ref_Before := True;
                end if;
 
                Next (Ref_Iter);
             end loop;
+
             Destroy (Ref_Iter);
 
             --  If we have a nested subprogram, give up, since we won't be
@@ -430,29 +459,35 @@ package body Refactoring.Subprograms is
             end if;
 
             if not Is_Modified and then Is_Read then
-               if Has_Ref_Before
-                 or else Has_Ref_After
-                 or else Is_Param
-               then
+               if Has_Ref_Before or else Has_Ref_After then
                   Append (Params, (Parameter => Entity,
                                    PType     => In_Parameter));
                else
                   Append (Local_Vars, Entity);
                end if;
+
             elsif Is_Modified then
-               if Has_Ref_Before then
+               if Has_Write_Before then
                   if Has_Ref_After then
+                     --  Written before and at least needed after the call
                      Append (Params, (Parameter => Entity,
                                       PType     => In_Out_Parameter));
                   else
+                     --  Written before, but not needed after.
+                     --  ??? It is modified in the function, so we should have
+                     --  a local variable that takes its value and is modified,
+                     --  we do not need to return the parameter itself
                      Append (Params, (Parameter => Entity,
-                                      PType     => In_Parameter));
+                                      PType     => In_Out_Parameter));
                   end if;
 
                elsif Has_Ref_After then
+                  --  Not set before the call, but needed after
                   Append (Params, (Parameter => Entity,
                                    PType     => Out_Parameter));
+
                else
+                  --  Not set before the call, and not needed after
                   Append (Local_Vars, Entity);
                end if;
             end if;
@@ -461,6 +496,8 @@ package body Refactoring.Subprograms is
          Next (Iter);
       end loop;
       Destroy (Iter);
+
+      Thaw (Get_Database (Kernel));
 
       Generate_Extracted_Method
         (Kernel,
@@ -500,11 +537,18 @@ package body Refactoring.Subprograms is
             Finish_Undo_Group (Kernel, File);
             return Success;
          else
+            Finish_Undo_Group (Kernel, File);
             return Failure;
          end if;
       else
          return Failure;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Thaw (Get_Database (Kernel));
+         return Failure;
    end Extract_Method;
 
    -------------
@@ -614,7 +658,7 @@ package body Refactoring.Subprograms is
       Filter : Action_Filter;
    begin
       --  Disabled for now
-      if False then
+      if Active (Me) then
          C := new Extract_Method_Command;
          Filter := new Is_Area_Context;
          Register_Contextual_Menu

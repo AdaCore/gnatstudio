@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                     Copyright (C) 2003-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -117,5 +117,11 @@ package Refactoring.Performers is
    --  Get, from the source, the initial value given to a variable, ie the
    --  value set when the variable was declared, as in
    --       A, B : Integer := 2;
+
+   function Get_Declaration
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity      : Entities.Entity_Information) return String;
+   --  Return the declaration of the entity (the part ": Integer := 2" in the
+   --  above example
 
 end Refactoring.Performers;
