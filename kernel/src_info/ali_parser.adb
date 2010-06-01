@@ -873,15 +873,29 @@ package body ALI_Parser is
             --  In the ALI file, the predefined entities are always lower-cased
             --  when in fact the entity name in GPS is expected to have its
             --  proper casing. For most users, capitalization is more suitable
-            --  than all lower-case
+            --  than all lower-case when the language is case insensitive (the
+            --  ALI parser is used also for C/C++ xref info produced by GCC).
 
-            Primitive := Get_Or_Create
-              (Name   => Locale_To_UTF8
-                 (Capitalize
-                    (Get_Name_String (Xref.Table (Current_Ref).Name))),
-               File   => Get_Predefined_File (Get_Database (LI), Handler),
-               Line   => Predefined_Line,
-               Column => Predefined_Column);
+            declare
+               Name : constant String :=
+                 Get_Name_String (Xref.Table (Current_Ref).Name);
+            begin
+               if Case_Insensitive_Identifiers (Handler) then
+                  Primitive := Get_Or_Create
+                    (Name   => Locale_To_UTF8 (Capitalize (Name)),
+                     File   => Get_Predefined_File
+                                 (Get_Database (LI), Handler),
+                     Line   => Predefined_Line,
+                     Column => Predefined_Column);
+               else
+                  Primitive := Get_Or_Create
+                    (Name   => Locale_To_UTF8 (Name),
+                     File   => Get_Predefined_File
+                                 (Get_Database (LI), Handler),
+                     Line   => Predefined_Line,
+                     Column => Predefined_Column);
+               end if;
+            end;
          else
             Primitive := Find_Entity_In_ALI
               (Handler,
@@ -1167,16 +1181,28 @@ package body ALI_Parser is
          --  In the ALI file, the predefined entities are always lower-cased
          --  when in fact the entity name in GPS is expected to have its
          --  proper casing. For most users, capitalization is more suitable
-         --  than all lower-case
+         --  than all lower-case when the language is case insensitive (the
+         --  ALI parser is used also for C/C++ xref info produced by GCC).
 
-         Parent := Get_Or_Create
-           (Name   => Locale_To_UTF8
-              (Capitalize
-                 (Get_Name_String
-                    (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity))),
-            File   => Get_Predefined_File (Get_Database (LI), Handler),
-            Line   => Predefined_Line,
-            Column => Predefined_Column);
+         declare
+            Name : constant String :=
+              Get_Name_String
+                (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity);
+         begin
+            if Case_Insensitive_Identifiers (Handler) then
+               Parent := Get_Or_Create
+                 (Name   => Locale_To_UTF8 (Capitalize (Name)),
+                  File   => Get_Predefined_File (Get_Database (LI), Handler),
+                  Line   => Predefined_Line,
+                  Column => Predefined_Column);
+            else
+               Parent := Get_Or_Create
+                 (Name   => Locale_To_UTF8 (Name),
+                  File   => Get_Predefined_File (Get_Database (LI), Handler),
+                  Line   => Predefined_Line,
+                  Column => Predefined_Column);
+            end if;
+         end;
       else
          Parent := Find_Entity_In_ALI
            (Handler    => Handler,
