@@ -33,17 +33,16 @@ with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel;             use GPS.Kernel;
 with Gtk.Box;                use Gtk.Box;
-with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
-with Histories;              use Histories;
 with Language;               use Language;
 with Language.Ada;           use Language.Ada;
 with Language_Handlers;      use Language_Handlers;
 with Language.Tree.Database; use Language.Tree.Database;
+with Refactoring_Module;     use Refactoring_Module;
 with Refactoring.Performers; use Refactoring.Performers;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
@@ -98,10 +97,6 @@ package body Refactoring.Subprograms is
       Line_Start, Line_End : Integer;
       --  Which code do we want to extract ?
 
-      Use_In_Keyword    : Boolean;
-      Use_Separate_Decl : Boolean;
-      --  The options to configure the output
-
       Parent               : Entity_Information;
       --  The subprogram that contained the extracted code before the
       --  refactoring
@@ -110,7 +105,7 @@ package body Refactoring.Subprograms is
       --  The entities referenced in the extracted code
    end record;
    Invalid_Context : constant Extract_Context :=
-     (GNATCOLL.VFS.No_File, -1, -1, False, False, null, Entities => <>);
+     (GNATCOLL.VFS.No_File, -1, -1, null, Entities => <>);
 
    procedure Compute_Context_Entities
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -487,7 +482,7 @@ package body Refactoring.Subprograms is
                   Append (Decl, "out ");
                elsif Params.Table (P).PType = In_Out_Parameter then
                   Append (Decl, "in out ");
-               elsif Context.Use_In_Keyword then
+               elsif Add_In_Keyword.Get_Pref then
                   Append (Decl, "in ");
                end if;
 
@@ -517,7 +512,15 @@ package body Refactoring.Subprograms is
          Decl := Decl & " return " & Get_Name (Typ).all;
       end if;
 
-      Result := Decl;
+      if Add_Subprogram_Box.Get_Pref then
+         Append (Result, ASCII.LF);
+         Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
+         Append (Result, "-- " & Name & " --" & ASCII.LF);
+         Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
+      end if;
+
+      Append (Result, Decl);
+
       Append (Decl, ";" & ASCII.LF);
 
       if Comment_Start < Comment_End then
@@ -672,12 +675,18 @@ package body Refactoring.Subprograms is
       Free (Constructs);
 
       --  Insert the body before the decl, so that if they are inserted at the
-      --  same line, they occur with the decl first
-      Inserted := Insert_Text (Kernel, In_File, Line, 1, Method_Body, True);
+      --  same line, they occur with the decl first.
+      --  We must also insert before any "subprogram box" preceding the first
+      --  subprogram we found
 
-      if Context.Use_Separate_Decl then
+      Inserted := Insert_Text
+        (Kernel, In_File, Line, 1, Method_Body,
+         Indent => True, Skip_Comments_Backward => True);
+
+      if Create_Subprogram_Decl.Get_Pref then
          Inserted :=
-           Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl, True);
+           Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl,
+                        Indent => True, Skip_Comments_Backward => True);
       end if;
    end Insert_New_Method;
 
@@ -1015,7 +1024,6 @@ package body Refactoring.Subprograms is
       Ent    : Gtk_Entry;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
-      Check, Separate_Decl  : Gtk_Check_Button;
 
       Extract : Extract_Context;
 
@@ -1027,8 +1035,6 @@ package body Refactoring.Subprograms is
                   Line_Start        => <>,
                   Line_End          => <>,
                   Parent            => <>,
-                  Use_In_Keyword    => False,
-                  Use_Separate_Decl => True,
                   Entities          => <>);
       Get_Area (Context.Context, Extract.Line_Start, Extract.Line_End);
       Compute_Context_Entities (Get_Kernel (Context.Context), Extract);
@@ -1051,33 +1057,12 @@ package body Refactoring.Subprograms is
       Set_Activates_Default (Ent, True);
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => False);
 
-      Gtk_New (Check, -"Use ""in"" keyword");
-      Pack_Start (Get_Vbox (Dialog), Check, Expand => False);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Get_Kernel (Context.Context)).all,
-         Key           => "Refactoring_Use_In_Keyword",
-         Default_Value => False);
-      Associate (Get_History (Get_Kernel (Context.Context)).all,
-                "Refactoring_Use_In_Keyword", Check);
-
-      Gtk_New (Separate_Decl, -"Create declaration for subprogram");
-      Pack_Start (Get_Vbox (Dialog), Separate_Decl, Expand => False);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Get_Kernel (Context.Context)).all,
-         Key           => "Refactoring_Create_Declaration",
-         Default_Value => True);
-      Associate (Get_History (Get_Kernel (Context.Context)).all,
-                "Refactoring_Create_Declaration", Separate_Decl);
-
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Extract.Use_In_Keyword    := Get_Active (Check);
-         Extract.Use_Separate_Decl := Get_Active (Separate_Decl);
-
          Result := Extract_Method
            (Kernel      => Get_Kernel (Context.Context),
             Method_Name => Get_Text (Ent),
@@ -1103,8 +1088,6 @@ package body Refactoring.Subprograms is
                   Line_Start        => Nth_Arg (Data, 2),
                   Line_End          => Nth_Arg (Data, 3),
                   Parent            => <>,
-                  Use_In_Keyword    => True,
-                  Use_Separate_Decl => True,
                   Entities          => <>);
       Compute_Context_Entities (Get_Kernel (Data), Context);
 

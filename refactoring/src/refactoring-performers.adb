@@ -307,23 +307,79 @@ package body Refactoring.Performers is
       return Text;
    end Get_Text;
 
+   -------------------
+   -- Skip_Comments --
+   -------------------
+
+   function Skip_Comments
+     (From : Editor_Location'Class;
+      Direction : Integer := 1) return Editor_Location'Class;
+   --  Skip any following or preceding comment lines (depending on Direction).
+   --  If there are no comments immediately before or after, From is returned.
+   --
+   --  ??? The implementation is specific to Ada comments for now
+
+   function Skip_Comments
+     (From : Editor_Location'Class;
+      Direction : Integer := 1) return Editor_Location'Class
+   is
+      Loc : Editor_Location'Class := From;
+      Seen_Comment : Boolean := False;
+   begin
+      loop
+         --  Skip backward until we find a non blank line that is not a comment
+
+         declare
+            Loc2 : constant Editor_Location'Class := Loc.Forward_Line (-1);
+            C    : constant String :=
+              Loc.Buffer.Get_Chars (Loc2, Loc2.End_Of_Line);
+            Index : Natural := C'First;
+         begin
+            exit when Loc2 = Loc;  --  Beginning of buffer
+
+            Skip_Blanks (C, Index, Step => 1);
+
+            if Index > C'Last then
+               null;   --  blank line
+
+            elsif Index < C'Last
+              and then C (Index .. Index + 1) = "--"
+            then
+               Seen_Comment := True;  --  comment line
+
+            else
+               exit;
+            end if;
+
+            Loc := Loc2;
+         end;
+      end loop;
+
+      if Seen_Comment then
+         return Loc;  --  return the next line
+      else
+         return From;
+      end if;
+   end Skip_Comments;
+
    -----------------
    -- Insert_Text --
    -----------------
 
    function Insert_Text
-     (Kernel            : access Kernel_Handle_Record'Class;
-      In_File           : GNATCOLL.VFS.Virtual_File;
-      Line              : Integer;
-      Column            : Visible_Column_Type := 1;
-      Text              : String;
-      Indent            : Boolean;
-      Replaced_Length   : Integer := 0;
-      Only_If_Replacing : String := "") return Boolean
+     (Kernel                 : access Kernel_Handle_Record'Class;
+      In_File                : GNATCOLL.VFS.Virtual_File;
+      Line                   : Integer;
+      Column                 : Visible_Column_Type := 1;
+      Text                   : String;
+      Indent                 : Boolean;
+      Skip_Comments_Backward : Boolean := False;
+      Replaced_Length        : Integer := 0;
+      Only_If_Replacing      : String := "") return Boolean
    is
       Editor : constant Editor_Buffer'Class :=
         Get_Buffer_Factory (Kernel).Get (In_File);
-      Loc_Start : constant Editor_Location'Class := Editor.New_Location
+      Loc_Start : Editor_Location'Class := Editor.New_Location
         (Line, Integer (Column));
       Loc_End   : constant Editor_Location'Class :=
         Loc_Start.Forward_Char (Replaced_Length - 1);
@@ -342,6 +398,10 @@ package body Refactoring.Performers is
 
       if Replaced_Length > 0 then
          Editor.Delete (Loc_Start, Loc_End);
+      end if;
+
+      if Skip_Comments_Backward then
+         Loc_Start := Skip_Comments (Loc_Start, Direction => -1);
       end if;
 
       Editor.Insert (Loc_Start, Text);

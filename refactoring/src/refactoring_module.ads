@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,8 +20,13 @@
 --  This package provides support for refactoring the code
 
 with GPS.Kernel;
+with Default_Preferences;
 
 package Refactoring_Module is
+
+   Add_Subprogram_Box     : Default_Preferences.Boolean_Preference;
+   Add_In_Keyword         : Default_Preferences.Boolean_Preference;
+   Create_Subprogram_Decl : Default_Preferences.Boolean_Preference;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
