@@ -41,12 +41,14 @@ with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Histories;              use Histories;
 with Language;               use Language;
+with Language.Ada;           use Language.Ada;
 with Language_Handlers;      use Language_Handlers;
 with Language.Tree.Database; use Language.Tree.Database;
 with Refactoring.Performers; use Refactoring.Performers;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
 
 package body Refactoring.Subprograms is
 
@@ -118,7 +120,8 @@ package body Refactoring.Subprograms is
    --  message has already been displayed in that case).
 
    type Parameter_Description is record
-      Parameter : Entity_Information;
+      Parameter : Extracted_Entity;
+      Is_Tagged : Boolean;
       PType     : Parameter_Type;
    end record;
 
@@ -155,6 +158,12 @@ package body Refactoring.Subprograms is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands
+
+   function Accepts_Primitive_Ops
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information;
+      Current_Offset : String_Index_Type) return Boolean;
+   --  Whether the entity is an instance of a class or interface
 
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -223,6 +232,41 @@ package body Refactoring.Subprograms is
       Skip_Blanks (Code, Code_End, Step => -1);
    end Prepare_Code;
 
+   ---------------------------
+   -- Accepts_Primitive_Ops --
+   ---------------------------
+
+   function Accepts_Primitive_Ops
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information;
+      Current_Offset : String_Index_Type) return Boolean
+   is
+      EDecl  : constant File_Location := Get_Declaration_Of
+        (Get_Type_Of (Entity));
+      Struct : constant Structured_File_Access := Get_Or_Create
+        (Db   => Get_Construct_Database (Kernel),
+         File => Get_Filename (EDecl.File));
+      EA     : Entity_Access;
+   begin
+      if Struct /= null then
+         EA := Find_Declaration
+           (Get_Tree_Language (Struct),
+            Struct,
+            Line   => EDecl.Line,
+            Column => To_Line_String_Index
+              (File   => Struct,
+               Line   => EDecl.Line,
+               Column => EDecl.Column));
+         EA := Get_Last_Visible_Declaration
+           (EA, Struct, Offset => Current_Offset);
+
+         return Get_Construct (EA).Attributes (Ada_Tagged_Attribute)
+           or else Get_Construct (EA).Attributes (Ada_Interface_Attribute);
+      else
+         return False;
+      end if;
+   end Accepts_Primitive_Ops;
+
    -------------------------------
    -- Generate_Extracted_Method --
    -------------------------------
@@ -244,7 +288,6 @@ package body Refactoring.Subprograms is
       In_Out_Params_Count : Natural := 0;
       In_Params_Count     : Natural := 0;
       Result, Decl        : Unbounded_String;
-      Entity              : Entity_Information;
       Typ                 : Entity_Information;
       First_Out_Param     : Entity_Information;
       Flags               : Extracted_Entity_Flags;
@@ -259,8 +302,14 @@ package body Refactoring.Subprograms is
 
       Code_Start, Code_End : Integer;
       Comment_Start, Comment_End : Integer;
-
+      Entity : Entity_Information;
+      Struct : Structured_File_Access;
+      Offset : String_Index_Type;
    begin
+      Struct := Get_Or_Create
+        (Get_Construct_Database (Kernel), File => Context.File);
+      Offset := To_String_Index (Struct, Context.Line_Start, 1);
+
       Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
 
       for P in Extracted_Entity_Arrays.First .. Last (Context.Entities) loop
@@ -271,7 +320,11 @@ package body Refactoring.Subprograms is
             if Flags (Flag_Modified_Before)
               or else Flags (Flag_Ref_Outside_Parent)
             then
-               Append (Params, (Parameter => Entity, PType => In_Parameter));
+               Append
+                 (Params,
+                  (Parameter => Context.Entities.Table (P),
+                   Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                   PType     => In_Parameter));
 
             else
                --  Variable not modified before, so its value before the
@@ -286,7 +339,7 @@ package body Refactoring.Subprograms is
 
                else
                   --  A reference to an uninitialized variable
-                  Append (Local_Vars, Entity);
+                  Append (Local_Vars, Context.Entities.Table (P).Entity);
                end if;
             end if;
 
@@ -296,25 +349,41 @@ package body Refactoring.Subprograms is
                  or else Flags (Flag_Ref_Outside_Parent)
                then
                   --  Written before and at least needed after the call
-                  Append (Params, (Entity, In_Out_Parameter));
+
+                  Append
+                    (Params,
+                     (Parameter => Context.Entities.Table (P),
+                      Is_Tagged =>
+                        Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                      PType     => In_Out_Parameter));
 
                else
                   --  Written before, but not needed after.
                   --  ??? It is modified in the function, so we should have
                   --  a local variable that takes its value and is modified,
                   --  we do not need to return the parameter itself
-                  Append (Params, (Entity, In_Out_Parameter));
+
+                  Append
+                    (Params,
+                     (Parameter => Context.Entities.Table (P),
+                      Is_Tagged =>
+                        Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                      PType     => In_Out_Parameter));
                end if;
 
             elsif Flags (Flag_Read_After)
               or else Flags (Flag_Ref_Outside_Parent)
             then
                --  Not set before the call, but needed after
-               Append (Params, (Entity, Out_Parameter));
+               Append
+                 (Params,
+                  (Parameter => Context.Entities.Table (P),
+                   Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                   PType     => Out_Parameter));
 
             else
                --  Not set before the call, and not needed after
-               Append (Local_Vars, Entity);
+               Append (Local_Vars, Context.Entities.Table (P).Entity);
             end if;
          end if;
       end loop;
@@ -322,7 +391,7 @@ package body Refactoring.Subprograms is
       for P in Parameter_Arrays.First .. Last (Params) loop
          if Params.Table (P).PType = Out_Parameter then
             Out_Params_Count := Out_Params_Count + 1;
-            First_Out_Param := Params.Table (P).Parameter;
+            First_Out_Param := Params.Table (P).Parameter.Entity;
          elsif Params.Table (P).PType = In_Out_Parameter then
             In_Out_Params_Count := In_Out_Params_Count + 1;
          else
@@ -355,12 +424,13 @@ package body Refactoring.Subprograms is
               or else In_Out_Params_Count /= 0
             then
                Append
-                 (Decl, Get_Name (Params.Table (P).Parameter).all & " : ");
-               Typ := Get_Type_Of (Params.Table (P).Parameter);
+                 (Decl,
+                  Get_Name (Params.Table (P).Parameter.Entity).all & " : ");
+               Typ := Get_Type_Of (Params.Table (P).Parameter.Entity);
                if Typ = null then
                   Insert (Kernel,
                           Text => -"Couldn't find the type of "
-                             & Get_Name (Params.Table (P).Parameter).all,
+                            & Get_Name (Params.Table (P).Parameter.Entity).all,
                           Mode => Error);
                   Method_Decl := Null_Unbounded_String;
                   Method_Body := Null_Unbounded_String;
@@ -376,6 +446,13 @@ package body Refactoring.Subprograms is
                end if;
 
                Append (Decl, Get_Name (Typ).all);
+
+               if Params.Table (P).Is_Tagged then
+                  --  Since we are putting the code in the body, we should not
+                  --  be a dispatching subprogram
+                  Append (Decl, "'Class");
+               end if;
+
                if P /= Last (Params) then
                   Append (Decl, ";" & ASCII.LF & "    ");
                end if;
@@ -485,7 +562,7 @@ package body Refactoring.Subprograms is
               or else In_Out_Params_Count /= 0
             then
                Append (Method_Call,
-                       Get_Name (Params.Table (P).Parameter).all);
+                       Get_Name (Params.Table (P).Parameter.Entity).all);
 
                if P /= Last (Params) then
                   Append (Method_Call, ", ");
@@ -607,6 +684,11 @@ package body Refactoring.Subprograms is
                        Flags  => (others => False));
 
             Decl := Get_Declaration_Of (Entity.Entity);
+
+--              Put_Line ("MANU Is_Tagged: "
+--                        & Get_Name (Entity.Entity).all
+--                        & " " & Entity.Is_Tagged'Img
+--                        & " " & To_String (EA));
 
             --  An entity is "global" (ie does not need an entry in the
             --  parameter list) if it is defined in another file, or in the
