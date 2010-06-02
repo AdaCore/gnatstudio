@@ -149,6 +149,9 @@ package body Refactoring.Subprograms is
       Method_Call : out Unbounded_String);
    --  Generate the code of the new method
 
+   procedure Sort_Parameters (Params : in out Parameter_Arrays.Instance);
+   --  Sort the parameters (any dispatching entity goes first)
+
    function Extract_Method
      (Kernel      : access Kernel_Handle_Record'Class;
       Context     : Extract_Context;
@@ -267,6 +270,52 @@ package body Refactoring.Subprograms is
       end if;
    end Accepts_Primitive_Ops;
 
+   ---------------------
+   -- Sort_Parameters --
+   ---------------------
+
+   procedure Sort_Parameters (Params : in out Parameter_Arrays.Instance) is
+      procedure Swap (Index1, Index2 : Parameter_Arrays.Index_Type);
+      --  Swap the parameters at the two indexes
+
+      procedure Swap (Index1, Index2 : Parameter_Arrays.Index_Type) is
+         Descr : constant Parameter_Description := Params.Table (Index1);
+      begin
+         Params.Table (Index1) := Params.Table (Index2);
+         Params.Table (Index2) := Descr;
+      end Swap;
+
+   begin
+      --  Put all "out" parameters last, so that we read from input parameters
+      --  to output parameters
+
+      for P in reverse Parameter_Arrays.First .. Last (Params) - 1 loop
+         case Params.Table (P).PType is
+            when Out_Parameter | In_Out_Parameter =>
+               Swap (Last (Params), P);
+            when In_Parameter | Access_Parameter =>
+               null;
+         end case;
+      end loop;
+
+      --  Put the dispatching parameter first, if any. By convention, we also
+      --  put "Self" or "This" first if we can't find another dispatching
+      --  parameter.
+      --  Needs to be done after the "out" parameter, in case the dispatching
+      --  parameter is also out
+
+      for P in Parameter_Arrays.First .. Last (Params) loop
+         if Params.Table (P).Is_Tagged then
+            Swap (Parameter_Arrays.First, P);
+         end if;
+      end loop;
+
+      --  ??? Put parameters with default values last
+      --  We currently do not create default values, so this is irrelevant
+
+      null;
+   end Sort_Parameters;
+
    -------------------------------
    -- Generate_Extracted_Method --
    -------------------------------
@@ -289,7 +338,7 @@ package body Refactoring.Subprograms is
       In_Params_Count     : Natural := 0;
       Result, Decl        : Unbounded_String;
       Typ                 : Entity_Information;
-      First_Out_Param     : Entity_Information;
+      Last_Out_Param      : Entity_Information;
       Flags               : Extracted_Entity_Flags;
       Declaration_Added   : Boolean;
 
@@ -325,6 +374,7 @@ package body Refactoring.Subprograms is
                   (Parameter => Context.Entities.Table (P),
                    Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
                    PType     => In_Parameter));
+               In_Params_Count := In_Params_Count + 1;
 
             else
                --  Variable not modified before, so its value before the
@@ -356,6 +406,7 @@ package body Refactoring.Subprograms is
                       Is_Tagged =>
                         Accepts_Primitive_Ops (Kernel, Entity, Offset),
                       PType     => In_Out_Parameter));
+                  In_Out_Params_Count := In_Out_Params_Count + 1;
 
                else
                   --  Written before, but not needed after.
@@ -369,6 +420,7 @@ package body Refactoring.Subprograms is
                       Is_Tagged =>
                         Accepts_Primitive_Ops (Kernel, Entity, Offset),
                       PType     => In_Out_Parameter));
+                  In_Out_Params_Count := In_Out_Params_Count + 1;
                end if;
 
             elsif Flags (Flag_Read_After)
@@ -380,6 +432,8 @@ package body Refactoring.Subprograms is
                   (Parameter => Context.Entities.Table (P),
                    Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
                    PType     => Out_Parameter));
+               Out_Params_Count := Out_Params_Count + 1;
+               Last_Out_Param := Context.Entities.Table (P).Entity;
 
             else
                --  Not set before the call, and not needed after
@@ -388,16 +442,7 @@ package body Refactoring.Subprograms is
          end if;
       end loop;
 
-      for P in Parameter_Arrays.First .. Last (Params) loop
-         if Params.Table (P).PType = Out_Parameter then
-            Out_Params_Count := Out_Params_Count + 1;
-            First_Out_Param := Params.Table (P).Parameter.Entity;
-         elsif Params.Table (P).PType = In_Out_Parameter then
-            In_Out_Params_Count := In_Out_Params_Count + 1;
-         else
-            In_Params_Count := In_Params_Count + 1;
-         end if;
-      end loop;
+      Sort_Parameters (Params);
 
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
@@ -405,6 +450,7 @@ package body Refactoring.Subprograms is
          Decl := To_Unbounded_String (ASCII.LF & "function ");
       else
          Decl := To_Unbounded_String (ASCII.LF & "procedure ");
+         Last_Out_Param := null;
       end if;
 
       Append (Decl, Name);
@@ -453,7 +499,10 @@ package body Refactoring.Subprograms is
                   Append (Decl, "'Class");
                end if;
 
-               if P /= Last (Params) then
+               if P /= Last (Params)
+                 and then Params.Table (P + 1).Parameter.Entity /=
+                 Last_Out_Param
+               then
                   Append (Decl, ";" & ASCII.LF & "    ");
                end if;
             end if;
@@ -464,7 +513,7 @@ package body Refactoring.Subprograms is
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
       then
-         Typ := Get_Type_Of (First_Out_Param);
+         Typ := Get_Type_Of (Last_Out_Param);
          Decl := Decl & " return " & Get_Name (Typ).all;
       end if;
 
@@ -525,8 +574,8 @@ package body Refactoring.Subprograms is
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
       then
-         Typ := Get_Type_Of (First_Out_Param);
-         Append (Result, "   " & Get_Name (First_Out_Param).all
+         Typ := Get_Type_Of (Last_Out_Param);
+         Append (Result, "   " & Get_Name (Last_Out_Param).all
                  & " : " & Get_Name (Typ).all & ";" & ASCII.LF);
       end if;
 
@@ -538,7 +587,7 @@ package body Refactoring.Subprograms is
         and then In_Out_Params_Count = 0
       then
          Append (Result, "   return "
-           & Get_Name (First_Out_Param).all & ";" & ASCII.LF);
+           & Get_Name (Last_Out_Param).all & ";" & ASCII.LF);
       end if;
 
       Append (Result, "end " & Name & ";" & ASCII.LF);
@@ -547,7 +596,7 @@ package body Refactoring.Subprograms is
         and then In_Out_Params_Count = 0
       then
          Method_Call := To_Unbounded_String
-           (Get_Name (First_Out_Param).all & " := ");
+           (Get_Name (Last_Out_Param).all & " := ");
       end if;
 
       Append (Method_Call, Name);
@@ -564,7 +613,10 @@ package body Refactoring.Subprograms is
                Append (Method_Call,
                        Get_Name (Params.Table (P).Parameter.Entity).all);
 
-               if P /= Last (Params) then
+               if P /= Last (Params)
+                 and then Params.Table (P + 1).Parameter.Entity /=
+                    Last_Out_Param
+               then
                   Append (Method_Call, ", ");
                end if;
             end if;
