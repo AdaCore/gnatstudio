@@ -915,6 +915,8 @@ package body Refactoring.Subprograms is
          if not Is_Global then
             Find_All_References
               (Ref_Iter, Entity.Entity, In_File => Context.Source);
+
+            For_Each_Ref :
             while not At_End (Ref_Iter) loop
                Ref      := Get (Ref_Iter);
                Location := Get_Location (Ref);
@@ -930,7 +932,7 @@ package body Refactoring.Subprograms is
                   --  in the extracted code and we already know the entity
                   --  is ref outside of that code
 
-                  exit when Location.Line > Context.Line_End;
+                  exit For_Each_Ref when Location.Line > Context.Line_End;
 
                else
                   --  A reference within the current subprogram
@@ -979,6 +981,19 @@ package body Refactoring.Subprograms is
 
                   else
                      --  A reference within the extracted code
+
+                     if Location.Line = Decl.Line then
+                        --  If this is the declaration, it means we have a
+                        --  "declare" block, and as such we can simply ignore
+                        --  this entity, it will be automatically extracted.
+                        --
+                        --  ??? Of course, the user could also have selected
+                        --  the local vars in the original subprogram, or only
+                        --  part of a declare block, in which case we should
+                        --  really display an error
+
+                        exit For_Each_Ref;
+                     end if;
 
                      --  Should ignore the reference if it is a named
                      --  parameter in a subprogram call, as in
@@ -1036,7 +1051,7 @@ package body Refactoring.Subprograms is
                end if;
 
                Next (Ref_Iter);
-            end loop;
+            end loop For_Each_Ref;
 
             Destroy (Ref_Iter);
 
