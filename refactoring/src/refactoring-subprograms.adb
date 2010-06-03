@@ -1086,8 +1086,8 @@ package body Refactoring.Subprograms is
    is
       Method_Decl, Method_Body, Method_Call : Unbounded_String;
       To_Delete  : Text_Ranges.Set;
-      Line_Start : Integer;
       Iter       : Text_Ranges.Cursor;
+      Result     : Command_Return_Type;
    begin
       if Context = Invalid_Context then
          Trace (Me, "Extract_Method: Invalid context");
@@ -1104,62 +1104,71 @@ package body Refactoring.Subprograms is
          Method_Call => Method_Call);
 
       if Method_Body /= Null_Unbounded_String then
-         Start_Undo_Group (Kernel, Context.File);
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Kernel).Get (Context.File);
+            Line_Start : constant Editor_Mark'Class :=
+              Buffer.New_Location (Context.Line_Start, 1).Create_Mark;
+            Line_End : constant Editor_Mark'Class :=
+              Buffer.New_Location (Context.Line_End, 1)
+              .End_Of_Line.Create_Mark;
+         begin
+            Buffer.Start_Undo_Group;
 
-         Line_Start := Context.Line_Start;
-         Iter := To_Delete.First;
+            Iter := To_Delete.First;
 
-         while Has_Element (Iter) loop
-            if Element (Iter).Start < Line_Start then
-               Line_Start := Line_Start - Element (Iter).Lines;
-            end if;
+            while Has_Element (Iter) loop
+               Delete_Text
+                 (Kernel     => Kernel,
+                  In_File    => Context.File,
+                  Line_Start => Element (Iter).Start,
+                  Line_End => Element (Iter).Start + Element (Iter).Lines - 1);
+               Next (Iter);
+            end loop;
 
             Delete_Text
-              (Kernel     => Kernel,
-               In_File    => Context.File,
-               Line_Start => Element (Iter).Start,
-               Line_End   => Element (Iter).Start + Element (Iter).Lines - 1);
-
-            Next (Iter);
-         end loop;
-
-         Delete_Text
-           (Kernel      => Kernel,
-            In_File     => Context.File,
-            Line_Start  => Line_Start,
-            Line_End    => Line_Start + Context.Line_End - Context.Line_Start);
-         if Insert_Text
-           (Kernel     => Kernel,
-            In_File    => Context.File,
-            Line       => Line_Start,
-            Column     => 1,
-            Text       => To_String (Method_Call),
-            Indent     => True)
-         then
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               -"Refactoring - extract subprogram " & Method_Name,
-               Context.File, Line_Start,
-               1, -"Extracted subprogram call inserted",
-               0,
-               (Editor_Side => True, Locations => True));
-
-            Insert_New_Method
               (Kernel      => Kernel,
                In_File     => Context.File,
-               Name        => Method_Name,
-               Before_Line => Line_Start,
-               Context     => Context,
-               Method_Decl => To_String (Method_Decl),
-               Method_Body => To_String (Method_Body));
-            Finish_Undo_Group (Kernel, Context.File);
-            return Success;
-         else
-            Trace (Me,
-                   "Extract_Method: Error inserting call to new subprogram");
-            Finish_Undo_Group (Kernel, Context.File);
-            return Failure;
-         end if;
+               Line_Start  => Line_Start.Line,
+               Line_End    => Line_End.Line);
+
+            if Insert_Text
+              (Kernel     => Kernel,
+               In_File    => Context.File,
+               Line       => Line_Start.Line,
+               Column     => 1,
+               Text       => To_String (Method_Call),
+               Indent     => True)
+            then
+               Create_Simple_Message
+                 (Get_Messages_Container (Kernel),
+                  -"Refactoring - extract subprogram " & Method_Name,
+                  Context.File, Line_Start.Line,
+                  1, -"Extracted subprogram call inserted",
+                  0,
+                  (Editor_Side => True, Locations => True));
+
+               Insert_New_Method
+                 (Kernel      => Kernel,
+                  In_File     => Context.File,
+                  Name        => Method_Name,
+                  Before_Line => Line_Start.Line,
+                  Context     => Context,
+                  Method_Decl => To_String (Method_Decl),
+                  Method_Body => To_String (Method_Body));
+               Result := Success;
+            else
+               Trace
+                 (Me,
+                  "Extract_Method: Error inserting call to new subprogram");
+               Result := Failure;
+            end if;
+
+            Line_Start.Delete;
+            Line_End.Delete;
+            Buffer.Finish_Undo_Group;
+            return Result;
+         end;
       else
          Trace (Me,
                 "Extract_Method: Couldn't compute body of new subprogram");
