@@ -227,7 +227,6 @@ package String_Utils is
    --  This function is used on Windows or when the Strip_CR preference is
    --  enabled (for systems that share dos files).
    --  CR/LF sequences are replaced by LF chars.
-   --  CR chars alone are replaced by LF chars.
 
    procedure Strip_CR
      (Text     : in out String;
