@@ -190,6 +190,12 @@ package body Refactoring.Subprograms is
    --  In particular, this skips leading and trailing white spaces, and if the
    --  code starts with a comment it separates the comment from the code
 
+   procedure Is_Parameter_Of
+     (Entity       : Entity_Information;
+      Is_Parameter : out Boolean;
+      PType        : out Parameter_Type);
+   --  Whether Entity is a parameter for a subprogram, and if it is which type
+
    ---------
    -- ">" --
    ---------
@@ -668,6 +674,38 @@ package body Refactoring.Subprograms is
       end if;
    end Compute_Context_Parent;
 
+   ---------------------
+   -- Is_Parameter_Of --
+   ---------------------
+
+   procedure Is_Parameter_Of
+     (Entity       : Entity_Information;
+      Is_Parameter : out Boolean;
+      PType        : out Parameter_Type)
+   is
+      Sub   : constant Entity_Information := Is_Parameter_Of (Entity);
+      Iter  : Subprogram_Iterator;
+      Param : Entity_Information;
+   begin
+      if Sub /= null then
+         Iter := Get_Subprogram_Parameters (Sub);
+         loop
+            Get (Iter, Param);
+            exit when Param = null;
+
+            if Param = Entity then
+               Is_Parameter := True;
+               PType        := Get_Type (Iter);
+               return;
+            end if;
+
+            Next (Iter);
+         end loop;
+      end if;
+
+      Is_Parameter := False;
+   end Is_Parameter_Of;
+
    ------------------------------
    -- Compute_Context_Entities --
    ------------------------------
@@ -680,12 +718,13 @@ package body Refactoring.Subprograms is
       Iter     : Entity_Iterator;
       Caller   : Entity_Information;
       Ref : Entity_Reference;
-      Decl, Location : File_Location;
-      Entity   : Extracted_Entity;
-      Is_Global       : Boolean;
-
-      Struct : Structured_File_Access;
-      ERef   : Entity_Reference_Details;
+      Decl, Location, Body_Loc : File_Location;
+      Entity    : Extracted_Entity;
+      Is_Global : Boolean;
+      Is_Param  : Boolean;
+      PType     : Parameter_Type;
+      Struct    : Structured_File_Access;
+      ERef      : Entity_Reference_Details;
 
    begin
       Context.Source := Get_Or_Create (Get_Database (Kernel), Context.File);
@@ -710,6 +749,9 @@ package body Refactoring.Subprograms is
                     Flags  => (others => False));
 
          Decl := Get_Declaration_Of (Entity.Entity);
+         Find_Next_Body
+           (Entity   => Entity.Entity,
+            Location => Body_Loc);
 
          --  An entity is "global" (ie does not need an entry in the parameter
          --  list) if it is defined in another file, or in the current file at
@@ -753,27 +795,41 @@ package body Refactoring.Subprograms is
                      Entity.Flags (Flag_Read_After) := True;
 
                   elsif Location.Line < Context.Line_Start then
-                     if Location.Line /= Decl.Line then
+                     if Location.Line /= Decl.Line
+                       and then Location.Line /= Body_Loc.Line
+                     then
                         if Is_Write_Reference (Get_Kind (Ref)) then
                            Entity.Flags (Flag_Modified_Before) := True;
                         elsif Is_Read_Reference (Get_Kind (Ref)) then
                            Entity.Flags (Flag_Read_Before) := True;
                         end if;
 
-                     elsif Is_Parameter_Of (Entity.Entity) /= null then
-                        --  A parameter declaration is considered as a read
-                        --  reference, since it will provide an initial
-                        --  value
-                        Entity.Flags (Flag_Modified_Before) := True;
-
                      else
-                        if Entity.Decl = No_Entity_Declaration then
-                           Entity.Decl := Get_Declaration
-                             (Kernel, Entity.Entity);
-                        end if;
+                        Is_Parameter_Of (Entity.Entity, Is_Param, PType);
+                        if Is_Param then
+                           case PType is
+                              when Out_Parameter =>
+                                 --  the entity is needed outside of the
+                                 --  extracted code (both to read its value and
+                                 --  set it for the caller)
+                                 Entity.Flags (Flag_Modified_After) := True;
+                                 Entity.Flags (Flag_Read_After) := True;
 
-                        if Entity.Decl.Initial_Value /= "" then
-                           Entity.Flags (Flag_Modified_Before) := True;
+                              when others =>
+                                 --  An initial value might be passed through
+                                 --  the parameter
+                                 Entity.Flags (Flag_Modified_Before) := True;
+                           end case;
+
+                        else
+                           if Entity.Decl = No_Entity_Declaration then
+                              Entity.Decl := Get_Declaration
+                                (Kernel, Entity.Entity);
+                           end if;
+
+                           if Entity.Decl.Initial_Value /= "" then
+                              Entity.Flags (Flag_Modified_Before) := True;
+                           end if;
                         end if;
                      end if;
 
