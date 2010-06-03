@@ -73,15 +73,16 @@ package Refactoring.Performers is
    ----------------------
 
    function Insert_Text
-     (Kernel                 : access GPS.Kernel.Kernel_Handle_Record'Class;
-      In_File                : GNATCOLL.VFS.Virtual_File;
-      Line                   : Integer;
-      Column                 : Visible_Column_Type := 1;
-      Text                   : String;
-      Indent                 : Boolean;
-      Skip_Comments_Backward : Boolean := False;
-      Replaced_Length        : Integer := 0;
-      Only_If_Replacing      : String := "") return Boolean;
+     (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      In_File                   : GNATCOLL.VFS.Virtual_File;
+      Line                      : Integer;
+      Column                    : Visible_Column_Type := 1;
+      Text                      : String;
+      Indent                    : Boolean;
+      Skip_Comments_Backward    : Boolean := False;
+      Surround_With_Blank_Lines : Boolean := False;
+      Replaced_Length           : Integer := 0;
+      Only_If_Replacing         : String := "") return Boolean;
    --  Insert some text in a source file.
    --  If Indent is True, the text is indented automatically.
    --  Replaced_Length is the number of characters that should first be removed
@@ -91,6 +92,8 @@ package Refactoring.Performers is
    --  insensitive). If it isn't, False is returned.
    --  If Skip_Comments_Backward is True, then the actual insertion will occur
    --  on the first line before any comment lines preceding Line.
+   --  If Surround_With_Blank_Lines is True, then the inserted text must end up
+   --  with a blank line before and after it (so lines are inserted as needed).
    --  This function returns True if the new text could be inserted.
 
    procedure Delete_Text

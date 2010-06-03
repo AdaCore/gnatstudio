@@ -378,15 +378,16 @@ package body Refactoring.Performers is
    -----------------
 
    function Insert_Text
-     (Kernel                 : access Kernel_Handle_Record'Class;
-      In_File                : GNATCOLL.VFS.Virtual_File;
-      Line                   : Integer;
-      Column                 : Visible_Column_Type := 1;
-      Text                   : String;
-      Indent                 : Boolean;
-      Skip_Comments_Backward : Boolean := False;
-      Replaced_Length        : Integer := 0;
-      Only_If_Replacing      : String := "") return Boolean
+     (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      In_File                   : GNATCOLL.VFS.Virtual_File;
+      Line                      : Integer;
+      Column                    : Visible_Column_Type := 1;
+      Text                      : String;
+      Indent                    : Boolean;
+      Skip_Comments_Backward    : Boolean := False;
+      Surround_With_Blank_Lines : Boolean := False;
+      Replaced_Length           : Integer := 0;
+      Only_If_Replacing         : String := "") return Boolean
    is
       Editor : constant Editor_Buffer'Class :=
         Get_Buffer_Factory (Kernel).Get (In_File);
@@ -411,11 +412,45 @@ package body Refactoring.Performers is
          Editor.Delete (Loc_Start, Loc_End);
       end if;
 
+      if Text = "" then
+         return True;
+      end if;
+
       if Skip_Comments_Backward then
          Loc_Start := Skip_Comments (Loc_Start, Direction => -1);
       end if;
 
+      --  Insert the trailing space if needed
+      if Surround_With_Blank_Lines
+        and then
+          (Text'Length < 2
+           or else Text (Text'Last - 1 .. Text'Last) /= ASCII.LF & ASCII.LF)
+      then
+         declare
+            L : constant Editor_Location'Class := Loc_Start.Beginning_Of_Line;
+         begin
+            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+               Editor.Insert (Loc_Start, "" & ASCII.LF);
+            end if;
+         end;
+      end if;
+
       Editor.Insert (Loc_Start, Text);
+
+      --  Insert the leading space if needed
+
+      if Surround_With_Blank_Lines
+        and then Text (Text'First) /= ASCII.LF
+      then
+         declare
+            L : constant Editor_Location'Class :=
+              Loc_Start.Forward_Line (-1).Beginning_Of_Line;
+         begin
+            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+               Editor.Insert (Loc_Start, "" & ASCII.LF);
+            end if;
+         end;
+      end if;
 
       if Indent then
          Editor.Indent

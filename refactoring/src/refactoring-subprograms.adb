@@ -438,9 +438,9 @@ package body Refactoring.Subprograms is
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
       then
-         Decl := To_Unbounded_String (ASCII.LF & "function ");
+         Decl := To_Unbounded_String ("function ");
       else
-         Decl := To_Unbounded_String (ASCII.LF & "procedure ");
+         Decl := To_Unbounded_String ("procedure ");
          Last_Out_Param := null;
       end if;
 
@@ -491,10 +491,10 @@ package body Refactoring.Subprograms is
       end if;
 
       if Add_Subprogram_Box.Get_Pref then
-         Append (Result, ASCII.LF);
          Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
          Append (Result, "-- " & Name & " --" & ASCII.LF);
          Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
+         Append (Result, ASCII.LF);
       end if;
 
       Append (Result, Decl);
@@ -618,13 +618,13 @@ package body Refactoring.Subprograms is
       while Constructs.Current /= null loop
          if Constructs.Current.Category in Subprogram_Category then
             if Constructs.Current.Sloc_Start.Line < Decl_Line then
-               Decl_Line := Constructs.Current.Sloc_Start.Line - 1;
+               Decl_Line := Constructs.Current.Sloc_Start.Line;
             end if;
 
             if Constructs.Current.Sloc_Start.Line <= Line
               and then Constructs.Current.Sloc_End.Line > Line
             then
-               Line := Constructs.Current.Sloc_Start.Line - 1;
+               Line := Constructs.Current.Sloc_Start.Line;
             end if;
          end if;
 
@@ -640,12 +640,16 @@ package body Refactoring.Subprograms is
 
       Inserted := Insert_Text
         (Kernel, In_File, Line, 1, Method_Body,
-         Indent => True, Skip_Comments_Backward => True);
+         Indent                    => True,
+         Surround_With_Blank_Lines => True,
+         Skip_Comments_Backward    => True);
 
       if Create_Subprogram_Decl.Get_Pref then
          Inserted :=
            Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl,
-                        Indent => True, Skip_Comments_Backward => True);
+                        Indent                    => True,
+                        Surround_With_Blank_Lines => True,
+                        Skip_Comments_Backward    => True);
       end if;
    end Insert_New_Method;
 
