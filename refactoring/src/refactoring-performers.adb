@@ -17,7 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+pragma Warnings (Off, "*is an internal GNAT unit");
+with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
+pragma Warnings (On, "*is an internal GNAT unit");
+with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Commands.Generic_Asynchronous;
@@ -28,9 +33,12 @@ with GPS.Editors;             use GPS.Editors;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
+with Refactoring_Module;      use Refactoring_Module;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
+with GNAT.Strings;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Language.Tree.Database; use Language.Tree.Database;
 
 package body Refactoring.Performers is
    Me : constant Debug_Handle := Create ("Refactoring");
@@ -465,63 +473,78 @@ package body Refactoring.Performers is
    ---------------------
 
    function Get_Declaration
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity      : Entities.Entity_Information) return String is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity : Entities.Entity_Information) return Entity_Declaration
+   is
+      Equal  : Integer;
+      EA     : Entity_Access;
+
    begin
       if Get_Kind (Entity).Is_Type then
-         return "";
+         return No_Entity_Declaration;
+      end if;
+
+      EA := Get_Entity_Access (Kernel, Entity);
+      if EA = Null_Entity_Access then
+         return No_Entity_Declaration;
       end if;
 
       declare
-         Text : constant String := Get_Text
-           (Kernel,
-            From_File => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
-            Line      => Get_Line (Get_Declaration_Of (Entity)),
-            Column    => Get_Column (Get_Declaration_Of (Entity)),
-            Length    => 1_000);
-         Index : Natural := Text'First;
-         Last  : Natural;
+         Buffer : constant GNAT.Strings.String_Access :=
+           Get_Buffer (Get_File (EA));
+         Last   : constant Integer := Get_Construct (EA).Sloc_End.Index;
+         Index : Natural := Get_Construct (EA).Sloc_Entity.Index;
       begin
-         Skip_To_Char (Text, Index, ':');
-         Last := Index;
-         Skip_To_Char (Text, Last, ';');
+         Skip_To_Char (Buffer (Index .. Last), Index, ':');
+         Equal := Index;
+         Skip_To_String (Buffer (Index .. Last), Equal, ":=");
 
-         return Text (Index .. Last);
+         --  unbounded strings are always indexed at 1, so normalize
+         Equal := Equal - Index + 1;
+
+         return (Entity    => Entity,
+                 Equal_Loc => Equal,
+                 Decl      => To_Unbounded_String (Buffer (Index .. Last)));
       end;
    end Get_Declaration;
 
-   -----------------------
-   -- Get_Initial_Value --
-   -----------------------
+   -------------------
+   -- Initial_Value --
+   -------------------
 
-   function Get_Initial_Value
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information) return String is
+   function Initial_Value (Self : Entity_Declaration) return String is
    begin
       --  These cannot have an initial value, so we save time
-      if Is_Container (Get_Kind (Entity).Kind) then
+      if Self = No_Entity_Declaration
+        or else Is_Container (Get_Kind (Self.Entity).Kind)
+      then
          return "";
       end if;
 
       declare
-         Text  : constant String := Get_Declaration (Kernel, Entity);
-         Index : Natural := Text'First + 1;  --  skip ':'
+         Text  : Big_String_Access;
+         Index : Natural;
+         Last  : Natural;
       begin
-         if Text = "" then
+         Get_String (Self.Decl, Text, Last);
+
+         if Last < Text'First then
             return "";
          end if;
 
-         while Index < Text'Last loop
+         Index := Text'First + 1;  --  skip ':'
+
+         while Index < Last loop
             if Text (Index .. Index + 1) = ":=" then
                Index := Index + 2;
-               Skip_Blanks (Text, Index);
+               Skip_Blanks (Text.all, Index);
 
                if Active (Me) then
                   Trace (Me, "  Initial value of "
-                         & Get_Name (Entity).all & " is "
-                         & Text (Index .. Text'Last - 1));
+                         & Get_Name (Self.Entity).all & " is "
+                         & Text (Index .. Last - 1));
                end if;
-               return Text (Index .. Text'Last - 1);
+               return Text (Index .. Last - 1);
 
             elsif Text (Index) = ';'
               or else Text (Index) = ')'
@@ -533,6 +556,85 @@ package body Refactoring.Performers is
       end;
 
       return "";
-   end Get_Initial_Value;
+   end Initial_Value;
+
+   --------------------------
+   -- Display_As_Parameter --
+   --------------------------
+
+   function Display_As_Parameter
+     (Self  : Entity_Declaration;
+      PType : Entities.Queries.Parameter_Type) return String
+   is
+      Result : Unbounded_String;
+      Decl : constant String := To_String (Self.Decl);
+   begin
+      Append (Result, Get_Name (Self.Entity).all & " : ");
+
+      case PType is
+         when Out_Parameter =>
+            Append (Result, "out ");
+         when In_Out_Parameter =>
+            Append (Result, "in out ");
+         when Access_Parameter =>
+            Append (Result, "access ");
+         when In_Parameter =>
+            if Add_In_Keyword.Get_Pref then
+               Append (Result, "in ");
+            end if;
+      end case;
+
+      --  Skip ":" in the declaration
+
+      Append
+        (Result, Trim (Decl (Decl'First + 1 .. Self.Equal_Loc - 1), Both));
+
+      return To_String (Result);
+   end Display_As_Parameter;
+
+   -------------------------
+   -- Display_As_Variable --
+   -------------------------
+
+   function Display_As_Variable
+     (Self  : Entity_Declaration) return String
+   is
+   begin
+      return Get_Name (Self.Entity).all & " "
+        & To_String (Self.Decl);
+   end Display_As_Variable;
+
+   -----------------------
+   -- Get_Entity_Access --
+   -----------------------
+
+   function Get_Entity_Access
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity : Entities.Entity_Information)
+      return Language.Tree.Database.Entity_Access
+   is
+      EDecl  : File_Location;
+      Struct : Structured_File_Access;
+   begin
+      if Entity /= null then
+         EDecl  := Get_Declaration_Of (Entity);
+         Struct := Get_Or_Create
+           (Db   => Get_Construct_Database (Kernel),
+            File => Get_Filename (EDecl.File));
+
+         if Struct /= null then
+            return Find_Declaration
+              (Get_Tree_Language (Struct),
+               Struct,
+               Line   => EDecl.Line,
+               Column => To_Line_String_Index
+                 (File   => Struct,
+                  Line   => EDecl.Line,
+                  Column => EDecl.Column));
+         end if;
+      end if;
+
+      return Null_Entity_Access;
+   end Get_Entity_Access;
 
 end Refactoring.Performers;

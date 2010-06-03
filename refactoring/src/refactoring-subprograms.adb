@@ -18,9 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Sets;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Commands.Interactive;   use Commands, Commands.Interactive;
-with Dynamic_Arrays;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
@@ -81,31 +81,37 @@ package body Refactoring.Subprograms is
 
    type Extracted_Entity is record
       Entity : Entity_Information;
+      Decl   : Entity_Declaration;
       Flags  : Extracted_Entity_Flags;
    end record;
    --  An entity found in the code to be extracted, and various information
    --  about its usage
 
-   package Extracted_Entity_Arrays is new Dynamic_Arrays
-     (Data                    => Extracted_Entity,
-      Table_Multiplier        => 1,
-      Table_Minimum_Increment => 10,
-      Table_Initial_Size      => 10);
+   package Extracted_Entity_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Extracted_Entity);
 
    type Extract_Context is record
       File                 : GNATCOLL.VFS.Virtual_File;
       Line_Start, Line_End : Integer;
       --  Which code do we want to extract ?
 
+      Source               : Source_File;
+      --  The file in which the extracted code is at the start
+
       Parent               : Entity_Information;
       --  The subprogram that contained the extracted code before the
       --  refactoring
 
-      Entities             : Extracted_Entity_Arrays.Instance;
+      Entities             : Extracted_Entity_Lists.List;
       --  The entities referenced in the extracted code
    end record;
    Invalid_Context : constant Extract_Context :=
-     (GNATCOLL.VFS.No_File, -1, -1, null, Entities => <>);
+     (GNATCOLL.VFS.No_File, -1, -1, null, null, Entities => <>);
+
+   procedure Compute_Context_Parent
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : in out Extract_Context);
+   --  Check that the selection in Context is within a single subprogram
 
    procedure Compute_Context_Entities
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -119,6 +125,8 @@ package body Refactoring.Subprograms is
       Is_Tagged : Boolean;
       PType     : Parameter_Type;
    end record;
+   package Parameter_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Parameter_Description);
 
    type Text_Range is record
       Start  : Integer;
@@ -130,9 +138,8 @@ package body Refactoring.Subprograms is
    package Text_Ranges is new Ada.Containers.Indefinite_Ordered_Sets
      (Text_Range, ">", "=");
 
-   package Parameter_Arrays is new Dynamic_Arrays (Parameter_Description);
-
-   use Parameter_Arrays, Entity_Information_Arrays, Text_Ranges;
+   use Parameter_Lists, Entity_Information_Arrays, Text_Ranges;
+   use Extracted_Entity_Lists;
 
    procedure Generate_Extracted_Method
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -144,7 +151,7 @@ package body Refactoring.Subprograms is
       Method_Call : out Unbounded_String);
    --  Generate the code of the new method
 
-   procedure Sort_Parameters (Params : in out Parameter_Arrays.Instance);
+   procedure Sort_Parameters (Params : in out Parameter_Lists.List);
    --  Sort the parameters (any dispatching entity goes first)
 
    function Extract_Method
@@ -239,24 +246,11 @@ package body Refactoring.Subprograms is
       Entity : Entity_Information;
       Current_Offset : String_Index_Type) return Boolean
    is
-      EDecl  : constant File_Location := Get_Declaration_Of
-        (Get_Type_Of (Entity));
-      Struct : constant Structured_File_Access := Get_Or_Create
-        (Db   => Get_Construct_Database (Kernel),
-         File => Get_Filename (EDecl.File));
-      EA     : Entity_Access;
+      EA  : Entity_Access := Get_Entity_Access (Kernel, Get_Type_Of (Entity));
    begin
-      if Struct /= null then
-         EA := Find_Declaration
-           (Get_Tree_Language (Struct),
-            Struct,
-            Line   => EDecl.Line,
-            Column => To_Line_String_Index
-              (File   => Struct,
-               Line   => EDecl.Line,
-               Column => EDecl.Column));
+      if EA /= Null_Entity_Access then
          EA := Get_Last_Visible_Declaration
-           (EA, Struct, Offset => Current_Offset);
+           (EA, Get_File (EA), Offset => Current_Offset);
 
          return Get_Construct (EA).Attributes (Ada_Tagged_Attribute)
            or else Get_Construct (EA).Attributes (Ada_Interface_Attribute);
@@ -269,28 +263,21 @@ package body Refactoring.Subprograms is
    -- Sort_Parameters --
    ---------------------
 
-   procedure Sort_Parameters (Params : in out Parameter_Arrays.Instance) is
-      procedure Swap (Index1, Index2 : Parameter_Arrays.Index_Type);
-      --  Swap the parameters at the two indexes
-
-      procedure Swap (Index1, Index2 : Parameter_Arrays.Index_Type) is
-         Descr : constant Parameter_Description := Params.Table (Index1);
-      begin
-         Params.Table (Index1) := Params.Table (Index2);
-         Params.Table (Index2) := Descr;
-      end Swap;
-
+   procedure Sort_Parameters (Params : in out Parameter_Lists.List) is
+      P : Parameter_Lists.Cursor;
    begin
       --  Put all "out" parameters last, so that we read from input parameters
       --  to output parameters
 
-      for P in reverse Parameter_Arrays.First .. Last (Params) - 1 loop
-         case Params.Table (P).PType is
+      P := Params.First;
+      while Has_Element (P) loop
+         case Element (P).PType is
             when Out_Parameter | In_Out_Parameter =>
-               Swap (Last (Params), P);
+               Params.Swap (P, Params.Last);
             when In_Parameter | Access_Parameter =>
                null;
          end case;
+         Next (P);
       end loop;
 
       --  Put the dispatching parameter first, if any. By convention, we also
@@ -299,10 +286,12 @@ package body Refactoring.Subprograms is
       --  Needs to be done after the "out" parameter, in case the dispatching
       --  parameter is also out
 
-      for P in Parameter_Arrays.First .. Last (Params) loop
-         if Params.Table (P).Is_Tagged then
-            Swap (Parameter_Arrays.First, P);
+      P := Params.First;
+      while Has_Element (P) loop
+         if Element (P).Is_Tagged then
+            Params.Swap (P, Params.First);
          end if;
+         Next (P);
       end loop;
 
       --  ??? Put parameters with default values last
@@ -324,10 +313,9 @@ package body Refactoring.Subprograms is
       Method_Body : out Unbounded_String;
       Method_Call : out Unbounded_String)
    is
-      use Extracted_Entity_Arrays;
-
-      Params              : Parameter_Arrays.Instance;
-      Local_Vars          : Entity_Information_Arrays.Instance;
+      Params              : Parameter_Lists.List;
+      Param               : Parameter_Lists.Cursor;
+      Local_Vars          : Extracted_Entity_Lists.List;
       Out_Params_Count    : Natural := 0;
       In_Out_Params_Count : Natural := 0;
       In_Params_Count     : Natural := 0;
@@ -335,7 +323,6 @@ package body Refactoring.Subprograms is
       Typ                 : Entity_Information;
       Last_Out_Param      : Entity_Information;
       Flags               : Extracted_Entity_Flags;
-      Declaration_Added   : Boolean;
 
       Editor              : constant Editor_Buffer'Class :=
         Get_Buffer_Factory (Kernel).Get (Context.File);
@@ -349,6 +336,8 @@ package body Refactoring.Subprograms is
       Entity : Entity_Information;
       Struct : Structured_File_Access;
       Offset : String_Index_Type;
+      P      : Extracted_Entity_Lists.Cursor;
+      E      : Extracted_Entity;
    begin
       Struct := Get_Or_Create
         (Get_Construct_Database (Kernel), File => Context.File);
@@ -356,17 +345,19 @@ package body Refactoring.Subprograms is
 
       Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
 
-      for P in Extracted_Entity_Arrays.First .. Last (Context.Entities) loop
-         Entity := Context.Entities.Table (P).Entity;
-         Flags  := Context.Entities.Table (P).Flags;
+      P := Context.Entities.First;
+      while Has_Element (P) loop
+         E := Element (P);
+
+         Entity := E.Entity;
+         Flags  := E.Flags;
 
          if Flags (Flag_Read) and then not Flags (Flag_Modified) then
             if Flags (Flag_Modified_Before)
               or else Flags (Flag_Ref_Outside_Parent)
             then
-               Append
-                 (Params,
-                  (Parameter => Context.Entities.Table (P),
+               Params.Append
+                 ((Parameter => E,
                    Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
                    PType     => In_Parameter));
                In_Params_Count := In_Params_Count + 1;
@@ -384,7 +375,7 @@ package body Refactoring.Subprograms is
 
                else
                   --  A reference to an uninitialized variable
-                  Append (Local_Vars, Context.Entities.Table (P).Entity);
+                  Local_Vars.Append (E);
                end if;
             end if;
 
@@ -395,9 +386,8 @@ package body Refactoring.Subprograms is
                then
                   --  Written before and at least needed after the call
 
-                  Append
-                    (Params,
-                     (Parameter => Context.Entities.Table (P),
+                  Params.Append
+                    ((Parameter => E,
                       Is_Tagged =>
                         Accepts_Primitive_Ops (Kernel, Entity, Offset),
                       PType     => In_Out_Parameter));
@@ -409,9 +399,8 @@ package body Refactoring.Subprograms is
                   --  a local variable that takes its value and is modified,
                   --  we do not need to return the parameter itself
 
-                  Append
-                    (Params,
-                     (Parameter => Context.Entities.Table (P),
+                  Params.Append
+                    ((Parameter => E,
                       Is_Tagged =>
                         Accepts_Primitive_Ops (Kernel, Entity, Offset),
                       PType     => In_Out_Parameter));
@@ -422,19 +411,20 @@ package body Refactoring.Subprograms is
               or else Flags (Flag_Ref_Outside_Parent)
             then
                --  Not set before the call, but needed after
-               Append
-                 (Params,
-                  (Parameter => Context.Entities.Table (P),
+               Params.Append
+                 ((Parameter => E,
                    Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
                    PType     => Out_Parameter));
                Out_Params_Count := Out_Params_Count + 1;
-               Last_Out_Param := Context.Entities.Table (P).Entity;
+               Last_Out_Param := Entity;
 
             else
                --  Not set before the call, and not needed after
-               Append (Local_Vars, Context.Entities.Table (P).Entity);
+               Local_Vars.Append (E);
             end if;
          end if;
+
+         Next (P);
       end loop;
 
       Sort_Parameters (Params);
@@ -456,51 +446,33 @@ package body Refactoring.Subprograms is
         or else Out_Params_Count > 1
       then
          Append (Decl, ASCII.LF & "   (");
-         for P in Parameter_Arrays.First .. Last (Params) loop
 
+         Param := Params.First;
+         while Has_Element (Param) loop
             --  Do not emit anything if there is a single out parameter, since
             --  we then use a function for the extracted method
-            if Params.Table (P).PType /= Out_Parameter
+            if Element (Param).PType /= Out_Parameter
               or else Out_Params_Count /= 1
               or else In_Out_Params_Count /= 0
             then
                Append
-                 (Decl,
-                  Get_Name (Params.Table (P).Parameter.Entity).all & " : ");
-               Typ := Get_Type_Of (Params.Table (P).Parameter.Entity);
-               if Typ = null then
-                  Insert (Kernel,
-                          Text => -"Couldn't find the type of "
-                            & Get_Name (Params.Table (P).Parameter.Entity).all,
-                          Mode => Error);
-                  Method_Decl := Null_Unbounded_String;
-                  Method_Body := Null_Unbounded_String;
-                  return;
-               end if;
+                 (Decl, Element (Param).Parameter.Decl.Display_As_Parameter
+                  (Element (Param).PType));
 
-               if Params.Table (P).PType = Out_Parameter then
-                  Append (Decl, "out ");
-               elsif Params.Table (P).PType = In_Out_Parameter then
-                  Append (Decl, "in out ");
-               elsif Add_In_Keyword.Get_Pref then
-                  Append (Decl, "in ");
-               end if;
-
-               Append (Decl, Get_Name (Typ).all);
-
-               if Params.Table (P).Is_Tagged then
+               if Element (Param).Is_Tagged then
                   --  Since we are putting the code in the body, we should not
                   --  be a dispatching subprogram
                   Append (Decl, "'Class");
                end if;
 
-               if P /= Last (Params)
-                 and then Params.Table (P + 1).Parameter.Entity /=
+               if Param /= Params.Last
+                 and then Element (Next (Param)).Parameter.Entity /=
                  Last_Out_Param
                then
                   Append (Decl, ";" & ASCII.LF & "    ");
                end if;
             end if;
+            Next (Param);
          end loop;
          Decl := Decl & ")";
       end if;
@@ -530,48 +502,27 @@ package body Refactoring.Subprograms is
 
       Append (Result, ASCII.LF & "is" & ASCII.LF);
 
-      for L in Entity_Information_Arrays.First .. Last (Local_Vars) loop
-         Append (Result, "   " & Get_Name (Local_Vars.Table (L)).all & " ");
+      P := Local_Vars.First;
+      while Has_Element (P) loop
+         E := Element (P);
 
-         Declaration_Added := False;
+         declare
+            Decl : constant String := E.Decl.Display_As_Variable;
+         begin
+            --  Will remove the previous declaration unless it is a parameter
 
-         --  We will remove the previous declaration unless it is a parameter
-
-         if Is_Parameter_Of (Local_Vars.Table (L)) = null then
-            declare
-               Decl : constant String :=
-                 Get_Declaration (Kernel, Local_Vars.Table (L));
-            begin
-               if Decl /= "" then
-                  Trace (Me, "Removing declaration of "
-                         & Get_Name (Local_Vars.Table (L)).all);
-                  To_Delete.Insert
-                    ((Start  =>
-                        Get_Line (Get_Declaration_Of (Local_Vars.Table (L))),
-                      Lines  => Lines_Count (Decl)));
-
-                  Append (Result, Decl);
-                  Declaration_Added := True;
-               end if;
-            end;
-         end if;
-
-         if not Declaration_Added then
-            Typ := Get_Type_Of (Local_Vars.Table (L));
-            if Typ = null then
-               Insert (Kernel,
-                       Text => -"Couldn't find the type of "
-                       & Get_Name (Local_Vars.Table (L)).all,
-                       Mode => Error);
-               Method_Decl := Null_Unbounded_String;
-               Method_Body := Null_Unbounded_String;
-               return;
+            if Is_Parameter_Of (E.Entity) = null then
+               To_Delete.Include
+                 ((Start  => Get_Line (Get_Declaration_Of (E.Entity)),
+                   Lines  => Lines_Count (Decl)));
             end if;
 
-            Append (Result, ": " & Get_Name (Typ).all & ";");
-         end if;
+            Append (Result, "   ");
+            Append (Result, Decl);
+            Append (Result, ASCII.LF);
+         end;
 
-         Append (Result, ASCII.LF);
+         Next (P);
       end loop;
 
       if Out_Params_Count = 1
@@ -608,21 +559,23 @@ package body Refactoring.Subprograms is
       then
          Append (Method_Call, " (");
 
-         for P in Parameter_Arrays.First .. Last (Params) loop
-            if Params.Table (P).PType /= Out_Parameter
+         Param := Params.First;
+         while Has_Element (Param) loop
+            if Element (Param).PType /= Out_Parameter
               or else Out_Params_Count /= 1
               or else In_Out_Params_Count /= 0
             then
                Append (Method_Call,
-                       Get_Name (Params.Table (P).Parameter.Entity).all);
+                       Get_Name (Element (Param).Parameter.Entity).all);
 
-               if P /= Last (Params)
-                 and then Params.Table (P + 1).Parameter.Entity /=
+               if Param /= Params.Last
+                 and then Element (Next (Param)).Parameter.Entity /=
                     Last_Out_Param
                then
                   Append (Method_Call, ", ");
                end if;
             end if;
+            Next (Param);
          end loop;
 
          Append (Method_Call, ")");
@@ -690,6 +643,31 @@ package body Refactoring.Subprograms is
       end if;
    end Insert_New_Method;
 
+   ----------------------------
+   -- Compute_Context_Parent --
+   ----------------------------
+
+   procedure Compute_Context_Parent
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : in out Extract_Context)
+   is
+      Scopes : constant Lines_To_Scope := Compute_Scopes (Context.Source);
+   begin
+      Context.Parent := Get_Scope (Scopes, Context.Line_Start);
+
+      if Active (Me) and then Context.Parent /= null then
+         Trace (Me, "Context.Parent=" & Get_Name (Context.Parent).all);
+      end if;
+
+      if Get_Scope (Scopes, Context.Line_End) /= Context.Parent then
+         Insert
+           (Kernel,
+            -"The selected code does not belong to a single subprogram",
+            Mode => Error);
+         Context := Invalid_Context;
+      end if;
+   end Compute_Context_Parent;
+
    ------------------------------
    -- Compute_Context_Entities --
    ------------------------------
@@ -703,8 +681,6 @@ package body Refactoring.Subprograms is
       Caller   : Entity_Information;
       Ref : Entity_Reference;
       Decl, Location : File_Location;
-      Source   : constant Source_File :=
-        Get_Or_Create (Get_Database (Kernel), Context.File);
       Entity   : Extracted_Entity;
       Is_Global       : Boolean;
 
@@ -712,206 +688,182 @@ package body Refactoring.Subprograms is
       ERef   : Entity_Reference_Details;
 
    begin
+      Context.Source := Get_Or_Create (Get_Database (Kernel), Context.File);
+
       --  This code might require loading a file, so we only freeze afterward
-      Find_All_Entities_In_File (Iter, Source);
+      Find_All_Entities_In_File (Iter, Context.Source);
       Freeze (Get_Database (Kernel), Mode => No_Create_Or_Update);
 
       Struct := Get_Or_Create
         (Get_Construct_Database (Kernel), File => Context.File);
       Update_Contents (Struct);
 
-      declare
-         Scopes : constant Lines_To_Scope := Compute_Scopes (Source);
-      begin
-         Context.Parent := Get_Scope (Scopes, Context.Line_Start);
+      Compute_Context_Parent (Kernel, Context);
+      if Context = Invalid_Context then
+         Thaw (Get_Database (Kernel));
+         return;
+      end if;
 
-         if Active (Me) and then Context.Parent /= null then
-            Trace (Me, "Context.Parent=" & Get_Name (Context.Parent).all);
+      while not At_End (Iter) loop
+         Entity := (Entity => Get (Iter),
+                    Decl   => No_Entity_Declaration,
+                    Flags  => (others => False));
+
+         Decl := Get_Declaration_Of (Entity.Entity);
+
+         --  An entity is "global" (ie does not need an entry in the parameter
+         --  list) if it is defined in another file, or in the current file at
+         --  library level. We however need to accept in case the entity is
+         --  declared in the '.ads' but we are working in the '.adb' (for
+         --  instance the parameter to a subprogram).
+
+         Is_Global := Get_LI (Decl.File) /= Get_LI (Context.Source)
+           or else not Is_Subprogram
+             (Get_Caller (Declaration_As_Reference (Entity.Entity)));
+
+         if Active (Me) then
+            Trace (Me, "Entity=" & Debug_Name (Entity.Entity)
+                   & " Is_Global=" & Is_Global'Img);
          end if;
 
-         if Get_Scope (Scopes, Context.Line_End) /= Context.Parent then
-            Trace (Me, "Selected code does not belong to a single subprogram");
-            Insert
-              (Kernel,
-               -"The selected code does not belong to a single subprogram",
-               Mode => Error);
-            Context := Invalid_Context;
-            Thaw (Get_Database (Kernel));
-            return;
-         end if;
+         if not Is_Global then
+            Find_All_References
+              (Ref_Iter, Entity.Entity, In_File => Context.Source);
+            while not At_End (Ref_Iter) loop
+               Ref      := Get (Ref_Iter);
+               Location := Get_Location (Ref);
+               Caller   := Get_Caller (Ref);
 
-         while not At_End (Iter) loop
-            Entity := (Entity => Get (Iter),
-                       Flags  => (others => False));
+               if Context.Parent /= null
+                 and then Caller /= Context.Parent
+               then
+                  --  A reference outside of the current subprogram
+                  Entity.Flags (Flag_Ref_Outside_Parent) := True;
 
-            Decl := Get_Declaration_Of (Entity.Entity);
+                  --  No interest in further references, since they can't be
+                  --  in the extracted code and we already know the entity
+                  --  is ref outside of that code
 
---              Put_Line ("MANU Is_Tagged: "
---                        & Get_Name (Entity.Entity).all
---                        & " " & Entity.Is_Tagged'Img
---                        & " " & To_String (EA));
+                  exit when Location.Line > Context.Line_End;
 
-            --  An entity is "global" (ie does not need an entry in the
-            --  parameter list) if it is defined in another file, or in the
-            --  current file at library level. The call to Get_Caller requires
-            --  parsing an ALI file so doing it systematically means parsing a
-            --  lot more ALI files than really necessary.
-            --  We however need to accept in case the entity is declared in the
-            --  '.ads' but we are working in the '.adb' (for instance the
-            --  parameter to a subprogram).
+               else
+                  --  A reference within the current subprogram
 
-            Is_Global := Get_LI (Decl.File) /= Get_LI (Source);
-            if not Is_Global then
-               Caller := Get_Caller (Declaration_As_Reference (Entity.Entity));
-               Is_Global := Caller = null or else not Is_Subprogram (Caller);
-            end if;
+                  if Location.Line > Context.Line_End then
+                     Entity.Flags (Flag_Read_After) := True;
 
-            if Active (Me) then
-               Trace (Me, "Entity=" & Get_Name (Entity.Entity).all
-                      & " Is_Global=" & Is_Global'Img);
-            end if;
-
-            if not Is_Global then
-               Find_All_References
-                 (Ref_Iter, Entity.Entity, In_File => Source);
-               while not At_End (Ref_Iter) loop
-                  Ref      := Get (Ref_Iter);
-                  Location := Get_Location (Ref);
-                  Caller   := Get_Caller (Ref);
-
-                  if Context.Parent /= null
-                    and then Caller /= Context.Parent
-                  then
-                     --  A reference outside of the current subprogram
-                     Entity.Flags (Flag_Ref_Outside_Parent) := True;
-
-                     --  No interest in further references, since they can't be
-                     --  in the extracted code and we already know the entity
-                     --  is ref outside of that code
-
-                     exit when Location.Line > Context.Line_End;
-
-                  else
-                     --  A reference within the current subprogram
-
-                     if Location.Line > Context.Line_End then
-                        Entity.Flags (Flag_Read_After) := True;
-
-                     elsif Location.Line < Context.Line_Start then
-                        if Location.Line /= Decl.Line then
-                           if Is_Write_Reference (Get_Kind (Ref)) then
-                              Entity.Flags (Flag_Modified_Before) := True;
-                           elsif Is_Read_Reference (Get_Kind (Ref)) then
-                              Entity.Flags (Flag_Read_Before) := True;
-                           end if;
-
-                        elsif Is_Parameter_Of (Entity.Entity) /= null then
-                           --  A parameter declaration is considered as a read
-                           --  reference, since it will provide an initial
-                           --  value
+                  elsif Location.Line < Context.Line_Start then
+                     if Location.Line /= Decl.Line then
+                        if Is_Write_Reference (Get_Kind (Ref)) then
                            Entity.Flags (Flag_Modified_Before) := True;
-
-                        --  If we have an initial value, assume the variable is
-                        --  modified. This is not optimal (for instance in the
-                        --  case of a Local_Variable we could simply copy the
-                        --  declaration, but if the variable ends up in a
-                        --  parameter we need to keep the initial value.
-                        --  ??? Don't do this if it ends up as a local_var
-
-                        elsif Get_Initial_Value (Kernel, Entity.Entity)
-                          /= ""
-                        then
-                           Entity.Flags (Flag_Modified_Before) := True;
+                        elsif Is_Read_Reference (Get_Kind (Ref)) then
+                           Entity.Flags (Flag_Read_Before) := True;
                         end if;
+
+                     elsif Is_Parameter_Of (Entity.Entity) /= null then
+                        --  A parameter declaration is considered as a read
+                        --  reference, since it will provide an initial
+                        --  value
+                        Entity.Flags (Flag_Modified_Before) := True;
 
                      else
-                        --  A reference within the extracted code
-
-                        if Active (Me) then
-                           Trace (Me, "Reference in extracted code "
-                                  & Get_Kind (Ref)'Img);
+                        if Entity.Decl = No_Entity_Declaration then
+                           Entity.Decl := Get_Declaration
+                             (Kernel, Entity.Entity);
                         end if;
 
-                        --  Should ignore the reference if it is a named
-                        --  parameter in a subprogram call, as in
-                        --  "Foo (Title => ...)"
+                        if Entity.Decl.Initial_Value /= "" then
+                           Entity.Flags (Flag_Modified_Before) := True;
+                        end if;
+                     end if;
 
-                        ERef := Find_Reference_Details
-                          (Get_Tree_Language (Struct),
-                           Struct,
-                           To_String_Index
-                             (Struct, Location.Line, Location.Column));
+                  else
+                     --  A reference within the extracted code
 
-                        if not ERef.Is_Named_Parameter then
-                           --  If we are calling a subprogram nested within the
-                           --  parent, we can't extract the code.
-                           --  ??? We could if we extract to another nested
-                           --  subprogram.
-                           --  ??? We also could if the only reference to that
-                           --  nested is within the extracted code, in which
-                           --  case we should extract the subprogram too
+                     --  Should ignore the reference if it is a named
+                     --  parameter in a subprogram call, as in
+                     --  "Foo (Title => ...)"
 
-                           if Is_Subprogram (Entity.Entity) then
-                              Caller := Get_Caller
-                                (Declaration_As_Reference (Entity.Entity));
+                     ERef := Find_Reference_Details
+                       (Get_Tree_Language (Struct),
+                        Struct,
+                        To_String_Index
+                          (Struct, Location.Line, Location.Column));
 
-                              --  ??? We should test if it is nested within
-                              --  Context.Parent, when that is set
-                              if Caller /= null
-                                and then Is_Subprogram (Caller)
-                              then
-                                 Trace (Me, "Call to nested subprogram");
-                                 Insert
-                                   (Kernel,
-                                    Text => -"A call to the nested subprogram "
-                                    & Get_Name (Entity.Entity).all
-                                    & (-" prevents the refactoring"),
-                                    Mode => Error);
-                                 Context := Invalid_Context;
-                                 Thaw (Get_Database (Kernel));
-                                 return;
-                              end if;
+                     if not ERef.Is_Named_Parameter then
+                        if Entity.Decl = No_Entity_Declaration then
+                           Entity.Decl := Get_Declaration
+                             (Kernel, Entity.Entity);
+                        end if;
+
+                        --  If we are calling a subprogram nested within the
+                        --  parent, we can't extract the code.
+                        --  ??? We could if we extract to another nested
+                        --  subprogram.
+                        --  ??? We also could if the only reference to that
+                        --  nested is within the extracted code, in which
+                        --  case we should extract the subprogram too
+
+                        if Is_Subprogram (Entity.Entity) then
+                           Caller := Get_Caller
+                             (Declaration_As_Reference (Entity.Entity));
+
+                           --  ??? We should test if it is nested within
+                           --  Context.Parent, when that is set
+                           if Caller /= null
+                             and then Is_Subprogram (Caller)
+                           then
+                              Trace (Me, "Call to nested subprogram");
+                              Insert
+                                (Kernel,
+                                 Text => -"A call to the nested subprogram "
+                                 & Get_Name (Entity.Entity).all
+                                 & (-" prevents the refactoring"),
+                                 Mode => Error);
+                              Context := Invalid_Context;
+                              Thaw (Get_Database (Kernel));
+                              return;
                            end if;
+                        end if;
 
-                           if Is_Write_Reference (Get_Kind (Ref)) then
-                              Entity.Flags (Flag_Modified) := True;
-                           elsif Is_Read_Reference (Get_Kind (Ref)) then
-                              Entity.Flags (Flag_Read) := True;
-                           end if;
+                        if Is_Write_Reference (Get_Kind (Ref)) then
+                           Entity.Flags (Flag_Modified) := True;
+                        elsif Is_Read_Reference (Get_Kind (Ref)) then
+                           Entity.Flags (Flag_Read) := True;
                         end if;
                      end if;
                   end if;
-
-                  Next (Ref_Iter);
-               end loop;
-
-               Destroy (Ref_Iter);
-
-               if Entity.Flags (Flag_Modified)
-                 or else Entity.Flags (Flag_Read)
-               then
-                  if Active (Me) then
-                     Trace (Me, "Extract references """
-                            & Get_Name (Entity.Entity).all
-                            & """ r=" & Entity.Flags (Flag_Read)'Img
-                            & " w=" & Entity.Flags (Flag_Modified)'Img
-                            & " before/r="
-                            & Entity.Flags (Flag_Read_Before)'Img
-                            & " w=" & Entity.Flags (Flag_Modified_Before)'Img
-                            & " after/r="
-                            & Entity.Flags (Flag_Read_After)'Img
-                            & " w=" & Entity.Flags (Flag_Modified_After)'Img
-                            & " outside="
-                            & Entity.Flags (Flag_Ref_Outside_Parent)'Img);
-                  end if;
-
-                  Extracted_Entity_Arrays.Append (Context.Entities, Entity);
                end if;
-            end if;
 
-            Next (Iter);
-         end loop;
-      end;
+               Next (Ref_Iter);
+            end loop;
+
+            Destroy (Ref_Iter);
+
+            if Entity.Flags (Flag_Modified)
+              or else Entity.Flags (Flag_Read)
+            then
+               if Active (Me) then
+                  Trace (Me, "Extract references """
+                         & Get_Name (Entity.Entity).all
+                         & """ r=" & Entity.Flags (Flag_Read)'Img
+                         & " w=" & Entity.Flags (Flag_Modified)'Img
+                         & " before/r="
+                         & Entity.Flags (Flag_Read_Before)'Img
+                         & " w=" & Entity.Flags (Flag_Modified_Before)'Img
+                         & " after/r="
+                         & Entity.Flags (Flag_Read_After)'Img
+                         & " w=" & Entity.Flags (Flag_Modified_After)'Img
+                         & " outside="
+                         & Entity.Flags (Flag_Ref_Outside_Parent)'Img);
+               end if;
+
+               Context.Entities.Append (Entity);
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
 
       Destroy (Iter);
       Thaw (Get_Database (Kernel));
@@ -1008,7 +960,6 @@ package body Refactoring.Subprograms is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         Thaw (Get_Database (Kernel));
          return Failure;
    end Extract_Method;
 
@@ -1032,6 +983,7 @@ package body Refactoring.Subprograms is
 
    begin
       Extract := (File              => File_Information (Context.Context),
+                  Source            => null,
                   Line_Start        => <>,
                   Line_End          => <>,
                   Parent            => <>,
@@ -1085,6 +1037,7 @@ package body Refactoring.Subprograms is
       Context     : Extract_Context;
    begin
       Context := (File              => Create (Nth_Arg (Data, 1)),
+                  Source            => null,
                   Line_Start        => Nth_Arg (Data, 2),
                   Line_End          => Nth_Arg (Data, 3),
                   Parent            => <>,

@@ -17,9 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;
-with Entities;
+with Ada.Strings.Unbounded;
+with Entities.Queries;
 with GNATCOLL.VFS;
+with GPS.Kernel;
+with Language.Tree.Database;
 
 package Refactoring.Performers is
 
@@ -114,17 +116,64 @@ package Refactoring.Performers is
       File   : GNATCOLL.VFS.Virtual_File);
    --  Interface to start/finish undo group
 
-   function Get_Initial_Value
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity      : Entities.Entity_Information) return String;
-   --  Get, from the source, the initial value given to a variable, ie the
-   --  value set when the variable was declared, as in
-   --       A, B : Integer := 2;
+   -------------------------
+   -- Entity declarations --
+   -------------------------
+
+   type Entity_Declaration is tagged private;
+   No_Entity_Declaration : constant Entity_Declaration;
 
    function Get_Declaration
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity      : Entities.Entity_Information) return String;
-   --  Return the declaration of the entity (the part ": Integer := 2" in the
-   --  above example
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity : Entities.Entity_Information) return Entity_Declaration;
+   --  Return the declaration of the entity. From this, one can extract the
+   --  initial value, the type (as set by the user, whether it is a constant,
+   --  and other attributes)
+
+   function Initial_Value (Self : Entity_Declaration) return String;
+   --  Return the initial value of the entity, as set in its declaration. For
+   --  instance, if the entity is declared as
+   --     A : Integer := 2 + 3;
+   --  then the initial_value is "2 + 3".
+   --  The empty string is returned if no initial value was specified
+
+   function Display_As_Parameter
+     (Self  : Entity_Declaration;
+      PType : Entities.Queries.Parameter_Type) return String;
+   --  Return the declaration of the entity as it should be displayed in a
+   --  parameter list. This includes the name of the variable.
+
+   function Display_As_Variable
+     (Self  : Entity_Declaration) return String;
+   --  Return the declaration of the entity as it should be displayed in a
+   --  variable declaration. This includes the name of the variable
+
+   function Get_Entity_Access
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity : Entities.Entity_Information)
+      return Language.Tree.Database.Entity_Access;
+   --  Return a pointer to the declaration of Entity. This pointer can be used
+   --  to retrieve additional data about the entity (read directly from the
+   --  source file).
+   --  This returns a pointer to the first declaration (aka "public view") of
+   --  the entity. You might need to call Get_Last_Visible_Declaration if you
+   --  want the declaration as visible from a specific part of the code (this
+   --  could for instance be the declaration in the private part).
+   --  Returns Null_Entity_Access if this could not be retrieved.
+
+private
+
+   type Entity_Declaration is tagged record
+      Entity : Entities.Entity_Information;
+      Decl   : Ada.Strings.Unbounded.Unbounded_String;
+
+      Equal_Loc : Integer := -1;
+      --  Location of ":=" in Decl
+   end record;
+
+   No_Entity_Declaration : constant Entity_Declaration :=
+     (Entity    => null,
+      Equal_Loc => -1,
+      Decl      => Ada.Strings.Unbounded.Null_Unbounded_String);
 
 end Refactoring.Performers;
