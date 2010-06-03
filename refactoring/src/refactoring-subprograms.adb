@@ -29,6 +29,8 @@ with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Messages.Simple;
+use GPS.Kernel.Messages, GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
@@ -220,6 +222,7 @@ package body Refactoring.Subprograms is
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
       In_File     : GNATCOLL.VFS.Virtual_File;
+      Name        : String;
       Before_Line : Integer;
       Context     : Extract_Context;
       Method_Decl : String;
@@ -721,6 +724,7 @@ package body Refactoring.Subprograms is
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
       In_File     : GNATCOLL.VFS.Virtual_File;
+      Name        : String;
       Before_Line : Integer;
       Context     : Extract_Context;
       Method_Decl : String;
@@ -765,6 +769,13 @@ package body Refactoring.Subprograms is
          Indent                    => True,
          Surround_With_Blank_Lines => True,
          Skip_Comments_Backward    => True);
+      Create_Simple_Message
+        (Get_Messages_Container (Kernel),
+         -"Refactoring - extract subprogram " & Name,
+         In_File, Line, 1,
+         -"Extracted subprogram body inserted",
+         0,
+         (Editor_Side => True, Locations => True));
 
       if Create_Subprogram_Decl.Get_Pref then
          Inserted :=
@@ -772,6 +783,13 @@ package body Refactoring.Subprograms is
                         Indent                    => True,
                         Surround_With_Blank_Lines => True,
                         Skip_Comments_Backward    => True);
+         Create_Simple_Message
+           (Get_Messages_Container (Kernel),
+            -"Refactoring - extract subprogram " & Name,
+            In_File, Decl_Line, 1,
+            -"Extracted subprogram spec inserted",
+            0,
+            (Editor_Side => True, Locations => True));
       end if;
    end Insert_New_Method;
 
@@ -1118,9 +1136,18 @@ package body Refactoring.Subprograms is
             Text       => To_String (Method_Call),
             Indent     => True)
          then
+            Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               -"Refactoring - extract subprogram " & Method_Name,
+               Context.File, Line_Start,
+               1, -"Extracted subprogram call inserted",
+               0,
+               (Editor_Side => True, Locations => True));
+
             Insert_New_Method
               (Kernel      => Kernel,
                In_File     => Context.File,
+               Name        => Method_Name,
                Before_Line => Line_Start,
                Context     => Context,
                Method_Decl => To_String (Method_Decl),
