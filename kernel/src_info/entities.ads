@@ -618,6 +618,9 @@ package Entities is
    pragma Inline (Get_Name);
    --  Return the name of the entity
 
+   function Debug_Name (Entity : Entity_Information) return String;
+   --  Return a string that can be displayed for debugging purposes
+
    function Get_Declaration_Of
      (Entity : Entity_Information) return File_Location;
    pragma Inline (Get_Declaration_Of);
@@ -733,7 +736,8 @@ package Entities is
 
    function Is_Subprogram (Entity : Entity_Information) return Boolean;
    function Is_Array      (Entity : Entity_Information) return Boolean;
-   --  Return True if Entity is associated with a subprogram or an array
+   --  Return True if Entity is associated with a subprogram or an array.
+   --  Always return False if Entity is null.
 
    type Entity_Reference is private;
    No_Entity_Reference : constant Entity_Reference;

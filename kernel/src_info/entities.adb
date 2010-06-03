@@ -316,6 +316,22 @@ package body Entities is
       end if;
    end Get_Name;
 
+   ----------------
+   -- Debug_Name --
+   ----------------
+
+   function Debug_Name (Entity : Entity_Information) return String is
+   begin
+      if Entity = null then
+         return "<null>";
+      else
+         return Entity.Name.all
+           & ":" & Entity.Declaration.File.Name.Display_Full_Name
+           & ":" & Image (Entity.Declaration.Line, Min_Width => 1)
+           & ":" & Image (Integer (Entity.Declaration.Column), Min_Width => 1);
+      end if;
+   end Debug_Name;
+
    ----------
    -- Hash --
    ----------
@@ -2132,7 +2148,7 @@ package body Entities is
 
    function Is_Subprogram (Entity : Entity_Information) return Boolean is
    begin
-      return Is_Subprogram_Entity (Entity.Kind.Kind);
+      return Entity /= null and then Is_Subprogram_Entity (Entity.Kind.Kind);
    end Is_Subprogram;
 
    --------------
@@ -2141,7 +2157,7 @@ package body Entities is
 
    function Is_Array (Entity : Entity_Information) return Boolean is
    begin
-      return Entity.Kind.Kind = Array_Kind;
+      return Entity /= null and then Entity.Kind.Kind = Array_Kind;
    end Is_Array;
 
    -------------------------------
