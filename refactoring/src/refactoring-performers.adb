@@ -646,11 +646,15 @@ package body Refactoring.Performers is
       Skip_Blanks (Decl, Index);
 
       --  Skip any keyword coming from the original declaration
+      --  Keep "access" since this is part of the type
 
       Skip_Keyword (Decl, Index, "constant");
-      Skip_Keyword (Decl, Index, "access");
       Skip_Keyword (Decl, Index, "in");
       Skip_Keyword (Decl, Index, "out");
+
+      if PType = Access_Parameter then
+         Skip_Keyword (Decl, Index, "access");
+      end if;
 
       Skip_Blanks (Decl, Last, Step => -1);
 

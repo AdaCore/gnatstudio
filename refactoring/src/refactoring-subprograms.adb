@@ -54,6 +54,7 @@ package body Refactoring.Subprograms is
    Me : constant Debug_Handle := Create ("Refactor.Subprograms");
 
    type Extract_Method_Command is new Interactive_Command with null record;
+
    overriding function Execute
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -120,6 +121,10 @@ package body Refactoring.Subprograms is
    --  Returns Invalid_Context if something prevents the refactoring (an error
    --  message has already been displayed in that case).
 
+   ----------------
+   -- Parameters --
+   ----------------
+
    type Parameter_Description is record
       Parameter : Extracted_Entity;
       Is_Tagged : Boolean;
@@ -127,6 +132,41 @@ package body Refactoring.Subprograms is
    end record;
    package Parameter_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Parameter_Description);
+
+   type Parameters is tagged record
+      List           : Parameter_Lists.List;
+      Last_Out_Param : Entity_Information;
+      Is_Function    : Boolean;
+      Has_Params     : Boolean;
+   end record;
+   --  The parameters that should be used for the extracted method.
+   --  Last_Out_Param points to the last "out" parameter, which is used as the
+   --  returned type for functions.
+   --  Is_Function is True if the extracted method should be implemented as a
+   --  method
+
+   function Generate (Self : Parameters'Class) return Unbounded_String;
+   --  Generate the list of parameters (including surrounding parenthesis) for
+   --  the extracted subprogram
+
+   function Generate_Method_Call
+     (Self : Parameters'Class; Name : String) return Unbounded_String;
+   --  Generate the code to call the new method
+
+   procedure Sort (Self : in out Parameters'Class);
+   --  Sort the parameters (any dispatching entity goes first)
+
+   ----------
+   -- Misc --
+   ----------
+
+   procedure Compute_Params_And_Vars
+     (Kernel              : access Kernel_Handle_Record'Class;
+      Context             : Extract_Context;
+      Params              : out Parameters'Class;
+      Local_Vars          : out Extracted_Entity_Lists.List'Class);
+   --  From the list of entities in the context, compute those that should
+   --  become parameters and those that should be local variables
 
    type Text_Range is record
       Start  : Integer;
@@ -151,8 +191,14 @@ package body Refactoring.Subprograms is
       Method_Call : out Unbounded_String);
    --  Generate the code of the new method
 
-   procedure Sort_Parameters (Params : in out Parameter_Lists.List);
-   --  Sort the parameters (any dispatching entity goes first)
+   function Generate_Box (Name : String) return Unbounded_String;
+   --  Generate the subprogram box
+
+   procedure Generate_Local_Vars
+     (Local_Vars : Extracted_Entity_Lists.List;
+      To_Delete  : out Text_Ranges.Set;
+      Result     : out Unbounded_String);
+   --  Generate the local variables declarations
 
    function Extract_Method
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -265,21 +311,21 @@ package body Refactoring.Subprograms is
       end if;
    end Accepts_Primitive_Ops;
 
-   ---------------------
-   -- Sort_Parameters --
-   ---------------------
+   ----------
+   -- Sort --
+   ----------
 
-   procedure Sort_Parameters (Params : in out Parameter_Lists.List) is
+   procedure Sort (Self : in out Parameters'Class) is
       P : Parameter_Lists.Cursor;
    begin
       --  Put all "out" parameters last, so that we read from input parameters
       --  to output parameters
 
-      P := Params.First;
+      P := Self.List.First;
       while Has_Element (P) loop
          case Element (P).PType is
             when Out_Parameter | In_Out_Parameter =>
-               Params.Swap (P, Params.Last);
+               Self.List.Swap (P, Self.List.Last);
             when In_Parameter | Access_Parameter =>
                null;
          end case;
@@ -292,10 +338,10 @@ package body Refactoring.Subprograms is
       --  Needs to be done after the "out" parameter, in case the dispatching
       --  parameter is also out
 
-      P := Params.First;
+      P := Self.List.First;
       while Has_Element (P) loop
          if Element (P).Is_Tagged then
-            Params.Swap (P, Params.First);
+            Self.List.Swap (P, Self.List.First);
          end if;
          Next (P);
       end loop;
@@ -304,54 +350,34 @@ package body Refactoring.Subprograms is
       --  We currently do not create default values, so this is irrelevant
 
       null;
-   end Sort_Parameters;
+   end Sort;
 
-   -------------------------------
-   -- Generate_Extracted_Method --
-   -------------------------------
+   -----------------------------
+   -- Compute_Params_And_Vars --
+   -----------------------------
 
-   procedure Generate_Extracted_Method
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Context     : Extract_Context;
-      To_Delete   : out Text_Ranges.Set;
-      Method_Decl : out Unbounded_String;
-      Method_Body : out Unbounded_String;
-      Method_Call : out Unbounded_String)
+   procedure Compute_Params_And_Vars
+     (Kernel              : access Kernel_Handle_Record'Class;
+      Context             : Extract_Context;
+      Params              : out Parameters'Class;
+      Local_Vars          : out Extracted_Entity_Lists.List'Class)
    is
-      Params              : Parameter_Lists.List;
-      Param               : Parameter_Lists.Cursor;
-      Local_Vars          : Extracted_Entity_Lists.List;
-      Out_Params_Count    : Natural := 0;
-      In_Out_Params_Count : Natural := 0;
-      In_Params_Count     : Natural := 0;
-      Result, Decl        : Unbounded_String;
-      Typ                 : Entity_Information;
-      Last_Out_Param      : Entity_Information;
-      Flags               : Extracted_Entity_Flags;
-
-      Editor              : constant Editor_Buffer'Class :=
-        Get_Buffer_Factory (Kernel).Get (Context.File);
-      Code : constant String :=
-        Editor.Get_Chars
-          (Editor.New_Location (Context.Line_Start, 1),
-           Editor.New_Location (Context.Line_End, 1).End_Of_Line);
-
-      Code_Start, Code_End : Integer;
-      Comment_Start, Comment_End : Integer;
+      type Parameter_Count is array (Parameter_Type) of Natural;
+      Count  : Parameter_Count := (others => 0);
       Entity : Entity_Information;
+      Flags  : Extracted_Entity_Flags;
+      E      : Extracted_Entity;
+      P      : Extracted_Entity_Lists.Cursor := Context.Entities.First;
       Struct : Structured_File_Access;
       Offset : String_Index_Type;
-      P      : Extracted_Entity_Lists.Cursor;
-      E      : Extracted_Entity;
    begin
       Struct := Get_Or_Create
         (Get_Construct_Database (Kernel), File => Context.File);
       Offset := To_String_Index (Struct, Context.Line_Start, 1);
 
-      Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
+      Count := (others => 0);
+      Params.Last_Out_Param := null;
 
-      P := Context.Entities.First;
       while Has_Element (P) loop
          E := Element (P);
 
@@ -362,11 +388,11 @@ package body Refactoring.Subprograms is
             if Flags (Flag_Modified_Before)
               or else Flags (Flag_Ref_Outside_Parent)
             then
-               Params.Append
+               Params.List.Append
                  ((Parameter => E,
                    Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
                    PType     => In_Parameter));
-               In_Params_Count := In_Params_Count + 1;
+               Count (In_Parameter) := Count (In_Parameter) + 1;
 
             else
                --  Variable not modified before, so its value before the
@@ -392,12 +418,12 @@ package body Refactoring.Subprograms is
                then
                   --  Written before and at least needed after the call
 
-                  Params.Append
+                  Params.List.Append
                     ((Parameter => E,
                       Is_Tagged =>
                         Accepts_Primitive_Ops (Kernel, Entity, Offset),
                       PType     => In_Out_Parameter));
-                  In_Out_Params_Count := In_Out_Params_Count + 1;
+                  Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
 
                else
                   --  Written before, but not needed after.
@@ -405,24 +431,24 @@ package body Refactoring.Subprograms is
                   --  a local variable that takes its value and is modified,
                   --  we do not need to return the parameter itself
 
-                  Params.Append
+                  Params.List.Append
                     ((Parameter => E,
                       Is_Tagged =>
                         Accepts_Primitive_Ops (Kernel, Entity, Offset),
                       PType     => In_Out_Parameter));
-                  In_Out_Params_Count := In_Out_Params_Count + 1;
+                  Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
                end if;
 
             elsif Flags (Flag_Read_After)
               or else Flags (Flag_Ref_Outside_Parent)
             then
                --  Not set before the call, but needed after
-               Params.Append
+               Params.List.Append
                  ((Parameter => E,
                    Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
                    PType     => Out_Parameter));
-               Out_Params_Count := Out_Params_Count + 1;
-               Last_Out_Param := Entity;
+               Count (Out_Parameter) := Count (Out_Parameter) + 1;
+               Params.Last_Out_Param := Entity;
 
             else
                --  Not set before the call, and not needed after
@@ -433,33 +459,37 @@ package body Refactoring.Subprograms is
          Next (P);
       end loop;
 
-      Sort_Parameters (Params);
-
-      if Out_Params_Count = 1
-        and then In_Out_Params_Count = 0
+      if Count (Out_Parameter) = 1
+        and then Count (In_Out_Parameter) = 0
       then
-         Decl := To_Unbounded_String ("function ");
+         Params.Is_Function := True;
       else
-         Decl := To_Unbounded_String ("procedure ");
-         Last_Out_Param := null;
+         Params.Is_Function := False;
+         Params.Last_Out_Param := null;
       end if;
 
-      Append (Decl, Name);
+      Params.Has_Params :=
+        Count (In_Parameter) + Count (In_Out_Parameter) > 0
+        or else Count (Out_Parameter) > 1;
+   end Compute_Params_And_Vars;
 
-      --  Do we have at least one parameter left ?
+   --------------
+   -- Generate --
+   --------------
 
-      if In_Params_Count + In_Out_Params_Count > 0
-        or else Out_Params_Count > 1
-      then
-         Append (Decl, ASCII.LF & "   (");
+   function Generate (Self : Parameters'Class) return Unbounded_String is
+      Decl  : Unbounded_String;
+      Param : Parameter_Lists.Cursor;
+   begin
+      if Self.Has_Params then
+         Append (Decl, "(");
 
-         Param := Params.First;
+         Param := Self.List.First;
          while Has_Element (Param) loop
             --  Do not emit anything if there is a single out parameter, since
             --  we then use a function for the extracted method
             if Element (Param).PType /= Out_Parameter
-              or else Out_Params_Count /= 1
-              or else In_Out_Params_Count /= 0
+              or else not Self.Is_Function
             then
                Append
                  (Decl, Element (Param).Parameter.Decl.Display_As_Parameter
@@ -471,9 +501,9 @@ package body Refactoring.Subprograms is
                   Append (Decl, "'Class");
                end if;
 
-               if Param /= Params.Last
+               if Param /= Self.List.Last
                  and then Element (Next (Param)).Parameter.Entity /=
-                 Last_Out_Param
+                 Self.Last_Out_Param
                then
                   Append (Decl, ";" & ASCII.LF & "    ");
                end if;
@@ -483,30 +513,83 @@ package body Refactoring.Subprograms is
          Decl := Decl & ")";
       end if;
 
-      if Out_Params_Count = 1
-        and then In_Out_Params_Count = 0
-      then
-         Typ := Get_Type_Of (Last_Out_Param);
-         Decl := Decl & " return " & Get_Name (Typ).all;
-      end if;
+      return Decl;
+   end Generate;
 
+   ------------------
+   -- Generate_Box --
+   ------------------
+
+   function Generate_Box (Name : String) return Unbounded_String is
+      Result : Unbounded_String;
+   begin
       if Add_Subprogram_Box.Get_Pref then
          Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
          Append (Result, "-- " & Name & " --" & ASCII.LF);
          Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
          Append (Result, ASCII.LF);
       end if;
+      return Result;
+   end Generate_Box;
 
-      Append (Result, Decl);
+   --------------------------
+   -- Generate_Method_Call --
+   --------------------------
 
-      Append (Decl, ";" & ASCII.LF);
-
-      if Comment_Start < Comment_End then
-         Append (Decl, Code (Comment_Start .. Comment_End));
-         Append (Decl, ASCII.LF);
+   function Generate_Method_Call
+     (Self : Parameters'Class; Name : String) return Unbounded_String
+   is
+      Param : Parameter_Lists.Cursor;
+      Method_Call : Unbounded_String;
+   begin
+      if Self.Is_Function then
+         Method_Call := To_Unbounded_String
+           (Get_Name (Self.Last_Out_Param).all & " := ");
       end if;
 
-      Append (Result, ASCII.LF & "is" & ASCII.LF);
+      Append (Method_Call, Name);
+
+      if Self.Has_Params then
+         Append (Method_Call, " (");
+
+         Param := Self.List.First;
+         while Has_Element (Param) loop
+            if Element (Param).PType /= Out_Parameter
+              or else not Self.Is_Function
+            then
+               Append (Method_Call,
+                       Get_Name (Element (Param).Parameter.Entity).all);
+
+               if Param /= Self.List.Last
+                 and then Element (Next (Param)).Parameter.Entity /=
+                 Self.Last_Out_Param
+               then
+                  Append (Method_Call, ", ");
+               end if;
+            end if;
+            Next (Param);
+         end loop;
+
+         Append (Method_Call, ")");
+      end if;
+
+      Append (Method_Call, ";" & ASCII.LF);
+      return Method_Call;
+   end Generate_Method_Call;
+
+   -------------------------
+   -- Generate_Local_Vars --
+   -------------------------
+
+   procedure Generate_Local_Vars
+     (Local_Vars : Extracted_Entity_Lists.List;
+      To_Delete  : out Text_Ranges.Set;
+      Result     : out Unbounded_String)
+   is
+      E    : Extracted_Entity;
+      P    : Extracted_Entity_Lists.Cursor;
+   begin
+      Result := Null_Unbounded_String;
 
       P := Local_Vars.First;
       while Has_Element (P) loop
@@ -530,12 +613,76 @@ package body Refactoring.Subprograms is
 
          Next (P);
       end loop;
+   end Generate_Local_Vars;
 
-      if Out_Params_Count = 1
-        and then In_Out_Params_Count = 0
-      then
-         Typ := Get_Type_Of (Last_Out_Param);
-         Append (Result, "   " & Get_Name (Last_Out_Param).all
+   -------------------------------
+   -- Generate_Extracted_Method --
+   -------------------------------
+
+   procedure Generate_Extracted_Method
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Name        : String;
+      Context     : Extract_Context;
+      To_Delete   : out Text_Ranges.Set;
+      Method_Decl : out Unbounded_String;
+      Method_Body : out Unbounded_String;
+      Method_Call : out Unbounded_String)
+   is
+      Editor  : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (Context.File);
+      Code    : constant String :=
+        Editor.Get_Chars
+          (Editor.New_Location (Context.Line_Start, 1),
+           Editor.New_Location (Context.Line_End, 1).End_Of_Line);
+
+      Params               : Parameters;
+      Local_Vars           : Extracted_Entity_Lists.List;
+      Result, Decl         : Unbounded_String;
+      Typ                  : Entity_Information;
+      Code_Start, Code_End : Integer;
+      Comment_Start, Comment_End : Integer;
+      PList, Local               : Unbounded_String;
+   begin
+      Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
+      Compute_Params_And_Vars (Kernel, Context, Params, Local_Vars);
+      Params.Sort;
+      PList := Params.Generate;
+
+      if Params.Is_Function then
+         Append (Decl, "function ");
+      else
+         Append (Decl, "procedure ");
+      end if;
+
+      Append (Decl, Name);
+
+      if PList /= Null_Unbounded_String then
+         Append (Decl, ASCII.LF & "   ");
+         Append (Decl, PList);
+      end if;
+
+      if Params.Is_Function then
+         Typ := Get_Type_Of (Params.Last_Out_Param);
+         Decl := Decl & " return " & Get_Name (Typ).all;
+      end if;
+
+      Result := Generate_Box (Name);
+      Append (Result, Decl);
+      Append (Decl, ";" & ASCII.LF);
+
+      if Comment_Start < Comment_End then
+         Append (Decl, Code (Comment_Start .. Comment_End));
+         Append (Decl, ASCII.LF);
+      end if;
+
+      Append (Result, ASCII.LF & "is" & ASCII.LF);
+
+      Generate_Local_Vars (Local_Vars, To_Delete, Local);
+      Append (Result, Local);
+
+      if Params.Is_Function then
+         Typ := Get_Type_Of (Params.Last_Out_Param);
+         Append (Result, "   " & Get_Name (Params.Last_Out_Param).all
                  & " : " & Get_Name (Typ).all & ";" & ASCII.LF);
       end if;
 
@@ -543,51 +690,14 @@ package body Refactoring.Subprograms is
       Append (Result, Code (Code_Start .. Code_End));
       Append (Result, ASCII.LF);
 
-      if Out_Params_Count = 1
-        and then In_Out_Params_Count = 0
-      then
+      if Params.Is_Function then
          Append (Result, "   return "
-           & Get_Name (Last_Out_Param).all & ";" & ASCII.LF);
+           & Get_Name (Params.Last_Out_Param).all & ";" & ASCII.LF);
       end if;
 
       Append (Result, "end " & Name & ";" & ASCII.LF);
 
-      if Out_Params_Count = 1
-        and then In_Out_Params_Count = 0
-      then
-         Method_Call := To_Unbounded_String
-           (Get_Name (Last_Out_Param).all & " := ");
-      end if;
-
-      Append (Method_Call, Name);
-      if In_Params_Count + In_Out_Params_Count > 0
-        or else Out_Params_Count > 1
-      then
-         Append (Method_Call, " (");
-
-         Param := Params.First;
-         while Has_Element (Param) loop
-            if Element (Param).PType /= Out_Parameter
-              or else Out_Params_Count /= 1
-              or else In_Out_Params_Count /= 0
-            then
-               Append (Method_Call,
-                       Get_Name (Element (Param).Parameter.Entity).all);
-
-               if Param /= Params.Last
-                 and then Element (Next (Param)).Parameter.Entity /=
-                    Last_Out_Param
-               then
-                  Append (Method_Call, ", ");
-               end if;
-            end if;
-            Next (Param);
-         end loop;
-
-         Append (Method_Call, ")");
-      end if;
-
-      Append (Method_Call, ";" & ASCII.LF);
+      Method_Call := Params.Generate_Method_Call (Name);
       Method_Decl := Decl;
       Method_Body := Result;
    end Generate_Extracted_Method;
