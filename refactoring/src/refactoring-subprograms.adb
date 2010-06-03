@@ -637,7 +637,6 @@ package body Refactoring.Subprograms is
 
       Params               : Parameters;
       Local_Vars           : Extracted_Entity_Lists.List;
-      Result, Decl         : Unbounded_String;
       Typ                  : Entity_Information;
       Code_Start, Code_End : Integer;
       Comment_Start, Comment_End : Integer;
@@ -649,57 +648,55 @@ package body Refactoring.Subprograms is
       PList := Params.Generate;
 
       if Params.Is_Function then
-         Append (Decl, "function ");
+         Method_Decl := To_Unbounded_String ("function ");
       else
-         Append (Decl, "procedure ");
+         Method_Decl := To_Unbounded_String ("procedure ");
       end if;
 
-      Append (Decl, Name);
+      Append (Method_Decl, Name);
 
       if PList /= Null_Unbounded_String then
-         Append (Decl, ASCII.LF & "   ");
-         Append (Decl, PList);
+         Append (Method_Decl, ASCII.LF & "   ");
+         Append (Method_Decl, PList);
       end if;
 
       if Params.Is_Function then
          Typ := Get_Type_Of (Params.Last_Out_Param);
-         Decl := Decl & " return " & Get_Name (Typ).all;
+         Append (Method_Decl, " return " & Get_Name (Typ).all);
       end if;
 
-      Result := Generate_Box (Name);
-      Append (Result, Decl);
-      Append (Decl, ";" & ASCII.LF);
+      Method_Body := Generate_Box (Name);
+      Append (Method_Body, Method_Decl);
+      Append (Method_Decl, ";" & ASCII.LF);
 
       if Comment_Start < Comment_End then
-         Append (Decl, Code (Comment_Start .. Comment_End));
-         Append (Decl, ASCII.LF);
+         Append (Method_Decl, Code (Comment_Start .. Comment_End));
+         Append (Method_Decl, ASCII.LF);
       end if;
 
-      Append (Result, ASCII.LF & "is" & ASCII.LF);
+      Append (Method_Body, ASCII.LF & "is" & ASCII.LF);
 
       Generate_Local_Vars (Local_Vars, To_Delete, Local);
-      Append (Result, Local);
+      Append (Method_Body, Local);
 
       if Params.Is_Function then
          Typ := Get_Type_Of (Params.Last_Out_Param);
-         Append (Result, "   " & Get_Name (Params.Last_Out_Param).all
+         Append (Method_Body, "   " & Get_Name (Params.Last_Out_Param).all
                  & " : " & Get_Name (Typ).all & ";" & ASCII.LF);
       end if;
 
-      Append (Result, "begin" & ASCII.LF & "   ");
-      Append (Result, Code (Code_Start .. Code_End));
-      Append (Result, ASCII.LF);
+      Append (Method_Body, "begin" & ASCII.LF & "   ");
+      Append (Method_Body, Code (Code_Start .. Code_End));
+      Append (Method_Body, ASCII.LF);
 
       if Params.Is_Function then
-         Append (Result, "   return "
-           & Get_Name (Params.Last_Out_Param).all & ";" & ASCII.LF);
+         Append (Method_Body, "   return "
+                 & Get_Name (Params.Last_Out_Param).all & ";" & ASCII.LF);
       end if;
 
-      Append (Result, "end " & Name & ";" & ASCII.LF);
+      Append (Method_Body, "end " & Name & ";" & ASCII.LF);
 
       Method_Call := Params.Generate_Method_Call (Name);
-      Method_Decl := Decl;
-      Method_Body := Result;
    end Generate_Extracted_Method;
 
    -----------------------
