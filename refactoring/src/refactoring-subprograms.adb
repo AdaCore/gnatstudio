@@ -30,6 +30,7 @@ with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel;             use GPS.Kernel;
 with Gtk.Box;                use Gtk.Box;
@@ -136,8 +137,8 @@ package body Refactoring.Subprograms is
    type Parameters is tagged record
       List           : Parameter_Lists.List;
       Last_Out_Param : Entity_Information;
+      Count          : Natural;
       Is_Function    : Boolean;
-      Has_Params     : Boolean;
    end record;
    --  The parameters that should be used for the extracted method.
    --  Last_Out_Param points to the last "out" parameter, which is used as the
@@ -463,14 +464,12 @@ package body Refactoring.Subprograms is
         and then Count (In_Out_Parameter) = 0
       then
          Params.Is_Function := True;
+         Params.Count := Integer (Params.List.Length) - 1;
       else
          Params.Is_Function := False;
+         Params.Count := Integer (Params.List.Length);
          Params.Last_Out_Param := null;
       end if;
-
-      Params.Has_Params :=
-        Count (In_Parameter) + Count (In_Out_Parameter) > 0
-        or else Count (Out_Parameter) > 1;
    end Compute_Params_And_Vars;
 
    --------------
@@ -481,7 +480,7 @@ package body Refactoring.Subprograms is
       Decl  : Unbounded_String;
       Param : Parameter_Lists.Cursor;
    begin
-      if Self.Has_Params then
+      if Self.Count > 0 then
          Append (Decl, "(");
 
          Param := Self.List.First;
@@ -549,7 +548,7 @@ package body Refactoring.Subprograms is
 
       Append (Method_Call, Name);
 
-      if Self.Has_Params then
+      if Self.Count > 0 then
          Append (Method_Call, " (");
 
          Param := Self.List.First;
@@ -640,12 +639,18 @@ package body Refactoring.Subprograms is
       Typ                  : Entity_Information;
       Code_Start, Code_End : Integer;
       Comment_Start, Comment_End : Integer;
-      PList, Local               : Unbounded_String;
+      PList, Local, Returns : Unbounded_String;
+      Newline_Before_Is : Boolean := False;
    begin
       Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
       Compute_Params_And_Vars (Kernel, Context, Params, Local_Vars);
       Params.Sort;
       PList := Params.Generate;
+
+      if Params.Is_Function then
+         Typ := Get_Type_Of (Params.Last_Out_Param);
+         Returns := To_Unbounded_String (" return " & Get_Name (Typ).all);
+      end if;
 
       if Params.Is_Function then
          Method_Decl := To_Unbounded_String ("function ");
@@ -656,14 +661,20 @@ package body Refactoring.Subprograms is
       Append (Method_Decl, Name);
 
       if PList /= Null_Unbounded_String then
-         Append (Method_Decl, ASCII.LF & "   ");
+         --  4 = " " + " is"
+         if Params.Count > 1
+           or else Length (Method_Decl) + Length (PList) + Length (Returns) + 4
+           > Highlight_Column.Get_Pref
+         then
+            Append (Method_Decl, ASCII.LF & "  ");
+            Newline_Before_Is := True;
+         end if;
+
+         Append (Method_Decl, " ");
          Append (Method_Decl, PList);
       end if;
 
-      if Params.Is_Function then
-         Typ := Get_Type_Of (Params.Last_Out_Param);
-         Append (Method_Decl, " return " & Get_Name (Typ).all);
-      end if;
+      Append (Method_Decl, Returns);
 
       Method_Body := Generate_Box (Name);
       Append (Method_Body, Method_Decl);
@@ -674,7 +685,11 @@ package body Refactoring.Subprograms is
          Append (Method_Decl, ASCII.LF);
       end if;
 
-      Append (Method_Body, ASCII.LF & "is" & ASCII.LF);
+      if Newline_Before_Is then
+         Append (Method_Body, ASCII.LF & "is" & ASCII.LF);
+      else
+         Append (Method_Body, " is" & ASCII.LF);
+      end if;
 
       Generate_Local_Vars (Local_Vars, To_Delete, Local);
       Append (Method_Body, Local);
