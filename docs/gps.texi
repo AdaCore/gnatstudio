@@ -3133,8 +3133,8 @@ the details of the invoice. This code depends on one local variable and
 the parameter to Print_Owing. When we select lines 54 to 57 and extract
 it into a new @code{Print_Details} subprogram, we get the following
 result. GPS automatically decides which variables to extract, and whether
-they should become parameters of the new subprogram, or parameters. In
-the latter case, it will also automatically decide whether to create
+they should become parameters of the new subprogram, or local variables. In
+the former case, it will also automatically decide whether to create
 @code{"in"}, @code{"out"} or @code{"in out"} parameters. If there is
 a single @code{"out"} parameter, it will automatically create a function
 rather than a procedure.
