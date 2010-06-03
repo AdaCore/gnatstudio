@@ -22,7 +22,6 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 pragma Warnings (Off, "*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, "*is an internal GNAT unit");
-with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Commands.Generic_Asynchronous;
@@ -89,6 +88,10 @@ package body Refactoring.Performers is
    procedure On_End_Of_Search (Data : Get_Locations_Data);
    --  Called when all the related files have been searched and the refactoring
    --  should be performed.
+
+   procedure Skip_Keyword
+     (Str : String; Index : in out Integer; Word : String);
+   --  Skip the next word in Str if it is Word
 
    ----------
    -- Free --
@@ -558,6 +561,22 @@ package body Refactoring.Performers is
       return "";
    end Initial_Value;
 
+   ------------------
+   -- Skip_Keyword --
+   ------------------
+
+   procedure Skip_Keyword
+     (Str : String; Index : in out Integer; Word : String) is
+   begin
+      if Index + Word'Length <= Str'Last
+        and then Looking_At (Str, Index, Word)
+        and then Is_Blank (Str (Index + Word'Length))
+      then
+         Index := Index + Word'Length;
+         Skip_Blanks (Str, Index);
+      end if;
+   end Skip_Keyword;
+
    --------------------------
    -- Display_As_Parameter --
    --------------------------
@@ -567,7 +586,9 @@ package body Refactoring.Performers is
       PType : Entities.Queries.Parameter_Type) return String
    is
       Result : Unbounded_String;
-      Decl : constant String := To_String (Self.Decl);
+      Decl   : constant String := To_String (Self.Decl);
+      Index  : Natural := Decl'First;
+      Last   : Natural := Self.Equal_Loc - 1;
    begin
       Append (Result, Get_Name (Self.Entity).all & " : ");
 
@@ -584,10 +605,21 @@ package body Refactoring.Performers is
             end if;
       end case;
 
-      --  Skip ":" in the declaration
+      --  Skip ":" in the declaration (always the first character)
 
-      Append
-        (Result, Trim (Decl (Decl'First + 1 .. Self.Equal_Loc - 1), Both));
+      Index := Index + 1;
+      Skip_Blanks (Decl, Index);
+
+      --  Skip any keyword coming from the original declaration
+
+      Skip_Keyword (Decl, Index, "constant");
+      Skip_Keyword (Decl, Index, "access");
+      Skip_Keyword (Decl, Index, "in");
+      Skip_Keyword (Decl, Index, "out");
+
+      Skip_Blanks (Decl, Last, Step => -1);
+
+      Append (Result, Decl (Index .. Last));
 
       return To_String (Result);
    end Display_As_Parameter;
