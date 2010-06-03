@@ -3229,6 +3229,13 @@ instance, passing the initial value 0 to @code{Get_Outstanding} is
 useless, and in fact that should probably be a function with no
 parameter. But GPS already saves a lot of time and manipulation.
 
+Finally, a word of caution: this refactoring does not check that you are
+giving a valid input. For instance, if the text you select includes a
+@code{declare} block, you should always include the full block, not just
+a part of it (or select text between @code{begin} and @code{end}). Likewise,
+GPS does not expect you to select any part of the variable declarations,
+just the code.
+
 @c --------------------------------------------------------------------------
 @node Using an External Editor
 @section Using an External Editor
