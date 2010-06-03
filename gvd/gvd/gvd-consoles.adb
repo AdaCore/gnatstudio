@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -58,8 +58,12 @@ with Interactive_Consoles;   use Interactive_Consoles;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
 with Traces;                 use Traces;
+with GNATCOLL.Traces;
 
 package body GVD.Consoles is
+
+   ANSI_Support : constant Debug_Handle :=
+                   Create ("GVD.ANSI_Support", GNATCOLL.Traces.On);
 
    Regexp_Any : constant Pattern_Matcher :=
      Compile (".+", Single_Line or Multiple_Lines);
@@ -427,6 +431,7 @@ package body GVD.Consoles is
          History_List        => Get_History (Kernel),
          Key                 => "gvd_console",
          Wrap_Mode           => Wrap_Char,
+         ANSI_Support        => Active (ANSI_Support),
          Empty_Equals_Repeat => True);
       Set_Font_And_Colors (Get_View (Console), Fixed_Font => False);
 
