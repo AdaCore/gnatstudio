@@ -801,6 +801,9 @@ package body GVD.Process is
       Matched        : Match_Array (0 .. Max_Paren_Count);
       First, Last    : Natural := 0;
       Last_Match     : Natural := 0;
+      Offset         : Natural := 0;
+      --  Offset from the start of the buffer to start the matching
+      New_Offset     : Natural := 0;
       Min_Size       : Natural;
       New_Size       : Natural;
       Str_Match      : Boolean;
@@ -835,15 +838,20 @@ package body GVD.Process is
          Process.Current_Output_Pos + Str'Length - 1) := Str;
       Process.Current_Output_Pos := Process.Current_Output_Pos + Str'Length;
 
-      --  Process the filters
+      --  Process the filters. Each filter is tested until there is no more
+      --  match at which point we move to the next one.
 
       Current_Filter := Process.Filters;
+      Last_Match := Process.Last_Match;
 
       while Current_Filter /= null loop
+         New_Offset := Offset;
+
          Match
            (Current_Filter.Regexp.all,
             Process.Current_Output
-              (Process.Last_Match + 1 .. Process.Current_Output_Pos - 1),
+              (Process.Last_Match + 1 + Offset ..
+                 Process.Current_Output_Pos - 1),
             Matched);
          Str_Match := False;
 
@@ -853,12 +861,31 @@ package body GVD.Process is
             Match
               (Current_Filter.Regexp.all,
                Process.Current_Output
-                 (Process.Current_Output_Pos - Str'Length ..
+                 (Process.Current_Output_Pos - Str'Length + Offset ..
                     Process.Current_Output_Pos - 1),
                Matched);
+
+            if Matched (0) /= No_Match then
+               --  Match found, record offset for next one. We cannot change
+               --  Offset here as we need it later when calling the filters.
+               New_Offset := Matched (0).Last + 1 -
+                 (Process.Current_Output_Pos - Str'Length);
+            end if;
+
+         else
+            --  Match found (see comment above)
+            New_Offset := Matched (0).Last + 1 - (Process.Last_Match + 1);
          end if;
 
-         if Matched (0) /= No_Match then
+         if Matched (0) = No_Match then
+            --  No more match for this filter, move to next one
+            Current_Filter := Current_Filter.Next;
+
+            --  Reset New_Offset (and Offset in the next iteration) to the
+            --  start of the buffer.
+            New_Offset := 0;
+
+         else
             if Matched (0).Last > Last_Match then
                Last_Match := Matched (0).Last;
             end if;
@@ -867,18 +894,21 @@ package body GVD.Process is
                Current_Filter.Filter
                  (Process,
                   Process.Current_Output
-                    (Process.Current_Output_Pos - Str'Length ..
+                    (Process.Current_Output_Pos - Str'Length + Offset ..
                        Process.Current_Output_Pos - 1),
                   Matched);
             else
                Current_Filter.Filter
                  (Process,
-                  Process.Current_Output (1 .. Process.Current_Output_Pos - 1),
+                  Process.Current_Output
+                    (Process.Last_Match + 1 + Offset ..
+                       Process.Current_Output_Pos - 1),
                   Matched);
             end if;
          end if;
 
-         Current_Filter := Current_Filter.Next;
+         --  Now we can set the offset for next iteration
+         Offset := New_Offset;
       end loop;
 
       if Last_Match /= 0 then
