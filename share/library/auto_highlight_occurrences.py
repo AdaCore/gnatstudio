@@ -59,36 +59,53 @@ class LocationHighlighter:
         end_loc = beg_loc.end_of_line()
 
         s = self.buffer.get_chars (beg_loc, end_loc)
+        s_len = len(s)
 
-        index = s.find(self.entity_name)
+        l = len(self.entity_name)
 
-        while index > 0:
-            # Cet the entity at this match
+        # Find name and expand tabs at the same time
 
-            # GPS.Entity might raise an exception: catch it
-            try:
-                e=GPS.Entity("", self.file, line, index+1)
-            except:
-                e=None
+        index = 0
+        tab_expanded_index = 0
 
-            if e:
-                # We have found an entity: verify whether it is the same as the one
-                # we are interested in.
+        while index + l < s_len:
+            if s[index:index+l] == self.entity_name:
+                # Cet the entity at this match
 
-                if e.declaration()==self.declaration:
-                    # It is the same entity: create a message
-                    msg = GPS.Message (
-                        "dynamic occurrences",
-                        self.file,
-                        line,
-                        index+1,
-                        "",
-                        2)
-                    msg.set_style(self.style, len(self.entity_name))
+                # GPS.Entity might raise an exception: catch it
+                try:
+                    e=GPS.Entity("", self.file, line, tab_expanded_index+1)
+                except:
+                    e=None
 
-                    self.messages += [msg]
+                if e:
+                    # We have found an entity: verify whether it is the same as the one
+                    # we are interested in.
 
-            index=s.find(self.entity_name, index+1)
+                    if e.declaration()==self.declaration:
+                        # It is the same entity: create a message
+                        msg = GPS.Message (
+                            "dynamic occurrences",
+                            self.file,
+                            line,
+                            tab_expanded_index+1,
+                            "",
+                            2)
+                        msg.set_style(self.style, len(self.entity_name))
+
+                        self.messages += [msg]
+
+                index += l+1
+                tab_expanded_index += l
+
+            else:
+                index += 1
+
+            if s[index-1]=='\t':
+                # snap to the next multiple of 8
+                tab_expanded_index += 9 - (tab_expanded_index+1) % 8
+            else:
+                tab_expanded_index += 1
 
     def process_one_batch(self):
         """ Process a batch of search locations.
@@ -218,24 +235,24 @@ def on_gps_started (hook_name):
     """ Called when GPS is started """
     global editor_location_style
 
-    # Destroy any locations potentially left over from a previous session
-    # ??? This should be done when exiting GPS.
-
-    for m in GPS.Message.list("dynamic occurrences"):
-        m.remove()
-
-    # Create preferences
-    for k in default_colors:
-        pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
-
-        # Create styles
-
-        editor_location_styles[k]=GPS.Style("dynamic occurrences " + k)
-        editor_location_styles[k].set_background(
-            GPS.Preference (pref_name).get())
-        editor_location_styles[k].set_in_speedbar(
-          GPS.Preference ("Plugins/auto_highlight_occurrences/speedbar").get())
 
     GPS.Hook ("location_changed").add(on_location_changed)
+
+# Destroy any locations potentially left over from a previous session
+# ??? This should be done when exiting GPS.
+for m in GPS.Message.list("dynamic occurrences"):
+    m.remove()
+
+# Create preferences
+for k in default_colors:
+    pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
+
+    # Create styles
+
+    editor_location_styles[k]=GPS.Style("dynamic occurrences " + k)
+    editor_location_styles[k].set_background(
+        GPS.Preference (pref_name).get())
+    editor_location_styles[k].set_in_speedbar(
+      GPS.Preference ("Plugins/auto_highlight_occurrences/speedbar").get())
 
 GPS.Hook ("gps_started").add (on_gps_started)
