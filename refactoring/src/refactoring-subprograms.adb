@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Commands.Interactive;   use Commands, Commands.Interactive;
@@ -112,6 +111,9 @@ package body Refactoring.Subprograms is
    Invalid_Context : constant Extract_Context :=
      (GNATCOLL.VFS.No_File, -1, -1, null, null, Entities => <>);
 
+   procedure Free (Context : in out Extract_Context);
+   --  Free the memory used by the context
+
    procedure Compute_Context_Parent
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : in out Extract_Context);
@@ -171,24 +173,13 @@ package body Refactoring.Subprograms is
    --  From the list of entities in the context, compute those that should
    --  become parameters and those that should be local variables
 
-   type Text_Range is record
-      Start  : Integer;
-      Lines  : Natural;
-   end record;
-
-   function ">" (Range1, Range2 : Text_Range) return Boolean;
-
-   package Text_Ranges is new Ada.Containers.Indefinite_Ordered_Sets
-     (Text_Range, ">", "=");
-
-   use Parameter_Lists, Entity_Information_Arrays, Text_Ranges;
-   use Extracted_Entity_Lists;
+   use Parameter_Lists, Entity_Information_Arrays, Extracted_Entity_Lists;
 
    procedure Generate_Extracted_Method
      (Kernel      : access Kernel_Handle_Record'Class;
       Name        : String;
       Context     : Extract_Context;
-      To_Delete   : out Text_Ranges.Set;
+      Local_Vars  : out Extracted_Entity_Lists.List;
       Method_Decl : out Unbounded_String;
       Method_Body : out Unbounded_String;
       Method_Call : out Unbounded_String);
@@ -199,7 +190,6 @@ package body Refactoring.Subprograms is
 
    procedure Generate_Local_Vars
      (Local_Vars : Extracted_Entity_Lists.List;
-      To_Delete  : out Text_Ranges.Set;
       Result     : out Unbounded_String);
    --  Generate the local variables declarations
 
@@ -246,16 +236,20 @@ package body Refactoring.Subprograms is
       PType        : out Parameter_Type);
    --  Whether Entity is a parameter for a subprogram, and if it is which type
 
-   ---------
-   -- ">" --
-   ---------
+   ----------
+   -- Free --
+   ----------
 
-   function ">" (Range1, Range2 : Text_Range) return Boolean is
+   procedure Free (Context : in out Extract_Context) is
+      C : Extracted_Entity_Lists.Cursor := Context.Entities.First;
+      E : Extracted_Entity;
    begin
-      return Range1.Start > Range2.Start
-        or else (Range1.Start = Range2.Start
-                 and then Range1.Lines > Range2.Lines);
-   end ">";
+      while Has_Element (C) loop
+         E := Element (C);
+         Free (E.Decl);
+         Next (C);
+      end loop;
+   end Free;
 
    ------------------
    -- Prepare_Code --
@@ -585,7 +579,6 @@ package body Refactoring.Subprograms is
 
    procedure Generate_Local_Vars
      (Local_Vars : Extracted_Entity_Lists.List;
-      To_Delete  : out Text_Ranges.Set;
       Result     : out Unbounded_String)
    is
       E    : Extracted_Entity;
@@ -596,23 +589,9 @@ package body Refactoring.Subprograms is
       P := Local_Vars.First;
       while Has_Element (P) loop
          E := Element (P);
-
-         declare
-            Decl : constant String := E.Decl.Display_As_Variable;
-         begin
-            --  Will remove the previous declaration unless it is a parameter
-
-            if Is_Parameter_Of (E.Entity) = null then
-               To_Delete.Include
-                 ((Start  => Get_Line (Get_Declaration_Of (E.Entity)),
-                   Lines  => Lines_Count (Decl)));
-            end if;
-
-            Append (Result, "   ");
-            Append (Result, Decl);
-            Append (Result, ASCII.LF);
-         end;
-
+         Append (Result, "   ");
+         Append (Result, E.Decl.Display_As_Variable);
+         Append (Result, ASCII.LF);
          Next (P);
       end loop;
    end Generate_Local_Vars;
@@ -625,7 +604,7 @@ package body Refactoring.Subprograms is
      (Kernel      : access Kernel_Handle_Record'Class;
       Name        : String;
       Context     : Extract_Context;
-      To_Delete   : out Text_Ranges.Set;
+      Local_Vars  : out Extracted_Entity_Lists.List;
       Method_Decl : out Unbounded_String;
       Method_Body : out Unbounded_String;
       Method_Call : out Unbounded_String)
@@ -638,7 +617,6 @@ package body Refactoring.Subprograms is
            Editor.New_Location (Context.Line_End, 1).End_Of_Line);
 
       Params               : Parameters;
-      Local_Vars           : Extracted_Entity_Lists.List;
       Typ                  : Entity_Information;
       Code_Start, Code_End : Integer;
       Comment_Start, Comment_End : Integer;
@@ -694,7 +672,7 @@ package body Refactoring.Subprograms is
          Append (Method_Body, " is" & ASCII.LF);
       end if;
 
-      Generate_Local_Vars (Local_Vars, To_Delete, Local);
+      Generate_Local_Vars (Local_Vars, Local);
       Append (Method_Body, Local);
 
       if Params.Is_Function then
@@ -858,6 +836,8 @@ package body Refactoring.Subprograms is
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : in out Extract_Context)
    is
+      Editor  : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (Context.File);
       Ref_Iter : Entity_Reference_Iterator;
       Iter     : Entity_Iterator;
       Caller   : Entity_Information;
@@ -869,6 +849,23 @@ package body Refactoring.Subprograms is
       PType     : Parameter_Type;
       Struct    : Structured_File_Access;
       ERef      : Entity_Reference_Details;
+
+      procedure Create_Decl_If_Necessary;
+      --  Get information about the entity declaration, if needed
+
+      procedure Create_Decl_If_Necessary is
+      begin
+         if Entity.Decl = No_Entity_Declaration then
+            Entity.Decl := Get_Declaration (Kernel, Entity.Entity);
+
+            --  Marks are used to remove the declaration for the entity, which
+            --  will not happen unless the entity is declared in the current
+            --  file.
+            if Get_Filename (Decl.File) = Context.File then
+               Create_Marks (Entity.Decl, Editor);
+            end if;
+         end if;
+      end Create_Decl_If_Necessary;
 
    begin
       Context.Source := Get_Or_Create (Get_Database (Kernel), Context.File);
@@ -968,10 +965,7 @@ package body Refactoring.Subprograms is
                            end case;
 
                         else
-                           if Entity.Decl = No_Entity_Declaration then
-                              Entity.Decl := Get_Declaration
-                                (Kernel, Entity.Entity);
-                           end if;
+                           Create_Decl_If_Necessary;
 
                            if Entity.Decl.Initial_Value /= "" then
                               Entity.Flags (Flag_Modified_Before) := True;
@@ -1006,10 +1000,7 @@ package body Refactoring.Subprograms is
                           (Struct, Location.Line, Location.Column));
 
                      if not ERef.Is_Named_Parameter then
-                        if Entity.Decl = No_Entity_Declaration then
-                           Entity.Decl := Get_Declaration
-                             (Kernel, Entity.Entity);
-                        end if;
+                        Create_Decl_If_Necessary;
 
                         --  If we are calling a subprogram nested within the
                         --  parent, we can't extract the code.
@@ -1099,45 +1090,47 @@ package body Refactoring.Subprograms is
       Context     : Extract_Context;
       Method_Name : String) return Command_Return_Type
    is
+      Buffer : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (Context.File);
       Method_Decl, Method_Body, Method_Call : Unbounded_String;
-      To_Delete  : Text_Ranges.Set;
-      Iter       : Text_Ranges.Cursor;
+      Local_Vars : Extracted_Entity_Lists.List;
+      Iter       : Extracted_Entity_Lists.Cursor;
       Result     : Command_Return_Type;
+      E          : Extracted_Entity;
    begin
       if Context = Invalid_Context then
          Trace (Me, "Extract_Method: Invalid context");
          return Failure;
       end if;
 
+      Buffer.Start_Undo_Group;
+
       Generate_Extracted_Method
         (Kernel,
          Name        => Method_Name,
          Context     => Context,
-         To_Delete   => To_Delete,
+         Local_Vars  => Local_Vars,
          Method_Decl => Method_Decl,
          Method_Body => Method_Body,
          Method_Call => Method_Call);
 
       if Method_Body /= Null_Unbounded_String then
          declare
-            Buffer : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Kernel).Get (Context.File);
             Line_Start : constant Editor_Mark'Class :=
               Buffer.New_Location (Context.Line_Start, 1).Create_Mark;
             Line_End : constant Editor_Mark'Class :=
               Buffer.New_Location (Context.Line_End, 1)
               .End_Of_Line.Create_Mark;
          begin
-            Buffer.Start_Undo_Group;
+            Iter := Local_Vars.First;
 
-            Iter := To_Delete.First;
+            --  Will remove the previous declaration unless it is a parameter
 
             while Has_Element (Iter) loop
-               Delete_Text
-                 (Kernel     => Kernel,
-                  In_File    => Context.File,
-                  Line_Start => Element (Iter).Start,
-                  Line_End => Element (Iter).Start + Element (Iter).Lines - 1);
+               E := Element (Iter);
+               if Is_Parameter_Of (E.Entity) = null then
+                  E.Decl.Remove;
+               end if;
                Next (Iter);
             end loop;
 
@@ -1181,14 +1174,15 @@ package body Refactoring.Subprograms is
 
             Line_Start.Delete;
             Line_End.Delete;
-            Buffer.Finish_Undo_Group;
-            return Result;
          end;
       else
          Trace (Me,
                 "Extract_Method: Couldn't compute body of new subprogram");
-         return Failure;
+         Result := Failure;
       end if;
+
+      Buffer.Finish_Undo_Group;
+      return Result;
 
    exception
       when E : others =>
@@ -1226,6 +1220,7 @@ package body Refactoring.Subprograms is
 
       if Extract = Invalid_Context then
          --  Nothing to do, and error message already printed
+         Free (Extract);
          return Failure;
       end if;
 
@@ -1256,6 +1251,7 @@ package body Refactoring.Subprograms is
 
       Destroy (Dialog);
 
+      Free (Extract);
       return Result;
    end Execute;
 
@@ -1285,6 +1281,8 @@ package body Refactoring.Subprograms is
       then
          Set_Error_Msg (Data, "Couldn't extract method");
       end if;
+
+      Free (Context);
    end Command_Handler;
 
    --------------------------

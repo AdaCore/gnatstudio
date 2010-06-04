@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 pragma Warnings (Off, "*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
@@ -32,12 +33,13 @@ with GPS.Editors;             use GPS.Editors;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
+with Language.Tree;           use Language.Tree;
+with Language.Tree.Database;  use Language.Tree.Database;
 with Refactoring_Module;      use Refactoring_Module;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with GNAT.Strings;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with Language.Tree.Database; use Language.Tree.Database;
 
 package body Refactoring.Performers is
    Me : constant Debug_Handle := Create ("Refactoring");
@@ -92,6 +94,10 @@ package body Refactoring.Performers is
    procedure Skip_Keyword
      (Str : String; Index : in out Integer; Word : String);
    --  Skip the next word in Str if it is Word
+
+   procedure Remove_Blanks
+     (From : in out Editor_Location'Class; Direction : Integer := 1);
+   --  Remove all blanks from From onwards (spaces, tabs and newlines)
 
    ----------
    -- Free --
@@ -531,7 +537,11 @@ package body Refactoring.Performers is
          Buffer : constant GNAT.Strings.String_Access :=
            Get_Buffer (Get_File (EA));
          Last   : constant Integer := Get_Construct (EA).Sloc_End.Index;
-         Index : Natural := Get_Construct (EA).Sloc_Entity.Index;
+         First  : constant Integer := Get_Construct (EA).Sloc_Entity.Index;
+         Index : Natural := First;
+         Shared : Boolean := False;
+         Iter   : Construct_Tree_Iterator;
+         Tree   : Construct_Tree;
       begin
          Skip_To_Char (Buffer (Index .. Last), Index, ':');
          Equal := Index;
@@ -540,11 +550,45 @@ package body Refactoring.Performers is
          --  unbounded strings are always indexed at 1, so normalize
          Equal := Equal - Index + 1;
 
+         Tree := Get_Tree (Get_File (EA));
+         Iter := To_Construct_Tree_Iterator (EA);
+         Shared := Get_Construct (Prev (Tree, Iter)).Sloc_End.Index = Last
+           or else Get_Construct (Next (Tree, Iter)).Sloc_End.Index = Last;
+
          return (Entity    => Entity,
+                 First     => null,
+                 Last      => null,
+                 SFirst    => Get_Construct (EA).Sloc_Entity,
+                 SLast     => Get_Construct (EA).Sloc_End,
                  Equal_Loc => Equal,
+                 Shared    => Shared,
+                 Length    => Last - First + 1,
                  Decl      => To_Unbounded_String (Buffer (Index .. Last)));
       end;
    end Get_Declaration;
+
+   ------------------
+   -- Create_Marks --
+   ------------------
+
+   procedure Create_Marks
+     (Self   : in out Entity_Declaration;
+      Buffer : Editor_Buffer'Class) is
+   begin
+      if Self.First = null and then Self.Entity /= null then
+         declare
+            Start  : constant Editor_Location'Class := Buffer.New_Location
+              (Line   => Self.SFirst.Line,
+               Column => Self.SFirst.Column);
+         begin
+            Self.First := new Editor_Mark'Class'(Start.Create_Mark);
+            Self.Last  := new Editor_Mark'Class'
+              (Buffer.New_Location
+                 (Line   => Self.SLast.Line,
+                  Column => Self.SLast.Column).Create_Mark);
+         end;
+      end if;
+   end Create_Marks;
 
    -------------------
    -- Initial_Value --
@@ -707,5 +751,139 @@ package body Refactoring.Performers is
 
       return Null_Entity_Access;
    end Get_Entity_Access;
+
+   ----------------------
+   -- Length_In_Source --
+   ----------------------
+
+   function Length_In_Source (Self : Entity_Declaration) return Natural is
+   begin
+      return Self.Length;
+   end Length_In_Source;
+
+   -------------------
+   -- Remove_Blanks --
+   -------------------
+
+   procedure Remove_Blanks
+     (From : in out Editor_Location'Class; Direction : Integer := 1)
+   is
+      EoB : constant Editor_Location'Class := From.Buffer.End_Of_Buffer;
+   begin
+      while From /= EoB loop
+         case From.Get_Char is
+            when Character'Pos (' ')
+               | Character'Pos (ASCII.HT)
+               | Character'Pos (ASCII.LF) =>
+               From.Buffer.Delete (From, From);
+
+            when others =>
+               exit;
+         end case;
+
+         if Direction < 0 then
+            From := From.Forward_Char (-1);
+            exit when From.Offset = 0;
+         end if;
+      end loop;
+   end Remove_Blanks;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (Self : Entity_Declaration) is
+   begin
+      if Self.First = null then
+         return;
+      end if;
+
+      declare
+         From : Editor_Location'Class := Self.First.Location;
+         To   : constant Editor_Location'Class := Self.Last.Location;
+
+      begin
+         --  ??? Should take into account the case where there are several
+         --  declarations grouped as in "A, B : Integer", and we only want to
+         --  remove one of them. The one we want to remove starts exactly at
+         --  From but there might be others afterward.
+
+         if Self.Shared then
+            declare
+               TM : constant Editor_Mark'Class := To.Create_Mark;
+            begin
+               --  Only remove the name of the entity and the preceding or
+               --  leading comma
+
+               From.Buffer.Delete
+                 (From, From.Forward_Char (Get_Name (Self.Entity)'Length - 1));
+               Remove_Blanks (From);
+
+               if From.Get_Char = Character'Pos (',') then
+                  From.Buffer.Delete (From, From);
+                  Remove_Blanks (From);
+
+               elsif From.Get_Char = Character'Pos (':') then
+                  From := From.Forward_Char (-1);
+                  --  Remove backward instead
+                  Remove_Blanks (From, -1);
+
+                  if From.Get_Char = Character'Pos (',') then
+                     From.Buffer.Delete (From, From);
+                     From := From.Forward_Char (-1);
+                     Remove_Blanks (From, -1);
+
+                     --  We have now removed " *, *", so we should put back one
+                     --  space
+
+                     From.Buffer.Insert (From.Forward_Char (1), " ");
+
+                  else
+                     --  After all the declaration is not shared (perhaps we
+                     --  removed all the variables on the line already)
+
+                     From.Buffer.Delete (From.Forward_Char (1), TM.Location);
+                  end if;
+               end if;
+
+               TM.Delete;
+            end;
+
+         else
+            From.Buffer.Delete (From, To);
+
+            --  Are we leaving an empty line ? If yes, remove it too
+
+            declare
+               Bol : constant Editor_Location'Class := From.Beginning_Of_Line;
+            begin
+               --  From points to the character that was just after the initial
+               --  decl, ie the newline. We'll need to move backward
+
+               if Trim (From.Buffer.Get_Chars (Bol, From), Both) =
+                 "" & ASCII.LF
+               then
+                  From.Buffer.Delete (Bol, From);
+               end if;
+            end;
+         end if;
+      end;
+   end Remove;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Entity_Declaration) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Editor_Mark'Class, Editor_Mark_Access);
+   begin
+      if Self.First /= null then
+         Self.First.Delete;
+         Unchecked_Free (Self.First);
+         Self.Last.Delete;
+         Unchecked_Free (Self.Last);
+      end if;
+   end Free;
 
 end Refactoring.Performers;
