@@ -63,6 +63,7 @@ with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -1989,18 +1990,40 @@ package body Src_Editor_View is
                end if;
 
             elsif Get_Button (Event) = 2 then
-               --  Short-circuit the textview handler to disable clipboard
-               --  paste under Windows: this is not a standard mechanism
-               --  on this platform, and it causes unwanted paste operations
-               --  with some mouse wheels.
 
                --  In hyper mode, we know that this won't cause a paste
                --  operation, since this will be interrupted by
                --  Src_Editor_View.Hyper_Mode.Button_Press_Event_Cb.
+               if View.Hyper_Mode then
+                  return False;
+               end if;
 
-               if Host = Windows
-                 and then not View.Hyper_Mode
-               then
+               --  Short-circuit the textview handler to disable clipboard
+               --  paste under Windows: this is not a standard mechanism
+               --  on this platform, and it causes unwanted paste operations
+               --  with some mouse wheels.
+               if Host = Windows then
+                  return True;
+               else
+                  --  On UNIX we intercept this to use our own paste function,
+                  --  because the default one pastes the tags, which we do not
+                  --  want.
+                  Copy_Clipboard
+                    (Get_Clipboard (View.Kernel),
+                     Get_Current_Focus_Widget (View.Kernel));
+
+                  declare
+                     L, C    : Gint;
+                     Iter    : Gtk_Text_Iter;
+                  begin
+                     Window_To_Buffer_Coords
+                       (View, Text_Window_Text,
+                        Gint (Get_X (Event)), Gint (Get_Y (Event)), L, C);
+                     Get_Iter_At_Location (View, Iter, L, C);
+                     Place_Cursor (Get_Buffer (View), Iter);
+                     Paste_Clipboard (Get_Clipboard (View.Kernel), View);
+                  end;
+
                   return True;
                end if;
             end if;
