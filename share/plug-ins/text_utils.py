@@ -145,7 +145,6 @@ def move_block (chars=1):
    end_loc = end_loc.forward_char(-1)
 
    text = buffer.get_chars(beg_loc, end_loc)
-   GPS.Console ("Messages").write ("#" + text +  "#")
 
    newtext = []
    for line in text.split('\n'):
