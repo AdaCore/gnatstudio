@@ -120,33 +120,68 @@ def get_selection_or_line (buffer, location):
 
 @interactive ("Editor", "Source editor", name="Move block right",
               menu="/Edit/Selection/Move right", key="control-alt-greater")
-@with_save_excursion
 def move_block (chars=1):
    """Move the current selection chars characters to the right. If chars
       is negative, moves to the left. If there is no selection, indent
       the current line."""
 
    buffer = GPS.EditorBuffer.get ()
-   start = buffer.selection_start ().beginning_of_line ()
-   end   = buffer.selection_end ().end_of_line ()
    tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
 
-   while start < end:
+   # Determine extents of the selection
+   start_line = buffer.selection_start().line()
+   end_line   = buffer.selection_end().line()
+
+   beg_loc = buffer.selection_start().beginning_of_line()
+   end_loc = buffer.selection_end().end_of_line()
+
+   had_selection = not (buffer.selection_start() == buffer.selection_end())
+
+   if not had_selection:
+       cursor_loc = buffer.current_view ().cursor()
+       cursor_line = cursor_loc.line()
+       cursor_col  = cursor_loc.column()
+
+   end_loc = end_loc.forward_char(-1)
+
+   text = buffer.get_chars(beg_loc, end_loc)
+   GPS.Console ("Messages").write ("#" + text +  "#")
+
+   newtext = []
+   for line in text.split('\n'):
       if chars > 0:
-         buffer.insert (start, " " * chars)
+         # Insert x chars at the beginning of the line
+         newtext += [" " * chars + line]
       else:
-         m = min (start - chars, start.end_of_line ())
-         txt = buffer.get_chars (start, m).replace ("\t", " " * tab_width)
-         repl = txt[-chars:] # If we did tab expansion, preserve extra chars
-         txt = txt[:-chars]  # txt always at most (-chars) in length
-         txt = txt.lstrip () # Remove all leading spaces. If the string had
-                             # only them (ie the text was indented far enough
-                             # to the right), we just want to remove them.
-                             # Otherwise that removes as many spaces as
-                             # possible and preserves the significant text
-         buffer.delete (start, m)
-         buffer.insert (start, txt + repl)
-      start = start.end_of_line () + 1 # beginning of next line
+         # ... remove x blanks from the beginning of the text ...
+
+         for c in range (-chars):
+             if line == "":
+                break
+             if line[0] == '\t':
+                line = " " * (tab_width - 1) + line[1:]
+             elif line[0] == ' ':
+                line = line[1:]
+             else:
+                break
+         newtext += [line]
+
+   buffer.start_undo_group ()
+   buffer.delete (beg_loc, end_loc)
+   buffer.insert (EditorLocation (buffer, start_line, 1), "\n".join(newtext))
+   buffer.finish_undo_group ()
+
+   if had_selection:
+       # Reselect the range of lines
+       start_loc = EditorLocation (buffer, start_line, 1)
+       end_loc   = EditorLocation (buffer, end_line, 1).end_of_line()
+       buffer.select (start_loc, end_loc)
+   else:
+       # Replace the cursor
+       buffer.current_view().goto (
+          EditorLocation (buffer,
+             cursor_line,
+             max (0, cursor_col + chars)))
 
 make_interactive (lambda:move_block(-1),
                   category="Editor", filter="Source editor",
@@ -206,7 +241,7 @@ def serialize (increment=1):
            AAA |10 AAA
            CCC 34567 CCC
            DDD DDD
- 
+
       then only the first two lines will be modified, and will become
 
            AAA 10 AAA
@@ -261,7 +296,7 @@ def serialize (increment=1):
    end_col = (repl - 1).column () - 1
 
    try:
-      value = int (buffer.get_chars (loc, repl - 1)) + increment 
+      value = int (buffer.get_chars (loc, repl - 1)) + increment
    except:
       GPS.Console().write ("Cursor must be before a number")
       return
@@ -290,7 +325,7 @@ def serialize (increment=1):
           replace (repl + frm_col, to - 1, format % value)
 
        repl = repl.end_of_line () + 1
-       value = value + increment 
+       value = value + increment
 
 @interactive ("Editor", "Source editor", name="kill forward")
 def delete_forward():
