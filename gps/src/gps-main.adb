@@ -1840,6 +1840,17 @@ procedure GPS.Main is
       Free (Home);
       Free (Prefix);
       Free (Startup_Dir);
+
+      declare
+         Tmp : String_Access := Getenv ("GPS_MEMORY_MONITOR");
+      begin
+         if Tmp.all /= "" then
+            GNATCOLL.Memory.Dump
+              (Size   => 10,
+               Report => GNATCOLL.Memory.All_Reports);
+         end if;
+         Free (Tmp);
+      end;
    end Do_Cleanups;
 
 begin
