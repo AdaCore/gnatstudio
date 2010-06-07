@@ -24,7 +24,7 @@ with "../keymanager/keymanager";
 with "../navigation/navigation";
 with "../prj_editor/prj_editor";
 with "../python/python";
-with "../refactoring/refactoring";
+with "../refactoring/ui/refactoring_ui";
 with "../remote/remote";
 with "../shell/shell";
 with "../socket/socket";
