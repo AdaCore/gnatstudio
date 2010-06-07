@@ -17,10 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Default_Preferences;     use Default_Preferences;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Intl;                use GPS.Intl;
 with Refactoring.Rename;      use Refactoring.Rename;
 with Refactoring.Parameters;  use Refactoring.Parameters;
 with Refactoring.Subprograms; use Refactoring.Subprograms;
@@ -43,44 +41,6 @@ package body Refactoring_Module is
       Refactoring.Rename.Register_Refactoring (Kernel);
       Refactoring.Parameters.Register_Refactoring (Kernel);
       Refactoring.Subprograms.Register_Refactoring (Kernel);
-
-      Add_Subprogram_Box := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "Refactoring-Subprogram-Box",
-         Default => True,
-         Doc     => -(
-           "This preference forces GPS to add a comment before bodies when it"
-           & " creates new subprograms. This comment is a three line comment"
-           & " box, containing the name of the subprogram, as in" & ASCII.LF
-           & "----------------" & ASCII.LF
-           & "-- Subprogram --" & ASCII.LF
-           & "----------------" & ASCII.LF),
-         Label   => -"Subprogram Box",
-         Page    => -"Refactoring");
-
-      Add_In_Keyword := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "Refactoring-In-Keyword",
-         Default => False,
-         Doc     => -(
-           "Whether the keyword ""in"" should be added when creating new"
-           & " subprograms, as in" & ASCII.LF
-           & "    procedure Proc (A : in Integer);" & ASCII.LF
-           & " as opposed to" & ASCII.LF
-           & "    procedure Proc (A : Integer);"),
-         Label   => -"Add ""in"" Keyword",
-         Page    => -"Refactoring");
-
-      Create_Subprogram_Decl  := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "Refactoring-Subprogram-Spec",
-         Default => True,
-         Doc     => -(
-           "Whether GPS should create a declaration for the subprogram. If"
-           & " set to False, only the body of the subprogram will be created"),
-         Label   => -"Create Subprogram Declarations",
-         Page    => -"Refactoring");
-
    end Register_Module;
 
 end Refactoring_Module;

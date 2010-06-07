@@ -27,11 +27,6 @@ with Basic_Types; use Basic_Types;
 
 package Refactoring.UI is
 
-   function Get_Context
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Refactoring.Factory_Context;
-   --  Return the context to use for all refactoring operations
-
    type Location_Type is record
       File   : Entities.Source_File;
       Line   : Integer;

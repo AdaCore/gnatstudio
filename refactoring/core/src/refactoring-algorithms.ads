@@ -48,6 +48,12 @@ package Refactoring.Algorithms is
    --  Any context must have been passed in the constructor (Create_*)
    --  and has been stored in Self.
 
+   function Create_Extract_Subprogram
+     (Context : Factory_Context;
+     ) return Code_Refactoring_Access;
+   --  Returns a refactoring that extracts part of a source code into a
+   --  new subprogram
+
 private
    type Code_Refactoring is abstract tagged null record;
 end Refactoring.Algorithms;

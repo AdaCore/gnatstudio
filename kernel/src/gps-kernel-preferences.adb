@@ -689,6 +689,45 @@ package body GPS.Kernel.Preferences is
          Label   => -"Search results highlighting",
          Page    => -"Editor/Fonts & Colors");
 
+      -- Refactoring --
+
+      Add_Subprogram_Box := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "Refactoring-Subprogram-Box",
+         Default => True,
+         Doc     => -(
+           "This preference forces GPS to add a comment before bodies when it"
+           & " creates new subprograms. This comment is a three line comment"
+           & " box, containing the name of the subprogram, as in" & ASCII.LF
+           & "----------------" & ASCII.LF
+           & "-- Subprogram --" & ASCII.LF
+           & "----------------" & ASCII.LF),
+         Label   => -"Subprogram Box",
+         Page    => -"Refactoring");
+
+      Add_In_Keyword := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "Refactoring-In-Keyword",
+         Default => False,
+         Doc     => -(
+           "Whether the keyword ""in"" should be added when creating new"
+           & " subprograms, as in" & ASCII.LF
+           & "    procedure Proc (A : in Integer);" & ASCII.LF
+           & " as opposed to" & ASCII.LF
+           & "    procedure Proc (A : Integer);"),
+         Label   => -"Add ""in"" Keyword",
+         Page    => -"Refactoring");
+
+      Create_Subprogram_Decl  := Create
+        (Manager => Get_Preferences (Kernel),
+         Name    => "Refactoring-Subprogram-Spec",
+         Default => True,
+         Doc     => -(
+           "Whether GPS should create a declaration for the subprogram. If"
+           & " set to False, only the body of the subprogram will be created"),
+         Label   => -"Create Subprogram Declarations",
+         Page    => -"Refactoring");
+
       -- Browsers --
 
       Browsers_Bg_Color := Create

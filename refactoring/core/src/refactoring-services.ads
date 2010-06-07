@@ -25,11 +25,18 @@
 with Ada.Strings.Unbounded;
 with Basic_Types;
 with Entities.Queries;
+with GNATCOLL.VFS;
 
 package Refactoring.Services is
 
+   ------------------------------------
+   -- Constructs <-> Entities bridge --
+   ------------------------------------
+   --  The following queries are implemented in terms of both the construct
+   --  database and the entities database.
+
    function Get_Entity_Access
-     (Context : Factory_Context;
+     (Context : not null access Factory_Context_Record'Class;
       Entity  : Entities.Entity_Information)
       return Language.Tree.Database.Entity_Access;
    --  Return a pointer to the declaration of Entity. This pointer can be used
@@ -42,11 +49,17 @@ package Refactoring.Services is
    --  Returns Null_Entity_Access if this could not be retrieved.
 
    function Accepts_Primitive_Ops
-     (Context        : Factory_Context;
+     (Context        : not null access Factory_Context_Record'Class;
       Entity         : Entities.Entity_Information;
       Current_Offset : Basic_Types.String_Index_Type) return Boolean;
    --  Whether the entity is an instance of a class or interface.
    --  This returns null for a "'Class".
+
+   procedure Is_Parameter_Of
+     (Entity       : Entities.Entity_Information;
+      Is_Parameter : out Boolean;
+      PType        : out Entities.Queries.Parameter_Type);
+   --  Whether Entity is a parameter for a subprogram, and if it is which type
 
    -------------------------
    -- Entity declarations --
@@ -56,7 +69,7 @@ package Refactoring.Services is
    No_Entity_Declaration : constant Entity_Declaration;
 
    function Get_Declaration
-     (Context : Factory_Context;
+     (Context : not null access Factory_Context_Record'Class;
       Entity  : Entities.Entity_Information) return Entity_Declaration;
    --  Return the declaration of the entity. From this, one can extract the
    --  initial value,  the type (as set by the user, whether it is a constant,
@@ -74,7 +87,7 @@ package Refactoring.Services is
 
    function Display_As_Parameter
      (Self    : Entity_Declaration;
-      Context : Factory_Context;
+      Context : not null access Factory_Context_Record'Class;
       PType   : Entities.Queries.Parameter_Type) return String;
    --  Return the declaration of the entity as it should be displayed in a
    --  parameter list. This includes the name of the variable.
@@ -94,6 +107,69 @@ package Refactoring.Services is
    procedure Remove (Self : Entity_Declaration);
    --  Remove the declaration of the entity from the source file.
    --  You must have called Create_Marks first.
+
+   -------------------
+   -- Range of code --
+   -------------------
+
+   type Range_Of_Code is new With_Factory with private;
+   Empty_Range_Of_Code : constant Range_Of_Code;
+
+   function Create_Range
+     (Context     : not null access Factory_Context_Record'Class;
+      File        : GNATCOLL.VFS.Virtual_File;
+      From_Line   : Integer;
+      To_Line     : Integer) return Range_Of_Code;
+   --  Create a range of code (ie the part of the code delimited by two lines).
+
+   function File      (Self : Range_Of_Code) return GNATCOLL.VFS.Virtual_File;
+   function From_Line (Self : Range_Of_Code) return Integer;
+   function To_Line   (Self : Range_Of_Code) return Integer;
+   --  Return the various components of the range
+
+   procedure Get_Parent
+     (Self   : in out Range_Of_Code;
+      Parent : out Entities.Entity_Information);
+   --  Return the entity that contains the whole range of the code (in general
+   --  the subprogram that includes from From_Line..To_Line).
+   --  If both ends of the code are not contained within the same entity, an
+   --  error is reported to the context, and No_Entity_Information is returned.
+
+   type Entity_References_Flag is
+     (Flag_Modified,
+      Flag_Read,
+      --  Whether the entity is modified or read in the range of code
+
+      Flag_Ref_Outside_Parent,
+      --  Whether the entity is referenced outside of the function containing
+      --  the range of code
+
+      Flag_Read_Before, Flag_Modified_Before,
+      --  Whether the entity is modified or read before the range of code, but
+      --  within the same function.
+
+      Flag_Read_After, Flag_Modified_After
+      --  Whether the entity is modified or read after the range of code, but
+      --  within the same function
+     );
+
+   type Entity_References_Flags is array (Entity_References_Flag) of Boolean;
+
+   procedure For_All_Variable_In_Range
+     (Self               : in out Range_Of_Code;
+      Callback           : not null access procedure
+        (Entity : Entities.Entity_Information;
+         Flags  : Entity_References_Flags);
+      Success            : out Boolean;
+      Omit_Library_Level : Boolean := False);
+   --  For each entity references within the given range of code, calls
+   --  Callback. The callback is never called for library level entities if
+   --  Omit_Library_Level is True.
+   --  The callback receives information on where else the entity is referenced
+   --  and on how it is used within the selected chunk of code.
+   --  Success is set to False if not all entities could be examined because an
+   --  error occurred. In such a case, the error has already been reported to
+   --  the context.
 
 private
 
@@ -123,4 +199,15 @@ private
       Last      => null,
       Shared    => False,
       Decl      => Ada.Strings.Unbounded.Null_Unbounded_String);
+
+   type Range_Of_Code is new With_Factory with record
+      File        : GNATCOLL.VFS.Virtual_File;
+      Source      : Entities.Source_File;
+      From_Line   : Integer;
+      To_Line     : Integer;
+      Parent      : Entities.Entity_Information;
+   end record;
+
+   Empty_Range_Of_Code : constant Range_Of_Code :=
+     (null, GNATCOLL.VFS.No_File, null, -1, -1, null);
 end Refactoring.Services;

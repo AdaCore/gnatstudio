@@ -55,6 +55,7 @@ with String_Hash;
 with Default_Preferences;
 with Histories;
 with Projects;
+with Refactoring;
 with Switches_Chooser;
 with String_List_Utils;
 with Task_Manager;
@@ -704,6 +705,13 @@ package GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record;
       Factory : GPS.Editors.Editor_Buffer_Factory_Access);
 
+   -----------------
+   -- Refactoring --
+   -----------------
+
+   function Refactoring_Context
+     (Kernel : access Kernel_Handle_Record) return Refactoring.Factory_Context;
+
    ----------------
    -- Hyper_Mode --
    ----------------
@@ -1192,6 +1200,8 @@ private
 
       Locations_View_Manager : System.Address := System.Null_Address;
       --  The locations view manager
+
+      Refactoring : Standard.Refactoring.Factory_Context;
    end record;
 
 end GPS.Kernel;

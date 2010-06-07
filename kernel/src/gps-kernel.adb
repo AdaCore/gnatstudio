@@ -68,6 +68,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Mapper;              use Basic_Mapper;
+with Basic_Types;               use Basic_Types;
 with Default_Preferences;       use Default_Preferences;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
@@ -81,6 +82,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -97,6 +99,7 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects;                  use Projects;
+with Refactoring;               use Refactoring;
 with String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
@@ -156,6 +159,52 @@ package body GPS.Kernel is
    pragma Convention (C, On_Main_Window_Destroyed);
    --  Called when the main window is destroyed, so that the kernel no longer
    --  points to an invalid window
+
+   type GPS_Refactoring_Factory_Context
+     is new Refactoring.Factory_Context_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+
+   overriding procedure Report_Error
+     (Self : access GPS_Refactoring_Factory_Context;
+      Msg  : String);
+   overriding procedure Report_Location
+     (Self     : access GPS_Refactoring_Factory_Context;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Natural;
+      Column   : Basic_Types.Visible_Column_Type := 1;
+      Text     : String);
+
+   ------------------
+   -- Report_Error --
+   ------------------
+
+   overriding procedure Report_Error
+     (Self : access GPS_Refactoring_Factory_Context;
+      Msg  : String) is
+   begin
+      Insert (Self.Kernel, Msg, Mode => Error);
+   end Report_Error;
+
+   ---------------------
+   -- Report_Location --
+   ---------------------
+
+   overriding procedure Report_Location
+     (Self     : access GPS_Refactoring_Factory_Context;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Natural;
+      Column   : Basic_Types.Visible_Column_Type := 1;
+      Text     : String)
+   is
+   begin
+      Create_Simple_Message
+        (Get_Messages_Container (Self.Kernel),
+         Category, File, Line, Column, Text,
+         0, (Editor_Side => True, Locations => True));
+   end Report_Location;
 
    --------------------------
    -- Get_Language_Handler --
@@ -1677,6 +1726,9 @@ package body GPS.Kernel is
         (History_Record, History);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Root_Table'Class, Root_Table_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Refactoring.Factory_Context_Record'Class,
+         Refactoring.Factory_Context);
    begin
       Reset_Properties (Handle);
 
@@ -1751,6 +1803,8 @@ package body GPS.Kernel is
 
          Destroy (Language_Handler (Handle.Lang_Handler));
       end if;
+
+      Unchecked_Free (Handle.Refactoring);
 
       Free (Tmp);
       Free (Handle.Gnatls_Cache);
@@ -2620,5 +2674,34 @@ package body GPS.Kernel is
    begin
       return Kernel.Hyper_Mode;
    end In_Hyper_Mode;
+
+   -------------------------
+   -- Refactoring_Context --
+   -------------------------
+
+   function Refactoring_Context
+     (Kernel : access Kernel_Handle_Record)
+      return Refactoring.Factory_Context is
+   begin
+      if Kernel.Refactoring = null then
+         Kernel.Refactoring := new GPS_Refactoring_Factory_Context'
+           (Kernel                 => Kernel_Handle (Kernel),
+            Buffer_Factory         => Get_Buffer_Factory (Kernel),
+            Entity_Db              => Get_Database (Kernel),
+            Construct_Db           => Get_Construct_Database (Kernel),
+            Add_Subprogram_Box     => False,
+            Add_In_Keyword         => False,
+            Create_Subprogram_Decl => False);
+      end if;
+
+      --  Update the flags from the current value of the preferences
+
+      Kernel.Refactoring.Add_Subprogram_Box := Add_Subprogram_Box.Get_Pref;
+      Kernel.Refactoring.Add_In_Keyword     := Add_In_Keyword.Get_Pref;
+      Kernel.Refactoring.Create_Subprogram_Decl :=
+        Create_Subprogram_Decl.Get_Pref;
+
+      return Kernel.Refactoring;
+   end Refactoring_Context;
 
 end GPS.Kernel;

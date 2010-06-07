@@ -20,13 +20,8 @@
 --  This package provides support for refactoring the code
 
 with GPS.Kernel;
-with Default_Preferences;
 
 package Refactoring_Module is
-
-   Add_Subprogram_Box     : Default_Preferences.Boolean_Preference;
-   Add_In_Keyword         : Default_Preferences.Boolean_Preference;
-   Create_Subprogram_Decl : Default_Preferences.Boolean_Preference;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

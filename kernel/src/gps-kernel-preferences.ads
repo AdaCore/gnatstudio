@@ -211,6 +211,12 @@ package GPS.Kernel.Preferences is
    Automatic_Xrefs_Load            : Boolean_Preference;
    Hidden_Directories_Pattern      : String_Preference;
 
+   -- Refactoring --
+
+   Add_Subprogram_Box     : Default_Preferences.Boolean_Preference;
+   Add_In_Keyword         : Default_Preferences.Boolean_Preference;
+   Create_Subprogram_Decl : Default_Preferences.Boolean_Preference;
+
    -- Wizards --
    Wizard_Title_Font : Font_Preference;
 

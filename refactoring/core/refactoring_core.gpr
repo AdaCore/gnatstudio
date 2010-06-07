@@ -1,5 +1,5 @@
-with "../../kernel/kernel";
 with "../../shared";
+with "../../kernel/kernel";  --  ??? Should be kernel_core
 with "../../ada_module/core/ada_module_core";
 
 project Refactoring_Core is
