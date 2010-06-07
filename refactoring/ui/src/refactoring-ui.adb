@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,9 @@
 
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Intl;             use GPS.Intl;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with Entities;               use Entities;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
+with Entities;             use Entities;
+with Refactoring_Module;   use Refactoring_Module;
 
 with Glib;                  use Glib;
 with Gtk.Box;               use Gtk.Box;
@@ -175,5 +176,22 @@ package body Refactoring.UI is
 
       return Scrolled;
    end Create_File_List;
+
+   -----------------
+   -- Get_Context --
+   -----------------
+
+   function Get_Context
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Refactoring.Factory_Context is
+   begin
+      return Factory_Context'
+        (Buffer_Factory         => Get_Buffer_Factory (Kernel),
+         Entity_Db              => Get_Database (Kernel),
+         Construct_Db           => Get_Construct_Database (Kernel),
+         Add_Subprogram_Box     => Add_Subprogram_Box.Get_Pref,
+         Add_In_Keyword         => Add_In_Keyword.Get_Pref,
+         Create_Subprogram_Decl => Create_Subprogram_Decl.Get_Pref);
+   end Get_Context;
 
 end Refactoring.UI;

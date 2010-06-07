@@ -17,13 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Basic_Types;               use Basic_Types;
-with Entities.Queries;
 with GNATCOLL.VFS;
-with GPS.Editors;
 with GPS.Kernel;
-with Language.Tree.Database;
 with Refactoring.UI;            use Refactoring.UI;
 
 package Refactoring.Performers is
@@ -121,98 +117,5 @@ package Refactoring.Performers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
    --  Interface to start/finish undo group
-
-   -------------------------
-   -- Entity declarations --
-   -------------------------
-
-   type Entity_Declaration is tagged private;
-   No_Entity_Declaration : constant Entity_Declaration;
-
-   function Get_Declaration
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity : Entities.Entity_Information) return Entity_Declaration;
-   --  Return the declaration of the entity. From this, one can extract the
-   --  initial value, the type (as set by the user, whether it is a constant,
-   --  and other attributes).
-
-   procedure Create_Marks
-     (Self   : in out Entity_Declaration;
-      Buffer : GPS.Editors.Editor_Buffer'Class);
-   --  Creates marks in the editor corresponding to the declaration of the
-   --  entity.
-   --  The result must be freed by the user.
-
-   function Initial_Value (Self : Entity_Declaration) return String;
-   --  Return the initial value of the entity, as set in its declaration. For
-   --  instance, if the entity is declared as
-   --     A : Integer := 2 + 3;
-   --  then the initial_value is "2 + 3".
-   --  The empty string is returned if no initial value was specified
-
-   procedure Free (Self : in out Entity_Declaration);
-   --  Free the memory used by Self
-
-   procedure Remove (Self : Entity_Declaration);
-   --  Remove the declaration of the entity from the source file.
-   --  You must have called Create_Marks first.
-
-   function Display_As_Parameter
-     (Self  : Entity_Declaration;
-      PType : Entities.Queries.Parameter_Type) return String;
-   --  Return the declaration of the entity as it should be displayed in a
-   --  parameter list. This includes the name of the variable.
-
-   function Display_As_Variable
-     (Self  : Entity_Declaration) return String;
-   --  Return the declaration of the entity as it should be displayed in a
-   --  variable declaration. This includes the name of the variable
-
-   function Length_In_Source (Self : Entity_Declaration) return Natural;
-   --  The length of the text for the declaration in the source file
-
-   function Get_Entity_Access
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity : Entities.Entity_Information)
-      return Language.Tree.Database.Entity_Access;
-   --  Return a pointer to the declaration of Entity. This pointer can be used
-   --  to retrieve additional data about the entity (read directly from the
-   --  source file).
-   --  This returns a pointer to the first declaration (aka "public view") of
-   --  the entity. You might need to call Get_Last_Visible_Declaration if you
-   --  want the declaration as visible from a specific part of the code (this
-   --  could for instance be the declaration in the private part).
-   --  Returns Null_Entity_Access if this could not be retrieved.
-
-private
-
-   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
-
-   type Entity_Declaration is tagged record
-      Entity : Entities.Entity_Information;
-      Decl   : Ada.Strings.Unbounded.Unbounded_String;
-      Length : Natural;
-
-      SFirst, SLast : Language.Source_Location;
-      First, Last   : Editor_Mark_Access;
-      --  From the start of the entity name to the ";"
-
-      Shared : Boolean;
-      --  Whether multiple entities share the same declaration
-
-      Equal_Loc : Integer := -1;
-      --  Location of ":=" in Decl
-   end record;
-
-   No_Entity_Declaration : constant Entity_Declaration :=
-     (Entity    => null,
-      Equal_Loc => -1,
-      Length    => 0,
-      SFirst    => <>,
-      SLast     => <>,
-      First     => null,
-      Last      => null,
-      Shared    => False,
-      Decl      => Ada.Strings.Unbounded.Null_Unbounded_String);
 
 end Refactoring.Performers;

@@ -46,6 +46,7 @@ package GPS.Editors is
    --  from the GPS UI.
 
    type Editor_Buffer_Factory is abstract new Controlled with null record;
+   type Editor_Buffer_Factory_Access is access all Editor_Buffer_Factory'Class;
 
    type Editor_Location is abstract new Controlled with null record;
    Nil_Editor_Location : constant Editor_Location'Class;

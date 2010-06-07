@@ -696,16 +696,13 @@ package GPS.Kernel is
    --  Editor_Factory --
    ---------------------
 
-   type Editor_Buffer_Factory_Access is access all
-     GPS.Editors.Editor_Buffer_Factory'Class;
-
    function Get_Buffer_Factory
      (Kernel : access Kernel_Handle_Record)
-      return Editor_Buffer_Factory_Access;
+      return GPS.Editors.Editor_Buffer_Factory_Access;
 
    procedure Set_Buffer_Factory
      (Kernel  : access Kernel_Handle_Record;
-      Factory : Editor_Buffer_Factory_Access);
+      Factory : GPS.Editors.Editor_Buffer_Factory_Access);
 
    ----------------
    -- Hyper_Mode --
@@ -1185,7 +1182,7 @@ private
 
       Hidden_File_Matcher : Pattern_Matcher_Access;
 
-      Editor_Factory               : Editor_Buffer_Factory_Access;
+      Editor_Factory               : GPS.Editors.Editor_Buffer_Factory_Access;
 
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode

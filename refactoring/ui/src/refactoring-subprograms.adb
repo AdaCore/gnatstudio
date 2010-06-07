@@ -42,15 +42,15 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Language;               use Language;
-with Language.Ada;           use Language.Ada;
 with Language_Handlers;      use Language_Handlers;
 with Language.Tree.Database; use Language.Tree.Database;
+with Refactoring.Services;   use Refactoring.Services;
 with Refactoring_Module;     use Refactoring_Module;
 with Refactoring.Performers; use Refactoring.Performers;
+with Refactoring.UI;         use Refactoring.UI;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 package body Refactoring.Subprograms is
 
@@ -106,11 +106,13 @@ package body Refactoring.Subprograms is
       --  The subprogram that contained the extracted code before the
       --  refactoring
 
+      Factory             : Factory_Context;
+
       Entities             : Extracted_Entity_Lists.List;
       --  The entities referenced in the extracted code
    end record;
    Invalid_Context : constant Extract_Context :=
-     (GNATCOLL.VFS.No_File, -1, -1, null, null, Entities => <>);
+     (GNATCOLL.VFS.No_File, -1, -1, null, null, Factory => <>, Entities => <>);
 
    procedure Free (Context : in out Extract_Context);
    --  Free the memory used by the context
@@ -151,7 +153,9 @@ package body Refactoring.Subprograms is
    --  Is_Function is True if the extracted method should be implemented as a
    --  method
 
-   function Generate (Self : Parameters'Class) return Unbounded_String;
+   function Generate
+     (Self : Parameters'Class;
+      Context : Extract_Context) return Unbounded_String;
    --  Generate the list of parameters (including surrounding parenthesis) for
    --  the extracted subprogram
 
@@ -203,12 +207,6 @@ package body Refactoring.Subprograms is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands
-
-   function Accepts_Primitive_Ops
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information;
-      Current_Offset : String_Index_Type) return Boolean;
-   --  Whether the entity is an instance of a class or interface
 
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -287,28 +285,6 @@ package body Refactoring.Subprograms is
       Code_End := Code'Last;
       Skip_Blanks (Code, Code_End, Step => -1);
    end Prepare_Code;
-
-   ---------------------------
-   -- Accepts_Primitive_Ops --
-   ---------------------------
-
-   function Accepts_Primitive_Ops
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information;
-      Current_Offset : String_Index_Type) return Boolean
-   is
-      EA  : Entity_Access := Get_Entity_Access (Kernel, Get_Type_Of (Entity));
-   begin
-      if EA /= Null_Entity_Access then
-         EA := Get_Last_Visible_Declaration
-           (EA, Get_File (EA), Offset => Current_Offset);
-
-         return Get_Construct (EA).Attributes (Ada_Tagged_Attribute)
-           or else Get_Construct (EA).Attributes (Ada_Interface_Attribute);
-      else
-         return False;
-      end if;
-   end Accepts_Primitive_Ops;
 
    ----------
    -- Sort --
@@ -389,7 +365,8 @@ package body Refactoring.Subprograms is
             then
                Params.List.Append
                  ((Parameter => E,
-                   Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                   Is_Tagged =>
+                     Accepts_Primitive_Ops (Context.Factory, Entity, Offset),
                    PType     => In_Parameter));
                Count (In_Parameter) := Count (In_Parameter) + 1;
 
@@ -420,7 +397,8 @@ package body Refactoring.Subprograms is
                   Params.List.Append
                     ((Parameter => E,
                       Is_Tagged =>
-                        Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                        Accepts_Primitive_Ops
+                          (Context.Factory, Entity, Offset),
                       PType     => In_Out_Parameter));
                   Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
 
@@ -433,7 +411,8 @@ package body Refactoring.Subprograms is
                   Params.List.Append
                     ((Parameter => E,
                       Is_Tagged =>
-                        Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                        Accepts_Primitive_Ops
+                          (Context.Factory, Entity, Offset),
                       PType     => In_Out_Parameter));
                   Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
                end if;
@@ -444,7 +423,8 @@ package body Refactoring.Subprograms is
                --  Not set before the call, but needed after
                Params.List.Append
                  ((Parameter => E,
-                   Is_Tagged => Accepts_Primitive_Ops (Kernel, Entity, Offset),
+                   Is_Tagged =>
+                     Accepts_Primitive_Ops (Context.Factory, Entity, Offset),
                    PType     => Out_Parameter));
                Count (Out_Parameter) := Count (Out_Parameter) + 1;
                Params.Last_Out_Param := Entity;
@@ -474,7 +454,10 @@ package body Refactoring.Subprograms is
    -- Generate --
    --------------
 
-   function Generate (Self : Parameters'Class) return Unbounded_String is
+   function Generate
+     (Self : Parameters'Class;
+      Context : Extract_Context) return Unbounded_String
+   is
       Decl  : Unbounded_String;
       Param : Parameter_Lists.Cursor;
    begin
@@ -490,7 +473,7 @@ package body Refactoring.Subprograms is
             then
                Append
                  (Decl, Element (Param).Parameter.Decl.Display_As_Parameter
-                  (Element (Param).PType));
+                  (Context.Factory, Element (Param).PType));
 
                if Element (Param).Is_Tagged then
                   --  Since we are putting the code in the body, we should not
@@ -627,7 +610,7 @@ package body Refactoring.Subprograms is
       Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
       Compute_Params_And_Vars (Kernel, Context, Params, Local_Vars);
       Params.Sort;
-      PList := Params.Generate;
+      PList := Params.Generate (Context);
 
       if Params.Is_Function then
          Typ := Get_Type_Of (Params.Last_Out_Param);
@@ -857,7 +840,7 @@ package body Refactoring.Subprograms is
       procedure Create_Decl_If_Necessary is
       begin
          if Entity.Decl = No_Entity_Declaration then
-            Entity.Decl := Get_Declaration (Kernel, Entity.Entity);
+            Entity.Decl := Get_Declaration (Context.Factory, Entity.Entity);
 
             --  Marks are used to remove the declaration for the entity, which
             --  will not happen unless the entity is declared in the current
@@ -1210,12 +1193,13 @@ package body Refactoring.Subprograms is
       pragma Unreferenced (Command, Button);
 
    begin
-      Extract := (File              => File_Information (Context.Context),
-                  Source            => null,
-                  Line_Start        => <>,
-                  Line_End          => <>,
-                  Parent            => <>,
-                  Entities          => <>);
+      Extract := (File           => File_Information (Context.Context),
+                  Factory        => Get_Context (Get_Kernel (Context.Context)),
+                  Source         => null,
+                  Line_Start     => <>,
+                  Line_End       => <>,
+                  Parent         => <>,
+                  Entities       => <>);
       Get_Area (Context.Context, Extract.Line_Start, Extract.Line_End);
       Compute_Context_Entities (Get_Kernel (Context.Context), Extract);
 
@@ -1266,12 +1250,13 @@ package body Refactoring.Subprograms is
       pragma Unreferenced (Command);
       Context     : Extract_Context;
    begin
-      Context := (File              => Create (Nth_Arg (Data, 1)),
-                  Source            => null,
-                  Line_Start        => Nth_Arg (Data, 2),
-                  Line_End          => Nth_Arg (Data, 3),
-                  Parent            => <>,
-                  Entities          => <>);
+      Context := (File           => Create (Nth_Arg (Data, 1)),
+                  Factory        => Get_Context (Get_Kernel (Data)),
+                  Source         => null,
+                  Line_Start     => Nth_Arg (Data, 2),
+                  Line_End       => Nth_Arg (Data, 3),
+                  Parent         => <>,
+                  Entities       => <>);
       Compute_Context_Entities (Get_Kernel (Data), Context);
 
       if Extract_Method

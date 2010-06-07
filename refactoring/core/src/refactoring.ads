@@ -17,6 +17,39 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Entities;
+with Language.Tree.Database;
+with GPS.Editors;
+
 package Refactoring is
+
+   ---------------------
+   -- Factory context --
+   ---------------------
+
+   type Factory_Context is record
+      Buffer_Factory : GPS.Editors.Editor_Buffer_Factory_Access;
+      Entity_Db      : Entities.Entities_Database;
+      Construct_Db   : Language.Tree.Database.Construct_Database_Access;
+
+      Add_Subprogram_Box : Boolean := True;
+      --  Whether creating a subprogram body should first insert a subprogram
+      --  box
+
+      Add_In_Keyword     : Boolean := False;
+      --  Whether adding "in" parameters should explicitly show the "in"
+      --  keyword. If False, the keyword is omitted
+
+      Create_Subprogram_Decl : Boolean := True;
+      --  Whether to add a subprogram declaration when creating a new
+      --  subprogram in a body.
+   end record;
+   --  This type groups the common data required by all the
+   --  constructors/factories of the various refactoring algorithms.
+   --  Among others, its role is to keep all necessary data from the kernel so
+   --  that GNATBench does not need to depend on the kernel.
+   --  This is a singleton, only one instance is needed in the application.
+   --  It has been made a public report for ease of use. In practice, this is a
+   --  read-only structure except at creation time.
 
 end Refactoring;
