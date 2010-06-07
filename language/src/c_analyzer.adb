@@ -715,9 +715,7 @@ package body C_Analyzer is
                when Tok_Void =>
                   --  Tok_Void is used for blocks: {}
 
-                  if Value.Curly_Level = 0
-                    and then Value.Name_Start /= 0
-                  then
+                  if Value.Name_Start /= 0 then
                      --  ??? Would be nice to be able to find the parameters
                      --  of this function
 
@@ -1257,7 +1255,10 @@ package body C_Analyzer is
                Do_Indent (Index, Indent);
 
             when Tok_Identifier =>
-               if Curly_Level = 0 then
+               if Curly_Level = 0
+                 or else Top_Token.Token = Tok_Class
+                 or else Top_Token.Token = Tok_Struct
+               then
                   --  Only record identifier outside function body, we only
                   --  record them to be able to retrieve subprogram name.
 
@@ -1370,7 +1371,9 @@ package body C_Analyzer is
                   Enclosing := Tokens.Next.Val'Access;
                end if;
 
-               if not Indent_Separate_Line (Enclosing.Token) then
+               if not Indent_Separate_Line (Enclosing.Token)
+                 and then Enclosing.Curly_Level = Curly_Level
+               then
                   Indent := Indent - Indent_Level;
                end if;
 
@@ -1405,7 +1408,10 @@ package body C_Analyzer is
                      begin
                         Val.Token := Tok_Void;
 
-                        if Curly_Level = 0 then
+                        if Curly_Level = 0
+                          or else Top_Token.Token = Tok_Class
+                          or else Top_Token.Token = Tok_Struct
+                        then
                            --  This is a top level curly brace, it defines a
                            --  function, use Tok_Ident as the function name.
                            --  Tok_Ident has been set while parsing a '('
