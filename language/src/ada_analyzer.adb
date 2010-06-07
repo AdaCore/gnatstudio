@@ -650,7 +650,7 @@ package body Ada_Analyzer is
                       "a(re_interchangeable|s|ssume)|const|div|" &
                       "element|fi(nish|rst)|for_(all|some)|goal|" &
                       "last|may_be_(deduced|deduced_from|" &
-                      "replaced_by)|no(n(first|last)|t_in)|odd|" &
+                      "replaced_by)|no(n(first|last)|t_in)|o(dd|ut)|" &
                       "p(ending|red|roof)|re(al|quires|turn|m)|s(ave|" &
                       "e(quence|t)|qr|t(art|rict_subset_of)|" &
                       "u(bset_of|cc))|then|update|var|where|xor|fld_.*|" &
