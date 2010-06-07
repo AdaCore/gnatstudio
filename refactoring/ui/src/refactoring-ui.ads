@@ -25,7 +25,7 @@ with Gtk.Stock;
 
 with Basic_Types; use Basic_Types;
 
-package Refactoring is
+package Refactoring.UI is
 
    type Location_Type is record
       File   : Entities.Source_File;
@@ -73,4 +73,4 @@ package Refactoring is
       return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    --  Create a list showing all the files in List
 
-end Refactoring;
+end Refactoring.UI;

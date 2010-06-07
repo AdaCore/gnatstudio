@@ -39,7 +39,7 @@ with Gtk.Widget;            use Gtk.Widget;
 
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
-package body Refactoring is
+package body Refactoring.UI is
 
    use File_Arrays;
    use Location_Arrays;
@@ -176,4 +176,4 @@ package body Refactoring is
       return Scrolled;
    end Create_File_List;
 
-end Refactoring;
+end Refactoring.UI;

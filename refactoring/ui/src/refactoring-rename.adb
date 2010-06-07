@@ -43,6 +43,7 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel;                 use GPS.Kernel;
 with Histories;                  use Histories;
+with Refactoring.UI;             use Refactoring.UI;
 with Refactoring.Performers;     use Refactoring.Performers;
 with Traces;                     use Traces;
 

@@ -1,3 +1,4 @@
+with "../core/refactoring_core";
 with "../../kernel/kernel";
 with "gtkada";
 with "../../shared";

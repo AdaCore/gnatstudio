@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types;           use Basic_Types;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;

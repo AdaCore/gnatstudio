@@ -18,11 +18,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;
+with Basic_Types;               use Basic_Types;
 with Entities.Queries;
 with GNATCOLL.VFS;
 with GPS.Editors;
 with GPS.Kernel;
 with Language.Tree.Database;
+with Refactoring.UI;            use Refactoring.UI;
 
 package Refactoring.Performers is
 

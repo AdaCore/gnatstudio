@@ -19,6 +19,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Basic_Types;            use Basic_Types;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
