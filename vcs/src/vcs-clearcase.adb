@@ -40,6 +40,7 @@ with String_Utils;              use String_Utils;
 with VCS_Module;                use VCS_Module;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with GPS.Editors; use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body VCS.ClearCase is
 

@@ -75,6 +75,7 @@ with Default_Preferences;               use Default_Preferences;
 with Find_Utils;                        use Find_Utils;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
+with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;

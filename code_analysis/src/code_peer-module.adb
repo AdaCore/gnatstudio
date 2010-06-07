@@ -31,6 +31,7 @@ with Gtk.Widget;
 
 with Basic_Types;
 with GPS.Editors;
+with GPS.Editors.Line_Information;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;
@@ -1832,7 +1833,7 @@ package body Code_Peer.Module is
                   end if;
 
                   Primary.Set_Action
-                    (new GPS.Editors.Line_Information_Record'
+                    (new GPS.Editors.Line_Information.Line_Information_Record'
                        (Text               => null,
                         Tooltip_Text       => new String'("Review message"),
                         Image              =>

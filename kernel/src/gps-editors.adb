@@ -19,27 +19,7 @@
 
 package body GPS.Editors is
 
-   use Commands;
-
    --  Dummy bodies for implementation of Nil values.
-
-   procedure Add_Special_Line
-     (This       : Editor_Buffer'Class;
-      Start_Line : Integer;
-      Text       : String;
-      Category   : String := "";
-      Name       : String := "";
-      Column_Id  : String := "";
-      Info       : Line_Information_Data := null)
-   is
-      Mark : constant Editor_Mark'Class :=
-        This.Add_Special_Line
-          (Start_Line, Text, Category, Name, Column_Id, Info);
-      pragma Unreferenced (Mark);
-
-   begin
-      null;
-   end Add_Special_Line;
 
    overriding function Beginning_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class
@@ -166,21 +146,6 @@ package body GPS.Editors is
       return Nil_Editor_View;
    end Open;
 
-   overriding function Add_Special_Line
-     (This       : Dummy_Editor_Buffer;
-      Start_Line : Integer;
-      Text       : String;
-      Category   : String := "";
-      Name       : String := "";
-      Column_Id  : String := "";
-      Info       : Line_Information_Data := null) return Editor_Mark'Class
-   is
-      pragma Unreferenced
-        (This, Start_Line, Text, Category, Name, Column_Id, Info);
-   begin
-      return Nil_Editor_Mark;
-   end Add_Special_Line;
-
    overriding function Current_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class
    is
@@ -265,20 +230,6 @@ package body GPS.Editors is
       Constructs := (null, null, null, 0);
       Timestamp := 0;
    end Get_Constructs;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Line_Information_Record) is
-   begin
-      Free (X.Text);
-      Free (X.Tooltip_Text);
-
-      if X.Associated_Command /= null then
-         Unref (X.Associated_Command);
-      end if;
-   end Free;
 
    -------------------
    -- Get_MDI_Child --

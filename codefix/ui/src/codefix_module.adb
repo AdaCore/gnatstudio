@@ -60,6 +60,7 @@ with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Glib;                      use Glib;
 with GPS.Editors;               use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Codefix_Module is
 
@@ -655,7 +656,7 @@ package body Codefix_Module is
          Error := Search_Error
            (Session.Corrector.all,
             File    => File_Information (Context),
-            Line    => Line_Information (Context),
+            Line    => Contexts.Line_Information (Context),
             Column  => Column_Index (Column_Information (Context)),
             Message => Remove_Markup (Message_Information (Context)));
 

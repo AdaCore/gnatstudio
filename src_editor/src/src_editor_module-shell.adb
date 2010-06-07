@@ -71,6 +71,8 @@ with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_View;           use Src_Editor_View;
 with Traces;                    use Traces;
 
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+
 package body Src_Editor_Module.Shell is
    Me : constant Debug_Handle := Create ("Editor.Shell");
 
@@ -269,7 +271,7 @@ package body Src_Editor_Module.Shell is
 
    function Get_Buffer
      (Data   : Callback_Data'Class;
-      Arg    : Positive) return Editor_Buffer'Class;
+      Arg    : Positive) return GPS_Editor_Buffer'Class;
    --  Set the Buffer variable appropriately, or null if the buffer could
    --  not be found or is no longer valid.
    --  If the buffer is no longer valid, raises Editor_Exception
@@ -313,15 +315,16 @@ package body Src_Editor_Module.Shell is
 
    function Get_Buffer
      (Data   : Callback_Data'Class;
-      Arg    : Positive) return Editor_Buffer'Class
+      Arg    : Positive) return GPS_Editor_Buffer'Class
    is
       EditorBuffer : constant Class_Type :=
                        New_Class (Get_Kernel (Data), "EditorBuffer");
       Inst    : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
    begin
-      return Buffer_From_Instance
-        (Src_Editor_Buffer_Factory
-           (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
+      return GPS_Editor_Buffer'Class
+        (Buffer_From_Instance
+           (Src_Editor_Buffer_Factory
+              (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst));
    end Get_Buffer;
 
    -----------------

@@ -16,12 +16,15 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Project;
+
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Code_Peer.Module.Editors is
 
@@ -40,7 +43,7 @@ package body Code_Peer.Module.Editors is
    --  Called when a file has been opened
 
    procedure Show_Annotations
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
+     (Buffer : GPS.Editors.Line_Information.GPS_Editor_Buffer'Class;
       File   : Code_Analysis.File_Access);
    --  Show annotations for the specified file in the specified buffer
 
@@ -56,8 +59,7 @@ package body Code_Peer.Module.Editors is
 
       Kernel : constant GPS.Kernel.Kernel_Handle := Self.Get_Kernel;
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get
-          (File.Name, False, False, False);
+        (Kernel.Get_Buffer_Factory.Get (File.Name, False, False, False));
 
       -------------
       -- Process --
@@ -79,7 +81,8 @@ package body Code_Peer.Module.Editors is
          if Data.Mark /= null
            and then Data.Mark.Is_Present
          then
-            Buffer.Remove_Special_Lines (Data.Mark.all, Data.Special_Lines);
+            GPS_Editor_Buffer'Class (Buffer).Remove_Special_Lines
+              (Data.Mark.all, Data.Special_Lines);
          end if;
 
          Free (Data.Mark);
@@ -87,7 +90,9 @@ package body Code_Peer.Module.Editors is
       end Process;
 
    begin
-      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+      if Buffer /= GPS.Editors.Nil_Editor_Buffer
+        and then Buffer in GPS_Editor_Buffer'Class
+      then
          File.Subprograms.Iterate (Process'Access);
       end if;
    end Hide_Annotations;
@@ -175,7 +180,7 @@ package body Code_Peer.Module.Editors is
    ----------------------
 
    procedure Show_Annotations
-     (Buffer : GPS.Editors.Editor_Buffer'Class;
+     (Buffer : GPS.Editors.Line_Information.GPS_Editor_Buffer'Class;
       File   : Code_Analysis.File_Access)
    is
 
@@ -289,8 +294,10 @@ package body Code_Peer.Module.Editors is
                  Self.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
 
    begin
-      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-         Show_Annotations (Buffer, File);
+      if Buffer /= GPS.Editors.Nil_Editor_Buffer
+        and then Buffer in GPS_Editor_Buffer'Class
+      then
+         Show_Annotations (GPS_Editor_Buffer'Class (Buffer), File);
       end if;
    end Show_Annotations;
 
@@ -324,8 +331,12 @@ package body Code_Peer.Module.Editors is
 
             while Has_Element (Buffer_Position) loop
                if Element (Buffer_Position).File = File then
-                  Show_Annotations
-                    (Element (Buffer_Position), Element (File_Position));
+                  if Element (Buffer_Position) in GPS_Editor_Buffer'Class then
+                     Show_Annotations
+                       (GPS_Editor_Buffer'Class (Element (Buffer_Position)),
+                        Element (File_Position));
+                  end if;
+
                   Delete (Buffers, Buffer_Position);
 
                   exit Projects when Buffers.Is_Empty;

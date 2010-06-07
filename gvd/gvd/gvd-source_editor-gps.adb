@@ -38,6 +38,7 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with GVD.Preferences;           use GVD.Preferences;
 with GPS.Editors; use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body GVD.Source_Editor.GPS is
 

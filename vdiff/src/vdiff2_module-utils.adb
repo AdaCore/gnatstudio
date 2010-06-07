@@ -47,6 +47,7 @@ with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module;                     use Vdiff2_Module;
 with GPS.Editors;                       use GPS.Editors;
+with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 
 package body Vdiff2_Module.Utils is
 
@@ -325,10 +326,17 @@ package body Vdiff2_Module.Utils is
       begin
          Remove_Blank_Lines (Kernel, D.Blank_Lines_Mark);
          if D.Special_Lines_Mark /= null then
-            Remove_Special_Lines
-              (D.Special_Lines_Mark.all.Location (False).Buffer,
-               D.Special_Lines_Mark.all,
-               D.Last - D.First);
+            declare
+               Buffer : constant Editor_Buffer'Class :=
+                 D.Special_Lines_Mark.all.Location (False).Buffer;
+            begin
+               if Buffer in GPS_Editor_Buffer'Class then
+                  Remove_Special_Lines
+                    (GPS_Editor_Buffer'Class (Buffer),
+                     D.Special_Lines_Mark.all,
+                     D.Last - D.First);
+               end if;
+            end;
 
             Unchecked_Free (D.Special_Lines_Mark);
          end if;
@@ -797,9 +805,10 @@ package body Vdiff2_Module.Utils is
       List       : constant Diff_List := Item.List;
       Curr_Node  : Diff_List_Node := First (List);
       Curr_Chunk : Diff_Chunk_Access;
-      Buf        : constant Editor_Buffer'Class := Get
-        (Get_Buffer_Factory (Kernel).all, File,
-         Open_Buffer => True, Open_View => True);
+      Buf        : constant GPS_Editor_Buffer'Class :=
+        GPS_Editor_Buffer'Class
+          (Get (Get_Buffer_Factory (Kernel).all, File,
+           Open_Buffer => True, Open_View => True));
       Refbuf     : constant Editor_Buffer'Class := Get
         (Get_Buffer_Factory (Kernel).all, Item.Files (Ref),
          Open_Buffer => True, Open_View => False);

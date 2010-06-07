@@ -48,6 +48,7 @@ with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors;               use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");

@@ -257,7 +257,7 @@ package body Code_Coverage.Xcov is
    overriding function Line_Coverage_Info
      (Coverage : Xcov_Line_Coverage;
       Bin_Mode : Boolean := False)
-      return GPS.Editors.Line_Information_Record
+      return GPS.Editors.Line_Information.Line_Information_Record
    is
       pragma Unreferenced (Bin_Mode);
       --  It is used by the gcov plugin.
@@ -270,7 +270,7 @@ package body Code_Coverage.Xcov is
       Partially_Covered_Color : constant String := "orange";
       Fully_Covered_Color     : constant String := "green";
 
-      Result : GPS.Editors.Line_Information_Record;
+      Result : GPS.Editors.Line_Information.Line_Information_Record;
 
    begin
       case Coverage.Status is

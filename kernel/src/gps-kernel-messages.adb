@@ -154,7 +154,7 @@ package body GPS.Kernel.Messages is
      new Unchecked_Conversion (System.Address, Messages_Container_Access);
 
    procedure Free is new Ada.Unchecked_Deallocation
-       (GPS.Editors.Line_Information_Record, Action_Item);
+       (GPS.Editors.Line_Information.Line_Information_Record, Action_Item);
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
@@ -269,7 +269,7 @@ package body GPS.Kernel.Messages is
       --  Destroy action item.
 
       if Self.Action /= null then
-         GPS.Editors.Free (Self.Action.all);
+         GPS.Editors.Line_Information.Free (Self.Action.all);
       end if;
 
       Free (Self.Action);

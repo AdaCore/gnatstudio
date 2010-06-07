@@ -19,6 +19,7 @@
 
 with Ada.Strings.Less_Case_Insensitive;
 with GNAT.Heap_Sort_G;
+with Ada.Strings.Equal_Case_Insensitive;
 
 package body Code_Analysis is
 

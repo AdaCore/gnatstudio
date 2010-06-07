@@ -27,14 +27,13 @@
 
 with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
-with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
 with GNATCOLL.Projects;                     use GNATCOLL.Projects;
 with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with GPS.Kernel;
-with GPS.Editors;
+with GPS.Editors.Line_Information;
 
 package Code_Analysis is
 
@@ -76,7 +75,7 @@ package Code_Analysis is
    function Line_Coverage_Info
      (Coverage : Line_Coverage;
       Bin_Mode : Boolean := False)
-      return GPS.Editors.Line_Information_Record is abstract;
+      return GPS.Editors.Line_Information.Line_Information_Record is abstract;
    --  Return a String_Access pointing on a message describing the coverage
    --  state of the line from which the Coverage record had been extracted
    --  If Bin_Mode is True, then the returned messages can only be between

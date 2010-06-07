@@ -95,6 +95,7 @@ with Traces;                    use Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors; use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body GVD_Module is
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
@@ -1665,14 +1666,14 @@ package body GVD_Module is
          Break_Source
            (Debugger,
             File_Information (Context.Context),
-            Line_Information (Context.Context),
+            Contexts.Line_Information (Context.Context),
             Temporary => True);
          Continue (Debugger, Mode => GVD.Types.Visible);
       else
          Break_Source
            (Debugger,
             File_Information (Context.Context),
-            Line_Information (Context.Context),
+            Contexts.Line_Information (Context.Context),
             Mode => GVD.Types.Visible);
       end if;
 

@@ -54,6 +54,8 @@ with Language;                  use Language;
 with Src_Contexts;              use Src_Contexts;
 with Traces;                    use Traces;
 
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+
 package body Src_Editor_Module.Editors is
 
    Me : constant Debug_Handle :=
@@ -67,7 +69,8 @@ package body Src_Editor_Module.Editors is
       Ref_Count : Natural := 1;
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
-   type Src_Editor_Buffer is new GPS.Editors.Editor_Buffer with record
+   type Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
+   with record
       Contents : Buffer_Reference_Access;  --  null only when not initialized
    end record;
    --  This is a reference counted type, so that when the buffer is destroyed

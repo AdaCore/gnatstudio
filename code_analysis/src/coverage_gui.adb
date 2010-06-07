@@ -38,6 +38,7 @@ with Code_Analysis_GUI;
 with Code_Coverage.Gcov;
 with Code_Coverage.Xcov;
 with GPS.Editors; use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Coverage_GUI is
 

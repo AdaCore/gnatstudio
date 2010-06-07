@@ -46,6 +46,7 @@ with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 with Basic_Types;               use Basic_Types;
 with Commands;                  use Commands;
 with GPS.Editors;               use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;

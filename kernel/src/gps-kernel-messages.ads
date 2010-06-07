@@ -39,6 +39,7 @@ with Ada.Tags;
 
 with GNATCOLL.VFS;
 with GPS.Styles;
+with GPS.Editors.Line_Information;
 
 package GPS.Kernel.Messages is
 
@@ -63,7 +64,8 @@ package GPS.Kernel.Messages is
 
    type Listener_Access is access all Abstract_Listener'Class;
 
-   type Action_Item is access all GPS.Editors.Line_Information_Record;
+   type Action_Item is access all
+     GPS.Editors.Line_Information.Line_Information_Record;
 
    type Unbounded_String_Array is
      array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;

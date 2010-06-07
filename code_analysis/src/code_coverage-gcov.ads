@@ -20,6 +20,7 @@
 with GNATCOLL.VFS;
 with GPS.Kernel;
 with GPS.Editors;
+with GPS.Editors.Line_Information;
 
 package Code_Coverage.Gcov is
 
@@ -38,7 +39,7 @@ package Code_Coverage.Gcov is
    overriding function Line_Coverage_Info
      (Coverage : Gcov_Line_Coverage;
       Bin_Mode : Boolean := False)
-      return GPS.Editors.Line_Information_Record;
+      return GPS.Editors.Line_Information.Line_Information_Record;
 
    overriding procedure Add_Location_If_Uncovered
      (Coverage    : Gcov_Line_Coverage;

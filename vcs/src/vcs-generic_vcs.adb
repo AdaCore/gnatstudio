@@ -51,6 +51,8 @@ with XML_Utils;                 use XML_Utils;
 with GPS.Editors; use GPS.Editors;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+
 package body VCS.Generic_VCS is
 
    use type GNAT.Strings.String_Access;

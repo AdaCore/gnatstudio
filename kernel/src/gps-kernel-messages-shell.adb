@@ -30,6 +30,7 @@ with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Commands;    use Commands;
 with Basic_Types; use Basic_Types;
 with GPS.Editors; use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 with Commands.Interactive;
 

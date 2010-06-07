@@ -24,6 +24,7 @@ with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with Basic_Types;
 
 with GPS.Editors;        use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with Entities;
 
