@@ -41,7 +41,6 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Language;               use Language;
-with Language_Handlers;      use Language_Handlers;
 with Language.Tree.Database; use Language.Tree.Database;
 with Refactoring.Services;   use Refactoring.Services;
 with Refactoring.Performers; use Refactoring.Performers;
@@ -156,9 +155,6 @@ package body Refactoring.Subprograms is
       Method_Call : out Unbounded_String);
    --  Generate the code of the new method
 
-   function Generate_Box (Name : String) return Unbounded_String;
-   --  Generate the subprogram box
-
    procedure Generate_Local_Vars
      (Local_Vars : Extracted_Entity_Lists.List;
       Result     : out Unbounded_String);
@@ -173,16 +169,6 @@ package body Refactoring.Subprograms is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands
-
-   procedure Insert_New_Method
-     (Kernel      : access Kernel_Handle_Record'Class;
-      In_File     : GNATCOLL.VFS.Virtual_File;
-      Name        : String;
-      Before_Line : Integer;
-      Method_Decl : String;
-      Method_Body : String);
-   --  Insert the new method decl and body in In_File, if possible before the
-   --  line Before_Line.
 
    procedure Prepare_Code
      (Code          : String;
@@ -454,22 +440,6 @@ package body Refactoring.Subprograms is
       return Decl;
    end Generate;
 
-   ------------------
-   -- Generate_Box --
-   ------------------
-
-   function Generate_Box (Name : String) return Unbounded_String is
-      Result : Unbounded_String;
-   begin
-      if Add_Subprogram_Box.Get_Pref then
-         Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
-         Append (Result, "-- " & Name & " --" & ASCII.LF);
-         Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
-         Append (Result, ASCII.LF);
-      end if;
-      return Result;
-   end Generate_Box;
-
    --------------------------
    -- Generate_Method_Call --
    --------------------------
@@ -598,8 +568,7 @@ package body Refactoring.Subprograms is
 
       Append (Method_Decl, Returns);
 
-      Method_Body := Generate_Box (Name);
-      Append (Method_Body, Method_Decl);
+      Method_Body := Method_Decl;
       Append (Method_Decl, ";" & ASCII.LF);
 
       if Comment_Start < Comment_End then
@@ -635,81 +604,6 @@ package body Refactoring.Subprograms is
 
       Method_Call := Params.Generate_Method_Call (Name);
    end Generate_Extracted_Method;
-
-   -----------------------
-   -- Insert_New_Method --
-   -----------------------
-
-   procedure Insert_New_Method
-     (Kernel      : access Kernel_Handle_Record'Class;
-      In_File     : GNATCOLL.VFS.Virtual_File;
-      Name        : String;
-      Before_Line : Integer;
-      Method_Decl : String;
-      Method_Body : String)
-   is
-      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
-      Handler    : constant LI_Handler :=
-        Get_LI_Handler_From_File (Languages, In_File);
-      Constructs : Construct_List;
-      Line       : Integer := Before_Line;
-      Decl_Line  : Integer := Integer'Last;
-      Inserted   : Boolean;
-      pragma Unreferenced (Inserted);
-   begin
-      Parse_File_Constructs (Handler, Languages, In_File, Constructs);
-      Constructs.Current := Constructs.First;
-      while Constructs.Current /= null loop
-         if Constructs.Current.Category in Subprogram_Category then
-            if Constructs.Current.Sloc_Start.Line < Decl_Line then
-               Decl_Line := Constructs.Current.Sloc_Start.Line;
-            end if;
-
-            if Constructs.Current.Sloc_Start.Line <= Line
-              and then Constructs.Current.Sloc_End.Line > Line
-            then
-               Line := Constructs.Current.Sloc_Start.Line;
-            end if;
-         end if;
-
-         Constructs.Current := Constructs.Current.Next;
-      end loop;
-
-      Free (Constructs);
-
-      --  Insert the body before the decl, so that if they are inserted at the
-      --  same line, they occur with the decl first.
-      --  We must also insert before any "subprogram box" preceding the first
-      --  subprogram we found
-
-      Inserted := Insert_Text
-        (Kernel, In_File, Line, 1, Method_Body,
-         Indent                    => True,
-         Surround_With_Blank_Lines => True,
-         Skip_Comments_Backward    => True);
-      Create_Simple_Message
-        (Get_Messages_Container (Kernel),
-         -"Refactoring - extract subprogram " & Name,
-         In_File, Line, 1,
-         -"Extracted subprogram body inserted",
-         0,
-         (Editor_Side => True, Locations => True));
-
-      if Create_Subprogram_Decl.Get_Pref then
-         Inserted :=
-           Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl,
-                        Indent                    => True,
-                        Surround_With_Blank_Lines => True,
-                        Skip_Comments_Backward    => True);
-         Create_Simple_Message
-           (Get_Messages_Container (Kernel),
-            -"Refactoring - extract subprogram " & Name,
-            In_File, Decl_Line, 1,
-            -"Extracted subprogram spec inserted",
-            0,
-            (Editor_Side => True, Locations => True));
-      end if;
-   end Insert_New_Method;
 
    ------------------------------
    -- Compute_Context_Entities --
@@ -773,6 +667,8 @@ package body Refactoring.Subprograms is
       Iter       : Extracted_Entity_Lists.Cursor;
       Result     : Command_Return_Type;
       E          : Extracted_Entity;
+      Category   : constant String :=
+        -"Refactoring - extract subprogram " & Method_Name;
    begin
       if Context = Invalid_Context then
          Trace (Me, "Extract_Method: Invalid context");
@@ -821,7 +717,7 @@ package body Refactoring.Subprograms is
                   Line_End    => Line_End.Line);
 
                if Insert_Text
-                 (Kernel     => Kernel,
+                 (Context    => Context.Code.Context,
                   In_File    => Context.Code.File,
                   Line       => Line_Start.Line,
                   Column     => 1,
@@ -830,19 +726,25 @@ package body Refactoring.Subprograms is
                then
                   Create_Simple_Message
                     (Get_Messages_Container (Kernel),
-                     -"Refactoring - extract subprogram " & Method_Name,
+                     Category,
                      Context.Code.File, Line_Start.Line,
                      1, -"Extracted subprogram call inserted",
                      0,
                      (Editor_Side => True, Locations => True));
 
-                  Insert_New_Method
-                    (Kernel      => Kernel,
+                  Insert_Subprogram_Body
+                    (Context.Code.Context,
                      In_File     => Context.Code.File,
                      Name        => Method_Name,
                      Before_Line => Line_Start.Line,
-                     Method_Decl => To_String (Method_Decl),
-                     Method_Body => To_String (Method_Body));
+                     Code        => To_String (Method_Body),
+                     Category    => Category);
+                  Insert_Subprogram_Declaration
+                    (Context.Code.Context,
+                     In_File  => Context.Code.File,
+                     Decl     => To_String (Method_Decl),
+                     Category => Category);
+
                   Result := Success;
                else
                   Trace

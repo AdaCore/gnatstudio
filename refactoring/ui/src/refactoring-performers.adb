@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with Commands.Generic_Asynchronous;
@@ -30,7 +29,6 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
-with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
@@ -306,150 +304,6 @@ package body Refactoring.Performers is
    begin
       return Text;
    end Get_Text;
-
-   -------------------
-   -- Skip_Comments --
-   -------------------
-
-   function Skip_Comments
-     (From : Editor_Location'Class;
-      Direction : Integer := 1) return Editor_Location'Class;
-   --  Skip any following or preceding comment lines (depending on Direction).
-   --  If there are no comments immediately before or after, From is returned.
-   --
-   --  ??? The implementation is specific to Ada comments for now
-
-   function Skip_Comments
-     (From : Editor_Location'Class;
-      Direction : Integer := 1) return Editor_Location'Class
-   is
-      Loc : Editor_Location'Class := From;
-      Seen_Comment : Boolean := False;
-   begin
-      loop
-         --  Skip backward until we find a non blank line that is not a comment
-
-         declare
-            Loc2 : constant Editor_Location'Class := Loc.Forward_Line (-1);
-            C    : constant String :=
-              Loc.Buffer.Get_Chars (Loc2, Loc2.End_Of_Line);
-            Index : Natural := C'First;
-         begin
-            exit when Loc2 = Loc;  --  Beginning of buffer
-
-            Skip_Blanks (C, Index, Step => 1);
-
-            if Index > C'Last then
-               null;   --  blank line
-
-            elsif Index < C'Last
-              and then C (Index .. Index + 1) = "--"
-            then
-               Seen_Comment := True;  --  comment line
-
-            else
-               exit;
-            end if;
-
-            Loc := Loc2;
-         end;
-      end loop;
-
-      if Seen_Comment then
-         return Loc;  --  return the next line
-      else
-         return From;
-      end if;
-   end Skip_Comments;
-
-   -----------------
-   -- Insert_Text --
-   -----------------
-
-   function Insert_Text
-     (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      In_File                   : GNATCOLL.VFS.Virtual_File;
-      Line                      : Integer;
-      Column                    : Visible_Column_Type := 1;
-      Text                      : String;
-      Indent                    : Boolean;
-      Skip_Comments_Backward    : Boolean := False;
-      Surround_With_Blank_Lines : Boolean := False;
-      Replaced_Length           : Integer := 0;
-      Only_If_Replacing         : String := "") return Boolean
-   is
-      Editor : constant Editor_Buffer'Class :=
-        Get_Buffer_Factory (Kernel).Get (In_File);
-      Loc_Start : Editor_Location'Class := Editor.New_Location
-        (Line, Integer (Column));
-      Loc_End   : constant Editor_Location'Class :=
-        Loc_Start.Forward_Char (Replaced_Length - 1);
-   begin
-      if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
-         declare
-            Replacing_Str : constant String := To_Lower (Only_If_Replacing);
-            Str : constant String :=
-              To_Lower (Editor.Get_Chars (Loc_Start, Loc_End));
-         begin
-            if Str /= Replacing_Str then
-               return False;
-            end if;
-         end;
-      end if;
-
-      if Replaced_Length > 0 then
-         Editor.Delete (Loc_Start, Loc_End);
-      end if;
-
-      if Text = "" then
-         return True;
-      end if;
-
-      if Skip_Comments_Backward then
-         Loc_Start := Skip_Comments (Loc_Start, Direction => -1);
-      end if;
-
-      --  Insert the trailing space if needed
-      if Surround_With_Blank_Lines
-        and then
-          (Text'Length < 2
-           or else Text (Text'Last - 1 .. Text'Last) /= ASCII.LF & ASCII.LF)
-      then
-         declare
-            L : constant Editor_Location'Class := Loc_Start.Beginning_Of_Line;
-         begin
-            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
-               Editor.Insert (Loc_Start, "" & ASCII.LF);
-            end if;
-         end;
-      end if;
-
-      Editor.Insert (Loc_Start, Text);
-
-      --  Insert the leading space if needed
-
-      if Surround_With_Blank_Lines
-        and then Text (Text'First) /= ASCII.LF
-      then
-         declare
-            L : constant Editor_Location'Class :=
-              Loc_Start.Forward_Line (-1).Beginning_Of_Line;
-         begin
-            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
-               Editor.Insert (Loc_Start, "" & ASCII.LF);
-            end if;
-         end;
-      end if;
-
-      if Indent then
-         Editor.Indent
-           (Loc_Start,
-            Editor.New_Location
-              (Line + Lines_Count (Text) - 1, 0).End_Of_Line);
-      end if;
-
-      return True;
-   end Insert_Text;
 
    -----------------
    -- Delete_Text --

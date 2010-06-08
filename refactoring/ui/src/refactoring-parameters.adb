@@ -32,6 +32,7 @@ with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with GPS.Intl;              use GPS.Intl;
 with Refactoring.Performers; use Refactoring.Performers;
+with Refactoring.Services;   use Refactoring.Services;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
@@ -62,7 +63,8 @@ package body Refactoring.Parameters is
    --  Handles shell commands
 
    function Name_Parameters
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Context : not null access Factory_Context_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
@@ -89,7 +91,8 @@ package body Refactoring.Parameters is
    ---------------------
 
    function Name_Parameters
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Context : not null access Factory_Context_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
@@ -97,7 +100,7 @@ package body Refactoring.Parameters is
    is
       --  File needs to be open for get_chars to work, unfortunately
       View  : constant Editor_View'Class :=
-        Get_Buffer_Factory (Kernel).Get (File).Open;
+        Context.Buffer_Factory.Get (File).Open;
       pragma Unreferenced (View);
 
       Chars : constant String := Get_Text
@@ -291,7 +294,8 @@ package body Refactoring.Parameters is
 
       Result := Result & Chars (Last .. First);
       if Insert_Text
-        (Kernel, File, Line, Column, To_String (Result),
+        (Context, In_File => File, Line => Line, Column => Column,
+         Text            => To_String (Result),
          Indent          => False,
          Replaced_Length => First - Chars'First + 1)
       then
@@ -312,7 +316,8 @@ package body Refactoring.Parameters is
       pragma Unreferenced (Command);
    begin
       return Name_Parameters
-        (Kernel => Get_Kernel (Context.Context),
+        (Kernel  => Get_Kernel (Context.Context),
+         Context => Get_Kernel (Context.Context).Refactoring_Context,
          Entity => Get_Entity (Context.Context, Ask_If_Overloaded => True),
          File   => File_Information (Context.Context),
          Line   => Line_Information (Context.Context),
@@ -335,6 +340,7 @@ package body Refactoring.Parameters is
          begin
             if Name_Parameters
               (Kernel => Get_Kernel (Data),
+               Context => Get_Kernel (Data).Refactoring_Context,
                Entity => Entity,
                File   => File,
                Line   => Get_Line (Location),

@@ -21,6 +21,8 @@
 --  code. These operations occur at the syntactic and semantic levels (as
 --  opposed to the GPS.Editors API, for instance, which operates at the
 --  character level).
+--  The subprograms in this package never create Undo_Groups, it is the
+--  responsibility of the caller.
 
 with Ada.Strings.Unbounded;
 with Basic_Types;
@@ -170,6 +172,62 @@ package Refactoring.Services is
    --  Success is set to False if not all entities could be examined because an
    --  error occurred. In such a case, the error has already been reported to
    --  the context.
+
+   -----------------
+   -- Subprograms --
+   -----------------
+
+   procedure Insert_Subprogram_Declaration
+     (Context  : not null access Factory_Context_Record'Class;
+      In_File  : GNATCOLL.VFS.Virtual_File;
+      Decl     : String;
+      Category : String := "");
+   --  Insert the subprogram declaration in In_File at an appropriate place.
+   --  If Category is specified, Report_Location is called for the context to
+   --  report the change to the user.
+
+   procedure Insert_Subprogram_Body
+     (Context     : not null access Factory_Context_Record'Class;
+      In_File     : GNATCOLL.VFS.Virtual_File;
+      Name        : String;
+      Code        : String;
+      Before_Line : Integer := Integer'Last;
+      Category    : String := "");
+   --  Insert the body for a subprogram at an appropriate location in In_File.
+   --  If Before_Line is specified, the insertion must occur before that line.
+   --  Name is the name of the subprogram (so that we can possibly insert a
+   --  subprogram box before it if the user wants one.
+
+   -------------
+   -- Editors --
+   -------------
+   --  The following subprograms are rather lower level than the ones above,
+   --  and are used to provide a slightly more convenient interface to editors.
+   --  When possible, the above subprograms should be preferred.
+
+   function Insert_Text
+     (Context                   : not null access Factory_Context_Record'Class;
+      In_File                   : GNATCOLL.VFS.Virtual_File;
+      Line                      : Integer;
+      Column                    : Basic_Types.Visible_Column_Type := 1;
+      Text                      : String;
+      Indent                    : Boolean;
+      Skip_Comments_Backward    : Boolean := False;
+      Surround_With_Blank_Lines : Boolean := False;
+      Replaced_Length           : Integer := 0;
+      Only_If_Replacing         : String := "") return Boolean;
+   --  Insert some text in a source file.
+   --  If Indent is True, the text is indented automatically.
+   --  Replaced_Length is the number of characters that should first be removed
+   --  to be replaced by Text.
+   --  If Only_If_Replacing is specified, then the replacement of text will be
+   --  done only if the text being replaced is Only_If_Replacing (case
+   --  insensitive). If it isn't, False is returned.
+   --  If Skip_Comments_Backward is True, then the actual insertion will occur
+   --  on the first line before any comment lines preceding Line.
+   --  If Surround_With_Blank_Lines is True, then the inserted text must end up
+   --  with a blank line before and after it (so lines are inserted as needed).
+   --  This function returns True if the new text could be inserted.
 
 private
 

@@ -45,6 +45,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 with Histories;                  use Histories;
 with Refactoring.UI;             use Refactoring.UI;
 with Refactoring.Performers;     use Refactoring.Performers;
+with Refactoring.Services;       use Refactoring.Services;
 with Traces;                     use Traces;
 
 package body Refactoring.Rename is
@@ -255,7 +256,7 @@ package body Refactoring.Rename is
          end if;
 
          if not Insert_Text
-           (Kernel,
+           (Kernel.Refactoring_Context,
             Get_Filename (Refs.Table (L).File),
             Refs.Table (L).Line,
             Refs.Table (L).Column,

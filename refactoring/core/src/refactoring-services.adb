@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -31,10 +32,12 @@ with Entities;                use Entities;
 with Entities.Queries;        use Entities.Queries;
 with GNAT.Strings;            use GNAT.Strings;
 with GPS.Editors;             use GPS.Editors;
+with Language;                use Language;
 with Language.Ada;            use Language.Ada;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
 with String_Utils;            use String_Utils;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 package body Refactoring.Services is
@@ -47,6 +50,18 @@ package body Refactoring.Services is
    procedure Remove_Blanks
      (From : in out Editor_Location'Class; Direction : Integer := 1);
    --  Remove all blanks from From onwards (spaces, tabs and newlines)
+
+   function Skip_Comments
+     (From : Editor_Location'Class;
+      Direction : Integer := 1) return Editor_Location'Class;
+   --  Skip any following or preceding comment lines (depending on Direction).
+   --  If there are no comments immediately before or after, From is returned.
+   --
+   --  ??? The implementation is specific to Ada comments for now
+
+   function Default_Insertion_Line (Tree : Construct_Tree) return Integer;
+   --  A line where we could insert code (preferably before the "end pkg" line,
+   --  or if there is no package default to the first line in the file
 
    ---------------------
    -- Get_Declaration --
@@ -766,5 +781,294 @@ package body Refactoring.Services is
    begin
       return Self.To_Line;
    end To_Line;
+
+   -------------------
+   -- Skip_Comments --
+   -------------------
+
+   function Skip_Comments
+     (From : Editor_Location'Class;
+      Direction : Integer := 1) return Editor_Location'Class
+   is
+      Loc : Editor_Location'Class := From;
+      Seen_Comment : Boolean := False;
+   begin
+      loop
+         --  Skip backward until we find a non blank line that is not a comment
+
+         declare
+            Loc2 : constant Editor_Location'Class := Loc.Forward_Line (-1);
+            C    : constant String :=
+              Loc.Buffer.Get_Chars (Loc2, Loc2.End_Of_Line);
+            Index : Natural := C'First;
+         begin
+            exit when Loc2 = Loc;  --  Beginning of buffer
+
+            Skip_Blanks (C, Index, Step => 1);
+
+            if Index > C'Last then
+               null;   --  blank line
+
+            elsif Index < C'Last
+              and then C (Index .. Index + 1) = "--"
+            then
+               Seen_Comment := True;  --  comment line
+
+            else
+               exit;
+            end if;
+
+            Loc := Loc2;
+         end;
+      end loop;
+
+      if Seen_Comment then
+         return Loc;  --  return the next line
+      else
+         return From;
+      end if;
+   end Skip_Comments;
+
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   function Insert_Text
+     (Context                   : not null access Factory_Context_Record'Class;
+      In_File                   : GNATCOLL.VFS.Virtual_File;
+      Line                      : Integer;
+      Column                    : Visible_Column_Type := 1;
+      Text                      : String;
+      Indent                    : Boolean;
+      Skip_Comments_Backward    : Boolean := False;
+      Surround_With_Blank_Lines : Boolean := False;
+      Replaced_Length           : Integer := 0;
+      Only_If_Replacing         : String := "") return Boolean
+   is
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (In_File);
+      Loc_Start : Editor_Location'Class := Editor.New_Location
+        (Line, Integer (Column));
+      Loc_End   : constant Editor_Location'Class :=
+        Loc_Start.Forward_Char (Replaced_Length - 1);
+   begin
+      if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
+         declare
+            Replacing_Str : constant String := To_Lower (Only_If_Replacing);
+            Str : constant String :=
+              To_Lower (Editor.Get_Chars (Loc_Start, Loc_End));
+         begin
+            if Str /= Replacing_Str then
+               return False;
+            end if;
+         end;
+      end if;
+
+      if Replaced_Length > 0 then
+         Editor.Delete (Loc_Start, Loc_End);
+      end if;
+
+      if Text = "" then
+         return True;
+      end if;
+
+      if Skip_Comments_Backward then
+         Loc_Start := Skip_Comments (Loc_Start, Direction => -1);
+      end if;
+
+      --  Insert the trailing space if needed
+      if Surround_With_Blank_Lines
+        and then
+          (Text'Length < 2
+           or else Text (Text'Last - 1 .. Text'Last) /= ASCII.LF & ASCII.LF)
+      then
+         declare
+            L : constant Editor_Location'Class := Loc_Start.Beginning_Of_Line;
+         begin
+            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+               Editor.Insert (Loc_Start, "" & ASCII.LF);
+            end if;
+         end;
+      end if;
+
+      Editor.Insert (Loc_Start, Text);
+
+      --  Insert the leading space if needed
+
+      if Surround_With_Blank_Lines
+        and then Text (Text'First) /= ASCII.LF
+      then
+         declare
+            L : constant Editor_Location'Class :=
+              Loc_Start.Forward_Line (-1).Beginning_Of_Line;
+         begin
+            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+               Editor.Insert (Loc_Start, "" & ASCII.LF);
+            end if;
+         end;
+      end if;
+
+      if Indent then
+         Editor.Indent
+           (Loc_Start,
+            Editor.New_Location
+              (Line + Lines_Count (Text) - 1, 0).End_Of_Line);
+      end if;
+
+      return True;
+   end Insert_Text;
+
+   ----------------------------
+   -- Default_Insertion_Line --
+   ----------------------------
+
+   function Default_Insertion_Line (Tree : Construct_Tree) return Integer is
+      Iter   : Construct_Tree_Iterator := First (Tree);
+      Constr : Simple_Construct_Information;
+   begin
+      while Iter /= Null_Construct_Tree_Iterator loop
+         Constr := Get_Construct (Iter).all;
+         if Constr.Category = Cat_Package then
+            return Constr.Sloc_End.Line;
+         end if;
+         Iter := Next (Tree, Iter);
+      end loop;
+
+      --  Still not found ? Insert at the beginning of the file (random
+      --  choice)
+      return 1;
+   end Default_Insertion_Line;
+
+   -----------------------------------
+   -- Insert_Subprogram_Declaration --
+   -----------------------------------
+
+   procedure Insert_Subprogram_Declaration
+     (Context  : not null access Factory_Context_Record'Class;
+      In_File  : GNATCOLL.VFS.Virtual_File;
+      Decl     : String;
+      Category : String := "")
+   is
+      Struct : Structured_File_Access;
+      Tree   : Construct_Tree;
+      Iter   : Construct_Tree_Iterator;
+      Constr : Simple_Construct_Information;
+      Line   : Integer := Integer'Last;
+      Inserted : Boolean;
+   begin
+      if not Context.Create_Subprogram_Decl then
+         --  Nothing to do, the user doesn't want specs
+         return;
+      end if;
+
+      Struct := Get_Or_Create (Db => Context.Construct_Db, File => In_File);
+      Update_Contents (Struct);
+      Tree := Get_Tree (Struct);  --  Will take into account existing editors
+
+      Iter := First (Tree);
+      while Iter /= Null_Construct_Tree_Iterator loop
+         Constr := Get_Construct (Iter).all;
+         if Constr.Category in Subprogram_Category then
+            Line := Constr.Sloc_Start.Line;
+            exit;
+         end if;
+         Iter := Next (Tree, Iter);
+      end loop;
+
+      if Line = Integer'Last then
+         Line := Default_Insertion_Line (Tree);
+      end if;
+
+      Inserted :=
+        Insert_Text (Context, In_File, Line, 1, Decl,
+                     Indent                    => True,
+                     Surround_With_Blank_Lines => True,
+                     Skip_Comments_Backward    => True);
+      if not Inserted then
+         Context.Report_Error
+           ("Could not insert the subprogram declaration at "
+            & In_File.Display_Full_Name & ":" & Image (Line, 1));
+      end if;
+
+      if Category /= "" then
+         Context.Report_Location
+           (Category => Category,
+            File     => In_File,
+            Line     => Line,
+            Column   => 1,
+            Text     => "Subprogram declaration inserted");
+      end if;
+   end Insert_Subprogram_Declaration;
+
+   ----------------------------
+   -- Insert_Subprogram_Body --
+   ----------------------------
+
+   procedure Insert_Subprogram_Body
+     (Context     : not null access Factory_Context_Record'Class;
+      In_File     : GNATCOLL.VFS.Virtual_File;
+      Name        : String;
+      Code        : String;
+      Before_Line : Integer := Integer'Last;
+      Category    : String := "")
+   is
+      Struct : Structured_File_Access;
+      Tree   : Construct_Tree;
+      Iter   : Construct_Tree_Iterator;
+      Constr : Simple_Construct_Information;
+      Line   : Integer := Before_Line;
+      Inserted : Boolean;
+      Result   : Unbounded_String;
+   begin
+      Struct := Get_Or_Create (Db => Context.Construct_Db, File => In_File);
+      Update_Contents (Struct);
+      Tree := Get_Tree (Struct);  --  Will take into account existing editors
+
+      Iter := First (Tree);
+      while Iter /= Null_Construct_Tree_Iterator loop
+         Constr := Get_Construct (Iter).all;
+         if Constr.Category in Subprogram_Category
+           and then Constr.Sloc_Start.Line <= Line
+           and then Constr.Sloc_End.Line > Line
+         then
+            Line := Constr.Sloc_Start.Line;
+            exit;
+         end if;
+         Iter := Next (Tree, Iter);
+      end loop;
+
+      if Line = Integer'Last then
+         Line := Default_Insertion_Line (Tree);
+      end if;
+
+      if Context.Add_Subprogram_Box then
+         Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
+         Append (Result, "-- " & Name & " --" & ASCII.LF);
+         Append (Result, (1 .. Name'Length + 6 => '-') & ASCII.LF);
+         Append (Result, ASCII.LF);
+      end if;
+
+      Append (Result, Code);
+
+      Inserted :=
+        Insert_Text (Context, In_File, Line, 1, To_String (Result),
+                     Indent                    => True,
+                     Surround_With_Blank_Lines => True,
+                     Skip_Comments_Backward    => True);
+      if not Inserted then
+         Context.Report_Error
+           ("Could not insert the subprogram body at "
+            & In_File.Display_Full_Name & ":" & Image (Line, 1));
+      end if;
+
+      if Category /= "" then
+         Context.Report_Location
+           (Category => Category,
+            File     => In_File,
+            Line     => Line,
+            Column   => 1,
+            Text     => "Subprogram body inserted");
+      end if;
+   end Insert_Subprogram_Body;
 
 end Refactoring.Services;
