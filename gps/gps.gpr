@@ -42,7 +42,7 @@ project GPS is
    for Main use ("gps-main.adb");
 
    for Source_Dirs use ("src");
-   for Object_Dir use "obj";
+   for Object_Dir use Shared'Object_Dir;
 
    Processors := external ("PROCESSORS", "1");
 

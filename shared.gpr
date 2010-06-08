@@ -9,6 +9,8 @@ project Shared is
    Build : Build_Type := External ("Build", "Debug");
 
    for Source_Dirs use ();
+   for Object_Dir use Gnatcoll_Shared'Object_Dir;
+   for Library_Dir use Gnatcoll_Shared'Library_Dir;
 
    type VCS_Type is ("Subversion", "Git", "Auto");
    VCS_Kind : VCS_Type := external ("PRJ_VCS", "Subversion");

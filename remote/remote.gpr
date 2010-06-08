@@ -7,7 +7,7 @@ project Remote is
 
    for Languages use ("Ada");
    for Source_Dirs use ("src");
-   for Object_Dir use "obj";
+   for Object_Dir use Shared'Object_Dir;
 
    package Compiler renames Shared.Compiler;
    package IDE renames Shared.IDE;

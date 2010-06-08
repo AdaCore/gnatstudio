@@ -7,7 +7,7 @@ project GVD is
 
    for Languages use ("C", "Ada");
    for Source_Dirs use ("gvd", "pixmaps");
-   for Object_Dir use "obj";
+   for Object_Dir use Shared'Object_Dir;
 
    package Builder is
       for Default_Switches ("Ada") use ("-m");
