@@ -1456,12 +1456,12 @@ package body Src_Editor_Box is
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column),
                         From_Expression =>
-                          Parse_Expression_Backward_To_String
+                          Parse_Reference_Backwards
                             (Get_Language (Get_Buffer (Editor)),
                              Buffer          => Str.Contents (1 .. Str.Length),
                              Start_Offset      =>
-                               String_Index_Type (Get_Line_Index (Entity_End)),
-                             Simple_Expression => True));
+                               String_Index_Type
+                                 (Get_Line_Index (Entity_End))));
                   end if;
                else
                   Set_Entity_Information

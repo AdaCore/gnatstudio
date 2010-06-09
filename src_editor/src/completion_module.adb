@@ -1469,7 +1469,7 @@ package body Completion_Module is
          The_Text := Get_String (Buffer);
          Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
 
-         Exp := Ada_Lang.Parse_Expression_Backward
+         Exp := Parse_Expression_Backward
            (The_Text,
             String_Index_Type (Get_Byte_Index (It)));
 

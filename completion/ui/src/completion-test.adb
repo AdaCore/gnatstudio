@@ -38,6 +38,7 @@ with String_Utils;            use String_Utils;
 with Language.Ada;            use Language.Ada;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
+with Ada_Semantic_Tree;       use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;                use Projects;
 with Entities;                use Entities;
@@ -257,7 +258,7 @@ procedure Completion.Test is
          Put (Token_Type'Image (Token.Tok_Type));
 
          case Token.Tok_Type is
-            when Tok_Identifier =>
+            when Tok_Identifier | Tok_Operator =>
                Put (" ");
                Put (Buffer
                  (Integer (Token.Token_First)
@@ -278,21 +279,17 @@ procedure Completion.Test is
    begin
       Put_Line ("*** COMPLETE RESULT ***");
       Result := Parse_Expression_Backward
-        (Ada_Lang,
-         Buffer,
+        (Buffer,
          String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)),
-         0,
-         False);
+         0);
       Display (Result.Tokens);
       Free (Result);
-      Put_Line ("*** SIMPLE RESULT ***");
-      Result := Parse_Expression_Backward
-        (Ada_Lang,
-         Buffer,
-         String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)),
-         0,
-         True);
-      Display (Result.Tokens);
+      Put_Line ("*** REFERENCE ***");
+      Put_Line
+        ("[" & Ada_Lang.Parse_Reference_Backwards
+           (Buffer.all,
+            String_Index_Type (UTF8_Find_Prev_Char (Buffer.all, Buffer'Last)),
+            0) & "]");
       Free (Result);
    end Parse_File;
 

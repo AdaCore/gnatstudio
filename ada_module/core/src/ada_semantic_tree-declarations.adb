@@ -751,8 +751,7 @@ package body Ada_Semantic_Tree.Declarations is
                   Fill_Children
                     (E               => Previous_Declaration,
                      Name            => "",
-                     Is_Partial      => Next (Token) = Token_List.Null_Node
-                                       and then Is_Partial,
+                     Is_Partial      => Is_Partial,
                      From_Visibility => Actual_From_Visibility,
                      Categories      => Actual_Categories,
                      Result          => Result);
@@ -1065,7 +1064,7 @@ package body Ada_Semantic_Tree.Declarations is
       if Expression = Null_Parsed_Expression then
          if Context.Context_Type = From_File then
             Analyzed_Expression := Parse_Expression_Backward
-              (Ada_Lang, Get_Buffer (Context.File), Context.Offset);
+              (Get_Buffer (Context.File), Context.Offset);
          else
             --  We can't do a search without expression on a database wide
             --  search.

@@ -22,8 +22,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Glib.Unicode;              use Glib.Unicode;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with String_Utils;              use String_Utils;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 package body Language.Ada is
 
@@ -809,30 +809,20 @@ package body Language.Ada is
    -- Parse_Expression_Backward --
    -------------------------------
 
-   overriding function Parse_Expression_Backward
+   overriding procedure Parse_Tokens_Backwards
      (Lang              : access Ada_Language;
-      Buffer            : access Glib.UTF8_String;
+      Buffer            : Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Simple_Expression : Boolean := False)
-      return Parsed_Expression
+      Callback          :
+      access procedure (Token : Token_Record;
+                        Stop : in out Boolean))
    is
       pragma Unreferenced (Lang);
-      use Token_List;
-
-      Offset             : Natural := Natural (Start_Offset);
-      Offset_Limit       : Natural;
-      Token              : Token_Record;
-      Result             : Parsed_Expression;
-      Last_Token_On_Line : Token_List.List_Node;
-      Prev_Tick          : Boolean := False;
-
-      procedure Handle_Expression
-        (Offset            : in out Natural;
-         Skip              : Boolean;
-         Incomplete_String : out Boolean);
-      --  Handle the expression given in parameter. Sets Incomplete_String to
-      --  True if an incomplete string has been encountered.
+      Offset       : Natural := Natural (Start_Offset);
+      Offset_Limit : Natural;
+      Token        : Token_Record;
+      Prev_Non_Blank_Token : Token_Record;
 
       procedure Skip_String
         (Offset            : in out Natural;
@@ -841,102 +831,12 @@ package body Language.Ada is
       --  corresponding openning double quote. If such openning double quote
       --  can't be found, Incomplete_String is set to True, false otherwise.
 
-      procedure Skip_Comment_Line (Offset : in out Natural);
+      procedure Skip_Comment_Line
+        (Offset : in out Natural; Incomplete_String : out Boolean);
 
-      procedure Handle_Potential_Keyword
-        (Offset  : in out Natural;
-         Keyword : String;
-         Tok     : Token_Type;
-         Found   : in out Boolean);
-      --  If the previous keyword is the one given in parameter, then it's
-      --  pushed with the appropriate kind. Found is set to true only if the
-      --  keyword is found, otherwise it's left to its initial value.
-
-      procedure Handle_Potential_Keyword
-        (Offset : in out Natural; Ignore : out Boolean);
-      --  Handle a potential keyword - Ignore is true if the keyword should be
-      --  ignored and the analysis continued.
-
-      function Check_Prev_Word
-        (Offset : Positive; Word : String)
-         return Boolean;
-
-      procedure Push (Token : in out Token_Record; Offset : Natural);
-      --  Adds a token at the beginning on the list.
-
-      procedure Pop;
-
-      function Was_Start_Of_Character return Boolean;
-      --  Return true if the last tick was the start of a character, not an
-      --  attribute, given that the offset is on the first non blank character
-      --  before.
-
-      ---------------------
-      -- Skip_Expression --
-      ---------------------
-
-      procedure Handle_Expression
-        (Offset            : in out Natural;
-         Skip              : Boolean;
-         Incomplete_String : out Boolean)
-      is
-         Local_Token     : Token_Record := Token;
-      begin
-         Incomplete_String := False;
-         Local_Token.Token_Last := String_Index_Type (Offset);
-
-         while Offset > Offset_Limit loop
-            case Buffer (Offset) is
-               when ')' =>
-                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-                  Handle_Expression (Offset, True, Incomplete_String);
-
-                  if Incomplete_String then
-                     exit;
-                  end if;
-
-               when ',' =>
-                  if not Skip then
-                     Local_Token.Tok_Type := Tok_Expression;
-                     Local_Token.Token_First := String_Index_Type (Offset) + 1;
-                     Push (Local_Token, Offset);
-                     Local_Token.Token_Last := String_Index_Type (Offset) - 1;
-                  end if;
-
-               when '"' =>
-                  Skip_String (Offset, Incomplete_String);
-
-                  if Incomplete_String then
-                     exit;
-                  end if;
-
-               when ''' =>
-                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-
-               when '(' =>
-                  if not Skip then
-                     Local_Token.Tok_Type := Tok_Expression;
-                     Local_Token.Token_First := String_Index_Type (Offset) + 1;
-                     Push (Local_Token, Offset);
-
-                     Local_Token.Tok_Type := Tok_Open_Parenthesis;
-                     Push (Local_Token, Offset);
-                  end if;
-
-                  exit;
-
-               when ASCII.LF =>
-                  Skip_Comment_Line (Offset);
-
-               when others =>
-                  null;
-            end case;
-
-            Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-
-         end loop;
-      end Handle_Expression;
+      procedure Handle_Token
+        (Token : in out Token_Record; Offset : Natural; Stop : out Boolean);
+      --  Adjust the position of the token and calls the callback.
 
       -----------------
       -- Skip_String --
@@ -961,7 +861,7 @@ package body Language.Ada is
 
                         exit;
                      else
-                        Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+                        Offset := UTF8_Find_Prev_Char (Buffer, Offset);
                      end if;
                   else
                      Close_Found := True;
@@ -976,7 +876,7 @@ package body Language.Ada is
                   null;
             end case;
 
-            Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
+            Offset := UTF8_Find_Prev_Char (Buffer, Offset);
          end loop;
       end Skip_String;
 
@@ -984,12 +884,15 @@ package body Language.Ada is
       -- Skip_Comment_Line --
       -----------------------
 
-      procedure Skip_Comment_Line (Offset : in out Natural) is
+      procedure Skip_Comment_Line
+        (Offset : in out Natural; Incomplete_String : out Boolean)
+      is
          Local_Offset      : Natural := Offset;
          Prev_Offset       : Natural;
-         Incomplete_String : Boolean := False;
       begin
-         Local_Offset := UTF8_Find_Prev_Char (Buffer.all, Local_Offset);
+         Incomplete_String := False;
+
+         Local_Offset := UTF8_Find_Prev_Char (Buffer, Local_Offset);
 
          while Local_Offset > Offset_Limit loop
             case Buffer (Local_Offset) is
@@ -998,22 +901,27 @@ package body Language.Ada is
 
                when ''' =>
                   Local_Offset := UTF8_Find_Prev_Char
-                    (Buffer.all, Local_Offset);
+                    (Buffer, Local_Offset);
                   Local_Offset := UTF8_Find_Prev_Char
-                    (Buffer.all, Local_Offset);
+                    (Buffer, Local_Offset);
 
                when '-' =>
                   Prev_Offset := UTF8_Find_Prev_Char
-                    (Buffer.all, Local_Offset);
+                    (Buffer, Local_Offset);
 
                   if Prev_Offset > Offset_Limit
                     and then Buffer (Prev_Offset) = '-'
                   then
                      Local_Offset := UTF8_Find_Prev_Char
-                       (Buffer.all, Prev_Offset);
+                       (Buffer, Prev_Offset);
+
+                     --  When hitting a comment, we don't care about incomplete
+                     --  strings.
+
+                     Incomplete_String := False;
 
                      --  ??? Not very efficient to use a recursive call here
-                     Skip_Comment_Line (Local_Offset);
+                     Skip_Comment_Line (Local_Offset, Incomplete_String);
                      Offset := Local_Offset + 1;
 
                      exit;
@@ -1027,72 +935,19 @@ package body Language.Ada is
             end case;
 
             Local_Offset := UTF8_Find_Prev_Char
-              (Buffer.all, Local_Offset);
+              (Buffer, Local_Offset);
          end loop;
       end Skip_Comment_Line;
 
-      ------------------------------
-      -- Handle_Potential_Keyword --
-      ------------------------------
+      ------------------
+      -- Handle_Token --
+      ------------------
 
-      procedure Handle_Potential_Keyword
-        (Offset  : in out Natural;
-         Keyword : String;
-         Tok     : Token_Type;
-         Found   : in out Boolean)
+      procedure Handle_Token
+        (Token : in out Token_Record; Offset : Natural; Stop : out Boolean)
       is
       begin
-         if Check_Prev_Word (Offset, Keyword) then
-            Token.Tok_Type := Tok;
-            Token.Token_Last := String_Index_Type (Offset);
-            Offset := Offset - (Keyword'Length - 1);
-            Token.Token_First := String_Index_Type (Offset);
-            Found := True;
-         end if;
-      end Handle_Potential_Keyword;
-
-      procedure Handle_Potential_Keyword
-        (Offset  : in out Natural; Ignore : out Boolean)
-      is
-         Found : Boolean;
-      begin
-         Ignore := False;
-         Found := False;
-
-         Handle_Potential_Keyword (Offset, "with",     Tok_With,   Found);
-         Handle_Potential_Keyword (Offset, "use",      Tok_Use,    Found);
-         Handle_Potential_Keyword (Offset, "pragma",   Tok_Pragma, Found);
-
-         if Found then
-            Push (Token, Offset);
-            return;
-         end if;
-
-         Handle_Potential_Keyword (Offset, "in",       No_Token, Found);
-         Handle_Potential_Keyword (Offset, "out",      No_Token, Found);
-         Handle_Potential_Keyword (Offset, "access",   No_Token, Found);
-         Handle_Potential_Keyword (Offset, "constant", No_Token, Found);
-         Handle_Potential_Keyword (Offset, "aliased",  No_Token, Found);
-
-         Token := Null_Token;
-
-         if Found then
-            Ignore := True;
-         end if;
-      end Handle_Potential_Keyword;
-
-      ----------
-      -- Push --
-      ----------
-
-      procedure Push (Token : in out Token_Record; Offset : Natural) is
-         Name : constant String := Get_Name (Result, Token);
-      begin
-         --  Check if we're on a special keyword
-
-         if Equal (Name, "all", False) then
-            Token.Tok_Type := Tok_All;
-         end if;
+         Stop := False;
 
          if Token /= Null_Token then
             if Token.Token_First = 0 then
@@ -1103,81 +958,72 @@ package body Language.Ada is
                Token.Token_Last := String_Index_Type (Offset);
             end if;
 
-            Prepend (Result.Tokens, Token);
+            if Token.Tok_Type = Tok_Identifier
+              and then Token.Token_Last /= Start_Offset
+            then
+               --  Check if we got a reserved word to be analyzed as such. We
+               --  consider the last word in the expression to be an
+               --  indentifier, as it may be used in the context of an
+               --  uncomplete expression, e.g. A.with completed into
+               --  A.withdrawal. This is not true anymore if there's anything
+               --  after the identifier, e.g. a space.
+
+               declare
+                  Word : constant String :=
+                    To_Lower
+                      (Buffer
+                           (Integer (Token.Token_First)
+                            .. Integer (Token.Token_Last)));
+               begin
+                  if Word = "with" then
+                     Token.Tok_Type := Tok_With;
+                  elsif Word = "use" then
+                     Token.Tok_Type := Tok_Use;
+                  elsif Word = "pragma" then
+                     Token.Tok_Type := Tok_Pragma;
+                  elsif Word = "all" then
+                     Token.Tok_Type := Tok_All;
+                  elsif Word = "or" then
+                     Token.Tok_Type := Tok_Operator;
+                  elsif Word = "and" then
+                     Token.Tok_Type := Tok_Operator;
+                  elsif Word = "xor" then
+                     Token.Tok_Type := Tok_Operator;
+                  elsif Word = "not" then
+                     Token.Tok_Type := Tok_Operator;
+                  elsif Word = "in" then
+                     Token.Tok_Type := Tok_Reserved;
+                  elsif Word = "out" then
+                     Token.Tok_Type := Tok_Reserved;
+                  elsif Word = "access" then
+                     Token.Tok_Type := Tok_Reserved;
+                  elsif Word = "constant" then
+                     Token.Tok_Type := Tok_Reserved;
+                  elsif Word = "alised" then
+                     Token.Tok_Type := Tok_Reserved;
+                  end if;
+               end;
+            end if;
+
+            Callback (Token, Stop);
+
+            if Token.Tok_Type /= Tok_Blank then
+               Prev_Non_Blank_Token := Token;
+            end if;
+
             Token := Null_Token;
          end if;
+      end Handle_Token;
 
-         if Last_Token_On_Line = Token_List.Null_Node then
-            Last_Token_On_Line := First (Result.Tokens);
-         end if;
-      end Push;
+      Next_Ind   : Natural;
 
-      ---------------------
-      -- Adjust_For_Tick --
-      ---------------------
+      Stop : Boolean := False;
 
-      function Was_Start_Of_Character return Boolean
-      is
-         Next_Ind : Natural;
-      begin
-         Next_Ind := UTF8_Next_Char (Buffer.all, Offset) - 1;
-
-         if (Next_Ind in Buffer'Range
-             and then
-               (Is_Alnum
-                  (UTF8_Get_Char (Buffer (Offset .. Next_Ind)))))
-           or else
-             (Next_Ind not in Buffer'Range
-              and then Is_Alphanumeric (Buffer (Offset)))
-           or else Buffer (Offset) = '_'
-           or else Buffer (Offset) = ')'
-         then
-            --  We're on a UTF8 character or a closing paren - consider this
-            --  as being an attribute except if found an other tick later on.
-
-            return False;
-         else
-            return True;
-         end if;
-      end Was_Start_Of_Character;
-
-      ---------
-      -- Pop --
-      ---------
-
-      procedure Pop is
-      begin
-         Remove_Nodes
-           (Result.Tokens, Token_List.Null_Node, First (Result.Tokens));
-      end Pop;
-
-      ---------------------
-      -- Check_Prev_Word --
-      ---------------------
-
-      function Check_Prev_Word (Offset : Positive; Word : String)
-                                return Boolean is
-      begin
-         return Offset - (Word'Length - 1) > Offset_Limit
-           and then To_Lower (Buffer (Offset - (Word'Length - 1) .. Offset))
-           = To_Lower (Word)
-           and then
-             (Offset - Word'Length <= Offset_Limit
-              or else Buffer (Offset - Word'Length) = ' '
-              or else Buffer (Offset - Word'Length) = ASCII.LF
-              or else Buffer (Offset - Word'Length) = ASCII.HT);
-      end Check_Prev_Word;
-
-      Blank_Here, Blank_Before : Boolean := False;
-      Next_Ind                 : Natural;
-      Possible_Arrow           : Boolean := False;
-      Ignore_Id                : Boolean := False;
-      Incomplete_String        : Boolean := False;
+      Incomplete_String : Boolean := False;
    begin
-      Result.Original_Buffer := Buffer;
 
       if Buffer'Length = 0 or Offset > Buffer'Last then
-         return Result;
+         return;
       end if;
 
       if Natural (End_Offset) < Buffer'First then
@@ -1186,13 +1032,20 @@ package body Language.Ada is
          Offset_Limit := Natural (End_Offset) - 1;
       end if;
 
-      Skip_Comment_Line (Offset);
+      Skip_Comment_Line (Offset, Incomplete_String);
 
       if Offset /= Natural (Start_Offset) then
          --  In this case, we are on a comment line. So the expression is
          --  empty.
 
-         return Result;
+         return;
+      end if;
+
+      if Incomplete_String then
+         --  This line contains a string that is not finished, we're actually
+         --  in a string, so don't return any token
+
+         return;
       end if;
 
       --  Adjust the first offset - if the cursor doesn't start at the start
@@ -1200,7 +1053,7 @@ package body Language.Ada is
 
       declare
          Prev_Offset : constant Integer :=
-           UTF8_Find_Prev_Char (Buffer.all, Offset);
+           UTF8_Find_Prev_Char (Buffer, Offset);
          Next_Offset : Integer;
       begin
          if Prev_Offset > Buffer'First then
@@ -1210,7 +1063,7 @@ package body Language.Ada is
             --  the start offset value, or it's the one before and next offset
             --  will be the one to analyze.
 
-            Next_Offset := UTF8_Next_Char (Buffer.all, Prev_Offset);
+            Next_Offset := UTF8_Next_Char (Buffer, Prev_Offset);
 
             if Next_Offset <= Offset then
                --  If the next offset found is equal or before the initial
@@ -1229,134 +1082,112 @@ package body Language.Ada is
       end;
 
       while Offset > Offset_Limit loop
-
-         Blank_Here := False;
-
-         if Possible_Arrow and then Buffer (Offset) /= '=' then
-            exit;
-         end if;
-
-         if Prev_Tick
-           and then Buffer (Offset) /= ' '
-           and then Buffer (Offset) /= ASCII.HT
-           and then Buffer (Offset) /= ASCII.CR
-           and then Buffer (Offset) /= ASCII.LF
-         then
-            --  If the last character found was a tick, and the current
-            --  character has to be analysed, check if that was really related
-            --  to an attribute, and finish the analysis if appropriate.
-
-            if Was_Start_Of_Character then
-               --  If we're actually on a character, then remove the
-               --  character tokens and end the analysis. Cases of removal
-               --  are:
-               --
-               --  ['] [a] [']
-               --  ['] [a]
-               --  [']
-
-               for J in 1 .. 3 loop
-                  if Length (Result.Tokens) > 0 then
-                     Pop;
-                  end if;
-               end loop;
-
-               Token := Null_Token;
-               exit;
-            end if;
-
-            Prev_Tick := False;
-         end if;
-
          case Buffer (Offset) is
+            when ';' =>
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               Token.Tok_Type := Tok_Semicolon;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
             when ',' =>
-               Push (Token, Offset);
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
-               if Length (Result.Tokens) = 0 then
-                  Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-                  Handle_Expression (Offset, False, Incomplete_String);
-
-                  if Incomplete_String then
-                     exit;
-                  end if;
-               else
-                  exit;
-               end if;
+               Token.Tok_Type := Tok_Comma;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
             when ')' =>
-               Push (Token, Offset);
-
-               if Length (Result.Tokens) /= 0
-                 and then Data (First (Result.Tokens)).Tok_Type /= Tok_Dot
-                 and then Data (First (Result.Tokens)).Tok_Type
-                 /= Tok_Open_Parenthesis
-               then
-                  --  On a closing parenthesis, the only accepted following
-                  --  tokens are the open parenthesis (array index) or the
-                  --  dot (component index). Things such as:
-                  --
-                  --  if X (A) in B
-                  --
-                  --  should stop the analysis
-
-                  exit;
-               end if;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
                Token.Tok_Type := Tok_Close_Parenthesis;
-               Push (Token, Offset);
-
-               Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-               Handle_Expression (Offset, False, Incomplete_String);
-
-               if Incomplete_String then
-                  exit;
-               end if;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
             when '(' =>
-               Push (Token, Offset);
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
-               if Length (Result.Tokens) = 0 then
-                  Token.Tok_Type := Tok_Open_Parenthesis;
-                  Push (Token, Offset);
-               end if;
+               Token.Tok_Type := Tok_Open_Parenthesis;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
             when '.' =>
-               Push (Token, Offset);
+               if Offset < Buffer'Last and then Buffer (Offset + 1) = '.' then
+                  --  We're on ".."
 
-               if Length (Result.Tokens) > 0
-                 and then Head (Result.Tokens).Tok_Type = Tok_Dot
-               then
-                  --  In this case, we have a range construct, like A .. B.
-                  --  It's the end of the expression.
+                  Token.Tok_Type := Tok_Range;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset + 1);
+               else
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
 
-                  Pop;
+                  Token.Tok_Type := Tok_Dot;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset);
+               end if;
 
+            when ''' =>
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               Token.Tok_Type := Tok_Tick;
+
+               declare
+                  Local_Offset : Integer := Offset;
+               begin
+                  Local_Offset :=
+                    UTF8_Find_Prev_Char (Buffer, Local_Offset);
+
+                  if not Is_Alnum
+                    (UTF8_Get_Char (Buffer (Local_Offset .. Offset)))
+                  then
+                     Token.Tok_Type := No_Token;
+                  end if;
+
+                  if Local_Offset > Offset_Limit then
+                     Local_Offset :=
+                       UTF8_Find_Prev_Char (Buffer, Local_Offset);
+                  end if;
+
+                  if Local_Offset > Offset_Limit then
+                     if Buffer (Local_Offset) = ''' then
+                        Token.Tok_Type := Tok_String;
+                        --  ??? This should rather be Tok_Character
+
+                        Token.Token_Last := String_Index_Type (Offset);
+                        Token.Token_First := String_Index_Type (Local_Offset);
+
+                        Offset := Local_Offset;
+                     end if;
+                  end if;
+               end;
+
+               if Token.Tok_Type = No_Token then
+                  Incomplete_String := True;
                   exit;
                end if;
 
-               Token.Tok_Type := Tok_Dot;
-               Push (Token, Offset);
-
-            when ''' =>
-               Push (Token, Offset);
-
-               Token.Tok_Type := Tok_Tick;
-               Push (Token, Offset);
-
-               Prev_Tick := True;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
             when ' ' | ASCII.HT | ASCII.CR =>
-               Push (Token, Offset);
-               Blank_Here := True;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               Token.Tok_Type := Tok_Blank;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
 
             when '"' =>
-               if First (Result.Tokens) /= Token_List.Null_Node
-                 and then
-                   (Data (First (Result.Tokens)).Tok_Type
-                    = Tok_Open_Parenthesis
-                    or else Data (First (Result.Tokens)).Tok_Type
-                    = Tok_Expression)
-               then
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               if Prev_Non_Blank_Token.Tok_Type = Tok_Open_Parenthesis then
                   --  We are in an operator symbol case
 
                   Token.Tok_Type := Tok_Identifier;
@@ -1370,42 +1201,106 @@ package body Language.Ada is
 
                   Token.Token_First := String_Index_Type (Offset);
 
-                  Push (Token, Offset);
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
                else
-                  exit;
+                  Token.Tok_Type := Tok_String;
+                  Token.Token_Last := String_Index_Type (Offset);
+
+                  Skip_String (Offset, Incomplete_String);
+
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
                end if;
 
-            when '>' =>
-               if Simple_Expression then
-                  exit;
-               end if;
+            when '<' | '>' =>
+               if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset + 1);
+               else
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
 
-               Possible_Arrow := True;
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset);
+               end if;
 
             when '=' =>
-               if Possible_Arrow then
+               if Offset < Buffer'Last and then Buffer (Offset + 1) = '>' then
                   Token.Tok_Type := Tok_Arrow;
-
-                  Push (Token, Offset);
-
-                  Possible_Arrow := False;
                else
-                  exit;
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
+
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset);
+               end if;
+
+            when '+' | '-' | '/' | '&' =>
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               Token.Tok_Type := Tok_Operator;
+               Token.Token_First := String_Index_Type (Offset);
+               Token.Token_Last := String_Index_Type (Offset);
+
+            when '*' =>
+               if Offset < Buffer'Last and then Buffer (Offset + 1) = '*' then
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset + 1);
+               else
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
+
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset);
                end if;
 
             when ':' =>
-               Push (Token, Offset);
-               Token.Tok_Type := Tok_Colon;
-               Push (Token, Offset);
-               exit;
+               if Token.Tok_Type /= Tok_Operator then
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
+
+                  Token.Tok_Type := Tok_Colon;
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
+
+                  exit;
+               else
+                  Token := Null_Token;
+
+                  exit;
+               end if;
 
             when ASCII.LF =>
-               Push (Token, Offset);
-               Blank_Here := True;
-               Skip_Comment_Line (Offset);
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               Token.Tok_Type := Tok_Blank;
+               Handle_Token (Token, Offset, Stop);
+               exit when Stop;
+
+               Skip_Comment_Line (Offset, Incomplete_String);
+
+               if Incomplete_String then
+                  --  This line contains an unfinished string, don't parse
+                  --  anything anymore and return.
+
+                  exit;
+               end if;
 
             when others =>
-               Next_Ind := UTF8_Next_Char (Buffer.all, Offset) - 1;
+               if Token.Tok_Type /= Tok_Identifier then
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
+               end if;
+
+               Next_Ind := UTF8_Next_Char (Buffer, Offset) - 1;
 
                if (Next_Ind in Buffer'Range
                    and then
@@ -1421,111 +1316,124 @@ package body Language.Ada is
 
                   if Token.Token_Last = 0 then
                      Token.Token_Last := String_Index_Type (Next_Ind);
-
-                     if Length (Result.Tokens) = 0 and then Blank_Before then
-                        Token := Null_Token;
-
-                        Handle_Potential_Keyword (Offset, Ignore_Id);
-
-                        if not Ignore_Id then
-                           exit;
-                        end if;
-                     end if;
-
-                     if Length (Result.Tokens) > 0
-                       and then Head (Result.Tokens).Tok_Type = Tok_Identifier
-                     then
-                        Handle_Potential_Keyword (Offset, Ignore_Id);
-                        Token := Null_Token;
-
-                        if not Ignore_Id then
-                           exit;
-                        end if;
-                     end if;
                   end if;
                else
-                  Push (Token, Offset);
-                  exit;
+                  Handle_Token (Token, Offset, Stop);
+                  exit when Stop;
                end if;
 
          end case;
 
-         Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-         Blank_Before := Blank_Here;
+         Offset := UTF8_Find_Prev_Char (Buffer, Offset);
       end loop;
 
-      Push (Token, Offset);
+      if Stop then
+         --  If we stopped before doing the prev offset
+         Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+      end if;
 
-      --  Check if we're on an incomplete string - see if there's a double
-      --  quote before the begining of the line marking it.
+      Handle_Token (Token, Offset, Stop);
+   end Parse_Tokens_Backwards;
 
-      if not Incomplete_String then
-         while Offset >= Buffer'First
-           and then Buffer (Offset) /= ASCII.LF
-         loop
-            if Buffer (Offset) = '"' then
-               Skip_String (Offset, Incomplete_String);
+   -------------------------------
+   -- Parse_Reference_Backwards --
+   -------------------------------
 
-               if Incomplete_String then
-                  exit;
+   overriding function Parse_Reference_Backwards
+     (Lang         : access Ada_Language;
+      Buffer       : Glib.UTF8_String;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type := 0) return String
+   is
+      Tmp : Unbounded_String;
+
+      Expression_Depth : Integer := 0;
+
+      Prev_Non_Blank : Token_Record;
+      Ends_With_Blanks : Boolean := False;
+      Is_First : Boolean := True;
+
+      procedure Callback
+        (Token : Token_Record;
+         Stop  : in out Boolean);
+
+      procedure Callback
+        (Token : Token_Record;
+         Stop  : in out Boolean)
+      is
+      begin
+         case Token.Tok_Type is
+            when Tok_Blank =>
+               if Is_First then
+                  Ends_With_Blanks := True;
                end if;
-            end if;
 
-            Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
-         end loop;
-      end if;
+               return;
 
-      --  If an incomplete string has been detected anytime in the process,
-      --  we're actually inside it. There's no result to provide in that
-      --  situation.
+            when Tok_Dot =>
+               if Is_First then
+                  Stop := True;
 
-      if Incomplete_String then
-         Free (Result.Tokens);
-         Token := Null_Token;
-      end if;
+                  return;
+               end if;
 
-      --  On the simple mode, we only return an expression that may correspond
-      --  to a value or a variable reference
+            when Tok_Identifier =>
+               if Ends_With_Blanks
+                 or else Prev_Non_Blank.Tok_Type = Tok_Identifier
+               then
+                  Stop := True;
 
-      if Simple_Expression and then not Is_Empty (Result.Tokens) then
-         declare
-            It          : Token_List.List_Node;
-            Last_Simple : Token_List.List_Node := Token_List.Null_Node;
-         begin
-            It := Last (Result.Tokens);
+                  return;
+               end if;
 
-            if Token_List.Data (It).Tok_Type = Tok_Identifier
-              or else Token_List.Data (It).Tok_Type = Tok_All
-            then
-               while It /= Token_List.Null_Node loop
-                  case Token_List.Data (It).Tok_Type is
-                     when Tok_Identifier
-                        | Tok_Dot
-                        | Tok_All
-                        | Tok_Expression
-                        | Tok_Close_Parenthesis
-                        | Tok_Open_Parenthesis =>
+            when Tok_All | Tok_Tick =>
+               if Ends_With_Blanks then
+                  Stop := True;
 
-                        Last_Simple := It;
-                     when others =>
+                  return;
+               end if;
 
-                        exit;
-                  end case;
+            when Tok_Close_Parenthesis =>
+               Expression_Depth := Expression_Depth + 1;
 
-                  It := Prev (Result.Tokens, It);
-               end loop;
-            end if;
+            when Tok_Open_Parenthesis =>
+               Expression_Depth := Expression_Depth - 1;
 
-            if Last_Simple /= First (Result.Tokens) then
-               Remove_Nodes
-                 (Result.Tokens,
-                  Token_List.Null_Node,
-                  Prev (Result.Tokens, Last_Simple));
-            end if;
-         end;
-      end if;
+               if Expression_Depth < 0 then
+                  Stop := True;
+                  return;
+               end if;
 
-      return Result;
-   end Parse_Expression_Backward;
+            when others =>
+               if Expression_Depth <= 0 then
+                  Stop := True;
+                  return;
+               end if;
+
+         end case;
+
+         if Token.Tok_Type /= Tok_Blank then
+            Is_First := False;
+         end if;
+
+         Insert
+           (Tmp,
+            1,
+            Buffer
+              (Natural (Token.Token_First)
+               .. Natural (Token.Token_Last)));
+
+         Prev_Non_Blank := Token;
+      end Callback;
+
+   begin
+      Lang.Parse_Tokens_Backwards
+        (Buffer            => Buffer,
+         Start_Offset      => Start_Offset,
+         End_Offset        => End_Offset,
+         Callback          => Callback'Access);
+
+      return To_String (Tmp);
+   end Parse_Reference_Backwards;
 
 end Language.Ada;

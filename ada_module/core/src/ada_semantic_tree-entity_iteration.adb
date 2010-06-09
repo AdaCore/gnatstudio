@@ -337,7 +337,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                then
                   It.Step_Has_Started := False;
                elsif Ref_Id /= Null_Distinct_Identifier then
-                  Expression := Parse_Expression_Backward (Ada_Lang, Ref_Id);
+                  Expression := Parse_Expression_Backward (Ref_Id);
 
                   It.Decl_List := Find_Declarations
                     ((From_File,

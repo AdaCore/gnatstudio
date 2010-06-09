@@ -39,7 +39,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
-with Language.Ada;           use Language.Ada;
+with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
 
 package body Refactoring.Parameters is
    Me : constant Debug_Handle := Create ("Refactor.Params");
@@ -172,8 +172,7 @@ package body Refactoring.Parameters is
 
          Expression : Parsed_Expression :=
            Parse_Expression_Backward
-             (Lang         => Ada_Lang,
-              Buffer       => Get_Buffer (S_File),
+             (Buffer       => Get_Buffer (S_File),
               Start_Offset => Offset);
 
          Entity_Before : Entity_Information;

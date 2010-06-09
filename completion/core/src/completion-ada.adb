@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language.Ada;  use Language.Ada;
-
 package body Completion.Ada is
 
    ---------------------------------
@@ -44,7 +42,7 @@ package body Completion.Ada is
       Completion_Context_Record (Ada_Context.all) :=
         Completion_Context_Record (Context.all);
       Ada_Context_All.Expression := Parse_Expression_Backward
-        (Ada_Lang, Context.Buffer, Context.Offset);
+        (Context.Buffer, Context.Offset);
 
       if Token_List.Length (Ada_Context_All.Expression.Tokens) > 0 then
          while It /= Completion_Resolver_List_Pckg.No_Element loop

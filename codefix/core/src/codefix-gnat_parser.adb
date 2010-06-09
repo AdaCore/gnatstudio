@@ -23,7 +23,6 @@ with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 with Language;                       use Language;
 with Language.Tree;                  use Language.Tree;
-with Language.Ada;                   use Language.Ada;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
@@ -3649,7 +3648,7 @@ package body Codefix.GNAT_Parser is
       end if;
 
       Expression := Parse_Expression_Backward
-        (Ada_Lang, Entity_Name, String_Index_Type (Entity_Name'Last));
+        (Entity_Name, String_Index_Type (Entity_Name'Last));
 
       List := Find_Declarations
         (Context    =>

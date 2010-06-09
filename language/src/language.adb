@@ -1217,173 +1217,80 @@ package body Language is
       return not (S1 < S2);
    end ">=";
 
-   -------------------------------
-   -- Parse_Expression_Backward --
-   -------------------------------
+   ---------------------------
+   -- Parse_Tokens_Backward --
+   ---------------------------
 
-   function Parse_Expression_Backward
+   procedure Parse_Tokens_Backwards
      (Lang              : access Language_Root;
-      Buffer            : access Glib.UTF8_String;
+      Buffer            : Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Simple_Expression : Boolean := False)
-      return Parsed_Expression
+      --   ??? This analysis should be done when looking for comments !!!
+      Callback          :
+      access procedure (Token : Token_Record;
+                        Stop : in out Boolean))
    is
-      pragma Unreferenced (Lang, Simple_Expression);
+      pragma Unreferenced (Lang);
       Lowest : constant String_Index_Type :=
         String_Index_Type'Max (End_Offset, String_Index_Type (Buffer'First));
       Index  : String_Index_Type := Start_Offset;
+      Stop   : Boolean := False;
    begin
       if Index not in Lowest .. String_Index_Type (Buffer'Last) then
-         return Null_Parsed_Expression;
+         return;
       else
          Skip_Word
            (Buffer (Natural (Lowest) .. Natural (Index)),
             Natural (Index),
             Step => -1);
 
-         --  Build in place to avoid a copy of the list
-
-         return Result : Parsed_Expression do
-            Result.Original_Buffer := Buffer;
-            Token_List.Append
-              (Result.Tokens, Token_Record'
-                 (Tok_Type    => Tok_Identifier,
-                  Token_First => Index + 1,
-                  Token_Last  => Start_Offset));
-         end return;
+         Callback
+           ((Tok_Type    => Tok_Identifier,
+             Token_First => Index + 1,
+             Token_Last  => Start_Offset),
+            Stop);
       end if;
-   end Parse_Expression_Backward;
+   end Parse_Tokens_Backwards;
 
-   -------------------------------
-   -- Parse_Expression_Backward --
-   -------------------------------
+   ------------------------------
+   -- Parse_Reference_Backward --
+   ------------------------------
 
-   function Parse_Expression_Backward
-     (Lang   : access Language_Root'Class;
-      Buffer : access Glib.UTF8_String;
-      Simple_Expression : Boolean := False) return Parsed_Expression is
-   begin
-      return Parse_Expression_Backward
-        (Lang, Buffer, String_Index_Type (Buffer'Last), 0, Simple_Expression);
-   end Parse_Expression_Backward;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (Expression : Parsed_Expression; Token : Token_Record) return String is
-   begin
-      case Token.Tok_Type is
-         when No_Token =>
-            return "";
-
-         when Tok_Dot =>
-            return ".";
-
-         when Tok_Open_Parenthesis =>
-            return "(";
-
-         when Tok_Close_Parenthesis =>
-            return ")";
-
-         when Tok_Colon =>
-            return " : ";
-
-         when Tok_Arrow =>
-            return "=>";
-
-         when Tok_Identifier | Tok_Expression =>
-            if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
-               return Expression.Original_Buffer
-                 (Natural (Token.Token_First) .. Natural (Token.Token_Last));
-            else
-               return "";
-            end if;
-
-         when Tok_All =>
-            return "all";
-
-         when Tok_Tick =>
-            return "'";
-
-         when Tok_With =>
-            return "with ";
-
-         when Tok_Use =>
-            return "use ";
-
-         when Tok_Pragma =>
-            return "pragma ";
-
-      end case;
-   end Get_Name;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Expression : Parsed_Expression) return String is
-      use Token_List;
-
-      Length : Natural := 0;
-      Iter   : Token_List.List_Node := First (Expression.Tokens);
-   begin
-      while Iter /= Null_Node loop
-         Length := Length + Get_Name (Expression, Data (Iter))'Length;
-         Iter := Next (Iter);
-      end loop;
-
-      return Result : String (1 .. Length) do
-         Iter := First (Expression.Tokens);
-         Length := Result'First;
-
-         while Iter /= Null_Node loop
-            declare
-               N : constant String := Get_Name (Expression, Data (Iter));
-            begin
-               Result (Length .. Length + N'Length - 1) := N;
-               Length := Length + N'Length;
-            end;
-            Iter := Next (Iter);
-         end loop;
-      end return;
-   end To_String;
-
-   -----------------------------------------
-   -- Parse_Expression_Backward_To_String --
-   -----------------------------------------
-
-   function Parse_Expression_Backward_To_String
-     (Lang              : access Language_Root'Class;
+   function Parse_Reference_Backwards
+     (Lang              : access Language_Root;
       Buffer            : Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0;
-      Simple_Expression : Boolean := False) return String
+      End_Offset        : String_Index_Type := 0) return String
    is
-      --  Buffer is always passed by reference in GNAT, so it is safe to take
-      --  a Unchecked_Access on it
-      Expr : Parsed_Expression :=
-        Parse_Expression_Backward
-          (Lang,
-           Buffer'Unrestricted_Access,
-           Start_Offset,
-           End_Offset,
-           Simple_Expression);
-   begin
-      return Result : constant String := To_String (Expr) do
-         Free (Expr);
-      end return;
-   end Parse_Expression_Backward_To_String;
+      Buf_Start : Integer := 1;
+      Buf_End   : Integer := 0;
 
-   ----------
-   -- Free --
-   ----------
+      procedure Callback
+        (Token : Token_Record;
+         Stop  : in out Boolean);
 
-   procedure Free (Expression : in out Parsed_Expression) is
+      procedure Callback
+        (Token : Token_Record;
+         Stop  : in out Boolean)
+      is
+      begin
+         if Token.Tok_Type /= Tok_Blank then
+            Buf_End := Integer (Token.Token_Last);
+            Buf_Start := Integer (Token.Token_First);
+            Stop := True;
+         end if;
+      end Callback;
+
    begin
-      Token_List.Free (Expression.Tokens);
-   end Free;
+
+      Lang.Parse_Tokens_Backwards
+        (Buffer            => Buffer,
+         Start_Offset      => Start_Offset,
+         End_Offset        => End_Offset,
+         Callback          => Callback'Access);
+
+      return Buffer (Buf_Start .. Buf_End);
+   end Parse_Reference_Backwards;
 
 end Language;

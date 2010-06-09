@@ -29,7 +29,6 @@ with Gtk.Handlers;       use Gtk.Handlers;
 
 with Completion_Window;  use Completion_Window;
 
-with Language.Ada;                   use Language.Ada;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
@@ -260,7 +259,7 @@ package body Completion_Window.Entity_Views is
    begin
       Text := new String'(Get_Text (View.Ent));
 
-      Expression := Parse_Expression_Backward (Ada_Lang, Text, False);
+      Expression := Parse_Expression_Backward (Text);
 
       List := Find_Declarations
         (Context           =>

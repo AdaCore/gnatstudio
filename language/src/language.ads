@@ -20,7 +20,6 @@
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
 with Glib;
 with Case_Handling;
-with Generic_List;
 with GNAT.Expect;
 with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
@@ -791,16 +790,25 @@ package Language is
       Tok_Close_Parenthesis,
       Tok_Colon,
       Tok_Arrow,
+      Tok_Operator,
+      Tok_Comma,
+      Tok_Range,
+      Tok_Semicolon,
+      Tok_Blank,
 
       --  Words
 
       Tok_Identifier,
+      Tok_String,
 
       --  Unparsed parts
 
       Tok_Expression,
 
       --  Keywords
+
+      --  used for any reserved word that in not part of the ones below
+      Tok_Reserved,
 
       Tok_All,
       Tok_Tick,
@@ -823,78 +831,27 @@ package Language is
    procedure Free (This : in out Token_Record) is null;
    --  Used to instantiate the generic list, does not actually do anything
 
-   package Token_List is new Generic_List (Token_Record, Free => Free);
-
-   type Parsed_Expression is record
-      Original_Buffer : access Glib.UTF8_String;
-      Tokens          : Token_List.List := Token_List.Null_List;
-   end record;
-   Null_Parsed_Expression : constant Parsed_Expression;
-   --  An expression extracted from source code.
-   --  Original_Buffer is a reference to the buffer passed to
-   --  Parse_Expression_Backward.
-   --
-   --  The src_editor module builds a string from that expression and stores it
-   --  in the current context. This is available through Expression_Information
-
-   procedure Free (Expression : in out Parsed_Expression);
-   --  Free memory associated with Expression
-
-   function Parse_Expression_Backward
+   procedure Parse_Tokens_Backwards
      (Lang              : access Language_Root;
-      Buffer            : access Glib.UTF8_String;
-      Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0;
-      Simple_Expression : Boolean := False)
-      return Parsed_Expression;
-   --  This function looks backwards from the offset given in parameter and
-   --  parses the relevant completion expression.
-   --  Start_Offset is the offset (in byte) of where we have to look.
-   --  The buffer given in parameter must have a lifetime superior or equal to
-   --  the resulting parser expression, as it gets referenced by this
-   --  expression.
-   --  An example, if we have the following Ada code:
-   --       A.Func (C).field
-   --  and Start_Offset points to "field", the returned parsed expression will
-   --  contain 8 elements:
-   --      Tok_Identifier + Tok_Dot + Tok_Identifier + Tok_Open_Parenthesis
-   --      + Tok_Identifier + Tok_Close_Parenthesis + Tok_Dot + Tok_Identifdier
-   --  Note that Start_Offset must point on the d, or the last identifier
-   --  returned will only contain a part of the name.
-   --
-   --  This parser may be able to retrieve complex expression, e.g. A + B,
-   --  or A => B in ada. If the flat Simple_Expression is true, then it will
-   --  avoid returning this kind of complex result involving more that one
-   --  top-level object.
-   --
-   --  The default implementation for any language is to return the current
-   --  identifier, ie stop at the first non-alphanumeric character.
-   --
-   --  The return value must be freed by the user
-
-   function Parse_Expression_Backward
-     (Lang              : access Language_Root'Class;
-      Buffer            : access Glib.UTF8_String;
-      Simple_Expression : Boolean := False) return Parsed_Expression;
-   --  Same as before, but analyzes the whole buffer as an expression (ie
-   --  Start_Offset = Buffer'Last.
-
-   function Parse_Expression_Backward_To_String
-     (Lang              : access Language_Root'Class;
       Buffer            : Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Simple_Expression : Boolean := False) return String;
-   --  Same as above, but doesn't return semantic information for each node.
-   --  Instead, the expression is returned as a sanitized string, ie with
-   --  which spaces, comments and newline characters removed.
+      Callback          :
+      access procedure (Token : Token_Record;
+                        Stop : in out Boolean));
+   --  Parses the tokens from the Start_Offset backwards to end offset. Calls
+   --  Callback on each token. If Stop is True on the callback, then the
+   --  parsing is stoped.
 
-   function Get_Name
-     (Expression : Parsed_Expression; Token : Token_Record) return String;
-   --  Return the name of the element pointed by the token
-
-   function To_String (Expression : Parsed_Expression) return String;
-   --  Returns a string with the contents of the expresion
+   function Parse_Reference_Backwards
+     (Lang              : access Language_Root;
+      Buffer            : Glib.UTF8_String;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0) return String;
+   --  Return a string containing a reference to a value, looking backwards
+   --  from End_Offset. E.g., for Ada, if the code is something like:
+   --  A := B (C.D (X).E)
+   --  and End_Offset is place after E, this will return "C.D(X).E".
 
 private
    type Language_Root is abstract tagged limited record
@@ -916,9 +873,6 @@ private
      (Tok_Type             => No_Token,
       Token_First          => 0,
       Token_Last           => 0);
-
-   Null_Parsed_Expression : constant Parsed_Expression :=
-     (null, Token_List.Null_List);
 
    Null_Construct_Info : constant Construct_Information :=
                            (Category        => Cat_Unknown,

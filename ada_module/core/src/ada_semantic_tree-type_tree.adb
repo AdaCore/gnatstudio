@@ -611,7 +611,7 @@ package body Ada_Semantic_Tree.Type_Tree is
 
          declare
             Expression : Parsed_Expression := Parse_Expression_Backward
-              (Ada_Lang, Get_Identifier (Ref_Ids));
+              (Get_Identifier (Ref_Ids));
 
             Decl_List   : Entity_List;
             It          : Entity_Iterator;

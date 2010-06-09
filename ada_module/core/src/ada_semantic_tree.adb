@@ -18,7 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+with Language.Ada; use Language.Ada;
 
 package body Ada_Semantic_Tree is
 
@@ -347,5 +349,288 @@ package body Ada_Semantic_Tree is
          end if;
       end if;
    end Unref;
+
+   -------------------------------
+   -- Parse_Expression_Backward --
+   -------------------------------
+
+   function Parse_Expression_Backward
+     (Buffer            : access Glib.UTF8_String;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0)
+      return Parsed_Expression
+   is
+      use Token_List;
+
+      Result    : Parsed_Expression;
+      Expression_Depth : Natural := 0;
+      Expression_Token : Token_Record;
+      Last_Token : Token_Record := Null_Token;
+      Last_Non_Blank_Token : Token_Record := Null_Token;
+
+      procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
+      function To_String (Token : Token_Record) return String;
+
+      ---------------
+      -- To_String --
+      ---------------
+
+      function To_String (Token : Token_Record) return String is
+      begin
+         if Token.Tok_Type = No_Token then
+            return "";
+         elsif Natural (Token.Token_First) not in Buffer'Range
+           or else Natural (Token.Token_Last) not in Buffer'Range
+         then
+            return "";
+         else
+            return To_Lower
+              (Buffer
+                 (Natural (Last_Non_Blank_Token.Token_First)
+                  .. Natural (Last_Non_Blank_Token.Token_Last)));
+         end if;
+      end To_String;
+
+      ------------------
+      -- Handle_Token --
+      ------------------
+
+      procedure Handle_Token (Token : Token_Record; Stop : in out Boolean) is
+      begin
+         Stop := False;
+
+         if Expression_Depth = 0 then
+            case Token.Tok_Type is
+               when Tok_With | Tok_Use | Tok_Pragma =>
+                  Prepend (Result.Tokens, Token);
+                  Stop := True;
+
+               when Tok_Identifier =>
+                  if Last_Non_Blank_Token.Tok_Type = Tok_Identifier then
+                     Stop := True;
+                  elsif Length (Result.Tokens) = 0
+                    and then Last_Token.Tok_Type = Tok_Blank
+                  then
+                     Stop := True;
+                  else
+                     Prepend (Result.Tokens, Token);
+                  end if;
+
+               when Tok_All
+                  | Tok_Tick
+                  | Tok_Arrow
+                  | Tok_Colon
+                  | Tok_Dot =>
+
+                  Prepend (Result.Tokens, Token);
+
+               when Tok_Close_Parenthesis =>
+                  if To_String (Last_Non_Blank_Token) = "in" then
+                     --  We're on e.g. for X in A, don't get more things
+
+                     Stop := True;
+
+                     return;
+                  end if;
+
+                  Prepend (Result.Tokens, Token);
+                  Expression_Depth := 1;
+                  Expression_Token.Tok_Type := Tok_Expression;
+
+               when Tok_Comma =>
+                  if Last_Non_Blank_Token = Null_Token then
+                     Expression_Depth := 1;
+                     Expression_Token.Tok_Type := Tok_Expression;
+                  else
+                     Stop := True;
+                  end if;
+
+               when Tok_Open_Parenthesis =>
+                  if Last_Non_Blank_Token = Null_Token then
+                     Prepend (Result.Tokens, Token);
+                  else
+                     Stop := True;
+                  end if;
+
+               when Tok_Operator
+                  | Tok_Range
+                  | Tok_String
+                  | Tok_Semicolon =>
+
+                  Stop := True;
+
+               when No_Token | Tok_Expression | Tok_Blank | Tok_Reserved =>
+                  null;
+
+            end case;
+
+            if Token.Tok_Type /= Tok_Blank then
+               Last_Non_Blank_Token := Token;
+            end if;
+
+            Last_Token := Token;
+         else
+            if Token.Tok_Type = Tok_Close_Parenthesis then
+               Expression_Depth := Expression_Depth + 1;
+            elsif Token.Tok_Type = Tok_Open_Parenthesis then
+               Expression_Depth := Expression_Depth - 1;
+            elsif Token.Tok_Type = Tok_Comma and then Expression_Depth = 1 then
+               Prepend (Result.Tokens, Expression_Token);
+               Expression_Token := (Tok_Expression, 0, 0);
+            end if;
+
+            if Expression_Depth = 0 then
+               Prepend (Result.Tokens, Expression_Token);
+
+               if Token.Tok_Type = Tok_Open_Parenthesis then
+                  Prepend (Result.Tokens, Token);
+               end if;
+            elsif Token.Tok_Type /= Tok_Comma
+              and then Token.Tok_Type /= Tok_Blank
+            then
+               if Expression_Token.Token_Last = 0 then
+                  Expression_Token.Token_Last := Token.Token_Last;
+               end if;
+
+               Expression_Token.Token_First := Token.Token_First;
+            end if;
+
+            Last_Token := Expression_Token;
+            Last_Non_Blank_Token := Token;
+         end if;
+      end Handle_Token;
+
+   begin
+      Result.Original_Buffer := Buffer;
+
+      Ada_Lang.Parse_Tokens_Backwards
+         (Buffer      => Buffer.all,
+         Start_Offset => Start_Offset,
+         End_Offset   => End_Offset,
+         Callback     => Handle_Token'Access);
+
+      return Result;
+   end Parse_Expression_Backward;
+
+   -------------------------------
+   -- Parse_Expression_Backward --
+   -------------------------------
+
+   function Parse_Expression_Backward (Buffer : access Glib.UTF8_String)
+      return Parsed_Expression
+   is
+   begin
+      return Parse_Expression_Backward
+        (Buffer, String_Index_Type (Buffer'Last), 0);
+   end Parse_Expression_Backward;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+   (Expression : Parsed_Expression; Token : Token_Record) return String is
+   begin
+      case Token.Tok_Type is
+         when No_Token =>
+            return "";
+
+         when Tok_Dot =>
+            return ".";
+
+         when Tok_Open_Parenthesis =>
+            return "(";
+
+         when Tok_Close_Parenthesis =>
+            return ")";
+
+         when Tok_Colon =>
+            return " : ";
+
+         when Tok_Arrow =>
+            return "=>";
+
+         when Tok_Identifier
+            | Tok_Expression
+            | Tok_Operator
+            | Tok_Reserved
+            | Tok_String =>
+
+            if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
+               return Expression.Original_Buffer
+              (Natural (Token.Token_First) .. Natural (Token.Token_Last));
+            else
+               return "";
+            end if;
+
+         when Tok_All =>
+            return "all";
+
+         when Tok_Tick =>
+            return "'";
+
+         when Tok_With =>
+            return "with ";
+
+         when Tok_Use =>
+            return "use ";
+
+         when Tok_Pragma =>
+            return "pragma ";
+
+         when Tok_Comma =>
+            return ", ";
+
+         when Tok_Range =>
+            return "..";
+
+         when Tok_Semicolon =>
+            return ";";
+
+         when Tok_Blank =>
+            return "";
+
+      end case;
+   end Get_Name;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Expression : Parsed_Expression) return String is
+      use Token_List;
+
+      Length : Natural := 0;
+      Iter   : Token_List.List_Node := First (Expression.Tokens);
+   begin
+      while Iter /= Null_Node loop
+         Length := Length + Get_Name (Expression, Data (Iter))'Length;
+         Iter := Next (Iter);
+      end loop;
+
+      return Result : String (1 .. Length) do
+         Iter := First (Expression.Tokens);
+         Length := Result'First;
+
+         while Iter /= Null_Node loop
+            declare
+               N : constant String := Get_Name (Expression, Data (Iter));
+            begin
+               Result (Length .. Length + N'Length - 1) := N;
+               Length := Length + N'Length;
+            end;
+            Iter := Next (Iter);
+         end loop;
+      end return;
+   end To_String;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Expression : in out Parsed_Expression) is
+   begin
+      Token_List.Free (Expression.Tokens);
+   end Free;
 
 end Ada_Semantic_Tree;

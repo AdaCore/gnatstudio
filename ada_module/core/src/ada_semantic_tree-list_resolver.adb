@@ -381,7 +381,7 @@ package body Ada_Semantic_Tree.List_Resolver is
       Result.Is_Named := False;
 
       Result.Expression := Parse_Expression_Backward
-        (Ada_Lang, Buffer, Param_End, Param_Start);
+        (Buffer, Param_End, Param_Start);
 
       if Length (Result.Expression.Tokens) >= 2 then
          It := First (Result.Expression.Tokens);

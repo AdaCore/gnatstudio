@@ -412,7 +412,7 @@ package body Ada_Semantic_Tree.Generics is
            (Get_Referenced_Identifiers
               (To_Construct_Tree_Iterator (Info))).all;
          Expression : Parsed_Expression :=
-           Ada_Lang.Parse_Expression_Backward
+           Parse_Expression_Backward
              (Id'Unchecked_Access, String_Index_Type (Id'Last));
          Generic_Resolution : Entity_List;
          It                 : Entity_Iterator;

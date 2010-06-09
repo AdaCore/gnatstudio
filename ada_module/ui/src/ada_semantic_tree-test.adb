@@ -580,8 +580,7 @@ procedure Ada_Semantic_Tree.Test is
 
          declare
             Expression : Parsed_Expression := Parse_Expression_Backward
-              (Lang         => Ada_Lang,
-               Buffer       => Buffer,
+              (Buffer       => Buffer,
                Start_Offset => String_Index_Type (Word_End),
                End_Offset   => String_Index_Type (Word_Begin));
 
@@ -656,8 +655,7 @@ procedure Ada_Semantic_Tree.Test is
                 Construct_Db),
                Expression        =>
                  Parse_Expression_Backward
-                   (Ada_Lang,
-                    Buffer,
+                   (Buffer,
                     String_Index_Type (Word_End),
                     String_Index_Type (Word_Begin)),
                Is_Partial        => True);

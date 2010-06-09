@@ -1119,8 +1119,7 @@ package body Ada_Semantic_Tree.Lang is
 
             Analyzed_Expression : Parsed_Expression :=
               Parse_Expression_Backward
-                (Lang              => Ada_Lang,
-                 Buffer            => Get_Buffer (File),
+                (Buffer            => Get_Buffer (File),
                  Start_Offset      => Ref.Index_End);
 
             Enclosing_Call : Parsed_Expression;
@@ -1154,8 +1153,7 @@ package body Ada_Semantic_Tree.Lang is
                if Call_Node = Token_List.Null_Node then
                   Enclosing_Call :=
                     Parse_Expression_Backward
-                      (Lang              => Ada_Lang,
-                       Buffer            => Get_Buffer (File),
+                      (Buffer            => Get_Buffer (File),
                        Start_Offset      => Token_List.Data
                          (Token_List.First
                             (Analyzed_Expression.Tokens)).Token_First - 1);

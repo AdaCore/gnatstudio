@@ -177,13 +177,20 @@ package Language.Ada is
    -- Parsing expressions --
    -------------------------
 
-   overriding function Parse_Expression_Backward
+   overriding procedure Parse_Tokens_Backwards
      (Lang              : access Ada_Language;
-      Buffer            : access Glib.UTF8_String;
+      Buffer            : Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Simple_Expression : Boolean := False)
-      return Parsed_Expression;
+      Callback          :
+      access procedure (Token : Token_Record;
+                        Stop : in out Boolean));
+
+   overriding function Parse_Reference_Backwards
+     (Lang              : access Ada_Language;
+      Buffer            : Glib.UTF8_String;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0) return String;
 
 private
    type Ada_Language is new Language_Root with null record;

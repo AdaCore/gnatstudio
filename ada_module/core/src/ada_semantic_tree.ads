@@ -27,6 +27,7 @@ with Language.Tree; use Language.Tree;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Glib; use Glib;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Generic_List;
 
 --  base package of all ada semantic tree queries.
 
@@ -208,6 +209,67 @@ package Ada_Semantic_Tree is
    procedure Unref (Stack : in out Excluded_Stack_Type);
    --  Decrement the reference counter of the stack.
 
+   ------------------------
+   --  Parsed expression --
+   ------------------------
+
+   package Token_List is new Generic_List (Token_Record, Free => Free);
+
+   type Parsed_Expression is record
+      Original_Buffer : access Glib.UTF8_String;
+      Tokens          : Token_List.List := Token_List.Null_List;
+   end record;
+   Null_Parsed_Expression : constant Parsed_Expression;
+   --  An expression extracted from source code.
+   --  Original_Buffer is a reference to the buffer passed to
+   --  Parse_Expression_Backward.
+   --
+   --  The src_editor module builds a string from that expression and stores it
+   --  in the current context. This is available through Expression_Information
+
+   procedure Free (Expression : in out Parsed_Expression);
+   --  Free memory associated with Expression
+
+   function Parse_Expression_Backward
+     (Buffer            : access Glib.UTF8_String;
+      Start_Offset      : String_Index_Type;
+      End_Offset        : String_Index_Type := 0)
+      return Parsed_Expression;
+   --  This function looks backwards from the offset given in parameter and
+   --  parses the relevant completion expression.
+   --  Start_Offset is the offset (in byte) of where we have to look.
+   --  The buffer given in parameter must have a lifetime superior or equal to
+   --  the resulting parser expression, as it gets referenced by this
+   --  expression.
+   --  An example, if we have the following Ada code:
+   --       A.Func (C).field
+   --  and Start_Offset points to "field", the returned parsed expression will
+   --  contain 8 elements:
+   --      Tok_Identifier + Tok_Dot + Tok_Identifier + Tok_Open_Parenthesis
+   --      + Tok_Identifier + Tok_Close_Parenthesis + Tok_Dot + Tok_Identifdier
+   --  Note that Start_Offset must point on the d, or the last identifier
+   --  returned will only contain a part of the name.
+   --
+   --  This parser may be able to retrieve complex expression, e.g. A + B,
+   --  or A => B in ada. If the flat Simple_Expression is true, then it will
+   --  avoid returning this kind of complex result involving more that one
+   --  top-level object.
+   --
+   --  The default implementation for any language is to return the current
+   --  identifier, ie stop at the first non-alphanumeric character.
+   --
+   --  The return value must be freed by the user
+
+   function Parse_Expression_Backward
+     (Buffer : access Glib.UTF8_String) return Parsed_Expression;
+   --  Same as above, assuming Start_Offset = Buffer'Last and End_Offset = 0
+
+   function To_String (Expression : Parsed_Expression) return String;
+   --  Returns a string with the contents of the expresion
+
+   function Get_Name
+     (Expression : Parsed_Expression; Token : Token_Record) return String;
+
 private
 
    Test_Trace : constant Trace_Handle :=
@@ -267,5 +329,8 @@ private
 
    Null_Entity_List : constant Entity_List :=
      (Entity_List_Pckg.Null_Virtual_List, null, Null_Visibility_Context);
+
+   Null_Parsed_Expression : constant Parsed_Expression :=
+     (null, Token_List.Null_List);
 
 end Ada_Semantic_Tree;

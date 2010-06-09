@@ -19,6 +19,8 @@
 
 --  This package provides an Ada-specific completer
 
+with Ada_Semantic_Tree; use Ada_Semantic_Tree;
+
 package Completion.Ada is
 
    type Ada_Completion_Manager is new Completion_Manager with private;
