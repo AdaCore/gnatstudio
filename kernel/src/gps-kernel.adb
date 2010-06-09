@@ -1812,7 +1812,7 @@ package body GPS.Kernel is
       Free (Handle.GNAT_Version);
       Free (Handle.Construct_Database);
 
-      Handle.Symbols.Display_Stats;
+      --  Handle.Symbols.Display_Stats;
       GNATCOLL.Symbols.Free (Handle.Symbols);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
