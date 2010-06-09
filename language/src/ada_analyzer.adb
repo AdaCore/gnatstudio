@@ -644,10 +644,10 @@ package body Ada_Analyzer is
    ------------------------
 
    SPARK_Keywords : constant Pattern_Matcher := Compile
-                     ("^(a(bs|nd|ssert)|check|derives|else|from|global|" &
+                     ("^(a(bs|nd|ssert)|check|derives|e(lse|nd)|from|global|" &
                       "h(ide|old)|in|in(herit|itializes|variant)|" &
                       "main_program|not|o(r|wn|thers)|post|pre|some|" &
-                      "a(re_interchangeable|s|ssume)|const|div|" &
+                      "a(ccept|re_interchangeable|s|ssume)|const|div|" &
                       "element|fi(nish|rst)|for_(all|some)|goal|" &
                       "last|may_be_(deduced|deduced_from|" &
                       "replaced_by)|no(n(first|last)|t_in)|o(dd|ut)|" &
