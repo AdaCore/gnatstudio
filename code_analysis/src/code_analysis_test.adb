@@ -31,6 +31,7 @@ with Language.Tree;            use Language.Tree;
 with Language.Ada;             use Language.Ada;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Glib;                     use Glib;
 with Gtk.Main;                 use Gtk.Main;
@@ -43,6 +44,8 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 
 procedure Code_Analysis_Test is
+
+   Symbols : constant Symbol_Table_Access := Allocate;
 
    procedure Print_Usage;
    --  Print the correct usage of the program to the standard output
@@ -372,6 +375,8 @@ procedure Code_Analysis_Test is
    Projects  : Code_Analysis_Tree := new Project_Maps.Map;
    Arg_Count : constant Natural := 3;
 begin
+   Set_Symbols (Ada_Lang, Symbols);
+
    if Argument_Count < Arg_Count then
       Put_Line ("error: missing arguments");
       Print_Usage;
