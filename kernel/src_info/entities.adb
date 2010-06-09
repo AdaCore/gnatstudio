@@ -19,7 +19,6 @@
 
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
@@ -2879,13 +2878,10 @@ package body Entities is
    ------------------------------
 
    function Get_Name
-     (Entities : Entity_Array_Access) return GNAT.Strings.String_Access
+     (Entities : Entity_Array_Access) return Cst_String_Access
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (Cst_String_Access, GNAT.Strings.String_Access);
    begin
-      return Convert
-        (Get (Get_Name (Entities (Entities'First))));
+      return Get (Get_Name (Entities (Entities'First)));
    end Get_Name;
 
    ------------

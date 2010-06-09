@@ -355,7 +355,7 @@ package body Ada_Semantic_Tree is
    -------------------------------
 
    function Parse_Expression_Backward
-     (Buffer            : access Glib.UTF8_String;
+     (Buffer            : access constant Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0)
       return Parsed_Expression
@@ -516,7 +516,8 @@ package body Ada_Semantic_Tree is
    -- Parse_Expression_Backward --
    -------------------------------
 
-   function Parse_Expression_Backward (Buffer : access Glib.UTF8_String)
+   function Parse_Expression_Backward
+      (Buffer : access constant Glib.UTF8_String)
       return Parsed_Expression
    is
    begin

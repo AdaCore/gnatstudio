@@ -310,9 +310,11 @@ package body GPS.Kernel is
       Handle.Home_Dir := Home_Dir;
       Handle.Prefix   := Prefix_Directory;
 
+      Handle.Symbols := GNATCOLL.Symbols.Allocate;
+
       --  Create the language handler
 
-      Create_Handler (Handler);
+      Create_Handler (Handler, Handle.Symbols);
       Handle.Lang_Handler := Handler;
 
       --  by default, the local server
@@ -320,8 +322,6 @@ package body GPS.Kernel is
 
       Create_Registry (Handle);
       Set_Registry (Handle.Lang_Handler, Handle.Registry);
-
-      Handle.Symbols := GNATCOLL.Symbols.Allocate;
 
       --  Note: we do not compute the view of this project yet. This will be
       --  done only if no other project was loaded from the command line, which
@@ -1812,6 +1812,7 @@ package body GPS.Kernel is
       Free (Handle.GNAT_Version);
       Free (Handle.Construct_Database);
 
+      Handle.Symbols.Display_Stats;
       GNATCOLL.Symbols.Free (Handle.Symbols);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,

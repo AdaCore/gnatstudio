@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with String_Utils;           use String_Utils;
 
@@ -49,8 +50,6 @@ package body Language.Tree is
    begin
       if Tree /= null then
          for J in Tree.Contents'Range loop
-            GNAT.Strings.Free (Tree.Contents (J).Construct.Name);
-
             Ref := Tree.Contents (J).Referenced_Ids;
 
             while Ref.Contents /= null loop
@@ -139,7 +138,7 @@ package body Language.Tree is
 
                To_Simple_Construct_Information
                  (Parent.all, Tree.Contents (Tree_Index).Construct, False);
-               Parent.Name := null;
+               Parent.Name := No_Symbol;
             else
                To_Simple_Construct_Information
                  (Parent.all, Tree.Contents (Tree_Index).Construct, True);
@@ -333,7 +332,7 @@ package body Language.Tree is
    ---------
 
    function "="
-     (Left : Referenced_Identifiers_List; Right : Distinct_Identifier)
+     (Left : Referenced_Identifiers_List; Right : Symbol)
       return Boolean
    is
    begin
@@ -347,7 +346,7 @@ package body Language.Tree is
    ---------
 
    function "="
-     (Left : Distinct_Identifier; Right : Referenced_Identifiers_List)
+     (Left : Symbol; Right : Referenced_Identifiers_List)
       return Boolean
    is
    begin
@@ -739,13 +738,7 @@ package body Language.Tree is
          return False;
       end if;
 
-      if ((Iter1.Node.Construct.Name = null
-           and then Iter2.Node.Construct.Name = null)
-          or else not
-            (Iter1.Node.Construct.Name = null
-             xor Iter1.Node.Construct.Name = null)
-          or else Iter1.Node.Construct.Name.all
-          = Iter2.Node.Construct.Name.all)
+      if Iter1.Node.Construct.Name = Iter2.Node.Construct.Name
         and then Iter1.Node.Construct.Category = Iter2.Node.Construct.Category
       then
          if Iter1.Node.Parent_Index = 0
@@ -856,16 +849,16 @@ package body Language.Tree is
       Length  : Integer;
       Current : Construct_Tree_Iterator := Get_Parent_Scope (Tree, It);
    begin
-      if Get_Construct (It).Name = null then
+      if Get_Construct (It).Name = No_Symbol then
          return "";
       end if;
 
-      Length := Get_Construct (It).Name.all'Length;
+      Length := Get (Get_Construct (It).Name)'Length;
 
       while Current /= Null_Construct_Tree_Iterator
         and then Get_Construct (Current).Category = Cat_Package
       loop
-         Length := Length + 1 + Get_Construct (Current).Name.all'Length;
+         Length := Length + 1 + Get (Get_Construct (Current).Name)'Length;
          Current := Get_Parent_Scope (Tree, Current);
       end loop;
 
@@ -873,19 +866,19 @@ package body Language.Tree is
          Name  : String (1 .. Length);
          Index : Natural := Length;
       begin
-         Name (Index - Get_Construct (It).Name.all'Length + 1 .. Index) :=
-           Get_Construct (It).Name.all;
+         Name (Index - Get (Get_Construct (It).Name)'Length + 1 .. Index) :=
+           Get (Get_Construct (It).Name).all;
 
-         Index := Index - Get_Construct (It).Name.all'Length;
+         Index := Index - Get (Get_Construct (It).Name)'Length;
          Current := Get_Parent_Scope (Tree, It);
 
          while Current /= Null_Construct_Tree_Iterator
            and then Get_Construct (Current).Category = Cat_Package
          loop
-            Name (Index - Get_Construct (Current).Name.all'Length .. Index)
-              := Get_Construct (Current).Name.all & ".";
+            Name (Index - Get (Get_Construct (Current).Name)'Length .. Index)
+              := Get (Get_Construct (Current).Name).all & ".";
 
-            Index := Index - 1 - Get_Construct (Current).Name.all'Length;
+            Index := Index - 1 - Get (Get_Construct (Current).Name)'Length;
             Current := Get_Parent_Scope (Tree, Current);
          end loop;
 
@@ -940,16 +933,11 @@ package body Language.Tree is
    ---------------
 
    function To_String (It : Construct_Tree_Iterator) return String is
-      Name    : access String;
-      No_Name : aliased String := "";
+      Name    : Symbol;
    begin
-      if It.Node.Construct.Name = null then
-         Name := No_Name'Access;
-      else
-         Name := It.Node.Construct.Name;
-      end if;
+      Name := It.Node.Construct.Name;
 
-      return Name.all & "(" & It.Node.Construct.Category'Img & ")"
+      return Get (Name).all & "(" & It.Node.Construct.Category'Img & ")"
         & " @" & It.Index'Img
         & "[" & It.Node.Construct.Sloc_Start.Line'Img
         & "," & It.Node.Construct.Sloc_Start.Column'Img & "]";
@@ -1344,7 +1332,7 @@ package body Language.Tree is
    --------------------
 
    function Get_Identifier
-     (It : Construct_Tree_Iterator) return Distinct_Identifier is
+     (It : Construct_Tree_Iterator) return Symbol is
    begin
       return It.Node.Id;
    end Get_Identifier;
@@ -1374,12 +1362,12 @@ package body Language.Tree is
    --------------------
 
    function Get_Identifier
-     (Ref : Referenced_Identifiers_List) return Distinct_Identifier is
+     (Ref : Referenced_Identifiers_List) return Symbol is
    begin
       if Ref.Contents /= null then
          return Ref.Contents.Element;
       else
-         return Null_Distinct_Identifier;
+         return No_Symbol;
       end if;
    end Get_Identifier;
 
@@ -1387,19 +1375,10 @@ package body Language.Tree is
    -- Analyze_Constructs_Identifiers --
    ------------------------------------
 
-   procedure Analyze_Constructs_Identifiers
-     (Manager : access Identifier_Manager'Class;
-      Tree    : Construct_Tree)
-   is
+   procedure Analyze_Constructs_Identifiers (Tree : Construct_Tree) is
    begin
       for J in Tree.Contents'Range loop
-         if Tree.Contents (J).Construct.Name = null then
-            Tree.Contents (J).Id := Null_Distinct_Identifier;
-         else
-            Tree.Contents (J).Id :=
-              Manager.Get_Identifier
-                (Tree.Contents (J).Construct.Name.all);
-         end if;
+         Tree.Contents (J).Id := Tree.Contents (J).Construct.Name;
       end loop;
    end Analyze_Constructs_Identifiers;
 
@@ -1410,7 +1389,6 @@ package body Language.Tree is
    procedure Analyze_Referenced_Identifiers
      (Buffer  : String;
       Lang    : access Language_Root'Class;
-      Manager : access Identifier_Manager'Class;
       Tree    : Construct_Tree)
    is
       Sloc_Start, Sloc_End : Source_Location;
@@ -1437,14 +1415,14 @@ package body Language.Tree is
                Tree.Contents (J).Referenced_Ids.Contents :=
                  new Referenced_Identifiers_List_Record;
                Tree.Contents (J).Referenced_Ids.Contents.Element :=
-                 Manager.Get_Identifier
+                 Lang.Symbols.Find
                    (Buffer (Sloc_Start.Index .. Sloc_End.Index));
                Current_Node := Tree.Contents (J).Referenced_Ids;
             else
                Current_Node.Contents.Next.Contents :=
                  new Referenced_Identifiers_List_Record;
                Current_Node.Contents.Next.Contents.Element :=
-                 Manager.Get_Identifier
+                 Lang.Symbols.Find
                    (Buffer (Sloc_Start.Index .. Sloc_End.Index));
                Current_Node := Current_Node.Contents.Next;
             end if;
@@ -1459,10 +1437,11 @@ package body Language.Tree is
    -----------
 
    function Match
-     (Seeked_Name, Tested_Name : Distinct_Identifier;
+     (Seeked_Name, Tested_Name : Symbol;
       Seeked_Is_Partial : Boolean)
       return Boolean
    is
+      Tested : Cst_String_Access;
    begin
       if not Seeked_Is_Partial then
          --  If the two names have to be strictly equals, then we'll just
@@ -1474,12 +1453,13 @@ package body Language.Tree is
       else
          --  Otherwise, we'll compare their contents.
 
-         if Tested_Name'Length = Seeked_Name'Length then
+         Tested := Get (Tested_Name);
+
+         if Tested'Length = Get (Seeked_Name)'Length then
             return Seeked_Name = Tested_Name;
-         elsif Tested_Name'Length > Seeked_Name'Length then
-            return Tested_Name
-              (Tested_Name'First .. Tested_Name'First
-               + Seeked_Name'Length - 1) = Seeked_Name.all;
+         elsif Tested'Length > Get (Seeked_Name)'Length then
+            return Tested (Tested'First .. Tested'First
+               + Get (Seeked_Name)'Length - 1) = Get (Seeked_Name).all;
          else
             return False;
          end if;

@@ -46,7 +46,7 @@ package body Tries is
    procedure Free (Cell : in out Cell_Child);
    --  Free the memory used by Cell and its own children
 
-   function Get_Index (Cell : Cell_Child) return String_Access;
+   function Get_Index (Cell : Cell_Child) return Cst_String_Access;
    --  Return the base index for the cell. Only the Cell.Index_Length first
    --  characters should be considered in the returned string.
    --  The returned string must not be freed.
@@ -135,9 +135,9 @@ package body Tries is
    -- Get_Index --
    ---------------
 
-   function Get_Index (Cell : Cell_Child) return String_Access is
+   function Get_Index (Cell : Cell_Child) return Cst_String_Access is
       C   : Cell_Child := Cell;
-      Ind : String_Access;
+      Ind : Cst_String_Access;
    begin
       loop
          Ind := Get_Index (C.Data);
@@ -183,7 +183,7 @@ package body Tries is
       --  Dump a cell
 
       procedure Dump (Cell : Cell_Child; Eliminate : Natural) is
-         Ind : constant String_Access := Get_Index (Cell);
+         Ind : constant Cst_String_Access := Get_Index (Cell);
       begin
          if Ind = null then
             Put ("(<null>");
@@ -229,7 +229,7 @@ package body Tries is
    is
       Current  : Cell_Child_Access := Root_Cell;
       Start    : Integer := Index'First;
-      Ind      : String_Access;
+      Ind      : Cst_String_Access;
       Ind_First, Ind_Last : Natural;
       Child    : Integer;
       TL       : Character;
@@ -361,7 +361,7 @@ package body Tries is
       Data : Data_Type)
    is
       Pointer : Cell_Pointer;
-      Index   : constant String_Access := Get_Index (Data);
+      Index   : constant Cst_String_Access := Get_Index (Data);
    begin
       if Index = null then
          return;

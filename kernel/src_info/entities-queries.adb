@@ -616,7 +616,7 @@ package body Entities.Queries is
                   --  than the dummy one created from the construct.
 
                   Entity := Get_Or_Create
-                    (Name => Db.Symbols.Find (Get_Construct (Result).Name.all),
+                    (Name     => Get_Construct (Result).Name,
                      File     => Get_Or_Create
                        (Db    => Db,
                         File  => Get_File_Path (Get_File (Result))),

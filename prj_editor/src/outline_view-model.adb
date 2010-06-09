@@ -30,6 +30,7 @@ with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
 with Basic_Types;                 use Basic_Types;
 with Project_Explorers_Common;    use Project_Explorers_Common;
+with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 
 with Traces; use Traces;
 
@@ -167,7 +168,6 @@ package body Outline_View.Model is
       end if;
 
       Unref (Obj.Node.Entity);
-      Free (Obj.Node.Name);
       Free (Obj.Node);
    end Free;
 
@@ -205,7 +205,7 @@ package body Outline_View.Model is
             return False;
       end case;
 
-      return Construct.Name /= null;
+      return Construct.Name /= No_Symbol;
    end Construct_Filter;
 
    ---------
@@ -260,7 +260,7 @@ package body Outline_View.Model is
               = Sort_Entities (Right.Category)
             then
                Comparison := Compare
-                 (Left.Name.all, Right.Name.all);
+                 (Get (Left.Name).all, Get (Right.Name).all);
 
                if Comparison = -1 then
                   return True;
@@ -442,7 +442,7 @@ package body Outline_View.Model is
       end if;
 
       Node.Category := Construct.Category;
-      Node.Name := new String'(Construct.Name.all);
+      Node.Name := Construct.Name;
       Node.Sloc := Construct.Sloc_Start;
 
       return Node;
@@ -634,12 +634,12 @@ package body Outline_View.Model is
       elsif Column = Display_Name_Column then
          Init (Value, GType_String);
 
-         if Get_Construct (It).Name /= null then
+         if Get_Construct (It).Name /= No_Symbol then
             if Self.Filter.Show_Profile
               and then Get_Construct (It).Category in Subprogram_Category
             then
                Set_String
-                 (Value, Escape_Text (Get_Construct (It).Name.all)
+                 (Value, Escape_Text (Get (Get_Construct (It).Name).all)
                   & " <span foreground=""#A0A0A0"">"
                   & Get_Profile
                     (Get_Tree_Language (Self.File),
@@ -647,7 +647,8 @@ package body Outline_View.Model is
                      500)
                   & "</span>");
             else
-               Set_String (Value, Escape_Text (Get_Construct (It).Name.all));
+               Set_String
+                 (Value, Escape_Text (Get (Get_Construct (It).Name).all));
             end if;
 
          else

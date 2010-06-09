@@ -23,13 +23,13 @@
 --  starting with the given prefix".
 
 with GNAT.Strings;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
 generic
    type Data_Type is private;
    No_Data : Data_Type;
 
-   with function Get_Index
-     (Data : Data_Type) return GNAT.Strings.String_Access;
+   with function Get_Index (Data : Data_Type) return Cst_String_Access;
    --  Return the index to use for Data. The returned string is not modified
    --  or stored by the Trie tree, but it is more efficient to return a
    --  String_Access than a String.

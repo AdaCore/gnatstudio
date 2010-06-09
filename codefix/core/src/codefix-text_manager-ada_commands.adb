@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;       use Ada.Characters.Handling;
+with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                use GNATCOLL.Utils;
 with Case_Handling;                 use Case_Handling;
 with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
@@ -363,7 +364,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
 
       if Pkg_Info.Category /= Cat_Unknown then
-         Assign (Word.String_Match, Pkg_Info.Name.all);
+         Assign (Word.String_Match, Get (Pkg_Info.Name).all);
       end if;
 
       if Pkg_Info.Category = Cat_Unknown then
@@ -395,7 +396,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          if This.Destination /= GNATCOLL.VFS.No_File then
             Append
               (Obj_List,
-               new String'("with " & Pkg_Info.Name.all & ";"));
+               new String'("with " & Get (Pkg_Info.Name).all & ";"));
          end if;
 
          Is_Instantiation := False;
@@ -616,7 +617,6 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Add_Pragma_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Position.all);
       Position : File_Cursor;
@@ -720,14 +720,12 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Garbage := Position;
          Position := File_Cursor
-           (Search_Token
-              (Current_Text, Position, Close_Paren_Tok));
+           (Search_Token (Current_Text, Position, Close_Paren_Tok));
          Free (Garbage);
 
          Garbage := Position;
          Position := File_Cursor
-           (Search_Token
-              (Current_Text, Position, Is_Tok));
+           (Search_Token (Current_Text, Position, Is_Tok));
          Free (Garbage);
       end Add_Parameter_Pragma;
 
@@ -774,8 +772,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
             if To_Lower (Next_Str.Get_Word) = To_Lower (This.Name.all) then
                Pragma_Cursor := File_Cursor
-                 (Search_Token
-                    (Current_Text, Pragma_Cursor, Close_Paren_Tok));
+                 (Search_Token (Current_Text, Pragma_Cursor, Close_Paren_Tok));
                Line_Cursor := Pragma_Cursor;
                Line_Cursor.Col := 1;
                Current_Text.Replace
@@ -921,9 +918,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Current_Text.Replace (Close_Paren, 1, "");
 
-      Text.Erase
-        (Cursor,
-         Current_Text.Search_Token (Cursor, Open_Paren_Tok));
+      Text.Erase (Cursor, Current_Text.Search_Token (Cursor, Open_Paren_Tok));
 
       Free (Open_Paren);
       Free (Close_Paren);
@@ -1751,7 +1746,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       while It /= Null_Construct_Tree_Iterator loop
          if Get_Construct (It).Category = Cat_Pragma
-           and then To_Lower (Get_Construct (It).Name.all)
+           and then To_Lower (Get (Get_Construct (It).Name).all)
            = This.Pragma_Name.all
          then
             --  We're on a pragma of the proper name - see if there's the
@@ -1945,8 +1940,8 @@ package body Codefix.Text_Manager.Ada_Commands is
         and then Is_Parent_Scope (Get_Parent_Scope (Tree, Sb_It), Prev_It)
       loop
          if Get_Construct (Prev_It).Category in Subprogram_Category then
-            if To_Lower (Get_Construct (Prev_It).Name.all) >
-              To_Lower (Get_Construct (Sb_It).Name.all)
+            if To_Lower (Get (Get_Construct (Prev_It).Name).all) >
+              To_Lower (Get (Get_Construct (Sb_It).Name).all)
             then
                Prev_Entity := Prev (Tree, Prev_It, Jump_Over);
 
@@ -2094,7 +2089,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Location.all);
       Semicol_Cursor : File_Cursor'Class :=
-        Current_Text.Search_Token (Cursor, Semicolon_Tok, Reverse_Step);
+        Current_Text.Search_Token
+          (Cursor, Semicolon_Tok, Reverse_Step);
    begin
       Current_Text.Replace (Semicol_Cursor, Semicol_Cursor, ": constant");
 

@@ -35,33 +35,12 @@ package body Src_Editor_Buffer.Blocks is
    --------------------
 
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
-
-      function Copy
-        (Str : GNAT.Strings.String_Access) return GNAT.Strings.String_Access;
-      pragma Inline (Copy);
-      --  Return a copy of Str
-
       Constructs : Construct_List;
       Current    : Construct_Access;
       Line_Start : Editable_Line_Type;
       Line_End   : Editable_Line_Type;
       Column     : Integer;
       Block      : Block_Access;
-
-      ----------
-      -- Copy --
-      ----------
-
-      function Copy
-        (Str : GNAT.Strings.String_Access) return GNAT.Strings.String_Access is
-      begin
-         if Str = null then
-            return null;
-         else
-            return new String'(Str.all);
-         end if;
-      end Copy;
-
    begin
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
@@ -100,7 +79,7 @@ package body Src_Editor_Buffer.Blocks is
                Stored_Offset     => Column,
                First_Line        => Line_Start,
                Last_Line         => Line_End,
-               Name              => Copy (Current.Name),
+               Name              => Current.Name,
                Block_Type        => Current.Category,
                GC                => null);
 

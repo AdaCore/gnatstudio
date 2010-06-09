@@ -21,6 +21,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
 with String_Utils;            use String_Utils;
 with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
 package body Syntax_Diff is
 
@@ -223,13 +224,7 @@ package body Syntax_Diff is
 
    function Name_Equal (C1, C2 : Construct_Access) return Boolean is
    begin
-      if C1.Name = null then
-         return C2.Name = null;
-      elsif C2.Name = null then
-         return False;
-      else
-         return C1.Name.all = C2.Name.all;
-      end if;
+      return C1.Name = C2.Name;
    end Name_Equal;
 
    --------------
@@ -337,14 +332,14 @@ package body Syntax_Diff is
       end Loc_Info;
 
    begin
-      if Info.Name = null then
+      if Info.Name = No_Symbol then
          return Loc_Info;
       elsif Info.Is_Declaration
         and then Info.Category in Enclosing_Entity_Category
       then
-         return Info.Name.all & " (spec) " & Loc_Info;
+         return Get (Info.Name).all & " (spec) " & Loc_Info;
       else
-         return Info.Name.all & " " & Loc_Info;
+         return Get (Info.Name).all & " " & Loc_Info;
       end if;
    end Image;
 

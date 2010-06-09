@@ -27,7 +27,8 @@ pragma Warnings (On);
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
-with GNATCOLL.Arg_Lists;              use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;                  use GNATCOLL.Arg_Lists;
+with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
@@ -623,7 +624,6 @@ package body Src_Editor_Buffer is
             if Block /= null
               and then Block.Last_Line = Line
             then
-               GNAT.Strings.Free (Block.Name);
                Unchecked_Free (Block);
             end if;
 
@@ -5350,7 +5350,7 @@ package body Src_Editor_Buffer is
 
       procedure Local_Format_Buffer
         (Lang          : Language_Access;
-         Buffer        : String;
+         Local_Buffer  : String;
          Replace       : Replace_Text_Callback;
          From, To      : Natural := 0;
          Indent_Params : Indent_Parameters);
@@ -5393,7 +5393,7 @@ package body Src_Editor_Buffer is
 
       procedure Local_Format_Buffer
         (Lang          : Language_Access;
-         Buffer        : String;
+         Local_Buffer  : String;
          Replace       : Replace_Text_Callback;
          From, To      : Natural := 0;
          Indent_Params : Indent_Parameters) is
@@ -5401,11 +5401,11 @@ package body Src_Editor_Buffer is
          if Indent_Style = Language.Simple then
             Format_Buffer
               (Language_Root (Lang.all)'Access,
-               Buffer, Replace, From, To,
+               Local_Buffer, Replace, From, To,
                Indent_Params, Indent_Offset, Get_Case_Exceptions);
          else
             Format_Buffer
-              (Lang, Buffer, Replace, From, To,
+              (Lang, Local_Buffer, Replace, From, To,
                Indent_Params, Indent_Offset, Get_Case_Exceptions);
          end if;
       end Local_Format_Buffer;
@@ -6453,7 +6453,7 @@ package body Src_Editor_Buffer is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record
    is
       Empty_Block : constant Block_Record :=
-                      (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
+                      (0, 0, 0, 0, 0, No_Symbol, Language.Cat_Unknown, null);
       L           : Editable_Line_Type;
       New_L       : Editable_Line_Type;
       Block       : Block_Record;
@@ -6472,7 +6472,7 @@ package body Src_Editor_Buffer is
          if Block.Block_Type in Namespace_Category
            or else Block.Block_Type in Subprogram_Category
          then
-            if Block.Name /= null then
+            if Block.Name /= No_Symbol then
                return Block;
             else
                return Empty_Block;

@@ -494,6 +494,7 @@ package body C_Analyzer is
 
    procedure Analyze_C_Source
      (Buffer           : String;
+      Symbols          : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params    : Indent_Parameters;
       Format           : Boolean               := True;
       From, To         : Natural               := 0;
@@ -702,8 +703,8 @@ package body C_Analyzer is
                   --  Tok_Pound is used for #include
 
                   Constructs.Current.Category := Cat_Include;
-                  Constructs.Current.Name := new String'(Buffer
-                    (Value.Name_Start .. Value.Name_End));
+                  Constructs.Current.Name := Symbols.Find
+                    (Buffer (Value.Name_Start .. Value.Name_End));
                   Constructs.Current.Sloc_Entity := Value.Sloc_Name;
 
                when Tok_Do | Tok_For | Tok_While =>
@@ -720,7 +721,7 @@ package body C_Analyzer is
                      --  of this function
 
                      Constructs.Current.Category := Cat_Function;
-                     Constructs.Current.Name := new String'
+                     Constructs.Current.Name := Symbols.Find
                        (Buffer (Value.Name_Start .. Value.Name_End));
 
                   else

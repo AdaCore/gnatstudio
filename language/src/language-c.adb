@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2009, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -86,7 +86,7 @@ package body Language.C is
 
    C_Explorer_Categories : constant Explorer_Categories :=
      (1 => (Category       => Cat_Function,
-            Category_Name  => null,
+            Category_Name  => GNATCOLL.Symbols.No_Symbol,
             Regexp         => Subprogram_RE'Access,
             Position_Index => 5,
             End_Index      => 0,
@@ -252,11 +252,11 @@ package body Language.C is
       Buffer : Glib.UTF8_String;
       Result : out Construct_List)
    is
-      pragma Unreferenced (Lang);
       Constructs : aliased Construct_List;
    begin
       Analyze_C_Source
         (Buffer,
+         Lang.Symbols,
          Default_Indent_Parameters,
          Format     => False,
          Constructs => Constructs'Unchecked_Access);
@@ -272,7 +272,6 @@ package body Language.C is
       Buffer   : String;
       Callback : Entity_Callback)
    is
-      pragma Unreferenced (Lang);
       pragma Suppress (All_Checks);
       --  ??? For some reason we're sometimes getting a CE in this procedure
       --  with no apparent reason if checks are enabled.
@@ -280,6 +279,7 @@ package body Language.C is
    begin
       Analyze_C_Source
         (Buffer        => Buffer,
+         Symbols       => Lang.Symbols,
          Indent_Params => Default_Indent_Parameters,
          Format        => False,
          Callback      => Callback);
@@ -301,10 +301,11 @@ package body Language.C is
       Is_Optional_Keyword : access function (S : String)
                                              return Boolean := null)
    is
-      pragma Unreferenced (Lang, Case_Exceptions, Is_Optional_Keyword);
+      pragma Unreferenced (Case_Exceptions, Is_Optional_Keyword);
    begin
       Analyze_C_Source
         (Buffer,
+         Lang.Symbols,
          Indent_Params,
          True,
          From,

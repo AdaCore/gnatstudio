@@ -24,6 +24,7 @@ with Ada.Strings.Hash;
 
 with GNAT.Strings;              use GNAT.Strings;
 
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
@@ -209,7 +210,7 @@ package body Project_Explorers_Common is
      (Model         : Gtk_Tree_Store;
       File          : GNATCOLL.VFS.Virtual_File;
       Category      : Language_Category;
-      Category_Name : Strings.String_Access;
+      Category_Name : GNATCOLL.Symbols.Symbol;
       Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
       Name    : constant String :=
@@ -274,17 +275,18 @@ package body Project_Explorers_Common is
 
       function Escape return String is
          C : Character;
+         Str : constant Cst_String_Access := Get (Construct.Name);
       begin
-         if Construct.Name.all = "" then
+         if Str.all = "" then
             return "";
          end if;
 
-         C := Construct.Name (Construct.Name'First);
+         C := Str (Str'First);
 
          if C = '"' or else C = '&' or else C = '<' or else C = '>' then
-            return Escape_Text (Construct.Name.all);
+            return Escape_Text (Str.all);
          else
-            return Construct.Name.all;
+            return Str.all;
          end if;
       end Escape;
 
@@ -340,7 +342,7 @@ package body Project_Explorers_Common is
       else
          while Sibling /= Null_Iter
            and then Get_String (Model, Sibling, Display_Name_Column)
-           <= Construct.Name.all
+           <= Get (Construct.Name).all
          loop
             Next (Model, Sibling);
          end loop;
@@ -354,7 +356,7 @@ package body Project_Explorers_Common is
 
       Set_File (Model, N, File_Column, File);
       Set (Model, N, Display_Name_Column, Entity_Name_Of (Construct, True));
-      Set (Model, N, Entity_Base_Column, Reduce (Construct.Name.all));
+      Set (Model, N, Entity_Base_Column, Reduce (Get (Construct.Name).all));
       Set (Model, N, Icon_Column,
            Glib.Object.GObject (Entity_Icon_Of (Construct)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
@@ -434,7 +436,7 @@ package body Project_Explorers_Common is
          Constructs.Current := Constructs.First;
 
          while Constructs.Current /= null loop
-            if Constructs.Current.Name /= null then
+            if Constructs.Current.Name /= No_Symbol then
                Category := Filter_Category (Constructs.Current.Category);
 
                if Category /= Cat_Unknown

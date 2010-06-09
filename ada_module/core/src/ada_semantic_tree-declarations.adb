@@ -17,7 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;       use GNAT.Strings;
+with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
@@ -45,7 +46,7 @@ package body Ada_Semantic_Tree.Declarations is
       First_Buffer    : String_Access;
       First_Offset    : String_Index_Type;
       Construct_Db    : Construct_Database_Access;
-      Name            : Distinct_Identifier;
+      Name            : Symbol;
       Is_Partial      : Boolean;
       Offset          : String_Index_Type;
       From_Visibility : Visibility_Context;
@@ -61,7 +62,7 @@ package body Ada_Semantic_Tree.Declarations is
       --  Common data
 
       Stage           : Iteration_Stage := File_Hierarchy;
-      Name            : Distinct_Identifier;
+      Name            : Symbol;
       Is_Partial      : Boolean;
       From_Visibility : Visibility_Context;
       Hidden_Entities : aliased Visibility_Resolver;
@@ -118,7 +119,7 @@ package body Ada_Semantic_Tree.Declarations is
    procedure Free (It : in out Declaration_Id_Iterator);
 
    procedure Get_Possibilities
-     (Identifier      : Distinct_Identifier;
+     (Identifier      : Symbol;
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
@@ -276,7 +277,7 @@ package body Ada_Semantic_Tree.Declarations is
       else
          Result.Stage := Database;
          Result.Db_Iterator := Start
-           (Result.Construct_Db, Result.Name.all, Result.Is_Partial);
+           (Result.Construct_Db, Get (Result.Name).all, Result.Is_Partial);
       end if;
 
       Computes_Visibility (Result);
@@ -309,7 +310,7 @@ package body Ada_Semantic_Tree.Declarations is
                It.Stage := Database;
 
                if not It.Is_Partial
-                 and then Is_Hidden (It.Hidden_Entities, It.Name.all)
+                 and then Is_Hidden (It.Hidden_Entities, Get (It.Name).all)
                then
                   --  If this name is already hidden by the entities extracted
                   --  and if it's not partial, then there's nothing more to
@@ -319,7 +320,7 @@ package body Ada_Semantic_Tree.Declarations is
                   It.Db_Iterator := Null_Construct_Db_Iterator;
                else
                   It.Db_Iterator := Start
-                    (It.Construct_Db, It.Name.all, It.Is_Partial);
+                    (It.Construct_Db, Get (It.Name).all, It.Is_Partial);
                end if;
             end if;
 
@@ -381,7 +382,7 @@ package body Ada_Semantic_Tree.Declarations is
 
          if Is_Hidden
            (It.Hidden_Entities,
-            Get_Construct (Potential_Entity).Name.all)
+            Get (Get_Construct (Potential_Entity).Name).all)
          then
             --  Entities hiddent by things founds in the parent are not
             --  displayed.
@@ -531,9 +532,8 @@ package body Ada_Semantic_Tree.Declarations is
       Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack)
       return Entity_List
    is
-
       Db                     : Construct_Database_Access;
-      All_Name_Id            : Distinct_Identifier;
+      All_Name_Id            : Symbol;
       Actual_From_Visibility : Visibility_Context;
       Analyzed_Expression    : Parsed_Expression;
       First_Token            : Token_List.List_Node;
@@ -584,13 +584,13 @@ package body Ada_Semantic_Tree.Declarations is
 
          Actual_Categories  : constant Category_Array := Adjust_Categories;
 
-         procedure Handle_Identifier (Id : Distinct_Identifier);
+         procedure Handle_Identifier (Id : Symbol);
 
          -----------------------
          -- Handle_Identifier --
          -----------------------
 
-         procedure Handle_Identifier (Id : Distinct_Identifier) is
+         procedure Handle_Identifier (Id : Symbol) is
             Tmp    : Entity_List;
             Tmp_It : Entity_Iterator;
 
@@ -605,7 +605,7 @@ package body Ada_Semantic_Tree.Declarations is
             then
                Get_Possible_Standard_Entities
                  (Db         => Db,
-                  Prefix     => Id.all,
+                  Prefix     => Get (Id).all,
                   Is_Partial => Partial_Id,
                   Result     => Tmp);
             end if;
@@ -631,7 +631,7 @@ package body Ada_Semantic_Tree.Declarations is
             then
                Get_Possible_Pragmas
                  (Db      => Db,
-                  Prefix  => Id.all,
+                  Prefix  => Get (Id).all,
                   Context => (others => True),
                   Result  => Tmp);
             elsif Previous_Token /= Token_List.Null_Node
@@ -639,13 +639,13 @@ package body Ada_Semantic_Tree.Declarations is
             then
                Get_Possible_Attributes
                  (Db      => Db,
-                  Prefix  => Id.all,
+                  Prefix  => Get (Id).all,
                   Context => (others => True),
                   Result  => Tmp);
             elsif Previous_Declaration /= Null_Entity_View then
                Fill_Children
                  (E               => Previous_Declaration,
-                  Name            => Id.all,
+                  Name            => Get (Id).all,
                   Is_Partial      => Partial_Id,
                   From_Visibility => Actual_From_Visibility,
                   Categories      => Actual_Categories,
@@ -769,8 +769,8 @@ package body Ada_Semantic_Tree.Declarations is
 
             when Tok_Identifier =>
                Handle_Identifier
-                 (Db.Get_Identifier
-                  (Get_Name (Analyzed_Expression, Data (Token))));
+                 (Db.Symbols.Find
+                    (Get_Name (Analyzed_Expression, Data (Token))));
 
             when Tok_Open_Parenthesis =>
                if Context.Context_Type /= From_File then
@@ -944,7 +944,7 @@ package body Ada_Semantic_Tree.Declarations is
                            Result);
                      else
                         Get_Possibilities
-                          (Null_Distinct_Identifier,
+                          (No_Symbol,
                            Is_Partial,
                            (From_File,
                             Null_Instance_Info,
@@ -977,7 +977,7 @@ package body Ada_Semantic_Tree.Declarations is
                         Result);
                   else
                      Get_Possibilities
-                       (Null_Distinct_Identifier,
+                       (No_Symbol,
                         Is_Partial,
                         (From_File,
                          Null_Instance_Info,
@@ -1057,7 +1057,7 @@ package body Ada_Semantic_Tree.Declarations is
             Db := Get_Database (Context.File);
       end case;
 
-      All_Name_Id := Db.Get_Identifier ("all");
+      All_Name_Id := Db.Symbols.Find ("all");
       Result.Excluded_List := Excluded_Entities;
       Ref (Result.Excluded_List);
 
@@ -1139,21 +1139,22 @@ package body Ada_Semantic_Tree.Declarations is
    ----------------------
 
    procedure Get_Possibilities
-     (Identifier      : Distinct_Identifier;
+     (Identifier      : Symbol;
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
       Categories      : Category_Array;
-      Result          : in out Entity_List)
-   is
-      Id_Name : String renames Identifier.all;
+      Result          : in out Entity_List) is
    begin
-      if (From_Visibility.Filter and All_Accessible_Units) /= 0 then
+      if (From_Visibility.Filter and All_Accessible_Units) /= 0
+         and then Identifier /= No_Symbol
+      then
          --  Create an extensive list of all the accessible units with no
          --  parent.
          declare
             C : Unit_Iterator := Get_Units
-              (Get_Database (Context.File), Id_Name, Is_Partial);
+              (Get_Database (Context.File),
+               Get (Identifier).all, Is_Partial);
             List : Entity_List_Extensive_Pckg.Extensive_List_Pckg.List;
             Construct_It : Construct_Tree_Iterator;
             Construct    : access Simple_Construct_Information;
@@ -1374,7 +1375,7 @@ package body Ada_Semantic_Tree.Declarations is
    function Is_Valid
      (It : Declaration_Composition_Iterator'Class) return Boolean
    is
-      Name_Str : String_Access;
+      Name_Str : Symbol;
       Entity   : Entity_Access;
       Construct_It : Construct_Tree_Iterator;
       Construct : access Simple_Construct_Information;
@@ -1395,7 +1396,7 @@ package body Ada_Semantic_Tree.Declarations is
 
          Name_Str := Construct.Name;
 
-         if Name_Str = null then
+         if Name_Str = No_Symbol then
             return False;
          end if;
 
@@ -1409,7 +1410,7 @@ package body Ada_Semantic_Tree.Declarations is
 
             declare
                Composite_Name : constant Composite_Identifier :=
-                 To_Composite_Identifier (Name_Str.all);
+                 To_Composite_Identifier (Get (Name_Str).all);
                Name           : constant String := Get_Item
                  (Composite_Name, Length (Composite_Name));
             begin
@@ -1422,7 +1423,7 @@ package body Ada_Semantic_Tree.Declarations is
          else
             --  If not, then we just have to compare the names
 
-            if Match (It.Name.all, Name_Str.all, It.Is_Partial) then
+            if Match (It.Name.all, Get (Name_Str).all, It.Is_Partial) then
                return True;
             else
                return False;
@@ -1539,8 +1540,8 @@ package body Ada_Semantic_Tree.Declarations is
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (E);
    begin
-      if Construct /= null and then Construct.Name /= null then
-         return Construct.Name.all;
+      if Construct /= null then
+         return Get (Construct.Name).all;
       else
          return "";
       end if;

@@ -37,7 +37,7 @@ with Generic_List;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 package Completion is
 

@@ -37,6 +37,7 @@ with Language.Ada;            use Language.Ada;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
 with String_Utils;            use String_Utils;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
@@ -173,7 +174,7 @@ package body Refactoring.Services is
 
                if Active (Me) then
                   Trace (Me, "  Initial value of "
-                         & Get_Name (Self.Entity).all & " is "
+                         & Debug_Name (Self.Entity) & " is "
                          & Text (Index .. Last - 1));
                end if;
                return Text (Index .. Last - 1);
@@ -220,7 +221,7 @@ package body Refactoring.Services is
       Index  : Natural := Decl'First;
       Last   : Natural := Self.Equal_Loc - 1;
    begin
-      Append (Result, Get_Name (Self.Entity).all & " : ");
+      Append (Result, Get (Get_Name (Self.Entity)).all & " : ");
 
       case PType is
          when Out_Parameter =>
@@ -265,7 +266,7 @@ package body Refactoring.Services is
    function Display_As_Variable
      (Self  : Entity_Declaration) return String is
    begin
-      return Get_Name (Self.Entity).all & " "
+      return Get (Get_Name (Self.Entity)).all & " "
         & To_String (Self.Decl);
    end Display_As_Variable;
 
@@ -357,7 +358,8 @@ package body Refactoring.Services is
                --  leading comma
 
                From.Buffer.Delete
-                 (From, From.Forward_Char (Get_Name (Self.Entity)'Length - 1));
+                 (From, From.Forward_Char
+                    (Get (Get_Name (Self.Entity))'Length - 1));
                Remove_Blanks (From);
 
                if From.Get_Char = Character'Pos (',') then
@@ -702,7 +704,7 @@ package body Refactoring.Services is
                            then
                               Self.Context.Report_Error
                                 ("A call to the nested subprogram "
-                                 & Get_Name (Entity).all
+                                 & Get (Get_Name (Entity)).all
                                  & " prevents the refactoring");
                               Success := False;
                               Thaw (Self.Context.Entity_Db);
@@ -727,7 +729,7 @@ package body Refactoring.Services is
             if Flags (Flag_Modified) or else Flags (Flag_Read) then
                if Active (Me) then
                   Trace (Me, "Extract references """
-                         & Get_Name (Entity).all
+                         & Debug_Name (Entity)
                          & """ r=" & Flags (Flag_Read)'Img
                          & " w=" & Flags (Flag_Modified)'Img
                          & " before/r=" & Flags (Flag_Read_Before)'Img
@@ -744,7 +746,6 @@ package body Refactoring.Services is
          Next (Iter);
       end loop;
 
-      Destroy (Iter);
       Thaw (Self.Context.Entity_Db);
       Success := True;
 

@@ -135,7 +135,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
      (Resolver : Visibility_Resolver; Entity : Entity_Access) return Boolean
    is
       Name_Lower : constant String :=
-        To_Lower (Get_Construct (Entity).Name.all);
+        To_Lower (Get (Get_Construct (Entity).Name).all);
 
       Cur        : Entity_List.Cursor;
       Cur_Entity : Entity_Access;
@@ -176,7 +176,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
      (Resolver : in out Visibility_Resolver; Entity : Entity_Access)
    is
       Name_Lower : constant String := To_Lower
-        (Get_Construct (Entity).Name.all);
+        (Get (Get_Construct (Entity).Name).all);
       List       : Entity_List_Access;
    begin
       if not Contains (Resolver.Hiding_Entities.all, Name_Lower) then
@@ -257,7 +257,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    function Get_Local_Visible_Constructs
      (File       : Structured_File_Access;
       Offset     : String_Index_Type;
-      Name       : Distinct_Identifier;
+      Name       : Symbol;
       Visibility : not null access Visibility_Resolver;
       Categories : Category_Array;
       Use_Wise   : Boolean := True;
@@ -387,15 +387,15 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             begin
                if not Match
                  (Name,
-                  Get_Database (File).Get_Identifier
-                  (Get_Item (Comp_Name, Length (Comp_Name))),
+                  Get_Database (File).Symbols.Find
+                    (Get_Item (Comp_Name, Length (Comp_Name))),
                   Is_Partial)
                then
                   return;
                end if;
             end;
          else
-            if Get_Construct (Entity).Name = null
+            if Get_Construct (Entity).Name = No_Symbol
               or else Get_Construct (Entity).Category
             not in Cat_Package .. Cat_Literal
               or else not Match
@@ -683,7 +683,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
         (File, Offset);
       Visibility : aliased Visibility_Resolver;
    begin
-      if Get_Construct (Entity).Name = null
+      if Get_Construct (Entity).Name = No_Symbol
         or else not Is_In_Parents (Entity_Unit, Local_Unit)
       then
          return False;
@@ -858,10 +858,10 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          is
             Parent_Name : constant Composite_Identifier :=
               To_Composite_Identifier
-                (Get_Construct (Parent).Name.all);
+                (Get (Get_Construct (Parent).Name).all);
             Child_Name : constant Composite_Identifier :=
               To_Composite_Identifier
-                (Get_Construct (Child).Name.all);
+                (Get (Get_Construct (Child).Name).all);
          begin
             return Equal
               (Get_Slice
@@ -878,7 +878,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             Generic_Instance : out Instance_Info)
          is
             Id : constant Composite_Identifier :=
-              To_Composite_Identifier (Construct.Name.all);
+              To_Composite_Identifier (Get (Construct.Name).all);
 
             Name_It : Construct_Db_Iterator;
 
@@ -968,7 +968,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                      Entity := Element (Entity_Iterator);
 
                      if Equal
-                       (Get_Construct (Entity).Name.all,
+                       (Get (Get_Construct (Entity).Name).all,
                         Get_Item (Id, 1),
                         False)
                      then
@@ -1007,8 +1007,8 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                         --  If the name is a root name, then that's it
                         if Length
                           (To_Composite_Identifier
-                             (Get_Construct
-                                (Get_Construct (Name_It)).Name.all))
+                             (Get (Get_Construct
+                                (Get_Construct (Name_It)).Name).all))
                           = 1
                         then
                            Root := Entity;
@@ -1113,7 +1113,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                                  if Get_Construct (Nested_It).Category
                                    = Cat_Package
                                    and then Equal
-                                     (Get_Construct (Nested_It).Name.all,
+                                     (Get (Get_Construct (Nested_It).Name).all,
                                       Get_Item (Id, 1),
                                       False)
                                  then
@@ -1189,7 +1189,8 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                      if Get_Construct (Sem_Entity).Category
                        = Cat_Package
                        and then Equal
-                         (Self_Name (Get_Construct (Sem_Entity).Name.all),
+                         (Self_Name
+                              (Get (Get_Construct (Sem_Entity).Name).all),
                           Get_Item (Id, J),
                           False)
                      then
@@ -1223,10 +1224,11 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       begin
          if (Get_Construct (It).Category = Cat_With
              or else Get_Construct (It).Category = Cat_Use)
-           and then Get_Construct (It).Name /= null
+           and then Get_Construct (It).Name /= No_Symbol
          then
             if Get_Construct (It).Category = Cat_With then
-               Unit := Get_Entity (Get_Unit (Db, Get_Construct (It).Name.all));
+               Unit := Get_Entity
+                 (Get_Unit (Db, Get (Get_Construct (It).Name).all));
             elsif Get_Construct (It).Category = Cat_Use then
                Resolve_Use_Clause (Get_Construct (It).all, Unit, Instance);
             end if;

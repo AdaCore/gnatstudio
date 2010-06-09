@@ -691,17 +691,17 @@ package body Docgen2 is
         and then Construct.Category /= Cat_Representation_Clause
         and then Construct.Category /= Cat_Namespace
         and then Category_Name (Construct.Category) /= ""
-        and then Construct.Name /= null
+        and then Construct.Name /= No_Symbol
       then
          --  Try to retrieve the entity declared at Sloc_Entity
          Entity := Docgen2.Utils.Get_Entity
            (Cmd.Kernel,
-            Construct.Name.all, Construct.Sloc_Entity,
+            Get (Construct.Name).all, Construct.Sloc_Entity,
             Context.File, Lang);
 
          if Entity = null then
             Entity := Docgen2.Utils.Get_Declaration_Entity
-              (Construct.Name.all, Construct.Sloc_Entity,
+              (Get (Construct.Name).all, Construct.Sloc_Entity,
                Context.File, Db, Lang);
 
             if Entity /= null then
@@ -715,7 +715,7 @@ package body Docgen2 is
                       Line   => Construct.Sloc_Entity.Line,
                       Column => Basic_Types.Visible_Column_Type
                         (Construct.Sloc_Entity.Column)));
-                  E_Info.Name := Cmd.Kernel.Symbols.Find (Construct.Name.all);
+                  E_Info.Name := Construct.Name;
                   E_Info.Short_Name := E_Info.Name;
                end if;
             end if;
@@ -727,7 +727,7 @@ package body Docgen2 is
             --  Set Name
             if Construct.Category = Cat_Package then
                --  Packages receive fully qualified names
-               E_Info.Name := Cmd.Kernel.Symbols.Find (Construct.Name.all);
+               E_Info.Name := Construct.Name;
             else
                E_Info.Name := Get_Name (Entity);
             end if;
@@ -1101,7 +1101,7 @@ package body Docgen2 is
                          (Name          => new String'
                               (Context.File_Buffer
                                    (Construct.Sloc_Start.Index +
-                                        Construct.Name.all'Length ..
+                                        Get (Construct.Name)'Length ..
                                           Construct.Sloc_End.Index)),
                           Location      => No_File_Location,
                           Xref          => null,

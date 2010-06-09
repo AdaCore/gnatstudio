@@ -2413,7 +2413,7 @@ package body Src_Editor_Box is
                 (Info.Category /= Cat_Procedure
                  and then Info.Category /= Cat_Function
                  and then Info.Category /= Cat_Package)
-              or else Info.Name = null
+              or else Info.Name = No_Symbol
             then
                --  No unit name found
                New_Base_Name := new Filesystem_String'("");
@@ -2428,7 +2428,7 @@ package body Src_Editor_Box is
 
                New_Base_Name := new Filesystem_String'
                  (Get_Project (Editor.Kernel).File_From_Unit
-                    (Unit_Name       => To_Lower (Info.Name.all),
+                    (Unit_Name       => To_Lower (Get (Info.Name).all),
                      Part            => Part,
                      File_Must_Exist => False,
                      Language        => "ada"));
@@ -2820,11 +2820,7 @@ package body Src_Editor_Box is
    is
       Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
    begin
-      if Block.Name = null then
-         return "";
-      else
-         return Block.Name.all;
-      end if;
+      return Get (Block.Name).all;
    end Get_Block_Name;
 
    --------------------
@@ -2877,13 +2873,13 @@ package body Src_Editor_Box is
 
       L := Get_Buffer_Line (Editor.Source_Buffer, Normalized_Line);
 
-      if Block.Name /= null then
+      if Block.Name /= No_Symbol then
          Find_Declaration_Or_Overloaded
            (Kernel      => Editor.Kernel,
             File        => Get_Or_Create
               (Db   => Get_Database (Editor.Kernel),
                File => Get_Filename (Editor.Source_Buffer)),
-            Entity_Name => Block.Name.all,
+            Entity_Name => Get (Block.Name).all,
             Line        => Integer
               (Get_Editable_Line (Editor.Source_Buffer, L) - 1),
             Ask_If_Overloaded => False,
@@ -2917,8 +2913,8 @@ package body Src_Editor_Box is
 
       Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
 
-      if Block.Name /= null then
-         return Reduce (Block.Name.all, Max_Length);
+      if Block.Name /= No_Symbol then
+         return Reduce (Get (Block.Name).all, Max_Length);
       else
          return "";
       end if;

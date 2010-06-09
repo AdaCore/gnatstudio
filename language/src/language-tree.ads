@@ -368,26 +368,6 @@ package Language.Tree is
    -- Identifiers --
    -----------------
 
-   type Distinct_Identifier is access all String;
-   --  A distinct identifier is publicly implemented as a access string. The
-   --  identifier manager is responsible for ensuring that for a given string,
-   --  only one access value is possible, taking into account. For example,
-   --  two distinct names "Bla" and "BLA", if the language is case insensitive,
-   --  should both be associated to a single string on the heap holding, e.g.
-   --  "bla".
-
-   Null_Distinct_Identifier : constant Distinct_Identifier := new String'("");
-
-   --  ??? This could be an Ada 2005 interface
-   type Identifier_Manager is abstract tagged null record;
-   --  This manager is responsible for carrying unique values for identifiers.
-   --  See the declaration of Distinct_Identifier for more details.
-
-   function Get_Identifier
-     (Manager : access Identifier_Manager; Name : String)
-      return Distinct_Identifier is abstract;
-   --  Return the unique identifier corresponding to this string.
-
    type Referenced_Identifiers_List is private;
    --  This is a list of referenced datas.
 
@@ -399,17 +379,17 @@ package Language.Tree is
    --  the two lists contains the same number of elements, false otherwise.
 
    function "="
-     (Left : Referenced_Identifiers_List; Right : Distinct_Identifier)
+     (Left : Referenced_Identifiers_List; Right : GNATCOLL.Symbols.Symbol)
       return Boolean;
    --  Return true if Left contains only one element, equals to Right.
 
    function "="
-     (Left : Distinct_Identifier; Right : Referenced_Identifiers_List)
+     (Left : GNATCOLL.Symbols.Symbol; Right : Referenced_Identifiers_List)
       return Boolean;
    --  Return true if Right contains only one element, equals to Left.
 
    function Get_Identifier
-     (It : Construct_Tree_Iterator) return Distinct_Identifier;
+     (It : Construct_Tree_Iterator) return GNATCOLL.Symbols.Symbol;
    --  Return the identifier stored at this iterator location.
 
    function Get_Referenced_Identifiers
@@ -422,26 +402,23 @@ package Language.Tree is
    --  of the one given in parameter.
 
    function Get_Identifier
-     (Ref : Referenced_Identifiers_List) return Distinct_Identifier;
+     (Ref : Referenced_Identifiers_List) return GNATCOLL.Symbols.Symbol;
    --  Return the first distinct identifier of the list.
 
-   procedure Analyze_Constructs_Identifiers
-     (Manager : access Identifier_Manager'Class;
-      Tree    : Construct_Tree);
+   procedure Analyze_Constructs_Identifiers (Tree : Construct_Tree);
    --  Initialize the indentifier information of the contents of the tree.
    --  Get_Identifier needs to have this function called before.
 
    procedure Analyze_Referenced_Identifiers
      (Buffer  : String;
       Lang    : access Language_Root'Class;
-      Manager : access Identifier_Manager'Class;
       Tree    : Construct_Tree);
    --  Initialize the referenced indentifier information of the contents of the
    --  tree. Get_Referenced_Identifiers needs to have this function called
    --  before.
 
    function Match
-     (Seeked_Name, Tested_Name : Distinct_Identifier;
+     (Seeked_Name, Tested_Name : GNATCOLL.Symbols.Symbol;
       Seeked_Is_Partial : Boolean)
       return Boolean;
    --  If Seeked_Is_Partial is false, return true if Seeked_Name equals
@@ -459,7 +436,8 @@ package Language.Tree is
 
    function Get_Name_Index
      (Lang      : access Abstract_Tree_Language;
-      Construct : Simple_Construct_Information) return String is abstract;
+      Construct : Simple_Construct_Information)
+      return GNATCOLL.Symbols.Symbol is abstract;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling. Default implementation return the actual
    --  construct name.
@@ -494,7 +472,7 @@ private
      (Contents => null);
 
    type Referenced_Identifiers_List_Record is record
-      Element : Distinct_Identifier;
+      Element : GNATCOLL.Symbols.Symbol;
       Next    : Referenced_Identifiers_List;
    end record;
 
@@ -505,7 +483,7 @@ private
       Parent_Index           : Natural := 0;
       Annotations            : aliased
         Construct_Annotations_Pckg.Annotation_Container;
-      Id                     : Distinct_Identifier;
+      Id                     : GNATCOLL.Symbols.Symbol;
       Referenced_Ids         : Referenced_Identifiers_List;
    end record;
 
@@ -521,7 +499,8 @@ private
 
    Null_Construct_Tree_Node : aliased Construct_Tree_Node :=
      (Null_Simple_Construct_Info, 0, 0, 0,
-      Construct_Annotations_Pckg.Null_Annotation_Container, null,
+      Construct_Annotations_Pckg.Null_Annotation_Container,
+      GNATCOLL.Symbols.No_Symbol,
       (Contents => null));
 
    type Construct_Tree_Iterator is record

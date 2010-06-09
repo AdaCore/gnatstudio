@@ -21,6 +21,7 @@ with Ada.Exceptions;    use Ada.Exceptions;
 
 with GNAT.Case_Util;    use GNAT.Case_Util;
 with GNAT.Regpat;       use GNAT.Regpat;
+with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 with Language.Ada;      use Language.Ada;
@@ -1101,7 +1102,7 @@ package body Codefix.Text_Manager is
            and then
              (Name = ""
               or else Compare_Last
-                (Get_Construct (Current_Info).Name.all, Name))
+                (Get (Get_Construct (Current_Info).Name).all, Name))
          then
             return Get_Construct (Current_Info).all;
          end if;

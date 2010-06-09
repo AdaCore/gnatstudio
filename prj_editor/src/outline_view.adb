@@ -65,6 +65,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;                  use Tooltips;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Traces;                    use Traces;
 
@@ -401,8 +402,7 @@ package body Outline_View is
 
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   =>
-              Kernel.Symbols.Find (Get_Construct (P_Entity).Name.all),
+            Entity_Name   => Get_Construct (P_Entity).Name,
             Entity_Column =>
               Visible_Column_Type
                 (Get_Construct (P_Entity).Sloc_Entity.Column));
@@ -550,7 +550,7 @@ package body Outline_View is
             if Construct.Sloc_Entity.Index /= 0 then
                Line := Construct.Sloc_Entity.Line;
                Column := Construct.Sloc_Entity.Column;
-               End_Column := Column + Construct.Name'Length;
+               End_Column := Column + Get (Construct.Name)'Length;
             else
                Line := Construct.Sloc_Start.Line;
                Column := Construct.Sloc_Start.Column;

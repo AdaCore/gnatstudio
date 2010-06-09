@@ -23,8 +23,8 @@ with Case_Handling;
 with GNAT.Expect;
 with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
-
-with Basic_Types; use Basic_Types;
+with GNATCOLL.Symbols;
+with Basic_Types;       use Basic_Types;
 
 package Language is
 
@@ -39,6 +39,16 @@ package Language is
 
    function Get_Name (Lang : access Language_Root) return String is abstract;
    --  Return the name of the language
+
+   procedure Set_Symbols
+     (Self    : access Language_Root'Class;
+      Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class);
+   function Symbols
+     (Self : access Language_Root'Class)
+      return GNATCOLL.Symbols.Symbol_Table_Access;
+   --  Get the symbol table.
+   --  The symbol table is set automatically when the language is registered in
+   --  the language_handler.
 
    ------------------------
    -- Types manipulation --
@@ -515,7 +525,8 @@ package Language is
 
    function Category_Name
      (Category : Language.Language_Category;
-      Name     : Strings.String_Access := null) return String;
+      Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol)
+      return String;
    --  Return the external name to display in GUIs for a given category.
    --  Name is an optional value, which is returned by this function if
    --  not null.
@@ -552,7 +563,7 @@ package Language is
       Category       : Language_Category;
       --  Define the kind of construct
 
-      Category_Name  : Strings.String_Access;
+      Category_Name  : GNATCOLL.Symbols.Symbol;
       --  Optional category name. Used if Category = Cat_Custom.
 
       Is_Declaration : Boolean;
@@ -564,7 +575,7 @@ package Language is
       Visibility     : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name           : Strings.String_Access;
+      Name           : GNATCOLL.Symbols.Symbol;
       --  Name of the enclosing token. Null if not relevant for Token
       --  This is encoded in UTF-8
 
@@ -601,7 +612,7 @@ package Language is
       Is_Declaration  : Boolean;
       Is_Generic_Spec : Boolean := False;
       Visibility      : Construct_Visibility := Visibility_Public;
-      Name            : Strings.String_Access;
+      Name            : GNATCOLL.Symbols.Symbol;
       Sloc_Start      : Source_Location;
       Sloc_Entity     : Source_Location;
       Sloc_End        : Source_Location;
@@ -730,7 +741,7 @@ package Language is
 
    type Explorer_Category is record
       Category       : Language_Category;
-      Category_Name  : Strings.String_Access;
+      Category_Name  : GNATCOLL.Symbols.Symbol;
       Regexp         : GNAT.Expect.Pattern_Matcher_Access;
       Position_Index : Natural;
       End_Index      : Natural;
@@ -855,6 +866,7 @@ package Language is
 
 private
    type Language_Root is abstract tagged limited record
+      Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;
       Indent_Style  : Indentation_Kind  := Extended;
    end record;
@@ -876,11 +888,11 @@ private
 
    Null_Construct_Info : constant Construct_Information :=
                            (Category        => Cat_Unknown,
-                            Category_Name   => null,
+                            Category_Name   => GNATCOLL.Symbols.No_Symbol,
                             Is_Declaration  => False,
                             Is_Generic_Spec => False,
                             Visibility      => Visibility_Public,
-                            Name            => null,
+                            Name            => GNATCOLL.Symbols.No_Symbol,
                             Profile         => null,
                             Sloc_Start      => (0, 0, 0),
                             Sloc_Entity     => (0, 0, 0),
@@ -894,7 +906,7 @@ private
                                    Is_Declaration  => False,
                                    Is_Generic_Spec => False,
                                    Visibility      => Visibility_Public,
-                                   Name            => null,
+                                   Name          => GNATCOLL.Symbols.No_Symbol,
                                    Sloc_Start      => (0, 0, 0),
                                    Sloc_Entity     => (0, 0, 0),
                                    Sloc_End        => (0, 0, 0),

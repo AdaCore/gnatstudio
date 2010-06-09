@@ -252,7 +252,7 @@ package body Entities.Tooltips is
       return Draw_Tooltip
         (Kernel => Kernel,
          Guess  => False,
-         Header => "<b>" & Get_Construct (Entity).Name.all & "</b>",
+         Header => "<b>" & Get (Get_Construct (Entity).Name).all & "</b>",
          Doc    => Get_Documentation
            (Get_Tree_Language (Get_File (Entity)),
             Entity),

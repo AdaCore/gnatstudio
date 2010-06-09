@@ -35,8 +35,8 @@ package body Aunit_Filters is
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
       File_Name    : Virtual_File;
-      Package_Name : out GNAT.Strings.String_Access;
-      Suite_Name   : out GNAT.Strings.String_Access;
+      Package_Name : out GNATCOLL.Symbols.Symbol;
+      Suite_Name   : out GNATCOLL.Symbols.Symbol;
       F_Type       : out Test_Type)
    is
       Index             : Integer;
@@ -47,8 +47,8 @@ package body Aunit_Filters is
       Info              : File_Info;
 
    begin
-      Package_Name := null;
-      Suite_Name   := null;
+      Package_Name := No_Symbol;
+      Suite_Name   := No_Symbol;
       F_Type       := Unknown;
 
       if not Is_Regular_File (File_Name) then
@@ -74,7 +74,7 @@ package body Aunit_Filters is
         and then Current_Construct /= null
       loop
          if Current_Construct.Category = Cat_Class
-           and then Current_Construct.Name /= null
+           and then Current_Construct.Name /= No_Symbol
          then
             Index := Current_Construct.Sloc_Start.Index;
 
@@ -100,7 +100,7 @@ package body Aunit_Filters is
          end if;
 
          if Current_Construct.Category = Cat_Function
-           and then Current_Construct.Name /= null
+           and then Current_Construct.Name /= No_Symbol
          then
             Index := Current_Construct.Sloc_Start.Index;
 
@@ -121,13 +121,6 @@ package body Aunit_Filters is
          Current_Construct := Current_Construct.Next;
       end loop;
 
-      --  Find the name of the main unit
-
-      if Found then
-         Package_Name := new String'(Constructs.Last.Name.all);
-         Suite_Name   := new String'(Suite_Name.all);
-      end if;
-
       Free (Constructs);
       Free (File_Buffer);
    end Get_Suite_Name;
@@ -145,24 +138,20 @@ package body Aunit_Filters is
       Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
-      Suite_Name   : GNAT.Strings.String_Access;
-      Package_Name : GNAT.Strings.String_Access;
+      Suite_Name   : Symbol;
+      Package_Name : Symbol;
       F_Type       : Test_Type;
 
    begin
       Get_Suite_Name (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
 
-      --  Don't need package name
-      Free (Package_Name);
-
       if F_Type = Test_Suite then
          State  := Normal;
-         Text   := Suite_Name;
+         Text   := new String'(Get (Suite_Name).all);
          Pixbuf := Filter.Pixbuf;
          return;
       end if;
 
-      Free (Suite_Name);
       State  := Invisible;
       Text   := new String'("");
       Pixbuf := Null_Pixbuf;
@@ -181,24 +170,20 @@ package body Aunit_Filters is
       Text   : out GNAT.Strings.String_Access)
    is
       pragma Unreferenced (Win);
-      Suite_Name   : GNAT.Strings.String_Access;
-      Package_Name : GNAT.Strings.String_Access;
+      Suite_Name   : Symbol;
+      Package_Name : Symbol;
       F_Type       : Test_Type;
 
    begin
       Get_Suite_Name (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
 
-      --  Don't need package name
-      Free (Package_Name);
-
       if F_Type = Test_Suite or else F_Type = Test_Case then
          State  := Normal;
-         Text   := Suite_Name;
+         Text   := new String'(Get (Suite_Name).all);
          Pixbuf := Filter.Pixbuf;
          return;
       end if;
 
-      Free (Suite_Name);
       State  := Invisible;
       Text   := new String'("");
       Pixbuf := Null_Pixbuf;

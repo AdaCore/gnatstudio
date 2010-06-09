@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2009, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
+with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -226,10 +226,11 @@ package body Codefix.Ada_Tools is
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_With then
             New_Clause := new With_Type
-              (Get_Parts_Number (Get_Construct (Iterator).Name.all));
+              (Get_Parts_Number (Get (Get_Construct (Iterator).Name).all));
             New_Clause.Name := Get_Arr_Str
-              (Get_Construct (Iterator).Name.all);
-            Assign (New_Clause.Name_Str, Get_Construct (Iterator).Name.all);
+              (Get (Get_Construct (Iterator).Name).all);
+            Assign
+              (New_Clause.Name_Str, Get (Get_Construct (Iterator).Name).all);
             Append (Result, New_Clause);
          end if;
 
@@ -262,7 +263,8 @@ package body Codefix.Ada_Tools is
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_Use then
             New_Clause := new Use_Type;
-            New_Clause.Name := new String'(Get_Construct (Iterator).Name.all);
+            New_Clause.Name :=
+              new String'(Get (Get_Construct (Iterator).Name).all);
             Set_File (New_Clause.Position, File_Name);
             Set_Location
               (New_Clause.Position,
@@ -388,7 +390,7 @@ package body Codefix.Ada_Tools is
    begin
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_With
-           and then Get_Construct (Iterator).Name.all = Pkg_Name
+           and then Get (Get_Construct (Iterator).Name).all = Pkg_Name
          then
             Set_File (Result, File_Name);
 

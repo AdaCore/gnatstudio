@@ -17,15 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Unchecked_Deallocation;
-
-with GNAT.Strings; use GNAT.Strings;
-
 with Ada_Semantic_Tree.Lang;       use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
+with GNATCOLL.Symbols;             use GNATCOLL.Symbols;
 
 package body Ada_Semantic_Tree.Parts is
 
@@ -297,7 +295,7 @@ package body Ada_Semantic_Tree.Parts is
          --      on it.
 
             if Can_Have_Parts (Get_Construct (It).Category)
-              and then Get_Construct (It).Name /= null
+              and then Get_Construct (It).Name /= No_Symbol
             then
                if Is_Set
                  (Get_Annotation_Container (Scope_Tree, It).all,
@@ -315,7 +313,7 @@ package body Ada_Semantic_Tree.Parts is
                declare
                   Similar_Names : Construct_List_Access;
                   Lower_Name    : constant String :=
-                    To_Lower (Get_Construct (It).Name.all);
+                    To_Lower (Get (Get_Construct (It).Name).all);
                   Cur           : Construct_List_Pckg.Cursor;
                   Found         : Boolean := False;
                   Relation      : Ada_Relation_Access := null;

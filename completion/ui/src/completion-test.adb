@@ -24,6 +24,7 @@ with Ada.Calendar;                  use Ada.Calendar;
 
 with GNAT.OS_Lib;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
+with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 
 with Glib.Unicode;                    use Glib.Unicode;
 
@@ -49,6 +50,8 @@ with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
 procedure Completion.Test is
    use Standard.Ada;
    use Token_List;
+
+   Symbols : constant Symbol_Table_Access := Allocate;
 
    Max_Accepted_Time_For_Creation : Duration := 0.1;
    --  Maximum time for the resolution, in seconds
@@ -626,6 +629,8 @@ begin
       return;
    end if;
 
+   Set_Symbols (Construct_Db, Symbols);
+   Set_Symbols (Ada_Lang, Symbols);
    Set_Max_Time;
 
    Given_File := Create_From_Base (+Argument (1));

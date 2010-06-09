@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +33,7 @@ with GPS.Intl;                use GPS.Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
 with Row_Data;                use Row_Data;
 
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Templates_Parser;        use Templates_Parser;
@@ -95,8 +96,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_B     : Filter_Show_Ada_Access;
       Filter_C     : Filter_Show_Tests_Access;
       Response     : GNATCOLL.VFS.Virtual_File;
-      Suite_Name   : String_Access;
-      Package_Name : String_Access;
+      Suite_Name   : Symbol;
+      Package_Name : Symbol;
       F_Type       : Test_Type;
       Row_Num      : Gint;
       Explorer     : File_Selector_Window_Access;
@@ -147,22 +148,24 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Get_Suite_Name (Suite_Window.Kernel, Response,
                       Package_Name, Suite_Name, F_Type);
 
-      if Suite_Name /= null and then Package_Name /= null then
+      if Suite_Name /= No_Symbol and then Package_Name /= No_Symbol then
          if F_Type = Test_Case then
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
-               + (Response.Display_Full_Name) + ("(test) " & Suite_Name.all));
-            Set (Suite_Window.Test_List, Row_Num, Package_Name.all);
+               + (Response.Display_Full_Name) + ("(test) "
+                 & Get (Suite_Name).all));
+            Set (Suite_Window.Test_List, Row_Num, Get (Package_Name).all);
 
          elsif F_Type = Test_Suite then
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
-               + (Response.Display_Full_Name) + ("(suite) " & Suite_Name.all));
+               + (Response.Display_Full_Name) + ("(suite) "
+                 & Get (Suite_Name).all));
             Set (Suite_Window.Test_List,
                  Row_Num,
-                 Package_Name.all);
+                 Get (Package_Name).all);
          end if;
       end if;
 

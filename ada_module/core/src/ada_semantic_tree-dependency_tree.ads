@@ -24,7 +24,8 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;     use GNAT.Strings;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 
 with Ada_Semantic_Tree.Generics; use Ada_Semantic_Tree.Generics;
 with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
@@ -69,7 +70,7 @@ package Ada_Semantic_Tree.Dependency_Tree is
    function Get_Local_Visible_Constructs
      (File       : Structured_File_Access;
       Offset     : String_Index_Type;
-      Name       : Distinct_Identifier;
+      Name       : GNATCOLL.Symbols.Symbol;
       Visibility : not null access Visibility_Resolver;
       Categories : Category_Array;
       Use_Wise   : Boolean := True;

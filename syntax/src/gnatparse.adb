@@ -23,6 +23,7 @@ with Ada.Command_Line;          use Ada.Command_Line;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with Ada.Text_IO;               use Ada.Text_IO;
 with String_Utils;              use String_Utils;
 with GNAT.Strings;
@@ -31,6 +32,7 @@ with Language;                  use Language;
 procedure Gnatparse is
    subtype String_Access is GNAT.Strings.String_Access;
 
+   Symbols     : constant Symbol_Table_Access := Allocate;
    F           : File_Descriptor;
    Name        : constant String := Argument (1);
    Buffer      : String_Access;
@@ -47,13 +49,13 @@ begin
 
    if File_Extension (Name) = ".c" then
       Analyze_C_Source
-        (Buffer.all, Default_Indent_Parameters,
+        (Buffer.all, Symbols, Default_Indent_Parameters,
          Format     => False,
          Constructs => Constructs'Unchecked_Access);
 
    else
       Analyze_Ada_Source
-        (Buffer.all, Default_Indent_Parameters,
+        (Buffer.all, Symbols, Default_Indent_Parameters,
          Format     => False,
          Constructs => Constructs'Unchecked_Access);
    end if;
@@ -71,8 +73,8 @@ begin
          Put (Cat (5 .. Cat'Last) & " ");
       end;
 
-      if Info.Name /= null then
-         Put (Info.Name.all & " ");
+      if Info.Name /= No_Symbol then
+         Put (Get (Info.Name).all & " ");
       end if;
 
       if Info.Profile /= null then

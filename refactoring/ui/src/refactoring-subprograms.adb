@@ -24,6 +24,7 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
@@ -452,7 +453,7 @@ package body Refactoring.Subprograms is
    begin
       if Self.Is_Function then
          Method_Call := To_Unbounded_String
-           (Get_Name (Self.Last_Out_Param).all & " := ");
+           (Get (Get_Name (Self.Last_Out_Param)).all & " := ");
       end if;
 
       Append (Method_Call, Name);
@@ -466,7 +467,7 @@ package body Refactoring.Subprograms is
               or else not Self.Is_Function
             then
                Append (Method_Call,
-                       Get_Name (Element (Param).Parameter.Entity).all);
+                       Get (Get_Name (Element (Param).Parameter.Entity)).all);
 
                if Param /= Self.List.Last
                  and then Element (Next (Param)).Parameter.Entity /=
@@ -541,7 +542,8 @@ package body Refactoring.Subprograms is
 
       if Params.Is_Function then
          Typ := Get_Type_Of (Params.Last_Out_Param);
-         Returns := To_Unbounded_String (" return " & Get_Name (Typ).all);
+         Returns := To_Unbounded_String
+           (" return " & Get (Get_Name (Typ)).all);
       end if;
 
       if Params.Is_Function then
@@ -587,8 +589,9 @@ package body Refactoring.Subprograms is
 
       if Params.Is_Function then
          Typ := Get_Type_Of (Params.Last_Out_Param);
-         Append (Method_Body, "   " & Get_Name (Params.Last_Out_Param).all
-                 & " : " & Get_Name (Typ).all & ";" & ASCII.LF);
+         Append (Method_Body,
+                 "   " & Get (Get_Name (Params.Last_Out_Param)).all
+                 & " : " & Get (Get_Name (Typ)).all & ";" & ASCII.LF);
       end if;
 
       Append (Method_Body, "begin" & ASCII.LF & "   ");
@@ -597,7 +600,8 @@ package body Refactoring.Subprograms is
 
       if Params.Is_Function then
          Append (Method_Body, "   return "
-                 & Get_Name (Params.Last_Out_Param).all & ";" & ASCII.LF);
+                 & Get (Get_Name (Params.Last_Out_Param)).all
+                 & ";" & ASCII.LF);
       end if;
 
       Append (Method_Body, "end " & Name & ";" & ASCII.LF);

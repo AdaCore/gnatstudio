@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,8 @@
 with Syntax_Diff;      use Syntax_Diff;
 with Ada_Analyzer;     use Ada_Analyzer;
 with Ada.Command_Line; use Ada.Command_Line;
-with GNATCOLL.Mmap;        use GNATCOLL.Mmap;
+with GNATCOLL.Mmap;    use GNATCOLL.Mmap;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Ada.Text_IO;      use Ada.Text_IO;
 with Language;         use Language;
@@ -37,6 +38,7 @@ procedure Gnatdiff is
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
+   Symbols     : constant Symbol_Table_Access := GNATCOLL.Symbols.Allocate;
    Constructs  : Construct_List;
    Constructs2 : Construct_List;
    Results     : Result_Link;
@@ -55,7 +57,7 @@ procedure Gnatdiff is
    begin
       Buffer := Read_Whole_File (File);
       Analyze_Ada_Source
-        (Buffer.all, Default_Indent_Parameters,
+        (Buffer.all, Symbols, Default_Indent_Parameters,
          Format           => False,
          Constructs       => Result'Unchecked_Access);
       Constructs := Result;

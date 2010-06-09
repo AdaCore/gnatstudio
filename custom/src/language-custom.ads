@@ -154,6 +154,7 @@ private
 
    procedure Set_Construct
      (Construct      : Construct_Access;
+      Symbols        : GNATCOLL.Symbols.Symbol_Table_Access;
       Category       : Language_Category;
       Name           : chars_ptr;
       Profile        : chars_ptr;
@@ -176,6 +177,7 @@ private
    type Parse_Constructs_Proc is access
      procedure (Buffer        : String;
                 Result        : out Construct_List;
+                Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
                 Length        : Integer;
                 New_Construct : System.Address;
                 Set_Construct : System.Address);
@@ -233,6 +235,7 @@ private
    --
    --  typedef void (*set_construct_proc)
    --    (construct_access construct,
+   --     void* symbols,
    --     language_category category,
    --     char *name,
    --     char *profile,
@@ -251,6 +254,7 @@ private
    --  typedef void (*parse_constructs_proc)
    --    (char *buffer,
    --     construct_list *result,
+   --     void* symbols,  //  passed as-is to set_construct
    --     int length,
    --     new_construct_proc new_construct,
    --     set_construct_proc set_construct);

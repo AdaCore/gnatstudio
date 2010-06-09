@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006                            --
---                            AdaCore                                --
+--                     Copyright (C) 2006-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,12 +23,14 @@ with Ada.Command_Line;          use Ada.Command_Line;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with Language;                  use Language;
 with Ada.Text_IO;               use Ada.Text_IO;
 
 procedure Gnathighlight is
    subtype String_Access is GNAT.Strings.String_Access;
 
+   Symbols     : constant Symbol_Table_Access := GNATCOLL.Symbols.Allocate;
    F           : File_Descriptor;
    Name        : constant String := Argument (1);
    Buffer      : String_Access;
@@ -68,13 +69,13 @@ begin
 
    if File_Extension (Name) = ".c" then
       Analyze_C_Source
-        (Buffer.all, Default_Indent_Parameters,
+        (Buffer.all, Symbols, Default_Indent_Parameters,
          Format   => False,
          Callback => Callback'Unrestricted_Access);
 
    else
       Analyze_Ada_Source
-        (Buffer.all, Default_Indent_Parameters,
+        (Buffer.all, Symbols, Default_Indent_Parameters,
          Format   => False,
          Callback => Callback'Unrestricted_Access);
    end if;

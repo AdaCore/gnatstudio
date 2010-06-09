@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Glib.Unicode;                use Glib, Glib.Unicode;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
+with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with String_Utils;                use String_Utils;
 
 package body Language is
@@ -118,7 +119,6 @@ package body Language is
       loop
          exit when Info = null;
 
-         GNAT.Strings.Free (Info.Name);
          GNAT.Strings.Free (Info.Profile);
          Tmp := Info;
          Info := Info.Next;
@@ -136,7 +136,6 @@ package body Language is
 
    procedure Free (Category   : in out Explorer_Category) is
    begin
-      GNAT.Strings.Free (Category.Category_Name);
       Basic_Types.Unchecked_Free (Category.Regexp);
    end Free;
 
@@ -410,7 +409,7 @@ package body Language is
       Simple    : out Simple_Construct_Information;
       Full_Copy : Boolean)
    is
-      use GNAT.Strings;
+      pragma Unreferenced (Full_Copy);
    begin
       Simple :=
         (Category        => Construct.Category,
@@ -422,12 +421,6 @@ package body Language is
          Sloc_Entity     => Construct.Sloc_Entity,
          Sloc_End        => Construct.Sloc_End,
          Attributes      => Construct.Attributes);
-
-      if Full_Copy then
-         if Construct.Name /= null then
-            Simple.Name := new String'(Simple.Name.all);
-         end if;
-      end if;
    end To_Simple_Construct_Information;
 
    ------------------
@@ -572,10 +565,10 @@ package body Language is
                Result.Size := Result.Size + 1;
 
                if Categories (C).Make_Entry /= null then
-                  Result.Current.Name := new String'
+                  Result.Current.Name := Lang.Symbols.Find
                     (Categories (C).Make_Entry (Buffer, Matches));
                else
-                  Result.Current.Name := new String'
+                  Result.Current.Name := Lang.Symbols.Find
                     (Buffer (Matches (Match_Index).First ..
                              Matches (Match_Index).Last));
                end if;
@@ -773,12 +766,13 @@ package body Language is
 
    function Category_Name
      (Category : Language.Language_Category;
-      Name     : Strings.String_Access := null) return String
+      Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol)
+      return String
    is
       use type Strings.String_Access;
    begin
-      if Name /= null then
-         return Name.all;
+      if Name /= No_Symbol then
+         return Get (Name).all;
       end if;
 
       case Category is
@@ -1292,5 +1286,27 @@ package body Language is
 
       return Buffer (Buf_Start .. Buf_End);
    end Parse_Reference_Backwards;
+
+   -----------------
+   -- Set_Symbols --
+   -----------------
+
+   procedure Set_Symbols
+     (Self   : access Language_Root'Class;
+      Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class) is
+   begin
+      Self.Symbols := Symbol_Table_Access (Symbols);
+   end Set_Symbols;
+
+   -------------
+   -- Symbols --
+   -------------
+
+   function Symbols
+     (Self : access Language_Root'Class)
+      return GNATCOLL.Symbols.Symbol_Table_Access is
+   begin
+      return Self.Symbols;
+   end Symbols;
 
 end Language;

@@ -96,7 +96,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Start_Cur, Stop_Cur : File_Cursor;
    begin
       Matched_Word := Word_Cursor (Search_Tokens
-        (Current_Text,
+          (Current_Text,
            Position,
            Delimiters,
            Reverse_Step));
@@ -120,8 +120,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       end loop;
 
       Stop_Cur := File_Cursor
-        (Search_Tokens
-           (Current_Text, Start_Cur, Delimiters));
+        (Search_Tokens (Current_Text, Start_Cur, Delimiters));
 
       Destination.Start := new Mark_Abstr'Class'
         (Current_Text.Get_New_Mark (Start_Cur));

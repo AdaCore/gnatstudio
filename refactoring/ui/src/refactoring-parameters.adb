@@ -27,7 +27,6 @@ with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
-with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;

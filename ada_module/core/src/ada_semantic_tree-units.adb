@@ -17,13 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System; use System;
-
+with System;                  use System;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-
-with GNAT.Strings; use GNAT.Strings;
-
-with Ada_Semantic_Tree.Lang; use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
 package body Ada_Semantic_Tree.Units is
 
@@ -501,7 +498,7 @@ package body Ada_Semantic_Tree.Units is
 
             if Is_Compilation_Unit (It)
               and then Construct /= null
-              and then Construct.Name /= null
+              and then Construct.Name /= No_Symbol
             then
                Info := Get_Unit_Info
                  (Assistant.Unit_Key, To_Entity_Access (File, It));
@@ -520,7 +517,7 @@ package body Ada_Semantic_Tree.Units is
                     (To_Entity_Access (File, It));
                   Ref (Info.Entity);
                   Info.Name := new Composite_Identifier'
-                    (To_Composite_Identifier (Construct.Name.all));
+                    (To_Composite_Identifier (Get (Construct.Name).all));
                   Info.Unit_Key := Assistant.Unit_Key;
                   Construct_Annotations_Pckg.Set_Annotation
                     (Get_Annotation_Container (Tree, It).all,
@@ -544,6 +541,7 @@ package body Ada_Semantic_Tree.Units is
 
                Insert
                  (Assistant.Units_Db'Access,
+                  Get_Database (File).Symbols,
                   It,
                   Info,
                   Ada_Tree_Lang,
@@ -732,6 +730,7 @@ package body Ada_Semantic_Tree.Units is
                if not Parent_Found then
                   Construct_Unit_Tries.Insert
                     (Trie         => Assistant.Waiting_For_Parent'Access,
+                     Symbols      => Get_Database (File).Symbols,
                      Construct_It => To_Construct_Tree_Iterator
                        (To_Entity_Access (Unit.Entity)),
                      Name         => Get_Item
@@ -1167,8 +1166,9 @@ package body Ada_Semantic_Tree.Units is
       End_It : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (To_Entity_Access (Unit.End_Entity));
       Construct : access Simple_Construct_Information;
-      Tree : constant Construct_Tree :=
-        Get_Tree (Get_File (To_Entity_Access (Unit.Start_Entity)));
+      File : constant Structured_File_Access :=
+        Get_File (To_Entity_Access (Unit.Start_Entity));
+      Tree : constant Construct_Tree := Get_Tree (File);
 
       Dummy_Index : Local_Construct_Trie.Construct_Trie_Index;
    begin
@@ -1181,13 +1181,14 @@ package body Ada_Semantic_Tree.Units is
       while It /= End_It loop
          Construct := Get_Construct (It);
 
-         if Construct.Name /= null
+         if Construct.Name /= No_Symbol
            and then Construct.Category /= Cat_Field
            and then Construct.Category /= Cat_With
            and then Construct.Category /= Cat_Use
          then
             Insert
               (Trie         => Unit.Local_Constructs'Access,
+               Symbols      => Get_Database (File).Symbols,
                Construct_It => It,
                Data         => 0,
                Lang         => Ada_Tree_Lang,
@@ -1289,6 +1290,7 @@ package body Ada_Semantic_Tree.Units is
       Child      : Unit_Access;
       Assistant  : Database_Assistant_Access;
       List_Annot : Tree_Annotations_Pckg.Annotation;
+      File       : constant Structured_File_Access := Get_File (Unit.Entity);
    begin
       Assistant := Get_Assistant
         (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
@@ -1304,6 +1306,7 @@ package body Ada_Semantic_Tree.Units is
             Construct_Unit_Tries.Insert
               (Trie         =>
                  Ada_Unit_Assistant (Assistant.all).Waiting_For_Parent'Access,
+               Symbols       => Get_Database (File).Symbols,
                Construct_It => To_Construct_Tree_Iterator
                  (To_Entity_Access (Child.Entity)),
                Name         => Get_Item
@@ -1325,7 +1328,7 @@ package body Ada_Semantic_Tree.Units is
         (Ada_Unit_Assistant (Assistant.all).Units_Db'Access, Unit.Db_Index);
 
       Tree_Annotations_Pckg.Get_Annotation
-        (Get_Annotation_Container (Get_Tree (Get_File (Unit.Entity))).all,
+        (Get_Annotation_Container (Get_Tree (File)).all,
          Ada_Unit_Assistant (Assistant.all).Unit_List_Key,
          List_Annot);
 

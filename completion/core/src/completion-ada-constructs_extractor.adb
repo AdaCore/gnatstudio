@@ -21,6 +21,7 @@ with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 
@@ -167,8 +168,8 @@ package body Completion.Ada.Constructs_Extractor is
       while It /= Null_Construct_Tree_Iterator loop
          Construct := Get_Construct (It);
 
-         if Construct.Name /= null then
-            Id_Length := Id_Length + Construct.Name'Length + 1;
+         if Construct.Name /= No_Symbol then
+            Id_Length := Id_Length + Get (Construct.Name)'Length + 1;
          end if;
 
          It := Get_Parent_Scope (Get_Tree (Get_File (Entity)), It);
@@ -187,11 +188,11 @@ package body Completion.Ada.Constructs_Extractor is
          while It /= Null_Construct_Tree_Iterator loop
             Construct := Get_Construct (It);
 
-            if Construct.Name /= null then
-               Id (Index - (Construct.Name'Length + 1 - 1)
+            if Construct.Name /= No_Symbol then
+               Id (Index - (Get (Construct.Name)'Length + 1 - 1)
                    .. Index) :=
-                 Construct.Name.all & ".";
-               Index := Index - (Construct.Name'Length + 1);
+                 Get (Construct.Name).all & ".";
+               Index := Index - (Get (Construct.Name)'Length + 1);
             end if;
 
             It := Get_Parent_Scope (Get_Tree (Get_File (Entity)), It);
@@ -241,14 +242,14 @@ package body Completion.Ada.Constructs_Extractor is
 
                if Aggregate_Extension /= Null_Entity_Access then
                   Aggregate_Length :=
-                    Get_Construct (Aggregate_Extension).Name.all'Length + 6;
+                    Get (Get_Construct (Aggregate_Extension).Name)'Length + 6;
                end if;
 
                for J in Missing_Formals'Range loop
                   Construct := Get_Construct (Missing_Formals (J));
 
-                  if Construct.Name'Length > Max_Size_Name then
-                     Max_Size_Name := Construct.Name'Length;
+                  if Get (Construct.Name)'Length > Max_Size_Name then
+                     Max_Size_Name := Get (Construct.Name)'Length;
                   end if;
                end loop;
 
@@ -263,8 +264,8 @@ package body Completion.Ada.Constructs_Extractor is
                   if Aggregate_Extension /= Null_Entity_Access then
                      Buffer
                        (Index .. Index + Aggregate_Length - 1) :=
-                       Get_Construct
-                         (Aggregate_Extension).Name.all & " with" & ASCII.LF;
+                       Get (Get_Construct (Aggregate_Extension).Name).all
+                       & " with" & ASCII.LF;
 
                      Index := Index + Aggregate_Length;
                   end if;
@@ -277,10 +278,8 @@ package body Completion.Ada.Constructs_Extractor is
                         Index := Index + 2;
                      end if;
 
-                     Buffer
-                       (Index ..
-                          Index
-                        + Construct.Name'Length - 1) := Construct.Name.all;
+                     Buffer (Index .. Index + Get (Construct.Name)'Length - 1)
+                       := Get (Construct.Name).all;
 
                      Index := Index + Max_Size_Name;
 
@@ -317,7 +316,7 @@ package body Completion.Ada.Constructs_Extractor is
       if Proposal.View.Get_Entity = Null_Entity_Access then
          return Proposal.View.Get_Name;
       elsif Proposal.Actual_Params /= null then
-         return "params of " & Construct.Name.all;
+         return "params of " & Get (Construct.Name).all;
       elsif Is_All (Proposal.View) then
          return "all";
       elsif Construct.Category = Cat_Package
@@ -326,12 +325,12 @@ package body Completion.Ada.Constructs_Extractor is
       then
          declare
             Id : constant Composite_Identifier := To_Composite_Identifier
-              (Construct.Name.all);
+              (Get (Construct.Name).all);
          begin
             return Get_Item (Id, Length (Id));
          end;
       else
-         return Construct.Name.all;
+         return Get (Construct.Name).all;
       end if;
    end Get_Label;
 
@@ -359,7 +358,7 @@ package body Completion.Ada.Constructs_Extractor is
                for J in Missing_Formals'Range loop
                   Current_Param_Length :=
                     UTF8_Strlen
-                      (Get_Construct (Missing_Formals (J)).Name.all);
+                      (Get (Get_Construct (Missing_Formals (J)).Name).all);
 
                   if Current_Param_Length > Max_Param_Length then
                      Max_Param_Length := Current_Param_Length;
@@ -474,15 +473,14 @@ package body Completion.Ada.Constructs_Extractor is
 
       Ada_Context := Ada_Completion_Context (Context.all);
 
-      if Construct.Name = null then
+      if Construct.Name = No_Symbol then
          return False;
       elsif Construct.Category = Cat_Field then
          return False;
       else
          declare
             Name : constant Composite_Identifier :=
-              To_Composite_Identifier
-                (Construct.Name.all);
+              To_Composite_Identifier (Get (Construct.Name).all);
          begin
             if not Match
               (Get_Name

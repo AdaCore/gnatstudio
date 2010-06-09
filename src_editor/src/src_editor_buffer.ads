@@ -30,6 +30,7 @@ with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.Strings;
+with GNATCOLL.Symbols;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
@@ -769,7 +770,7 @@ package Src_Editor_Buffer is
       Last_Line         : Editable_Line_Type := 0;
       --  Indicate the lines that bound the block
 
-      Name              : GNAT.Strings.String_Access;
+      Name              : GNATCOLL.Symbols.Symbol;
       --  The name of the block, this is the subprogram or package name. This
       --  pointer is null for a block where name has no meaning.
 
@@ -1139,7 +1140,7 @@ private
      (Boolean_Array, Boolean_Array_Access);
 
    New_Block : constant Block_Record :=
-     (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
+     (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown, null);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;

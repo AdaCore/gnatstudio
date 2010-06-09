@@ -23,6 +23,8 @@ with Ada_Semantic_Tree.Declarations;  use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Units;         use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Cache;         use Ada_Semantic_Tree.Cache;
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
+with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 
 package body Ada_Semantic_Tree.Generics is
 
@@ -299,7 +301,7 @@ package body Ada_Semantic_Tree.Generics is
                      Actual_Expression : constant Parsed_Expression :=
                        Get_Expression_For_Formal
                          (Info.Resolver.all,
-                          Get_Construct (Formals (J)).Name.all);
+                          Get (Get_Construct (Formals (J)).Name).all);
                      Actual_Resolution : Entity_List;
                      Actual_It         : Entity_Iterator;
                   begin
@@ -408,12 +410,13 @@ package body Ada_Semantic_Tree.Generics is
       end if;
 
       declare
-         Id : aliased UTF8_String := Get_Identifier
+         Id : constant Cst_String_Access := Get (Get_Identifier
            (Get_Referenced_Identifiers
-              (To_Construct_Tree_Iterator (Info))).all;
+              (To_Construct_Tree_Iterator (Info))),
+            Empty_If_Null => True);
          Expression : Parsed_Expression :=
            Parse_Expression_Backward
-             (Id'Unchecked_Access, String_Index_Type (Id'Last));
+             (Id, String_Index_Type (Id'Last));
          Generic_Resolution : Entity_List;
          It                 : Entity_Iterator;
       begin

@@ -24,6 +24,7 @@ with GNAT.Regpat;        use GNAT.Regpat;
 with Glib;
 with GPS.Intl;           use GPS.Intl;
 with String_Utils;       use String_Utils;
+with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 with GNATCOLL.Utils;     use GNATCOLL.Utils;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GNATCOLL.Traces;
@@ -146,7 +147,7 @@ package body Code_Coverage is
                     /= null
                   then
                      if Subp_Cov = null then
-                        Subp_Name := new String'(Node_Info.Name.all);
+                        Subp_Name := new String'(Get (Node_Info.Name).all);
                         Subp_Node := Get_Or_Create (File_Node, Subp_Name);
                         Subp_Node.Line   := Node_Info.Sloc_Entity.Line;
                         Subp_Node.Column := Node_Info.Sloc_Entity.Column;

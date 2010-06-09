@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,11 +22,13 @@ with Ada.Command_Line; use Ada.Command_Line;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with GNAT.IO;          use GNAT.IO;
 with GNAT.Strings;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with Language;         use Language;
 
 procedure Gnatunit is
    subtype String_Access is GNAT.Strings.String_Access;
 
+   Symbols     : constant Symbol_Table_Access := GNATCOLL.Symbols.Allocate;
    F           : File_Descriptor;
    Name        : constant String := Argument (1);
    Buffer      : String_Access;
@@ -43,7 +44,7 @@ begin
    Close (F);
 
    Analyze_Ada_Source
-     (Buffer.all, Default_Indent_Parameters,
+     (Buffer.all, Symbols, Default_Indent_Parameters,
       Format     => False,
       Constructs => Constructs'Unchecked_Access);
    Free (Buffer);
@@ -55,11 +56,11 @@ begin
        (Info.Category /= Cat_Procedure
         and then Info.Category /= Cat_Function
         and then Info.Category /= Cat_Package)
-     or else Info.Name = null
+     or else Info.Name = No_Symbol
    then
       Put_Line ("No unit found in file " & Name);
    else
-      Put ("Unit " & Info.Name.all);
+      Put ("Unit " & Get (Info.Name).all);
 
       if Info.Is_Declaration then
          Put (" (spec)");

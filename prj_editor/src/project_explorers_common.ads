@@ -17,8 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;      use GNAT;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Gdk.Pixbuf;
@@ -131,7 +131,7 @@ package Project_Explorers_Common is
      (Model         : Gtk_Tree_Store;
       File          : GNATCOLL.VFS.Virtual_File;
       Category      : Language_Category;
-      Category_Name : Strings.String_Access;
+      Category_Name : GNATCOLL.Symbols.Symbol;
       Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Add a category node in the model
 

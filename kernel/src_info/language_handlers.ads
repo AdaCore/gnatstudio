@@ -36,6 +36,7 @@ with Entities;
 with Language;
 with Language.Tree.Database;
 with Projects;
+with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 
 package Language_Handlers is
@@ -45,7 +46,9 @@ package Language_Handlers is
    with private;
    type Language_Handler is access all Language_Handler_Record'Class;
 
-   procedure Create_Handler (Handler : out Language_Handler);
+   procedure Create_Handler
+     (Handler : out Language_Handler;
+      Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class);
    --  Create a new language handler
 
    procedure Destroy (Handler : in out Language_Handler);
@@ -178,6 +181,7 @@ private
    type Language_Handler_Record
      is new Language.Tree.Database.Abstract_Language_Handler_Record
    with record
+      Symbols   : GNATCOLL.Symbols.Symbol_Table_Access;
       Languages : Language_Info_Access;
       Handlers  : Handler_Info_Access;
       Registry  : Projects.Project_Registry_Access;

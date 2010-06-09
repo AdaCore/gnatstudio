@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2009, AdaCore                --
+--                   Copyright (C) 2000-2010, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,13 +57,13 @@ package body Language.Cpp is
 
    Cpp_Explorer_Categories : constant Explorer_Categories (1 .. 2) :=
      (1 => (Category       => Cat_Class,
-            Category_Name  => null,
+            Category_Name  => GNATCOLL.Symbols.No_Symbol,
             Regexp         => Classes_RE'Access,
             Position_Index => 2,
             End_Index      => 0,
             Make_Entry     => Make_Entry_Class'Access),
       2 => (Category       => Cat_Method,
-            Category_Name  => null,
+            Category_Name  => GNATCOLL.Symbols.No_Symbol,
             Regexp         => Methods_RE'Access,
             Position_Index => 5,
             End_Index      => 0,
@@ -147,13 +147,13 @@ package body Language.Cpp is
       Buffer   : String;
       Callback : Entity_Callback)
    is
-      pragma Unreferenced (Lang);
       pragma Suppress (All_Checks);
       --  See comment in Language.C.Parse_Entities
 
    begin
       Analyze_C_Source
         (Buffer        => Buffer,
+         Symbols       => Lang.Symbols,
          Indent_Params => Default_Indent_Parameters,
          Format        => False,
          Callback      => Callback,

@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;     use GNAT.Strings;
-with GNATCOLL.Utils;   use GNATCOLL.Utils;
-with Language.Ada;     use Language.Ada;
-with String_Utils;     use String_Utils;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
+with GNATCOLL.Utils;                 use GNATCOLL.Utils;
+with Language.Ada;                   use Language.Ada;
+with String_Utils;                   use String_Utils;
 with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
@@ -247,8 +247,8 @@ package body Ada_Semantic_Tree.Visibility is
          return None;
       elsif Path_To'Length = 0 or else Path_From'Length = 0 then
          return None;
-      elsif Get_Construct (Path_To (1)).Name = null
-        or else Get_Construct (Path_From (1)).Name = null
+      elsif Get_Construct (Path_To (1)).Name = No_Symbol
+        or else Get_Construct (Path_From (1)).Name = No_Symbol
       then
          return None;
       end if;
@@ -256,9 +256,10 @@ package body Ada_Semantic_Tree.Visibility is
       declare
          Root_To_Name   : constant Composite_Identifier :=
            To_Composite_Identifier
-             (Get_Construct (Path_To (1)).Name.all);
+             (Get (Get_Construct (Path_To (1)).Name).all);
          Root_From_Name : constant Composite_Identifier :=
-           To_Composite_Identifier (Get_Construct (Path_From (1)).Name.all);
+           To_Composite_Identifier
+             (Get (Get_Construct (Path_From (1)).Name).all);
 
          Index_In_To_Root, Index_In_From_Root : Integer := 1;
          Index_In_To_Path, Index_In_From_Path : Integer := 1;
@@ -296,7 +297,8 @@ package body Ada_Semantic_Tree.Visibility is
                --  the name of the remaining ones - no composite identifier is
                --  expected pass this point.
 
-               if Get_Construct (Path_From (Index_In_From_Path)).Name = null
+               if Get_Construct
+                 (Path_From (Index_In_From_Path)).Name = No_Symbol
                  or else Get_Identifier (Path_To (Index_In_To_Path))
                  /= Get_Identifier (Path_From (Index_In_From_Path))
                then
@@ -320,10 +322,12 @@ package body Ada_Semantic_Tree.Visibility is
                --  completely analyzed to. Check the next index of the
                --  composite "from" against the next path element of "to"
 
-               if Get_Construct (Path_From (Index_In_From_Path)).Name = null
+               if Get_Construct (Path_From (Index_In_From_Path)).Name =
+                 No_Symbol
                  or else not Equal
                    (Get_Item (Root_To_Name, Index_In_To_Root),
-                    Get_Construct (Path_From (Index_In_From_Path)).Name.all,
+                    Get
+                     (Get_Construct (Path_From (Index_In_From_Path)).Name).all,
                     False)
                then
                   return None;
@@ -334,11 +338,11 @@ package body Ada_Semantic_Tree.Visibility is
                --  composite "to" against the next path element of "from"
 
                if Get_Construct
-                 (Path_To (Index_In_To_Path)).Name = null
+                 (Path_To (Index_In_To_Path)).Name = No_Symbol
                  or else not Equal
                    (Get_Item (Root_From_Name, Index_In_From_Root),
-                    Get_Construct
-                      (Path_To (Index_In_To_Path)).Name.all,
+                    Get (Get_Construct
+                      (Path_To (Index_In_To_Path)).Name).all,
                     False)
                then
                   return None;
@@ -577,7 +581,7 @@ package body Ada_Semantic_Tree.Visibility is
 
       Clause : Entity_Access;
 
-      Entity_Id : constant Distinct_Identifier :=
+      Entity_Id : constant Symbol :=
         Get_Identifier (To_Construct_Tree_Iterator (Entity));
 
       function Is_Prefix_Of (Prefix, Full : String) return Boolean;
@@ -666,8 +670,9 @@ package body Ada_Semantic_Tree.Visibility is
                    (To_Construct_Tree_Iterator (Entity))
                then
                   if Is_Prefix_Of
-                    (Entity_Id.all, Get_Identifier
-                       (To_Construct_Tree_Iterator (Clause)).all)
+                    (Get (Entity_Id).all,
+                     Get (Get_Identifier
+                       (To_Construct_Tree_Iterator (Clause))).all)
                   then
                      return Get_Target (Get_Clause_Info (Clause));
                   end if;

@@ -23,6 +23,7 @@ with Ada.Strings.Hash;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
@@ -2799,15 +2800,16 @@ package body Project_Explorers is
 
          while Constructs.Current /= null loop
             if Filter_Category (Constructs.Current.Category) /= Cat_Unknown
-              and then Constructs.Current.Name /= null
-              and then Match (C, Constructs.Current.Name.all) /= -1
+              and then Constructs.Current.Name /= No_Symbol
+              and then Match (C, Get (Constructs.Current.Name).all) /= -1
             then
                Status := True;
 
-               if Get (C.Matches, Constructs.Current.Name.all) /=
+               if Get (C.Matches, Get (Constructs.Current.Name).all) /=
                  Search_Match
                then
-                  Set (C.Matches, Constructs.Current.Name.all, Search_Match);
+                  Set (C.Matches, Get (Constructs.Current.Name).all,
+                       Search_Match);
                end if;
             end if;
 

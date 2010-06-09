@@ -19,6 +19,7 @@
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
 package body Engine_Wrappers is
 
@@ -138,7 +139,7 @@ package body Engine_Wrappers is
    ------------------
 
    overriding function Get_Proposal
-     (Iter : Comp_Iterator) return Root_Proposal'Class is
+     (Iter    : Comp_Iterator) return Root_Proposal'Class is
    begin
       return Comp_Proposal'
         (P => new Completion_Proposal'Class'(Get_Proposal (Iter.I)));
@@ -150,10 +151,10 @@ package body Engine_Wrappers is
 
    overriding function Get_Label (Proposal : Entity_Proposal) return String is
    begin
-      if Proposal.Construct.Name = null then
+      if Proposal.Construct.Name = No_Symbol then
          return "<no name>";
       else
-         return Proposal.Construct.Name.all;
+         return Get (Proposal.Construct.Name).all;
       end if;
    end Get_Label;
 
@@ -208,8 +209,7 @@ package body Engine_Wrappers is
    -----------------------
 
    overriding function Get_Documentation
-     (Proposal : Entity_Proposal)
-      return String is
+     (Proposal : Entity_Proposal) return String is
    begin
       return Proposal.Documentation.all;
    end Get_Documentation;
@@ -279,7 +279,8 @@ package body Engine_Wrappers is
    ------------------
 
    overriding function Get_Proposal
-     (Iter : Entity_Iterator) return Root_Proposal'Class
+     (Iter    : Entity_Iterator)
+      return Root_Proposal'Class
    is
       File : Virtual_File;
       Decl : Entity_View;
@@ -305,8 +306,8 @@ package body Engine_Wrappers is
       return Entity_Proposal'
         (File      => File,
          Construct => Construct,
-         Documentation => new String'(
-          Get_Documentation (Ada_Tree_Lang, Get_Entity (Iter.I))));
+         Documentation => new String'
+           (Get_Documentation (Ada_Tree_Lang, Get_Entity (Iter.I))));
    end Get_Proposal;
 
    -----------------------------

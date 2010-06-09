@@ -23,11 +23,11 @@ with Language.Tree.Database; use Language.Tree.Database;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 with Generic_Stack;
-with Language.Tree; use Language.Tree;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Glib; use Glib;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Generic_List;
+with Language.Tree;     use Language.Tree;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with Glib;              use Glib;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 --  base package of all ada semantic tree queries.
 
@@ -96,7 +96,8 @@ package Ada_Semantic_Tree is
    --  Return the entity pointed by this declaration view.
 
    function Get_Documentation
-     (E : access Entity_View_Record) return UTF8_String is abstract;
+     (E       : access Entity_View_Record) return UTF8_String
+      is abstract;
 
    function Get_Name
      (E : access Entity_View_Record) return UTF8_String is abstract;
@@ -216,7 +217,7 @@ package Ada_Semantic_Tree is
    package Token_List is new Generic_List (Token_Record, Free => Free);
 
    type Parsed_Expression is record
-      Original_Buffer : access Glib.UTF8_String;
+      Original_Buffer : access constant Glib.UTF8_String;
       Tokens          : Token_List.List := Token_List.Null_List;
    end record;
    Null_Parsed_Expression : constant Parsed_Expression;
@@ -231,7 +232,7 @@ package Ada_Semantic_Tree is
    --  Free memory associated with Expression
 
    function Parse_Expression_Backward
-     (Buffer            : access Glib.UTF8_String;
+     (Buffer            : access constant Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0)
       return Parsed_Expression;
@@ -261,7 +262,7 @@ package Ada_Semantic_Tree is
    --  The return value must be freed by the user
 
    function Parse_Expression_Backward
-     (Buffer : access Glib.UTF8_String) return Parsed_Expression;
+     (Buffer : access constant Glib.UTF8_String) return Parsed_Expression;
    --  Same as above, assuming Start_Offset = Buffer'Last and End_Offset = 0
 
    function To_String (Expression : Parsed_Expression) return String;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2009, AdaCore               --
+--                    Copyright (C) 2007-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Strings;
-
+with GNATCOLL.Symbols;
+with GNATCOLL.Utils;
 with Language.Tree; use Language.Tree;
 with Lazy_Vectors;
 with Tries;
@@ -90,6 +90,7 @@ package Construct_Tries is
 
    procedure Insert
      (Trie         : access Construct_Trie;
+      Symbols      : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
       Construct_It : Construct_Tree_Iterator;
       Data         : Additional_Data_Type;
       Lang         : access Abstract_Tree_Language'Class;
@@ -100,6 +101,7 @@ package Construct_Tries is
 
    procedure Insert
      (Trie         : access Construct_Trie;
+      Symbols      : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
       Construct_It : Construct_Tree_Iterator;
       Name         : String;
       Data         : Additional_Data_Type;
@@ -120,8 +122,10 @@ package Construct_Tries is
    --  Replace the object pointed by the iterator.
 
    function Get_Name_Index
-     (Trie : access Construct_Trie; Name : String)
-      return GNAT.Strings.String_Access;
+     (Trie    : access Construct_Trie;
+      Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class;
+      Name    : String)
+      return GNATCOLL.Symbols.Symbol;
    --  Return the unique string access corresponding to the name given in
    --  parameter. If none, will create one.
 
@@ -142,16 +146,18 @@ private
 
    type Construct_Node_List is record
       Constructs : Construct_Vector.Lazy_Vector;
-      Name       : GNAT.Strings.String_Access;
+      Name       : GNATCOLL.Symbols.Symbol;
    end record;
 
    type Construct_Node_List_Access is access all Construct_Node_List;
 
    Null_Construct_Node_List : constant Construct_Node_List :=
-     (Construct_Vector.Null_Lazy_Vector, null);
+     (Construct_Vector.Null_Lazy_Vector, GNATCOLL.Symbols.No_Symbol);
 
    function Get_Name
-     (Node : Construct_Node_List_Access) return GNAT.Strings.String_Access;
+     (Node : Construct_Node_List_Access)
+      return GNATCOLL.Utils.Cst_String_Access;
+   --  (instantiation of Tries)
 
    procedure Free (Node : in out Construct_Node_List_Access);
    --  Free the data associated to the node.
@@ -180,10 +186,10 @@ private
 
    type Construct_Trie_Index is record
       It   : Construct_Vector.Iterator;
-      Name : GNAT.Strings.String_Access;
+      Name : GNATCOLL.Symbols.Symbol;
    end record;
 
    Null_Construct_Trie_Index : constant Construct_Trie_Index :=
-     (Construct_Vector.Null_Iterator, null);
+     (Construct_Vector.Null_Iterator, GNATCOLL.Symbols.No_Symbol);
 
 end Construct_Tries;

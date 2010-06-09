@@ -40,7 +40,7 @@ package Language.Tree.Database is
    --  for persistent storage: its data are not valid anymore after a refresh
    --  on the file where the entity is located.
 
-   type Construct_Database is new Identifier_Manager with private;
+   type Construct_Database is tagged private;
    --  A construct database is a data structure containing a file index and a
    --  construct index, both sorted alphabetically.
 
@@ -64,8 +64,8 @@ package Language.Tree.Database is
    --  Return the language associated to this tree.
 
    function Get_Documentation
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return String;
+     (Lang    : access Tree_Language;
+      Entity  : Entity_Access) return String;
    --  This function returns the documentation for the entity given in
    --  parameter, for the given language. By default, it computes a
    --  documentation from generic knowledge on the constructs.
@@ -86,7 +86,7 @@ package Language.Tree.Database is
 
    overriding function Get_Name_Index
      (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return String;
+      Construct : Simple_Construct_Information) return GNATCOLL.Symbols.Symbol;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling. Default implementation return the actual
    --  construct name.
@@ -132,9 +132,9 @@ package Language.Tree.Database is
    Invalid_Reference : constant Entity_Reference_Details;
 
    function Find_Reference_Details
-     (Lang   : access Tree_Language;
-      File   : Structured_File_Access;
-      Index  : String_Index_Type) return Entity_Reference_Details is abstract;
+     (Lang    : access Tree_Language;
+      File    : Structured_File_Access;
+      Index   : String_Index_Type) return Entity_Reference_Details is abstract;
    --  Return details about an entity reference within the given file
 
    function Find_Next_Part
@@ -390,6 +390,9 @@ package Language.Tree.Database is
    procedure Set_Symbols
      (Self    : access Construct_Database;
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access);
+   function Symbols
+     (Self    : access Construct_Database)
+      return GNATCOLL.Symbols.Symbol_Table_Access;
    --  Set the symbol table to use to store entity names.
    --  This table is shared with the kernel, but the kernel is not visible
    --  from this package. This also simplifies integration in GNATBench
@@ -492,13 +495,8 @@ package Language.Tree.Database is
    function Start_File_Search (Db : Construct_Database) return File_Set.Cursor;
    --  Return a cursor pointing at the first element of the file database.
 
-   overriding function Get_Identifier
-     (Manager : access Construct_Database; Name : String)
-      return Distinct_Identifier;
-   pragma Inline (Get_Identifier);
-   --  Return the unique identifier for the name given in parameter.
-
-   function Get_Identifier (Entity : Entity_Access) return Distinct_Identifier;
+   function Get_Identifier
+     (Entity : Entity_Access) return GNATCOLL.Symbols.Symbol;
    pragma Inline (Get_Identifier);
    --  Return the identifier of this entity.
 
@@ -683,9 +681,9 @@ private
    type Unknown_Tree_Language is new Tree_Language with null record;
 
    overriding function Find_Reference_Details
-     (Lang   : access Unknown_Tree_Language;
-      File   : Structured_File_Access;
-      Index  : String_Index_Type) return Entity_Reference_Details;
+     (Lang    : access Unknown_Tree_Language;
+      File    : Structured_File_Access;
+      Index   : String_Index_Type) return Entity_Reference_Details;
 
    Unknown_Tree_Lang : constant Tree_Language_Access :=
      new Unknown_Tree_Language;
@@ -765,7 +763,7 @@ private
 
    use Database_Listeners;
 
-   type Construct_Database is new Identifier_Manager with record
+   type Construct_Database is tagged record
       Files_Db           : File_Map.Map;
       Sorted_Files_Db    : File_Set.Set;
       --  ??? Do we really need these two now that we removed the assertion

@@ -20,7 +20,7 @@
 --  This package provides containers & process used to analyze formal / actual
 --  list of entities, in particular parameters.
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;     use GNAT.Strings;
 with Glib;
 
 package Ada_Semantic_Tree.List_Resolver is

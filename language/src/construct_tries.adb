@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2009, AdaCore               --
+--                    Copyright (C) 2007-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,13 +20,14 @@
 with Ada.Unchecked_Deallocation;
 with Language; use Language;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 
 package body Construct_Tries is
 
-   use GNAT.Strings;
-
    function Get_Or_Create_List
-     (Trie : access Construct_Trie; Name : String)
+     (Trie    : access Construct_Trie;
+      Symbols : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
+      Name    : String)
       return Construct_Node_List_Access;
 
    -----------
@@ -55,8 +56,9 @@ package body Construct_Tries is
       if not At_End (It.It_Db) then
          It.It_Vector := First (Get (It.It_Db).Constructs);
 
+         --  ??? Should have Lower_Prefix as a symbol
          if not It.Is_Partial
-           and then Get (It.It_Db).Name.all /= Lower_Prefix
+           and then Get (Get (It.It_Db).Name).all /= Lower_Prefix
          then
             Free (It.It_Db);
             It.It_Db := Construct_Trie_Trees.Null_Iterator;
@@ -159,7 +161,9 @@ package body Construct_Tries is
    ------------------------
 
    function Get_Or_Create_List
-     (Trie : access Construct_Trie; Name : String)
+     (Trie    : access Construct_Trie;
+      Symbols : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
+      Name    : String)
       return Construct_Node_List_Access
    is
       List  : Construct_Node_List_Access := Get (Trie, Name);
@@ -169,7 +173,7 @@ package body Construct_Tries is
 
       if List = null then
          List := new Construct_Node_List;
-         List.Name := new String'(Name);
+         List.Name := Symbols.Find (Name);
          List.Constructs :=
            new Construct_Vector.Lazy_Vector_Record;
          Insert (Construct_Trie (Trie.all), List);
@@ -184,6 +188,7 @@ package body Construct_Tries is
 
    procedure Insert
      (Trie         : access Construct_Trie;
+      Symbols      : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
       Construct_It : Construct_Tree_Iterator;
       Data         : Additional_Data_Type;
       Lang         : access Abstract_Tree_Language'Class;
@@ -191,8 +196,9 @@ package body Construct_Tries is
    begin
       Insert
         (Trie,
+         Symbols,
          Construct_It,
-         Get_Name_Index (Lang, Get_Construct (Construct_It).all),
+         Get (Get_Name_Index (Lang, Get_Construct (Construct_It).all)).all,
          Data,
          Lang,
          Index);
@@ -200,6 +206,7 @@ package body Construct_Tries is
 
    procedure Insert
      (Trie         : access Construct_Trie;
+      Symbols      : access GNATCOLL.Symbols.Symbol_Table_Record'Class;
       Construct_It : Construct_Tree_Iterator;
       Name         : String;
       Data         : Additional_Data_Type;
@@ -212,7 +219,7 @@ package body Construct_Tries is
       --  ??? This To_Lower should be dependent on language casing.
       Lower_Name : constant String := To_Lower (Name);
       List       : constant Construct_Node_List_Access :=
-        Get_Or_Create_List (Trie, Lower_Name);
+        Get_Or_Create_List (Trie, Symbols, Lower_Name);
    begin
       Wrapper.Node := Construct_It;
       Wrapper.Data := Data;
@@ -264,10 +271,11 @@ package body Construct_Tries is
    --------------
 
    function Get_Name
-     (Node : Construct_Node_List_Access) return GNAT.Strings.String_Access is
+     (Node : Construct_Node_List_Access)
+      return GNATCOLL.Utils.Cst_String_Access is
    begin
       if Node /= null then
-         return Node.Name;
+         return Get (Node.Name);
       else
          return null;
       end if;
@@ -282,8 +290,6 @@ package body Construct_Tries is
         (Construct_Node_List, Construct_Node_List_Access);
    begin
       if Node /= null then
-         Free (Node.Name);
-
          Free (Node.Constructs);
          Internal (Node);
       end if;
@@ -294,10 +300,12 @@ package body Construct_Tries is
    --------------------
 
    function Get_Name_Index
-     (Trie : access Construct_Trie; Name : String) return String_Access
+     (Trie : access Construct_Trie;
+      Symbols : not null access Symbol_Table_Record'Class;
+      Name : String) return Symbol
    is
       List   : constant Construct_Node_List_Access :=
-        Get_Or_Create_List (Trie, To_Lower (Name));
+        Get_Or_Create_List (Trie, Symbols, To_Lower (Name));
       --  ??? This To_Lower should depend on some casing property.
    begin
       return List.Name;

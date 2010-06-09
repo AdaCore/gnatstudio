@@ -31,6 +31,7 @@ with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with Language.Tree.Database;            use Language.Tree.Database;
 with Projects;                          use Projects;
 with Traces;                            use Traces;
+with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body Codefix.Formal_Errors is
@@ -629,14 +630,14 @@ package body Codefix.Formal_Errors is
       end if;
 
       while Get_Construct (It).Sloc_Entity.Line = Cursor.Get_Line loop
-         exit when Matches (Remove_Quotes (Get_Construct (It).Name.all));
+         exit when Matches (Remove_Quotes (Get (Get_Construct (It).Name).all));
 
          It := Next (Tree, It);
       end loop;
 
       if It = Null_Construct_Tree_Iterator
         or else Get_Construct (It).Sloc_Entity.Line /= Cursor.Get_Line
-        or else not Matches (Remove_Quotes (Get_Construct (It).Name.all))
+        or else not Matches (Remove_Quotes (Get (Get_Construct (It).Name).all))
       then
          --  There's no construct that we can analyse at that location, so we
          --  won't do operations relying on entity data.

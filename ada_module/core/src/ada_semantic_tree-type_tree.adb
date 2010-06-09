@@ -26,6 +26,7 @@ with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 
 package body Ada_Semantic_Tree.Type_Tree is
 
@@ -553,7 +554,7 @@ package body Ada_Semantic_Tree.Type_Tree is
             Trace
               (Test_Trace,
                "TYPE OUT OF DATE: "
-               & Get_Construct (Entity_Type).Name.all);
+               & Get (Get_Construct (Entity_Type).Name).all);
          end if;
       else
          --  Check if we want to do analysis on this kind of construct
@@ -578,7 +579,7 @@ package body Ada_Semantic_Tree.Type_Tree is
             Trace
               (Test_Trace,
                "NEW TYPE: "
-               & Get_Construct (Entity_Type).Name.all);
+               & Get (Get_Construct (Entity_Type).Name).all);
          end if;
       end if;
 
@@ -611,7 +612,7 @@ package body Ada_Semantic_Tree.Type_Tree is
 
          declare
             Expression : Parsed_Expression := Parse_Expression_Backward
-              (Get_Identifier (Ref_Ids));
+              (Get (Get_Identifier (Ref_Ids)));
 
             Decl_List   : Entity_List;
             It          : Entity_Iterator;

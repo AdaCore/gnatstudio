@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
 with Glib;
 with Glib.Module;             use Glib.Module;
@@ -669,7 +670,7 @@ package body Language.Custom is
             Category      : Language_Category;
             Index         : Integer;
             End_Index     : Integer;
-            Category_Name : Strings.String_Access := null;
+            Category_Name : Symbol := No_Symbol;
 
          begin
             declare
@@ -679,7 +680,7 @@ package body Language.Custom is
             exception
                when Constraint_Error =>
                   Category := Cat_Custom;
-                  Category_Name := new String'(Name);
+                  Category_Name := Find (Kernel.Symbols, Name);
             end;
 
             Index := Integer'Value (Get_Field (Node, "Index").all);
@@ -688,6 +689,7 @@ package body Language.Custom is
             else
                End_Index := 0;
             end if;
+
             Lang.Categories (J) :=
               (Category       => Category,
                Category_Name  => Category_Name,
@@ -700,7 +702,8 @@ package body Language.Custom is
          exception
             when Constraint_Error =>
                --  ??? Should display an error instead.
-               Lang.Categories (J) := (Cat_Unknown, null, null, 0, 0, null);
+               Lang.Categories (J) :=
+                 (Cat_Unknown, No_Symbol, null, 0, 0, null);
                Trace (Me, "Invalid Category found for language "
                       & Lang.Name.all);
          end;
@@ -832,6 +835,7 @@ package body Language.Custom is
 
    procedure Set_Construct
      (Construct      : Construct_Access;
+      Symbols        : Symbol_Table_Access;
       Category       : Language_Category;
       Name           : chars_ptr;
       Profile        : chars_ptr;
@@ -841,10 +845,11 @@ package body Language.Custom is
       Is_Declaration : Boolean;
       Prev, Next     : Construct_Access)
    is
-      N, P : GNAT.Strings.String_Access;
+      N : Symbol := No_Symbol;
+      P : GNAT.Strings.String_Access;
    begin
       if Name /= Null_Ptr then
-         N := new String'(Value (Name));
+         N := Symbols.Find (Value (Name));
       end if;
 
       if Profile /= Null_Ptr then
@@ -853,7 +858,7 @@ package body Language.Custom is
 
       Construct.all :=
         (Category,
-         null,
+         No_Symbol,
          Is_Declaration  => Is_Declaration,
          Visibility      => Visibility_Public,
          Name            => N,
@@ -932,7 +937,7 @@ package body Language.Custom is
          end if;
       else
          Lang.Parse_Constructs
-           (Buffer, Result, Buffer'Length,
+           (Buffer, Result, Lang.Symbols, Buffer'Length,
             New_Construct'Address, Set_Construct'Address);
       end if;
    end Parse_Constructs;
@@ -1044,7 +1049,8 @@ package body Language.Custom is
            or else Lang.Context /= Null_Context'Access
            or else Lang.Keywords /= null
          then
-            Parse_Entities (Language_Root (Lang.all)'Access, Buffer, Callback);
+            Parse_Entities
+              (Language_Root (Lang.all)'Access, Buffer, Callback);
          else
             Parse_Entities (Lang.Parent, Buffer, Callback);
          end if;

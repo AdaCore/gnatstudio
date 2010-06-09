@@ -17,12 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with Language.Ada;                use Language.Ada;
 with Ada_Semantic_Tree.Type_Tree; use Ada_Semantic_Tree.Type_Tree;
-with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Parts;     use Ada_Semantic_Tree.Parts;
 
 package body Ada_Semantic_Tree.List_Resolver is
 
@@ -426,15 +427,15 @@ package body Ada_Semantic_Tree.List_Resolver is
             if Actual.Is_Named
               and then Get_Construct
                 (To_Construct_Tree_Iterator
-                     (Params.Profile.Params (J))).Name /= null
+                     (Params.Profile.Params (J))).Name /= No_Symbol
             then
                if Equal
                  (Get_Name
                     (Actual.Expression,
                      Data (First (Actual.Expression.Tokens))),
-                  Get_Construct
+                  Get (Get_Construct
                     (To_Construct_Tree_Iterator
-                       (Params.Profile.Params (J))).Name.all,
+                       (Params.Profile.Params (J))).Name).all,
                   False)
                then
                   Param_Added := True;
@@ -626,7 +627,8 @@ package body Ada_Semantic_Tree.List_Resolver is
    begin
       for J in Params.Profile.Params'Range loop
          if To_Lower
-           (Get_Construct (Params.Profile.Params (J)).Name.all) = Lower_Name
+           (Get (Get_Construct (Params.Profile.Params (J)).Name).all) =
+           Lower_Name
          then
             return Params.Actual_Params (J).Expression;
          end if;

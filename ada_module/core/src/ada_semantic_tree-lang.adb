@@ -86,12 +86,11 @@ package body Ada_Semantic_Tree.Lang is
 
    overriding function Get_Name_Index
      (Lang      : access Ada_Tree_Language;
-      Construct : Simple_Construct_Information) return String
+      Construct : Simple_Construct_Information) return GNATCOLL.Symbols.Symbol
    is
-      pragma Unreferenced (Lang);
    begin
-      if Construct.Name = null then
-         return "";
+      if Construct.Name = No_Symbol then
+         return No_Symbol;
       end if;
 
       if Construct.Category = Cat_Package
@@ -103,12 +102,17 @@ package body Ada_Semantic_Tree.Lang is
 
          declare
             Id : constant Composite_Identifier :=
-                   To_Composite_Identifier (Construct.Name.all);
+                   To_Composite_Identifier (Get (Construct.Name).all);
          begin
-            return To_Lower (Get_Item (Id, Length (Id)));
+            return Get_Language (Lang).Symbols.Find
+              (To_Lower (Get_Item (Id, Length (Id))));
          end;
       else
-         return To_Lower (Construct.Name.all);
+         --  ??? Inefficient, we should compute and keep the lower-cased
+         --  version somewhere if we really needed it
+
+         return Get_Language (Lang).Symbols.Find
+           (To_Lower (Get (Construct.Name).all));
       end if;
    end Get_Name_Index;
 
@@ -117,8 +121,8 @@ package body Ada_Semantic_Tree.Lang is
    -----------------------
 
    overriding function Get_Documentation
-     (Lang   : access Ada_Tree_Language;
-      Entity : Entity_Access) return String
+     (Lang    : access Ada_Tree_Language;
+      Entity  : Entity_Access) return String
    is
    begin
       return Format_Documentation (Lang, Entity, -1, All_Doc);
@@ -362,7 +366,8 @@ package body Ada_Semantic_Tree.Lang is
 
       begin
          Parse_Entities
-           (Ada_Lang, Buffer (Construct.Sloc_Entity.Index .. Buffer'Last),
+           (Ada_Lang,
+            Buffer (Construct.Sloc_Entity.Index .. Buffer'Last),
             Token_Callback'Unrestricted_Access);
 
          return Result (1 .. Current_Ind);
@@ -431,11 +436,11 @@ package body Ada_Semantic_Tree.Lang is
          begin
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  if Get_Construct (Sub_Iter).Name'Length >
+                  if Get (Get_Construct (Sub_Iter).Name)'Length >
                     Biggest_Parameter_Name
                   then
                      Biggest_Parameter_Name :=
-                       Get_Construct (Sub_Iter).Name'Length;
+                       Get (Get_Construct (Sub_Iter).Name)'Length;
                   end if;
 
                   if Attribute_Decoration
@@ -532,13 +537,13 @@ package body Ada_Semantic_Tree.Lang is
                     Type_End.Index - Type_Start.Index + 1;
 
                   Append
-                    (Escape_Text (Get_Construct (Sub_Iter).Name.all));
+                    (Escape_Text (Get (Get_Construct (Sub_Iter).Name).all));
 
                   --  ??? These loops are highly inefficient. Consider
                   --  improving these
 
                   if Kind = All_Doc then
-                     for J in Get_Construct (Sub_Iter).Name'Length + 1
+                     for J in Get (Get_Construct (Sub_Iter).Name)'Length + 1
                        .. Biggest_Parameter_Name
                      loop
                         Append (" ");
@@ -974,9 +979,9 @@ package body Ada_Semantic_Tree.Lang is
    ----------------------------
 
    overriding function Find_Reference_Details
-     (Lang   : access Ada_Tree_Language;
-      File   : Structured_File_Access;
-      Index  : String_Index_Type) return Entity_Reference_Details
+     (Lang     : access Ada_Tree_Language;
+      File     : Structured_File_Access;
+      Index    : String_Index_Type) return Entity_Reference_Details
    is
       pragma Unreferenced (Lang);
       Str    : constant GNAT.Strings.String_Access := Get_Buffer (File);
@@ -1193,17 +1198,18 @@ package body Ada_Semantic_Tree.Lang is
                      Profile : constant List_Profile :=
                        Get_List_Profile (Call_Entity, Null_Visibility_Context);
                      Formals : constant Entity_Array := Get_Formals (Profile);
-                     Looked_Name : constant String :=
-                       To_Lower
+                     Looked_Name : constant Symbol :=
+                       Get_Database (File).Symbols.Find
+                       (To_Lower
                          (Get_Name
                               (Analyzed_Expression,
-                               Data (Last (Analyzed_Expression.Tokens))));
-                     Id : Distinct_Identifier;
+                               Data (Last (Analyzed_Expression.Tokens)))));
+                     Id : Symbol;
                   begin
                      for J in Formals'Range loop
                         Id := Get_Identifier (Formals (J));
 
-                        if Id /= null and then Looked_Name = Id.all then
+                        if Looked_Name = Id then
                            return Formals (J);
                         end if;
                      end loop;

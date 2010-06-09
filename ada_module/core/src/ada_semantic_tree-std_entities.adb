@@ -23,6 +23,7 @@ with XML_Utils;   use XML_Utils;
 with XML_Parsers; use XML_Parsers;
 with Ada.Unchecked_Deallocation;
 with Tries;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
 with Ada.Characters.Handling;
 use Ada.Characters.Handling;
@@ -31,7 +32,7 @@ package body Ada_Semantic_Tree.Std_Entities is
 
    Std_Entities_Assistant_Id : constant String := "STD_ENTITIES_ASSISTANT";
 
-   function Get_Index (Desc : Std_Description) return String_Access;
+   function Get_Index (Desc : Std_Description) return Cst_String_Access;
 
    procedure Free (This : in out Std_Description);
 
@@ -289,10 +290,10 @@ package body Ada_Semantic_Tree.Std_Entities is
    -- Get_Index --
    ---------------
 
-   function Get_Index (Desc : Std_Description) return String_Access is
+   function Get_Index (Desc : Std_Description) return Cst_String_Access is
    begin
       if Desc /= null then
-         return Desc.Index;
+         return Cst_String_Access (Desc.Index);
       else
          return null;
       end if;

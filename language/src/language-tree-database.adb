@@ -19,6 +19,7 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Calendar;          use Ada.Calendar;
+with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 
 with Glib.Convert; use Glib.Convert;
 
@@ -98,11 +99,11 @@ package body Language.Tree.Database is
 
    overriding function Get_Name_Index
      (Lang      : access Tree_Language;
-      Construct : Simple_Construct_Information) return String
+      Construct : Simple_Construct_Information) return Symbol
    is
       pragma Unreferenced (Lang);
    begin
-      return Construct.Name.all;
+      return Construct.Name;
    end Get_Name_Index;
 
    -----------------------
@@ -110,8 +111,8 @@ package body Language.Tree.Database is
    -----------------------
 
    function Get_Documentation
-     (Lang   : access Tree_Language;
-      Entity : Entity_Access) return String
+     (Lang    : access Tree_Language;
+      Entity  : Entity_Access) return String
    is
       Tree                 : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
@@ -168,13 +169,9 @@ package body Language.Tree.Database is
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
                   Add_New_Line := True;
-
-                  if Get_Construct (Sub_Iter).Name'Length >
-                    Biggest_Parameter_Name
-                  then
-                     Biggest_Parameter_Name :=
-                       Get_Construct (Sub_Iter).Name'Length;
-                  end if;
+                  Biggest_Parameter_Name := Integer'Max
+                    (Biggest_Parameter_Name,
+                     Get (Get_Construct (Sub_Iter).Name)'Length);
                end if;
 
                Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
@@ -206,9 +203,10 @@ package body Language.Tree.Database is
                      Success);
 
                   Append
-                    (Result, Escape_Text (Get_Construct (Sub_Iter).Name.all));
+                    (Result,
+                     Escape_Text (Get (Get_Construct (Sub_Iter).Name).all));
 
-                  for J in Get_Construct (Sub_Iter).Name'Length + 1
+                  for J in Get (Get_Construct (Sub_Iter).Name)'Length + 1
                     .. Biggest_Parameter_Name
                   loop
                      Append (Result, " ");
@@ -353,7 +351,7 @@ package body Language.Tree.Database is
                      Success);
 
                   if not Append
-                    (Escape_Text (Get_Construct (Sub_Iter).Name.all))
+                    (Escape_Text (Get (Get_Construct (Sub_Iter).Name).all))
                   then
                      return Result;
                   end if;
@@ -819,7 +817,7 @@ package body Language.Tree.Database is
          --  We add only named constructs in the database, and we dismiss some
          --  categories.
 
-         if Construct.Name = null
+         if Construct.Name = No_Symbol
            or else Construct.Category = Cat_Parameter
            or else Construct.Category = Cat_Field
            or else Construct.Category = Cat_With
@@ -831,11 +829,12 @@ package body Language.Tree.Database is
          Data.File := File;
 
          Construct_Db_Trie.Insert
-           (File.Db.Entities_Db'Access,
-            It,
-            Data,
-            File.Tree_Lang,
-            New_Db_Data_Tree (It.Index));
+           (Trie         => File.Db.Entities_Db'Access,
+            Symbols      => File.Db.Symbols,
+            Construct_It => It,
+            Data         => Data,
+            Lang         => File.Tree_Lang,
+            Index        => New_Db_Data_Tree (It.Index));
       end Add_New_Construct_If_Needed;
 
       -------------------
@@ -955,8 +954,8 @@ package body Language.Tree.Database is
          New_Tree := To_Construct_Tree (Constructs'Access, True);
 
          Analyze_Referenced_Identifiers
-           (Buffer.all, File.Lang, File.Db, New_Tree);
-         Analyze_Constructs_Identifiers (File.Db, New_Tree);
+           (Buffer.all, File.Lang, New_Tree);
+         Analyze_Constructs_Identifiers (New_Tree);
          New_Db_Data_Tree := new Construct_Db_Data_Array
            (1 .. New_Tree.Contents'Length);
          New_Db_Data_Tree.all :=
@@ -1795,21 +1794,8 @@ package body Language.Tree.Database is
    -- Get_Identifier --
    --------------------
 
-   overriding function Get_Identifier
-     (Manager : access Construct_Database; Name : String)
-      return Distinct_Identifier
-   is
-   begin
-      return Distinct_Identifier
-        (Get_Name_Index (Manager.Entities_Db'Access, Name));
-   end Get_Identifier;
-
-   --------------------
-   -- Get_Identifier --
-   --------------------
-
    function Get_Identifier
-     (Entity : Entity_Access) return Distinct_Identifier
+     (Entity : Entity_Access) return Symbol
    is
    begin
       return Entity.It.Node.Id;
@@ -1902,9 +1888,9 @@ package body Language.Tree.Database is
    ----------------------------
 
    overriding function Find_Reference_Details
-     (Lang   : access Unknown_Tree_Language;
-      File   : Structured_File_Access;
-      Index  : String_Index_Type) return Entity_Reference_Details
+     (Lang    : access Unknown_Tree_Language;
+      File    : Structured_File_Access;
+      Index   : String_Index_Type) return Entity_Reference_Details
    is
       pragma Unreferenced (Lang, File, Index);
    begin
@@ -1921,5 +1907,16 @@ package body Language.Tree.Database is
    begin
       Self.Symbols := Symbols;
    end Set_Symbols;
+
+   -------------
+   -- Symbols --
+   -------------
+
+   function Symbols
+     (Self    : access Construct_Database)
+      return GNATCOLL.Symbols.Symbol_Table_Access is
+   begin
+      return Self.Symbols;
+   end Symbols;
 
 end Language.Tree.Database;

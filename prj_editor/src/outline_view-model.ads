@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                    Copyright (C) 2009-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 
 with Ada.Containers.Ordered_Sets;
 
-with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Symbols;
 
 with Glib;                       use Glib;
 with Glib.Values;                use Glib.Values;
@@ -189,7 +189,7 @@ private
       --  to remove the node after it has been deleted from the construct
       --  tree.
       Category     : Language_Category;
-      Name         : String_Access;
+      Name         : GNATCOLL.Symbols.Symbol;
       Sloc         : Source_Location;
    end record;
 

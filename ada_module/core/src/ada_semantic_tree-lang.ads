@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
+
 package Ada_Semantic_Tree.Lang is
 
    function Is_Enum_Type
@@ -33,13 +35,13 @@ package Ada_Semantic_Tree.Lang is
      (Tree : access Ada_Tree_Language) return Language_Access;
    overriding function Get_Name_Index
      (Lang      : access Ada_Tree_Language;
-      Construct : Simple_Construct_Information) return String;
+      Construct : Simple_Construct_Information) return GNATCOLL.Symbols.Symbol;
    overriding function Find_Reference_Details
-     (Lang   : access Ada_Tree_Language;
-      File   : Structured_File_Access;
-      Index  : String_Index_Type) return Entity_Reference_Details;
+     (Lang    : access Ada_Tree_Language;
+      File    : Structured_File_Access;
+      Index   : String_Index_Type) return Entity_Reference_Details;
    overriding function Get_Documentation
-     (Lang   : access Ada_Tree_Language;
+     (Lang     : access Ada_Tree_Language;
       Entity : Entity_Access) return String;
    overriding function Get_Profile
      (Lang     : access Ada_Tree_Language;

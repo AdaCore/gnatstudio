@@ -20,9 +20,10 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
-with Language.Ada; use Language.Ada;
+with Language.Ada;            use Language.Ada;
 
 package body Ada_Semantic_Tree.Interfaces is
 
@@ -232,14 +233,15 @@ package body Ada_Semantic_Tree.Interfaces is
             --  If this is a pragma, then extrat the import / export
             --  information
 
-            if Get_Construct (It).Name /= null
+            if Get_Construct (It).Name /= No_Symbol
               and then
-                (Equal (Get_Construct (It).Name.all, Import_Pragma, False)
+                (Equal
+                     (Get (Get_Construct (It).Name).all, Import_Pragma, False)
                  or else Equal
-                   (Get_Construct (It).Name.all, Export_Pragma, False))
+                   (Get (Get_Construct (It).Name).all, Export_Pragma, False))
             then
                if Equal
-                 (Get_Construct (It).Name.all, Import_Pragma, False)
+                 (Get (Get_Construct (It).Name).all, Import_Pragma, False)
                then
                   Current_Interface_Kind := Import;
 
@@ -318,16 +320,18 @@ package body Ada_Semantic_Tree.Interfaces is
                   end if;
                end if;
             end if;
-         elsif Get_Construct (It).Name /= null then
+         elsif Get_Construct (It).Name /= No_Symbol then
             --  If this is a named construct, then check if there is an
             --  applicable pragma
 
             --  ??? should check the nesting level...
 
-            if Current_Associations.Contains (Get_Construct (It).Name.all) then
+            if Current_Associations.Contains
+              (Get (Get_Construct (It).Name).all)
+            then
                declare
                   P : constant Interface_Pragma := Current_Associations.Element
-                    (Get_Construct (It).Name.all);
+                    (Get (Get_Construct (It).Name).all);
                   Entity            : Entity_Access;
                   Entity_Persistent : Entity_Persistent_Access;
                   Annot             : Annotation;
@@ -368,7 +372,8 @@ package body Ada_Semantic_Tree.Interfaces is
                   end if;
                end;
 
-               Current_Associations.Delete (Get_Construct (It).Name.all);
+               Current_Associations.Delete
+                 (Get (Get_Construct (It).Name).all);
             end if;
          end if;
 

@@ -22,7 +22,6 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Calendar;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
 with HTables;
 with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
@@ -1106,7 +1105,7 @@ private
    type Entity_Array_Access is access all Entity_Information_Array;
 
    function Get_Name (Entities : Entity_Array_Access)
-      return GNAT.Strings.String_Access;
+      return GNATCOLL.Utils.Cst_String_Access;
    --  Return the common name of all entities stored in this node
 
    procedure Free is new Ada.Unchecked_Deallocation

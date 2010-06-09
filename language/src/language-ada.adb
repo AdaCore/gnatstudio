@@ -22,6 +22,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Glib.Unicode;              use Glib.Unicode;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with String_Utils;              use String_Utils;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
@@ -174,7 +175,7 @@ package body Language.Ada is
 
    Ada_Explorer_Categories : constant Explorer_Categories :=
                                ((Category       => Cat_Procedure,
-                                 Category_Name  => null,
+                                 Category_Name  => No_Symbol,
                                  Regexp         => Subprogram_RE'Access,
                                  Position_Index => 2,
                                  End_Index      => 0,
@@ -182,28 +183,28 @@ package body Language.Ada is
                                    Make_Entry_Subprogram'Access),
 
                                 (Category       => Cat_Package,
-                                 Category_Name  => null,
+                                 Category_Name  => No_Symbol,
                                  Regexp         => Package_RE'Access,
                                  Position_Index => 3,
                                  End_Index      => 0,
                                  Make_Entry     => null),
 
                                 (Category       => Cat_Type,
-                                 Category_Name  => null,
+                                 Category_Name  => No_Symbol,
                                  Regexp         => Type_Def_RE'Access,
                                  Position_Index => 2,
                                  End_Index      => 0,
                                  Make_Entry     => null),
 
                                 (Category       => Cat_Task,
-                                 Category_Name  => null,
+                                 Category_Name  => No_Symbol,
                                  Regexp         => Task_RE'Access,
                                  Position_Index => 3,
                                  End_Index      => 0,
                                  Make_Entry     => Make_Entry_Task'Access),
 
                                 (Category       => Cat_Protected,
-                                 Category_Name  => null,
+                                 Category_Name  => No_Symbol,
                                  Regexp         => Protected_RE'Access,
                                  Position_Index => 3,
                                  End_Index      => 0,
@@ -588,11 +589,11 @@ package body Language.Ada is
       Buffer : Glib.UTF8_String;
       Result : out Construct_List)
    is
-      pragma Unreferenced (Lang);
       Constructs : aliased Construct_List;
    begin
       Analyze_Ada_Source
         (Buffer,
+         Lang.Symbols,
          Default_Indent_Parameters,
          Format     => False,
          Constructs => Constructs'Unchecked_Access);
@@ -608,7 +609,6 @@ package body Language.Ada is
       Buffer   : String;
       Callback : Entity_Callback)
    is
-      pragma Unreferenced (Lang);
       pragma Suppress (All_Checks);
       --  See comment in Language.C.Parse_Entities
       --  We've never got an exception for an Ada file, but on the other hand,
@@ -617,6 +617,7 @@ package body Language.Ada is
    begin
       Analyze_Ada_Source
         (Buffer,
+         Lang.Symbols,
          Default_Indent_Parameters,
          Format   => False,
          Callback => Callback);
@@ -638,10 +639,9 @@ package body Language.Ada is
       Is_Optional_Keyword : access function (S : String)
                                              return Boolean := null)
    is
-      pragma Unreferenced (Lang);
    begin
       Analyze_Ada_Source
-        (Buffer, Indent_Params, True, From, To,
+        (Buffer, Lang.Symbols, Indent_Params, True, From, To,
          Replace,
          Indent_Offset       => Indent_Offset,
          Case_Exceptions     => Case_Exceptions,
@@ -783,11 +783,11 @@ package body Language.Ada is
         or else Construct.Category in Namespace_Category
       then
          if From_Index = 0 then
-            if Construct.Name = null then
+            if Construct.Name = No_Symbol then
                Index_Begin := Construct.Sloc_Start.Index;
             else
                Index_Begin :=
-                 Construct.Sloc_Entity.Index + Construct.Name'Length;
+                 Construct.Sloc_Entity.Index + Get (Construct.Name)'Length;
             end if;
 
          else

@@ -26,6 +26,7 @@ with Aunit_Filters;   use Aunit_Filters;
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 with GPS.Intl;                  use GPS.Intl;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with AUnit_Templates;         use AUnit_Templates;
@@ -101,8 +102,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Filter_B     : Filter_Show_Ada_Access;
       Filter_C     : Filter_Show_Suites_Access;
       Response     : GNATCOLL.VFS.Virtual_File;
-      Suite_Name   : String_Access;
-      Package_Name : String_Access;
+      Suite_Name   : Symbol;
+      Package_Name : Symbol;
       F_Type       : Test_Type;
       Explorer     : File_Selector_Window_Access;
 
@@ -152,22 +153,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Get_Suite_Name (Win.Kernel, Response,
                       Package_Name, Suite_Name, F_Type);
 
-      if Suite_Name /= null
-        and then Package_Name /= null
-        and then F_Type /= Unknown
-      then
-         Win.Suite_Name := Suite_Name;
-         Win.Package_Name := Package_Name;
-      end if;
-
-      Free (Win.Suite_Name);
-      Free (Win.Package_Name);
-
-      Get_Suite_Name (Win.Kernel, Response,
-                      Package_Name, Suite_Name, F_Type);
-
-      if Suite_Name = null
-        or else Package_Name = null
+      if Suite_Name = No_Symbol
+        or else Package_Name = No_Symbol
         or else F_Type /= Test_Suite
       then
          Set_Text
@@ -175,14 +162,11 @@ package body Make_Harness_Window_Pkg.Callbacks is
             (-"The file ") &
             Response.Display_Base_Name &
             (-" does not contain a test suite."));
-         Free (Suite_Name);
-         Free (Package_Name);
-
          return;
       end if;
 
-      Win.Suite_Name := Suite_Name;
-      Win.Package_Name := Package_Name;
+      Win.Suite_Name := new String'(Get (Suite_Name).all);
+      Win.Package_Name := new String'(Get (Package_Name).all);
       Set_Text (Win.File_Name_Entry, +Response.Full_Name);
       --  ??? What if the filesystem path is non-UTF8?
 

@@ -22,6 +22,7 @@ with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Type_Tree;    use Ada_Semantic_Tree.Type_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 
 package body Ada_Semantic_Tree.Entity_Iteration is
 
@@ -322,7 +323,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             return;
          elsif not It.Step_Has_Started then
             declare
-               Ref_Id : Distinct_Identifier;
+               Ref_Id : Symbol;
             begin
                Ref_Id := Get_Identifier
                  (Get_Referenced_Identifiers (It.Current_Construct));
@@ -336,8 +337,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                     and then not It.References_To_Follow (Returned_Type))
                then
                   It.Step_Has_Started := False;
-               elsif Ref_Id /= Null_Distinct_Identifier then
-                  Expression := Parse_Expression_Backward (Ref_Id);
+
+               elsif Ref_Id /= No_Symbol then
+                  Expression := Parse_Expression_Backward (Get (Ref_Id));
 
                   It.Decl_List := Find_Declarations
                     ((From_File,

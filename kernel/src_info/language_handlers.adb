@@ -54,10 +54,13 @@ package body Language_Handlers is
    -- Gtk_New --
    -------------
 
-   procedure Create_Handler (Handler : out Language_Handler) is
+   procedure Create_Handler
+     (Handler : out Language_Handler;
+      Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class) is
    begin
       --  ??? Never freed, but the handler is never destroyed
       Handler := new Language_Handler_Record;
+      Handler.Symbols := GNATCOLL.Symbols.Symbol_Table_Access (Symbols);
    end Create_Handler;
 
    ------------------
@@ -238,6 +241,8 @@ package body Language_Handlers is
          Handler.Languages := new Language_Info_Array (1 .. 1);
          Index := Handler.Languages'Last;
       end if;
+
+      Set_Symbols (Lang, Handler.Symbols);
 
       Handler.Languages (Index) :=
         (Handler   => LI,

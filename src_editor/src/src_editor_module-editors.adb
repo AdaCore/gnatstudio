@@ -21,8 +21,8 @@ with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
 
-with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;
 
 with Gdk.Color;                 use Gdk.Color;
@@ -989,8 +989,8 @@ package body Src_Editor_Module.Editors is
    begin
       Get_Block (This, Block, Success, As_Subprogram => Subprogram);
 
-      if Success and then Block.Name /= null then
-         return Block.Name.all;
+      if Success then
+         return Get (Block.Name).all;
       end if;
 
       return "";

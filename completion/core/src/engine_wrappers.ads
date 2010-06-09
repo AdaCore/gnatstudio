@@ -73,7 +73,7 @@ package Engine_Wrappers is
    function Is_Valid (Iter : Root_Iterator) return Boolean is abstract;
    procedure Next (Iter : in out Root_Iterator) is abstract;
    function Get_Proposal
-     (Iter : Root_Iterator) return Root_Proposal'Class is abstract;
+     (Iter    : Root_Iterator) return Root_Proposal'Class is abstract;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Iterator'Class, Root_Iterator_Access);
@@ -116,7 +116,7 @@ package Engine_Wrappers is
    overriding function Is_Valid (Iter : Comp_Iterator) return Boolean;
    overriding procedure Next (Iter : in out Comp_Iterator);
    overriding function Get_Proposal
-     (Iter : Comp_Iterator) return Root_Proposal'Class;
+     (Iter    : Comp_Iterator) return Root_Proposal'Class;
 
    -------------------------------------------------
    -- Implementation for the entity search engine --
@@ -152,7 +152,7 @@ package Engine_Wrappers is
    overriding function Is_Valid (Iter : Entity_Iterator) return Boolean;
    overriding procedure Next (Iter : in out Entity_Iterator);
    overriding function Get_Proposal
-     (Iter : Entity_Iterator) return Root_Proposal'Class;
+     (Iter    : Entity_Iterator) return Root_Proposal'Class;
 
 private
 

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,11 +23,13 @@
 --  source reformatting, ...
 
 with Language; use Language;
+with GNATCOLL.Symbols;
 
 package C_Analyzer is
 
    procedure Analyze_C_Source
      (Buffer           : String;
+      Symbols          : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params    : Indent_Parameters;
       Format           : Boolean               := True;
       From, To         : Natural               := 0;

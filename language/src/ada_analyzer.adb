@@ -659,6 +659,7 @@ package body Ada_Analyzer is
 
    procedure Analyze_Ada_Source
      (Buffer              : Glib.UTF8_String;
+      Symbols             : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params       : Indent_Parameters;
       Format              : Boolean               := True;
       From, To            : Natural               := 0;
@@ -1761,7 +1762,7 @@ package body Ada_Analyzer is
 
             if Value.Ident_Len > 0 then
                Constructs.Current.Name :=
-                 new String'(Value.Identifier (1 .. Value.Ident_Len));
+                 Symbols.Find (Value.Identifier (1 .. Value.Ident_Len));
                Constructs.Current.Sloc_Entity := Value.Sloc_Name;
             end if;
 
@@ -3344,6 +3345,7 @@ package body Ada_Analyzer is
 
                         Analyze_Ada_Source
                           (Buffer (First + 3 .. Last - 1),
+                           Symbols,
                            Indent_Params => Indent_Params,
                            Format        => Format,
                            Replace       => null,
@@ -4449,9 +4451,7 @@ package body Ada_Analyzer is
    exception
       when E : others =>
          Trace (Me, E);
-         Clear (Paren_Stack);
-         Clear (Tokens);
-         Clear (Indents);
+         raise;
    end Analyze_Ada_Source;
 
 end Ada_Analyzer;
