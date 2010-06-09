@@ -25,6 +25,7 @@ with Ada.Text_IO;                    use Ada.Text_IO;
 with GNAT.Strings;                   use GNAT.Strings;
 
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
@@ -59,6 +60,7 @@ procedure Ada_Semantic_Tree.Test is
 
    procedure Analyze_File (File : GNATCOLL.VFS.Virtual_File);
 
+   Symbols      : constant Symbol_Table_Access := Allocate;
    Tree         : constant Project_Tree_Access := new Project_Tree;
    New_Registry : constant Project_Registry_Access := Create (Tree);
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
@@ -149,7 +151,7 @@ procedure Ada_Semantic_Tree.Test is
                   & (+Base_Name (Get_File_Path (Get_File (Decl))))
                   & ":" & Construct.Sloc_Start.Line'Img
                   & ":" & Construct.Sloc_Start.Column'Img
-                  & ": " & Construct.Name.all);
+                  & ": " & Get (Construct.Name).all);
 
                Next (It);
             end loop;
@@ -187,7 +189,7 @@ procedure Ada_Semantic_Tree.Test is
                   & (+Base_Name (Get_File_Path (Get_File (Decl))))
                   & ":" & Construct.Sloc_Start.Line'Img
                   & ":" & Construct.Sloc_Start.Column'Img
-                  & ": " & Construct.Name.all);
+                  & ": " & Get (Construct.Name).all);
             else
                Put_Line ("---> DECLARATION [null]");
             end if;
@@ -260,7 +262,8 @@ procedure Ada_Semantic_Tree.Test is
                      Entity := Get_Entity_Or_Overriden (Primitives (J));
 
                      Put_Line
-                       ("---> PRIMITIVE: " & Get_Construct (Entity).Name.all
+                       ("---> PRIMITIVE: "
+                        & Get (Get_Construct (Entity).Name).all
                         & " " & (+Base_Name
                           (Get_File_Path (Get_File (Entity))))
                         & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
@@ -278,7 +281,8 @@ procedure Ada_Semantic_Tree.Test is
                      Entity := To_Entity_Access (Children (J));
 
                      Put_Line
-                       ("---> CHILD: " & Get_Construct (Entity).Name.all
+                       ("---> CHILD: "
+                        & Get (Get_Construct (Entity).Name).all
                         & " " & (+Base_Name
                           (Get_File_Path (Get_File (Entity))))
                         & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
@@ -296,7 +300,8 @@ procedure Ada_Semantic_Tree.Test is
                      Entity := To_Entity_Access (Parents (J));
 
                      Put_Line
-                       ("---> PARENT: " & Get_Construct (Entity).Name.all
+                       ("---> PARENT: "
+                        & Get (Get_Construct (Entity).Name).all
                         & " " & (+Base_Name
                           (Get_File_Path (Get_File (Entity))))
                         & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
@@ -386,8 +391,8 @@ procedure Ada_Semantic_Tree.Test is
                C := Get_Construct (Obj);
                Put ("(l" & C.Sloc_Start.Line'Img & ")");
 
-               if C.Name /= null then
-                  Put (" "  & C.Name.all);
+               if C.Name /= No_Symbol then
+                  Put (" "  & Get (C.Name).all);
                end if;
             end Put;
 
@@ -634,7 +639,7 @@ procedure Ada_Semantic_Tree.Test is
             else
                Construct := Get_Construct (Entity);
                Put_Line
-                 ("---> " & Construct.Name.all & ":"
+                 ("---> " & Get (Construct.Name).all & ":"
                   & Construct.Sloc_Entity.Line'Img & ":"
                   & Construct.Sloc_Entity.Column'Img);
             end if;
@@ -706,8 +711,8 @@ procedure Ada_Semantic_Tree.Test is
 
                   Put (Get_Construct (It).Category'Img);
 
-                  if Get_Construct (It).Name /= null then
-                     Put (" - " & Get_Construct (It).Name.all);
+                  if Get_Construct (It).Name /= No_Symbol then
+                     Put (" - " & Get (Get_Construct (It).Name).all);
                   end if;
 
                   New_Line;
@@ -812,8 +817,11 @@ procedure Ada_Semantic_Tree.Test is
    end Project_Error;
 
    Db : constant Entities_Database := Create (New_Registry, Construct_Db);
-   pragma Unreferenced (Db);
 begin
+   Set_Symbols (Construct_Db, Symbols);
+   Set_Symbols (Db, Symbols);
+   Set_Symbols (Ada_Lang, Symbols);
+
    Tree.Load
      (Root_Project_Path => Create_From_Dir (Get_Current_Dir, +Argument (1)),
       Errors            => Project_Error'Unrestricted_Access);
