@@ -23,6 +23,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -390,7 +391,7 @@ package body Src_Editor_Box is
       Column   : Visible_Column_Type;
       Entity   : Entity_Information)
    is
-      Length            : constant Natural := Get_Name (Entity).all'Length;
+      Length            : constant Natural := Get (Get_Name (Entity))'Length;
       Source            : Source_Editor_Box;
       File_Up_To_Date   : Boolean;
       L                 : Natural;
@@ -443,7 +444,7 @@ package body Src_Editor_Box is
                    Line, Char_Column,
                    Line,
                    Char_Column + Character_Offset_Type (Length)),
-              Get_Name (Entity).all,
+              Get (Get_Name (Entity)).all,
               Case_Sensitive => Is_Case_Sensitive);
 
          --  Search for the closest reference to the entity if
@@ -462,7 +463,7 @@ package body Src_Editor_Box is
                Console.Insert
                  (Kernel,
                   -("xref info mismatch, cursor was set at closest ref to ")
-                    & Get_Name (Entity).all);
+                    & Get (Get_Name (Entity)).all);
             end if;
 
             --  Search for the closest reference to entity, and highlight the
@@ -476,7 +477,8 @@ package body Src_Editor_Box is
                L := Convert (Line);
                Buffer := Get_String (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, Char_Column, Found, Get_Name (Entity).all,
+                 (Buffer.all, L, Char_Column, Found,
+                  Get (Get_Name (Entity)).all,
                   Case_Sensitive => Get_Language_Context
                     (Get_Language (Source.Source_Buffer)).Case_Sensitive);
                Free (Buffer);
@@ -1445,14 +1447,16 @@ package body Src_Editor_Box is
 
                      Set_Entity_Information
                        (Context,
-                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                        Entity_Name   => Kernel.Symbols.Find
+                          (Get_Text (Entity_Start, Entity_End)),
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column));
 
                   else
                      Set_Entity_Information
                        (Context,
-                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                        Entity_Name   => Kernel.Symbols.Find
+                          (Get_Text (Entity_Start, Entity_End)),
                         Entity_Column => Expand_Tabs
                           (Editor.Source_Buffer, The_Line, The_Column),
                         From_Expression =>
@@ -1466,7 +1470,8 @@ package body Src_Editor_Box is
                else
                   Set_Entity_Information
                     (Context,
-                     Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                     Entity_Name   => Kernel.Symbols.Find
+                       (Get_Text (Entity_Start, Entity_End)),
                      Entity_Column => Expand_Tabs
                        (Editor.Source_Buffer, The_Line, The_Column));
                end if;
@@ -1612,7 +1617,8 @@ package body Src_Editor_Box is
         (Callee, Primitive_Of : Entity_Information) return Boolean is
       begin
          Gtk_New (Label,
-                  "Primitive of: " & Emphasize (Get_Name (Primitive_Of).all));
+                  "Primitive of: "
+                  & Emphasize (Get (Get_Name (Primitive_Of)).all));
          Set_Use_Markup (Label, True);
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
@@ -1660,7 +1666,8 @@ package body Src_Editor_Box is
       if Count = 0 and then Show_Default then
          Gtk_New
            (Label,
-            Default_Title & Emphasize (Get_Name (Get_Entity (Context)).all));
+            Default_Title
+            & Emphasize (Get (Get_Name (Get_Entity (Context))).all));
          Set_Use_Markup (Label, True);
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
@@ -2043,8 +2050,8 @@ package body Src_Editor_Box is
          if Is_Predefined_Entity (Entity_Type) then
             Console.Insert
               (Kernel,
-               -Get_Name (Entity).all & " is of predefined type "
-               & Get_Name (Entity_Type).all);
+               -Get (Get_Name (Entity)).all & " is of predefined type "
+               & Get (Get_Name (Entity_Type)).all);
             return Commands.Failure;
 
          else
@@ -2129,7 +2136,7 @@ package body Src_Editor_Box is
             Get_Filename (Get_File (Loc)),
             Get_Line (Loc),
             Get_Column (Loc),
-            Get_Name (Entity).all & " (" & Kind & ')',
+            Get (Get_Name (Entity)).all & " (" & Kind & ')',
             0,
             (Editor_Side => True,
              Locations   => True));
@@ -2158,20 +2165,20 @@ package body Src_Editor_Box is
          if Is_Predefined_Entity (Entity_Type) then
             Console.Insert
               (Kernel,
-               -Get_Name (Entity).all & " is of predefined type "
-               & Get_Name (Entity_Type).all);
+               Get (Get_Name (Entity)).all & (-" is of predefined type ")
+               & Get (Get_Name (Entity_Type)).all);
             return Commands.Failure;
 
          else
             if Get_Category (Entity) = Type_Or_Subtype then
-               Insert (Get_Name (Entity).all, Entity);
+               Insert (Get (Get_Name (Entity)).all, Entity);
             end if;
 
             loop
                exit when Entity_Type = null
                  or else Is_Predefined_Entity (Entity_Type);
 
-               Insert (Get_Name (Entity).all, Entity_Type);
+               Insert (Get (Get_Name (Entity)).all, Entity_Type);
 
                Entity_Type := Get_Type_Or_Ref (Entity_Type);
             end loop;

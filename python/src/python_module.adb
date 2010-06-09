@@ -25,6 +25,8 @@ with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
+with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
+with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 
 with Basic_Types;
 
@@ -568,11 +570,11 @@ package body Python_Module is
         or else Command = "__repr__"
       then
          if Is_Predefined_Entity (Entity) then
-            Set_Return_Value (Data, Get_Name (Entity).all);
+            Set_Return_Value (Data, Get (Get_Name (Entity)).all);
          else
             Set_Return_Value
               (Data,
-               Get_Name (Entity).all & ':'
+               Get (Get_Name (Entity)).all & ':'
                & (+Base_Name
                  (Get_Filename
                     (Get_File (Get_Declaration_Of (Entity)))))
@@ -584,7 +586,7 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
-              (Hash (Get_Name (Entity).all
+              (Hash (Get (Get_Name (Entity)).all
                      & (+Full_Name (Get_Filename
                        (Get_File (Get_Declaration_Of (Entity)))))
                      & Image (Get_Line (Get_Declaration_Of (Entity)))
@@ -603,10 +605,10 @@ package body Python_Module is
             Set_Return_Value (Data, 1);
          else
             declare
-               Name1 : constant String := Get_Name (Entity).all;
-               Name2 : constant String := Get_Name (Entity2).all;
+               Name1 : constant Cst_String_Access := Get (Get_Name (Entity));
+               Name2 : constant Cst_String_Access := Get (Get_Name (Entity2));
             begin
-               if Name1 < Name2 then
+               if Name1.all < Name2.all then
                   Set_Return_Value (Data, -1);
                elsif Name1 = Name2 then
                   declare

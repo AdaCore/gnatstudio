@@ -27,6 +27,8 @@ with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
@@ -151,7 +153,7 @@ package body Refactoring.Parameters is
                First := First - 1;
             end if;
 
-            Result := Result & Get_Name (Param).all & " => ";
+            Append (Result, Get (Get_Name (Param)).all & " => ");
 
             Next (Iter);
             Get (Iter, Param);

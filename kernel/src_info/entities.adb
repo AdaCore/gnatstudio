@@ -19,10 +19,11 @@
 
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -210,7 +211,7 @@ package body Entities is
    procedure Ref (Entity : Entity_Information; Reason : String) is
    begin
       if Entity /= null and then Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Entity.Name.all & " (" & Reason & ")");
+         Trace (Ref_Me, "Ref " & Debug_Name (Entity) & " (" & Reason & ")");
       end if;
       Ref (Entity);
    end Ref;
@@ -223,7 +224,7 @@ package body Entities is
    begin
       if Entity /= null and then Active (Ref_Me) then
          Trace
-           (Ref_Me, "Unref " & Entity.Name.all
+           (Ref_Me, "Unref " & Debug_Name (Entity)
             & " (" & Reason & ")"
             & Entity.Ref_Count'Img & " " & Boolean'Image (Entity.Is_Valid));
       end if;
@@ -306,11 +307,10 @@ package body Entities is
    -- Get_Name --
    --------------
 
-   function Get_Name
-     (Entity : Entity_Information) return GNAT.Strings.String_Access is
+   function Get_Name (Entity : Entity_Information) return Symbol is
    begin
       if Entity = null then
-         return null;
+         return No_Symbol;
       else
          return Entity.Name;
       end if;
@@ -325,7 +325,7 @@ package body Entities is
       if Entity = null then
          return "<null>";
       else
-         return Entity.Name.all
+         return Get (Entity.Name).all
            & ":" & Entity.Declaration.File.Name.Display_Full_Name
            & ":" & Image (Entity.Declaration.Line, Min_Width => 1)
            & ":" & Image (Integer (Entity.Declaration.Column), Min_Width => 1);
@@ -339,9 +339,9 @@ package body Entities is
    function Hash (S : Cased_String) return Header_Num is
    begin
       if S.Case_Sensitive then
-         return Hash (S.Str.all);
+         return Hash (Get (S.Str).all);
       else
-         return Case_Insensitive_Hash (S.Str.all);
+         return Case_Insensitive_Hash (Get (S.Str).all);
       end if;
    end Hash;
 
@@ -352,9 +352,10 @@ package body Entities is
    function Equal (S1, S2 : Cased_String) return Boolean is
    begin
       if S1.Case_Sensitive then
-         return S1.Str.all = S2.Str.all;
+         return S1.Str = S2.Str;
       else
-         return Equal (S1.Str.all, S2.Str.all, S1.Case_Sensitive);
+         return Equal
+           (Get (S1.Str).all, Get (S2.Str).all, S1.Case_Sensitive);
       end if;
    end Equal;
 
@@ -373,7 +374,8 @@ package body Entities is
               (Assert_Me,
                D.List.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
                "Entity has been freed: "
-               & D.List.Table (Entity_Information_Arrays.First).Name.all);
+               & Debug_Name
+                 (D.List.Table (Entity_Information_Arrays.First)));
          end if;
 
          return
@@ -769,7 +771,7 @@ package body Entities is
       Entity2 : Entity_Information;
    begin
       if Active (Ref_Me) then
-         Trace (Ref_Me, "Isolate " & Entity.Name.all);
+         Trace (Ref_Me, "Isolate " & Debug_Name (Entity));
       end if;
 
       Unref (Entity.Caller_At_Declaration, "caller_at_decl");
@@ -829,12 +831,14 @@ package body Entities is
    procedure Check_Entity_Is_Valid
      (Entity : Entity_Information; Reason : String) is
    begin
-      Assert (Debug_Me, Entity /= null, "Referencing null entity ("
-              & Reason & ")");
-      Assert (Debug_Me,
-              Entity.Ref_Count /= 0,
-              "Entity should no longer be referenced "
-              & Entity.Name.all & " (" & Reason & ") ");
+      if Active (Debug_Me) then
+         Assert (Debug_Me, Entity /= null, "Referencing null entity ("
+                 & Reason & ")");
+         Assert (Debug_Me,
+                 Entity.Ref_Count /= 0,
+                 "Entity should no longer be referenced "
+                 & Debug_Name (Entity) & " (" & Reason & ") ");
+      end if;
    end Check_Entity_Is_Valid;
 
    ------------
@@ -935,18 +939,18 @@ package body Entities is
    -----------
 
    procedure Unref (Entity : in out Entity_Information) is
-      Shared : GNAT.Strings.String_Access;
    begin
       if Entity /= null and then Entity.Ref_Count /= Natural'Last then
          if Active (Assert_Me) then
             Assert (Assert_Me, Entity.Ref_Count > 0,
-                    "too many calls to unref for " & Entity.Name.all);
+                    "too many calls to unref for "
+                    & Debug_Name (Entity));
          end if;
 
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
             if Active (Ref_Me) then
-               Trace (Ref_Me, "Freeing " & Entity.Name.all
+               Trace (Ref_Me, "Freeing " & Debug_Name (Entity)
                       & ":"
                       & (+Base_Name (Get_Filename (Entity.Declaration.File)))
                       & Entity.Declaration.Line'Img
@@ -954,17 +958,6 @@ package body Entities is
             end if;
 
             Isolate (Entity, Clear_References => True);
-
-            --  If we are debugging, we do not free the memory, to keep a
-            --  debuggable structure. Use a temporary variable to store the
-            --  future name: otherwise, the entity will not be properly removed
-            --  from the htable since it won't be found there.
-
-            if Active (Debug_Me) then
-               Shared := new String'
-                 (Entity.Name.all
-                  & ':' & (+Base_Name (Entity.Declaration.File.Name)));
-            end if;
 
             --  Temporarily fool the system, otherwise we cannot remove the
             --  entity from the trie because of a call to Get_Name.
@@ -989,9 +982,8 @@ package body Entities is
             Entity.Ref_Count := 0;
 
             if Active (Debug_Me) then
-               Entity.Name := Shared;
+               null;
             else
-               Free (Entity.Name);
                Unchecked_Free (Entity);
             end if;
 
@@ -2019,7 +2011,7 @@ package body Entities is
    -------------------
 
    function Get_Or_Create
-     (Name         : String;
+     (Name         : GNATCOLL.Symbols.Symbol;
       File         : Source_File;
       Line         : Natural;
       Column       : Basic_Types.Visible_Column_Type;
@@ -2029,13 +2021,14 @@ package body Entities is
       E                : Entity_Information;
       Must_Add_To_File : Boolean := False;
       Str              : constant Cased_String :=
-                           (Str            => Name'Unrestricted_Access,
+                           (Str            => Name,
                             Case_Sensitive =>
                               not Case_Insensitive_Identifiers (File.Handler));
    begin
-      Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
+      Assert
+        (Assert_Me, Name /= No_Symbol, "No name specified for Get_Or_Create");
       if Active (Ref_Me) then
-         Trace (Ref_Me, "Get_Or_Create entity name=" & Name
+         Trace (Ref_Me, "Get_Or_Create entity name=" & Get (Name).all
                 & " File=" & (+Base_Name (Get_Filename (File)))
                 & " Line=" & Line'Img);
       end if;
@@ -2057,7 +2050,7 @@ package body Entities is
 
       if E = null and then Allow_Create then
          E := new Entity_Information_Record'
-           (Name                         => new String'(Name),
+           (Name                         => Name,
             Kind                         => Unresolved_Entity_Kind,
             Attributes                   => (others => False),
             Declaration                  => (File, Line, Column),
@@ -2769,7 +2762,7 @@ package body Entities is
 
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean is
    begin
-      return Entity1.Name.all < Entity2.Name.all;
+      return Get (Entity1.Name).all < Get (Entity2.Name).all;
    end "<";
 
    ------------------------------
@@ -2886,9 +2879,13 @@ package body Entities is
    ------------------------------
 
    function Get_Name
-     (Entities : Entity_Array_Access) return GNAT.Strings.String_Access is
+     (Entities : Entity_Array_Access) return GNAT.Strings.String_Access
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (Cst_String_Access, GNAT.Strings.String_Access);
    begin
-      return Get_Name (Entities (Entities'First));
+      return Convert
+        (Get (Get_Name (Entities (Entities'First))));
    end Get_Name;
 
    ------------
@@ -2906,7 +2903,7 @@ package body Entities is
            (Case_Sensitive => not Case_Insensitive_Identifiers (Handler));
       end if;
 
-      Node := Get (Handler.Name_Index, Get_Name (Entity).all);
+      Node := Get (Handler.Name_Index, Get (Get_Name (Entity)).all);
 
       --  If there were no such node, create it
 
@@ -2956,7 +2953,7 @@ package body Entities is
       Node : Entity_Array_Access;
    begin
       if Handler.Name_Index /= null then
-         Node := Get (Handler.Name_Index, Get_Name (Entity).all);
+         Node := Get (Handler.Name_Index, Get (Get_Name (Entity)).all);
          if Node /= null then
             Node (Entity.Trie_Tree_Index) := null;
          end if;
@@ -3100,8 +3097,8 @@ package body Entities is
          elsif List.Table (IT (Op2)) = null then
             return False;
          elsif Sort_By = Sort_Alphabetical then
-            return Get_Name (List.Table (IT (Op1))).all <
-              Get_Name (List.Table (IT (Op2))).all;
+            return Get (Get_Name (List.Table (IT (Op1)))).all <
+              Get (Get_Name (List.Table (IT (Op2)))).all;
          else
             return Get_Declaration_Of (List.Table (IT (Op1))) <
               Get_Declaration_Of (List.Table (IT (Op2)));
@@ -3128,5 +3125,26 @@ package body Entities is
       Next (Iter, Natural'Last, Count, Total); --  All steps
       Free (Iter);
    end Parse_All_LI_Information;
+
+   -----------------
+   -- Set_Symbols --
+   -----------------
+
+   procedure Set_Symbols
+     (Self    : Entities_Database;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access) is
+   begin
+      Self.Symbols := Symbols;
+   end Set_Symbols;
+
+   -----------------
+   -- Get_Symbols --
+   -----------------
+
+   function Get_Symbols
+     (Self : Entities_Database) return GNATCOLL.Symbols.Symbol_Table_Access is
+   begin
+      return Self.Symbols;
+   end Get_Symbols;
 
 end Entities;

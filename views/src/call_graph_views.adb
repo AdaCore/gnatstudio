@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;                use GNAT.Strings;
+with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
@@ -354,7 +355,7 @@ package body Call_Graph_Views is
                     (Get_Int (Model, Iter, Location_Column_Column)),
                   Column_End => Visible_Column_Type
                     (Get_Int (Model, Iter, Location_Column_Column))
-                  + Get_Name (Entity)'Length,
+                  + Get (Get_Name (Entity))'Length,
                   New_File   => False,
                   Focus      => False);
             end if;
@@ -605,7 +606,7 @@ package body Call_Graph_Views is
             Filename   => Get_Filename (Get_File (Loc)),
             Line       => Get_Line (Loc),
             Column     => Get_Column (Loc),
-            Column_End => Get_Column (Loc) + Get_Name (Entity)'Length,
+            Column_End => Get_Column (Loc) + Get (Get_Name (Entity))'Length,
             Focus => False);
       end if;
    end Open_Selected_Value;
@@ -1096,7 +1097,7 @@ package body Call_Graph_Views is
                Decl := Get_Declaration_Of (Entity);
                N.Tag := new String'("entity");
                Set_Attribute
-                 (N, "entity_name", Get_Name (Entity).all);
+                 (N, "entity_name", Get (Get_Name (Entity)).all);
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
                Set_Attribute
@@ -1222,7 +1223,8 @@ package body Call_Graph_Views is
 
                if Source /= null then
                   Entity := Get_Or_Create
-                    (Name   => Get_Attribute (N, "entity_name"),
+                    (Name   => View.Kernel.Symbols.Find
+                       (Get_Attribute (N, "entity_name")),
                      File   => Source,
                      Line   => Safe_Value (Get_Attribute (N, "entity_line")),
                      Column => Basic_Types.Visible_Column_Type
@@ -1456,7 +1458,7 @@ package body Call_Graph_Views is
 
          Prepend (Model, Iter, Parent_Iter);
 
-         Set (Model, Iter, Name_Column, Get_Name (Entity).all & Suffix);
+         Set (Model, Iter, Name_Column, Get (Get_Name (Entity)).all & Suffix);
          Set (Model, Iter, Decl_Column,
               Display_Base_Name (Get_Filename (Get_File (Decl)))
               & ':' & Image (Get_Line (Decl))

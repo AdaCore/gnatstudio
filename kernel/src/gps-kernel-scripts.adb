@@ -28,6 +28,7 @@ with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -842,7 +843,7 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "name" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Name (Entity).all);
+         Set_Return_Value (Data, Get (Get_Name (Entity)).all);
 
       elsif Command = "declaration" then
          declare
@@ -1072,7 +1073,6 @@ package body GPS.Kernel.Scripts is
                   end if;
                   Next (Iter);
                end loop;
-               Destroy (Iter);
             end if;
          end;
 

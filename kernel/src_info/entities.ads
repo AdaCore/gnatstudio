@@ -25,6 +25,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with HTables;
 with GNATCOLL.Projects;
+with GNATCOLL.Symbols;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with Dynamic_Arrays;
@@ -70,6 +71,15 @@ package Entities is
    -----------------------
 
    type Entities_Database is private;
+
+   procedure Set_Symbols
+     (Self    : Entities_Database;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access);
+   function Get_Symbols
+     (Self : Entities_Database) return GNATCOLL.Symbols.Symbol_Table_Access;
+   --  Set the symbol table to use to store entity names.
+   --  This table is shared with the kernel, but the kernel is not visible
+   --  from this package. This also simplifies integration in GNATBench
 
    function Create
      (Registry     : Projects.Project_Registry_Access;
@@ -597,13 +607,13 @@ package Entities is
    --  Line and column to use for predefined entities
 
    function Get_Or_Create
-     (Name         : String;
+     (Name         : GNATCOLL.Symbols.Symbol;
       File         : Source_File;
       Line         : Natural;
       Column       : Basic_Types.Visible_Column_Type;
       Allow_Create : Boolean := True) return Entity_Information;
    --  Get an existing or create a new declaration for an entity. File, Line
-   --  and column are the location of irs declaration.
+   --  and column are the location of its declaration.
    --  When creating an entity in the predefined file, always set Line and
    --  Column to Predefined_Line and Predefined_Column.
 
@@ -614,7 +624,7 @@ package Entities is
    --  Return the current end of scope for the entity
 
    function Get_Name
-     (Entity : Entity_Information) return GNAT.Strings.String_Access;
+     (Entity : Entity_Information) return GNATCOLL.Symbols.Symbol;
    pragma Inline (Get_Name);
    --  Return the name of the entity
 
@@ -1135,7 +1145,7 @@ private
    ------------------------
 
    type Entity_Information_Record is tagged record
-      Name           : GNAT.Strings.String_Access;
+      Name           : GNATCOLL.Symbols.Symbol;
       --  Name of the entity. This name contains the
       --  proper casing for the entity.
 
@@ -1230,10 +1240,11 @@ private
    type Entity_Information_List_Access is access Entity_Information_List;
 
    type Cased_String is record
-      Str            : GNAT.Strings.String_Access;
+      Str            : GNATCOLL.Symbols.Symbol;
       Case_Sensitive : Boolean;
    end record;
-   Empty_Cased_String : constant Cased_String := (null, True);
+   Empty_Cased_String : constant Cased_String :=
+     (GNATCOLL.Symbols.No_Symbol, True);
 
    function Hash  (S : Cased_String) return Header_Num;
    function Equal (S1, S2 : Cased_String) return Boolean;
@@ -1443,6 +1454,8 @@ private
       FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
       Stack           : Freeze_Stack.Simple_Stack;
       Count           : Integer := 0;
+
+      Symbols         : GNATCOLL.Symbols.Symbol_Table_Access;
 
       Construct_Db       : Language.Tree.Database.Construct_Database_Access;
       Construct_Db_Locks : Integer := 0;

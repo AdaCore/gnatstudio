@@ -1911,4 +1911,15 @@ package body Language.Tree.Database is
       return Invalid_Reference;
    end Find_Reference_Details;
 
+   -----------------
+   -- Set_Symbols --
+   -----------------
+
+   procedure Set_Symbols
+     (Self    : access Construct_Database;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access) is
+   begin
+      Self.Symbols := Symbols;
+   end Set_Symbols;
+
 end Language.Tree.Database;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@ with Ada.Containers.Vectors;
 with GNAT.Strings;
 
 with Entities;     use Entities;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Language;     use Language;
 with Docgen2.Tags;
 
@@ -108,10 +109,10 @@ package Docgen2.Entities is
          Lang_Category        : Language_Category;
          --  Entity category as returned by the language package
 
-         Name                 : GNAT.Strings.String_Access;
+         Name                 : GNATCOLL.Symbols.Symbol;
          --  Full name (with namespace)
 
-         Short_Name           : GNAT.Strings.String_Access;
+         Short_Name           : GNATCOLL.Symbols.Symbol;
          --  Short name
 
          Description          : aliased Docgen2.Tags.Comment_Type;

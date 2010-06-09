@@ -65,7 +65,8 @@ package body Docgen2.Utils is
    ----------------
 
    function Get_Entity
-     (Construct : String;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Construct : String;
       Loc       : Source_Location;
       File      : Source_File;
       Lang      : Language_Access) return Entity_Information
@@ -80,7 +81,7 @@ package body Docgen2.Utils is
          Column => Basic_Types.Visible_Column_Type (Loc.Column));
 
       Entity := Get_Or_Create
-        (Construct,
+        (Kernel.Symbols.Find (Construct),
          File,
          Current_Loc.Line,
          Current_Loc.Column,
@@ -90,7 +91,7 @@ package body Docgen2.Utils is
          --  Handle "="-like subprograms, that are stored whithout the '"' in
          --  the entities database
          Entity := Get_Entity
-           (Construct (Construct'First + 1 .. Construct'Last - 1),
+           (Kernel, Construct (Construct'First + 1 .. Construct'Last - 1),
             Loc, File, Lang);
       end if;
 
@@ -104,7 +105,7 @@ package body Docgen2.Utils is
                    (Loc.Column + J + 1 - Construct'First);
 
                Entity := Get_Or_Create
-                 (Construct (J + 1 .. Construct'Last),
+                 (Kernel.Symbols.Find (Construct (J + 1 .. Construct'Last)),
                   File,
                   Current_Loc.Line,
                   Current_Loc.Column,

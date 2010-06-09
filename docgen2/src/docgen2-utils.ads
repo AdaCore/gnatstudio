@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,7 +37,8 @@ package Docgen2.Utils is
    --  Whether File is a spec file
 
    function Get_Entity
-     (Construct : String;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Construct : String;
       Loc       : Source_Location;
       File      : Source_File;
       Lang      : Language.Language_Access)

@@ -28,6 +28,7 @@ with GNAT.Strings;
 with GNATCOLL.Projects;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
+with GNATCOLL.Symbols;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Glib.Object;  use Glib;
@@ -331,6 +332,12 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record)
       return Language.Tree.Database.Construct_Database_Access;
    --  Return the database storing the construct information
+
+   function Symbols
+     (Kernel : access Kernel_Handle_Record)
+      return GNATCOLL.Symbols.Symbol_Table_Access;
+   --  Return the symbol table used to store various shared strings, in
+   --  particular storing the name of all entities found in the source files
 
    procedure Find_Declaration_Or_Overloaded
      (Kernel            : access Kernel_Handle_Record;
@@ -941,7 +948,7 @@ private
       --  When several lines are selected in a file. The selection starts
       --  at Line. Text is the current selection.
 
-      Entity_Name   : GNAT.Strings.String_Access := null;  --  ??? Use Text
+      Entity_Name   : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       Entity_Column : Basic_Types.Visible_Column_Type := 0;
 
       Expression    : GNAT.Strings.String_Access := null;
@@ -1077,6 +1084,9 @@ private
 
       Construct_Database : Language.Tree.Database.Construct_Database_Access;
       --  The construct information
+
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
+      --  The symbol used to store common strings read from sources
 
       Tools   : Tools_List.List;
       --  The tools registered in the kernel

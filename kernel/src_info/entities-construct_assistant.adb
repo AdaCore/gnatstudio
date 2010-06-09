@@ -91,7 +91,7 @@ package body Entities.Construct_Assistant is
          New_Entity :=
            new Entity_Information_Record'
              (Name                         =>
-              new String'(Get_Construct (E).Name.all),
+                 Assistant.LI_Db.Symbols.Find (Get_Construct (E).Name.all),
               Kind                         => Unresolved_Entity_Kind,
               Attributes                   => (others => False),
               Declaration                  =>

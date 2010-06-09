@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.VFS;
-with GNAT.Strings;
 with Interfaces.C;
 with Ada.Containers.Ordered_Sets;
 with Language_Handlers;
@@ -148,9 +147,6 @@ package Entities.Queries is
 
    procedure Next (Iter : in out Entity_Iterator);
    --  Move to the next entity
-
-   procedure Destroy (Iter : in out Entity_Iterator);
-   --  Free the memory used by the iterator
 
    ----------------
    -- References --
@@ -589,7 +585,7 @@ private
    end record;
 
    type Entity_Iterator is record
-      Name                : GNAT.Strings.String_Access;
+      Name                : GNATCOLL.Symbols.Symbol;
       SIter               : Entities_Hash.Cursor;
       Iter                : Entities_Hash.Cursor;
       File                : Source_File;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2009, AdaCore           --
+--                        Copyright (C) 2003-2010, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +20,9 @@
 with Ada.Calendar;      use Ada.Calendar;
 with GNAT.Calendar;     use GNAT.Calendar;
 with String_Utils;      use String_Utils;
+with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
-with GNAT.Strings;      use GNAT.Strings;
 with GNAT.Heap_Sort;    use GNAT.Heap_Sort;
 
 with Basic_Types; use Basic_Types;
@@ -442,10 +442,10 @@ package body Entities.Debug is
             Output ("   " & Name & "= ");
          end if;
 
-         if Get_Name (Entity) = null then
+         if Get_Name (Entity) = No_Symbol then
             Output ("<no_name>:");
          else
-            Output (Get_Name (Entity).all & ':');
+            Output (Get (Get_Name (Entity)).all & ':');
          end if;
          Dump (Entity.Declaration);
 
@@ -603,8 +603,8 @@ package body Entities.Debug is
             elsif Sorted (Op2) = null then
                return False;
             else
-               return Get_Name (Sorted (Op1)).Str.all <
-                 Get_Name (Sorted (Op2)).Str.all;
+               return Get (Get_Name (Sorted (Op1)).Str).all <
+                 Get (Get_Name (Sorted (Op2)).Str).all;
             end if;
          end Lt;
       begin

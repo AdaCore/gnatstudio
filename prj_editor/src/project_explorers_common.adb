@@ -978,8 +978,8 @@ package body Project_Explorers_Common is
       if Node_Type = Entity_Node then
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   => Entity_Base
-              (Get_String (Model, Iter, Entity_Base_Column)),
+            Entity_Name   => Kernel.Symbols.Find
+              (Entity_Base (Get_String (Model, Iter, Entity_Base_Column))),
             Entity_Column => Visible_Column_Type
               (Get_Int (Model, Iter, Column_Column)));
          L := Integer (Get_Int (Model, Iter, Line_Column));

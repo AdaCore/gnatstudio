@@ -86,11 +86,6 @@ package body Docgen2.Entities is
          return;
       end if;
 
-      if EInfo.Short_Name /= EInfo.Name then
-         Free (EInfo.Short_Name);
-      end if;
-
-      Free (EInfo.Name);
       Free (EInfo.Printout);
       EInfo.Generic_Params.Clear;
       EInfo.Children.Clear;
@@ -290,7 +285,7 @@ package body Docgen2.Entities is
 
    function Less_Than_Full_Name (Left, Right : Entity_Info) return Boolean is
    begin
-      return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
+      return To_Lower (Get (Left.Name).all) < To_Lower (Get (Right.Name).all);
    end Less_Than_Full_Name;
 
    --------------------------
@@ -299,7 +294,8 @@ package body Docgen2.Entities is
 
    function Less_Than_Short_Name (Left, Right : Entity_Info) return Boolean is
    begin
-      return To_Lower (Left.Short_Name.all) < To_Lower (Right.Short_Name.all);
+      return To_Lower (Get (Left.Short_Name).all) <
+        To_Lower (Get (Right.Short_Name).all);
    end Less_Than_Short_Name;
 
    ---------------

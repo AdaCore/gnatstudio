@@ -30,7 +30,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings; use GNAT.Strings;
 
 with Construct_Tries;
-with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with GNATCOLL.Symbols;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 package Language.Tree.Database is
 
@@ -385,6 +386,13 @@ package Language.Tree.Database is
       Lg_Handler : Abstract_Language_Handler);
    --  This procedure has to be called before any other operation on the
    --  database.
+
+   procedure Set_Symbols
+     (Self    : access Construct_Database;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access);
+   --  Set the symbol table to use to store entity names.
+   --  This table is shared with the kernel, but the kernel is not visible
+   --  from this package. This also simplifies integration in GNATBench
 
    procedure Free (This : in out Construct_Database_Access);
    --  Free the data associated to this database.
@@ -774,6 +782,8 @@ private
       Persistent_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
 
       Null_Structured_File : aliased Structured_File;
+
+      Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
 
       Lg_Handler    : Abstract_Language_Handler;
    end record;

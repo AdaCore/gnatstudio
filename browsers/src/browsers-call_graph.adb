@@ -19,7 +19,8 @@
 
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
-with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 with GNAT.Strings;                  use GNAT.Strings;
 
 with Gdk.GC;                        use Gdk.GC;
@@ -508,13 +509,13 @@ package body Browsers.Call_Graph is
            & Krunch (+Base_Name (Local_File));
 
       elsif Local_Only then
-         return -"Local references for " & Get_Name (Entity).all
+         return -"Local references for " & Get (Get_Name (Entity)).all
            & " ("  & Krunch (+Base_Name (Get_Filename (Decl.File)))
            & ":" & Image (Decl.Line) & ") " & (-"in ")
            & Krunch (+Base_Name (Local_File));
 
       else
-         return -"References for " & Get_Name (Entity).all
+         return -"References for " & Get (Get_Name (Entity)).all
            & " ("  & Krunch (+Base_Name (Get_Filename (Decl.File)))
            & ":" & Image (Decl.Line) & ")";
       end if;
@@ -546,7 +547,7 @@ package body Browsers.Call_Graph is
    begin
       Item.Entity := Entity;
       Ref (Item.Entity);
-      Initialize (Item, Browser, Get_Name (Entity).all,
+      Initialize (Item, Browser, Get (Get_Name (Entity)).all,
                   Examine_Ancestors_Call_Graph'Access,
                   Examine_Entity_Call_Graph'Access);
       Set_Children_Shown (Item, not May_Have_To_Dependencies);
@@ -1112,6 +1113,7 @@ package body Browsers.Call_Graph is
       Show_Caller  : Boolean;
       Sort_In_File : Boolean)
    is
+      pragma Unreferenced (Sort_In_File);
       use Basic_Types;
 
       Col     : Basic_Types.Visible_Column_Type :=
@@ -1209,7 +1211,7 @@ package body Browsers.Call_Graph is
                Print_Ref
                  (Data.Kernel,
                   Ref,
-                  Get_Name (Data.Entity).all,
+                  Get (Get_Name (Data.Entity)).all,
                   Data.Category.all,
                   Show_Caller  => Data.Show_Caller,
                   Sort_In_File => False);
@@ -1319,7 +1321,7 @@ package body Browsers.Call_Graph is
 
       Set_Entity_Information
         (Context,
-         Entity_Name   => Get_Name (Item.Entity).all,
+         Entity_Name   => Get_Name (Item.Entity),
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
 
    exception
@@ -1870,7 +1872,7 @@ package body Browsers.Call_Graph is
                      then
                         Print_Ref (Kernel,
                                    Get (Iter),
-                                   Get_Name (Entity2).all,
+                                   Get (Get_Name (Entity2)).all,
                                    Title,
                                    Show_Caller => Show_Caller,
                                    Sort_In_File => True);
@@ -1888,7 +1890,7 @@ package body Browsers.Call_Graph is
                          (Get_File (Get_Declaration_Of (Entity2))),
                        Get_Line (Get_Declaration_Of (Entity2)),
                        Get_Column (Get_Declaration_Of (Entity2)),
-                       Get_Name (Entity2).all,
+                       Get (Get_Name (Entity2)).all,
                        0,
                        (Editor_Side => True,
                         Locations   => True));
@@ -1897,14 +1899,12 @@ package body Browsers.Call_Graph is
                        (Kernel_Handle (Kernel),
                         Get_Name (Search_Results_Style) & '/' & Title,
                         Search_Results_Style),
-                     Get_Name (Entity2)'Length);
+                     Get (Get_Name (Entity2))'Length);
                end if;
             end if;
 
             Next (Iter2);
          end loop;
-
-         Destroy (Iter2);
 
       elsif Locals_Only then
          --  Print the declaration of the entity, but only if it is in the
@@ -1923,7 +1923,7 @@ package body Browsers.Call_Graph is
             if Get (Iter) /= No_Entity_Reference then
                Print_Ref (Kernel,
                           Get (Iter),
-                          Get_Name (Entity).all,
+                          Get (Get_Name (Entity)).all,
                           Title,
                           Show_Caller => Show_Caller,
                           Sort_In_File => True);

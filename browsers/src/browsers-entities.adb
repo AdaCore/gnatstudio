@@ -55,6 +55,7 @@ with Doc_Utils;                 use Doc_Utils;
 with Entities.Queries;          use Entities, Entities.Queries;
 with Entities.Tooltips;         use Entities.Tooltips;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -287,8 +288,6 @@ package body Browsers.Entities is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Command handler for this module (in the shell window)
-
-   function "<" (E1, E2 : Entity_Information) return Boolean;
 
    procedure Add_Primitive_Operations
      (List : in out Xref_List;
@@ -876,15 +875,6 @@ package body Browsers.Entities is
       Free (Item.Meth_Lines);
    end Destroy;
 
-   --------
-   -- E1 --
-   --------
-
-   function "<" (E1, E2 : Entity_Information) return Boolean is
-   begin
-      return Get_Name (E1).all < Get_Name (E2).all;
-   end "<";
-
    --------------------
    -- Entity_As_Link --
    --------------------
@@ -892,9 +882,9 @@ package body Browsers.Entities is
    function Entity_As_Link (Ent : Entity_Information) return String is
    begin
       if Is_Predefined_Entity (Ent) then
-         return Get_Name (Ent).all;
+         return Get (Get_Name (Ent)).all;
       else
-         return '@' & Get_Name (Ent).all & '@';
+         return '@' & Get (Get_Name (Ent)).all & '@';
       end if;
    end Entity_As_Link;
 
@@ -1089,9 +1079,9 @@ package body Browsers.Entities is
 
          Add_Line
            (List,
-            Get_Name (Parameter).all & ": " &
+            Get (Get_Name (Parameter)).all & ": " &
               Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
-            Length1  => Get_Name (Parameter).all'Length + 1,
+            Length1  => Get (Get_Name (Parameter)).all'Length + 1,
             Callback => (1 => Build (Item, Typ)));
          --  Do not free Typ, it is needed for callbacks
 
@@ -1168,7 +1158,8 @@ package body Browsers.Entities is
 
          else
             Add_Type
-              (Attr_List, Item, Arr.Table (A), Get_Name (Arr.Table (A)).all);
+              (Attr_List, Item, Arr.Table (A),
+               Get (Get_Name (Arr.Table (A))).all);
          end if;
       end loop;
 
@@ -1203,7 +1194,7 @@ package body Browsers.Entities is
          Field := Get_Entity (Discriminants);
          if Field /= null then
             Add_Type (List, Item, Field,
-                      -"Discriminant: " & Get_Name (Field).all);
+                      -"Discriminant: " & Get (Get_Name (Field)).all);
          end if;
 
          Next (Discriminants);
@@ -1236,10 +1227,10 @@ package body Browsers.Entities is
 
       for F in Entity_Information_Arrays.First .. Last (Fields) loop
          if Is_Enum then
-            Add_Line (List, Get_Name (Fields.Table (F)).all);
+            Add_Line (List, Get (Get_Name (Fields.Table (F))).all);
          else
             Add_Type (List, Item, Fields.Table (F),
-                      Get_Name (Fields.Table (F)).all);
+                      Get (Get_Name (Fields.Table (F))).all);
          end if;
       end loop;
 
@@ -1791,7 +1782,8 @@ package body Browsers.Entities is
          Line       => Get_Line (Get_Declaration_Of (It.Entity)),
          Column     => Get_Column (Get_Declaration_Of (It.Entity)),
          Column_End => Get_Column (Get_Declaration_Of (It.Entity)) +
-           Basic_Types.Visible_Column_Type (Get_Name (It.Entity).all'Length));
+           Basic_Types.Visible_Column_Type
+             (Get (Get_Name (It.Entity))'Length));
    end On_Show_Source;
 
    ------------------------
@@ -1810,7 +1802,7 @@ package body Browsers.Entities is
    begin
       Set_Entity_Information
         (Context       => Context,
-         Entity_Name   => Get_Name (Item.Entity).all,
+         Entity_Name   => Get_Name (Item.Entity),
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
       Set_File_Information
         (Context     => Context,

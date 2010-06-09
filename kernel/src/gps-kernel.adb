@@ -321,6 +321,8 @@ package body GPS.Kernel is
       Create_Registry (Handle);
       Set_Registry (Handle.Lang_Handler, Handle.Registry);
 
+      Handle.Symbols := GNATCOLL.Symbols.Allocate;
+
       --  Note: we do not compute the view of this project yet. This will be
       --  done only if no other project was loaded from the command line, which
       --  is more efficient in case the current directory has lots of source
@@ -328,6 +330,8 @@ package body GPS.Kernel is
 
       Handle.Database := Create
         (Handle.Registry, Handle.Get_Construct_Database);
+      Set_Symbols (Handle.Database, Handle.Symbols);
+      Set_Symbols (Handle.Get_Construct_Database, Handle.Symbols);
       Register_Language_Handler (Handle.Database, Handler);
 
       Gtk_New (Handle.Icon_Factory);
@@ -1154,7 +1158,6 @@ package body GPS.Kernel is
          Free (Data.Category_Name);
          Free (Data.Message);
          Free (Data.Text);
-         Free (Data.Entity_Name);
          Free (Data.Expression);
 
          --  Do not unref the entity stored in the context if the kernel is in
@@ -1646,8 +1649,6 @@ package body GPS.Kernel is
          Next (Iter);
       end loop;
 
-      Destroy (Iter);
-
       Decl := null;
       Status := Entity_Not_Found;
 
@@ -1674,7 +1675,6 @@ package body GPS.Kernel is
             Destroy (Dialog);
          end if;
 
-         Destroy (Iter);
          raise;
    end Select_Entity_Declaration;
 
@@ -1811,6 +1811,8 @@ package body GPS.Kernel is
       Free (Handle.Gnatls_Server);
       Free (Handle.GNAT_Version);
       Free (Handle.Construct_Database);
+
+      GNATCOLL.Symbols.Free (Handle.Symbols);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
@@ -2703,5 +2705,16 @@ package body GPS.Kernel is
 
       return Kernel.Refactoring;
    end Refactoring_Context;
+
+   -------------
+   -- Symbols --
+   -------------
+
+   function Symbols
+     (Kernel : access Kernel_Handle_Record)
+      return GNATCOLL.Symbols.Symbol_Table_Access is
+   begin
+      return Kernel.Symbols;
+   end Symbols;
 
 end GPS.Kernel;

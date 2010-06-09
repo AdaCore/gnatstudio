@@ -41,6 +41,7 @@ with SN.Find_Fns;               use SN.Find_Fns;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -258,8 +259,9 @@ package body CPP_Parser is
    --  there is none.
 
    function Entity_From_FIL
-     (Sym    : FIL_Table;
-      Source : Source_File) return Entity_Information;
+     (Handler : access CPP_Handler_Record'Class;
+      Sym     : FIL_Table;
+      Source  : Source_File) return Entity_Information;
    --  Create an entity from the information in Sym
 
    procedure Parse_FIL_Table
@@ -347,7 +349,7 @@ package body CPP_Parser is
    procedure Parse_Method_Table_Internal
      (Handler      : access CPP_Handler_Record'Class;
       Entity       : out Entity_Information;
-      Entity_Name  : String;
+      Entity_Name  : Symbol;
       Entity_Start : Point;
       Return_Type  : String;
       Entity_File  : String;
@@ -414,7 +416,7 @@ package body CPP_Parser is
 
    function Lookup_Non_Overloaded_Entity
      (In_File : Source_File;
-      Name    : String) return Entity_Information;
+      Name    : Symbol) return Entity_Information;
    pragma Unreferenced (Lookup_Non_Overloaded_Entity);
    --  In there is only one possible declaration for Name so far, return it.
    --  Otherwise, this is an overloaded entity, and null is returned.
@@ -438,7 +440,7 @@ package body CPP_Parser is
 
    function Find_Forward_Declaration_And_Body
      (Handler    : access CPP_Handler_Record'Class;
-      Name       : String;
+      Name       : Symbol;
       Filename   : String;
       Args       : String;
       Body_Known : Boolean;
@@ -657,6 +659,8 @@ package body CPP_Parser is
      (Handler    : access CPP_Handler_Record'Class;
       Clean_Name : String) return Entity_Information
    is
+      S_Name       : constant Symbol :=
+        Get_Symbols (Handler.Db).Find (Clean_Name);
       Signed_Str   : constant String := "signed ";
       Unsigned_Str : constant String := "unsigned ";
 
@@ -668,7 +672,7 @@ package body CPP_Parser is
    begin
       --  Do we already have a predefined entity with this name ?
       Entity := Get_Or_Create
-        (Name         => Clean_Name,
+        (Name         => S_Name,
          File         => Get_Predefined_File (Handler.Db, Handler),
          Line         => Predefined_Line,
          Column       => Predefined_Column,
@@ -721,7 +725,7 @@ package body CPP_Parser is
          Kind.Is_Type := True;
 
          Entity := Get_Or_Create
-           (Name         => Clean_Name,
+           (Name         => S_Name,
             File         => Get_Predefined_File (Handler.Db, Handler),
             Line         => Predefined_Line,
             Column       => Predefined_Column,
@@ -861,7 +865,8 @@ package body CPP_Parser is
               (Handler.Db, +F.Key (F.File_Name.First .. F.File_Name.Last),
                Handler);
             Entity := Get_Or_Create
-              (Name   => Name (Name'First .. Last),
+              (Name   => Get_Symbols (Handler.Db).Find
+                 (Name (Name'First .. Last)),
                File   => Source,
                Line   => F.Start_Position.Line,
                Column => F.Start_Position.Column);
@@ -889,7 +894,8 @@ package body CPP_Parser is
                +Key.Key (Key.File_Name.First .. Key.File_Name.Last),
                Handler);
             Entity := Get_Or_Create
-              (Name   => Name (Name'First .. Last),
+              (Name   => Get_Symbols (Handler.Db).Find
+                 (Name (Name'First .. Last)),
                File   => Source,
                Line   => Key.Start_Position.Line,
                Column => Key.Start_Position.Column);
@@ -918,7 +924,8 @@ package body CPP_Parser is
                   +Key2.Key (Key2.File_Name.First .. Key2.File_Name.Last),
                   Handler);
                Entity := Get_Or_Create
-                 (Name   => Name (Name'First .. Last),
+                 (Name   => Get_Symbols (Handler.Db).Find
+                    (Name (Name'First .. Last)),
                   File   => Source,
                   Line   => Key2.Start_Position.Line,
                   Column => Key2.Start_Position.Column);
@@ -945,7 +952,8 @@ package body CPP_Parser is
                +Key3.Key (Key3.File_Name.First .. Key3.File_Name.Last),
                Handler);
             Entity := Get_Or_Create
-              (Name   => Name (Name'First .. Last),
+              (Name   => Get_Symbols (Handler.Db).Find
+                 (Name (Name'First .. Last)),
                File   => Source,
                Line   => Key3.Start_Position.Line,
                Column => Key3.Start_Position.Column);
@@ -1039,13 +1047,15 @@ package body CPP_Parser is
             if Name (Last) /= ' ' then
                if Is_Predefined_Entity (Entity) then
                   Real_Entity := Get_Or_Create
-                    (Name   => Name (Name'First .. Last),
+                    (Name   => Get_Symbols (Handler.Db).Find
+                       (Name (Name'First .. Last)),
                      File   => Get_Predefined_File (Handler.Db, Handler),
                      Line   => Predefined_Line,
                      Column => Predefined_Column);
                else
                   Real_Entity := Get_Or_Create
-                    (Name   => Name (Name'First .. Last),
+                    (Name   => Get_Symbols (Handler.Db).Find
+                       (Name (Name'First .. Last)),
                      File   => Current_Source,
                      Line   => Predefined_Line,
                      Column => Predefined_Column);
@@ -1080,15 +1090,15 @@ package body CPP_Parser is
 
    function Lookup_Non_Overloaded_Entity
      (In_File : Source_File;
-      Name    : String) return Entity_Information
+      Name    : Symbol) return Entity_Information
    is
       Iter   : Entity_Iterator;
       Count  : Natural := 0;
       Entity : Entity_Information;
    begin
-      Find_All_Entities_In_File (Iter, In_File, null, Name);
+      Find_All_Entities_In_File (Iter, In_File, null, Get (Name).all);
       while not At_End (Iter) loop
-         if Get_Name (Get (Iter)).all = Name then
+         if Get_Name (Get (Iter)) = Name then
             Count := Count + 1;
             Entity := Get (Iter);
             exit when Count >= 2;
@@ -1100,7 +1110,6 @@ package body CPP_Parser is
          Entity := null;
       end if;
 
-      Destroy (Iter);
       return Entity;
    end Lookup_Non_Overloaded_Entity;
 
@@ -1125,7 +1134,8 @@ package body CPP_Parser is
 
       if Success then
          Entity := Get_Or_Create
-           (Name   => G.Key (G.Name.First .. G.Name.Last),
+           (Name   => Get_Symbols (Handler.Db).Find
+              (G.Key (G.Name.First .. G.Name.Last)),
             File   => Get_Or_Create
               (Handler.Db,
                +Var.Key (Var.File_Name.First .. Var.File_Name.Last),
@@ -1196,7 +1206,7 @@ package body CPP_Parser is
          end if;
 
          if Entity = null then
-            Entity := Entity_From_FIL (Sym, Source);
+            Entity := Entity_From_FIL (Handler, Sym, Source);
 
             Set_Parent
               (Handler          => Handler,
@@ -1388,7 +1398,8 @@ package body CPP_Parser is
            (Handler, Entity,
             Return_Type  =>
               Var.Data (Var.Return_Type.First .. Var.Return_Type.Last),
-            Entity_Name  => Var.Key (Var.Name.First .. Var.Name.Last),
+            Entity_Name  => Get_Symbols (Handler.Db).Find
+              (Var.Key (Var.Name.First .. Var.Name.Last)),
             Entity_Start => Var.Start_Position,
             Entity_File => Var.Key (Var.File_Name.First .. Var.File_Name.Last),
             Entity_Class => Var.Key (Var.Class.First .. Var.Class.Last),
@@ -1412,7 +1423,7 @@ package body CPP_Parser is
          --  "Go to body" is also activated.
 
          Set_Cursor_At
-           (Handler.SN_Table (MI), Name => Get_Name (Entity).all);
+           (Handler.SN_Table (MI), Name => Get (Get_Name (Entity)).all);
          loop
             Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
             exit when P = No_Pair;
@@ -1453,7 +1464,7 @@ package body CPP_Parser is
    procedure Parse_Method_Table_Internal
      (Handler      : access CPP_Handler_Record'Class;
       Entity       : out Entity_Information;
-      Entity_Name  : String;
+      Entity_Name  : Symbol;
       Entity_Start : Point;
       Return_Type  : String;
       Entity_File  : String;
@@ -1482,7 +1493,7 @@ package body CPP_Parser is
             Source           => Source);
          Parse_TO_Table
            (Handler       => Handler,
-            Sym_Name      => Entity_Name,
+            Sym_Name      => Get (Entity_Name).all,
             Sym_Class     => Entity_Class,
             Sym_Arg_Types => Arg_Types);
          Class := Lookup_Entity_In_Tables
@@ -1602,7 +1613,8 @@ package body CPP_Parser is
          --  Insert the declaration. Extra info will be/has been inserted when
          --  the MD table is parsed.
          Entity := Get_Or_Create
-           (Name   => D.Key (D.Name.First .. D.Name.Last),
+           (Name   => Get_Symbols (Handler.Db).Find
+              (D.Key (D.Name.First .. D.Name.Last)),
             File   => Get_Or_Create
               (Handler.Db,
                +D.Key (D.File_Name.First .. D.File_Name.Last),
@@ -1626,7 +1638,8 @@ package body CPP_Parser is
                Entity       => Entity,
                Return_Type  =>
                  M.Data (M.Return_Type.First .. M.Return_Type.Last),
-               Entity_Name  => M.Key (M.Name.First .. M.Name.Last),
+               Entity_Name  => Get_Symbols (Handler.Db).Find
+                 (M.Key (M.Name.First .. M.Name.Last)),
                Entity_Start => M.Start_Position,
                Entity_File  => M.Key (M.File_Name.First .. M.File_Name.Last),
                Entity_Class => M.Key (M.Class.First .. M.Class.Last),
@@ -1636,7 +1649,8 @@ package body CPP_Parser is
                Class        => Class);
          else
             Entity := Get_Or_Create
-              (Name   => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+              (Name   => Get_Symbols (Handler.Db).Find
+                 (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
                File   => Source,
                Line   => Sym.Start_Position.Line,
                Column => Sym.Start_Position.Column);
@@ -1928,7 +1942,7 @@ package body CPP_Parser is
 
    function Find_Forward_Declaration_And_Body
      (Handler    : access CPP_Handler_Record'Class;
-      Name       : String;
+      Name       : Symbol;
       Filename   : String;
       Args       : String;
       Body_Known : Boolean;
@@ -1941,7 +1955,7 @@ package body CPP_Parser is
    begin
       if Is_Open (Handler.SN_Table (FD)) then
          Set_Cursor
-           (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
+           (Handler.SN_Table (FD), By_Key, Get (Name).all & Field_Sep, False);
          loop
             Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
             exit when P = No_Pair;
@@ -2002,8 +2016,6 @@ package body CPP_Parser is
 
                --  Get the body info, since we want to be able to show
                --  "go to body" in the contextual menus
-               Trace (Me, "Find_Forward_Declaration_And_Body " & Name
-                      & " " & Args);
                Parse_FU_Table_From_FD
                  (Handler    => Handler,
                   Entity     => Decl,
@@ -2059,7 +2071,8 @@ package body CPP_Parser is
    begin
       return Find_Forward_Declaration_And_Body
         (Handler,
-         Name       => Sym.Key  (Sym.Identifier.First .. Sym.Identifier.Last),
+         Name       => Get_Symbols (Handler.Db).Find
+           (Sym.Key  (Sym.Identifier.First .. Sym.Identifier.Last)),
          Filename   => Sym.Key  (Sym.File_Name.First .. Sym.File_Name.Last),
          Args       => Sym.Data (Sym.Types_Of_Arguments.First ..
                                  Sym.Types_Of_Arguments.Last),
@@ -2087,7 +2100,7 @@ package body CPP_Parser is
          Body_Found := True;
       else
          Set_Cursor_At
-           (Handler.SN_Table (FU), Name => Get_Name (Entity).all);
+           (Handler.SN_Table (FU), Name => Get (Get_Name (Entity)).all);
          loop
             Get_Pair (Handler.SN_Table (FU), Next_By_Key, Result => P);
             exit when P = No_Pair;
@@ -2156,8 +2169,8 @@ package body CPP_Parser is
          --  Find forward declaration if any, possibly in another file
          Entity := Find_Forward_Declaration_And_Body
            (Handler,
-            Name       =>
-              Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+            Name       => Get_Symbols (Handler.Db).Find
+              (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Filename   => "",
             Args       => C.Data (C.Arg_Types.First .. C.Arg_Types.Last),
             Body_Known => True,
@@ -2173,7 +2186,7 @@ package body CPP_Parser is
          end if;
 
          if Entity = null then
-            Entity := Entity_From_FIL (Sym, S);
+            Entity := Entity_From_FIL (Handler, Sym, S);
             End_Of_Scope_Kind := End_Of_Spec;
          else
             --  Check if we already have the body reference, which might be
@@ -2295,9 +2308,9 @@ package body CPP_Parser is
 --                          .. R.Referred_Symbol_Name.Last));
 
                   Ref := Get_Or_Create
-                    (Name         => R.Key
-                       (R.Referred_Symbol_Name.First
-                        .. R.Referred_Symbol_Name.Last),
+                    (Name         => Get_Symbols (Handler.Db).Find
+                       (R.Key (R.Referred_Symbol_Name.First
+                               .. R.Referred_Symbol_Name.Last)),
                      File         => Ref_Source,
                      Line         => Predefined_Line,
                      Column       => Predefined_Column,
@@ -2404,7 +2417,7 @@ package body CPP_Parser is
          Set_Cursor
            (Handler.SN_Table (LV),
             By_Key,
-            Get_Name (Entity).all & Field_Sep,
+            Get (Get_Name (Entity)).all & Field_Sep,
             Exact_Match => False);
 
          loop
@@ -2421,7 +2434,8 @@ package body CPP_Parser is
               Entity_Arg_Types
             then
                Local := Get_Or_Create
-                 (Name   => Var.Key (Var.Name.First .. Var.Name.Last),
+                 (Name   => Get_Symbols (Handler.Db).Find
+                     (Var.Key (Var.Name.First .. Var.Name.Last)),
                   File   => Source,
                   Line   => Var.Start_Position.Line,
                   Column => Var.Start_Position.Column);
@@ -2569,11 +2583,12 @@ package body CPP_Parser is
    ---------------------
 
    function Entity_From_FIL
-     (Sym     : FIL_Table;
+     (Handler : access CPP_Handler_Record'Class;
+      Sym     : FIL_Table;
       Source  : Source_File) return Entity_Information is
    begin
       return Get_Or_Create
-        (Name   => String
+        (Name   => Get_Symbols (Handler.Db).Find
            (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          File   => Source,
          Line   => Sym.Start_Position.Line,
@@ -2615,26 +2630,26 @@ package body CPP_Parser is
                   Parse_IU_Table (Handler, Source, Sym);
 
                when T =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_T_Table (Handler, Entity, Sym);
 
                when CL =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_CL_Table (Handler, Entity, Sym);
 
                when CON =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_CON_Table (Handler, Entity, Sym);
 
                when MA =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Set_Kind (Entity, Macro_Entity);
 
                when FU =>
                   Parse_FU_Table (Handler, Source, Sym);
 
                when IV =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_IV_Table (Handler, Entity, Sym);
 
                when MD =>
@@ -2644,7 +2659,7 @@ package body CPP_Parser is
                   Parse_MI_Table (Handler, Sym, Source);
 
                when TA =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_TA_Table (Handler, Entity, Sym);
 
                when FD    =>
@@ -2655,11 +2670,11 @@ package body CPP_Parser is
                when SN_IN => null; --  Parsed when handling CL
 
                when E =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_E_Table (Handler, Entity, Sym);
 
                when EC =>
-                  Entity := Entity_From_FIL (Sym, Source);
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
                   Parse_EC_Table (Handler, Entity, Sym);
 
                when UN | Undef | COM | COV | FR | LV | SU | UD =>

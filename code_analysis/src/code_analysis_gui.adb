@@ -422,7 +422,7 @@ package body Code_Analysis_GUI is
       Event        : Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget);
+      pragma Unreferenced (Event_Widget);
       use Project_Maps;
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
       X         : constant Gdouble := Get_X (Event);
@@ -517,7 +517,8 @@ package body Code_Analysis_GUI is
                Set_File_Information
                  (Context, (1 => File_Node.Name), Prj_Node.Name);
                Set_Entity_Information
-                 (Context, Subprogram_Access (Node).Name.all);
+                 (Context, Kernel.Symbols.Find
+                    (Subprogram_Access (Node).Name.all));
             end if;
          end;
       end if;

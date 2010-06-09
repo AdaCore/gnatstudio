@@ -37,6 +37,7 @@ with Language.Icons;            use Language.Icons;
 with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Gdk.Display; use Gdk.Display;
 with Gdk.Screen;  use Gdk.Screen;
@@ -163,7 +164,7 @@ package body Entities.Tooltips is
             else
                Result := Result
                  & (-"from instance of ")
-                 & Get_Name (Inst_Of).all & ':'
+                 & Get (Get_Name (Inst_Of)).all & ':'
                  & Display_Base_Name (Get_Filename
                      (Get_File (Get_Declaration_Of (Inst_Of)))) & ':'
                  & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
@@ -171,7 +172,7 @@ package body Entities.Tooltips is
             end if;
 
             Result := Result
-              & Get_Name (Inst_E).all
+              & Get (Get_Name (Inst_E)).all
               & ':'
               &  Display_Base_Name (Get_Filename
                               (Get_File (Get_Declaration_Of (Inst_E)))) & ':'
@@ -191,7 +192,7 @@ package body Entities.Tooltips is
    function Get_Header (Entity : Entity_Information) return String is
    begin
       if Get_Kind (Entity).Kind = Include_File then
-         return  "<b>" & Escape_Text (Entity.Name.all)
+         return  "<b>" & Escape_Text (Get (Entity.Name).all)
            & "</b>" & ASCII.LF
            & (-Kind_To_String (Get_Kind (Entity))
            & ' ' & Entity.Declaration.File.Name.Display_Full_Name);

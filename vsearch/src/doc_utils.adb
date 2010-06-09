@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2009, AdaCore             --
+--                      Copyright (C) 2005-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with Find_Utils;             use Find_Utils;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
 with GNAT.Strings;           use GNAT.Strings;
+with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Language_Handlers;      use Language_Handlers;
@@ -121,7 +122,7 @@ package body Doc_Utils is
 
          Find_Closest_Match
            (Buffer (1 .. Buffer_Len), Line, Column, Found,
-            Get_Name (Entity).all,
+            Get (Get_Name (Entity)).all,
             Case_Sensitive => Context.Case_Sensitive);
 
          Skip_Lines (Buffer (1 .. Buffer_Len), Line - 1, Index, Lines_Skipped);

@@ -22,8 +22,8 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -90,7 +90,7 @@ package body Entities.Queries is
 
    procedure Find
      (Source                 : Source_File;
-      Normalized_Entity_Name : String := "";
+      Normalized_Entity_Name : Symbol := No_Symbol;
       Line                   : Integer;
       Column                 : Basic_Types.Visible_Column_Type;
       Check_Decl_Only        : Boolean;
@@ -350,7 +350,7 @@ package body Entities.Queries is
 
    procedure Find
      (Source                 : Source_File;
-      Normalized_Entity_Name : String := "";
+      Normalized_Entity_Name : Symbol := No_Symbol;
       Line                   : Integer;
       Column                 : Basic_Types.Visible_Column_Type;
       Check_Decl_Only        : Boolean;
@@ -367,7 +367,7 @@ package body Entities.Queries is
 
    begin
       if Active (Me) then
-         Trace (Me, "Find name=" & Normalized_Entity_Name
+         Trace (Me, "Find name=" & Get (Normalized_Entity_Name).all
                 & " Source=" & Display_Full_Name (Get_Filename (Source))
                 & " line=" & Line'Img & " column=" & Column'Img
                 & " check_decl=" & Check_Decl_Only'Img);
@@ -375,13 +375,13 @@ package body Entities.Queries is
 
       Closest_Ref := No_Entity_Reference;
 
-      if Normalized_Entity_Name = "" then
+      if Normalized_Entity_Name = No_Symbol then
          Find_Any_Entity
            (Source, Line, Column, Check_Decl_Only, Distance, Closest,
             Closest_Ref);
       else
          UEI := Get (Source.Entities,
-                     (Str => Normalized_Entity_Name'Unrestricted_Access,
+                     (Str => Normalized_Entity_Name,
                       Case_Sensitive => Case_Sensitive));
          if UEI /= null then
             Find
@@ -393,7 +393,7 @@ package body Entities.Queries is
 
          if Distance /= 0 and then not Check_Decl_Only then
             UEI := Get (Source.All_Entities,
-                        (Str => Normalized_Entity_Name'Unrestricted_Access,
+                        (Str => Normalized_Entity_Name,
                          Case_Sensitive => Case_Sensitive));
             if UEI /= null then
                Find (UEI.List,
@@ -418,7 +418,7 @@ package body Entities.Queries is
          --  How many entities with this name do we have ?
 
          Find_All_Entities_In_File
-           (Iter, File => Source, Name => Normalized_Entity_Name);
+           (Iter, File => Source, Name => Get (Normalized_Entity_Name).all);
 
          if Get (Iter) /= null then
             Next (Iter);
@@ -432,8 +432,6 @@ package body Entities.Queries is
          else
             Status := Fuzzy_Match;
          end if;
-
-         Destroy (Iter);
 
          Entity := Closest;
       end if;
@@ -521,6 +519,7 @@ package body Entities.Queries is
       Handler         : LI_Handler := null;
       Fuzzy_Expected  : Boolean := False)
    is
+      S_Entity_Name : constant Symbol := Db.Symbols.Find (Entity_Name);
       H       : LI_Handler := Handler;
       Updated : Source_File;
    begin
@@ -547,7 +546,7 @@ package body Entities.Queries is
 
       if Source = Get_Predefined_File (Db, Source.Handler) then
          Entity := Get_Or_Create
-           (Name         => Entity_Name,
+           (Name         => S_Entity_Name,
             File         => Source,
             Line         => Line,
             Column       => Column,
@@ -569,7 +568,7 @@ package body Entities.Queries is
          Updated := Get_Source_Info (H, Get_Filename (Source));
 
          if Updated /= null then
-            Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
+            Find (Source, S_Entity_Name, Line, Column, Check_Decl_Only,
                   Entity, Closest_Ref, Status);
          end if;
 
@@ -617,7 +616,7 @@ package body Entities.Queries is
                   --  than the dummy one created from the construct.
 
                   Entity := Get_Or_Create
-                    (Name   => Get_Construct (Result).Name.all,
+                    (Name => Db.Symbols.Find (Get_Construct (Result).Name.all),
                      File     => Get_Or_Create
                        (Db    => Db,
                         File  => Get_File_Path (Get_File (Result))),
@@ -663,7 +662,7 @@ package body Entities.Queries is
    begin
       if Active (Me) then
          Trace (Me, "Find_Next_Body for "
-                & Get_Name (Entity).all
+                & Debug_Name (Entity)
                 & " current=" & To_String (Current_Location));
       end if;
 
@@ -866,7 +865,7 @@ package body Entities.Queries is
       Deps : Dependency_Iterator;
    begin
       if Active (Me) then
-         Trace (Me, "Setup_For_Entity " & Get_Name (Entity).all
+         Trace (Me, "Setup_For_Entity " & Debug_Name (Entity)
                 & " declared at "
            & (+Base_Name
              (Get_Filename (Get_Declaration_Of (Entity).File))
@@ -993,7 +992,7 @@ package body Entities.Queries is
               "No Entity specified to Find_All_References");
 
       if Active (Me) then
-         Trace (Me, "Find_All_References to " & Get_Name (Entity).all
+         Trace (Me, "Find_All_References to " & Debug_Name (Entity)
                 & ' ' & To_String (Entity.Declaration)
                 & " in_file=" & Boolean'Image (In_File /= null));
       end if;
@@ -1132,7 +1131,7 @@ package body Entities.Queries is
          Top : Entity_Information := Entity;
       begin
          if Use_Approximate_Overriding_Algorithm then
-            return Get_Name (Entity).all = Get_Name (Subprogram).all;
+            return Entity.Name = Subprogram.Name;
          else
             --  The test is smarter here: we make sure that it is correct even
             --  when there are two primitive operations with the same name.
@@ -1180,9 +1179,7 @@ package body Entities.Queries is
                         Get (SIter, Param);
                         exit when Param = null;
 
-                        if Get_Name (Param).all =
-                          Get_Name (Iter.Entity).all
-                        then
+                        if Param.Name = Iter.Entity.Name then
                            Append (Iter.Extra_Entities, Param);
                            exit;
                         end if;
@@ -2243,7 +2240,7 @@ package body Entities.Queries is
       while T2 /= null loop
          Trace
            (Me, Prefix
-            & Get_Name (T2.Entity).all
+            & Debug_Name (T2.Entity)
             & T2.Start_Line'Img & T2.End_Line'Img);
          Dump (T2.First_Child, Prefix & "  ");
          T2 := T2.Sibling;
@@ -2473,12 +2470,12 @@ package body Entities.Queries is
                   if Result.Line_Info (L) /= null then
                      if Result.Info_For_Decl (L) /= null then
                         Trace (Callers_Me, "Line" & L'Img & " "
-                               & Get_Name (Result.Line_Info (L)).all
+                               & Debug_Name (Result.Line_Info (L))
                                & " Decl="
-                               & Get_Name (Result.Info_For_Decl (L)).all);
+                               & Debug_Name (Result.Info_For_Decl (L)));
                      else
                         Trace (Callers_Me, "Line" & L'Img & " "
-                               & Get_Name (Result.Line_Info (L)).all
+                               & Debug_Name (Result.Line_Info (L))
                                & " Decl=<null>");
                      end if;
                   end if;
@@ -2622,7 +2619,7 @@ package body Entities.Queries is
                Replace (Refs, Index (It), E_Ref);
 
                if Caller /= null then
-                  Trace (Ref_Me, "Ref " & Caller.Name.all
+                  Trace (Ref_Me, "Ref " & Debug_Name (Caller)
                          & " since caller for a location");
                   Ref (Caller);
 
@@ -2751,7 +2748,7 @@ package body Entities.Queries is
       for J in 1 .. Max_Level loop
          exit when E = null;
 
-         Append (Result, E.Name.all);
+         Append (Result, Get (E.Name).all);
          Compute_Callers_And_Called (E.Declaration.File);
          Last_Not_Null := E;
          E := E.Caller_At_Declaration;
@@ -2769,7 +2766,7 @@ package body Entities.Queries is
          E := Get_Parent_Package (E);
          exit when E = null;
          Append (Result, Separator);
-         Append (Result, E.Name.all);
+         Append (Result, Get (E.Name).all);
       end loop;
 
       return Revert (To_String (Result));
@@ -2942,6 +2939,7 @@ package body Entities.Queries is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Name                  : String := "")
    is
+      S_Name : constant Symbol := File.Db.Symbols.Find (Name);
       UEI : Entity_Informations;
    begin
       Update_Xref (File, File_Has_No_LI_Report);
@@ -2956,7 +2954,7 @@ package body Entities.Queries is
 
       else
          UEI := Get (File.Entities,
-                     (Str => Name'Unrestricted_Access,
+                     (Str => S_Name,
                       Case_Sensitive => Iter.Case_Sensitive));
       end if;
 
@@ -2964,10 +2962,7 @@ package body Entities.Queries is
          Iter.EL := UEI.List;
       end if;
 
-      if Name /= "" then
-         Iter.Name := new String'(Name);
-      end if;
-
+      Iter.Name := S_Name;
       Iter.File := File;
       Iter.Index_In_EL := Entity_Information_Arrays.First;
       Iter.Processing_Entities := True;
@@ -3017,7 +3012,7 @@ package body Entities.Queries is
          if Iter.Processing_Entities then
             Iter.Index_In_EL := Entity_Information_Arrays.First;
 
-            if Iter.Name = null then
+            if Iter.Name = No_Symbol then
                Get_Next (Iter.File.Entities, Iter.SIter);
                EIS := Get_Element (Iter.SIter);
                if EIS /= null then
@@ -3046,7 +3041,7 @@ package body Entities.Queries is
                end if;
             end if;
 
-         elsif Iter.Name = null then
+         elsif Iter.Name = No_Symbol then
             Iter.Index_In_EL := Entity_Information_Arrays.First;
             Get_Next (Iter.File.All_Entities, Iter.Iter);
             UEI := Get_Element (Iter.Iter);
@@ -3062,15 +3057,6 @@ package body Entities.Queries is
          end if;
       end if;
    end Next;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Iter : in out Entity_Iterator) is
-   begin
-      Free (Iter.Name);
-   end Destroy;
 
    -----------------------
    -- Get_Variable_Type --

@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
@@ -585,16 +586,12 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
-      Entity_Name     : String := "";
+      Entity_Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "") is
    begin
-      Free (Context.Data.Data.Entity_Name);
-      if Entity_Name /= "" then
-         Context.Data.Data.Entity_Name := new String'(Entity_Name);
-      end if;
-
-      Context.Data.Data.Entity_Column := Entity_Column;
+      Context.Data.Data.Entity_Name     := Entity_Name;
+      Context.Data.Data.Entity_Column   := Entity_Column;
       Context.Data.Data.Entity_Resolved := Entity_Not_Found;
 
       if From_Expression /= "" then
@@ -612,9 +609,7 @@ package body GPS.Kernel.Contexts is
       From_Expression : String := "") is
    begin
       Ref (Entity_Information (Entity));
-      Free (Context.Data.Data.Entity_Name);
-      Context.Data.Data.Entity_Name     :=
-        new String'(Get_Name (Entity_Information (Entity)).all);
+      Context.Data.Data.Entity_Name := Get_Name (Entity_Information (Entity));
       Context.Data.Data.Entity_Column   :=
         Get_Column (Get_Declaration_Of (Entity_Information (Entity)));
       Context.Data.Data.Entity          := Entity_Information (Entity);
@@ -658,7 +653,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Entity_Name /= null;
+        and then Context.Data.Data.Entity_Name /= No_Symbol;
    end Has_Entity_Name_Information;
 
    -----------------------------
@@ -668,10 +663,10 @@ package body GPS.Kernel.Contexts is
    function Entity_Name_Information
      (Context : Selection_Context) return String is
    begin
-      if Context.Data.Data.Entity_Name = null then
+      if Context.Data.Data.Entity_Name = No_Symbol then
          return "";
       else
-         return Context.Data.Data.Entity_Name.all;
+         return Get (Context.Data.Data.Entity_Name).all;
       end if;
    end Entity_Name_Information;
 

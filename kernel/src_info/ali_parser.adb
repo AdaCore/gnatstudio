@@ -25,6 +25,7 @@ with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -753,7 +754,8 @@ package body ALI_Parser is
          end if;
 
          Entity := Get_Or_Create
-           (Name   => Name_Buffer (First .. Last),
+           (Name   => Get_Symbols (Handler.Db).Find
+              (Name_Buffer (First .. Last)),
             File   => Sfiles (File_Num).File,
             Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
             Column => Visible_Column_Type (Xref_Entity.Table (Xref_Ent).Col));
@@ -882,14 +884,16 @@ package body ALI_Parser is
             begin
                if Case_Insensitive_Identifiers (Handler) then
                   Primitive := Get_Or_Create
-                    (Name   => Locale_To_UTF8 (Capitalize (Name)),
+                    (Name   => Get_Symbols (Handler.Db).Find
+                       (Locale_To_UTF8 (Capitalize (Name))),
                      File   => Get_Predefined_File
                                  (Get_Database (LI), Handler),
                      Line   => Predefined_Line,
                      Column => Predefined_Column);
                else
                   Primitive := Get_Or_Create
-                    (Name   => Locale_To_UTF8 (Name),
+                    (Name   => Get_Symbols (Handler.Db).Find
+                       (Locale_To_UTF8 (Name)),
                      File   => Get_Predefined_File
                                  (Get_Database (LI), Handler),
                      Line   => Predefined_Line,
@@ -1050,8 +1054,10 @@ package body ALI_Parser is
                            or else Xref_Entity.Table (Entity).Col = Column)
                then
                   return Get_Or_Create
-                    (Name => Locale_To_UTF8
-                       (Get_Name_String (Xref_Entity.Table (Entity).Entity)),
+                    (Name => Get_Symbols (Handler.Db).Find
+                       (Locale_To_UTF8
+                          (Get_Name_String
+                             (Xref_Entity.Table (Entity).Entity))),
                      File => Sfiles (File_Num).File,
                      Line => Integer (Line),
                      Column => Visible_Column_Type
@@ -1084,9 +1090,10 @@ package body ALI_Parser is
                               or else Xref.Table (Ref).Col = Column)
                   then
                      return Get_Or_Create
-                       (Name => Locale_To_UTF8
-                          (Get_Name_String
-                             (Xref_Entity.Table (Entity).Entity)),
+                       (Name => Get_Symbols (Handler.Db).Find
+                          (Locale_To_UTF8
+                             (Get_Name_String
+                                (Xref_Entity.Table (Entity).Entity))),
                         File =>
                           Sfiles (Xref_Section.Table (Sect).File_Num).File,
                         Line => Integer (Xref_Entity.Table (Entity).Line),
@@ -1191,13 +1198,15 @@ package body ALI_Parser is
          begin
             if Case_Insensitive_Identifiers (Handler) then
                Parent := Get_Or_Create
-                 (Name   => Locale_To_UTF8 (Capitalize (Name)),
+                 (Name   => Get_Symbols (Handler.Db).Find
+                    (Locale_To_UTF8 (Capitalize (Name))),
                   File   => Get_Predefined_File (Get_Database (LI), Handler),
                   Line   => Predefined_Line,
                   Column => Predefined_Column);
             else
                Parent := Get_Or_Create
-                 (Name   => Locale_To_UTF8 (Name),
+                 (Name   => Get_Symbols (Handler.Db).Find
+                    (Locale_To_UTF8 (Name)),
                   File   => Get_Predefined_File (Get_Database (LI), Handler),
                   Line   => Predefined_Line,
                   Column => Predefined_Column);
