@@ -80,7 +80,7 @@ EXPECT=no
 TERM=no
 
 --  Display full traceback for all calls from python to Ada (expensive)
-PYTHON.TB=yes
+PYTHON.TB=no
 
 --  Debug handles related to the debugger
 GVD.OUT=no
