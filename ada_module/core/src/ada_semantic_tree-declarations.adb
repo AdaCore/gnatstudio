@@ -32,6 +32,7 @@ with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Std_Entities;    use Ada_Semantic_Tree.Std_Entities;
 
 package body Ada_Semantic_Tree.Declarations is
+   Me : constant Trace_Handle := Create ("Declarations");
 
    use Token_List;
 
@@ -944,7 +945,7 @@ package body Ada_Semantic_Tree.Declarations is
                            Result);
                      else
                         Get_Possibilities
-                          (No_Normalized_Symbol,
+                          (Normalized_Symbol (Empty_String),
                            Is_Partial,
                            (From_File,
                             Null_Instance_Info,
@@ -1149,6 +1150,7 @@ package body Ada_Semantic_Tree.Declarations is
       if (From_Visibility.Filter and All_Accessible_Units) /= 0
         and then Identifier /= No_Normalized_Symbol
       then
+         Trace (Me, "Getting list of all accessible units with no parent");
          --  Create an extensive list of all the accessible units with no
          --  parent.
          declare
@@ -1198,6 +1200,7 @@ package body Ada_Semantic_Tree.Declarations is
       end if;
 
       if (From_Visibility.Filter and All_Visible_Entities) /= 0 then
+         Trace (Me, "Get_Possibilities: adding all visible entities");
          declare
             List : Declaration_Id_List;
          begin
