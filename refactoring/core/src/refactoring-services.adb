@@ -440,7 +440,9 @@ package body Refactoring.Services is
    is
       EA  : Entity_Access := Get_Entity_Access (Context, Get_Type_Of (Entity));
    begin
-      if EA /= Null_Entity_Access then
+      if EA /= Null_Entity_Access
+        and then Get_Kind (Entity).Kind /= Class_Wide
+      then
          EA := Get_Last_Visible_Declaration
            (EA, Get_File (EA), Offset => Current_Offset);
 
