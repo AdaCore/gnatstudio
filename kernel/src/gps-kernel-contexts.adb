@@ -590,7 +590,12 @@ package body GPS.Kernel.Contexts is
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "") is
    begin
-      Context.Data.Data.Entity_Name     := Entity_Name;
+      if Entity_Name = Empty_String then
+         Context.Data.Data.Entity_Name := No_Symbol;
+      else
+         Context.Data.Data.Entity_Name     := Entity_Name;
+      end if;
+
       Context.Data.Data.Entity_Column   := Entity_Column;
       Context.Data.Data.Entity_Resolved := Entity_Not_Found;
 

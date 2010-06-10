@@ -418,7 +418,8 @@ package body Entities.Queries is
          --  How many entities with this name do we have ?
 
          Find_All_Entities_In_File
-           (Iter, File => Source, Name => Get (Normalized_Entity_Name).all);
+           (Iter, File => Source,
+            Name => Get (Normalized_Entity_Name, True).all);
 
          if Get (Iter) /= null then
             Next (Iter);
