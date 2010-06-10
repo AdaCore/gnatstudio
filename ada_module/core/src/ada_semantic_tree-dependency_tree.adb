@@ -24,6 +24,7 @@ with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility;    use Ada_Semantic_Tree.Visibility;
+with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 
 package body Ada_Semantic_Tree.Dependency_Tree is
@@ -257,7 +258,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    function Get_Local_Visible_Constructs
      (File       : Structured_File_Access;
       Offset     : String_Index_Type;
-      Name       : Symbol;
+      Name       : Normalized_Symbol;
       Visibility : not null access Visibility_Resolver;
       Categories : Category_Array;
       Use_Wise   : Boolean := True;
@@ -387,8 +388,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             begin
                if not Match
                  (Name,
-                  Get_Database (File).Symbols.Find
-                    (Get_Item (Comp_Name, Length (Comp_Name))),
+                  Find_Normalized
+                    (Get_Database (File).Symbols,
+                     Get_Item (Comp_Name, Length (Comp_Name))),
                   Is_Partial)
                then
                   return;

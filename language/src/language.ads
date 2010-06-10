@@ -563,7 +563,7 @@ package Language is
       Category       : Language_Category;
       --  Define the kind of construct
 
-      Category_Name  : GNATCOLL.Symbols.Symbol;
+      Category_Name  : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Optional category name. Used if Category = Cat_Custom.
 
       Is_Declaration : Boolean;
@@ -575,7 +575,7 @@ package Language is
       Visibility     : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name           : GNATCOLL.Symbols.Symbol;
+      Name           : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Name of the enclosing token. Null if not relevant for Token
       --  This is encoded in UTF-8
 

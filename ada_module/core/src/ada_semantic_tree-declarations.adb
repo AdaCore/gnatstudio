@@ -46,7 +46,7 @@ package body Ada_Semantic_Tree.Declarations is
       First_Buffer    : String_Access;
       First_Offset    : String_Index_Type;
       Construct_Db    : Construct_Database_Access;
-      Name            : Symbol;
+      Name            : Normalized_Symbol;
       Is_Partial      : Boolean;
       Offset          : String_Index_Type;
       From_Visibility : Visibility_Context;
@@ -62,7 +62,7 @@ package body Ada_Semantic_Tree.Declarations is
       --  Common data
 
       Stage           : Iteration_Stage := File_Hierarchy;
-      Name            : Symbol;
+      Name            : Normalized_Symbol;
       Is_Partial      : Boolean;
       From_Visibility : Visibility_Context;
       Hidden_Entities : aliased Visibility_Resolver;
@@ -119,7 +119,7 @@ package body Ada_Semantic_Tree.Declarations is
    procedure Free (It : in out Declaration_Id_Iterator);
 
    procedure Get_Possibilities
-     (Identifier      : Symbol;
+     (Identifier      : Normalized_Symbol;
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
@@ -533,7 +533,7 @@ package body Ada_Semantic_Tree.Declarations is
       return Entity_List
    is
       Db                     : Construct_Database_Access;
-      All_Name_Id            : Symbol;
+      All_Name_Id            : Normalized_Symbol;
       Actual_From_Visibility : Visibility_Context;
       Analyzed_Expression    : Parsed_Expression;
       First_Token            : Token_List.List_Node;
@@ -584,13 +584,13 @@ package body Ada_Semantic_Tree.Declarations is
 
          Actual_Categories  : constant Category_Array := Adjust_Categories;
 
-         procedure Handle_Identifier (Id : Symbol);
+         procedure Handle_Identifier (Id : Normalized_Symbol);
 
          -----------------------
          -- Handle_Identifier --
          -----------------------
 
-         procedure Handle_Identifier (Id : Symbol) is
+         procedure Handle_Identifier (Id : Normalized_Symbol) is
             Tmp    : Entity_List;
             Tmp_It : Entity_Iterator;
 
@@ -769,8 +769,8 @@ package body Ada_Semantic_Tree.Declarations is
 
             when Tok_Identifier =>
                Handle_Identifier
-                 (Db.Symbols.Find
-                    (Get_Name (Analyzed_Expression, Data (Token))));
+                 (Find_Normalized (Db.Symbols,
+                    Get_Name (Analyzed_Expression, Data (Token))));
 
             when Tok_Open_Parenthesis =>
                if Context.Context_Type /= From_File then
@@ -944,7 +944,7 @@ package body Ada_Semantic_Tree.Declarations is
                            Result);
                      else
                         Get_Possibilities
-                          (No_Symbol,
+                          (No_Normalized_Symbol,
                            Is_Partial,
                            (From_File,
                             Null_Instance_Info,
@@ -977,7 +977,7 @@ package body Ada_Semantic_Tree.Declarations is
                         Result);
                   else
                      Get_Possibilities
-                       (No_Symbol,
+                       (No_Normalized_Symbol,
                         Is_Partial,
                         (From_File,
                          Null_Instance_Info,
@@ -1057,7 +1057,7 @@ package body Ada_Semantic_Tree.Declarations is
             Db := Get_Database (Context.File);
       end case;
 
-      All_Name_Id := Db.Symbols.Find ("all");
+      All_Name_Id := Find_Normalized (Db.Symbols, "all");
       Result.Excluded_List := Excluded_Entities;
       Ref (Result.Excluded_List);
 
@@ -1139,7 +1139,7 @@ package body Ada_Semantic_Tree.Declarations is
    ----------------------
 
    procedure Get_Possibilities
-     (Identifier      : Symbol;
+     (Identifier      : Normalized_Symbol;
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
@@ -1147,7 +1147,7 @@ package body Ada_Semantic_Tree.Declarations is
       Result          : in out Entity_List) is
    begin
       if (From_Visibility.Filter and All_Accessible_Units) /= 0
-         and then Identifier /= No_Symbol
+        and then Identifier /= No_Normalized_Symbol
       then
          --  Create an extensive list of all the accessible units with no
          --  parent.

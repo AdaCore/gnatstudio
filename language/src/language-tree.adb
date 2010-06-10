@@ -17,9 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with String_Utils;           use String_Utils;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with String_Utils;            use String_Utils;
 
 package body Language.Tree is
 
@@ -332,7 +333,7 @@ package body Language.Tree is
    ---------
 
    function "="
-     (Left : Referenced_Identifiers_List; Right : Symbol)
+     (Left : Referenced_Identifiers_List; Right : Normalized_Symbol)
       return Boolean
    is
    begin
@@ -346,7 +347,7 @@ package body Language.Tree is
    ---------
 
    function "="
-     (Left : Symbol; Right : Referenced_Identifiers_List)
+     (Left : Normalized_Symbol; Right : Referenced_Identifiers_List)
       return Boolean
    is
    begin
@@ -1332,7 +1333,7 @@ package body Language.Tree is
    --------------------
 
    function Get_Identifier
-     (It : Construct_Tree_Iterator) return Symbol is
+     (It : Construct_Tree_Iterator) return Normalized_Symbol is
    begin
       return It.Node.Id;
    end Get_Identifier;
@@ -1362,12 +1363,12 @@ package body Language.Tree is
    --------------------
 
    function Get_Identifier
-     (Ref : Referenced_Identifiers_List) return Symbol is
+     (Ref : Referenced_Identifiers_List) return Normalized_Symbol is
    begin
       if Ref.Contents /= null then
          return Ref.Contents.Element;
       else
-         return No_Symbol;
+         return No_Normalized_Symbol;
       end if;
    end Get_Identifier;
 
@@ -1375,10 +1376,14 @@ package body Language.Tree is
    -- Analyze_Constructs_Identifiers --
    ------------------------------------
 
-   procedure Analyze_Constructs_Identifiers (Tree : Construct_Tree) is
+   procedure Analyze_Constructs_Identifiers
+     (Lang : access Language_Root'Class;
+      Tree : Construct_Tree) is
    begin
       for J in Tree.Contents'Range loop
-         Tree.Contents (J).Id := Tree.Contents (J).Construct.Name;
+         --  ??? We should store the normalized name in the construct tree
+         Tree.Contents (J).Id := Find_Normalized
+           (Lang.Symbols, Get (Tree.Contents (J).Construct.Name).all);
       end loop;
    end Analyze_Constructs_Identifiers;
 
@@ -1415,15 +1420,15 @@ package body Language.Tree is
                Tree.Contents (J).Referenced_Ids.Contents :=
                  new Referenced_Identifiers_List_Record;
                Tree.Contents (J).Referenced_Ids.Contents.Element :=
-                 Lang.Symbols.Find
-                   (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+                 Find_Normalized
+                   (Lang.Symbols, Buffer (Sloc_Start.Index .. Sloc_End.Index));
                Current_Node := Tree.Contents (J).Referenced_Ids;
             else
                Current_Node.Contents.Next.Contents :=
                  new Referenced_Identifiers_List_Record;
                Current_Node.Contents.Next.Contents.Element :=
-                 Lang.Symbols.Find
-                   (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+                 Find_Normalized
+                   (Lang.Symbols, Buffer (Sloc_Start.Index .. Sloc_End.Index));
                Current_Node := Current_Node.Contents.Next;
             end if;
 
@@ -1437,7 +1442,7 @@ package body Language.Tree is
    -----------
 
    function Match
-     (Seeked_Name, Tested_Name : Symbol;
+     (Seeked_Name, Tested_Name : Normalized_Symbol;
       Seeked_Is_Partial : Boolean)
       return Boolean
    is
@@ -1465,5 +1470,16 @@ package body Language.Tree is
          end if;
       end if;
    end Match;
+
+   ---------------------
+   -- Find_Normalized --
+   ---------------------
+
+   function Find_Normalized
+     (Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class;
+      Name    : String) return Normalized_Symbol is
+   begin
+      return Normalized_Symbol (Symbols.Find (To_Lower (Name)));
+   end Find_Normalized;
 
 end Language.Tree;

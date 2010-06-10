@@ -581,7 +581,7 @@ package body Ada_Semantic_Tree.Visibility is
 
       Clause : Entity_Access;
 
-      Entity_Id : constant Symbol :=
+      Entity_Id : constant Normalized_Symbol :=
         Get_Identifier (To_Construct_Tree_Iterator (Entity));
 
       function Is_Prefix_Of (Prefix, Full : String) return Boolean;

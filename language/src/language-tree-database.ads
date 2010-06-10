@@ -496,7 +496,7 @@ package Language.Tree.Database is
    --  Return a cursor pointing at the first element of the file database.
 
    function Get_Identifier
-     (Entity : Entity_Access) return GNATCOLL.Symbols.Symbol;
+     (Entity : Entity_Access) return Normalized_Symbol;
    pragma Inline (Get_Identifier);
    --  Return the identifier of this entity.
 

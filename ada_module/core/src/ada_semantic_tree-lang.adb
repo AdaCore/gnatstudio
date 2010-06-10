@@ -1198,18 +1198,17 @@ package body Ada_Semantic_Tree.Lang is
                      Profile : constant List_Profile :=
                        Get_List_Profile (Call_Entity, Null_Visibility_Context);
                      Formals : constant Entity_Array := Get_Formals (Profile);
-                     Looked_Name : constant Symbol :=
-                       Get_Database (File).Symbols.Find
-                       (To_Lower
+                     Looked_Name : constant String :=
+                       To_Lower
                          (Get_Name
                               (Analyzed_Expression,
-                               Data (Last (Analyzed_Expression.Tokens)))));
-                     Id : Symbol;
+                               Data (Last (Analyzed_Expression.Tokens))));
+                     Id : Normalized_Symbol;
                   begin
                      for J in Formals'Range loop
                         Id := Get_Identifier (Formals (J));
 
-                        if Looked_Name = Id then
+                        if Looked_Name = Get (Id).all then
                            return Formals (J);
                         end if;
                      end loop;

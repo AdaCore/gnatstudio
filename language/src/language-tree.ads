@@ -368,6 +368,22 @@ package Language.Tree is
    -- Identifiers --
    -----------------
 
+   type Normalized_Symbol is new GNATCOLL.Symbols.Symbol;
+   No_Normalized_Symbol : constant Normalized_Symbol :=
+     Normalized_Symbol (GNATCOLL.Symbols.No_Symbol);
+   --  A symbol that has been converted to lower case when it applies to a
+   --  case insensitive language. Showing this concept at the type level shows
+   --  whether the entity can be printed as is (a Symbol) or not (a
+   --  Normalized_Symbol).
+
+   function Find_Normalized
+     (Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class;
+      Name    : String) return Normalized_Symbol;
+   --  Normalizes Name.
+   --  ??? For now, this is specific to Ada and always converts to lower-case.
+   --  It will not work for C, and should really receive a Language parameter
+   --  in addition.
+
    type Referenced_Identifiers_List is private;
    --  This is a list of referenced datas.
 
@@ -379,17 +395,17 @@ package Language.Tree is
    --  the two lists contains the same number of elements, false otherwise.
 
    function "="
-     (Left : Referenced_Identifiers_List; Right : GNATCOLL.Symbols.Symbol)
+     (Left : Referenced_Identifiers_List; Right : Normalized_Symbol)
       return Boolean;
    --  Return true if Left contains only one element, equals to Right.
 
    function "="
-     (Left : GNATCOLL.Symbols.Symbol; Right : Referenced_Identifiers_List)
+     (Left : Normalized_Symbol; Right : Referenced_Identifiers_List)
       return Boolean;
    --  Return true if Right contains only one element, equals to Left.
 
    function Get_Identifier
-     (It : Construct_Tree_Iterator) return GNATCOLL.Symbols.Symbol;
+     (It : Construct_Tree_Iterator) return Normalized_Symbol;
    --  Return the identifier stored at this iterator location.
 
    function Get_Referenced_Identifiers
@@ -402,10 +418,12 @@ package Language.Tree is
    --  of the one given in parameter.
 
    function Get_Identifier
-     (Ref : Referenced_Identifiers_List) return GNATCOLL.Symbols.Symbol;
+     (Ref : Referenced_Identifiers_List) return Normalized_Symbol;
    --  Return the first distinct identifier of the list.
 
-   procedure Analyze_Constructs_Identifiers (Tree : Construct_Tree);
+   procedure Analyze_Constructs_Identifiers
+     (Lang : access Language_Root'Class;
+      Tree : Construct_Tree);
    --  Initialize the indentifier information of the contents of the tree.
    --  Get_Identifier needs to have this function called before.
 
@@ -418,7 +436,7 @@ package Language.Tree is
    --  before.
 
    function Match
-     (Seeked_Name, Tested_Name : GNATCOLL.Symbols.Symbol;
+     (Seeked_Name, Tested_Name : Normalized_Symbol;
       Seeked_Is_Partial : Boolean)
       return Boolean;
    --  If Seeked_Is_Partial is false, return true if Seeked_Name equals
@@ -472,7 +490,7 @@ private
      (Contents => null);
 
    type Referenced_Identifiers_List_Record is record
-      Element : GNATCOLL.Symbols.Symbol;
+      Element : Normalized_Symbol;
       Next    : Referenced_Identifiers_List;
    end record;
 
@@ -483,7 +501,7 @@ private
       Parent_Index           : Natural := 0;
       Annotations            : aliased
         Construct_Annotations_Pckg.Annotation_Container;
-      Id                     : GNATCOLL.Symbols.Symbol;
+      Id                     : Normalized_Symbol;
       Referenced_Ids         : Referenced_Identifiers_List;
    end record;
 
@@ -500,7 +518,7 @@ private
    Null_Construct_Tree_Node : aliased Construct_Tree_Node :=
      (Null_Simple_Construct_Info, 0, 0, 0,
       Construct_Annotations_Pckg.Null_Annotation_Container,
-      GNATCOLL.Symbols.No_Symbol,
+      No_Normalized_Symbol,
       (Contents => null));
 
    type Construct_Tree_Iterator is record

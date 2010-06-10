@@ -955,7 +955,7 @@ package body Language.Tree.Database is
 
          Analyze_Referenced_Identifiers
            (Buffer.all, File.Lang, New_Tree);
-         Analyze_Constructs_Identifiers (New_Tree);
+         Analyze_Constructs_Identifiers (File.Lang, New_Tree);
          New_Db_Data_Tree := new Construct_Db_Data_Array
            (1 .. New_Tree.Contents'Length);
          New_Db_Data_Tree.all :=
@@ -1795,7 +1795,7 @@ package body Language.Tree.Database is
    --------------------
 
    function Get_Identifier
-     (Entity : Entity_Access) return Symbol
+     (Entity : Entity_Access) return Normalized_Symbol
    is
    begin
       return Entity.It.Node.Id;
