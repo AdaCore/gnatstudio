@@ -990,7 +990,7 @@ package body Src_Editor_Module.Editors is
       Get_Block (This, Block, Success, As_Subprogram => Subprogram);
 
       if Success then
-         return Get (Block.Name).all;
+         return Get (Block.Name, True).all;
       end if;
 
       return "";
