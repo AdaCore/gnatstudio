@@ -367,7 +367,7 @@ package body Entities.Queries is
 
    begin
       if Active (Me) then
-         Trace (Me, "Find name=" & Get (Normalized_Entity_Name).all
+         Trace (Me, "Find name=" & Get (Normalized_Entity_Name, True).all
                 & " Source=" & Display_Full_Name (Get_Filename (Source))
                 & " line=" & Line'Img & " column=" & Column'Img
                 & " check_decl=" & Check_Decl_Only'Img);
@@ -519,10 +519,14 @@ package body Entities.Queries is
       Handler         : LI_Handler := null;
       Fuzzy_Expected  : Boolean := False)
    is
-      S_Entity_Name : constant Symbol := Db.Symbols.Find (Entity_Name);
+      S_Entity_Name : Symbol := No_Symbol;
       H       : LI_Handler := Handler;
       Updated : Source_File;
    begin
+      if Entity_Name /= "" then
+         S_Entity_Name := Db.Symbols.Find (Entity_Name);
+      end if;
+
       if Active (Me) then
          if Source /= null then
             Trace (Me, "Find_Declaration entity=" & Entity_Name
