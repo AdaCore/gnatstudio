@@ -2939,7 +2939,7 @@ package body Entities.Queries is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Name                  : String := "")
    is
-      S_Name : constant Symbol := File.Db.Symbols.Find (Name);
+      S_Name : Symbol;
       UEI : Entity_Informations;
    begin
       Update_Xref (File, File_Has_No_LI_Report);
@@ -2951,18 +2951,20 @@ package body Entities.Queries is
          UEI := Get_Element (Iter.SIter);
 
          Get_First (File.All_Entities, Iter.Iter);
+         Iter.Name := No_Symbol;
 
       else
+         S_Name := File.Db.Symbols.Find (Name);
          UEI := Get (File.Entities,
                      (Str => S_Name,
                       Case_Sensitive => Iter.Case_Sensitive));
+         Iter.Name := S_Name;
       end if;
 
       if UEI /= null then
          Iter.EL := UEI.List;
       end if;
 
-      Iter.Name := S_Name;
       Iter.File := File;
       Iter.Index_In_EL := Entity_Information_Arrays.First;
       Iter.Processing_Entities := True;
