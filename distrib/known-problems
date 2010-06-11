@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J610-025: "Use exec dir" broken when running executables in the debugger
+  Problem:    When using the Debug->Run... menu to launch executables in
+              the debugger, the checkbox "use exec dir instead of current dir"
+              has no effect.
+  Workaround: Use the command "cd" in the debugger console to change the
+              current working directory
+
 - J528-029: Potential source editor corruption with block folding and undo/redo
   Problem:    When using block folding, if an undo/redo operation affects the
               contents of a folded block, the operation might cause loss of
