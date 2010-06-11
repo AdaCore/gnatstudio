@@ -1303,7 +1303,7 @@ package body GVD_Module is
             if Use_Exec_Dir then
                Change_Directory
                  (Process.Debugger,
-                  Process.Descriptor.Program);
+                  Process.Descriptor.Program.Dir);
             end if;
 
             if Is_Start then
