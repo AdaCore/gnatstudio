@@ -32,7 +32,8 @@ with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Std_Entities;    use Ada_Semantic_Tree.Std_Entities;
 
 package body Ada_Semantic_Tree.Declarations is
-   Me : constant Trace_Handle := Create ("Declarations");
+
+   Me : constant Trace_Handle := Create ("Declarations", Off);
 
    use Token_List;
 
