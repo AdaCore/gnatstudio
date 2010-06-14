@@ -219,9 +219,9 @@ package body Refactoring.Services is
       Result : Unbounded_String;
       Decl   : constant String := To_String (Self.Decl);
       Index  : Natural := Decl'First;
-      Last   : Natural := Self.Equal_Loc - 1;
+      Last   : Integer := Self.Equal_Loc - 1;
    begin
-      Append (Result, Get (Get_Name (Self.Entity)).all & " : ");
+      Append (Result, Get (Get_Name (Self.Entity), True).all & " : ");
 
       case PType is
          when Out_Parameter =>
@@ -250,6 +250,10 @@ package body Refactoring.Services is
 
       if PType = Access_Parameter then
          Skip_Keyword (Decl, Index, "access");
+      end if;
+
+      if Last <= 0 then
+         Last := Decl'Last;
       end if;
 
       Skip_Blanks (Decl, Last, Step => -1);
@@ -284,9 +288,11 @@ package body Refactoring.Services is
    begin
       if Entity /= null then
          EDecl  := Get_Declaration_Of (Entity);
+
          Struct := Get_Or_Create
            (Db   => Context.Construct_Db,
             File => Get_Filename (EDecl.File));
+         Update_Contents (Struct);
 
          if Struct /= null then
             return Find_Declaration
