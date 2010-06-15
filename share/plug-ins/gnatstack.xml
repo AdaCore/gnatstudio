@@ -1,5 +1,5 @@
 <GPS>
-  <!--  Support for run GNATStack as build target  -->
+  <!--  Support for running GNATStack as a build target  -->
 
   <target-model name="gnatstack" category="">
     <description>Run GNATStack for analysis</description>
