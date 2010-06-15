@@ -64,7 +64,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001-2009, AdaCore
+Copyright @copyright{} 2001-2010, AdaCore
 
 @menu
 * Introduction::
