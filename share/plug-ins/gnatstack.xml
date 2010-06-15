@@ -1,0 +1,29 @@
+<GPS>
+  <!--  Support for run GNATStack as build target  -->
+
+  <target-model name="gnatstack" category="">
+    <description>Run GNATStack for analysis</description>
+    <command-line>
+      <arg>gnat</arg>
+      <arg>stack</arg>
+      <arg>-x</arg>
+      <arg>-Wa</arg>
+      <arg>-P%PP</arg>
+    </command-line>
+    <switches>
+    </switches>
+  </target-model>
+
+  <target model="gnatstack" category="GNATStack" name="Run GNATStack">
+    <in-toolbar>FALSE</in-toolbar>
+    <in-menu>FALSE</in-menu>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <command-line>
+      <arg>gnat</arg>
+      <arg>stack</arg>
+      <arg>-x</arg>
+      <arg>-Wa</arg>
+      <arg>-P%PP</arg>
+    </command-line>
+  </target>
+</GPS>
