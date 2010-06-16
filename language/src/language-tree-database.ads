@@ -96,12 +96,6 @@ package Language.Tree.Database is
       Old_Tree, New_Tree : Construct_Tree;
       Callback           : Diff_Callback);
 
-   type Unknown_Tree_Language is new Tree_Language with private;
-
-   overriding function Get_Language
-     (Tree : access Unknown_Tree_Language) return Language_Access;
-   --  See inherited documentation
-
    function Find_Declaration
      (Lang     : access Tree_Language;
       File     : Structured_File_Access;
@@ -142,6 +136,18 @@ package Language.Tree.Database is
       Entity : Entity_Access) return Entity_Access;
    --  Find the next part of the entity given in parameter if there is any.
    --  By default, return Entity.
+
+   type Unknown_Tree_Language is new Tree_Language with private;
+
+   overriding function Get_Language
+     (Tree : access Unknown_Tree_Language) return Language_Access;
+   --  See inherited documentation
+
+   overriding function Find_Reference_Details
+     (Lang    : access Unknown_Tree_Language;
+      File    : Structured_File_Access;
+      Index   : String_Index_Type) return Entity_Reference_Details;
+   --  See inherited documentation
 
    Unknown_Tree_Lang : constant Tree_Language_Access;
 
@@ -278,7 +284,7 @@ package Language.Tree.Database is
       Line   : Integer;
       Column : Visible_Column_Type) return String_Index_Type;
    --  Return the offset from the beginning of the file, according to Line and
-   --  Column in File, considering that the line is a string starting at 1.
+   --  Column in File, considering that the file is a string starting at 1.
 
    procedure To_Line_Column
      (File                 : Structured_File_Access;
@@ -679,11 +685,6 @@ private
    --     <-  here is the offset
 
    type Unknown_Tree_Language is new Tree_Language with null record;
-
-   overriding function Find_Reference_Details
-     (Lang    : access Unknown_Tree_Language;
-      File    : Structured_File_Access;
-      Index   : String_Index_Type) return Entity_Reference_Details;
 
    Unknown_Tree_Lang : constant Tree_Language_Access :=
      new Unknown_Tree_Language;
