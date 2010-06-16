@@ -644,7 +644,8 @@ package body Ada_Analyzer is
    ------------------------
 
    SPARK_Keywords : constant Pattern_Matcher := Compile
-                     ("^(a(bs|nd|ssert)|check|derives|e(lse|nd)|from|global|" &
+                     ("^(a(bs|ll|nd|ssert)|check|derives|e(lse|nd)|" &
+                      "f(or|rom)|global|" &
                       "h(ide|old)|in|in(herit|itializes|variant)|" &
                       "main_program|not|o(r|wn|thers)|post|pre|some|" &
                       "a(ccept|re_interchangeable|s|ssume)|const|div|" &
@@ -652,7 +653,7 @@ package body Ada_Analyzer is
                       "last|may_be_(deduced|deduced_from|" &
                       "replaced_by)|no(n(first|last)|t_in)|o(dd|ut)|" &
                       "p(ending|red|roof)|re(al|quires|turn|m)|s(ave|" &
-                      "e(quence|t)|qr|t(art|rict_subset_of)|" &
+                      "e(quence|t)|ome|qr|t(art|rict_subset_of)|" &
                       "u(bset_of|cc))|then|update|var|where|xor|fld_.*|" &
                       "upf_.*)$");
    --  Regular expression for SPARK keywords
