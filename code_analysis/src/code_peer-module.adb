@@ -19,7 +19,6 @@
 
 with Ada.Characters.Handling;
 with Ada.Text_IO;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Input_Sources.File;
 
@@ -1911,17 +1910,18 @@ package body Code_Peer.Module is
       Submenu_Factory    : GPS.Kernel.Modules.Submenu_Factory;
       Menu               : constant String := -"/_CodePeer";
       Advanced_Menu      : constant String := Menu & (-"/Advanced");
-      Str                : String_Access := Locate_Exec_On_Path ("codepeer");
+      Codepeer           : constant Virtual_File :=
+                             Locate_On_Path ("codepeer");
       Mitem              : Gtk.Menu_Item.Gtk_Menu_Item;
 
    begin
-      if Str = null then
+      if Codepeer = No_File then
          --  Do not register the CodePeer module if the codepeer executable
          --  cannot be found.
+
          return;
       end if;
 
-      Free (Str);
       Module          := new Module_Id_Record (Kernel);
       Submenu_Factory := new Submenu_Factory_Record (Module);
 
