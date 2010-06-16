@@ -90,7 +90,13 @@ package body GNATStack.Readers is
 
    begin
       Self.Pop;
-      Self.State.Location.Column := Value;
+
+      if Self.State.Kind = Location_State then
+         Self.State.Location.Column := Value;
+
+      elsif Self.State.Kind = Unbounded_Object_State then
+         Self.State.Object.Column := Value;
+      end if;
    end Analyze_column_End_Tag;
 
    ------------------------------
@@ -101,7 +107,9 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Assert (Self.State.Kind = Location_State);
+      pragma Assert
+        (Self.State.Kind = Location_State
+           or else Self.State.Kind = Unbounded_Object_State);
       pragma Assert (Attributes.Get_Value ("type") = "integers");
 
    begin

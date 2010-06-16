@@ -54,9 +54,10 @@ package GNATStack.Readers is
    end record;
 
    type Object_Information is record
-      Name : Ada.Strings.Unbounded.Unbounded_String;
-      File : Ada.Strings.Unbounded.Unbounded_String;
-      Line : Positive;
+      Name   : Ada.Strings.Unbounded.Unbounded_String;
+      File   : Ada.Strings.Unbounded.Unbounded_String;
+      Line   : Positive;
+      Column : Positive;
    end record;
 
    package Object_Information_Vectors is
