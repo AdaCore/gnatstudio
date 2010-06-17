@@ -578,8 +578,8 @@ package GPS.Editors is
    --  the range, it just has no effect in that case
 
    overriding function "="
-     (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean
-     is abstract;
+     (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean;
+   --     is abstract; --  ??? workaround, for J617-004
    --  Compare two buffers. Since an Editor_Buffer is just a wrapper and we
    --  recreate as many of them as we need even for the same widget
    --  object, we do the comparison on the widget itself.

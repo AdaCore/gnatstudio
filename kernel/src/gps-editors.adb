@@ -19,6 +19,19 @@
 
 package body GPS.Editors is
 
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean is
+   begin
+      --  ??? this body is provided so that the type is correctly bound to
+      --  java, waiting for J617-004 to be removed
+      raise Program_Error with "Not implemented";
+      return False;
+   end "=";
+
    --  Dummy bodies for implementation of Nil values.
 
    overriding function Beginning_Of_Line
