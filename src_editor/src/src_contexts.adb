@@ -55,6 +55,7 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Styles;                 use GPS.Styles;
+with GPS.Styles.UI;              use GPS.Styles.UI;
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;

@@ -25,7 +25,7 @@ with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with Language;         use Language;
-with GPS.Styles; use GPS.Styles;
+with GPS.Styles;       use GPS.Styles;
 
 package GPS.Editors is
 

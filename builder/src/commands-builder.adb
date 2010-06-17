@@ -40,6 +40,7 @@ with GPS.Kernel.Messages.Legacy;       use GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Styles;                       use GPS.Styles;
+with GPS.Styles.UI;                    use GPS.Styles.UI;
 with GPS.Intl;                         use GPS.Intl;
 with Traces;                           use Traces;
 with Basic_Types;                      use Basic_Types;

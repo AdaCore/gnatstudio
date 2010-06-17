@@ -48,6 +48,7 @@ package body GPS.Kernel.Messages is
    use GPS.Kernel.Hooks;
    use GPS.Kernel.Project;
    use GPS.Styles;
+   use GPS.Styles.UI;
    use Listener_Vectors;
    use Node_Vectors;
    use Note_Maps;
@@ -488,7 +489,7 @@ package body GPS.Kernel.Messages is
 
    function Get_Highlighting_Style
      (Self : not null access constant Abstract_Message'Class)
-      return GPS.Styles.Style_Access is
+      return GPS.Styles.UI.Style_Access is
    begin
       return Self.Style;
    end Get_Highlighting_Style;
@@ -1847,7 +1848,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
-      Style  : GPS.Styles.Style_Access;
+      Style  : GPS.Styles.UI.Style_Access;
       Length : Positive) is
    begin
       Self.Style := Style;
@@ -1863,7 +1864,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self  : not null access Abstract_Message'Class;
-      Style : GPS.Styles.Style_Access) is
+      Style : GPS.Styles.UI.Style_Access) is
    begin
       Self.Style := Style;
       Self.Length := 0;

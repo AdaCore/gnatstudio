@@ -41,6 +41,7 @@ with Commands.Controls;  use Commands.Controls;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with GPS.Styles;         use GPS.Styles;
+with GPS.Styles.UI;      use GPS.Styles.UI;
 with GPS.Kernel;         use GPS.Kernel;
 with Generic_List;
 with HTables;

@@ -22,7 +22,8 @@
 
 with String_Hash;
 
-with GPS.Styles; use GPS.Styles;
+with GPS.Styles;    use GPS.Styles;
+with GPS.Styles.UI; use GPS.Styles.UI;
 
 package GPS.Kernel.Styles is
 

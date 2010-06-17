@@ -39,6 +39,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    use GPS.Kernel.Preferences;
    use GPS.Kernel.Styles;
    use GPS.Styles;
+   use GPS.Styles.UI;
    use Node_Vectors;
    use String_Utils;
 
@@ -72,7 +73,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
       Weight             : Natural;
-      Highlight_Category : GPS.Styles.Style_Access;
+      Highlight_Category : GPS.Styles.UI.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean)
    is
@@ -267,9 +268,9 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text               : UTF8_String;
       Category           : Glib.UTF8_String;
       Highlight          : Boolean := False;
-      Highlight_Category : GPS.Styles.Style_Access := null;
-      Style_Category     : GPS.Styles.Style_Access := null;
-      Warning_Category   : GPS.Styles.Style_Access := null)
+      Highlight_Category : GPS.Styles.UI.Style_Access := null;
+      Style_Category     : GPS.Styles.UI.Style_Access := null;
+      Warning_Category   : GPS.Styles.UI.Style_Access := null)
    is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -298,9 +299,9 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text                    : UTF8_String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : GPS.Styles.Style_Access := null;
-      Style_Category          : GPS.Styles.Style_Access := null;
-      Warning_Category        : GPS.Styles.Style_Access := null;
+      Highlight_Category      : GPS.Styles.UI.Style_Access := null;
+      Style_Category          : GPS.Styles.UI.Style_Access := null;
+      Warning_Category        : GPS.Styles.UI.Style_Access := null;
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
       Line_Index_In_Regexp    : Integer;
@@ -394,7 +395,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Line          : Natural := 1;
       Column        : Basic_Types.Visible_Column_Type := 1;
       Weight        : Natural;
-      C             : GPS.Styles.Style_Access;
+      C             : GPS.Styles.UI.Style_Access;
 
       -----------------
       -- Get_Message --

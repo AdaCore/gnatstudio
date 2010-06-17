@@ -26,6 +26,7 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
+with GPS.Styles.UI;              use GPS.Styles.UI;
 with Traces;
 with Coverage_GUI;               use Coverage_GUI;
 

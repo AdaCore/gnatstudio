@@ -71,12 +71,13 @@ with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Styles;                    use GPS.Styles;
+with GPS.Styles.UI;                 use GPS.Styles.UI;
 with GPS.Kernel;                    use GPS.Kernel;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with XML_Utils;                     use XML_Utils;
 with Traces;                        use Traces;
-with GNATCOLL.VFS;                           use GNATCOLL.VFS;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Generic_List;
 with Ada.Strings.Fixed;
 

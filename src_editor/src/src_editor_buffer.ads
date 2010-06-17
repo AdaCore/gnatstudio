@@ -52,6 +52,7 @@ with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Styles;                use GPS.Styles;
+with GPS.Styles.UI;             use GPS.Styles.UI;
 with Language;
 with Src_Highlighting;
 

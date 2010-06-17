@@ -178,7 +178,7 @@ package body Src_Editor_Module.Messages is
    ----------
 
    function Hash
-     (Item : GPS.Styles.Style_Access) return Containers.Hash_Type is
+     (Item : GPS.Styles.UI.Style_Access) return Containers.Hash_Type is
    begin
       return Strings.Hash (Get_Name (Item));
    end Hash;

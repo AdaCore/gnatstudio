@@ -25,6 +25,7 @@ with Ada.Containers.Hashed_Maps;
 
 private with Ada.Containers.Hashed_Sets;
 private with GPS.Styles;
+private with GPS.Styles.UI;
 
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
@@ -42,12 +43,12 @@ private
    use Ada.Strings.Unbounded;
 
    function Hash
-     (Item : GPS.Styles.Style_Access) return Containers.Hash_Type;
+     (Item : GPS.Styles.UI.Style_Access) return Containers.Hash_Type;
    --  Returns hash value constructed from style's name
 
    package Style_Sets is
      new Ada.Containers.Hashed_Sets
-       (GPS.Styles.Style_Access, Hash, GPS.Styles."=");
+       (GPS.Styles.UI.Style_Access, Hash, GPS.Styles.UI."=");
 
    type Style_Set_Access is access all Style_Sets.Set;
 
