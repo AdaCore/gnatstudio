@@ -29,7 +29,9 @@ package body GPS.Styles is
      (Style : not null access Simple_Style_Record; Color : String) is
    begin
       Free (Style.Foreground);
-      Style.Foreground := new String'(Color);
+      if Color /= "" then
+         Style.Foreground := new String'(Color);
+      end if;
    end Set_Foreground;
 
    --------------------
@@ -40,8 +42,25 @@ package body GPS.Styles is
      (Style : not null access Simple_Style_Record; Color : String) is
    begin
       Free (Style.Background);
-      Style.Background := new String'(Color);
+      if Color /= "" then
+         Style.Background := new String'(Color);
+      end if;
    end Set_Background;
+
+   ---------------------
+   -- Set_Editor_Icon --
+   ---------------------
+
+   procedure Set_Editor_Icon
+     (Style : not null access Simple_Style_Record; Id : String) is
+   begin
+      Free (Style.Editor_Icon_Name);
+      if Id /= "" then
+         Style.Editor_Icon_Name := new String'(Id);
+      else
+         Style.Editor_Icon_Name := null;
+      end if;
+   end Set_Editor_Icon;
 
    --------------------
    -- Get_Background --
@@ -72,6 +91,20 @@ package body GPS.Styles is
    end Get_Foreground;
 
    ---------------------
+   -- Get_Editor_Icon --
+   ---------------------
+
+   function Get_Editor_Icon
+     (Style : not null access Simple_Style_Record) return String is
+   begin
+      if Style.Editor_Icon_Name = null then
+         return "";
+      else
+         return Style.Editor_Icon_Name.all;
+      end if;
+   end Get_Editor_Icon;
+
+   ---------------------
    -- Set_In_Speedbar --
    ---------------------
 
@@ -100,6 +133,7 @@ package body GPS.Styles is
    begin
       Free (Style.Background);
       Free (Style.Foreground);
+      Free (Style.Editor_Icon_Name);
    end Free;
 
 end GPS.Styles;

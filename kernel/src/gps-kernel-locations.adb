@@ -101,7 +101,8 @@ package body GPS.Kernel.Locations is
                Col_Index_In_Regexp     => Col_Index_In_Regexp,
                Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
                Style_Index_In_Regexp   => Style_Index_In_Regexp,
-               Warning_Index_In_Regexp => Warning_Index_In_Regexp);
+               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Show_In_Locations       => True);
          else
             GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
               (Kernel                  => Kernel,
@@ -120,7 +121,8 @@ package body GPS.Kernel.Locations is
                Col_Index_In_Regexp     => Col_Index_In_Regexp,
                Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
                Style_Index_In_Regexp   => Style_Index_In_Regexp,
-               Warning_Index_In_Regexp => Warning_Index_In_Regexp);
+               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
+               Show_In_Locations       => True);
             Free (Output);
          end if;
       end if;

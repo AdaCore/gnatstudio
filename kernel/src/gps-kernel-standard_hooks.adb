@@ -467,7 +467,8 @@ package body GPS.Kernel.Standard_Hooks is
          Length => Category'Length,
          Value  => Category,
          Quiet  => Nth_Arg (Data, 3),
-         Shadow => Nth_Arg (Data, 4));
+         Shadow => Nth_Arg (Data, 4),
+         Background => Nth_Arg (Data, 5));
    end From_Callback_Data_Compilation;
 
    ---------------------------------------------
@@ -489,7 +490,9 @@ package body GPS.Kernel.Standard_Hooks is
          Target_Name        => Target_Name,
          Mode_Name_Length   => Mode_Name'Length,
          Mode_Name          => Mode_Name,
-         Status             => Nth_Arg (Data, 5));
+         Shadow             => Nth_Arg (Data, 5),
+         Background         => Nth_Arg (Data, 6),
+         Status             => Nth_Arg (Data, 7));
    end From_Callback_Data_Compilation_Finished;
 
    ---------------------------------

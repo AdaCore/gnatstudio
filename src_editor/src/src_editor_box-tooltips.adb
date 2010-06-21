@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -56,6 +56,12 @@ package body Src_Editor_Box.Tooltips is
    type Editor_Tooltips is new Standard.Tooltips.Pixmap_Tooltips with record
       Box : Source_Editor_Box;
    end record;
+
+   procedure Draw_Content
+     (Content : Unbounded_String;
+      Widget : Source_View;
+      Pixmap : in out Gdk.Pixmap.Gdk_Pixmap);
+
    overriding procedure Draw
      (Tooltip : access Editor_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
@@ -132,6 +138,45 @@ package body Src_Editor_Box.Tooltips is
          Entity := null;
    end Get_Declaration_Info;
 
+   ------------------
+   -- Draw_Content --
+   ------------------
+
+   procedure Draw_Content
+     (Content : Unbounded_String;
+      Widget : Source_View;
+      Pixmap : in out Gdk.Pixmap.Gdk_Pixmap)
+   is
+      Layout : Pango_Layout;
+      GC : Gdk.Gdk_GC;
+      Width, Height : Gint;
+      Font          : constant Pango_Font_Description :=
+        Default_Font.Get_Pref_Font;
+   begin
+      Layout := Create_Pango_Layout (Widget, "");
+      Set_Font_Description (Layout, Font);
+      Set_Markup (Layout, To_String (Content));
+
+      Get_Pixel_Size (Layout, Width, Height);
+
+      Width := Width + 6;
+      Height := Height + 4;
+
+      Gdk_New (GC, Get_Window (Widget));
+      Set_Foreground (GC, Tooltip_Color.Get_Pref);
+
+      Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
+      Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
+
+      Set_Foreground (GC, Black (Get_Default_Colormap));
+      Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
+
+      Draw_Layout (Pixmap, GC, 2, 0, Layout);
+      Unref (Layout);
+
+      Unref (GC);
+   end Draw_Content;
+
    ----------
    -- Draw --
    ----------
@@ -141,7 +186,6 @@ package body Src_Editor_Box.Tooltips is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      use Ada.Strings.Unbounded;
       use type GNAT.Strings.String_Access;
       Box              : constant Source_Editor_Box := Tooltip.Box;
       Widget           : constant Source_View := Get_View (Tooltip.Box);
@@ -158,6 +202,7 @@ package body Src_Editor_Box.Tooltips is
       Window_Width     : Gint;
       Window_Height    : Gint;
       Window_Depth     : Gint;
+      Line_Info        : Line_Info_Width_Array_Access;
 
    begin
       Pixmap := null;
@@ -185,20 +230,15 @@ package body Src_Editor_Box.Tooltips is
            (Widget, Win_X, Mouse_Y, Line, Col, Out_Of_Bounds);
 
          declare
-            Line_Info     : constant Line_Info_Width_Array_Access :=
-                              Get_Side_Information
-                                (Box.Source_Buffer,
-                                 Buffer_Line_Type (Line + 1));
             Content       : Unbounded_String;
-            Font          : constant Pango_Font_Description :=
-                              Default_Font.Get_Pref_Font;
-            Layout        : Pango_Layout;
-            Width, Height : Gint := 0;
-            GC            : Gdk.Gdk_GC;
             Has_Info      : Boolean := False;
             Action        : Line_Information_Record;
 
          begin
+            Line_Info := Get_Side_Information
+              (Box.Source_Buffer,
+               Buffer_Line_Type (Line + 1));
+
             --  Concatenate the tooltip information for all columns
 
             if Line_Info /= null then
@@ -216,28 +256,7 @@ package body Src_Editor_Box.Tooltips is
             end if;
 
             if Has_Info then
-               Layout := Create_Pango_Layout (Widget, "");
-               Set_Font_Description (Layout, Font);
-               Set_Markup (Layout, To_String (Content));
-
-               Get_Pixel_Size (Layout, Width, Height);
-
-               Width := Width + 6;
-               Height := Height + 4;
-
-               Gdk_New (GC, Get_Window (Widget));
-               Set_Foreground (GC, Tooltip_Color.Get_Pref);
-
-               Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
-               Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
-
-               Set_Foreground (GC, Black (Get_Default_Colormap));
-               Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
-
-               Draw_Layout (Pixmap, GC, 2, 0, Layout);
-               Unref (Layout);
-
-               Unref (GC);
+               Draw_Content (Content, Widget, Pixmap);
             end if;
          end;
 
@@ -253,6 +272,10 @@ package body Src_Editor_Box.Tooltips is
 
          return;
       end if;
+
+      Line_Info := Get_Side_Information
+        (Box.Source_Buffer,
+         Buffer_Line_Type (Line + 1));
 
       Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
       Search_Entity_Bounds (Start_Iter, End_Iter);
@@ -297,6 +320,35 @@ package body Src_Editor_Box.Tooltips is
          if Pixmap /= null then
             return;
          end if;
+
+         --  If there is a message on this line, display it
+
+         for J in Line_Info'Range loop
+            declare
+               C : Message_List.Cursor;
+               Message : Message_Access;
+            begin
+               C := Line_Info (J).Messages.First;
+
+               while Message_List.Has_Element (C) loop
+                  Message := Message_List.Element (C);
+
+                  declare
+                     M : constant GPS.Editors.Editor_Mark'Class
+                       := Message.Get_Editor_Mark;
+                  begin
+                     if Col + 1 >= Gint (M.Column)
+                       and then Col + 1 <= Gint (M.Column
+                         + Message.Get_Highlighting_Length)
+                     then
+                        Draw_Content (Message.Get_Text, Widget, Pixmap);
+                        return;
+                     end if;
+                  end;
+                  Message_List.Next (C);
+               end loop;
+            end;
+         end loop;
 
          --  If the mouse is not on top of text, do not display a tooltip
 

@@ -58,6 +58,9 @@ package Commands.Builder is
       --  error found. This is useful for builds that occur on saving, or in
       --  a background mode.
 
+      Background : Boolean := False;
+      --  Whether this is a background build
+
       Shadow : Boolean := False;
       --  Whether this is a Shadow build
 
@@ -77,12 +80,13 @@ package Commands.Builder is
    --  target Name.
 
    procedure Process_Builder_Output
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : Commands.Command_Access;
-      Output  : Glib.UTF8_String;
-      Quiet   : Boolean;
-      Shadow  : Boolean;
-      Target  : String := "");
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Command    : Commands.Command_Access;
+      Output     : Glib.UTF8_String;
+      Quiet      : Boolean;
+      Shadow     : Boolean;
+      Background : Boolean;
+      Target     : String);
    --  Process the builder output: update the progress bar in Command as
    --  necessary, hide the progress output, and display the other outputs in
    --  the console. Error messages are displayed in the locations window.
@@ -115,14 +119,16 @@ package Commands.Builder is
    --  Synchronous.
 
    procedure Display_Compiler_Message
-     (Kernel  : GPS.Kernel.Kernel_Handle;
-      Message : String;
-      Shadow  : Boolean);
+     (Kernel     : GPS.Kernel.Kernel_Handle;
+      Message    : String;
+      Shadow     : Boolean;
+      Background : Boolean);
    --  Display Message
 
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;
       Shadow              : Boolean;
+      Background          : Boolean;
       Create_If_Not_Exist : Boolean;
       New_Console_Name    : String := "") return Interactive_Console;
    --  Return the console appropriate for showing compiler errors

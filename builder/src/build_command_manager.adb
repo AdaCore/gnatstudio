@@ -167,7 +167,7 @@ package body Build_Command_Manager is
 
          elsif Background
            and then not Simulate
-           and then Param = "pp"
+           and then (Param = "pp" or else Param = "PP")
          then
             return +Get_Project (Background_Env).Full_Name.all;
 
@@ -360,7 +360,6 @@ package body Build_Command_Manager is
 
       elsif Arg = "%fp" then
          if not Simulate
-           and then not Background
            and then Force_File /= No_File
          then
             --  We are launching a compile command involving Force_File:
@@ -725,10 +724,20 @@ package body Build_Command_Manager is
 
          Data := new Build_Callback_Data;
          Data.Target_Name := To_Unbounded_String (Target_Name);
-         Data.Category_Name := To_Unbounded_String (Error_Category);
+
+         if Background then
+            Data.Category_Name := To_Unbounded_String
+              (Current_Background_Build_Id);
+         else
+            Data.Category_Name :=
+              To_Unbounded_String
+                (Target_Name_To_Locations_Category (Target_Name));
+         end if;
+
          Data.Mode_Name   := To_Unbounded_String (Mode);
          Data.Quiet := Quiet;
          Data.Shadow := Shadow;
+         Data.Background := Background;
          Data.Background_Env := Background_Env;
 
          if Get_Category (T) = "CodePeer" then

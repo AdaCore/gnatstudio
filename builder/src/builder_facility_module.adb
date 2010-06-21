@@ -20,8 +20,6 @@
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-
 with Generic_Stack;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -79,6 +77,9 @@ with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 with XML_Utils;                 use XML_Utils;
 with GNAT.Directory_Operations;
+
+with Ada.Containers.Hashed_Maps;
+with Ada.Strings.Unbounded.Hash;
 
 package body Builder_Facility_Module is
 
@@ -138,6 +139,15 @@ package body Builder_Facility_Module is
    package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
 
+   package Target_Outputs is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Unbounded_String, Ada.Strings.Unbounded.Hash, "=");
+
+   type Target_Output_Type is
+     (Normal_Output, Background_Output, Shadow_Output);
+
+   type Target_Output_Array is array (Target_Output_Type) of
+     Target_Outputs.Map;
+
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
@@ -167,11 +177,7 @@ package body Builder_Facility_Module is
       --  The set of menu items that need to be removed when reloading the
       --  targets
 
-      Output     : String_List_Utils.String_List.List;
-      --  The last build output
-
-      Shadow_Output  : String_List_Utils.String_List.List;
-      --  The last build output
+      Outputs : Target_Output_Array;
 
       Build_Count : Natural := 0;
       --  The number of builds currently running
@@ -183,6 +189,9 @@ package body Builder_Facility_Module is
       Browsing_For_Mode    : Unbounded_String := Null_Unbounded_String;
       --  The mode we are currently looking for when filling the combo,
       --  set to Null_Unbounded_String if we are not browsing.
+
+      Background_Build_ID : Integer := 1;
+      --  The ID of the current background build.
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -227,6 +236,16 @@ package body Builder_Facility_Module is
    procedure On_Shadow_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Launch the shadow console
+
+   procedure On_Background_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open the background console
+
+   procedure Auxiliary_Console
+     (Kernel     : Kernel_Handle;
+      Background : Boolean;
+      Shadow     : Boolean);
+   --  Code factorization between On_Shadow_Console and On_Background_Console
 
    overriding procedure Customize
      (Module : access Builder_Module_ID_Record;
@@ -302,7 +321,8 @@ package body Builder_Facility_Module is
       Category        : String;
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
-      Shadow          : Boolean);
+      Shadow          : Boolean;
+      Background      : Boolean);
    --  Clear the compiler output, the console, and the locations view for
    --  Category.
 
@@ -493,8 +513,10 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
-      String_List_Utils.String_List.Free (Module.Shadow_Output);
-      String_List_Utils.String_List.Free (Module.Output);
+      for T in Target_Output_Type loop
+         Module.Outputs (T).Clear;
+      end loop;
+
       Free (Module.Registry);
    end Destroy;
 
@@ -762,27 +784,31 @@ package body Builder_Facility_Module is
       Category        : String;
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
-      Shadow          : Boolean)
+      Shadow          : Boolean;
+      Background      : Boolean)
    is
-      pragma Unreferenced (Category);
       Console : Interactive_Console;
    begin
       if Clear_Console then
-         Console := Get_Build_Console (Kernel, Shadow, False);
+         Console := Get_Build_Console (Kernel, Shadow, Background, False);
 
          if Console /= null then
             Clear (Console);
          end if;
       end if;
 
-      if Clear_Locations then
-         Get_Messages_Container (Kernel).Remove_Category (Error_Category);
+      if Clear_Locations
+        and then not Background
+      then
+         Get_Messages_Container (Kernel).Remove_Category (Category);
       end if;
 
       if Shadow then
-         String_List_Utils.String_List.Free (Builder_Module_ID.Shadow_Output);
+         Builder_Module_ID.Outputs (Shadow_Output).Clear;
+      elsif Background then
+         Builder_Module_ID.Outputs (Background_Output).Clear;
       else
-         String_List_Utils.String_List.Free (Builder_Module_ID.Output);
+         Builder_Module_ID.Outputs (Normal_Output).Clear;
       end if;
    end Clear_Compilation_Output;
 
@@ -829,7 +855,8 @@ package body Builder_Facility_Module is
          Clear_Console   => (not D.Quiet)
            and then (D.Shadow or else Builder_Module_ID.Build_Count = 0),
          Clear_Locations => Builder_Module_ID.Build_Count = 0,
-         Shadow          => D.Shadow);
+         Shadow          => D.Shadow,
+         Background      => D.Background);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
@@ -1716,6 +1743,44 @@ package body Builder_Facility_Module is
    end On_Project_Changed_Hook;
 
    -----------------------
+   -- Auxiliary_Console --
+   -----------------------
+
+   procedure Auxiliary_Console
+     (Kernel     : Kernel_Handle;
+      Background : Boolean;
+      Shadow     : Boolean)
+   is
+      Console : Interactive_Console := Get_Build_Console
+        (Kernel, True, False, False);
+
+      C : Target_Outputs.Cursor;
+   begin
+      if Console = null then
+         Console := Get_Build_Console (Kernel, Shadow, Background, True);
+
+         if Shadow then
+            C := Builder_Module_ID.Outputs (Shadow_Output).First;
+         elsif Background then
+            C := Builder_Module_ID.Outputs (Background_Output).First;
+         else
+            C := Builder_Module_ID.Outputs (Normal_Output).First;
+         end if;
+
+         while Target_Outputs.Has_Element (C) loop
+            Insert (Console,
+                    "***" & To_String (Target_Outputs.Key (C))
+                    & "***" & ASCII.LF
+                    & To_String (Target_Outputs.Element (C)));
+            Target_Outputs.Next (C);
+         end loop;
+
+      else
+         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+      end if;
+   end Auxiliary_Console;
+
+   -----------------------
    -- On_Shadow_Console --
    -----------------------
 
@@ -1723,27 +1788,25 @@ package body Builder_Facility_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Console : Interactive_Console := Get_Build_Console
-        (Kernel, True, False);
-      use String_List_Utils.String_List;
-      Node    : List_Node;
    begin
-      if Console = null then
-         Console := Get_Build_Console (Kernel, True, True);
-
-         Node := First (Builder_Module_ID.Shadow_Output);
-
-         while Node /= Null_Node loop
-            Insert (Console, Data (Node));
-            Node := Next (Node);
-         end loop;
-
-      else
-         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
-      end if;
+      Auxiliary_Console (Kernel, Background => False, Shadow => True);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Shadow_Console;
+
+   ---------------------------
+   -- On_Background_Console --
+   ---------------------------
+
+   procedure On_Background_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Auxiliary_Console (Kernel, Background => True, Shadow => False);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Background_Console;
 
    ---------------------
    -- Parse_Mode_Node --
@@ -2044,6 +2107,10 @@ package body Builder_Facility_Module is
                      -"_Auxiliary Builds", "",
                      On_Shadow_Console'Access);
 
+      Register_Menu (Kernel, -"/Tools/Consoles",
+                     -"_Background Builds", "",
+                     On_Background_Console'Access);
+
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Build",
@@ -2122,19 +2189,46 @@ package body Builder_Facility_Module is
    ----------------------------
 
    procedure Append_To_Build_Output
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line   : String;
-      Shadow : Boolean)
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line       : String;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean)
    is
       pragma Unreferenced (Kernel);
+
+      Inserted : Boolean := True;
+      C : Target_Outputs.Cursor;
+      T : Target_Output_Type;
+      use Target_Outputs;
    begin
       if Builder_Module_ID /= null then
          if Shadow then
-            String_List_Utils.String_List.Append
-             (Builder_Module_ID.Shadow_Output, Line);
+            T := Shadow_Output;
+
+         elsif Background then
+            T := Background_Output;
+
          else
-            String_List_Utils.String_List.Append
-              (Builder_Module_ID.Output, Line);
+            T := Normal_Output;
+         end if;
+
+         C := Builder_Module_ID.Outputs (T).Find
+           (To_Unbounded_String (Target));
+
+         if C = Target_Outputs.No_Element then
+            Builder_Module_ID.Outputs (T).Insert
+              (Key       => To_Unbounded_String (Target),
+               New_Item  => To_Unbounded_String (Line & ASCII.LF),
+               Position  => C,
+               Inserted  => Inserted);
+         else
+            declare
+               N : Unbounded_String;
+            begin
+               N := Element (C) & Line & ASCII.LF;
+               Builder_Module_ID.Outputs (T).Replace_Element (C, N);
+            end;
          end if;
       end if;
    end Append_To_Build_Output;
@@ -2144,12 +2238,20 @@ package body Builder_Facility_Module is
    ----------------------
 
    function Get_Build_Output
-     (Shadow : Boolean) return String_List_Utils.String_List.List is
+     (Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean) return Unbounded_String
+   is
    begin
       if Shadow then
-         return Builder_Module_ID.Shadow_Output;
+         return Builder_Module_ID.Outputs (Shadow_Output).Element
+           (To_Unbounded_String (Target));
+      elsif Background then
+         return Builder_Module_ID.Outputs (Background_Output).Element
+           (To_Unbounded_String (Target));
       else
-         return Builder_Module_ID.Output;
+         return Builder_Module_ID.Outputs (Normal_Output).Element
+           (To_Unbounded_String (Target));
       end if;
    end Get_Build_Output;
 
@@ -2470,5 +2572,38 @@ package body Builder_Facility_Module is
          Next (Model, Iter);
       end loop;
    end Set_Mode;
+
+   ----------------------------------
+   -- Previous_Background_Build_Id --
+   ----------------------------------
+
+   function Previous_Background_Build_Id return String is
+   begin
+      return Integer'Image (Builder_Module_ID.Background_Build_ID - 1);
+   end Previous_Background_Build_Id;
+
+   ---------------------------------
+   -- Current_Background_Build_Id --
+   ---------------------------------
+
+   function Current_Background_Build_Id return String is
+   begin
+      return Integer'Image (Builder_Module_ID.Background_Build_ID);
+   end Current_Background_Build_Id;
+
+   -------------------------------
+   -- Background_Build_Finished --
+   -------------------------------
+
+   procedure Background_Build_Finished is
+   begin
+      if Builder_Module_ID.Background_Build_ID = Integer'Last then
+         --  Very very unlikely, but just in case.
+         Builder_Module_ID.Background_Build_ID := 1;
+      else
+         Builder_Module_ID.Background_Build_ID :=
+           Builder_Module_ID.Background_Build_ID + 1;
+      end if;
+   end Background_Build_Finished;
 
 end Builder_Facility_Module;

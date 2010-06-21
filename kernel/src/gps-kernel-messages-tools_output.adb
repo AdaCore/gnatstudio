@@ -26,6 +26,8 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Styles;
 with String_Utils;
+with GPS.Editors; use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body GPS.Kernel.Messages.Tools_Output is
 
@@ -65,7 +67,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    -- Add_Tool_Message --
    ----------------------
 
-   procedure Add_Tool_Message
+   function Add_Tool_Message
      (Container          : not null access Messages_Container'Class;
       Category           : String;
       File               : GNATCOLL.VFS.Virtual_File;
@@ -75,7 +77,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Weight             : Natural;
       Highlight_Category : GPS.Styles.UI.Style_Access;
       Length             : Natural;
-      Look_For_Secondary : Boolean)
+      Look_For_Secondary : Boolean;
+      Show_In_Locations  : Boolean) return Message_Access
    is
       Locs                   : Locations_List.List;
       Loc                    : Location;
@@ -83,6 +86,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Has_Secondary_Location : Boolean := False;
       Highlight_Style        : Style_Access;
 
+      Returned               : Message_Access;
    begin
       --  Looking for existent message
 
@@ -114,7 +118,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                     and then Message.Column = Column
                     and then Message.Get_Text = Text
                   then
-                     return;
+                     return null;
                   end if;
 
                   Next (Message_Position);
@@ -156,7 +160,9 @@ package body GPS.Kernel.Messages.Tools_Output is
                       Column,
                       Text,
                       Weight,
-                      (Editor_Side => True, Locations => True)));
+                      (Editor_Side => True,
+                       Locations   => Show_In_Locations)));
+            Returned := Primary;
 
             if Highlight_Category /= null then
                Highlight_Style :=
@@ -186,12 +192,14 @@ package body GPS.Kernel.Messages.Tools_Output is
                Text,
                Loc.First,
                Loc.Last,
-               (Editor_Side => True, Locations => True));
+               (Editor_Side => True, Locations => Show_In_Locations));
             Node := Next (Node);
          end loop;
 
          Free (Locs);
       end;
+
+      return Returned;
    end Add_Tool_Message;
 
    -----------------------
@@ -270,7 +278,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Highlight          : Boolean := False;
       Highlight_Category : GPS.Styles.UI.Style_Access := null;
       Style_Category     : GPS.Styles.UI.Style_Access := null;
-      Warning_Category   : GPS.Styles.UI.Style_Access := null)
+      Warning_Category   : GPS.Styles.UI.Style_Access := null;
+      Show_In_Locations  : Boolean := True)
    is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -287,7 +296,8 @@ package body GPS.Kernel.Messages.Tools_Output is
          -1,
          -1,
          -1,
-         -1);
+         -1,
+         Show_In_Locations => Show_In_Locations);
    end Parse_File_Locations;
 
    --------------------------
@@ -308,7 +318,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Col_Index_In_Regexp     : Integer;
       Msg_Index_In_Regexp     : Integer;
       Style_Index_In_Regexp   : Integer;
-      Warning_Index_In_Regexp : Integer)
+      Warning_Index_In_Regexp : Integer;
+      Show_In_Locations       : Boolean)
    is
       function Get_File_Location return GNAT.Regpat.Pattern_Matcher;
       --  Return the pattern matcher for the file location
@@ -395,6 +406,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       Line          : Natural := 1;
       Column        : Basic_Types.Visible_Column_Type := 1;
       Weight        : Natural;
+
+      Length        : Natural;
       C             : GPS.Styles.UI.Style_Access;
 
       -----------------
@@ -411,7 +424,16 @@ package body GPS.Kernel.Messages.Tools_Output is
          end if;
       end Get_Message;
 
+      Message : Message_Access;
+      Action  : Action_Item;
+
    begin
+      if Show_In_Locations then
+         Length := 0;
+      else
+         Length := 2;
+      end if;
+
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
 
@@ -451,7 +473,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                Last := Matched (Col_Index).Last;
                Column := Basic_Types.Visible_Column_Type'Value
                  (Text (Matched (Col_Index).First ..
-                            Matched (Col_Index).Last));
+                    Matched (Col_Index).Last));
 
                if Column <= 0 then
                   Column := 1;
@@ -473,20 +495,41 @@ package body GPS.Kernel.Messages.Tools_Output is
                Weight := 0;
             end if;
 
-            Add_Tool_Message
-              (Get_Messages_Container (Kernel),
-               Glib.Convert.Escape_Text (Category),
-               Create
-                 (+Text (Matched
-                  (File_Index).First .. Matched (File_Index).Last),
-                  Kernel),
-               Positive (Line),
-               Column,
-               Get_Message (Last),
-               Weight,
-               C,
-               0,
-               True);
+            declare
+               Msg : constant String := Get_Message (Last);
+            begin
+               Action := new Line_Information_Record;
+               if C /= null then
+                  Action.Image := Get_Editor_Icon (C);
+               end if;
+               Action.Tooltip_Text := new String'(Msg);
+
+               if not Show_In_Locations then
+                  C := GPS.Styles.UI.Builder_Background_Style;
+               end if;
+
+               Message := Add_Tool_Message
+                 (Get_Messages_Container (Kernel),
+                  Glib.Convert.Escape_Text (Category),
+                  Create
+                    (+Text (Matched
+                     (File_Index).First .. Matched (File_Index).Last),
+                     Kernel),
+                  Positive (Line),
+                  Column,
+                  Get_Message (Last),
+                  Weight,
+                  C,
+                  Length,
+                  True,
+                  Show_In_Locations);
+
+               if Message /= null then
+                  Message.Set_Action (Action);
+               else
+                  Free (Action.all);
+               end if;
+            end;
          end if;
 
          Start := Real_Last + 1;

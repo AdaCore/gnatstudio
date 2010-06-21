@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Gtk.Enums;  use Gtk.Enums;
+
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 with Traces; use Traces;
@@ -32,6 +34,24 @@ package body GPS.Styles.UI is
    procedure Allocate_Color
      (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC);
    --  Allocates the low-level structures for Color.
+
+   function Get_A_Widget return Gtk_Widget;
+   --  Return a widget for purposes of getting the current style
+
+   ------------------
+   -- Get_A_Widget --
+   ------------------
+
+   function Get_A_Widget return Gtk_Widget is
+      Widget  : Gtk_Widget;
+      Tops    : Gtk.Widget.Widget_List.Glist;
+
+   begin
+      Tops := List_Toplevels;
+      Widget := Widget_List.Get_Data (Tops);
+      Widget_List.Free (Tops);
+      return Widget;
+   end Get_A_Widget;
 
    --------------------
    -- Allocate_Color --
@@ -82,7 +102,7 @@ package body GPS.Styles.UI is
       Set_Foreground (GC, Color);
    end Allocate_Color;
 
-----------
+   ----------
    -- Free --
    ----------
 
@@ -138,7 +158,9 @@ package body GPS.Styles.UI is
    function Get_Background_GC
      (Style : not null access Style_Record) return Gdk.GC.Gdk_GC is
    begin
-      if Style.Bg_GC = null then
+      if Style.Bg_GC = null
+        and then Style.Background /= null
+      then
          Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
       end if;
 
@@ -152,7 +174,9 @@ package body GPS.Styles.UI is
    function Get_Background_Color
      (Style : not null access Style_Record) return Gdk_Color is
    begin
-      if Style.Bg_GC = null then
+      if Style.Bg_GC = null
+        and then Style.Background /= null
+      then
          Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
       end if;
 
@@ -173,5 +197,29 @@ package body GPS.Styles.UI is
 
       return "";
    end Get_Name;
+
+   ---------------------
+   -- Get_Editor_Icon --
+   ---------------------
+
+   function Get_Editor_Icon
+     (Style  : not null access Style_Record) return Gdk_Pixbuf
+   is
+      Widget : Gtk_Widget;
+   begin
+      if Style.Editor_Icon_Name /= null
+        and then Style.Editor_Icon = Null_Pixbuf
+      then
+         Widget := Get_A_Widget;
+         if Widget /= null
+           and then Realized_Is_Set (Widget)
+         then
+            Style.Editor_Icon := Render_Icon
+              (Widget, Style.Editor_Icon_Name.all, Icon_Size_Menu);
+         end if;
+      end if;
+
+      return Style.Editor_Icon;
+   end Get_Editor_Icon;
 
 end GPS.Styles.UI;

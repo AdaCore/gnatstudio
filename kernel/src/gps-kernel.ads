@@ -787,7 +787,8 @@ package GPS.Kernel is
      (Handle   : access Kernel_Handle_Record;
       Category : String;
       Quiet    : Boolean;
-      Shadow   : Boolean) return Boolean;
+      Shadow   : Boolean;
+      Background : Boolean) return Boolean;
    --  Runs the "compilation_starting" hook.
    --  The Category corresponds to the location/highlighting category that
    --  will contain the compilation output.
@@ -800,6 +801,8 @@ package GPS.Kernel is
       Category    : String;
       Target_Name : String;
       Mode_Name   : String;
+      Shadow      : Boolean;
+      Background  : Boolean;
       Status      : Integer);
    --  Runs the "compilation_finished" hook
    --  The Category corresponds to the location/highlighting category that

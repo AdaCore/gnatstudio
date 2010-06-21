@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -106,8 +106,8 @@
 with GNAT.OS_Lib;
 with GPS.Kernel;
 with Build_Configurations;
-with String_List_Utils;
 with Remote;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
@@ -118,17 +118,19 @@ package Builder_Facility_Module is
    --  Register the module
 
    procedure Append_To_Build_Output
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line   : String;
-      Shadow : Boolean);
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line       : String;
+      Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean);
    --  Register Line as part of the current compilation output
    --  Shadow indicates whether to add it to the normal or the shadow output
 
    function Get_Build_Output
-     (Shadow : Boolean) return String_List_Utils.String_List.List;
+     (Target     : String;
+      Shadow     : Boolean;
+      Background : Boolean) return Unbounded_String;
    --  Return the last build output.
-   --  User should not free the result nor store a pointer to the result, as
-   --  this might get invalidated as soon as a new compilation starts.
    --  Shadow indicates whether to get the normal or the shadow output
 
    function Get_Mains
@@ -179,6 +181,24 @@ package Builder_Facility_Module is
    procedure Set_Mode (Mode : String);
    --  Set the mode to Mode. If Mode does not correspond to a registered mode,
    --  do nothing.
+
+   --------------------------
+   -- Background build ids --
+   --------------------------
+
+   --  For background builds, we do not want to erase the messages of build N-1
+   --  until the end of build N, since that would create annoying highlighting
+   --  removal and additions as the user types. To support this we introduce
+   --  the notion of background build ID.
+
+   function Previous_Background_Build_Id return String;
+   --  Return the ID of the previous background build
+
+   function Current_Background_Build_Id return String;
+   --  Return the ID of the current background build
+
+   procedure Background_Build_Finished;
+   --  Inform the module that a background build has finished
 
    procedure Save_Targets;
    procedure Load_Targets;

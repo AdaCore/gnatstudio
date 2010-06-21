@@ -34,6 +34,8 @@ package GPS.Styles is
    type Simple_Style_Record is tagged limited record
       Foreground : GNAT.Strings.String_Access;
       Background : GNAT.Strings.String_Access;
+
+      Editor_Icon_Name : GNAT.Strings.String_Access;
       Speedbar   : Boolean := False;
    end record;
 
@@ -47,11 +49,18 @@ package GPS.Styles is
    --  Set the foreground or background color for Style. Color must be a
    --  recognized color. (Either a simple color, or "#RRGGBB");
 
+   procedure Set_Editor_Icon
+     (Style : not null access Simple_Style_Record; Id : String);
+   --  Set the icon to use to represent this style in the side of editors
+
    function Get_Foreground
      (Style : not null access Simple_Style_Record) return String;
    function Get_Background
      (Style : not null access Simple_Style_Record) return String;
    --  Return the background color used for the style
+   function Get_Editor_Icon
+     (Style : not null access Simple_Style_Record) return String;
+   --  Return the editor icon id used for the style
 
    procedure Set_In_Speedbar
      (Style       : not null access Simple_Style_Record;

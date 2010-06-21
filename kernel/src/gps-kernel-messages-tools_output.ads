@@ -31,7 +31,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Highlight               : Boolean := False;
       Highlight_Category      : GPS.Styles.UI.Style_Access := null;
       Style_Category          : GPS.Styles.UI.Style_Access := null;
-      Warning_Category        : GPS.Styles.UI.Style_Access := null);
+      Warning_Category        : GPS.Styles.UI.Style_Access := null;
+      Show_In_Locations       : Boolean := True);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
@@ -52,7 +53,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Col_Index_In_Regexp     : Integer;
       Msg_Index_In_Regexp     : Integer;
       Style_Index_In_Regexp   : Integer;
-      Warning_Index_In_Regexp : Integer);
+      Warning_Index_In_Regexp : Integer;
+      Show_In_Locations       : Boolean);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
@@ -62,10 +64,11 @@ package GPS.Kernel.Messages.Tools_Output is
    --  The default blank value will matches locations reported by gcc or GNAT,
    --  ie "file:line:column message". The various index parameters indicate the
    --  relevant parenthesis pair in the regexp.
-
+   --  If Show_In_Locations is True, show the messages in the Locations view,
+   --  otherwise show messages only in the editors.
    --  Subprograms below is intended to be used only by scripting engine
 
-   procedure Add_Tool_Message
+   function Add_Tool_Message
      (Container          : not null access Messages_Container'Class;
       Category           : String;
       File               : GNATCOLL.VFS.Virtual_File;
@@ -75,9 +78,11 @@ package GPS.Kernel.Messages.Tools_Output is
       Weight             : Natural;
       Highlight_Category : GPS.Styles.UI.Style_Access;
       Length             : Natural;
-      Look_For_Secondary : Boolean);
+      Look_For_Secondary : Boolean;
+      Show_In_Locations  : Boolean) return Message_Access;
    --  Looking for same message in the messages container and add it into the
    --  container when it is not exists. If secondary locations is detected in
    --  the message when add messages for all detected locations.
+   --  If we have added messages, return the primary message inserted.
 
 end GPS.Kernel.Messages.Tools_Output;

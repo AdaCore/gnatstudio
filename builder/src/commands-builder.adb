@@ -25,6 +25,7 @@ with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 with GNAT.Expect;                      use GNAT.Expect;
 with GNAT.Regpat;                      use GNAT.Regpat;
 with GNAT.String_Split;                use GNAT.String_Split;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;                  use GNAT.Expect.TTY;
 pragma Warnings (On);
@@ -63,8 +64,10 @@ package body Commands.Builder is
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
+      Target           : String;
       Shadow           : Boolean;
-      Quiet            : Boolean);
+      Quiet            : Boolean;
+      Background       : Boolean);
    --  Parse the output of build engine and insert the result
    --    - in the GPS results view if it corresponds to a file location
    --    - in the GPS console if it is a general message.
@@ -107,6 +110,7 @@ package body Commands.Builder is
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;
       Shadow              : Boolean;
+      Background          : Boolean;
       Create_If_Not_Exist : Boolean;
       New_Console_Name    : String := "") return Interactive_Console is
    begin
@@ -122,7 +126,17 @@ package body Commands.Builder is
             Accept_Input        => True);
       end if;
 
-      if Shadow then
+      if Background then
+         return Create_Interactive_Console
+           (Kernel              => Kernel,
+            Title               => -"Background Builds",
+            History             => "interactive",
+            Create_If_Not_Exist => Create_If_Not_Exist,
+            Module              => null,
+            Force_Create        => False,
+            Accept_Input        => False);
+
+      elsif Shadow then
          return Create_Interactive_Console
            (Kernel              => Kernel,
             Title               => -"Auxiliary Builds",
@@ -141,13 +155,14 @@ package body Commands.Builder is
    ------------------------------
 
    procedure Display_Compiler_Message
-     (Kernel  : Kernel_Handle;
-      Message : String;
-      Shadow  : Boolean)
+     (Kernel     : GPS.Kernel.Kernel_Handle;
+      Message    : String;
+      Shadow     : Boolean;
+      Background : Boolean)
    is
       Console : Interactive_Console;
    begin
-      Console := Get_Build_Console (Kernel, Shadow, False);
+      Console := Get_Build_Console (Kernel, Shadow, Background, False);
 
       if Console /= null then
          Insert (Console, Message, Add_LF => False);
@@ -168,11 +183,22 @@ package body Commands.Builder is
 
       if Category_Count (Data.Kernel, Error_Category) = 0
         and then Status /= 0
+        and then not Build_Data.Background
       then
          Console.Raise_Console (Data.Kernel);
       end if;
 
       Destroy (Build_Data.Background_Env);
+
+      if Build_Data.Background then
+         --  We remove the previous background build data messages only when
+         --  the new background build is completed.
+
+         Get_Messages_Container (Data.Kernel).Remove_Category
+           (Previous_Background_Build_Id);
+
+         Background_Build_Finished;
+      end if;
 
       --  ??? should also pass the Status value to Compilation_Finished
       --  and to the corresponding hook
@@ -182,6 +208,8 @@ package body Commands.Builder is
          To_String (Build_Data.Category_Name),
          To_String (Build_Data.Target_Name),
          To_String (Build_Data.Mode_Name),
+         Build_Data.Shadow,
+         Build_Data.Background,
          Status);
    end End_Build_Callback;
 
@@ -254,6 +282,7 @@ package body Commands.Builder is
                   Output  => Str.all,
                   Quiet   => Build_Data.Quiet,
                   Shadow  => Build_Data.Shadow,
+                  Background => Build_Data.Background,
                   Target  => To_String (Build_Data.Target_Name));
 
             else
@@ -263,6 +292,7 @@ package body Commands.Builder is
                   Output  => Output (1 .. Len),
                   Quiet   => Build_Data.Quiet,
                   Shadow  => Build_Data.Shadow,
+                  Background => Build_Data.Background,
                   Target  => To_String (Build_Data.Target_Name));
             end if;
          else
@@ -288,13 +318,16 @@ package body Commands.Builder is
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
+      Target           : String;
       Shadow           : Boolean;
-      Quiet            : Boolean)
+      Quiet            : Boolean;
+      Background       : Boolean)
    is
       Last  : Natural;
       Lines : Slice_Set;
+
    begin
-      Display_Compiler_Message (Kernel, Output, Shadow);
+      Display_Compiler_Message (Kernel, Output, Shadow, Background);
 
       if Output'Length = 0
         or else
@@ -323,17 +356,19 @@ package body Commands.Builder is
          Mode       => Single);
 
       for J in 1 .. Slice_Count (Lines) loop
-         Append_To_Build_Output (Kernel, Slice (Lines, J), Shadow);
+         Append_To_Build_Output
+           (Kernel, Slice (Lines, J), Target, Shadow, Background);
       end loop;
 
       Parse_File_Locations
         (Kernel,
          Output,
-         Category           => Commands.Builder.Error_Category,
+         Category           => Category,
          Highlight          => True,
          Highlight_Category => Error_Category,
          Style_Category     => Style_Category,
-         Warning_Category   => Warning_Category);
+         Warning_Category   => Warning_Category,
+         Show_In_Locations  => not Background);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -349,16 +384,34 @@ package body Commands.Builder is
    --  we should not have a hard coded regexp here.
 
    procedure Process_Builder_Output
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Command : Commands.Command_Access;
-      Output  : Glib.UTF8_String;
-      Quiet   : Boolean;
-      Shadow  : Boolean;
-      Target  : String := "")
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Command    : Commands.Command_Access;
+      Output     : Glib.UTF8_String;
+      Quiet      : Boolean;
+      Shadow     : Boolean;
+      Background : Boolean;
+      Target     : String)
    is
       Start   : Integer := Output'First;
       Matched : Match_Array (0 .. 3);
       Buffer  : Unbounded_String;
+
+      function Message_Category return String;
+      --  Return the message category to use for this build
+
+      ----------------------
+      -- Message_Category --
+      ----------------------
+
+      function Message_Category return String is
+      begin
+         if Background then
+            return Current_Background_Build_Id;
+         end if;
+
+         return Target_Name_To_Locations_Category (Target);
+      end Message_Category;
+
    begin
       while Start <= Output'Last loop
          Match (Completed_Matcher, Output (Start .. Output'Last), Matched);
@@ -378,11 +431,13 @@ package body Commands.Builder is
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
            (Kernel           => Kernel_Handle (Kernel),
-            Category         => Target_Name_To_Locations_Category (Target),
+            Category         => Message_Category,
             Error_Category   => Builder_Errors_Style,
             Warning_Category => Builder_Warnings_Style,
             Style_Category   => Builder_Style_Style,
             Output           => To_String (Buffer),
+            Target           => Target,
+            Background       => Background,
             Shadow           => Shadow,
             Quiet            => Quiet);
       end if;
@@ -413,27 +468,35 @@ package body Commands.Builder is
    begin
       if New_Console_Name /= "" then
          Console := Get_Build_Console
-           (Kernel, Data.Shadow, False, New_Console_Name);
+           (Kernel, Data.Shadow, Data.Background, False, New_Console_Name);
          Cb      := null;
          Exit_Cb := null;
-         Show_Output := True;
-         Show_Command := True;
+         Show_Output := not Data.Background;
+         Show_Command := not Data.Background;
          Is_A_Run := True;
 
          Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
 
       else
-         Console := Get_Build_Console (Kernel, Data.Shadow, False);
+         Console := Get_Build_Console
+           (Kernel, Data.Shadow, Data.Background, False);
          Cb      := Build_Callback'Access;
          Exit_Cb := End_Build_Callback'Access;
          Show_Output := False;
-         Show_Command := True;
+         Show_Command := not Data.Background;
          Is_A_Run := False;
       end if;
 
-      if not Data.Shadow
-        and then not Data.Quiet
+      if not Is_A_Run
+        and then not Data.Background
       then
+         --  If we are starting a "real" build, remove messages from the
+         --  current background build
+         Get_Messages_Container (Kernel).Remove_Category
+           (Previous_Background_Build_Id);
+      end if;
+
+      if not (Data.Shadow or else Data.Quiet or else Data.Background) then
          if Is_A_Run then
             Clear (Console);
             Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console),
@@ -448,9 +511,12 @@ package body Commands.Builder is
           (Kernel,
            To_String (Data.Target_Name),
            Quiet  => Data.Quiet,
-           Shadow => Data.Shadow)
+           Shadow => Data.Shadow,
+           Background => Data.Background)
       then
-         Append_To_Build_Output (Kernel, To_Display_String (CL), Data.Shadow);
+         Append_To_Build_Output
+           (Kernel, To_Display_String (CL), To_String (Data.Target_Name),
+            Data.Shadow, Data.Background);
 
          if Data.Mode_Name /= "default" then
             Cmd_Name := Data.Target_Name & " (" & Data.Mode_Name & ")";
@@ -482,10 +548,11 @@ package body Commands.Builder is
                   Directory            => Directory,
                   Callback             => Cb,
                   Exit_Cb              => Exit_Cb,
-                  Show_In_Task_Manager => True,
+                  Show_In_Task_Manager => not Data.Background,
                   Name_In_Task_Manager => To_String (Cmd_Name),
                   Synchronous          => Synchronous,
-                  Show_Exit_Status     => not Data.Shadow);
+                  Show_Exit_Status     => not (Data.Shadow
+                    or else Data.Background));
             end;
 
          else
@@ -502,10 +569,11 @@ package body Commands.Builder is
                Directory            => Directory,
                Callback             => Cb,
                Exit_Cb              => Exit_Cb,
-               Show_In_Task_Manager => True,
+               Show_In_Task_Manager => not Data.Background,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
-               Show_Exit_Status     => not Data.Shadow);
+               Show_Exit_Status     => not (Data.Shadow
+                or else Data.Background));
          end if;
 
          --  ??? check value of Success

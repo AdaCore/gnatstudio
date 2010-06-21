@@ -640,6 +640,8 @@ package body GPS.Kernel is
       Category    : String;
       Target_Name : String;
       Mode_Name   : String;
+      Shadow      : Boolean;
+      Background  : Boolean;
       Status      : Integer)
    is
       Data : aliased Compilation_Finished_Hooks_Args :=
@@ -650,6 +652,8 @@ package body GPS.Kernel is
                 Target_Name        => Target_Name,
                 Mode_Name_Length   => Mode_Name'Length,
                 Mode_Name          => Mode_Name,
+                Shadow             => Shadow,
+                Background         => Background,
                 Status             => Status);
 
    begin
@@ -664,14 +668,16 @@ package body GPS.Kernel is
      (Handle   : access Kernel_Handle_Record;
       Category : String;
       Quiet    : Boolean;
-      Shadow   : Boolean) return Boolean
+      Shadow   : Boolean;
+      Background : Boolean) return Boolean
    is
       Data : aliased Compilation_Hooks_Args :=
                (Hooks_Data with
                 Length => Category'Length,
                 Value  => Category,
                 Quiet  => Quiet,
-                Shadow => Shadow);
+                Shadow => Shadow,
+                Background => Background);
    begin
       return Run_Hook_Until_Failure
         (Handle, Compilation_Starting_Hook, Data'Unchecked_Access);

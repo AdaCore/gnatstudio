@@ -93,6 +93,7 @@ package GPS.Kernel.Standard_Hooks is
       record
          Quiet  : Boolean;
          Shadow : Boolean;
+         Background : Boolean;
       end record;
    overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
@@ -114,6 +115,8 @@ package GPS.Kernel.Standard_Hooks is
          Category    : String (1 .. Category_Length);
          Target_Name : String (1 .. Target_Name_Length);
          Mode_Name   : String (1 .. Mode_Name_Length);
+         Shadow      : Boolean;
+         Background  : Boolean;
          Status      : Integer;
       end record;
    overriding function Create_Callback_Data

@@ -59,6 +59,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       End_Mark : Gtk_Text_Mark;
       --  The mark indicating the end of the message highlighting, if relevant
+
+      At_End_Of_Line : Boolean := False;
+      --  True if the message was put at the end of the line and the
+      --  highlighting was set one character back.
    end record;
    type Line_Info_Note is access all Line_Info_Note_Record'Class;
 
@@ -1278,9 +1282,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Result    : Boolean;
       Has_Iters : Boolean := False;
+
+      Mark : constant Editor_Mark'Class := Message.Get_Editor_Mark;
    begin
-      Line := Editable_Line_Type (Message.Get_Editor_Mark.Line);
-      From_Column := Visible_Column_Type (Message.Get_Editor_Mark.Column);
+      Line := Editable_Line_Type (Mark.Line);
+      From_Column := Visible_Column_Type (Mark.Column);
 
       --  Determine the To_Column:
       --  If there is an End_Mark associated with the message, remove the
@@ -1295,7 +1301,9 @@ package body Src_Editor_Buffer.Line_Information is
             Get_Iter_At_Screen_Position
               (Buffer, Start_Iter, Line, From_Column);
 
-            if Ends_Line (Start_Iter) then
+            if Note.At_End_Of_Line
+              or else Ends_Line (Start_Iter)
+            then
                Backward_Char (Start_Iter, Result);
             end if;
 
@@ -1340,6 +1348,8 @@ package body Src_Editor_Buffer.Line_Information is
       EL       : Editable_Line_Type := 0; --  The actual buffer line
       BL       : Buffer_Line_Type := 0;   --  The actual editable line
 
+      Mark     : constant Editor_Mark'Class := Message.Get_Editor_Mark;
+
       procedure Compute_EL;
       --  Compute EL
 
@@ -1372,12 +1382,14 @@ package body Src_Editor_Buffer.Line_Information is
             if Editable_Line /= 0 then
                EL := Editable_Line;
             else
-               EL := Editable_Line_Type (Message.Get_Editor_Mark.Line);
+               EL := Editable_Line_Type (Mark.Line);
             end if;
          end if;
       end Compute_EL;
 
       Note : Line_Info_Note;
+      Iter : Gtk_Text_Iter;
+
    begin
       Style := Message.Get_Highlighting_Style;
 
@@ -1417,16 +1429,20 @@ package body Src_Editor_Buffer.Line_Information is
             if Note /= null then
                --  It should never happen that note=null here, that would mean
                --  that the message is not properly entered in the database
-               Note.End_Mark := Create_Mark (Buffer => Buffer,
-                                             Line   => EL,
-                                             Column => End_Col);
+
+               Get_Iter_At_Screen_Position (Buffer, Iter, EL, End_Col);
+               Note.End_Mark := Create_Mark (Buffer => Buffer, Where => Iter);
+
+               if Ends_Line (Iter) then
+                  Note.At_End_Of_Line := True;
+               end if;
             end if;
 
             Highlight_Range
               (Buffer    => Buffer,
                Style     => Style,
                Line      => EL,
-               Start_Col => Message.Get_Column,
+               Start_Col => Visible_Column_Type (Mark.Column),
                End_Col   => End_Col,
                Remove    => False);
          end if;
@@ -1488,6 +1504,8 @@ package body Src_Editor_Buffer.Line_Information is
                                Editable_Line => Editable_Line,
                                Buffer_Line   => BL,
                                Message       => Message);
+
+            Side_Column_Changed (Buffer);
          end if;
       end if;
    end Put_Message;

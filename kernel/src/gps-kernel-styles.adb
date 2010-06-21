@@ -50,6 +50,7 @@ package body GPS.Kernel.Styles is
         (Style : in out Style_Access;
          Name  : String;
          Desc  : String;
+         Icon  : String;
          Fg    : String := "";
          Bg    : String := "";
          Speedbar : Boolean := False);
@@ -60,6 +61,7 @@ package body GPS.Kernel.Styles is
         (Style : in out Style_Access;
          Name  : String;
          Desc  : String;
+         Icon  : String;
          Fg    : String := "";
          Bg    : String := "";
          Speedbar : Boolean := False) is
@@ -80,33 +82,42 @@ package body GPS.Kernel.Styles is
 
             Set_In_Speedbar (Style, Speedbar);
          end if;
+
+         if Icon /= "" then
+            Set_Editor_Icon (Style, Icon);
+         end if;
       end Init;
    begin
       --  ??? Should we use the old preferences as reference ?
       Init (Search_Results_Style,
             -"Search results",
             -"Color used to highlight the search results",
+            "",
             Bg => Search_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Errors_Style,
             -"Builder results",
             -"Color used to highlight the build errors",
+            "gps-build-error",
             Bg => Error_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Warnings_Style,
             -"Builder warnings",
             -"Color used to highlight the build warnings",
+            "gps-build-warning",
             Bg => Warning_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Style_Style,
             -"Style errors",
             -"Color used to highlight the style errors",
+            "gps-build-style",
             Bg => Style_Src_Highlight.Get_Pref, Speedbar => True);
 
-      Init (Builder_Shadow_Style,
-            -"Syntax check",
+      Init (Builder_Background_Style,
+            -"Background compilation",
             -"Color used to highlight the build errors in background builds",
-            Bg => "light grey", Speedbar => True);
+            "",
+            Bg => "", Speedbar => True);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

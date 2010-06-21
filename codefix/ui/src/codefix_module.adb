@@ -531,12 +531,18 @@ package body Codefix_Module is
       Data   : access Hooks_Data'Class)
    is
       Compilation_Data : constant Compilation_Finished_Hooks_Args :=
-                           Compilation_Finished_Hooks_Args (Data.all);
+        Compilation_Finished_Hooks_Args (Data.all);
+      Cmd : Arg_List;
 
    begin
+      Cmd := Create ("get_build_output");
+      Append_Argument (Cmd, Compilation_Data.Target_Name, One_Arg);
+      Append_Argument (Cmd, Compilation_Data.Shadow'Img, One_Arg);
+      Append_Argument (Cmd, Compilation_Data.Background'Img, One_Arg);
+
       Activate_Codefix
         (Kernel_Handle (Kernel),
-         Execute_GPS_Shell_Command (Kernel, Create ("get_build_output")),
+         Execute_GPS_Shell_Command (Kernel, Cmd),
          Compilation_Data.Category);
    exception
       when E : others => Trace (Exception_Handle, E);

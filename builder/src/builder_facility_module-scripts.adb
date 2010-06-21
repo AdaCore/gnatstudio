@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada, Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
@@ -29,7 +28,6 @@ with Build_Configurations;       use Build_Configurations;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
-with String_List_Utils;          use String_List_Utils;
 
 package body Builder_Facility_Module.Scripts is
 
@@ -53,6 +51,8 @@ package body Builder_Facility_Module.Scripts is
    Extra_Args_Cst    : aliased constant String := "extra_args";
    Build_Mode_Cst    : aliased constant String := "build_mode";
    Synchronous_Cst   : aliased constant String := "synchronous";
+   Shadow_Cst        : aliased constant String := "shadow";
+   Background_Cst    : aliased constant String := "background";
 
    Target_Class_Name : constant String := "BuildTarget";
 
@@ -125,11 +125,9 @@ package body Builder_Facility_Module.Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      use String_List;
       Target_Class : constant Class_Type :=
                        Get_Target_Class (Get_Kernel (Data));
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
-      Node         : List_Node;
       Extra_Args   : GNAT.OS_Lib.Argument_List_Access;
       Info         : Virtual_File;
    begin
@@ -246,13 +244,18 @@ package body Builder_Facility_Module.Scripts is
          end;
 
       elsif Command = "get_build_output" then
-         Node := First (Get_Build_Output (Shadow => False));
+         Name_Parameters
+           (Data,
+            (1 => Target_Name_Cst'Access,
+             2 => Shadow_Cst'Access,
+             3 => Background_Cst'Access));
 
-         Set_Return_Value_As_List (Data);
-         while Node /= Null_Node loop
-            Set_Return_Value (Data, String_List_Utils.String_List.Data (Node));
-            Node := Next (Node);
-         end loop;
+         Set_Return_Value
+           (Data,
+            To_String (Get_Build_Output
+              (Target     => Nth_Arg (Data, 1),
+               Shadow     => Nth_Arg (Data, 2, False),
+               Background => Nth_Arg (Data, 3, False))));
 
       elsif Command = "compile" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
@@ -362,7 +365,9 @@ package body Builder_Facility_Module.Scripts is
 
       Register_Command
         (Kernel, "get_build_output",
-         Handler => Shell_Handler'Access);
+         Handler => Shell_Handler'Access,
+         Minimum_Args => 1,
+         Maximum_Args => 3);
 
       --  File commands
 
@@ -422,7 +427,7 @@ package body Builder_Facility_Module.Scripts is
 
    procedure Free (Ar : in out GNAT.OS_Lib.String_List_Access) is
       use GNAT.OS_Lib;
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
           (GNAT.OS_Lib.String_List, GNAT.OS_Lib.String_List_Access);
 
    begin

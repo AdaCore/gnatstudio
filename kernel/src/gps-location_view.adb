@@ -1348,23 +1348,27 @@ package body GPS.Location_View is
 
          declare
             File : constant Virtual_File :=
-                     Get_Data
-                       (Nth_Arg (Data, 2, Get_File_Class (Get_Kernel (Data))));
+              Get_Data
+                (Nth_Arg (Data, 2, Get_File_Class (Get_Kernel (Data))));
+            Message : Message_Access;
+            pragma Unreferenced (Message);
 
          begin
             if File.Is_Absolute_Path then
-               GPS.Kernel.Messages.Tools_Output.Add_Tool_Message
-                 (Get_Messages_Container (Get_Kernel (Data)),
-                  Glib.Convert.Escape_Text (Nth_Arg (Data, 1)),
-                  File,
-                  Nth_Arg (Data, 3),
-                  Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
-                  Glib.Convert.Escape_Text (Nth_Arg (Data, 5)),
-                  0,
-                  Get_Or_Create_Style
-                    (Get_Kernel (Data), Nth_Arg (Data, 6, ""), False),
-                  Nth_Arg (Data, 7, 0),
-                  Nth_Arg (Data, 8, False));
+               Message :=
+                 GPS.Kernel.Messages.Tools_Output.Add_Tool_Message
+                   (Get_Messages_Container (Get_Kernel (Data)),
+                    Glib.Convert.Escape_Text (Nth_Arg (Data, 1)),
+                    File,
+                    Nth_Arg (Data, 3),
+                    Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
+                    Glib.Convert.Escape_Text (Nth_Arg (Data, 5)),
+                    0,
+                    Get_Or_Create_Style
+                      (Get_Kernel (Data), Nth_Arg (Data, 6, ""), False),
+                    Nth_Arg (Data, 7, 0),
+                    Nth_Arg (Data, 8, False),
+                    Show_In_Locations => True);
             end if;
          end;
 

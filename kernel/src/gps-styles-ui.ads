@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with Gdk.GC;     use Gdk.GC;
-with Gdk.Color; use Gdk.Color;
+with Gdk.Color;  use Gdk.Color;
+with Gdk.Pixbuf; use Gdk.Pixbuf;
 
 package GPS.Styles.UI is
 
@@ -26,6 +27,8 @@ package GPS.Styles.UI is
       Name        : GNAT.Strings.String_Access;
       Description : GNAT.Strings.String_Access;
       --  A short description of the style
+
+      Editor_Icon : Gdk_Pixbuf := Null_Pixbuf;
 
       Fg_Color   : Gdk_Color := Null_Color;
       Fg_GC      : Gdk_GC    := Null_GC;
@@ -46,6 +49,7 @@ package GPS.Styles.UI is
    Builder_Errors_Style   : Style_Access;
    Builder_Warnings_Style : Style_Access;
    Builder_Style_Style    : Style_Access;
+   Builder_Background_Style : Style_Access;
    Builder_Shadow_Style   : Style_Access;
 
    overriding procedure Set_Foreground
@@ -62,6 +66,11 @@ package GPS.Styles.UI is
      (Style : not null access Style_Record) return Gdk_Color;
    --  Return the background GC stored in Style. Return Null_GC if there is
    --  none.
+
+   function Get_Editor_Icon
+     (Style  : not null access Style_Record) return Gdk_Pixbuf;
+   --  Return the default icon to use when displaying this style in the
+   --  side of editors.
 
    function Get_Name (Style : Style_Access) return String;
    --  Return the name of Style.
