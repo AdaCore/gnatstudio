@@ -315,7 +315,29 @@
        <alternate                     file="../icons/18px/syntax_check_18.png" size="2" />
     </icon>
 
+    <icon id="gps-build-error"       file="../icons/9px/build_error.png">
+       <alternate                    file="../icons/9px/build_error.png" size="1" />
+    </icon>
 
+    <icon id="gps-build-warning"     file="../icons/9px/build_warning.png">
+       <alternate                    file="../icons/9px/build_warning.png" size="1" />
+    </icon>
+
+    <icon id="gps-build-style"       file="../icons/9px/build_style.png">
+       <alternate                    file="../icons/9px/build_style.png" size="1" />
+    </icon>
+
+    <icon id="gps-build-error-fixable"   file="../icons/9px/build_error_fixable.png">
+       <alternate                        file="../icons/9px/build_error_fixable.png" size="1" />
+    </icon>
+
+    <icon id="gps-build-warning-fixable" file="../icons/9px/build_warning_fixable.png">
+       <alternate                        file="../icons/9px/build_warning_fixable.png" size="1" />
+    </icon>
+
+    <icon id="gps-build-style-fixable"   file="../icons/9px/build_style_fixable.png">
+       <alternate                        file="../icons/9px/build_style_fixable.png" size="1" />
+    </icon>
   </stock>
 
 </GPS>
