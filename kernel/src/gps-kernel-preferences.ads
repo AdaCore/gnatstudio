@@ -175,6 +175,7 @@ package GPS.Kernel.Preferences is
    Block_Highlighting        : Boolean_Preference;
    Automatic_Syntax_Check    : Boolean_Preference;
    Current_Line_Color        : Color_Preference;
+   Current_Line_Thin         : Boolean_Preference;
    Current_Block_Color       : Color_Preference;
    Search_Results_Color      : Color_Preference;
 

@@ -666,6 +666,15 @@ package body GPS.Kernel.Preferences is
          Label   => -"Current line color",
          Page    => -"Editor/Fonts & Colors");
 
+      Current_Line_Thin := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Current-Line-Thin",
+         Default => True,
+         Doc     => -("Whether to use a thin line rather than full background"
+           & ASCII.LF & " highlighting on the current line."),
+         Label   => -"Draw current line as a thin line",
+         Page    => -"Editor/Fonts & Colors");
+
       Current_Block_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Block-Color",

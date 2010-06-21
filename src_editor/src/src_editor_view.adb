@@ -729,15 +729,21 @@ package body Src_Editor_View is
          Scroll_To_Cursor_Location (User, Minimal);
       end if;
 
-      --  If we are doing block highlighting, re-expose the entire view if the
-      --  current block has changed.
+      --  If we are highlighting the current line, re-expose the entire view
+      --  if the line has changed. Same thing if we are doing block
+      --  highlighting and the block has changed.
 
-      if User.Highlight_Blocks
-        and then User.Current_Block /=
-          Get_Block (Buffer, Editable_Line_Type (Line), False)
+      if (User.Highlight_Current
+          and then User.Current_Line /= Line)
+        or else
+          (User.Highlight_Blocks
+           and then User.Current_Block /=
+             Get_Block (Buffer, Editable_Line_Type (Line), False))
       then
          Invalidate_Window (User);
       end if;
+
+      User.Current_Line := Line;
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1099,9 +1105,15 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
-            Draw_Rectangle
-              (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
-               Rect.Width, Line_Height);
+            if View.Highlight_As_Line then
+               Draw_Rectangle
+                 (Window, View.Current_Line_GC, True, Margin,
+                  Buffer_Line_Y + Line_Height, Rect.Width, 1);
+            else
+               Draw_Rectangle
+                 (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
+                  Rect.Width, Line_Height);
+            end if;
          end if;
 
          --  Highlight the current block
@@ -1588,6 +1600,8 @@ package body Src_Editor_View is
          Set_Foreground (Source.Current_Block_GC, Color);
          Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
       end if;
+
+      Source.Highlight_As_Line := Current_Line_Thin.Get_Pref;
 
       Source.Speed_Column_Mode := Speed_Column_Policy.Get_Pref;
 

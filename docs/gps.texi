@@ -10012,6 +10012,10 @@ Setting the color to white will set a transparent color.
 Color for highlighting the current line. Leave it to blank for no highlighting.
 Setting the color to white will set a transparent color.
 
+@item Draw current line as a thin line
+Whether to use a thin line rather than full background highlighting on the
+current line.
+
 @item Current block color
 Color for highlighting the current source block.
 
