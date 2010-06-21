@@ -3742,6 +3742,8 @@ package body Src_Editor_Buffer is
             Current := Current + 1;
          end if;
 
+         exit when Ends_Line (Iter);
+
          Forward_Char (Iter, Result);
       end loop;
    end Get_Iter_At_Screen_Position;
