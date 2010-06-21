@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2009, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -182,6 +182,7 @@ private
       Default_GC          : Gdk.GC.Gdk_GC;
       Current_Line_GC     : Gdk.GC.Gdk_GC;
       Highlight_Current   : Boolean := False;
+      Highlight_As_Line   : Boolean := False;
 
       Top_Line            : Src_Editor_Buffer.Buffer_Line_Type := 1;
       Bottom_Line         : Src_Editor_Buffer.Buffer_Line_Type := 0;
@@ -209,6 +210,9 @@ private
       Current_Block_GC    : Gdk.GC.Gdk_GC;
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted
+
+      Current_Line        : Gint;
+      --  The line that contains the cursor
 
       Current_Block       : Src_Editor_Buffer.Block_Record;
       --  Cache used to prevent redrawing the whole buffer when the cursor
