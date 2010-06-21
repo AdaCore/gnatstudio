@@ -15,6 +15,13 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J621-010 New preference to control current line highlighting (2010-06-21)
+
+  A new preference "Draw current line as thin line" in the Editor->Fonts and
+  Colors section controls the aspect of the highlighting of the current line
+  and allows displaying a thin underline rather than highlighting the whole
+  background of the line.
+
 NF-45-J528-009 New contextual menu: Refactoring/Extract Subprogram (2010-06-01)
 
   This refactoring can be used to extract some code and create a new
