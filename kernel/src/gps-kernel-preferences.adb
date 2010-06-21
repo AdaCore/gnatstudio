@@ -661,7 +661,8 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Color",
          Default => "#D1DCFC",
-         Doc     => -"Color for highlighting the current line",
+         Doc     => -("Color for highlighting the current line. White means"
+                      & " transparent"),
          Label   => -"Current line color",
          Page    => -"Editor/Fonts & Colors");
 
