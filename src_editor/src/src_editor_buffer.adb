@@ -1383,17 +1383,6 @@ package body Src_Editor_Buffer is
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X
 
-      ----------
-      -- Free --
-      ----------
-
-      procedure Free (X : in out Line_Info_Width_Array) is
-      begin
-         for J in X'Range loop
-            Free (X (J), Free_Messages => False);
-         end loop;
-      end Free;
-
       Stub    : Source_Buffer_Record;
       Success : Boolean;
       pragma Unreferenced (Data);
@@ -1401,6 +1390,17 @@ package body Src_Editor_Buffer is
 
       Buffer  : constant Source_Buffer :=
                   Source_Buffer (Get_User_Data (Buf, Stub));
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (X : in out Line_Info_Width_Array) is
+      begin
+         for J in X'Range loop
+            Free (Buffer, X (J), Free_Messages => False);
+         end loop;
+      end Free;
 
    begin
       Trace (Me, "Destroying Buffer buffer="
@@ -6158,18 +6158,36 @@ package body Src_Editor_Buffer is
    -- Free --
    ----------
 
-   procedure Free (X : in out Line_Info_Width; Free_Messages : Boolean) is
-      C : Message_List.Cursor;
+   procedure Free
+     (Buffer        : access Source_Buffer_Record;
+      X             : in out Line_Info_Width;
+      Free_Messages : Boolean)
+   is
    begin
       Free (X.Action);
 
       if Free_Messages then
-         C := X.Messages.First;
 
-         while Message_List.Has_Element (C) loop
-            Free_Note (Message_List.Element (C));
-            Message_List.Next (C);
-         end loop;
+         --  We are about to remove messages from the editor. For safety, do
+         --  not iterate on the messages list, since removing messages will
+         --  affect this list. Instead, construct a Message_Array with all
+         --  messages. This is also potentially more efficient, as
+         --  Remove_Messages works on an array of messages.
+         declare
+            M : Message_Array (1 .. Integer (X.Messages.Length));
+            J : Natural := 1;
+            C : Message_List.Cursor;
+         begin
+            C := X.Messages.First;
+
+            while Message_List.Has_Element (C) loop
+               M (J) := Message_List.Element (C);
+               J := J + 1;
+               Message_List.Next (C);
+            end loop;
+
+            Remove_Messages (Buffer, M);
+         end;
 
          X.Messages.Clear;
       end if;

@@ -1164,8 +1164,12 @@ private
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
    --  The line terminator style of the given buffer
 
-   procedure Free (X : in out Line_Info_Width; Free_Messages : Boolean);
+   procedure Free
+     (Buffer        : access Source_Buffer_Record;
+      X             : in out Line_Info_Width;
+      Free_Messages : Boolean);
    --  Free memory associated to X
+   --  If Free_Messages, then remove the messages from the buffer.
 
    --------------------------
    -- Recursion protection --

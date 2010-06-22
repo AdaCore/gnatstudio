@@ -1748,7 +1748,7 @@ package body Src_Editor_Buffer.Line_Information is
          for J in Start_Line .. Start_Line + Number - 1 loop
             if Buffer_Lines (J).Side_Info_Data /= null then
                for Col in Buffer_Lines (J).Side_Info_Data'Range loop
-                  Free (Buffer_Lines (J).Side_Info_Data (Col), True);
+                  Free (Buffer, Buffer_Lines (J).Side_Info_Data (Col), True);
                end loop;
             end if;
          end loop;
