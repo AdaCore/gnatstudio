@@ -132,6 +132,7 @@ package Builder_Facility_Module is
       Background : Boolean) return Unbounded_String;
    --  Return the last build output.
    --  Shadow indicates whether to get the normal or the shadow output
+   --  If Target is null, get all output in the category.
 
    function Get_Mains
      (Kernel : GPS.Kernel.Kernel_Handle) return GNAT.OS_Lib.Argument_List;

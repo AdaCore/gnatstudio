@@ -253,7 +253,7 @@ package body Builder_Facility_Module.Scripts is
          Set_Return_Value
            (Data,
             To_String (Get_Build_Output
-              (Target     => Nth_Arg (Data, 1),
+              (Target     => Nth_Arg (Data, 1, ""),
                Shadow     => Nth_Arg (Data, 2, False),
                Background => Nth_Arg (Data, 3, False))));
 
@@ -366,7 +366,7 @@ package body Builder_Facility_Module.Scripts is
       Register_Command
         (Kernel, "get_build_output",
          Handler => Shell_Handler'Access,
-         Minimum_Args => 1,
+         Minimum_Args => 0,
          Maximum_Args => 3);
 
       --  File commands

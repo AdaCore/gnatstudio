@@ -903,7 +903,7 @@ GPS.parse_xml ("""
   </shell_doc>
 
   <shell_doc name="GPS.get_build_output">
-      <param name="target_name">A string</param>
+      <param name="target_name">(optional) a string</param>
       <param name="shadow">(optional) a Boolean, indicating whether we want the output of shadow builds</param>
       <param name="background">(optional) a Boolean, indicating whether we want the output of background builds</param>
       <return>A string, the output of the latest build for the corresponding target.</return>

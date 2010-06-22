@@ -2242,15 +2242,32 @@ package body Builder_Facility_Module is
       Shadow     : Boolean;
       Background : Boolean) return Unbounded_String
    is
+      Output : Target_Output_Type;
    begin
       if Shadow then
-         return Builder_Module_ID.Outputs (Shadow_Output).Element
-           (To_Unbounded_String (Target));
+         Output := Shadow_Output;
       elsif Background then
-         return Builder_Module_ID.Outputs (Background_Output).Element
-           (To_Unbounded_String (Target));
+         Output := Background_Output;
       else
-         return Builder_Module_ID.Outputs (Normal_Output).Element
+         Output := Normal_Output;
+      end if;
+
+      if Target = "" then
+         declare
+            C : Target_Outputs.Cursor;
+            R : Unbounded_String;
+         begin
+            C := Builder_Module_ID.Outputs (Output).First;
+
+            while Target_Outputs.Has_Element (C) loop
+               R := R & Target_Outputs.Element (C) & ASCII.LF;
+               Target_Outputs.Next (C);
+            end loop;
+
+            return R;
+         end;
+      else
+         return Builder_Module_ID.Outputs (Output).Element
            (To_Unbounded_String (Target));
       end if;
    end Get_Build_Output;
