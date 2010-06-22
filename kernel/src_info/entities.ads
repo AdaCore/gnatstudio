@@ -333,9 +333,9 @@ package Entities is
    --  Convert a reference kind into a displayable string
 
    type Reference_Kind_Filter is array (Reference_Kind) of Boolean;
-   Real_References_Filter : constant Reference_Kind_Filter;
-   Read_Reference_Filter  : constant Reference_Kind_Filter;
-   Write_Reference_Filter : constant Reference_Kind_Filter;
+   Real_References_Filter : aliased constant Reference_Kind_Filter;
+   Read_Reference_Filter  : aliased constant Reference_Kind_Filter;
+   Write_Reference_Filter : aliased constant Reference_Kind_Filter;
 
    function Is_End_Reference (Kind : Reference_Kind) return Boolean;
    pragma Inline (Is_End_Reference);
@@ -749,7 +749,7 @@ package Entities is
    --  Always return False if Entity is null.
 
    type Entity_Reference is private;
-   No_Entity_Reference : constant Entity_Reference;
+   No_Entity_Reference : aliased constant Entity_Reference;
 
    function Get_Location (Ref : Entity_Reference) return File_Location;
    --  Return the location of the reference
@@ -1095,7 +1095,7 @@ private
       Entity : Entity_Information;
       Index  : Entity_Reference_Index;
    end record;
-   No_Entity_Reference : constant Entity_Reference :=
+   No_Entity_Reference : aliased constant Entity_Reference :=
      (null, Null_Entity_Reference_Index);
 
    --------------------------
@@ -1471,7 +1471,7 @@ private
       Name_Index : Entities_Search_Tries.Trie_Tree_Access := null;
    end record;
 
-   Real_References_Filter : constant Reference_Kind_Filter :=
+   Real_References_Filter : aliased constant Reference_Kind_Filter :=
      (Reference                                => True,
       Own_Reference                            => True,
       Dispatching_Call                         => True,
@@ -1486,7 +1486,7 @@ private
       others                                   => False);
    --  See Is_Real_Reference
 
-   Read_Reference_Filter  : constant Reference_Kind_Filter :=
+   Read_Reference_Filter  : aliased constant Reference_Kind_Filter :=
      (Reference                                => True,
       Own_Reference                            => True,
       Dispatching_Call                         => True,
@@ -1500,7 +1500,7 @@ private
       others                                   => False);
    --  See Is_Read_Reference
 
-   Write_Reference_Filter : constant Reference_Kind_Filter :=
+   Write_Reference_Filter : aliased constant Reference_Kind_Filter :=
      (Modification                             => True,
       others                                   => False);
 

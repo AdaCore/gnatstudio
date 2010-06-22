@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2004-2009, AdaCore                  --
+--                 Copyright (C) 2004-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,7 +57,7 @@ package Case_Handling is
    --  This is the case exceptions handler, a set of exceptions to the
    --  standard casing rule can be recorded into this object.
 
-   No_Casing_Exception : constant Casing_Exceptions;
+   No_Casing_Exception : aliased constant Casing_Exceptions;
 
    procedure Set_Case
      (C      : Casing_Exceptions;
@@ -120,6 +120,7 @@ private
       S : Exceptions_Table := new String_Hash_Table.Instance;
    end record;
 
-   No_Casing_Exception : constant Casing_Exceptions := (E => null, S => null);
+   No_Casing_Exception : aliased constant Casing_Exceptions := 
+      (E => null, S => null);
 
 end Case_Handling;

@@ -72,7 +72,7 @@ package Language.Tree is
    -- Construct_Tree_Iterator --
    -----------------------------
 
-   Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator;
+   Null_Construct_Tree_Iterator : aliased constant Construct_Tree_Iterator;
 
    overriding function "="
      (Left, Right : Construct_Tree_Iterator) return Boolean;
@@ -120,7 +120,8 @@ package Language.Tree is
    --  construct and its fields should be copied.
 
    type Category_Array is array (Natural range <>) of Language_Category;
-   Null_Category_Array : Category_Array (1 .. 0) := (others => Cat_Unknown);
+   Null_Category_Array : aliased constant 
+      Category_Array (1 .. 0) := (others => Cat_Unknown);
 
    type Category_Array_Access is access all Category_Array;
 
@@ -528,7 +529,7 @@ private
 
    type Construct_Index is new Natural;
 
-   Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator :=
+   Null_Construct_Tree_Iterator : aliased constant Construct_Tree_Iterator :=
      (Null_Construct_Tree_Node'Access, 0);
 
    Null_Construct_Tree : constant Construct_Tree := null;

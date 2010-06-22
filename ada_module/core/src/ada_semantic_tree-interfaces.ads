@@ -39,7 +39,7 @@ package Ada_Semantic_Tree.Interfaces is
    --  for a long time, as its contents will be invalidated at each construct
    --  file update.
 
-   Null_Imported_Entity : constant Imported_Entity;
+   Null_Imported_Entity : aliased constant Imported_Entity;
 
    function Get_Imported_Entity
      (Entity : Entity_Access) return Imported_Entity;
@@ -58,6 +58,6 @@ private
       Convention : String_Access;
    end record;
 
-   Null_Imported_Entity : constant Imported_Entity := (null, null);
+   Null_Imported_Entity : aliased constant Imported_Entity := (null, null);
 
 end Ada_Semantic_Tree.Interfaces;

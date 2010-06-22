@@ -336,7 +336,7 @@ package Language.Tree.Database is
    -- Entity_Access --
    -------------------
 
-   Null_Entity_Access : constant Entity_Access;
+   Null_Entity_Access : aliased constant Entity_Access;
 
    type Entity_Array is array (Integer range <>) of Entity_Access;
 
@@ -801,7 +801,7 @@ private
       It   : Construct_Tree_Iterator;
    end record;
 
-   Null_Entity_Access : constant Entity_Access :=
+   Null_Entity_Access : aliased constant Entity_Access :=
      (null, Null_Construct_Tree_Iterator);
 
    type Entity_Persistent_Info is record

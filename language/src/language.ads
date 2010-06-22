@@ -612,11 +612,11 @@ package Language is
       Is_Declaration  : Boolean;
       Is_Generic_Spec : Boolean := False;
       Visibility      : Construct_Visibility := Visibility_Public;
-      Name            : GNATCOLL.Symbols.Symbol;
-      Sloc_Start      : Source_Location;
-      Sloc_Entity     : Source_Location;
-      Sloc_End        : Source_Location;
-      Attributes      : Construct_Attribute_Map;
+      Name            : aliased GNATCOLL.Symbols.Symbol;
+      Sloc_Start      : aliased Source_Location;
+      Sloc_Entity     : aliased Source_Location;
+      Sloc_End        : aliased Source_Location;
+      Attributes      : aliased Construct_Attribute_Map;
    end record;
    --  Same as above, but containing only the needed construct information, no
    --  list constructions.
