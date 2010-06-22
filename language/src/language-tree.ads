@@ -120,7 +120,7 @@ package Language.Tree is
    --  construct and its fields should be copied.
 
    type Category_Array is array (Natural range <>) of Language_Category;
-   Null_Category_Array : aliased constant 
+   Null_Category_Array : aliased constant
       Category_Array (1 .. 0) := (others => Cat_Unknown);
 
    type Category_Array_Access is access all Category_Array;
