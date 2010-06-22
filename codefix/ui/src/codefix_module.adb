@@ -540,10 +540,18 @@ package body Codefix_Module is
       Append_Argument (Cmd, Compilation_Data.Shadow'Img, One_Arg);
       Append_Argument (Cmd, Compilation_Data.Background'Img, One_Arg);
 
-      Activate_Codefix
-        (Kernel_Handle (Kernel),
-         Execute_GPS_Shell_Command (Kernel, Cmd),
-         Compilation_Data.Category);
+      if Compilation_Data.Background then
+         Activate_Codefix
+           (Kernel_Handle (Kernel),
+            Execute_GPS_Shell_Command (Kernel, Cmd),
+            Compilation_Data.Category);
+      else
+         Activate_Codefix
+           (Kernel_Handle (Kernel),
+            Execute_GPS_Shell_Command (Kernel, Cmd),
+            -"Builder results");
+      end if;
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end Compilation_Finished_Cb;
