@@ -2260,7 +2260,7 @@ package body Builder_Facility_Module is
             C := Builder_Module_ID.Outputs (Output).First;
 
             while Target_Outputs.Has_Element (C) loop
-               R := R & Target_Outputs.Element (C) & ASCII.LF;
+               R := R & Target_Outputs.Element (C);
                Target_Outputs.Next (C);
             end loop;
 

@@ -250,12 +250,23 @@ package body Builder_Facility_Module.Scripts is
              2 => Shadow_Cst'Access,
              3 => Background_Cst'Access));
 
-         Set_Return_Value
-           (Data,
-            To_String (Get_Build_Output
-              (Target     => Nth_Arg (Data, 1, ""),
-               Shadow     => Nth_Arg (Data, 2, False),
-               Background => Nth_Arg (Data, 3, False))));
+         Set_Return_Value_As_List (Data);
+
+         declare
+            S : constant String := To_String
+              (Get_Build_Output
+                 (Target     => Nth_Arg (Data, 1, ""),
+                  Shadow     => Nth_Arg (Data, 2, False),
+                  Background => Nth_Arg (Data, 3, False)));
+            Prev : Integer := S'First;
+         begin
+            for J in S'Range loop
+               if S (J) = ASCII.LF then
+                  Set_Return_Value (Data, S (Prev .. J - 1));
+                  Prev := J + 1;
+               end if;
+            end loop;
+         end;
 
       elsif Command = "compile" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
