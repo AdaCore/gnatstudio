@@ -118,6 +118,7 @@ with Cpp_Module;
 with Custom_Module;
 with Docgen2_Module;
 with External_Editor_Module;
+with GNATStack.Module;
 with GPS.Location_View;
 with GVD_Module;
 with Help_Module;
@@ -192,6 +193,8 @@ procedure GPS.Main is
                         Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
    Code_Peer_Trace        : constant Debug_Handle :=
                               Create ("MODULE.Code_Peer", GNATCOLL.Traces.On);
+   GNATStack_Trace        : constant Debug_Handle :=
+                              Create ("MODULE.GNATStack", GNATCOLL.Traces.On);
    Codefix_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Debug_Handle :=
@@ -1470,6 +1473,10 @@ procedure GPS.Main is
 
       if Active (Code_Peer_Trace) then
          Code_Peer.Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (GNATStack_Trace) then
+         GNATStack.Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       --  Register the supported languages and their associated LI handlers
