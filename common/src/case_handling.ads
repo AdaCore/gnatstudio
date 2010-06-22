@@ -120,7 +120,7 @@ private
       S : Exceptions_Table := new String_Hash_Table.Instance;
    end record;
 
-   No_Casing_Exception : aliased constant Casing_Exceptions := 
+   No_Casing_Exception : aliased constant Casing_Exceptions :=
       (E => null, S => null);
 
 end Case_Handling;
