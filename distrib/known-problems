@@ -109,7 +109,7 @@ Known Problems fixed in GPS 4.4.1
               applied in the locations view.
   Workaround: Remove the filter before starting editing sources.
 
-- IB06-028: expanded code not displayed with project without object dir
+- IB06-028: Expanded code not displayed with project without object dir
   Problem:    When using the contextual menu "Expanded code" on source editors
               to display expanded code for files or subprograms, GPS might
               fail to generate the expanded code if the root project does
