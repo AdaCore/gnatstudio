@@ -787,6 +787,7 @@ package body Builder_Facility_Module is
       Shadow          : Boolean;
       Background      : Boolean)
    is
+      pragma Unreferenced (Category);
       Console : Interactive_Console;
    begin
       if Clear_Console then
@@ -800,7 +801,7 @@ package body Builder_Facility_Module is
       if Clear_Locations
         and then not Background
       then
-         Get_Messages_Container (Kernel).Remove_Category (Category);
+         Get_Messages_Container (Kernel).Remove_Category (Error_Category);
       end if;
 
       if Shadow then

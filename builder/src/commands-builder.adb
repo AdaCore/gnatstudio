@@ -360,15 +360,27 @@ package body Commands.Builder is
            (Kernel, Slice (Lines, J), Target, Shadow, Background);
       end loop;
 
-      Parse_File_Locations
-        (Kernel,
-         Output,
-         Category           => Category,
-         Highlight          => True,
-         Highlight_Category => Error_Category,
-         Style_Category     => Style_Category,
-         Warning_Category   => Warning_Category,
-         Show_In_Locations  => not Background);
+      if Background then
+         Parse_File_Locations
+           (Kernel,
+            Output,
+            Category           => Category,
+            Highlight          => True,
+            Highlight_Category => Error_Category,
+            Style_Category     => Style_Category,
+            Warning_Category   => Warning_Category,
+            Show_In_Locations  => not Background);
+      else
+         Parse_File_Locations
+           (Kernel,
+            Output,
+            Category           => Commands.Builder.Error_Category,
+            Highlight          => True,
+            Highlight_Category => Error_Category,
+            Style_Category     => Style_Category,
+            Warning_Category   => Warning_Category,
+            Show_In_Locations  => not Background);
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);
