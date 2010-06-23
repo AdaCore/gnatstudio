@@ -304,6 +304,11 @@ NF-45-I120-044 Preferences for CodePeer messages colors (2010-03-30)
   A set of color properties can now be used to customize the background color
   of CodePeer messages and annotations.
 
+NF-45-H208-025 Warning displayed when editing read-only editors (2010-06-23)
+
+  When trying to insert text in a read-only editor, GPS will display a warning
+  in the Messages window.
+
 NF-45-GA24-019 Smart completion for discriminants (2010-01-26)
 
   The smart completion now offers to complete with record discriminants.
