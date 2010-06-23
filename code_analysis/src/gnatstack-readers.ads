@@ -216,6 +216,7 @@ private
             Global_Usage  : Stack_Usage_Information;
             Local_Usage   : Stack_Usage_Information;
             Calls         : Subprogram_Information_Sets.Set;
+            Unbounded     : Object_Information_Vectors.Vector;
 
          when Location_State =>
             Location : Subprogram_Location;
@@ -224,9 +225,7 @@ private
             Cycle : Subprogram_Information_Vectors.Vector;
 
          when Unbounded_State =>
-            U_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            U_Locations   : Subprogram_Location_Sets.Set;
-            U_Subprogram  : Subprogram_Information_Access;
+            null;
 
          when Stack_Usage_State =>
             Stack_Usage : Stack_Usage_Information;
@@ -258,6 +257,10 @@ private
       Stack          : Parser_State_Vectors.Vector;
       Subprogram_Map : Subprogram_Information_Maps.Map;
       Analysis       : Analysis_Information;
+      Global_Section : Boolean;
+      --  This flag indicates processing of child element of 'global' element
+      --  because 'unboundedobjectset' elements must not be processed as
+      --  child of 'global' element.
    end record;
 
    function Resolve_Or_Create

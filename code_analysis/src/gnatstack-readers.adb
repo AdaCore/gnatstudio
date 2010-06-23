@@ -362,7 +362,7 @@ package body GNATStack.Readers is
       --  "global" is top level element
 
    begin
-      null;
+      Self.Global_Section := False;
    end Analyze_global_End_Tag;
 
    ------------------------------
@@ -373,11 +373,13 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
+      pragma Unreferenced (Attributes);
+
       pragma Assert (Self.Stack.Is_Empty);
       --  "global" is top level element
 
    begin
-      null;
+      Self.Global_Section := True;
    end Analyze_global_Start_Tag;
 
    --------------------------------------
@@ -675,7 +677,9 @@ package body GNATStack.Readers is
          Self.State.S_Locations := Value;
 
       elsif Self.State.Kind = Unbounded_State then
-         Self.State.U_Locations := Value;
+         --  Content of 'unbounded' element is ignored.
+
+         null;
       end if;
    end Analyze_locationset_End_Tag;
 
@@ -756,7 +760,9 @@ package body GNATStack.Readers is
          Self.State.S_Prefix_Name := Value;
 
       elsif Self.State.Kind = Unbounded_State then
-         Self.State.U_Prefix_Name := Value;
+         --  Content of 'unbounded' element is ignored.
+
+         null;
       end if;
    end Analyze_prefixname_End_Tag;
 
@@ -869,6 +875,7 @@ package body GNATStack.Readers is
          Info.Global_Usage := Value.Global_Usage;
          Info.Local_Usage := Value.Local_Usage;
          Info.Calls := Value.Calls;
+         Info.Unbounded := Value.Unbounded;
 
       elsif Self.State.Kind = Subprogram_Called_Set_State then
          --  Insert subprogram into the set
@@ -1008,12 +1015,8 @@ package body GNATStack.Readers is
    procedure Analyze_unbounded_End_Tag (Self : in out Reader) is
       pragma Assert (Self.State.Kind = Unbounded_State);
 
-      Value : constant Subprogram_Information_Access :=
-                Self.State.U_Subprogram;
-
    begin
       Self.Pop;
-      Self.Analysis.Unbounded_Set.Insert (Value);
    end Analyze_unbounded_End_Tag;
 
    ---------------------------------
@@ -1045,15 +1048,11 @@ package body GNATStack.Readers is
    begin
       Self.Pop;
 
-      --  Resolve subprogram's record or create new one.
+      if not Self.Global_Section then
+         pragma Assert (Self.State.Kind = Subprogram_State);
 
-      if Self.State.U_Subprogram = null then
-         Self.State.U_Subprogram :=
-           Self.Resolve_Or_Create
-             ((Self.State.U_Prefix_Name, Self.State.U_Locations));
+         Self.State.Unbounded.Append (Value);
       end if;
-
-      Self.State.U_Subprogram.Unbounded.Append (Value);
    end Analyze_unboundedobject_End_Tag;
 
    ---------------------------------------
@@ -1066,7 +1065,9 @@ package body GNATStack.Readers is
    is
       pragma Unreferenced (Attributes);
 
-      pragma Assert (Self.State.Kind = Unbounded_State);
+      pragma Assert
+        (Self.State.Kind = Unbounded_State
+           or else Self.State.Kind = Subprogram_State);
 
    begin
       Self.Push;
@@ -1078,7 +1079,9 @@ package body GNATStack.Readers is
    ----------------------------------------
 
    procedure Analyze_unboundedobjectset_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = Unbounded_State);
+      pragma Assert
+        (Self.State.Kind = Unbounded_State
+           or else Self.State.Kind = Subprogram_State);
       --  "unboundedobjectset" element is ignored, parser's state is unchanged
       --  to allow direct access to members of Unbounded_Set state.
 
@@ -1094,7 +1097,9 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Assert (Self.State.Kind = Unbounded_State);
+      pragma Assert
+        (Self.State.Kind = Unbounded_State
+           or else Self.State.Kind = Subprogram_State);
 
    begin
       --  "unboundedobjectset" element is ignored, parser's state is unchanged
