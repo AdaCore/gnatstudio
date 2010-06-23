@@ -62,7 +62,10 @@ with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 
 with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
+with GPS.Intl;                   use GPS.Intl;
+
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -2100,6 +2103,12 @@ package body Src_Editor_View is
       end if;
 
       if not Get_Editable (View) then
+         if Get_String (Event)'Length >= 1 then
+            Insert
+              (View.Kernel,
+               -"Warning: attempting to edit a read-only editor.",
+               Mode => Error);
+         end if;
          return False;
       end if;
 
