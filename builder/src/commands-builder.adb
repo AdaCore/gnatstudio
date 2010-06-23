@@ -26,6 +26,8 @@ with GNAT.Expect;                      use GNAT.Expect;
 with GNAT.Regpat;                      use GNAT.Regpat;
 with GNAT.String_Split;                use GNAT.String_Split;
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+
 pragma Warnings (Off);
 with GNAT.Expect.TTY;                  use GNAT.Expect.TTY;
 pragma Warnings (On);
@@ -417,6 +419,7 @@ package body Commands.Builder is
       Is_A_Run : Boolean;
       Show_Output  : Boolean;
       Show_Command : Boolean;
+      Created_Command : Scheduled_Command_Access;
    begin
       if New_Console_Name /= "" then
          Console := Get_Build_Console
@@ -504,7 +507,8 @@ package body Commands.Builder is
                   Name_In_Task_Manager => To_String (Cmd_Name),
                   Synchronous          => Synchronous,
                   Show_Exit_Status     => not (Data.Shadow
-                    or else Data.Background));
+                    or else Data.Background),
+                  Created_Command      => Created_Command);
             end;
 
          else
@@ -525,10 +529,15 @@ package body Commands.Builder is
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
                Show_Exit_Status     => not (Data.Shadow
-                or else Data.Background));
+                 or else Data.Background),
+               Created_Command      => Created_Command);
          end if;
 
          --  ??? check value of Success
+      end if;
+
+      if Success and then Data.Background then
+         Background_Build_Started (Created_Command);
       end if;
    end Launch_Build_Command;
 

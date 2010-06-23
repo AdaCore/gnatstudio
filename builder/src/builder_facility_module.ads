@@ -110,6 +110,7 @@ with Remote;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 package Builder_Facility_Module is
 
@@ -200,6 +201,10 @@ package Builder_Facility_Module is
 
    procedure Background_Build_Finished;
    --  Inform the module that a background build has finished
+
+   procedure Background_Build_Started (Command : Scheduled_Command_Access);
+   --  Inform the module that a background build has started, controlled by
+   --  Command.
 
    procedure Save_Targets;
    procedure Load_Targets;

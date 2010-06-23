@@ -192,6 +192,13 @@ package body Builder_Facility_Module is
 
       Background_Build_ID : Integer := 1;
       --  The ID of the current background build.
+
+      Background_Build_Command : Scheduled_Command_Access;
+      --  The command holding the background build.
+
+      Prevent_Save_Reentry : Boolean := False;
+      --  Used to prevent cases where a compilation is triggered "on file save"
+      --  and the "file save" is caused by another compilation
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -845,11 +852,13 @@ package body Builder_Facility_Module is
       --  Do this before checking the project, in case we have a default
       --  project whose name is changed when saving
 
+      Builder_Module_ID.Prevent_Save_Reentry := True;
       if not (D.Quiet or else D.Shadow)
         and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
       then
          return False;
       end if;
+      Builder_Module_ID.Prevent_Save_Reentry := False;
 
       Clear_Compilation_Output
         (Kernel_Handle (Kernel),
@@ -1016,17 +1025,37 @@ package body Builder_Facility_Module is
       File   : Virtual_File;
       Saved  : Boolean)
    is
-      C         : Build_Configurations.Target_Cursor :=
+      C          : Build_Configurations.Target_Cursor :=
         Get_First_Target (Builder_Module_ID.Registry);
-      T         : Target_Access;
+      T          : Target_Access;
+      Background : constant Boolean := not Saved;
    begin
-      --  If there is a category in the locations view that contains the
-      --  build errors, do not launch a background build.
-
-      if Has_Category
-        (Get_Messages_Container (Get_Kernel), Error_Category)
+      --  If the current "save" operation is actually caused by the launch of
+      --  a build operation, do not build in response to this save, as this
+      --  would mean multiple builds (most likely of the same file) in
+      --  parallel.
+      if Saved
+        and then Builder_Module_ID.Prevent_Save_Reentry
       then
          return;
+      end if;
+
+      if Background then
+         --  If there is a category in the locations view that contains the
+         --  build errors, do not launch a background build.
+
+         if Has_Category
+           (Get_Messages_Container (Get_Kernel), Error_Category)
+         then
+            return;
+         end if;
+
+         --  If there is already a background build running, interrupt it
+         --  and clean up before launching a new one.
+         if Builder_Module_ID.Background_Build_Command /= null then
+            Interrupt (Builder_Module_ID.Background_Build_Command.all);
+            Builder_Module_ID.Background_Build_Command := null;
+         end if;
       end if;
 
       --  We run this hook only when a source file has changed.
@@ -1062,7 +1091,7 @@ package body Builder_Facility_Module is
                            Extra_Args   => null,
                            Quiet        => True,
                            Synchronous  => False,
-                           Background   => not Saved,
+                           Background   => Background,
                            Dialog       => Default,
                            Main         => "");
             --  ??? Should we attempt to compute which is the "relevant" main
@@ -1235,6 +1264,11 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Widget);
    begin
+      if Builder_Module_ID.Background_Build_Command /= null then
+         Interrupt (Builder_Module_ID.Background_Build_Command.all);
+         Builder_Module_ID.Background_Build_Command := null;
+      end if;
+
       Launch_Target
         (Get_Kernel,
          Builder_Module_ID.Registry,
@@ -1257,6 +1291,11 @@ package body Builder_Facility_Module is
       Data : constant Gtkada.Combo_Tool_Button.User_Data :=
                Get_Selected_Item_Data (Widget);
    begin
+      if Builder_Module_ID.Background_Build_Command /= null then
+         Interrupt (Builder_Module_ID.Background_Build_Command.all);
+         Builder_Module_ID.Background_Build_Command := null;
+      end if;
+
       if Data /= null then
          Launch_Target
            (Get_Kernel,
@@ -2631,6 +2670,17 @@ package body Builder_Facility_Module is
          Builder_Module_ID.Background_Build_ID :=
            Builder_Module_ID.Background_Build_ID + 1;
       end if;
+
+      Builder_Module_ID.Background_Build_Command := null;
    end Background_Build_Finished;
+
+   ------------------------------
+   -- Background_Build_Started --
+   ------------------------------
+
+   procedure Background_Build_Started (Command : Scheduled_Command_Access) is
+   begin
+      Builder_Module_ID.Background_Build_Command := Command;
+   end Background_Build_Started;
 
 end Builder_Facility_Module;
