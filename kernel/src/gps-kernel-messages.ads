@@ -265,6 +265,11 @@ package GPS.Kernel.Messages is
    --  Create_Marks indicates whether messages in this container should
    --  create marks to track their location
 
+   function Has_Category
+     (Self     : not null access constant Messages_Container'Class;
+      Category : String) return Boolean;
+   --  Return True if Category is present in the container
+
    function Get_Categories
      (Self : not null access constant Messages_Container'Class)
       return Unbounded_String_Array;

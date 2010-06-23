@@ -729,9 +729,7 @@ package body Build_Command_Manager is
             Data.Category_Name := To_Unbounded_String
               (Current_Background_Build_Id);
          else
-            Data.Category_Name :=
-              To_Unbounded_String
-                (Target_Name_To_Locations_Category (Target_Name));
+            Data.Category_Name := To_Unbounded_String (Error_Category);
          end if;
 
          Data.Mode_Name   := To_Unbounded_String (Mode);

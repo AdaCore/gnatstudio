@@ -75,18 +75,11 @@ package Commands.Builder is
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
    overriding procedure Destroy (Data : in out Build_Callback_Data);
 
-   function Target_Name_To_Locations_Category (Name : String) return String;
-   --  Return the name of the locations category associated with the build of
-   --  target Name.
-
    procedure Process_Builder_Output
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command    : Commands.Command_Access;
       Output     : Glib.UTF8_String;
-      Quiet      : Boolean;
-      Shadow     : Boolean;
-      Background : Boolean;
-      Target     : String);
+      Data       : Build_Callback_Data);
    --  Process the builder output: update the progress bar in Command as
    --  necessary, hide the progress output, and display the other outputs in
    --  the console. Error messages are displayed in the locations window.
@@ -121,8 +114,7 @@ package Commands.Builder is
    procedure Display_Compiler_Message
      (Kernel     : GPS.Kernel.Kernel_Handle;
       Message    : String;
-      Shadow     : Boolean;
-      Background : Boolean);
+      Data       : Build_Callback_Data);
    --  Display Message
 
    function Get_Build_Console

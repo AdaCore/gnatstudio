@@ -59,15 +59,11 @@ package body Commands.Builder is
 
    procedure Parse_Compiler_Output
      (Kernel           : Kernel_Handle;
-      Category         : String;
       Error_Category   : Style_Access;
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
-      Target           : String;
-      Shadow           : Boolean;
-      Quiet            : Boolean;
-      Background       : Boolean);
+      Data             : Build_Callback_Data);
    --  Parse the output of build engine and insert the result
    --    - in the GPS results view if it corresponds to a file location
    --    - in the GPS console if it is a general message.
@@ -89,19 +85,6 @@ package body Commands.Builder is
    begin
       null;
    end Destroy;
-
-   ---------------------------------------
-   -- Target_Name_To_Locations_Category --
-   ---------------------------------------
-
-   function Target_Name_To_Locations_Category (Name : String) return String is
-   begin
-      if Name = "" then
-         return Error_Category;
-      else
-         return -"Build results: " & Name;
-      end if;
-   end Target_Name_To_Locations_Category;
 
    -----------------------
    -- Get_Build_Console --
@@ -157,12 +140,12 @@ package body Commands.Builder is
    procedure Display_Compiler_Message
      (Kernel     : GPS.Kernel.Kernel_Handle;
       Message    : String;
-      Shadow     : Boolean;
-      Background : Boolean)
+      Data       : Build_Callback_Data)
    is
       Console : Interactive_Console;
    begin
-      Console := Get_Build_Console (Kernel, Shadow, Background, False);
+      Console := Get_Build_Console
+        (Kernel, Data.Shadow, Data.Background, False);
 
       if Console /= null then
          Insert (Console, Message, Add_LF => False);
@@ -280,20 +263,14 @@ package body Commands.Builder is
                  (Kernel  => Data.Kernel,
                   Command => Data.Command,
                   Output  => Str.all,
-                  Quiet   => Build_Data.Quiet,
-                  Shadow  => Build_Data.Shadow,
-                  Background => Build_Data.Background,
-                  Target  => To_String (Build_Data.Target_Name));
+                  Data    => Build_Data);
 
             else
                Process_Builder_Output
                  (Kernel  => Data.Kernel,
                   Command => Data.Command,
                   Output  => Output (1 .. Len),
-                  Quiet   => Build_Data.Quiet,
-                  Shadow  => Build_Data.Shadow,
-                  Background => Build_Data.Background,
-                  Target  => To_String (Build_Data.Target_Name));
+                  Data    => Build_Data);
             end if;
          else
             Console.Insert
@@ -313,21 +290,17 @@ package body Commands.Builder is
 
    procedure Parse_Compiler_Output
      (Kernel           : Kernel_Handle;
-      Category         : String;
       Error_Category   : Style_Access;
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
-      Target           : String;
-      Shadow           : Boolean;
-      Quiet            : Boolean;
-      Background       : Boolean)
+      Data             : Build_Callback_Data)
    is
       Last  : Natural;
       Lines : Slice_Set;
 
    begin
-      Display_Compiler_Message (Kernel, Output, Shadow, Background);
+      Display_Compiler_Message (Kernel, Output, Data);
 
       if Output'Length = 0
         or else
@@ -357,30 +330,20 @@ package body Commands.Builder is
 
       for J in 1 .. Slice_Count (Lines) loop
          Append_To_Build_Output
-           (Kernel, Slice (Lines, J), Target, Shadow, Background);
+           (Kernel, Slice (Lines, J), To_String (Data.Target_Name),
+            Data.Shadow,
+            Data.Background);
       end loop;
 
-      if Background then
-         Parse_File_Locations
-           (Kernel,
-            Output,
-            Category           => Category,
-            Highlight          => True,
-            Highlight_Category => Error_Category,
-            Style_Category     => Style_Category,
-            Warning_Category   => Warning_Category,
-            Show_In_Locations  => not Background);
-      else
-         Parse_File_Locations
-           (Kernel,
-            Output,
-            Category           => Commands.Builder.Error_Category,
-            Highlight          => True,
-            Highlight_Category => Error_Category,
-            Style_Category     => Style_Category,
-            Warning_Category   => Warning_Category,
-            Show_In_Locations  => not Background);
-      end if;
+      Parse_File_Locations
+        (Kernel,
+         Output,
+         Category           => To_String (Data.Category_Name),
+         Highlight          => True,
+         Highlight_Category => Error_Category,
+         Style_Category     => Style_Category,
+         Warning_Category   => Warning_Category,
+         Show_In_Locations  => not Data.Background);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -399,30 +362,11 @@ package body Commands.Builder is
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command    : Commands.Command_Access;
       Output     : Glib.UTF8_String;
-      Quiet      : Boolean;
-      Shadow     : Boolean;
-      Background : Boolean;
-      Target     : String)
+      Data       : Build_Callback_Data)
    is
       Start   : Integer := Output'First;
       Matched : Match_Array (0 .. 3);
       Buffer  : Unbounded_String;
-
-      function Message_Category return String;
-      --  Return the message category to use for this build
-
-      ----------------------
-      -- Message_Category --
-      ----------------------
-
-      function Message_Category return String is
-      begin
-         if Background then
-            return Current_Background_Build_Id;
-         end if;
-
-         return Target_Name_To_Locations_Category (Target);
-      end Message_Category;
 
    begin
       while Start <= Output'Last loop
@@ -443,15 +387,11 @@ package body Commands.Builder is
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
            (Kernel           => Kernel_Handle (Kernel),
-            Category         => Message_Category,
             Error_Category   => Builder_Errors_Style,
             Warning_Category => Builder_Warnings_Style,
             Style_Category   => Builder_Style_Style,
             Output           => To_String (Buffer),
-            Target           => Target,
-            Background       => Background,
-            Shadow           => Shadow,
-            Quiet            => Quiet);
+            Data             => Data);
       end if;
    end Process_Builder_Output;
 

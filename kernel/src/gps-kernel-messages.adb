@@ -307,6 +307,17 @@ package body GPS.Kernel.Messages is
       return Self.Action;
    end Get_Action;
 
+   ------------------
+   -- Has_Category --
+   ------------------
+
+   function Has_Category
+     (Self     : not null access constant Messages_Container'Class;
+      Category : String) return Boolean is
+   begin
+      return Self.Category_Map.Contains (To_Unbounded_String (Category));
+   end Has_Category;
+
    --------------------
    -- Get_Categories --
    --------------------

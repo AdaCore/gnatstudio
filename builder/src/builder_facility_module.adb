@@ -852,7 +852,8 @@ package body Builder_Facility_Module is
       end if;
 
       Clear_Compilation_Output
-        (Kernel_Handle (Kernel), Target_Name_To_Locations_Category (D.Value),
+        (Kernel_Handle (Kernel),
+         Category        => D.Value,
          Clear_Console   => (not D.Quiet)
            and then (D.Shadow or else Builder_Module_ID.Build_Count = 0),
          Clear_Locations => Builder_Module_ID.Build_Count = 0,
@@ -1019,6 +1020,14 @@ package body Builder_Facility_Module is
         Get_First_Target (Builder_Module_ID.Registry);
       T         : Target_Access;
    begin
+      --  If there is a category in the locations view that contains the
+      --  build errors, do not launch a background build.
+
+      if Has_Category
+        (Get_Messages_Container (Get_Kernel), Error_Category)
+      then
+         return;
+      end if;
 
       --  We run this hook only when a source file has changed.
       --  For other files (for instance revision logs), we do not want to
