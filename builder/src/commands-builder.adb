@@ -534,11 +534,12 @@ package body Commands.Builder is
          end if;
 
          --  ??? check value of Success
+
+         if Success and then Data.Background then
+            Background_Build_Started (Created_Command);
+         end if;
       end if;
 
-      if Success and then Data.Background then
-         Background_Build_Started (Created_Command);
-      end if;
    end Launch_Build_Command;
 
 end Commands.Builder;
