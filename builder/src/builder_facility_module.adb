@@ -45,6 +45,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Projects;                  use Projects;
 
+with Commands;                    use Commands;
 with Commands.Interactive;        use Commands.Interactive;
 
 with Build_Configurations;        use Build_Configurations;
@@ -390,6 +391,9 @@ package body Builder_Facility_Module is
      (Menu_Type   : Contextual_Menu_Type;
       Context     : Selection_Context;
       Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
+
+   procedure Interrupt_Background_Build;
+   --  Interrupt the currently running background build
 
    -------------------------------
    -- Append_To_Contextual_Menu --
@@ -1052,10 +1056,7 @@ package body Builder_Facility_Module is
 
          --  If there is already a background build running, interrupt it
          --  and clean up before launching a new one.
-         if Builder_Module_ID.Background_Build_Command /= null then
-            Interrupt (Builder_Module_ID.Background_Build_Command.all);
-            Builder_Module_ID.Background_Build_Command := null;
-         end if;
+         Interrupt_Background_Build;
       end if;
 
       --  We run this hook only when a source file has changed.
@@ -1264,10 +1265,7 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      if Builder_Module_ID.Background_Build_Command /= null then
-         Interrupt (Builder_Module_ID.Background_Build_Command.all);
-         Builder_Module_ID.Background_Build_Command := null;
-      end if;
+      Interrupt_Background_Build;
 
       Launch_Target
         (Get_Kernel,
@@ -1291,10 +1289,7 @@ package body Builder_Facility_Module is
       Data : constant Gtkada.Combo_Tool_Button.User_Data :=
                Get_Selected_Item_Data (Widget);
    begin
-      if Builder_Module_ID.Background_Build_Command /= null then
-         Interrupt (Builder_Module_ID.Background_Build_Command.all);
-         Builder_Module_ID.Background_Build_Command := null;
-      end if;
+      Interrupt_Background_Build;
 
       if Data /= null then
          Launch_Target
@@ -2682,5 +2677,19 @@ package body Builder_Facility_Module is
    begin
       Builder_Module_ID.Background_Build_Command := Command;
    end Background_Build_Started;
+
+   --------------------------------
+   -- Interrupt_Background_Build --
+   --------------------------------
+
+   procedure Interrupt_Background_Build is
+   begin
+      if Builder_Module_ID.Background_Build_Command /= null then
+         Interrupt_Queue
+           (Get_Kernel,
+            Command_Access (Builder_Module_ID.Background_Build_Command));
+         Builder_Module_ID.Background_Build_Command := null;
+      end if;
+   end Interrupt_Background_Build;
 
 end Builder_Facility_Module;
