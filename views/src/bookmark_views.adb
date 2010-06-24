@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---               Copyright (C) 2005-2009, AdaCore                    --
+--               Copyright (C) 2005-2010, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -521,6 +521,8 @@ package body Bookmark_Views is
                Result := Go_To (Marker.Marker, View.Kernel);
                --  Return True here to prevent focus from flickering between
                --  editor and bookmark view.
+
+               Push_Marker_In_History (View.Kernel, Marker.Marker);
                return True;
             end if;
          end if;
@@ -974,10 +976,13 @@ package body Bookmark_Views is
       elsif Command = "goto" then
          Inst := Nth_Arg (Data, 1, Bookmark_Class);
          Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
-         if Bookmark = Null_Node
-           or else not Go_To
+         if Bookmark /= Null_Node
+           and then Go_To
              (Bookmark_List.Data (Bookmark).Marker, Get_Kernel (Data))
          then
+            Push_Marker_In_History (Get_Kernel (Data),
+                                    Bookmark_List.Data (Bookmark).Marker);
+         else
             Set_Error_Msg (Data, "Invalid bookmark");
          end if;
 
