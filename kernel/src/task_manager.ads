@@ -118,9 +118,7 @@ private
       Active  : Boolean);
    --  Runs the task manager, if it is not already running
 
-   type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
-   --  ??? The Interrupted status should probably be removed since interrupted
-   --  tasks are not to b e displayed in the task manager.
+   type Queue_Status is (Not_Started, Running, Paused, Completed);
 
    type Task_Queue_Record is record
       Status   : Queue_Status := Running;

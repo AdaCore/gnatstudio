@@ -274,7 +274,7 @@ package body Task_Manager is
 
          Command := Command_Queues.Head (Queue.Queue);
 
-         if Queue.Status = Interrupted then
+         if Queue.Status = Completed then
             Result := Success;
          else
             Result := Safe_Execute (Command);
@@ -284,7 +284,7 @@ package body Task_Manager is
             when Success | Failure =>
                --  ??? add the command to the list of done or failed commands
 
-               if Queue.Status = Interrupted then
+               if Queue.Status = Completed then
                   Command_Queues.Free (Queue.Queue);
 
                else
@@ -555,6 +555,14 @@ package body Task_Manager is
          while Node /= Null_Node loop
             if Data (Node) = Command then
                Interrupt_Command (Manager, J);
+               Manager.Queues (J).Status := Completed;
+
+               if J >= Manager.Passive_Index then
+                  Manager.Minimal_Passive_Priority := 0;
+               else
+                  Manager.Minimal_Active_Priority := 0;
+               end if;
+
                Free (Manager.Queues (J).Queue);
                return;
             end if;
