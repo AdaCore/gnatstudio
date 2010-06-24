@@ -46,6 +46,7 @@ def goto_declaration_body():
          decl = entity.declaration().file()
          decl_line = entity.declaration().line()
 
+         GPS.Editor.mark_current_location()
          if current_file == decl and current_line == decl_line:
             body = entity.body().file()
             body_line = entity.body().line()
@@ -57,6 +58,7 @@ def goto_declaration_body():
             GPS.Editor.edit (decl.name(),
                              line=decl_line,
                              column=entity.declaration().column())
+         GPS.Editor.mark_current_location()
    except:
          print "Not found " + name + ":" + current_file.name() + ":" + `line`
          GPS.Editor.edit (current_file.other_file().name())
@@ -73,6 +75,7 @@ def goto_other_file():
       try:
          entity = GPS.Entity (name, current_file, line)
 
+         GPS.Editor.mark_current_location()
          if entity.declaration ().file() == current_file:
             body = entity.body()
 
@@ -88,6 +91,9 @@ def goto_other_file():
             GPS.Editor.edit (entity.declaration ().file().name(),
                              line=entity.declaration ().line(),
                              column=entity.declaration ().column())
+
+         GPS.Editor.mark_current_location()
+
       except:
          print "Not found " + name + ":" + current_file.name() + ":" + `line`
          GPS.Editor.edit (current_file.other_file().name())

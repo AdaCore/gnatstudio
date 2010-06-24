@@ -2493,6 +2493,13 @@ If the line and column are not specified, then the current selection is returned
        <description>Print the contents of the items attached to the side of a line. This is used mainly for debugging and testing purposes.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Editor.mark_current_location">
+      <description>Push the location in the current editor in the history of locations.
+      This should be called before jumping to a new location on a user's
+      request, so that he can easily choose to go back to the previous
+     location.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####  VCS class
     ###################################################################-->

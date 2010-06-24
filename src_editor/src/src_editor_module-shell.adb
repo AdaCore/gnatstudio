@@ -991,6 +991,9 @@ package body Src_Editor_Module.Shell is
          Push_Current_Editor_Location_In_History (Kernel);
          Force := Go_To (Marker, Kernel);
 
+      elsif Command = "mark_current_location" then
+         Push_Current_Editor_Location_In_History (Kernel);
+
       elsif Command = "delete_mark" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
          if Marker /= null then
@@ -2798,6 +2801,10 @@ package body Src_Editor_Module.Shell is
          Editor_Class, True);
       Register_Command
         (Kernel, "set_title", 2, 3, Edit_Command_Handler'Access,
+         Editor_Class, True);
+
+      Register_Command
+        (Kernel, "mark_current_location", 0, 0, Edit_Command_Handler'Access,
          Editor_Class, True);
 
       --  Register the debug commands
