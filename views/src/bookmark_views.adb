@@ -218,9 +218,6 @@ package body Bookmark_Views is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the bookmark view is destroyed
 
-   procedure On_Model_Row_Changed (View : access Gtk_Widget_Record'Class);
-   --  Called when the treeview model is changed
-
    --------------
    -- Tooltips --
    --------------
@@ -668,16 +665,6 @@ package body Bookmark_Views is
       Unref (Bookmark_View_Access (View).Goto_Icon);
    end On_Destroy;
 
-   --------------------------
-   -- On_Model_Row_Changed --
-   --------------------------
-
-   procedure On_Model_Row_Changed (View : access Gtk_Widget_Record'Class) is
-      V : constant Bookmark_View_Access := Bookmark_View_Access (View);
-   begin
-      Save_Bookmarks (V.Kernel);
-   end On_Model_Row_Changed;
-
    ----------------
    -- Initialize --
    ----------------
@@ -743,15 +730,6 @@ package body Bookmark_Views is
                 Refresh_H,
                 Name  => "bookmark_views.refresh",
                 Watch => GObject (View));
-
-      --  Each change to the model (in particular renaming of bookmarks) should
-      --  be saved immediately into the bookmarks.xml file. Unfortunately,
-      --  there doesn't appear to be a signal when a cell is finished editing,
-      --  so we just monitor these events at the model level directly.
-
-      Widget_Callback.Object_Connect
-        (Get_Model (View.Tree), Signal_Row_Changed,
-         On_Model_Row_Changed'Access, View);
 
       --  Initialize tooltips
 

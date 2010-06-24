@@ -1875,10 +1875,11 @@ package body GUI_Utils is
                Add_Attribute
                  (Col, Text_Render, "editable",
                   Editable_Columns (Integer (ColNum)));
-               Tree_Model_Callback.Object_Connect
-                 (Text_Render, Signal_Edited, Edited_Callback'Access,
-                  Slot_Object => Model, User_Data => Gint (N));
 
+               --  First connect the user callback, before validating the
+               --  change in the second callback: validating the change could
+               --  force the tree view to resort itself, thus making the path
+               --  we are giving the user callback invalid.
                if Integer (ColNum) in Editable_Callback'Range
                  and then Editable_Callback (Integer (ColNum)) /= null
                then
@@ -1886,8 +1887,12 @@ package body GUI_Utils is
                     (Text_Render, Signal_Edited,
                      Widget_Callback.Handler
                        (Editable_Callback (Integer (ColNum))),
-                     Slot_Object => View, After => True);
+                     Slot_Object => View);
                end if;
+
+               Tree_Model_Callback.Object_Connect
+                 (Text_Render, Signal_Edited, Edited_Callback'Access,
+                  Slot_Object => Model, User_Data => Gint (N));
             end if;
 
          elsif Is_Icon then

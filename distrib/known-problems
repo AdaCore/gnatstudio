@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J623-007: Renaming bookmarks sometimes mixes them
+  Problem:    If you rename a bookmark in the Bookmarks View, and the new
+              name changes the sort order, then the location and names of
+              bookmarks no longer match.
+  Workaround: Directly edit the file $HOME/.gps/bookmarks.xml before starting
+              GPS
+
 - J610-025: "Use exec dir" broken when running executables in the debugger
   Problem:    When using the Debug->Run... menu to launch executables in
               the debugger, the checkbox "use exec dir instead of current dir"
