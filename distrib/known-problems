@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.5.0
   Workaround: Directly edit the file $HOME/.gps/bookmarks.xml before starting
               GPS
 
+- J621-018: Bookmark locations not entered in locations history
+  Problem:    When using the Bookmark view to visit locations, using
+              the menu Navigate->Back or the toolbar "Back" button does not
+              cause GPS to jump to locations previously visited by bookmarks.
+  Workaround: Go to the desired location manually.
+
 - J610-025: "Use exec dir" broken when running executables in the debugger
   Problem:    When using the Debug->Run... menu to launch executables in
               the debugger, the checkbox "use exec dir instead of current dir"

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2009, AdaCore                 --
+--                  Copyright (C) 2005-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -114,6 +114,8 @@ private
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean;
    overriding function To_String
      (Marker : access File_Marker_Record) return String;
+   overriding function Clone
+     (Marker : access File_Marker_Record) return Location_Marker;
    overriding function Save
      (Marker : access File_Marker_Record) return XML_Utils.Node_Ptr;
    overriding function Similar

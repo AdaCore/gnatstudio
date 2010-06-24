@@ -431,6 +431,11 @@ package GPS.Kernel is
    --  If this function returns False, it is assumed the marker is no longer
    --  legal, and should be removed from the history.
 
+   function Clone
+     (Marker : access Location_Marker_Record)
+      return Location_Marker is abstract;
+   --  Return a clone of Marker
+
    procedure Destroy (Marker : in out Location_Marker_Record);
    --  Free the memory used by Marker. By default, this does nothing.
 

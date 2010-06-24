@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -240,6 +240,9 @@ package body Browsers.Canvas is
    overriding function Go_To
      (Marker : access Browser_Marker_Record;
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   overriding function Clone
+     (Marker : access Browser_Marker_Record)
+      return Location_Marker;
    overriding procedure Destroy (Marker : in out Browser_Marker_Record);
    overriding function To_String
      (Marker : access Browser_Marker_Record) return String;
@@ -2657,6 +2660,17 @@ package body Browsers.Canvas is
       return new Browser_Marker_Record'
         (Location_Marker_Record with Title => new String'(Browser_Name));
    end Create_Browser_Marker;
+
+   -----------
+   -- Clone --
+   -----------
+
+   overriding function Clone
+     (Marker : access Browser_Marker_Record)
+      return Location_Marker is
+   begin
+      return Location_Marker (Create_Browser_Marker (Marker.Title.all));
+   end Clone;
 
    --------------------
    -- Get_Orthogonal --

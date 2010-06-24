@@ -518,11 +518,13 @@ package body Bookmark_Views is
             Marker := Convert (Get_Address (Model, Iter, Data_Column));
 
             if Marker /= null then
+               --  Push_Current_Editor_Location_In_History (View.Kernel);
                Result := Go_To (Marker.Marker, View.Kernel);
+               Push_Marker_In_History (View.Kernel, Clone (Marker.Marker));
+
                --  Return True here to prevent focus from flickering between
                --  editor and bookmark view.
 
-               Push_Marker_In_History (View.Kernel, Marker.Marker);
                return True;
             end if;
          end if;
@@ -980,8 +982,9 @@ package body Bookmark_Views is
            and then Go_To
              (Bookmark_List.Data (Bookmark).Marker, Get_Kernel (Data))
          then
-            Push_Marker_In_History (Get_Kernel (Data),
-                                    Bookmark_List.Data (Bookmark).Marker);
+            Push_Marker_In_History
+              (Get_Kernel (Data),
+               Clone (Bookmark_List.Data (Bookmark).Marker));
          else
             Set_Error_Msg (Data, "Invalid bookmark");
          end if;

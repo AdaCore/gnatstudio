@@ -97,6 +97,9 @@ package body Navigation_Module is
      (Marker : access Shell_Marker_Record;
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
    overriding procedure Destroy (Marker : in out Shell_Marker_Record);
+   overriding function Clone
+     (Marker : access Shell_Marker_Record)
+      return Location_Marker;
    overriding function To_String
      (Marker : access Shell_Marker_Record) return String;
    overriding function Save
@@ -594,6 +597,18 @@ package body Navigation_Module is
    begin
       return Marker.Command.all;
    end To_String;
+
+   -----------
+   -- Clone --
+   -----------
+
+   overriding function Clone
+     (Marker : access Shell_Marker_Record)
+      return Location_Marker is
+   begin
+      return Location_Marker
+        (Create_Shell_Marker (Marker.Script, Marker.Command.all));
+   end Clone;
 
    ----------
    -- Save --

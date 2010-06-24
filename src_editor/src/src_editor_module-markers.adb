@@ -594,6 +594,22 @@ package body Src_Editor_Module.Markers is
       end;
    end To_String;
 
+   -----------
+   -- Clone --
+   -----------
+
+   overriding function Clone
+     (Marker : access File_Marker_Record) return Location_Marker
+   is
+
+   begin
+      return Location_Marker
+        (Create_File_Marker
+           (Marker.Kernel, Marker.File,
+            Marker.Get_Line, Marker.Get_Column));
+
+   end Clone;
+
    ----------
    -- Save --
    ----------
