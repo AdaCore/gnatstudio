@@ -63,7 +63,7 @@ with GNATCOLL.Traces;
 package body GVD.Consoles is
 
    ANSI_Support : constant Debug_Handle :=
-                   Create ("GVD.ANSI_Support", GNATCOLL.Traces.On);
+                   Create ("GVD.ANSI_Support", GNATCOLL.Traces.Off);
 
    Regexp_Any : constant Pattern_Matcher :=
      Compile (".+", Single_Line or Multiple_Lines);
