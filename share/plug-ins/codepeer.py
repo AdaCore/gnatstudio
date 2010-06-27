@@ -167,6 +167,8 @@ if codepeer != "":
                 tip="Display a progress bar with information about how many files are left to be compiled" />
          <check label="Ignore representation clauses" switch="-gnatI" column="1"
                 tip="Ignore all representation clauses, useful for generating SCIL for another architecture" />
+         <check label="GNAT warnings" switch="-gnatwna" column="1"
+                tip="Enable GNAT warnings during SCIL generation" />
        </switches>
     </target-model>
 
@@ -254,6 +256,7 @@ if codepeer != "":
           <arg>%eL</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>-gnatcC</arg>
        </command-line>
     </target>
 
