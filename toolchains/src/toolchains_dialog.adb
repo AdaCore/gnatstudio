@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,6 +35,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Toolchains;                use Toolchains;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with Traces;                    use Traces;
@@ -210,7 +211,7 @@ package body Toolchains_Dialog is
       Label  : Gtk_Label;
       Browse : Gtk_Button;
       Pix    : Gtk_Image;
-      Tips   : constant Gtk_Tooltips := GPS.Kernel.Get_Tooltips (Kernel);
+      Tips   : constant Gtk_Tooltips := Get_Tooltips (Kernel);
       pragma Unreferenced (Dead);
 
    begin

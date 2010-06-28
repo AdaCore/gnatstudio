@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2004-2009, AdaCore                 --
+--                  Copyright (C) 2004-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
 package body Aunit_Utils is
 
@@ -28,8 +29,7 @@ package body Aunit_Utils is
    function Get_Context_Directory
      (Kernel : Kernel_Handle) return Virtual_File
    is
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
    begin
       if Has_Directory_Information (Context) then
          return Directory_Information (Context);

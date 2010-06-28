@@ -26,6 +26,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;    use GNATCOLL.Scripts.Gtkada;
 
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Histories;

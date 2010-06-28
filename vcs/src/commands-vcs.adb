@@ -20,6 +20,7 @@
 with GNAT.Strings;
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with Traces;              use Traces;
 with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
