@@ -1325,13 +1325,13 @@ package body Entities.Queries is
             Iter.Entity_It := Element (Iter.Files_It).Refs.First;
             Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
          else
-            --  Otherwise, the File_It iterator is corrupted, reset
-            --  it and look for new files.
+            --  Otherwise, the File_It iterator is corrupted, reset it and look
+            --  for new files.
 
             Iter.Files_It := First (Iter.Entity.References);
 
             --  If the first file has not already been analysed, then we need
-            --  to perform the analysis
+            --  to perform the analysis.
 
             if not Iter.Files_Analyzed.Contains (Key (Iter.Files_It)) then
                Safe_Update_Xref (Element (Iter.Files_It).File);
