@@ -1465,6 +1465,9 @@ package body Browsers.Canvas is
       W, H          : Gint;
       Layout_H      : Gint := 0;
       Bg_GC         : Gdk_GC;
+
+      use Gdk;
+
    begin
       Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
 
@@ -1490,24 +1493,26 @@ package body Browsers.Canvas is
 
       Bg_GC := Get_Background_GC (Browser_Item (Item));
 
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Bg_GC,
-         Filled => True,
-         X      => Xoffset,
-         Y      => Layout_H + Yoffset,
-         Width  => W - Width_Offset,
-         Height => H - Layout_H - Height_Offset);
+      if Pixmap (Item) /= Null_Pixmap then
+         Draw_Rectangle
+           (Pixmap (Item),
+            GC     => Bg_GC,
+            Filled => True,
+            X      => Xoffset,
+            Y      => Layout_H + Yoffset,
+            Width  => W - Width_Offset,
+            Height => H - Layout_H - Height_Offset);
 
-      Draw_Shadow
-        (Style       => Get_Style (Item.Browser.Canvas),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
-         Shadow_Type => Shadow_Out,
-         X           => Xoffset,
-         Y           => Yoffset,
-         Width       => W - Width_Offset - Xoffset,
-         Height      => H - Height_Offset - Yoffset);
+         Draw_Shadow
+           (Style       => Get_Style (Item.Browser.Canvas),
+            Window      => Pixmap (Item),
+            State_Type  => State_Normal,
+            Shadow_Type => Shadow_Out,
+            X           => Xoffset,
+            Y           => Yoffset,
+            Width       => W - Width_Offset - Xoffset,
+            Height      => H - Height_Offset - Yoffset);
+      end if;
 
       if Item.Title_Layout /= null then
          Yoffset := Yoffset + Layout_H;

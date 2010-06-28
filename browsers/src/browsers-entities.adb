@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -491,7 +491,7 @@ package body Browsers.Entities is
          Kernel      => Kernel,
          Module_Name => "Entity_Browser");
 
-      GPS.Kernel.Register_Desktop_Functions
+      Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Examine_Entity_Command;

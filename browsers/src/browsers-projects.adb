@@ -772,8 +772,7 @@ package body Browsers.Projects is
          Kernel      => Kernel,
          Module_Name => Project_Browser_Module_Name,
          Priority    => Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? will be done in hook
       --     Set_Sensitive (Mitem, not Children_Shown (Item));

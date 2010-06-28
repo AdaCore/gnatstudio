@@ -1067,8 +1067,7 @@ package body Browsers.Dependency_Items is
          Kernel       => Kernel,
          Module_Name  => Dependency_Browser_Module_Name,
          Priority     => Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? Sensitivity will be handled in the hook "contextual_menu"
 

@@ -2201,8 +2201,7 @@ package body Browsers.Call_Graph is
          Kernel      => Kernel,
          Module_Name => Call_Graph_Module_Name,
          Priority    => GPS.Kernel.Modules.Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Filter := new Subprogram_Entity_Filter;
       Register_Filter (Kernel, Filter, "Entity is subprogram");
