@@ -117,6 +117,7 @@ package body GPS.Kernel.Preferences is
          begin
             if Pref = null then
                Set_Error_Msg (Data, -"Unknown preference " & Name);
+               Done := False;
 
             elsif Pref.all in Integer_Preference_Record'Class then
                Set_Pref
