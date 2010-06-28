@@ -2443,8 +2443,7 @@ package body Vsearch is
          Kernel      => Kernel,
          Module_Name => Search_Module_Name,
          Priority    => Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;
 
