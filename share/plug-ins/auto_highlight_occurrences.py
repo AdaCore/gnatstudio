@@ -206,8 +206,7 @@ class LocationHighlighter:
 
 current_highlighter=None
 
-def on_location_changed(hook, file, line, column):
-    """ Called when the current location changes """
+def re_highlight():
     global current_highlighter
     context=GPS.current_context()
 
@@ -231,28 +230,43 @@ def on_location_changed(hook, file, line, column):
                 current_highlighter.destroy()
                 current_highlighter = None
 
+def on_location_changed(hook, file, line, column):
+    """ Called when the current location changes """
+    re_highlight()
+
 def on_gps_started (hook_name):
     """ Called when GPS is started """
     global editor_location_style
 
+def on_preferences_changed (hook_name):
+    global current_highlighter
+    if current_highlighter:
+        current_highlighter.destroy()
+        current_highlighter = None
 
-    GPS.Hook ("location_changed").add(on_location_changed)
+    # Destroy any locations potentially left over from a previous session
+    # ??? This should also be done when exiting GPS.
 
-# Destroy any locations potentially left over from a previous session
-# ??? This should be done when exiting GPS.
-for m in GPS.Message.list("dynamic occurrences"):
-    m.remove()
+    for m in GPS.Message.list("dynamic occurrences"):
+        m.remove()
 
-# Create preferences
-for k in default_colors:
-    pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
+    # Create preferences
+    for k in default_colors:
+        pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
 
-    # Create styles
+        # Create styles
 
-    editor_location_styles[k]=GPS.Style("dynamic occurrences " + k)
-    editor_location_styles[k].set_background(
-        GPS.Preference (pref_name).get())
-    editor_location_styles[k].set_in_speedbar(
-      GPS.Preference ("Plugins/auto_highlight_occurrences/speedbar").get())
+        editor_location_styles[k]=GPS.Style("dynamic occurrences " + k)
+        editor_location_styles[k].set_background(
+            GPS.Preference (pref_name).get())
+        editor_location_styles[k].set_in_speedbar(
+          GPS.Preference ("Plugins/auto_highlight_occurrences/speedbar").get())
+
+        GPS.Hook ("location_changed").add(on_location_changed)
+
+    # Re-highlight after preferences changed
+
+    re_highlight()
 
 GPS.Hook ("gps_started").add (on_gps_started)
+GPS.Hook ("preferences_changed").add (on_preferences_changed)
