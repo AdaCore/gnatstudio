@@ -26,13 +26,13 @@ with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Text_Manager.Spark_Commands;
                                        use Codefix.Text_Manager.Spark_Commands;
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 with Language.Tree.Database;            use Language.Tree.Database;
 with Projects;                          use Projects;
 with Traces;                            use Traces;
 with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with Refactoring.Services;              use Refactoring.Services;
 
 package body Codefix.Formal_Errors is
 
@@ -60,7 +60,7 @@ package body Codefix.Formal_Errors is
       declare
          Matches : Match_Array (0 .. Max_Index);
          Line    : Integer;
-         Col     : Column_Index;
+         Col     : Visible_Column_Type;
       begin
          Match (Regexp, Error_Line, Matches);
 
@@ -84,7 +84,7 @@ package body Codefix.Formal_Errors is
          end if;
 
          if Matches (Col_Index) /= No_Match then
-            Col := Column_Index'Value
+            Col := Visible_Column_Type'Value
               (Error_Line
                  (Matches (Col_Index).First .. Matches (Col_Index).Last));
          else
@@ -124,7 +124,7 @@ package body Codefix.Formal_Errors is
      (This    : in out Error_Message;
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
-      Col     : Column_Index;
+      Col     : Visible_Column_Type;
       Message : String;
       Order   : Long_Long_Integer) is
    begin
@@ -438,7 +438,7 @@ package body Codefix.Formal_Errors is
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      Column_Expected : Column_Index := 0) return Solution_List
+      Column_Expected : Visible_Column_Type := 0) return Solution_List
    is
       New_Command_Ptr : constant Ptr_Command := new Indent_Code_Cmd;
       New_Command     : Indent_Code_Cmd renames
@@ -457,7 +457,7 @@ package body Codefix.Formal_Errors is
          Set_Caption
            (New_Command,
             "Move begin of instruction to column " &
-            Column_Index'Image (Column_Expected));
+            Visible_Column_Type'Image (Column_Expected));
       end if;
 
       Append (Result, New_Command_Ptr);
@@ -675,7 +675,8 @@ package body Codefix.Formal_Errors is
                      Delete_Command  : Remove_Elements_Cmd renames
                        Remove_Elements_Cmd (Delete_Command_Ptr.all);
                   begin
-                     Set_Remove_Mode (Delete_Command, Erase);
+                     Set_Remove_Mode
+                       (Delete_Command, Refactoring.Services.Erase);
                      Add_To_Remove (Delete_Command, Current_Text, Var_Cursor);
                      Set_Caption (Delete_Command, "Delete """ & Name & """");
                      Append (Result, Delete_Command_Ptr);
@@ -689,7 +690,8 @@ package body Codefix.Formal_Errors is
                      Comment_Command : Remove_Elements_Cmd renames
                        Remove_Elements_Cmd (Comment_Command_Ptr.all);
                   begin
-                     Set_Remove_Mode (Comment_Command, Comment);
+                     Set_Remove_Mode
+                       (Comment_Command, Refactoring.Services.Comment);
                      Add_To_Remove (Comment_Command, Current_Text, Var_Cursor);
                      Set_Caption
                        (Comment_Command,

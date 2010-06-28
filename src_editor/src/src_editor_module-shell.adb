@@ -1927,7 +1927,8 @@ package body Src_Editor_Module.Shell is
             Editor_Location_Class_Name,
             Get_Buffer (Data, 2).New_Location
             (Line   => Integer'Max (1, Nth_Arg (Data, 3)),
-             Column => Integer'Max (1, Nth_Arg (Data, 4))));
+             Column =>
+               Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 4)))));
 
       elsif Command = Comparison_Method then
          declare
@@ -1948,7 +1949,7 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value (Data, Get_Location (Data, 1).Line);
 
       elsif Command = "column" then
-         Set_Return_Value (Data, Get_Location (Data, 1).Column);
+         Set_Return_Value (Data, Integer (Get_Location (Data, 1).Column));
 
       elsif Command = "offset" then
          Set_Return_Value (Data, Get_Location (Data, 1).Offset);

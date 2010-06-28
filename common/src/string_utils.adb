@@ -149,13 +149,29 @@ package body String_Utils is
    -- Is_Blank_Line --
    -------------------
 
-   function Is_Blank_Line (Buffer : String; Index : Natural) return Boolean is
+   function Is_Blank_Line
+     (Buffer : String; Index : Natural := 0) return Boolean
+   is
+      It : Natural := Index;
    begin
-      for J in Line_Start (Buffer, Index) .. Line_End (Buffer, Index) loop
-         if not Is_Blank (Buffer (J)) then
-            return False;
-         end if;
-      end loop;
+      if It = 0 then
+         It := Buffer'First;
+      end if;
+
+      if It >= Buffer'First then
+         while It <= Buffer'Last
+           and then Buffer (It) /= ASCII.CR
+           and then Buffer (It) /= ASCII.LF
+         loop
+            if Buffer (It) /= ' '
+              and then Buffer (It) /= ASCII.HT
+            then
+               return False;
+            end if;
+
+            It := It + 1;
+         end loop;
+      end if;
 
       return True;
    end Is_Blank_Line;

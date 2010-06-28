@@ -110,7 +110,7 @@ package Codefix.Errors_Manager is
      (This         : Correction_Manager;
       File         : GNATCOLL.VFS.Virtual_File;
       Line         : Integer;
-      Column       : Column_Index;
+      Column       : Visible_Column_Type;
       Message      : String := "")
      return Error_Id;
    --  Return the Error_Id contained in the correction manager correspondant to

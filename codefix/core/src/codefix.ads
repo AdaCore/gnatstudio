@@ -20,7 +20,8 @@
 --  This is the main package of Codefix, it define constants, exceptions and
 --  tools that are used in others packages.
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Basic_Types;  use Basic_Types;
+with Ada.Text_IO;  use Ada.Text_IO;
 with GNAT.Strings; use GNAT.Strings;
 
 with Generic_List;
@@ -41,21 +42,13 @@ package Codefix is
    EOL_Str : constant String := (1 => ASCII.LF);
    --  String used to insert an end of line.
 
-   type Column_Index is new Natural;
-   --  Type of a column
-   --  ??? This should either be a Visible_Column_Type or
-   --  a Character_Offset_Type.
-
-   type Char_Index is new Natural;
-   --  Type of an index in a string
-
    function To_Char_Index
-     (Index : Column_Index; Str : String) return Char_Index;
+     (Index : Visible_Column_Type; Str : String) return String_Index_Type;
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
    function To_Column_Index
-     (Index : Char_Index; Str : String) return Column_Index;
+     (Index : String_Index_Type; Str : String) return Visible_Column_Type;
    --  Return the column index corresponding to the char index given in
    --  parameter. This will handle tablulations.
 

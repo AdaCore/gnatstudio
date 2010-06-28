@@ -30,14 +30,14 @@ package body Codefix is
    -------------------
 
    function To_Char_Index
-     (Index : Column_Index; Str : String) return Char_Index
+     (Index : Visible_Column_Type; Str : String) return String_Index_Type
    is
       Current_Index : Integer := Str'First;
    begin
       Skip_To_Column (Buffer  => Str,
                       Columns => Integer (Index),
                       Index   => Current_Index);
-      return Char_Index (Current_Index);
+      return String_Index_Type (Current_Index);
    end To_Char_Index;
 
    ---------------------
@@ -45,10 +45,10 @@ package body Codefix is
    ---------------------
 
    function To_Column_Index
-     (Index : Char_Index; Str : String) return Column_Index
+     (Index : String_Index_Type; Str : String) return Visible_Column_Type
    is
-      Current_Index : Char_Index := Char_Index (Str'First);
-      Current_Col   : Column_Index := 1;
+      Current_Index : String_Index_Type := String_Index_Type (Str'First);
+      Current_Col   : Visible_Column_Type := 1;
    begin
       loop
          exit when Current_Index >= Index;
@@ -56,8 +56,8 @@ package body Codefix is
          if Natural (Current_Index) <= Str'Last
            and then Str (Natural (Current_Index)) = ASCII.HT
          then
-            Current_Col := Current_Col + Column_Index (Tab_Width) -
-              ((Current_Col - 1) mod Column_Index (Tab_Width));
+            Current_Col := Current_Col + Visible_Column_Type (Tab_Width) -
+              ((Current_Col - 1) mod Visible_Column_Type (Tab_Width));
          else
             Current_Col := Current_Col + 1;
          end if;

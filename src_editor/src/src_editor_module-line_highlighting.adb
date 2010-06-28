@@ -137,14 +137,14 @@ package body Src_Editor_Module.Line_Highlighting is
                   Buffer.Apply_Style
                     (Style       => Style,
                      Line        => Line,
-                     From_Column => Integer (Start_Col),
-                     To_Column   => Integer (End_Col));
+                     From_Column => Start_Col,
+                     To_Column   => End_Col);
                else
                   Buffer.Remove_Style
                     (Style       => Style,
                      Line        => Line,
-                     From_Column => Integer (Start_Col),
-                     To_Column   => Integer (End_Col));
+                     From_Column => Start_Col,
+                     To_Column   => End_Col);
                end if;
             else
                Set_Error_Msg

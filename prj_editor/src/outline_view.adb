@@ -527,7 +527,8 @@ package body Outline_View is
       Entity : Entity_Persistent_Access;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
-      Line, Column, End_Column  : Integer;
+      Line, End_Line : Integer;
+      Column, End_Column  : Visible_Column_Type;
       Construct : access Simple_Construct_Information;
    begin
       if Get_Button (Event) = 1 then
@@ -548,12 +549,26 @@ package body Outline_View is
               (To_Construct_Tree_Iterator (To_Entity_Access (Entity)));
 
             if Construct.Sloc_Entity.Index /= 0 then
-               Line := Construct.Sloc_Entity.Line;
-               Column := Construct.Sloc_Entity.Column;
-               End_Column := Column + Get (Construct.Name)'Length;
+               To_Line_Column
+                 (Get_File (Entity),
+                  String_Index_Type (Construct.Sloc_Entity.Index),
+                  Line,
+                  Column);
+               To_Line_Column
+                 (Get_File (Entity),
+                  String_Index_Type
+                    (Construct.Sloc_Entity.Index
+                     + Get (Construct.Name)'Length),
+                  End_Line,
+                  End_Column);
             else
-               Line := Construct.Sloc_Start.Line;
-               Column := Construct.Sloc_Start.Column;
+               To_Line_Column
+                 (Get_File (Entity),
+                  String_Index_Type (Construct.Sloc_Start.Index),
+                  Line,
+                  Column);
+
+               End_Line := Line;
                End_Column := Column;
             end if;
 
@@ -564,7 +579,7 @@ package body Outline_View is
                Location : constant Editor_Location'Class :=
                  New_Location (Buffer, Line, Column);
                End_Location : constant Editor_Location'Class :=
-                 New_Location (Buffer, Line, End_Column);
+                 New_Location (Buffer, End_Line, End_Column);
 
                View : constant Editor_View'Class := Current_View (Buffer);
             begin

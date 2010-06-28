@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
+with Refactoring.Services; use Refactoring.Services;
 
 package Codefix.Text_Manager.Ada_Commands is
 
@@ -292,7 +292,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This         : in out Indent_Code_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Line_Cursor  : File_Cursor'Class;
-      Force_Column : Column_Index);
+      Force_Column : Visible_Column_Type);
    --  Creates a indentation query - if Force_Column is 0, then the GPS
    --  indentation engine will get used.
 
@@ -511,9 +511,6 @@ private
    package Mark_List is new Generic_List (Word_Mark);
    use Mark_List;
 
-   package Ada_Lists is new Generic_List (Ada_List);
-   use Ada_Lists;
-
    type Recase_Word_Cmd is new Text_Command (Simple) with record
       Cursor       : Ptr_Mark;
       Correct_Word : GNAT.Strings.String_Access;
@@ -585,7 +582,7 @@ private
 
    type Indent_Code_Cmd is new Text_Command (Simple) with record
       Line         : Ptr_Mark;
-      Force_Column : Column_Index;
+      Force_Column : Visible_Column_Type;
    end record;
 
    type Add_Clauses_Cmd is new Text_Command (Simple) with record

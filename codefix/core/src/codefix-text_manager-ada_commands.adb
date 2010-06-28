@@ -25,8 +25,12 @@ with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
 with String_Utils;                  use String_Utils;
 with Language.Ada;                  use Language.Ada;
 with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
+with Entities; use Entities;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Codefix.Text_Manager.Ada_Commands is
+
+   Me : constant Trace_Handle := Create ("Codefix");
 
    function Get_Closing_Paren
      (Current_Text : Text_Navigator_Abstr'Class;
@@ -72,7 +76,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                Close_Cursor.Set_File (Open_Cursor.File);
                Close_Cursor.Set_Line (Sloc_Start.Line);
                Close_Cursor.Set_Column
-                 (To_Column_Index (Char_Index (Sloc_Start.Column), Line));
+                 (To_Column_Index
+                    (String_Index_Type (Sloc_Start.Column), Line));
 
                return True;
             end if;
@@ -215,10 +220,17 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Start_Instruction : constant File_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Begin_Mark.all));
-      Instruction       : Ada_Instruction;
+      Instruction       : Ada_Statement;
+
+      Location : constant Universal_Location := To_Location
+        (Get_Or_Create (Db   => Get_Context (Current_Text).Construct_Db,
+                        File => Start_Instruction.File),
+         Start_Instruction.Line,
+         Start_Instruction.Col);
    begin
-      Get_Unit (Current_Text, Start_Instruction, Instruction);
-      Remove_Instruction (Instruction, Current_Text);
+      Initialize (Instruction, Get_Context (Current_Text), Location);
+
+      Remove (Instruction);
       Free (Instruction);
    end Execute;
 
@@ -277,12 +289,26 @@ package body Codefix.Text_Manager.Ada_Commands is
          Make_Word_Cursor (Data (Current_Word), Current_Text, Current_Cursor);
 
          declare
-            Extract_Temp : Ada_List;
+            Extract_Temp : Ada_Statement;
+            Loc          : aliased Universal_Location;
          begin
-            Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-            Remove_Elements
-              (Extract_Temp, Current_Text,
-               This.Mode, Current_Cursor.String_Match.all);
+            Loc := To_Location
+              (Current_Text.Get_Structured_File (Current_Cursor.File),
+               Current_Cursor.Line,
+               Current_Cursor.Col);
+
+            Refactoring.Services.Initialize
+              (Self     => Extract_Temp,
+               Context  => Get_Context (Current_Text),
+               Location => Loc);
+
+            Remove_Element
+              (Extract_Temp,
+               This.Mode,
+               Find_Normalized
+                 (Get_Symbols
+                    (Get_Context (Current_Text).Entity_Db),
+                  Current_Cursor.String_Match.all));
          end;
 
          Current_Word := Next (Current_Word);
@@ -340,28 +366,25 @@ package body Codefix.Text_Manager.Ada_Commands is
       Is_Instantiation : Boolean;
       Node      : String_List.List_Node;
 
-      Instantiation_Pkg : Ada_Instruction;
-      Clauses_Pkg       : Ada_List;
+      Instantiation_Pkg : Ada_Statement;
+      Clauses_Pkg       : Ada_Statement;
       Obj_List          : String_List.List;
    begin
+      Trace (Me, "Execute Remove_Pkg_Clauses_Cmd");
+
       File_Cursor (Word) :=
         File_Cursor (Current_Text.Get_Current_Cursor (This.Word.all));
       Word.String_Match := new String'(This.Word_Str.all);
 
-      if Get_Word (Word) /= "" then
-         Pkg_Info := Search_Unit
-           (Current_Text, Get_File (Word), Cat_With, Word.String_Match.all);
-      else
-         declare
-            It : constant Construct_Tree_Iterator := Get_Iterator_At
-              (Current_Text,
-               Word,
-               Position => This.Position,
-               Categories_Seeked => (1 => This.Category));
-         begin
-            Pkg_Info := Get_Construct (It).all;
-         end;
-      end if;
+      declare
+         It : constant Construct_Tree_Iterator := Get_Iterator_At
+           (Current_Text,
+            Word,
+            Position => This.Position,
+            Categories_Seeked => (1 => This.Category));
+      begin
+         Pkg_Info := Get_Construct (It).all;
+      end;
 
       if Pkg_Info.Category /= Cat_Unknown then
          Assign (Word.String_Match, Get (Pkg_Info.Name).all);
@@ -373,19 +396,27 @@ package body Codefix.Text_Manager.Ada_Commands is
             Cat_Package,
             Word.String_Match.all);
 
-         Get_Unit
-           (Current_Text => Current_Text,
-            Position     => Word,
-            Destination  => Instantiation_Pkg);
+         Initialize
+           (Instantiation_Pkg,
+            Get_Context (Current_Text),
+            To_Location
+              (Get_Or_Create
+                 (Get_Context (Current_Text).Construct_Db, Word.File),
+               Word.Line,
+               Word.Col));
 
          Is_Instantiation := True;
       else
-         Get_Unit
-           (Current_Text => Current_Text,
-            Position     => Word,
-            Destination  => Clauses_Pkg);
+         Initialize
+           (Clauses_Pkg,
+            Get_Context (Current_Text),
+            To_Location
+              (Get_Or_Create
+                 (Get_Context (Current_Text).Construct_Db, Word.File),
+               Word.Line,
+               Word.Col));
 
-         if Clauses_Pkg.Get_Kind not in Clause_Kind then
+         if Get_Kind (Clauses_Pkg) not in Clause_Kind then
             --  If the list is neither a use or a with list, then that means
             --  that something changed in the text (e.g. the clause has been
             --  removed from a previous message). The fix is obsolescent.
@@ -416,19 +447,26 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          while Clause_Node /= Words_Lists.Null_Node loop
             declare
-               Use_Pck : Ada_List;
+               Use_Pck : Ada_Statement;
             begin
-               Get_Unit
-                 (Current_Text => Current_Text,
-                  Position     => Data (Clause_Node),
-                  Destination  => Use_Pck);
+               Initialize
+                 (Use_Pck,
+                  Get_Context (Current_Text),
+                  To_Location
+                    (Get_Or_Create
+                       (Get_Context (Current_Text).Construct_Db, Word.File),
+                     Data (Clause_Node).Line,
+                     Data (Clause_Node).Col));
 
-               Use_Pck.Remove_Elements
-                 (Text_Nav => Current_Text,
-                  Mode     => Erase,
-                  First    => Data (Clause_Node).Get_Word);
+               Remove_Element
+                 (Self => Use_Pck,
+                  Mode => Erase,
+                  Name => Find_Normalized
+                    (Symbols =>
+                       Get_Symbols (Get_Context (Current_Text).Entity_Db),
+                     Name    => Data (Clause_Node).Get_Word));
 
-               Use_Pck.Free;
+               Free (Use_Pck);
             end;
 
             if This.Destination /= GNATCOLL.VFS.No_File then
@@ -451,16 +489,16 @@ package body Codefix.Text_Manager.Ada_Commands is
          Free (Last_With);
       end if;
 
-      Free (Word);
-
       if Is_Instantiation then
-         Instantiation_Pkg.Remove_Instruction (Current_Text);
+         Remove (Instantiation_Pkg);
       end if;
 
-      Clauses_Pkg.Remove_Elements
-        (Text_Nav => Current_Text,
-         Mode     => Erase,
-         First    => Word.Get_Word);
+      Remove_Element
+        (Self => Clauses_Pkg,
+         Mode => Erase,
+         Name => Find_Normalized
+           (Symbols => Get_Symbols (Get_Context (Current_Text).Entity_Db),
+            Name    => Word.Get_Word));
 
       if Last_With /= Null_File_Cursor then
 
@@ -474,6 +512,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Free (Last_With);
       end if;
 
+      Free (Word);
       Free (Instantiation_Pkg);
       Free (Clauses_Pkg);
       Free (Obj_List);
@@ -631,11 +670,12 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       procedure Add_Pragma is
          Declaration  : Construct_Tree_Iterator;
-         Char_Ind     : Char_Index;
+         Char_Ind     : String_Index_Type;
       begin
          Declaration := Get_Iterator_At (Current_Text, Cursor);
 
-         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
+         Char_Ind := String_Index_Type
+           (Get_Construct (Declaration).Sloc_End.Column);
 
          --  ??? This test is only here because the parser returns sometimes
          --  a Sloc_End.Col equal to 0.
@@ -664,14 +704,15 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       procedure Add_Literal_Pragma is
          Declaration : Construct_Tree_Iterator;
-         Char_Ind    : Char_Index;
+         Char_Ind    : String_Index_Type;
       begin
          Declaration := Get_Iterator_At
            (Current_Text,
             Cursor,
             Position => Before,
             Categories_Seeked => (1 => Cat_Type));
-         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
+         Char_Ind := String_Index_Type
+           (Get_Construct (Declaration).Sloc_End.Column);
 
          if Char_Ind = 0 then
             Char_Ind := 1;
@@ -714,7 +755,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Set_Location
               (Position, Get_Construct (Declaration).Sloc_Entity.Line,
                To_Column_Index
-                 (Char_Index
+                 (String_Index_Type
                     (Get_Construct (Declaration).Sloc_Entity.Column), Line));
          end;
 
@@ -830,24 +871,35 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor        : File_Cursor;
-      Work_Extract  : Ada_List;
+      Work_Extract  : Ada_Statement;
       New_Instr     : GNAT.Strings.String_Access;
       Col_Decl      : Natural;
+      End_Decl      : aliased Universal_Location;
 
    begin
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
-      Get_Unit (Current_Text, Cursor, Work_Extract);
 
-      if Get_Number_Of_Declarations (Work_Extract) = 1 then
+      Initialize
+        (Self     => Work_Extract,
+         Context  => Get_Context (Current_Text),
+         Location => To_Location
+           (Get_Structured_File (Current_Text, Cursor.File),
+            Cursor.Line,
+            Cursor.Col));
+
+      if Number_Of_Declarations (Work_Extract) = 1 then
          Current_Text.Replace
            (Current_Text.Search_Token (Cursor, Semicolon_Tok),
             1,
             ": constant");
       else
-         Cut_Off_Elements
-           (Work_Extract, Current_Text,
-            New_Instr, Current_Text, This.Name.all);
+         Extract_Element
+           (Work_Extract,
+            New_Instr,
+            Find_Normalized
+              (Get_Symbols (Get_Context (Current_Text).Entity_Db),
+               This.Name.all));
 
          Col_Decl := New_Instr'First;
          Skip_To_Char (New_Instr.all, Col_Decl, ':');
@@ -857,8 +909,13 @@ package body Codefix.Text_Manager.Ada_Commands is
             New_Instr (New_Instr'First .. Col_Decl) & " constant"
             & New_Instr (Col_Decl + 1 .. New_Instr'Last));
 
+         End_Decl := Get_End (Work_Extract);
          Current_Text.Add_Line
-           (Work_Extract.Get_Stop (Current_Text), New_Instr.all, True);
+           (File_Cursor'
+              (Line => Get_Line (End_Decl'Access),
+               Col  => Get_Column (End_Decl'Access),
+               File => Get_File_Path (Get_File (End_Decl'Access))),
+            New_Instr.all, True);
 
          Free (New_Instr);
       end if;
@@ -901,7 +958,6 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Conversion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Work_Extract  : Ada_Instruction;
       Cursor        : File_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Cursor.all));
       Text : Ptr_Text;
@@ -912,8 +968,6 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Text := Current_Text.Get_File (Cursor.File);
 
-      Get_Unit (Current_Text, Cursor, Work_Extract);
-
       Close_Paren := Get_Closing_Paren (Current_Text, Open_Paren);
 
       Current_Text.Replace (Close_Paren, 1, "");
@@ -922,7 +976,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Free (Open_Paren);
       Free (Close_Paren);
-      Free (Work_Extract);
       Free (Cursor);
    end Execute;
 
@@ -1023,7 +1076,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                   Begin_Cursor.File := Position_File;
                   Begin_Cursor.Line := Sloc_Start.Line;
                   Begin_Cursor.Col := To_Column_Index
-                    (Char_Index (Sloc_Start.Column),
+                    (String_Index_Type (Sloc_Start.Column),
                      Get_Line (Current_Text, Begin_Cursor, 1));
                end if;
             end Begin_Of_Profile;
@@ -1037,7 +1090,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                End_Cursor.File := Position_File;
                End_Cursor.Line := Last_Entity_Line;
                End_Cursor.Col := To_Column_Index
-                 (Char_Index (Last_Entity_Column),
+                 (String_Index_Type (Last_Entity_Column),
                   Get_Line (Current_Text, End_Cursor, 1));
 
                if Begin_Cursor = Null_File_Cursor then
@@ -1115,7 +1168,8 @@ package body Codefix.Text_Manager.Ada_Commands is
          Set_Column
            (Begin_Analyze_Cursor,
             To_Column_Index
-              (Char_Index (Get_Construct (Position_It).Sloc_Start.Column),
+              (String_Index_Type
+                 (Get_Construct (Position_It).Sloc_Start.Column),
                Get_Line (Current_Text, Begin_Analyze_Cursor, 1)));
 
          Last_Entity_Column := Integer (Begin_Analyze_Cursor.Col);
@@ -1360,7 +1414,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : in out Indent_Code_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Line_Cursor  : File_Cursor'Class;
-      Force_Column : Column_Index)
+      Force_Column : Visible_Column_Type)
    is
    begin
       This.Line := new Mark_Abstr'Class'
@@ -1376,7 +1430,7 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Indent_Code_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Char_Ind : Char_Index;
+      Char_Ind : String_Index_Type;
       Indent_Size : Integer := -1;
       Line_Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Line.all);
@@ -1559,7 +1613,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Set_Location
            (End_Cursor,
             Sloc_End.Line,
-            To_Column_Index (Char_Index (Sloc_End.Column), Line));
+            To_Column_Index (String_Index_Type (Sloc_End.Column), Line));
 
          return False;
       end Entity_Callback;
@@ -1571,7 +1625,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          declare
             Line       : constant String :=
               Get_Line (Current_Text, Begin_Cursor, 1);
-            Real_Begin : Char_Index :=
+            Real_Begin : String_Index_Type :=
               To_Char_Index (Get_Column (Begin_Cursor), Line) - 1;
          begin
             while Real_Begin > 1
@@ -1593,7 +1647,7 @@ package body Codefix.Text_Manager.Ada_Commands is
                   Set_Location
                     (Begin_Cursor,
                      Get_Line (Begin_Cursor),
-                     Column_Index
+                     Visible_Column_Type
                        (Get_Line (Current_Text, Begin_Cursor)'Last + 1));
                end if;
             else
@@ -1655,11 +1709,12 @@ package body Codefix.Text_Manager.Ada_Commands is
         Current_Text.Get_Current_Cursor (This.Location.all);
       Line         : constant String := Get_Line (Current_Text, Cursor, 1);
       New_Id       : String (1 .. Line'Length);
-      Index        : Char_Index := To_Char_Index (Get_Column (Cursor), Line);
+      Index        : String_Index_Type :=
+        To_Char_Index (Get_Column (Cursor), Line);
       New_Id_Index : Integer := 1;
-      Start_Index  : Char_Index;
+      Start_Index  : String_Index_Type;
    begin
-      while Index > Char_Index (Line'First)
+      while Index > String_Index_Type (Line'First)
         and then not Is_Separator (Line (Integer (Index)))
       loop
          Index := Index - 1;
@@ -1671,7 +1726,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Start_Index := Index;
 
-      while Index < Char_Index (Line'Last)
+      while Index < String_Index_Type (Line'Last)
         and then not Is_Separator (Line (Integer (Index)))
       loop
          if Line (Integer (Index)) = '_' then
@@ -1679,7 +1734,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Index := Index + 1;
             New_Id_Index := New_Id_Index + 1;
 
-            while Index < Char_Index (Line'Last)
+            while Index < String_Index_Type (Line'Last)
               and then Line (Integer (Index)) = '_'
             loop
                Index := Index + 1;
@@ -1741,8 +1796,14 @@ package body Codefix.Text_Manager.Ada_Commands is
       It   : Construct_Tree_Iterator := Current_Text.Get_Iterator_At
         (Cursor            => Cursor,
          Position          => Before);
+
+      Name : Normalized_Symbol;
    begin
       Pragma_Cursor.Set_File (Cursor.Get_File);
+
+      Name := Find_Normalized
+        (Symbols => Get_Symbols (Get_Context (Current_Text).Entity_Db),
+         Name    => This.Element_Name.all);
 
       while It /= Null_Construct_Tree_Iterator loop
          if Get_Construct (It).Category = Cat_Pragma
@@ -1755,22 +1816,24 @@ package body Codefix.Text_Manager.Ada_Commands is
             Pragma_Cursor.Set_Location (Get_Construct (It).Sloc_Start.Line, 1);
             Pragma_Cursor.Set_Column
               (To_Column_Index
-                 (Char_Index (Get_Construct (It).Sloc_Start.Column),
+                 (String_Index_Type (Get_Construct (It).Sloc_Start.Column),
                   Current_Text.Get_Line (Pragma_Cursor, 0)));
 
             declare
-               List : Ada_List;
-               Num  : Integer;
+               List : Ada_Statement;
+               Loc  : aliased Universal_Location;
             begin
-               Get_Unit (Current_Text, Pragma_Cursor, List);
-               Num := List.Get_Nth_Element (This.Element_Name.all);
+               Loc := To_Location
+                 (File   => Current_Text.Get_Structured_File (Cursor.File),
+                  Line   => Pragma_Cursor.Line,
+                  Column => Pragma_Cursor.Col);
+               Refactoring.Services.Initialize
+                 (Self     => List,
+                  Context  => Get_Context (Current_Text),
+                  Location => Loc);
 
-               if Num /= 0 then
-                  List.Remove_Elements
-                    (Text_Nav => Current_Text,
-                     Mode     => Erase,
-                     First    => Num);
-
+               if Contains_Element (List, Name) then
+                  Remove_Element (List, Erase, Name);
                   Free (List);
 
                   return;

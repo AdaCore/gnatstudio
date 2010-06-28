@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;                    use Basic_Types;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
@@ -2476,7 +2475,7 @@ package body Codefix.GNAT_Parser is
       Solutions := Wrong_Column
         (Current_Text,
          Message,
-         Column_Index'Value (Get_Message (Message)
+         Visible_Column_Type'Value (Get_Message (Message)
                           (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
@@ -3691,7 +3690,8 @@ package body Codefix.GNAT_Parser is
             --  This is not exact - we're actually retreiving a char index
             --  here. But for the purpose of retreiving the enclosing package
             --  later on, that's good enough.
-            Column_Index (Get_Construct (Correct_Entity).Sloc_Start.Column));
+            Visible_Column_Type
+              (Get_Construct (Correct_Entity).Sloc_Start.Column));
 
          Solutions := Resolve_Unvisible_Declaration
            (Current_Text,

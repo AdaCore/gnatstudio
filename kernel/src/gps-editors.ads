@@ -24,6 +24,7 @@ with Ada.Finalization; use Ada.Finalization;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
+with Basic_Types;      use Basic_Types;
 with Language;         use Language;
 with GPS.Styles;       use GPS.Styles;
 
@@ -139,7 +140,8 @@ package GPS.Editors is
    function Line (This : Editor_Location) return Integer is abstract;
    --  Return the line of the location
 
-   function Column (This : Editor_Location) return Integer is abstract;
+   function Column
+     (This : Editor_Location) return Visible_Column_Type is abstract;
    --  Return the column of the location
 
    function Offset (This : Editor_Location) return Natural is abstract;
@@ -250,7 +252,7 @@ package GPS.Editors is
    --  Return the current line of the mark, without opening the buffer if not
    --  open.
 
-   function Column (This : Editor_Mark) return Integer is abstract;
+   function Column (This : Editor_Mark) return Visible_Column_Type is abstract;
    --  Return the current column of the mark, without opening the buffer if not
    --  open.
 
@@ -347,7 +349,7 @@ package GPS.Editors is
    function New_Location
      (This   : Editor_Buffer;
       Line   : Integer;
-      Column : Integer) return Editor_Location'Class is abstract;
+      Column : Visible_Column_Type) return Editor_Location'Class is abstract;
    --  Return a new location
 
    function New_View
@@ -530,7 +532,7 @@ package GPS.Editors is
      (This  : Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1) is abstract;
+      From_Column, To_Column : Visible_Column_Type := -1) is abstract;
    --  Apply a specific style to part of a buffer.
    --  If From_Column and To_Column are equal, the highlighting is drawn so
    --  that the whole line including the trailing spaces appear selected.
@@ -540,7 +542,7 @@ package GPS.Editors is
      (This  : Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1) is abstract;
+      From_Column, To_Column : Visible_Column_Type := -1) is abstract;
    --  Remove highlighting from a specific part of the text.
    --  If Line is 0, the removal is done on the whole buffer.
 
@@ -661,7 +663,8 @@ private
      (This : Dummy_Editor_Location) return Language_Category;
 
    overriding function Line (This : Dummy_Editor_Location) return Integer;
-   overriding function Column (This : Dummy_Editor_Location) return Integer;
+   overriding function Column
+     (This : Dummy_Editor_Location) return Visible_Column_Type;
    overriding function Offset (This : Dummy_Editor_Location) return Natural;
 
    overriding function Buffer
@@ -723,7 +726,8 @@ private
 
    overriding function Line (This : Dummy_Editor_Mark) return Integer;
 
-   overriding function Column (This : Dummy_Editor_Mark) return Integer;
+   overriding function Column
+     (This : Dummy_Editor_Mark) return Visible_Column_Type;
 
    overriding function Location
      (This : Dummy_Editor_Mark;
@@ -758,7 +762,7 @@ private
    overriding function New_Location
      (This   : Dummy_Editor_Buffer;
       Line   : Integer;
-      Column : Integer) return Editor_Location'Class;
+      Column : Visible_Column_Type) return Editor_Location'Class;
 
    overriding function New_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class;
@@ -846,13 +850,13 @@ private
      (This  : Dummy_Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1) is null;
+      From_Column, To_Column : Visible_Column_Type := -1) is null;
 
    overriding procedure Remove_Style
      (This  : Dummy_Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1) is null;
+      From_Column, To_Column : Visible_Column_Type := -1) is null;
 
    overriding function File (This : Dummy_Editor_Buffer) return Virtual_File;
 

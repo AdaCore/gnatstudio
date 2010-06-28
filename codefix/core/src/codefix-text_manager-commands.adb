@@ -107,7 +107,7 @@ package body Codefix.Text_Manager.Commands is
       Space_Cursor    : File_Cursor;
       Word            : Word_Cursor;
       New_Pos         : Word_Cursor;
-      Word_Char_Index : Char_Index;
+      Word_Char_Index : String_Index_Type;
       Modified_Text   : Ptr_Text;
    begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
@@ -130,7 +130,7 @@ package body Codefix.Text_Manager.Commands is
                Matches);
 
             New_Pos.Col := To_Column_Index
-              (Char_Index (Matches (1).Last) + 1,
+              (String_Index_Type (Matches (1).Last) + 1,
                Get_Line (Current_Text, New_Pos, 1));
          end;
       end if;
@@ -342,7 +342,8 @@ package body Codefix.Text_Manager.Commands is
          Set_Location (Second_Cursor, Line, 1);
       end loop;
 
-      Set_Location (Second_Cursor, Line, Column_Index (Matches (1).First));
+      Set_Location
+        (Second_Cursor, Line, Visible_Column_Type (Matches (1).First));
 
       Text.Replace
         (First_Cursor, This.First_Word'Length, This.Second_Word.all);

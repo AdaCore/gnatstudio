@@ -55,12 +55,6 @@ package Basic_Types is
    procedure Free is new Ada.Unchecked_Deallocation
      (Unchecked_String, Unchecked_String_Access);
 
-   type Position_Type is new Natural;
-   --  Indicates the position in a file.
-   --  Note that these positions are relative to the real contents of the
-   --  editor, not necessarily the positions visible to the user (which
-   --  might be different because of ASCII.HT handling)
-
    function Is_Equal
      (List1, List2   : GNAT.OS_Lib.Argument_List;
       Case_Sensitive : Boolean := True;

@@ -38,6 +38,7 @@ with Refactoring.Services;   use Refactoring.Services;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Language;               use Language;
+with Language.Ada;           use Language.Ada;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with Ada_Semantic_Tree;      use Ada_Semantic_Tree;

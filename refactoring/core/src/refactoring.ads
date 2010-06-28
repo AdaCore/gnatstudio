@@ -25,6 +25,53 @@ with GPS.Editors;
 
 package Refactoring is
 
+   ------------------------
+   -- Universal_Location --
+   ------------------------
+
+   type Universal_Location is private;
+
+   Null_Universal_Location : constant Universal_Location;
+
+   function To_Location
+     (File   : Language.Tree.Database.Structured_File_Access;
+      Line   : Integer;
+      Column : Basic_Types.Visible_Column_Type) return Universal_Location;
+
+   function To_Location
+     (File          : Language.Tree.Database.Structured_File_Access;
+      Index_In_File : Basic_Types.String_Index_Type) return Universal_Location;
+
+   function Get_File
+     (Location : access Universal_Location)
+      return Language.Tree.Database.Structured_File_Access;
+   function Get_Line (Location : access Universal_Location) return Integer;
+   function Get_Column
+     (Location : access Universal_Location)
+      return Basic_Types.Visible_Column_Type;
+   function Get_Index_In_File
+     (Location : access Universal_Location)
+      return Basic_Types.String_Index_Type;
+
+   function Get_Index_In_Line
+     (Location : access Universal_Location)
+      return Basic_Types.String_Index_Type;
+   --  Return the index of the location in the current line. First index is 1
+
+   procedure Set_Column
+     (Location : access Universal_Location;
+      Column   : Basic_Types.Visible_Column_Type);
+   procedure Set_Index_In_Line
+     (Location : access Universal_Location;
+      Index    : Basic_Types.String_Index_Type);
+   procedure Set_Line_Column
+     (Location : access Universal_Location;
+      Line     : Integer;
+      Column   : Basic_Types.Visible_Column_Type);
+   procedure Set_Index_In_File
+     (Location : access Universal_Location;
+      Index    : Basic_Types.String_Index_Type);
+
    ---------------------
    -- Factory context --
    ---------------------
@@ -78,4 +125,32 @@ package Refactoring is
    --  Base type for all types that store a factory context. This field is made
    --  public for ease of use and efficiency, rather than go through a
    --  primitive operation.
+
+private
+
+   type Universal_Location is record
+      File   : Language.Tree.Database.Structured_File_Access;
+
+      Line          : Integer;
+      Column        : Basic_Types.Visible_Column_Type;
+
+      Index_In_Line : Basic_Types.String_Index_Type;
+      Index_In_File : Basic_Types.String_Index_Type;
+
+      Is_Column_Computed : Boolean := False;
+      Is_Index_In_File_Computed : Boolean := False;
+      Is_Index_In_Line_Computed : Boolean := False;
+   end record;
+
+   Null_Universal_Location : constant Universal_Location :=
+     Universal_Location'
+       (File                      => null,
+        Line                      => 0,
+        Column                    => 0,
+        Index_In_Line             => 0,
+        Index_In_File             => 0,
+        Is_Column_Computed        => False,
+        Is_Index_In_File_Computed => False,
+        Is_Index_In_Line_Computed => False);
+
 end Refactoring;

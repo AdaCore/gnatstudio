@@ -489,6 +489,7 @@ package body Codefix_Module is
         (Session.Corrector.all,
          new GPS_Execute_Corrupted_Record'
            (Execute_Corrupted_Record with Kernel));
+      Set_Context (Session.Current_Text.all, Refactoring_Context (Kernel));
       Add_Errors_From (Errors_Found, Get_Registry (Kernel), Output);
 
       Options.Remove_Policy := Policy_To_Operations
@@ -671,7 +672,7 @@ package body Codefix_Module is
            (Session.Corrector.all,
             File    => File_Information (Context),
             Line    => Contexts.Line_Information (Context),
-            Column  => Column_Index (Column_Information (Context)),
+            Column  => Column_Information (Context),
             Message => Remove_Markup (Message_Information (Context)));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
@@ -803,7 +804,7 @@ package body Codefix_Module is
               (Session.Corrector.all,
                Get_Data (File),
                Get_Line (Location),
-               Column_Index (Get_Column (Location)), Message);
+               Get_Column (Location), Message);
          begin
             if Error = Null_Error_Id then
                Set_Error_Msg (Data, -"No fixable error at that location");
@@ -873,7 +874,7 @@ package body Codefix_Module is
                  (Get_Script (Data),
                   File   => Create_File (Get_Script (Data), Get_File (Msg)),
                   Line   => Get_Line (Msg),
-                  Column => Visible_Column_Type (Get_Column (Msg))));
+                  Column => Get_Column (Msg)));
             --  ??? Is the conversion to Visible_Column_Type correct ?
          end;
 
@@ -987,7 +988,7 @@ package body Codefix_Module is
               (This    => Session.Corrector.all,
                File    => File,
                Line    => Line,
-               Column  => Column_Index (Column),
+               Column  => Visible_Column_Type (Column),
                Message => Message);
 
             Err : Class_Instance;

@@ -21,6 +21,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
 pragma Warnings (Off, "*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
@@ -63,6 +64,510 @@ package body Refactoring.Services is
    function Default_Insertion_Line (Tree : Construct_Tree) return Integer;
    --  A line where we could insert code (preferably before the "end pkg" line,
    --  or if there is no package default to the first line in the file
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ada_Statement) is
+   begin
+      null;
+   end Free;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self     : in out Ada_Statement;
+      Context  : Factory_Context;
+      Location : Universal_Location)
+   is
+      use Tokens_List;
+
+      Loc : aliased Universal_Location := Location;
+
+      Start_Index : Integer := Integer (Get_Index_In_File (Loc'Access));
+      End_Index   : Integer := Start_Index;
+      Buffer : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Loc'Access));
+      Paren_Depth : Integer := 0;
+
+      procedure Backwards_Callback
+        (Token : Token_Record;
+         Stop : in out Boolean);
+
+      function Forwards_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+
+      -----------------------
+      -- Backwards_Callback --
+      -----------------------
+
+      procedure Backwards_Callback
+        (Token : Token_Record;
+         Stop : in out Boolean) is
+      begin
+         Stop := False;
+
+         Trace (Me, "[" & Buffer
+                           (Integer (Token.Token_First)
+                            .. Integer (Token.Token_Last)) & "]");
+
+         case Token.Tok_Type is
+            when Tok_Semicolon | Tok_Arrow =>
+               Stop := True;
+               return;
+
+               --  ??? This does not take into account cases where we have
+               --  P (A => 0);
+               --  and the cursor is placed after the arrow.
+
+            when Tok_Declare
+               | Tok_Begin
+               | Tok_Is
+               | Tok_Then
+               | Tok_Loop
+               | Tok_Record
+               | Tok_Else
+               | Tok_Do
+               | Tok_Select
+               | Tok_Private
+               | Tok_Exception =>
+
+               --  ??? This does not take into account "or else" and
+               --  "and then" operators. Cursor place after won't come
+               --  back enough.
+               --  "is private; may not be correctly analyzed either.
+
+               Stop := True;
+               return;
+
+            when others =>
+               null;
+         end case;
+
+         if Token.Tok_Type /= Tok_Blank then
+            Start_Index := Integer (Token.Token_First);
+         end if;
+      end Backwards_Callback;
+
+      -----------------------
+      -- Forwards_Callback --
+      -----------------------
+
+      function Forwards_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+         Name : constant String :=
+           To_Lower (Buffer (Sloc_Start.Index .. Sloc_End.Index));
+
+         procedure Add_To_List;
+
+         procedure Add_To_List is
+         begin
+            if Entity = Identifier_Text then
+               if Self.Sloc_First_Id = Null_Universal_Location then
+                  Self.Sloc_First_Id := To_Location
+                    (Get_File (Loc'Access),
+                     String_Index_Type (Sloc_Start.Index));
+               end if;
+
+               Self.Tokens.Append
+                 (Token_Record'
+                    (Tok_Type    => Tok_Identifier,
+                     Token_First =>
+                       String_Index_Type (Sloc_Start.Index),
+                     Token_Last  =>
+                       String_Index_Type (Sloc_End.Index)));
+
+               Self.Number_Of_Elements := Self.Number_Of_Elements + 1;
+            elsif Name = "," then
+               Self.Tokens.Append
+                 (Token_Record'
+                    (Tok_Type    => Tok_Comma,
+                     Token_First =>
+                       String_Index_Type (Sloc_Start.Index),
+                     Token_Last  =>
+                       String_Index_Type (Sloc_End.Index)));
+            end if;
+         end Add_To_List;
+
+      begin
+         End_Index := Sloc_End.Index;
+
+         if Self.Kind = Unknown_Kind then
+            if Name = "pragma" then
+               Self.Kind := Pragma_Kind;
+            elsif Name = "with" then
+               Self.Kind := With_Kind;
+            elsif Name = "use" then
+               Self.Kind := Use_Kind;
+            elsif Name = "type" then
+               Self.Kind := Type_Kind;
+            elsif Name = "when" then
+               Self.Kind := When_Kind;
+            end if;
+         elsif Self.Kind = Use_Kind then
+            if Name = "type" then
+               Self.Kind := Use_Type_Kind;
+            end if;
+         end if;
+
+         if Name = "(" then
+            Paren_Depth := Paren_Depth + 1;
+         elsif Name = ")" then
+            Paren_Depth := Paren_Depth - 1;
+         elsif Name = ";" or else (Name = "=>" and then Paren_Depth = 0) then
+            return True;
+         elsif Name = ":" then
+            Self.Sloc_Column :=
+              To_Location
+                (Get_File (Loc'Access), String_Index_Type (Sloc_Start.Index));
+         else
+            case Self.Kind is
+               when Pragma_Kind | Type_Kind =>
+                  if Paren_Depth = 1 then
+                     Add_To_List;
+                  end if;
+
+               when Clause_Kind =>
+                  Add_To_List;
+
+               when Unknown_Kind | When_Kind =>
+                  --  we're on a declaration, like a, b : Integer;
+
+                  if Self.Sloc_Column = Null_Universal_Location then
+                     Add_To_List;
+                  end if;
+            end case;
+         end if;
+
+         return False;
+      end Forwards_Callback;
+
+   begin
+
+      --  First, get to the beginning of the statement
+
+      Ada_Lang.Parse_Tokens_Backwards
+        (Buffer       => Buffer.all,
+         Start_Offset => String_Index_Type (Start_Index),
+         End_Offset   => 0,
+         Callback     => Backwards_Callback'Access);
+
+      --  Then, parse the statement until the end
+
+      Paren_Depth := 0;
+
+      Ada_Lang.Parse_Entities
+        (Buffer   => Buffer.all (Start_Index .. Buffer.all'Last),
+         Callback => Forwards_Callback'Unrestricted_Access);
+
+      Self.Sloc_Start := To_Location
+        (Get_File (Loc'Access), String_Index_Type (Start_Index));
+      Self.Sloc_End := To_Location
+        (Get_File (Loc'Access), String_Index_Type (End_Index));
+      Self.Context := Context;
+   end Initialize;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind (Self : Ada_Statement) return Statement_Kind is
+   begin
+      return Self.Kind;
+   end Get_Kind;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (Self : in out Ada_Statement) is
+      Start_To_Remove : aliased Universal_Location;
+      Stop_To_Remove : aliased Universal_Location;
+   begin
+      if Self.Kind = When_Kind then
+         Start_To_Remove := Self.Sloc_First_Id;
+         Stop_To_Remove := Self.Sloc_Column;
+      else
+         Start_To_Remove := Self.Sloc_Start;
+         Stop_To_Remove := Self.Sloc_End;
+      end if;
+
+      declare
+         Line : constant String :=
+           Get_Line (Self.Context, Stop_To_Remove'Access, 1);
+         Last_To_Remove : String_Index_Type;
+      begin
+         Last_To_Remove := Get_Index_In_Line (Stop_To_Remove'Access);
+
+         for J in Integer (Get_Index_In_Line (Stop_To_Remove'Access)) + 1
+           .. Line'Last
+         loop
+            exit when Line (J) /= ASCII.HT and then Line (J) /= ' ';
+
+            Last_To_Remove := String_Index_Type (J);
+         end loop;
+
+         Set_Index_In_Line (Stop_To_Remove'Access, Last_To_Remove);
+
+         Remove_Code
+           (Self.Context, Start_To_Remove'Access, Stop_To_Remove'Access);
+      end;
+   end Remove;
+
+   -------------
+   -- Comment --
+   -------------
+
+   procedure Comment (Self : in out Ada_Statement) is
+   begin
+      if Self.Kind = When_Kind then
+         Comment_Code
+           (Self.Context, Self.Sloc_First_Id'Access, Self.Sloc_Column'Access);
+      else
+         Comment_Code
+           (Self.Context, Self.Sloc_Start'Access, Self.Sloc_End'Access);
+      end if;
+   end Comment;
+
+   ---------------
+   -- Get_Start --
+   ---------------
+
+   function Get_Start (Self : Ada_Statement) return Universal_Location is
+   begin
+      return Self.Sloc_Start;
+   end Get_Start;
+
+   -------------
+   -- Get_End --
+   -------------
+
+   function Get_End (Self : Ada_Statement) return Universal_Location is
+   begin
+      return Self.Sloc_End;
+   end Get_End;
+
+   ----------------------
+   -- Contains_Element --
+   ----------------------
+
+   function Contains_Element
+     (Self : Ada_Statement;
+      Name : Language.Tree.Normalized_Symbol) return Boolean
+   is
+      use Tokens_List;
+
+      Loc_Copy : aliased Universal_Location := Self.Sloc_Start;
+
+      Buffer : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Loc_Copy'Access));
+      Cur : Tokens_List.Cursor;
+   begin
+      Cur := First (Self.Tokens);
+
+      while Cur /= Tokens_List.No_Element loop
+         declare
+            Token        : constant Token_Record := Element (Cur);
+            Name_In_List : constant String := Buffer
+              (Integer (Token.Token_First)
+               .. Integer (Token.Token_Last));
+         begin
+            if Token.Tok_Type = Tok_Identifier then
+               if Name = Find_Normalized
+                 (Symbols => Get_Symbols (Self.Context.Entity_Db),
+                  Name    => Name_In_List)
+               then
+                  return True;
+               end if;
+            end if;
+         end;
+
+         Cur := Next (Cur);
+      end loop;
+
+      return False;
+   end Contains_Element;
+
+   ---------------------
+   -- Remove_Elements --
+   ---------------------
+
+   procedure Remove_Element
+     (Self  : in out Ada_Statement;
+      Mode  : Remove_Code_Mode;
+      Name  : Language.Tree.Normalized_Symbol)
+   is
+      Str : GNAT.Strings.String_Access;
+   begin
+      Extract_Element (Self, Str, Name, Mode);
+      Free (Str);
+   end Remove_Element;
+
+   ----------------------
+   -- Extract_Elements --
+   ----------------------
+
+   procedure Extract_Element
+     (Self      : in out Ada_Statement;
+      Extracted : out GNAT.Strings.String_Access;
+      Name      : Language.Tree.Normalized_Symbol;
+      Mode      : Remove_Code_Mode := Erase)
+   is
+      use Tokens_List;
+
+      Cur : Tokens_List.Cursor;
+      Buffer : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Self.Sloc_Start'Access));
+
+      First_To_Delete, Last_To_Delete : String_Index_Type := 0;
+      Token_Deleted : Token_Record;
+
+      Last_Comma : Token_Record := Null_Token;
+   begin
+      Cur := First (Self.Tokens);
+
+      while Cur /= Tokens_List.No_Element loop
+         declare
+            Token        : constant Token_Record := Element (Cur);
+            Name_In_List : constant String := Buffer
+              (Integer (Token.Token_First)
+               .. Integer (Token.Token_Last));
+         begin
+            if Token.Tok_Type = Tok_Identifier then
+               if Name = Find_Normalized
+                 (Symbols => Get_Symbols (Self.Context.Entity_Db),
+                  Name    => Name_In_List)
+               then
+                  First_To_Delete := Token.Token_First;
+                  Last_To_Delete := Token.Token_Last;
+                  Token_Deleted := Token;
+
+                  if Last_Comma /= Null_Token then
+                     First_To_Delete := Last_Comma.Token_First;
+
+                     exit;
+                  end if;
+               end if;
+            elsif Token.Tok_Type = Tok_Comma then
+               Last_Comma := Token;
+
+               if First_To_Delete /= 0 then
+                  Last_To_Delete := Last_Comma.Token_First;
+
+                  while Last_To_Delete < String_Index_Type (Buffer'Last)
+                    and then
+                      (Buffer (Integer (Last_To_Delete) + 1) = ASCII.HT
+                       or else Buffer (Integer (Last_To_Delete) + 1) = ' ')
+                  loop
+                     Last_To_Delete := Last_To_Delete + 1;
+                  end loop;
+
+                  exit;
+               end if;
+            end if;
+         end;
+
+         Cur := Next (Cur);
+      end loop;
+
+      if First_To_Delete /= 0 then
+         if Self.Number_Of_Elements = 1 then
+            Extracted :=
+              new String'
+                (Get
+                     (Self.Context,
+                      Self.Sloc_Start'Access,
+                      Self.Sloc_End'Access));
+
+            case Mode is
+               when Erase =>
+                  Remove (Self);
+               when Comment =>
+                  Comment (Self);
+            end case;
+         else
+            declare
+               End_Location : constant GPS.Editors.Editor_Location'Class :=
+                 To_Location (Self.Context, Self.Sloc_End'Access);
+               End_Mark     : constant GPS.Editors.Editor_Mark'Class :=
+                 End_Location.Create_Mark;
+
+               First, Last : aliased Universal_Location;
+               Token_First, Token_Last : aliased Universal_Location;
+            begin
+               First := To_Location
+                 (Get_File (Self.Sloc_Start'Access), First_To_Delete);
+               Trace (Me, "LAST TO DELETE = " & Last_To_Delete'Img);
+               Last := To_Location
+                 (Get_File (Self.Sloc_Start'Access), Last_To_Delete);
+               Trace (Me, "LAST COL = " & Get_Column (Last'Access)'Img);
+
+               Token_First := To_Location
+                 (Get_File
+                    (Self.Sloc_Start'Access), Token_Deleted.Token_First);
+               Token_Last := To_Location
+                 (Get_File
+                    (Self.Sloc_Start'Access), Token_Deleted.Token_Last);
+
+               if Self.Sloc_Column = Null_Universal_Location then
+                  Extracted :=
+                    new String'
+                      (Get
+                           (Self.Context,
+                            Token_First'Access,
+                            Token_Last'Access));
+               else
+                  Extracted :=
+                    new String'
+                      (Get
+                           (Self.Context,
+                            Token_First'Access,
+                            Token_Last'Access)
+                       & " "
+                       & Get
+                         (Self.Context,
+                          Self.Sloc_Column'Access,
+                          Self.Sloc_End'Access));
+               end if;
+
+               case Mode is
+                  when Erase =>
+                     Remove_Code
+                       (Context => Self.Context,
+                        Start   => First'Access,
+                        Stop    => Last'Access);
+                  when Comment =>
+                     Comment_Code
+                       (Context => Self.Context,
+                        Start   => First'Access,
+                        Stop    => Last'Access);
+               end case;
+
+               Self.Sloc_End := To_Location (Self.Context, End_Mark.Location);
+            end;
+         end if;
+      end if;
+   end Extract_Element;
+
+   ----------------------------
+   -- Number_Of_Declarations --
+   ----------------------------
+
+   function Number_Of_Declarations (Self : Ada_Statement) return Integer is
+   begin
+      return Self.Number_Of_Elements;
+   end Number_Of_Declarations;
 
    ---------------------
    -- Get_Declaration --
@@ -107,7 +612,8 @@ package body Refactoring.Services is
          Shared := Get_Construct (Prev (Tree, Iter)).Sloc_End.Index = Last
            or else Get_Construct (Next (Tree, Iter)).Sloc_End.Index = Last;
 
-         return (Entity    => Entity,
+         return (File      => Get_File (EA),
+                 Entity    => Entity,
                  First     => null,
                  Last      => null,
                  SFirst    => Get_Construct (EA).Sloc_Entity,
@@ -124,19 +630,34 @@ package body Refactoring.Services is
 
    procedure Create_Marks
      (Self   : in out Entity_Declaration;
-      Buffer : Editor_Buffer'Class) is
+      Buffer : Editor_Buffer'Class)
+   is
+      First_Line, Last_Line     : Integer;
+      First_Column, Last_Column : Visible_Column_Type;
    begin
       if Self.First = null and then Self.Entity /= null then
+         To_Line_Column
+           (Self.File,
+            String_Index_Type (Self.SFirst.Index),
+            First_Line,
+            First_Column);
+
+         To_Line_Column
+           (Self.File,
+            String_Index_Type (Self.SLast.Index),
+            Last_Line,
+            Last_Column);
+
          declare
             Start  : constant Editor_Location'Class := Buffer.New_Location
-              (Line   => Self.SFirst.Line,
-               Column => Self.SFirst.Column);
+              (Line   => First_Line,
+               Column => First_Column);
          begin
             Self.First := new Editor_Mark'Class'(Start.Create_Mark);
             Self.Last  := new Editor_Mark'Class'
               (Buffer.New_Location
-                 (Line   => Self.SLast.Line,
-                  Column => Self.SLast.Column).Create_Mark);
+                 (Line   => Last_Line,
+                  Column => Last_Column).Create_Mark);
          end;
       end if;
    end Create_Marks;
@@ -857,7 +1378,7 @@ package body Refactoring.Services is
       Editor : constant Editor_Buffer'Class :=
         Context.Buffer_Factory.Get (In_File);
       Loc_Start : Editor_Location'Class := Editor.New_Location
-        (Line, Integer (Column));
+        (Line, Column);
       Loc_End   : constant Editor_Location'Class :=
         Loc_Start.Forward_Char (Replaced_Length - 1);
    begin

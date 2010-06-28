@@ -264,6 +264,7 @@ package Language.Tree.Database is
    --  Return the offset of the line given in parameter. For efficency, the
    --  line offsets of all lines are cached when calling this function,
    --  and freed either when the File is freed or updated.
+   --  The first line starts at index 1.
 
    function To_Visible_Column
      (File        : Structured_File_Access;
@@ -277,7 +278,7 @@ package Language.Tree.Database is
       Line   : Integer;
       Column : Visible_Column_Type) return String_Index_Type;
    --  Convert a column into a line offset, taking into account tabulations.
-   --  Note that the first column is 1, the first byte offset is 0.
+   --  Note that the first column is 1, the first byte index is 1.
 
    function To_String_Index
      (File   : Structured_File_Access;

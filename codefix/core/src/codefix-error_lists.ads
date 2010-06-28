@@ -50,7 +50,7 @@ package Codefix.Error_Lists is
      (List    : Error_Message_List;
       File    : Virtual_File;
       Line    : Integer;
-      Column  : Column_Index;
+      Column  : Visible_Column_Type;
       Message : String;
       Order   : Long_Long_Integer);
    --  Add the given error to the list. Order is an optional field that may be
@@ -63,7 +63,7 @@ package Codefix.Error_Lists is
      (List   : Error_Message_List;
       File   : Virtual_File;
       Line   : Integer;
-      Column : Column_Index);
+      Column : Visible_Column_Type);
    --  Remove all the messages from the list that are referenced on the given
    --  location.
 
@@ -76,7 +76,7 @@ package Codefix.Error_Lists is
      (List   : Error_Message_List;
       File   : Virtual_File;
       Line   : Integer;
-      Column : Column_Index)
+      Column : Visible_Column_Type)
       return Error_Message_Iterator;
    --  Return an iterator starting on the first message matching the location
    --  given in parameter - and won't go beyond that location.
@@ -114,7 +114,7 @@ private
    type Messages_Loc is record
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer;
-      Column : Column_Index;
+      Column : Visible_Column_Type;
    end record;
 
    function "<" (Left, Right : Messages_Loc) return Boolean;

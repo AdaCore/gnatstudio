@@ -208,7 +208,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Block_Unfold (This : Src_Editor_Location);
 
    overriding function Line (This : Src_Editor_Location) return Integer;
-   overriding function Column (This : Src_Editor_Location) return Integer;
+   overriding function Column
+     (This : Src_Editor_Location) return Visible_Column_Type;
    overriding function Offset (This : Src_Editor_Location) return Natural;
 
    overriding procedure Search
@@ -265,7 +266,8 @@ package body Src_Editor_Module.Editors is
 
    overriding function Line (This : Src_Editor_Mark) return Integer;
 
-   overriding function Column (This : Src_Editor_Mark) return Integer;
+   overriding function Column
+     (This : Src_Editor_Mark) return Visible_Column_Type;
 
    overriding function Is_Present (This : Src_Editor_Mark) return Boolean;
 
@@ -297,7 +299,7 @@ package body Src_Editor_Module.Editors is
    overriding function New_Location
      (This   : Src_Editor_Buffer;
       Line   : Integer;
-      Column : Integer) return Editor_Location'Class;
+      Column : Visible_Column_Type) return Editor_Location'Class;
 
    overriding function New_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
@@ -430,13 +432,13 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1);
+      From_Column, To_Column : Visible_Column_Type := -1);
 
    overriding procedure Remove_Style
      (This  : Src_Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1);
+      From_Column, To_Column : Visible_Column_Type := -1);
 
    overriding procedure Get_Constructs
      (This       : Src_Editor_Buffer;
@@ -1089,9 +1091,11 @@ package body Src_Editor_Module.Editors is
    -- Column --
    ------------
 
-   overriding function Column (This : Src_Editor_Location) return Integer is
+   overriding function Column
+     (This : Src_Editor_Location) return Visible_Column_Type
+   is
    begin
-      return Integer (This.Column);
+      return This.Column;
    end Column;
 
    ------------
@@ -1468,14 +1472,14 @@ package body Src_Editor_Module.Editors is
    overriding function New_Location
      (This   : Src_Editor_Buffer;
       Line   : Integer;
-      Column : Integer) return Editor_Location'Class
+      Column : Visible_Column_Type) return Editor_Location'Class
    is
       Result : Src_Editor_Location;
    begin
       Result.Buffer := This;
       Result.Line   := Editable_Line_Type'Max (1, Editable_Line_Type (Line));
       Result.Column := Visible_Column_Type'Max
-        (1, Visible_Column_Type (Column));
+        (1, Column);
 
       return Result;
    end New_Location;
@@ -2034,7 +2038,7 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1)
+      From_Column, To_Column : Visible_Column_Type := -1)
    is
    begin
       --  ??? The interface for Add_Line_Highlighting only works on a single
@@ -2053,8 +2057,8 @@ package body Src_Editor_Module.Editors is
             Highlight_Range
               (This.Contents.Buffer, Style_Access (Style),
                Editable_Line_Type (Line),
-               Visible_Column_Type (From_Column),
-               Visible_Column_Type (To_Column));
+               From_Column,
+               To_Column);
          end if;
       end if;
    end Apply_Style;
@@ -2067,7 +2071,7 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
-      From_Column, To_Column : Integer := -1) is
+      From_Column, To_Column : Visible_Column_Type := -1) is
    begin
       if This.Contents.Buffer /= null then
          if From_Column = To_Column then
@@ -2078,8 +2082,8 @@ package body Src_Editor_Module.Editors is
             Highlight_Range
               (This.Contents.Buffer, Style_Access (Style),
                Editable_Line_Type (Line),
-               Visible_Column_Type (From_Column),
-               Visible_Column_Type (To_Column),
+               From_Column,
+               To_Column,
                Remove => True);
          end if;
       end if;
@@ -2222,9 +2226,11 @@ package body Src_Editor_Module.Editors is
    -- Column --
    ------------
 
-   overriding function Column (This : Src_Editor_Mark) return Integer is
+   overriding function Column
+     (This : Src_Editor_Mark) return Visible_Column_Type
+   is
    begin
-      return Integer (This.Mark.Mark.Get_Column);
+      return This.Mark.Mark.Get_Column;
    end Column;
 
    ----------------

@@ -24,10 +24,15 @@
 --  The subprograms in this package never create Undo_Groups, it is the
 --  responsibility of the caller.
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
 with Basic_Types;
 with Entities.Queries;
 with GNATCOLL.VFS;
+with GNAT.Strings;
+with Language;
+with Language.Tree;
+with Language.Tree.Database;
 
 package Refactoring.Services is
 
@@ -62,6 +67,97 @@ package Refactoring.Services is
       Is_Parameter : out Boolean;
       PType        : out Entities.Queries.Parameter_Type);
    --  Whether Entity is a parameter for a subprogram, and if it is which type
+
+   ----------------
+   -- Statements --
+   ----------------
+
+   type Statement_Kind is
+     (Unknown_Kind,
+      Pragma_Kind,
+      With_Kind,
+      Use_Kind,
+      Use_Type_Kind,
+      Type_Kind,
+      When_Kind);
+
+   subtype Clause_Kind is Statement_Kind range With_Kind .. Use_Type_Kind;
+
+   type Remove_Code_Mode is (Erase, Comment);
+
+   type Ada_Statement is private;
+   --  This type represent a "statement", that is to say an ada declaration
+   --  or intstruction.
+
+   procedure Free (This : in out Ada_Statement);
+   --  Free the memory associated to this statement
+
+   procedure Initialize
+     (Self     : in out Ada_Statement;
+      Context  : Factory_Context;
+      Location : Universal_Location);
+   --  Initializes the statements. This will first look backwards to the
+   --  beginning of the statement, and then forwards to the end, so that the
+   --  location can be place in the middle of a statement.
+   --
+   --  Certain statements are threated like lists where an element can be
+   --  removed without disturbing the rest of the list
+   --
+   --  declarations
+   --     A, B, C : Integer;
+   --  pragmas
+   --     pragma Unreferenced (A, B, C);
+   --  clauses
+   --     with A, B, C;
+   --  exception handlers (even if there can be only one element)
+   --     when A : others =>
+
+   function Get_Kind (Self : Ada_Statement) return Statement_Kind;
+   --  Return the kind of the statement found during the initialization
+
+   procedure Remove (Self : in out Ada_Statement);
+   --  Removes the statement from the buffer. Trailing spaces after the
+   --  Statement will be removed. If the removal ends up in an empty line, the
+   --  whole line will be removed.
+
+   procedure Comment (Self : in out Ada_Statement);
+   --  Comments the statement from the buffer
+
+   function Get_Start (Self : Ada_Statement) return Universal_Location;
+   --  Return the location at the beginning of the statement
+
+   function Get_End (Self : Ada_Statement) return Universal_Location;
+   --  Return the location at the end of the statement
+
+   function Contains_Element
+     (Self : Ada_Statement;
+      Name : Language.Tree.Normalized_Symbol) return Boolean;
+   --  Return true if the element name given in parameter is contained in the
+   --  list.
+
+   procedure Remove_Element
+     (Self : in out Ada_Statement;
+      Mode : Remove_Code_Mode;
+      Name : Language.Tree.Normalized_Symbol);
+   --  Removes an element from the list.
+
+   procedure Extract_Element
+     (Self      : in out Ada_Statement;
+      Extracted : out GNAT.Strings.String_Access;
+      Name      : Language.Tree.Normalized_Symbol;
+      Mode      : Remove_Code_Mode := Erase);
+   --  Removes an element from the list, and provides a String
+   --  with the extracted element, that can be directly inserted in the text
+   --  afterwards. For example:
+   --  A, B, C : Integer := 0;
+   --  extracting B will issue:
+   --     - in the buffer: A, C : Integer := 0;
+   --     - in extracted: B : Integer := 0;
+   --  ??? this is currently only implemented for variable declarations - would
+   --  be worth extending it to other kind of statements if relevant.
+
+   function Number_Of_Declarations (Self : Ada_Statement) return Integer;
+   --  Return the number of elements declared in that statement.
 
    -------------------------
    -- Entity declarations --
@@ -233,7 +329,24 @@ private
 
    type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
 
+   package Tokens_List is new Ada.Containers.Doubly_Linked_Lists
+     (Language.Token_Record, Language."=");
+
+   type Ada_Statement is record
+      Context              : Factory_Context;
+      Sloc_Start, Sloc_End : aliased Universal_Location;
+      Kind                 : Statement_Kind := Unknown_Kind;
+      Tokens               : Tokens_List.List;
+      Number_Of_Elements : Integer := 0;
+      --  Number of elements if we're on a list, e.g. number of declaration
+      --  on a variable declaration.
+
+      Sloc_First_Id : aliased Universal_Location := Null_Universal_Location;
+      Sloc_Column   : aliased Universal_Location := Null_Universal_Location;
+   end record;
+
    type Entity_Declaration is tagged record
+      File   : Language.Tree.Database.Structured_File_Access;
       Entity : Entities.Entity_Information;
       Decl   : Ada.Strings.Unbounded.Unbounded_String;
 
@@ -249,7 +362,8 @@ private
    end record;
 
    No_Entity_Declaration : constant Entity_Declaration :=
-     (Entity    => null,
+     (File      => null,
+      Entity    => null,
       Equal_Loc => -1,
       SFirst    => <>,
       SLast     => <>,

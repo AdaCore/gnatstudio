@@ -1286,7 +1286,7 @@ package body Src_Editor_Buffer.Line_Information is
       Mark : constant Editor_Mark'Class := Message.Get_Editor_Mark;
    begin
       Line := Editable_Line_Type (Mark.Line);
-      From_Column := Visible_Column_Type (Mark.Column);
+      From_Column := Mark.Column;
 
       --  Determine the To_Column:
       --  If there is an End_Mark associated with the message, remove the
@@ -1442,7 +1442,7 @@ package body Src_Editor_Buffer.Line_Information is
               (Buffer    => Buffer,
                Style     => Style,
                Line      => EL,
-               Start_Col => Visible_Column_Type (Mark.Column),
+               Start_Col => Mark.Column,
                End_Col   => End_Col,
                Remove    => False);
          end if;

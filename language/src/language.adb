@@ -1240,7 +1240,7 @@ package body Language is
             Step => -1);
 
          Callback
-           ((Tok_Type    => Tok_Identifier,
+           ((Tok_Type    => No_Token,
              Token_First => Index + 1,
              Token_Last  => Start_Offset),
             Stop);
@@ -1269,11 +1269,9 @@ package body Language is
          Stop  : in out Boolean)
       is
       begin
-         if Token.Tok_Type /= Tok_Blank then
-            Buf_End := Integer (Token.Token_Last);
-            Buf_Start := Integer (Token.Token_First);
-            Stop := True;
-         end if;
+         Buf_End := Integer (Token.Token_Last);
+         Buf_Start := Integer (Token.Token_First);
+         Stop := True;
       end Callback;
 
    begin

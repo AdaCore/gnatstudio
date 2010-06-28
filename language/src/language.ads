@@ -791,42 +791,28 @@ package Language is
    --  above). They are used in particular by the completion module to find out
    --  the current context, and for similar reasons by the debugger module.
 
-   type Token_Type is
-     (No_Token,
+   type Token_Type is range 0 .. Integer'Last;
+   --  This is a type of token. Languages may define dedicated constant for
+   --  this type to represent what can be parsed.
 
-      --  Separators
+   overriding
+   function "+" (Left, Right : Token_Type) return Token_Type is abstract;
+   overriding
+   function "-" (Left, Right : Token_Type) return Token_Type is abstract;
+   overriding
+   function "*" (Left, Right : Token_Type) return Token_Type is abstract;
+   overriding
+   function "/" (Left, Right : Token_Type) return Token_Type is abstract;
+   overriding
+   function ">" (Left, Right : Token_Type) return Boolean is abstract;
+   overriding
+   function "<" (Left, Right : Token_Type) return Boolean is abstract;
+   overriding
+   function ">=" (Left, Right : Token_Type) return Boolean is abstract;
+   overriding
+   function "<=" (Left, Right : Token_Type) return Boolean is abstract;
 
-      Tok_Dot,
-      Tok_Open_Parenthesis,
-      Tok_Close_Parenthesis,
-      Tok_Colon,
-      Tok_Arrow,
-      Tok_Operator,
-      Tok_Comma,
-      Tok_Range,
-      Tok_Semicolon,
-      Tok_Blank,
-
-      --  Words
-
-      Tok_Identifier,
-      Tok_String,
-
-      --  Unparsed parts
-
-      Tok_Expression,
-
-      --  Keywords
-
-      --  used for any reserved word that in not part of the ones below
-      Tok_Reserved,
-
-      Tok_All,
-      Tok_Tick,
-      Tok_With,
-      Tok_Use,
-      Tok_Pragma);
-   --  Types of tokens that are found in an expression
+   No_Token : constant Token_Type := 0;
 
    type Token_Record is record
       Tok_Type    : Token_Type := No_Token;
@@ -849,7 +835,7 @@ package Language is
       End_Offset        : String_Index_Type := 0;
       Callback          :
       access procedure (Token : Token_Record;
-                        Stop : in out Boolean));
+                        Stop  : in out Boolean));
    --  Parses the tokens from the Start_Offset backwards to end offset. Calls
    --  Callback on each token. If Stop is True on the callback, then the
    --  parsing is stoped.

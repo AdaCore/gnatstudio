@@ -25,7 +25,7 @@ with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Projects;
-
+with Refactoring;            use Refactoring;
 with Generic_List;
 
 package Codefix.Text_Manager is
@@ -70,15 +70,16 @@ package Codefix.Text_Manager is
    --  Return True when Left is after or in the same position than Right
 
    procedure Set_Location
-     (This : in out Text_Cursor; Line : Natural; Column : Column_Index);
+     (This : in out Text_Cursor; Line : Natural; Column : Visible_Column_Type);
    --  Set the location information
 
    function Get_Line (This : Text_Cursor) return Integer;
-   function Get_Column (This : Text_Cursor) return Column_Index;
+   function Get_Column (This : Text_Cursor) return Visible_Column_Type;
    --  Return the location
 
    procedure Set_Line (This : in out Text_Cursor; Line : Natural);
-   procedure Set_Column (This : in out Text_Cursor; Column : Column_Index);
+   procedure Set_Column
+     (This : in out Text_Cursor; Column : Visible_Column_Type);
    --  Set the line or column
 
    type File_Cursor is new Text_Cursor with private;
@@ -211,7 +212,7 @@ package Codefix.Text_Manager is
    function Get_Line
      (This      : Text_Interface;
       Cursor    : Text_Cursor'Class;
-      Start_Col : Column_Index := 0) return String is abstract;
+      Start_Col : Visible_Column_Type := 0) return String is abstract;
    --  Get all character from the column specified by the cursor to the end of
    --  the line, or beginning by Start_Col if not 0. The String resulting must
    --  have parameter 'First equal to Cursor.Col.
@@ -327,6 +328,9 @@ package Codefix.Text_Manager is
    --  If not found, return a Contruct_Information with Category = Cat_Unknown.
    --  If Name is "", then the first unit with the rigth Category will be
    --  returned.
+   --
+   --  ??? This subprogram is not correctly implemented and does a had hoc
+   --  analysis while we now have all the tools to do better. Remove its usage.
 
    function Get_Full_Prefix
      (This     : access Text_Interface'Class;
@@ -376,8 +380,7 @@ package Codefix.Text_Manager is
 
    procedure Erase
      (This            : in out Text_Interface'Class;
-      Start, Stop     : File_Cursor'Class;
-      Remove_If_Blank : Boolean := True);
+      Start, Stop     : File_Cursor'Class);
    --  Erase the text from Start to Stop. If a line, after the deletion, is
    --  empty, then this line will be deleted. If Remove_If_Blank is true, the
    --  remaining line will get removed if it contains only blank characters.
@@ -409,6 +412,14 @@ package Codefix.Text_Manager is
 
    function Get_Construct_Database
      (Text : Text_Navigator_Abstr) return Construct_Database_Access;
+
+   procedure Set_Context
+     (Text    : in out Text_Navigator_Abstr;
+      Context : Factory_Context);
+
+   function Get_Context
+     (Text : Text_Navigator_Abstr)
+      return Factory_Context;
 
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : GNATCOLL.VFS.Virtual_File)
@@ -475,7 +486,7 @@ package Codefix.Text_Manager is
    function Get_Line
      (This      : Text_Navigator_Abstr;
       Cursor    : File_Cursor'Class;
-      Start_Col : Column_Index := 0) return String;
+      Start_Col : Visible_Column_Type := 0) return String;
    --  Get all character from the file and the column specified by the cursor
    --  to the end of the line, or beginning by Start_Col if not 0.
    --  The String resulting must have parameter 'First equal to Cursor.Col.
@@ -742,6 +753,7 @@ private
       Files        : Ptr_List_Text := new Text_List.List;
       Registry     : Projects.Project_Registry_Access;
       Construct_Db : Construct_Database_Access;
+      Context      : Factory_Context;
    end record;
 
    function Get_File
@@ -798,7 +810,7 @@ private
       --  differently. ??? Not quite clear why it is needed to handle it
       --  specially.
 
-      Col  : Column_Index := 0;
+      Col  : Visible_Column_Type := 0;
       --  The reason why we store columns rather than char index is that
       --  converting a column index into a char index may be more expensive.
       --  When you convert from char to column, you usually already have the

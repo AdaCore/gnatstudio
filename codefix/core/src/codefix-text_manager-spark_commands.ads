@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-
 package Codefix.Text_Manager.Spark_Commands is
 
    -------------------------------
@@ -47,9 +45,6 @@ private
 
    package Mark_List is new Generic_List (Word_Mark);
    use Mark_List;
-
-   package Ada_Lists is new Generic_List (Ada_List);
-   use Ada_Lists;
 
    type Move_Tilde_Or_Percent_Cmd is new Text_Command (Simple) with record
       Cursor : Ptr_Mark;

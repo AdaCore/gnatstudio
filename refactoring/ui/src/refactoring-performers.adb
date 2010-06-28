@@ -297,7 +297,7 @@ package body Refactoring.Performers is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (From_File);
       Loc_Start : constant Editor_Location'Class := Editor.New_Location
-        (Line, Integer (Column));
+        (Line, Column);
       Loc_End   : constant Editor_Location'Class :=
         Loc_Start.Forward_Char (Length - 1);
       Text : constant String := Editor.Get_Chars (Loc_Start, Loc_End);

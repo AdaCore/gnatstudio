@@ -55,7 +55,7 @@ package Codefix.Formal_Errors is
      (This    : in out Error_Message;
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
-      Col     : Column_Index;
+      Col     : Visible_Column_Type;
       Message : String;
       Order   : Long_Long_Integer);
    --  Store the contents of an error message, after it has been parsed
@@ -158,7 +158,7 @@ package Codefix.Formal_Errors is
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      Column_Expected : Column_Index := 0) return Solution_List;
+      Column_Expected : Visible_Column_Type := 0) return Solution_List;
    --  Try re-indent the line
 
    function Clause_Missing

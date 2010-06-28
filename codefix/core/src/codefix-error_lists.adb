@@ -97,7 +97,7 @@ package body Codefix.Error_Lists is
      (List    : Error_Message_List;
       File    : Virtual_File;
       Line    : Integer;
-      Column  : Column_Index;
+      Column  : Visible_Column_Type;
       Message : String;
       Order   : Long_Long_Integer)
    is
@@ -166,7 +166,7 @@ package body Codefix.Error_Lists is
      (List   : Error_Message_List;
       File   : Virtual_File;
       Line   : Integer;
-      Column : Column_Index)
+      Column : Visible_Column_Type)
    is
       Loc : Messages_Loc;
       Loc_List : Internal_List_Access;
@@ -209,7 +209,7 @@ package body Codefix.Error_Lists is
      (List   : Error_Message_List;
       File   : Virtual_File;
       Line   : Integer;
-      Column : Column_Index)
+      Column : Visible_Column_Type)
       return Error_Message_Iterator
    is
       Loc : Messages_Loc;

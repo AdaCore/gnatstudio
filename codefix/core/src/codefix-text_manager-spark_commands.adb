@@ -75,7 +75,7 @@ package body Codefix.Text_Manager.Spark_Commands is
               & Str (Matches (4).First .. Matches (4).Last)
               & Str (Matches (2).First .. Matches (2).Last);
          begin
-            Cursor.Set_Column (Column_Index (Matches (0).First));
+            Cursor.Set_Column (Visible_Column_Type (Matches (0).First));
             Current_Text.Replace (Cursor, Cur_Word'Length, New_Word);
          end;
       end if;

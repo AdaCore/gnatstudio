@@ -30,8 +30,6 @@ with String_Utils;      use String_Utils;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
-with Basic_Types;
-
 package body Codefix.Text_Manager is
 
    function Search_Tokens
@@ -394,7 +392,7 @@ package body Codefix.Text_Manager is
    function Get_Line
      (This      : Text_Navigator_Abstr;
       Cursor    : File_Cursor'Class;
-      Start_Col : Column_Index := 0) return String is
+      Start_Col : Visible_Column_Type := 0) return String is
    begin
       return Get_Line
         (Get_File (This, Get_File (Cursor)).all,
@@ -634,10 +632,10 @@ package body Codefix.Text_Manager is
          Body_End.Line := Get_Construct (Body_Info).Sloc_End.Line;
 
          Body_Begin.Col := To_Column_Index
-           (Char_Index (Get_Construct (Body_Info).Sloc_Start.Column),
+           (String_Index_Type (Get_Construct (Body_Info).Sloc_Start.Column),
             Get_Line (Current_Text, Body_Begin));
          Body_End.Col := To_Column_Index
-           (Char_Index (Get_Construct (Body_Info).Sloc_End.Column),
+           (String_Index_Type (Get_Construct (Body_Info).Sloc_End.Column),
             Get_Line (Current_Text, Body_End));
 
          Spec_Begin.Col := 1;
@@ -646,10 +644,10 @@ package body Codefix.Text_Manager is
          Spec_End.Line := Get_Construct (Unit_Info).Sloc_End.Line;
 
          Spec_Begin.Col := To_Column_Index
-           (Char_Index (Get_Construct (Unit_Info).Sloc_Start.Column),
+           (String_Index_Type (Get_Construct (Unit_Info).Sloc_Start.Column),
             Get_Line (Current_Text, Spec_Begin));
          Spec_End.Col := To_Column_Index
-           (Char_Index (Get_Construct (Unit_Info).Sloc_End.Column),
+           (String_Index_Type (Get_Construct (Unit_Info).Sloc_End.Column),
             Get_Line (Current_Text, Spec_End));
       else
          Set_File (Body_Begin, Get_File (Cursor));
@@ -661,10 +659,10 @@ package body Codefix.Text_Manager is
          Body_End.Line := Get_Construct (Unit_Info).Sloc_End.Line;
 
          Body_Begin.Col := To_Column_Index
-           (Char_Index (Get_Construct (Unit_Info).Sloc_Start.Column),
+           (String_Index_Type (Get_Construct (Unit_Info).Sloc_Start.Column),
             Get_Line (Current_Text, Body_Begin));
          Body_End.Col := To_Column_Index
-           (Char_Index (Get_Construct (Unit_Info).Sloc_End.Column),
+           (String_Index_Type (Get_Construct (Unit_Info).Sloc_End.Column),
             Get_Line (Current_Text, Body_End));
 
          Assign (Spec_Begin, Null_File_Cursor);
@@ -813,8 +811,7 @@ package body Codefix.Text_Manager is
          (Absolute_Offset => False,
           Line            => Get_Line (Cursor),
           Line_Offset     =>
-            Basic_Types.String_Index_Type
-              (To_Char_Index (Get_Column (Cursor), Line_Cursor))),
+            To_Char_Index (Get_Column (Cursor), Line_Cursor)),
          From_Type,
          Position,
          Categories_Seeked);
@@ -847,18 +844,18 @@ package body Codefix.Text_Manager is
          Line        : constant String :=
            Get_Line (Text_Interface'Class (This), C, 1);
          Next_Cursor : Text_Cursor;
-         Char_Start, Char_End : Char_Index;
+         Char_Start, Char_End : String_Index_Type;
       begin
          if C.Line = Start.Line then
             Char_Start := To_Char_Index (Start.Col, Line);
          else
-            Char_Start := Char_Index (Line'First);
+            Char_Start := String_Index_Type (Line'First);
          end if;
 
          if C.Line = Stop.Line then
             Char_End := To_Char_Index (Stop.Col, Line);
          else
-            Char_End := Char_Index (Line'Last);
+            Char_End := String_Index_Type (Line'Last);
          end if;
 
          if C.Line = Stop.Line then
@@ -942,7 +939,7 @@ package body Codefix.Text_Manager is
 
       Result        : Word_Cursor :=
         (File_Cursor (Cursor) with null, Text_Ascii);
-      Start_Index   : Char_Index;
+      Start_Index   : String_Index_Type;
       Found         : Boolean := False;
 
       function Callback
@@ -973,7 +970,7 @@ package body Codefix.Text_Manager is
                end if;
 
                Result.Col := To_Column_Index
-                 (Char_Index (Sloc_Start.Index), Line);
+                 (String_Index_Type (Sloc_Start.Index), Line);
                Result.String_Match :=
                  new String'
                    (Line (Sloc_Start.Index .. Sloc_End.Index));
@@ -1000,7 +997,7 @@ package body Codefix.Text_Manager is
       end if;
 
       if Result.Col = 0 then
-         Start_Index := Char_Index (Line'Last);
+         Start_Index := String_Index_Type (Line'Last);
       else
          Start_Index := To_Char_Index (Result.Col, Line);
       end if;
@@ -1038,7 +1035,7 @@ package body Codefix.Text_Manager is
       Last, Increment    : Integer;
       Result             : Word_Cursor;
       New_Cursor         : File_Cursor;
-      Old_Col            : Column_Index;
+      Old_Col            : Visible_Column_Type;
    begin
       New_Cursor := File_Cursor (Cursor);
 
@@ -1166,8 +1163,8 @@ package body Codefix.Text_Manager is
    is
       Current_Line      : GNAT.Strings.String_Access;
       Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
-      Begin_Word        : Char_Index;
-      Cursor_Char_Index : Char_Index;
+      Begin_Word        : String_Index_Type;
+      Cursor_Char_Index : String_Index_Type;
    begin
       Word.Mode := Text_Ascii;
       Word.File := This.File_Name;
@@ -1220,7 +1217,7 @@ package body Codefix.Text_Manager is
       Word.Line := Line_Cursor.Line;
       Word.Col := To_Column_Index (Begin_Word, Current_Line.all);
 
-      if Cursor_Char_Index = Char_Index (Current_Line'Last) then
+      if Cursor_Char_Index = String_Index_Type (Current_Line'Last) then
          Cursor_Char_Index := 1;
          Cursor.Line := Cursor.Line + 1;
       else
@@ -1296,7 +1293,7 @@ package body Codefix.Text_Manager is
 
             Assign (Current_Line, Get_Line (This, Line_Cursor));
             Result.Col := To_Column_Index
-              (Char_Index (Current_Line'Last), Current_Line.all);
+              (String_Index_Type (Current_Line'Last), Current_Line.all);
          end if;
 
          if not Is_Blank
@@ -1328,7 +1325,8 @@ package body Codefix.Text_Manager is
    begin
       Line_Offset := Get_Line (Start) - 1;
       Col_Offset := Integer
-        (To_Column_Index (Char_Index (Get_Column (Start)), First_Line)) - 1;
+        (To_Column_Index
+           (String_Index_Type (Get_Column (Start)), First_Line)) - 1;
 
       while not Stop and then Line_Offset + 1 <= Last_Line loop
          declare
@@ -1434,7 +1432,8 @@ package body Codefix.Text_Manager is
       Line       : constant String := This.Get_Line (Position, 1);
    begin
       Dest_Stop.Col := To_Column_Index
-        (To_Char_Index (Dest_Start.Col, Line) + Char_Index (Len) - 1, Line);
+        (To_Char_Index
+           (Dest_Start.Col, Line) + String_Index_Type (Len) - 1, Line);
 
       Replace
         (This          => This,
@@ -1472,10 +1471,10 @@ package body Codefix.Text_Manager is
          Pos    : Bound_Type)
       is
          Line : constant String := Dest_Text.Get_Line (Around, 1);
-         Begin_Text : Char_Index;
-         End_Text   : Char_Index;
+         Begin_Text : String_Index_Type;
+         End_Text   : String_Index_Type;
          Tmp_Cursor   : Text_Cursor := Around;
-         Blank_Length : Char_Index;
+         Blank_Length : String_Index_Type;
       begin
          case Pos is
             when First =>
@@ -1560,7 +1559,7 @@ package body Codefix.Text_Manager is
 
          declare
             Line  : constant String := This.Get_Line (Dest_Start, 1);
-            Index : constant Char_Index :=
+            Index : constant String_Index_Type :=
               To_Char_Index (Dest_Start.Col, Line)
               + New_Text'Length - 1;
          begin
@@ -1575,7 +1574,7 @@ package body Codefix.Text_Manager is
          begin
             Dest_Stop.Col :=
               To_Column_Index
-                (Char_Index (New_Text'Last - Last_Begin_Line + 1),
+                (String_Index_Type (New_Text'Last - Last_Begin_Line + 1),
                  Line_Indexes (New_Text (Last_Begin_Line .. New_Text'Last)));
          end;
       end if;
@@ -1609,13 +1608,12 @@ package body Codefix.Text_Manager is
 
    procedure Erase
      (This            : in out Text_Interface'Class;
-      Start, Stop     : File_Cursor'Class;
-      Remove_If_Blank : Boolean := True)
+      Start, Stop     : File_Cursor'Class)
    is
    begin
       This.Replace (Start, Stop, "");
 
-      if Remove_If_Blank and then Is_Blank (This.Get_Line (Start, 1)) then
+      if Is_Blank (This.Get_Line (Start, 1)) then
          This.Delete_Line (Start);
       end if;
    end Erase;
@@ -1629,8 +1627,8 @@ package body Codefix.Text_Manager is
       Start, Stop : File_Cursor'Class)
    is
       Line_Cursor      : File_Cursor := File_Cursor (Start);
-      Start_Char_Index : Char_Index;
-      Stop_Char_Index : Char_Index;
+      Start_Char_Index : String_Index_Type;
+      Stop_Char_Index : String_Index_Type;
       Tmp_Cursor       : File_Cursor;
    begin
       Line_Cursor.Col := 1;
@@ -1844,6 +1842,29 @@ package body Codefix.Text_Manager is
       return Text.Construct_Db;
    end Get_Construct_Database;
 
+   -----------------
+   -- Set_Context --
+   -----------------
+
+   procedure Set_Context
+     (Text    : in out Text_Navigator_Abstr;
+      Context : Factory_Context)
+   is
+   begin
+      Text.Context := Context;
+   end Set_Context;
+
+   -----------------
+   -- Get_Context --
+   -----------------
+
+   function Get_Context
+     (Text : Text_Navigator_Abstr)
+      return Factory_Context is
+   begin
+      return Text.Context;
+   end Get_Context;
+
    ----------------------
    -- Get_Body_Or_Spec --
    ----------------------
@@ -1868,7 +1889,7 @@ package body Codefix.Text_Manager is
    -- Get_Column --
    ----------------
 
-   function Get_Column (This : Text_Cursor) return Column_Index is
+   function Get_Column (This : Text_Cursor) return Visible_Column_Type is
    begin
       return This.Col;
    end Get_Column;
@@ -1895,7 +1916,9 @@ package body Codefix.Text_Manager is
    -- Set_Column --
    ----------------
 
-   procedure Set_Column (This : in out Text_Cursor; Column : Column_Index) is
+   procedure Set_Column
+     (This : in out Text_Cursor; Column : Visible_Column_Type)
+   is
    begin
       This.Col := Column;
    end Set_Column;
@@ -1905,7 +1928,9 @@ package body Codefix.Text_Manager is
    ------------------
 
    procedure Set_Location
-     (This : in out Text_Cursor; Line : Natural; Column : Column_Index) is
+     (This : in out Text_Cursor;
+      Line : Natural; Column : Visible_Column_Type)
+   is
    begin
       This.Line := Line;
       This.Col := Column;
@@ -1988,7 +2013,7 @@ package body Codefix.Text_Manager is
                Matcher    : constant Pattern_Matcher := Compile
                  (Word.String_Match.all);
                Str_Parsed : constant String := Text.Get_Line (Word, 1);
-               Index      : constant Char_Index :=
+               Index      : constant String_Index_Type :=
                  To_Char_Index (Word.Col, Str_Parsed);
             begin
                Match

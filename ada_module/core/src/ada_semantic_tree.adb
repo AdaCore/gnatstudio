@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Language.Ada; use Language.Ada;
 
@@ -369,27 +368,6 @@ package body Ada_Semantic_Tree is
       Last_Non_Blank_Token : Token_Record := Null_Token;
 
       procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
-      function To_String (Token : Token_Record) return String;
-
-      ---------------
-      -- To_String --
-      ---------------
-
-      function To_String (Token : Token_Record) return String is
-      begin
-         if Token.Tok_Type = No_Token then
-            return "";
-         elsif Natural (Token.Token_First) not in Buffer'Range
-           or else Natural (Token.Token_Last) not in Buffer'Range
-         then
-            return "";
-         else
-            return To_Lower
-              (Buffer
-                 (Natural (Last_Non_Blank_Token.Token_First)
-                  .. Natural (Last_Non_Blank_Token.Token_Last)));
-         end if;
-      end To_String;
 
       ------------------
       -- Handle_Token --
@@ -401,7 +379,7 @@ package body Ada_Semantic_Tree is
 
          if Expression_Depth = 0 then
             case Token.Tok_Type is
-               when Tok_With | Tok_Use | Tok_Pragma =>
+               when Tok_With | Tok_Use | Tok_Pragma | Tok_Colon =>
                   Prepend (Result.Tokens, Token);
                   Stop := True;
 
@@ -419,13 +397,12 @@ package body Ada_Semantic_Tree is
                when Tok_All
                   | Tok_Tick
                   | Tok_Arrow
-                  | Tok_Colon
                   | Tok_Dot =>
 
                   Prepend (Result.Tokens, Token);
 
                when Tok_Close_Parenthesis =>
-                  if To_String (Last_Non_Blank_Token) = "in" then
+                  if Last_Non_Blank_Token.Tok_Type = Tok_In then
                      --  We're on e.g. for X in A, don't get more things
 
                      Stop := True;
@@ -452,15 +429,24 @@ package body Ada_Semantic_Tree is
                      Stop := True;
                   end if;
 
-               when Tok_Operator
-                  | Tok_Range
-                  | Tok_String
-                  | Tok_Semicolon =>
+               when Tok_Aliased
+                  | Tok_Access
+                  | Tok_Constant
+                  | Tok_Null
+                  | Tok_Not
+                  | Tok_In
+                  | Tok_Out =>
 
-                  Stop := True;
+                  --  In declaration, e.g. A : constant B. Ignore the
+                  --  modifier keywords
 
-               when No_Token | Tok_Expression | Tok_Blank | Tok_Reserved =>
                   null;
+
+               when Tok_Blank =>
+                  null;
+
+               when others =>
+                  Stop := True;
 
             end case;
 
@@ -532,7 +518,7 @@ package body Ada_Semantic_Tree is
    function Get_Name
    (Expression : Parsed_Expression; Token : Token_Record) return String is
    begin
-      case Token.Tok_Type is
+      case Ada_Token'(Token.Tok_Type) is
          when No_Token =>
             return "";
 
@@ -554,8 +540,8 @@ package body Ada_Semantic_Tree is
          when Tok_Identifier
             | Tok_Expression
             | Tok_Operator
-            | Tok_Reserved
-            | Tok_String =>
+            | Tok_String
+            | Ada_Reserved_Token =>
 
             if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
                return Expression.Original_Buffer
@@ -564,32 +550,20 @@ package body Ada_Semantic_Tree is
                return "";
             end if;
 
-         when Tok_All =>
-            return "all";
-
          when Tok_Tick =>
             return "'";
 
-         when Tok_With =>
-            return "with ";
-
-         when Tok_Use =>
-            return "use ";
-
-         when Tok_Pragma =>
-            return "pragma ";
-
          when Tok_Comma =>
             return ", ";
-
-         when Tok_Range =>
-            return "..";
 
          when Tok_Semicolon =>
             return ";";
 
          when Tok_Blank =>
             return "";
+
+         when Tok_Dot_Dot =>
+            return "..";
 
       end case;
    end Get_Name;

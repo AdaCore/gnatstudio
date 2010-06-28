@@ -258,7 +258,7 @@ procedure Completion.Test is
 
       procedure Display (Token : Token_Record) is
       begin
-         Put (Token_Type'Image (Token.Tok_Type));
+         Put (Image (Token.Tok_Type));
 
          case Token.Tok_Type is
             when Tok_Identifier | Tok_Operator =>

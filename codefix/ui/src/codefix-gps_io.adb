@@ -59,7 +59,7 @@ package body Codefix.GPS_Io is
          Set_Location
            (New_Cursor,
             GPS_Mark'Class (Mark).Mark.Line,
-            Column_Index (GPS_Mark'Class (Mark).Mark.Column));
+            GPS_Mark'Class (Mark).Mark.Column);
 
       exception
          when Constraint_Error =>
@@ -111,7 +111,7 @@ package body Codefix.GPS_Io is
       Len    : Natural) return String
    is
       Line : constant String := Get_Line (This, Cursor, 1);
-      Char_Ind : constant Char_Index :=
+      Char_Ind : constant String_Index_Type :=
         To_Char_Index (Get_Column (Cursor), Line);
    begin
       return Line
@@ -127,7 +127,7 @@ package body Codefix.GPS_Io is
       Cursor : Text_Cursor'Class) return Character
    is
       Line : constant String := Get_Line (This, Cursor, 1);
-      Char_Ind : constant Char_Index :=
+      Char_Ind : constant String_Index_Type :=
         To_Char_Index (Get_Column (Cursor), Line);
    begin
       return Line (Natural (Char_Ind));
@@ -140,7 +140,7 @@ package body Codefix.GPS_Io is
    overriding function Get_Line
      (This      : Console_Interface;
       Cursor    : Text_Cursor'Class;
-      Start_Col : Column_Index := 0) return String
+      Start_Col : Visible_Column_Type := 0) return String
    is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (This.Get_File_Name);
@@ -149,7 +149,7 @@ package body Codefix.GPS_Io is
       Loc_End   : constant Editor_Location'CLass := Loc_Start.End_Of_Line;
 
       Line : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
-      Char_Ind : Char_Index;
+      Char_Ind : String_Index_Type;
 
       Last_Ind : Integer := Line'Last;
    begin
@@ -180,13 +180,13 @@ package body Codefix.GPS_Io is
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
 
       Actual_Start_Line : Integer;
-      Actual_Start_Column : Integer;
+      Actual_Start_Column : Visible_Column_Type;
    begin
       Text_Has_Changed (This);
 
       if Get_Line (Cursor) /= 0 then
          Actual_Start_Line := Cursor.Get_Line;
-         Actual_Start_Column := Integer (Cursor.Get_Column);
+         Actual_Start_Column := Cursor.Get_Column;
       else
          Actual_Start_Line := 1;
          Actual_Start_Column := 1;
@@ -224,10 +224,10 @@ package body Codefix.GPS_Io is
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc_Start : constant Editor_Location'Class :=
         Editor.New_Location
-          (Start_Cursor.Get_Line, Integer (Start_Cursor.Get_Column));
+          (Start_Cursor.Get_Line, Start_Cursor.Get_Column);
       Loc_End : constant Editor_Location'Class :=
         Editor.New_Location
-          (End_Cursor.Get_Line, Integer (End_Cursor.Get_Column));
+          (End_Cursor.Get_Line, End_Cursor.Get_Column);
    begin
       if not
         (Loc_Start.Line > Loc_End.Line
@@ -269,7 +269,8 @@ package body Codefix.GPS_Io is
             Set_Location
               (Insert_Position,
                Get_Line (Insert_Position),
-               To_Column_Index (Char_Index (Line_Str'Last), Line_Str) + 1);
+               To_Column_Index
+                 (String_Index_Type (Line_Str'Last), Line_Str) + 1);
             Replace (This, Insert_Position, 0, EOL_Str & New_Line);
          end;
       end if;

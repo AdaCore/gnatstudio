@@ -117,6 +117,8 @@ package body Language.Ada is
                      70 => new String'("while"),
                      71 => new String'("with"),
                      72 => new String'("xor"));
+   --  List of the keywords. Indexes in this array have to correspond to values
+   --  declared for token types in the specification.
 
    --  Make_Entry functions for the explorer
 
@@ -805,6 +807,33 @@ package body Language.Ada is
       end if;
    end Get_Referenced_Entity;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Token : Ada_Token) return String is
+   begin
+      case Token is
+         when No_Token              => return "NO_TOKEN";
+         when Ada_Reserved_Token    =>
+            return "TOK_" & To_Upper (The_Keywords (Integer (Token)).all);
+         when Tok_Dot               => return "TOK_DOT";
+         when Tok_Open_Parenthesis  => return "TOK_OPEN_PARENTHESIS";
+         when Tok_Close_Parenthesis => return "TOK_CLOSE_PARENTHESIS";
+         when Tok_Colon             => return "TOK_COLON";
+         when Tok_Arrow             => return "TOK_ARROW";
+         when Tok_Operator          => return "TOK_OPERATOR";
+         when Tok_Comma             => return "TOK_COMMA";
+         when Tok_Semicolon         => return "TOK_SEMICOLON";
+         when Tok_Blank             => return "TOK_BLANK";
+         when Tok_Tick              => return "TOK_TICK";
+         when Tok_Dot_Dot           => return "TOK_DOT_DOT";
+         when Tok_Identifier        => return "TOK_IDENTIFIER";
+         when Tok_String            => return "TOK_STRING";
+         when Tok_Expression        => return "TOK_EXPRESSION";
+      end case;
+   end Image;
+
    -------------------------------
    -- Parse_Expression_Backward --
    -------------------------------
@@ -912,19 +941,12 @@ package body Language.Ada is
                   if Prev_Offset > Offset_Limit
                     and then Buffer (Prev_Offset) = '-'
                   then
-                     Local_Offset := UTF8_Find_Prev_Char
-                       (Buffer, Prev_Offset);
+                     Offset := Prev_Offset;
 
                      --  When hitting a comment, we don't care about incomplete
                      --  strings.
 
                      Incomplete_String := False;
-
-                     --  ??? Not very efficient to use a recursive call here
-                     Skip_Comment_Line (Local_Offset, Incomplete_String);
-                     Offset := Local_Offset + 1;
-
-                     exit;
                   end if;
 
                when ASCII.LF =>
@@ -975,33 +997,13 @@ package body Language.Ada is
                            (Integer (Token.Token_First)
                             .. Integer (Token.Token_Last)));
                begin
-                  if Word = "with" then
-                     Token.Tok_Type := Tok_With;
-                  elsif Word = "use" then
-                     Token.Tok_Type := Tok_Use;
-                  elsif Word = "pragma" then
-                     Token.Tok_Type := Tok_Pragma;
-                  elsif Word = "all" then
-                     Token.Tok_Type := Tok_All;
-                  elsif Word = "or" then
-                     Token.Tok_Type := Tok_Operator;
-                  elsif Word = "and" then
-                     Token.Tok_Type := Tok_Operator;
-                  elsif Word = "xor" then
-                     Token.Tok_Type := Tok_Operator;
-                  elsif Word = "not" then
-                     Token.Tok_Type := Tok_Operator;
-                  elsif Word = "in" then
-                     Token.Tok_Type := Tok_Reserved;
-                  elsif Word = "out" then
-                     Token.Tok_Type := Tok_Reserved;
-                  elsif Word = "access" then
-                     Token.Tok_Type := Tok_Reserved;
-                  elsif Word = "constant" then
-                     Token.Tok_Type := Tok_Reserved;
-                  elsif Word = "alised" then
-                     Token.Tok_Type := Tok_Reserved;
-                  end if;
+                  for J in The_Keywords'Range loop
+                     if The_Keywords (J).all = Word then
+                        Token.Tok_Type := Token_Type (J);
+
+                        exit;
+                     end if;
+                  end loop;
                end;
             end if;
 
@@ -1117,9 +1119,9 @@ package body Language.Ada is
 
             when '.' =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '.' then
-                  --  We're on ".."
+                  --  .. case
 
-                  Token.Tok_Type := Tok_Range;
+                  Token.Tok_Type := Tok_Dot_Dot;
                   Token.Token_First := String_Index_Type (Offset);
                   Token.Token_Last := String_Index_Type (Offset + 1);
                else
@@ -1215,6 +1217,7 @@ package body Language.Ada is
 
             when '<' | '>' =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
+                  --  >= or <= case
                   Token.Tok_Type := Tok_Operator;
                   Token.Token_First := String_Index_Type (Offset);
                   Token.Token_Last := String_Index_Type (Offset + 1);
@@ -1229,6 +1232,7 @@ package body Language.Ada is
 
             when '=' =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '>' then
+                  --  => case
                   Token.Tok_Type := Tok_Arrow;
                else
                   Handle_Token (Token, Offset, Stop);
@@ -1249,6 +1253,7 @@ package body Language.Ada is
 
             when '*' =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '*' then
+                  --  ** case
                   Token.Tok_Type := Tok_Operator;
                   Token.Token_First := String_Index_Type (Offset);
                   Token.Token_Last := String_Index_Type (Offset + 1);
@@ -1262,19 +1267,18 @@ package body Language.Ada is
                end if;
 
             when ':' =>
-               if Token.Tok_Type /= Tok_Operator then
+               if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
+                  --  := case
+                  Token.Tok_Type := Tok_Operator;
+                  Token.Token_First := String_Index_Type (Offset);
+                  Token.Token_Last := String_Index_Type (Offset + 1);
+               else
                   Handle_Token (Token, Offset, Stop);
                   exit when Stop;
 
                   Token.Tok_Type := Tok_Colon;
                   Handle_Token (Token, Offset, Stop);
                   exit when Stop;
-
-                  exit;
-               else
-                  Token := Null_Token;
-
-                  exit;
                end if;
 
             when ASCII.LF =>

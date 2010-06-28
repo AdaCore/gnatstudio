@@ -126,9 +126,11 @@ package String_Utils is
    function Is_Blank (C : Character) return Boolean;
    --  Return True if C is a blank character: CR, LF, HT or ' '
 
-   function Is_Blank_Line (Buffer : String; Index : Natural) return Boolean;
+   function Is_Blank_Line
+     (Buffer : String; Index : Natural := 0) return Boolean;
    --  Return True if the line pointed by Index only contains blank characters
-   --  (' ', HT, LF, CR).
+   --  (' ', HT, LF, CR). By default, if Index is 0, then the line considered
+   --  is the first line of the buffer.
 
    function Line_Start (Buffer : String; P : Natural) return Natural;
    --  Return the start of the line pointed by P

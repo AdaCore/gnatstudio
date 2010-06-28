@@ -338,8 +338,10 @@ package body Src_Editor_Box.Tooltips is
                        := Message.Get_Editor_Mark;
                   begin
                      if Col + 1 >= Gint (M.Column)
-                       and then Col + 1 <= Gint (M.Column
-                         + Message.Get_Highlighting_Length)
+                       and then Col + 1 <= Gint
+                         (M.Column
+                          + Visible_Column_Type
+                            (Message.Get_Highlighting_Length))
                      then
                         Draw_Content (Message.Get_Text, Widget, Pixmap);
                         return;

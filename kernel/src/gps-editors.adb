@@ -80,7 +80,9 @@ package body GPS.Editors is
       return 0;
    end Line;
 
-   overriding function Column (This : Dummy_Editor_Location) return Integer is
+   overriding function Column
+     (This : Dummy_Editor_Location) return Visible_Column_Type
+   is
       pragma Unreferenced (This);
    begin
       return 0;
@@ -118,7 +120,8 @@ package body GPS.Editors is
       return 0;
    end Line;
 
-   overriding function Column (This : Dummy_Editor_Mark) return Integer is
+   overriding function Column
+     (This : Dummy_Editor_Mark) return Visible_Column_Type is
       pragma Unreferenced (This);
    begin
       return 0;
@@ -136,7 +139,7 @@ package body GPS.Editors is
    overriding function New_Location
      (This   : Dummy_Editor_Buffer;
       Line   : Integer;
-      Column : Integer) return Editor_Location'Class
+      Column : Visible_Column_Type) return Editor_Location'Class
    is
       pragma Unreferenced (This, Line, Column);
    begin
@@ -318,8 +321,8 @@ package body GPS.Editors is
    is
       L1 : constant Integer := Line (Editor_Location'Class (This));
       L2 : constant Integer := Line (Editor_Location'Class (To));
-      C1 : Integer;
-      C2 : Integer;
+      C1 : Visible_Column_Type;
+      C2 : Visible_Column_Type;
    begin
       if L1 < L2 then
          return -1;

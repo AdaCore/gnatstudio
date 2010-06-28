@@ -296,7 +296,7 @@ package body Codefix.Errors_Manager is
      (This         : Correction_Manager;
       File         : GNATCOLL.VFS.Virtual_File;
       Line         : Integer;
-      Column       : Column_Index;
+      Column       : Visible_Column_Type;
       Message      : String := "")
       return Error_Id
    is

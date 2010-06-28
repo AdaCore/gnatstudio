@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Language.Ada;                      use Language.Ada;
 with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 with Glib.Unicode;                      use Glib.Unicode;

@@ -403,10 +403,10 @@ package body Casing_Exceptions is
               Kernel.Get_Buffer_Factory.Get (File);
             Loc_Start : constant Editor_Location'Class := Editor.New_Location
               (Line_Information (Context),
-               Integer (Column_Information (Context))).Forward_Char (-1);
+               Column_Information (Context)).Forward_Char (-1);
             Loc_End   : constant Editor_Location'Class := Editor.New_Location
               (Line_Information (Context),
-               Integer (Column_Information (Context)))
+               Column_Information (Context))
               .Forward_Char (Area'Length);
             Text : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
          begin

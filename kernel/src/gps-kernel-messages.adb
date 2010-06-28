@@ -1699,12 +1699,13 @@ package body GPS.Kernel.Messages is
 
                if Current_Node.Mark /= null
                  and then Current_Node.Mark.Column
-                 /= Integer (Current_Node.Column)
+                 /= Current_Node.Column
                then
                   Set_Attribute
                     (XML_Node,
                      "actual_column",
-                     Trim (Integer'Image (Current_Node.Mark.Column), Both));
+                     Trim (Visible_Column_Type'Image
+                       (Current_Node.Mark.Column), Both));
                end if;
 
                if Current_Node.Style /= null then

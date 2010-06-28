@@ -279,7 +279,7 @@ package body Codefix.Ada_Tools is
                  (New_Clause.Position,
                   Line      => Get_Construct (Iterator).Sloc_Start.Line,
                   Column    => To_Column_Index
-                    (Char_Index
+                    (String_Index_Type
                        (Get_Construct (Iterator).Sloc_Start.Column), Line));
             end;
 
@@ -359,7 +359,7 @@ package body Codefix.Ada_Tools is
               (Current_Cursor,
                Get_Construct (Last_Info).Sloc_End.Line,
                To_Column_Index
-                 (Char_Index
+                 (String_Index_Type
                     (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
          end;
       else
@@ -404,7 +404,7 @@ package body Codefix.Ada_Tools is
                Set_Location
                  (Result, Get_Construct (Iterator).Sloc_Start.Line,
                   To_Column_Index
-                    (Char_Index
+                    (String_Index_Type
                        (Get_Construct (Iterator).Sloc_Start.Column), Line));
             end;
 
