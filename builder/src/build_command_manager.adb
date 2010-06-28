@@ -33,6 +33,7 @@ with GPS.Kernel.Console;          use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Macros;           use GPS.Kernel.Macros;
 with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
@@ -491,8 +492,8 @@ package body Build_Command_Manager is
       Simulate   : Boolean;
       Background_Env : Extending_Environment) return Expansion_Result
    is
-      Result : Expansion_Result;
-      Final  : Expansion_Result;
+      Result  : Expansion_Result;
+      Final   : Expansion_Result;
       Context : constant Selection_Context := Get_Current_Context (Kernel);
 
    begin

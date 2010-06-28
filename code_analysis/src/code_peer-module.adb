@@ -39,6 +39,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
@@ -571,7 +572,6 @@ package body Code_Peer.Module is
    is
       use type Code_Peer.Summary_Reports.Summary_Report;
       use type Code_Analysis.Code_Analysis_Tree;
-      use type GPS.Kernel.MDI.GPS_MDI_Child;
 
       Input   : Input_Sources.File.File_Input;
       Reader  : Code_Peer.Bridge.Inspection_Readers.Reader;
