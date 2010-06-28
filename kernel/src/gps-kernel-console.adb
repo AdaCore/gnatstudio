@@ -605,8 +605,7 @@ package body GPS.Kernel.Console is
          Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
          Priority     => Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Initialize_Console (Kernel);
 

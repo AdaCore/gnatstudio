@@ -591,8 +591,7 @@ package body GPS.Kernel.Task_Manager is
          Kernel       => Kernel,
          Module_Name  => Task_Manager_Module_Name,
          Priority     => Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Set_Progress_Area
         (Get_Task_Manager (Kernel),

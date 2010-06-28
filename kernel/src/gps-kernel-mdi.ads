@@ -28,6 +28,48 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package GPS.Kernel.MDI is
 
+   ----------------------
+   -- Desktop handling --
+   ----------------------
+
+   package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
+
+   type Save_Desktop_Function is access function
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return XML_Utils.Node_Ptr;
+
+   type Load_Desktop_Function is access function
+     (MDI  : Gtkada.MDI.MDI_Window;
+      Node : XML_Utils.Node_Ptr;
+      User : Kernel_Handle) return Gtkada.MDI.MDI_Child;
+
+   procedure Register_Desktop_Functions
+     (Save : Save_Desktop_Function;
+      Load : Load_Desktop_Function);
+
+   function Get_XML_Content
+     (MDI : Gtkada.MDI.MDI_Window;
+      Tag : String) return XML_Utils.Node_Ptr;
+   --  Wrapper around Kernel_Desktop functions
+
+   function Has_User_Desktop
+     (Handle : access Kernel_Handle_Record'Class) return Boolean;
+   --  Return True if an user-defined desktop is present, and False
+   --  if the default desktop is used.
+
+   procedure Save_Desktop
+     (Handle : access Kernel_Handle_Record'Class);
+   --  Save the current desktop.
+
+   function Load_Desktop
+     (Handle      : access Kernel_Handle_Record'Class;
+      For_Project : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      return Boolean;
+   --  Reload a saved desktop.
+   --  Calls "Show_All" on Handle.Main_Window before loading the desktop.
+   --  Return False if no desktop could be loaded (in which case the default
+   --  desktop was loaded).
+
    ---------
    -- MDI --
    ---------

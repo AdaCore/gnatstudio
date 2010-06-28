@@ -71,30 +71,6 @@ package GPS.Kernel is
    pragma No_Strict_Aliasing (Kernel_Handle);
    --  A kernel handle used to share information throughout GPS
 
-   ----------------------
-   -- Desktop handling --
-   ----------------------
-
-   package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
-
-   type Save_Desktop_Function is access function
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return XML_Utils.Node_Ptr;
-
-   type Load_Desktop_Function is access function
-     (MDI  : Gtkada.MDI.MDI_Window;
-      Node : XML_Utils.Node_Ptr;
-      User : Kernel_Handle) return Gtkada.MDI.MDI_Child;
-
-   procedure Register_Desktop_Functions
-     (Save : Save_Desktop_Function;
-      Load : Load_Desktop_Function);
-
-   function Get_XML_Content
-     (MDI : Gtkada.MDI.MDI_Window;
-      Tag : String) return XML_Utils.Node_Ptr;
-   --  Wrapper around Kernel_Desktop functions
-
    -------------------
    -- Kernel_Handle --
    -------------------
@@ -136,24 +112,6 @@ package GPS.Kernel is
      (Handle : access Kernel_Handle_Record)
       return Default_Preferences.Preferences_Manager;
    --  Return the preference manager associated with Handle
-
-   function Has_User_Desktop
-     (Handle : access Kernel_Handle_Record) return Boolean;
-   --  Return True if an user-defined desktop is present, and False
-   --  if the default desktop is used.
-
-   procedure Save_Desktop
-     (Handle : access Kernel_Handle_Record);
-   --  Save the current desktop.
-
-   function Load_Desktop
-     (Handle      : access Kernel_Handle_Record;
-      For_Project : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
-      return Boolean;
-   --  Reload a saved desktop.
-   --  Calls "Show_All" on Handle.Main_Window before loading the desktop.
-   --  Return False if no desktop could be loaded (in which case the default
-   --  desktop was loaded).
 
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;

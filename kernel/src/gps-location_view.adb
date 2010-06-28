@@ -1210,8 +1210,7 @@ package body GPS.Location_View is
          Kernel      => Kernel,
          Module_Name => Module_Name);
 
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
    -----------------------
