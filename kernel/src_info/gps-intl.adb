@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  ??? Should use a callback to avoid direct dependency on GtkAda.Intl
 --  with Gtkada.Intl; use Gtkada.Intl;
 
 package body GPS.Intl is
@@ -24,6 +25,7 @@ package body GPS.Intl is
    function "-" (Msg : String) return String is
    begin
       --  The default domain name is already "gps", no need to look it up again
+      --  ??? dummy implementation for now, we don't really support i18n anyway
       --  return Gettext (Msg);
       return Msg;
    end "-";
