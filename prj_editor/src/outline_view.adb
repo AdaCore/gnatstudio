@@ -1028,8 +1028,7 @@ package body Outline_View is
          Filter => Create (Module => Outline_View_Module_Name),
          Label  => -"Refresh");
 
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Profile, True);

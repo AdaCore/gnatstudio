@@ -1418,8 +1418,7 @@ package body Project_Explorers_Files is
          Kernel      => Kernel,
          Module_Name => "Files_View",
          Priority    => GPS.Kernel.Modules.Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
         (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access,
          Ref_Item => -"Entities", Add_Before => False);

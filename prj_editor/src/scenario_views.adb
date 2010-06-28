@@ -599,8 +599,7 @@ package body Scenario_Views is
         (Module      => Scenario_Module_Id,
          Kernel      => Kernel,
          Module_Name => "Scenario_View");
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
         (Kernel, '/' & (-"Tools") & '/' & (-"Views"),

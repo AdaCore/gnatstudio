@@ -3132,8 +3132,7 @@ package body Project_Explorers is
          Module_Name => Explorer_Module_Name,
          Priority    => GPS.Kernel.Modules.Default_Priority);
 
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Locate_File_In_Explorer_Command;
       Register_Contextual_Menu
