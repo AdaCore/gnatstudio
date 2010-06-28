@@ -28,6 +28,7 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 
 with Glib.Convert;              use Glib.Convert;
@@ -706,7 +707,9 @@ package body GPS.Kernel.Modules is
 
       Assert (Me, Context.Context.Data.Data /= null,
               "Contextual_Action called on freed context");
-      Context.Event   := Kernel_Handle (Kernel).Last_Event_For_Contextual;
+      Context.Event :=
+        GPS_Window
+          (Kernel_Handle (Kernel).Main_Window).Last_Event_For_Contextual;
       --   Event will be deep-copied in the call to Create_Proxy below
 
       case Action.Menu_Type is
@@ -1116,10 +1119,16 @@ package body GPS.Kernel.Modules is
       User.Kernel.Last_Context_For_Contextual := Context;
       User.Kernel.Last_Context_From_Contextual := True;
 
-      if User.Kernel.Last_Event_For_Contextual /= null then
-         Free (User.Kernel.Last_Event_For_Contextual);
+      if GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual
+        /= null
+      then
+         Free (GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual);
       end if;
-      Deep_Copy (From => Event, To => User.Kernel.Last_Event_For_Contextual);
+      Deep_Copy
+        (From => Event,
+         To   =>
+           GPS_Window
+             (User.Kernel.Main_Window).Last_Event_For_Contextual);
 
       --  Override the previous value. No Ref is taken explicitly, so we do not
       --  need to Unref either. This field is automatically reset to null when

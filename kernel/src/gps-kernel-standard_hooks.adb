@@ -21,6 +21,8 @@ with Ada.Command_Line;
 with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
 with System;             use System;
 
+with Gtk.Main;
+
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Traces;             use Traces;

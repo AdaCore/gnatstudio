@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2009, AdaCore              --
+--                     Copyright (C) 2005-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,12 @@
 
 with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
+with Gtk.Accel_Group;
+with Gtk.Icon_Factory;
+with Gtk.Main;
 with Gtk.Menu;
+with Gtk.Tooltips;
+with Gtk.Toolbar;
 with Gtk.Widget;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
@@ -211,6 +216,53 @@ package GPS.Kernel.MDI is
      (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Fixed_Font : Boolean);
    --  Change the style of the widget based on the preferences
+
+   -----------------------------------
+   -- Misc Gtk+ Related Subprograms --
+   -----------------------------------
+
+   package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
+   --  General Idle loop for a GObject
+
+   function Get_Current_Focus_Widget
+     (Kernel : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget;
+   --  Return the widget which currently has the keyboard focus. null is
+   --  returned if no widget has the focus, or if GPS itself doesn't have
+   --  it.
+
+   function Get_Default_Accelerators
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Accel_Group.Gtk_Accel_Group;
+   --  Returns the defauls accelerators group for the main window
+
+   function Get_Icon_Factory
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Icon_Factory.Gtk_Icon_Factory;
+   --  Return the default icon factory
+
+   function Get_Tooltips
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Tooltips.Gtk_Tooltips;
+
+   function Get_Toolbar
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar;
+   --  Return the main toolbar associated with the kernel
+
+   function Get_Current_Context
+     (Kernel : access Kernel_Handle_Record'Class) return Selection_Context;
+   --  Return the context associated with the current MDI child.
+   --  The caller should not free the returned value, this is taken care of by
+   --  the kernel automatically. If the caller needs to keep the context valid
+   --  throughout its execution, it should first call Ref, and then Unref on
+   --  the context, similarly for any caller that need to keep a valid context.
+   --  The returned value might be null, if the current child doesn't support
+   --  selection contexts.
+   --  This function is mostly intended to be called for the callbacks in the
+   --  menu bar.
+   --  The context returned will be that of the active contextual menu if there
+   --  is one at that point in time (therefore, we ignore cases where for
+   --  instance a new child has been selected automatically at that point)
 
 private
 

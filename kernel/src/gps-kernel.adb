@@ -39,22 +39,17 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
 with XML_Utils;                 use XML_Utils;
 
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Combo;                 use Gtk.Combo;
-with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -64,7 +59,6 @@ with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Mapper;              use Basic_Mapper;
 with Basic_Types;               use Basic_Types;
@@ -212,17 +206,6 @@ package body GPS.Kernel is
       return Handle.Lang_Handler;
    end Get_Language_Handler;
 
-   ----------------------
-   -- Get_Icon_Factory --
-   ----------------------
-
-   function Get_Icon_Factory
-     (Handle : access Kernel_Handle_Record)
-      return Gtk.Icon_Factory.Gtk_Icon_Factory is
-   begin
-      return Handle.Icon_Factory;
-   end Get_Icon_Factory;
-
    ----------
    -- Hash --
    ----------
@@ -329,13 +312,6 @@ package body GPS.Kernel is
       Set_Symbols (Handle.Get_Construct_Database, Handle.Symbols);
       Register_Language_Handler (Handle.Database, Handler);
 
-      Gtk_New (Handle.Icon_Factory);
-      Add_Default (Handle.Icon_Factory);
-
-      Gtk_New (Handle.Tooltips);
-      Ref (Handle.Tooltips);
-      Sink (Handle.Tooltips);
-
       --  Initialize the preferences. We load the file now, even though it
       --  will also be reloaded after the customization files, so that themes
       --  do not override user's preferences.
@@ -429,17 +405,6 @@ package body GPS.Kernel is
       Load_Preferences
         (Handle.Preferences, Create_From_Dir (Handle.Home_Dir, "preferences"));
    end Load_Preferences;
-
-   ------------------------------
-   -- Get_Default_Accelerators --
-   ------------------------------
-
-   function Get_Default_Accelerators
-     (Handle : access Kernel_Handle_Record)
-      return Gtk.Accel_Group.Gtk_Accel_Group is
-   begin
-      return GPS_Window (Handle.Main_Window).Main_Accel_Group;
-   end Get_Default_Accelerators;
 
    ---------------------
    -- Get_Preferences --
@@ -734,33 +699,6 @@ package body GPS.Kernel is
       Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
    end Context_Changed;
 
-   -------------------------
-   -- Get_Current_Context --
-   -------------------------
-
-   function Get_Current_Context
-     (Kernel : access Kernel_Handle_Record) return Selection_Context
-   is
-      Module  : Module_ID;
-      Handle  : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Context : Selection_Context := New_Context;
-   begin
-      --  ??? Shouldn't have to recompute everytime, but this is needed when
-      --  in the editor (comment-line for instance relies on accurate info in
-      --  the context to get the current line)
-      Module := Get_Current_Module (Kernel);
-
-      Set_Context_Information
-        (Context, Handle, Abstract_Module_ID (Module));
-
-      if Module /= null then
-         Default_Context_Factory
-           (Module, Context, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
-      end if;
-
-      return Context;
-   end Get_Current_Context;
-
    ----------------------------------
    -- Report_Preference_File_Error --
    ----------------------------------
@@ -983,30 +921,6 @@ package body GPS.Kernel is
    begin
       return Handle.Main_Window;
    end Get_Main_Window;
-
-   ------------------
-   -- Get_Tooltips --
-   ------------------
-
-   function Get_Tooltips
-     (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips is
-   begin
-      return Handle.Tooltips;
-   end Get_Tooltips;
-
-   -----------------
-   -- Get_Toolbar --
-   -----------------
-
-   function Get_Toolbar
-     (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar is
-   begin
-      if Handle.Main_Window /= null then
-         return GPS_Window (Handle.Main_Window).Toolbar;
-      else
-         return null;
-      end if;
-   end Get_Toolbar;
 
    ------------------
    -- Process_Anim --
@@ -1436,7 +1350,6 @@ package body GPS.Kernel is
       GPS.Kernel.Messages.View.Unregister (Handle);
       Free_Modules (Handle);
       Free_Messages_Container (Handle);
-      Unref (Handle.Tooltips);
 
       Commands.Command_Queues.Free (Handle.Perma_Commands);
 
@@ -1525,98 +1438,6 @@ package body GPS.Kernel is
    begin
       null;
    end Bind_Default_Key;
-
-   ------------------------------
-   -- Get_Current_Focus_Widget --
-   ------------------------------
-
-   function Get_Current_Focus_Widget
-     (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget
-   is
-      use Widget_List;
-      W, W2       : Gtk_Widget;
-      Toplevel    : Gtk_Window;
-      List, List2 : Widget_List.Glist;
-   begin
-      --  First check if a window currently has a grab
-
-      W := Grab_Get_Current;
-      if W /= null then
-         Toplevel := Gtk_Window (Get_Toplevel (W));
-         W := Get_Focus (Toplevel);
-      end if;
-
-      --  Then check all toplevel windows and stop at the one that has
-      --  the focus.
-
-      if W = null then
-         List := List_Toplevels;
-         List2 := First (List);
-
-         while List2 /= Widget_List.Null_List loop
-            Toplevel := Gtk_Window (Get_Data (List2));
-
-            if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
-               W := Get_Focus (Toplevel);
-               if W /= null and then Has_Focus_Is_Set (W) then
-                  exit;
-               end if;
-               W := null;
-            end if;
-
-            List2 := Next (List2);
-         end loop;
-
-         Free (List);
-      end if;
-
-      --  If still no one has the focus, then no window in GPS currently has
-      --  it. In this case, we assume that would be the main GPS window unless
-      --  a floating child last had the focus. In particular, this is used when
-      --  a Command_Window was used, then closed just before calling the
-      --  on_activate user callback. Since the gtk+ main loop hasn't been
-      --  called in between, the focus has not been transfered by the window
-      --  manager yet.
-      if W = null then
-         declare
-            Iter : constant Child_Iterator := First_Child (Get_MDI (Kernel));
-         begin
-            if Get (Iter) /= null
-              and then Is_Floating (Get (Iter))
-            then
-               --  The toplevel widget is not necessarily a GtkWindow. In some
-               --  cases, for instance, it will be a Editor_Child_Record, when
-               --  the editor is floating (since in that case the MDI_Child is
-               --  detached from the MDI, and its own child is put in a
-               --  toplevel window.
-
-               W := Get_Toplevel (Get_Widget (Get (Iter)));
-               W := Get_Focus (Gtk_Window (W));
-            else
-               W := Get_Focus (Get_Main_Window (Kernel));
-            end if;
-         end;
-      end if;
-
-      if W /= null then
-         W2 := W;
-
-         while W2 /= null and then W2.all in Gtk_Container_Record'Class loop
-            W  := W2;
-            W2 := Get_Focus_Child (Gtk_Container (W));
-         end loop;
-
-         if W2 /= null then
-            W := W2;
-         end if;
-
-         if W.all in Gtk_Combo_Record'Class then
-            W := Gtk_Widget (Get_Entry (Gtk_Combo (W)));
-         end if;
-      end if;
-
-      return W;
-   end Get_Current_Focus_Widget;
 
    -------------------
    -- Lookup_Filter --

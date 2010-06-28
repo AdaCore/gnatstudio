@@ -22,6 +22,7 @@ with GNAT.Strings;             use GNAT.Strings;
 
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
+with Glib.Properties;           use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
 with Gdk.Color; use Gdk; use Gdk.Color;
@@ -30,6 +31,8 @@ with Gdk.Window;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
@@ -95,6 +98,7 @@ package body GPS.Kernel.MDI is
    MDI_Focus_Title_Color : Color_Preference;
    MDI_All_Floating      : Boolean_Preference;
    MDI_Float_Short_Title : Boolean_Preference;
+   MDI_Editors_Floating  : Boolean_Preference;
 
    Desktop_Name : constant Filesystem_String := "perspectives.xml";
 
@@ -280,6 +284,16 @@ package body GPS.Kernel.MDI is
          Label   => -"Short titles for floats",
          Page    => -"Windows");
 
+      MDI_Editors_Floating := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Editors-Floating",
+         Default => False,
+         Doc     =>
+           -("If enabled, all new editors will be set as floating windows and"
+             & " put under control of your window manager."),
+         Label   => -"Floating editors",
+         Page    => "");  --  -"Windows"
+
       MDI_Background_Color := Create
         (Manager => Get_Preferences (Kernel),
          Name    => "MDI-Background-Color",
@@ -356,7 +370,8 @@ package body GPS.Kernel.MDI is
       Configure
         (Get_MDI (Kernel),
          Opaque_Resize             => MDI_Opaque.Get_Pref,
-         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref,
+         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
+           and not MDI_Editors_Floating.Get_Pref,
          Title_Font                => Default_Font.Get_Pref_Font,
          Background_Color          => MDI_Background_Color.Get_Pref,
          Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
@@ -1200,5 +1215,176 @@ package body GPS.Kernel.MDI is
          return No_Context;
       end if;
    end Get_Context_For_Child;
+
+   ------------------------------
+   -- Get_Current_Focus_Widget --
+   ------------------------------
+
+   function Get_Current_Focus_Widget
+     (Kernel : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget
+   is
+      use Widget_List;
+      W, W2       : Gtk_Widget;
+      Toplevel    : Gtk_Window;
+      List, List2 : Widget_List.Glist;
+   begin
+      --  First check if a window currently has a grab
+
+      W := Gtk.Main.Grab_Get_Current;
+      if W /= null then
+         Toplevel := Gtk_Window (Get_Toplevel (W));
+         W := Get_Focus (Toplevel);
+      end if;
+
+      --  Then check all toplevel windows and stop at the one that has
+      --  the focus.
+
+      if W = null then
+         List := List_Toplevels;
+         List2 := First (List);
+
+         while List2 /= Widget_List.Null_List loop
+            Toplevel := Gtk_Window (Get_Data (List2));
+
+            if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
+               W := Get_Focus (Toplevel);
+               if W /= null and then Has_Focus_Is_Set (W) then
+                  exit;
+               end if;
+               W := null;
+            end if;
+
+            List2 := Next (List2);
+         end loop;
+
+         Free (List);
+      end if;
+
+      --  If still no one has the focus, then no window in GPS currently has
+      --  it. In this case, we assume that would be the main GPS window unless
+      --  a floating child last had the focus. In particular, this is used when
+      --  a Command_Window was used, then closed just before calling the
+      --  on_activate user callback. Since the gtk+ main loop hasn't been
+      --  called in between, the focus has not been transfered by the window
+      --  manager yet.
+      if W = null then
+         declare
+            Iter : constant Child_Iterator := First_Child (Get_MDI (Kernel));
+         begin
+            if Get (Iter) /= null
+              and then Is_Floating (Get (Iter))
+            then
+               --  The toplevel widget is not necessarily a GtkWindow. In some
+               --  cases, for instance, it will be a Editor_Child_Record, when
+               --  the editor is floating (since in that case the MDI_Child is
+               --  detached from the MDI, and its own child is put in a
+               --  toplevel window.
+
+               W := Get_Toplevel (Get_Widget (Get (Iter)));
+               W := Get_Focus (Gtk_Window (W));
+            else
+               W := Get_Focus (Get_Main_Window (Kernel));
+            end if;
+         end;
+      end if;
+
+      if W /= null then
+         W2 := W;
+
+         while W2 /= null and then W2.all in Gtk_Container_Record'Class loop
+            W  := W2;
+            W2 := Get_Focus_Child (Gtk_Container (W));
+         end loop;
+
+         if W2 /= null then
+            W := W2;
+         end if;
+
+         if W.all in Gtk_Combo_Record'Class then
+            W := Gtk_Widget (Get_Entry (Gtk_Combo (W)));
+         end if;
+      end if;
+
+      return W;
+   end Get_Current_Focus_Widget;
+
+   ------------------------------
+   -- Get_Default_Accelerators --
+   ------------------------------
+
+   function Get_Default_Accelerators
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Accel_Group.Gtk_Accel_Group is
+   begin
+      return GPS_Window (Handle.Main_Window).Main_Accel_Group;
+   end Get_Default_Accelerators;
+
+   ----------------------
+   -- Get_Icon_Factory --
+   ----------------------
+
+   function Get_Icon_Factory
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Icon_Factory.Gtk_Icon_Factory is
+   begin
+      return GPS_Window (Handle.Main_Window).Icon_Factory;
+   end Get_Icon_Factory;
+
+   ------------------
+   -- Get_Tooltips --
+   ------------------
+
+   function Get_Tooltips
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Tooltips.Gtk_Tooltips is
+   begin
+      if Handle.Main_Window /= null then
+         return GPS_Window (Handle.Main_Window).Tooltips;
+      else
+         return null;
+      end if;
+   end Get_Tooltips;
+
+   -----------------
+   -- Get_Toolbar --
+   -----------------
+
+   function Get_Toolbar
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar is
+   begin
+      if Handle.Main_Window /= null then
+         return GPS_Window (Handle.Main_Window).Toolbar;
+      else
+         return null;
+      end if;
+   end Get_Toolbar;
+
+   -------------------------
+   -- Get_Current_Context --
+   -------------------------
+
+   function Get_Current_Context
+     (Kernel : access Kernel_Handle_Record'Class) return Selection_Context
+   is
+      Module  : Module_ID;
+      Handle  : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Context : Selection_Context := New_Context;
+   begin
+      --  ??? Shouldn't have to recompute everytime, but this is needed when
+      --  in the editor (comment-line for instance relies on accurate info in
+      --  the context to get the current line)
+      Module := Get_Current_Module (Kernel);
+
+      Set_Context_Information
+        (Context, Handle, Abstract_Module_ID (Module));
+
+      if Module /= null then
+         Default_Context_Factory
+           (Module, Context, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
+      end if;
+
+      return Context;
+   end Get_Current_Context;
 
 end GPS.Kernel.MDI;

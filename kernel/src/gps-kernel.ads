@@ -32,14 +32,7 @@ with GNATCOLL.Symbols;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Glib.Object;  use Glib;
-with Gdk.Event;    use Gdk.Event;
 with Gtk.Handlers;
-with Gtk.Accel_Group;
-with Gtk.Icon_Factory;
-with Gtk.Main;
-with Gtk.Toolbar;
-with Gtk.Tooltips;
-with Gtk.Widget;
 with Gtk.Window;
 
 with Basic_Types;
@@ -102,11 +95,6 @@ package GPS.Kernel is
    procedure Destroy (Handle : access Kernel_Handle_Record);
    --  Free the memory occupied by the kernel
 
-   function Get_Default_Accelerators
-     (Handle : access Kernel_Handle_Record)
-      return Gtk.Accel_Group.Gtk_Accel_Group;
-   --  Returns the defauls accelerators group for the main window
-
    function Get_Preferences
      (Handle : access Kernel_Handle_Record)
       return Default_Preferences.Preferences_Manager;
@@ -115,14 +103,6 @@ package GPS.Kernel is
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
    --  Return the main window associated with the kernel
-
-   function Get_Tooltips
-     (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips;
-   --  Return the widget used to register tooltips for the graphical interface
-
-   function Get_Toolbar
-     (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar;
-   --  Return the main toolbar associated with the kernel
 
    function Get_History
      (Handle : access Kernel_Handle_Record) return Histories.History;
@@ -196,11 +176,6 @@ package GPS.Kernel is
      (Handle : access Kernel_Handle_Record) return String;
    --  Return a string containing the GNAT version number.
    --  The string has the form "3.16w (20020610)"
-
-   function Get_Icon_Factory
-     (Handle : access Kernel_Handle_Record)
-      return Gtk.Icon_Factory.Gtk_Icon_Factory;
-   --  Return the default icon factory
 
    procedure Set_Destruction_Flag
      (Handle : access Kernel_Handle_Record;
@@ -341,27 +316,6 @@ package GPS.Kernel is
    function Get_Creator
      (Context : Selection_Context) return Abstract_Module_ID;
    --  Return the module ID for the module that created the context
-
-   function Get_Current_Context
-     (Kernel : access Kernel_Handle_Record) return Selection_Context;
-   --  Return the context associated with the current MDI child.
-   --  The caller should not free the returned value, this is taken care of by
-   --  the kernel automatically. If the caller needs to keep the context valid
-   --  throughout its execution, it should first call Ref, and then Unref on
-   --  the context, similarly for any caller that need to keep a valid context.
-   --  The returned value might be null, if the current child doesn't support
-   --  selection contexts.
-   --  This function is mostly intended to be called for the callbacks in the
-   --  menu bar.
-   --  The context returned will be that of the active contextual menu if there
-   --  is one at that point in time (therefore, we ignore cases where for
-   --  instance a new child has been selected automatically at that point)
-
-   function Get_Current_Focus_Widget
-     (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget;
-   --  Return the widget which currently has the keyboard focus. null is
-   --  returned if no widget has the focus, or if GPS itself doesn't have
-   --  it.
 
    -------------
    -- Markers --
@@ -641,9 +595,6 @@ package GPS.Kernel is
    package Kernel_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel
-
-   package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
-   --  General Idle loop for a GObject
 
    type File_Project_Record is record
       Project : GNATCOLL.Projects.Project_Type;
@@ -1074,9 +1025,6 @@ private
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main GPS window
 
-      Tooltips : Gtk.Tooltips.Gtk_Tooltips;
-      --  The widget used to register all tooltips
-
       Registry : Projects.Project_Registry_Access;
       --  The project registry
 
@@ -1112,9 +1060,6 @@ private
       --  Whether Last_Context_For_Contextual has been obtain from a contextual
       --  menu.
 
-      Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
-      --  The event triggering the last contextual menu
-
       Home_Dir : Virtual_File;
       --  The home directory (e.g ~/.gps)
 
@@ -1142,9 +1087,6 @@ private
       Customization_Strings : XML_Utils.Node_Ptr;
       --  The customization strings hard-coded by the modules, and they have
       --  been registered before all modules are loaded.
-
-      Icon_Factory : Gtk.Icon_Factory.Gtk_Icon_Factory;
-      --  The icon factory specific to GPS
 
       Contextual : System.Address := System.Null_Address;
       --  The contextual menus registered by the user. This is only used in

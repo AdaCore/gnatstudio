@@ -63,6 +63,7 @@ with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;

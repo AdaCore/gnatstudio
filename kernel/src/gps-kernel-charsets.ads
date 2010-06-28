@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005-2008, AdaCore           --
+--                      Copyright (C) 2005-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,8 @@
 
 with Default_Preferences;  use Default_Preferences;
 with Gtk.Combo;
+with Gtk.Tooltips;
+with Gtk.Widget;
 
 package GPS.Kernel.Charsets is
 

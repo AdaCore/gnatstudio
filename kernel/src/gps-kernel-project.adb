@@ -128,7 +128,7 @@ package body GPS.Kernel.Project is
       --  process of creating the kernel).
       --  This is used to disable some aspects of Recompute_View, in particular
       --  the hooks, since it is too early to call them
-      Assert (Me, Handle.Tooltips = null,
+      Assert (Me, Get_Tooltips (Handle) = null,
               "Tooltips should not exist when loading project");
       Tree.Load_Empty_Project (Env => Handle.Registry.Environment);
    end Create_Registry;
@@ -179,7 +179,7 @@ package body GPS.Kernel.Project is
 
       --  If we are in the process of creating the kernel, no need to do
       --  anything else here
-      if Self.Handle.Tooltips = null then
+      if Get_Tooltips (Self.Handle) = null then
          Pop_State (Self.Handle);
          return;
       end if;
