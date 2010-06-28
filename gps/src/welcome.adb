@@ -40,6 +40,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Config;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
