@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2009, AdaCore             --
+--                      Copyright (C) 2000-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -401,7 +401,7 @@ package body GVD.Generic_View is
       procedure Register_Desktop_Functions
         (Kernel : access Kernel_Handle_Record'Class) is
       begin
-         GPS.Kernel.Register_Desktop_Functions
+         Register_Desktop_Functions
            (Simple_Views.Save_Desktop'Unrestricted_Access,
             Simple_Views.Load_Desktop'Unrestricted_Access);
          Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
