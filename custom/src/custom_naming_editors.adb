@@ -30,6 +30,7 @@ with Gtk.Tooltips;            use Gtk.Tooltips;
 with Gtk.Widget;              use Gtk.Widget;
 
 with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
 with Naming_Exceptions;       use Naming_Exceptions;
 
