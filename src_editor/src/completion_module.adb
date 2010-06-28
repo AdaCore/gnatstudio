@@ -1338,8 +1338,7 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
