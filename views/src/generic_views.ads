@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -123,12 +123,12 @@ package Generic_Views is
          Node : XML_Utils.Node_Ptr;
          User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
       Load_Desktop_Access : constant
-        GPS.Kernel.Load_Desktop_Function := Load_Desktop'Access;
+        GPS.Kernel.MDI.Load_Desktop_Function := Load_Desktop'Access;
       function Save_Desktop
         (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
          User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr;
       Save_Desktop_Access : constant
-        GPS.Kernel.Save_Desktop_Function := Save_Desktop'Access;
+        GPS.Kernel.MDI.Save_Desktop_Function := Save_Desktop'Access;
       --  Support functions for the MDI
    end Simple_Views;
 
