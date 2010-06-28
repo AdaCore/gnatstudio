@@ -630,13 +630,12 @@ package body Language.Tree.Database is
      (File : Structured_File_Access; Line : Integer)
       return String_Index_Type
    is
+      Buffer : constant GNAT.Strings.String_Access := Get_Buffer (File);
    begin
       if File.Line_Starts = null then
          declare
             Lines       : Line_Start_Indexes_Access :=
-              new Line_Start_Indexes (1 .. 1000);
-            Buffer      : constant
-              GNAT.Strings.String_Access := Get_Buffer (File);
+              new Line_Start_Indexes (1 .. 1024);
             Lines_Index : Integer := 2;
             Tmp_Lines   : Line_Start_Indexes_Access;
          begin
@@ -662,7 +661,15 @@ package body Language.Tree.Database is
          end;
       end if;
 
-      return File.Line_Starts (Line);
+      if Line > File.Line_Starts'Last then
+         --  Prevent indexing past File.Line_Starts in case of e.g. an
+         --  obsolete ALI file containing references to a too large line
+         --  number.
+
+         return String_Index_Type (Buffer'Last);
+      else
+         return File.Line_Starts (Line);
+      end if;
    end Get_Offset_Of_Line;
 
    -----------------------
