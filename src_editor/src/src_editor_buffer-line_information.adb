@@ -1320,7 +1320,6 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       if From_Column = To_Column then
-         Trace (Me, "MANU Remove_Line_Highlighting on line" & Line'Img);
          Remove_Line_Highlighting (Buffer, Line, Style);
       else
          if Has_Iters then
