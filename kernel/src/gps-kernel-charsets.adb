@@ -30,6 +30,7 @@ with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;

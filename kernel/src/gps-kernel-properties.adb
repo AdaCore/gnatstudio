@@ -19,7 +19,6 @@
 
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Fixed;
-with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
@@ -27,56 +26,14 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with XML_Utils;                  use XML_Utils;
-with Osint;                      use Osint;
-with String_Hash;
 with Traces;                     use Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Kernel.Properties is
 
-   Me : constant Debug_Handle := Create ("Properties");
-
-   Sep : constant String := "@@";
-   --  Separator between resource name and property name in the key of htables
-
-   type Property_Description is record
-      Value      : Property_Access;
-      --  The actual value of the property. This is still null if the property
-      --  hasn't been parsed yet (and then Unparsed it not null and contains
-      --  the value read from the XML file). This parsing is implemented
-      --  lazily so that we do not have to register the property types in
-      --  advance, and they are only needed when actually reading a property
-
-      Unparsed   : Node_Ptr;
-      Persistent : Boolean;
-   end record;
-   type Property_Description_Access is access Property_Description;
-   --  The description of a property
-
-   procedure Free (Description : in out Property_Description_Access);
-
-   package Properties_Hash is new String_Hash
-     (Data_Type      => Property_Description_Access,
-      Free_Data      => Free,
-      Null_Ptr       => null,
-      Case_Sensitive => True);
    use Properties_Hash.String_Hash_Table;
 
-   All_Properties : Properties_Hash.String_Hash_Table.Instance;
-   --  Global variable storing all the current properties for the current
-   --  project.
-   --  Indexes a made of both the Resource_Key (ie the file or project name for
-   --  instance) and the name of property we want for that resource, with the
-   --  following format:
-   --       Resource_Key & "@@" & Property_Name
-   --  To avoid ambiguities, property names should not contain "@@".
-   --
-   --  ??? It would be nicer to store this in the kernel but:
-   --    - it really doesn't provide anything in addition (no more task safe
-   --      in any case)
-   --    - It would require an extra Kernel parameter to Set_Property
-   --      and Get_Property, thus making the API harder to use.
-   --  For now, we'll leave with this global variable.
+   Me : constant Debug_Handle := Create ("Properties");
 
    function Get_Properties_Filename
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
@@ -92,14 +49,6 @@ package body GPS.Kernel.Properties is
       Save_File     : Boolean := True);
    --  Set property for any kind of resource. This is the internal
    --  implementation of Set_*_Property
-
-   procedure Get_Resource_Property
-     (Property      : out Property_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String;
-      Found         : out Boolean);
-   --  Get property for any kind of resource
 
    procedure Remove_Resource_Property
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -119,122 +68,6 @@ package body GPS.Kernel.Properties is
    procedure Properties_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles script commands for properties
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Description : in out Property_Description_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Property_Record'Class, Property_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Property_Description, Property_Description_Access);
-   begin
-      if Description.Value /= null then
-         Destroy (Description.Value.all);
-         Unchecked_Free (Description.Value);
-      end if;
-
-      if Description.Unparsed /= null then
-         Free (Description.Unparsed);
-      end if;
-
-      Unchecked_Free (Description);
-   end Free;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Property : in out Property_Record) is
-      pragma Unreferenced (Property);
-   begin
-      null;
-   end Destroy;
-
-   ----------
-   -- Save --
-   ----------
-
-   overriding procedure Save
-     (Property : access String_Property;
-      Node     : in out XML_Utils.Node_Ptr) is
-   begin
-      if Property.Value /= null then
-         Node.Value := new String'(Property.Value.all);
-      end if;
-   end Save;
-
-   ----------
-   -- Save --
-   ----------
-
-   overriding procedure Save
-     (Property : access Integer_Property;
-      Node     : in out XML_Utils.Node_Ptr) is
-   begin
-      Node.Value := new String'(Integer'Image (Property.Value));
-   end Save;
-
-   ----------
-   -- Save --
-   ----------
-
-   overriding procedure Save
-     (Property : access Boolean_Property;
-      Node     : in out XML_Utils.Node_Ptr) is
-   begin
-      Node.Value := new String'(Boolean'Image (Property.Value));
-   end Save;
-
-   ----------
-   -- Load --
-   ----------
-
-   overriding procedure Load
-     (Property : in out String_Property; From : XML_Utils.Node_Ptr) is
-   begin
-      if From.Value /= null then
-         Property.Value := new String'(From.Value.all);
-      else
-         Property.Value := null;
-      end if;
-   end Load;
-
-   ----------
-   -- Load --
-   ----------
-
-   overriding procedure Load
-     (Property : in out Integer_Property; From : XML_Utils.Node_Ptr) is
-   begin
-      Property.Value := Integer'Value (From.Value.all);
-   exception
-      when Constraint_Error =>
-         Property.Value := 0;
-   end Load;
-
-   ----------
-   -- Load --
-   ----------
-
-   overriding procedure Load
-     (Property : in out Boolean_Property; From : XML_Utils.Node_Ptr) is
-   begin
-      Property.Value := Boolean'Value (From.Value.all);
-   exception
-      when Constraint_Error =>
-         Property.Value := True;
-   end Load;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Property : in out String_Property) is
-   begin
-      Free (Property.Value);
-   end Destroy;
 
    ---------------------------
    -- Set_Resource_Property --
@@ -260,40 +93,6 @@ package body GPS.Kernel.Properties is
          Save_Persistent_Properties (Kernel);
       end if;
    end Set_Resource_Property;
-
-   ---------------------------
-   -- Get_Resource_Property --
-   ---------------------------
-
-   procedure Get_Resource_Property
-     (Property      : out Property_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String;
-      Found         : out Boolean)
-   is
-      pragma Unreferenced (Resource_Kind);
-      Descr : Property_Description_Access;
-
-   begin
-      Descr := Get (All_Properties, Resource_Key & Sep & Name);
-      Found := Descr /= null;
-
-      if Found then
-         if Descr.Value = null then
-            Load (Property, Descr.Unparsed);
-            Descr.Value := new Property_Record'Class'(Property);
-            Free (Descr.Unparsed);  --  No longer needed
-         end if;
-
-         Property := Descr.Value.all;
-         Found := True;
-      end if;
-
-   exception
-      when others =>
-         Found := False;
-   end Get_Resource_Property;
 
    ------------------------------
    -- Remove_Resource_Property --
@@ -331,20 +130,6 @@ package body GPS.Kernel.Properties is
                                Persistent => Persistent));
    end Set_Property;
 
-   ------------------
-   -- Get_Property --
-   ------------------
-
-   procedure Get_Property
-     (Property    : out Property_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String;
-      Found       : out Boolean) is
-   begin
-      Get_Resource_Property (Property, Index_Value, Index_Name, Name, Found);
-   end Get_Property;
-
    ---------------------
    -- Remove_Property --
    ---------------------
@@ -357,35 +142,6 @@ package body GPS.Kernel.Properties is
    begin
       Remove_Resource_Property (Kernel, Index_Value, Index_Name, Name);
    end Remove_Property;
-
-   function To_String
-     (File : GNATCOLL.VFS.Virtual_File) return String;
-   --  Returns the file name
-
-   function To_String (Prj : Project_Type) return String;
-   --  Returns the project's path
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String
-     (File : GNATCOLL.VFS.Virtual_File) return String is
-      Filename : String := +Full_Name (File, True);
-   begin
-      Canonical_Case_File_Name (Filename);
-
-      return Filename;
-   end To_String;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Prj : Project_Type) return String is
-   begin
-      return To_String (Project_Path (Prj));
-   end To_String;
 
    ------------------
    -- Set_Property --
@@ -416,32 +172,6 @@ package body GPS.Kernel.Properties is
       Set_Property
         (Kernel, "project", To_String (Project), Name, Property, Persistent);
    end Set_Property;
-
-   ------------------
-   -- Get_Property --
-   ------------------
-
-   procedure Get_Property
-     (Property : out Property_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Name     : String;
-      Found    : out Boolean) is
-   begin
-      Get_Property (Property, "file", To_String (File), Name, Found);
-   end Get_Property;
-
-   ------------------
-   -- Get_Property --
-   ------------------
-
-   procedure Get_Property
-     (Property : out Property_Record'Class;
-      Project  : Project_Type;
-      Name     : String;
-      Found    : out Boolean) is
-   begin
-      Get_Property (Property, "project", To_String (Project), Name, Found);
-   end Get_Property;
 
    ---------------------
    -- Remove_Property --

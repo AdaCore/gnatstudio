@@ -36,6 +36,7 @@ with Gtk.Main;                   use Gtk.Main;
 with XML_Utils;                  use XML_Utils;
 
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;

@@ -25,6 +25,7 @@ with XML_Utils;                 use XML_Utils;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -37,8 +38,7 @@ with Builder_Facility_Module;
 
 package body Toolchains_Module is
 
-   type Toolchains_Property is new GPS.Kernel.Properties.Property_Record
-   with record
+   type Toolchains_Property is new Property_Record with record
       Active           : Boolean;
       Tools_Path       : Virtual_File;
       Use_Xrefs_Subdir : Boolean;

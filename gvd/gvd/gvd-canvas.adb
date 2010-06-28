@@ -46,6 +46,7 @@ with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Properties;         use GPS.Properties;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;

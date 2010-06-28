@@ -26,7 +26,7 @@ with GNAT.Strings;
 
 with Case_Handling;             use Case_Handling;
 with Entities;                  use Entities;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
+with GPS.Properties;            use GPS.Properties;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
 with Language.Tree;             use Language.Tree;

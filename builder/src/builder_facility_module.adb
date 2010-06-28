@@ -52,6 +52,7 @@ with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -1333,7 +1334,7 @@ package body Builder_Facility_Module is
       Mode : constant String := Get_Active_Text (Widget);
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Get_Kernel).all);
-      Prop : aliased GPS.Kernel.Properties.String_Property_Access;
+      Prop : aliased String_Property_Access;
 
    begin
       --  Do not consider a change to be effective if we are just creating
@@ -1351,9 +1352,9 @@ package body Builder_Facility_Module is
       end if;
 
       if Mode /= "default" then
-         Prop := new GPS.Kernel.Properties.String_Property;
+         Prop := new String_Property;
          Prop.Value := new String'(Mode);
-         GPS.Kernel.Properties.Set_Property
+         Set_Property
            (Get_Kernel,
             GPS.Kernel.Project.Get_Project (Get_Kernel),
             Mode_Property,
@@ -1753,7 +1754,7 @@ package body Builder_Facility_Module is
    is
       use type Glib.Gint;
 
-      Prop  : GPS.Kernel.Properties.String_Property;
+      Prop  : String_Property;
       Found : Boolean;
 
    begin
@@ -1763,7 +1764,6 @@ package body Builder_Facility_Module is
       if Found then
          declare
             Mode : constant String := Prop.Value.all;
-
          begin
             --  Going in reverse order, so if unknown mode is specified in the
             --  property then 'default' mode will be selected

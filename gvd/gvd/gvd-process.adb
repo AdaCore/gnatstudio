@@ -52,6 +52,7 @@ with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.VMS;               use Debugger.VMS;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;

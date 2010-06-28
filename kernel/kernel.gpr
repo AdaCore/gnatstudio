@@ -1,26 +1,15 @@
 --  The part of the kernel that depends on the GUI
 with "../gnat";
 with "gtkada";
-with "../common/common";
+with "kernel_core";
+with "shared";
 with "../widgets/widgets";
-with "../shared";
-with "../gnatlib/src/gnatcoll";
 with "../gnatlib/src/gnatcoll_gtk";
-with "../language/language";
-with "src_info/sn/sn";
---  with "kernel_core";
-
---  ??? Ideally, we should be able to use a standard with here. However, we
---  would need the following dependencies: kernel->refactoring_core->kernel_core
---  but the kernel module is not clean yet (for instance, entities.ads should
---  be in kernel_core but depends on kernel.gpr)
-
-limited with "../refactoring/core/refactoring_core";
+with "../refactoring/core/refactoring_core";
 
 project Kernel is
 
-   for Source_Dirs use ("src", "src_info", "src_info/sn_wrapper");
-   --  ??? The last two directories should be in kernel_core
+   for Source_Dirs use ("src");
 
    for Object_Dir use Shared'Object_Dir;
 

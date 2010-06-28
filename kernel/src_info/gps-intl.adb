@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,14 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Intl; use Gtkada.Intl;
+--  with Gtkada.Intl; use Gtkada.Intl;
 
 package body GPS.Intl is
 
    function "-" (Msg : String) return String is
    begin
       --  The default domain name is already "gps", no need to look it up again
-      return Gettext (Msg);
+      --  return Gettext (Msg);
+      return Msg;
    end "-";
 
 end GPS.Intl;

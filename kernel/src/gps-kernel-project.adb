@@ -38,6 +38,7 @@ with Prj;
 with Types;                            use Types;
 
 with GPS.Intl;                         use GPS.Intl;
+with GPS.Properties;                   use GPS.Properties;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
@@ -243,7 +244,7 @@ package body GPS.Kernel.Project is
       return Idx.Nickname.all & "||" & Idx.Gnatls.all;
    end To_String;
 
-   type Predefined_Paths_Property is new GPS.Kernel.Properties.Property_Record
+   type Predefined_Paths_Property is new GPS.Properties.Property_Record
    with record
       Source_Path  : File_Array_Access;
       Object_Path  : File_Array_Access;
