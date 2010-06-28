@@ -211,8 +211,7 @@ package body Python_Module is
         (Module      => Module_ID (Python_Module_Id),
          Kernel      => Kernel,
          Module_Name => "Python");
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
         (Kernel,
