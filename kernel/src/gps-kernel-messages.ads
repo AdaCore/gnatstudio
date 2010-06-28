@@ -433,8 +433,10 @@ package GPS.Kernel.Messages is
    procedure Save
      (Self  : not null access Messages_Container'Class;
       File  : GNATCOLL.VFS.Virtual_File;
+      Flags : Message_Flags;
       Debug : Boolean);
    --  Saves all messages into the specified file
+   --  Save only categories which match Flags.
 
    procedure Free_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class);

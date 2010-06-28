@@ -1608,7 +1608,9 @@ package body GPS.Kernel.Messages is
    procedure Save (Self : not null access Messages_Container'Class) is
    begin
       Self.Save
-        (Create_From_Dir (Self.Kernel.Home_Dir, Messages_File_Name), False);
+        (Create_From_Dir (Self.Kernel.Home_Dir, Messages_File_Name),
+         (True, True),
+         False);
    end Save;
 
    ----------
@@ -1618,6 +1620,7 @@ package body GPS.Kernel.Messages is
    procedure Save
      (Self  : not null access Messages_Container'Class;
       File  : GNATCOLL.VFS.Virtual_File;
+      Flags : Message_Flags;
       Debug : Boolean)
    is
 
@@ -1828,7 +1831,9 @@ package body GPS.Kernel.Messages is
          --  Save categories
 
          for J in 1 .. Natural (Self.Categories.Length) loop
-            Save_Node (Self.Categories.Element (J), Project_XML_Node);
+            if Match (Flags, Self.Categories.Element (J).Flags) then
+               Save_Node (Self.Categories.Element (J), Project_XML_Node);
+            end if;
          end loop;
 
          Print (Root_XML_Node, File);

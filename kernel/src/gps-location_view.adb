@@ -1375,7 +1375,9 @@ package body GPS.Location_View is
       elsif Command = "dump" then
          Name_Parameters (Data, Locations_Add_Parameters);
          Get_Messages_Container (Get_Kernel (Data)).Save
-           (Create (Nth_Arg (Data, 1)), True);
+           (Create (Nth_Arg (Data, 1)),
+            (Editor_Side => False, Messages.Locations => True),
+            True);
       end if;
    end Default_Command_Handler;
 
