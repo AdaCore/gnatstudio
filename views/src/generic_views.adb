@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2009, AdaCore                 --
+--                  Copyright (C) 2005-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -230,8 +230,7 @@ package body Generic_Views is
             Kernel      => Kernel,
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
-         GPS.Kernel.Register_Desktop_Functions
-           (Save_Desktop_Access, Load_Desktop_Access);
+         Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
 
          Register_Menu
            (Kernel, '/' & (-"Tools") & '/' & (-"_Views"),
