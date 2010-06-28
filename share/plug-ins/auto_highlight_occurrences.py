@@ -204,9 +204,14 @@ class LocationHighlighter:
 
 
 current_highlighter=None
+exiting=False # Whether GPS is about to exit
 
 def re_highlight():
     global current_highlighter
+
+    if exiting:
+        return
+
     context=GPS.current_context()
 
     if context.__class__ == GPS.EntityContext:
@@ -233,21 +238,17 @@ def on_location_changed(hook, file, line, column):
     """ Called when the current location changes """
     re_highlight()
 
-def on_gps_started (hook_name):
-    """ Called when GPS is started """
-    global editor_location_style
-
-def on_preferences_changed (hook_name):
+def remove_all_messages():
     global current_highlighter
     if current_highlighter:
         current_highlighter.destroy()
         current_highlighter = None
 
-    # Destroy any locations potentially left over from a previous session
-    # ??? This should also be done when exiting GPS.
-
     for m in GPS.Message.list("dynamic occurrences"):
         m.remove()
+
+def on_preferences_changed (hook_name):
+    remove_all_messages()
 
     # Create preferences
     for k in default_colors:
@@ -267,5 +268,14 @@ def on_preferences_changed (hook_name):
 
     re_highlight()
 
-GPS.Hook ("gps_started").add (on_gps_started)
+def before_exit(hook_name):
+    global exiting
+    try:
+        remove_all_messages()
+        exiting=True
+    except:
+        raise
+    return 1
+
+GPS.Hook ("before_exit_action_hook").add (before_exit)
 GPS.Hook ("preferences_changed").add (on_preferences_changed)
