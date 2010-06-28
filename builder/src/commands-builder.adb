@@ -420,6 +420,7 @@ package body Commands.Builder is
       Show_Output  : Boolean;
       Show_Command : Boolean;
       Created_Command : Scheduled_Command_Access;
+      Background : constant Boolean := Data.Background;
    begin
       if New_Console_Name /= "" then
          Console := Get_Build_Console
@@ -535,7 +536,7 @@ package body Commands.Builder is
 
          --  ??? check value of Success
 
-         if Success and then Data.Background then
+         if Success and then Background then
             Background_Build_Started (Created_Command);
          end if;
       end if;
