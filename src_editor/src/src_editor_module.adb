@@ -2895,8 +2895,7 @@ package body Src_Editor_Module is
          Kernel      => Kernel,
          Module_Name => Src_Editor_Module_Name,
          Priority    => Default_Priority);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Add_Hook (Kernel, Open_File_Action_Hook,
                 Wrapper (Source_File_Hook'Access),
