@@ -23,10 +23,6 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
-pragma Warnings (Off, "*is an internal GNAT unit");
-with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
-pragma Warnings (On, "*is an internal GNAT unit");
-
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Basic_Types;             use Basic_Types;
 with Entities;                use Entities;
@@ -676,35 +672,34 @@ package body Refactoring.Services is
       end if;
 
       declare
-         Text  : Big_String_Access;
+         Text  : constant String := To_String (Self.Decl);
          Index : Natural;
-         Last  : Natural;
       begin
-         Get_String (Self.Decl, Text, Last);
 
-         if Last < Text'First then
+         if Text = "" then
             return "";
          end if;
 
          Index := Text'First + 1;  --  skip ':'
 
-         while Index < Last loop
+         while Index < Text'Last loop
             if Text (Index .. Index + 1) = ":=" then
                Index := Index + 2;
-               Skip_Blanks (Text.all, Index);
+               Skip_Blanks (Text, Index);
 
                if Active (Me) then
                   Trace (Me, "  Initial value of "
                          & Debug_Name (Self.Entity) & " is "
-                         & Text (Index .. Last - 1));
+                         & Text (Index .. Text'Last - 1));
                end if;
-               return Text (Index .. Last - 1);
+               return Text (Index .. Text'Last - 1);
 
             elsif Text (Index) = ';'
               or else Text (Index) = ')'
             then
                exit;
             end if;
+
             Index := Index + 1;
          end loop;
       end;
