@@ -70,6 +70,11 @@ package GPS.Kernel.MDI is
    --  Return False if no desktop could be loaded (in which case the default
    --  desktop was loaded).
 
+   function Get_Context_For_Child
+     (Child : Gtkada.MDI.MDI_Child) return Selection_Context;
+   --  Return the context associated with Child.
+   --  The user should free the returned value.
+
    ---------
    -- MDI --
    ---------

@@ -1176,4 +1176,29 @@ package body GPS.Kernel.MDI is
         (Create_From_Dir (Handle.Home_Dir, Desktop_Name));
    end Has_User_Desktop;
 
+   ---------------------------
+   -- Get_Context_For_Child --
+   ---------------------------
+
+   function Get_Context_For_Child
+     (Child : Gtkada.MDI.MDI_Child) return Selection_Context
+   is
+      Module  : Module_ID;
+      Context : Selection_Context;
+   begin
+      if Child = null then
+         return No_Context;
+      end if;
+
+      Module := Get_Module_From_Child (Child);
+
+      if Module /= null then
+         Context.Data.Data := new Selection_Context_Data_Record;
+         Default_Context_Factory (Module, Context, Get_Widget (Child));
+         return Context;
+      else
+         return No_Context;
+      end if;
+   end Get_Context_For_Child;
+
 end GPS.Kernel.MDI;

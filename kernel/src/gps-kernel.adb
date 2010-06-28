@@ -761,31 +761,6 @@ package body GPS.Kernel is
       return Context;
    end Get_Current_Context;
 
-   ---------------------------
-   -- Get_Context_For_Child --
-   ---------------------------
-
-   function Get_Context_For_Child
-     (Child : Gtkada.MDI.MDI_Child) return Selection_Context
-   is
-      Module  : Module_ID;
-      Context : Selection_Context;
-   begin
-      if Child = null then
-         return No_Context;
-      end if;
-
-      Module := Get_Module_From_Child (Child);
-
-      if Module /= null then
-         Context.Data.Data := new Selection_Context_Data_Record;
-         Default_Context_Factory (Module, Context, Get_Widget (Child));
-         return Context;
-      else
-         return No_Context;
-      end if;
-   end Get_Context_For_Child;
-
    ----------------------------------
    -- Report_Preference_File_Error --
    ----------------------------------

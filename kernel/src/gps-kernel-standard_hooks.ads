@@ -20,6 +20,8 @@
 with Ada.Unchecked_Conversion;
 with System;
 
+with Gtkada.MDI;
+
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with Basic_Types;
 

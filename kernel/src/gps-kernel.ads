@@ -41,7 +41,6 @@ with Gtk.Toolbar;
 with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
-with Gtkada.MDI;
 
 with Basic_Types;
 with Basic_Mapper;
@@ -357,11 +356,6 @@ package GPS.Kernel is
    --  The context returned will be that of the active contextual menu if there
    --  is one at that point in time (therefore, we ignore cases where for
    --  instance a new child has been selected automatically at that point)
-
-   function Get_Context_For_Child
-     (Child : Gtkada.MDI.MDI_Child) return Selection_Context;
-   --  Return the context associated with Child.
-   --  The user should free the returned value.
 
    function Get_Current_Focus_Widget
      (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget;
