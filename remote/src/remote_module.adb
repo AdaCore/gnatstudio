@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                     Copyright (C) 2009-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -220,9 +221,7 @@ package body Remote_Module is
       Remote_Module_Record (Remote_Module_Id.all).Database :=
         Remote.Db.Initialize_Database;
 
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access,
-         Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
         (Kernel, Tools_View_Menu, -"_Remote", "",
          Show_Remote_View'Access,
