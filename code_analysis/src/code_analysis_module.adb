@@ -1284,7 +1284,7 @@ package body Code_Analysis_Module is
       procedure Parse_XML is new Code_Analysis_XML.Parse_XML (On_New_File);
 
    begin
-      Node := GPS.Kernel.Get_XML_Content
+      Node := Get_XML_Content
         (Get_MDI (Kernel), "Code_Analysis_Tree");
 
       if Node /= null then
@@ -2189,8 +2189,7 @@ package body Code_Analysis_Module is
          Hook    => Project_Changed_Hook,
          Func    => Wrapper (On_Project_Loaded_Hook'Access),
          Name    => "code_analysis.project_changed");
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       --  Shell commands registration
       Register_Command
