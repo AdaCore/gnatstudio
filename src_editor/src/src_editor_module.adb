@@ -1300,6 +1300,11 @@ package body Src_Editor_Module is
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
+         --  ??? Consider enabling this code
+         --  if MDI_Editors_Floating.Get_Pref then
+         --     Float_Child (Child, True);
+         --  end if;
+
          Check_Writable (Editor);
 
          if Get_Status (Get_Buffer (Editor)) = Modified then
