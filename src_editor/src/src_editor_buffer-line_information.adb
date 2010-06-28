@@ -1462,28 +1462,31 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Note     : Line_Info_Note;
       The_Data : Line_Info_Width_Array_Access;
-
       BL       : Buffer_Line_Type;
 
    begin
       if Buffer_Line = 0 then
-         case Buffer.Editable_Lines (Editable_Line).Where is
-         when In_Buffer =>
-            BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-            if BL in Buffer.Line_Data'Range
-              and then Buffer.Line_Data (BL).Side_Info_Data /= null
-            then
-               The_Data := Buffer.Line_Data (BL).Side_Info_Data;
-            end if;
+         if Editable_Line not in Buffer.Editable_Lines'Range then
+            return;
+         end if;
 
-         when In_Mark =>
-            if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
-              /= null
-            then
-               The_Data := Buffer.Editable_Lines
-                 (Editable_Line).UL.Data.Side_Info_Data;
-               BL := 0;
-            end if;
+         case Buffer.Editable_Lines (Editable_Line).Where is
+            when In_Buffer =>
+               BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+               if BL in Buffer.Line_Data'Range
+                 and then Buffer.Line_Data (BL).Side_Info_Data /= null
+               then
+                  The_Data := Buffer.Line_Data (BL).Side_Info_Data;
+               end if;
+
+            when In_Mark =>
+               if Buffer.Editable_Lines (Editable_Line).UL.Data.Side_Info_Data
+                 /= null
+               then
+                  The_Data := Buffer.Editable_Lines
+                    (Editable_Line).UL.Data.Side_Info_Data;
+                  BL := 0;
+               end if;
          end case;
       else
          The_Data := Buffer.Line_Data (Buffer_Line).Side_Info_Data;
