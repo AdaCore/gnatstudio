@@ -1319,7 +1319,7 @@ package body Custom_Module is
          --  XML is case-sensitive, and we do not need to be backward
          --  compatible for this node, so expect lower-case only
          elsif Current_Node.Tag.all = "perspective" then
-            GPS.Kernel.Kernel_Desktop.Define_Perspective
+            Kernel_Desktop.Define_Perspective
               (Get_MDI (Kernel), Convert (Current_Node), Kernel);
 
          elsif To_Lower (Current_Node.Tag.all) = "filter"
