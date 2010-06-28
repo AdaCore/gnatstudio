@@ -184,16 +184,15 @@ class LocationHighlighter:
 
     def cb_destroy(self, event):
         """ Callback on the destroy event on the view. """
-        self.destroy()
-
-    def destroy(self):
-        """ Destroy self """
 
         # Unregister the idle callback
 
         if self.timeout:
             self.timeout.remove()
             self.timeout=None
+
+    def destroy(self):
+        """ Destroy self """
 
         # Remove all messages
 
