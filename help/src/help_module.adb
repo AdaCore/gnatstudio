@@ -1239,8 +1239,7 @@ package body Help_Module is
          Kernel       => Kernel,
          Module_Name  => Help_Module_Name,
          Priority     => GPS.Kernel.Modules.Default_Priority - 20);
-      GPS.Kernel.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
       Add_Hook (Kernel, Html_Action_Hook,
                 Wrapper (Open_Help_Hook'Access),
                 Name => "help.html");
