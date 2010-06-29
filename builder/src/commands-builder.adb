@@ -412,7 +412,7 @@ package body Commands.Builder is
       Directory        : Virtual_File)
    is
       Console  : Interactive_Console;
-      Success  : Boolean;
+      Success  : Boolean := False;
       Cmd_Name : Unbounded_String;
       Cb       : Output_Callback;
       Exit_Cb  : Exit_Callback;

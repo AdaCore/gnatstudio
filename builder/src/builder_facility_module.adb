@@ -202,6 +202,9 @@ package body Builder_Facility_Module is
       Prevent_Save_Reentry : Boolean := False;
       --  Used to prevent cases where a compilation is triggered "on file save"
       --  and the "file save" is caused by another compilation
+
+      Last_Mains : Target_Outputs.Map;
+      --  The last launched main
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -2692,5 +2695,33 @@ package body Builder_Facility_Module is
          Builder_Module_ID.Background_Build_Command := null;
       end if;
    end Interrupt_Background_Build;
+
+   -------------------
+   -- Set_Last_Main --
+   -------------------
+
+   procedure Set_Last_Main (Target : String; Main : String) is
+      Key : constant Unbounded_String := To_Unbounded_String (Target);
+   begin
+      Builder_Module_ID.Last_Mains.Exclude (Key);
+      Builder_Module_ID.Last_Mains.Insert (Key, To_Unbounded_String (Main));
+   end Set_Last_Main;
+
+   -------------------
+   -- Get_Last_Main --
+   -------------------
+
+   function Get_Last_Main (Target : String) return String is
+      Key : constant Unbounded_String := To_Unbounded_String (Target);
+      Cur : Target_Outputs.Cursor;
+      use Target_Outputs;
+   begin
+      Cur := Builder_Module_ID.Last_Mains.Find (Key);
+      if Cur /= Target_Outputs.No_Element then
+         return To_String (Element (Cur));
+      else
+         return "";
+      end if;
+   end Get_Last_Main;
 
 end Builder_Facility_Module;

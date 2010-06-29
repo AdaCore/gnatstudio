@@ -52,6 +52,15 @@ package body Build_Command_Manager is
 
    Me : constant Debug_Handle := Create ("Build_Command_Manager");
 
+   function Get_Last_Main_For_Background_Target
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Target : Target_Access) return String;
+   --  Return the Main to use for building Target as a background build.
+   --  This is either the last main that was used, if it exists, or the first
+   --  main defined for this target, if it exists.
+   --  The full path to the target is returned.
+   --  If the target is not found, "" is returned.
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
@@ -69,6 +78,7 @@ package body Build_Command_Manager is
    function Expand_Command_Line
      (Kernel     : GPS.Kernel.Kernel_Handle;
       CL         : Argument_List;
+      Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
@@ -84,6 +94,7 @@ package body Build_Command_Manager is
    function Expand_Arg
      (Kernel     : GPS.Kernel.Kernel_Handle;
       Context    : GPS.Kernel.Selection_Context;
+      Target     : Target_Access;
       Arg        : String;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -113,6 +124,52 @@ package body Build_Command_Manager is
       end loop;
    end Free;
 
+   -----------------------------------------
+   -- Get_Last_Main_For_Background_Target --
+   -----------------------------------------
+
+   function Get_Last_Main_For_Background_Target
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Target : Target_Access) return String
+   is
+      Last : constant String := Get_Last_Main (Get_Name (Target));
+   begin
+      if Last = "" then
+         --  There is no last-launched main: compute the list of
+         --  mains for this target
+
+         declare
+            Targets : constant Unbounded_String :=
+              Get_Properties (Target).Target_Type;
+            Data   : aliased String_Hooks_Args :=
+              (Hooks_Data with
+               Length => Length (Targets),
+               Value  => To_String (Targets));
+            Mains  : constant Any_Type :=
+              Run_Hook_Until_Not_Empty
+                (Kernel,
+                 Compute_Build_Targets_Hook,
+                 Data'Unchecked_Access);
+
+         begin
+            if Mains.Length = 0 then
+               return "";
+            end if;
+
+            declare
+               The_Main : constant String :=
+                 Mains.List (1).Tuple (2).Str;
+            begin
+               Set_Last_Main (Get_Name (Target), The_Main);
+
+               return The_Main;
+            end;
+         end;
+      else
+         return Last;
+      end if;
+   end Get_Last_Main_For_Background_Target;
+
    ----------------
    -- Expand_Arg --
    ----------------
@@ -120,6 +177,7 @@ package body Build_Command_Manager is
    function Expand_Arg
      (Kernel     : GPS.Kernel.Kernel_Handle;
       Context    : GPS.Kernel.Selection_Context;
+      Target     : Target_Access;
       Arg        : String;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -438,10 +496,29 @@ package body Build_Command_Manager is
          if Main /= "" then
             Result.Args := Create (Main & Arg (Arg'First + 3 .. Arg'Last));
          else
-            Console.Insert
-              (Kernel, -"Could not determine the target to build.",
-               Mode => Console.Error);
-            raise Invalid_Argument;
+            if Background then
+               declare
+                  M : constant String :=
+                    Get_Last_Main_For_Background_Target (Kernel, Target);
+               begin
+                  if M = "" then
+                     Console.Insert
+                       (Kernel,
+                        (-"Could not launch background build: no main(s)"
+                         & " found for target ") & Get_Name (Target),
+                        Mode => Console.Error);
+                     raise Invalid_Argument;
+                  else
+                     Result.Args := Create
+                       (M & Arg (Arg'First + 3 .. Arg'Last));
+                  end if;
+               end;
+            else
+               Console.Insert
+                 (Kernel, -"Could not determine the target to build.",
+                  Mode => Console.Error);
+               raise Invalid_Argument;
+            end if;
          end if;
 
       elsif Starts_With (Arg, "%T") then
@@ -450,10 +527,30 @@ package body Build_Command_Manager is
               (GNAT.Directory_Operations.Base_Name (Main)
                & Arg (Arg'First + 2 .. Arg'Last));
          else
-            Console.Insert
-              (Kernel, -"Could not determine the target to build.",
-               Mode => Console.Error);
-            raise Invalid_Argument;
+            if Background then
+               declare
+                  M : constant String :=
+                    Get_Last_Main_For_Background_Target (Kernel, Target);
+               begin
+                  if M = "" then
+                     Console.Insert
+                       (Kernel,
+                        (-"Could not launch background build: no main(s)"
+                         & " found for target ") & Get_Name (Target),
+                        Mode => Console.Error);
+                     raise Invalid_Argument;
+                  else
+                     Result.Args := Create
+                       (GNAT.Directory_Operations.Base_Name (M) &
+                        Arg (Arg'First + 3 .. Arg'Last));
+                  end if;
+               end;
+            else
+               Console.Insert
+                 (Kernel, -"Could not determine the target to build.",
+                  Mode => Console.Error);
+               raise Invalid_Argument;
+            end if;
          end if;
 
       elsif Starts_With (Arg, "%E") then
@@ -484,6 +581,7 @@ package body Build_Command_Manager is
    function Expand_Command_Line
      (Kernel     : GPS.Kernel.Kernel_Handle;
       CL         : Argument_List;
+      Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
@@ -505,7 +603,7 @@ package body Build_Command_Manager is
          end if;
 
          Result := Expand_Arg
-           (Kernel, Context, CL (J).all, Server,
+           (Kernel, Context, Target, CL (J).all, Server,
             Force_File, Main, Subdir, Background, Simulate, Background_Env);
 
          if Result.Dir /= No_File then
@@ -587,12 +685,14 @@ package body Build_Command_Manager is
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
             Res       : constant Expansion_Result :=
-                          Expand_Command_Line
-                            (Kernel, Mode_Args.all & All_Extra_Args.all,
-                             Server,
-                             Force_File, Main, Subdir, Shadow,
-                             Simulate => True,
-                             Background_Env => Background_Env);
+              Expand_Command_Line
+                (Kernel,
+                 Mode_Args.all & All_Extra_Args.all,
+                 T,
+                 Server,
+                 Force_File, Main, Subdir, Shadow,
+                 Simulate => True,
+                 Background_Env => Background_Env);
 
          begin
             Free (CL_Args);
@@ -649,7 +749,7 @@ package body Build_Command_Manager is
                              (Get_Model (T), Mode, Command_Line.all);
             begin
                Full := Expand_Command_Line
-                 (Kernel, CL_Mode.all & All_Extra_Args.all,
+                 (Kernel, CL_Mode.all & All_Extra_Args.all, T,
                   Server, Force_File, Main, Subdir, False, False,
                   Background_Env);
                Free (Command_Line);
@@ -687,11 +787,11 @@ package body Build_Command_Manager is
 
                if All_Extra_Args = null then
                   Full := Expand_Command_Line
-                    (Kernel, CL_Mode.all, Server, Force_File, Main,
+                    (Kernel, CL_Mode.all, T, Server, Force_File, Main,
                      Subdir, Background, False, Background_Env);
                else
                   Full := Expand_Command_Line
-                    (Kernel, CL_Mode.all & All_Extra_Args.all,
+                    (Kernel, CL_Mode.all & All_Extra_Args.all, T,
                      Server, Force_File, Main, Subdir, Background, False,
                      Background_Env);
                end if;
@@ -731,6 +831,10 @@ package body Build_Command_Manager is
               (Current_Background_Build_Id);
          else
             Data.Category_Name := To_Unbounded_String (Error_Category);
+
+            if Main /= "" then
+               Set_Last_Main (Target_Name, Main);
+            end if;
          end if;
 
          Data.Mode_Name   := To_Unbounded_String (Mode);

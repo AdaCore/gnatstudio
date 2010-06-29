@@ -210,4 +210,16 @@ package Builder_Facility_Module is
    procedure Load_Targets;
    --  Save/Load the targets in the user-defined XML
 
+   -----------------
+   -- Latest main --
+   -----------------
+
+   --  Storing the latest Main on which a target was launched is useful
+   --  for launching background commands working on mains
+
+   procedure Set_Last_Main (Target : String; Main : String);
+   function Get_Last_Main (Target : String) return String;
+   --  Get/Set the last main that was actually used when launching a manual
+   --  build for Target
+
 end Builder_Facility_Module;

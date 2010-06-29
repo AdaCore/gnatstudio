@@ -51,8 +51,61 @@ package body Extending_Environments is
       Server : Server_Type) return Extending_Environment
    is
       Env : Extending_Environment;
-      P : Project_Type;
-      W : Writable_File;
+
+      procedure Write_Extending_Project
+        (File   : in out Virtual_File;
+         P      : Project_Type;
+         E_All  : String;
+         Body_S : String;
+         With_S : String);
+      --  Write in File a project extending P.
+      --  E_All can contain "all" if the project extends all.
+      --  With_S is the string of 'with' statements.
+
+      -----------------------------
+      -- Write_Extending_Project --
+      -----------------------------
+
+      procedure Write_Extending_Project
+        (File   : in out Virtual_File;
+         P      : Project_Type;
+         E_All  : String;
+         Body_S : String;
+         With_S : String)
+      is
+         W : Writable_File;
+      begin
+         File := Create_From_Dir
+           (Env.Temporary_Dir, "extends_" & Base_Name (Project_Path (P)));
+
+         W := Write_File (File);
+         Write (W, With_S & ASCII.LF & "project Extends_" & P.Name
+                & " extends " & E_All & " """
+                & (+Project_Path (P).Full_Name.all) & """ is"
+                & ASCII.LF
+                & Body_S & ASCII.LF);
+
+         --  If this is a library project, add a "Library_Dir" attribute
+         if P.Attribute_Value (Library_Name_Attribute) /= "" then
+            declare
+               Lib_Directory : Virtual_File;
+            begin
+               Lib_Directory :=
+                 Create_From_Dir (Env.Temporary_Dir, "lib");
+               if not Is_Directory (Lib_Directory) then
+                  Make_Dir (Lib_Directory);
+               end if;
+               Write (W, "   for Library_Dir use ""lib"";" & ASCII.LF);
+            end;
+         end if;
+
+         Write (W, "end Extends_" & P.Name & ";" & ASCII.LF);
+         Close (W);
+      end Write_Extending_Project;
+
+      P, Root : Project_Type;
+
+      Project_File : Virtual_File;
 
    begin
       --  Create the temporary directory
@@ -65,33 +118,22 @@ package body Extending_Environments is
       end if;
 
       --  Create the project file
+
       P := Get_Registry (Kernel).Tree.Info (Source).Project;
+      Root := Get_Registry (Kernel).Tree.Root_Project;
 
-      Env.Project_File := Create_From_Dir
-        (Env.Temporary_Dir, "extends_" & Base_Name (Project_Path (P)));
+      Write_Extending_Project (File   => Project_File,
+                               P      => P,
+                               E_All  => "",
+                               Body_S => "",
+                               With_S => "");
 
-      W := Write_File (Env.Project_File);
-      Write (W, "project Extends_" & P.Name
-             & " extends """
-             & (+Project_Path (P).Full_Name.all) & """ is"
-             & ASCII.LF);
-
-      --  If this is a library project, add a "Library_Dir" attribute
-      if P.Attribute_Value (Library_Name_Attribute) /= "" then
-         declare
-            Lib_Directory : Virtual_File;
-         begin
-            Lib_Directory :=
-              Create_From_Dir (Env.Temporary_Dir, "lib");
-            if not Is_Directory (Lib_Directory) then
-               Make_Dir (Lib_Directory);
-            end if;
-            Write (W, "   for Library_Dir use ""lib"";" & ASCII.LF);
-         end;
-      end if;
-
-      Write (W, "end Extends_" & P.Name & ";");
-      Close (W);
+      Write_Extending_Project (File   => Env.Project_File,
+                               P      => Root,
+                               E_All  => "all",
+                               Body_S => "for Source_Dirs use ();",
+                               With_S => "with """ &
+                               (+Project_File.Full_Name.all) & """;");
 
       --  Create the file
       Env.File := Create_From_Dir (Env.Temporary_Dir, Base_Name (Source));
