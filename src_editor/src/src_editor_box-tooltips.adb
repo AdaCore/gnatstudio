@@ -324,34 +324,36 @@ package body Src_Editor_Box.Tooltips is
 
          --  If there is a message on this line, display it
 
-         for J in Line_Info'Range loop
-            declare
-               C : Message_List.Cursor;
-               Message : Message_Access;
-            begin
-               C := Line_Info (J).Messages.First;
+         if Line_Info /= null then
+            for J in Line_Info'Range loop
+               declare
+                  C : Message_List.Cursor;
+                  Message : Message_Access;
+               begin
+                  C := Line_Info (J).Messages.First;
 
-               while Message_List.Has_Element (C) loop
-                  Message := Message_List.Element (C);
+                  while Message_List.Has_Element (C) loop
+                     Message := Message_List.Element (C);
 
-                  declare
-                     M : constant GPS.Editors.Editor_Mark'Class
-                       := Message.Get_Editor_Mark;
-                  begin
-                     if Col + 1 >= Gint (M.Column)
-                       and then Col + 1 <= Gint
-                         (M.Column
-                          + Visible_Column_Type
-                            (Message.Get_Highlighting_Length))
-                     then
-                        Draw_Content (Message.Get_Text, Widget, Pixmap);
-                        return;
-                     end if;
-                  end;
-                  Message_List.Next (C);
-               end loop;
-            end;
-         end loop;
+                     declare
+                        M : constant GPS.Editors.Editor_Mark'Class
+                          := Message.Get_Editor_Mark;
+                     begin
+                        if Col + 1 >= Gint (M.Column)
+                          and then Col + 1 <= Gint
+                            (M.Column
+                             + Visible_Column_Type
+                               (Message.Get_Highlighting_Length))
+                        then
+                           Draw_Content (Message.Get_Text, Widget, Pixmap);
+                           return;
+                        end if;
+                     end;
+                     Message_List.Next (C);
+                  end loop;
+               end;
+            end loop;
+         end if;
 
          --  If the mouse is not on top of text, do not display a tooltip
 
