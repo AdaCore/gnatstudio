@@ -1419,6 +1419,19 @@ package body Src_Editor_Buffer.Line_Information is
                  (Highlight_Speedbar => Style.In_Speedbar,
                   Highlight_Editor   => True));
          else
+            if Style.In_Speedbar then
+               Compute_BL;
+
+               Set_Line_Highlighting
+                 (Editor       => Buffer,
+                  Line         => BL,
+                  Style        => Style,
+                  Set          => True,
+                  Highlight_In =>
+                    (Highlight_Speedbar => Style.In_Speedbar,
+                     Highlight_Editor   => False));
+            end if;
+
             Compute_EL;
 
             End_Col := Message.Get_Column + Visible_Column_Type (Length);
@@ -2576,6 +2589,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       if Color /= Null_Color then
          Set_Property (Tag, Background_Gdk_Property, Color);
+         Set_Property (Tag, Underline_Property, Pango_Underline_None);
       else
          Set_Property (Tag, Underline_Property, Pango_Underline_Error);
       end if;
