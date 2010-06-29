@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
 with GNAT.Regexp;
 with GNAT.Regpat;
 
@@ -80,6 +81,10 @@ package Src_Contexts is
    type Current_File_Context_Access is access all Current_File_Context'Class;
    --  A special context for searching interactively in the current file.
    --  It doesn't support All_Occurrences.
+
+   overriding function Context_Look_In
+     (Self : Current_File_Context) return String;
+   --  See inherited documentation
 
    function Current_File_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -166,6 +171,8 @@ package Src_Contexts is
    type Files_Context_Access is access all Files_Context'Class;
    --  A special context for searching in a specific list of files
 
+   overriding function Context_Look_In (Self : Files_Context) return String;
+
    overriding function Get_Current_Progress
      (Context : access Files_Context) return Integer;
    overriding function Get_Total_Progress
@@ -206,6 +213,9 @@ package Src_Contexts is
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
    --  Context used to search in all files from the project
 
+   overriding function Context_Look_In
+     (Self : Files_Project_Context) return String;
+
    overriding function Get_Current_Progress
      (Context : access Files_Project_Context) return Integer;
    overriding function Get_Total_Progress
@@ -245,6 +255,9 @@ package Src_Contexts is
    type Open_Files_Context is new Abstract_Files_Context with private;
    type Open_Files_Context_Access is access all Open_Files_Context'Class;
    --  Context used to search in all files current edited
+
+   overriding function Context_Look_In
+     (Self : Open_Files_Context) return String;
 
    overriding function Get_Current_Progress
      (Context : access Open_Files_Context) return Integer;
@@ -333,7 +346,9 @@ private
       --  state
    end record;
 
-   type Current_File_Context is new File_Search_Context with null record;
+   type Current_File_Context is new File_Search_Context with record
+      Current_File : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
 
    type Abstract_Files_Context is abstract new File_Search_Context
      with null record;

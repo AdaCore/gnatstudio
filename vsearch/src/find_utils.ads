@@ -89,7 +89,7 @@ package Find_Utils is
    --  The following types are for use as simple search contexts, that can
    --  search both constant strings and regular expressions.
 
-   type Root_Search_Context is tagged limited private;
+   type Root_Search_Context is abstract tagged limited private;
 
    procedure Set_End_Notif_Done
      (Context : in out Root_Search_Context; Value : Boolean);
@@ -124,6 +124,13 @@ package Find_Utils is
    --  Note that the regexp is cached for efficiency.
    --  Invalid_Context is raised if the user is not looking for a regular
    --  expression, or the regular expression is invalid.
+
+   function Context_Look_In
+     (Self : Root_Search_Context) return String;
+   --  Describe the current context (what files are searched,...)
+   --  This is intended for display to the user.
+   --  The returned string should start with a lower case, and continue a
+   --  a sentence that ends with "in ...".
 
    procedure Context_As_Boyer_Moore
      (Context : access Root_Search_Context;

@@ -188,6 +188,8 @@ package body Project_Explorers is
    end record;
    type Explorer_Search_Context_Access is access all Explorer_Search_Context;
 
+   overriding function Context_Look_In
+     (Self : Explorer_Search_Context) return String;
    overriding procedure Free (Context : in out Explorer_Search_Context);
    --  Free the memory allocated for Context
 
@@ -3231,5 +3233,17 @@ package body Project_Explorers is
    begin
       return Ada.Strings.Hash (+Key);
    end Hash;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Explorer_Search_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return -"project explorer";
+   end Context_Look_In;
 
 end Project_Explorers;

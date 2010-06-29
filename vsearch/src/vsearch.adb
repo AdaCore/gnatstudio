@@ -637,7 +637,9 @@ package body Vsearch is
       if not Data.Found then
          Button := Message_Dialog
            (Msg     => "No occurrences of '" &
-            Context_Look_For (Data.Context) & "' found.",
+            Context_Look_For (Data.Context) & "' found."
+            & ASCII.LF & "in "
+            & Context_Look_In (Data.Context.all),
             Title   => -"Search",
             Buttons => Button_OK,
             Parent  => Get_Main_Window (Vsearch.Kernel));
@@ -876,7 +878,8 @@ package body Vsearch is
                Stop_Macro (Vsearch.Kernel);
                Button := Message_Dialog
                  (Msg     => (-"No occurrences of '") & Pattern &
-                  (-"' found."),
+                  (-"' found in") & ASCII.LF
+                  & Context_Look_In (Vsearch.Last_Search_Context.all),
                   Title   => -"Search",
                   Buttons => Button_OK,
                   Parent  => Gtk_Window (Toplevel));

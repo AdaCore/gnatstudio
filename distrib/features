@@ -15,6 +15,14 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J628-026 Fail search indicates context (2010-06-29)
+
+  When a search fails, the dialog now indicates in which context the search
+  was done (in particular the name of the file when searching in
+  "Current File".
+  This is in particular useful when in all windows floating mode, since it is
+  sometimes ambiguous which editor has the focus.
+
 NF-45-J621-010 New preference to control current line highlighting (2010-06-21)
 
   A new preference "Draw current line as thin line" in the Editor->Fonts and

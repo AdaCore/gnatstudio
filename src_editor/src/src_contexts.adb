@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
@@ -1275,7 +1276,6 @@ package body Src_Contexts is
       Context.All_Occurrences := All_Occurrences;
       Context.Scope := Scope;
       return Search_Context_Access (Context);
-
    end Current_File_Factory;
 
    --------------------------------
@@ -1678,6 +1678,9 @@ package body Src_Contexts is
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
+
+      Context.Current_File := To_Unbounded_String
+        (Get_Filename (Get_Buffer (Editor)).Display_Full_Name);
 
       Raise_Child (Child, Give_Focus);
 
@@ -2130,9 +2133,11 @@ package body Src_Contexts is
                   if not Already_Looped then
                      Button := Message_Dialog
                        (Msg           => (-"No more occurrences of '")
-                        & Context_As_String (C) &
+                        & Context_Look_For (C) &
                         (-("' found."
                            & ASCII.LF
+                           & (-"in ")
+                           & Context_Look_In (C.all) & ASCII.LF
                            & "Search from the beginning ?")),
                         Title         => -"Search",
                         Buttons       => Button_Yes or Button_No,
@@ -2572,5 +2577,49 @@ package body Src_Contexts is
         (Extra.Directory_Entry, Signal_Changed, Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Gtk_New;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In (Self : Files_Context) return String is
+      pragma Unreferenced (Self);
+   begin
+      return -"selected files";
+   end Context_Look_In;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Files_Project_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return -"any file in the project";
+   end Context_Look_In;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Open_Files_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return -"any opened file";
+   end Context_Look_In;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Current_File_Context) return String is
+   begin
+      return To_String (Self.Current_File);
+   end Context_Look_In;
 
 end Src_Contexts;

@@ -726,4 +726,17 @@ package body Find_Utils is
         (-"Search for: " & Context_Look_For (Context));
    end Reset;
 
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   function Context_Look_In
+     (Self : Root_Search_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      --  Only used in Find_Closest_Match
+      return -"file";
+   end Context_Look_In;
+
 end Find_Utils;

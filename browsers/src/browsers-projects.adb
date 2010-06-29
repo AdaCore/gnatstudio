@@ -56,6 +56,8 @@ package body Browsers.Projects is
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
 
+   overriding function Context_Look_In
+     (Self : Browser_Search_Context) return String;
    overriding procedure Default_Context_Factory
      (Module  : access Project_Browser_Module;
       Context : in out Selection_Context;
@@ -812,5 +814,17 @@ package body Browsers.Projects is
          Mask    => All_Options and not Supports_Replace
             and not Search_Backward and not All_Occurrences);
    end Register_Module;
+
+   ---------------------
+   -- Context_Look_In --
+   ---------------------
+
+   overriding function Context_Look_In
+     (Self : Browser_Search_Context) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return -"project browser";
+   end Context_Look_In;
 
 end Browsers.Projects;
