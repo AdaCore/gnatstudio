@@ -194,6 +194,12 @@ class LocationHighlighter:
     def destroy(self):
         """ Destroy self """
 
+        # Stop highlighting new messages
+
+        if self.timeout:
+            self.timeout.remove()
+            self.timeout=None
+
         # Remove all messages
 
         if self.messages:
@@ -274,7 +280,7 @@ def before_exit(hook_name):
         remove_all_messages()
         exiting=True
     except:
-        raise
+        pass
     return 1
 
 GPS.Hook ("before_exit_action_hook").add (before_exit)
