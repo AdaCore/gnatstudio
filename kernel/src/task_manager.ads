@@ -27,7 +27,6 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-with Gtk.Box;
 with Gtk.Progress_Bar;
 with Gtk.Widget;  use Gtk.Widget;
 
@@ -38,6 +37,7 @@ with Ada.Unchecked_Deallocation;
 
 package Task_Manager is
 
+   type Task_Manager_Record is tagged private;
    type Task_Manager_Access is private;
    No_Task_Manager : constant Task_Manager_Access;
 
@@ -70,11 +70,6 @@ package Task_Manager is
    procedure Interrupt_All_Tasks (Manager : Task_Manager_Access);
    --  Interrput all tasks
 
-   procedure Set_Progress_Area
-     (Manager : Task_Manager_Access;
-      Area    : Gtk.Box.Gtk_Hbox);
-   --  Indicate an area in which progress bars can be displayed
-
    procedure Set_Busy_Commands
      (Manager      : Task_Manager_Access;
       Push_Command : Command_Access;
@@ -84,12 +79,6 @@ package Task_Manager is
    procedure Destroy
      (Manager : Task_Manager_Access);
    --  Free all memory associated to the task manager
-
-   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
-   procedure Set_GUI
-     (Manager : Task_Manager_Access;
-      GUI     : Gtk_Widget);
-   --  Get and set the active graphical interface for Manager
 
    function Has_Running_Commands
      (Manager         : Task_Manager_Access;
@@ -158,7 +147,7 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Task_Queue_Array, Task_Queue_Array_Access);
 
-   type Task_Manager_Record is record
+   type Task_Manager_Record is tagged record
       Queues               : Task_Queue_Array_Access;
 
       Passive_Index        : Integer := 0;
@@ -172,32 +161,27 @@ private
       Minimal_Active_Priority  : Integer := 0;
       Minimal_Passive_Priority : Integer := 0;
 
-      --  Graphical elements
-
-      GUI                  : Gtk_Widget       := null;
-      Progress_Area        : Gtk.Box.Gtk_Hbox := null;
-
       Push_Command, Pop_Command : Command_Access;
       --  Commands used to push/pop the "busy" state
    end record;
 
-   type Task_Manager_Access is access all Task_Manager_Record;
+   type Task_Manager_Access is access all Task_Manager_Record'Class;
    No_Task_Manager : constant Task_Manager_Access := null;
 
    procedure Queue_Added
-     (Manager : Task_Manager_Access;
-      Index   : Integer);
+     (Manager : access Task_Manager_Record;
+      Index   : Integer) is null;
    --  Inform the GUI that a queue has been added
 
    procedure Queue_Removed
-     (Manager : Task_Manager_Access;
-      Index   : Integer);
+     (Manager : access Task_Manager_Record;
+      Index   : Integer) is null;
    --  Inform the GUI that a queue has been removed
 
    procedure Queue_Changed
-     (Manager           : Task_Manager_Access;
+     (Manager           : access Task_Manager_Record;
       Index             : Integer;
-      Immediate_Refresh : Boolean);
+      Immediate_Refresh : Boolean) is null;
    --  Inform the GUI that a queue has been changed; if Immediate_Refresh is
    --  True, refresh immediately, otherwise do so in a timeout callback.
 

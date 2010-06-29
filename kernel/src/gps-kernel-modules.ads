@@ -104,26 +104,6 @@ package GPS.Kernel.Modules is
    function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle;
    --  Return the kernel associated with Module
 
-   procedure Menu_Handler
-     (Module  : access Module_ID_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Glib.Object.GObject_Record'Class) is null;
-   --  Callback used every time some contextual menu event happens in GPS.
-   --
-   --  The object that is displaying the contextual menu is Object. Note that
-   --  this isn't necessarily the widget in which the mouse event occurs.
-   --
-   --  Context contains all the information about the current selection.
-   --  The module that initiated the event (ie the one that is currently
-   --  displaying the contextual menu) can be found by reading Get_Creator for
-   --  the context.
-   --
-   --  The callback should add the relevant items to Menu (which can be assumed
-   --  to be of type Gtk.Menu.Gtk_Menu_Record´Class). It is recommended to
-   --  use GPS.Kernel.Modules.UI.Context_Callback to connect signals to
-   --  the items.
-
    procedure Default_Context_Factory
      (Module  : access Module_ID_Record;
       Context : in out Selection_Context;

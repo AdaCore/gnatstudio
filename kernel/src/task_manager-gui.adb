@@ -189,19 +189,19 @@ package body Task_Manager.GUI is
    Null_Progress_Data : constant Progress_Data := (0, 0.0, "", False);
 
    function Get_Progress_Text
-     (Manager                : Task_Manager_Access;
+     (Manager                : access Task_Manager_Record'Class;
       Index                  : Natural;
       As_Percent             : Boolean;
       With_Name_And_Fraction : Boolean) return Progress_Data;
    --  Get the text for queue Index
 
    function Get_Fraction
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Natural) return Gdouble;
    --  Return the fraction for queue Index
 
    function Get_Progress_Text
-     (Manager    : Task_Manager_Access;
+     (Manager    : access Task_Manager_Record'Class;
       As_Percent : Boolean) return Progress_Data;
    --  Get the text for the global progress bar
 
@@ -244,7 +244,7 @@ package body Task_Manager.GUI is
    -----------------------
 
    procedure Interrupt_Command
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Integer) is
    begin
       if Manager.Queues = null then
@@ -256,7 +256,8 @@ package body Task_Manager.GUI is
 
          Manager.Queues (Index).Status := Completed;
          Queue_Changed (Manager, Index, True);
-         Run (Manager, Active => Index < Manager.Passive_Index);
+         Run (Task_Manager_Access (Manager),
+              Active => Index < Manager.Passive_Index);
       end if;
    end Interrupt_Command;
 
@@ -265,7 +266,7 @@ package body Task_Manager.GUI is
    -------------------
 
    procedure Pause_Command
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Integer) is
    begin
       if Manager.Queues = null then
@@ -286,7 +287,7 @@ package body Task_Manager.GUI is
    --------------------
 
    procedure Resume_Command
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Integer) is
    begin
       if Manager.Queues = null then
@@ -296,7 +297,8 @@ package body Task_Manager.GUI is
       if Index in Manager.Queues'Range then
          if Manager.Queues (Index).Status = Paused then
             Manager.Queues (Index).Status := Running;
-            Run (Manager, Active => Index < Manager.Passive_Index);
+            Run (Task_Manager_Access (Manager),
+                 Active => Index < Manager.Passive_Index);
          end if;
 
          Queue_Changed (Manager, Index, True);
@@ -552,7 +554,7 @@ package body Task_Manager.GUI is
       Dialog  : Gtk_Widget := null) return Task_Manager_Widget_Access
    is
       GUI      : constant Task_Manager_Interface :=
-                   Task_Manager_Interface (Manager.GUI);
+                   Task_Manager_UI_Access (Manager).GUI;
       View     : Task_Manager_Widget_Access;
       Scrolled : Gtk_Scrolled_Window;
    begin
@@ -625,11 +627,11 @@ package body Task_Manager.GUI is
       Model.GUI := Task_Manager_Interface (View);
 
       View.Kernel  := Kernel;
-      View.Manager := Manager;
+      View.Manager := Task_Manager_UI_Access (Manager);
       View.Model   := Gtk_Tree_Model (Model);
       View.Reference_Widget := Widget;
 
-      View.Manager.GUI := Gtk_Widget (View);
+      View.Manager.GUI := Task_Manager_Interface (View);
 
       Task_Manager_Handler.Connect
         (View,
@@ -643,7 +645,7 @@ package body Task_Manager.GUI is
    -- Pop_State --
    ---------------
 
-   procedure Pop_State (Manager : Task_Manager_Access) is
+   procedure Pop_State (Manager : access Task_Manager_Record'Class) is
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
@@ -656,7 +658,7 @@ package body Task_Manager.GUI is
    -- Push_State --
    ----------------
 
-   procedure Push_State (Manager : Task_Manager_Access) is
+   procedure Push_State (Manager : access Task_Manager_Record'Class) is
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
@@ -980,7 +982,8 @@ package body Task_Manager.GUI is
                   Pix : constant Gdk_Pixbuf := To_Pixbuf
                     (Self.GUI,
                      Get_Progress_Text
-                       (Self.GUI.Manager, Integer (Index), False, True));
+                       (Task_Manager_Access (Self.GUI.Manager),
+                        Integer (Index), False, True));
                begin
                   if Pix /= Null_Pixbuf then
                      Set_Object (Value, GObject (Pix));
@@ -1086,10 +1089,11 @@ package body Task_Manager.GUI is
    -- Queue_Added --
    -----------------
 
-   procedure Queue_Added
-     (GUI   : Task_Manager_Interface;
-      Index : Integer)
+   overriding procedure Queue_Added
+     (Manager : access Task_Manager_UI_Record;
+      Index   : Integer)
    is
+      GUI  : constant Task_Manager_Interface := Manager.GUI;
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Iter : constant Gtk_Tree_Iter :=
                Nth_Child (M, Null_Iter, Gint (Index - 1));
@@ -1112,10 +1116,11 @@ package body Task_Manager.GUI is
    -- Queue_Removed --
    -------------------
 
-   procedure Queue_Removed
-     (GUI   : Task_Manager_Interface;
-      Index : Integer)
+   overriding procedure Queue_Removed
+     (Manager : access Task_Manager_UI_Record;
+      Index   : Integer)
    is
+      GUI  : constant Task_Manager_Interface := Manager.GUI;
       M    : constant Task_Manager_Model := Task_Manager_Model (GUI.Model);
       Path : constant Gtk_Tree_Path := Gtk_New_First;
       Dummy : Command_Return_Type;
@@ -1185,12 +1190,13 @@ package body Task_Manager.GUI is
    -- Queue_Changed --
    -------------------
 
-   procedure Queue_Changed
-     (GUI               : Task_Manager_Interface;
+   overriding procedure Queue_Changed
+     (Manager           : access Task_Manager_UI_Record;
       Index             : Integer;
       Immediate_Refresh : Boolean)
    is
       use type Glib.Main.G_Source_Id;
+      GUI : constant Task_Manager_Interface := Manager.GUI;
    begin
       if Immediate_Refresh then
          Refresh_One_Index (GUI, Index);
@@ -1217,7 +1223,7 @@ package body Task_Manager.GUI is
    ------------------
 
    function Get_Fraction
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Natural) return Gdouble
    is
       Fraction   : Gdouble;
@@ -1263,7 +1269,7 @@ package body Task_Manager.GUI is
    -----------------------
 
    function Get_Progress_Text
-     (Manager                : Task_Manager_Access;
+     (Manager                : access Task_Manager_Record'Class;
       Index                  : Natural;
       As_Percent             : Boolean;
       With_Name_And_Fraction : Boolean) return Progress_Data
@@ -1358,7 +1364,7 @@ package body Task_Manager.GUI is
    -----------------------
 
    function Get_Progress_Text
-     (Manager    : Task_Manager_Access;
+     (Manager    : access Task_Manager_Record'Class;
       As_Percent : Boolean) return Progress_Data
    is
       Index    : Natural := 0;
@@ -1410,13 +1416,9 @@ package body Task_Manager.GUI is
       Widget : Gtk_Widget) return Task_Manager_Access
    is
       R : Task_Manager_Access;
-      W : Task_Manager_Interface;
    begin
-      R := new Task_Manager_Record;
-
-      Gtk_New (W, Kernel, R, Widget);
-      R.GUI := Gtk_Widget (W);
-
+      R := new Task_Manager_UI_Record;
+      Gtk_New (Task_Manager_UI_Access (R).GUI, Kernel, R, Widget);
       return R;
    end Create;
 
@@ -1429,5 +1431,34 @@ package body Task_Manager.GUI is
    begin
       return Gtk_Widget (GUI.Tree);
    end Get_Focus_Widget;
+
+   -------------
+   -- Get_GUI --
+   -------------
+
+   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget is
+   begin
+      return Gtk_Widget (Task_Manager_UI_Access (Manager).GUI);
+   end Get_GUI;
+
+   -------------
+   -- Set_GUI --
+   -------------
+
+   procedure Set_GUI (Manager : Task_Manager_Access; GUI : Gtk_Widget) is
+   begin
+      Task_Manager_UI_Access (Manager).GUI := Task_Manager_Interface (GUI);
+   end Set_GUI;
+
+   -----------------------
+   -- Set_Progress_Area --
+   -----------------------
+
+   procedure Set_Progress_Area
+     (Manager : Task_Manager_Access;
+      Area    : Gtk.Box.Gtk_Hbox) is
+   begin
+      Task_Manager_UI_Access (Manager).Progress_Area := Area;
+   end Set_Progress_Area;
 
 end Task_Manager.GUI;

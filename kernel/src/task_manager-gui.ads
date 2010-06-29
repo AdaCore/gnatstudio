@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2009, AdaCore                 --
+--                  Copyright (C) 2003-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,6 +50,17 @@ package Task_Manager.GUI is
       Widget : Gtk_Widget) return Task_Manager_Access;
    --  ??? Missing documentation
 
+   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
+   procedure Set_GUI
+     (Manager : Task_Manager_Access;
+      GUI     : Gtk_Widget);
+   --  Get and set the active graphical interface for Manager
+
+   procedure Set_Progress_Area
+     (Manager : Task_Manager_Access;
+      Area    : Gtk.Box.Gtk_Hbox);
+   --  Indicate an area in which progress bars can be displayed
+
    type Task_Manager_Widget_Record is new Gtk_Hbox_Record with private;
    type Task_Manager_Widget_Access is access all
      Task_Manager_Widget_Record'Class;
@@ -79,37 +90,19 @@ package Task_Manager.GUI is
    --  Internal initialization procedure
 
    procedure Interrupt_Command
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Integer);
    --  Interrupt command referenced by Index
 
    procedure Pause_Command
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Integer);
    --  Pause command referenced by Index
 
    procedure Resume_Command
-     (Manager : Task_Manager_Access;
+     (Manager : access Task_Manager_Record'Class;
       Index   : Integer);
    --  Resume paused command referenced by Index
-
-   procedure Queue_Added
-     (GUI   : Task_Manager_Interface;
-      Index : Integer);
-   --  Inform the GUI that a queue has been added
-
-   procedure Queue_Removed
-     (GUI   : Task_Manager_Interface;
-      Index : Integer);
-   --  Inform the GUI that a queue has been removed
-
-   procedure Queue_Changed
-     (GUI               : Task_Manager_Interface;
-      Index             : Integer;
-      Immediate_Refresh : Boolean);
-   --  Inform the GUI that the progress or running information of a queue has
-   --  been changed. If Immediate_Refresh is True, reflect the changes in the
-   --  GUI immediately, otherwise do it in a timeout callback.
 
    function Get_Focus_Widget
      (GUI : Task_Manager_Widget_Access) return Gtk_Widget;
@@ -136,10 +129,34 @@ private
    package Task_Manager_Source is new Glib.Main.Generic_Sources
      (Task_Manager_Interface);
 
+   type Task_Manager_UI_Record is new Task_Manager_Record with record
+      GUI           : Task_Manager_Interface := null;
+      Progress_Area : Gtk.Box.Gtk_Hbox := null;
+   end record;
+   type Task_Manager_UI_Access is access all Task_Manager_UI_Record'Class;
+
+   overriding procedure Queue_Added
+     (Manager : access Task_Manager_UI_Record;
+      Index   : Integer);
+   --  Inform the GUI that a queue has been added
+
+   overriding procedure Queue_Removed
+     (Manager : access Task_Manager_UI_Record;
+      Index   : Integer);
+   --  Inform the GUI that a queue has been removed
+
+   overriding procedure Queue_Changed
+     (Manager           : access Task_Manager_UI_Record;
+      Index             : Integer;
+      Immediate_Refresh : Boolean);
+   --  Inform the GUI that the progress or running information of a queue has
+   --  been changed. If Immediate_Refresh is True, reflect the changes in the
+   --  GUI immediately, otherwise do it in a timeout callback.
+
    type Task_Manager_Interface_Record is new Gtk_Hbox_Record with record
       Kernel                 : Kernel_Handle;
       Model                  : Gtk_Tree_Model;
-      Manager                : Task_Manager_Access;
+      Manager                : Task_Manager_UI_Access;
 
       Progress_Bar_Button    : Gtk_Button;
 
@@ -171,8 +188,8 @@ private
       Main_Progress_Bar      : Gtk_Progress_Bar;
    end record;
 
-   procedure Push_State (Manager : Task_Manager_Access);
-   procedure Pop_State (Manager : Task_Manager_Access);
+   procedure Push_State (Manager : access Task_Manager_Record'Class);
+   procedure Pop_State (Manager : access Task_Manager_Record'Class);
    --  Push and pop the "busy" state of the task manager
 
 end Task_Manager.GUI;

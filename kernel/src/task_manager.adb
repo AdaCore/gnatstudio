@@ -595,17 +595,6 @@ package body Task_Manager is
    end Head;
 
    -----------------------
-   -- Set_Progress_Area --
-   -----------------------
-
-   procedure Set_Progress_Area
-     (Manager : Task_Manager_Access;
-      Area    : Gtk.Box.Gtk_Hbox) is
-   begin
-      Manager.Progress_Area := Area;
-   end Set_Progress_Area;
-
-   -----------------------
    -- Set_Busy_Commands --
    -----------------------
 
@@ -651,24 +640,6 @@ package body Task_Manager is
          Unref (Manager.Pop_Command);
       end if;
    end Destroy;
-
-   -------------
-   -- Get_GUI --
-   -------------
-
-   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget is
-   begin
-      return Manager.GUI;
-   end Get_GUI;
-
-   -------------
-   -- Set_GUI --
-   -------------
-
-   procedure Set_GUI (Manager : Task_Manager_Access; GUI : Gtk_Widget) is
-   begin
-      Manager.GUI := GUI;
-   end Set_GUI;
 
    ---------------------------
    -- Interrupt_Latest_Task --
@@ -756,54 +727,5 @@ package body Task_Manager is
          return Result;
       end;
    end Get_Scheduled_Commands;
-
-   -----------------
-   -- Queue_Added --
-   -----------------
-
-   procedure Queue_Added
-     (Manager : Task_Manager_Access;
-      Index   : Integer)
-   is
-      GUI : Task_Manager_Interface;
-   begin
-      if Manager.GUI /= null then
-         GUI := Task_Manager_Interface (Manager.GUI);
-         Queue_Added (GUI, Index);
-      end if;
-   end Queue_Added;
-
-   -------------------
-   -- Queue_Removed --
-   -------------------
-
-   procedure Queue_Removed
-     (Manager : Task_Manager_Access;
-      Index   : Integer)
-   is
-      GUI : Task_Manager_Interface;
-   begin
-      if Manager.GUI /= null then
-         GUI := Task_Manager_Interface (Manager.GUI);
-         Queue_Removed (GUI, Index);
-      end if;
-   end Queue_Removed;
-
-   -------------------
-   -- Queue_Changed --
-   -------------------
-
-   procedure Queue_Changed
-     (Manager           : Task_Manager_Access;
-      Index             : Integer;
-      Immediate_Refresh : Boolean)
-   is
-      GUI : Task_Manager_Interface;
-   begin
-      if Manager.GUI /= null then
-         GUI := Task_Manager_Interface (Manager.GUI);
-         Queue_Changed (GUI, Index, Immediate_Refresh);
-      end if;
-   end Queue_Changed;
 
 end Task_Manager;
