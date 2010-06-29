@@ -46,6 +46,7 @@ with Debugger;               use Debugger;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Main_Window.Debug;  use GPS.Main_Window.Debug;
 with GVD.Preferences;        use GVD.Preferences;

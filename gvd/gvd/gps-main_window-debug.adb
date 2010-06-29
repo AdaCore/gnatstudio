@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,15 +23,16 @@ with Gtk.Menu_Item;      use Gtk.Menu_Item;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 
-with Breakpoints_Editor; use Breakpoints_Editor;
-with GVD_Module;         use GVD_Module;
-with GVD.Scripts;        use GVD.Scripts;
-with GVD.Process;        use GVD.Process;
-with GVD.Types;          use GVD.Types;
-with Debugger;           use Debugger;
-with Process_Proxies;    use Process_Proxies;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Intl;           use GPS.Intl;
+with Breakpoints_Editor;    use Breakpoints_Editor;
+with GVD_Module;            use GVD_Module;
+with GVD.Scripts;           use GVD.Scripts;
+with GVD.Process;           use GVD.Process;
+with GVD.Types;             use GVD.Types;
+with Debugger;              use Debugger;
+with Process_Proxies;       use Process_Proxies;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Intl;              use GPS.Intl;
 
 package body GPS.Main_Window.Debug is
 
