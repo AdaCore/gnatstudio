@@ -25,11 +25,6 @@ with GNATCOLL.Traces;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Enums;                 use Gtk.Enums;
-
-with Gtk.Object;                use Gtk.Object;
-with Gtk.Widget;                use Gtk.Widget;
-
 with System;                    use System;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
