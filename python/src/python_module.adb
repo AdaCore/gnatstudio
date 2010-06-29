@@ -42,6 +42,7 @@ with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;

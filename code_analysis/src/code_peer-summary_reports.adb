@@ -46,6 +46,7 @@ with Gtk.Widget;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Code_Analysis_GUI;
 
 package body Code_Peer.Summary_Reports is
@@ -858,7 +859,7 @@ package body Code_Peer.Summary_Reports is
 
       --
 
-      GPS.Kernel.Modules.Register_Contextual_Menu
+      Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => Self.Analysis_View,
          Object          => Self,

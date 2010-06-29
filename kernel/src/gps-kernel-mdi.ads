@@ -23,6 +23,7 @@
 with Commands;
 with Gtkada.MDI;         use Gtkada.MDI;
 with Gtk.Accel_Group;
+with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Icon_Factory;
 with Gtk.Main;
 with Gtk.Menu;
@@ -263,6 +264,45 @@ package GPS.Kernel.MDI is
    --  The context returned will be that of the active contextual menu if there
    --  is one at that point in time (therefore, we ignore cases where for
    --  instance a new child has been selected automatically at that point)
+
+   ---------------------
+   -- Signal emission --
+   ---------------------
+
+   procedure Setup (Data : Glib.Object.GObject; Id : Gtk.Handlers.Handler_Id);
+   --  Make sure that when Data is destroyed, Id is properly removed
+
+   package Object_User_Callback is new Gtk.Handlers.User_Callback_With_Setup
+     (Glib.Object.GObject_Record, Glib.Object.GObject, Setup);
+   --  Generic callback that can be used to connect a signal to a kernel
+
+   package Object_Return_Callback is new Gtk.Handlers.Return_Callback
+     (Glib.Object.GObject_Record, Boolean);
+   --  Generic callback that can be used to connect a signal to a kernel
+
+   package Object_User_Return_Callback
+     is new Gtk.Handlers.User_Return_Callback_With_Setup
+     (Widget_Type => Glib.Object.GObject_Record,
+      User_Type   => Glib.Object.GObject,
+      Return_Type => Boolean,
+      Setup       => Setup);
+   --  Generic callback that can be used to connect a signal to a kernel
+
+   package Kernel_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Kernel_Handle);
+   --  Generic callback that can be used to connect a signal to a kernel
+
+   type File_Project_Record is record
+      Project : GNATCOLL.Projects.Project_Type;
+      File    : aliased GNATCOLL.VFS.Virtual_File;
+   end record;
+
+   package File_Project_Cb is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, File_Project_Record);
+   --  Generic callback that can be used to connect a signal to a kernel
+
+   package Entity_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Entities.Entity_Information);
 
 private
 

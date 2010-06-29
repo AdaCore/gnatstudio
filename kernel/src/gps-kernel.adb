@@ -44,7 +44,6 @@ with XML_Utils;                 use XML_Utils;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Object;
@@ -416,16 +415,6 @@ package body GPS.Kernel is
    begin
       return Handle.Preferences;
    end Get_Preferences;
-
-   -----------
-   -- Setup --
-   -----------
-
-   procedure Setup
-     (Data : Glib.Object.GObject; Id : Gtk.Handlers.Handler_Id) is
-   begin
-      Add_Watch (Id, Data);
-   end Setup;
 
    ------------------------
    -- Get_Buffer_Factory --

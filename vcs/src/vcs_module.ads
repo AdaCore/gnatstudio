@@ -23,18 +23,18 @@ with Ada.Containers.Indefinite_Hashed_Maps;  use Ada;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 
-with GNATCOLL.Projects;   use GNATCOLL.Projects;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with Gtk.Widget;
-with Gtkada.MDI;          use Gtkada.MDI;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with Glib.Object;
+with Gtkada.MDI;            use Gtkada.MDI;
 
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with Projects;            use Projects;
-with VCS;                 use VCS;
-with VCS_View.Explorer;   use VCS_View.Explorer;
-with VCS_View.Activities; use VCS_View.Activities;
-with VCS_Status;          use VCS_Status;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with Projects;              use Projects;
+with VCS;                   use VCS;
+with VCS_View.Explorer;     use VCS_View.Explorer;
+with VCS_View.Activities;   use VCS_View.Activities;
+with VCS_Status;            use VCS_Status;
 
 package VCS_Module is
 
@@ -102,7 +102,7 @@ package VCS_Module is
    overriding procedure Default_Context_Factory
      (Module  : access VCS_Module_ID_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    procedure Register_Module

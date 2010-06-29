@@ -61,6 +61,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -97,7 +98,7 @@ package body Browsers.Entities is
    overriding procedure Default_Context_Factory
      (Module  : access Entity_Browser_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    type Entity_Browser_Action_Context is new GPS.Kernel.Action_Filter_Record
@@ -1831,7 +1832,7 @@ package body Browsers.Entities is
    overriding procedure Default_Context_Factory
      (Module  : access Entity_Browser_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
       Browser : constant Type_Browser := Type_Browser (Child);

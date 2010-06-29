@@ -48,6 +48,7 @@ with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Main_Window;            use GPS.Main_Window;
@@ -131,7 +132,7 @@ package body Help_Module is
    overriding procedure Default_Context_Factory
      (Module  : access Help_Module_ID_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    procedure Add_Doc_Directory
@@ -694,7 +695,7 @@ package body Help_Module is
    overriding procedure Default_Context_Factory
      (Module  : access Help_Module_ID_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Child, Context, Module);
    begin

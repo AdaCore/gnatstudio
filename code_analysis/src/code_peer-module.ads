@@ -28,7 +28,7 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Gdk.Color;
 private with Default_Preferences;
 with GPS.Kernel;   use GPS.Kernel;
-with GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;
 with GPS.Styles;
 with GPS.Styles.UI;
 
@@ -63,7 +63,7 @@ package Code_Peer.Module is
 
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
-     new GPS.Kernel.Modules.Submenu_Factory_Record with null record;
+     new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
 
    overriding procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;

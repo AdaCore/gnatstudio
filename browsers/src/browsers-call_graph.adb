@@ -65,6 +65,7 @@ with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
@@ -95,7 +96,7 @@ package body Browsers.Call_Graph is
    overriding procedure Default_Context_Factory
      (Module  : access Callgraph_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    Automatically_Check_To_Dependencies : constant Boolean := True;
@@ -1400,7 +1401,7 @@ package body Browsers.Call_Graph is
    overriding procedure Default_Context_Factory
      (Module  : access Callgraph_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
       Browser : constant Call_Graph_Browser := Call_Graph_Browser (Child);

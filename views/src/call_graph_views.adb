@@ -56,6 +56,7 @@ with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;

@@ -24,6 +24,7 @@ with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;

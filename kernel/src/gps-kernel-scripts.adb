@@ -58,6 +58,7 @@ with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
@@ -1394,7 +1395,7 @@ package body GPS.Kernel.Scripts is
 
          if Object /= null then
             Gtk.Menu.Gtk_New (Menu);
-            GPS.Kernel.Modules.Create_Contextual_Menu
+            Create_Contextual_Menu
               (Kernel, Object, Context, Menu);
             if Menu /= null then
                Set_Return_Value_As_List (Data);

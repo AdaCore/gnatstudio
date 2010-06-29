@@ -47,6 +47,7 @@ with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
@@ -75,7 +76,7 @@ package body Browsers.Dependency_Items is
    overriding procedure Default_Context_Factory
      (Module  : access Dependency_Browser_Module;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    --------------
@@ -937,7 +938,7 @@ package body Browsers.Dependency_Items is
    overriding procedure Default_Context_Factory
      (Module  : access Dependency_Browser_Module;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
       Browser : constant Dependency_Browser := Dependency_Browser (Child);

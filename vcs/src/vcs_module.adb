@@ -39,6 +39,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -828,14 +829,15 @@ package body VCS_Module is
    overriding procedure Default_Context_Factory
      (Module  : access VCS_Module_ID_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
    begin
-      if Child = Gtk_Widget (Get_Explorer (Kernel, False)) then
-         Context := VCS_View_API.Context_Factory (Kernel, Child);
+      if Child = GObject (Get_Explorer (Kernel, False)) then
+         Context := VCS_View_API.Context_Factory (Kernel, Gtk_Widget (Child));
       else
-         Context := VCS_Activities_View_API.Context_Factory (Kernel, Child);
+         Context := VCS_Activities_View_API.Context_Factory
+           (Kernel, Gtk_Widget (Child));
       end if;
    end Default_Context_Factory;
 

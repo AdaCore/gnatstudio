@@ -32,6 +32,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
 use GPS.Kernel.Messages, GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel;             use GPS.Kernel;

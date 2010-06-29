@@ -77,6 +77,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -221,7 +222,7 @@ package body Src_Editor_Box is
       Default_Title : String;
       Filter        : Reference_Kind_Filter;
       Show_Default  : Boolean;
-      Callback      : GPS.Kernel.Entity_Callback.Simple_Handler);
+      Callback      : GPS.Kernel.MDI.Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
 
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
@@ -1596,7 +1597,7 @@ package body Src_Editor_Box is
       Default_Title : String;
       Filter        : Reference_Kind_Filter;
       Show_Default  : Boolean;
-      Callback      : GPS.Kernel.Entity_Callback.Simple_Handler)
+      Callback      : GPS.Kernel.MDI.Entity_Callback.Simple_Handler)
    is
       Item   : Gtk_Menu_Item;
       Label  : Gtk_Label;
@@ -1623,7 +1624,7 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         GPS.Kernel.Entity_Callback.Object_Connect
+         GPS.Kernel.MDI.Entity_Callback.Object_Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
             Callback, Get_Kernel (Context), Callee);
          Add (Menu, Item);
@@ -1672,7 +1673,7 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         GPS.Kernel.Entity_Callback.Object_Connect
+         GPS.Kernel.MDI.Entity_Callback.Object_Connect
            (Item, Gtk.Menu_Item.Signal_Activate,
             Callback, Kernel, Get_Entity (Context));
          Add (Menu, Item);

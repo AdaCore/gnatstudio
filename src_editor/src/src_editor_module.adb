@@ -81,6 +81,7 @@ with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
@@ -1096,7 +1097,7 @@ package body Src_Editor_Module is
 
    overriding function Save_Function
      (Module       : access Source_Editor_Module_Record;
-      Child        : Gtk.Widget.Gtk_Widget;
+      Child        : Glib.Object.GObject;
       Mode         : Save_Function_Mode;
       Single_Child : Boolean;
       Force        : Boolean) return Boolean
@@ -2512,7 +2513,7 @@ package body Src_Editor_Module is
    overriding procedure Default_Context_Factory
      (Module  : access Source_Editor_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget) is
+      Child   : Glib.Object.GObject) is
    begin
       Get_Contextual_Menu
         (Context, Get_Kernel (Module.all),

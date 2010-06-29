@@ -17,15 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;        use Glib.Object;
-with XML_Utils;       use XML_Utils;
-with Gtk.Widget;         use Gtk.Widget;
-with Gtkada.MDI;         use Gtkada.MDI;
+with Glib.Object;           use Glib.Object;
+with XML_Utils;             use XML_Utils;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.MDI;            use Gtkada.MDI;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Intl;              use GPS.Intl;
 
 package body Generic_Views is
 

@@ -39,6 +39,7 @@ with Entities.Queries;          use Entities.Queries;
 with Entities.Tooltips;         use Entities.Tooltips;
 with GPS.Kernel.Contexts;       use GPS.Kernel, GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GUI_Utils;                 use GUI_Utils;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
@@ -315,7 +316,7 @@ package body Src_Editor_Box.Tooltips is
             Location => Location_Mouse);
 
          Trace (Me, "Tooltip on " & Entity_Name_Information (Context));
-         GPS.Kernel.Modules.Compute_Tooltip (Box.Kernel, Context, Pixmap);
+         Compute_Tooltip (Box.Kernel, Context, Pixmap);
 
          if Pixmap /= null then
             return;

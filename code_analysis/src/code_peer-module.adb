@@ -40,6 +40,7 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
@@ -1908,7 +1909,7 @@ package body Code_Peer.Module is
          Style.Set_Background (Preference.Get_Pref);
       end Initialize_Style;
 
-      Submenu_Factory    : GPS.Kernel.Modules.Submenu_Factory;
+      Submenu_Factory    : GPS.Kernel.Modules.UI.Submenu_Factory;
       Menu               : constant String := -"/_CodePeer";
       Advanced_Menu      : constant String := Menu & (-"/Advanced");
       Codepeer           : constant Virtual_File :=
@@ -1927,7 +1928,7 @@ package body Code_Peer.Module is
       Submenu_Factory := new Submenu_Factory_Record (Module);
 
       Module.Register_Module (Kernel, "CodePeer");
-      GPS.Kernel.Modules.Register_Contextual_Submenu
+      Register_Contextual_Submenu
         (Kernel  => Kernel,
          Name    => "CodePeer",
          Label   => -"CodePeer",
@@ -1935,20 +1936,20 @@ package body Code_Peer.Module is
            or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
          Submenu => Submenu_Factory);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Analyze All",
          Ref_Item    => -"Window",
          Callback    => On_Analyze_All'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"Analyze _Root Project",
          Callback    => On_Analyze_Root'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"Analyze _File",
@@ -1956,52 +1957,52 @@ package body Code_Peer.Module is
          Filter      => Lookup_Filter (Kernel, "File")
                           and Create (Language => "ada"));
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Display Code Review",
          Callback    => On_Display_Code_Review'Access);
 
       Gtk.Menu_Item.Gtk_New (Mitem);
-      GPS.Kernel.Modules.Register_Menu (Kernel, Menu, Mitem);
+      Register_Menu (Kernel, Menu, Mitem);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Quick Analyze All",
          Callback    => On_Quick_Analyze_All'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Generate SCIL",
          Callback    => On_Generate_SCIL'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"Run _CodePeer",
          Callback    => On_Run_Analysis_Manually'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"_Regenerate Report",
          Callback    => On_Regenerate_Report'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,
          Text        => -"Display _HTML Report",
          Callback    => On_HTML_Report'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"Text _Overview",
          Callback    => On_Edit_Text_Overview'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"_Text Listing",
@@ -2009,34 +2010,34 @@ package body Code_Peer.Module is
          Filter      => Lookup_Filter (Kernel, "File")
                           and Create (Language => "ada"));
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"CodePeer _Log",
          Callback    => On_Edit_Log'Access);
 
       Gtk.Menu_Item.Gtk_New (Mitem);
-      GPS.Kernel.Modules.Register_Menu (Kernel, Advanced_Menu, Mitem);
+      Register_Menu (Kernel, Advanced_Menu, Mitem);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"R_emove Lock",
          Callback    => On_Remove_Lock'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"Remove _XML Code Review",
          Callback    => On_Remove_XML_Review'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"_Remove SCIL",
          Callback    => On_Remove_SCIL'Access);
 
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Advanced_Menu,
          Text        => -"Remove _SCIL & DB",

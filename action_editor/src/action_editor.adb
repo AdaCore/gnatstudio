@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2009, AdaCore             --
+--                      Copyright (C) 2004-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -58,6 +58,7 @@ with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel;               use GPS.Kernel;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;

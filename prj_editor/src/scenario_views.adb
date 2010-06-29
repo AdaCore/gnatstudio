@@ -42,20 +42,21 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with XML_Utils;           use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
 
-with Projects;            use Projects;
-with GNAT.Case_Util;      use GNAT.Case_Util;
-with GNAT.Strings;        use GNAT.Strings;
-with GNATCOLL.Projects;   use GNATCOLL.Projects;
-with GNATCOLL.Utils;      use GNATCOLL.Utils;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;  use GPS.Kernel.Project;
-with Variable_Editors;    use Variable_Editors;
-with GPS.Intl;            use GPS.Intl;
-with GUI_Utils;           use GUI_Utils;
-with Traces;              use Traces;
+with Projects;              use Projects;
+with GNAT.Case_Util;        use GNAT.Case_Util;
+with GNAT.Strings;          use GNAT.Strings;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with Variable_Editors;      use Variable_Editors;
+with GPS.Intl;              use GPS.Intl;
+with GUI_Utils;             use GUI_Utils;
+with Traces;                use Traces;
 
 package body Scenario_Views is
 

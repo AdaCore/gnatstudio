@@ -21,6 +21,7 @@ with Glib.Object;
 with GPS.Intl;
 with GPS.Kernel.Console;
 with GPS.Kernel.Project;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Traces;
@@ -135,13 +136,13 @@ package body GNATStack.Module is
       Module := new GNATStack_Module_Id_Record (Kernel);
 
       Module.Register_Module (Kernel, "GNATStack");
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => -"/Tools/GNATStack",
          Text        => -"_Analyze stack usage",
          Ref_Item    => -"Macro",
          Callback    => On_Analyze_Stack_Usage'Access);
-      GPS.Kernel.Modules.Register_Menu
+      Register_Menu
         (Kernel      => Kernel,
          Parent_Path => -"/Tools/GNATStack",
          Text        => -"_Load data",

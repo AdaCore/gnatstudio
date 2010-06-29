@@ -114,7 +114,7 @@ package Generic_Views is
         (Widget : access Glib.Object.GObject_Record'Class;
          Kernel : GPS.Kernel.Kernel_Handle);
       On_Open_View_Access : constant
-        GPS.Kernel.Kernel_Callback.Marshallers.Void_Marshaller.Handler :=
+        GPS.Kernel.MDI.Kernel_Callback.Marshallers.Void_Marshaller.Handler :=
           On_Open_View'Access;
       --  Create a new view if none exists, or raise the existing one
 

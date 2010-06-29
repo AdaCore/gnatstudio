@@ -51,6 +51,7 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -72,7 +73,7 @@ package body Project_Explorers_Files is
    overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    type Append_Directory_Idle_Data is record
@@ -272,10 +273,11 @@ package body Project_Explorers_Files is
    overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget) is
+      Child   : Glib.Object.GObject) is
    begin
       Explorer_Context_Factory
-        (Context, Get_Kernel (Module.all), Child, Child, null, null);
+        (Context, Get_Kernel (Module.all),
+         Gtk_Widget (Child), Child, null, null);
    end Default_Context_Factory;
 
    --------------------

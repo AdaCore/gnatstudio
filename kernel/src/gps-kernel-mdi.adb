@@ -22,7 +22,8 @@ with GNAT.Strings;             use GNAT.Strings;
 
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
-with Glib.Properties;           use Glib.Properties;
+with Glib.Object;              use Glib.Object;
+with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
 with Gdk.Color; use Gdk; use Gdk.Color;
@@ -31,8 +32,8 @@ with Gdk.Window;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo;                 use Gtk.Combo;
-with Gtk.Container;             use Gtk.Container;
+with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Container;            use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
@@ -55,6 +56,7 @@ with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
@@ -438,7 +440,7 @@ package body GPS.Kernel.MDI is
 
          if Module /= null
            and then Save_Function
-             (Module, Get_Widget (Child),
+             (Module, GObject (Get_Widget (Child)),
               Mode         => Query,
               Single_Child => Children'Length = 1,
               Force        => Force)
@@ -459,7 +461,7 @@ package body GPS.Kernel.MDI is
       begin
          if Module /= null then
             return Save_Function
-              (Module, Get_Widget (Child),
+              (Module, GObject (Get_Widget (Child)),
                Mode         => Action,
                Single_Child => Children'Length = 1,
                Force        => Force);
@@ -1209,7 +1211,8 @@ package body GPS.Kernel.MDI is
 
       if Module /= null then
          Context.Data.Data := new Selection_Context_Data_Record;
-         Default_Context_Factory (Module, Context, Get_Widget (Child));
+         Default_Context_Factory
+           (Module, Context, GObject (Get_Widget (Child)));
          return Context;
       else
          return No_Context;
@@ -1381,10 +1384,21 @@ package body GPS.Kernel.MDI is
 
       if Module /= null then
          Default_Context_Factory
-           (Module, Context, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
+           (Module, Context,
+            GObject (Get_Widget (Get_Focus_Child (Get_MDI (Handle)))));
       end if;
 
       return Context;
    end Get_Current_Context;
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup
+     (Data : Glib.Object.GObject; Id : Gtk.Handlers.Handler_Id) is
+   begin
+      Add_Watch (Id, Data);
+   end Setup;
 
 end GPS.Kernel.MDI;

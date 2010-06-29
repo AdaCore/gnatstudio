@@ -28,6 +28,7 @@ with GPS.Intl;                use GPS.Intl;
 with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;

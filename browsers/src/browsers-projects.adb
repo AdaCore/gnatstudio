@@ -19,6 +19,7 @@
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Stock;              use Gtk.Stock;
@@ -32,6 +33,7 @@ with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
@@ -57,7 +59,7 @@ package body Browsers.Projects is
    overriding procedure Default_Context_Factory
      (Module  : access Project_Browser_Module;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    ---------------------
@@ -618,7 +620,7 @@ package body Browsers.Projects is
    overriding procedure Default_Context_Factory
      (Module  : access Project_Browser_Module;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
       Browser : constant Project_Browser := Project_Browser (Child);

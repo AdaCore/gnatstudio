@@ -76,6 +76,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
@@ -133,7 +134,7 @@ package body Project_Explorers is
    overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    type Explorer_Path is record
@@ -2440,10 +2441,11 @@ package body Project_Explorers is
    overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget) is
+      Child   : Glib.Object.GObject) is
    begin
       Explorer_Context_Factory
-        (Context, Get_Kernel (Module.all), Child, Child, null, null);
+        (Context, Get_Kernel (Module.all),
+         Gtk_Widget (Child), Child, null, null);
    end Default_Context_Factory;
 
    ----------

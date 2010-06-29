@@ -58,6 +58,7 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with Histories;                 use Histories;
@@ -94,7 +95,7 @@ package body Outline_View is
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    procedure On_Context_Changed
@@ -352,7 +353,7 @@ package body Outline_View is
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget)
+      Child   : Glib.Object.GObject)
    is
       Outline : constant Outline_View_Access := Outline_View_Access (Child);
    begin

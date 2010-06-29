@@ -322,10 +322,10 @@ private
    overriding procedure Default_Context_Factory
      (Module  : access Source_Editor_Module_Record;
       Context : in out Selection_Context;
-      Child   : Gtk.Widget.Gtk_Widget);
+      Child   : Glib.Object.GObject);
    overriding function Save_Function
      (Module       : access Source_Editor_Module_Record;
-      Child        : Gtk.Widget.Gtk_Widget;
+      Child        : Glib.Object.GObject;
       Mode         : Save_Function_Mode;
       Single_Child : Boolean;
       Force        : Boolean) return Boolean;

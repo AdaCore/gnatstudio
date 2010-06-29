@@ -46,7 +46,7 @@ with Language;
 with Language_Handlers;
 with GPS.Editors;
 with GPS.Kernel;
-with GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
 
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
@@ -352,7 +352,7 @@ package Src_Editor_Box is
    --  Go to the body of the entity in the context
 
    type Goto_Dispatch_Declaration_Submenu is new
-     GPS.Kernel.Modules.Submenu_Factory_Record with null record;
+     GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access Goto_Dispatch_Declaration_Submenu;
       Object  : access Glib.Object.GObject_Record'Class;
@@ -361,7 +361,7 @@ package Src_Editor_Box is
    --  Adds submenus to the "Goto dispatching declaration" contextual menu
 
    type Goto_Dispatch_Body_Submenu is new
-     GPS.Kernel.Modules.Submenu_Factory_Record with null record;
+     GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access Goto_Dispatch_Body_Submenu;
       Object  : access Glib.Object.GObject_Record'Class;
@@ -370,7 +370,7 @@ package Src_Editor_Box is
    --  Adds submenus to the "Goto dispatching body" contextual menu
 
    type Goto_Body_Menu_Label is new
-     GPS.Kernel.Modules.Contextual_Menu_Label_Creator_Record
+     GPS.Kernel.Modules.UI.Contextual_Menu_Label_Creator_Record
      with null record;
    overriding function Get_Label
      (Creator : access Goto_Body_Menu_Label;
