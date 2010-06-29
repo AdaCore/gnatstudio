@@ -16,37 +16,25 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-private with Default_Preferences;
-with GPS.Kernel.Modules;
-private with GPS.Styles.UI;
-private with GNATCOLL.VFS;
-private with GNATStack.Data_Model;
 
-package GNATStack.Module is
+private package GNATStack.Module.Editors is
+
+   procedure Show_Stack_Usage
+     (Module : not null access GNATStack_Module_Id_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
+   --  Shows stack usage information in the specified file.
+
+   procedure Hide_Stack_Usage
+     (Module : not null access GNATStack_Module_Id_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
+   --  Hides stack usage information in the specified file.
+
+   procedure Show_Stack_Usage_In_Opened_Editors
+     (Module : not null access GNATStack_Module_Id_Record'Class);
+   --  Shows stack usage information is all opened editors.
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the module
+     (Module : not null access GNATStack_Module_Id_Record'Class);
+   --  Register preferences, styles, hooks for editor integration.
 
-private
-
-   type GNATStack_Module_Id_Record
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
-     new GPS.Kernel.Modules.Module_ID_Record with
-   record
-      Data                   : GNATStack.Data_Model.Analysis_Information;
-      Loaded                 : Boolean := False;
-      File                   : GNATCOLL.VFS.Virtual_File;
-      Annotations_Foreground : Default_Preferences.Color_Preference;
-      Annotations_Background : Default_Preferences.Color_Preference;
-      Annotations_Style      : GPS.Styles.UI.Style_Access;
-   end record;
-
-   GNATStack_Editor_Annotations : constant String :=
-                                    "GNATStack editor annotations";
-
-   type GNATStack_Module_Id is access all GNATStack_Module_Id_Record'Class;
-
-   Module : GNATStack_Module_Id;
-
-end GNATStack.Module;
+end GNATStack.Module.Editors;

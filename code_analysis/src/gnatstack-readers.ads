@@ -18,119 +18,33 @@
 -----------------------------------------------------------------------
 
 private with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Hashed_Sets;
-with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+private with Ada.Containers.Vectors;
+private with Ada.Strings.Unbounded;
 
 private with Sax.Attributes;
 with Sax.Readers;
 private with Unicode.CES;
 
+with GNATStack.Data_Model;
+
 package GNATStack.Readers is
 
    type Reader is new Sax.Readers.Reader with private;
 
-   type Stack_Usage_Information is record
-      Size      : Integer;
-      Qualifier : Ada.Strings.Unbounded.Unbounded_String;
-   end record;
-
-   type Subprogram_Location is record
-      Name   : Ada.Strings.Unbounded.Unbounded_String;
-      File   : Ada.Strings.Unbounded.Unbounded_String;
-      Line   : Positive;
-      Column : Positive;
-   end record;
-
-   function Hash
-     (Item : Subprogram_Location) return Ada.Containers.Hash_Type;
-
-   package Subprogram_Location_Sets is
-     new Ada.Containers.Hashed_Sets (Subprogram_Location, Hash, "=");
-
-   type Subprogram_Identifier is record
-      Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-      Locations   : Subprogram_Location_Sets.Set;
-   end record;
-
-   type Object_Information is record
-      Name   : Ada.Strings.Unbounded.Unbounded_String;
-      File   : Ada.Strings.Unbounded.Unbounded_String;
-      Line   : Positive;
-      Column : Positive;
-   end record;
-
-   package Object_Information_Vectors is
-     new Ada.Containers.Vectors (Positive, Object_Information);
-
-   type Indirect_Call_Information is record
-      File : Ada.Strings.Unbounded.Unbounded_String;
-      Line : Positive;
-   end record;
-
-   package Indirect_Call_Information_Vectors is
-     new Ada.Containers.Vectors (Positive, Indirect_Call_Information);
-
-   type Subprogram_Information;
-   type Subprogram_Information_Access is access all Subprogram_Information;
-
-   function Hash
-     (Item : Subprogram_Information_Access) return Ada.Containers.Hash_Type;
-
-   function Equivalent_Elements
-     (Left  : Subprogram_Information_Access;
-      Right : Subprogram_Information_Access) return Boolean;
-
-   package Subprogram_Information_Vectors is
-     new Ada.Containers.Vectors (Positive, Subprogram_Information_Access);
-
-   package Subprogram_Information_Vector_Vectors is
-     new Ada.Containers.Vectors
-       (Positive,
-        Subprogram_Information_Vectors.Vector,
-        Subprogram_Information_Vectors."=");
-
-   package Subprogram_Information_Sets is
-     new Ada.Containers.Hashed_Sets
-       (Subprogram_Information_Access, Hash, Equivalent_Elements);
-
-   type Subprogram_Information is record
-      Identifier   : Subprogram_Identifier;
-      Global_Usage : Stack_Usage_Information;
-      Local_Usage  : Stack_Usage_Information;
-      Calls        : Subprogram_Information_Sets.Set;
-      Unbounded    : Object_Information_Vectors.Vector;
-      Indirects    : Indirect_Call_Information_Vectors.Vector;
-
-      --  For entry subprograms
-
-      Is_Entry     : Boolean := False;
-      Entry_Usage  : Stack_Usage_Information;
-      Chain        : Subprogram_Information_Vectors.Vector;
-
-      --  For external subprograms
-
-      Is_External  : Boolean := False;
-   end record;
-
-   type Analysis_Information is record
-      Accurate       : Boolean;
-      Subprogram_Set : Subprogram_Information_Sets.Set;
-      Unbounded_Set  : Subprogram_Information_Sets.Set;
-      External_Set   : Subprogram_Information_Sets.Set;
-      Indirect_Set   : Subprogram_Information_Sets.Set;
-      Cycle_Set      : Subprogram_Information_Vector_Vectors.Vector;
-      Entry_Set      : Subprogram_Information_Sets.Set;
-   end record;
+   function Get_Data
+     (Self : Reader'Class) return GNATStack.Data_Model.Analysis_Information;
+   --  Returns loaded information.
 
 private
 
-   function Hash
-     (Item : Subprogram_Identifier) return Ada.Containers.Hash_Type;
+   use GNATStack.Data_Model;
 
    package Subprogram_Information_Maps is
      new Ada.Containers.Hashed_Maps
-       (Subprogram_Identifier, Subprogram_Information_Access, Hash, "=");
+       (GNATStack.Data_Model.Subprogram_Identifier,
+        GNATStack.Data_Model.Subprogram_Information_Access,
+        Hash,
+        "=");
 
    type Parser_State_Kinds is
      (None_State,
