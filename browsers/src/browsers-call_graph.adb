@@ -1890,6 +1890,7 @@ package body Browsers.Call_Graph is
 
          exception
             when E : others =>
+               Unlock_Construct_Heuristics (Lock);
                Insert (Get_Kernel (Context.Context),
                        -"Internal error when creating the call graph for "
                        & Entity_Name_Information (Context.Context),
