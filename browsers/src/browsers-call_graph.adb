@@ -66,6 +66,7 @@ with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
@@ -77,6 +78,7 @@ with GPS.Kernel;                    use GPS.Kernel;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with XML_Utils;                     use XML_Utils;
+with Std_Dialogs;                   use Std_Dialogs;
 with Traces;                        use Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Generic_List;
@@ -179,6 +181,11 @@ package body Browsers.Call_Graph is
    type Entity_Calls_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Entity_Calls_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Entity_Calls_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Entity_Calls_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Entity_Called_By_Command is new Interactive_Command with null record;
@@ -352,9 +359,11 @@ package body Browsers.Call_Graph is
    --  See inherited documentation
 
    procedure Examine_Entity_Call_Graph
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Entity     : Entity_Information);
-   --  Display the call graph for the node
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Entity  : Entity_Information;
+      Refresh : Boolean := True);
+   --  Display the call graph for the node.
+   --  If Refresh is True, refresh the canvas layout.
 
    procedure Examine_Ancestors_Call_Graph
      (Kernel : access Kernel_Handle_Record'Class;
@@ -413,12 +422,12 @@ package body Browsers.Call_Graph is
    --  Add a new entity to the browser, if not already there
 
    procedure Add_Entity_And_Link
-     (Browser        : Call_Graph_Browser;
-      Item           : Entity_Item;
-      Link_From_Item : Boolean;
-      Entity         : Entity_Information;
-      Ref            : Entity_Reference;
-      Is_Renaming    : Boolean;
+     (Browser             : Call_Graph_Browser;
+      Item                : Entity_Item;
+      Link_From_Item      : Boolean;
+      Entity              : Entity_Information;
+      Ref                 : Entity_Reference;
+      Is_Renaming         : Boolean;
       Through_Dispatching : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
@@ -752,8 +761,9 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Entity  : Entity_Information;
+      Refresh : Boolean := True)
    is
       Child_Browser : constant MDI_Child := Open_Call_Graph_Browser (Kernel);
       Browser       : constant Call_Graph_Browser :=
@@ -764,6 +774,9 @@ package body Browsers.Call_Graph is
 
    begin
       if not Children_Shown (Item) then
+         Set_Children_Shown (Item, True);
+         Redraw_Title_Bar (Item);
+
          declare
             Data : constant Examine_Ancestors_Data_Access :=
               new Examine_Ancestors_Data'
@@ -771,9 +784,8 @@ package body Browsers.Call_Graph is
                  Browser        => Browser,
                  Item           => Item,
                  Link_From_Item => True);
+
          begin
-            Set_Children_Shown (Data.Item, True);
-            Redraw_Title_Bar (Data.Item);
             Examine_Entity_Call_Graph
               (Kernel            => Kernel,
                Entity            => Entity,
@@ -788,12 +800,14 @@ package body Browsers.Call_Graph is
          Refresh_Linked_Items (Item, Refresh_Children => True);
       end if;
 
-      --  We need to do a layout in all cases, so that the newly added item
-      --  is put at a correct place.
-      Layout (Browser, Force => False);
-      Canvas := Get_Canvas (Browser);
-      Refresh_Canvas (Canvas);
-      Align_Item (Canvas, Item, 0.4, 0.4);
+      if Refresh then
+         --  We need to do a layout, so that the newly added item is put at a
+         --  correct place.
+         Layout (Browser, Force => False);
+         Canvas := Get_Canvas (Browser);
+         Refresh_Canvas (Canvas);
+         Align_Item (Canvas, Item, 0.4, 0.4);
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -826,12 +840,12 @@ package body Browsers.Call_Graph is
    -------------------------
 
    procedure Add_Entity_And_Link
-     (Browser        : Call_Graph_Browser;
-      Item           : Entity_Item;
-      Link_From_Item : Boolean;
-      Entity         : Entity_Information;
-      Ref            : Entity_Reference;
-      Is_Renaming    : Boolean;
+     (Browser             : Call_Graph_Browser;
+      Item                : Entity_Item;
+      Link_From_Item      : Boolean;
+      Entity              : Entity_Information;
+      Ref                 : Entity_Reference;
+      Is_Renaming         : Boolean;
       Through_Dispatching : Boolean)
    is
       Child            : Entity_Item;
@@ -940,6 +954,7 @@ package body Browsers.Call_Graph is
            (Data.Browser, Data.Item, Data.Link_From_Item,
             Parent, Ref, Is_Renaming, Through_Dispatching);
       end if;
+
       return True;
    end On_Entity_Found;
 
@@ -1782,9 +1797,123 @@ package body Browsers.Call_Graph is
       return Commands.Failure;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   overriding function Execute
+     (Command : access Entity_Calls_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Key         : constant Histories.History_Key := "Call_Graph_Limit";
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Node_Entity : Entity_Information;
+      History     : constant Histories.History := Get_History (Kernel);
+      Max_Items   : Natural := 1000;
+
+   begin
+      if Histories.Get_History (History.all, Key) = null then
+         Histories.Add_To_History (History.all, Key, "1000");
+      end if;
+
+      declare
+         Str  : constant String :=
+           Simple_Entry_Dialog
+             (Get_Main_Window (Kernel),
+              -"Complete Call Graph",
+              -("Computing complete call graph may take a long time." &
+                ASCII.LF & "Enter maximum number of items to display: "),
+              Win_Pos_Mouse, History, Key);
+      begin
+         if Str /= "" and then Str (Str'First) /= ASCII.NUL then
+            Max_Items := Integer'Value (Str);
+         else
+            return Commands.Failure;
+         end if;
+      exception
+         when others =>
+            return Commands.Failure;
+      end;
+
+      Push_State (Get_Kernel (Context.Context), Busy);
+      Node_Entity := Get_Entity (Context.Context, Ask_If_Overloaded => True);
+
+      if Node_Entity /= null then
+         --  ??? Should check that Decl.Kind is a subprogram
+
+         declare
+            Db      : constant Entities_Database := Get_Database (Kernel);
+            Browser : constant Call_Graph_Browser := Call_Graph_Browser
+                        (Get_Widget (Open_Call_Graph_Browser (Kernel)));
+            Canvas  : constant Interactive_Canvas := Get_Canvas (Browser);
+            Lock    : Construct_Heuristics_Lock :=
+                        Lock_Construct_Heuristics (Db);
+            Item    : Entity_Item;
+            Iter    : Item_Iterator;
+            Count   : Integer := 1;
+
+         begin
+            Parse_All_LI_Information (Kernel, Get_Project (Kernel), False);
+            --  ??? for some reason, calling Freeze (Db) here generates
+            --  incomplete call graphs
+            --  Freeze (Db);
+
+            Examine_Entity_Call_Graph (Kernel, Node_Entity, Refresh => False);
+
+            Main_Loop : loop
+               Iter := Start (Canvas);
+
+               loop
+                  Item := Entity_Item (Get (Iter));
+
+                  exit Main_Loop when Item = null;
+
+                  if not Children_Shown (Item) then
+                     Trace (Me, "Entity = " & Debug_Name (Item.Entity) &
+                            " Count =" & Count'Img);
+                     Examine_Entity_Call_Graph
+                       (Kernel, Item.Entity, Refresh => False);
+                     --  Iter may no longer be valid, so start again
+                     exit;
+                  end if;
+
+                  Next (Iter);
+               end loop;
+
+               Count := Count + 1;
+               exit Main_Loop when Count > Max_Items;
+            end loop Main_Loop;
+
+            --  ??? See comment about Freeze above
+            --  Thaw (Db);
+            Unlock_Construct_Heuristics (Lock);
+
+            Layout (Browser, Force => True);
+            Refresh_Canvas (Canvas);
+
+         exception
+            when E : others =>
+               Insert (Get_Kernel (Context.Context),
+                       -"Internal error when creating the call graph for "
+                       & Entity_Name_Information (Context.Context),
+                       Mode => Error);
+               Trace (Exception_Handle, E);
+               Pop_State (Get_Kernel (Context.Context));
+               return Commands.Failure;
+         end;
+
+      else
+         Insert (Get_Kernel (Context.Context),
+                 -"No call graph available for "
+                 & Entity_Name_Information (Context.Context));
+      end if;
+
+      Pop_State (Get_Kernel (Context.Context));
+      return Commands.Success;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         Pop_State (Get_Kernel (Context.Context));
+      return Commands.Failure;
+   end Execute;
 
    overriding function Execute
      (Command : access Entity_Called_By_Command;
@@ -2211,6 +2340,13 @@ package body Browsers.Call_Graph is
       Register_Contextual_Menu
         (Kernel, "Entity calls in browser",
          Label  => "Browsers/%e calls",
+         Filter => Filter,
+         Action => Command);
+
+      Command := new Entity_Calls_All_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity calls (recursively) in browser",
+         Label  => "Browsers/%e calls (recursively)",
          Filter => Filter,
          Action => Command);
 

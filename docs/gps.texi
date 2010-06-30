@@ -3964,6 +3964,15 @@ subprograms.
 Open or raise the call graph browser on the specified entity and display all
 the subprograms called by @i{entity}. @xref{Call Graph}.
 
+@item @i{Entity} calls (recursively)
+@cindex call graph
+@cindex calls
+Open or raise the call graph browser on the specified entity and display all
+the subprograms called by @i{entity}, transitively for all subprograms.
+Since this can take a long time to compute and generate a very large graph,
+an intermediate dialog is displayed to limit the number of subprograms to
+display (1000 by default). @xref{Call Graph}.
+
 @item @i{Entity} is called by
 @cindex call graph
 @cindex called by
