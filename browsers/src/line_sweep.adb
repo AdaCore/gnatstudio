@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                             G P S                                 --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                    Copyright (C) 2001-2010, AdaCore               --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -350,6 +349,12 @@ package body Line_Sweep is
 
                loop
                   pragma Assert (Current.Next /= null);
+
+                  --  Better to return silently than to get a Constraint_Error
+                  --  in case assertions are disabled.
+
+                  exit when Current.Next = null;
+
                   Current.Edge := Current.Next.Edge;
                   Current := Current.Next;
                   exit when Current.Edge = S1 or else Current.Edge = S2;
