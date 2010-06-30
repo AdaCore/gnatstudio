@@ -378,6 +378,7 @@
       <shell>Hook.run %1 "$1" null %8 %2 "%10 [rBASE]"</shell>
       <shell>delete "%4"</shell>
       <shell>delete "%11"</shell>
+      <shell>Editor.set_writable %12 FALSE</shell>
    </action>
 
    <action name="generic_svn_diff_tag" show-command="false" output="none" category="">
