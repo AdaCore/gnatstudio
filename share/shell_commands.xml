@@ -6131,6 +6131,10 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      </example>
   </shell_doc>
 
+  <shell_doc name="GPS.Message.__del__">
+      <description>Destroy the Message instance.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Message.list">
      <param name="file">(optional) a GPS File. Specifying this parameter
      restricts the output to messages for this file only.</param>
