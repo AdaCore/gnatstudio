@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Containers.Doubly_Linked_Lists;
 
 with Gtk.Enums;  use Gtk.Enums;
 with Gtk.Widget; use Gtk.Widget;
@@ -64,8 +65,28 @@ package body GPS.Kernel.Messages.Shell is
    end record;
    type Subprogram_Command is access all Subprogram_Command_Record'Class;
 
+   package Instance_Linked_List is new Ada.Containers.Doubly_Linked_Lists
+     (Class_Instance);
+   use Instance_Linked_List;
+
+   type Shell_Note_Record is new Abstract_Note with record
+      Instances : List;
+   end record;
+   type Shell_Note is access all Shell_Note_Record'Class;
+
    overriding function Execute
      (Command : access Subprogram_Command_Record) return Command_Return_Type;
+
+   type Shell_Listener
+     (Kernel : not null access Kernel_Handle_Record'Class)
+     is new Abstract_Listener with null record;
+   type Shell_Listener_Access is access all Shell_Listener'Class;
+   --  Listener for messages
+
+   overriding procedure Message_Removed
+     (Self    : not null access Shell_Listener;
+      Message : not null access Abstract_Message'Class);
+   --  Called when a message is removed
 
    -----------------------
    -- Local subprograms --
@@ -77,7 +98,8 @@ package body GPS.Kernel.Messages.Shell is
    --  Set data in Instance to Message
 
    function Get_Message (Instance : Class_Instance) return Message_Access;
-   --  Return Message stored in Instance
+   --  Return Message stored in Instance.
+   --  Return null if the message is no longer valid.
 
    procedure Message_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -116,11 +138,25 @@ package body GPS.Kernel.Messages.Shell is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Message  : Message_Access) is
+      Message  : Message_Access)
+   is
+      Note : Shell_Note;
    begin
-      Set_Data (Instance, Class,
-                Message_Property_Record'
-                  (Message => Message));
+      Set_Data (Instance, Class, Message_Property_Record'(Message => Message));
+
+      --  We are creating an instance containing Message: add Instance to the
+      --  note in message
+
+      if Message /= null then
+         if Message.Has_Note (Shell_Note_Record'Tag) then
+            Note := Shell_Note (Message.Get_Note (Shell_Note_Record'Tag));
+         else
+            Note := new Shell_Note_Record;
+            Message.Set_Note (Note_Access (Note));
+         end if;
+
+         Note.Instances.Append (Instance);
+      end if;
    end Set_Data;
 
    -----------------
@@ -149,10 +185,29 @@ package body GPS.Kernel.Messages.Shell is
    procedure Accessors
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Message : constant Message_Access := Get_Message
-        (Nth_Arg (Data, 1, Message_Class));
+      Inst    : constant Class_Instance := Nth_Arg (Data, 1, Message_Class);
+      Message : constant Message_Access := Get_Message (Inst);
+      Note    : Shell_Note;
+      C       : Instance_Linked_List.Cursor;
    begin
-      if Command = "get_line" then
+      if Message = null then
+         return;
+      end if;
+
+      if Command = Destructor_Method then
+         --  Remove the message instance from the list of instances stored in
+         --  the message note
+
+         if Message.Has_Note (Shell_Note_Record'Tag) then
+            Note := Shell_Note (Message.Get_Note (Shell_Note_Record'Tag));
+            C := Note.Instances.Find (Inst);
+
+            if C /= No_Element then
+               Note.Instances.Delete (C);
+            end if;
+         end if;
+
+      elsif Command = "get_line" then
          Set_Return_Value (Data, Message.Get_Line);
 
       elsif Command = "get_column" then
@@ -217,9 +272,11 @@ package body GPS.Kernel.Messages.Shell is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Message_Inst : Class_Instance;
+      Message      : Message_Access;
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
       Container    : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
+
    begin
       if Command = Constructor_Method then
          Name_Parameters
@@ -273,6 +330,12 @@ package body GPS.Kernel.Messages.Shell is
 
             use type Commands.Interactive.Interactive_Command_Access;
          begin
+            Message := Get_Message (Nth_Arg (Data, 1, Message_Class));
+
+            if Message = null then
+               return;
+            end if;
+
             if Action_Str /= "" then
                The_Action := Lookup_Action (Kernel, Action_Str);
 
@@ -295,7 +358,7 @@ package body GPS.Kernel.Messages.Shell is
                   Size     => Icon_Size_Menu),
                Associated_Command => Command);
 
-            Get_Message (Nth_Arg (Data, 1, Message_Class)).Set_Action (Action);
+            Message.Set_Action (Action);
          end;
 
       elsif Command = "set_subprogram" then
@@ -311,6 +374,11 @@ package body GPS.Kernel.Messages.Shell is
             Command      : Subprogram_Command;
             Action       : Action_Item;
          begin
+            Message := Get_Message (Nth_Arg (Data, 1, Message_Class));
+            if Message = null then
+               return;
+            end if;
+
             Command := new Subprogram_Command_Record;
             Command.Sub  := Nth_Arg (Data, 2);
             Command.Inst := Nth_Arg (Data, 1, Message_Class);
@@ -324,7 +392,7 @@ package body GPS.Kernel.Messages.Shell is
                   Size     => Icon_Size_Menu),
                Associated_Command => Command_Access (Command));
 
-            Get_Message (Nth_Arg (Data, 1, Message_Class)).Set_Action (Action);
+            Message.Set_Action (Action);
          end;
 
       elsif Command = "list" then
@@ -412,12 +480,24 @@ package body GPS.Kernel.Messages.Shell is
    -----------------------
 
    procedure Register_Commands
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Manager : constant Shell_Listener_Access := new Shell_Listener (Kernel);
    begin
+      --  Register the Messages listener
+      Get_Messages_Container (Kernel).Register_Listener
+        (Listener_Access (Manager),
+         (others => True));
+      --  ??? This is never unregistered/deallocated
+
       Message_Class := New_Class (Kernel, Class);
 
       Register_Command
         (Kernel, Constructor_Method, 5, 6, Message_Command_Handler'Access,
+         Message_Class, False);
+
+      Register_Command
+        (Kernel, Destructor_Method, 0, 0, Accessors'Access,
          Message_Class, False);
 
       Register_Command
@@ -463,5 +543,31 @@ package body GPS.Kernel.Messages.Shell is
         (Kernel, "execute_action", 0, 0, Accessors'Access, Message_Class);
 
    end Register_Commands;
+
+   ---------------------
+   -- Message_Removed --
+   ---------------------
+
+   overriding procedure Message_Removed
+     (Self    : not null access Shell_Listener;
+      Message : not null access Abstract_Message'Class)
+   is
+      pragma Unreferenced (Self);
+      Note : Shell_Note;
+      C    : Instance_Linked_List.Cursor;
+   begin
+      if Message.Has_Note (Shell_Note_Record'Tag) then
+         --  Invalidate all the instances referring to this message
+
+         Note := Shell_Note (Message.Get_Note (Shell_Note_Record'Tag));
+
+         C := Note.Instances.First;
+
+         while Has_Element (C) loop
+            Set_Data (Instance_Linked_List.Element (C), Message_Access'(null));
+            Next (C);
+         end loop;
+      end if;
+   end Message_Removed;
 
 end GPS.Kernel.Messages.Shell;
