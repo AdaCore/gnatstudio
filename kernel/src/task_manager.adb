@@ -243,14 +243,14 @@ package body Task_Manager is
          end if;
 
          for Q in First .. Last loop
+            Manager.Queues (Q).Current_Priority :=
+              Manager.Queues (Q).Current_Priority - Previous_Prio;
+
             if Manager.Queues (Q).Current_Priority < Lowest then
                Lowest := Manager.Queues (Q).Current_Priority;
                Index := Q;
                Queue := Manager.Queues (Q);
             end if;
-
-            Manager.Queues (Q).Current_Priority :=
-              Manager.Queues (Q).Current_Priority - Previous_Prio;
          end loop;
 
          Queue.Current_Priority := Queue.Current_Priority + Queue.Priority;
@@ -564,6 +564,11 @@ package body Task_Manager is
                end if;
 
                Free (Manager.Queues (J).Queue);
+
+               for K in Manager.Queues'Range loop
+                  Manager.Queues (K).Current_Priority := 0;
+               end loop;
+
                return;
             end if;
 
