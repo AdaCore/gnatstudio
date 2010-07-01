@@ -25,4 +25,8 @@ package GPS.Kernel.Messages.Shell is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the shell commands used to handle messages
 
+   procedure Unregister
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Unregister the listener
+
 end GPS.Kernel.Messages.Shell;

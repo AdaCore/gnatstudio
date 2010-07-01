@@ -81,6 +81,8 @@ package body GPS.Kernel.Messages.Shell is
      (Kernel : not null access Kernel_Handle_Record'Class)
      is new Abstract_Listener with null record;
    type Shell_Listener_Access is access all Shell_Listener'Class;
+
+   Manager : Shell_Listener_Access;
    --  Listener for messages
 
    overriding procedure Message_Removed
@@ -482,13 +484,12 @@ package body GPS.Kernel.Messages.Shell is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Manager : constant Shell_Listener_Access := new Shell_Listener (Kernel);
    begin
+      Manager := new Shell_Listener (Kernel);
       --  Register the Messages listener
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
          (others => True));
-      --  ??? This is never unregistered/deallocated
 
       Message_Class := New_Class (Kernel, Class);
 
@@ -569,5 +570,19 @@ package body GPS.Kernel.Messages.Shell is
          end loop;
       end if;
    end Message_Removed;
+
+   ----------------
+   -- Unregister --
+   ----------------
+
+   procedure Unregister
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Shell_Listener'Class, Shell_Listener_Access);
+   begin
+      Get_Messages_Container (Kernel).Unregister_Listener
+        (Listener => Listener_Access (Manager));
+      Unchecked_Free (Manager);
+   end Unregister;
 
 end GPS.Kernel.Messages.Shell;
