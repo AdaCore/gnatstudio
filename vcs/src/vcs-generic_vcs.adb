@@ -55,6 +55,11 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body VCS.Generic_VCS is
 
+   --  A note about launching of commands: in this module, the launching of
+   --  commands through the Launch_Background_Command interface should be
+   --  done in general with Active => True for commands that execute something
+   --  and with Active => False for commands that wait on an external process.
+
    use type GNAT.Strings.String_Access;
 
    Me : constant Debug_Handle := Create ("Generic_VCS");
