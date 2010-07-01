@@ -2066,7 +2066,7 @@ package body VCS.Generic_VCS is
             " """ & P_Rev & """ """ & Rev & """", Script);
 
          Launch_Background_Command
-           (Kernel, Command_Access (Command), False, False,
+           (Kernel, Command_Access (Command), True, False,
             Revision_Handling_Queue);
       end Create_Link;
 
@@ -2188,7 +2188,7 @@ package body VCS.Generic_VCS is
             Launch_Background_Command
               (Kernel   => Rep.Kernel,
                Command  => Commands,
-               Active   => False,
+               Active   => True,
                Show_Bar => False,
                Queue_Id => Revision_Handling_Queue);
          end if;
@@ -2266,7 +2266,7 @@ package body VCS.Generic_VCS is
             Launch_Background_Command
               (Kernel   => Rep.Kernel,
                Command  => Commands,
-               Active   => False,
+               Active   => True,
                Show_Bar => False,
                Queue_Id => Revision_Handling_Queue);
          end if;
