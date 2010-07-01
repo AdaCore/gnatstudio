@@ -16,6 +16,11 @@ DEBUG.COUNT=no
 
 UNEXPECTED_EXCEPTIONS=yes
 
+--  Should we override the X11 server's default handling of middle mouse
+--  button to paste the selection (and thus do not paste text highlight)
+
+OVERRIDE_MIDDLE_CLICK_PASTE = yes
+
 --  Select the modules that should be loaded
 
 --  MODULE.DOCGEN             = yes

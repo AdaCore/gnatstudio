@@ -19,6 +19,7 @@
 
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 
+with GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Gdk;                        use Gdk;
@@ -81,6 +82,13 @@ with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 package body Src_Editor_View is
 
    Me : constant Debug_Handle := Create ("Editor_View");
+
+   Trace_Override_Middle_Click_Paste : constant Debug_Handle :=
+     Create ("OVERRIDE_MIDDLE_CLICK_PASTE", GNATCOLL.Traces.On);
+   --  When this is On, we do our own handling of middle mouse click to
+   --  implement paste on Unix platforms. The default handling of the Xserver
+   --  also copies the syntax highlighting which is unwanted if for instance we
+   --  copy a highlighting on an entity.
 
    Speed_Column_Width : constant := 10;
    --  The width of the speed column
@@ -2019,9 +2027,11 @@ package body Src_Editor_View is
                --  paste under Windows: this is not a standard mechanism
                --  on this platform, and it causes unwanted paste operations
                --  with some mouse wheels.
+
                if Host = Windows then
                   return True;
-               else
+
+               elsif Active (Trace_Override_Middle_Click_Paste) then
                   --  On UNIX we intercept this to use our own paste function,
                   --  because the default one pastes the tags, which we do not
                   --  want.
