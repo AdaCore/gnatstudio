@@ -197,6 +197,14 @@ package body GPS.Kernel.Messages.Shell is
       end if;
 
       if Command = Destructor_Method then
+         --  When deleting the Python module, the destructor will be called
+         --  on all remaining messages. At this point, do not manipulate
+         --  message notes since there is no longer a message container.
+
+         if Manager = null then
+            return;
+         end if;
+
          --  Remove the message instance from the list of instances stored in
          --  the message note
 
@@ -583,6 +591,7 @@ package body GPS.Kernel.Messages.Shell is
       Get_Messages_Container (Kernel).Unregister_Listener
         (Listener => Listener_Access (Manager));
       Unchecked_Free (Manager);
+      Manager := null;
    end Unregister;
 
 end GPS.Kernel.Messages.Shell;
