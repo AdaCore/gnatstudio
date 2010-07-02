@@ -331,4 +331,3 @@ NF-45-G428-003 Display call graph recursively (2010-06-30)
 
   GPS now provides a new contextual menu Browsers->xxx calls (recursively)
   to display a complete call graph from a given subprogram.
-
