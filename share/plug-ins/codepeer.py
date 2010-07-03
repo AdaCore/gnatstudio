@@ -203,7 +203,7 @@ if codepeer != "":
       <extra-args>
         <arg>-margs</arg>
         <arg>--subdirs=%subdir</arg>
-        <arg>-j1</arg>
+        <arg>--single-compile-per-obj-dir</arg>
         <arg>-k</arg>
         <arg>-c</arg>
         <arg>-gnatcC</arg>
@@ -325,7 +325,7 @@ if codepeer != "":
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-dbg-partition-limit</arg>
-          <arg>1000</arg>
+          <arg>200</arg>
           <arg>-method-timeout</arg>
           <arg>30</arg>
           <arg>-no-html-output</arg>
