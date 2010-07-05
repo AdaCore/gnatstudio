@@ -226,7 +226,7 @@ package body Remote_Module is
       Register_Menu
         (Kernel, Tools_View_Menu, -"_Remote", "",
          Show_Remote_View'Access,
-         Ref_Item => -"Window");
+         Ref_Item => -"Consoles");
 
       --  Load user specific machine list
       Load_Remote_Config (Kernel);
