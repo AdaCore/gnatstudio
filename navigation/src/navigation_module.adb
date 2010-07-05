@@ -234,6 +234,10 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Load all locations from an XML file
 
+   procedure On_Project_Loaded_Hook
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when a project is loaded.
+
    --------------------------------
    -- On_Marker_Added_In_History --
    --------------------------------
@@ -293,14 +297,56 @@ package body Navigation_Module is
                       Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
-      File, Child : Node_Ptr;
+      File, Child, Project, Prev : Node_Ptr;
+
       Success     : Boolean;
 
+      Project_File : constant Virtual_File :=
+        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
+
+      Error             : GNAT.Strings.String_Access;
    begin
       if M.Markers /= null then
          Trace (Me, "Saving " & Filename.Display_Full_Name);
-         File     := new Node;
-         File.Tag := new String'("Locations");
+
+         if Filename.Is_Regular_File then
+            Parse (Filename, File, Error);
+         end if;
+
+         if File = null then
+            File     := new Node;
+            File.Tag := new String'("Locations");
+         end if;
+
+         Child := File.Child;
+
+         while Child /= null loop
+            if Child.Tag = null
+              or else Child.Tag.all /= "Project"
+            then
+               if Prev = null then
+                  File.Child := Child.Next;
+               else
+                  Prev.Next := Child.Next;
+               end if;
+            else
+               if Get_File_Child (Child, "file") = Project_File then
+                  Project := Child;
+                  Project.Child := null;
+                  exit;
+               end if;
+            end if;
+
+            Prev := Child;
+            Child := Child.Next;
+         end loop;
+
+         if Project = null then
+            Project := new Node;
+            Project.Tag := new String'("Project");
+            Add_File_Child (Project, "file", Project_File);
+            Add_Child (File, Project);
+         end if;
 
          for Index in M.Markers'First .. M.Last_Marker loop
             Child := Save (M.Markers (Index));
@@ -308,7 +354,7 @@ package body Navigation_Module is
                if Index = M.Current_Marker then
                   Set_Attribute (Child, "current", "true");
                end if;
-               Add_Child (File, Child, Append => True);
+               Add_Child (Project, Child, Append => True);
             end if;
          end loop;
 
@@ -332,9 +378,12 @@ package body Navigation_Module is
                       Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
-      File, Child : Node_Ptr;
+      File, Child, Project : Node_Ptr;
       Marker      : Location_Marker;
       Err         : String_Access;
+
+      Project_File : constant Virtual_File :=
+        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
    begin
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
@@ -345,32 +394,63 @@ package body Navigation_Module is
             Free (Err);
 
          else
-            M.Markers := new Location_Marker_Array
-              (1 .. Max_Locations_In_History);
-            M.Current_Marker := 0;
-            M.Last_Marker := 0;
-
             Child := File.Child;
+
             while Child /= null loop
-               Marker := Create_Marker (Kernel, Child);
-
-               if Marker /= null then
-                  M.Last_Marker := M.Last_Marker + 1;
-                  M.Markers (M.Last_Marker) := Marker;
-                  if Get_Attribute (Child, "current", "false") = "true" then
-                     M.Current_Marker := M.Last_Marker;
-                  end if;
-
-                  exit when M.Last_Marker = Max_Locations_In_History;
+               if Child.Tag.all = "Project"
+                 and then Get_File_Child (Child, "file") = Project_File
+               then
+                  Project := Child;
+                  exit;
                end if;
 
                Child := Child.Next;
             end loop;
 
+            if Project /= null then
+               Child := Project.Child;
+
+               M.Markers := new Location_Marker_Array
+                 (1 .. Max_Locations_In_History);
+               M.Current_Marker := 0;
+               M.Last_Marker := 0;
+
+               while Child /= null loop
+                  Marker := Create_Marker (Kernel, Child);
+
+                  if Marker /= null then
+                     M.Last_Marker := M.Last_Marker + 1;
+                     M.Markers (M.Last_Marker) := Marker;
+
+                     if Get_Attribute (Child, "current", "false") = "true" then
+                        M.Current_Marker := M.Last_Marker;
+                     end if;
+
+                     exit when M.Last_Marker = Max_Locations_In_History;
+                  end if;
+
+                  Child := Child.Next;
+               end loop;
+            end if;
+
             Free (File);
          end if;
       end if;
    end Load_History_Markers;
+
+   ----------------------------
+   -- On_Project_Loaded_Hook --
+   ----------------------------
+
+   procedure On_Project_Loaded_Hook
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      --  Save the previous history
+      Save_History_Markers (Kernel);
+
+      --  Load the history for the new project
+      Load_History_Markers (Kernel);
+   end On_Project_Loaded_Hook;
 
    ---------------------------------
    -- Check_Marker_History_Status --
@@ -1067,7 +1147,12 @@ package body Navigation_Module is
       Navigation_Module (Navigation_Module_ID).Forward_Button :=
         Gtk_Widget (Button);
 
-      Load_History_Markers (Kernel);
+      Add_Hook
+        (Kernel  => Kernel,
+         Hook    => Project_Changed_Hook,
+         Func    => Wrapper (On_Project_Loaded_Hook'Access),
+         Name    => "navigation_module.project_changed");
+
       Refresh_Location_Buttons (Kernel);
    end Register_Module;
 

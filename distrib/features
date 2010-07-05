@@ -23,6 +23,13 @@ NF-45-J628-026 Fail search indicates context (2010-06-29)
   This is in particular useful when in all windows floating mode, since it is
   sometimes ambiguous which editor has the focus.
 
+NF-45-J628-017 Project-aware Locations history (2010-07-05)
+
+  The Locations history used by the Back/Forward toolbar buttons is now
+  project-aware: for instance, clicking "Back" when working on project A will
+  cause GPS not visit locations that were visited in a previous GPS session on
+  project B.
+
 NF-45-J621-010 New preference to control current line highlighting (2010-06-21)
 
   A new preference "Draw current line as thin line" in the Editor->Fonts and
