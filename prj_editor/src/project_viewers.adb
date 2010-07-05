@@ -159,6 +159,9 @@ package body Project_Viewers is
       --  The project to which the files currently in the viewer belong. This
       --  indicates which project file should be normalized when a modification
       --  takes place.
+
+      Current_Dir : Virtual_File := No_File;
+      --  The directory currently being shown.
    end record;
    type Project_Viewer is access all Project_Viewer_Record'Class;
 
@@ -180,7 +183,7 @@ package body Project_Viewers is
       Directory_Filter    : Virtual_File := GNATCOLL.VFS.No_File);
    --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
-   --  This doesn't clear the list first!
+   --  This clears the list first.
    --  Directory_Filter should be used to limit the search path for the files.
    --  Only the files in Directory_Filter will be displayed.
    --
@@ -434,7 +437,7 @@ package body Project_Viewers is
       Internal (Get_Object (Viewer.Model), Iter'Address,
                 Compiler_Switches_Column,
                 Locale_To_UTF8
-                  (Argument_List_To_String (Value.all)),
+                  (Argument_List_To_String (Value.all)) & ASCII.NUL,
                 Compiler_Color_Column, Color);
       Free (Value);
    end Project_Viewers_Set;
@@ -510,8 +513,6 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class) is
    begin
       if not Hook.Viewer.View_Changed_Blocked then
-         Clear (Hook.Viewer.Model);  --  ??? Should delete selectively
-
          if Hook.Viewer.Current_Project /= No_Project then
             Hook.Viewer.Current_Project := Get_Project (Kernel);
             Show_Project (Hook.Viewer, Hook.Viewer.Current_Project);
@@ -556,7 +557,6 @@ package body Project_Viewers is
       end if;
 
       Viewer.Current_Project := Project;
-      Clear (Viewer.Model);  --  ??? Should delete selectively
 
       if Viewer.Current_Project /= No_Project then
          Show_Project (Viewer, Viewer.Current_Project, Directory);
@@ -757,7 +757,20 @@ package body Project_Viewers is
    is
       Files : File_Array_Access :=
         Project_Filter.Source_Files (Recursive => False);
+      Same_Dir_And_Project : constant Boolean :=
+        (Viewer.Current_Project = Project_Filter
+         and then Viewer.Current_Dir = Directory_Filter);
    begin
+      if Same_Dir_And_Project then
+         return;
+      end if;
+
+      if Directory_Filter /= No_File then
+         Viewer.Current_Dir := Directory_Filter;
+      end if;
+
+      Clear (Viewer.Model);
+
       Viewer.Current_Project := Project_Filter;
 
       for F in Files'Range loop
