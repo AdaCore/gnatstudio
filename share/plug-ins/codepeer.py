@@ -203,7 +203,6 @@ if codepeer != "":
       <extra-args>
         <arg>-margs</arg>
         <arg>--subdirs=%subdir</arg>
-        <arg>--single-compile-per-obj-dir</arg>
         <arg>-k</arg>
         <arg>-c</arg>
         <arg>-gnatcC</arg>
