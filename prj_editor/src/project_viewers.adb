@@ -535,6 +535,7 @@ package body Project_Viewers is
    is
       Child : MDI_Child;
       Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
 
    begin
       Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
@@ -568,6 +569,10 @@ package body Project_Viewers is
             if Get_File (Viewer.Model, Iter, File_Column) = File then
                Unselect_All (Get_Selection (Viewer.Tree));
                Select_Iter (Get_Selection (Viewer.Tree), Iter);
+
+               Path := Get_Path (Viewer.Model, Iter);
+               Scroll_To_Cell (Viewer.Tree, Path, null, True, 0.5, 0.5);
+               Path_Free (Path);
                exit;
             end if;
 
@@ -759,6 +764,7 @@ package body Project_Viewers is
         Project_Filter.Source_Files (Recursive => False);
       Same_Dir_And_Project : constant Boolean :=
         (Viewer.Current_Project = Project_Filter
+         and then Directory_Filter /= No_File
          and then Viewer.Current_Dir = Directory_Filter);
    begin
       if Same_Dir_And_Project then
