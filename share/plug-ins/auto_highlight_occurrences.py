@@ -21,8 +21,8 @@ default_colors =  {
   "literal"    : "lightblue",
   "object"     : "#ffbeee",
   "subprogram" : "#ffcf90",
-  "packgage/namespace" : "lightgreen",
-  "type"               : "lightgreen",
+  "package/namespace" : "lightgreen",
+  "type"              : "lightgreen",
   "unknown"    : "lightblue" }
 
 editor_location_styles = {}
