@@ -817,13 +817,6 @@ package body Src_Editor_Module is
                Dummy := File_Edit_Callback
                  ((Src, Line,
                    Real_Column, 0, User, False));
-               Push_Marker_In_History
-                 (Kernel  => User,
-                  Marker  => Create_File_Marker
-                    (Kernel => User,
-                     File   => F,
-                     Line   => Line,
-                     Column => Column));
             end if;
          end if;
       end if;

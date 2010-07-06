@@ -81,6 +81,8 @@ package body Navigation_Module is
       Forward_Button : Gtk.Widget.Gtk_Widget;
       --  Back and forward buttons on the toolbar.
       --  ??? This might be put elsewhere.
+
+      Previous_Project : Virtual_File := No_File;
    end record;
    type Navigation_Module is access all Navigation_Module_Record'Class;
 
@@ -227,8 +229,11 @@ package body Navigation_Module is
    --  Go to the location pointed to by the current marker in the history
 
    procedure Save_History_Markers
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Old_Project : Boolean := False);
    --  Save all locations to an XML file
+   --  If Old_Project is True, save the locations from the previous project
+   --  rather than from the current project.
 
    procedure Load_History_Markers
      (Kernel : access Kernel_Handle_Record'Class);
@@ -291,7 +296,8 @@ package body Navigation_Module is
    --------------------------
 
    procedure Save_History_Markers
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Old_Project : Boolean := False)
    is
       Filename    : constant Virtual_File :=
                       Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
@@ -301,11 +307,23 @@ package body Navigation_Module is
 
       Success     : Boolean;
 
-      Project_File : constant Virtual_File :=
-        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
+      Project_File : Virtual_File;
 
       Error             : GNAT.Strings.String_Access;
+
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+
+      Current_Project : constant Virtual_File :=
+        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
+
    begin
+      if Old_Project then
+         Project_File := Module.Previous_Project;
+      else
+         Project_File := Current_Project;
+      end if;
+
       if M.Markers /= null then
          Trace (Me, "Saving " & Filename.Display_Full_Name);
 
@@ -446,7 +464,7 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       --  Save the previous history
-      Save_History_Markers (Kernel);
+      Save_History_Markers (Kernel, Old_Project => True);
 
       --  Load the history for the new project
       Load_History_Markers (Kernel);
