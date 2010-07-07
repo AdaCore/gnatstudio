@@ -752,7 +752,9 @@ package body VCS_View_API is
                   VCS := Unknown_VCS.Unknown_VCS_Reference;
                end if;
 
-               if not VCS.Is_Used then
+               if not VCS.Is_Used
+                 and not (VCS = Unknown_VCS.Unknown_VCS_Reference)
+               then
                   VCS.Used;
                   Console.Insert (Kernel, -("Auto-VCS: using " & Name (VCS)));
                end if;
