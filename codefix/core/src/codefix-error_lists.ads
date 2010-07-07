@@ -76,10 +76,12 @@ package Codefix.Error_Lists is
      (List   : Error_Message_List;
       File   : Virtual_File;
       Line   : Integer;
-      Column : Visible_Column_Type)
+      Column : Visible_Column_Type;
+      Order  : Long_Long_Integer)
       return Error_Message_Iterator;
    --  Return an iterator starting on the first message matching the location
-   --  given in parameter - and won't go beyond that location.
+   --  given in parameter - and won't go beyond that location. The retreived
+   --  message is the one starting at the given order
 
    function Next (It : Error_Message_Iterator) return Error_Message_Iterator;
    --  Move the iterator to the next error message.

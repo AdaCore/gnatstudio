@@ -78,7 +78,7 @@ package Refactoring is
 
    type Factory_Context_Record is tagged record
       Buffer_Factory : GPS.Editors.Editor_Buffer_Factory_Access;
-      Entity_Db      : Entities.Entities_Database;
+      Entity_Db      : aliased Entities.Entities_Database;
       Construct_Db   : Language.Tree.Database.Construct_Database_Access;
 
       Add_Subprogram_Box : Boolean := True;

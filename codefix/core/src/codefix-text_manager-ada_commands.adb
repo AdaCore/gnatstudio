@@ -485,8 +485,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       if This.Destination /= GNATCOLL.VFS.No_File then
          Last_With := File_Cursor
            (Get_Next_With_Position (Current_Text, This.Destination));
-
-         Free (Last_With);
       end if;
 
       if Is_Instantiation then
@@ -501,7 +499,6 @@ package body Codefix.Text_Manager.Ada_Commands is
             Name    => Word.Get_Word));
 
       if Last_With /= Null_File_Cursor then
-
          Node := First (Obj_List);
 
          while Node /= String_List.Null_Node loop

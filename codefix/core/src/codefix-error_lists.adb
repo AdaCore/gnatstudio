@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -209,10 +209,12 @@ package body Codefix.Error_Lists is
      (List   : Error_Message_List;
       File   : Virtual_File;
       Line   : Integer;
-      Column : Visible_Column_Type)
+      Column : Visible_Column_Type;
+      Order  : Long_Long_Integer)
       return Error_Message_Iterator
    is
       Loc : Messages_Loc;
+      It : Error_Message_Iterator;
    begin
       Loc.File := File;
       Loc.Line := Line;
@@ -223,9 +225,17 @@ package body Codefix.Error_Lists is
            (Map_Cur  => Error_Message_Container.No_Element,
             List_Cur => Internal_Message_List_Pckg.No_Element);
       else
-         return
+         It :=
            (Map_Cur  => Error_Message_Container.No_Element,
             List_Cur => First (Element (List.Messages, Loc).all));
+
+         while It.List_Cur /= Internal_Message_List_Pckg.No_Element
+           and then Element (It.List_Cur).Get_Order /= Order
+         loop
+            It.List_Cur := Next (It.List_Cur);
+         end loop;
+
+         return It;
       end if;
    end First_At_Location;
 
