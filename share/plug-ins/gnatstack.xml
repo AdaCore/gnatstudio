@@ -6,6 +6,8 @@
     <command-line>
       <arg>gnat</arg>
       <arg>stack</arg>
+      <arg>-pi</arg>
+      <arg>-Q</arg>
       <arg>-x</arg>
       <arg>-Wa</arg>
       <arg>-P%PP</arg>
@@ -21,6 +23,8 @@
     <command-line>
       <arg>gnat</arg>
       <arg>stack</arg>
+      <arg>-pi</arg>
+      <arg>-Q</arg>
       <arg>-x</arg>
       <arg>-Wa</arg>
       <arg>-P%PP</arg>
