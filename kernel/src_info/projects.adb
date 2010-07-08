@@ -30,7 +30,7 @@ with Snames;                     use Snames;
 with GPS.Intl;                   use GPS.Intl;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
-with Toolchains;                 use Toolchains;
+with Toolchains_Old;                 use Toolchains_Old;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-package Toolchains is
+package Toolchains_Old is
 
    function Is_Toolchains_Active return Boolean;
    --  Tell if the multiple toolchains mode is active
@@ -49,4 +49,4 @@ package Toolchains is
       Compiler_Search_Path : Virtual_File);
    --  Set the toolchains selections global properties
 
-end Toolchains;
+end Toolchains_Old;

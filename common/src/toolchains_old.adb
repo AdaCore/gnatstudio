@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2009, AdaCore                 --
+--                  Copyright (C) 2008-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,7 @@ with System;                   use System;
 with Ada.Unchecked_Conversion;
 with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 
-package body Toolchains is
+package body Toolchains_Old is
 
    type Toolchains_Property_Record is record
       Active        : Boolean      := False;
@@ -203,4 +203,4 @@ package body Toolchains is
       end if;
    end Locate_Compiler_Executable;
 
-end Toolchains;
+end Toolchains_Old;

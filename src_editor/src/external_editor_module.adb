@@ -43,7 +43,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Toolchains;                use Toolchains;
+with Toolchains_Old;            use Toolchains_Old;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;

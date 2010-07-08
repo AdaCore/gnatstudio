@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings; use GNAT.Strings;
-with Toolchains;
+with Toolchains_Old;
 
 package body Remote is
 
@@ -61,7 +61,7 @@ package body Remote is
       if Server in Distant_Server_Type then
          return Servers (Server).Is_Local;
       elsif Server = Tools_Server then
-         if Toolchains.Is_Toolchains_Active then
+         if Toolchains_Old.Is_Toolchains_Active then
             return True;
          else
             return Servers (Build_Server).Is_Local;

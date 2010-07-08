@@ -82,7 +82,7 @@ with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
-with Toolchains;                 use Toolchains;
+with Toolchains_Old;             use Toolchains_Old;
 with Traces;                     use Traces;
 with XML_Utils;                  use XML_Utils;
 

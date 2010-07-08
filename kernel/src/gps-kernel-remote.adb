@@ -47,7 +47,7 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
-with Toolchains;                 use Toolchains;
+with Toolchains_Old;             use Toolchains_Old;
 with Traces;                     use Traces;
 with UTF8_Utils;                 use UTF8_Utils;
 

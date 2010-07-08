@@ -33,7 +33,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Toolchains;                use Toolchains;
+with Toolchains_Old;            use Toolchains_Old;
 with Toolchains_Dialog;         use Toolchains_Dialog;
 with Builder_Facility_Module;
 
@@ -156,7 +156,7 @@ package body Toolchains_Module is
      (Property : Toolchains_Property;
       Kernel   : GPS.Kernel.Kernel_Handle) is
    begin
-      Toolchains.Set_Toolchains_Properties
+      Toolchains_Old.Set_Toolchains_Properties
         (Active               => Property.Active,
          Tool_Search_Path     => Property.Tools_Path,
          Compiler_Search_Path => Property.Compiler_Path);
