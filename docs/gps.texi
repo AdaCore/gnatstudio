@@ -9203,7 +9203,7 @@ machine, you can specify the name of this machine by setting the
 @noindent
 In a network environment, it is common for programmers to use as a desktop
 a computer that is not directly suitable for their development tasks. For
-instance, each developers may have a PC running Windows or GNU/Linux as their
+instance, each developer may have a PC running Windows or GNU/Linux as their
 main entrypoint to the company network and do all their development activities
 on servers potentially running a different operating system and on which the
 various project resources are shared. A typical way of operating in such an
@@ -9213,9 +9213,9 @@ Running GPS remotely on a shared remote server will increase the workload of the
 server as well as the traffic on the network. When the network is slow or
 saturated, the user interactions can become uncomfortably sluggish. This is a
 pity when the desktop used to access the network is often a powerful PC which
-remains idle most of the time. GPS offers the possibility to run natively on the
-desktop while compilation, run and/or debug activities are performed
-transparently on one or several remote server.
+remains idle most of the time. To address this situation, GPS offers the 
+possibility to run natively on the desktop while compilation, run and/or debug 
+activities are performed transparently on one or more remote servers.
 
 @node Requirements
 @section Requirements
@@ -9238,12 +9238,12 @@ for unix, and comes as part of cygwin under windows:
 @url{http://www.cygwin.com}.
 
 @item
-Subprojects must be withed by the main project using relative paths, or the
-same absolute paths exist on the involved machines.
+Subprojects must be 'withed' by the main project using relative paths, or the
+same absolute paths must exist on the machines involved.
 @end itemize
 
 @noindent
-The full remote development setup is performed in several steps:
+The full remote development setup is performed in two broad steps:
 @itemize
 @item Setup the remote servers configuration.
 @item Setup a remote project.
