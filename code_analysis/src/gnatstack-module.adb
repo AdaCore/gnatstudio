@@ -24,8 +24,10 @@ with Gtk.Menu_Item;
 with GPS.Intl;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 with GPS.Kernel.Modules.UI;
+with GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Projects;
 with Traces;
 
@@ -75,6 +77,15 @@ package body GNATStack.Module is
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Hides stack usage information in the editor for selected file.
 
+   procedure On_Compilation_Finished
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Callback for the "compilation_finished" hook, to schedule other tasks
+
+   procedure Load_Data
+     (Self : not null access GNATStack_Module_Id_Record'Class);
+   --  Loads analysis data.
+
    --------------------
    -- Append_To_Menu --
    --------------------
@@ -114,6 +125,38 @@ package body GNATStack.Module is
       end if;
    end Append_To_Menu;
 
+   ---------------
+   -- Load_Data --
+   ---------------
+
+   procedure Load_Data
+     (Self : not null access GNATStack_Module_Id_Record'Class)
+   is
+      Name   : constant GNATCOLL.VFS.Virtual_File :=
+                 GNATCOLL.VFS.Create_From_Dir
+                   (GNATCOLL.Projects.Object_Dir
+                      (GPS.Kernel.Project.Get_Project (Self.Kernel)),
+                    "stack_usage.xml");
+      File   : Input_Sources.File.File_Input;
+      Reader : GNATStack.Readers.Reader;
+
+   begin
+      if Name.Is_Regular_File then
+         Input_Sources.File.Open (String (Name.Full_Name.all), File);
+         Reader.Parse (File);
+         Input_Sources.File.Close (File);
+         Module.Data := Reader.Get_Data;
+         Module.Loaded := True;
+
+      else
+         GPS.Kernel.Console.Insert
+           (Self.Kernel,
+            "stack_usage.xml not found. Run GNATStack first.",
+            True,
+            GPS.Kernel.Console.Error);
+      end if;
+   end Load_Data;
+
    ----------------------------
    -- On_Analyze_Stack_Usage --
    ----------------------------
@@ -134,6 +177,33 @@ package body GNATStack.Module is
       when E : others =>
          Trace (Exception_Handle, E);
    end On_Analyze_Stack_Usage;
+
+   -----------------------------
+   -- On_Compilation_Finished --
+   -----------------------------
+
+   procedure On_Compilation_Finished
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+
+      Hook_Data : constant
+        GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args :=
+          GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args (Data.all);
+
+   begin
+      if Hook_Data.Status = 0
+        and Hook_Data.Target_Name = "Run GNATStack"
+      then
+         Load_Data (Module);
+         Editors.Show_Stack_Usage_In_Opened_Editors (Module);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Compilation_Finished;
 
    -------------------------
    -- On_Hide_Stack_Usage --
@@ -158,31 +228,9 @@ package body GNATStack.Module is
    is
       pragma Unreferenced (Widget);
 
-      Name   : constant GNATCOLL.VFS.Virtual_File :=
-                 GNATCOLL.VFS.Create_From_Dir
-                   (GNATCOLL.Projects.Object_Dir
-                      (GPS.Kernel.Project.Get_Project (Kernel)),
-                    "stack_usage.xml");
-      File   : Input_Sources.File.File_Input;
-      Reader : GNATStack.Readers.Reader;
-
    begin
-      if Name.Is_Regular_File then
-         Input_Sources.File.Open (String (Name.Full_Name.all), File);
-         Reader.Parse (File);
-         Input_Sources.File.Close (File);
-         Module.Data := Reader.Get_Data;
-         Module.Loaded := True;
-
-         Editors.Show_Stack_Usage_In_Opened_Editors (Module);
-
-      else
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            "stack_usage.xml not found. Run GNATStack first.",
-            True,
-            GPS.Kernel.Console.Error);
-      end if;
+      Load_Data (Module);
+      Editors.Show_Stack_Usage_In_Opened_Editors (Module);
 
    exception
       when E : others =>
@@ -249,6 +297,11 @@ package body GNATStack.Module is
          Parent_Path => -"/Tools/GNATStac_k",
          Text        => -"_Load data",
          Callback    => On_Load_Data'Access);
+
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.Compilation_Finished_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
+         Name => "gnatstack.compilation_finished");
 
       Editors.Register_Module (Module);
    end Register_Module;
