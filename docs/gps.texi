@@ -9201,28 +9201,31 @@ machine, you can specify the name of this machine by setting the
 @end menu
 
 @noindent
-In a network environment, it is common for programmers to use as a desktop
-a computer that is not directly suitable for their development tasks. For
-instance, each developer may have a PC running Windows or GNU/Linux as their
-main entrypoint to the company network and do all their development activities
-on servers potentially running a different operating system and on which the
-various project resources are shared. A typical way of operating in such an
-environment is to access the server through X-Window. GPS does naturally work
-in such a context but it is not necessarily the most efficient organization.
-Running GPS remotely on a shared remote server will increase the workload of the
-server as well as the traffic on the network. When the network is slow or
-saturated, the user interactions can become uncomfortably sluggish. This is a
-pity when the desktop used to access the network is often a powerful PC which
-remains idle most of the time. To address this situation, GPS offers the 
-possibility to run natively on the desktop while compilation, run and/or debug 
-activities are performed transparently on one or more remote servers.
+In a network environment, it is common for programmers to use a desktop
+computer that is not directly suitable for their development tasks. For 
+example, each developer may have a desktop PC running Windows or GNU/Linux
+as their main entrypoint to the company network. They may do all their actual 
+development work using project resources shared on networked servers. These 
+remote servers may also be running an operating system that is different from
+the one on their desktop machine. 
+
+A typical way of operating in such an environment is to access the server 
+through a remote windowing system such as X-Window. GPS does indeed work in 
+such a context but it is not necessarily the most efficient organization. 
+Running GPS remotely on a shared server will increase the workload of the 
+server as well as the traffic on the network. When the network is slow or 
+saturated, user interactions can become uncomfortably sluggish. This is 
+unfortunate because the desktop used to access the network is often a powerful 
+PC that remains idle most of the time. To address this situation, GPS offers 
+the option to run natively on the desktop, with compilation, run and/or debug 
+activities performed transparently on one or more remote servers. 
 
 @node Requirements
 @section Requirements
 
 @noindent
-In order to compile, run or debug on a remote host from GPS, three conditions
-need to be met:
+In order to compile, run or debug on a host remote from GPS, three conditions
+must be met:
 
 @itemize
 @item
@@ -9231,10 +9234,10 @@ Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'. Note that
 GPS can now handle passwords for such connections.
 
 @item
-Either have a Network Filesystem (i.e. NFS, SMB or equivalent) sharing the
-project files between the host and the target, or having rsync installed on
-both client and server. rsync can be found at @url{http://www.samba.org/rsync/}
-for unix, and comes as part of cygwin under windows:
+Have either a Network Filesystem (i.e. NFS, SMB or equivalent) sharing the
+project files between the host and the target, or have rsync installed on
+both client and server. Note that rsync can be found at @url{http://www.samba.org/rsync/}
+for unix, and comes as part of cygwin under Windows:
 @url{http://www.cygwin.com}.
 
 @item
@@ -9312,7 +9315,7 @@ You need first to create a new server. For this, click on the button
 @code{Add Server} on the bottom left part of the dialog. Enter a nickname
 identifying the server you want to connect to (this is not necessarily the
 network name of this server). Note that this nickname identifies the server and
-thus needs to be unique. This new server is then automatically selected,
+therefore must be unique. This new server is then automatically selected,
 and the right part of the dialog shows its configuration, which is empty for
 the most part.
 
@@ -9348,7 +9351,7 @@ windows: it is preferable to use cmd.exe as a remote shell on Windows servers.
 
 @noindent
 Other fields might need to be taken into consideration, but they are not
-mandatory. They are for the most part accessible through the advanced
+mandatory. They are, for the most part, accessible through the advanced
 configuration pane.
 
 @itemize
@@ -9356,36 +9359,35 @@ configuration pane.
 The remote sync tool is used to synchronize remote and local filesystems, if
 these are not shared filesystems. For now, only rsync is supported.
 @item
-The Extra Init Commands field represent initialization commands sent to the
+The Extra Init Commands field represents initialization commands sent to the
 server upon connection: when GPS connects to your remote machine, the chosen
 shell is launched, and your default initialization files are read (i.e. .bashrc
 file for the bash shell). Then GPS sends these extra init commands, allowing
 you for example to specify a compilation toolchain.
 @item
-(In Advanced configuration pane) The user name specifies the name used to connect to the server. If unspecified,
-the remote access tool will most of the time use your current login name. If
-not, and a user name is requested, gps will prompt you for a user name when
-requested.
+(In Advanced configuration pane) The user name specifies the name used to 
+connect to the server. If unspecified, the remote access tool will typically 
+use your current login name. If not, and a user name is requested, GPS will 
+prompt you for a user name.
 @item
 (In Advanced configuration pane) The timeout value is used to determine if a connection to a remote host is
-dead. All elementary operations performed on the remote host (i.e. operations
-that are normally almost immediate to perform) will use this timeout value. By
+dead. All elementary operations performed on the remote host (i.e., operations
+that normally complete almost immediately) will use this timeout value. By
 default, this value is set to 10s. If you have a very slow network connection
 or a very overloaded server, set this timeout to a higher value.
 @item
 (In Advanced configuration pane) The maximum number of connections determines the maximum number of simultaneous
-connections GPS is allowed to perform to this server. In fact, if you want to
+connections GPS is allowed to have to this server. In fact, if you want to
 compile, debug and execute at the same time on the machine, GPS will need
 more that one connection to do this. The default value is 3.
 @item
-(In Advanced configuration pane) The handling of line terminations. Depending
-on the kind of server you are connecting to and the remote access tool used,
-commands sent to the server need sometimes to end with the LF character, or
-CR/LF characters. GPS can most of the time detect automatically what is needed
-(the 'auto' mode), but this behavior can be forced to use CR/LF (cr/lf handling
+(In Advanced configuration pane) Depending on the kind of server and the remote 
+access tool used, commands sent to the server may require a specific line terminator,
+i.e., either the LF character or CR/LF characters. Usually GPS can automatically detect what is needed
+(the 'auto' mode), but the choice can be forced to CR/LF (cr/lf handling
 set to 'on') or LF (cr/lf handling set to 'off').
 @item
-(In Advanced configuration pane) The Debug console allow you to easily
+(In Advanced configuration pane) The Debug console allows you to easily
 debug a remote connection. If checked, it will open a console
 reporting all exchanges between GPS and the selected server.
 @end itemize
@@ -9395,11 +9397,11 @@ reporting all exchanges between GPS and the selected server.
 @subsection Paths settings
 @c -----------------------------------------------------------------------
 
-The last configuration part is to define the path translations between
+The last configuration part defines the path translations between
 your local host and the remote server.
 
 The remote paths definition will allow GPS to translate your locally loaded
-project (e.g. the project that resides in your local filesystem) to
+project (the project that resides in your local filesystem) to
 paths used on the remote server. This part also tells GPS how to keep
 those paths synchronized between the local machine and the remote server.
 
@@ -9427,11 +9429,11 @@ They are kept synchronised by GPS before and after every remote action (such
 as performing a build or run).
 @item @code{Once to local}/@code{Once to remote}: Relevant to project's
 dependencies. They are synchronized once when a remote project is
-loaded or when a local project is set remote. They can be still
+loaded or when a local project is set remote. They can still be 
 manually synchronized using the Remote View (@xref{The remote view}.)
 @end itemize
 
-The way those paths need to be configured depend on your network architecture.
+The way those paths need to be configured depends on your network architecture.
 
 @itemize
 @item
@@ -9441,9 +9443,9 @@ of those filesystems need to be specified, using each server's native paths (on
 Windows, the paths will be expressed using X:\my\mounted\directory\ while on
 unix, the paths will be expressed using /mnt/path/).
 @item
-In case the project's files are synchronized using rsync, then defining
-a too generic path translation will lead to very slow synchronization. You will
-then need to define as specific paths as possible, in order to speed up
+If the project's files are synchronized using rsync, defining a too generic 
+path translation will lead to very slow synchronization. In that case you 
+should define the paths as specifically as possible, in order to speed up
 the synchronization process.
 @end itemize
 
@@ -9474,13 +9476,13 @@ Execution_Server. The GPS_Server (the local machine) is used for all
 other operations.
 
 The Tools server is defined to handle all compiler related operations that do
-not depend on a specific compiler version. It is used in dual compilation mode
-to determine whether the action can be safely run using a bleeding edge
-compiler toolchain (this is the tools server), or whether we need to stick with
-a specific older compiler version.
+not depend on a specific compiler version. It is used in dual compilation mode,
+for example, to determine whether the action can be safely run using a very
+recent compiler toolchain (this is the tools server), or whether a specific 
+older baseline compiler version must be used.
 
 In case the remote mode is activated, and the dual compilation mode is not,
-then all Tools server operations are executed on the build server. Else, if the
+all Tools server operations are executed on the build server. Otherwise, if the
 dual compilation mode is activated, then the tools server operations are always
 executed on the local machine.
 
@@ -9489,11 +9491,11 @@ executed on the local machine.
 @subsection The remote view
 @c -----------------------------------------------------------------------
 
-The Remote view (@code{Tools->Views->Remote}) allows you to assign to
-each operation category a configured server (when the Servers
-assignment tab is fully expanded) or assign at once all categories to
-a unique server (when the Servers assignment tab is collapsed) for the
-currently loaded project.
+The Remote view (@code{Tools->Views->Remote}) allows you to assign servers to
+operation categories for the currently loaded project.  You may assign each
+operation category a distinct server if the Servers assignment tab is fully
+expanded. Alternatively, you may assign all categories to a single server in
+one step if the Servers assignment tab is collapsed.
 
 @iftex
 @cindex screen shot
@@ -9506,25 +9508,25 @@ currently loaded project.
 @end ifhtml
 
 @noindent
-When a server is selected for a particular category, the change is not
-immediately performed. Thus, the server's name will appear in red. You can
-check the configuration before applying it by pressing the
-@code{Check} button. This will test for correct remote hosts
-connection, and will check that the project path exists on the build server and
-has an equivalence on the local machine.
+When a server is selected for a particular category, the change is not 
+immediately effective. To indicate that fact, the server's name will appear in 
+red. This approach allows you to check the configuration before applying it, by 
+pressing the @code{Check} button. This action will test for correct remote hosts
+connection. It will also verify that the project path exists on the build server and
+that it has an equivalence on the local machine.
 
 Clicking on the @code{Apply} button will perform the following actions:
 @itemize
 @item Read the default project paths on the Build machine and translate them
 into local paths.
-@item Synchronize from the build server the paths marked as Sync @code{Always} or @code{Once to
+@item Synchronize from the build server those paths marked as Sync @code{Always} or @code{Once to
 local}.
 @item Load the translated local project.
 @item Assign the Build, Execution and Debug servers.
 @end itemize
 
-If one of the above operations fail, then errors are reported in the
-@code{Messages} view, and the previous project is kept.
+If one of the above operations fails, corresponding errors are reported in the
+@code{Messages} view and the previous project settings are retained.
 
 Once a remote server is assigned, this remote configuration will be
 automatically loaded each time the project is loaded.
@@ -9542,13 +9544,13 @@ button) or from your local machine to the remote host (right button).
 If the project you want to work with is already on a distant server, you can
 directly load it on your local GPS.
 
-To do this, you need to use the @code{Project->Open From Host} menu.
-Then you select the server's nickname. This will show you its file tree.
-Navigate to your project, select it. The project will be loaded as described
+To do this, use the @code{Project->Open From Host} menu.
+Then select the server's nickname. This will show you its file tree.
+Navigate to your project and select it. The project will be loaded as described
 above, with all remote operations categories assigned to the selected server by
 default.
 
-You can reload your project using the local files on your machine, the
+You can reload your project using the local files on your machine. The
 remote configuration will then be automatically reapplied.
 
 @c -----------------------------------------------------------------------
@@ -9556,12 +9558,12 @@ remote configuration will then be automatically reapplied.
 @section Limitations
 @c -----------------------------------------------------------------------
 
-The GPS remote mode involves a few limitations:
+The GPS remote mode imposes a few limitations:
 
 @itemize
 @item Execution: you cannot use an external terminal to remotely execute your
 application. The @code{Use external terminal} checkbox of the run dialog will
-then have no effect if the program is run remotely.
+have no effect if the program is run remotely.
 
 @item Debugging: you cannot use a separate execution window. The
 @code{Use separate execution window} option is ignored for remote
@@ -9570,9 +9572,9 @@ debugging sessions.
 @item Cygwin on remote host: the GNAT compilation toolchain does not
 understand cygwin's mounted directories. In order to use GPS with
 a remote Windows server using cygwin's bash, you need to use
-directories that are the same on Windows and Cygwin (absolute
+directories that are the same on Windows and cygwin (absolute
 paths). For example, a project having a C:\my_project will be accepted
-if cygwin's path is /my_project, but will not if
+if cygwin's path is /my_project, but will not be accepted if
 /cygdrive/c/my_project is used.
 
 Note that even if you use cygwin's sshd on such a server, you can
