@@ -295,7 +295,7 @@ package body GNATStack.Module is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => -"/Tools/GNATStac_k",
-         Text        => -"_Load data",
+         Text        => -"_Load last stack usage",
          Callback    => On_Load_Data'Access);
 
       GPS.Kernel.Hooks.Add_Hook
