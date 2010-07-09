@@ -264,9 +264,11 @@ package body GNATStack.Module is
    is
       use GNATCOLL.VFS;
 
+      Menu           : constant String := -"/Tools/GNATStac_k";
       GNATStack_Path : constant GNATCOLL.VFS.Virtual_File :=
                          GNATCOLL.VFS.Locate_On_Path ("gnatstack");
       Factory        : GPS.Kernel.Modules.UI.Submenu_Factory;
+      Mitem          : Gtk.Menu_Item.Gtk_Menu_Item;
 
    begin
       if GNATStack_Path = No_File then
@@ -288,13 +290,17 @@ package body GNATStack.Module is
          Submenu => Factory);
       Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => -"/Tools/GNATStac_k",
+         Parent_Path => Menu,
          Text        => -"_Analyze stack usage",
          Ref_Item    => -"Macro",
          Callback    => On_Analyze_Stack_Usage'Access);
+
+      Gtk.Menu_Item.Gtk_New (Mitem);
+      Register_Menu (Kernel, Menu, Mitem);
+
       Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => -"/Tools/GNATStac_k",
+         Parent_Path => Menu,
          Text        => -"_Load last stack usage",
          Callback    => On_Load_Data'Access);
 
