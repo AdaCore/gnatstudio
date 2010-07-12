@@ -876,6 +876,10 @@ package body GNATStack.Readers is
          Info.Calls := Value.Calls;
          Info.Unbounded := Value.Unbounded;
 
+         if not Info.Unbounded.Is_Empty then
+            Self.Analysis.Unbounded_Set.Insert (Info);
+         end if;
+
       elsif Self.State.Kind = Subprogram_Called_Set_State then
          --  Insert subprogram into the set
 
