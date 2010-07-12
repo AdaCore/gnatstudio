@@ -353,14 +353,17 @@ xmlCompilerHead = """
    <tool name="Ada" package="Compiler" index="ada" override="true">
       <language>Ada</language>
       <initial-cmd-line>-g -gnatQ</initial-cmd-line>
-      <switches lines="3" columns="2">
+      <switches lines="4" columns="2">
          <title line="1" column="1" >Code generation</title>
          <title line="1" column="2" >Run-time checks</title>
          <title line="2" column="1" line-span="2" >Messages</title>
          <title line="3" column="1" line-span="0" />
          <title line="2" column="2" >Debugging</title>
          <title line="3" column="2" >Syntax</title>
+         <title line="4" column="1" >Stack usage</title>
+         <title line="4" column="2" ></title>
 
+         <check label="Generate stack usage information" switch="-fcallgraph-info=su,da" line="4" column="1"/>
          <combo switch="-O" nodigit="1" noswitch="0"
                 tip="Controls the optimization level">
             <combo-entry label="No optimization" value="0" />
