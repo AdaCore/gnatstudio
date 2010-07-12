@@ -220,6 +220,7 @@ def re_highlight():
 
     context=GPS.current_context()
 
+    # Is there an entity?
     if context.__class__ == GPS.EntityContext:
         try:
             entity = context.entity()
@@ -227,18 +228,26 @@ def re_highlight():
             entity = None
 
         if entity:
+            # Destroy the current highlighter if it is highlighting another
+            # entity
             if (current_highlighter
                 and (not entity.declaration()
                          == current_highlighter.declaration)):
                 current_highlighter.destroy()
                 current_highlighter = None
 
+            # Highlight the current entity
             if not current_highlighter:
                 current_highlighter=LocationHighlighter(context, entity)
-        else:
-            if current_highlighter:
-                current_highlighter.destroy()
-                current_highlighter = None
+                return
+
+    # If we reach this point, there is no entity in the context: remove
+    # highlighting
+
+    if current_highlighter:
+        current_highlighter.destroy()
+        current_highlighter = None
+
 
 def on_location_changed(hook, file, line, column):
     """ Called when the current location changes """
