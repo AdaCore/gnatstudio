@@ -249,9 +249,9 @@ if codepeer != "":
             <combo-entry label="Max" value="max" />
          </combo>
          <spin label="Subp memory size" switch="-method-memory-size"
-               min="1" max="4096" default="540"
+               min="0" max="99999" default="0"
                separator=" " column="1"
-               tip="Max amount of memory (in megs) to use for analyzing a subprogram" />
+               tip="Max amount of memory (in megs) to use for analyzing a subprogram. 0 means default." />
          <spin label="Subp timeout" switch="-method-timeout"
                min="1" max="10000" default="600"
                separator=" " column="2"
