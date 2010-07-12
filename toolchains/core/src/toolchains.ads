@@ -56,11 +56,11 @@ package Toolchains is
 
    Target_Exception : exception;
 
-   type Toolchain_Manger_Record is abstract tagged private;
-   type Toolchain_Manager is access all Toolchain_Manger_Record'Class;
+   type Toolchain_Manager_Record is abstract tagged private;
+   type Toolchain_Manager is access all Toolchain_Manager_Record'Class;
 
    function Execute
-     (This : Toolchain_Manger_Record; Command : String) return String
+     (This : Toolchain_Manager_Record; Command : String) return String
       is abstract;
    --  Executes the command and returns the result. The implementation of this
    --  subprogram typically differs between GNATbench and GPS.
@@ -177,6 +177,8 @@ package Toolchains is
    --  given in parameter - caches the result so that no extra computation has
    --  to be done the second time the same information is requested.
 
+   type Toolchain_Array is array (Integer range <>) of Toolchain;
+
 private
 
    type Ada_Library_Info_Record is record
@@ -223,15 +225,13 @@ private
 
    Null_Toolchain : constant Toolchain := null;
 
-   type Toolchain_Array is array (Integer range <>) of Toolchain;
-
    package Toolchain_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (String, Toolchain);
 
    package Library_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (String, Ada_Library_Info);
 
-   type Toolchain_Manger_Record is abstract tagged record
+   type Toolchain_Manager_Record is abstract tagged record
       Toolchains          : Toolchain_Maps.Map;
       No_Native_Toolchain : Boolean := False;
       Computed_Libraries  : Library_Maps.Map;
