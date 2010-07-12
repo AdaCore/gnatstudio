@@ -35,6 +35,8 @@ with String_Utils;            use String_Utils;
 with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
+with UTF8_Utils; use UTF8_Utils;
+
 package body Casing_Exceptions is
 
    Case_Exceptions_Filename : constant Filesystem_String :=
@@ -244,19 +246,26 @@ package body Casing_Exceptions is
       ---------------
 
       function Get_Label (Str : String) return String is
-         Name : String := Str;
+         Success : aliased Boolean;
+         Name    : String := Krunch (Unknown_To_UTF8 (Str, Success'Access));
       begin
+         if not Success then
+            return "<>";
+         end if;
+
          case Creator.Casing is
             when Lower =>
-               return "Casing/Lower " & Escape_Text (Krunch (To_Lower (Name)));
+               Set_Case (No_Casing_Exception, Name, Lower);
+               return "Casing/Lower " & Escape_Text (Name);
             when Upper =>
-               return "Casing/Upper " & Escape_Text (Krunch (To_Upper (Name)));
+               Set_Case (No_Casing_Exception, Name, Upper);
+               return "Casing/Upper " & Escape_Text (Name);
             when Mixed =>
                Mixed_Case (Name, False);
-               return "Casing/Mixed " & Escape_Text (Krunch (Name));
+               return "Casing/Mixed " & Escape_Text (Name);
             when Smart_Mixed =>
                Mixed_Case (Name, True);
-               return "Casing/Smart Mixed " & Escape_Text (Krunch (Name));
+               return "Casing/Smart Mixed " & Escape_Text (Name);
          end case;
       end Get_Label;
 

@@ -862,20 +862,38 @@ package body String_Utils is
                         Character'Val (16#E2#) & Character'Val (16#80#)
                         & Character'Val (16#A6#);
       --  UTF8 encoding for the ellipsis character (8230 in Decimal)
-      Half          : Integer;
+
+      First_Half          : Natural;
+      Second_Half         : Natural;
 
    begin
       if S'Length <= Max_String_Length then
          return S;
       end if;
 
-      Half := (Max_String_Length - Ellipsis_UTF8'Length + 1) / 2;
-
       if Max_String_Length <= Ellipsis_UTF8'Length then
          return S (S'First .. S'First + Max_String_Length - 1);
       else
-         return S (S'First .. S'First + Half - 1) &
-           Ellipsis_UTF8 & S (S'Last - Half + 1 .. S'Last);
+         First_Half := S'First;
+
+         for J in 1 .. (Max_String_Length - Ellipsis_UTF8'Length + 1) / 2 loop
+            First_Half := UTF8_Next_Char (S, First_Half);
+         end loop;
+
+         Second_Half := S'Last;
+
+         for J in 1 .. (Max_String_Length - Ellipsis_UTF8'Length - 1) / 2 loop
+            Second_Half := UTF8_Find_Prev_Char (S, Second_Half);
+         end loop;
+
+         if First_Half > S'Last
+           or else Second_Half < S'First
+         then
+            return S;
+         else
+            return S (S'First .. First_Half - 1)
+              & Ellipsis_UTF8 & S (Second_Half .. S'Last);
+         end if;
       end if;
    end Krunch;
 

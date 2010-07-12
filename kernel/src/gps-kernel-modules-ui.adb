@@ -73,6 +73,8 @@ with System;                    use System;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
+with UTF8_Utils; use UTF8_Utils;
+
 package body GPS.Kernel.Modules.UI is
 
    Me : constant Debug_Handle :=
@@ -412,7 +414,7 @@ package body GPS.Kernel.Modules.UI is
             declare
                Done : aliased Boolean := False;
                Tmp  : constant String :=
-                        Locale_To_UTF8
+                        Unknown_To_UTF8
                           (GPS.Kernel.Macros.Substitute
                              (Param, Context, Quoted, Done'Access));
             begin
