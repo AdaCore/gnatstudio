@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 with Ada.Containers.Hashed_Sets;
+with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
@@ -83,6 +84,12 @@ package GNATStack.Data_Model is
      (Left  : Subprogram_Information_Access;
       Right : Subprogram_Information_Access) return Boolean;
 
+   function Element_Is_Less
+     (Left  : Subprogram_Information_Access;
+      Right : Subprogram_Information_Access) return Boolean;
+   --  Returns True if Prefix_Name of the Left is less than Prefix_Name of
+   --  the Right.
+
    package Subprogram_Information_Vectors is
      new Ada.Containers.Vectors (Positive, Subprogram_Information_Access);
 
@@ -95,6 +102,10 @@ package GNATStack.Data_Model is
    package Subprogram_Information_Sets is
      new Ada.Containers.Hashed_Sets
        (Subprogram_Information_Access, Hash, Equivalent_Elements);
+
+   package Subprogram_Information_Ordered_Sets is
+     new Ada.Containers.Ordered_Sets
+       (Subprogram_Information_Access, Element_Is_Less, Equivalent_Elements);
 
    type Subprogram_Information is record
       Identifier   : Subprogram_Identifier;
@@ -119,7 +130,7 @@ package GNATStack.Data_Model is
       Accurate       : Boolean;
       Subprogram_Set : Subprogram_Information_Sets.Set;
       Unbounded_Set  : Subprogram_Information_Sets.Set;
-      External_Set   : Subprogram_Information_Sets.Set;
+      External_Set   : Subprogram_Information_Ordered_Sets.Set;
       Indirect_Set   : Subprogram_Information_Sets.Set;
       Cycle_Set      : Subprogram_Information_Vector_Vectors.Vector;
       Entry_Set      : Subprogram_Information_Sets.Set;

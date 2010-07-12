@@ -23,6 +23,28 @@ package body GNATStack.Data_Model is
    use Ada.Strings.Unbounded;
    use Subprogram_Location_Sets;
 
+   ---------------------
+   -- Element_Is_Less --
+   ---------------------
+
+   function Element_Is_Less
+     (Left  : Subprogram_Information_Access;
+      Right : Subprogram_Information_Access) return Boolean is
+   begin
+      return Left.Identifier.Prefix_Name < Right.Identifier.Prefix_Name;
+   end Element_Is_Less;
+
+   -------------------------
+   -- Equivalent_Elements --
+   -------------------------
+
+   function Equivalent_Elements
+     (Left  : Subprogram_Information_Access;
+      Right : Subprogram_Information_Access) return Boolean is
+   begin
+      return Left.Identifier = Right.Identifier;
+   end Equivalent_Elements;
+
    ----------
    -- Hash --
    ----------
@@ -75,16 +97,5 @@ package body GNATStack.Data_Model is
    begin
       return Hash (Item.Identifier);
    end Hash;
-
-   -------------------------
-   -- Equivalent_Elements --
-   -------------------------
-
-   function Equivalent_Elements
-     (Left  : Subprogram_Information_Access;
-      Right : Subprogram_Information_Access) return Boolean is
-   begin
-      return Left.Identifier = Right.Identifier;
-   end Equivalent_Elements;
 
 end GNATStack.Data_Model;
