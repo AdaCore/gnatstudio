@@ -304,6 +304,10 @@ package body GNATStack.Module is
         (Position : Subprogram_Information_Sets.Cursor);
       --  Output list of indirect calls in the subprogram.
 
+      procedure Process_Entry_Point
+        (Position : Subprogram_Information_Sets.Cursor);
+      --  Output entry point information.
+
       --------------
       -- Add_Line --
       --------------
@@ -334,6 +338,17 @@ package body GNATStack.Module is
 
          Element (Position).Iterate (Process_Subprogram'Access);
       end Process_Cycle;
+
+      -------------------------
+      -- Process_Entry_Point --
+      -------------------------
+
+      procedure Process_Entry_Point
+        (Position : Subprogram_Information_Sets.Cursor) is
+      begin
+         Add_Line
+           ("  " & To_String (Element (Position).Identifier.Prefix_Name));
+      end Process_Entry_Point;
 
       ----------------------------
       -- Process_Indirect_Calls --
@@ -482,6 +497,12 @@ package body GNATStack.Module is
            ("List of reachable and unresolved indirect"
             & " (including dispatching) calls:");
          Self.Data.Indirect_Set.Iterate (Process_Indirect_Calls'Access);
+      end if;
+
+      if not Self.Data.Entry_Set.Is_Empty then
+         Add_Line;
+         Add_Line ("List of entry points:");
+         Self.Data.Entry_Set.Iterate (Process_Entry_Point'Access);
       end if;
    end Open_Report;
 
