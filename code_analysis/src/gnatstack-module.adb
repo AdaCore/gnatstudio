@@ -393,10 +393,41 @@ package body GNATStack.Module is
       -------------------------------
 
       procedure Process_Unbounded_Objects
-        (Position : Subprogram_Information_Sets.Cursor) is
+        (Position : Subprogram_Information_Sets.Cursor)
+      is
+         Subprogram : constant Subprogram_Information_Access :=
+                        Element (Position);
+
+         procedure Process_Object
+           (Position : Object_Information_Vectors.Cursor);
+         --  Outputs name and location of the object.
+
+         --------------------
+         -- Process_Object --
+         --------------------
+
+         procedure Process_Object
+           (Position : Object_Information_Vectors.Cursor)
+         is
+            Object : constant Object_Information := Element (Position);
+
+         begin
+            Add_Line
+              ("    "
+               & To_String (Object.Name)
+               & " at "
+               & To_String (Object.File)
+               & ":"
+               & Trim (Integer'Image (Object.Line), Both)
+               & ":"
+               & Trim (Integer'Image (Object.Column), Both));
+         end Process_Object;
+
       begin
+         Add_Line;
          Add_Line
-           ("  " & To_String (Element (Position).Identifier.Prefix_Name));
+           ("  In " & To_String (Subprogram.Identifier.Prefix_Name));
+         Subprogram.Unbounded.Iterate (Process_Object'Access);
       end Process_Unbounded_Objects;
 
    begin
