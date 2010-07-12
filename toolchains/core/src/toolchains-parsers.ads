@@ -22,7 +22,26 @@ with Prj.Tree; use Prj.Tree;
 with Ada.Containers.Ordered_Sets;
 limited with Toolchains.Project_Parsers;
 
-private package Toolchains.Parsers is
+package Toolchains.Parsers is
+
+   type Toolchain_Parser_Record is private;
+
+   type Toolchain_Parser is access all Toolchain_Parser_Record;
+
+   procedure Parse
+     (This      : Toolchain_Parser;
+      Parser    : access Toolchains.Project_Parsers.Project_Parser_Record;
+      Node_Data : Project_Node_Tree_Ref;
+      IDE_Node  : Project_Node_Id);
+   --  Parse the toolchain contained in the IDE node given in parameter.
+
+   procedure Set_Toolchains
+     (This       : Toolchain_Parser;
+      Toolchains : Toolchain_Array);
+   --  Modifies the stucture of the project so that it supports the toolchains
+   --  given in parameter
+
+private
 
    package Prj_Node_Sets is new Ada.Containers.Ordered_Sets (Project_Node_Id);
 
@@ -42,20 +61,5 @@ private package Toolchains.Parsers is
       Attributes       : Prj_Node_Sets.Set;
       Toolchains       : Toolchain_Maps.Map;
    end record;
-
-   type Toolchain_Parser is access all Toolchain_Parser_Record;
-
-   procedure Parse
-     (This      : Toolchain_Parser;
-      Parser    : access Toolchains.Project_Parsers.Project_Parser_Record;
-      Node_Data : Project_Node_Tree_Ref;
-      IDE_Node  : Project_Node_Id);
-   --  Parse the toolchain contained in the IDE node given in parameter.
-
-   procedure Set_Toolchains
-     (This       : Toolchain_Parser;
-      Toolchains : Toolchain_Array);
-   --  Modifies the stucture of the project so that it supports the toolchains
-   --  given in parameter
 
 end Toolchains.Parsers;
