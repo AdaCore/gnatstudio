@@ -283,7 +283,7 @@ NF-45-IA11-001 Smart completion now completes formal profiles (2010-05-21)
   The smart completion mechanism now completes automatically formal profiles
   on generic instantiations.
 
-NF-45-IA01-003 New plugin: selection_highlighter.py (2009-10-12)
+NF-45-IA01-003 New plugin: highlight_selection.py (2009-10-12)
 
   When some text is selected in a buffer, this plugin will automatically
   highlight other occurrences of the selected text in the buffer.
