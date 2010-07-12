@@ -99,6 +99,15 @@ package body Toolchains is
       return This.Install_Path;
    end Get_Install_Path;
 
+   ----------------
+   -- Has_Errors --
+   ----------------
+
+   function Has_Errors (This : Ada_Library_Info) return Boolean is
+   begin
+      return This.Error /= null;
+   end Has_Errors;
+
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------
@@ -186,6 +195,42 @@ package body Toolchains is
          or else This.Name.all = Tool_POWERPC_WRS_VXWORKSAE
          or else This.Name.all = Tool_POWERPC_WRS_VXWORKSMILS);
    end Is_Simple_Cross;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (This : Toolchain) return String is
+   begin
+      return This.Name.all;
+   end Get_Name;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy (This : Toolchain) return Toolchain is
+      Result : Toolchain;
+   begin
+      Result := new Toolchain_Record'(This.all);
+
+      if Result.Name /= null then
+         Result.Name := new String'(Result.Name.all);
+      end if;
+
+      if Result.Label /= null then
+         Result.Label := new String'(Result.Label.all);
+      end if;
+
+      for J in Result.Tool_Commands'Range loop
+         if Result.Tool_Commands (J) /= null then
+            Result.Tool_Commands (J) :=
+              new String'(Result.Tool_Commands (J).all);
+         end if;
+      end loop;
+
+      return Result;
+   end Copy;
 
    ----------------------------
    -- Create_Known_Toolchain --
@@ -342,6 +387,75 @@ package body Toolchains is
 
       return null;
    end Get_Toolchain;
+
+   -----------------------
+   -- Compute_Toolchain --
+   -----------------------
+
+   function Compute_Toolchain
+     (This : Toolchain_Manager; Project : Project_Type) return Toolchain
+   is
+      GNAT_List_Str    : constant String :=
+        Attribute_Value (Project, Build ("ide", "gnatlist"), "");
+      GNAT_Driver_Str  : constant String :=
+        Attribute_Value (Project, Build ("ide", "gnat"), "");
+      Ada_Compiler_Str : constant String :=
+        Attribute_Value (Project, Build ("ide", "compiler_command"), "ada");
+      C_Compiler_Str   : constant String :=
+        Attribute_Value (Project, Build ("ide", "compiler_command"), "c");
+      Debugger_Str     : constant String :=
+        Attribute_Value (Project, Build ("ide", "debugger_command"), "");
+
+      The_Toolchain : Toolchain;
+   begin
+      if GNAT_List_Str /= "" then
+         The_Toolchain := Compute_Toolchain_From_Tool
+           (This, GNAT_List_Str, GNAT_List);
+      end if;
+
+      if The_Toolchain = null and then Ada_Compiler_Str /= "" then
+         The_Toolchain := Compute_Toolchain_From_Tool
+           (This, Ada_Compiler_Str, Ada_Compiler);
+      end if;
+
+      if The_Toolchain = null then
+         The_Toolchain := new Toolchain_Record;
+      else
+         The_Toolchain := Copy (The_Toolchain);
+      end if;
+
+      if GNAT_List_Str /= "" then
+         Free (The_Toolchain.Tool_Commands (GNAT_List));
+         The_Toolchain.Tool_Commands (GNAT_List) :=
+           new String'(GNAT_List_Str);
+      end if;
+
+      if GNAT_Driver_Str /= "" then
+         Free (The_Toolchain.Tool_Commands (GNAT_Driver));
+         The_Toolchain.Tool_Commands (GNAT_Driver) :=
+           new String'(GNAT_Driver_Str);
+      end if;
+
+      if Ada_Compiler_Str /= "" then
+         Free (The_Toolchain.Tool_Commands (Ada_Compiler));
+         The_Toolchain.Tool_Commands (Ada_Compiler) :=
+           new String'(Ada_Compiler_Str);
+      end if;
+
+      if C_Compiler_Str /= "" then
+         Free (The_Toolchain.Tool_Commands (C_Compiler));
+         The_Toolchain.Tool_Commands (C_Compiler) :=
+           new String'(C_Compiler_Str);
+      end if;
+
+      if Debugger_Str /= "" then
+         Free (The_Toolchain.Tool_Commands (Debugger));
+         The_Toolchain.Tool_Commands (Debugger) :=
+           new String'(Debugger_Str);
+      end if;
+
+      return The_Toolchain;
+   end Compute_Toolchain;
 
    ---------------------------------
    -- Compute_Toolchain_From_Tool --

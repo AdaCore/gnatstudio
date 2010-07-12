@@ -20,17 +20,24 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with GNAT.Strings; use GNAT.Strings;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Toolchains is
 
-   Tool_AAMP                    : constant String := "aamp";
-   Tool_E500V2_WRS_VXWORKS      : constant String := "e500v2-wrs-vxworks";
-   Tool_E500V2_WRS_VXWORKSMILS  : constant String := "e500v2-wrs-vxworksmils";
-   Tool_I586_WRS_VXWORKS        : constant String := "i586-wrs-vxworks";
-   Tool_JVM                     : constant String := "jvm";
-   Tool_POWERPC_WRS_VXWORKS     : constant String := "powerpc-wrs-vxworks";
-   Tool_POWERPC_WRS_VXWORKSAE   : constant String := "powerpc-wrs-vxworksae";
-   Tool_POWERPC_WRS_VXWORKSMILS : constant String := "powerpc-wrs-vxworksmils";
+   Tool_AAMP                    : aliased constant String := "aamp";
+   Tool_E500V2_WRS_VXWORKS      : aliased constant String :=
+     "e500v2-wrs-vxworks";
+   Tool_E500V2_WRS_VXWORKSMILS  : aliased constant String :=
+     "e500v2-wrs-vxworksmils";
+   Tool_I586_WRS_VXWORKS        : aliased constant String :=
+     "i586-wrs-vxworks";
+   Tool_JVM                     : aliased constant String := "jvm";
+   Tool_POWERPC_WRS_VXWORKS     : aliased constant String :=
+     "powerpc-wrs-vxworks";
+   Tool_POWERPC_WRS_VXWORKSAE   : aliased constant String :=
+     "powerpc-wrs-vxworksae";
+   Tool_POWERPC_WRS_VXWORKSMILS : aliased constant String :=
+     "powerpc-wrs-vxworksmils";
 
    Known_Toolchains : constant String_List :=
      ( --  Bareboards
@@ -94,6 +101,10 @@ package Toolchains is
    --  Return the path where the toolchain associated with this library
    --  information is installed
 
+   function Has_Errors (This : Ada_Library_Info) return Boolean;
+   --  Return true if the library information contains errors and is not
+   --  correctly loaded, false otherwise.
+
    ---------------
    -- Toolchain --
    ---------------
@@ -115,7 +126,7 @@ package Toolchains is
    --  through customization, either manually or from the contents of a project
    --  file.
 
-   Null_Toolchain : constant Toolchain;
+   Null_Toolchain : aliased constant Toolchain;
 
    procedure Compute_Predefined_Paths
      (This : Toolchain; Manager : Toolchain_Manager);
@@ -127,6 +138,12 @@ package Toolchains is
    function Is_Simple_Cross (This : Toolchain) return Boolean;
    --  Return true if the toolchain is a "simple" cross toolchain, that is
    --  to say all the tools are the for prefix-tool, false otherwise.
+
+   function Get_Name (This : Toolchain) return String;
+   --  Return the name of this toolchain, as used for the properties deduction
+
+   function Copy (This : Toolchain) return Toolchain;
+   --  Copy all the data for the toolchain given in parameter.
 
    -----------------------
    -- Toolchain_Manager --
@@ -150,6 +167,13 @@ package Toolchains is
    --  Return a toolchain according to its name. If no such toolchain exist,
    --  but the name is the name of a known toolchain, then it will be
    --  automatically created. Otherwise, will return Null_Toolchain.
+
+   function Compute_Toolchain
+     (This : Toolchain_Manager; Project : Project_Type) return Toolchain;
+   --  Retreives the toolchain based on the contents of a project. This
+   --  toolchain may not be stored in the manager if the project specifies
+   --  dedicated tool commands. The caller is always responsible for freeing
+   --  the returned value.
 
    function Compute_Toolchain_From_Tool
      (This : Toolchain_Manager;
@@ -223,7 +247,7 @@ private
 
    type Toolchain is access all Toolchain_Record;
 
-   Null_Toolchain : constant Toolchain := null;
+   Null_Toolchain : aliased constant Toolchain := null;
 
    package Toolchain_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (String, Toolchain);
