@@ -201,7 +201,7 @@ package Toolchains is
    --  given in parameter - caches the result so that no extra computation has
    --  to be done the second time the same information is requested.
 
-   type Toolchain_Array is array (Integer range <>) of Toolchain;
+   type Toolchain_Array is array (Integer range <>) of aliased Toolchain;
 
    function Get_Toolchains (This : Toolchain_Manager) return Toolchain_Array;
    --  Return the toolchains contained in this manager.

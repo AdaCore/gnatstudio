@@ -1150,4 +1150,25 @@ package body Toolchains.Parsers is
       Free (This.Error);
    end Free;
 
+   ------------------
+   -- Is_Supported --
+   ------------------
+
+   function Is_Supported (This : Toolchain_Parser) return Boolean is
+   begin
+      return This.Error = null;
+   end Is_Supported;
+
+   ------------------------
+   -- Get_Parsed_Project --
+   ------------------------
+
+   function Get_Parsed_Project
+     (This : Toolchain_Parser)
+      return access Toolchains.Project_Parsers.Parsed_Project_Record
+   is
+   begin
+      return This.Project;
+   end Get_Parsed_Project;
+
 end Toolchains.Parsers;

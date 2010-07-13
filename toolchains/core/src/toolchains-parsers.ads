@@ -41,6 +41,14 @@ package Toolchains.Parsers is
    --  Modifies the stucture of the project so that it supports the toolchains
    --  given in parameter
 
+   function Is_Supported (This : Toolchain_Parser) return Boolean;
+   --  Return true if the toolchain definition is supported, false otherwise
+
+   function Get_Parsed_Project
+     (This : Toolchain_Parser)
+      return access Toolchains.Project_Parsers.Parsed_Project_Record;
+   --  Return the parsed project from where this toolchain has been extracted.
+
 private
 
    package Prj_Node_Sets is new Ada.Containers.Ordered_Sets (Project_Node_Id);
