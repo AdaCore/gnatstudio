@@ -205,6 +205,18 @@ package body Toolchains is
       end if;
    end Get_Command;
 
+   -----------------
+   -- Set_Command --
+   -----------------
+
+   procedure Set_Command
+     (This : Toolchain; Name : Tool_Names; Value : String)
+   is
+   begin
+      Free (This.Tool_Commands (Name));
+      This.Tool_Commands (Name) := new String'(Value);
+   end Set_Command;
+
    ---------------------
    -- Is_Simple_Cross --
    ---------------------
@@ -227,6 +239,16 @@ package body Toolchains is
    begin
       return This.Name.all;
    end Get_Name;
+
+   --------------
+   -- Set_Name --
+   --------------
+
+   procedure Set_Name (This : Toolchain; Name : String) is
+   begin
+      Free (This.Name);
+      This.Name := new String'(Name);
+   end Set_Name;
 
    ----------
    -- Copy --
@@ -263,6 +285,24 @@ package body Toolchains is
    begin
       return This.Is_Custom;
    end Is_Custom;
+
+   ----------------
+   -- Set_Custom --
+   ----------------
+
+   procedure Set_Custom (This : Toolchain; Value : Boolean) is
+   begin
+      This.Is_Custom := Value;
+   end Set_Custom;
+
+   ----------------
+   -- Set_Native --
+   ----------------
+
+   procedure Set_Native (This : Toolchain; Value : Boolean) is
+   begin
+      This.Is_Native := Value;
+   end Set_Native;
 
    ----------
    -- Free --

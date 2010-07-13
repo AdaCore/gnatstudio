@@ -135,12 +135,18 @@ package Toolchains is
    function Get_Command (This : Toolchain; Name : Tool_Names) return String;
    --  Return the command to use in order to call the tool given in parameter.
 
+   procedure Set_Command (This : Toolchain; Name : Tool_Names; Value : String);
+   --  Set the command for this tool on this toolchain
+
    function Is_Simple_Cross (This : Toolchain) return Boolean;
    --  Return true if the toolchain is a "simple" cross toolchain, that is
    --  to say all the tools are the for prefix-tool, false otherwise.
 
    function Get_Name (This : Toolchain) return String;
    --  Return the name of this toolchain, as used for the properties deduction
+
+   procedure Set_Name (This : Toolchain; Name : String);
+   --  Changes the name of the toolchain given in parameter
 
    function Copy (This : Toolchain) return Toolchain;
    --  Copy all the data for the toolchain given in parameter.
@@ -149,6 +155,12 @@ package Toolchains is
    --  Return true if this toolchain is a custom toolchain, that is to say it's
    --  not one of the common toolchains known by GPS and its properties have
    --  been manually set by the user.
+
+   procedure Set_Custom (This : Toolchain; Value : Boolean);
+   --  Set wether this toolchain is a custom toolchain
+
+   procedure Set_Native (This : Toolchain; Value : Boolean);
+   --  Set wether this toolchain is a native toolchain
 
    procedure Free (This : in out Toolchain);
    --  Free the memory associated to this toolchain. Removal from the manager

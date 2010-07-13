@@ -24,6 +24,8 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Namet; use Namet;
 with Types; use Types;
 with Sinput; use Sinput;
+with Prj.PP; use Prj.PP;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Toolchains.Project_Parsers is
 
@@ -286,5 +288,54 @@ package body Toolchains.Project_Parsers is
    begin
       return This.Path;
    end Get_Path;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save (This : Parsed_Project_Record) is
+   begin
+      Save (This, This.Path);
+   end Save;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save (This : Parsed_Project_Record; To : Virtual_File) is
+      File : Ada.Text_IO.File_Type;
+
+      procedure Write_Char_Ap (C : Character);
+      procedure Write_Eol_Ap;
+      procedure Write_Str_Ap (S : String);
+
+      procedure Write_Char_Ap (C : Character) is
+      begin
+         Put (File, C);
+      end Write_Char_Ap;
+
+      procedure Write_Eol_Ap is
+      begin
+         New_Line (File);
+      end Write_Eol_Ap;
+
+      procedure Write_Str_Ap (S : String) is
+      begin
+         Put (File, S);
+      end Write_Str_Ap;
+
+   begin
+      Create (File, Out_File, String (To.Full_Name.all));
+
+      Pretty_Print
+        (Project                => This.Project_Node,
+         In_Tree                => This.Node_Data,
+         W_Char                 => Write_Char_Ap'Unrestricted_Access,
+         W_Eol                  => Write_Eol_Ap'Unrestricted_Access,
+         W_Str                  => Write_Str_Ap'Unrestricted_Access,
+         Backward_Compatibility => False);
+
+      Close (File);
+   end Save;
 
 end Toolchains.Project_Parsers;

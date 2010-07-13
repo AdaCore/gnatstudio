@@ -124,6 +124,13 @@ package Toolchains.Project_Parsers is
    function Get_Path (This : Parsed_Project_Record) return Virtual_File;
    --  Return this project path.
 
+   procedure Save (This : Parsed_Project_Record);
+   --  Save the project to the file from where it has been loaded
+
+   procedure Save (This : Parsed_Project_Record; To : Virtual_File);
+   --  Save the current version of the project tree on the file given in
+   --  parameter.
+
 private
 
    package Parsed_Projects_Maps is new Ada.Containers.Ordered_Maps
