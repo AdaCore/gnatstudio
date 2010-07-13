@@ -203,6 +203,19 @@ package Toolchains is
 
    type Toolchain_Array is array (Integer range <>) of Toolchain;
 
+   function Get_Toolchains (This : Toolchain_Manager) return Toolchain_Array;
+   --  Return the toolchains contained in this manager.
+
+   procedure Scan_Toolchains
+     (This     : Toolchain_Manager;
+      Progress : access procedure
+        (Name    : String;
+         Current : Integer;
+         Total   : Integer));
+   --  Scans the toolchains installed on the system using gprbuild, and run
+   --  each gnat list on the whole list (scanned toolchains + already loaded
+   --  toolchains
+
 private
 
    type Ada_Library_Info_Record is record

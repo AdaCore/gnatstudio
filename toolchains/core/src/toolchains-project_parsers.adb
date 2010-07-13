@@ -126,6 +126,15 @@ package body Toolchains.Project_Parsers is
       return This.Manager;
    end Get_Manager;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (This : access Project_Parser_Record) return Boolean is
+   begin
+      return This.Is_Valid;
+   end Is_Valid;
+
    ----------------------
    -- Get_Root_Project --
    ----------------------

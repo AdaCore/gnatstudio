@@ -88,6 +88,11 @@ package Toolchains.Project_Parsers is
    function Get_Manager
      (This : access Project_Parser_Record) return Toolchain_Manager;
 
+   function Is_Valid (This : access Project_Parser_Record) return Boolean;
+   --  Return true if the parser could correctly parse the project, false
+   --  otherwise. And invalid project may be semantically correct, but doesn't
+   --  fall into the standard supported toolchain description.
+
    type Parsed_Project_Record is private;
    type Parsed_Project is access all Parsed_Project_Record;
 

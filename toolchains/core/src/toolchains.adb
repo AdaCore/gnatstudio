@@ -777,4 +777,106 @@ package body Toolchains is
       end;
    end Get_Library_Information;
 
+   --------------------
+   -- Get_Toolchains --
+   --------------------
+
+   function Get_Toolchains (This : Toolchain_Manager) return Toolchain_Array is
+      use Toolchain_Maps;
+
+      Result : Toolchain_Array (1 .. Integer (This.Toolchains.Length));
+      Cur    : Toolchain_Maps.Cursor := This.Toolchains.First;
+   begin
+      for J in Result'Range loop
+         Result (J) := Element (Cur);
+         Cur := Next (Cur);
+      end loop;
+
+      return Result;
+   end Get_Toolchains;
+
+   ---------------------
+   -- Scan_Toolchains --
+   ---------------------
+
+   procedure Scan_Toolchains
+     (This     : Toolchain_Manager;
+      Progress : access procedure
+        (Name    : String;
+         Current : Integer;
+         Total   : Integer))
+   is
+      Output : constant String := This.Execute ("gprconfig --show-targets");
+      Lines  : String_List_Access := Split (Output, ASCII.LF);
+      Garbage         : String_Access;
+      Toolchain_Matcher : constant Pattern_Matcher :=
+        Compile ("([^ ]+-[^ ]+).*");
+      Toolchain_Matches : Match_Array (0 .. 1);
+   begin
+      for J in Lines'Range loop
+         for K in Lines (J)'Range loop
+            if Lines (J)(K) = ASCII.LF or else Lines (J)(K) = ASCII.CR then
+               Garbage := Lines (J);
+               Lines (J) := new String'
+                 (Trim (Lines (J) (Lines (J)'First .. K - 1), Both));
+               Free (Garbage);
+
+               exit;
+            end if;
+         end loop;
+      end loop;
+
+      for J in Lines'Range loop
+         declare
+            Ada_Toolchain : Toolchain;
+            Is_Native     : constant Boolean :=
+              Index (Lines (J).all, "native") in Lines (J)'Range;
+         begin
+            Match (Toolchain_Matcher, Lines (J).all, Toolchain_Matches);
+
+            if Toolchain_Matches (0) /= No_Match then
+               if Is_Native then
+                  Ada_Toolchain := Get_Native_Toolchain (This);
+               else
+                  Ada_Toolchain := Get_Toolchain (This, Lines (J).all);
+               end if;
+
+               if Ada_Toolchain = null then
+                  Ada_Toolchain := new Toolchain_Record;
+                  Ada_Toolchain.Name := new String'(Lines (J).all);
+                  Ada_Toolchain.Is_Native := Is_Native;
+                  This.Toolchains.Insert
+                    (Ada_Toolchain.Name.all, Ada_Toolchain);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      declare
+         use Toolchain_Maps;
+
+         I   : Integer := 1;
+         Cur : Toolchain_Maps.Cursor := This.Toolchains.First;
+      begin
+         while Cur /= Toolchain_Maps.No_Element loop
+            if Progress /= null then
+               Progress
+                 ("Compute " & Get_Name (Element (Cur)),
+                  I,
+                  Integer (This.Toolchains.Length));
+            end if;
+
+            I := I + 1;
+
+            Compute_Predefined_Paths
+              (This    => Element (Cur),
+               Manager => This);
+
+            Cur := Next (Cur);
+         end loop;
+      end;
+
+      Free (Lines);
+   end Scan_Toolchains;
+
 end Toolchains;
