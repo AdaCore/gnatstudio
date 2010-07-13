@@ -855,18 +855,18 @@ package body Toolchains is
       declare
          use Toolchain_Maps;
 
-         I   : Integer := 1;
+         Cur_Progress : Integer := 1;
          Cur : Toolchain_Maps.Cursor := This.Toolchains.First;
       begin
          while Cur /= Toolchain_Maps.No_Element loop
             if Progress /= null then
                Progress
                  ("Compute " & Get_Name (Element (Cur)),
-                  I,
+                  Cur_Progress,
                   Integer (This.Toolchains.Length));
             end if;
 
-            I := I + 1;
+            Cur_Progress := Cur_Progress + 1;
 
             Compute_Predefined_Paths
               (This    => Element (Cur),
