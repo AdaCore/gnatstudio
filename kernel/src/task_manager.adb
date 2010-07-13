@@ -288,61 +288,6 @@ package body Task_Manager is
                   Command_Queues.Free (Queue.Queue);
 
                else
-                  declare
-                     use Command_Queues;
-                     Cons_Actions : constant Command_Queues.List :=
-                                      Get_Consequence_Actions (Command);
-                  begin
-                     if Command.Is_Continuation_Action then
-                        if Cons_Actions /= Command_Queues.Null_List
-                          and then Head (Cons_Actions).Is_Continuation_Action
-                        then
-                           --  Next action still part of the group fail, record
-                           --  status and keep going.
-                           if Result = Failure then
-                              Queue.Stored_Status := Result;
-                           end if;
-                           Result := Success;
-
-                        else
-                           --  We reach the end of a group fail section, the
-                           --  status of the last action is set to false if one
-                           --  of the grouped action failed.
-                           if Queue.Stored_Status = Failure then
-                              Result := Failure;
-                           end if;
-                           Queue.Stored_Status := Success;
-                        end if;
-                     end if;
-                  end;
-
-                  if Result = Success then
-                     declare
-                        New_Queue : constant Command_Queues.List :=
-                                      Get_Consequence_Actions (Command);
-                     begin
-                        Queue.Total :=
-                          Queue.Total + Command_Queues.Length (New_Queue);
-                        Command_Queues.Concat (Queue.Queue, New_Queue);
-                     end;
-
-                     Free_Alternate_Actions (Command, True, False);
-                     Free_Consequence_Actions (Command, False, False);
-
-                  else
-                     declare
-                        New_Queue : constant Command_Queues.List :=
-                                      Get_Alternate_Actions (Command);
-                     begin
-                        Queue.Total := Queue.Total
-                          + Command_Queues.Length (New_Queue);
-                        Command_Queues.Concat (Queue.Queue, New_Queue);
-                     end;
-
-                     Free_Consequence_Actions (Command, True, False);
-                     Free_Alternate_Actions (Command, False, False);
-                  end if;
-
                   Command_Queues.Next (Queue.Queue);
 
                   Queue.Done := Queue.Done + 1;

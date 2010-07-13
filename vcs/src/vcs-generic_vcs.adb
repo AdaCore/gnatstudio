@@ -52,6 +52,7 @@ with GPS.Editors; use GPS.Editors;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with VCS.Branching_Commands; use VCS.Branching_Commands;
 
 package body VCS.Generic_VCS is
 
@@ -2107,7 +2108,7 @@ package body VCS.Generic_VCS is
       P_Branch : Unbounded_String;
       P_Rev    : Unbounded_String;
       First    : Boolean := True;
-      Commands : Command_Access;
+      Commands : Branching_Command;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
@@ -2147,9 +2148,11 @@ package body VCS.Generic_VCS is
                Script);
 
             if Commands /= null then
-               Add_Consequence_Action (Commands, Command);
+               VCS.Branching_Commands.Add_Consequence_Action
+                 (Commands, Command_Access (Command));
             else
-               Commands := Command_Access (Command);
+               Commands := Create
+                 (Kernel, Command_Access (Command), Name (Rep));
             end if;
 
             First := False;
@@ -2186,7 +2189,7 @@ package body VCS.Generic_VCS is
                   Rep.Kernel, Log_Parsed_Hook);
       begin
          if Commands /= null then
-            Add_Consequence_Action (Commands, C);
+            VCS.Branching_Commands.Add_Consequence_Action (Commands, C);
          end if;
 
          if Commands /= null then
@@ -2215,7 +2218,7 @@ package body VCS.Generic_VCS is
       Matches  : Match_Array (0 .. Parser.Matches_Num);
       Script   : Scripting_Language;
       Start    : Integer := S'First;
-      Commands : Command_Access;
+      Commands : Branching_Command;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
@@ -2247,9 +2250,11 @@ package body VCS.Generic_VCS is
                Script);
 
             if Commands /= null then
-               Add_Consequence_Action (Commands, Command);
+               VCS.Branching_Commands.Add_Consequence_Action
+                 (Commands, Command_Access (Command));
             else
-               Commands := Command_Access (Command);
+               Commands := Create
+                 (Kernel, Command_Access (Command), Name (Rep));
             end if;
          end;
 
@@ -2264,7 +2269,7 @@ package body VCS.Generic_VCS is
                   Rep.Kernel, Revision_Parsed_Hook);
       begin
          if Commands /= null then
-            Add_Consequence_Action (Commands, C);
+            VCS.Branching_Commands.Add_Consequence_Action (Commands, C);
          end if;
 
          if Commands /= null then

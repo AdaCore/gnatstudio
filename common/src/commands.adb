@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2009, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,6 @@ package body Commands is
    procedure Enqueue
      (Queue         : Command_Queue;
       Action        : access Root_Command'Class;
-      High_Priority : Boolean;
       Modify_Group  : Boolean);
    --  Internal version of Enqueue.
    --  Modify_Group indicates whether we should modify the current group.
@@ -119,8 +118,6 @@ package body Commands is
          if Command.Ref_Count = 0 then
             --  Do not free commands registered as actions, except if we are
             --  freeing the actions themselves
-            Free (Command.Next_Commands);
-            Free (Command.Alternate_Commands);
             Free (Command.all);
             Unchecked_Free (Command);
          end if;
@@ -183,10 +180,9 @@ package body Commands is
 
    procedure Enqueue
      (Queue         : Command_Queue;
-      Action        : access Root_Command;
-      High_Priority : Boolean := False) is
+      Action        : access Root_Command) is
    begin
-      Enqueue (Queue, Action, High_Priority, True);
+      Enqueue (Queue, Action, True);
    end Enqueue;
 
    -------------
@@ -196,7 +192,6 @@ package body Commands is
    procedure Enqueue
      (Queue         : Command_Queue;
       Action        : access Root_Command'Class;
-      High_Priority : Boolean;
       Modify_Group  : Boolean) is
    begin
       if Queue = Null_Command_Queue then
@@ -209,11 +204,7 @@ package body Commands is
          Action.Group := Queue.Current_Group_Number;
       end if;
 
-      if High_Priority then
-         Prepend (Queue.The_Queue, Command_Access (Action));
-      else
-         Append (Queue.The_Queue, Command_Access (Action));
-      end if;
+      Append (Queue.The_Queue, Command_Access (Action));
 
       if not Queue.Command_In_Progress then
          Execute_Next_Action (Queue);
@@ -287,8 +278,6 @@ package body Commands is
          return;
       end if;
 
-      Node := First (Action.Next_Commands);
-
       if Action.Group_Fail then
          if Node /= Null_Node and then Data (Node).Group_Fail then
             --  Next action still part of the group fail, record status and
@@ -306,33 +295,9 @@ package body Commands is
          end if;
       end if;
 
-      if not Success then
-         Node := First (Action.Alternate_Commands);
-      end if;
-
       Queue.Command_In_Progress := False;
 
-      --  Copy all actions from the proper list pointed to by Node into the
-      --  queue.
-
-      while Node /= Null_Node loop
-         Prepend (Queue.The_Queue, Data (Node));
-         Data (Node).Queue := Queue;
-         Node := Next (Node);
-      end loop;
-
-      --  And release them from the current list
-
-      if Success then
-         Free (Action.Next_Commands, Free_Data => False);
-         Free (Action.Alternate_Commands);
-      else
-         Free (Action.Alternate_Commands, Free_Data => False);
-         Free (Action.Next_Commands);
-      end if;
-
-      Action.Next_Commands := Null_List;
-      Action.Alternate_Commands := Null_List;
+      --  And release action from the current list
 
       case Action.Mode is
          when Normal =>
@@ -429,51 +394,6 @@ package body Commands is
       Success := Execute (Command_Access (Command));
    end Execute;
 
-   ----------------------------
-   -- Is_Continuation_Action --
-   ----------------------------
-
-   function Is_Continuation_Action
-     (Action : access Root_Command) return Boolean is
-   begin
-      return Action.Group_Fail;
-   end Is_Continuation_Action;
-
-   -----------------------------
-   -- Add_Continuation_Action --
-   -----------------------------
-
-   procedure Add_Continuation_Action
-     (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class) is
-   begin
-      Item.Group_Fail := True;
-      Action.Group_Fail := True;
-      Prepend (Item.Next_Commands, Command_Access (Action));
-   end Add_Continuation_Action;
-
-   ----------------------------
-   -- Add_Consequence_Action --
-   ----------------------------
-
-   procedure Add_Consequence_Action
-     (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class) is
-   begin
-      Prepend (Item.Next_Commands, Command_Access (Action));
-   end Add_Consequence_Action;
-
-   --------------------------
-   -- Add_Alternate_Action --
-   --------------------------
-
-   procedure Add_Alternate_Action
-     (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class) is
-   begin
-      Prepend (Item.Alternate_Commands, Command_Access (Action));
-   end Add_Alternate_Action;
-
    --------------------------
    -- Get_Previous_Command --
    --------------------------
@@ -521,7 +441,7 @@ package body Commands is
          Group := Action.Group;
 
          Next (Queue.Undo_Queue, Free_Data => False);
-         Enqueue (Queue, Action, False, False);
+         Enqueue (Queue, Action, False);
 
          exit when Group = 0;
       end loop;
@@ -546,7 +466,7 @@ package body Commands is
          Group := Action.Group;
 
          Next (Queue.Redo_Queue, Free_Data => False);
-         Enqueue (Queue, Action, False, False);
+         Enqueue (Queue, Action, False);
 
          exit when Group = 0;
       end loop;
@@ -570,70 +490,6 @@ package body Commands is
       return Is_Empty (Queue.Redo_Queue);
    end Redo_Queue_Empty;
 
-   -----------------------------
-   -- Get_Consequence_Actions --
-   -----------------------------
-
-   function Get_Consequence_Actions
-     (Item : access Root_Command'Class) return Command_Queues.List is
-   begin
-      return Item.Next_Commands;
-   end Get_Consequence_Actions;
-
-   ---------------------------
-   -- Get_Alternate_Actions --
-   ---------------------------
-
-   function Get_Alternate_Actions
-     (Item : access Root_Command'Class) return Command_Queues.List is
-   begin
-      return Item.Alternate_Commands;
-   end Get_Alternate_Actions;
-
-   ------------------------------
-   -- Free_Consequence_Actions --
-   ------------------------------
-
-   procedure Free_Consequence_Actions
-     (Item      : access Root_Command'Class;
-      Free_Data : Boolean;
-      Free_List : Boolean)
-   is
-      Empty : Command_Queues.List;
-   begin
-      if Free_Data then
-         Command_Queues.Free (Item.Next_Commands);
-      else
-         if Free_List then
-            Command_Queues.Free (Item.Next_Commands, False);
-         end if;
-
-         Item.Next_Commands := Empty;
-      end if;
-   end Free_Consequence_Actions;
-
-   ----------------------------
-   -- Free_Alternate_Actions --
-   ----------------------------
-
-   procedure Free_Alternate_Actions
-     (Item      : access Root_Command'Class;
-      Free_Data : Boolean;
-      Free_List : Boolean)
-   is
-      Empty : Command_Queues.List;
-   begin
-      if Free_Data then
-         Command_Queues.Free (Item.Alternate_Commands);
-      else
-         if Free_List then
-            Command_Queues.Free (Item.Alternate_Commands, False);
-         end if;
-
-         Item.Alternate_Commands := Empty;
-      end if;
-   end Free_Alternate_Actions;
-
    --------------------------------
    -- Launch_Synchronous_Generic --
    --------------------------------
@@ -642,8 +498,7 @@ package body Commands is
      (Command : access Root_Command'Class;
       Wait    : Duration := 0.0)
    is
-      Next_Actions : List_Node;
-      Result       : Command_Return_Type;
+      Result : Command_Return_Type;
    begin
       loop
          Result := Execute_Command (Command_Access (Command));
@@ -653,19 +508,6 @@ package body Commands is
          if Wait /= 0.0 then
             delay Wait;
          end if;
-      end loop;
-
-      if Result = Success then
-         Next_Actions := First (Get_Consequence_Actions (Command));
-
-      else
-         Next_Actions := First (Get_Alternate_Actions (Command));
-      end if;
-
-      --  ??? Should we really use a recursive implementation here
-      while Next_Actions /= Null_Node loop
-         Launch_Synchronous_Generic (Data (Next_Actions), Wait);
-         Next_Actions := Next (Next_Actions);
       end loop;
    end Launch_Synchronous_Generic;
 

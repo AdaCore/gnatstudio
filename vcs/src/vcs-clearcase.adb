@@ -42,6 +42,8 @@ with VCS_View.Explorer;         use VCS_View.Explorer;
 with GPS.Editors; use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
+with VCS.Branching_Commands; use VCS.Branching_Commands;
+
 package body VCS.ClearCase is
 
    use String_List;
@@ -673,6 +675,7 @@ package body VCS.ClearCase is
             File     : Virtual_File renames Filenames (J);
 
             Checkout_File_Command : External_Command_Access;
+            Checkout_Wrapper      : Branching_Command;
 
             Fail_Message    : Console_Command_Access;
             Success_Message : Console_Command_Access;
@@ -721,6 +724,9 @@ package body VCS.ClearCase is
                     Checkout_Handler'Access,
                     -"ClearCase: Checking out");
 
+            Checkout_Wrapper := Create
+              (Kernel, Command_Access (Checkout_File_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
@@ -731,17 +737,17 @@ package body VCS.ClearCase is
 
             --  Enqueue the actions
 
-            Add_Consequence_Action
-              (Checkout_File_Command,
-               Success_Message);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Checkout_Wrapper,
+               Command_Access (Success_Message));
 
-            Add_Alternate_Action
-              (Checkout_File_Command,
-               Fail_Message);
+            VCS.Branching_Commands.Add_Alternate_Action
+              (Checkout_Wrapper,
+               Command_Access (Fail_Message));
 
             Launch_Background_Command
               (Rep.Kernel,
-               Command_Access (Checkout_File_Command),
+               Command_Access (Checkout_Wrapper),
                False,
                True,
                ClearCase_Identifier);
@@ -777,6 +783,7 @@ package body VCS.ClearCase is
             Head                 : List;
             File                 : Virtual_File renames Filenames (J);
             Checkin_File_Command : External_Command_Access;
+            Checkin_Wrapper      : Branching_Command;
             Fail_Message         : Console_Command_Access;
             Success_Message      : Console_Command_Access;
             Log_File             : constant Virtual_File := Create_Tmp_File;
@@ -833,22 +840,25 @@ package body VCS.ClearCase is
                Checkin_Handler'Access,
                -"ClearCase: Checking in");
 
+            Checkin_Wrapper := Create
+              (Kernel, Command_Access (Checkin_File_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
             --  Enqueue the actions
 
-            Add_Consequence_Action
-              (Checkin_File_Command,
-               Success_Message);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Checkin_Wrapper,
+               Command_Access (Success_Message));
 
-            Add_Alternate_Action
-              (Checkin_File_Command,
-               Fail_Message);
+            VCS.Branching_Commands.Add_Alternate_Action
+              (Checkin_Wrapper,
+               Command_Access (Fail_Message));
 
             Launch_Background_Command
               (Rep.Kernel,
-               Command_Access (Checkin_File_Command),
+               Command_Access (Checkin_Wrapper),
                False,
                True,
                ClearCase_Identifier);
@@ -1117,9 +1127,15 @@ package body VCS.ClearCase is
             Dir      : Virtual_File renames Get_Parent (Filenames (J));
 
             Checkout_Dir_Command : External_Command_Access;
+            Checkout_Wrapper     : Branching_Command;
+
             Make_Element_Command : External_Command_Access;
-            Checkin_Element_Command : External_Command_Access;
+            Make_Wrapper         : Branching_Command;
+
             Checkin_Dir_Command  : External_Command_Access;
+            Checkin_Wrapper      : Branching_Command;
+
+            Checkin_Element_Command : External_Command_Access;
 
             Fail_Message    : Console_Command_Access;
             Success_Message : Console_Command_Access;
@@ -1166,6 +1182,9 @@ package body VCS.ClearCase is
                     Checkout_Handler'Access,
                     -"ClearCase: Checking out");
 
+            Checkout_Wrapper := Create
+              (Kernel, Command_Access (Checkout_Dir_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
@@ -1189,6 +1208,9 @@ package body VCS.ClearCase is
                     Head,
                     Checkout_Handler'Access,
                     -"ClearCase: Making element");
+
+            Make_Wrapper := Create
+              (Kernel, Command_Access (Make_Element_Command), Name (Rep));
 
             Free (Args);
             Free (Head);
@@ -1234,43 +1256,46 @@ package body VCS.ClearCase is
                     Checkin_Handler'Access,
                     -"ClearCase: Checking in");
 
+            Checkin_Wrapper := Create
+              (Kernel, Command_Access (Checkin_Dir_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
             --  If the directory checkout was successful, create the element
 
-            Add_Consequence_Action
-              (Checkout_Dir_Command,
-               Make_Element_Command);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Checkout_Wrapper,
+               Command_Access (Make_Wrapper));
 
-            Add_Alternate_Action
-              (Checkout_Dir_Command,
-               Fail_Message);
+            VCS.Branching_Commands.Add_Alternate_Action
+              (Checkout_Wrapper,
+               Command_Access (Fail_Message));
 
             --  If the element was successfully created, check it in
 
-            Add_Consequence_Action
-              (Make_Element_Command,
-               Checkin_Element_Command);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Make_Wrapper,
+               Command_Access (Checkin_Element_Command));
 
-            Add_Alternate_Action
-              (Make_Element_Command,
-               Copy (Fail_Message));
+            VCS.Branching_Commands.Add_Alternate_Action
+              (Make_Wrapper,
+               Command_Access (Copy (Fail_Message)));
 
-            Add_Consequence_Action
-              (Checkin_Dir_Command,
-               Success_Message);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Checkin_Wrapper,
+               Command_Access (Success_Message));
 
             Launch_Background_Command
               (Rep.Kernel,
-               Command_Access (Checkout_Dir_Command),
+               Command_Access (Checkout_Wrapper),
                False,
                True,
                ClearCase_Identifier);
 
             Launch_Background_Command
               (Rep.Kernel,
-               Command_Access (Checkin_Dir_Command),
+               Command_Access (Checkin_Wrapper),
                False,
                True,
                ClearCase_Identifier);
@@ -1304,6 +1329,10 @@ package body VCS.ClearCase is
             Checkout_Dir_Command   : External_Command_Access;
             Remove_Element_Command : External_Command_Access;
             Checkin_Dir_Command    : External_Command_Access;
+
+            Checkout_Wrapper : Branching_Command;
+            Remove_Wrapper   : Branching_Command;
+            Checkin_Wrapper  : Branching_Command;
 
             Fail_Message    : Console_Command_Access;
             Success_Message : Console_Command_Access;
@@ -1348,6 +1377,9 @@ package body VCS.ClearCase is
                     Checkout_Handler'Access,
                     -"ClearCase: Checking out");
 
+            Checkout_Wrapper := Create
+              (Kernel, Command_Access (Checkout_Dir_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
@@ -1372,6 +1404,9 @@ package body VCS.ClearCase is
                     Remove_Handler'Access,
                     -"ClearCase: Removing element");
 
+            Remove_Wrapper := Create
+              (Kernel, Command_Access (Remove_Element_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
@@ -1394,37 +1429,40 @@ package body VCS.ClearCase is
                     Checkin_Handler'Access,
                     -"ClearCase: Checking in directory");
 
+            Checkin_Wrapper := Create
+              (Kernel, Command_Access (Checkin_Dir_Command), Name (Rep));
+
             Free (Args);
             Free (Head);
 
             --  If the directory checkout was successful, create the element
 
-            Add_Consequence_Action
-              (Checkout_Dir_Command,
-               Remove_Element_Command);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Checkout_Wrapper,
+               Command_Access (Remove_Wrapper));
 
-            Add_Alternate_Action
-              (Checkout_Dir_Command,
-               Fail_Message);
+            VCS.Branching_Commands.Add_Alternate_Action
+              (Checkout_Wrapper,
+               Command_Access (Fail_Message));
 
-            Add_Alternate_Action
-              (Remove_Element_Command,
-               Copy (Fail_Message));
+            VCS.Branching_Commands.Add_Alternate_Action
+              (Remove_Wrapper,
+               Command_Access (Copy (Fail_Message)));
 
-            Add_Consequence_Action
-              (Checkin_Dir_Command,
-               Success_Message);
+            VCS.Branching_Commands.Add_Consequence_Action
+              (Checkin_Wrapper,
+               Command_Access (Success_Message));
 
             Launch_Background_Command
               (Rep.Kernel,
-               Command_Access (Checkout_Dir_Command),
+               Command_Access (Checkout_Wrapper),
                False,
                True,
                ClearCase_Identifier);
 
             Launch_Background_Command
               (Rep.Kernel,
-               Command_Access (Checkin_Dir_Command),
+               Command_Access (Checkin_Wrapper),
                False,
                True,
                ClearCase_Identifier);

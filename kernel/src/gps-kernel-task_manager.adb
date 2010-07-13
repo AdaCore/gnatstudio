@@ -272,16 +272,6 @@ package body GPS.Kernel.Task_Manager is
       return Kernel.Tasks;
    end Get_Task_Manager;
 
-   ----------------------------
-   -- Is_Continuation_Action --
-   ----------------------------
-
-   overriding function Is_Continuation_Action
-     (Command : access Scheduled_Command) return Boolean is
-   begin
-      return Command.Command.Is_Continuation_Action;
-   end Is_Continuation_Action;
-
    -----------------
    -- Get_Command --
    -----------------
@@ -409,49 +399,9 @@ package body GPS.Kernel.Task_Manager is
       return Scheduled_Command_Access
    is
       C     : constant Scheduled_Command_Access := new Scheduled_Command;
-      Queue : Command_Queues.List;
-      Node  : Command_Queues.List_Node;
    begin
       C.Command := Command_Access (Command);
       C.Destroy_On_Exit := Destroy_On_Exit;
-
-      --  Add the consequence actions to the wrapper
-
-      Queue := Get_Consequence_Actions (Command);
-
-      Node := First (Queue);
-
-      while Node /= Command_Queues.Null_Node loop
-         if Data (Node) /= null then
-            Add_Consequence_Action
-              (C, Create_Wrapper (Data (Node), Destroy_On_Exit));
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      --  Add the alternate actions to the wrapper
-
-      Queue := Get_Alternate_Actions (Command);
-
-      Node := First (Queue);
-
-      while Node /= Command_Queues.Null_Node loop
-         if Data (Node) /= null then
-            Add_Alternate_Action
-              (C, Create_Wrapper (Data (Node), Destroy_On_Exit));
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      --  We have to free those lists, otherwise in the case of incremental
-      --  execution, a call to destroy will free all these.
-
-      Free_Consequence_Actions
-        (Command, Free_Data => False, Free_List => True);
-      Free_Alternate_Actions
-        (Command, Free_Data => False, Free_List => True);
 
       return C;
    end Create_Wrapper;

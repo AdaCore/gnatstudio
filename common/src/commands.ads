@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -130,67 +130,6 @@ package Commands is
    package Command_Queues is
      new Generic_List (Command_Access, Free => Unref);
 
-   procedure Add_Consequence_Action
-     (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class);
-   --  Add an action that will be executed if Item executes successfully.
-   --  If the command is executed through a Command_Queue, the consequence
-   --  action will be added to the queue, and removed from the list of
-   --  consequence actions for the command. As a result, executing the
-   --  Command a second time will not take into account the consequence action
-   --  a second time.
-
-   procedure Add_Alternate_Action
-     (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class);
-   --  Add an action that will be executed if execution of Item is
-   --  unsuccessfull.
-   --  See comment for Add_Consequence_Action
-
-   procedure Add_Continuation_Action
-     (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class);
-   --  As for Add_Consequence_Action except that only the last action of a set
-   --  of continuation action will report the failure. This means that all
-   --  actions before the last one will report the status Success. This is to
-   --  be used when we want a group of action to be executed and stop only when
-   --  the last action of the group is reached. For example this can be used to
-   --  pass a style checker on sources. Each command run on a file could report
-   --  errors, but we want to continue to have errors on all files to be
-   --  reported.
-
-   function Is_Continuation_Action
-     (Action : access Root_Command) return Boolean;
-   --  Return true is Action is a continuation action, see above
-
-   function Get_Consequence_Actions
-     (Item : access Root_Command'Class) return Command_Queues.List;
-   --  Get the consequence actions for Item.
-   --  Result must not be freed by the user.
-
-   function Get_Alternate_Actions
-     (Item : access Root_Command'Class) return Command_Queues.List;
-   --  Get the alternate actions for Item.
-   --  Result must not be freed by the user.
-
-   procedure Free_Consequence_Actions
-     (Item      : access Root_Command'Class;
-      Free_Data : Boolean;
-      Free_List : Boolean);
-   procedure Free_Alternate_Actions
-     (Item      : access Root_Command'Class;
-      Free_Data : Boolean;
-      Free_List : Boolean);
-   --  Free memory associated to the consequence/alternate commands of Item.
-   --  If Free_List is False, the command will be marked as having no
-   --  consequence/alternate actions, but the actual list will not be
-   --  freed.
-   --  If Free_Data is False, the command will be marked as having no
-   --  consequence/alternate actions, but the actual list will not be
-   --  freed, nor its data.
-   --  Note that if Free_Data is true, then Free_List has no effect (e.g.
-   --  we assume that when we free the data, we always free the list too).
-
    -------------------------
    -- Executing a command --
    -------------------------
@@ -269,8 +208,7 @@ package Commands is
 
    procedure Enqueue
      (Queue         : Command_Queue;
-      Action        : access Root_Command;
-      High_Priority : Boolean := False);
+      Action        : access Root_Command);
    --  Adds Action to the Queue, and start executing the command immediately
    --  if the queue is empty, or after all commands already in the queue.
    --  The execution is by default synchronous, ie this call will only return
@@ -280,10 +218,6 @@ package Commands is
    --  As a side effect, when the command is executed, its consequence actions
    --  are modified, so you cannot execute the same command exactly the same
    --  way a second time.
-   --
-   --  If High_Priority is True, the only thing that is guaranteed is
-   --  that this Action will be executed before all the actions that
-   --  were enqueued with High_Priority set to False.
    --
    --  This command steals a reference to Action, so that when the queue
    --  finishes its execution the command is freed. If you need to keep a
@@ -315,6 +249,8 @@ package Commands is
    --  and replaced by Command.
    --  The caller is responsible for freeing Command when it is no longer
    --  used.
+   --  This is useful for implementing Undo/Redo buttons in a graphical
+   --  interface, for instance.
 
    ---------------------
    -- Debug functions --
@@ -326,6 +262,7 @@ package Commands is
    function Debug_Get_Undo_Queue
      (Q : Command_Queue) return Command_Queues.List;
    --  Return the undo queue
+
    function Debug_Get_Redo_Queue
      (Q : Command_Queue) return Command_Queues.List;
    --  Return the redo queue
@@ -419,8 +356,6 @@ private
 
    type Root_Command is abstract tagged limited record
       Queue              : Command_Queue;
-      Next_Commands      : Command_Queues.List;
-      Alternate_Commands : Command_Queues.List;
       Mode               : Command_Mode := Normal;
       Group_Fail         : Boolean := False;
 

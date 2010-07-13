@@ -53,6 +53,7 @@ with VCS_Utils;                        use VCS_Utils;
 with VCS_View;                         use VCS_View;
 
 with UTF8_Utils;                       use UTF8_Utils;
+with VCS.Branching_Commands; use VCS.Branching_Commands;
 
 package body Log_Utils is
 
@@ -711,7 +712,11 @@ package body Log_Utils is
       Logs                   : String_List.List;
 
       Commit_Command         : Log_Action_Command_Access;
+      Commit_Command_Wrapper : Branching_Command;
+
       Get_Status_Command     : Get_Status_Command_Access;
+      Get_Status_Command_Wrapper : Branching_Command;
+
       Check_Activity_Command : Check_Activity_Command_Access;
 
       Project                : Project_Type;
@@ -722,9 +727,13 @@ package body Log_Utils is
       Cancel_All             : Boolean := False;
 
       Log_Checks             : External_Command_Access;
-      File_Checks            : External_Command_Access;
+      Log_Checks_Wrapper     : Branching_Command;
 
-      First_Check, Last_Check : Command_Access := null;
+      File_Checks            : External_Command_Access;
+      File_Checks_Wrapper    : Branching_Command;
+
+      First_Check            : Command_Access := null;
+      Last_Check             : Branching_Command;
 
    begin
       if not Save_Files
@@ -788,22 +797,26 @@ package body Log_Utils is
       --  Create the Commit command
 
       Create (Commit_Command, Kernel, Ref, Action, Files, Logs);
+      Commit_Command_Wrapper := Create
+        (Kernel, Command_Access (Commit_Command), Name (Ref));
 
       --  Create the Get_Status command
 
       Create (Get_Status_Command, Ref, Files);
+      Get_Status_Command_Wrapper := Create
+        (Kernel, Command_Access (Get_Status_Command), Name (Ref));
 
       --  The Get_Status command is a consequence of the Commit command
 
-      Add_Consequence_Action
-        (Command_Access (Commit_Command),
-         Command_Access (Get_Status_Command));
+      VCS.Branching_Commands.Add_Consequence_Action
+        (Commit_Command_Wrapper,
+         Command_Access (Get_Status_Command_Wrapper));
 
       --  The Check_Activity command is a consequence of the Get_Status command
 
       if Activity /= No_Activity and then Action = Commit then
-         Add_Consequence_Action
-           (Command_Access (Get_Status_Command),
+         VCS.Branching_Commands.Add_Consequence_Action
+           (Get_Status_Command_Wrapper,
             Command_Access (Check_Activity_Command));
       end if;
 
@@ -894,14 +907,17 @@ package body Log_Utils is
                              Null_List,
                              Check_Handler'Access,
                              -"Version Control: Checking files");
+                     File_Checks_Wrapper := Create
+                       (Kernel, Command_Access (File_Checks), Name (Ref));
 
                      if First_Check = null then
-                        First_Check := Command_Access (File_Checks);
+                        First_Check := Command_Access (File_Checks_Wrapper);
                      else
-                        Add_Continuation_Action (Last_Check, File_Checks);
+                        VCS.Branching_Commands.Add_Consequence_Action
+                          (Last_Check, Command_Access (File_Checks_Wrapper));
                      end if;
 
-                     Last_Check := Command_Access (File_Checks);
+                     Last_Check := File_Checks_Wrapper;
                      OS_Lib.Free (C_Args);
                   end if;
                end if;
@@ -980,14 +996,18 @@ package body Log_Utils is
                      Head_List,
                      Check_Handler'Access,
                      -"Version Control: Checking file changelogs");
+                  Log_Checks_Wrapper := Create
+                    (Kernel, Command_Access (Log_Checks), Name (Ref));
 
                   if First_Check = null then
-                     First_Check := Command_Access (Log_Checks);
+                     First_Check := Command_Access (Log_Checks_Wrapper);
                   else
-                     Add_Continuation_Action (Last_Check, Log_Checks);
+                     VCS.Branching_Commands.Add_Consequence_Action
+                       (Last_Check, Command_Access (Log_Checks_Wrapper));
                   end if;
 
-                  Last_Check := Command_Access (Log_Checks);
+                  Last_Check := Log_Checks_Wrapper;
+
                   OS_Lib.Free (C_Args);
                end if;
 
@@ -1003,9 +1023,10 @@ package body Log_Utils is
       --  command.
 
       if Last_Check /= null then
-         Add_Consequence_Action (Last_Check, Commit_Command);
+         VCS.Branching_Commands.Add_Consequence_Action
+           (Last_Check, Command_Access (Commit_Command_Wrapper));
       else
-         First_Check := Command_Access (Commit_Command);
+         First_Check := Command_Access (Commit_Command_Wrapper);
       end if;
 
       if Cancel_All then
