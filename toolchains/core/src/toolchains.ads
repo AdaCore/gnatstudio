@@ -61,7 +61,7 @@ package Toolchains is
       new String'("powerpc-elf-pikeos"),
       new String'("powerpc-xcoff-lynxos"));
 
-   Target_Exception : exception;
+   Toolchain_Exception : exception;
 
    type Toolchain_Manager_Record is abstract tagged private;
    type Toolchain_Manager is access all Toolchain_Manager_Record'Class;
@@ -145,6 +145,17 @@ package Toolchains is
    function Copy (This : Toolchain) return Toolchain;
    --  Copy all the data for the toolchain given in parameter.
 
+   function Is_Custom (This : Toolchain) return Boolean;
+   --  Return true if this toolchain is a custom toolchain, that is to say it's
+   --  not one of the common toolchains known by GPS and its properties have
+   --  been manually set by the user.
+
+   procedure Free (This : in out Toolchain);
+   --  Free the memory associated to this toolchain. Removal from the manager
+   --  has to be done separately, if needed. Note that on the other end,
+   --  removing a toolchain from the manager will free it, so this should
+   --  only be used for toolchains outside of the toolchain manager.
+
    -----------------------
    -- Toolchain_Manager --
    -----------------------
@@ -189,6 +200,18 @@ package Toolchains is
       Ada_Toolchain : Toolchain);
    --  Add a toolchain in the toolchain manager - raise an exception if the
    --  toolchain already exsits.
+
+   procedure Modify_Toolchain
+     (This          : Toolchain_Manager;
+      Ada_Toolchain : Toolchain);
+   --  Modify an existing toolchain in the toolchain manager - raise an
+   --  exception if the toolchain is not found.
+
+   procedure Remove_Toolchain
+     (This          : Toolchain_Manager;
+      Ada_Toolchain : Toolchain);
+   --  Remove an existing toolchain in the toolchain manager - raise an
+   --  exception if the toolchain is not found.
 
    function Create_Anonymous_Name (This : Toolchain_Manager) return String;
    --  Return a unique anonymous name that's not already registered in the

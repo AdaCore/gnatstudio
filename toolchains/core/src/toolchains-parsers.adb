@@ -51,7 +51,7 @@ package body Toolchains.Parsers is
       Node_Data : Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id)
    is
-      Manager : constant Toolchain_Manager := Get_Manager (Parser);
+      Manager : constant Toolchain_Manager := Get_Manager (Parser.all);
 
       procedure Handle_IDE_Package (IDE_Package_Node : Project_Node_Id);
       --  Analyses the IDE package and looks for known-patterns generated for
@@ -115,7 +115,8 @@ package body Toolchains.Parsers is
            (IDE_Package_Node, Node_Data);
 
          if Renamed_IDE_Project /= Empty_Node then
-            This.Project := Get_Parsed_Project (Parser, Renamed_IDE_Project);
+            This.Project :=
+              Get_Parsed_Project (Parser.all, Renamed_IDE_Project);
 
             Decl_Id := First_Declarative_Item_Of
               (Project_Declaration_Of (Renamed_IDE_Project, Node_Data),
@@ -531,7 +532,7 @@ package body Toolchains.Parsers is
            (Get_Name_String (Name_Of (Var_Ref, Node_Data)));
          Var_Node : Project_Node_Id;
       begin
-         Var_Node := Get_Variable (This.Project, Var_Name);
+         Var_Node := Get_Variable (This.Project.all, Var_Name);
 
          if Var_Node = Empty_Node then
             Result.Error := Create_Error_Message
@@ -596,7 +597,7 @@ package body Toolchains.Parsers is
    begin
       This.Node_Data := Node_Data;
       This.Enclosing_Parser := Parser;
-      This.Project := Get_Root_Project (Parser);
+      This.Project := Get_Root_Project (Parser.all);
 
       if IDE_Node /= Empty_Node then
          Handle_IDE_Package (IDE_Node);
@@ -707,7 +708,7 @@ package body Toolchains.Parsers is
             --  one.
 
             This.Variable_Node :=
-              Get_Variable (This.Project, "target");
+              Get_Variable (This.Project.all, "target");
 
             if This.Variable_Node /= Empty_Node then
                Type_Declaration := String_Type_Of
@@ -729,7 +730,7 @@ package body Toolchains.Parsers is
                   Get_Name_Id ("Target_Type"));
 
                Tail_Node := First_Declarative_Item_Of
-                 (Get_Project_Node (This.Project), This.Node_Data);
+                 (Get_Project_Node (This.Project.all), This.Node_Data);
                Decl_Type := Default_Project_Node
                  (This.Node_Data,
                   N_Declarative_Item,
@@ -739,7 +740,7 @@ package body Toolchains.Parsers is
                  (Decl_Type, This.Node_Data, Type_Declaration);
 
                Set_First_Declarative_Item_Of
-                 (Get_Project_Node (This.Project),
+                 (Get_Project_Node (This.Project.all),
                   This.Node_Data,
                   Decl_Type);
 
@@ -874,7 +875,7 @@ package body Toolchains.Parsers is
            (Decl_Var, This.Node_Data, This.Variable_Node);
 
          Decl_Type := First_Declarative_Item_Of
-           (Get_Project_Node (This.Project), This.Node_Data);
+           (Get_Project_Node (This.Project.all), This.Node_Data);
 
          while Decl_Type /= Empty_Node loop
             Item_Node := Current_Item_Node
@@ -1084,7 +1085,7 @@ package body Toolchains.Parsers is
 
       if This.IDE_Package = Empty_Node then
          This.IDE_Package := Create_Package
-           (This.Node_Data, Get_Project_Node (This.Project), "ide");
+           (This.Node_Data, Get_Project_Node (This.Project.all), "ide");
       end if;
 
       --  Second, remove the case statement representing the toolchains
@@ -1170,5 +1171,18 @@ package body Toolchains.Parsers is
    begin
       return This.Project;
    end Get_Parsed_Project;
+
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
+
+   function Get_Error_Message (This : Toolchain_Parser) return String is
+   begin
+      if This.Error = null then
+         return "";
+      else
+         return This.Error.all;
+      end if;
+   end Get_Error_Message;
 
 end Toolchains.Parsers;

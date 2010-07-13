@@ -120,7 +120,7 @@ package body Toolchains.Project_Parsers is
    -----------------
 
    function Get_Manager
-     (This : access Project_Parser_Record) return Toolchain_Manager
+     (This : Project_Parser_Record) return Toolchain_Manager
    is
    begin
       return This.Manager;
@@ -130,17 +130,27 @@ package body Toolchains.Project_Parsers is
    -- Is_Valid --
    --------------
 
-   function Is_Valid (This : access Project_Parser_Record) return Boolean is
+   function Is_Valid (This : Project_Parser_Record) return Boolean is
    begin
       return This.Is_Valid;
    end Is_Valid;
+
+   --------------------------
+   -- Get_Toolchain_Parser --
+   --------------------------
+
+   function Get_Toolchain_Parser
+     (This : Project_Parser_Record) return Toolchain_Parser is
+   begin
+      return This.Toolchain_Found;
+   end Get_Toolchain_Parser;
 
    ----------------------
    -- Get_Root_Project --
    ----------------------
 
    function Get_Root_Project
-     (This : access Project_Parser_Record) return Parsed_Project
+     (This : Project_Parser_Record) return Parsed_Project
    is
    begin
       return This.Root_Project;
@@ -151,7 +161,7 @@ package body Toolchains.Project_Parsers is
    ------------------------
 
    function Get_Parsed_Project
-     (This : access Project_Parser_Record;
+     (This : Project_Parser_Record;
       Node : Project_Node_Id) return Parsed_Project
    is
    begin
@@ -163,7 +173,7 @@ package body Toolchains.Project_Parsers is
    ------------------
 
    function Get_Variable
-     (This : access Parsed_Project_Record;
+     (This : Parsed_Project_Record;
       Name : String) return Project_Node_Id
    is
    begin
@@ -179,7 +189,7 @@ package body Toolchains.Project_Parsers is
    ----------------------
 
    function Get_Project_Node
-     (This : access Parsed_Project_Record) return Project_Node_Id is
+     (This : Parsed_Project_Record) return Project_Node_Id is
    begin
       return This.Project_Node;
    end Get_Project_Node;
@@ -258,5 +268,23 @@ package body Toolchains.Project_Parsers is
          Decl_Id := Next_Declarative_Item (Decl_Id, This.Node_Data);
       end loop;
    end Initialize;
+
+   -------------
+   -- Is_Root --
+   -------------
+
+   function Is_Root (This : Parsed_Project_Record) return Boolean is
+   begin
+      return This.Is_Root;
+   end Is_Root;
+
+   --------------
+   -- Get_Path --
+   --------------
+
+   function Get_Path (This : Parsed_Project_Record) return Virtual_File is
+   begin
+      return This.Path;
+   end Get_Path;
 
 end Toolchains.Project_Parsers;

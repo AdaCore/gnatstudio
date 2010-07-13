@@ -22,8 +22,15 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with Ada.Unchecked_Deallocation;
 
 package body Toolchains is
+
+   procedure Free (This : in out Ada_Library_Info);
+   pragma Unreferenced (Free);
+   --  Free the memory associated to this library info. This should only be
+   --  called by the manager, as we store the result of this information during
+   --  the session.
 
    ---------------------
    -- Get_Source_Path --
@@ -107,6 +114,22 @@ package body Toolchains is
    begin
       return This.Error /= null;
    end Has_Errors;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ada_Library_Info) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Ada_Library_Info_Record, Ada_Library_Info);
+   begin
+      Unchecked_Free (This.Source_Path);
+      Unchecked_Free (This.Objects_Path);
+      Unchecked_Free (This.Project_Path);
+      Free (This.Version);
+      Free (This.Error);
+      Free (This);
+   end Free;
 
    ------------------------------
    -- Compute_Predefined_Paths --
@@ -231,6 +254,33 @@ package body Toolchains is
 
       return Result;
    end Copy;
+
+   ---------------
+   -- Is_Custom --
+   ---------------
+
+   function Is_Custom (This : Toolchain) return Boolean is
+   begin
+      return This.Is_Custom;
+   end Is_Custom;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Toolchain) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Toolchain_Record, Toolchain);
+   begin
+      Free (This.Label);
+      Free (This.Name);
+
+      for J in This.Tool_Commands'Range loop
+         Free (This.Tool_Commands (J));
+      end loop;
+
+      Free (This);
+   end Free;
 
    ----------------------------
    -- Create_Known_Toolchain --
@@ -541,15 +591,84 @@ package body Toolchains is
    is
    begin
       if This.Toolchains.Contains (Ada_Toolchain.Name.all) then
-         raise Target_Exception with "Toolchain "
+         raise Toolchain_Exception with "Toolchain "
            & Ada_Toolchain.Name.all & " already registered";
       end if;
 
       Compute_Predefined_Paths (Ada_Toolchain, This);
       This.Toolchains.Insert (Ada_Toolchain.Name.all, Ada_Toolchain);
 
-      --  ??? write this things to the XML
+      --  ??? fire a toolchain modify event
    end Add_Toolchain;
+
+   ----------------------
+   -- Modify_Toolchain --
+   ----------------------
+
+   procedure Modify_Toolchain
+     (This          : Toolchain_Manager;
+      Ada_Toolchain : Toolchain)
+   is
+      Existing : Toolchain;
+   begin
+      if not This.Toolchains.Contains (Ada_Toolchain.Name.all) then
+         raise Toolchain_Exception with "toolchain " & Ada_Toolchain.Name.all
+           & " not found.";
+      end if;
+
+      Existing := This.Toolchains.Element (Ada_Toolchain.Name.all);
+
+      Free (Existing.Name);
+      Free (Existing.Label);
+      Existing.Library := null;
+
+      for J in Existing.Tool_Commands'Range loop
+         Free (Existing.Tool_Commands (J));
+      end loop;
+
+      if Ada_Toolchain.Name /= null then
+         Existing.Name := new String'(Ada_Toolchain.Name.all);
+      end if;
+
+      if Ada_Toolchain.Label /= null then
+         Existing.Label := new String'(Ada_Toolchain.Label.all);
+      end if;
+
+      for J in Ada_Toolchain.Tool_Commands'Range loop
+         if Ada_Toolchain.Tool_Commands (J) /= null then
+            Existing.Tool_Commands (J) :=
+              new String'(Ada_Toolchain.Tool_Commands (J).all);
+         end if;
+      end loop;
+
+      Existing.Is_Native := Ada_Toolchain.Is_Native;
+      Existing.Is_Custom := Ada_Toolchain.Is_Custom;
+      Existing.Is_Computed := False;
+      Existing.Is_Valid := False;
+
+      Compute_Predefined_Paths (Existing, This);
+   end Modify_Toolchain;
+
+   ----------------------
+   -- Remove_Toolchain --
+   ----------------------
+
+   procedure Remove_Toolchain
+     (This          : Toolchain_Manager;
+      Ada_Toolchain : Toolchain)
+   is
+      Existing : Toolchain;
+   begin
+      if not This.Toolchains.Contains (Ada_Toolchain.Name.all) then
+         raise Toolchain_Exception with "toolchain " & Ada_Toolchain.Name.all
+           & " not found.";
+      end if;
+
+      Existing := This.Toolchains.Element (Ada_Toolchain.Name.all);
+
+      This.Toolchains.Delete (Ada_Toolchain.Name.all);
+      Free (Existing);
+   end Remove_Toolchain;
 
    ------------------------
    -- Get_Anonymous_Name --

@@ -66,9 +66,10 @@
 
 with Prj;      use Prj;
 with Prj.Tree; use Prj.Tree;
+with Toolchains.Parsers; use Toolchains.Parsers;
+
 private with Ada.Containers.Indefinite_Ordered_Maps;
 private with Ada.Containers.Ordered_Maps;
-private with Toolchains.Parsers;
 
 package Toolchains.Project_Parsers is
 
@@ -86,35 +87,44 @@ package Toolchains.Project_Parsers is
    --  (GNAT_Project_Path).
 
    function Get_Manager
-     (This : access Project_Parser_Record) return Toolchain_Manager;
+     (This : Project_Parser_Record) return Toolchain_Manager;
 
-   function Is_Valid (This : access Project_Parser_Record) return Boolean;
+   function Is_Valid (This : Project_Parser_Record) return Boolean;
    --  Return true if the parser could correctly parse the project, false
    --  otherwise. And invalid project may be semantically correct, but doesn't
    --  fall into the standard supported toolchain description.
+
+   function Get_Toolchain_Parser
+     (This : Project_Parser_Record) return Toolchain_Parser;
+   --  Return the parser used to analyse the toolchain in this project
 
    type Parsed_Project_Record is private;
    type Parsed_Project is access all Parsed_Project_Record;
 
    function Get_Root_Project
-     (This : access Project_Parser_Record) return Parsed_Project;
+     (This : Project_Parser_Record) return Parsed_Project;
 
    function Get_Parsed_Project
-     (This : access Project_Parser_Record;
+     (This : Project_Parser_Record;
       Node : Project_Node_Id) return Parsed_Project;
 
    function Get_Variable
-     (This : access Parsed_Project_Record;
-      Name : String) return Project_Node_Id;
+     (This : Parsed_Project_Record; Name : String) return Project_Node_Id;
    --  Return the project node id corresponding to the name given in parameter,
    --  Empty_Node if none.
 
    function Get_Project_Node
-     (This : access Parsed_Project_Record) return Project_Node_Id;
+     (This : Parsed_Project_Record) return Project_Node_Id;
    --  Return the project node associated to this project
 
+   function Is_Root (This : Parsed_Project_Record) return Boolean;
+   --  Return true if the project given in parameter is a root project, false
+   --  if it's withed by the root project.
+
+   function Get_Path (This : Parsed_Project_Record) return Virtual_File;
+   --  Return this project path.
+
 private
-   use Toolchains.Parsers;
 
    package Parsed_Projects_Maps is new Ada.Containers.Ordered_Maps
      (Project_Node_Id, Parsed_Project);

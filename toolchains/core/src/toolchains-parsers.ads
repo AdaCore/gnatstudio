@@ -49,6 +49,10 @@ package Toolchains.Parsers is
       return access Toolchains.Project_Parsers.Parsed_Project_Record;
    --  Return the parsed project from where this toolchain has been extracted.
 
+   function Get_Error_Message (This : Toolchain_Parser) return String;
+   --  Return the error message associated to the parsing of this toolchain,
+   --  if any.
+
 private
 
    package Prj_Node_Sets is new Ada.Containers.Ordered_Sets (Project_Node_Id);
