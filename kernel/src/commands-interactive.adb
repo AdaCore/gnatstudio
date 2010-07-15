@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -125,34 +125,6 @@ package body Commands.Interactive is
    begin
       return Execute (Interactive_Command_Access (Command), Null_Context);
    end Execute;
-
-   ------------------------------------
-   -- Launch_Synchronous_Interactive --
-   ------------------------------------
-
-   procedure Launch_Synchronous_Interactive
-     (Command : access Interactive_Command'Class;
-      Context : Interactive_Command_Context;
-      Wait    : Duration := 0.0)
-   is
-      function Execute_Command
-        (Command : Command_Access) return Command_Return_Type;
-
-      ---------------------
-      -- Execute_Command --
-      ---------------------
-
-      function Execute_Command
-        (Command : Command_Access) return Command_Return_Type is
-      begin
-         return Execute (Interactive_Command_Access (Command), Context);
-      end Execute_Command;
-
-      procedure Internal is new Launch_Synchronous_Generic (Execute_Command);
-
-   begin
-      Internal (Command_Access (Command), Wait);
-   end Launch_Synchronous_Interactive;
 
    ------------------
    -- Create_Proxy --

@@ -1341,9 +1341,8 @@ private
       End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
       --  Bounds for the parenthesis highlighting
 
-      Controls_Set : Boolean := False;
-      --  Whether the Queue is currently connected to the
-      --  Undo/Redo buttons.
+      Controls_Command : Command_Access := null;
+      --  The command controlling the buttons connected to the undo/redo queue.
 
       --  The following is related to information regarding
       --  the side column information.

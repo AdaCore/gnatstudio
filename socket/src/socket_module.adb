@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,7 +42,7 @@ package body Socket_Module is
 
    Max_Number_Of_Reads : constant := 128;
 
-   use Commands.Command_Queues;
+   use Commands.Command_Lists;
 
    type Socket_Set_Type_Access is access Socket_Set_Type;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -217,7 +217,7 @@ package body Socket_Module is
          if Is_Empty (Data.Commands_List) then
             Data.Commands_Present := False;
          else
-            Result := Execute (Head (Data.Commands_List));
+            Result := Execute (Data.Commands_List.First_Element);
             Next (Data.Commands_List);
          end if;
       end if;

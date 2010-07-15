@@ -26,8 +26,6 @@ with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package GPS.Kernel.Task_Manager is
 
-   use Commands.Command_Queues;
-
    type Scheduled_Command is new Root_Command with private;
    --  This command encloses any command scheduled or running in the task
    --  manager

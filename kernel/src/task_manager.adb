@@ -265,14 +265,14 @@ package body Task_Manager is
             return False;
          end if;
 
-         if Command_Queues.Is_Empty (Queue.Queue) then
+         if Queue.Queue.Is_Empty then
             --  The queue is empty: this can happen when scripts call the
             --  interrupt function.
             --  In this case, free the queue and return.
             return Free_Queue;
          end if;
 
-         Command := Command_Queues.Head (Queue.Queue);
+         Command := Queue.Queue.First_Element;
 
          if Queue.Status = Completed then
             Result := Success;
@@ -285,16 +285,16 @@ package body Task_Manager is
                --  ??? add the command to the list of done or failed commands
 
                if Queue.Status = Completed then
-                  Command_Queues.Free (Queue.Queue);
+                  Free (Queue.Queue);
 
                else
-                  Command_Queues.Next (Queue.Queue);
+                  Next (Queue.Queue);
 
                   Queue.Done := Queue.Done + 1;
                end if;
                --  If it was the last command in the queue, free the queue
 
-               if Command_Queues.Is_Empty (Queue.Queue) then
+               if Queue.Queue.Is_Empty then
                   return Free_Queue;
                end if;
 
@@ -475,7 +475,7 @@ package body Task_Manager is
                      Get_Or_Create_Task_Queue
                        (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
    begin
-      Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
+      Manager.Queues (Task_Queue).Queue.Append (Command);
 
       Manager.Queues (Task_Queue).Total :=
         Manager.Queues (Task_Queue).Total + 1;
@@ -491,14 +491,14 @@ package body Task_Manager is
      (Manager : Task_Manager_Access;
       Command : Command_Access)
    is
-      use Command_Queues;
-      Node : Command_Queues.List_Node;
+      use Command_Lists;
+      Node : Cursor;
    begin
       for J in Manager.Queues'Range loop
          Node := First (Manager.Queues (J).Queue);
 
-         while Node /= Null_Node loop
-            if Data (Node) = Command then
+         while Has_Element (Node) loop
+            if Element (Node) = Command then
                Interrupt_Command (Manager, J);
                Manager.Queues (J).Status := Completed;
 
@@ -529,7 +529,6 @@ package body Task_Manager is
    function Head
      (Manager : Task_Manager_Access; Id : String) return Command_Access
    is
-      use Command_Queues;
    begin
       if Manager.Queues = null then
          return null;
@@ -537,7 +536,7 @@ package body Task_Manager is
 
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Id.all = Id then
-            return Head (Manager.Queues (J).Queue);
+            return Manager.Queues (J).Queue.First_Element;
          end if;
       end loop;
 
@@ -574,7 +573,7 @@ package body Task_Manager is
    begin
       if Manager.Queues /= null then
          for J in Manager.Queues'Range loop
-            Command_Queues.Free (Manager.Queues (J).Queue);
+            Free (Manager.Queues (J).Queue);
             GNAT.Strings.Free (Manager.Queues (J).Id);
             Unchecked_Free (Manager.Queues (J));
          end loop;
@@ -646,7 +645,7 @@ package body Task_Manager is
    function Get_Scheduled_Commands
      (Manager : Task_Manager_Access) return Command_Array
    is
-      use Commands.Command_Queues;
+      use Commands.Command_Lists;
 
       Total       : Integer := 0;
       Empty_Array : Command_Array (1 .. 0);
@@ -656,19 +655,19 @@ package body Task_Manager is
       end if;
 
       for J in Manager.Queues.all'Range loop
-         Total := Total + Length (Manager.Queues (J).Queue);
+         Total := Total + Integer (Manager.Queues (J).Queue.Length);
       end loop;
 
       declare
          Result       : Command_Array (1 .. Total);
-         Node         : Command_Queues.List_Node;
+         Node         : Cursor;
          Result_Index : Integer := 1;
       begin
          for J in Manager.Queues.all'Range loop
             Node := First (Manager.Queues (J).Queue);
 
-            while Node /= Null_Node loop
-               Result (Result_Index) := Data (Node);
+            while Has_Element (Node) loop
+               Result (Result_Index) := Element (Node);
                Node := Next (Node);
                Result_Index := Result_Index + 1;
             end loop;

@@ -369,9 +369,9 @@ package body Src_Editor_Buffer.Debug is
          Set_Return_Value_As_List (Data);
 
          declare
-            use Command_Queues;
+            use Command_Lists;
             Q : List;
-            N : List_Node;
+            N : Command_Lists.Cursor;
             C : Command_Access;
          begin
             if Command = "debug_dump_undo_queue" then
@@ -382,8 +382,8 @@ package body Src_Editor_Buffer.Debug is
 
             N := First (Q);
 
-            while N /= Null_Node loop
-               C := Command_Queues.Data (N);
+            while Has_Element (N) loop
+               C := Element (N);
 
                if C.all in Base_Editor_Command_Type'Class then
                   Set_Return_Value

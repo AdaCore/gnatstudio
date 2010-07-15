@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -117,14 +117,6 @@ package Commands.Interactive is
    overriding function Execute (Command : access Interactive_Command)
       return Command_Return_Type;
    --  Execute the command non-interactively, with a Null_Context
-
-   procedure Launch_Synchronous_Interactive
-     (Command : access Interactive_Command'Class;
-      Context : Interactive_Command_Context;
-      Wait    : Duration := 0.0);
-   --  Execute the command synchronously.
-   --  This is similar to Commands.Lauch_Synchronous, except it also propagates
-   --  the Event parameter.
 
    function Start
      (Command : access Interactive_Command) return Component_Iterator;

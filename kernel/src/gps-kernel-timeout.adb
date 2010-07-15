@@ -139,32 +139,6 @@ package body GPS.Kernel.Timeout is
    overriding function Name (Command : access Monitor_Command) return String;
    --  See inherited documentation
 
-   function Execute_Monitor
-     (Command : Command_Access) return Command_Return_Type;
-   --  Execute the monitor command Command once, then process its current
-   --  output and check whether it should be executed again.
-
-   ---------------------
-   -- Execute_Monitor --
-   ---------------------
-
-   function Execute_Monitor
-     (Command : Command_Access) return Command_Return_Type
-   is
-      C      : constant Monitor_Command_Access :=
-                 Monitor_Command_Access (Command);
-      Result : Command_Return_Type;
-      Dummy  : Boolean;
-      pragma Unreferenced (Dummy);
-   begin
-      Result := Execute (Command);
-      Dummy := Process_Cb (C.Data);
-      return Result;
-   end Execute_Monitor;
-
-   procedure Launch_Monitor_Command_Synchronous is new
-     Launch_Synchronous_Generic (Execute_Monitor);
-
    ---------------
    -- Interrupt --
    ---------------
@@ -660,7 +634,7 @@ package body GPS.Kernel.Timeout is
       Initialize (C.Data);
 
       if Synchronous then
-         Launch_Monitor_Command_Synchronous (Command_Access (C), 0.1);
+         Launch_Synchronous (Command_Access (C), 0.1);
          Unref (Command_Access (C));
 
       else

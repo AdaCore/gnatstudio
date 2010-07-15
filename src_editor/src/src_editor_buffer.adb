@@ -1423,7 +1423,7 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      if Buffer.Controls_Set then
+      if Buffer.Controls_Command /= null then
          Remove_Controls (Buffer);
       end if;
 
@@ -4886,12 +4886,10 @@ package body Src_Editor_Buffer is
 
    procedure Add_Controls (Buffer : access Source_Buffer_Record) is
    begin
-      if not Buffer.Controls_Set then
-         Set_Controls
+      if Buffer.Controls_Command = null then
+         Buffer.Controls_Command := Set_Controls
            (Buffer.Queue, Undo_Redo_Data.Get (Buffer.Kernel, Undo_Redo_Id));
       end if;
-
-      Buffer.Controls_Set := True;
    end Add_Controls;
 
    ---------------------
@@ -4900,11 +4898,13 @@ package body Src_Editor_Buffer is
 
    procedure Remove_Controls (Buffer : access Source_Buffer_Record) is
    begin
-      if Buffer.Controls_Set then
-         Unset_Controls (Buffer.Queue);
+      if Buffer.Controls_Command /= null then
+         Unset_Controls (Buffer.Controls_Command);
       end if;
 
-      Buffer.Controls_Set := False;
+      --  No need to Unref the command, this is done in the following call to
+      --  Add_Controls.
+      Buffer.Controls_Command := null;
    end Remove_Controls;
 
    ----------------------------

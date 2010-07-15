@@ -1340,7 +1340,7 @@ package body GPS.Kernel is
       Free_Modules (Handle);
       Free_Messages_Container (Handle);
 
-      Commands.Command_Queues.Free (Handle.Perma_Commands);
+      Commands.Free (Handle.Perma_Commands);
 
       --  Most of the rest if for the sake of memory leaks checkin, and since
       --  it can take a while for big projects we do not do this in normal
@@ -2070,11 +2070,12 @@ package body GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : access Commands.Root_Command'Class)
    is
-      use Commands.Command_Queues, Commands;
-      L : List_Node := First (Kernel.Perma_Commands);
+      use Commands.Command_Lists, Commands;
+
+      L : Command_Lists.Cursor := First (Kernel.Perma_Commands);
    begin
-      while L /= Null_Node loop
-         if Data (L) = Commands.Command_Access (Command) then
+      while Has_Element (L) loop
+         if Element (L) = Commands.Command_Access (Command) then
             return;  --  Already in list, nothing to do
          end if;
 
@@ -2083,8 +2084,7 @@ package body GPS.Kernel is
 
       --  Command is not in list: we steal a reference to it
 
-      Commands.Command_Queues.Append
-        (Kernel.Perma_Commands, Commands.Command_Access (Command));
+      Kernel.Perma_Commands.Append (Commands.Command_Access (Command));
    end Register_Perma_Command;
 
    ----------------------

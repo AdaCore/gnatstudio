@@ -17,10 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_List_Utils; use String_List_Utils;
 with Unchecked_Deallocation;
 
 package body Commands is
+
+   use Ada.Strings.Unbounded;
 
    procedure Enqueue
      (Queue         : Command_Queue;
@@ -29,7 +30,7 @@ package body Commands is
    --  Internal version of Enqueue.
    --  Modify_Group indicates whether we should modify the current group.
 
-   use Command_Queues;
+   use Command_Lists;
 
    -----------------------
    -- Local subprograms --
@@ -37,10 +38,6 @@ package body Commands is
 
    procedure Execute_Next_Action (Queue : Command_Queue);
    --  Execute the next action in the queue, or do nothing if there is none
-
-   function Default_Execute_Command
-     (Command : Command_Access) return Command_Return_Type;
-   --  Internal subprogram for the implementation of Launch_Synchronous
 
    procedure Change_Group (Queue : Command_Queue);
    --  Change the current group, so that following actions are not grouped
@@ -61,16 +58,29 @@ package body Commands is
 
    procedure Free_Queue (Q : in out Command_Queue) is
       procedure Free_Queue_Access is
-         new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
+        new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
+
+      use Identifier_And_Command_List;
+      C : Identifier_And_Command_List.Cursor;
+      Command : Command_Access;
    begin
       if Q /= null then
          Free (Q.Undo_Queue);
          Free (Q.Redo_Queue);
-         Free (Q.Queue_Change_Hook);
+
+         C := Q.Queue_Change_Hook.First;
+         while Has_Element (C) loop
+            Command := Element (C).Command;
+            Unref (Command);
+
+            C := Next (C);
+         end loop;
+         Q.Queue_Change_Hook.Clear;
 
          Free (Q.The_Queue);
-         Free (Q.Queue_Change_Hook, Free_Data => False);
-         String_List.Free (Q.Hook_Identifiers);
+
+         Q.Queue_Change_Hook.Clear;
+
          Free_Queue_Access (Q);
       end if;
    end Free_Queue;
@@ -80,7 +90,8 @@ package body Commands is
    -----------------
 
    procedure Empty_Queue (Q : Command_Queue) is
-      Node : List_Node;
+      use Identifier_And_Command_List;
+      Node : Identifier_And_Command_List.Cursor;
    begin
       Free (Q.Undo_Queue);
       Free (Q.Redo_Queue);
@@ -90,8 +101,8 @@ package body Commands is
 
       Node := First (Q.Queue_Change_Hook);
 
-      while Node /= Null_Node loop
-         Execute (Data (Node));
+      while Has_Element (Node) loop
+         Execute (Element (Node).Command);
          Node := Next (Node);
       end loop;
    end Empty_Queue;
@@ -242,13 +253,13 @@ package body Commands is
       Queue.Command_In_Progress := True;
 
       declare
-         Action  : constant Command_Access := Head (Queue.The_Queue);
+         Action  : constant Command_Access := Queue.The_Queue.First_Element;
          Success : Boolean;
          Result  : Command_Return_Type;
          pragma Unreferenced (Success, Result);
 
       begin
-         Next (Queue.The_Queue, Free_Data => False);
+         Queue.The_Queue.Delete_First;
 
          case Action.Mode is
             when Normal | Undone =>
@@ -269,7 +280,8 @@ package body Commands is
       Success : in out Boolean)
    is
       Queue : Command_Queue renames Action.Queue;
-      Node  : List_Node;
+      use Identifier_And_Command_List;
+      Node  : Identifier_And_Command_List.Cursor;
 
    begin
       if Queue = null then
@@ -279,7 +291,7 @@ package body Commands is
       end if;
 
       if Action.Group_Fail then
-         if Node /= Null_Node and then Data (Node).Group_Fail then
+         if Has_Element (Node) and then Element (Node).Command.Group_Fail then
             --  Next action still part of the group fail, record status and
             --  keep going.
             Action.Queue.Stored_Status :=
@@ -322,8 +334,8 @@ package body Commands is
 
       Node := First (Queue.Queue_Change_Hook);
 
-      while Node /= Null_Node loop
-         Execute (Data (Node));
+      while Has_Element (Node) loop
+         Execute (Element (Node).Command);
          Node := Next (Node);
       end loop;
 
@@ -344,16 +356,6 @@ package body Commands is
    end Command_Finished;
 
    ---------------------------
-   -- Get_Queue_Change_Hook --
-   ---------------------------
-
-   function Get_Queue_Change_Hook
-     (Queue : Command_Queue) return Command_Queues.List is
-   begin
-      return Queue.Queue_Change_Hook;
-   end Get_Queue_Change_Hook;
-
-   ---------------------------
    -- Add_Queue_Change_Hook --
    ---------------------------
 
@@ -362,25 +364,26 @@ package body Commands is
       Command    : Command_Access;
       Identifier : String)
    is
-      Id        : String_List.List_Node;
-      Hook_Node : List_Node;
-
+      use Identifier_And_Command_List;
+      Hook_Node : Identifier_And_Command_List.Cursor;
+      Previous_Command   : Command_Access;
    begin
       Hook_Node := First (Queue.Queue_Change_Hook);
-      Id := String_List.First (Queue.Hook_Identifiers);
 
-      while Hook_Node /= Null_Node loop
-         if String_List.Data (Id) = Identifier then
-            Set_Data (Hook_Node, Command);
+      while Has_Element (Hook_Node) loop
+         if To_String (Element (Hook_Node).Identifier) = Identifier then
+            Previous_Command := Element (Hook_Node).Command;
+            Unref (Previous_Command);
+            Queue.Queue_Change_Hook.Replace_Element
+              (Hook_Node, (To_Unbounded_String (Identifier), Command));
             return;
          end if;
 
          Hook_Node := Next (Hook_Node);
-         Id := String_List.Next (Id);
       end loop;
 
-      Append (Queue.Queue_Change_Hook, Command);
-      String_List.Append (Queue.Hook_Identifiers, Identifier);
+      Append (Queue.Queue_Change_Hook,
+              (To_Unbounded_String (Identifier), Command));
    end Add_Queue_Change_Hook;
 
    -------------
@@ -402,7 +405,7 @@ package body Commands is
      (Queue : Command_Queue) return Command_Access is
    begin
       if not Is_Empty (Queue.Undo_Queue) then
-         return Head (Queue.Undo_Queue);
+         return First_Element (Queue.Undo_Queue);
       else
          return null;
       end if;
@@ -416,7 +419,7 @@ package body Commands is
      (Queue : Command_Queue) return Command_Access is
    begin
       if not Is_Empty (Queue.Redo_Queue) then
-         return Head (Queue.Redo_Queue);
+         return First_Element (Queue.Redo_Queue);
       else
          return null;
       end if;
@@ -431,7 +434,7 @@ package body Commands is
       Group  : Natural := 0;
    begin
       while not Is_Empty (Queue.Undo_Queue) loop
-         Action := Head (Queue.Undo_Queue);
+         Action := First_Element (Queue.Undo_Queue);
 
          exit when Group /= 0 and then Group /= Action.Group;
 
@@ -440,7 +443,7 @@ package body Commands is
 
          Group := Action.Group;
 
-         Next (Queue.Undo_Queue, Free_Data => False);
+         Queue.Undo_Queue.Delete_First;
          Enqueue (Queue, Action, False);
 
          exit when Group = 0;
@@ -456,7 +459,7 @@ package body Commands is
       Group  : Natural := 0;
    begin
       while not Is_Empty (Queue.Redo_Queue) loop
-         Action := Head (Queue.Redo_Queue);
+         Action := First_Element (Queue.Redo_Queue);
 
          exit when Group /= 0 and then Group /= Action.Group;
 
@@ -465,7 +468,7 @@ package body Commands is
 
          Group := Action.Group;
 
-         Next (Queue.Redo_Queue, Free_Data => False);
+         Queue.Redo_Queue.Delete_First;
          Enqueue (Queue, Action, False);
 
          exit when Group = 0;
@@ -490,37 +493,6 @@ package body Commands is
       return Is_Empty (Queue.Redo_Queue);
    end Redo_Queue_Empty;
 
-   --------------------------------
-   -- Launch_Synchronous_Generic --
-   --------------------------------
-
-   procedure Launch_Synchronous_Generic
-     (Command : access Root_Command'Class;
-      Wait    : Duration := 0.0)
-   is
-      Result : Command_Return_Type;
-   begin
-      loop
-         Result := Execute_Command (Command_Access (Command));
-
-         exit when Result = Success or else Result = Failure;
-
-         if Wait /= 0.0 then
-            delay Wait;
-         end if;
-      end loop;
-   end Launch_Synchronous_Generic;
-
-   -----------------------------
-   -- Default_Execute_Command --
-   -----------------------------
-
-   function Default_Execute_Command
-     (Command : Command_Access) return Command_Return_Type is
-   begin
-      return Execute (Command);
-   end Default_Execute_Command;
-
    ------------------------
    -- Launch_Synchronous --
    ------------------------
@@ -529,10 +501,17 @@ package body Commands is
      (Command : access Root_Command'Class;
       Wait    : Duration := 0.0)
    is
-      procedure Internal is new Launch_Synchronous_Generic
-        (Default_Execute_Command);
+      Result : Command_Return_Type;
    begin
-      Internal (Command, Wait);
+      loop
+         Result := Execute (Command_Access (Command));
+
+         exit when Result = Success or else Result = Failure;
+
+         if Wait /= 0.0 then
+            delay Wait;
+         end if;
+      end loop;
    end Launch_Synchronous;
 
    ----------
@@ -587,7 +566,7 @@ package body Commands is
    --------------------------
 
    function Debug_Get_Undo_Queue
-     (Q : Command_Queue) return Command_Queues.List is
+     (Q : Command_Queue) return Command_Lists.List is
    begin
       return Q.Undo_Queue;
    end Debug_Get_Undo_Queue;
@@ -597,7 +576,7 @@ package body Commands is
    --------------------------
 
    function Debug_Get_Redo_Queue
-     (Q : Command_Queue) return Command_Queues.List is
+     (Q : Command_Queue) return Command_Lists.List is
    begin
       return Q.Redo_Queue;
    end Debug_Get_Redo_Queue;
@@ -611,5 +590,39 @@ package body Commands is
    begin
       return C.Group;
    end Debug_Get_Group;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Command_Lists.List) is
+      C : Cursor;
+      Command : Command_Access;
+   begin
+      C := List.First;
+      while Has_Element (C) loop
+         Command := Element (C);
+         Unref (Command);
+         Next (C);
+      end loop;
+      List.Clear;
+   end Free;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (List : in out Command_Lists.List) is
+      Command : Command_Access;
+   begin
+      if List.Is_Empty then
+         return;
+      end if;
+
+      Command := List.First_Element;
+      Unref (Command);
+
+      List.Delete_First;
+   end Next;
 
 end Commands;

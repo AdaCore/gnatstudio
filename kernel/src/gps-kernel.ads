@@ -1004,7 +1004,7 @@ private
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
 
-      Perma_Commands : Commands.Command_Queues.List;
+      Perma_Commands : Commands.Command_Lists.List;
       --  The list of global commands associated with menus, actions or
       --  contextual menus, so that they can be freed on exit. These commands
       --  are automatically added to the list when the menu or action is

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
+--                     Copyright (C) 2001-2010                       --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,16 +42,17 @@ package Commands.Controls is
 
    type Undo_Redo is access Undo_Redo_Information;
 
-   procedure Set_Controls
+   function Set_Controls
      (Queue  : Command_Queue;
-      UR     : Undo_Redo);
+      UR     : Undo_Redo) return Command_Access;
    --  Associate the state of Queue to the buttons:
    --  The sensitivity of Undo/Redo widgets (named "controls")
    --  indicate the presence of actions in the corresponding Undo/Redo Queues.
    --  Activating the controls executes the first action in the corresponding
    --  queue.
 
-   procedure Unset_Controls (Queue : Command_Queue);
-   --  Disconnect any controls that are connected to Queue.
+   procedure Unset_Controls (Command : Command_Access);
+   --  Disconnect any controls that are connected to Command.
+   --  Command must be a Queue_Change_Access.
 
 end Commands.Controls;

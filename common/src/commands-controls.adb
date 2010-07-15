@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -139,9 +139,9 @@ package body Commands.Controls is
    -- Set_Controls --
    ------------------
 
-   procedure Set_Controls
+   function Set_Controls
      (Queue : Command_Queue;
-      UR    : Undo_Redo)
+      UR    : Undo_Redo) return Command_Access
    is
       Command : Queue_Change_Access;
    begin
@@ -168,67 +168,50 @@ package body Commands.Controls is
          Execute (Command);
          Add_Queue_Change_Hook (Queue, Command_Access (Command), "Controls");
       end if;
+
+      return Command_Access (Command);
    end Set_Controls;
 
    --------------------
    -- Unset_Controls --
    --------------------
 
-   procedure Unset_Controls (Queue : Command_Queue) is
-      The_Command : Command_Access := null;
-      Queue_Node  : Command_Queues.List_Node;
-      Command     : Queue_Change_Access;
-
-      use type Command_Queues.List_Node;
+   procedure Unset_Controls
+     (Command : Command_Access)
+   is
+      use Command_Lists;
+      C : Queue_Change_Access;
    begin
-      Queue_Node := Command_Queues.First (Get_Queue_Change_Hook (Queue));
-
-      while Queue_Node /= Command_Queues.Null_Node loop
-         The_Command := Command_Queues.Data (Queue_Node);
-
-         if The_Command /= null
-           and then The_Command.all in Queue_Change_Command'Class
-         then
-            exit;
-         else
-            The_Command := null;
-         end if;
-
-         Queue_Node := Command_Queues.Next (Queue_Node);
-      end loop;
-
-      if The_Command = null then
+      if Command = null
+        or else Command.all not in Queue_Change_Command'Class
+      then
          return;
       end if;
 
-      Command := Queue_Change_Access (The_Command);
+      C := Queue_Change_Access (Command);
 
-      if Command.UR.Undo_Button_Handler_ID.Id /= Null_Handler_Id then
-         Disconnect
-           (Command.UR.Undo_Button, Command.UR.Undo_Button_Handler_ID);
-         Disconnect
-           (Command.UR.Redo_Button, Command.UR.Redo_Button_Handler_ID);
-         Disconnect
-           (Command.UR.Undo_Menu_Item, Command.UR.Undo_Menu_Item_Handler_ID);
-         Disconnect
-           (Command.UR.Redo_Menu_Item, Command.UR.Redo_Menu_Item_Handler_ID);
-         Command.UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
+      if C.UR.Undo_Button_Handler_ID.Id /= Null_Handler_Id then
+         Disconnect (C.UR.Undo_Button, C.UR.Undo_Button_Handler_ID);
+         Disconnect (C.UR.Redo_Button, C.UR.Redo_Button_Handler_ID);
+         Disconnect (C.UR.Undo_Menu_Item, C.UR.Undo_Menu_Item_Handler_ID);
+         Disconnect (C.UR.Redo_Menu_Item, C.UR.Redo_Menu_Item_Handler_ID);
+         C.UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
       end if;
 
-      if Command.UR.Undo_Button /= null then
-         Set_Sensitive (Command.UR.Undo_Button, False);
+      if C.UR.Undo_Button /= null then
+         Set_Sensitive (C.UR.Undo_Button, False);
       end if;
 
-      if Command.UR.Redo_Button /= null then
-         Set_Sensitive (Command.UR.Redo_Button, False);
+      if C.UR.Redo_Button /= null then
+         Set_Sensitive (C.UR.Redo_Button, False);
       end if;
 
-      if Command.UR.Undo_Menu_Item /= null then
-         Set_Sensitive (Command.UR.Undo_Menu_Item, False);
+      if C.UR.Undo_Menu_Item /= null then
+         Set_Sensitive (C.UR.Undo_Menu_Item, False);
       end if;
 
-      if Command.UR.Redo_Menu_Item /= null then
-         Set_Sensitive (Command.UR.Redo_Menu_Item, False);
+      if C.UR.Redo_Menu_Item /= null then
+         Set_Sensitive (C.UR.Redo_Menu_Item, False);
       end if;
    end Unset_Controls;
 

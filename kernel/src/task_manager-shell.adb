@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,8 +82,8 @@ package body Task_Manager.Shell is
 
       elsif Command = "name" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         C := Command_Queues.Head
-           (Manager.Queues (Get_Data (Task_Inst, Task_Class)).Queue);
+         C := Manager.Queues
+           (Get_Data (Task_Inst, Task_Class)).Queue.First_Element;
          Set_Return_Value (Data, Commands.Name (C));
       end if;
    end Task_Command_Handler;

@@ -36,8 +36,8 @@
 --  Commands can be asynchronous, ie Execute may return even though
 --  the action is not finished.
 
-with Generic_List;
-with String_List_Utils;
+with Ada.Strings.Unbounded;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package Commands is
 
@@ -121,14 +121,14 @@ package Commands is
    --  command will be freed automatically (this depends on whether we tried
    --  to free it while a refcount was not null).
 
-   -----------------------
-   -- Alternate actions --
-   -----------------------
-   --  A command can be associated with consequence actions, that are
-   --  only executed depending on the result of the command.
+   package Command_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Command_Access);
 
-   package Command_Queues is
-     new Generic_List (Command_Access, Free => Unref);
+   procedure Free (List : in out Command_Lists.List);
+   --  Call Unref on all elements in List and then clears List
+
+   procedure Next (List : in out Command_Lists.List);
+   --  Call Unref on the first element in List and then deletes it
 
    -------------------------
    -- Executing a command --
@@ -150,20 +150,6 @@ package Commands is
    --  The command and its consequence actions are not modified. As a result,
    --  you can execute the same command multiple times through calls to
    --  Launch_Synchronous.
-
-   generic
-      with function Execute_Command
-        (Command : Command_Access) return Command_Return_Type;
-   procedure Launch_Synchronous_Generic
-     (Command : access Root_Command'Class;
-      Wait    : Duration := 0.0);
-   --  Same as Launch_Synchronous, but you can specify exactly how a command
-   --  should be executed.
-   --  The procedure above behaves as if Execute_Command was just calling
-   --  the primitive operation Execute.
-   --  This subprogram can be used if other parameters need to be passed to
-   --  the command, or if you need to analyse the output of each command
-   --  executed in the set.
 
    -------------------
    -- Command_Queue --
@@ -260,11 +246,11 @@ package Commands is
    --  called in production.
 
    function Debug_Get_Undo_Queue
-     (Q : Command_Queue) return Command_Queues.List;
+     (Q : Command_Queue) return Command_Lists.List;
    --  Return the undo queue
 
    function Debug_Get_Redo_Queue
-     (Q : Command_Queue) return Command_Queues.List;
+     (Q : Command_Queue) return Command_Lists.List;
    --  Return the redo queue
 
    function Debug_Get_Group
@@ -296,34 +282,35 @@ private
    --  Action is the Action that has just finished. Success indicates
    --  the success of Action.
 
-   function Get_Queue_Change_Hook
-     (Queue : Command_Queue) return Command_Queues.List;
-   --  Return the queue change hook
+   type Identifier_And_Command is record
+      Identifier : Ada.Strings.Unbounded.Unbounded_String;
+      Command    : Command_Access;
+   end record;
+
+   package Identifier_And_Command_List is new
+     Ada.Containers.Doubly_Linked_Lists (Identifier_And_Command);
 
    type Command_Queue_Record is record
       Command_In_Progress : Boolean := False;
       Stored_Status       : Boolean := True;
       --  Status stored for a group fail set of actions
 
-      The_Queue           : Command_Queues.List;
+      The_Queue           : Command_Lists.List;
 
-      Undo_Queue          : Command_Queues.List;
+      Undo_Queue          : Command_Lists.List;
       --  This contains the actions that have already been done,
       --  in reverse chronological order (ie, most ancient actions are
       --  at the end of the queue, recent actions are prepended at the
       --  beginning).
 
-      Redo_Queue          : Command_Queues.List;
+      Redo_Queue          : Command_Lists.List;
       --  This contains the actions that have been done and undone.
       --  (Again, most recent additions to this queue are at its
       --  beginning).
 
-      Queue_Change_Hook   : Command_Queues.List;
+      Queue_Change_Hook   : Identifier_And_Command_List.List;
       --  These are the actions that will be executed every time the state
       --  of the queue changes.
-
-      Hook_Identifiers    : String_List_Utils.String_List.List;
-      --  A list of identifiers corresponding to elements in Queue_Change_Hook
 
       Position            : Integer := 0;
       --  The position in the queue.

@@ -252,7 +252,7 @@ package body Task_Manager.GUI is
       end if;
 
       if Index in Manager.Queues'Range then
-         Interrupt (Command_Queues.Head (Manager.Queues (Index).Queue).all);
+         Interrupt (Manager.Queues (Index).Queue.First_Element.all);
 
          Manager.Queues (Index).Status := Completed;
          Queue_Changed (Manager, Index, True);
@@ -966,10 +966,10 @@ package body Task_Manager.GUI is
       Task_Queue := Self.GUI.Manager.Queues
         (Self.GUI.Manager.Queues'First - 1 + Integer (Index));
 
-      Length := Command_Queues.Length (Task_Queue.Queue);
+      Length := Integer (Task_Queue.Queue.Length);
 
       if Length /= 0 then
-         Command := Command_Queues.Head (Task_Queue.Queue);
+         Command := Task_Queue.Queue.First_Element;
 
          case Column is
             when Command_Name_Column =>
@@ -1240,10 +1240,10 @@ package body Task_Manager.GUI is
       end if;
 
       Task_Queue := Manager.Queues (Manager.Queues'First - 1 + Index);
-      Length := Command_Queues.Length (Task_Queue.Queue);
+      Length := Integer (Task_Queue.Queue.Length);
 
       if Length /= 0 then
-         Command := Command_Queues.Head (Task_Queue.Queue);
+         Command := Task_Queue.Queue.First_Element;
          Progress := Commands.Progress (Command);
 
          if Progress.Total = 0 then
@@ -1314,10 +1314,10 @@ package body Task_Manager.GUI is
       end if;
 
       Task_Queue := Manager.Queues (Manager.Queues'First - 1 + Index);
-      Length := Command_Queues.Length (Task_Queue.Queue);
+      Length := Integer (Task_Queue.Queue.Length);
 
       if Length /= 0 then
-         Command := Command_Queues.Head (Task_Queue.Queue);
+         Command := Task_Queue.Queue.First_Element;
          Progress := Commands.Progress (Command);
 
          --  Compute text

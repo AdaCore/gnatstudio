@@ -112,7 +112,7 @@ private
    type Task_Queue_Record is record
       Status   : Queue_Status := Running;
 
-      Queue         : Command_Queues.List;
+      Queue         : Command_Lists.List;
       Stored_Status : Command_Return_Type := Success;
 
       Total    : Integer := 0;
