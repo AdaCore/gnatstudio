@@ -97,7 +97,7 @@ package body Toolchains.Project_Parsers is
 
             if Get_Name_String (Name) = "ide" then
                This.Toolchain_Found := new Toolchain_Parser_Record;
-               Parse (This.Toolchain_Found, This, This.Node_Data, Item_Id);
+               Parse (This.Toolchain_Found.all, This, This.Node_Data, Item_Id);
             end if;
          end if;
 
@@ -106,7 +106,7 @@ package body Toolchains.Project_Parsers is
 
       if This.Toolchain_Found = null then
          This.Toolchain_Found := new Toolchain_Parser_Record;
-         Parse (This.Toolchain_Found, This, This.Node_Data, Empty_Node);
+         Parse (This.Toolchain_Found.all, This, This.Node_Data, Empty_Node);
       end if;
 
       This.Is_Valid := True;

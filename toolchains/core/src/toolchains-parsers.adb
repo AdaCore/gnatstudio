@@ -46,7 +46,7 @@ package body Toolchains.Parsers is
    -----------
 
    procedure Parse
-     (This      : Toolchain_Parser;
+     (This      : in out Toolchain_Parser_Record;
       Parser    : access Toolchains.Project_Parsers.Project_Parser_Record;
       Node_Data : Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id)
@@ -615,7 +615,7 @@ package body Toolchains.Parsers is
    --------------------
 
    procedure Set_Toolchains
-     (This       : Toolchain_Parser;
+     (This       : in out Toolchain_Parser_Record;
       Toolchains : Toolchain_Array)
    is
       procedure Remove_Previous_Toolchain;
@@ -1155,7 +1155,7 @@ package body Toolchains.Parsers is
    -- Is_Supported --
    ------------------
 
-   function Is_Supported (This : Toolchain_Parser) return Boolean is
+   function Is_Supported (This : Toolchain_Parser_Record) return Boolean is
    begin
       return This.Error = null;
    end Is_Supported;
@@ -1165,7 +1165,7 @@ package body Toolchains.Parsers is
    ------------------------
 
    function Get_Parsed_Project
-     (This : Toolchain_Parser)
+     (This : Toolchain_Parser_Record)
       return access Toolchains.Project_Parsers.Parsed_Project_Record
    is
    begin
@@ -1176,7 +1176,7 @@ package body Toolchains.Parsers is
    -- Get_Error_Message --
    -----------------------
 
-   function Get_Error_Message (This : Toolchain_Parser) return String is
+   function Get_Error_Message (This : Toolchain_Parser_Record) return String is
    begin
       if This.Error = null then
          return "";
@@ -1184,5 +1184,27 @@ package body Toolchains.Parsers is
          return This.Error.all;
       end if;
    end Get_Error_Message;
+
+   --------------------
+   -- Get_Toolchains --
+   --------------------
+
+   function Get_Toolchains
+     (This : Toolchain_Parser_Record) return Toolchain_Array
+   is
+      use Toolchain_Maps;
+
+      Cur : Toolchain_Maps.Cursor := This.Toolchains.First;
+
+      Result : Toolchain_Array (1 .. Integer (This.Toolchains.Length));
+   begin
+      for J in Result'Range loop
+         Result (J) := Element (Cur);
+
+         Cur := Next (Cur);
+      end loop;
+
+      return Result;
+   end Get_Toolchains;
 
 end Toolchains.Parsers;

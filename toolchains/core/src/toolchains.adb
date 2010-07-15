@@ -322,6 +322,20 @@ package body Toolchains is
       Free (This);
    end Free;
 
+   -----------------------------
+   -- Get_Library_Information --
+   -----------------------------
+
+   function Get_Library_Information
+     (This : Toolchain) return Ada_Library_Info
+   is
+   begin
+      --  There intentionally no call to compute here - should use whatever
+      --  information is available without long process.
+
+      return This.Library;
+   end Get_Library_Information;
+
    ----------------------------
    -- Create_Known_Toolchain --
    ----------------------------

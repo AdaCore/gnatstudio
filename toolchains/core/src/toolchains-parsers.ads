@@ -29,29 +29,33 @@ package Toolchains.Parsers is
    type Toolchain_Parser is access all Toolchain_Parser_Record;
 
    procedure Parse
-     (This      : Toolchain_Parser;
+     (This      : in out Toolchain_Parser_Record;
       Parser    : access Toolchains.Project_Parsers.Project_Parser_Record;
       Node_Data : Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id);
    --  Parse the toolchain contained in the IDE node given in parameter.
 
    procedure Set_Toolchains
-     (This       : Toolchain_Parser;
+     (This       : in out Toolchain_Parser_Record;
       Toolchains : Toolchain_Array);
    --  Modifies the stucture of the project so that it supports the toolchains
    --  given in parameter
 
-   function Is_Supported (This : Toolchain_Parser) return Boolean;
+   function Is_Supported (This : Toolchain_Parser_Record) return Boolean;
    --  Return true if the toolchain definition is supported, false otherwise
 
    function Get_Parsed_Project
-     (This : Toolchain_Parser)
+     (This : Toolchain_Parser_Record)
       return access Toolchains.Project_Parsers.Parsed_Project_Record;
    --  Return the parsed project from where this toolchain has been extracted.
 
-   function Get_Error_Message (This : Toolchain_Parser) return String;
+   function Get_Error_Message (This : Toolchain_Parser_Record) return String;
    --  Return the error message associated to the parsing of this toolchain,
    --  if any.
+
+   function Get_Toolchains
+     (This : Toolchain_Parser_Record) return Toolchain_Array;
+   --  Return the toolchains red from the project file.
 
 private
 

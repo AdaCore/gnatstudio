@@ -168,6 +168,11 @@ package Toolchains is
    --  removing a toolchain from the manager will free it, so this should
    --  only be used for toolchains outside of the toolchain manager.
 
+   function Get_Library_Information
+     (This : Toolchain) return Ada_Library_Info;
+   --  Return the library information, as computed by gnatls. The library
+   --  information needs to have been computed beforehands.
+
    -----------------------
    -- Toolchain_Manager --
    -----------------------
