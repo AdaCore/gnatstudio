@@ -20,17 +20,22 @@
 with Prj;      use Prj;
 with Prj.Tree; use Prj.Tree;
 with Ada.Containers.Ordered_Sets;
-limited with Toolchains.Project_Parsers;
+with Ada.Containers.Ordered_Maps;
 
 package Toolchains.Parsers is
 
-   type Toolchain_Parser_Record is private;
+   type Parsed_Project_Record is private;
+   type Parsed_Project is access all Parsed_Project_Record;
 
+   type Toolchain_Parser_Record is private;
    type Toolchain_Parser is access all Toolchain_Parser_Record;
+
+   type Project_Parser_Record is private;
+   type Project_Parser is access all Project_Parser_Record;
 
    procedure Parse
      (This      : in out Toolchain_Parser_Record;
-      Parser    : access Toolchains.Project_Parsers.Project_Parser_Record;
+      Parser    : Project_Parser;
       Node_Data : Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id);
    --  Parse the toolchain contained in the IDE node given in parameter.
@@ -46,7 +51,7 @@ package Toolchains.Parsers is
 
    function Get_Parsed_Project
      (This : Toolchain_Parser_Record)
-      return access Toolchains.Project_Parsers.Parsed_Project_Record;
+      return Parsed_Project;
    --  Return the parsed project from where this toolchain has been extracted.
 
    function Get_Error_Message (This : Toolchain_Parser_Record) return String;
@@ -57,16 +62,72 @@ package Toolchains.Parsers is
      (This : Toolchain_Parser_Record) return Toolchain_Array;
    --  Return the toolchains red from the project file.
 
+   --------------------
+   -- Project_Parser --
+   --------------------
+
+   procedure Parse
+     (This         : Project_Parser;
+      Manager      : Toolchain_Manager;
+      Path         : Virtual_File;
+      Project_Path : String);
+   --  Parse a project according to its location (path) and the project path
+   --  (GNAT_Project_Path).
+
+   function Get_Manager
+     (This : Project_Parser_Record) return Toolchain_Manager;
+
+   function Is_Valid (This : Project_Parser_Record) return Boolean;
+   --  Return true if the parser could correctly parse the project, false
+   --  otherwise. And invalid project may be semantically correct, but doesn't
+   --  fall into the standard supported toolchain description.
+
+   function Get_Toolchain_Parser
+     (This : Project_Parser_Record) return Toolchain_Parser;
+   --  Return the parser used to analyse the toolchain in this project
+
+   --------------------
+   -- Parsed_Project --
+   --------------------
+
+   function Get_Root_Project
+     (This : Project_Parser_Record) return Parsed_Project;
+
+   function Get_Parsed_Project
+     (This : Project_Parser_Record;
+      Node : Project_Node_Id) return Parsed_Project;
+
+   function Get_Variable
+     (This : Parsed_Project_Record; Name : String) return Project_Node_Id;
+   --  Return the project node id corresponding to the name given in parameter,
+   --  Empty_Node if none.
+
+   function Get_Project_Node
+     (This : Parsed_Project_Record) return Project_Node_Id;
+   --  Return the project node associated to this project
+
+   function Is_Root (This : Parsed_Project_Record) return Boolean;
+   --  Return true if the project given in parameter is a root project, false
+   --  if it's withed by the root project.
+
+   function Get_Path (This : Parsed_Project_Record) return Virtual_File;
+   --  Return this project path.
+
+   procedure Save (This : Parsed_Project_Record);
+   --  Save the project to the file from where it has been loaded
+
+   procedure Save (This : Parsed_Project_Record; To : Virtual_File);
+   --  Save the current version of the project tree on the file given in
+   --  parameter.
+
 private
 
    package Prj_Node_Sets is new Ada.Containers.Ordered_Sets (Project_Node_Id);
 
    type Toolchain_Parser_Record is record
-      Enclosing_Parser : access
-        Toolchains.Project_Parsers.Project_Parser_Record;
+      Enclosing_Parser : Project_Parser;
       Node_Data        : Project_Node_Tree_Ref;
-      Project          : access
-        Toolchains.Project_Parsers.Parsed_Project_Record;
+      Project          : Parsed_Project;
 
       Error            : String_Access;
 
@@ -77,5 +138,43 @@ private
       Attributes       : Prj_Node_Sets.Set;
       Toolchains       : Toolchain_Maps.Map;
    end record;
+
+   --------------------
+   -- Parsed_Project --
+   --------------------
+
+   package Parsed_Projects_Maps is new Ada.Containers.Ordered_Maps
+     (Project_Node_Id, Parsed_Project);
+
+   type Project_Parser_Record is record
+      Manager                : Toolchain_Manager;
+
+      Tree_Data              : Project_Tree_Ref;
+      Node_Data              : Project_Node_Tree_Ref;
+      Enclosing_Project_Node : Project_Node_Id;
+      Root_Project_Node      : Project_Node_Id;
+      Is_Valid               : Boolean := False;
+
+      Toolchain_Found        : Toolchain_Parser;
+      Root_Project           : Parsed_Project;
+      Parsed_Projects        : Parsed_Projects_Maps.Map;
+   end record;
+
+   package Tree_Node_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+     (String, Project_Node_Id);
+
+   type Parsed_Project_Record is record
+      Project_Node : Project_Node_Id;
+      Node_Data    : Project_Node_Tree_Ref;
+      Variables    : Tree_Node_Maps.Map;
+      Path         : Virtual_File;
+      Is_Root      : Boolean;
+   end record;
+
+   procedure Initialize
+     (This         : Parsed_Project;
+      Parser       : Project_Parser;
+      Node_Data    : Project_Node_Tree_Ref;
+      Project_Node : Project_Node_Id);
 
 end Toolchains.Parsers;
