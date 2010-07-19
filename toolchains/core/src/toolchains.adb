@@ -153,6 +153,8 @@ package body Toolchains is
 
       if This.Library.Error /= null then
          This.Is_Valid := False;
+      else
+         This.Is_Valid := True;
       end if;
    end Compute_Predefined_Paths;
 
