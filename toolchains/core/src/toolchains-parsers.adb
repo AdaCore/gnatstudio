@@ -46,17 +46,45 @@ package body Toolchains.Parsers is
 
    procedure Free (This : in out Attribute);
 
+   procedure Parse
+     (This      : in out Toolchain_Parser_Record;
+      Node_Data : Project_Node_Tree_Ref;
+      IDE_Node  : Project_Node_Id);
+   --  Parse the toolchain contained in the IDE node given in parameter.
+
+   function Get_Toolchains
+     (This : Toolchain_Parser_Record) return Toolchain_Array;
+   --  Return the toolchains red from the project file.
+
+   procedure Set_Toolchains
+     (This       : in out Toolchain_Parser_Record;
+      Toolchains : Toolchain_Array);
+   --  Modifies the stucture of the project so that it supports the toolchains
+   --  given in parameter
+
+   function Is_Supported (This : Toolchain_Parser_Record) return Boolean;
+   --  Return true if the toolchain definition is supported, false otherwise
+
+   function Get_Parsed_Project
+     (This : Toolchain_Parser_Record)
+      return Parsed_Project;
+   --  Return the parsed project from where this toolchain has been extracted.
+
+   function Get_Error_Message (This : Toolchain_Parser_Record) return String;
+   --  Return the error message associated to the parsing of this toolchain,
+   --  if any.
+
    -----------
    -- Parse --
    -----------
 
    procedure Parse
      (This      : in out Toolchain_Parser_Record;
-      Parser    : Project_Parser;
       Node_Data : Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id)
    is
-      Manager : constant Toolchain_Manager := Get_Manager (Parser.all);
+      Manager : constant Toolchain_Manager := Get_Manager
+        (This.Enclosing_Parser.all);
 
       procedure Handle_IDE_Package (IDE_Package_Node : Project_Node_Id);
       --  Analyses the IDE package and looks for known-patterns generated for
@@ -121,7 +149,8 @@ package body Toolchains.Parsers is
 
          if Renamed_IDE_Project /= Empty_Node then
             This.Project :=
-              Get_Parsed_Project (Parser.all, Renamed_IDE_Project);
+              Get_Parsed_Project
+                (This.Enclosing_Parser.all, Renamed_IDE_Project);
 
             Decl_Id := First_Declarative_Item_Of
               (Project_Declaration_Of (Renamed_IDE_Project, Node_Data),
@@ -601,8 +630,7 @@ package body Toolchains.Parsers is
 
    begin
       This.Node_Data := Node_Data;
-      This.Enclosing_Parser := Parser;
-      This.Project := Get_Root_Project (Parser.all);
+      This.Project := Get_Root_Project (This.Enclosing_Parser.all);
 
       if IDE_Node /= Empty_Node then
          Handle_IDE_Package (IDE_Node);
@@ -1216,7 +1244,7 @@ package body Toolchains.Parsers is
    -----------
 
    procedure Parse
-     (This         : Project_Parser;
+     (This         : in out Project_Parser_Record;
       Manager      : Toolchain_Manager;
       Path         : Virtual_File;
       Project_Path : File_Array)
@@ -1224,6 +1252,7 @@ package body Toolchains.Parsers is
       Decl_Id : Project_Node_Id;
       Item_Id : Project_Node_Id;
       Name    : Name_Id;
+      Toolchain_Found : Boolean := False;
    begin
       This.Manager := Manager;
       This.Tree_Data := new Project_Tree_Data;
@@ -1232,7 +1261,8 @@ package body Toolchains.Parsers is
       This.Node_Data := new Project_Node_Tree_Data;
       Initialize (This.Node_Data);
 
-      Set_Path (This.Node_Data.Project_Path, String (To_Path (Project_Path)));
+      Add_Directories
+        (This.Node_Data.Project_Path, String (To_Path (Project_Path)));
 
       Parse (In_Tree                => This.Node_Data,
              Project                => This.Enclosing_Project_Node,
@@ -1276,17 +1306,17 @@ package body Toolchains.Parsers is
             Name := Name_Of (Item_Id, This.Node_Data);
 
             if Get_Name_String (Name) = "ide" then
-               This.Toolchain_Found := new Toolchain_Parser_Record;
-               Parse (This.Toolchain_Found.all, This, This.Node_Data, Item_Id);
+               Parse (This.Toolchain_Found, This.Node_Data, Item_Id);
+
+               Toolchain_Found := True;
             end if;
          end if;
 
          Decl_Id := Next_Declarative_Item (Decl_Id, This.Node_Data);
       end loop;
 
-      if This.Toolchain_Found = null then
-         This.Toolchain_Found := new Toolchain_Parser_Record;
-         Parse (This.Toolchain_Found.all, This, This.Node_Data, Empty_Node);
+      if not Toolchain_Found then
+         Parse (This.Toolchain_Found, This.Node_Data, Empty_Node);
       end if;
 
       This.Is_Valid := True;
@@ -1317,15 +1347,57 @@ package body Toolchains.Parsers is
       return This.Is_Valid;
    end Is_Valid;
 
-   --------------------------
-   -- Get_Toolchain_Parser --
-   --------------------------
+   --------------------
+   -- Get_Toolchains --
+   --------------------
 
-   function Get_Toolchain_Parser
-     (This : Project_Parser_Record) return Toolchain_Parser is
+   function Get_Toolchains
+     (This : Project_Parser_Record) return Toolchain_Array is
    begin
-      return This.Toolchain_Found;
-   end Get_Toolchain_Parser;
+      return Get_Toolchains (This.Toolchain_Found);
+   end Get_Toolchains;
+
+   --------------------
+   -- Set_Toolchains --
+   --------------------
+
+   procedure Set_Toolchains
+     (This       : in out Project_Parser_Record;
+      Toolchains : Toolchain_Array)
+   is
+   begin
+      Set_Toolchains (This.Toolchain_Found, Toolchains);
+   end Set_Toolchains;
+
+   ------------------
+   -- Is_Supported --
+   ------------------
+
+   function Is_Supported (This : Project_Parser_Record) return Boolean is
+   begin
+      return Is_Supported (This.Toolchain_Found);
+   end Is_Supported;
+
+   ------------------------
+   -- Get_Parsed_Project --
+   ------------------------
+
+   function Get_Parsed_Project
+     (This : Project_Parser_Record)
+      return Parsed_Project
+   is
+   begin
+      return Get_Parsed_Project (This.Toolchain_Found);
+   end Get_Parsed_Project;
+
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
+
+   function Get_Error_Message (This : Project_Parser_Record) return String is
+   begin
+      return Get_Error_Message (This.Toolchain_Found);
+   end Get_Error_Message;
 
    ----------------------
    -- Get_Root_Project --
@@ -1382,7 +1454,7 @@ package body Toolchains.Parsers is
 
    procedure Initialize
      (This         : Parsed_Project;
-      Parser       : Project_Parser;
+      Parser       : in out Project_Parser_Record;
       Node_Data    : Project_Node_Tree_Ref;
       Project_Node : Project_Node_Id)
    is

@@ -883,7 +883,7 @@ package body Toolchains is
                      --  Do nothing for empty lines or current directory
                      null;
                   else
-                     Source_Search_Path.Append (Lines (Current_Line).all);
+                     Source_Search_Path.Append (Name);
                   end if;
                end;
 
@@ -906,7 +906,7 @@ package body Toolchains is
                      --  Do nothing for empty lines or current directory
                      null;
                   else
-                     Object_Search_Path.Append (Lines (Current_Line).all);
+                     Object_Search_Path.Append (Name);
                   end if;
                end;
 
@@ -925,7 +925,7 @@ package body Toolchains is
                   --  Do nothing for empty lines or current directory
                   null;
                else
-                  Project_Search_Path.Append (Lines (Current_Line).all);
+                  Project_Search_Path.Append (Name);
                end if;
             end;
 
