@@ -121,7 +121,7 @@ package Toolchains is
       is abstract;
    --  Executes the command and returns the result. The implementation of this
    --  subprogram typically differs between GNATbench and GPS. If the process
-   --  didn't return untile timeout miliseconds, then the call has to be
+   --  didn't return until timeout miliseconds, then the call has to be
    --  aborted.
 
    ----------------------

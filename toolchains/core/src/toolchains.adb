@@ -967,7 +967,7 @@ package body Toolchains is
       end;
    exception
       when E : others =>
-         --  This happens typically if the GNALS process didn't go through.
+         --  This happens typically if the GNATLS process didn't go through.
 
          declare
             Lib : Ada_Library_Info;
