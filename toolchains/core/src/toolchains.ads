@@ -115,10 +115,14 @@ package Toolchains is
    type Toolchain_Manager is access all Toolchain_Manager_Record'Class;
 
    function Execute
-     (This : Toolchain_Manager_Record; Command : String) return String
+     (This    : Toolchain_Manager_Record;
+      Command : String;
+      Timeout : Integer) return String
       is abstract;
    --  Executes the command and returns the result. The implementation of this
-   --  subprogram typically differs between GNATbench and GPS.
+   --  subprogram typically differs between GNATbench and GPS. If the process
+   --  didn't return untile timeout miliseconds, then the call has to be
+   --  aborted.
 
    ----------------------
    -- Ada_Library_Info --

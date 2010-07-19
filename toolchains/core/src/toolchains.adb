@@ -348,15 +348,6 @@ package body Toolchains is
       return This.Library;
    end Get_Library_Information;
 
-   -------------
-   -- Copy_To --
-   -------------
-
-   procedure Copy_To (Source, Destination : Toolchain) is
-   begin
-      null;
-   end Copy_To;
-
    ----------------------------
    -- Create_Known_Toolchain --
    ----------------------------
@@ -821,7 +812,8 @@ package body Toolchains is
       This.Computed_Libraries.Insert (GNATls_Command, Result);
 
       declare
-         Output : constant String := This.Execute (GNATls_Command & " -v");
+         Output : constant String := This.Execute
+           (GNATls_Command & " -v", 5_000);
          Lines           : String_List_Access := Split (Output, ASCII.LF);
          Garbage         : String_Access;
          Current_Line    : Integer;
@@ -1002,7 +994,8 @@ package body Toolchains is
          Current : Integer;
          Total   : Integer))
    is
-      Output : constant String := This.Execute ("gprconfig --show-targets");
+      Output : constant String := This.Execute
+        ("gprconfig --show-targets", 50_000);
       Lines  : String_List_Access := Split (Output, ASCII.LF);
       Garbage         : String_Access;
       Toolchain_Matcher : constant Pattern_Matcher :=
