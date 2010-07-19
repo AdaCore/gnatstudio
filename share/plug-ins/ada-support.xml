@@ -19,7 +19,7 @@
          <check label="Minimal recompilation" switch="-m"
                 tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
 
-         <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
+         <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
                column="2"
                tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
          <check label="Keep going" switch="-k" column="2"
