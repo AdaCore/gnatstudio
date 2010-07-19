@@ -32,6 +32,9 @@ package body Toolchains is
    --  called by the manager, as we store the result of this information during
    --  the session.
 
+   procedure Fire_Change_Event (This : Toolchain_Manager);
+   --  Calls the Toolchain_Changed event on all listeners.
+
    ---------------------
    -- Get_Source_Path --
    ---------------------
@@ -286,6 +289,15 @@ package body Toolchains is
       return This.Is_Custom;
    end Is_Custom;
 
+   ---------------
+   -- Is_Native --
+   ---------------
+
+   function Is_Native (This : Toolchain) return Boolean is
+   begin
+      return This.Is_Native;
+   end Is_Native;
+
    ----------------
    -- Set_Custom --
    ----------------
@@ -335,6 +347,15 @@ package body Toolchains is
 
       return This.Library;
    end Get_Library_Information;
+
+   -------------
+   -- Copy_To --
+   -------------
+
+   procedure Copy_To (Source, Destination : Toolchain) is
+   begin
+      null;
+   end Copy_To;
 
    ----------------------------
    -- Create_Known_Toolchain --
@@ -652,7 +673,7 @@ package body Toolchains is
       Compute_Predefined_Paths (Ada_Toolchain, This);
       This.Toolchains.Insert (Ada_Toolchain.Name.all, Ada_Toolchain);
 
-      --  ??? fire a toolchain modify event
+      Fire_Change_Event (This);
    end Add_Toolchain;
 
    ----------------------
@@ -701,6 +722,7 @@ package body Toolchains is
       Existing.Is_Valid := False;
 
       Compute_Predefined_Paths (Existing, This);
+      Fire_Change_Event (This);
    end Modify_Toolchain;
 
    ----------------------
@@ -722,6 +744,7 @@ package body Toolchains is
 
       This.Toolchains.Delete (Ada_Toolchain.Name.all);
       Free (Existing);
+      Fire_Change_Event (This);
    end Remove_Toolchain;
 
    ------------------------
@@ -1050,6 +1073,70 @@ package body Toolchains is
       end;
 
       Free (Lines);
+
+      Fire_Change_Event (This);
    end Scan_Toolchains;
+
+   ------------------
+   -- Add_Listener --
+   ------------------
+
+   procedure Add_Listener
+     (This     : Toolchain_Manager;
+      Listener : Toolchain_Change_Listener)
+   is
+      use Listener_List;
+
+      Cur : Listener_List.Cursor := This.Listeners.First;
+   begin
+      while Cur /= Listener_List.No_Element loop
+         if Element (Cur) = Listener then
+            return;
+         end if;
+
+         Cur := Next (Cur);
+      end loop;
+
+      This.Listeners.Append (Listener);
+   end Add_Listener;
+
+   ---------------------
+   -- Remove_Listener --
+   ---------------------
+
+   procedure Remove_Listener
+     (This     : Toolchain_Manager;
+      Listener : Toolchain_Change_Listener)
+   is
+      use Listener_List;
+
+      Cur : Listener_List.Cursor := This.Listeners.First;
+   begin
+      while Cur /= Listener_List.No_Element loop
+         if Element (Cur) = Listener then
+            This.Listeners.Delete (Cur);
+            return;
+         end if;
+
+         Cur := Next (Cur);
+      end loop;
+   end Remove_Listener;
+
+   -----------------------
+   -- Fire_Change_Event --
+   -----------------------
+
+   procedure Fire_Change_Event (This : Toolchain_Manager)
+   is
+      use Listener_List;
+
+      Cur : Listener_List.Cursor := This.Listeners.First;
+   begin
+      while Cur /= Listener_List.No_Element loop
+         Element (Cur).Toolchain_Changed (This);
+
+         Cur := Next (Cur);
+      end loop;
+   end Fire_Change_Event;
 
 end Toolchains;

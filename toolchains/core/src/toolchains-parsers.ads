@@ -70,7 +70,7 @@ package Toolchains.Parsers is
      (This         : Project_Parser;
       Manager      : Toolchain_Manager;
       Path         : Virtual_File;
-      Project_Path : String);
+      Project_Path : File_Array);
    --  Parse a project according to its location (path) and the project path
    --  (GNAT_Project_Path).
 

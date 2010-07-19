@@ -1219,7 +1219,7 @@ package body Toolchains.Parsers is
      (This         : Project_Parser;
       Manager      : Toolchain_Manager;
       Path         : Virtual_File;
-      Project_Path : String)
+      Project_Path : File_Array)
    is
       Decl_Id : Project_Node_Id;
       Item_Id : Project_Node_Id;
@@ -1232,7 +1232,7 @@ package body Toolchains.Parsers is
       This.Node_Data := new Project_Node_Tree_Data;
       Initialize (This.Node_Data);
 
-      Set_Path (This.Node_Data.Project_Path, Project_Path);
+      Set_Path (This.Node_Data.Project_Path, String (To_Path (Project_Path)));
 
       Parse (In_Tree                => This.Node_Data,
              Project                => This.Enclosing_Project_Node,

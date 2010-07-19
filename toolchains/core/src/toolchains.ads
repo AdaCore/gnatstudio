@@ -65,6 +65,7 @@
 --  capabilities on the renamed package.
 
 with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers.Doubly_Linked_Lists;
 with GNAT.Strings; use GNAT.Strings;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
@@ -86,7 +87,7 @@ package Toolchains is
    Tool_POWERPC_WRS_VXWORKSMILS : aliased constant String :=
      "powerpc-wrs-vxworksmils";
 
-   Known_Toolchains : constant String_List :=
+   Known_Toolchains : aliased constant String_List :=
      ( --  Bareboards
       new String'("erc32-elf"),
       new String'("leon-elf"),
@@ -203,6 +204,9 @@ package Toolchains is
    --  not one of the common toolchains known by GPS and its properties have
    --  been manually set by the user.
 
+   function Is_Native (This : Toolchain) return Boolean;
+   --  Return true if this toolchain is a native toolchain.
+
    procedure Set_Custom (This : Toolchain; Value : Boolean);
    --  Set wether this toolchain is a custom toolchain
 
@@ -219,6 +223,19 @@ package Toolchains is
      (This : Toolchain) return Ada_Library_Info;
    --  Return the library information, as computed by gnatls. The library
    --  information needs to have been computed beforehands.
+
+   -------------------------------
+   -- Toolchain_Change_Listener --
+   -------------------------------
+
+   type Toolchain_Change_Listener_Record is abstract tagged null record;
+   type Toolchain_Change_Listener is access all
+     Toolchain_Change_Listener_Record'Class;
+
+   procedure Toolchain_Changed
+     (This    : Toolchain_Change_Listener_Record;
+      Manager : Toolchain_Manager) is abstract;
+   --  Reacts to changes made in the manager.
 
    -----------------------
    -- Toolchain_Manager --
@@ -303,6 +320,18 @@ package Toolchains is
    --  each gnat list on the whole list (scanned toolchains + already loaded
    --  toolchains
 
+   procedure Add_Listener
+     (This     : Toolchain_Manager;
+      Listener : Toolchain_Change_Listener);
+   --  Adds a listener to the toolchain change event - does nothing if the
+   --  listener is already registered.
+
+   procedure Remove_Listener
+     (This     : Toolchain_Manager;
+      Listener : Toolchain_Change_Listener);
+   --  Removes the listener from the toolchain change event - does nothing if
+   --  the listener doesn't exist.
+
 private
 
    type Ada_Library_Info_Record is record
@@ -355,10 +384,14 @@ private
    package Library_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (String, Ada_Library_Info);
 
+   package Listener_List is new Ada.Containers.Doubly_Linked_Lists
+     (Toolchain_Change_Listener);
+
    type Toolchain_Manager_Record is abstract tagged record
       Toolchains          : Toolchain_Maps.Map;
       No_Native_Toolchain : Boolean := False;
       Computed_Libraries  : Library_Maps.Map;
+      Listeners           : Listener_List.List;
    end record;
 
 end Toolchains;
