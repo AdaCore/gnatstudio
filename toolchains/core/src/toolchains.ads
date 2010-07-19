@@ -369,7 +369,7 @@ private
       Tool_Commands : Tool_Name_Array;
       --  The name of the tools for this toolchain.
 
-      Is_Computed : Boolean;
+      Is_Computed : Boolean := False;
       --  Have the toolchain properties already been computed from gnatls?
 
       Is_Valid : Boolean;
