@@ -30,6 +30,7 @@ pragma Warnings (On);
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gtk.Window;                use Gtk.Window;
@@ -255,6 +256,15 @@ package body Debugger.Gdb is
 
    procedure Connect_To_Target_If_Needed (Debugger : access Gdb_Debugger);
    --  Connect to the target if not already connected
+
+   procedure Test_If_Has_Command
+     (Debugger : access Gdb_Debugger;
+      Flag     : in out Integer;
+      Command  : String);
+   --  Test whether the command is supported by the current version of gdb.
+   --  Flag should be set to -1 initially, and will be set to either 0 or 1
+   --  depending on whether the command is supported or not. Further calls to
+   --  this subprogram will do nothing.
 
    --------------------------
    -- Detect_Debugger_Mode --
@@ -1305,6 +1315,32 @@ package body Debugger.Gdb is
       Send (Debugger, "info line", Mode => Internal);
    end Load_Core_File;
 
+   -------------------------
+   -- Test_If_Has_Command --
+   -------------------------
+
+   procedure Test_If_Has_Command
+     (Debugger : access Gdb_Debugger;
+      Flag     : in out Integer;
+      Command  : String)
+   is
+   begin
+      if Flag = -1 then
+         declare
+            S : constant String := Send
+              (Debugger, "help " & Command, Mode => Internal);
+         begin
+            if Starts_With (S, Undefined_Command)
+              or else Starts_With (S, No_Definition_Of)
+            then
+               Flag := 0;
+            else
+               Flag := 1;
+            end if;
+         end;
+      end if;
+   end Test_If_Has_Command;
+
    -----------------
    -- Add_Symbols --
    -----------------
@@ -1317,8 +1353,19 @@ package body Debugger.Gdb is
    is
       Symbols : constant String := +Module.Unix_Style_Full_Name;
    begin
-      Send
-        (Debugger, "add-symbol-file " & Symbols & " " & Address, Mode => Mode);
+      Test_If_Has_Command
+        (Debugger, Debugger.Has_Wtx_Add_Symbol_File,
+         "wtx add-symbol-file");
+
+      if Debugger.Has_Wtx_Add_Symbol_File = 1
+        and then Address = ""
+      then
+         Send (Debugger, "wtx add-symbol-file " & Symbols, Mode => Mode);
+      else
+         Send
+           (Debugger,
+            "add-symbol-file " & Symbols & " " & Address, Mode => Mode);
+      end if;
 
       if Mode in Visible_Command then
          Wait_User_Command (Debugger);
@@ -1484,22 +1531,7 @@ package body Debugger.Gdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      if Debugger.Has_Start_Cmd = -1 then
-         declare
-            S : constant String := Send
-                  (Debugger, "help start", Mode => Internal);
-         begin
-            if S'Length > Undefined_Command'Length
-              and then S (S'First ..
-                          S'First + Undefined_Command'Length - 1) =
-                Undefined_Command
-            then
-               Debugger.Has_Start_Cmd := 0;
-            else
-               Debugger.Has_Start_Cmd := 1;
-            end if;
-         end;
-      end if;
+      Test_If_Has_Command (Debugger, Debugger.Has_Start_Cmd, "start");
 
       if Arguments = "" and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= GNATCOLL.VFS.No_File
@@ -1625,15 +1657,10 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Debugger);
    begin
-      return
-        (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "thread")
-        or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "task")
-        or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "core")
-        or else (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "attach");
+      return Starts_With (Command, "thread")
+        or else Starts_With (Command, "task")
+        or else Starts_With (Command, "core")
+        or else Starts_With (Command, "attach");
    end Is_Context_Command;
 
    --------------------------
@@ -1668,18 +1695,12 @@ package body Debugger.Gdb is
         or else Command (Command'First .. Index - 1) = "run"
         or else Command (Command'First .. Index - 1) = "r"
         or else Command = "finish"
-        or else (Command'Length >= 6
-          and then
-            (Command (Command'First .. Command'First + 5) = "attach"
-             or else Command (Command'First .. Command'First + 5) = "target"))
-        or else (Command'Length >= 3
-          and then Command (Command'First .. Command'First + 2) = "run")
-        or else (Command'Length >= 2
-          and then Command (Command'First .. Command'First + 1) = "r ")
-        or else (Command'Length >= 5
-          and then
-            (Command (Command'First .. Command'First + 4) = "begin"
-             or else Command (Command'First .. Command'First + 4) = "start"));
+        or else Starts_With (Command, "attach")
+        or else Starts_With (Command, "target")
+        or else Starts_With (Command, "run")
+        or else Starts_With (Command, "r ")
+        or else Starts_With (Command, "begin")
+        or else Starts_With (Command, "start");
    end Is_Execution_Command;
 
    ---------------------
@@ -1692,14 +1713,10 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Debugger);
    begin
-      return
-        (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "file")
-        or else (Command'Length >= 15
-          and then Command (Command'First .. Command'First + 14) =
-            "add-symbol-file")
-        or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "load");
+      return Starts_With (Command, "file")
+        or else Starts_With (Command, "add-symbol-file")
+        or else Starts_With (Command, "wtx add-symbol-file")
+        or else Starts_With (Command, "load");
    end Is_Load_Command;
 
    ----------------------
@@ -2433,6 +2450,13 @@ package body Debugger.Gdb is
       if Cached_File = File then
          Result := True;
       else
+         Test_If_Has_Command
+           (Debugger, Debugger.Has_Symbol_List, "-symbol-list-lines");
+
+         if Debugger.Has_Symbol_List = 0 then
+            return;
+         end if;
+
          declare
             --  Send the gdb command to get the list of lines with code.
             --  The call to "Format_Pathname" is to work a bug in some versions
@@ -2444,19 +2468,6 @@ package body Debugger.Gdb is
             Num_Lines, Pos : Natural;
 
          begin
-            if Debugger.Has_Symbol_List = -1 then
-               if S'Length > No_Definition_Of'Length
-                 and then S (S'First ..
-                             S'First + No_Definition_Of'Length - 1) =
-                   No_Definition_Of
-               then
-                  Debugger.Has_Symbol_List := 0;
-                  return;
-               else
-                  Debugger.Has_Symbol_List := 1;
-               end if;
-            end if;
-
             if S'Length < List_Lines'Length
               or else S (S'First ..
                          S'First + List_Lines'Length - 1) /= List_Lines

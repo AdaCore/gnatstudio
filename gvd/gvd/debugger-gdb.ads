@@ -445,6 +445,7 @@ private
       Debuggee_Pid     : Integer := 0;
       Has_Symbol_List  : Integer := -1;
       Has_Start_Cmd    : Integer := -1;
+      Has_Wtx_Add_Symbol_File : Integer := -1;
       Initializing     : Boolean := False;
 
       Mode             : Remote_GDB_Mode := Native;
