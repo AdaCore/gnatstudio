@@ -28,7 +28,6 @@ with Ada.Exceptions; use Ada.Exceptions;
 package body Toolchains is
 
    procedure Free (This : in out Ada_Library_Info);
-   pragma Unreferenced (Free);
    --  Free the memory associated to this library info. This should only be
    --  called by the manager, as we store the result of this information during
    --  the session.
@@ -808,10 +807,6 @@ package body Toolchains is
          return This.Computed_Libraries.Element (GNATls_Command);
       end if;
 
-      Result := new Ada_Library_Info_Record;
-
-      This.Computed_Libraries.Insert (GNATls_Command, Result);
-
       declare
          Output : constant String := This.Execute
            (GNATls_Command & " -v", 5_000);
@@ -819,6 +814,10 @@ package body Toolchains is
          Garbage         : String_Access;
          Current_Line    : Integer;
       begin
+         Result := new Ada_Library_Info_Record;
+
+         This.Computed_Libraries.Insert (GNATls_Command, Result);
+
          for J in Lines'Range loop
             for K in Lines (J)'Range loop
                if Lines (J)(K) = ASCII.LF or else Lines (J)(K) = ASCII.CR then
@@ -963,13 +962,28 @@ package body Toolchains is
          Free (Lines);
 
          return Result;
-      exception
-         when E : others =>
-            --  This happens typically if the GNALS process didn't go through.
+      end;
+   exception
+      when E : others =>
+         --  This happens typically if the GNALS process didn't go through.
 
+         declare
+            Lib : Ada_Library_Info;
+         begin
+            --  If there's already an element added, removed it.
+
+            if This.Computed_Libraries.Contains (GNATls_Command) then
+               Lib := This.Computed_Libraries.Element (GNATls_Command);
+               Free (Lib);
+               This.Computed_Libraries.Delete (GNATls_Command);
+            end if;
+
+            Result := new Ada_Library_Info_Record;
+
+            This.Computed_Libraries.Insert (GNATls_Command, Result);
             Result.Error := new String'(Exception_Message (E));
             return Result;
-      end;
+         end;
    end Get_Library_Information;
 
    --------------------
