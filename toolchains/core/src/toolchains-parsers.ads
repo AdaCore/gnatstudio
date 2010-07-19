@@ -27,47 +27,15 @@ package Toolchains.Parsers is
    type Parsed_Project_Record is private;
    type Parsed_Project is access all Parsed_Project_Record;
 
-   type Toolchain_Parser_Record is private;
-   type Toolchain_Parser is access all Toolchain_Parser_Record;
-
    type Project_Parser_Record is private;
    type Project_Parser is access all Project_Parser_Record;
-
-   procedure Parse
-     (This      : in out Toolchain_Parser_Record;
-      Parser    : Project_Parser;
-      Node_Data : Project_Node_Tree_Ref;
-      IDE_Node  : Project_Node_Id);
-   --  Parse the toolchain contained in the IDE node given in parameter.
-
-   procedure Set_Toolchains
-     (This       : in out Toolchain_Parser_Record;
-      Toolchains : Toolchain_Array);
-   --  Modifies the stucture of the project so that it supports the toolchains
-   --  given in parameter
-
-   function Is_Supported (This : Toolchain_Parser_Record) return Boolean;
-   --  Return true if the toolchain definition is supported, false otherwise
-
-   function Get_Parsed_Project
-     (This : Toolchain_Parser_Record)
-      return Parsed_Project;
-   --  Return the parsed project from where this toolchain has been extracted.
-
-   function Get_Error_Message (This : Toolchain_Parser_Record) return String;
-   --  Return the error message associated to the parsing of this toolchain,
-   --  if any.
-
-   function Get_Toolchains
-     (This : Toolchain_Parser_Record) return Toolchain_Array;
-   --  Return the toolchains red from the project file.
 
    --------------------
    -- Project_Parser --
    --------------------
 
    procedure Parse
-     (This         : Project_Parser;
+     (This         : in out Project_Parser_Record;
       Manager      : Toolchain_Manager;
       Path         : Virtual_File;
       Project_Path : File_Array);
@@ -82,9 +50,27 @@ package Toolchains.Parsers is
    --  otherwise. And invalid project may be semantically correct, but doesn't
    --  fall into the standard supported toolchain description.
 
-   function Get_Toolchain_Parser
-     (This : Project_Parser_Record) return Toolchain_Parser;
-   --  Return the parser used to analyse the toolchain in this project
+   function Get_Toolchains
+     (This : Project_Parser_Record) return Toolchain_Array;
+   --  Return the toolchains red from the project file.
+
+   procedure Set_Toolchains
+     (This       : in out Project_Parser_Record;
+      Toolchains : Toolchain_Array);
+   --  Modifies the stucture of the project so that it supports the toolchains
+   --  given in parameter
+
+   function Is_Supported (This : Project_Parser_Record) return Boolean;
+   --  Return true if the toolchain definition is supported, false otherwise
+
+   function Get_Parsed_Project
+     (This : Project_Parser_Record)
+      return Parsed_Project;
+   --  Return the parsed project from where this toolchain has been extracted.
+
+   function Get_Error_Message (This : Project_Parser_Record) return String;
+   --  Return the error message associated to the parsing of this toolchain,
+   --  if any.
 
    --------------------
    -- Parsed_Project --
@@ -124,20 +110,22 @@ private
 
    package Prj_Node_Sets is new Ada.Containers.Ordered_Sets (Project_Node_Id);
 
-   type Toolchain_Parser_Record is record
-      Enclosing_Parser : Project_Parser;
+   type Toolchain_Parser_Record
+     (Enclosing_Parser : access Project_Parser_Record)
+   is record
       Node_Data        : Project_Node_Tree_Ref;
       Project          : Parsed_Project;
 
       Error            : String_Access;
 
-      IDE_Package      : Project_Node_Id;
-      Toolchain_Case_Statement : Project_Node_Id;
-      Variable_Node    : Project_Node_Id;
+      IDE_Package              : Project_Node_Id := Empty_Node;
+      Toolchain_Case_Statement : Project_Node_Id := Empty_Node;
+      Variable_Node            : Project_Node_Id := Empty_Node;
 
       Attributes       : Prj_Node_Sets.Set;
       Toolchains       : Toolchain_Maps.Map;
    end record;
+   type Toolchain_Parser is access all Toolchain_Parser_Record;
 
    --------------------
    -- Parsed_Project --
@@ -155,7 +143,8 @@ private
       Root_Project_Node      : Project_Node_Id;
       Is_Valid               : Boolean := False;
 
-      Toolchain_Found        : Toolchain_Parser;
+      Toolchain_Found        : Toolchain_Parser_Record
+        (Project_Parser_Record'Access);
       Root_Project           : Parsed_Project;
       Parsed_Projects        : Parsed_Projects_Maps.Map;
    end record;
@@ -173,7 +162,7 @@ private
 
    procedure Initialize
      (This         : Parsed_Project;
-      Parser       : Project_Parser;
+      Parser       : in out Project_Parser_Record;
       Node_Data    : Project_Node_Tree_Ref;
       Project_Node : Project_Node_Id);
 
