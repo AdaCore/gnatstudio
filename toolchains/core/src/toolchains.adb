@@ -23,6 +23,7 @@ with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions; use Ada.Exceptions;
 
 package body Toolchains is
 
@@ -962,6 +963,12 @@ package body Toolchains is
          Free (Lines);
 
          return Result;
+      exception
+         when E : others =>
+            --  This happens typically if the GNALS process didn't go through.
+
+            Result.Error := new String'(Exception_Message (E));
+            return Result;
       end;
    end Get_Library_Information;
 
