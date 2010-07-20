@@ -375,7 +375,7 @@ private
       Is_Native : Boolean := False;
       --  Is this a native toolchain?
 
-      Is_Custom : Boolean;
+      Is_Custom : Boolean := False;
       --  Are the contents of this toolchain coming from standard description,
       --  or are fields been manually set by the user?
 
