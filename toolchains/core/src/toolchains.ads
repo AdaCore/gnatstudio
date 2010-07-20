@@ -200,6 +200,10 @@ package Toolchains is
    procedure Set_Name (This : Toolchain; Name : String);
    --  Changes the name of the toolchain given in parameter
 
+   function Get_Label (This : Toolchain) return String;
+   --  Return the label of the toolchain, for display purposes. Usually equals
+   --  to the name execpt in certain cases (e.g. native)
+
    function Copy (This : Toolchain) return Toolchain;
    --  Copy all the data for the toolchain given in parameter.
 
@@ -254,6 +258,11 @@ package Toolchains is
    --  return Null_Toolchain if no such name is known. Note that the returned
    --  object needs to be added to the toolchain manager manually if it has to
    --  be stored.
+
+   function Create_Empty_Toolchain return Toolchain;
+   --  Create an empty toolchain. The result has either to be added to the
+   --  manager or manually freed. The result is an empty toolchain that can
+   --  be modified, different from Null_Toolchain which can't.
 
    function Is_Known_Toolchain_Name (Name : String) return Boolean;
    --  Return true if this is the name of a known toolchain.

@@ -243,8 +243,25 @@ package body Toolchains is
 
    function Get_Name (This : Toolchain) return String is
    begin
-      return This.Name.all;
+      if This.Name = null then
+         return "";
+      else
+         return This.Name.all;
+      end if;
    end Get_Name;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (This : Toolchain) return String is
+   begin
+      if This.Label = null then
+         return Get_Name (This);
+      else
+         return This.Label.all;
+      end if;
+   end Get_Label;
 
    --------------
    -- Set_Name --
@@ -412,6 +429,15 @@ package body Toolchains is
 
       return Result;
    end Create_Known_Toolchain;
+
+   ----------------------------
+   -- Create_Empty_Toolchain --
+   ----------------------------
+
+   function Create_Empty_Toolchain return Toolchain is
+   begin
+      return new Toolchain_Record;
+   end Create_Empty_Toolchain;
 
    -----------------------------
    -- Is_Known_Toolchain_Name --
@@ -1073,7 +1099,7 @@ package body Toolchains is
 
                if Progress /= null then
                   Progress
-                    ("Compute " & Lines (J).all,
+                    (Lines (J).all,
                      Cur_Progress,
                      Nb_Toolchains);
                   Cur_Progress := Cur_Progress + 1;

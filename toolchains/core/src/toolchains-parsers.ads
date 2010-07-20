@@ -92,6 +92,10 @@ package Toolchains.Parsers is
      (This : Parsed_Project_Record) return Project_Node_Id;
    --  Return the project node associated to this project
 
+   function Get_Project_Declaration
+     (This : Parsed_Project_Record) return Project_Node_Id;
+   --  Return the project declaration that has been parsed
+
    function Is_Root (This : Parsed_Project_Record) return Boolean;
    --  Return true if the project given in parameter is a root project, false
    --  if it's withed by the root project.

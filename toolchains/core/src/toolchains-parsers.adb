@@ -763,7 +763,7 @@ package body Toolchains.Parsers is
                   Get_Name_Id ("Target_Type"));
 
                Tail_Node := First_Declarative_Item_Of
-                 (Get_Project_Node (This.Project.all), This.Node_Data);
+                 (Get_Project_Declaration (This.Project.all), This.Node_Data);
                Decl_Type := Default_Project_Node
                  (This.Node_Data,
                   N_Declarative_Item,
@@ -773,7 +773,7 @@ package body Toolchains.Parsers is
                  (Decl_Type, This.Node_Data, Type_Declaration);
 
                Set_First_Declarative_Item_Of
-                 (Get_Project_Node (This.Project.all),
+                 (Get_Project_Declaration (This.Project.all),
                   This.Node_Data,
                   Decl_Type);
 
@@ -908,7 +908,7 @@ package body Toolchains.Parsers is
            (Decl_Var, This.Node_Data, This.Variable_Node);
 
          Decl_Type := First_Declarative_Item_Of
-           (Get_Project_Node (This.Project.all), This.Node_Data);
+           (Get_Project_Declaration (This.Project.all), This.Node_Data);
 
          while Decl_Type /= Empty_Node loop
             Item_Node := Current_Item_Node
@@ -1447,6 +1447,16 @@ package body Toolchains.Parsers is
    begin
       return This.Project_Node;
    end Get_Project_Node;
+
+   -----------------------------
+   -- Get_Project_Declaration --
+   -----------------------------
+
+   function Get_Project_Declaration
+     (This : Parsed_Project_Record) return Project_Node_Id is
+   begin
+      return Project_Declaration_Of (This.Project_Node, This.Node_Data);
+   end Get_Project_Declaration;
 
    ----------------
    -- Initialize --
