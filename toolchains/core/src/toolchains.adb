@@ -196,6 +196,7 @@ package body Toolchains is
 
    begin
       if This.Tool_Commands (Name) = null then
+
          if Name = Unknown then
             return "";
          end if;
@@ -299,6 +300,15 @@ package body Toolchains is
    begin
       return This.Is_Native;
    end Is_Native;
+
+   -----------------
+   -- Is_Computed --
+   -----------------
+
+   function Is_Computed (This : Toolchain) return Boolean is
+   begin
+      return This.Is_Computed;
+   end Is_Computed;
 
    ----------------
    -- Set_Custom --
@@ -489,6 +499,7 @@ package body Toolchains is
          declare
             Result : constant Toolchain := Create_Known_Toolchain (Name);
          begin
+            Compute_Predefined_Paths (Result, This);
             Add_Toolchain (This, Result);
             return Result;
          end;
@@ -984,6 +995,7 @@ package body Toolchains is
 
             This.Computed_Libraries.Insert (GNATls_Command, Result);
             Result.Error := new String'(Exception_Message (E));
+
             return Result;
          end;
    end Get_Library_Information;
@@ -1024,6 +1036,9 @@ package body Toolchains is
       Toolchain_Matcher : constant Pattern_Matcher :=
         Compile ("([^ ]+-[^ ]+).*");
       Toolchain_Matches : Match_Array (0 .. 1);
+
+      Nb_Toolchains : Integer := 0;
+      Cur_Progress : Integer := 1;
    begin
       for J in Lines'Range loop
          for K in Lines (J)'Range loop
@@ -1039,14 +1054,31 @@ package body Toolchains is
       end loop;
 
       for J in Lines'Range loop
+         Match (Toolchain_Matcher, Lines (J).all, Toolchain_Matches);
+
+         if Toolchain_Matches (0) /= No_Match then
+            Nb_Toolchains := Nb_Toolchains + 1;
+         else
+            Free (Lines (J));
+         end if;
+      end loop;
+
+      for J in Lines'Range loop
          declare
             Ada_Toolchain : Toolchain;
-            Is_Native     : constant Boolean :=
-              Index (Lines (J).all, "native") in Lines (J)'Range;
+            Is_Native     : Boolean;
          begin
-            Match (Toolchain_Matcher, Lines (J).all, Toolchain_Matches);
+            if Lines (J) /= null then
+               Is_Native := Index (Lines (J).all, "native") in Lines (J)'Range;
 
-            if Toolchain_Matches (0) /= No_Match then
+               if Progress /= null then
+                  Progress
+                    ("Compute " & Lines (J).all,
+                     Cur_Progress,
+                     Nb_Toolchains);
+                  Cur_Progress := Cur_Progress + 1;
+               end if;
+
                if Is_Native then
                   Ada_Toolchain := Get_Native_Toolchain (This);
                else
@@ -1057,40 +1089,14 @@ package body Toolchains is
                   Ada_Toolchain := new Toolchain_Record;
                   Ada_Toolchain.Name := new String'(Lines (J).all);
                   Ada_Toolchain.Is_Native := Is_Native;
-                  This.Toolchains.Insert
-                    (Ada_Toolchain.Name.all, Ada_Toolchain);
+                  Compute_Predefined_Paths (Ada_Toolchain, This);
+                  Add_Toolchain (This, Ada_Toolchain);
                end if;
             end if;
          end;
       end loop;
 
-      declare
-         use Toolchain_Maps;
-
-         Cur_Progress : Integer := 1;
-         Cur : Toolchain_Maps.Cursor := This.Toolchains.First;
-      begin
-         while Cur /= Toolchain_Maps.No_Element loop
-            if Progress /= null then
-               Progress
-                 ("Compute " & Get_Name (Element (Cur)),
-                  Cur_Progress,
-                  Integer (This.Toolchains.Length));
-            end if;
-
-            Cur_Progress := Cur_Progress + 1;
-
-            Compute_Predefined_Paths
-              (This    => Element (Cur),
-               Manager => This);
-
-            Cur := Next (Cur);
-         end loop;
-      end;
-
       Free (Lines);
-
-      Fire_Change_Event (This);
    end Scan_Toolchains;
 
    ------------------

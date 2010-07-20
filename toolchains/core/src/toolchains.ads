@@ -211,6 +211,10 @@ package Toolchains is
    function Is_Native (This : Toolchain) return Boolean;
    --  Return true if this toolchain is a native toolchain.
 
+   function Is_Computed (This : Toolchain) return Boolean;
+   --  Return true if the library information has been computed for this
+   --  toolchain.
+
    procedure Set_Custom (This : Toolchain; Value : Boolean);
    --  Set wether this toolchain is a custom toolchain
 
@@ -344,7 +348,7 @@ private
       Project_Path : File_Array_Access;
       Version      : String_Access;
       Error        : String_Access;
-      Install_Path : Virtual_File;
+      Install_Path : Virtual_File := No_File;
    end record;
 
    type Ada_Library_Info is access all Ada_Library_Info_Record;
@@ -359,7 +363,7 @@ private
       Label : String_Access;
       --  The name of the toolchain as displayed by the user
 
-      Is_Native : Boolean;
+      Is_Native : Boolean := False;
       --  Is this a native toolchain?
 
       Is_Custom : Boolean;
