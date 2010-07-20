@@ -701,7 +701,9 @@ package body GVD_Module is
             declare
                Addr : constant String :=
                         Query_User (Gtk_Window (Top),
-                                    -"Enter starting address of module's text",
+                                    -"Enter starting address of module's text"
+                                    & ASCII.LF
+                                    & (-"Optionally leave empty on VxWorks"),
                                     False, False, "0");
 
             begin
