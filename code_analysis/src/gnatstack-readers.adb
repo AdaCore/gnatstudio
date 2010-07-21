@@ -190,12 +190,15 @@ package body GNATStack.Readers is
                        ((Self.State.C_Prefix_Name, Self.State.C_Locations));
       Value      : constant Subprogram_Information_Vectors.Vector :=
                      Self.State.Chain;
+      Usage      : constant Stack_Usage_Information :=
+                     Self.State.Entry_Usage;
 
    begin
       Self.Pop;
       Self.Analysis.Entry_Set.Insert (Subprogram);
       Subprogram.Is_External := True;
       Subprogram.Chain := Value;
+      Subprogram.Entry_Usage := Usage;
    end Analyze_entry_End_Tag;
 
    -----------------------------

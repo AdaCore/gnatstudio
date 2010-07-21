@@ -72,9 +72,6 @@ package body GNATStack.Module.Editors is
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Called when a file has been opened
 
-   function Stack_Usage_Image (Item : Stack_Usage_Information) return String;
-   --  Returns textual representation of the stack usage information.
-
    ----------------------
    -- Hide_Stack_Usage --
    ----------------------
@@ -307,9 +304,9 @@ package body GNATStack.Module.Editors is
         (GPS_Editor_Buffer'Class (Buffer),
          Subprogram_Location.Line,
          Indent & "--  Stack usage: local: "
-         & Stack_Usage_Image (Subprogram.Local_Usage)
+         & Image (Subprogram.Local_Usage)
          & ", global: "
-         & Stack_Usage_Image (Subprogram.Global_Usage),
+         & Image (Subprogram.Global_Usage),
          GNATStack_Editor_Annotations);
       Lines := Lines + 1;
 
@@ -433,44 +430,5 @@ package body GNATStack.Module.Editors is
          Next (Buffer_Position);
       end loop;
    end Show_Stack_Usage_In_Opened_Editors;
-
-   -----------------------
-   -- Stack_Usage_Image --
-   -----------------------
-
-   function Stack_Usage_Image (Item : Stack_Usage_Information) return String is
-
-      function Qualifier_Image return String;
-      --  Returns textual representation of the qualifier
-
-      ---------------------
-      -- Qualifier_Image --
-      ---------------------
-
-      function Qualifier_Image return String is
-      begin
-         if Item.Qualifier = "UNBOUNDED" then
-            return " (unbounded)";
-
-         elsif Item.Qualifier = "UNKNOWN" then
-            return " (?)";
-
-         elsif Item.Qualifier = "STATIC" then
-            return "";
-
-         else
-            raise Program_Error;
-         end if;
-      end Qualifier_Image;
-
-   begin
-      if Item.Size >= 0 then
-         return
-           Trim (Integer'Image (Item.Size), Both) & " bytes" & Qualifier_Image;
-
-      else
-         return Trim (Qualifier_Image, Both);
-      end if;
-   end Stack_Usage_Image;
 
 end GNATStack.Module.Editors;

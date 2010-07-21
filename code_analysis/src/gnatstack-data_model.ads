@@ -136,4 +136,7 @@ package GNATStack.Data_Model is
       Entry_Set      : Subprogram_Information_Sets.Set;
    end record;
 
+   function Image (Item : Stack_Usage_Information) return String;
+   --  Returns textual representation of the stack usage information.
+
 end GNATStack.Data_Model;

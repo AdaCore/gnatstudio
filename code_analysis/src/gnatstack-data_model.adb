@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded.Hash;
 
 package body GNATStack.Data_Model is
@@ -97,5 +98,47 @@ package body GNATStack.Data_Model is
    begin
       return Hash (Item.Identifier);
    end Hash;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Item : Stack_Usage_Information) return String is
+
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+
+      function Qualifier_Image return String;
+      --  Returns textual representation of the qualifier
+
+      ---------------------
+      -- Qualifier_Image --
+      ---------------------
+
+      function Qualifier_Image return String is
+      begin
+         if Item.Qualifier = "UNBOUNDED" then
+            return " (unbounded)";
+
+         elsif Item.Qualifier = "UNKNOWN" then
+            return " (?)";
+
+         elsif Item.Qualifier = "STATIC" then
+            return "";
+
+         else
+            raise Program_Error;
+         end if;
+      end Qualifier_Image;
+
+   begin
+      if Item.Size >= 0 then
+         return
+           Trim (Integer'Image (Item.Size), Both) & " bytes" & Qualifier_Image;
+
+      else
+         return Trim (Qualifier_Image, Both);
+      end if;
+   end Image;
 
 end GNATStack.Data_Model;

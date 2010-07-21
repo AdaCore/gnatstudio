@@ -19,6 +19,7 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 
+with Basic_Types;
 with Input_Sources.File;
 with Glib.Object;
 with Gtk.Handlers;
@@ -30,6 +31,7 @@ with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
+with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Projects;
@@ -41,6 +43,7 @@ with GNATStack.Shell_Commands;
 
 package body GNATStack.Module is
 
+   use Ada.Strings.Unbounded;
    use GPS.Editors.Line_Information;
    use GPS.Intl;
    use GPS.Kernel.Modules.UI;
@@ -48,6 +51,7 @@ package body GNATStack.Module is
    use GNATStack.Data_Model;
    use GNATStack.Data_Model.Object_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Information_Sets;
+   use GNATStack.Data_Model.Subprogram_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Location_Sets;
    use Traces;
 
@@ -95,6 +99,10 @@ package body GNATStack.Module is
      (Self : not null access GNATStack_Module_Id_Record'Class);
    --  Opens stack usage analysis report.
 
+   procedure Fill_Entry_Points
+     (Self : not null access GNATStack_Module_Id_Record'Class);
+   --  Fills locations view by the list of entry points.
+
    --------------------
    -- Append_To_Menu --
    --------------------
@@ -133,6 +141,119 @@ package body GNATStack.Module is
          end;
       end if;
    end Append_To_Menu;
+
+   --------------------
+   -- Fill_Locations --
+   --------------------
+
+   procedure Fill_Entry_Points
+     (Self : not null access GNATStack_Module_Id_Record'Class)
+   is
+
+      procedure Process_Entry_Point
+        (Position : Subprogram_Information_Sets.Cursor);
+      --  Adds messages into messages container for entry point and call
+      --  chain.
+
+      -------------------------
+      -- Process_Entry_Point --
+      -------------------------
+
+      procedure Process_Entry_Point
+        (Position : Subprogram_Information_Sets.Cursor)
+      is
+         Entry_Subprogram : constant Subprogram_Information_Access :=
+                              Element (Position);
+         Entry_Message    : GPS.Kernel.Messages.Simple.Simple_Message_Access;
+
+         procedure Process_Subprogram
+           (Position : Subprogram_Information_Vectors.Cursor);
+         --  Adds secondary message for the subprogram at the specified
+         --  position.
+
+         ------------------------
+         -- Process_Subprogram --
+         ------------------------
+
+         procedure Process_Subprogram
+           (Position : Subprogram_Information_Vectors.Cursor)
+         is
+            Subprogram : constant Subprogram_Information_Access :=
+                           Element (Position);
+
+         begin
+            if Subprogram.Identifier.Locations.Is_Empty then
+               GPS.Kernel.Messages.Simple.Create_Simple_Message
+                 (GPS.Kernel.Messages.Message_Access (Entry_Message),
+                  GNATCOLL.VFS.No_File,
+                  0,
+                  0,
+                  To_String (Subprogram.Identifier.Prefix_Name)
+                    & " : " & Image (Subprogram.Local_Usage),
+                  (GPS.Kernel.Messages.Locations => True, others => False));
+
+            else
+               GPS.Kernel.Messages.Simple.Create_Simple_Message
+                 (GPS.Kernel.Messages.Message_Access (Entry_Message),
+                  GNATCOLL.VFS.Create
+                   (GNATCOLL.VFS.Filesystem_String
+                      (To_String
+                         (Element
+                            (Subprogram.Identifier.Locations.First).File))),
+                  Element (Subprogram.Identifier.Locations.First).Line,
+                  Basic_Types.Visible_Column_Type
+                    (Element
+                       (Subprogram.Identifier.Locations.First).Column),
+                  To_String (Subprogram.Identifier.Prefix_Name)
+                    & " : " & Image (Subprogram.Local_Usage),
+                  (GPS.Kernel.Messages.Locations => True, others => False));
+            end if;
+         end Process_Subprogram;
+
+      begin
+         if Entry_Subprogram.Identifier.Locations.Is_Empty then
+            Entry_Message :=
+              GPS.Kernel.Messages.Simple.Create_Simple_Message
+                (GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel),
+                 "GNATStack",
+                 GNATCOLL.VFS.No_File,
+                 0,
+                 0,
+                 To_String (Entry_Subprogram.Identifier.Prefix_Name)
+                   & " : total " & Image (Entry_Subprogram.Entry_Usage),
+                 0,
+                 (GPS.Kernel.Messages.Locations => True, others => False));
+
+         else
+            Entry_Message :=
+              GPS.Kernel.Messages.Simple.Create_Simple_Message
+                (GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel),
+                 "GNATStack",
+                 GNATCOLL.VFS.Create
+                   (GNATCOLL.VFS.Filesystem_String
+                      (To_String
+                         (Element
+                            (Entry_Subprogram.Identifier.Locations.First)
+                               .File))),
+                 Element (Entry_Subprogram.Identifier.Locations.First).Line,
+                 Basic_Types.Visible_Column_Type
+                   (Element
+                      (Entry_Subprogram.Identifier.Locations.First).Column),
+                 To_String (Entry_Subprogram.Identifier.Prefix_Name)
+                   & " : total " & Image (Entry_Subprogram.Entry_Usage),
+                 0,
+                 (GPS.Kernel.Messages.Locations => True, others => False));
+         end if;
+
+         Entry_Subprogram.Chain.Iterate (Process_Subprogram'Access);
+      end Process_Entry_Point;
+
+   begin
+      GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel).Remove_Category
+        ("GNATStack");
+
+      Self.Data.Entry_Set.Iterate (Process_Entry_Point'Access);
+   end Fill_Entry_Points;
 
    ---------------
    -- Load_Data --
@@ -208,6 +329,7 @@ package body GNATStack.Module is
          Load_Data (Module);
          Open_Report (Module);
          Editors.Show_Stack_Usage_In_Opened_Editors (Module);
+         Fill_Entry_Points (Module);
       end if;
 
    exception
@@ -242,6 +364,7 @@ package body GNATStack.Module is
       Load_Data (Module);
       Open_Report (Module);
       Editors.Show_Stack_Usage_In_Opened_Editors (Module);
+      Fill_Entry_Points (Module);
 
    exception
       when E : others =>
@@ -275,10 +398,8 @@ package body GNATStack.Module is
    is
       use Ada.Strings;
       use Ada.Strings.Fixed;
-      use Ada.Strings.Unbounded;
       use Indirect_Call_Information_Vectors;
       use Subprogram_Information_Ordered_Sets;
-      use Subprogram_Information_Vectors;
       use Subprogram_Information_Vector_Vectors;
 
       Buffer : constant GPS_Editor_Buffer'Class :=
