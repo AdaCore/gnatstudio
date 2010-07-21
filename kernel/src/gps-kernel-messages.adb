@@ -672,7 +672,6 @@ package body GPS.Kernel.Messages is
       Flags         : Message_Flags)
    is
       pragma Assert (Category /= "");
-      pragma Assert (File /= No_File);
 
       Category_Name     : constant Unbounded_String :=
                             To_Unbounded_String (Category);
@@ -690,7 +689,8 @@ package body GPS.Kernel.Messages is
       Self.Column := Column;
       Self.Weight := Weight;
       Self.Flags  := Flags;
-      if Container.Create_Marks then
+
+      if Container.Create_Marks and File /= No_File then
          Self.Mark :=
            new Editor_Mark'Class'
              (Container.Kernel.Get_Buffer_Factory.New_Mark
@@ -798,7 +798,7 @@ package body GPS.Kernel.Messages is
       Self.Flags := Flags;
       Self.Message_Count := 0;
 
-      if Parent.Get_Container.Create_Marks then
+      if Parent.Get_Container.Create_Marks and File /= No_File then
          Self.Mark :=
            new Editor_Mark'Class'
              (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
@@ -1038,7 +1038,6 @@ package body GPS.Kernel.Messages is
    -----------
 
    function Match (A, B : Message_Flags) return Boolean is
-
    begin
       for K in Message_Visibility_Kind loop
          if A (K) and then B (K) then
@@ -1054,13 +1053,14 @@ package body GPS.Kernel.Messages is
    ----------------------------
 
    function New_Messages_Container
-     (Kernel : not null access Kernel_Handle_Record'Class;
+     (Kernel       : not null access Kernel_Handle_Record'Class;
       Create_Marks : Boolean) return not null Messages_Container_Access
    is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
    begin
       Result.Create_Marks := Create_Marks;
+
       return Result;
    end New_Messages_Container;
 

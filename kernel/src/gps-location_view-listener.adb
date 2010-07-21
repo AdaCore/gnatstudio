@@ -17,33 +17,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk.Tree_Model; use Gtk.Tree_Model;
-
-with System;
-with Gtk.Widget;
-
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with System;
 
+with Glib.Object;
+with Glib;
 with Gtk.Enums;
 with Gtk.Tree_Model.Utils;
+with Gtk.Widget;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-
+with Basic_Types;
 with GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;
 with String_Utils;
 with Traces;
-with Glib.Object;
-with Ada.Unchecked_Deallocation;
 
 package body GPS.Location_View.Listener is
 
    use Ada.Strings.Fixed;
    use Gdk.Color;
    use Gdk.Pixbuf;
+   use Glib;
    use Gtk.Widget;
+   use GNATCOLL.VFS;
    use GPS.Editors;
    use GPS.Editors.GtkAda;
    use Node_Vectors;
@@ -578,6 +576,7 @@ package body GPS.Location_View.Listener is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
+      use Basic_Types;
       use Glib.Values;
 
       function To_Address is
@@ -601,31 +600,44 @@ package body GPS.Location_View.Listener is
                Set_String (Value, To_String (Node.Name));
 
             when Node_File =>
-               Set_String (Value, String (Node.File.Base_Name));
+               if Node.File /= No_File then
+                  Set_String (Value, String (Node.File.Base_Name));
+
+               else
+                  Set_String (Value, "&lt;unknown&gt;");
+               end if;
 
             when Node_Message =>
-               case Node.Message.Level is
-                  when Primary =>
-                     declare
-                        Location : constant String :=
-                          Image (Node.Message.Get_Line)
-                          & ':' & Image (Natural (Node.Message.Get_Column));
-                        Length   : constant Natural :=
-                          Integer'Max (0, Location_Padding - Location'Length);
+               if Node.Message.Level = Primary
+                 and (Node.Message.Get_Line /= 0
+                        or Node.Message.Get_Column /= 0)
+               then
+                  --  For primary messages, output line:column information and
+                  --  text of the message when line:column information is
+                  --  available.
 
-                     begin
-                        Set_String
-                          (Value,
-                           "<b>" & Location & "</b>" & (Length * ' ')
-                           & To_String (Node.Message.Get_Markup));
-                     end;
+                  declare
+                     Location : constant String :=
+                       Image (Node.Message.Get_Line)
+                         & ':' & Image (Natural (Node.Message.Get_Column));
+                     Length   : constant Natural :=
+                       Integer'Max (0, Location_Padding - Location'Length);
 
-                  when Secondary =>
+                  begin
                      Set_String
                        (Value,
-                        (Location_Padding * ' ')
+                        "<b>" & Location & "</b>" & (Length * ' ')
                         & To_String (Node.Message.Get_Markup));
-               end case;
+                  end;
+
+               else
+                  --  Otherwise output message text only.
+
+                  Set_String
+                    (Value,
+                     (Location_Padding * ' ')
+                     & To_String (Node.Message.Get_Markup));
+               end if;
          end case;
       end Set_Node_Markup;
 
@@ -727,12 +739,15 @@ package body GPS.Location_View.Listener is
                   Set_String (Value, To_String (Node.Name));
 
                when Node_File =>
-                  Set_String (Value, String (Node.File.Base_Name));
+                  if Node.File /= No_File then
+                     Set_String (Value, String (Node.File.Base_Name));
+
+                  else
+                     Set_String (Value, "<unknown>");
+                  end if;
 
                when Node_Message =>
-                  Set_String
-                    (Value,
-                To_String (Node.Message.Get_Text));
+                  Set_String (Value, To_String (Node.Message.Get_Text));
             end case;
 
          when Node_Icon_Column =>
