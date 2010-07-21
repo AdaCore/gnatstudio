@@ -330,6 +330,12 @@ Tip: Copy/Paste contextual menus
 You can add Cut/Copy/Paste menus to the Editor's contextual menu by
 going to Tools->Plug-ins and enable the <i>copy_paste.py</i> plug-in.
 
+Tip: Automatic highlighting of occurrences
+
+Leave your cursor on an entity: GPS will automatically highlight all references
+to this entity in the current editor. Also, the color of the highlight gives
+a hint on the category of the entity.
+
 Tip: Your tip here
 
 Have your own idea for a nice tip and would like to share it with other GPS

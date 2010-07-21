@@ -2005,6 +2005,20 @@ This capability is currently implemented for Ada, C and C++ languages.
 You can configure the editor to periodically save modified files.
 See @ref{autosave delay} for a full description of this capability.
 
+@item Automatic highlighting of entities
+@cintex auto highlighting
+When the cursor is positioned on an entity in the source editor, GPS will
+highlight all references to this entity in the current editor.
+
+When the cursor moves away from the entity, the highlighting is removed.
+
+This is controlled by the plugin @code{auto_highlight_occurrences.py}: it can
+be deactivated by deactivating the plugin (@pxref{The Plug-ins Editor}).
+
+Details such as presence of indications in the Speed Column or highlighting
+color can be customized in the @code{Plugins} section of
+@ref{The Preferences Dialog}.
+
 @end table
 
 @cindex emacs
