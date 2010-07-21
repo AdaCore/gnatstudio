@@ -203,6 +203,7 @@ package body Vsearch is
       Found           : Boolean := False;
       Replace_With    : String_Access := null;
       --  Whether the search results in at least one match.
+      Case_Preserving : Boolean;
    end record;
 
    procedure Search_Iterate
@@ -671,6 +672,7 @@ package body Vsearch is
         (Data.Context,
          Data.Vsearch.Kernel,
          Data.Replace_With.all,
+         Data.Case_Preserving,
          Data.Search_Backward,
          Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
       then
@@ -837,6 +839,8 @@ package body Vsearch is
                (Vsearch         => Vsearch,
                 Search_Backward => False,
                 Context         => Vsearch.Last_Search_All_Context,
+                Case_Preserving => Get_Active
+                  (Vsearch.Case_Preserving_Replace),
                 Found           => False,
                 Replace_With    => null),
                Search_Iterate'Access);
@@ -1012,6 +1016,7 @@ package body Vsearch is
         (Vsearch.Last_Search_Context,
          Vsearch.Kernel,
          Get_Text (Vsearch.Replace_Entry),
+         Get_Active (Vsearch.Case_Preserving_Replace),
          Search_Backward => False,
          Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
       Pop_State (Vsearch.Kernel);
@@ -1041,6 +1046,7 @@ package body Vsearch is
         (Vsearch.Last_Search_Context,
          Vsearch.Kernel,
          Get_Text (Vsearch.Replace_Entry),
+         Get_Active (Vsearch.Case_Preserving_Replace),
          Search_Backward => False,
          Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
       Pop_State (Vsearch.Kernel);
@@ -1117,6 +1123,7 @@ package body Vsearch is
          (Vsearch         => Vsearch,
           Search_Backward => False,
           Context         => Vsearch.Last_Search_All_Context,
+          Case_Preserving => Get_Active (Vsearch.Case_Preserving_Replace),
           Found           => False,
           Replace_With    => new String'(Get_Text (Vsearch.Replace_Entry))),
          Replace_Iterate'Access);
@@ -1186,6 +1193,7 @@ package body Vsearch is
          Set_Sensitive (Vsearch.Replace_Label, Replace);
          Set_Sensitive (Vsearch.Replace_Combo, Replace);
          Set_Sensitive (Vsearch.Replace_All_Button, Replace);
+         Set_Sensitive (Vsearch.Case_Preserving_Replace, Replace);
 
          if (Data.Mask and All_Occurrences) = 0 then
             Set_Sensitive (Vsearch.Replace_All_Button, False);
@@ -1635,7 +1643,7 @@ package body Vsearch is
       Gtk_New_Vbox (Vsearch.Context_Specific, Homogeneous => False);
       Pack_Start (Vsearch.Options_Frame, Vsearch.Context_Specific, False);
 
-      Gtk_New (Vsearch.Options_Vbox, 3, 2, False);
+      Gtk_New (Vsearch.Options_Vbox, 4, 2, False);
       Pack_Start (Vsearch.Options_Frame, Vsearch.Options_Vbox);
 
       Gtk_New (Vsearch.Regexp_Check, -"Regexp");
@@ -1648,7 +1656,7 @@ package body Vsearch is
         (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Regexp_Check, 0, 1, 0, 1);
 
-      Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
+      Gtk_New (Vsearch.Case_Check, -"Case Sensitive Search");
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Case_Check,
          -("Select this to differenciate upper from lower casing in search"
@@ -1658,7 +1666,20 @@ package body Vsearch is
       Associate
         (Get_History (Handle).all, "case_sensitive_search",
          Vsearch.Case_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 1, 2, 0, 1);
+      Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 0, 2, 2, 3);
+
+      Gtk_New (Vsearch.Case_Preserving_Replace, -"Case Preserving Replace");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Case_Preserving_Replace,
+         -"Select this to preserve original word casing when replacing");
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Handle).all, "case_preserving_replace", True);
+      Associate
+        (Get_History (Handle).all, "case_preserving_replace",
+         Vsearch.Case_Preserving_Replace);
+      Attach
+        (Vsearch.Options_Vbox, Vsearch.Case_Preserving_Replace, 0, 2, 3, 4);
+      Set_Sensitive (Vsearch.Case_Preserving_Replace, False);
 
       Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word");
       Set_Tip
@@ -1680,7 +1701,7 @@ package body Vsearch is
         (Hist   => Get_History (Handle).all,
          Key    => Select_On_Match_Hist_Key,
          Button => Vsearch.Select_Editor_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 1, 2);
+      Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 0, 1);
 
       Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Match");
       Set_Tip
@@ -1690,7 +1711,7 @@ package body Vsearch is
         (Hist   => Get_History (Handle).all,
          Key    => Close_On_Match_Hist_Key,
          Button => Vsearch.Auto_Hide_Check);
-      Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 2, 2, 3);
+      Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check,  1, 2, 1, 2);
 
       --  Create the widget
 
@@ -1752,7 +1773,6 @@ package body Vsearch is
       Widget_Callback.Object_Connect
         (Vsearch.Replace_Search_Button, Signal_Clicked,
          On_Replace_Search'Access, Vsearch);
-      Set_Sensitive (Vsearch_Access (Vsearch).Replace_Search_Button, False);
 
       Gtk_New_With_Mnemonic (Vsearch.Replace_All_Button, -"Repl All");
       Attach
@@ -1786,6 +1806,9 @@ package body Vsearch is
          Reset_Search'Access, Handle);
       Kernel_Callback.Connect
         (Vsearch.Case_Check,
+         Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Handle);
+      Kernel_Callback.Connect
+        (Vsearch.Case_Preserving_Replace,
          Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Handle);
       Kernel_Callback.Connect
         (Vsearch.Whole_Word_Check, Gtk.Toggle_Button.Signal_Toggled,

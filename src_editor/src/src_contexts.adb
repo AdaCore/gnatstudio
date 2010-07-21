@@ -72,6 +72,17 @@ package body Src_Contexts is
 
    Me : constant Debug_Handle := Create ("Src_Contexts");
 
+   type Casing_Type is (Lower, Upper, Smart_Mixed, Unchanged);
+
+   function Guess_Casing (S : String) return Casing_Type;
+   --  Guess the casing which is used in S.
+   --  S is encoded in UTF-8.
+
+   function To_Casing (S : String; Casing : Casing_Type) return String;
+   --  Return S transformed to match Casing.
+   --  If S is not all lower-case, return S unchanged.
+   --  S is encoded in UTF-8, and so is the result.
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result, Match_Result_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -257,6 +268,7 @@ package body Src_Contexts is
      (Context         : access File_Search_Context'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
       Child           : MDI_Child) return Boolean;
@@ -268,6 +280,7 @@ package body Src_Contexts is
      (Context         : access Abstract_Files_Context'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
       File            : GNATCOLL.VFS.Virtual_File) return Boolean;
@@ -1713,6 +1726,7 @@ package body Src_Contexts is
      (Context         : access File_Search_Context'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
       Child           : MDI_Child) return Boolean
@@ -1720,12 +1734,25 @@ package body Src_Contexts is
       Editor          : Source_Editor_Box;
       Current_Matches : Boolean;
       Matches         : Match_Result_Array_Access;
+
+      type Casings_A is array (Casing_Type) of String (Replace_String'Range);
+
+      Casings : Casings_A;
+      Current_Casing : Casing_Type := Unchanged;
    begin
+      Casings (Unchanged) := Replace_String;
+
+      if Case_Preserving then
+         --  Pre-compute all casings of the string to replace
+         for Casing in Lower .. Smart_Mixed loop
+            Casings (Casing) := To_Casing (Replace_String, Casing);
+         end loop;
+      end if;
+
       Raise_Child (Child, Give_Focus);
       Editor := Get_Source_Box_From_MDI (Child);
 
       if Context.All_Occurrences then
-
          Matches := Scan_And_Store
            (Context => Context,
             Handler => Get_Language_Handler (Kernel),
@@ -1742,13 +1769,23 @@ package body Src_Contexts is
             Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), True);
 
             for M in reverse Matches'Range loop
+               if Case_Preserving then
+                  Current_Casing := Guess_Casing
+                    (Get_Text
+                       (Get_Buffer (Editor),
+                        Editable_Line_Type (Matches (M).Begin_Line),
+                        Matches (M).Begin_Column,
+                        Editable_Line_Type (Matches (M).End_Line),
+                        Matches (M).End_Column));
+               end if;
+
                Replace_Slice
                  (Get_Buffer (Editor),
                   Editable_Line_Type (Matches (M).Begin_Line),
                   Matches (M).Begin_Column,
                   Editable_Line_Type (Matches (M).End_Line),
                   Matches (M).End_Column,
-                  Replace_String);
+                  Casings (Current_Casing));
             end loop;
 
             Set_Avoid_Cursor_Move_On_Changes (Get_Buffer (Editor), False);
@@ -1775,7 +1812,6 @@ package body Src_Contexts is
                     (Get_Buffer (Editor),
                      Context.Begin_Line,
                      Context.Begin_Column)) /= -1;
-
             elsif Get_Options (Context).Case_Sensitive then
                Current_Matches := Get_Text
                  (Get_Buffer (Editor),
@@ -1792,19 +1828,29 @@ package body Src_Contexts is
             end if;
 
             if Current_Matches then
+               if Case_Preserving then
+                  Current_Casing := Guess_Casing
+                    (Get_Text
+                       (Get_Buffer (Editor),
+                        Context.Begin_Line,
+                        Context.Begin_Column,
+                        Context.End_Line,
+                        Context.End_Column));
+               end if;
+
                Replace_Slice
                  (Get_Buffer (Editor),
                   Context.Begin_Line,
                   Context.Begin_Column,
                   Context.End_Line,
                   Context.End_Column,
-                  Replace_String);
+                  Casings (Current_Casing));
 
                Forward_Position
                  (Get_Buffer (Editor),
                   Context.Begin_Line,
                   Context.Begin_Column,
-                  Replace_String'Length,
+                  Casings (Current_Casing)'Length,
                   Context.End_Line,
                   Context.End_Column);
 
@@ -1841,12 +1887,18 @@ package body Src_Contexts is
      (Context         : access Abstract_Files_Context'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
       File            : GNATCOLL.VFS.Virtual_File) return Boolean
    is
       Matches : Match_Result_Array_Access;
       Child   : MDI_Child;
+
+      type Casings_A is array (Casing_Type) of String (Replace_String'Range);
+
+      Casings : Casings_A;
+      Current_Casing : Casing_Type := Unchanged;
    begin
       --  If the file is loaded in an editor, do the replacement directly
       --  there.
@@ -1858,6 +1910,7 @@ package body Src_Contexts is
            (Context,
             Kernel,
             Replace_String,
+            Case_Preserving,
             Search_Backward,
             Give_Focus,
             Child);
@@ -1865,6 +1918,15 @@ package body Src_Contexts is
          --  Else, file isn't loaded, so we replace directly in the physical
          --  file.
       else
+         --  Pre-compute all casings of the string to replace
+         Casings (Unchanged) := Replace_String;
+
+         if Case_Preserving then
+            for Casing in Lower .. Smart_Mixed loop
+               Casings (Casing) := To_Casing (Replace_String, Casing);
+            end loop;
+         end if;
+
          --  ??? Could be more efficient, since we have already read the
          --  file to do the search
 
@@ -1895,12 +1957,20 @@ package body Src_Contexts is
                                 Replace_String'Length);
 
                   for M in Matches'First + 1 .. Matches'Last loop
+                     if Case_Preserving then
+                        Current_Casing := Guess_Casing
+                          (Buffer
+                             (Matches (M).Index
+                              .. Matches (M).Index
+                              + Replace_String'Length - 1));
+                     end if;
+
                      Len := Matches (M - 1).Index
                        + Matches (M - 1).Pattern_Length;
                      Len := Write
                        (FD, Buffer (Len)'Address, Matches (M).Index - Len);
-                     Len := Write (FD, Replace_String'Address,
-                                   Replace_String'Length);
+                     Len := Write (FD, Casings (Current_Casing)'Address,
+                                   Casings (Current_Casing)'Length);
                   end loop;
 
                   Len := Matches (Matches'Last).Index
@@ -1927,6 +1997,7 @@ package body Src_Contexts is
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
@@ -1939,7 +2010,8 @@ package body Src_Contexts is
       end if;
 
       Found := Replace_From_Editor
-        (Context, Kernel, Replace_String, Search_Backward, Give_Focus, Child);
+        (Context, Kernel, Replace_String,
+         Case_Preserving, Search_Backward, Give_Focus, Child);
 
       return not Context.All_Occurrences and then Found;
    exception
@@ -2252,6 +2324,7 @@ package body Src_Contexts is
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
@@ -2281,6 +2354,7 @@ package body Src_Contexts is
                  (Context,
                   Kernel,
                   Replace_String,
+                  Case_Preserving,
                   Search_Backward,
                   Give_Focus,
                   Child);
@@ -2301,6 +2375,7 @@ package body Src_Contexts is
            (Context,
             Kernel,
             Replace_String,
+            Case_Preserving,
             Search_Backward,
             Give_Focus,
             Current_File (C));
@@ -2621,5 +2696,92 @@ package body Src_Contexts is
    begin
       return To_String (Self.Current_File);
    end Context_Look_In;
+
+   ------------------
+   -- Guess_Casing --
+   ------------------
+
+   function Guess_Casing (S : String) return Casing_Type
+   is
+      Index_1    : Integer;
+      Index_2    : Integer;
+   begin
+      if S = "" then
+         return Lower;
+      end if;
+
+      Index_1 := UTF8_Next_Char (S, S'First);
+
+      --  First character is lower: this string is Lower
+      if Is_Lower (UTF8_Get_Char (S (S'First .. Index_1 - 1))) then
+         return Lower;
+      end if;
+
+      --  There is only one character: this string is Upper
+      if Index_1 > S'Last then
+         return Upper;
+      end if;
+
+      Index_2 := UTF8_Next_Char (S, Index_1);
+
+      --  The first character is not lower and the second character is:
+      --  this string is Smart_Mixed
+      if Is_Lower (UTF8_Get_Char (S (Index_1 .. Index_2 - 1))) then
+         return Smart_Mixed;
+      end if;
+
+      --  The first two characters are upper: this string is Upper
+      return Upper;
+   end Guess_Casing;
+
+   ---------------
+   -- To_Casing --
+   ---------------
+
+   function To_Casing (S : String; Casing : Casing_Type) return String is
+      Lower_S : constant String := UTF8_Strdown (S);
+
+   begin
+      --  If S is not all lower case: return S
+      if Lower_S /= S then
+         return S;
+      end if;
+
+      case Casing is
+         when Unchanged =>
+            return S;
+
+         when Lower =>
+            return Lower_S;
+
+         when Upper =>
+            return UTF8_Strup (S);
+
+         when Smart_Mixed =>
+            declare
+               O       : String (S'Range);
+               I1, I2  : Natural := S'First;
+               Capitalize_Next : Boolean := True;
+            begin
+               loop
+                  I1 := I2;
+                  I2 := UTF8_Next_Char (S, I1);
+
+                  if Capitalize_Next then
+                     O (I1 .. I2 - 1) := UTF8_Strup (S (I1 .. I2 - 1));
+                  else
+                     O (I1 .. I2 - 1) := S (I1 .. I2 - 1);
+                  end if;
+
+                  Capitalize_Next := not Is_Alpha
+                    (UTF8_Get_Char (S (I1 .. I2 - 1)));
+
+                  if I2 > S'Last then
+                     return O;
+                  end if;
+               end loop;
+            end;
+      end case;
+   end To_Casing;
 
 end Src_Contexts;

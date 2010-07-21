@@ -176,6 +176,7 @@ private
       Options_Vbox        : Gtk_Table;
       Select_Editor_Check : Gtk_Check_Button;
       Case_Check          : Gtk_Check_Button;
+      Case_Preserving_Replace : Gtk_Check_Button;
       Whole_Word_Check    : Gtk_Check_Button;
       Auto_Hide_Check     : Gtk_Check_Button;
       Regexp_Check        : Gtk_Check_Button;

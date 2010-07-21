@@ -292,6 +292,7 @@ package Find_Utils is
      (Context         : access Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  This subprogram should search for the next occurrence of Context. If

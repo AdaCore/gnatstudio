@@ -298,6 +298,7 @@ private
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Replace function for "Current File"
@@ -376,6 +377,7 @@ private
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
+      Case_Preserving : Boolean;
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Replace function for "Files From Project" and "Open_Files"
