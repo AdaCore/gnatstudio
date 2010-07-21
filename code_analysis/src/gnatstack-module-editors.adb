@@ -33,6 +33,7 @@ package body GNATStack.Module.Editors is
    use Ada.Strings.Unbounded;
    use GPS.Editors;
    use GPS.Intl;
+   use GNATCOLL.VFS;
    use GNATStack.Data_Model;
    use GNATStack.Data_Model.Object_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Information_Sets;
@@ -82,50 +83,58 @@ package body GNATStack.Module.Editors is
      (Module : not null access GNATStack_Module_Id_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
    is
-      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Module.Kernel.Get_Buffer_Factory.Get (File);
+   begin
+      if File = No_File then
+         return;
+      end if;
 
-      procedure Process_Subprogram
-        (Position : Subprogram_Information_Sets.Cursor);
-      --  Process subprogram.
+      declare
+         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                    Module.Kernel.Get_Buffer_Factory.Get (File);
 
-      ------------------------
-      -- Process_Subprogram --
-      ------------------------
+         procedure Process_Subprogram
+           (Position : Subprogram_Information_Sets.Cursor);
+         --  Process subprogram.
 
-      procedure Process_Subprogram
-        (Position : Subprogram_Information_Sets.Cursor)
-      is
-         Subprogram        : constant Subprogram_Information_Access :=
-                               Element (Position);
-         Location_Position : Subprogram_Location_Sets.Cursor :=
-                               Subprogram.Identifier.Locations.First;
+         ------------------------
+         -- Process_Subprogram --
+         ------------------------
+
+         procedure Process_Subprogram
+           (Position : Subprogram_Information_Sets.Cursor)
+         is
+            Subprogram        : constant Subprogram_Information_Access :=
+                                  Element (Position);
+            Location_Position : Subprogram_Location_Sets.Cursor :=
+                                  Subprogram.Identifier.Locations.First;
+
+         begin
+            while Has_Element (Location_Position) loop
+               exit when
+                 Element (Location_Position).File
+                   = String (File.Full_Name.all);
+
+               Next (Location_Position);
+            end loop;
+
+            if Has_Element (Location_Position)
+              and then Element (Location_Position).Mark /= null
+            then
+               Hide_Subprogram_Stack_Usage
+                 (Buffer,
+                  Subprogram,
+                  Element (Location_Position),
+                  Location_Position);
+            end if;
+         end Process_Subprogram;
 
       begin
-         while Has_Element (Location_Position) loop
-            exit when
-              Element (Location_Position).File = String (File.Full_Name.all);
-
-            Next (Location_Position);
-         end loop;
-
-         if Has_Element (Location_Position)
-           and then Element (Location_Position).Mark /= null
+         if Buffer /= GPS.Editors.Nil_Editor_Buffer
+           and then Buffer in GPS_Editor_Buffer'Class
          then
-            Hide_Subprogram_Stack_Usage
-              (Buffer,
-               Subprogram,
-               Element (Location_Position),
-               Location_Position);
+            Module.Data.Subprogram_Set.Iterate (Process_Subprogram'Access);
          end if;
-      end Process_Subprogram;
-
-   begin
-      if Buffer /= GPS.Editors.Nil_Editor_Buffer
-        and then Buffer in GPS_Editor_Buffer'Class
-      then
-         Module.Data.Subprogram_Set.Iterate (Process_Subprogram'Access);
-      end if;
+      end;
    end Hide_Stack_Usage;
 
    ---------------------------------

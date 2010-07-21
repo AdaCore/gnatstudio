@@ -27,7 +27,8 @@ private package GNATStack.Module.Editors is
    procedure Hide_Stack_Usage
      (Module : not null access GNATStack_Module_Id_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
-   --  Hides stack usage information in the specified file.
+   --  Hides stack usage information in the specified file. Do nothing when
+   --  specified file is No_File.
 
    procedure Show_Stack_Usage_In_Opened_Editors
      (Module : not null access GNATStack_Module_Id_Record'Class);
