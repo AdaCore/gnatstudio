@@ -49,7 +49,6 @@ with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors;               use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
@@ -233,8 +232,9 @@ package body Src_Editor_Box.Tooltips is
          declare
             Content       : Unbounded_String;
             Has_Info      : Boolean := False;
-            Action        : Line_Information_Record;
+            Action        : GPS.Kernel.Messages.Action_Item;
 
+            C : Message_List.Cursor;
          begin
             Line_Info := Get_Side_Information
               (Box.Source_Buffer,
@@ -244,15 +244,24 @@ package body Src_Editor_Box.Tooltips is
 
             if Line_Info /= null then
                for K in Line_Info'Range loop
-                  Action := Get_Relevant_Action (Line_Info (K));
-                  if Action.Tooltip_Text /= null then
-                     if Content /= Null_Unbounded_String then
-                        Append (Content, ASCII.LF);
+                  C := Line_Info (K).Messages.Last;
+
+                  while Message_List.Has_Element (C) loop
+                     Action := Message_List.Element (C).Get_Action;
+
+                     if Action /= null then
+                        if Action.Tooltip_Text /= null then
+                           if Content /= Null_Unbounded_String then
+                              Append (Content, ASCII.LF);
+                           end if;
+
+                           Append (Content, Action.Tooltip_Text.all);
+                           Has_Info := True;
+                        end if;
                      end if;
 
-                     Append (Content, Action.Tooltip_Text.all);
-                     Has_Info := True;
-                  end if;
+                     Message_List.Previous (C);
+                  end loop;
                end loop;
             end if;
 
@@ -329,8 +338,9 @@ package body Src_Editor_Box.Tooltips is
                declare
                   C : Message_List.Cursor;
                   Message : Message_Access;
+                  Text    : Unbounded_String;
                begin
-                  C := Line_Info (J).Messages.First;
+                  C := Line_Info (J).Messages.Last;
 
                   while Message_List.Has_Element (C) loop
                      Message := Message_List.Element (C);
@@ -345,12 +355,20 @@ package body Src_Editor_Box.Tooltips is
                              + Visible_Column_Type
                                (Message.Get_Highlighting_Length))
                         then
-                           Draw_Content (Message.Get_Text, Widget, Pixmap);
-                           return;
+                           if Text /= Null_Unbounded_String then
+                              Text := Text & ASCII.LF;
+                           end if;
+
+                           Text := Text & Message.Get_Text;
                         end if;
                      end;
-                     Message_List.Next (C);
+                     Message_List.Previous (C);
                   end loop;
+
+                  if Text /= Null_Unbounded_String then
+                     Draw_Content (Text, Widget, Pixmap);
+                     return;
+                  end if;
                end;
             end loop;
          end if;
