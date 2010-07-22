@@ -5665,6 +5665,13 @@ When compiler messages are detected by GPS, an entry is added in the
 messages (see @ref{The Locations View}), or even to automatically correct some
 errors or warnings (see @ref{Code Fixing}).
 
+Compiler messages also appear as icons on the side of lines in the source
+editors. When the mouse pointer is left on these icons, a tooltip appears,
+listing the error messages found on this line. When GPS is capable of
+automatically correcting the errors, clicking on the icon will apply the
+fix to the source code. The icons on the side of editors are removed when
+the corresponding entries are removed from @ref{The Locations View}.
+
 @menu
 * The Build Menu::
 * The Target Configuration Dialog::
