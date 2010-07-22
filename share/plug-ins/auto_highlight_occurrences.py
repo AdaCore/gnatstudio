@@ -239,7 +239,8 @@ def re_highlight():
             # Highlight the current entity
             if not current_highlighter:
                 current_highlighter=LocationHighlighter(context, entity)
-                return
+
+            return
 
     # If we reach this point, there is no entity in the context: remove
     # highlighting
