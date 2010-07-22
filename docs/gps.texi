@@ -2006,7 +2006,7 @@ You can configure the editor to periodically save modified files.
 See @ref{autosave delay} for a full description of this capability.
 
 @item Automatic highlighting of entities
-@cintex auto highlighting
+@cindex auto highlighting
 When the cursor is positioned on an entity in the source editor, GPS will
 highlight all references to this entity in the current editor.
 
