@@ -31,19 +31,19 @@ def internal_dependency_path (from_file, to_file, include_implicit):
   # the parent that put it in the list
   to_analyze = [(from_file, None)]
 
-  # imports does not list the dependency from body to spec, so we add it
-  # explicitly if from_file is a body.
-
-  ext = os.path.splitext (from_file.name())
-  if ext[1] == ".adb" or (ext[1] == ".ada" and ext[0][-2:] == ".2"):
-    to_analyze.append ((from_file.other_file(), None))
-
   while len (to_analyze) != 0:
     (file, because_of) = to_analyze.pop()
     imports = file.imports (include_implicit=include_implicit,
                             include_system=False)
-    deps[file] = because_of
 
+    # imports does not list the dependency from body to spec, so we add it
+    # explicitly if from_file is a body.
+
+    ext = os.path.splitext (from_file.name())
+    if ext[1] == ".adb" or (ext[1] == ".ada" and ext[0][-2:] == ".2"):
+      imports.append (from_file.other_file())
+
+    deps[file] = because_of
     if file == to_file:
       break
 
