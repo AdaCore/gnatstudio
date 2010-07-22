@@ -5916,6 +5916,12 @@ Targets.
   @item On file save:
     the Target is launched automatically by GPS when a file is saved.
     The dialog is never displayed.
+
+  @item In background:
+    the Target is launched automatically in the background after each
+    modification in the source editor. See @code{Background compilations}
+    below.
+
   @end itemize
 
 @item Target type: type of target described. If empty, or set to
@@ -5956,6 +5962,35 @@ The full command line is displayed at the bottom. Note that it may contain
 Macro Arguments. For instance if the command line contains the string "%PP",
 GPS will expand this to the full path to the current project. For a full
 list of available Macros, see @ref{Macro arguments}.
+
+@subsection Background compilations
+
+GPS is capable of launching compilation targets in the background. This means
+that GPS will launch the compiler on the current state of the file in the
+editor.
+
+Error messages resulting from background compilations are not listed in the
+Locations view or the Messages window. The full messages are listed in the
+Background Build console, accessible from the menu @code{Tools->Console}.
+Error messages which contain a source location indication are shown as icons
+on the side of lines in editors, and the exact location is highlighted directly
+in the editor. On both of these places, tooltips show the contents of the error
+messages.
+
+Messages from background compilations are removed automatically either when a
+new background compilation has finished, or when a non-background compilation
+is launched.
+
+GPS will launch background compilations for all targets that have a
+@code{Launch mode} set to @code{In background}, after modifications occur in
+a source editor. Background compilation is useful mostly for targets such as
+@code{Compile File} or @code{Check Syntax}. For targets that work on Mains,
+the last main that was used in a non-background is considered, defaulting to
+the first main defined in the project hierarchy.
+
+Background compilations are not launched while GPS is already listing results
+from non-background compilations, ie as long as there are entries in the
+Locations View showing entries in the @code{Builder results} category.
 
 @node The Build Mode
 @section The Build Mode
