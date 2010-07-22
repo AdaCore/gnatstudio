@@ -36,7 +36,7 @@ def internal_dependency_path (from_file, to_file, include_implicit):
 
   ext = os.path.splitext (from_file.name())
   if ext[1] == ".adb" or (ext[1] == ".ada" and ext[0][-2:] == ".2"):
-    to_analyze.append ((from_file.other_file(), from_file))
+    to_analyze.append ((from_file.other_file(), None))
 
   while len (to_analyze) != 0:
     (file, because_of) = to_analyze.pop()
