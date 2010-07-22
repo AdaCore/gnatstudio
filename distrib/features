@@ -135,6 +135,13 @@ NF-45-J210-027 Support for assembler language (2010-02-11)
   The project editor now supports adding assembler language for use by
   GPRbuild during compilation and builds.
 
+NF-45-J208-020 Background compilation (2010-07-22)
+
+  GPS is now capable of launching build targets in the background automatically
+  when source code is modified in an editor. This is activated through the
+  Target Configuration dialog (menu Build->Settings->Targets), by setting
+  the launch mode of a target to "In background".
+
 NF-45-J208-019 Automatic highlighting of occurrences (2010-07-21)
 
   When the cursor is positioned on an entity in a source editor, GPS will
