@@ -24,10 +24,9 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-
 with Glib.Object;               use Glib.Object;
 
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -64,12 +63,6 @@ with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Codefix_Module is
-
-   Codefix_Answer_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Codefix_Answer_Xpm, "codefix_answer_xpm");
-
-   Codefix_Ambiguous_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Codefix_Ambiguous_Xpm, "codefix_ambiguous_xpm");
 
    Me          : constant Debug_Handle := Create ("Codefix_Module");
 
@@ -612,9 +605,15 @@ package body Codefix_Module is
         (-"<b>Fix: </b>" & Get_Message (Err));
 
       if Get_Number_Of_Fixes (Error) = 1 then
-         New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Answer_Xpm);
+         New_Action.Image := Render_Icon
+           (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
+            Stock_Id => "gps-wrench",
+            Size     => Icon_Size_Menu);
       else
-         New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Ambiguous_Xpm);
+         New_Action.Image := Render_Icon
+           (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
+            Stock_Id => "gps-wrench-multi",
+            Size     => Icon_Size_Menu);
       end if;
 
       New_Action.Associated_Command := new Codefix_Command;
