@@ -26,9 +26,9 @@ all:
 	  -C ../templates_parser setup
 	$(MAKE) -s -C ../kernel/src_info/sn
 	$(MAKE) -s -C ../gnatlib do_links
-	$(GPRBUILD) ${GPRBUILD_FLAGS} -m -p -ws -P../gnatlib/src/gnatcoll
-	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -XTP_TASKING=No_Tasking \
-	  ${GPRBUILD_BUILD_TYPE_FLAGS} -Pgps
+	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -P../gnatlib/src/gnatcoll
+	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
+	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 
 resources:
 ifeq ($(OS),Windows_NT)
