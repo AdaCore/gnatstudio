@@ -34,6 +34,10 @@ private package GNATStack.Module.Editors is
      (Module : not null access GNATStack_Module_Id_Record'Class);
    --  Shows stack usage information is all opened editors.
 
+   procedure Hide_Stack_Usage_In_Opened_Editors
+     (Module : not null access GNATStack_Module_Id_Record'Class);
+   --  Hides stack usage information is all opened editors.
+
    procedure Register_Module
      (Module : not null access GNATStack_Module_Id_Record'Class);
    --  Register preferences, styles, hooks for editor integration.

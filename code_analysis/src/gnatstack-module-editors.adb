@@ -134,6 +134,28 @@ package body GNATStack.Module.Editors is
       end;
    end Hide_Stack_Usage;
 
+   ----------------------------------------
+   -- Hide_Stack_Usage_In_Opened_Editors --
+   ----------------------------------------
+
+   procedure Hide_Stack_Usage_In_Opened_Editors
+     (Module : not null access GNATStack_Module_Id_Record'Class)
+   is
+      use GPS.Editors.Buffer_Lists;
+
+      Buffers         : constant GPS.Editors.Buffer_Lists.List :=
+        Module.Kernel.Get_Buffer_Factory.Buffers;
+      Buffer_Position : GPS.Editors.Buffer_Lists.Cursor;
+
+   begin
+      Buffer_Position := Buffers.First;
+
+      while Has_Element (Buffer_Position) loop
+         Hide_Stack_Usage (Module, Element (Buffer_Position).File);
+         Next (Buffer_Position);
+      end loop;
+   end Hide_Stack_Usage_In_Opened_Editors;
+
    ---------------------------------
    -- Hide_Subprogram_Stack_Usage --
    ---------------------------------

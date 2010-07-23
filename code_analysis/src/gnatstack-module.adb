@@ -78,6 +78,11 @@ package body GNATStack.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when "Load data" menu item is activated
 
+   procedure On_Clear_Data
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Clear data" menu item is activated
+
    procedure On_Show_Stack_Usage
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Shows stack usage information in the editor for selected file.
@@ -271,6 +276,14 @@ package body GNATStack.Module is
       Reader : GNATStack.Readers.Reader;
 
    begin
+      if Self.Loaded then
+         GPS.Kernel.Messages.Get_Messages_Container
+           (Self.Kernel).Remove_Category ("GNATStack");
+         Editors.Hide_Stack_Usage_In_Opened_Editors (Self);
+         Clear (Self.Data);
+         Self.Loaded := False;
+      end if;
+
       if Name.Is_Regular_File then
          Input_Sources.File.Open (String (Name.Full_Name.all), File);
          Reader.Parse (File);
@@ -307,6 +320,24 @@ package body GNATStack.Module is
       when E : others =>
          Trace (Exception_Handle, E);
    end On_Analyze_Stack_Usage;
+
+   -------------------
+   -- On_Clear_Data --
+   -------------------
+
+   procedure On_Clear_Data
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
+
+   begin
+      GPS.Kernel.Messages.Get_Messages_Container
+        (Module.Kernel).Remove_Category ("GNATStack");
+      Editors.Hide_Stack_Usage_In_Opened_Editors (Module);
+      Clear (Module.Data);
+      Module.Loaded := False;
+   end On_Clear_Data;
 
    -----------------------------
    -- On_Compilation_Finished --
@@ -675,6 +706,11 @@ package body GNATStack.Module is
          Parent_Path => Menu,
          Text        => -"_Load last stack usage",
          Callback    => On_Load_Data'Access);
+      Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => Menu,
+         Text        => -"_Clear stack usage information",
+         Callback    => On_Clear_Data'Access);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,

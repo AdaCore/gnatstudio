@@ -18,11 +18,73 @@
 -----------------------------------------------------------------------
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded.Hash;
+with Ada.Unchecked_Deallocation;
 
 package body GNATStack.Data_Model is
 
    use Ada.Strings.Unbounded;
    use Subprogram_Location_Sets;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Item : in out Analysis_Information) is
+
+      procedure Deallocate_Subprogram
+        (Position : Subprogram_Information_Sets.Cursor);
+      --  Deallocates subprogram information object.
+
+      procedure Deallocate_Location
+        (Position : Subprogram_Location_Sets.Cursor);
+      --  Deallocates subprogram location object.
+
+      -------------------------
+      -- Deallocate_Location --
+      -------------------------
+
+      procedure Deallocate_Location
+        (Position : Subprogram_Location_Sets.Cursor)
+      is
+         procedure Free is
+           new Ada.Unchecked_Deallocation
+             (GPS.Editors.Editor_Mark'Class, Editor_Mark_Access);
+
+         Mark : Editor_Mark_Access := Element (Position).Mark;
+
+      begin
+         Free (Mark);
+      end Deallocate_Location;
+
+      ---------------------------
+      -- Deallocate_Subprogram --
+      ---------------------------
+
+      procedure Deallocate_Subprogram
+        (Position : Subprogram_Information_Sets.Cursor)
+      is
+         use Subprogram_Information_Sets;
+
+         procedure Free is
+           new Ada.Unchecked_Deallocation
+                 (Subprogram_Information, Subprogram_Information_Access);
+
+         Subprogram : Subprogram_Information_Access := Element (Position);
+
+      begin
+         Subprogram.Identifier.Locations.Iterate (Deallocate_Location'Access);
+         Free (Subprogram);
+      end Deallocate_Subprogram;
+
+   begin
+      Item.Subprogram_Set.Iterate (Deallocate_Subprogram'Access);
+      Item.Subprogram_Set.Clear;
+      Item.Unbounded_Set.Clear;
+      Item.External_Set.Clear;
+      Item.Indirect_Set.Clear;
+      Item.Cycle_Set.Clear;
+      Item.Entry_Set.Clear;
+   end Clear;
 
    ---------------------
    -- Element_Is_Less --

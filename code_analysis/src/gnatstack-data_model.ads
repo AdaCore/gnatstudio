@@ -139,4 +139,7 @@ package GNATStack.Data_Model is
    function Image (Item : Stack_Usage_Information) return String;
    --  Returns textual representation of the stack usage information.
 
+   procedure Clear (Item : in out Analysis_Information);
+   --  Deallocates all information and clears containers.
+
 end GNATStack.Data_Model;
