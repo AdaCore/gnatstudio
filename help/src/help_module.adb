@@ -22,10 +22,11 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.Expect;                use GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -33,7 +34,7 @@ with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with XML_Utils;               use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Object;                 use Gtk.Object;
@@ -934,12 +935,16 @@ package body Help_Module is
       Button     : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
+      Verbose    : aliased String := "-v";
       Top        : constant GPS_Window :=
                      GPS_Window (Get_Main_Window (Kernel));
+      Codepeer   : constant Virtual_File := Locate_On_Path ("codepeer");
       About_File : constant Virtual_File :=
                      Create_From_Dir
                        (Get_System_Dir (Kernel), "/share/gps/about.txt");
       Contents   : GNAT.Strings.String_Access;
+      About_Text : Unbounded_String;
+      Status     : aliased Integer;
 
    begin
       Contents := About_File.Read_File;
@@ -947,10 +952,23 @@ package body Help_Module is
          Contents := new String'("");
       end if;
 
+      Set_Unbounded_String
+        (About_Text,
+         GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &
+         (-") hosted on ") & Config.Target & LF &
+         (-"GNAT ") & GNAT_Version (Kernel) & LF);
+
+      if Codepeer /= No_File then
+         Append
+           (About_Text,
+            Get_Command_Output
+              (Codepeer.Display_Full_Name, (1 => Verbose'Unchecked_Access),
+               "", Status'Access, Err_To_Out => True));
+         Append (About_Text, (1 => ASCII.LF));
+      end if;
+
       Button := Message_Dialog
-        (GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &
-           (-") hosted on ") & Config.Target & LF &
-         (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
+        (To_String (About_Text) & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
          "(c) 2001-2010 AdaCore",
          Buttons => Button_OK,
