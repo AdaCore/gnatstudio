@@ -15,6 +15,13 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J722-013 Improved filedeps.py plug-in (2010-07-22)
+
+  The filedeps.py plug-in which provides a way to display the dependency
+  path between two files/units is now improved and will in particular
+  display the path both in the Messages view and in the Locations view
+  for easier navigation and visualization.
+
 NF-45-J713-014 Case-preserving replacement (2010-07-21)
 
   GPS is now capable of preserving the casing of words when performing
