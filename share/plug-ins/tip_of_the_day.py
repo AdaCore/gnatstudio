@@ -336,6 +336,13 @@ Leave your cursor on an entity: GPS will automatically highlight all references
 to this entity in the current editor. Also, the color of the highlight gives
 a hint on the category of the entity.
 
+Tip: Compute dependency path between two units
+
+If you want to understand why two units or files depend on each other (to
+understand an elaboration circularity for example, or explain why changing
+a given file triggers recompilation of another file), you can go to
+Tools->Plug-ins and enable the <i>filedeps.py</i> plug-in.
+
 Tip: Your tip here
 
 Have your own idea for a nice tip and would like to share it with other GPS
