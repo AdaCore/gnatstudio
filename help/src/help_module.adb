@@ -22,7 +22,7 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNAT.Expect;                use GNAT.Expect;
+with GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -961,7 +961,7 @@ package body Help_Module is
       if Codepeer /= No_File then
          Append
            (About_Text,
-            Get_Command_Output
+            GNAT.Expect.Get_Command_Output
               (Codepeer.Display_Full_Name, (1 => Verbose'Unchecked_Access),
                "", Status'Access, Err_To_Out => True));
          Append (About_Text, (1 => ASCII.LF));
