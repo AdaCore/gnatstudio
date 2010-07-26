@@ -28,7 +28,6 @@ with Ada.Containers; use Ada.Containers;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Prj.Part; use Prj.Part;
 with Prj.Env; use Prj.Env;
-with Ada.Text_IO; use Ada.Text_IO;
 with Prj.PP; use Prj.PP;
 
 package body Toolchains.Parsers is
@@ -163,7 +162,7 @@ package body Toolchains.Parsers is
                   Name := Name_Of (Item_Id, Node_Data);
 
                   if Get_Name_String (Name) = "ide" then
-                     Handle_IDE_Package (IDE_Package_Node);
+                     Handle_IDE_Package (Item_Id);
                   end if;
                end if;
 
@@ -945,7 +944,7 @@ package body Toolchains.Parsers is
             Create_Attribute
               (Container, "gnat",             "",    "-gnat", Variable_Id);
             Create_Attribute
-              (Container, "compiler_command", "ada", "-gcc", Variable_Id);
+              (Container, "compiler_command", "ada", "-gnatmake", Variable_Id);
             Create_Attribute
               (Container, "compiler_command", "c",   "-gcc", Variable_Id);
             Create_Attribute
@@ -1566,7 +1565,7 @@ package body Toolchains.Parsers is
    ----------
 
    procedure Save (This : Parsed_Project_Record; To : Virtual_File) is
-      File : Ada.Text_IO.File_Type;
+      File : Writable_File;
 
       procedure Write_Char_Ap (C : Character);
       procedure Write_Eol_Ap;
@@ -1574,21 +1573,21 @@ package body Toolchains.Parsers is
 
       procedure Write_Char_Ap (C : Character) is
       begin
-         Put (File, C);
+         Write (File, C & "");
       end Write_Char_Ap;
 
       procedure Write_Eol_Ap is
       begin
-         New_Line (File);
+         Write (File, ASCII.LF & "");
       end Write_Eol_Ap;
 
       procedure Write_Str_Ap (S : String) is
       begin
-         Put (File, S);
+         Write (File, S);
       end Write_Str_Ap;
 
    begin
-      Create (File, Out_File, String (To.Full_Name.all));
+      File := Write_File (To);
 
       Pretty_Print
         (Project                => This.Project_Node,

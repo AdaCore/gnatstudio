@@ -694,6 +694,8 @@ package body Toolchains is
                   return Element (Cur);
                end if;
             end if;
+
+            Cur := Next (Cur);
          end loop;
       end;
 
