@@ -753,7 +753,13 @@ package body Entities.Queries is
                Entity := To_Entity_Access (S_File, Construct);
                New_Entity := Tree_Lang.Find_Next_Part (Entity);
 
-               if No_Location_If_First
+               --  If we're initializing a loop, e.g. the current location is
+               --  no location, then return the result. Otherwise, don't return
+               --  it if we got back to the initial body and the caller doesn't
+               --  want to loop back.
+
+               if Current_Location /= No_File_Location
+                 and then No_Location_If_First
                  and then Entity = Tree_Lang.Find_First_Part (Entity)
                then
                   Location := No_File_Location;
