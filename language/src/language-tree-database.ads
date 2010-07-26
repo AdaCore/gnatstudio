@@ -131,6 +131,12 @@ package Language.Tree.Database is
       Index   : String_Index_Type) return Entity_Reference_Details is abstract;
    --  Return details about an entity reference within the given file
 
+   function Find_First_Part
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return Entity_Access;
+   --  Return the first part of the entity given in parameter. By default,
+   --  return Entity.
+
    function Find_Next_Part
      (Lang   : access Tree_Language;
       Entity : Entity_Access) return Entity_Access;

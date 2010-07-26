@@ -753,6 +753,14 @@ package body Entities.Queries is
                Entity := To_Entity_Access (S_File, Construct);
                New_Entity := Tree_Lang.Find_Next_Part (Entity);
 
+               if No_Location_If_First
+                 and then Entity = Tree_Lang.Find_First_Part (Entity)
+               then
+                  Location := No_File_Location;
+
+                  return;
+               end if;
+
                if Entity /= Null_Entity_Access
                  and then New_Entity /= Entity
                then

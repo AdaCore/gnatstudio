@@ -469,6 +469,19 @@ package body Language.Tree.Database is
       return Null_Entity_Access;
    end Find_Declaration;
 
+   ---------------------
+   -- Find_First_Part --
+   ---------------------
+
+   function Find_First_Part
+     (Lang   : access Tree_Language;
+      Entity : Entity_Access) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Entity;
+   end Find_First_Part;
+
    --------------------
    -- Find_Next_Part --
    --------------------

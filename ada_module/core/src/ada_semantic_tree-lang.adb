@@ -1292,6 +1292,19 @@ package body Ada_Semantic_Tree.Lang is
       return Result;
    end Find_Declaration;
 
+   ---------------------
+   -- Find_First_Part --
+   ---------------------
+
+   overriding function Find_First_Part
+     (Lang   : access Ada_Tree_Language;
+      Entity : Entity_Access) return Entity_Access
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Get_First_Occurence (Entity);
+   end Find_First_Part;
+
    --------------------
    -- Find_Next_Part --
    --------------------
