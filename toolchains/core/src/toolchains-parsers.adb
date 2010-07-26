@@ -342,7 +342,7 @@ package body Toolchains.Parsers is
                         Tool_Commands => (others => null),
                         Is_Computed   => False,
                         Is_Valid      => False,
-                        Library       => null);
+                        Library       => (others => <>));
                      Created_Toolchains.Append (Ada_Toolchain);
                   end if;
 

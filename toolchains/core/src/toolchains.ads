@@ -157,6 +157,30 @@ package Toolchains is
    --  Return true if the library information contains errors and is not
    --  correctly loaded, false otherwise.
 
+   procedure Set_Source_Path
+     (This : in out Ada_Library_Info; Val : File_Array);
+   --  Set the source path associated to this library information
+
+   procedure Set_Objects_Path
+     (This : in out Ada_Library_Info; Val : File_Array);
+   --  Set the objects path associated to this library information
+
+   procedure Set_Project_Path
+     (This : in out Ada_Library_Info; Val : File_Array);
+   --  Set the project path associated to this library information
+
+   procedure Set_Version (This : in out Ada_Library_Info; Val : String);
+   --  Set the GNAT version associated to this library information
+
+   procedure Set_Error (This : in out Ada_Library_Info; Val : String);
+   --  If the library information has not been correctly computed, set
+   --  the error message explaining the problem.
+
+   procedure Set_Install_Path
+     (This : in out Ada_Library_Info; Val : Virtual_File);
+   --  Set the path where the toolchain associated with this library
+   --  information is installed
+
    ---------------
    -- Toolchain --
    ---------------
@@ -235,6 +259,11 @@ package Toolchains is
      (This : Toolchain) return Ada_Library_Info;
    --  Return the library information, as computed by gnatls. The library
    --  information needs to have been computed beforehands.
+
+   procedure Set_Library_Information
+     (This : Toolchain;
+      Info : Ada_Library_Info);
+   --  Modifies the library information stored in this toolchain.
 
    -------------------------------
    -- Toolchain_Change_Listener --
@@ -315,9 +344,10 @@ package Toolchains is
    --  Return a unique anonymous name that's not already registered in the
    --  manager
 
-   function Get_Library_Information
+   procedure Get_Library_Information
      (This           : Toolchain_Manager;
-      GNATls_Command : String) return Ada_Library_Info;
+      GNATls_Command : String;
+      Info           : in out Ada_Library_Info);
    --  Returns the library information corresponding to the gnatls executable
    --  given in parameter - caches the result so that no extra computation has
    --  to be done the second time the same information is requested.
@@ -351,7 +381,7 @@ package Toolchains is
 
 private
 
-   type Ada_Library_Info_Record is record
+   type Ada_Library_Info is record
       Source_Path  : File_Array_Access;
       Objects_Path : File_Array_Access;
       Project_Path : File_Array_Access;
@@ -359,8 +389,6 @@ private
       Error        : String_Access;
       Install_Path : Virtual_File := No_File;
    end record;
-
-   type Ada_Library_Info is access all Ada_Library_Info_Record;
 
    type Tool_Name_Array is array (Tool_Names) of String_Access;
 

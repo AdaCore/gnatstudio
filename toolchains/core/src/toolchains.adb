@@ -118,20 +118,91 @@ package body Toolchains is
       return This.Error /= null;
    end Has_Errors;
 
+   ---------------------
+   -- Set_Source_Path --
+   ---------------------
+
+   procedure Set_Source_Path
+     (This : in out Ada_Library_Info; Val : File_Array)
+   is
+   begin
+      Unchecked_Free (This.Source_Path);
+      This.Source_Path := new File_Array'(Val);
+   end Set_Source_Path;
+
+   ----------------------
+   -- Set_Objects_Path --
+   ----------------------
+
+   procedure Set_Objects_Path
+     (This : in out Ada_Library_Info; Val : File_Array)
+   is
+   begin
+      Unchecked_Free (This.Objects_Path);
+      This.Objects_Path := new File_Array'(Val);
+   end Set_Objects_Path;
+
+   ----------------------
+   -- Set_Project_Path --
+   ----------------------
+
+   procedure Set_Project_Path
+     (This : in out Ada_Library_Info; Val : File_Array)
+   is
+   begin
+      Unchecked_Free (This.Project_Path);
+      This.Project_Path := new File_Array'(Val);
+   end Set_Project_Path;
+
+   -----------------
+   -- Set_Version --
+   -----------------
+
+   procedure Set_Version
+     (This : in out Ada_Library_Info; Val : String)
+   is
+   begin
+      Free (This.Version);
+      This.Version := new String'(Val);
+   end Set_Version;
+
+   ---------------
+   -- Set_Error --
+   ---------------
+
+   procedure Set_Error
+     (This : in out Ada_Library_Info; Val : String)
+   is
+   begin
+      Free (This.Error);
+
+      if Val /= "" then
+         This.Error := new String'(Val);
+      end if;
+   end Set_Error;
+
+   ----------------------
+   -- Set_Install_Path --
+   ----------------------
+
+   procedure Set_Install_Path
+     (This : in out Ada_Library_Info; Val : Virtual_File)
+   is
+   begin
+      This.Install_Path := Val;
+   end Set_Install_Path;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (This : in out Ada_Library_Info) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Ada_Library_Info_Record, Ada_Library_Info);
    begin
       Unchecked_Free (This.Source_Path);
       Unchecked_Free (This.Objects_Path);
       Unchecked_Free (This.Project_Path);
       Free (This.Version);
       Free (This.Error);
-      Free (This);
    end Free;
 
    ------------------------------
@@ -148,8 +219,10 @@ package body Toolchains is
 
       This.Is_Computed := True;
 
-      This.Library :=
-        Get_Library_Information (Manager, Get_Command (This, GNAT_List));
+      Get_Library_Information
+        (Manager,
+         Get_Command (This, GNAT_List),
+         This.Library);
 
       if This.Library.Error /= null then
          This.Is_Valid := False;
@@ -377,6 +450,18 @@ package body Toolchains is
       return This.Library;
    end Get_Library_Information;
 
+   -----------------------------
+   -- Set_Library_Information --
+   -----------------------------
+
+   procedure Set_Library_Information
+     (This : Toolchain;
+      Info : Ada_Library_Info)
+   is
+   begin
+      This.Library := Info;
+   end Set_Library_Information;
+
    ----------------------------
    -- Create_Known_Toolchain --
    ----------------------------
@@ -488,7 +573,7 @@ package body Toolchains is
          Tool_Commands => (others => null),
          Is_Computed   => False,
          Is_Valid      => False,
-         Library       => null);
+         Library       => (others => <>));
 
       Compute_Predefined_Paths (Native_Toolchain, This);
 
@@ -743,7 +828,7 @@ package body Toolchains is
 
       Free (Existing.Name);
       Free (Existing.Label);
-      Existing.Library := null;
+      Existing.Library := (others => <>);
 
       for J in Existing.Tool_Commands'Range loop
          Free (Existing.Tool_Commands (J));
@@ -825,9 +910,10 @@ package body Toolchains is
 
    use String_Lists;
 
-   function Get_Library_Information
+   procedure Get_Library_Information
      (This           : Toolchain_Manager;
-      GNATls_Command : String) return Ada_Library_Info
+      GNATls_Command : String;
+      Info           : in out Ada_Library_Info)
    is
       Result : Ada_Library_Info;
 
@@ -860,8 +946,10 @@ package body Toolchains is
       end To_Path_Array;
 
    begin
+      Info := (others => <>);
+
       if This.Computed_Libraries.Contains (GNATls_Command) then
-         return This.Computed_Libraries.Element (GNATls_Command);
+         Info := This.Computed_Libraries.Element (GNATls_Command);
       end if;
 
       declare
@@ -871,8 +959,6 @@ package body Toolchains is
          Garbage         : String_Access;
          Current_Line    : Integer;
       begin
-         Result := new Ada_Library_Info_Record;
-
          This.Computed_Libraries.Insert (GNATls_Command, Result);
 
          for J in Lines'Range loop
@@ -1018,7 +1104,7 @@ package body Toolchains is
 
          Free (Lines);
 
-         return Result;
+         Info := Result;
       end;
    exception
       when E : others =>
@@ -1035,12 +1121,12 @@ package body Toolchains is
                This.Computed_Libraries.Delete (GNATls_Command);
             end if;
 
-            Result := new Ada_Library_Info_Record;
+            Info := (others => <>);
 
             This.Computed_Libraries.Insert (GNATls_Command, Result);
             Result.Error := new String'(Exception_Message (E));
 
-            return Result;
+            Info := Result;
          end;
    end Get_Library_Information;
 
