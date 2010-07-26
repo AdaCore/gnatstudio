@@ -670,7 +670,8 @@ package body Toolchains.Parsers is
          The_Toolchain : Toolchain);
       --  Create all the attributes for the toolchain given in parameter.
       --  If then toolchain is null, then the variable given in parameter will
-      --  be used.
+      --  be used. This should not be called with both a variable Id and
+      --  a toolchain.
 
       procedure Create_Attribute
         (Container      : Project_Node_Id;
@@ -1165,7 +1166,7 @@ package body Toolchains.Parsers is
          Create_Attributes
            (This.IDE_Package,
             This.Variable_Node,
-            Toolchains (Toolchains'First));
+            null);
       else
          --  If we've got multiple targets handling with custom names,
          --  then we need to use a case statement.

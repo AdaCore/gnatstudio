@@ -573,10 +573,24 @@ package body Toolchains is
            (This, Ada_Compiler_Str, Ada_Compiler);
       end if;
 
-      if The_Toolchain = null then
-         The_Toolchain := new Toolchain_Record;
-      else
+      --  At this stage, there's three cases.
+      --  1 - we found a toolchain. Make a copy of it and retreive the actual
+      --      attributes
+      --  2 - all attributes are empty. Create a native toolchain
+      --  3 - there's still attribute but they don't match a toochain. Create
+      --      a new one.
+
+      if The_Toolchain /= null then
          The_Toolchain := Copy (The_Toolchain);
+      elsif GNAT_List_Str = ""
+        and then GNAT_Driver_Str = ""
+        and then Ada_Compiler_Str = ""
+        and then C_Compiler_Str = ""
+        and then Debugger_Str = ""
+      then
+         The_Toolchain := Get_Native_Toolchain (This);
+      else
+         The_Toolchain := new Toolchain_Record;
       end if;
 
       if GNAT_List_Str /= "" then
@@ -625,6 +639,8 @@ package body Toolchains is
       Subname_Index : Integer;
       Has_Prefix    : Boolean := False;
    begin
+      Name_Index := Name'Last;
+
       for J in Name'Range loop
          if Name (J) = ' ' then
             Name_Index := J - 1;
@@ -634,7 +650,7 @@ package body Toolchains is
 
       Subname_Index := Name_Index;
 
-      for J in Name'First .. Name_Index loop
+      for J in reverse Name'First .. Name_Index loop
          if Name (J) = '-' then
             Subname_Index := J - 1;
             Has_Prefix := True;
