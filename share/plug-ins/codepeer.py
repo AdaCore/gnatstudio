@@ -233,7 +233,7 @@ if codepeer != "":
          <check label="Re-partition" switch="-repartition"
                 column="1" tip="Recompute partition libraries instead of reusing partitions from previous run (ignored with -global)" />
          <spin label="Partition limit" switch="-dbg-partition-limit"
-               min="10" max="100000" default="10000"
+               min="10" max="100000" default="8000"
                separator=" " column="2"
                tip="Size of each partition to analyze (ignored with -global)" />
          <spin label="Multiprocessing" switch="-jobs" min="1" max="100"
