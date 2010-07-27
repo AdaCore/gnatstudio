@@ -338,6 +338,14 @@
     <icon id="gps-build-style-fixable"   file="../icons/9px/build_style_fixable.png">
        <alternate                        file="../icons/9px/build_style_fixable.png" size="1" />
     </icon>
-  </stock>
+
+    <icon id="gps-wrench"    file="../icons/9px/wrench.png">
+       <alternate            file="../icons/9px/wrench.png" size="1" />
+    </icon>
+
+    <icon id="gps-wrench-multi" file="../icons/9px/wrench_multi.png">
+       <alternate               file="../icons/9px/wrench_multi.png" size="1" />
+    </icon>
+</stock>
 
 </GPS>
