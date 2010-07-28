@@ -128,7 +128,8 @@ package Toolchains is
    -- Ada_Library_Info --
    ----------------------
 
-   type Ada_Library_Info is private;
+   type Ada_Library_Info (<>) is limited private;
+   type Ada_Library_Info_Access is access all Ada_Library_Info;
    --  This type stores the information as returned by GNATLS, e.g. various
    --  paths, gnat version...
    --  ??? how do we free instances of this object?
@@ -239,10 +240,6 @@ package Toolchains is
    function Is_Native (This : Toolchain) return Boolean;
    --  Return true if this toolchain is a native toolchain.
 
-   function Is_Computed (This : Toolchain) return Boolean;
-   --  Return true if the library information has been computed for this
-   --  toolchain.
-
    procedure Set_Custom (This : Toolchain; Value : Boolean);
    --  Set wether this toolchain is a custom toolchain
 
@@ -256,13 +253,13 @@ package Toolchains is
    --  only be used for toolchains outside of the toolchain manager.
 
    function Get_Library_Information
-     (This : Toolchain) return Ada_Library_Info;
+     (This : Toolchain) return Ada_Library_Info_Access;
    --  Return the library information, as computed by gnatls. The library
    --  information needs to have been computed beforehands.
 
    procedure Set_Library_Information
      (This : Toolchain;
-      Info : Ada_Library_Info);
+      Info : Ada_Library_Info_Access);
    --  Modifies the library information stored in this toolchain.
 
    -------------------------------
@@ -344,13 +341,18 @@ package Toolchains is
    --  Return a unique anonymous name that's not already registered in the
    --  manager
 
-   procedure Get_Library_Information
+   procedure Compute_If_Needed
+     (Manager : Toolchain_Manager; This : in out Ada_Library_Info);
+   --  Computes this library info using gnatls if needed.
+
+   function Get_Or_Create_Library_Information
      (This           : Toolchain_Manager;
-      GNATls_Command : String;
-      Info           : in out Ada_Library_Info);
-   --  Returns the library information corresponding to the gnatls executable
-   --  given in parameter - caches the result so that no extra computation has
-   --  to be done the second time the same information is requested.
+      GNATls_Command : String) return Ada_Library_Info_Access;
+   --  Return the library info for this gnatls command. The resulting object
+   --  is not computed through gnatls, and the information may be inaccurate.
+   --  This is flagged in the internal state of the object, which will do
+   --  a gnatls query the first time up to date data is needed. If there's
+   --  already a library for this gnatls command, it will get returned.
 
    type Toolchain_Array is array (Integer range <>) of aliased Toolchain;
 
@@ -381,13 +383,20 @@ package Toolchains is
 
 private
 
-   type Ada_Library_Info is record
+   type Ada_Library_Info is limited record
+      GNATls_Command : String_Access;
+
       Source_Path  : File_Array_Access;
       Objects_Path : File_Array_Access;
       Project_Path : File_Array_Access;
       Version      : String_Access;
       Error        : String_Access;
       Install_Path : Virtual_File := No_File;
+
+      Is_Computed : Boolean := False;
+      --  Have the toolchain properties already been computed from gnatls? If
+      --  not, the values stored in this object may be just buffered values
+      --  that will need to be updated as soon as this is actually used.
    end record;
 
    type Tool_Name_Array is array (Tool_Names) of String_Access;
@@ -410,13 +419,10 @@ private
       Tool_Commands : Tool_Name_Array;
       --  The name of the tools for this toolchain.
 
-      Is_Computed : Boolean := False;
-      --  Have the toolchain properties already been computed from gnatls?
-
       Is_Valid : Boolean;
       --  Is this toolchain accessible from the environment ?
 
-      Library : Ada_Library_Info;
+      Library : Ada_Library_Info_Access;
    end record;
 
    type Toolchain is access all Toolchain_Record;
@@ -427,7 +433,7 @@ private
      (String, Toolchain);
 
    package Library_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Ada_Library_Info);
+     (String, Ada_Library_Info_Access);
 
    package Listener_List is new Ada.Containers.Doubly_Linked_Lists
      (Toolchain_Change_Listener);

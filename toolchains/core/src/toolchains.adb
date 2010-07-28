@@ -27,7 +27,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 
 package body Toolchains is
 
-   procedure Free (This : in out Ada_Library_Info);
+   procedure Free (This : in out Ada_Library_Info_Access);
    --  Free the memory associated to this library info. This should only be
    --  called by the manager, as we store the result of this information during
    --  the session.
@@ -93,8 +93,8 @@ package body Toolchains is
 
    function Get_Error (This : Ada_Library_Info) return String is
    begin
-      if This.Version /= null then
-         return This.Version.all;
+      if This.Error /= null then
+         return This.Error.all;
       else
          return "";
       end if;
@@ -196,7 +196,9 @@ package body Toolchains is
    -- Free --
    ----------
 
-   procedure Free (This : in out Ada_Library_Info) is
+   procedure Free (This : in out Ada_Library_Info_Access) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Ada_Library_Info, Ada_Library_Info_Access);
    begin
       Unchecked_Free (This.Source_Path);
       Unchecked_Free (This.Objects_Path);
@@ -213,16 +215,15 @@ package body Toolchains is
      (This : Toolchain; Manager : Toolchain_Manager)
    is
    begin
-      if This.Is_Computed then
+      if This.Library /= null and then This.Library.Is_Computed then
          return;
       end if;
 
-      This.Is_Computed := True;
-
-      Get_Library_Information
+      This.Library := Get_Or_Create_Library_Information
         (Manager,
-         Get_Command (This, GNAT_List),
-         This.Library);
+         Get_Command (This, GNAT_List));
+
+      Compute_If_Needed (Manager, This.Library.all);
 
       if This.Library.Error /= null then
          This.Is_Valid := False;
@@ -391,15 +392,6 @@ package body Toolchains is
       return This.Is_Native;
    end Is_Native;
 
-   -----------------
-   -- Is_Computed --
-   -----------------
-
-   function Is_Computed (This : Toolchain) return Boolean is
-   begin
-      return This.Is_Computed;
-   end Is_Computed;
-
    ----------------
    -- Set_Custom --
    ----------------
@@ -441,7 +433,7 @@ package body Toolchains is
    -----------------------------
 
    function Get_Library_Information
-     (This : Toolchain) return Ada_Library_Info
+     (This : Toolchain) return Ada_Library_Info_Access
    is
    begin
       --  There intentionally no call to compute here - should use whatever
@@ -456,7 +448,7 @@ package body Toolchains is
 
    procedure Set_Library_Information
      (This : Toolchain;
-      Info : Ada_Library_Info)
+      Info : Ada_Library_Info_Access)
    is
    begin
       This.Library := Info;
@@ -571,9 +563,8 @@ package body Toolchains is
          Is_Native     => True,
          Is_Custom     => False,
          Tool_Commands => (others => null),
-         Is_Computed   => False,
          Is_Valid      => False,
-         Library       => (others => <>));
+         Library       => null);
 
       Compute_Predefined_Paths (Native_Toolchain, This);
 
@@ -708,6 +699,16 @@ package body Toolchains is
            new String'(Debugger_Str);
       end if;
 
+      if not The_Toolchain.Is_Native and then The_Toolchain.Name = null then
+         The_Toolchain.Name := new String'(Create_Anonymous_Name (This));
+      end if;
+
+      --  Reset the library information in case the GNATls that needs to be
+      --  recomputed has changed, and then recompute the predifined paths if
+      --  needed.
+      The_Toolchain.Library := null;
+      Compute_Predefined_Paths (The_Toolchain, This);
+
       return The_Toolchain;
    end Compute_Toolchain;
 
@@ -803,7 +804,6 @@ package body Toolchains is
            & Ada_Toolchain.Name.all & " already registered";
       end if;
 
-      Compute_Predefined_Paths (Ada_Toolchain, This);
       This.Toolchains.Insert (Ada_Toolchain.Name.all, Ada_Toolchain);
 
       Fire_Change_Event (This);
@@ -828,7 +828,6 @@ package body Toolchains is
 
       Free (Existing.Name);
       Free (Existing.Label);
-      Existing.Library := (others => <>);
 
       for J in Existing.Tool_Commands'Range loop
          Free (Existing.Tool_Commands (J));
@@ -851,10 +850,8 @@ package body Toolchains is
 
       Existing.Is_Native := Ada_Toolchain.Is_Native;
       Existing.Is_Custom := Ada_Toolchain.Is_Custom;
-      Existing.Is_Computed := False;
       Existing.Is_Valid := False;
 
-      Compute_Predefined_Paths (Existing, This);
       Fire_Change_Event (This);
    end Modify_Toolchain;
 
@@ -901,22 +898,18 @@ package body Toolchains is
       end loop;
    end Create_Anonymous_Name;
 
-   -----------------------------
-   -- Get_Library_Information --
-   -----------------------------
+   -----------------------
+   -- Compute_If_Needed --
+   -----------------------
 
    package String_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (String);
 
    use String_Lists;
 
-   procedure Get_Library_Information
-     (This           : Toolchain_Manager;
-      GNATls_Command : String;
-      Info           : in out Ada_Library_Info)
+   procedure Compute_If_Needed
+     (Manager : Toolchain_Manager; This : in out Ada_Library_Info)
    is
-      Result : Ada_Library_Info;
-
       Source_Search_Path  : String_Lists.List;
       Object_Search_Path  : String_Lists.List;
       Project_Search_Path : String_Lists.List;
@@ -946,21 +939,19 @@ package body Toolchains is
       end To_Path_Array;
 
    begin
-      Info := (others => <>);
-
-      if This.Computed_Libraries.Contains (GNATls_Command) then
-         Info := This.Computed_Libraries.Element (GNATls_Command);
+      if This.Is_Computed then
+         return;
+      else
+         This.Is_Computed := True;
       end if;
 
       declare
-         Output : constant String := This.Execute
-           (GNATls_Command & " -v", 5_000);
+         Output : constant String := Manager.Execute
+           (This.GNATls_Command.all & " -v", 5_000);
          Lines           : String_List_Access := Split (Output, ASCII.LF);
          Garbage         : String_Access;
          Current_Line    : Integer;
       begin
-         This.Computed_Libraries.Insert (GNATls_Command, Result);
-
          for J in Lines'Range loop
             for K in Lines (J)'Range loop
                if Lines (J)(K) = ASCII.LF or else Lines (J)(K) = ASCII.CR then
@@ -988,7 +979,7 @@ package body Toolchains is
                  (Version_Matcher, Lines (Current_Line).all, Version_Matches);
 
                if Version_Matches (1) /= No_Match then
-                  Result.Version := new String'
+                  This.Version := new String'
                     (Lines (Current_Line)
                      (Version_Matches (1).First .. Version_Matches (1).Last));
 
@@ -1075,17 +1066,17 @@ package body Toolchains is
 
          --  Copy the lists in the result arrays
 
-         Result.Source_Path := To_Path_Array (Source_Search_Path);
-         Result.Objects_Path := To_Path_Array (Object_Search_Path);
-         Result.Project_Path := To_Path_Array (Project_Search_Path);
+         This.Source_Path := To_Path_Array (Source_Search_Path);
+         This.Objects_Path := To_Path_Array (Object_Search_Path);
+         This.Project_Path := To_Path_Array (Project_Search_Path);
 
          --  Deduce the install path from the adalib directory in the object
          --  path
 
-         for J in Result.Objects_Path'Range loop
-            if Result.Objects_Path (J).Base_Dir_Name = "adalib" then
+         for J in This.Objects_Path'Range loop
+            if This.Objects_Path (J).Base_Dir_Name = "adalib" then
                declare
-                  Cur_Path : Virtual_File := Result.Objects_Path (J);
+                  Cur_Path : Virtual_File := This.Objects_Path (J);
                begin
                   while Cur_Path /= No_File
                     and then Cur_Path.Base_Dir_Name /= "lib"
@@ -1094,7 +1085,7 @@ package body Toolchains is
                   end loop;
 
                   if Cur_Path.Base_Dir_Name = "lib" then
-                     Result.Install_Path := Cur_Path.Get_Parent;
+                     This.Install_Path := Cur_Path.Get_Parent;
 
                      exit;
                   end if;
@@ -1103,32 +1094,34 @@ package body Toolchains is
          end loop;
 
          Free (Lines);
-
-         Info := Result;
       end;
    exception
       when E : others =>
          --  This happens typically if the GNATLS process didn't go through.
 
-         declare
-            Lib : Ada_Library_Info;
-         begin
-            --  If there's already an element added, removed it.
+         This.Error := new String'(Exception_Message (E));
+   end Compute_If_Needed;
 
-            if This.Computed_Libraries.Contains (GNATls_Command) then
-               Lib := This.Computed_Libraries.Element (GNATls_Command);
-               Free (Lib);
-               This.Computed_Libraries.Delete (GNATls_Command);
-            end if;
+   --------------------------------
+   -- Create_Library_Information --
+   --------------------------------
 
-            Info := (others => <>);
+   function Get_Or_Create_Library_Information
+     (This           : Toolchain_Manager;
+      GNATls_Command : String) return Ada_Library_Info_Access
+   is
+      Result : Ada_Library_Info_Access;
+   begin
+      if not This.Computed_Libraries.Contains (GNATls_Command) then
+         Result := new Ada_Library_Info;
+         This.Computed_Libraries.Insert (GNATls_Command, Result);
+         Result.GNATls_Command := new String'(GNATls_Command);
+      else
+         Result := This.Computed_Libraries.Element (GNATls_Command);
+      end if;
 
-            This.Computed_Libraries.Insert (GNATls_Command, Result);
-            Result.Error := new String'(Exception_Message (E));
-
-            Info := Result;
-         end;
-   end Get_Library_Information;
+      return Result;
+   end Get_Or_Create_Library_Information;
 
    --------------------
    -- Get_Toolchains --

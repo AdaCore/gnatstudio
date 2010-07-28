@@ -271,6 +271,7 @@ package body Toolchains.Parsers is
               (Unique_Toolchain.Name.all, Unique_Toolchain);
 
             if Is_Creating_Anonymous_Toolchain then
+               Compute_Predefined_Paths (Unique_Toolchain, Manager);
                Add_Toolchain (Manager, Unique_Toolchain);
             end if;
          elsif This.Variable_Node /= Empty_Node then
@@ -340,9 +341,8 @@ package body Toolchains.Parsers is
                         Is_Native     => False,
                         Is_Custom     => True,
                         Tool_Commands => (others => null),
-                        Is_Computed   => False,
                         Is_Valid      => False,
-                        Library       => (others => <>));
+                        Library       => null);
                      Created_Toolchains.Append (Ada_Toolchain);
                   end if;
 
@@ -431,6 +431,7 @@ package body Toolchains.Parsers is
             Cur := Created_Toolchains.First;
 
             while Cur /= Toolchain_Lists.No_Element loop
+               Compute_Predefined_Paths (Element (Cur), Manager);
                Add_Toolchain (Manager, Element (Cur));
 
                Cur := Next (Cur);
