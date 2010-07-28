@@ -25,7 +25,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect;
 with GNAT.Strings;
 
-with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
 
 with Glib.Object;
@@ -153,10 +152,6 @@ package Src_Editor_Module is
    --  Return the default character width to use when showing line numbers.
    --  Return 0 when we are not showing line numbers.
    --  This function is used as a preference cache for all editors.
-
-   function Post_It_Note_GC return Gdk.GC.Gdk_GC;
-   pragma Inline (Post_It_Note_GC);
-   --  Return the color to use for post-it notes
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -297,9 +292,6 @@ private
 
       Categories            : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories
-
-      Blank_Lines_GC        : Gdk.GC.Gdk_GC := null;
-      Post_It_Note_GC       : Gdk.GC.Gdk_GC := null;
 
       Editors               : Editors_Hash.Instance;
 

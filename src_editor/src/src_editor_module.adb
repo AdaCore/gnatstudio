@@ -27,8 +27,6 @@ with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
-with Gdk.Color;                         use Gdk.Color;
-with Gdk.GC;                            use Gdk.GC;
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Types;                         use Gdk.Types;
 with Gdk;                               use Gdk;
@@ -373,9 +371,6 @@ package body Src_Editor_Module is
    --  Called when we are about to destroy the toolbar which contains the
    --  undo/redo items.
 
-   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
-   --  Create the module-wide GCs
-
    procedure On_Editor_Destroy
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
@@ -463,49 +458,6 @@ package body Src_Editor_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Toolbar_Destroy_Cb;
-
-   ------------
-   -- Map_Cb --
-   ------------
-
-   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class) is
-      Color   : Gdk_Color;
-      Success : Boolean;
-      Id      : constant Source_Editor_Module :=
-                  Source_Editor_Module (Src_Editor_Module_Id);
-   begin
-      Gdk_New (Id.Blank_Lines_GC, Get_Window (Widget));
-      Gdk_New (Id.Post_It_Note_GC, Get_Window (Widget));
-
-      --  ??? Should this be a preference ?
-      Color := Parse ("#AAAAAA");
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-      if Success then
-         Set_Foreground
-           (Id.Blank_Lines_GC, Color);
-      else
-         Set_Foreground
-           (Id.Blank_Lines_GC,
-            Black (Get_Default_Colormap));
-      end if;
-
-      --  ??? This should be a preference !
-      Color := Parse ("#FFFF88");
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-      if Success then
-         Set_Foreground
-           (Id.Post_It_Note_GC, Color);
-      else
-         Set_Foreground
-           (Id.Post_It_Note_GC,
-            Black (Get_Default_Colormap));
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Map_Cb;
 
    -------------------------
    -- Get_File_Identifier --
@@ -3265,18 +3217,6 @@ package body Src_Editor_Module is
 
       Register_Editor_Hooks (Kernel);
 
-      --  Create the module-wide GCs.
-      --  We need to do that in a callback to "map"
-
-      if not Mapped_Is_Set (Get_Main_Window (Kernel)) then
-         Widget_Callback.Connect
-           (Get_Main_Window (Kernel),
-            Signal_Map, Map_Cb'Access, After => True);
-
-      else
-         Map_Cb (Get_Main_Window (Kernel));
-      end if;
-
       Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (close_block_xpm);
       Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (fold_block_xpm);
       Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (unfold_block_xpm);
@@ -3442,14 +3382,6 @@ package body Src_Editor_Module is
       --  Post_It_Note_GC and Blank_Lines_GC are initialized only when the
       --  main window is mapped. Therefore, if the window was never displayed,
       --  these values are not initialized.
-
-      if Id.Post_It_Note_GC /= null then
-         Unref (Id.Post_It_Note_GC);
-      end if;
-
-      if Id.Blank_Lines_GC /= null then
-         Unref (Id.Blank_Lines_GC);
-      end if;
 
       --  Destroy graphics
       if Remove_Blank_Lines_Pixbuf /= null then
@@ -3706,17 +3638,6 @@ package body Src_Editor_Module is
          return Id.Character_Width;
       end if;
    end Line_Number_Character_Width;
-
-   ---------------------
-   -- Post_It_Note_GC --
-   ---------------------
-
-   function Post_It_Note_GC return Gdk.GC.Gdk_GC is
-      Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
-   begin
-      return Id.Post_It_Note_GC;
-   end Post_It_Note_GC;
 
    ----------------------------
    -- On_Close_Other_Editors --
