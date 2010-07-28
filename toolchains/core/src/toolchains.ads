@@ -72,6 +72,10 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Toolchains is
 
+   --  ??? Should get rid of all these hard coded values and replace them
+   --  by an XML file.
+   --  Also, missing some toolchains, e.g. dotnet
+
    Tool_AAMP                    : aliased constant String := "aamp";
    Tool_E500V2_WRS_VXWORKS      : aliased constant String :=
      "e500v2-wrs-vxworks";
