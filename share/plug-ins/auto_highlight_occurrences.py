@@ -252,7 +252,13 @@ def re_highlight():
 
 def on_location_changed(hook, file, line, column):
     """ Called when the current location changes """
-    re_highlight()
+    global current_highlighter
+    try:
+        re_highlight()
+    except:
+        if current_highlighter:
+            current_highlighter.destroy()
+            current_highlighter = None
 
 def remove_all_messages():
     global current_highlighter
