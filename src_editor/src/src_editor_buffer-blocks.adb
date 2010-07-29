@@ -81,7 +81,7 @@ package body Src_Editor_Buffer.Blocks is
                Last_Line         => Line_End,
                Name              => Current.Name,
                Block_Type        => Current.Category,
-               GC                => null);
+               Color             => Gdk.Color.Null_Color);
 
             for J in Line_Start + 1 .. Line_End loop
                if Buffer.Editable_Lines (J).Block = null then

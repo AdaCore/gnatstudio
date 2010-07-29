@@ -35,7 +35,7 @@ with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Gdk.GC;                    use Gdk.GC;
+with Gdk.Color;
 with Glib;                      use Glib;
 with Gtk;
 with Gtk.Main;
@@ -747,11 +747,11 @@ package Src_Editor_Buffer is
    --  corresponding to Id.
    --  See Src_Editor_Box.Remove_Line_Highlighting.
 
-   function Get_Highlight_GC
+   function Get_Highlight_Color
      (Editor  : access Source_Buffer_Record;
       Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk_GC;
-   pragma Inline (Get_Highlight_GC);
+      Context : Highlight_Location) return Gdk.Color.Gdk_Color;
+   pragma Inline (Get_Highlight_Color);
    --  Return the current highlighting for Line, or null if no highlighting
    --  is set.
 
@@ -778,7 +778,7 @@ package Src_Editor_Buffer is
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
       --  Indicates the type of the block, if Indentation_Level /= 0
 
-      GC                : Gdk_GC := null;
+      Color             : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       --  The color to use when highlighting this block
    end record;
 
@@ -1141,7 +1141,8 @@ private
      (Boolean_Array, Boolean_Array_Access);
 
    New_Block : constant Block_Record :=
-     (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown, null);
+     (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
+      Gdk.Color.Null_Color);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;

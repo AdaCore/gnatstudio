@@ -234,22 +234,21 @@ package body Src_Editor_Module.Line_Highlighting is
       return Module_Id.Categories'Last;
    end Lookup_Category;
 
-   ------------
-   -- Get_GC --
-   ------------
+   ---------------
+   -- Get_Color --
+   ---------------
 
-   function Get_GC (Index : Natural) return Gdk_GC is
+   function Get_Color (Index : Natural) return Gdk_Color is
       Module_Id : constant Source_Editor_Module :=
                     Source_Editor_Module (Src_Editor_Module_Id);
 
-      use type Gdk_GC;
    begin
       if Index > 0 and then Index <= Module_Id.Categories'Last then
-         return Get_Background_GC (Module_Id.Categories (Index).Style);
+         return Get_Background_Color (Module_Id.Categories (Index).Style);
       else
-         return null;
+         return Null_Color;
       end if;
-   end Get_GC;
+   end Get_Color;
 
    --------------
    -- Get_Name --

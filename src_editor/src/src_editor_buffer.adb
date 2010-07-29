@@ -5184,28 +5184,28 @@ package body Src_Editor_Buffer is
       Line_Highlights_Changed (Editor);
    end Remove_Line_Highlighting;
 
-   ----------------------
-   -- Get_Highlight_GC --
-   ----------------------
+   -------------------------
+   -- Get_Highlight_Color --
+   -------------------------
 
-   function Get_Highlight_GC
+   function Get_Highlight_Color
      (Editor  : access Source_Buffer_Record;
       Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk_GC is
+      Context : Highlight_Location) return Gdk_Color is
    begin
       if Line = 0 then
-         return null;
+         return Null_Color;
       end if;
 
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
         and then Editor.Line_Data (Line).Highlight_In (Context)
       then
-         return Get_GC (Editor.Line_Data (Line).Highlight_Category);
+         return Get_Color (Editor.Line_Data (Line).Highlight_Category);
       end if;
 
-      return null;
-   end Get_Highlight_GC;
+      return Null_Color;
+   end Get_Highlight_Color;
 
    ---------------
    -- Get_Block --
@@ -6473,7 +6473,7 @@ package body Src_Editor_Buffer is
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record
    is
       Empty_Block : constant Block_Record :=
-                      (0, 0, 0, 0, 0, No_Symbol, Language.Cat_Unknown, null);
+        (0, 0, 0, 0, 0, No_Symbol, Language.Cat_Unknown, Null_Color);
       L           : Editable_Line_Type;
       New_L       : Editable_Line_Type;
       Block       : Block_Record;

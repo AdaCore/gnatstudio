@@ -22,7 +22,6 @@
 --  many functionalities related to source code editing.
 --  </description>
 
-with Gdk.GC;
 with Gdk.Color;
 with Gdk.Event;
 with Gdk.Pixmap;
@@ -177,10 +176,8 @@ private
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 
-      Side_Column_GC      : Gdk.GC.Gdk_GC;
-      Side_Background_GC  : Gdk.GC.Gdk_GC;
-      Default_GC          : Gdk.GC.Gdk_GC;
-      Current_Line_GC     : Gdk.GC.Gdk_GC;
+      Current_Line_Color  : Gdk.Color.Gdk_Color;
+
       Highlight_Current   : Boolean := False;
       Highlight_As_Line   : Boolean := False;
 
@@ -207,7 +204,8 @@ private
 
       Width_Of_256_Chars  : Gint;
 
-      Current_Block_GC    : Gdk.GC.Gdk_GC;
+      Current_Block_Color : Gdk.Color.Gdk_Color;
+
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted
 
@@ -242,8 +240,9 @@ private
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
 
-      Background_Color     : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      --  The editor background color
+      Background_Color       : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Background_Color_Other : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      --  The editor background color and its ligthened/darkened version
 
       Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       --  The editor text color

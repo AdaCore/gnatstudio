@@ -20,8 +20,10 @@
 --  This package handles the customizable information in the buffer,
 --  such as information added to the sides of lines, or VCS information.
 
+with Gdk.Color;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
 with Gdk.Pixmap;
+
 with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Widget;    use Gtk.Widget;
 
@@ -86,7 +88,7 @@ package Src_Editor_Buffer.Line_Information is
       Top_Line    : Buffer_Line_Type;
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
-      GC          : Gdk.GC.Gdk_GC;
+      Color       : Gdk.Color.Gdk_Color;
       Layout      : Pango_Layout;
       Drawable    : Gdk.Pixmap.Gdk_Pixmap);
    --  Draw side info from Top_Line to Bottom_Line on Drawable.

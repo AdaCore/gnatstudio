@@ -22,11 +22,12 @@ with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
+with Cairo;                      use Cairo;
+
 with Gdk;                        use Gdk;
-with Gdk.Drawable;               use Gdk.Drawable;
+with Gdk.Cairo;                  use Gdk.Cairo;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.GC;                     use Gdk.GC;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk.Pixmap;                 use Gdk.Pixmap;
@@ -171,12 +172,6 @@ package body Src_Editor_View is
    function Line_Highlight_Redraw (User : Source_View) return Boolean;
    --  Redraw the source view after a change in highlights
 
-   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
-   --  This procedure is invoked when the Source_View widget is mapped.
-   --  It performs various operations that can not be done before the widget
-   --  is mapped, such as creating GCs associated to the left border window
-   --  for instance.
-
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
@@ -292,6 +287,11 @@ package body Src_Editor_View is
 
    procedure Register_Idle_Column_Redraw (View : Source_View);
    --  Register an idle redrawing of the side columns
+
+   procedure Invalidate_Side_Column_Cache
+     (View : access Source_View_Record'Class);
+   pragma Inline (Invalidate_Side_Column_Cache);
+   --  Factorizes code
 
    -------------------
    -- As_Is_Enabled --
@@ -439,18 +439,7 @@ package body Src_Editor_View is
    begin
       View.Area := null;
 
-      if View.Side_Column_GC /= null then
-         Unref (View.Side_Column_GC);
-         Unref (View.Side_Background_GC);
-         Unref (View.Default_GC);
-         Unref (View.Current_Line_GC);
-         Unref (View.Current_Block_GC);
-      end if;
-
-      if View.Side_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (View.Side_Column_Buffer);
-         View.Side_Column_Buffer := null;
-      end if;
+      Invalidate_Side_Column_Cache (View);
 
       if View.Speed_Column_Buffer /= null then
          Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
@@ -652,10 +641,7 @@ package body Src_Editor_View is
 
       User.Buffer_Top_Line := 0;
 
-      if User.Side_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (User.Side_Column_Buffer);
-         User.Side_Column_Buffer := null;
-      end if;
+      Invalidate_Side_Column_Cache (User);
 
       Register_Idle_Column_Redraw (User);
 
@@ -676,10 +662,7 @@ package body Src_Editor_View is
    begin
       User.Side_Columns_Up_To_Date := False;
 
-      if User.Side_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (User.Side_Column_Buffer);
-         User.Side_Column_Buffer := null;
-      end if;
+      Invalidate_Side_Column_Cache (User);
 
       User.Buffer_Top_Line := 0;
 
@@ -695,10 +678,7 @@ package body Src_Editor_View is
 
    function Idle_Column_Redraw (View : Source_View) return Boolean is
    begin
-      if View.Side_Column_Buffer /= null then
-         Gdk.Pixmap.Unref (View.Side_Column_Buffer);
-         View.Side_Column_Buffer := null;
-      end if;
+      Invalidate_Side_Column_Cache (View);
 
       if View.Speed_Column_Buffer /= null then
          Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
@@ -967,7 +947,8 @@ package body Src_Editor_View is
          Bottom_Line      : Buffer_Line_Type;
          Top_In_Buffer    : Gint;
          Bottom_In_Buffer : Gint;
-         GC               : Gdk.GC.Gdk_GC;
+         Color            : Gdk_Color;
+         Cr               : Cairo_Context;
 
          procedure Draw_Block (B : in out Block_Record);
          --  Draw block B at line L
@@ -1040,28 +1021,31 @@ package body Src_Editor_View is
 
             Block_End_Y := Y + Height;
 
+            Set_Source_Color (Cr, View.Current_Block_Color);
+
             if Block_End_Y > Rect.Height then
                Block_End_Y := Rect.Height;
             else
-               Draw_Line
-                 (Window,
-                  View.Current_Block_GC,
-                  X, Block_End_Y, X + Bracket_Length, Block_End_Y);
+               Move_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
+               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
             end if;
 
-            Draw_Line
-              (Window, View.Current_Block_GC,
-               X, Block_Begin_Y, X, Block_End_Y);
+            Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
+            Line_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
 
             if Block_Begin_Y /= 0 then
-               Draw_Line
-                 (Window, View.Current_Block_GC,
-                  X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
+               Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
+               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
             end if;
+
+            Stroke (Cr);
          end Draw_Block;
 
       begin
          Get_Visible_Rect (View, Rect);
+         Cr := Create (Window);
+         Set_Line_Width (Cr, 1.0);
+         Set_Antialias (Cr, Cairo_Antialias_None);
 
          Buffer_To_Window_Coords
            (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
@@ -1086,20 +1070,21 @@ package body Src_Editor_View is
          Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
          for Line in Top_Line .. Bottom_Line loop
-            GC := Get_Highlight_GC (Buffer, Line, Context => Highlight_Editor);
+            Color := Get_Highlight_Color
+              (Buffer, Line, Context => Highlight_Editor);
 
-            if GC /= null then
+            if Color /= Null_Color then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
                Buffer_To_Window_Coords
                  (View, Text_Window_Text,
                   Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
-               Draw_Rectangle
-                 (Window,
-                  GC,
-                  True,
-                  Margin, Buffer_Line_Y,
-                  Rect.Width, Line_Height);
+               Set_Source_Color (Cr, Color);
+               Cairo.Rectangle
+                 (Cr,
+                  Gdouble (Margin), Gdouble (Buffer_Line_Y),
+                  Gdouble (Rect.Width), Gdouble (Line_Height));
+               Cairo.Fill (Cr);
             end if;
 
             Forward_Line (Iter, Success);
@@ -1116,15 +1101,24 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
+            Set_Source_Color (Cr, View.Current_Line_Color);
+
             if View.Highlight_As_Line then
-               Draw_Rectangle
-                 (Window, View.Current_Line_GC, True, Margin,
-                  Buffer_Line_Y + Line_Height, Rect.Width, 1);
+               Move_To (Cr,
+                        Gdouble (Margin),
+                        Gdouble (Buffer_Line_Y + Line_Height));
+               Rel_Line_To (Cr, Gdouble (Rect.Width), 0.0);
+               Stroke (Cr);
             else
-               Draw_Rectangle
-                 (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
-                  Rect.Width, Line_Height);
+               Cairo.Rectangle
+                 (Cr,
+                  Gdouble (Margin),
+                  Gdouble (Buffer_Line_Y),
+                  Gdouble (Rect.Width),
+                  Gdouble (Line_Height));
+               Cairo.Fill (Cr);
             end if;
+
          end if;
 
          --  Highlight the current block
@@ -1142,9 +1136,14 @@ package body Src_Editor_View is
 
          if Column > 0 then
             X := (Column * View.Width_Of_256_Chars) / 256 - Rect.X + Margin;
-            Draw_Line
-              (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
+
+            Set_Source_Color (Cr, View.Background_Color_Other);
+            Move_To (Cr, Gdouble (X), Gdouble (Y));
+            Rel_Line_To (Cr, 0.0, Gdouble (Rect.Height));
+            Stroke (Cr);
          end if;
+
+         Destroy (Cr);
       end Highlight_Text;
 
    begin  -- Expose_Event_Cb
@@ -1217,58 +1216,6 @@ package body Src_Editor_View is
          Trace (Exception_Handle, E);
          return False;
    end Focus_In_Event_Cb;
-
-   ------------
-   -- Map_Cb --
-   ------------
-
-   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class) is
-      Color   : Gdk_Color;
-      View    : constant Source_View := Source_View (Widget);
-   begin
-      --  ??? Here we are creating GCs and allocating colors for every instance
-      --  of a text view, maybe this could be shared somewhere.
-
-      --  Now that the Source_View is mapped, we can create the Graphic
-      --  Context used for writing line numbers.
-      Gdk_New
-        (View.Side_Column_GC,
-         Get_Window (View, Text_Window_Left));
-      Gdk_New
-        (View.Side_Background_GC,
-         Get_Window (View, Text_Window_Left));
-
-      Gdk_New
-        (View.Current_Line_GC,
-         Get_Window (View, Text_Window_Text));
-      Color := Current_Line_Color.Get_Pref;
-      Set_Foreground (View.Current_Line_GC, Color);
-      View.Highlight_Current :=
-        not Equal (Color, White (Get_Default_Colormap));
-
-      Gdk_New
-        (View.Current_Block_GC,
-         Get_Window (View, Text_Window_Text));
-      Color := Current_Block_Color.Get_Pref;
-      Set_Foreground (View.Current_Block_GC, Color);
-      View.Highlight_Blocks := Block_Highlighting.Get_Pref;
-
-      Gdk_New
-        (View.Default_GC,
-         Get_Window (View, Text_Window_Text));
-
-      Set_Foreground (View.Side_Column_GC, View.Text_Color);
-
-      --  We'll use a slightly darker color for the side area with line
-      --  numbers
-
-      Set_Foreground (View.Side_Background_GC,
-                      Darken_Or_Lighten (View.Background_Color));
-      Set_Foreground (View.Default_GC, View.Text_Color);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Map_Cb;
 
    ----------------
    -- On_Destroy --
@@ -1372,10 +1319,6 @@ package body Src_Editor_View is
       Widget_Callback.Connect
         (View, Signal_Realize,
          Marsh => Widget_Callback.To_Marshaller (Realize_Cb'Access),
-         After => True);
-      Widget_Callback.Connect
-        (View, Signal_Map,
-         Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
          After => True);
       Return_Callback.Connect
         (View, Signal_Focus_In_Event,
@@ -1601,16 +1544,8 @@ package body Src_Editor_View is
       --  and therefore the Current_Line_GC might not be initialized at this
       --  point.
 
-      if Source.Current_Line_GC /= null then
-         Color := Current_Line_Color.Get_Pref;
-         Set_Foreground (Source.Current_Line_GC, Color);
-         Source.Highlight_Current :=
-           not Equal (Color, White (Get_Default_Colormap));
-
-         Color := Current_Block_Color.Get_Pref;
-         Set_Foreground (Source.Current_Block_GC, Color);
-         Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
-      end if;
+      Source.Current_Block_Color := Current_Block_Color.Get_Pref;
+      Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
 
       Source.Highlight_As_Line := Current_Line_Thin.Get_Pref;
 
@@ -1644,6 +1579,7 @@ package body Src_Editor_View is
 
       if Color /= Source.Background_Color then
          Source.Background_Color := Color;
+         Source.Background_Color_Other := Darken_Or_Lighten (Color);
          Modify_Base (Source, State_Normal, Color);
       end if;
 
@@ -1653,6 +1589,10 @@ package body Src_Editor_View is
          Source.Text_Color := Color;
          Modify_Text (Source, State_Normal, Color);
       end if;
+
+      Source.Current_Line_Color := Current_Line_Color.Get_Pref;
+      Source.Highlight_Current :=
+        not Equal (Source.Current_Line_Color, White (Get_Default_Colormap));
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -2234,6 +2174,10 @@ package body Src_Editor_View is
    -- Redraw_Columns --
    --------------------
 
+   --------------------
+   -- Redraw_Columns --
+   --------------------
+
    procedure Redraw_Columns (View : access Source_View_Record'Class) is
       Left_Window : Gdk.Window.Gdk_Window;
 
@@ -2244,6 +2188,7 @@ package body Src_Editor_View is
                       Source_Buffer (Get_Buffer (View));
 
       Total_Width : Gint;
+      Cr          : Cairo_Context;
 
    begin
       Total_Width := Gint (Get_Total_Column_Width (Src_Buffer));
@@ -2259,10 +2204,7 @@ package body Src_Editor_View is
          Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
 
          --  Force the redraw
-         if View.Side_Column_Buffer /= null then
-            Gdk.Pixmap.Unref (View.Side_Column_Buffer);
-            View.Side_Column_Buffer := null;
-         end if;
+         Invalidate_Side_Column_Cache (View);
       end if;
 
       --  Create the graphical elements
@@ -2279,22 +2221,15 @@ package body Src_Editor_View is
       then
          --  If the cache corresponds to the lines, redraw it
 
-         Draw_Pixmap
-           (Drawable => Left_Window,
-            Src      => View.Side_Column_Buffer,
-            GC       => View.Side_Column_GC,
-            Xsrc     => 0,
-            Ysrc     => 0,
-            Xdest    => 0,
-            Ydest    => 0);
+         Cr := Create (Left_Window);
+         Set_Source_Pixmap (Cr, View.Side_Column_Buffer, 0.0, 0.0);
+         Paint (Cr);
+         Destroy (Cr);
 
       else
          --  The lines have changed or the cache is not created: create it
 
-         if View.Side_Column_Buffer /= null then
-            Gdk.Pixmap.Unref (View.Side_Column_Buffer);
-            View.Side_Column_Buffer := null;
-         end if;
+         Invalidate_Side_Column_Cache (View);
 
          View.Buffer_Top_Line    := View.Top_Line;
          View.Buffer_Bottom_Line := View.Bottom_Line;
@@ -2305,24 +2240,24 @@ package body Src_Editor_View is
          Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
          Gdk_New (View.Side_Column_Buffer, Left_Window, Total_Width, Height);
-         Draw_Rectangle
-           (View.Side_Column_Buffer,
-            View.Side_Background_GC,
-            True, X, Y, Total_Width, Height);
+
+         Cr := Create (View.Side_Column_Buffer);
+         Set_Source_Color (Cr, View.Background_Color_Other);
+         Cairo.Rectangle
+           (Cr,  Gdouble (X), Gdouble (Y),
+            Gdouble (Total_Width), Gdouble (Height));
+         Cairo.Fill (Cr);
+         Destroy (Cr);
 
          Draw_Line_Info
            (Src_Buffer, View.Top_Line, View.Bottom_Line,
-            Gtk_Text_View (View), View.Side_Column_GC,
+            Gtk_Text_View (View), View.Text_Color,
             Layout, View.Side_Column_Buffer);
 
-         Draw_Pixmap
-           (Drawable => Left_Window,
-            Src      => View.Side_Column_Buffer,
-            GC       => View.Side_Column_GC,
-            Xsrc     => 0,
-            Ysrc     => 0,
-            Xdest    => 0,
-            Ydest    => 0);
+         Cr := Create (Left_Window);
+         Set_Source_Pixmap (Cr, View.Side_Column_Buffer, 0.0, 0.0);
+         Paint (Cr);
+         Destroy (Cr);
 
          Unref (Layout);
       end if;
@@ -2336,7 +2271,7 @@ package body Src_Editor_View is
       Right_Window : Gdk.Window.Gdk_Window;
 
       X, Y, Width, Height, Depth : Gint;
-      GC                         : Gdk.GC.Gdk_GC;
+      Color        : Gdk_Color;
 
       Src_Buffer   : constant Source_Buffer :=
                        Source_Buffer (Get_Buffer (View));
@@ -2345,6 +2280,7 @@ package body Src_Editor_View is
       Total_Lines  : Gint;
 
       Info_Exists  : Boolean := False;
+      Cr           : Cairo_Context;
 
    begin
       if View.Area = null
@@ -2370,10 +2306,14 @@ package body Src_Editor_View is
             Speed_Column_Width,
             Height);
 
-         Draw_Rectangle
-           (View.Speed_Column_Buffer,
-            View.Side_Background_GC,
-            True, X, Y, Speed_Column_Width, Height);
+         Cr := Create (View.Speed_Column_Buffer);
+         Set_Antialias (Cr, Cairo_Antialias_None);
+
+         Set_Source_Color (Cr, View.Background_Color_Other);
+         Cairo.Rectangle
+           (Cr, Gdouble (X), Gdouble (Y),
+            Gdouble (Speed_Column_Width), Gdouble (Height));
+         Cairo.Fill (Cr);
 
          Line_Height := Height / Total_Lines + 1;
 
@@ -2386,21 +2326,23 @@ package body Src_Editor_View is
          Info_Exists := False;
 
          for J in 1 .. Total_Lines loop
-            GC := Get_Highlight_GC
+            Color := Get_Highlight_Color
               (Src_Buffer, Buffer_Line_Type (J),
                Context => Highlight_Speedbar);
 
-            if GC /= null then
-               Draw_Rectangle
-                 (View.Speed_Column_Buffer,
-                  GC,
-                  True,
-                  0, (Height * J) / Total_Lines,
-                  Speed_Column_Width, Line_Height);
+            if Color /= Null_Color then
+               Set_Source_Color (Cr, Color);
+               Cairo.Rectangle
+                 (Cr,
+                  0.0, Gdouble ((Height * J) / Total_Lines),
+                  Gdouble (Speed_Column_Width), Gdouble (Line_Height));
+               Cairo.Fill (Cr);
 
                Info_Exists := True;
             end if;
          end loop;
+
+         Destroy (Cr);
 
          if Info_Exists then
             if View.Speed_Column_Hide_Registered then
@@ -2425,29 +2367,25 @@ package body Src_Editor_View is
          end if;
       end if;
 
-      Draw_Pixmap
-        (Drawable => Right_Window,
-         Src      => View.Speed_Column_Buffer,
-         GC       => View.Side_Column_GC,
-         Xsrc     => 0,
-         Ysrc     => 0,
-         Xdest    => 0,
-         Ydest    => 0);
+      Cr := Create (Right_Window);
+      Set_Source_Pixmap (Cr, View.Speed_Column_Buffer, 0.0, 0.0);
+      Paint (Cr);
 
       if Width = 1 then
          return;
       end if;
 
-      Draw_Rectangle
-        (Drawable => Right_Window,
-         GC       => View.Current_Block_GC,
-         Filled   => False,
-         X        => 0,
-         Y        => (Height * Gint (View.Top_Line)) / Total_Lines,
-         Width    => Speed_Column_Width - 1,
-         Height   =>
-           (Gint (View.Bottom_Line - View.Top_Line) * Height)
-         / Total_Lines);
+      Set_Source_Rgba (Cr, 0.0, 0.0, 0.0, 0.2);
+      Cairo.Rectangle
+        (Cr,
+         0.0,
+         Gdouble ((Height * Gint (View.Top_Line)) / Total_Lines),
+         Gdouble (Speed_Column_Width),
+         Gdouble ((Gint (View.Bottom_Line - View.Top_Line) * Height)
+           / Total_Lines));
+      Cairo.Fill (Cr);
+
+      Destroy (Cr);
    end Redraw_Speed_Column;
 
    -----------------------------
@@ -2562,5 +2500,18 @@ package body Src_Editor_View is
    begin
       return In_Completion (Source_Buffer (Get_Buffer (View)));
    end In_Completion;
+
+   ----------------------------------
+   -- Invalidate_Side_Column_Cache --
+   ----------------------------------
+
+   procedure Invalidate_Side_Column_Cache
+     (View : access Source_View_Record'Class) is
+   begin
+      if View.Side_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+         View.Side_Column_Buffer := null;
+      end if;
+   end Invalidate_Side_Column_Cache;
 
 end Src_Editor_View;

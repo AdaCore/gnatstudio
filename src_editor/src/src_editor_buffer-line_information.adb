@@ -19,9 +19,11 @@
 
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
+with Cairo;                    use Cairo;
+
 with Gdk;                      use Gdk;
+with Gdk.Cairo;                use Gdk.Cairo;
 with Gdk.Color;                use Gdk.Color;
-with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Pixmap;               use Gdk.Pixmap;
 
 with Glib.Object;              use Glib.Object;
@@ -32,6 +34,8 @@ with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
+
+with Pango.Cairo;              use Pango.Cairo;
 with Pango.Enums;              use Pango.Enums;
 
 with Commands.Editor;          use Commands.Editor;
@@ -904,7 +908,7 @@ package body Src_Editor_Buffer.Line_Information is
       Top_Line    : Buffer_Line_Type;
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
-      GC          : Gdk.GC.Gdk_GC;
+      Color       : Gdk_Color;
       Layout      : Pango_Layout;
       Drawable    : Gdk.Pixmap.Gdk_Pixmap)
    is
@@ -917,6 +921,7 @@ package body Src_Editor_Buffer.Line_Information is
       Dummy_Gint      : Gint;
       Dummy_Boolean   : Boolean;
       Line_Info       : Line_Info_Width;
+      Cr              : Cairo_Context;
 
       Line_Char_Width : constant Gint := Line_Number_Character_Width;
 
@@ -956,12 +961,10 @@ package body Src_Editor_Buffer.Line_Information is
          Set_Markup (Layout, Editable_Line'Img);
          Get_Pixel_Size (Layout, Width, Height);
 
-         Draw_Layout
-           (Drawable => Drawable,
-            GC       => GC,
-            X        => Gint (Buffer.Line_Numbers_Width) - Width,
-            Y        => Y_Pix_In_Window,
-            Layout   => Layout);
+         Move_To (Cr,
+                  Gdouble (Gint (Buffer.Line_Numbers_Width) - Width),
+                  Gdouble (Y_Pix_In_Window));
+         Show_Layout (Cr, Layout);
       end Draw_Line_Info;
 
       ---------------
@@ -976,32 +979,31 @@ package body Src_Editor_Buffer.Line_Information is
          if Action.Text /= null then
             Set_Markup (Layout, Action.Text.all);
 
-            Draw_Layout
-              (Drawable => Drawable,
-               GC       => GC,
-               X        => Starting_X,
-               Y        => Y_Pix_In_Window,
-               Layout   => Layout);
+            Move_To (Cr,
+                     Gdouble (Starting_X),
+                     Gdouble (Y_Pix_In_Window));
+            Show_Layout (Cr, Layout);
          end if;
 
          if Action.Image /= Null_Pixbuf then
-            Render_To_Drawable
-              (Pixbuf   => Action.Image,
-               Drawable => Drawable,
-               GC       => GC,
-               Src_X    => 0,
-               Src_Y    => 0,
-               Dest_X   => Starting_X,
-               Dest_Y   => Y_Pix_In_Window + (Line_Height -
-                   Get_Height (Action.Image)) / 2,
-               Width    => -1,
-               Height   => -1);
+            Save (Cr);
+            Translate
+              (Cr,
+               Gdouble (Starting_X),
+               Gdouble (Y_Pix_In_Window + (Line_Height -
+                   Get_Height (Action.Image)) / 2));
+            Set_Source_Pixbuf (Cr, Action.Image, 0.0, 0.0);
+            Paint (Cr);
+            Restore (Cr);
          end if;
       end Draw_Info;
 
    begin
       Current_Line := Top_Line;
       Get_Iter_At_Line (Buffer, Iter, Gint (Current_Line - 1));
+
+      Cr := Create (Drawable);
+      Set_Source_Color (Cr, Color);
 
       Drawing_Loop :
       while Current_Line <= Bottom_Line loop
@@ -1044,6 +1046,8 @@ package body Src_Editor_Buffer.Line_Information is
 
          Current_Line := Current_Line + 1;
       end loop Drawing_Loop;
+
+      Destroy (Cr);
    end Draw_Line_Info;
 
    ----------------
