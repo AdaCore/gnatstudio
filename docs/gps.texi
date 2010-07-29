@@ -12148,6 +12148,10 @@ can make an action depend on a named filter:
   Matches when clicking on a file node in the Project View
   @item Explorer_Entity_Node
   Matches when clicking on an entity node in the Project View
+  @item File
+  Matches when the current context contains a file (for instance the focus is
+   on a source editor, or the focus is on the Project view and the currently
+   selected line contains file information).
   @end table
 
 @item language   (optional)
