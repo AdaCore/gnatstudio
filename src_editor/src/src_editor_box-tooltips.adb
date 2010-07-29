@@ -20,17 +20,19 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
+with Cairo; use Cairo;
+
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk, Gdk.Color;
-with Gdk.GC;                    use Gdk.GC;
+with Gdk.Cairo;                 use Gdk.Cairo;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Drawable;              use Gdk.Drawable;
 with Gdk.Types;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Window;                use Gdk.Window;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
+with Pango.Cairo;               use Pango.Cairo;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
@@ -148,10 +150,12 @@ package body Src_Editor_Box.Tooltips is
       Pixmap : in out Gdk.Pixmap.Gdk_Pixmap)
    is
       Layout : Pango_Layout;
-      GC : Gdk.Gdk_GC;
+
       Width, Height : Gint;
       Font          : constant Pango_Font_Description :=
         Default_Font.Get_Pref_Font;
+
+      Cr : Cairo_Context;
    begin
       Layout := Create_Pango_Layout (Widget, "");
       Set_Font_Description (Layout, Font);
@@ -162,19 +166,23 @@ package body Src_Editor_Box.Tooltips is
       Width := Width + 6;
       Height := Height + 4;
 
-      Gdk_New (GC, Get_Window (Widget));
-      Set_Foreground (GC, Tooltip_Color.Get_Pref);
-
       Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
-      Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
 
-      Set_Foreground (GC, Black (Get_Default_Colormap));
-      Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
+      Cr := Create (Pixmap);
+      Set_Source_Color (Cr, Tooltip_Color.Get_Pref);
 
-      Draw_Layout (Pixmap, GC, 2, 0, Layout);
+      Cairo.Rectangle
+        (Cr, 0.0, 0.0, Gdouble (Width - 1), Gdouble (Height - 1));
+      Fill_Preserve (Cr);
+
+      Set_Source_Color (Cr, Black (Get_Default_Colormap));
+      Stroke (Cr);
+
+      Move_To (Cr, 2.0, 0.0);
+      Show_Layout (Cr, Layout);
+
       Unref (Layout);
-
-      Unref (GC);
+      Destroy (Cr);
    end Draw_Content;
 
    ----------

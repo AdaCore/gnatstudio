@@ -29,7 +29,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.GC;                     use Gdk.GC;
 with Gdk.Main;                   use Gdk.Main;
 with Gdk.Pixbuf;                 use Gdk.Pixbuf;
 with Gdk.Types;                  use Gdk.Types;
@@ -788,11 +787,6 @@ package body Src_Editor_Box is
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
       Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
-
-      if Box.Default_GC /= null then
-         Unref (Box.Bg_GC);
-         Unref (Box.Default_GC);
-      end if;
 
       Delete (Box.Source_View);
 

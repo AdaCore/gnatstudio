@@ -502,8 +502,6 @@ private
 
       Overwrite            : Boolean := False;
 
-      Default_GC, Bg_GC    : Gdk.Gdk_GC;
-
       Cursor_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "cursor_position_changed" in
       --  the Source_Buffer.
