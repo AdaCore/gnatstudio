@@ -2705,6 +2705,7 @@ package body Src_Contexts is
    is
       Index_1    : Integer;
       Index_2    : Integer;
+      First_Char : Gunichar;
    begin
       if S = "" then
          return Lower;
@@ -2712,8 +2713,14 @@ package body Src_Contexts is
 
       Index_1 := UTF8_Next_Char (S, S'First);
 
+      First_Char := UTF8_Get_Char (S (S'First .. Index_1 - 1));
+
+      if not Is_Alpha (First_Char) then
+         return Unchanged;
+      end if;
+
       --  First character is lower: this string is Lower
-      if Is_Lower (UTF8_Get_Char (S (S'First .. Index_1 - 1))) then
+      if Is_Lower (First_Char) then
          return Lower;
       end if;
 
