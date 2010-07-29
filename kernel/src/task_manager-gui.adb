@@ -17,8 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;                use Gdk.Color;
-with Gdk.Drawable;             use Gdk.Drawable;
+with Cairo; use Cairo;
+
+with Pango.Cairo; use Pango.Cairo;
+
+with Gdk.Cairo;                use Gdk.Cairo;
 with Gdk.Event;                use Gdk.Event;
 
 with Glib.Object;              use Glib.Object;
@@ -855,9 +858,6 @@ package body Task_Manager.GUI is
       --  If the graphics have been initialized, free them now
 
       if GUI.Progress_Template /= null then
-         Unref (GUI.Progress_Background_GC);
-         Unref (GUI.Progress_Foreground_GC);
-         Unref (GUI.Progress_Text_GC);
          Unref (GUI.Close_Button_Pixbuf);
          Unref (GUI.Pause_Button_Pixbuf);
          Unref (GUI.Play_Button_Pixbuf);
@@ -881,8 +881,6 @@ package body Task_Manager.GUI is
    is
       Iface                       : constant Gtk_Widget :=
                                       GUI.Reference_Widget;
-      Color                       : Gdk_Color;
-      Success                     : Boolean;
       Layout_Width, Layout_Height : Gint;
       use Gdk;
    begin
@@ -893,31 +891,9 @@ package body Task_Manager.GUI is
          return;
       end if;
 
-      Gdk_New (GUI.Progress_Background_GC, Get_Window (Iface));
-      Gdk_New (GUI.Progress_Foreground_GC, Get_Window (Iface));
-      Gdk_New (GUI.Progress_Text_GC, Get_Window (Iface));
-      Set_Foreground (GUI.Progress_Text_GC,
-                      Black (Get_Default_Colormap));
-
-      Color := Parse ("#cccccc");
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-      if Success then
-         Set_Foreground (GUI.Progress_Background_GC, Color);
-      else
-         Set_Foreground
-           (GUI.Progress_Background_GC, Black (Get_Default_Colormap));
-      end if;
-
-      Color := Parse ("#aaaaff");
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-      if Success then
-         Set_Foreground (GUI.Progress_Foreground_GC, Color);
-      else
-         Set_Foreground
-           (GUI.Progress_Foreground_GC, White (Get_Default_Colormap));
-      end if;
+      GUI.Progress_Text_Color := Black (Get_Default_Colormap);
+      GUI.Progress_Background_Color := Parse ("#cccccc");
+      GUI.Progress_Foreground_Color := Parse ("#aaaaff");
 
       GUI.Progress_Layout := Create_Pango_Layout (Iface);
       Set_Font_Description (GUI.Progress_Layout, Default_Font.Get_Pref_Font);
@@ -1027,6 +1003,7 @@ package body Task_Manager.GUI is
    is
       Pix                         : Gdk_Pixbuf;
       Layout_Width, Layout_Height : Gint;
+      Cr : Cairo_Context;
    begin
       if GUI.Progress_Layout = null then
          --  Attempt to initialize graphics now
@@ -1038,29 +1015,31 @@ package body Task_Manager.GUI is
          end if;
       end if;
 
-      Draw_Rectangle
-        (GUI.Progress_Template,
-         GUI.Progress_Background_GC,
-         True, 0, 0,
-         GUI.Progress_Width,
-         GUI.Progress_Height);
+      Cr := Create (GUI.Progress_Template);
 
-      Draw_Rectangle
-        (GUI.Progress_Template,
-         GUI.Progress_Foreground_GC,
-         True, 0, 0,
-         Gint (Gdouble (GUI.Progress_Width) * Progress.Fraction),
-         GUI.Progress_Height);
+      Set_Source_Color (Cr, GUI.Progress_Background_Color);
+      Rectangle
+        (Cr,
+         0.0, 0.0,
+         Gdouble (GUI.Progress_Width), Gdouble (GUI.Progress_Height));
+      Cairo.Fill (Cr);
+
+      Set_Source_Color (Cr, GUI.Progress_Foreground_Color);
+      Rectangle
+        (Cr,
+         0.0, 0.0,
+         Gdouble (GUI.Progress_Width) * Progress.Fraction,
+         Gdouble (GUI.Progress_Height));
+      Cairo.Fill (Cr);
 
       Set_Text (GUI.Progress_Layout, Progress.Text);
       Get_Pixel_Size (GUI.Progress_Layout, Layout_Width, Layout_Height);
 
-      Draw_Layout
-        (Drawable => GUI.Progress_Template,
-         GC       => GUI.Progress_Text_GC,
-         X        => (GUI.Progress_Width - Layout_Width) / 2,
-         Y        => 2,
-         Layout   => GUI.Progress_Layout);
+      Set_Source_Color (Cr, GUI.Progress_Text_Color);
+      Move_To (Cr, Gdouble ((GUI.Progress_Width - Layout_Width) / 2), 2.0);
+      Show_Layout (Cr, GUI.Progress_Layout);
+
+      Destroy (Cr);
 
       Pix := Get_From_Drawable
         (Pix, GUI.Progress_Template,

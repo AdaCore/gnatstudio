@@ -21,7 +21,7 @@
 
 with Glib; use Glib;
 
-with Gdk.GC;     use Gdk.GC;
+with Gdk.Color;  use Gdk.Color;
 with Gdk.Pixmap; use Gdk.Pixmap;
 with Gtk.Image;                use Gtk.Image;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
@@ -164,9 +164,9 @@ private
       Label                  : Gtk_Label;
 
       Progress_Template      : Gdk_Pixmap;
-      Progress_Background_GC : Gdk_GC;
-      Progress_Foreground_GC : Gdk_GC;
-      Progress_Text_GC       : Gdk_GC;
+      Progress_Background_Color : Gdk_Color;
+      Progress_Foreground_Color : Gdk_Color;
+      Progress_Text_Color       : Gdk_Color;
       Progress_Width         : Gint;
       Progress_Height        : Gint;
 
