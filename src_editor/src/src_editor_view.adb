@@ -2372,6 +2372,7 @@ package body Src_Editor_View is
       Paint (Cr);
 
       if Width = 1 then
+         Destroy (Cr);
          return;
       end if;
 
