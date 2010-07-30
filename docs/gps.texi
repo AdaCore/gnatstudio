@@ -3875,7 +3875,7 @@ This contextual menu appears when you are clicking on a subprogram call that
 is a dispatching call. In such a case, there is no possibility for GPS to
 know what subprogram will actually be called at run time, since that depends
 on dynamic information. It therefore gives you a list of all entities in the
-tagged type hierarchy, and let you choose which of the declarations you want
+tagged type hierarchy, and lets you choose which of the declarations you want
 to jump to. See also the @file{methods.py} plug-in (enabled by default) which,
 given an object, lists all its primitive operations in a contextual menu so
 that you can easily jump to them. See also the contextual menu
@@ -4375,7 +4375,7 @@ appropriate scenario (@ref{The Project Properties Editor}).
 
 There is one limitation in what GPS can do with scenario variables: although
 gnatmake and gprbuild have no problem dealing with scenario variables
-those default value is not a static string (for instance a concatenation, or
+whose default value is not a static string (for instance a concatenation, or
 the value of another scenario variable), GPS will not be able to edit such
 a project graphically. Such projects will load fine in GPS though.
 
