@@ -3285,7 +3285,7 @@ is reused every time:
 @end smallexample
 
 @cindex gnuserv url
-See @url{http://www.hpl.hp.com/people/ange/gnuserv/home.html} for more
+See @url{http://www.hpl.hp.com/personal/ange/gnuserv/home.html} for more
 information.
 
 @item emacsclient
@@ -3382,7 +3382,7 @@ text currently selected. The @i{GPS clipboard}, when set, will
 override the @i{primary clipboard}.
 
 @cindex url
-See @url{http://www.freedesktop.org/standards/clipboards.txt} for more
+See @url{http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt} for more
 information.
 
 @c --------------------------------------------------------------------------
@@ -9296,9 +9296,9 @@ GPS can now handle passwords for such connections.
 @item
 Have either a Network Filesystem (i.e. NFS, SMB or equivalent) sharing the
 project files between the host and the target, or have rsync installed on
-both client and server. Note that rsync can be found at @url{http://www.samba.org/rsync/}
-for unix, and comes as part of cygwin under Windows:
-@url{http://www.cygwin.com}.
+both client and server. Note that rsync can be found at
+@url{http://www.samba.org/rsync/} for unix, and comes as part of cygwin under
+Windows: @url{http://www.cygwin.com}.
 
 @item
 Subprojects must be 'withed' by the main project using relative paths, or the
@@ -10660,7 +10660,7 @@ needs to call external tool (not distributed with GPS) such as @command{diff}
 or @command{patch}. These tools are usually found on most unix systems, and
 may not be available by default on other OSes. Under Windows, you can
 download them from one of the unix toolsets
-available, such as msys (@url{http://www.mingw.org/msys.shtml}) or
+available, such as msys (@url{http://www.mingw.org}) or
 cygwin (@url{http://www.cygwin.com}).
 
 @table @i
@@ -15971,7 +15971,7 @@ Locations.parse """%1 """ category_name
 Python is an interpreted object-oriented language, created by Guido
 Van Rossum. It is similar in its capabilities to languages such as
 Perl, Tcl or Lisp. This section is not a tutorial on python
-programming. See @url{http://www.python.org/doc/current/} to access the
+programming. See @url{http://docs.python.org/} to access the
 documentation for the current version of python.
 
 If python support has been enabled, the python shell is accessible through the
@@ -16810,8 +16810,7 @@ in the python console
 GPS is based on the Gtk+ graphical toolkit, which is available under many
 platforms and for many programming languages.
 
-You can install an third party package, downloadable from
-@url{http://www.pygtk.org}, which is a python binding to Gtk+.
+In particular, GPS comes with pygtk, a python binding to Gtk+.
 Using pygtk, you will be able to create your own dialogs and graphical
 windows using the python capabilities provided by GPS.
 
