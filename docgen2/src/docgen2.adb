@@ -3676,11 +3676,22 @@ package body Docgen2 is
    -----------------------
 
    function Get_Doc_Directory
-     (Object : Docgen_Object) return Virtual_File is
+     (Object : Docgen_Object) return Virtual_File
+   is
+      Base_Dir : Virtual_File;
    begin
-      return Create_From_Dir
-        (Get_Registry (Object.Kernel).Tree.Root_Project.Object_Dir,
-         +"doc/");
+      if Get_Registry (Object.Kernel).Tree.Root_Project.Object_Dir /=
+        No_File
+      then
+         Base_Dir :=
+           Get_Registry (Object.Kernel).Tree.Root_Project.Object_Dir;
+      else
+         Base_Dir :=
+           Get_Registry
+             (Object.Kernel).Tree.Root_Project.Project_Path.Get_Parent;
+      end if;
+
+      return Create_From_Dir (Base_Dir, +"doc/");
    end Get_Doc_Directory;
 
    ----------------------
