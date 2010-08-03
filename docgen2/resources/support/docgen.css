@@ -325,6 +325,7 @@ div.subprograms div.comment
    padding-left: 5px;
    padding-top: 0px;
    padding-bottom: 0px;
+   white-space: pre-wrap;
 }
 div.subprograms div.comment *
 {
