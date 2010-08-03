@@ -115,6 +115,7 @@ package body Docgen2 is
 
    type Command_State is
      (Analysis_Setup,
+      Update_Xrefs,
       Analyse_Files,
       Analyse_File_Constructs,
       Analysis_Tear_Down,
@@ -613,8 +614,9 @@ package body Docgen2 is
 
          --  If the cross ref is in the same file, use a simple name
          --  If in another file, then use the fully qualified name
-         if Get_Declaration_Of (E).File = Get_Declaration_Of (Entity).File
-           and then not Use_Full_Name
+         if not Use_Full_Name
+           and then Get_Declaration_Of (E).File =
+            Get_Declaration_Of (Entity).File
          then
             return Create_Xref
               (Get (Get_Name (E)).all, Get_Declaration_Of (E));
@@ -967,7 +969,9 @@ package body Docgen2 is
                               Get_Parent_Types (Entity, Recursive => True);
                begin
                   for J in Parents'Range loop
-                     E_Info.Parents.Append (Create_Xref (Parents (J)));
+                     --  Use full name, as Parents is used in the inheritance
+                     --  tree and we want fully qualified names there.
+                     E_Info.Parents.Append (Create_Xref (Parents (J), True));
                   end loop;
                end;
 
@@ -1175,7 +1179,7 @@ package body Docgen2 is
 
    begin
       case Command.State is
-         when Analysis_Setup =>
+         when Analysis_Setup | Update_Xrefs =>
             Current := 0;
          when Analyse_Files | Analyse_File_Constructs =>
             if Has_Element (Command.File_Index) then
@@ -1311,14 +1315,15 @@ package body Docgen2 is
          when Analysis_Setup =>
             --  Let's first create the destination directory with support files
             Generate_Support_Files (Docgen_Object (Command));
-            Command.State := Analyse_Files;
+            Command.State := Update_Xrefs;
             Command.File_Index := Command.Src_Files.First;
             On_Documentation_Start (Docgen_Object (Command));
 
-         when Analyse_Files =>
+         when Update_Xrefs =>
             --  Test if there are still files to analyse
             if not Has_Element (Command.File_Index) then
-               Command.State := Gen_Doc_Setup;
+               Command.File_Index := Command.Src_Files.First;
+               Command.State := Analyse_Files;
                return Execute_Again;
             end if;
 
@@ -1395,6 +1400,21 @@ package body Docgen2 is
 
                return Execute_Again;
             end if;
+
+            --  And setup for next file analysis
+            Next (Command.File_Index);
+
+         when Analyse_Files =>
+
+            --  Test if there are still files to analyse
+            if not Has_Element (Command.File_Index) then
+               Command.State := Gen_Doc_Setup;
+               return Execute_Again;
+            end if;
+
+            File := Get_Or_Create (Database, Element (Command.File_Index));
+            Lang := Get_Language_From_File
+              (Lang_Handler, Element (Command.File_Index));
 
             --  Create the new entity info structure
             File_EInfo := new Entity_Info_Record (Category => Cat_File);
@@ -2719,6 +2739,7 @@ package body Docgen2 is
                        (Parent_Tag,
                         Gen_Href (Command.Backend, Xref, True, False, False));
                   end if;
+
                   Prev_Xref := Xref;
                end loop;
 
@@ -3153,7 +3174,6 @@ package body Docgen2 is
                           (Get_System_Dir (Cmd.Kernel), Tmpl_Class_Tree_Elem);
       File_Handle   : Writable_File;
       Xref_Cursor   : Cross_Ref_List.Cursor;
-      Parent_Cursor : Cross_Ref_List.Cursor;
       EInfo         : Entity_Info;
       Xref          : Cross_Ref;
       Translation   : Translate_Set;
@@ -3246,17 +3266,7 @@ package body Docgen2 is
             Has_Parent := False;
 
             if not EInfo.Parents.Is_Empty then
-               Has_Parent := False;
-               Parent_Cursor := EInfo.Parents.First;
-
-               while Cross_Ref_List.Has_Element (Parent_Cursor) loop
-                  if Cross_Ref_List.Element (Parent_Cursor).Xref /= null then
-                     Has_Parent := True;
-                     exit;
-                  end if;
-
-                  Cross_Ref_List.Next (Parent_Cursor);
-               end loop;
+               Has_Parent := True;
             end if;
 
             --  No parent: print out the tagged type.
