@@ -3613,6 +3613,11 @@ GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("description"))</example>
      <return>A GPS.File instance</return>
      <description>Retrieves the current analysed source file. You should call this method only from a GPS.DocgenTagHandler.on_match() callback.</description>
   </shell_doc>
+  <shell_doc name="GPS.Docgen.get_doc_dir">
+     <param name="self">The Docgen instance as passed in the GPS.DocgenTagHandler callbacks</param>
+     <return>A GPS.File instance</return>
+     <description>Retrieves the directory that will contain the documentation. You should call this method only from a GPS.DocgenTagHandler.on_match() callback.</description>
+  </shell_doc>
 
   <shell_doc name="GPS.DocgenTagHandler">
      <description>This class is used to handle user-defined documentation tags. This allows custom handling of comments such as : -- &lt;summary&gt;This fn does something&lt;/summary&gt;</description>

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -262,6 +262,25 @@ package body Docgen2.Scripts is
                  (Get_Script (Data),
                   Get_Current_File (Prop.Doc_Generator)));
          end;
+
+      elsif Command = "get_doc_dir" then
+         declare
+            Inst : constant Class_Instance :=
+                     Nth_Arg
+                       (Data, 1,
+                        Get_Docgen_Class (Get_Repository (Data)),
+                        Allow_Null => True);
+            Prop : constant Docgen_Property_Access :=
+                     Docgen_Property_Access
+                       (Get_Data (Inst, Docgen_Class_Name));
+         begin
+            Set_Return_Value
+              (Data,
+               Create_File
+                 (Get_Script (Data),
+                  Get_Doc_Directory (Prop.Doc_Generator)));
+         end;
+
       end if;
    end Docgen_Handler;
 
@@ -300,6 +319,12 @@ package body Docgen2.Scripts is
          Handler       => Docgen_Handler'Access);
       Register_Command
         (Kernel, "get_current_file",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Docgen_Class,
+         Handler      => Docgen_Handler'Access);
+      Register_Command
+        (Kernel, "get_doc_dir",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Docgen_Class,
