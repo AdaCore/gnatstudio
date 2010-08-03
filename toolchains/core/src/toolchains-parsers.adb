@@ -1255,6 +1255,12 @@ package body Toolchains.Parsers is
       Name    : Name_Id;
       Toolchain_Found : Boolean := False;
    begin
+      if not Path.Is_Regular_File then
+         raise Toolchain_Exception
+           with """" & String (Path.Full_Name.all)
+           & """ is not a regular file";
+      end if;
+
       This.Manager := Manager;
       This.Tree_Data := new Project_Tree_Data;
       Prj.Initialize (This.Tree_Data);
