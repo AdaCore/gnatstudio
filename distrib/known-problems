@@ -51,6 +51,16 @@ Known Problems fixed in GPS 4.5.0
               data or loss of synchronization in the undo/redo cycle.
   Workaround: Deactivate Block Folding in the Editor section of the Preferences
 
+- J527-005: Problems detecting executable names for mains in old project syntax
+  Problem:    In some cases, GPS will display at startup messages of the form:
+                "Build facility: Could not determine executable names
+                 for the mains".
+              This might occur if the project files are specifying Main files
+              without the extension, as was tolerated in previous versions of
+              the GNAT toolchain.
+  Workaround: Make sure all Mains are specified with the extension, as in:
+                for Main use ("hello.adb");
+
 - J520-004: Launching of external Python-based build or scripts fails
   Problem:    GPS internally sets the PYTHONHOME and PYTHONPATH variables to
               point to its packaged Python libraries. This might be a problem
