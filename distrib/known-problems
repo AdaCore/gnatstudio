@@ -61,6 +61,16 @@ Known Problems fixed in GPS 4.5.0
   Workaround: Make sure all Mains are specified with the extension, as in:
                 for Main use ("hello.adb");
 
+- J525-014 Building in a project that has symbolic links
+  Problem:    When compiling in a project hierarchy that contains symbolic
+              links, GPS may fail with the following message:
+                "Could not determine the project for file: <...>
+                 Invalid context, cannot build."
+  Workaround: Change the project hierarchy so that it no longer contains
+              symbolic links, or deactivate "Fast project loading" in the
+              Project section of the preferences (although this will disable
+              some speed optimizations when loading the project).
+
 - J520-004: Launching of external Python-based build or scripts fails
   Problem:    GPS internally sets the PYTHONHOME and PYTHONPATH variables to
               point to its packaged Python libraries. This might be a problem
