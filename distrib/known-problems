@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.5.0
 
+- J804-008: Documentation generation issues with non-ascii characters
+  Problem:    If a source code contains non-ascii characters, then some display
+              issues might happen in the generated documentation.
+  Workaround: Use ascii characters.
+
 - J803-003: Documentation generation computes incomplete inheritance tree
   Problem:    The generated documentation may generate an incomplete
               inheritance tree.
