@@ -1451,8 +1451,6 @@ package body Docgen2 is
 
                declare
                   Old_Buff : GNAT.Strings.String_Access := File_Buffer;
-                  --  ??? Do we really need to translate from locale ? We
-                  --  should retrieve the default charset from GPS ...
                   N_String : constant String :=
                                Glib.Convert.Convert
                                  (Old_Buff (Old_Buff'First .. Last),
