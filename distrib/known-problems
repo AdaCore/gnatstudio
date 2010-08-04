@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- J728-003: Documentation generation issue with projects without object dir
+  Problem:    If the root project loaded by GPS does not contain an object
+              directory, then generating the documentation on it will raise an
+              exception, and no documentation is generated
+  Workaround: Define an object directory in your project file.
+
 - J623-007: Renaming bookmarks sometimes mixes them
   Problem:    If you rename a bookmark in the Bookmarks View, and the new
               name changes the sort order, then the location and names of
