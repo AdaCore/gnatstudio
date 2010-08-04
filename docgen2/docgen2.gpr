@@ -5,9 +5,16 @@ with "../vsearch/vsearch";
 
 project Docgen2 is
 
-   for Source_Dirs use ("src/");
+   for Source_Dirs use
+     ("src/", "resources/", "resources/support/", "resources/custom/");
    for Object_Dir use Shared'Object_Dir;
-   for Languages use ("Ada");
+   for Languages use ("Ada", "css", "html", "javascript");
+
+   package Naming is
+      for Implementation_Suffix ("css") use ".css";
+      for Implementation_Suffix ("html") use ".tmpl";
+      for Implementation_Suffix ("javascript") use ".js";
+   end Naming;
 
    package Builder is
       for Default_Switches ("ada") use ("-g");
