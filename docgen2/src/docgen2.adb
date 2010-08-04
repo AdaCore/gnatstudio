@@ -33,6 +33,7 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -1448,15 +1449,20 @@ package body Docgen2 is
                --  Strip CRs from file.
                Strip_CR (File_Buffer.all, Last, CR_Found);
 
-               if CR_Found then
-                  declare
-                     Old_Buff : GNAT.Strings.String_Access := File_Buffer;
-                  begin
-                     File_Buffer :=
-                       new String'(Old_Buff (Old_Buff'First .. Last));
-                     Free (Old_Buff);
-                  end;
-               end if;
+               declare
+                  Old_Buff : GNAT.Strings.String_Access := File_Buffer;
+                  --  ??? Do we really need to translate from locale ? We
+                  --  should retrieve the default charset from GPS ...
+                  N_String : constant String :=
+                               Glib.Convert.Convert
+                                 (Old_Buff (Old_Buff'First .. Last),
+                                  Get_File_Charset
+                                    (Element (Command.File_Index)),
+                                  "UTF-8");
+               begin
+                  File_Buffer := new String'(N_String);
+                  Free (Old_Buff);
+               end;
 
                   --  ??? Commented out code, because for now only Ada will be
                   --  supported
@@ -1487,7 +1493,7 @@ package body Docgen2 is
                   --  else
 
                Parse_Constructs
-                 (Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
+                 (Lang, File_Buffer.all, Constructs);
                --  end if;
 
                --  And add it to the global documentation list
