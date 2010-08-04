@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J803-003: Documentation generation computes incomplete inheritance tree
+  Problem:    The generated documentation may generate an incomplete
+              inheritance tree.
+  Workaround: Make sure that the cross-reference informations are loaded
+              automatically, and wait for them to be fully loaded before
+              generating the documentation.
+
 - J728-003: Documentation generation issue with projects without object dir
   Problem:    If the root project loaded by GPS does not contain an object
               directory, then generating the documentation on it will raise an
