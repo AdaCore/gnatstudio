@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2009, AdaCore                 --
+--                  Copyright (C) 2003-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,8 @@
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with GPS.Kernel;
+with GPS.Kernel.Preferences;
+
 with Traces;      use Traces;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
@@ -58,11 +60,13 @@ package Vdiff2_Module.Utils is
    --  Remove the highlighting on Diff block
 
    procedure Visual_Diff
-     (File1 : Virtual_File;
+     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1 : Virtual_File;
       File2 : Virtual_File;
       File3 : Virtual_File := GNATCOLL.VFS.No_File);
    function Visual_Diff
-     (File1 : Virtual_File;
+     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1 : Virtual_File;
       File2 : Virtual_File;
       File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access;
    --  Create a new visual diff
@@ -78,7 +82,8 @@ package Vdiff2_Module.Utils is
    --  Get the list of visual diff associated with the module
 
    function Visual_Patch
-     (Orig_File : GNATCOLL.VFS.Virtual_File;
+     (Mode      : GPS.Kernel.Preferences.Vdiff_Modes;
+      Orig_File : GNATCOLL.VFS.Virtual_File;
       New_File  : GNATCOLL.VFS.Virtual_File;
       Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Head_Access;

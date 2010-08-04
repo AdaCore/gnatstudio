@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -112,7 +112,7 @@ package body Vdiff2_Module.Callback is
                  Pattern_Name      => -"All files;Ada files;C/C++ files",
                  History           => Get_History (Kernel));
          begin
-            Visual_Diff (File1, File2, File3);
+            Visual_Diff (Side_By_Side, File1, File2, File3);
          end;
       end;
    exception
@@ -161,7 +161,7 @@ package body Vdiff2_Module.Callback is
             return;
          end if;
 
-         Visual_Diff (File1, File2);
+         Visual_Diff (Side_By_Side, File1, File2);
       end;
 
    exception
@@ -224,11 +224,12 @@ package body Vdiff2_Module.Callback is
 
          begin
             if File3 = GNATCOLL.VFS.No_File then
-               Visual_Diff (File1, File2);
+               Visual_Diff (Side_By_Side, File1, File2);
                return;
             end if;
 
-            Visual_Diff (File1 => File2, File2 => File1, File3 => File3);
+            Visual_Diff
+              (Side_By_Side, File1 => File2, File2 => File1, File3 => File3);
 
             declare
                Merge : constant Virtual_File :=
@@ -295,7 +296,7 @@ package body Vdiff2_Module.Callback is
             return;
          end if;
 
-         Visual_Diff (File1, File2);
+         Visual_Diff (Side_By_Side, File1, File2);
 
          declare
             Merge : constant Virtual_File :=
@@ -396,7 +397,8 @@ package body Vdiff2_Module.Callback is
             Ref_F : Virtual_File renames Get_Ref_Filename (D.New_File);
             Res   : Diff_Head_Access;
          begin
-            Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
+            Res := Visual_Patch
+              (Diff_Mode.Get_Pref, Ref_F, D.New_File, D.Diff_File, True);
 
             if Res /= null then
                Setup_Ref (D.New_File, Ref_F);
@@ -412,7 +414,8 @@ package body Vdiff2_Module.Callback is
             Ref_F : Virtual_File renames Get_Ref_Filename (D.Orig_File);
             Res   : Diff_Head_Access;
          begin
-            Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
+            Res := Visual_Patch
+              (Diff_Mode.Get_Pref, D.Orig_File, Ref_F, D.Diff_File, False);
 
             if Res /= null then
                Setup_Ref (No_File, Ref_F);
@@ -423,7 +426,8 @@ package body Vdiff2_Module.Callback is
          end;
 
       else
-         return Visual_Patch (D.Orig_File, D.New_File, D.Diff_File) /= null;
+         return Visual_Patch
+           (Diff_Mode.Get_Pref, D.Orig_File, D.New_File, D.Diff_File) /= null;
       end if;
    end Diff_Hook;
 

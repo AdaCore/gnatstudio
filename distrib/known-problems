@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J805-015: Comparing two or three files from disk in Unified mode
+  Problem:    When using the menu Tools->Compare->Two Files or Three Files
+              while the Visual Diff "Mode" preference is set to Unified, GPS
+              only shows one file.
+  Workaround: Change the "Mode" preference to "Unified" when comparing two or
+              three files from the disk.
+
 - J804-008: Documentation generation issues with non-ascii characters
   Problem:    If a source code contains non-ascii characters, then some display
               issues might happen in the generated documentation.

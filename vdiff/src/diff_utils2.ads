@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,6 +29,7 @@ with Generic_List;
 with GPS.Kernel;         use GPS.Kernel;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Editors;        use GPS.Editors;
+with GPS.Kernel.Preferences;
 
 package Diff_Utils2 is
 
@@ -92,6 +93,7 @@ package Diff_Utils2 is
       Ref_File       : T_VFile_Index := 2;
       In_Destruction : Boolean := False;
       Instances      : Instance_List_Access := null;
+      Mode           : GPS.Kernel.Preferences.Vdiff_Modes;
    end record;
    type Diff_Head_Access is access all Diff_Head;
    --  Data structure that represents a visual diff
@@ -110,7 +112,8 @@ package Diff_Utils2 is
                   Current_Node   => Diff_Chunk_List.Null_Node,
                   Ref_File       => 2,
                   In_Destruction => False,
-                  Instances      => null);
+                  Instances      => null,
+                  Mode           => GPS.Kernel.Preferences.Side_By_Side);
 
    procedure Free (Vdiff : in out Diff_Head_Access);
    --  Free the memory associated with the head of the list Link

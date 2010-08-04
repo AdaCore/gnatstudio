@@ -983,7 +983,7 @@ package body Vdiff2_Module.Utils is
       Register_Highlighting (Kernel);
 
       if Item.Files (3) = GNATCOLL.VFS.No_File then
-         if Diff_Mode.Get_Pref = Unified then
+         if Item.Mode = Unified then
             Show_Unified_Differences (Kernel, Item);
          else
             Show_Differences (Kernel, Item);
@@ -1299,7 +1299,8 @@ package body Vdiff2_Module.Utils is
    -----------------
 
    function Visual_Diff
-     (File1 : Virtual_File;
+     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1 : Virtual_File;
       File2 : Virtual_File;
       File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access
    is
@@ -1321,7 +1322,8 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Item :=
-        (List           => Result,
+        (Mode           => Mode,
+         List           => Result,
          Files          => (File1, File2, File3),
          Current_Node   => First (Result),
          Ref_File       => 2,
@@ -1336,11 +1338,13 @@ package body Vdiff2_Module.Utils is
    -----------------
 
    procedure Visual_Diff
-     (File1 : Virtual_File;
+     (Mode  : GPS.Kernel.Preferences.Vdiff_Modes;
+      File1 : Virtual_File;
       File2 : Virtual_File;
       File3 : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Dummy : constant Diff_Head_Access := Visual_Diff (File1, File2, File3);
+      Dummy : constant Diff_Head_Access :=
+        Visual_Diff (Mode, File1, File2, File3);
       pragma Unreferenced (Dummy);
    begin
       null;
@@ -1351,7 +1355,8 @@ package body Vdiff2_Module.Utils is
    ------------------
 
    function Visual_Patch
-     (Orig_File : GNATCOLL.VFS.Virtual_File;
+     (Mode      : GPS.Kernel.Preferences.Vdiff_Modes;
+      Orig_File : GNATCOLL.VFS.Virtual_File;
       New_File  : GNATCOLL.VFS.Virtual_File;
       Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Head_Access
@@ -1370,7 +1375,8 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Item :=
-        (List           => Result,
+        (Mode           => Mode,
+         List           => Result,
          Files          => (Orig_File, New_File, No_File),
          Current_Node   => First (Result),
          Ref_File       => 1,
