@@ -8805,7 +8805,9 @@ cross-reference engine gives GPS all the flexibility needed to generate
 accurate documentation.
 
 The documentation is put into a directory called @file{doc}, created
-under the object directory of the root project loaded in GPS.
+under the object directory of the root project loaded in GPS. If no such object
+directory exists, then it is directly created in the same directory as the root
+project.
 
 Once the documentation is generated, the main documentation file is loaded
 in your default browser.
@@ -8817,9 +8819,20 @@ can be found under @file{<install_dir>/share/gps/docgen2}. If you need a
 different layout as the proposed one, you can change directly those files.
 
 In addition, user-defined structured comments can be used to improve the
-generated documentation. To define your own structured comments,
-please refer to the GPS python extension documentation (from GPS Help menu,
-choose 'Python extensions').
+generated documentation. The structured comments use xml-like tags. To define
+your own set of tags, please refer to the GPS python extension documentation
+(from GPS Help menu, choose 'Python extensions').
+
+The string values inside those tags are handled very roughly the same way as in
+regular xml: duplicated spaces and line returns are ignored. One exception is
+that the layout is preserved in the following cases:
+@table @code
+@item The line starts with "- " or "* "
+In this case, GPS makes sure that a proper line return precedes the line. This
+is to allow lists in comments
+@item The line starts with a capital letter
+GPS then supposes that the preceding line return was intended, so it is kept
+@end table
 
 Some default tags have been already defined by GPS in
 @file{<install_dir>/share/gps/plug-ins/docgen_base_tags.py}. The tags handled
