@@ -302,7 +302,13 @@ div.subprograms div.details div
 }
 div.subprograms div.details table
 {
-   padding-left: 20px;
+   margin-left: 20px;
+   border-collapse: collapse;
+}
+div.subprograms div.details table td
+{
+   border:0px;
+   padding:0px;
 }
 div.subprograms div.details span.keyword
 {
