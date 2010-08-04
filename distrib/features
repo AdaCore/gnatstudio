@@ -15,6 +15,13 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J804-010 Improved tag handling in documentation generator (2010-08-04)
+
+  The GPS document generator now handles lists and on-purpose line return in
+  structured comments. Lists are detected if a line starts with a * or -
+  surrounded with spaces, while on-purpose line returns are detected if a line
+  starts with a capital letter.
+
 NF-45-J722-013 Improved filedeps.py plug-in (2010-07-22)
 
   The filedeps.py plug-in which provides a way to display the dependency
