@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,10 +59,11 @@ package body Docgen2.Tags is
      (S : Unbounded_String;
       Keep_Formatting : Boolean) return String
    is
-      Str : constant String := To_String (S);
-      Res : Unbounded_String;
-      Idx : Natural;
-      Nxt : Natural;
+      Str   : constant String := To_String (S);
+      Res   : Unbounded_String;
+      Idx   : Natural;
+      Nxt   : Natural;
+      First : Boolean := True;
 
    begin
       Idx := Str'First;
@@ -83,10 +84,26 @@ package body Docgen2.Tags is
          else
             if not Keep_Formatting then
                Skip_Blanks (Str, Idx);
+
+               --  Try to handle lists: if a line starts with "[-*] ", then we
+               --  suppose that this contains a bullet list and we add a LF.
+               --  We also handle cases where the line starts with a
+               --  capital letter, supposing that the line return was then
+               --  on purpose
+               if not First
+                 and then Idx + 2 <= Str'Last
+                 and then (Str (Idx .. Idx + 1) = "- "
+                           or else Str (Idx .. Idx + 1) = "* "
+                           or else Str (Idx) in 'A' .. 'Z')
+               then
+                  Res := Res & ASCII.LF;
+               end if;
             end if;
 
             Res := Res & Str (Idx .. Nxt);
          end if;
+
+         First := False;
 
          if Keep_Formatting then
             Res := Res & ASCII.LF;
