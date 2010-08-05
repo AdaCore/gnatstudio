@@ -90,6 +90,7 @@ def on_gps_start (hook):
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("summary"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("exception"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("seealso"))
+   GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("code"))
    # register <parameter>, <c_version> and <group> tags.
    GPS.Docgen.register_tag_handler (ParameterTagHandler ())
    GPS.Docgen.register_tag_handler (CVersionTagHandler ())
