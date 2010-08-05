@@ -3689,20 +3689,30 @@ package body Docgen2 is
    -- Get_Doc_Directory --
    -----------------------
 
-   function Get_Doc_Directory
-     (Object : Docgen_Object) return Virtual_File
+   function Get_Doc_Directory (Object : Docgen_Object) return Virtual_File
    is
       Base_Dir : Virtual_File;
+      Project  : Project_Type renames
+                   Get_Registry (Object.Kernel).Tree.Root_Project;
+      Attr     : constant String :=
+                   Project.Attribute_Value (Documentation_Dir_Attribute);
+
    begin
-      if Get_Registry (Object.Kernel).Tree.Root_Project.Object_Dir /=
-        No_File
-      then
-         Base_Dir :=
-           Get_Registry (Object.Kernel).Tree.Root_Project.Object_Dir;
+      --  If the Directory_Dir attribute is defined in the project, then use
+      --  the value. Else, we use the default directory: a subdirectory 'doc'
+      --  in the object directory, or in the project directory if no object dir
+      --  is defined.
+      if Attr /= "" then
+         Base_Dir := Create_From_Base (+Attr);
+         Base_Dir.Ensure_Directory;
+
+         return Base_Dir;
+      end if;
+
+      if Project.Object_Dir /= No_File then
+         Base_Dir := Project.Object_Dir;
       else
-         Base_Dir :=
-           Get_Registry
-             (Object.Kernel).Tree.Root_Project.Project_Path.Get_Parent;
+         Base_Dir := Project.Project_Path.Get_Parent;
       end if;
 
       return Create_From_Dir (Base_Dir, +"doc/");

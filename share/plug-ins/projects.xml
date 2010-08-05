@@ -320,6 +320,16 @@
         <string type="directory" default="(same as build directory)" allow_empty="False" />
     </project_attribute>
 
+    <project_attribute
+        name="documentation_dir"
+        package="IDE"
+        editor_page="Objects"
+        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified"
+        label="Doc directory"
+        omit_if_default="true">
+        <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
+    </project_attribute>
+
     <!--  Main units -->
 
     <project_attribute

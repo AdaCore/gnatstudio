@@ -20,6 +20,11 @@ NF-45-J804-023 Documentation generator now handles 'code' tag (2010-08-05)
   The GPS document generator now defines a new default tag 'code' that allows
   the text in it to keep its layout when displayed in the documentation.
 
+NF-45-J804-022 Allow customisation of the documentation directory (2010-08-05)
+
+  A new attribute documentation_dir has been added to the projects so that the
+  directory in which the documentation is generated can now be customized.
+
 NF-45-J804-010 Improved tag handling in documentation generator (2010-08-04)
 
   The GPS document generator now handles lists and on-purpose line return in
