@@ -270,6 +270,12 @@ div.subprograms .name
 {
    color: red;
 }
+div.subprograms .name_emphasis
+{
+   color: red;
+   font-weight: bold;
+}
+
 div.subprograms h3
 {
    background: #dae3fe;

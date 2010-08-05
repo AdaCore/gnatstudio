@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -250,7 +250,7 @@ package body Docgen2_Backend.HTML is
       case Tag is
          when Identifier_Text =>
             if Emphasis then
-               return "<span class=""name""><b>" & Value & "</b></span>";
+               return "<span class=""name_emphasis"">" & Value & "</span>";
             else
                return "<span class=""name"">" & Value & "</span>";
             end if;
