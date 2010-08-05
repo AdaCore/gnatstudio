@@ -1,0 +1,24 @@
+with "../shared";
+
+project Docgen_Resources is
+
+   for Source_Dirs use
+     ("resources/", "resources/support/", "resources/custom/");
+   for Object_Dir use Shared'Object_Dir;
+   for Languages use ("css", "html", "javascript");
+
+   package Naming is
+      for Implementation_Suffix ("css") use ".css";
+      for Implementation_Suffix ("html") use ".tmpl";
+      for Implementation_Suffix ("javascript") use ".js";
+   end Naming;
+
+   package Compiler is
+      for Driver ("css") use "";
+      for Driver ("html") use "";
+      for Driver ("javascript") use "";
+   end Compiler;
+
+   package Ide renames Shared.Ide;
+
+end Docgen_Resources;
