@@ -20,7 +20,6 @@
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Maps;      use Ada.Strings.Maps;
 with String_Utils;          use String_Utils;
-with UTF8_Utils;            use UTF8_Utils;
 with XML_Utils;             use XML_Utils;
 
 package body Docgen2_Backend.HTML is
@@ -231,7 +230,8 @@ package body Docgen2_Backend.HTML is
    is
       pragma Unreferenced (Backend);
    begin
-      return XML_Utils.Protect (Unknown_To_UTF8 (S));
+      --  We want to keep LF characters for further filtering (add <p></p>)
+      return XML_Utils.Protect (S, True);
    end Filter;
 
    -------------

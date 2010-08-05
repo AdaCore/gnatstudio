@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2009, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,15 +82,25 @@ package Docgen2.Tags is
 
 private
 
-   type Node;
+   type Node_Kind is (Root_Node, Text_Node, Element_Node);
+
+   type Node (<>);
    type Node_Ptr is access all Node;
-   type Node is record
-      Tag        : Ada.Strings.Unbounded.Unbounded_String;
-      Value      : Ada.Strings.Unbounded.Unbounded_String;
-      Attributes : Ada.Strings.Unbounded.Unbounded_String;
+   type Node (Kind : Node_Kind) is record
       Next       : Node_Ptr;
-      Children   : Node_Ptr;
       Parent     : Node_Ptr;
+      Children   : Node_Ptr;
+      Last_Child : Node_Ptr;
+
+      case Kind is
+         when Root_Node =>
+            null;
+         when Text_Node =>
+            Value      : Ada.Strings.Unbounded.Unbounded_String;
+         when Element_Node =>
+            Tag        : Ada.Strings.Unbounded.Unbounded_String;
+            Attributes : Ada.Strings.Unbounded.Unbounded_String;
+      end case;
    end record;
 
    type Comment_Type is record

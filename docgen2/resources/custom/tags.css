@@ -41,3 +41,11 @@ div.seealso
 {
    font-style: italic;
 }
+div.code
+{
+   font-family: monospace;
+}
+div.code p
+{
+   padding: 0;
+}

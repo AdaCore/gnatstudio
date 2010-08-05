@@ -8854,6 +8854,9 @@ For bindings, the version of the C file.
 @item group
 For packages, this builds an index of all packages in the project grouped by
 categories.
+@item code
+When the layout of the value of the node needs to be preserved. The text is
+displayed using a fixed font (monospace).
 @end table
 
 The following sample shows how those tags are translated:

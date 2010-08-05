@@ -37,7 +37,8 @@ package body Docgen2.Tags is
      (Docgen      : Docgen_Object;
       N           : Node_Ptr;
       Entity_Name : String;
-      Href        : String) return Unbounded_String;
+      Href        : String;
+      Keep_Layout : Boolean := False) return Unbounded_String;
 
    function Strip_Blanks
      (S : Unbounded_String;
@@ -129,55 +130,81 @@ package body Docgen2.Tags is
      (Docgen      : Docgen_Object;
       N           : Node_Ptr;
       Entity_Name : String;
-      Href        : String) return Unbounded_String
+      Href        : String;
+      Keep_Layout : Boolean := False) return Unbounded_String
    is
-      Str     : Ada.Strings.Unbounded.Unbounded_String;
-      Node    : Node_Ptr := N;
-      Backend : Docgen2_Backend.Backend_Handle renames Get_Backend (Docgen);
+      Node    : Node_Ptr;
+      Backend : Docgen2_Backend.Backend_Handle renames
+                      Get_Backend (Docgen);
 
    begin
-      if Node = null then
+      if N = null then
          return Null_Unbounded_String;
       end if;
 
-      if Node.Tag = Null_Unbounded_String
-        and then Node.Children = null
-      then
+      if N.Kind = Text_Node then
          return To_Unbounded_String
-           (Backend.Filter (Strip_Blanks (Node.Value, True)));
-      end if;
+           (Backend.Filter (Strip_Blanks (N.Value, Keep_Layout)));
 
-      while Node /= null loop
+      elsif N.Kind = Root_Node then
          declare
-            Val_Str      : constant String :=
-                             Backend.Filter
-                               (Strip_Blanks
-                                  (Node.Value,
-                                   Node.Tag = Null_Unbounded_String));
-            Val_U_Str    : Unbounded_String;
-            Children_Str : constant Unbounded_String :=
-                             To_Unbounded_String
-                               (Docgen, Node.Children, Entity_Name, Href);
-            Idx          : Natural;
-            Nxt          : Natural;
+            Ret : Unbounded_String;
+         begin
+            Node := N.Children;
+
+            while Node /= null loop
+               Append
+                 (Ret, To_Unbounded_String (Docgen, Node, Entity_Name, Href));
+               Node := Node.Next;
+            end loop;
+
+            return Ret;
+         end;
+
+      else
+         declare
+            C_Val  : Unbounded_String;
+            Val    : Unbounded_String;
+            Keep_L : Boolean := Keep_Layout;
          begin
 
-            if Node.Tag /= Null_Unbounded_String then
-               if Next_Line (Val_Str, Val_Str'First) < Val_Str'Last then
-                  Idx := Val_Str'First;
-                  Val_U_Str := Null_Unbounded_String;
+            if To_String (N.Tag) = "code" then
+               Keep_L := True;
+            end if;
 
-                  while Idx < Val_Str'Last loop
-                     Nxt := Line_End (Val_Str, Idx);
+            Node := N.Children;
+
+            while Node /= null loop
+               Append
+                 (C_Val,
+                  To_Unbounded_String
+                    (Docgen, Node, Entity_Name, Href, Keep_L));
+               Node := Node.Next;
+            end loop;
+
+            Node := N;
+
+            declare
+               S     : constant String := To_String (C_Val);
+               Idx   : Natural;
+               Nxt   : Natural;
+
+            begin
+               Idx := S'First;
+
+               while Idx < S'Last loop
+                  Nxt := Line_End (S, Idx);
+
+                  if Idx = S'First and then Nxt = S'Last then
+                     --  No need to generate a paragraph
+                     Append (Val, S);
+                  else
                      Append
-                       (Val_U_Str,
-                        Backend.Gen_Paragraph (Val_Str (Idx .. Nxt)));
-                     Idx := Next_Line (Val_Str, Idx);
-                  end loop;
+                       (Val, Backend.Gen_Paragraph (S (Idx .. Nxt)));
+                  end if;
 
-               else
-                  Val_U_Str := To_Unbounded_String (Val_Str);
-               end if;
+                  Idx := Next_Line (S, Idx);
+               end loop;
 
                declare
                   Res : constant String :=
@@ -185,7 +212,7 @@ package body Docgen2.Tags is
                             (Docgen,
                              To_String (Node.Tag),
                              To_String (Node.Attributes),
-                             To_String (Val_U_Str),
+                             To_String (Val),
                              Entity_Name,
                              Href);
                begin
@@ -194,39 +221,22 @@ package body Docgen2.Tags is
                      --  return a single space character. In this case, do
                      --  not append it to the result.
                      if Res'Length > 1 or else Res /= " " then
-                        Append (Str, Res);
+                        return To_Unbounded_String (Res);
+                     else
+                        return Null_Unbounded_String;
                      end if;
+
                   else
-                     Append
-                       (Str,
-                        Backend.Gen_User_Tag
+                     return To_Unbounded_String
+                       (Backend.Gen_User_Tag
                           (To_String (Node.Tag),
                            To_String (Node.Attributes),
-                           To_String (Val_U_Str)));
+                           To_String (Val)));
                   end if;
                end;
-            end if;
-
-            if Length (Children_Str) > 0 then
-               Str := Str & Children_Str;
-            end if;
-
-            --  For unidentified tags, we generate the extra text after
-            --  children text, if any
-            if Node.Tag = Null_Unbounded_String then
-               Idx := Val_Str'First;
-               while Idx < Val_Str'Last loop
-                  Nxt := Line_End (Val_Str, Idx);
-                  Str := Str & Backend.Gen_Paragraph (Val_Str (Idx .. Nxt));
-                  Idx := Next_Line (Val_Str, Idx);
-               end loop;
-            end if;
+            end;
          end;
-
-         Node := Node.Next;
-      end loop;
-
-      return Str;
+      end if;
    end To_Unbounded_String;
 
    ---------------
@@ -248,25 +258,54 @@ package body Docgen2.Tags is
       N    : in out Node_Ptr;
       Opts : Docgen_Options)
    is
-      Matches     : Match_Array (0 .. 3);
-      Tag         : Unbounded_String;
-      New_Node    : Node;
-      Closing_Tag : Boolean;
-      Stand_Alone : Boolean;
+      Matches      : Match_Array (0 .. 3);
+      Tag          : Unbounded_String;
+      New_Node     : Node_Ptr;
+      Closing_Tag  : Boolean;
+      Stand_Alone  : Boolean;
+
+      procedure Append_Txt (S : String);
+      --  Append text to N
+
+      procedure Append_Txt (S : String) is
+         New_Node : Node_Ptr;
+      begin
+         if N.Last_Child /= null and then N.Last_Child.Kind = Text_Node then
+            Append (N.Last_Child.Value, S);
+
+         else
+            New_Node := new Node'
+              (Kind       => Text_Node,
+               Value      => To_Unbounded_String (S),
+               Parent     => N,
+               Children   => null,
+               Last_Child => null,
+               Next       => null);
+
+            if N.Last_Child = null then
+               N.Children := New_Node;
+            else
+               N.Last_Child.Next := New_Node;
+            end if;
+
+            N.Last_Child := New_Node;
+         end if;
+      end Append_Txt;
+
    begin
       Match (XML_Regpat, S, Matches);
 
       --  No xml case
       if Matches (0) = No_Match then
          --  Regular string. Let's append it to the current node value
-         N.Value := N.Value & S;
+         Append_Txt (S);
 
          return;
       end if;
 
       --  Append characters to the last opened tag.
       if Matches (0).First > S'First then
-         N.Value := N.Value & S (S'First .. Matches (0).First - 1);
+         Append_Txt (S (S'First .. Matches (0).First - 1));
       end if;
 
       Tag := To_Unbounded_String (S (Matches (2).First .. Matches (2).Last));
@@ -280,9 +319,10 @@ package body Docgen2.Tags is
 
       --  If we found an unexpected xml tag, then treat it like raw text
       if not Is_Custom_Tag (To_String (Tag))
-        or else (Closing_Tag and then Tag /= N.Tag)
+        or else (Closing_Tag
+                 and then (N.Kind /= Element_Node or else Tag /= N.Tag))
       then
-         N.Value := N.Value & S (Matches (0).First .. Matches (0).Last);
+         Append_Txt (S (Matches (0).First .. Matches (0).Last));
 
       --  Treat closing tags.
       elsif Closing_Tag then
@@ -290,26 +330,22 @@ package body Docgen2.Tags is
 
       --  Opening tag
       else
-         New_Node :=
-           (Tag        => Tag,
-            Value      => Null_Unbounded_String,
+         New_Node := new Node'
+           (Kind       => Element_Node,
+            Tag        => Tag,
             Attributes => Null_Unbounded_String,
             Next       => null,
             Children   => null,
+            Last_Child => null,
             Parent     => N);
 
          if N.Children = null then
-            N.Children := new Node'(New_Node);
-            N := N.Children;
+            N.Children := New_Node;
          else
-            N := N.Children;
-            while N.Next /= null loop
-               N := N.Next;
-            end loop;
-
-            N.Next := new Node'(New_Node);
-            N := N.Next;
+            N.Last_Child.Next := New_Node;
          end if;
+
+         N.Last_Child := New_Node;
 
          --  See if the tag finishes by '/>'
          Stand_Alone := False;
@@ -323,13 +359,13 @@ package body Docgen2.Tags is
 
          --  Now initialize the attributes field
          if Matches (3).First <= Matches (3).Last then
-            N.Attributes :=
+            New_Node.Attributes :=
               To_Unbounded_String (S (Matches (3).First .. Matches (3).Last));
          end if;
 
-         --  Set N to parent if the tag is stand-alone
-         if Stand_Alone then
-            N := N.Parent;
+         --  Set N to the newly created node if the tag is not stand-alone
+         if not Stand_Alone then
+            N := New_Node;
          end if;
       end if;
 
@@ -387,11 +423,10 @@ package body Docgen2.Tags is
       end if;
 
       N := new Node'
-        (Tag        => Null_Unbounded_String,
-         Value      => Null_Unbounded_String,
-         Attributes => Null_Unbounded_String,
+        (Kind       => Root_Node,
          Next       => null,
          Children   => null,
+         Last_Child => null,
          Parent     => null);
 
       --  Translate the block into an xml tree

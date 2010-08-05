@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -163,7 +163,8 @@ begin
    Args := Get_Command (HTML_Browser);
 
    if not Launch_Browser
-     (String_Utils.Unprotect (Protect (Args (Args'First).all, False)),
+     (String_Utils.Unprotect
+        (String_Utils.Protect (Args (Args'First).all, False)),
       Args (Args'First + 1 .. Args'Last))
    then
       Insert

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -483,7 +483,7 @@ package body XML_Utils is
    -- Protect --
    -------------
 
-   function Protect (S : String) return String is
+   function Protect (S : String; Ignore_LF : Boolean := False) return String is
       R      : Unbounded_Wide_Wide_String;
       Wide   : Wide_Wide_String (1 .. S'Length);
       Length : Natural;
@@ -503,18 +503,27 @@ package body XML_Utils is
             when '"' =>
                Append (R, "&quot;");
             when others =>
-               if Get_Category
-                 (UTF_32'Val (Wide_Wide_Character'Pos (Wide (J)))) = Cc
-               then
-                  declare
-                     Img : constant Wide_Wide_String := Natural'Wide_Wide_Image
-                       (Wide_Wide_Character'Pos (Wide (J)));
-                  begin
-                     Append (R, "&#" & Img (Img'First + 1 .. Img'Last) & ";");
-                  end;
-               else
-                  Append (R, Wide (J));
-               end if;
+               declare
+                  C_Val : Natural;
+               begin
+                  C_Val := Wide_Wide_Character'Pos (Wide (J));
+                  if Get_Category (UTF_32'Val (C_Val)) = Cc
+                    and then
+                      (not Ignore_LF or else C_Val /= Character'Pos (ASCII.LF))
+                  then
+                     declare
+                        Img : constant Wide_Wide_String :=
+                                Natural'Wide_Wide_Image (C_Val);
+                     begin
+                        Append
+                          (R, "&#" & Img (Img'First + 1 .. Img'Last) & ";");
+                     end;
+
+                  else
+                     Append (R, Wide (J));
+                  end if;
+               end;
+
          end case;
       end loop;
 

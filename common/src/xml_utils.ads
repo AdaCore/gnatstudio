@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                  Copyright (C) 2009-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,8 +83,9 @@ package XML_Utils is
       Success : out Boolean);
    --  Same as above, with Success reporting the success of the operation
 
-   function Protect (S : String) return String;
+   function Protect (S : String; Ignore_LF : Boolean := False) return String;
    --  Return a copy of S modified so that it is a valid XML value
+   --  If Ignore_LF is set, then LF characters won't be translated as &#10;
 
    function Find_Tag (N : Node_Ptr; Tag : UTF8_String) return Node_Ptr;
    --  Find a tag Tag in N and its brothers
