@@ -82,9 +82,12 @@ package Entities is
 
    function Create
      (Registry     : Projects.Project_Registry_Access;
-      Construct_Db : Language.Tree.Database.Construct_Database_Access)
-      return Entities_Database;
-   --  Return a new empty database
+      Construct_Db : Language.Tree.Database.Construct_Database_Access;
+      Normal_Ref_In_Call_Graph : Boolean := False) return Entities_Database;
+   --  Return a new empty database.
+   --  Normal_Ref_In_Call_Graph indicates whether call graph queries should
+   --  consider normal references as potential subprogram calls (needed for
+   --  old GNAT versions).
 
    procedure Destroy (Db : in out Entities_Database);
    --  Free the memory occupied by Db
@@ -266,6 +269,7 @@ package Entities is
 
    type Reference_Kind is
      (Reference,
+      Subprogram_Call,
       Dispatching_Call,
       Modification,
       Instantiation_Reference,
@@ -290,6 +294,8 @@ package Entities is
       End_Of_Body);
    --  The kind of reference to an entity. They have the following meaning:
    --    - Reference: The entity is used
+   --    - Subprogram_Call: The reference is a subprogram call
+   --    - Dispatching_Call: The reference is a dispatching subprogram call
    --    - Modification: The value of the entity is changed
    --    - Instantiation_Reference: Reference to the instantiation of a
    --      generic.
@@ -1474,6 +1480,7 @@ private
    Real_References_Filter : aliased constant Reference_Kind_Filter :=
      (Reference                                => True,
       Own_Reference                            => True,
+      Subprogram_Call                          => True,
       Dispatching_Call                         => True,
       Declaration                              => True,
       Instantiation_Reference                  => True,
@@ -1489,6 +1496,7 @@ private
    Read_Reference_Filter  : aliased constant Reference_Kind_Filter :=
      (Reference                                => True,
       Own_Reference                            => True,
+      Subprogram_Call                          => True,
       Dispatching_Call                         => True,
       Instantiation_Reference                  => True,
       Body_Entity                              => True,

@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 
 pragma Warnings (Off);
@@ -250,6 +251,37 @@ package body GPS.Kernel is
       end if;
    end GNAT_Version;
 
+   -----------------------
+   -- Require_GNAT_Date --
+   -----------------------
+
+   function Require_GNAT_Date
+     (Handle : access Kernel_Handle_Record;
+      Date   : String) return Boolean
+   is
+      Version     : constant String := GNAT_Version (Handle);
+      Open_Index  : constant Natural := Index (Version, "(");
+      Close_Index : Natural;
+
+   begin
+      if Open_Index = 0 then
+         return False;
+      else
+         Close_Index := Index (Version (Open_Index + 1 .. Version'Last), "-");
+
+         if Close_Index = 0 then
+            Close_Index :=
+              Index (Version (Open_Index + 1 .. Version'Last), ")");
+         end if;
+
+         if Close_Index = 0 then
+            return False;
+         else
+            return Version (Open_Index + 1 .. Close_Index - 1) >= Date;
+         end if;
+      end if;
+   end Require_GNAT_Date;
+
    ------------------------------
    -- On_Main_Window_Destroyed --
    ------------------------------
@@ -306,7 +338,9 @@ package body GPS.Kernel is
       --  files.
 
       Handle.Database := Create
-        (Handle.Registry, Handle.Get_Construct_Database);
+        (Handle.Registry, Handle.Get_Construct_Database,
+         Normal_Ref_In_Call_Graph =>
+           not Require_GNAT_Date (Handle, "20100805"));
       Set_Symbols (Handle.Database, Handle.Symbols);
       Set_Symbols (Handle.Get_Construct_Database, Handle.Symbols);
       Register_Language_Handler (Handle.Database, Handler);

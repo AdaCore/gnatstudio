@@ -135,6 +135,7 @@ package body ALI_Parser is
       'p'    => Primitive_Operation,
       'P'    => Overriding_Primitive_Operation,
       'r'    => Reference,
+      's'    => Subprogram_Call,
       'R'    => Dispatching_Call,
       't'    => End_Of_Body,
       'w'    => With_Line,

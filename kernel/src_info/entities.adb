@@ -197,10 +197,10 @@ package body Entities is
       Subprogram_Access_Parameter => True,
       others                      => False);
 
-   Show_In_Call_Graph_Array : constant Reference_Kind_Filter :=
-     (Reference        => True,
+   Show_In_Call_Graph_Array : Reference_Kind_Filter :=
+     (Reference        => False,
+      Subprogram_Call  => True,
       Dispatching_Call => True,
-      Modification     => True,
       others           => False);
 
    ---------
@@ -1030,11 +1030,12 @@ package body Entities is
 
    function Create
      (Registry     : Project_Registry_Access;
-      Construct_Db : Language.Tree.Database.Construct_Database_Access)
-      return Entities_Database
+      Construct_Db : Language.Tree.Database.Construct_Database_Access;
+      Normal_Ref_In_Call_Graph : Boolean := False) return Entities_Database
    is
       Db : Entities_Database;
    begin
+      Show_In_Call_Graph_Array (Reference) := Normal_Ref_In_Call_Graph;
       Db          := new Entities_Database_Record;
       Db.Registry := Registry;
       Db.Frozen   := Create_And_Update;
@@ -2610,6 +2611,7 @@ package body Entities is
       case Kind is
          when Reference               => return -"reference";
          when Own_Reference           => return -"own reference";
+         when Subprogram_Call         => return -"call";
          when Dispatching_Call        => return -"dispatching call";
          when Modification            => return -"write reference";
          when Instantiation_Reference => return -"instantiation";

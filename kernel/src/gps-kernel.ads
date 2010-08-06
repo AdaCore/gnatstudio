@@ -174,7 +174,14 @@ package GPS.Kernel is
    function GNAT_Version
      (Handle : access Kernel_Handle_Record) return String;
    --  Return a string containing the GNAT version number.
-   --  The string has the form "3.16w (20020610)"
+   --  The string has the form "Pro 6.4.0w (20100727-43)"
+   --  See also Require_GNAT_Date below.
+
+   function Require_GNAT_Date
+     (Handle : access Kernel_Handle_Record;
+      Date   : String) return Boolean;
+   --  Return True if the version of GNAT associated with Handle is at
+   --  least Date. Date is of the form YYYYMMDD.
 
    procedure Set_Destruction_Flag
      (Handle : access Kernel_Handle_Record;
@@ -283,11 +290,11 @@ package GPS.Kernel is
       Fuzzy_Expected    : Boolean := False);
    --  Find the declaration of the given entity in the file.
    --  If Ask_If_Overloaded is True and there are several possible matches for
-   --  the entiy (for instance because the xref info is not up-to-date), an
+   --  the entity (for instance because the xref info is not up-to-date), an
    --  interactive dialog is opened.
    --  If Fast is True, get the entity information only from the
    --  constructs database, do not attempt to refine the search using the ALI
-   --  database.
+   --  database. ??? There is no Fast parameter
 
    --------------
    -- Contexts --
