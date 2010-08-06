@@ -27,7 +27,6 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-with Gtk.Progress_Bar;
 with Gtk.Widget;  use Gtk.Widget;
 
 with Commands;    use Commands;
@@ -133,8 +132,6 @@ private
       Show_Bar     : Boolean := False;
 
       Block_Exit   : Boolean := True;
-
-      Bar          : Gtk.Progress_Bar.Gtk_Progress_Bar := null;
    end record;
    type Task_Queue_Access is access Task_Queue_Record;
 

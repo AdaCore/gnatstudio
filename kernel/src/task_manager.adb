@@ -18,8 +18,6 @@
 -----------------------------------------------------------------------
 
 with Glib.Main;        use Glib.Main;
-
-with Gtk.Progress_Bar; use Gtk.Progress_Bar;
 with Gtk.Main;         use Gtk.Main;
 with Traces;           use Traces;
 
@@ -170,11 +168,6 @@ package body Task_Manager is
       function Free_Queue return Boolean is
       begin
          GNAT.Strings.Free (Queue.Id);
-
-         if Queue.Bar /= null then
-            Destroy (Get_Parent (Queue.Bar));
-            Queue.Bar := null;
-         end if;
 
          if Manager.Queues'Length = 1 then
             Queue_Removed (Manager, 1);
