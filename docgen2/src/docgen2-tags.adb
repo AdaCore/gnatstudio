@@ -197,7 +197,7 @@ package body Docgen2.Tags is
 
                   if Idx = S'First and then Nxt = S'Last then
                      --  No need to generate a paragraph
-                     Append (Val, S);
+                     Append (Val, S & ASCII.LF);
                   else
                      Append
                        (Val, Backend.Gen_Paragraph (S (Idx .. Nxt)));
