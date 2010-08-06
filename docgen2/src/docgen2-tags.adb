@@ -66,6 +66,39 @@ package body Docgen2.Tags is
       Nxt   : Natural;
       First : Boolean := True;
 
+      function Is_Intended_LF (Idx : Natural) return Boolean;
+      --  True if the line starting at Idx seems intended (e.g. is a list item
+      --  or a paragraph start.
+
+      function Is_Intended_LF (Idx : Natural) return Boolean is
+         C : Character;
+      begin
+         if Idx + 2 <= Str'Last
+           and then (Str (Idx .. Idx + 1) = "- "
+                     or else Str (Idx .. Idx + 1) = "* ")
+         then
+            --  List item
+            return True;
+         end if;
+
+         if Str (Idx) in 'A' .. 'Z' then
+            for J in reverse 1 .. Ada.Strings.Unbounded.Length (Res) loop
+               C := Ada.Strings.Unbounded.Element (Res, J);
+               if C = '.' then
+                  --  A new sentence starting with a new-line: suppose this is
+                  --  intentional
+                  return True;
+               elsif C = ' ' or else C = ASCII.LF then
+                  null;
+               else
+                  return False;
+               end if;
+            end loop;
+         end if;
+
+         return False;
+      end Is_Intended_LF;
+
    begin
       Idx := Str'First;
       Skip_Blanks (Str, Idx);
@@ -91,12 +124,7 @@ package body Docgen2.Tags is
                --  We also handle cases where the line starts with a
                --  capital letter, supposing that the line return was then
                --  on purpose
-               if not First
-                 and then Idx + 2 <= Str'Last
-                 and then (Str (Idx .. Idx + 1) = "- "
-                           or else Str (Idx .. Idx + 1) = "* "
-                           or else Str (Idx) in 'A' .. 'Z')
-               then
+               if not First and then Is_Intended_LF (Idx) then
                   Res := Res & ASCII.LF;
                end if;
             end if;
