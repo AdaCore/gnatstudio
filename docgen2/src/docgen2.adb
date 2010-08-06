@@ -1705,28 +1705,36 @@ package body Docgen2 is
             Generate_Trees (Docgen_Object (Command));
             Generate_Global_Index (Docgen_Object (Command));
 
-            if Scripts.Get_Main_Index /= No_File then
-               declare
-                  Success : Boolean;
-               begin
-                  Scripts.Get_Main_Index.Copy
-                    (Full_Name
-                       (Create_From_Dir
-                          (Get_Doc_Directory (Docgen_Object (Command)),
-                           Command.Backend.To_Destination_Name ("index"))),
-                     Success);
+            declare
+               Success : Boolean;
+               Src     : GNATCOLL.VFS.Virtual_File;
+            begin
 
-                  if not Success then
-                     Insert
-                       (Command.Kernel,
-                        -("warning: could not copy the index file ") &
-                        Display_Base_Name (Scripts.Get_Main_Index) &
-                        (-" to destination. Verify that the file exists" &
-                           " and that the rights are properly set."),
-                        Mode => Error);
-                  end if;
-               end;
-            end if;
+               Src := Scripts.Get_Main_Index;
+
+               if Src = No_File then
+                  Src := Create_From_Dir
+                    (Get_Doc_Directory (Docgen_Object (Command)),
+                     Command.Backend.To_Destination_Name ("toc"));
+               end if;
+
+               Scripts.Get_Main_Index.Copy
+                 (Full_Name
+                    (Create_From_Dir
+                       (Get_Doc_Directory (Docgen_Object (Command)),
+                        Command.Backend.To_Destination_Name ("index"))),
+                  Success);
+
+               if not Success then
+                  Insert
+                    (Command.Kernel,
+                     -("warning: could not copy the index file ") &
+                     Display_Base_Name (Scripts.Get_Main_Index) &
+                     (-" to destination. Verify that the file exists" &
+                        " and that the rights are properly set."),
+                     Mode => Error);
+               end if;
+            end;
 
             Templates_Parser.Release_Cache;
             Free (Command.EInfos);
@@ -3579,12 +3587,12 @@ package body Docgen2 is
             end if;
          end loop;
 
-         if First_List and then Scripts.Get_Main_Index = No_File then
+         if First_List then
             --  First non empty list... create index.html
             File_Handle := Write_File
               (Create_From_Dir
                  (Get_Doc_Directory (Cmd),
-                  Cmd.Backend.To_Destination_Name ("index")));
+                  Cmd.Backend.To_Destination_Name ("toc")));
             Write
               (File_Handle,
                Parse (+Tmpl.Full_Name, Translation, Cached => True));

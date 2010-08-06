@@ -1,7 +1,7 @@
 @@SET@@ WHEREAMI = $1
   <div id='header'>
     <h2 class="button">Documentation</h2>
-    @@INCLUDE@@ navbutton.tmpl @_WHEREAMI_@ "INDEX" "index.html" "Table of Contents"
+    @@INCLUDE@@ navbutton.tmpl @_WHEREAMI_@ "INDEX" "toc.html" "Table of Contents"
     @@INCLUDE@@ navbutton.tmpl @_WHEREAMI_@ "CLASS_TREE" "tree.html" "Class Inheritance Tree"
     @@IF@@ @_EXIST:USER_DEFINED_FILES_@
     @@TABLE@@
