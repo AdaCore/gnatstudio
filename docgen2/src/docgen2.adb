@@ -1718,7 +1718,7 @@ package body Docgen2 is
                      Command.Backend.To_Destination_Name ("toc"));
                end if;
 
-               Scripts.Get_Main_Index.Copy
+               Src.Copy
                  (Full_Name
                     (Create_From_Dir
                        (Get_Doc_Directory (Docgen_Object (Command)),
