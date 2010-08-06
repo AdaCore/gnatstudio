@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,11 @@ package Docgen2.Scripts is
    --  Register script commands and hooks
 
    function Get_Custom_CSS_Files return Custom_CSS_File_Vectors.Vector;
+   --  Retrieve the list of user-registered css files
+
+   function Get_Main_Index return Virtual_File;
+   --  Retrieve the file identified by the user as index.html, or No_File if
+   --  undefined.
 
    function Is_Custom_Tag (Tag : String) return Boolean;
    --  Tell if Tag is a user-defined custom tag

@@ -49,7 +49,8 @@ package body Docgen2.Scripts is
      (Natural, Custom_Tag_Property);
    Custom_Tags  : Custom_Tag_Vectors.Vector;
 
-   Custom_CSS_Files : Custom_CSS_File_Vectors.Vector;
+   Custom_CSS_Files  : Custom_CSS_File_Vectors.Vector;
+   Custom_Main_Index : Virtual_File := No_File;
 
    Tag_Cst      : aliased constant String := "tag";
    On_Start_Cst : aliased constant String := "on_start";
@@ -196,6 +197,13 @@ package body Docgen2.Scripts is
             Custom_CSS_Files.Append (File);
          end;
 
+      elsif Command = "register_main_index" then
+         declare
+            File : constant GNATCOLL.VFS.Virtual_File := Nth_Arg (Data, 1);
+         begin
+            Custom_Main_Index := File;
+         end;
+
       elsif Command = "register_tag_handler" then
          Name_Parameters (Data, Register_Args);
          declare
@@ -305,6 +313,13 @@ package body Docgen2.Scripts is
          Handler       => Docgen_Handler'Access,
          Static_Method => True);
       Register_Command
+        (Kernel, "register_main_index",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Docgen_Class,
+         Handler       => Docgen_Handler'Access,
+         Static_Method => True);
+      Register_Command
         (Kernel, "register_tag_handler",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
@@ -345,6 +360,15 @@ package body Docgen2.Scripts is
    begin
       return Custom_CSS_Files;
    end Get_Custom_CSS_Files;
+
+   --------------------
+   -- Get_Main_Index --
+   --------------------
+
+   function Get_Main_Index return Virtual_File is
+   begin
+      return Custom_Main_Index;
+   end Get_Main_Index;
 
    -------------------
    -- Is_Custom_Tag --
