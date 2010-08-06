@@ -20,8 +20,6 @@
 with Ada.Characters.Handling;               use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
 
-with Glib.Convert; use Glib.Convert;
-
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -33,7 +31,6 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -48,6 +45,7 @@ with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Templates_Parser;          use Templates_Parser;
+with UTF8_Utils;                use UTF8_Utils;
 
 with Docgen2_Backend;        use Docgen2_Backend;
 with Docgen2.Entities;       use Docgen2.Entities, Docgen2.Entities.Files_List;
@@ -206,7 +204,6 @@ package body Docgen2 is
      (Command     : Docgen_Object;
       File        : Source_File;
       Buffer      : GNAT.Strings.String_Access;
-      Buffer_Last : Natural;
       Lang        : Language_Access;
       Db          : Entities_Database;
       Xrefs       : Entity_Info_Map.Map);
@@ -1451,15 +1448,16 @@ package body Docgen2 is
 
                declare
                   Old_Buff : GNAT.Strings.String_Access := File_Buffer;
+                  Success  : aliased Boolean;
                   N_String : constant String :=
-                               Glib.Convert.Convert
+                               Unknown_To_UTF8
                                  (Old_Buff (Old_Buff'First .. Last),
-                                  Get_File_Charset
-                                    (Element (Command.File_Index)),
-                                  "UTF-8");
+                                  Success'Access);
                begin
-                  File_Buffer := new String'(N_String);
-                  Free (Old_Buff);
+                  if Success then
+                     File_Buffer := new String'(N_String);
+                     Free (Old_Buff);
+                  end if;
                end;
 
                   --  ??? Commented out code, because for now only Ada will be
@@ -1644,11 +1642,24 @@ package body Docgen2 is
                Buffer := Read_File (Element (Command.File_Index));
                Strip_CR (Buffer.all, Last, Striped);
 
+               declare
+                  Old_Buff : GNAT.Strings.String_Access := Buffer;
+                  Success  : aliased Boolean;
+                  N_String : constant String :=
+                               Unknown_To_UTF8
+                                 (Old_Buff (Old_Buff'First .. Last),
+                                  Success'Access);
+               begin
+                  if Success then
+                     Buffer := new String'(N_String);
+                     Free (Old_Buff);
+                  end if;
+               end;
+
                Generate_Annotated_Source
                  (Command     => Docgen_Object (Command),
                   File        => File,
                   Buffer      => Buffer,
-                  Buffer_Last => Last,
                   Lang        => Language,
                   Db          => Get_Database (Command.Kernel),
                   Xrefs       => Command.EInfos);
@@ -1841,7 +1852,6 @@ package body Docgen2 is
      (Command     : Docgen_Object;
       File        : Source_File;
       Buffer      : GNAT.Strings.String_Access;
-      Buffer_Last : Natural;
       Lang        : Language_Access;
       Db          : Entities_Database;
       Xrefs       : Entity_Info_Map.Map)
@@ -2013,11 +2023,11 @@ package body Docgen2 is
         (Printout, Current_Line);
 
       Parse_Entities
-        (Lang, Buffer (Buffer'First .. Buffer_Last), CB'Unrestricted_Access);
+        (Lang, Buffer.all, CB'Unrestricted_Access);
 
       if Last_Idx /= 0 then
          Command.Backend.Handle_Code
-           (Buffer (Last_Idx + 1 .. Buffer_Last),
+           (Buffer (Last_Idx + 1 .. Buffer'Last),
             Printout,
             Current_Line,
             Line_Nb,
