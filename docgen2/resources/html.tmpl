@@ -353,7 +353,7 @@
               <span class="type"><a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a></span>.
               @@INCLUDE@@ multilink.tmpl "@_TASK_ENTRY_@" "@_TASK_ENTRY_SRC_@" "Goto spec in source" "@_TASK_ENTRY_BODY_SRC_@" "Goto body in source"
             </h3>
-            <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</pre></div>
+            <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\)[^\)]*)$/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n */ ):TASK_ENTRY_PRINTOUT_@</pre></div>
             @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
             <div class='profile'>
               <h4>References:</h4>
@@ -394,7 +394,7 @@
           @@END_TABLE@@
         </div>
         @@END_IF@@
-        <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):SUBP_PRINTOUT_@</pre></div>
+        <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\)[^\)]*)$/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n */ ):SUBP_PRINTOUT_@</pre></div>
         @@IF@@ @_EXIST:SUBP_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>
