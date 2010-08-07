@@ -340,7 +340,7 @@ package body GPS.Kernel is
       Handle.Database := Create
         (Handle.Registry, Handle.Get_Construct_Database,
          Normal_Ref_In_Call_Graph =>
-           not Require_GNAT_Date (Handle, "20100805"));
+           not Require_GNAT_Date (Handle, "20100806"));
       Set_Symbols (Handle.Database, Handle.Symbols);
       Set_Symbols (Handle.Get_Construct_Database, Handle.Symbols);
       Register_Language_Handler (Handle.Database, Handler);
