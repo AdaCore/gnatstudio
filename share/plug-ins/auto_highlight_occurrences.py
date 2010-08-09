@@ -219,11 +219,12 @@ def destroy_current_highlighter():
         current_highlighter = None
 
     # For safety, clear all dynamic occurrences styles from the editor
-    buf=GPS.EditorBuffer.get()
+    buf=GPS.EditorBuffer.get(open=False)
 
-    for k in default_colors:
-        overlay=buf.create_overlay("dynamic occurrences " + k)
-        buf.remove_overlay(overlay)
+    if buf:
+        for k in default_colors:
+            overlay=buf.create_overlay("dynamic occurrences " + k)
+            buf.remove_overlay(overlay)
 
 def re_highlight():
     global current_highlighter
