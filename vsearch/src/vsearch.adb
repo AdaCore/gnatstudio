@@ -2042,8 +2042,6 @@ package body Vsearch is
          declare
             Vsearch  : constant Vsearch_Access := Vsearch_Module_Id.Search;
          begin
-            Set_Text (Get_Entry (Vsearch.Replace_Combo), "");
-
             if Context = null then
                if Module /= null then
                   declare
