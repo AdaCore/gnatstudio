@@ -3453,7 +3453,13 @@ package body Src_Editor_Buffer is
       Internal : Boolean := False;
       Force    : Boolean := False)
    is
-      Name_Changed      : constant Boolean := Buffer.Filename /= Filename;
+      --  When a file is created through "Goto spec<->body", the file won't
+      --  exist on the disk yet, but Buffer.Filename will already be set. So
+      --  we need both tests below
+      Name_Changed      : constant Boolean :=
+        Buffer.Filename /= Filename
+        or else not Buffer.Filename.Is_Regular_File;
+
       Result            : Boolean;
       Original_Filename : constant Virtual_File := Buffer.Filename;
    begin
