@@ -71,7 +71,7 @@ class GroupTagHandler (GPS.DocgenTagHandler):
          n += 1
       content += """</ul></div></div></div>"""
 
-      content += """<div class="title">Package Groups</div>"""
+      content += """<div class="title">Package Groups</div><div class="page">"""
       n = 0
       for group in sorted(self.groups.keys()):
          content += """<p><a name="%d"></a><h1>%s</h1>\n""" % (n, group)
@@ -79,6 +79,8 @@ class GroupTagHandler (GPS.DocgenTagHandler):
          for href in sorted(self.groups[group]):
             content += "%s<br/>\n" % (href)
          content += "</p>\n"
+
+      content += "</div>"
 
       if content != "":
          docgen.generate_index_file ("Package groups", "groups.html", content);
