@@ -155,7 +155,6 @@ class LocationHighlighter:
         self.file=self.buffer.file()
         self.declaration=self.entity.declaration()
 
-
         cat = self.entity.category()
         if cat in editor_location_styles:
             self.style = editor_location_styles[cat]
@@ -212,6 +211,20 @@ class LocationHighlighter:
 current_highlighter=None
 exiting=False # Whether GPS is about to exit
 
+def destroy_current_highlighter():
+    global current_highlighter
+
+    if current_highlighter:
+        current_highlighter.destroy()
+        current_highlighter = None
+
+    # For safety, clear all dynamic occurrences styles from the editor
+    buf=GPS.EditorBuffer.get()
+
+    for k in default_colors:
+        overlay=buf.create_overlay("dynamic occurrences " + k)
+        buf.remove_overlay(overlay)
+
 def re_highlight():
     global current_highlighter
 
@@ -233,8 +246,7 @@ def re_highlight():
             if (current_highlighter
                 and (not entity.declaration()
                          == current_highlighter.declaration)):
-                current_highlighter.destroy()
-                current_highlighter = None
+                destroy_current_highlighter()
 
             # Highlight the current entity
             if not current_highlighter:
@@ -245,10 +257,7 @@ def re_highlight():
     # If we reach this point, there is no entity in the context: remove
     # highlighting
 
-    if current_highlighter:
-        current_highlighter.destroy()
-        current_highlighter = None
-
+    destroy_current_highlighter()
 
 def on_location_changed(hook, file, line, column):
     """ Called when the current location changes """
@@ -256,15 +265,12 @@ def on_location_changed(hook, file, line, column):
     try:
         re_highlight()
     except:
-        if current_highlighter:
-            current_highlighter.destroy()
-            current_highlighter = None
+        destroy_current_highlighter()
 
 def remove_all_messages():
     global current_highlighter
-    if current_highlighter:
-        current_highlighter.destroy()
-        current_highlighter = None
+
+    destroy_current_highlighter()
 
     for m in GPS.Message.list("dynamic occurrences"):
         m.remove()
