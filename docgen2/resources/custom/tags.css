@@ -44,6 +44,7 @@ div.seealso
 div.code
 {
    font-family: monospace;
+   white-space: pre-wrap;
 }
 div.code p
 {
