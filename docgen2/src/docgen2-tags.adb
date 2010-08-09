@@ -40,9 +40,7 @@ package body Docgen2.Tags is
       Href        : String;
       Keep_Layout : Boolean := False) return Unbounded_String;
 
-   function Strip_Blanks
-     (S : Unbounded_String;
-      Keep_Formatting : Boolean) return String;
+--     function Strip_Blanks (S : Unbounded_String) return String;
 
    procedure Parse_Buffer
      (S    : String;
@@ -51,104 +49,6 @@ package body Docgen2.Tags is
 
    procedure Free_Node (N : in out Node_Ptr);
    --  Free a xml node tree
-
-   ------------------
-   -- Strip_Blanks --
-   ------------------
-
-   function Strip_Blanks
-     (S : Unbounded_String;
-      Keep_Formatting : Boolean) return String
-   is
-      Str   : constant String := To_String (S);
-      Res   : Unbounded_String;
-      Idx   : Natural;
-      Nxt   : Natural;
-      First : Boolean := True;
-
-      function Is_Intended_LF (Idx : Natural) return Boolean;
-      --  True if the line starting at Idx seems intended (e.g. is a list item
-      --  or a paragraph start.
-
-      function Is_Intended_LF (Idx : Natural) return Boolean is
-         C : Character;
-      begin
-         if Idx + 2 <= Str'Last
-           and then (Str (Idx .. Idx + 1) = "- "
-                     or else Str (Idx .. Idx + 1) = "* ")
-         then
-            --  List item
-            return True;
-         end if;
-
-         if Str (Idx) in 'A' .. 'Z' then
-            for J in reverse 1 .. Ada.Strings.Unbounded.Length (Res) loop
-               C := Ada.Strings.Unbounded.Element (Res, J);
-               if C = '.' then
-                  --  A new sentence starting with a new-line: suppose this is
-                  --  intentional
-                  return True;
-               elsif C = ' ' or else C = ASCII.LF then
-                  null;
-               else
-                  return False;
-               end if;
-            end loop;
-         end if;
-
-         return False;
-      end Is_Intended_LF;
-
-   begin
-      Idx := Str'First;
-      Skip_Blanks (Str, Idx);
-
-      if Idx > Str'Last then
-         return "";
-      end if;
-
-      loop
-         Nxt := Line_End (Str, Idx);
-
-         if not Keep_Formatting
-           and then Is_Blank_Line (Str (Idx .. Nxt), Idx)
-         then
-            Res := Res & ASCII.LF;
-
-         else
-            if not Keep_Formatting then
-               Skip_Blanks (Str, Idx);
-
-               --  Try to handle lists: if a line starts with "[-*] ", then we
-               --  suppose that this contains a bullet list and we add a LF.
-               --  We also handle cases where the line starts with a
-               --  capital letter, supposing that the line return was then
-               --  on purpose
-               if not First and then Is_Intended_LF (Idx) then
-                  Res := Res & ASCII.LF;
-               end if;
-            end if;
-
-            Res := Res & Str (Idx .. Nxt);
-         end if;
-
-         First := False;
-
-         if Keep_Formatting then
-            Res := Res & ASCII.LF;
-
-         elsif not Is_Blank (Str (Nxt))
-           and then Next_Line (Str, Idx) /= Str'Last
-         then
-            Res := Res & ' ';
-         end if;
-
-         Idx := Next_Line (Str, Idx);
-         exit when Idx = Str'Last;
-      end loop;
-
-      return To_String (Res);
-   end Strip_Blanks;
 
    -------------------------
    -- To_Unbounded_String --
@@ -165,14 +65,44 @@ package body Docgen2.Tags is
       Backend : Docgen2_Backend.Backend_Handle renames
                       Get_Backend (Docgen);
 
+      function Is_Intended_LF (Str : String; Idx : Natural) return Boolean;
+      --  True if the line starting at Idx seems intended (e.g. is a list item
+      --  or a paragraph start.
+
+      function Is_Intended_LF (Str : String; Idx : Natural) return Boolean is
+      begin
+         if Idx + 2 <= Str'Last
+           and then (Str (Idx .. Idx + 1) = "- "
+                     or else Str (Idx .. Idx + 1) = "* ")
+         then
+            --  List item
+            return True;
+         end if;
+
+         if Str (Idx) in 'A' .. 'Z' then
+            for J in reverse Str'First .. Idx - 1 loop
+               if Str (J) = '.' then
+                  --  A new sentence starting with a new-line: suppose this is
+                  --  intentional
+                  return True;
+
+               elsif not Is_Blank (Str (J)) then
+                  return False;
+
+               end if;
+            end loop;
+         end if;
+
+         return False;
+      end Is_Intended_LF;
+
    begin
       if N = null then
          return Null_Unbounded_String;
       end if;
 
       if N.Kind = Text_Node then
-         return To_Unbounded_String
-           (Backend.Filter (Strip_Blanks (N.Value, Keep_Layout)));
+         return To_Unbounded_String (Backend.Filter (To_String (N.Value)));
 
       elsif N.Kind = Root_Node then
          declare
@@ -213,26 +143,28 @@ package body Docgen2.Tags is
             Node := N;
 
             declare
-               S     : constant String := To_String (C_Val);
-               Idx   : Natural;
-               Nxt   : Natural;
+               S       : constant String := To_String (C_Val);
+               Idx     : Natural;
+               P_First : Natural := S'First;
 
             begin
                Idx := S'First;
 
                while Idx < S'Last loop
-                  Nxt := Line_End (S, Idx);
-
-                  if Idx = S'First and then Nxt = S'Last then
-                     --  No need to generate a paragraph
-                     Append (Val, S & ASCII.LF);
-                  else
-                     Append
-                       (Val, Backend.Gen_Paragraph (S (Idx .. Nxt)));
+                  if Is_Intended_LF (S, Idx) then
+                     Append (Val,
+                             Backend.Gen_Paragraph (S (P_First .. Idx - 1)));
+                     P_First := Idx;
                   end if;
 
                   Idx := Next_Line (S, Idx);
                end loop;
+
+               if P_First > S'First then
+                  Append (Val, Backend.Gen_Paragraph (S (P_First .. S'Last)));
+               else
+                  Append (Val, S);
+               end if;
 
                declare
                   Res : constant String :=

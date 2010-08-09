@@ -315,6 +315,7 @@ div.subprograms div.details table td
 {
    border:0px;
    padding:0px;
+   vertical-align: top;
 }
 div.subprograms div.details span.keyword
 {
@@ -344,6 +345,7 @@ div.subprograms div.comment *
    margin: 0px;
    padding-top: 3px;
    padding-bottom: 3px;
+   white-space: normal;
 }
 
 div.subprograms .type,
