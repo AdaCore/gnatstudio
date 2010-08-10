@@ -18,7 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
+with Ada.Strings.Hash;
 with GNAT.Strings;
 
 with Entities;     use Entities;
@@ -213,6 +215,16 @@ package Docgen2.Entities is
    package Entity_Info_Map is new Ada.Containers.Indefinite_Hashed_Maps
      (File_Location, Entity_Info, Hash, Equivalent_Keys);
    --  A hashed set of nodes, identified by their 'loc' attribute
+
+   package Entity_Info_Vector is new Ada.Containers.Indefinite_Vectors
+     (Index_Type   => Natural,
+      Element_Type => Entity_Info);
+   package Entity_Info_Map_By_Name is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Entity_Info_Vector.Vector,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=",
+      "="             => Entity_Info_Vector."=");
 
    procedure Free (List : in out Entity_Info_List.Vector);
    procedure Free (List : in out Entity_Info_Map.Map);

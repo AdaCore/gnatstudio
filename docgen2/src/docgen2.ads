@@ -66,6 +66,9 @@ package Docgen2 is
       --  True if docgen should process only files having up-to-date cross refs
       Spawn_Browser           : Boolean := True;
       --  True if docgen should spawn a browser after having generated the doc
+      Generate_Comment_Xref   : Boolean := True;
+      --  True if docgen should try to find entity names in comments and
+      --  generate cross references in this case
    end record;
 
    procedure Generate

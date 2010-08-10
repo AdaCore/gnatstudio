@@ -71,6 +71,10 @@ package body Docgen2_Module is
       Spawn_Browser           : Boolean_Preference;
       --  True if docgen should spawn a browser after documentation generation.
 
+      Gen_Comment_Xref        : Boolean_Preference;
+      --  True if docgen should try to find entity names in comments and
+      --  generate cross references in this case
+
       Options                 : Docgen_Options;
       --  Group all the preferences
 
@@ -195,7 +199,9 @@ package body Docgen2_Module is
          Process_Up_To_Date_Only =>
            Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only.Get_Pref,
          Spawn_Browser           =>
-           Docgen_Module (Docgen_Module_Id).Spawn_Browser.Get_Pref);
+           Docgen_Module (Docgen_Module_Id).Spawn_Browser.Get_Pref,
+         Generate_Comment_Xref   =>
+           Docgen_Module (Docgen_Module_Id).Gen_Comment_Xref.Get_Pref);
 
    exception
       when E : others =>
@@ -495,13 +501,22 @@ package body Docgen2_Module is
 
       Docgen_Module (Docgen_Module_Id).Spawn_Browser := Create
         (Get_Preferences (Kernel),
-         Name => "Doc-Spawn-Browser",
+         Name    => "Doc-Spawn-Browser",
          Default => True,
          Page    => -"Documentation",
          Doc     =>
          -("Whether Docgen should spawn a browser after having generated"
            & " the documentation."),
          Label   => -"Spawn a browser");
+      Docgen_Module (Docgen_Module_Id).Gen_Comment_Xref := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-Generate-Comment-Xref",
+         Default => True,
+         Page    => -"Documentation",
+         Doc     =>
+         -("Whether Docgen should analyze the comments and try to find entity "
+           & "names in them."),
+         Label   => -"Find xrefs in comments");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

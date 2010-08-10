@@ -8804,10 +8804,18 @@ comments. The engine in charge of extracting them coupled with the
 cross-reference engine gives GPS all the flexibility needed to generate
 accurate documentation.
 
-The documentation is put into a directory called @file{doc}, created
+The documentation is put by default into a directory called @file{doc}, created
 under the object directory of the root project loaded in GPS. If no such object
 directory exists, then it is directly created in the same directory as the root
-project.
+project. This behavior can be modified by specifying the attribute
+Documentation_Dir in the package IDE of your root project:
+@smallexample
+project P is
+   package IDE is
+      for Documentation_Dir use "html";
+   end IDE;
+end P;
+@end smallexample
 
 Once the documentation is generated, the main documentation file is loaded
 in your default browser.
@@ -8939,14 +8947,7 @@ only or from the selected project recursively.
 You will find the list of all documentation options in
 @ref{The Preferences Dialog}.
 
-@item Restrictions
-There are some restrictions in the generated documentation:
-
-@itemize @bullet
-@item The formal part of generics is not always displayed.
-@end itemize
-
-Furthermore, the documentation generator relies on the ALI files created by
+Note that the documentation generator relies on the ALI files created by
 GNAT. Depending on the version of GNAT used, the following restrictions may
 or may not apply:
 
@@ -10944,6 +10945,11 @@ comments starting with '!'.
 
 If enabled, a browser is spawned after each documentation generation to view
 the generated files. This browser is not spawned if disabled.
+
+@item Find xrefs in comments
+
+If enabled, GPS will try to find references to entities in comments, and
+ generate links to them when generating the documentation.
 
 @end table
 

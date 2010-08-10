@@ -18,10 +18,14 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;               use Ada.Characters.Handling;
+with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
+
+with Glib;                      use Glib;
+with Glib.Unicode;              use Glib.Unicode;
 
 with Basic_Types;
 with Commands;                  use Commands;
@@ -58,9 +62,13 @@ package body Docgen2 is
 
    Me : constant Debug_Handle := Create ("Docgen");
 
+   Fullnames : constant GNATCOLL.Symbols.Symbol_Table_Access :=
+                 GNATCOLL.Symbols.Allocate;
+
    function Filter_Documentation
      (Doc     : String;
-      Options : Docgen_Options) return String;
+      Docgen  : Docgen_Object;
+      File    : Source_File) return String;
    --  Filters the doc according to the Options.
 
    type Context_Stack_Element is record
@@ -154,6 +162,9 @@ package body Docgen2 is
       EInfos           : Entity_Info_Map.Map;
       --  List of all entities described in this documentation
 
+      EInfos_By_Name   : Entity_Info_Map_By_Name.Map;
+      --  List of all entities, indexed by their simple names
+
       Xref_List        : Cross_Ref_List.Vector;
       --  All cross-ref used in this documentation.
 
@@ -225,7 +236,7 @@ package body Docgen2 is
       To_API  : Boolean;
       To_Spec : Boolean;
       To_Body : Boolean;
-      Name    : String := "") return String;
+      Name    : String) return String;
    --  Generates a '<a href' tag, using Name to display or the entity's
    --  name if name is empty
 
@@ -302,26 +313,10 @@ package body Docgen2 is
       To_API  : Boolean;
       To_Spec : Boolean;
       To_Body : Boolean;
-      Name    : String := "") return String
+      Name    : String) return String
    is
       Kind    : Href_Kind;
       N_Links : Natural := 0;
-
-      function Get_Name return String;
-      --  Get the name finally used for href
-
-      --------------
-      -- Get_Name --
-      --------------
-
-      function Get_Name return String is
-      begin
-         if Name = "" then
-            return Get (EInfo.Name).all;
-         else
-            return Name;
-         end if;
-      end Get_Name;
 
    begin
       if To_API then
@@ -335,7 +330,7 @@ package body Docgen2 is
       end if;
 
       if N_Links = 0 then
-         return Get_Name;
+         return Name;
       elsif N_Links = 1 then
          if To_API then
             Kind := API_Href;
@@ -346,14 +341,14 @@ package body Docgen2 is
          end if;
 
          return Backend.Gen_Href
-           (Get_Name,
+           (Name,
             Get_Ref (Backend, EInfo, Kind),
             "defined at " & Spec_Location_Image (EInfo));
       else
          declare
             Ret : Unbounded_String;
          begin
-            Ret := To_Unbounded_String (Backend.Multi_Href_Start (Get_Name));
+            Ret := To_Unbounded_String (Backend.Multi_Href_Start (Name));
 
             if To_API then
                Append
@@ -476,26 +471,132 @@ package body Docgen2 is
 
    function Filter_Documentation
      (Doc     : String;
-      Options : Docgen_Options) return String
+      Docgen  : Docgen_Object;
+      File    : Source_File) return String
    is
       Matches : Match_Array (0 .. 0);
+      Idx     : Natural;
+      Nxt     : Natural;
+      Tmp     : Natural;
+      Ret     : Unbounded_String;
+      Done    : Boolean := False;
+      E       : Entity_Info;
+      Short_N : Natural;
+      C       : Gunichar;
+      Next_C  : Gunichar;
       use type GNAT.Expect.Pattern_Matcher_Access;
+
    begin
 
-      if Options.Comments_Filter = null then
+      --  take care of comments filters (way to ignore comments)
+      if Docgen.Options.Comments_Filter /= null then
+         Match (Docgen.Options.Comments_Filter.all, Doc, Matches);
+
+         if Matches (0) /= No_Match then
+            return Filter_Documentation
+              (Doc (Doc'First .. Matches (0).First - 1) &
+               Doc (Matches (0).Last + 1 .. Doc'Last),
+               Docgen,
+               File);
+         end if;
+      end if;
+
+      --  Now try to find entities in comment
+
+      if not Docgen.Options.Generate_Comment_Xref then
          return Doc;
       end if;
 
-      Match (Options.Comments_Filter.all, Doc, Matches);
+      Idx := Doc'First;
+      Nxt := Doc'First;
 
-      if Matches (0) = No_Match then
-         return Doc;
-      end if;
+      --  Find potential entities in comment
+      --  ??? Completely Ada specific ?
+      while Nxt <= Doc'Last loop
+         C := UTF8_Get_Char (Doc (Nxt .. Doc'Last));
+         Tmp := UTF8_Next_Char (Doc, Nxt);
+         if Tmp < Doc'Last then
+            Next_C := UTF8_Get_Char (Doc (Tmp .. Doc'Last));
+         end if;
 
-      return Filter_Documentation
-        (Doc (Doc'First .. Matches (0).First - 1) &
-           Doc (Matches (0).Last + 1 .. Doc'Last),
-         Options);
+         --  While we have entity letters or dots surrounded by entity letters,
+         --  then we move on. Else, we analyze the word.
+         if not String_Utils.Is_Entity_Letter (C)
+           and then
+             (C /= Character'Pos ('.')
+              or else Tmp > Doc'Last
+              or else not Is_Entity_Letter (Next_C))
+         then
+
+            Short_N := Idx;
+
+            --  See if a full name is furnished
+            for K in reverse Idx .. Nxt - 1 loop
+               if Doc (K) = '.' then
+                  Short_N := K + 1;
+
+                  exit;
+               end if;
+            end loop;
+
+            Done := False;
+
+            if Docgen.EInfos_By_Name.Contains (Doc (Short_N .. Nxt - 1)) then
+               declare
+                  Vect : Entity_Info_Vector.Vector renames
+                           Docgen.EInfos_By_Name.Element
+                             (Doc (Short_N .. Nxt - 1));
+               begin
+                  --  For short names, only pick up entities defined in the
+                  --  same package
+                  for K in Vect.First_Index .. Vect.Last_Index loop
+                     if Short_N = Idx
+                       and then Vect.Element (K).Location.Spec_Loc.File = File
+                     then
+                        E := Vect.Element (K);
+                        Done := True;
+                        exit;
+
+                     --  Compare full names case insensitive
+                     --  ??? Ada specific, lots of languages being case
+                     --  sensitive
+                     elsif Ada.Strings.Equal_Case_Insensitive
+                       (Get (Vect.Element (K).Name).all,
+                        Doc (Idx .. Nxt - 1))
+                     then
+                        E := Vect.Element (K);
+                        Done := True;
+
+                        exit;
+                     end if;
+                  end loop;
+               end;
+            end if;
+
+            if Done then
+               Append
+                 (Ret,
+                  Docgen.Backend.Gen_Href
+                    (Doc (Idx .. Nxt - 1),
+                     Docgen.Backend.To_Href
+                       (Spec_Location_Image (E),
+                        Base_Name
+                          (Get_Filename
+                             (E.Location.Spec_Loc.File)),
+                        E.Location.Pkg_Nb),
+                     Doc (Idx .. Nxt - 1)));
+               Append (Ret, Doc (Nxt .. Tmp - 1));
+            else
+               Append (Ret, Doc (Idx .. Tmp - 1));
+            end if;
+
+            Idx := Tmp;
+         end if;
+
+         Nxt := Tmp;
+      end loop;
+
+      return To_String (Ret);
    end Filter_Documentation;
 
    ----------
@@ -563,8 +664,9 @@ package body Docgen2 is
       --  Create a new Cross-Ref and update the Cross-Refs list
 
       function Create_EInfo
-        (Cat : Language_Category;
-         Loc : File_Location) return Entity_Info;
+        (Cat        : Language_Category;
+         Loc        : File_Location;
+         Short_Name : GNATCOLL.Symbols.Symbol) return Entity_Info;
       --  Create a new Entity Info and update the Entity info list
 
       -----------------
@@ -628,16 +730,19 @@ package body Docgen2 is
       ------------------
 
       function Create_EInfo
-        (Cat : Language_Category;
-         Loc : File_Location) return Entity_Info
+        (Cat        : Language_Category;
+         Loc        : File_Location;
+         Short_Name : GNATCOLL.Symbols.Symbol) return Entity_Info
       is
          E_Info : Entity_Info;
+         Vect   : Entity_Info_Vector.Vector;
 
       begin
          pragma Assert (Loc /= No_File_Location);
 
          E_Info := new Entity_Info_Record (Category => To_Category (Cat));
          E_Info.Lang_Category := Cat;
+         E_Info.Short_Name := Short_Name;
 
          if Context_Elem.Pkg_Entity /= null then
             E_Info.Location := (Spec_Loc  => Loc,
@@ -650,6 +755,24 @@ package body Docgen2 is
          end if;
 
          Cmd.EInfos.Include (Loc, E_Info);
+
+         if E_Info.Category /= Cat_Parameter
+           and then E_Info.Category /= Cat_Unknown
+         then
+            declare
+               S_Name : constant String := Get (E_Info.Short_Name).all;
+            begin
+               if Cmd.EInfos_By_Name.Contains (S_Name) then
+                  Vect := Cmd.EInfos_By_Name.Element (S_Name);
+                  Vect.Append (E_Info);
+                  Cmd.EInfos_By_Name.Replace (S_Name, Vect);
+               else
+                  Vect.Append (E_Info);
+                  Cmd.EInfos_By_Name.Include (S_Name, Vect);
+               end if;
+            end;
+         end if;
+
          E_Info.Is_Visible := not Context.In_Body;
 
          return E_Info;
@@ -715,7 +838,8 @@ package body Docgen2 is
                      (File   => Context.File,
                       Line   => Construct.Sloc_Entity.Line,
                       Column => Basic_Types.Visible_Column_Type
-                        (Construct.Sloc_Entity.Column)));
+                        (Construct.Sloc_Entity.Column)),
+                    Get_Name (Entity));
                   E_Info.Name := Construct.Name;
                   E_Info.Short_Name := E_Info.Name;
                end if;
@@ -723,16 +847,13 @@ package body Docgen2 is
 
          else
             E_Info := Create_EInfo
-              (Construct.Category, Get_Declaration_Of (Entity));
+              (Construct.Category,
+               Get_Declaration_Of (Entity),
+               Get_Name (Entity));
 
             --  Set Name
-            if Construct.Category = Cat_Package then
-               --  Packages receive fully qualified names
-               E_Info.Name := Construct.Name;
-            else
-               E_Info.Name := Get_Name (Entity);
-            end if;
-
+            E_Info.Name := GNATCOLL.Symbols.Find
+              (Fullnames, Get_Full_Name (Entity));
             E_Info.Short_Name := Get_Name (Entity);
 
             --  Retrieve documentation comments
@@ -838,7 +959,8 @@ package body Docgen2 is
 
                   Param_EInfo := Create_EInfo
                     (Cat_Parameter,
-                     Get_Declaration_Of (Param_Entity));
+                     Get_Declaration_Of (Param_Entity),
+                     Get_Name (Entity));
                   Param_EInfo.Name := Get_Name (Param_Entity);
 
                   Param_EInfo.Description :=
@@ -893,7 +1015,7 @@ package body Docgen2 is
          then
             E_Info.Is_Partial := True;
             E_Info.Full_Declaration :=
-              Create_Xref (Get (E_Info.Name).all, Body_Location);
+              Create_Xref (Get (E_Info.Short_Name).all, Body_Location);
          end if;
 
          --  Initialize now category specific parameters
@@ -2162,7 +2284,7 @@ package body Docgen2 is
       function Get_Name (E : Entity_Info) return String is
          Str : Unbounded_String;
       begin
-         Str := To_Unbounded_String (Get (E.Name).all);
+         Str := To_Unbounded_String (Get (E.Short_Name).all);
 
          if E.Is_Abstract then
             Str := Str & " (abstract)";
@@ -2254,8 +2376,8 @@ package body Docgen2 is
          Append
            (Tags.Description_Tag,
             Filter_Documentation
-              (To_String (E_Info.Description),
-               Command.Options));
+              (To_String (E_Info.Description), Command,
+               E_Info.Location.Spec_Loc.File));
 
          for J in E_Info.References.First_Index .. E_Info.References.Last_Index
          loop
@@ -2686,7 +2808,8 @@ package body Docgen2 is
       declare
          Unit_Comment : constant String :=
                           Filter_Documentation
-                            (To_String (E_Info.Description), Command.Options);
+                            (To_String (E_Info.Description), Command,
+                             E_Info.Location.Spec_Loc.File);
       begin
          if Unit_Comment /= "" then
             Insert (Translation, Assoc ("DESCRIPTION", Unit_Comment));
@@ -2889,16 +3012,16 @@ package body Docgen2 is
                   Append
                     (Entries_Href,
                      Command.Backend.Gen_Href
-                       (Get (E_Entry.Name).all,
+                       (Get (E_Entry.Short_Name).all,
                         Command.Backend.To_Href
                           (Spec_Location_Image (E_Entry),
                            Base_Name
                              (Get_Filename
                                 (E_Entry.Location.Spec_Loc.File)),
                            E_Entry.Location.Pkg_Nb),
-                        Get (E_Entry.Name).all));
+                        Get (E_Entry.Short_Name).all));
 
-                  Append (Task_Entry_Parent, Get (Child_EInfo.Name).all);
+                  Append (Task_Entry_Parent, Get (Child_EInfo.Short_Name).all);
                   Append (Task_Entry_Parent_Loc,
                           Spec_Location_Image (Child_EInfo));
                   Entity_Info_List.Next (Entry_Cursor);
