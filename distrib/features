@@ -57,6 +57,11 @@ NF-45-J720-004 More precise call graph (2010-08-06)
   generate misleading information for some references to subprograms which
   are not function calls.
 
+NF-45-J713-015 'Replace' field remember between searches (2010-08-10)
+
+  The contents of the 'Replace' field in the Search/Replace dialog is
+  now preserved between two search sessions.
+
 NF-45-J713-014 Case-preserving replacement (2010-07-21)
 
   GPS is now capable of preserving the casing of words when performing
