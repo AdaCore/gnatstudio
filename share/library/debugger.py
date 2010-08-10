@@ -1,24 +1,25 @@
-"""Various extensions to the debugger contextual menu.
+"""Various extensions to the visual debugger support in GPS.
    This is mostly intended as a template for your own custom commands.
 
-   It adds a single entry in the Debug contextual menu so that
-   you can display the entity under the cursor as a decimal. In particular,
-   this is useful when you click on an enumeration literal or a variable of
-   an enumeration type if you want to see the actual value instead of the
-   literal value.
+   This plug-in adds:
 
-   It also adds a /Debug/Data/Graph Display Local Variables menu, which
+   - an entry in the Debug contextual menu so that you can display the entity
+   under the cursor as a decimal. In particular, this is useful when you click
+   on an enumeration literal or a variable of an enumeration type if you want
+   to see the actual value instead of the literal value.
+
+   - /Debug/Data/Graph Display Local Variables menu, which
    displays all local variables in the data window, one box per variable.
    This is different from the /Debug/Data/Display Local Variables menu
    which does not pretty-print the variables.
 
-   It adds a way to ignore exceptions raised at specific source locations,
+   - a way to ignore exceptions raised at specific source locations,
    while still stopping on all other exceptions. The source locations are
    set through the contextual menu "Ignore exception breakpoints" (and removed
    likewise), and are preserved between GPS sessions if the preference is set
    appropriately.
 
-   It defines a GPS action (to which key bindings can be set) called
+   - a GPS action (to which key bindings can be set) called
    "Continue till line" (in the General category of the key shortcut manager).
    This allows you through a simple key shortcut to automatically continue the
    debugger till the current line.
