@@ -49,8 +49,17 @@ package GNATStack.Data_Model is
 
    type Subprogram_Identifier is record
       Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
+      Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
+      --  Linker_Name is name in encoded form, it is used to represent name in
+      --  .ci files only.
       Locations   : Subprogram_Location_Sets.Set;
    end record;
+
+   overriding function "="
+     (Left  : Subprogram_Identifier;
+      Right : Subprogram_Identifier) return Boolean;
+   --  Encoded_Name is optional information and must be ignored by relationship
+   --  operations.
 
    function Hash
      (Item : Subprogram_Identifier)

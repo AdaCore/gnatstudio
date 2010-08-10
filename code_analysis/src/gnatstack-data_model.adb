@@ -25,6 +25,19 @@ package body GNATStack.Data_Model is
    use Ada.Strings.Unbounded;
    use Subprogram_Location_Sets;
 
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (Left  : Subprogram_Identifier;
+      Right : Subprogram_Identifier) return Boolean is
+   begin
+      return
+        Left.Prefix_Name = Right.Prefix_Name
+          and Left.Locations = Right.Locations;
+   end "=";
+
    -----------
    -- Clear --
    -----------

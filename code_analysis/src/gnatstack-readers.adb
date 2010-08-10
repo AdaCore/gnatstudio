@@ -187,7 +187,9 @@ package body GNATStack.Readers is
 
       Subprogram : constant Subprogram_Information_Access :=
                      Self.Resolve_Or_Create
-                       ((Self.State.C_Prefix_Name, Self.State.C_Locations));
+                       ((Self.State.C_Prefix_Name,
+                         Self.State.C_Linker_Name,
+                         Self.State.C_Locations));
       Value      : constant Subprogram_Information_Vectors.Vector :=
                      Self.State.Chain;
       Usage      : constant Stack_Usage_Information :=
@@ -258,7 +260,9 @@ package body GNATStack.Readers is
 
       Subprogram : constant Subprogram_Information_Access :=
                      Self.Resolve_Or_Create
-                       ((Self.State.E_Prefix_Name, Self.State.E_Locations));
+                       ((Self.State.E_Prefix_Name,
+                         Self.State.E_Linker_Name,
+                         Self.State.E_Locations));
 
    begin
       Self.Pop;
@@ -505,7 +509,9 @@ package body GNATStack.Readers is
    begin
       Self.State.I_Subprogram :=
         Self.Resolve_Or_Create
-          ((Self.State.I_Prefix_Name, Self.State.I_Locations));
+          ((Self.State.I_Prefix_Name,
+            Self.State.I_Linker_Name,
+            Self.State.I_Locations));
    end Analyze_indirectcallset_Start_Tag;
 
    ---------------------------------
@@ -579,6 +585,58 @@ package body GNATStack.Readers is
       Self.Push;
       Self.State := (Kind => Integer_Value_State, others => <>);
    end Analyze_line_Start_Tag;
+
+   --------------------------------
+   -- Analyze_linkername_End_Tag --
+   --------------------------------
+
+   procedure Analyze_linkername_End_Tag (Self : in out Reader) is
+      pragma Assert (Self.State.Kind = String_Value_State);
+
+      Value : constant Unbounded_String := Self.State.String_Value;
+
+   begin
+      Self.Pop;
+
+      if Self.State.Kind = Entry_State then
+         Self.State.C_Linker_Name := Value;
+
+      elsif Self.State.Kind = External_State then
+         Self.State.E_Linker_Name := Value;
+
+      elsif Self.State.Kind = Indirect_State then
+         Self.State.I_Linker_Name := Value;
+
+      elsif Self.State.Kind = Subprogram_State then
+         Self.State.S_Linker_Name := Value;
+
+      elsif Self.State.Kind = Unbounded_State then
+         --  Content of 'unbounded' element is ignored.
+
+         null;
+      end if;
+   end Analyze_linkername_End_Tag;
+
+   ----------------------------------
+   -- Analyze_linkername_Start_Tag --
+   ----------------------------------
+
+   procedure Analyze_linkername_Start_Tag
+     (Self       : in out Reader;
+      Attributes : Sax.Attributes.Attributes'Class)
+   is
+      pragma Assert
+        (Self.State.Kind = Entry_State
+           or else Self.State.Kind = External_State
+           or else Self.State.Kind = Indirect_State
+           or else Self.State.Kind = Subprogram_State
+           or else Self.State.Kind = Unbounded_State);
+      pragma Assert (Attributes.Get_Value ("type") = "strings");
+
+   begin
+      Self.Push;
+      Self.State := (Kind => String_Value_State, others => <>);
+   end Analyze_linkername_Start_Tag;
 
    -------------------------------------
    -- Analyze_localstackusage_End_Tag --
@@ -864,7 +922,8 @@ package body GNATStack.Readers is
    begin
       Self.Pop;
       Info :=
-        Self.Resolve_Or_Create ((Value.S_Prefix_Name, Value.S_Locations));
+        Self.Resolve_Or_Create
+          ((Value.S_Prefix_Name, Value.S_Linker_Name, Value.S_Locations));
 
       if Self.State.Kind = Entry_State then
          --  Insert subprogram into the chain
@@ -1240,6 +1299,9 @@ package body GNATStack.Readers is
       elsif Local_Name = "line" then
          Self.Analyze_line_End_Tag;
 
+      elsif Local_Name = "linkername" then
+         Self.Analyze_linkername_End_Tag;
+
       elsif Local_Name = "localstackusage" then
          Self.Analyze_localstackusage_End_Tag;
 
@@ -1416,6 +1478,9 @@ package body GNATStack.Readers is
 
       elsif Local_Name = "line" then
          Self.Analyze_line_Start_Tag (Atts);
+
+      elsif Local_Name = "linkername" then
+         Self.Analyze_linkername_Start_Tag (Atts);
 
       elsif Local_Name = "localstackusage" then
          Self.Analyze_localstackusage_Start_Tag (Atts);

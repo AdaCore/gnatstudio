@@ -110,21 +110,25 @@ private
 
          when Entry_State =>
             C_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
+            C_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             C_Locations   : Subprogram_Location_Sets.Set;
             Entry_Usage   : Stack_Usage_Information;
             Chain         : Subprogram_Information_Vectors.Vector;
 
          when External_State =>
             E_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
+            E_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             E_Locations   : Subprogram_Location_Sets.Set;
 
          when Indirect_State =>
             I_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
+            I_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             I_Locations   : Subprogram_Location_Sets.Set;
             I_Subprogram  : Subprogram_Information_Access;
 
          when Subprogram_State =>
             S_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
+            S_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             S_Locations   : Subprogram_Location_Sets.Set;
             Is_Reference  : Boolean;
             Global_Usage  : Stack_Usage_Information;
@@ -325,6 +329,14 @@ private
 
    procedure Analyze_line_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "line" element
+
+   procedure Analyze_linkername_Start_Tag
+     (Self       : in out Reader;
+      Attributes : Sax.Attributes.Attributes'Class);
+   --  Analyzes start tag of "linkername" element
+
+   procedure Analyze_linkername_End_Tag (Self : in out Reader);
+   --  Analyzes end tag of "linkername" element
 
    procedure Analyze_localstackusage_Start_Tag
      (Self       : in out Reader;
