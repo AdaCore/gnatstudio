@@ -57,7 +57,7 @@ NF-45-J720-004 More precise call graph (2010-08-06)
   generate misleading information for some references to subprograms which
   are not function calls.
 
-NF-45-J713-015 'Replace' field remember between searches (2010-08-10)
+NF-45-J713-015 'Replace' field kept between searches (2010-08-10)
 
   The contents of the 'Replace' field in the Search/Replace dialog is
   now preserved between two search sessions.
