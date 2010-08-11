@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Containers;            use Ada.Containers;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -35,7 +36,7 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;
-with Ada.Containers; use Ada.Containers;
+
 with Entities.Construct_Assistant; use Entities.Construct_Assistant;
 
 package body Entities.Queries is
@@ -657,13 +658,168 @@ package body Entities.Queries is
       Location             : out File_Location;
       No_Location_If_First : Boolean := False)
    is
+
+      function Is_Expected_Construct
+        (Location : File_Location) return Boolean;
+      --  Return true if the location given in parameter indeed corresponds to
+      --  a declaration construct, false otherwise, typically when the file has
+      --  been modified and the ali retreived is not up to date.
+      --  Note that if the construct database is deactivated, this will always
+      --  return true (we're always on the expected construct, we don't expect
+      --  anything in particular).
+
+      function Extract_Next_By_Heuristics return File_Location;
+      --  Return the next location using the construct heuristics
+
+      --------------------------------
+      -- Extract_Next_By_Heuristics --
+      --------------------------------
+
+      function Extract_Next_By_Heuristics return File_Location is
+         Start_Loc : File_Location;
+
+         Result : File_Location;
+      begin
+         --  In order to locate the reference to look from, we check if there
+         --  is a file associated to the input location. In certain cases, this
+         --  location is computed from a context that does not have file
+         --  information, so for safety purpose, we check that the file exist
+         --  (there's nothing we can do at the completion level without a
+         --  file). If there's no file, then the context has been partially
+         --  provided (or not at all) so we start from the declaration of the
+         --  entity.
+
+         if Current_Location.File /= null then
+            Start_Loc := Current_Location;
+         else
+            Start_Loc := Entity.Declaration;
+         end if;
+
+         if Active (Constructs_Heuristics)
+           and then Start_Loc.File.Db.Construct_Db_Locks = 0
+         then
+            declare
+               Db : constant Entities_Database  := Start_Loc.File.Db;
+
+               Tree_Lang : constant Tree_Language_Access :=
+                 Get_Tree_Language_From_File
+                   (Language_Handler (Db.Lang), Start_Loc.File.Name);
+               S_File : constant Structured_File_Access :=
+                 Get_Or_Create
+                   (Db   => Db.Construct_Db,
+                    File => Start_Loc.File.Name);
+               Construct : Construct_Tree_Iterator;
+               Entity, New_Entity : Entity_Access;
+            begin
+               Update_Contents (S_File);
+
+               Construct :=
+                 Get_Iterator_At
+                   (Tree      => Get_Tree (S_File),
+                    Location  => To_Location
+                      (Start_Loc.Line,
+                       To_Line_String_Index
+                         (S_File,
+                          Start_Loc.Line,
+                          Start_Loc.Column)),
+                    From_Type => Start_Name);
+
+               if Construct /= Null_Construct_Tree_Iterator then
+                  Entity := To_Entity_Access (S_File, Construct);
+                  New_Entity := Tree_Lang.Find_Next_Part (Entity);
+
+                  --  If we're initializing a loop, e.g. the current location
+                  --  is no location, then return the result. Otherwise, don't
+                  --  return it if we got back to the initial body and the
+                  --  caller doesn't want to loop back.
+
+                  if Current_Location /= No_File_Location
+                    and then No_Location_If_First
+                    and then Entity = Tree_Lang.Find_First_Part (Entity)
+                  then
+                     return No_File_Location;
+                  end if;
+
+                  if Entity /= Null_Entity_Access
+                    and then New_Entity /= Entity
+                  then
+                     Result.File :=
+                       Get_Or_Create
+                         (Db           => Db,
+                          File         =>
+                            Get_File_Path (Get_File (New_Entity)));
+                     Result.Line :=
+                       Get_Construct (New_Entity).Sloc_Entity.Line;
+
+                     Result.Column := To_Visible_Column
+                       (Get_File (New_Entity),
+                        Get_Construct (New_Entity).Sloc_Entity.Line,
+                        String_Index_Type
+                          (Get_Construct (New_Entity).Sloc_Entity.Column));
+
+                     return Result;
+                  end if;
+               end if;
+            end;
+         end if;
+
+         return No_File_Location;
+      end Extract_Next_By_Heuristics;
+
+      ---------------------------
+      -- Is_Expected_Construct --
+      ---------------------------
+
+      function Is_Expected_Construct
+        (Location : File_Location) return Boolean
+      is
+      begin
+         if Active (Constructs_Heuristics)
+           and then Location.File.Db.Construct_Db_Locks = 0
+         then
+            declare
+               Db : constant Entities_Database  := Location.File.Db;
+
+               S_File : constant Structured_File_Access :=
+                 Get_Or_Create
+                   (Db   => Db.Construct_Db,
+                    File => Location.File.Name);
+               Construct : Construct_Tree_Iterator;
+            begin
+               Update_Contents (S_File);
+
+               Construct :=
+                 Get_Iterator_At
+                   (Tree      => Get_Tree (S_File),
+                    Location  => To_Location
+                      (Location.Line,
+                       To_Line_String_Index
+                         (S_File,
+                          Location.Line,
+                          Location.Column)),
+                    From_Type => Start_Name);
+
+               --  Return true if we found a construct here and if it's of the
+               --  appropriate name.
+
+               return Construct /= Null_Construct_Tree_Iterator
+                 and then Get_Identifier (Construct) = Find_Normalized
+                 (Get_Symbols (Db), Get (Entity.Name).all);
+            end;
+         end if;
+
+         return True;
+      end Is_Expected_Construct;
+
       Ref          : E_Reference;
       First_Entity : Entity_Reference_Cursor :=
                        Null_Entity_Reference_Cursor;
       Return_Next  : Boolean := Current_Location = No_File_Location;
       It           : Entity_Reference_Cursor;
-      Start_Loc    : File_Location;
-      Number_Of_Entities_Found : Integer := 0;
+
+      Bodies_Found : Integer := 0;
+      H_Loc : File_Location;
+
    begin
       if Active (Me) then
          Trace (Me, "Find_Next_Body for "
@@ -678,15 +834,23 @@ package body Entities.Queries is
       It := First (Entity.References);
 
       while It /= Null_Entity_Reference_Cursor loop
-         Number_Of_Entities_Found := Number_Of_Entities_Found + 1;
-
          Ref := Element (It);
 
          if Ref.Kind = Body_Entity
            or else Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
          then
+            Bodies_Found := Bodies_Found + 1;
             if Return_Next then
                Location := Ref.Location;
+
+               if not Is_Expected_Construct (Location) then
+                  H_Loc := Extract_Next_By_Heuristics;
+
+                  if H_Loc /= No_File_Location then
+                     Location := H_Loc;
+                  end if;
+               end if;
+
                return;
             end if;
 
@@ -702,93 +866,36 @@ package body Entities.Queries is
          It := Next (It);
       end loop;
 
-      --  If no entity is found at this stage, we'll try to find one using the
-      --  construct database.
+      --  If no next body has been found at this stage, try to see what we can
+      --  do using the construct database.
 
-      --  In order to locate the reference to look from, we check if there is a
-      --  file associated to the input location. In certain cases, this
-      --  location is computed from a context that does not have file
-      --  information, so for safety purpose, we check that the file exist
-      --  (there's nothing we can do at the completion level without a file).
-      --  If there's no file, then the context has been partially provided (or
-      --  not at all) so we start from the declaration of the entity.
+      H_Loc := Extract_Next_By_Heuristics;
 
-      if Current_Location.File /= null then
-         Start_Loc := Current_Location;
-      else
-         Start_Loc := Entity.Declaration;
-      end if;
+      if H_Loc /= No_File_Location then
+         if First_Entity = Null_Entity_Reference_Cursor then
+            --  Case 1, we didn't found anything at all, so just use the
+            --  information coming from the construct database
 
-      if Active (Constructs_Heuristics)
-        and then Start_Loc.File.Db.Construct_Db_Locks = 0
-        and then Number_Of_Entities_Found <= 1
-      then
-         declare
-            Db : constant Entities_Database  := Start_Loc.File.Db;
+            Location := H_Loc;
+            return;
+         else
+            --  Case 2, we did find 'First_Entity'. Check if it's at the
+            --  expected location and that it's OK to return the first entity.
 
-            Tree_Lang : constant Tree_Language_Access :=
-                         Get_Tree_Language_From_File
-                           (Language_Handler (Db.Lang), Start_Loc.File.Name);
-            S_File : constant Structured_File_Access :=
-              Get_Or_Create
-                (Db   => Db.Construct_Db,
-                 File => Start_Loc.File.Name);
-            Construct : Construct_Tree_Iterator;
-            Entity, New_Entity : Entity_Access;
-         begin
-            Update_Contents (S_File);
+            if not No_Location_If_First
+              and then not Is_Expected_Construct
+                (Element (First_Entity).Location)
+            then
 
-            Construct :=
-              Get_Iterator_At
-                (Tree      => Get_Tree (S_File),
-                 Location  => To_Location
-                   (Start_Loc.Line,
-                    To_Line_String_Index
-                      (S_File,
-                       Start_Loc.Line,
-                       Start_Loc.Column)),
-                 From_Type => Start_Name);
-
-            if Construct /= Null_Construct_Tree_Iterator then
-               Entity := To_Entity_Access (S_File, Construct);
-               New_Entity := Tree_Lang.Find_Next_Part (Entity);
-
-               --  If we're initializing a loop, e.g. the current location is
-               --  no location, then return the result. Otherwise, don't return
-               --  it if we got back to the initial body and the caller doesn't
-               --  want to loop back.
-
-               if Current_Location /= No_File_Location
-                 and then No_Location_If_First
-                 and then Entity = Tree_Lang.Find_First_Part (Entity)
-               then
-                  Location := No_File_Location;
-
-                  return;
-               end if;
-
-               if Entity /= Null_Entity_Access
-                 and then New_Entity /= Entity
-               then
-                  Location.File :=
-                    Get_Or_Create
-                      (Db           => Db,
-                       File         => Get_File_Path (Get_File (New_Entity)));
-                  Location.Line := Get_Construct (New_Entity).Sloc_Entity.Line;
-
-                  Location.Column := To_Visible_Column
-                    (Get_File (New_Entity),
-                     Get_Construct (New_Entity).Sloc_Entity.Line,
-                     String_Index_Type
-                       (Get_Construct (New_Entity).Sloc_Entity.Column));
-
-                  return;
-               end if;
+               Location := H_Loc;
+               return;
             end if;
-         end;
+         end if;
       end if;
 
-      --  Still not found, no result
+      --  If we don't have any more information to extract from the construct
+      --  database, then return the first entity if allowed by the flags, or
+      --  null.
 
       if No_Location_If_First
         or else First_Entity = Null_Entity_Reference_Cursor

@@ -866,15 +866,20 @@ package body GPS.Kernel.Scripts is
       elsif Command = "body" then
          Name_Parameters (Data, Body_Cmd_Parameters);
          declare
-            Location : File_Location := Standard.Entities.No_File_Location;
-            Count    : Integer := Nth_Arg (Data, 2, 1);
+            Location     : File_Location := Standard.Entities.No_File_Location;
+            Cur_Location : File_Location := Standard.Entities.No_File_Location;
+            Count        : Integer := Nth_Arg (Data, 2, 1);
          begin
             Entity := Get_Data (Data, 1);
             while Count > 0 loop
                Find_Next_Body
-                 (Entity, Current_Location => Location, Location => Location,
+                 (Entity,
+                  Current_Location     => Cur_Location,
+                  Location             => Location,
                   No_Location_If_First => True);
                Count := Count - 1;
+
+               Cur_Location := Location;
             end loop;
 
             if Location /= Standard.Entities.No_File_Location then
