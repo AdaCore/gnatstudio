@@ -722,6 +722,13 @@ package body Ada_Semantic_Tree.Declarations is
       begin
          case Data (Token).Tok_Type is
             when Tok_Dot =>
+               if Previous_Declaration = null then
+                  --  If we could not find any previous declaration, then
+                  --  there's nothing to analyse. End the process.
+
+                  return;
+               end if;
+
                --  ??? We could factorize that in a "Are actuals consistent"
                --  subprogram.
 
@@ -775,6 +782,13 @@ package body Ada_Semantic_Tree.Declarations is
                     Get_Name (Analyzed_Expression, Data (Token))));
 
             when Tok_Open_Parenthesis =>
+               if Previous_Declaration = null then
+                  --  If we could not find any previous declaration, then
+                  --  there's nothing to analyse. End the process.
+
+                  return;
+               end if;
+
                if Context.Context_Type /= From_File then
                   --  We do not handle parenthesis in a search in database
 
