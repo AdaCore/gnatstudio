@@ -89,8 +89,4 @@ project GPS is
 
    package IDE renames Shared.IDE;
 
-   package Make is
-      for Makefile use "/home/briot/svn/trunk/gps/gps/Makefile";
-   end Make;
-
 end GPS;
