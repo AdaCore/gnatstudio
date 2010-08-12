@@ -3327,11 +3327,9 @@ package body Project_Properties is
                Set_Text (Editor.Ent, Current);
 
             else
-               Set_Text (Editor.Ent,
-                 Normalize_Pathname
-                   (Current,
-                    Directory     => Get_Text (Path_Widget),
-                    Resolve_Links => False));
+               --  Normalization will take place when the project is generated.
+               --  In particular, the final project path is not known till then
+               Set_Text (Editor.Ent, Current);
             end if;
          end;
 
