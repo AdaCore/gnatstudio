@@ -12,7 +12,10 @@
 
 <GPS>
   <action name="metrics project" category="Metrics" >
-     <filter id="Project only" />
+     <filter_and>
+       <filter id="Project only" />
+       <filter language="ada" />
+     </filter_and>
      <description>Run GNAT Metrics on a project</description>
      <shell show-command="false">Editor.save</shell>
      <shell output="none">Project.root</shell>
