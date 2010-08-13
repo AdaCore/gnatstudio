@@ -82,6 +82,11 @@ package Language is
       Operator_Text);
    pragma Convention (C, Language_Entity);
    --  The entities found in a language.
+   --  Block_Text represents a block (subprogram, task, entry, declare block,
+   --  ...), and Type_Text represents a type. Block_Text and Type_Text are
+   --  currently triggered only in declarations and not in statements.
+   --  Annotated_Comment_Text represents special comments that contain
+   --  annotations, e.g. SPARK annotations.
 
    subtype Identifier_Entity is Language_Entity
      range Identifier_Text .. Type_Text;
