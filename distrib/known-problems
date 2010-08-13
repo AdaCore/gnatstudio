@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.5.0
 
+- J813-005: Crashes when searching in non-UTF8 files on disk
+  Problem:    When GPS is searching for occurrences in files which are not
+              being edited (for instance when looking in "Files from project"),
+              GPS might crash if the locations found contain international
+              characters and the file is encoded in a character set different
+              from UTF8 (for instance ISO-8859-1).
+  Workaround: Encode in UTF8 all sources that may contain international
+              characters, or remove all international characters.
+
 - J810-015: Project wizard: wrong location of object directory
   Problem:    When you create a project through the /Project/New menu, the
               object directory is always set to the current directory. By
