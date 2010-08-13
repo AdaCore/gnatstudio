@@ -1,0 +1,107 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                      Copyright (C) 2010, AdaCore                  --
+--                                                                   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package handles creation of project from templates.
+
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Hashed_Maps;
+
+with Ada.Strings.Unbounded.Hash;
+
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+
+package Project_Templates is
+
+   Template_File_Extension : constant Filesystem_String := ".gpt";
+   --  Extension for recognized template files
+   --  (".gpt" stands for GNAT Project Template).
+
+   type Variable is record
+      Label         : Unbounded_String; --  The label of the variable
+      Default_Value : Unbounded_String; --  The default value
+      Description   : Unbounded_String; --  A one-line description
+   end record;
+
+   package Variables_List is new Ada.Containers.Doubly_Linked_Lists
+     (Variable);
+
+   type Project_Template is record
+      Label    : Unbounded_String;
+      --  The label of the template
+
+      Category : Unbounded_String;
+      --  The category of the template, for sorting/displaying purposes.
+      --  This can be a number of fields separated by '/'.
+
+      Description : Unbounded_String;
+      --  A short (one or two sentences) description for the template
+
+      Source_Dir : Virtual_File;
+      --  The root directory that contains the template
+
+      Variables : Variables_List.List;
+      --  A list of variables which need to be defined for this project
+   end record;
+
+   package Project_Templates_List is new Ada.Containers.Doubly_Linked_Lists
+     (Project_Template);
+
+   procedure Read_Templates_File
+     (File      : Virtual_File;
+      Errors    : out Unbounded_String;
+      Templates : in out Project_Templates_List.List);
+   --  Return a list of project templates read from description file File.
+   --  The format of File is as follows:
+   --
+   --  [<label_1>]
+   --  category: <category_1>
+   --  description: <description_1>
+   --
+   --  <variable_1_label>: <default_value_1> : <description_1>
+   --  <variable_2_label>: <default_value_2> : <description_2>
+   --
+   --  [<label_2>]
+   --
+   --  and so forth.
+   --  Errors contains error messages in case of errors.
+
+   procedure Read_Templates_Dir
+     (Dir       : Virtual_File;
+      Errors    : out Unbounded_String;
+      Templates : in out Project_Templates_List.List);
+   --  Look in all subdirectories of Dir and attempt to find all template files
+   --  in those directories, and reads the results in Templates.
+
+   package Variable_Assignments is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Unbounded_String,
+      Ada.Strings.Unbounded.Hash,
+      Ada.Strings.Unbounded."=");
+
+   procedure Instantiate_Template
+     (Template    : Project_Template;
+      Target_Dir  : Virtual_File;
+      Assignments : Variable_Assignments.Map;
+      Errors      : out Unbounded_String);
+   --  Create Template in target directory Target_Dir, with given variable
+   --  assignments.
+   --  Target_Dir is created if necessary.
+   --  In case of errors, they are listed in Errors.
+
+end Project_Templates;
