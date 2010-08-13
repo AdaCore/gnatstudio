@@ -4343,6 +4343,10 @@ package body Ada_Analyzer is
                  or else Prev_Token = Tok_Package
                  or else (Prev_Token = Tok_Renames
                           and then Prev_Prev_Token = Tok_Right_Paren)
+                 or else (Current + 8 <= Buffer_Last
+                          and then Buffer (Current + 2) = ':'
+                          and then (Look_For (Current + 4, "begin")
+                                    or else Look_For (Current + 4, "declare")))
                then
                   Entity := Block_Text;
                end if;
