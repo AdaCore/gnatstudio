@@ -605,7 +605,7 @@ package body GPS.Kernel.Preferences is
          Doc          => -("Style to use when displaying blocks (subprograms,"
            & "tasks, entries, ...) in declarations."),
          Default_Font => "Courier 10",
-         Default_Fg   => "#C998D8",
+         Default_Fg   => "#A600D9",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
@@ -616,7 +616,7 @@ package body GPS.Kernel.Preferences is
          Doc          => -("Style to use when displaying types in "
            & "declarations."),
          Default_Font => "Courier 10",
-         Default_Fg   => "#21A9DE",
+         Default_Fg   => "#009CD9",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
