@@ -1,0 +1,353 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                      Copyright (C) 2010, AdaCore                  --
+--                                                                   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
+
+with String_Utils;   use String_Utils;
+with GNAT.Strings;   use GNAT.Strings;
+
+package body Project_Templates is
+
+   Null_Project_Template : constant Project_Template :=
+     (Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      No_File,
+      Variables_List.Empty_List);
+
+   function CISW (S : String; Prefix : String) return Boolean;
+   --  Case-Insensitive Starts_With: return true if S starts with Prefix,
+   --  using case-insensitive comparison.
+
+   function Find
+     (S : String;
+      C : Character;
+      Start_Index : Integer := -1)
+      return Natural;
+   --  Return the index of the next occurrence of C in S, and return S'Last + 1
+   --  if this was not found. If Start_Index is specified, start searching
+   --  at Start_Index.
+
+   procedure Replace
+     (S           : in out Unbounded_String;
+      Pattern     : String;
+      Replacement : String);
+   --  Return S, with all occurrences of Pattern replaced with Replacement
+
+   ----------
+   -- CISW --
+   ----------
+
+   function CISW (S : String; Prefix : String) return Boolean is
+      L : constant String := To_Lower (Prefix);
+   begin
+      if S'Length < Prefix'Length then
+         return False;
+      end if;
+
+      for J in 0 .. L'Length - 1 loop
+         if To_Lower (S (S'First + J)) /= L (L'First + J) then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end CISW;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (S           : in out Unbounded_String;
+      Pattern     : String;
+      Replacement : String)
+   is
+      Ind : Natural := Index_Non_Blank (S);
+   begin
+      while Ind < Length (S) loop
+         Ind := Index (S, Pattern, Ind);
+
+         exit when Ind = 0;
+
+         S := Replace_Slice (S, Ind, Ind + Pattern'Length - 1, Replacement);
+         Ind := Ind + Replacement'Length;
+      end loop;
+   end Replace;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (S : String;
+      C : Character;
+      Start_Index : Integer := -1)
+      return Natural
+   is
+      Ind : Natural;
+   begin
+      if Start_Index > 0 then
+         Ind := Start_Index;
+      else
+         Ind := S'First;
+      end if;
+
+      while Ind <= S'Last loop
+         if S (Ind) = C then
+            return Ind;
+         end if;
+
+         Ind := Ind + 1;
+      end loop;
+
+      return Ind;
+   end Find;
+
+   -------------------------
+   -- Read_Templates_File --
+   -------------------------
+
+   procedure Read_Templates_File
+     (File      : Virtual_File;
+      Errors    : out Unbounded_String;
+      Templates : in out Project_Templates_List.List)
+   is
+      Contents : GNAT.Strings.String_Access := File.Read_File;
+      Lines    : constant Unbounded_String_Array := Split
+        (Contents.all, ASCII.LF);
+      Current  : Project_Template := Null_Project_Template;
+      Index, Index2 : Natural;
+   begin
+      for J in Lines'Range loop
+         declare
+            Line : constant String := Strip_Quotes
+              (Strip_CR (To_String (Lines (J))));
+         begin
+            if Line'Length = 0
+              or else Starts_With (Line, "#")
+            then
+               --  A comment or an empty line do nothing
+               null;
+
+            elsif Starts_With (Line, "[") then
+               --  This is a new definition, add current one to the list if it
+               --  is not null...
+               if Current.Label /= Null_Unbounded_String then
+                  Templates.Append (Current);
+
+                  --  ...and reset the current object
+                  Current := Null_Project_Template;
+               end if;
+
+               Current.Source_Dir := File.Dir;
+               Index := Find (Line, ']', Line'First + 1);
+               Current.Label := To_Unbounded_String
+                 (Line (Line'First + 1 .. Index - 1));
+
+            elsif CISW (Line, "description:") then
+               Current.Description := To_Unbounded_String
+                 (Strip_Quotes (Line (Line'First + 12 .. Line'Last)));
+
+            elsif CISW (Line, "category:") then
+               Current.Category := To_Unbounded_String
+                 (Strip_Quotes (Line (Line'First + 9 .. Line'Last)));
+
+            else
+               Index := Find (Line, ':', Line'First + 1);
+               if Index > Line'Last then
+                  Append
+                    (Errors, To_Unbounded_String
+                       (J'Img & ": invalid syntax" & ASCII.LF));
+               else
+                  Index2 := Find (Line, ':', Index + 1);
+
+                  Append
+                    (Errors, To_Unbounded_String
+                       (J'Img & ": invalid syntax" & ASCII.LF));
+
+                  Current.Variables.Append
+                    ((To_Unbounded_String (Line (Line'First .. Index - 1)),
+                     To_Unbounded_String (Line (Index + 1 .. Index2 - 1)),
+                     To_Unbounded_String (Line (Index2 + 1 .. Line'Last))));
+               end if;
+            end if;
+         end;
+      end loop;
+
+      if Current /= Null_Project_Template then
+         Templates.Append (Current);
+      end if;
+
+      GNAT.Strings.Free (Contents);
+   end Read_Templates_File;
+
+   ------------------------
+   -- Read_Templates_Dir --
+   ------------------------
+
+   procedure Read_Templates_Dir
+     (Dir       : Virtual_File;
+      Errors    : out Unbounded_String;
+      Templates : in out Project_Templates_List.List)
+   is
+      Subdirs : File_Array_Access;
+      Files   : File_Array_Access;
+      Err     : Unbounded_String;
+   begin
+      Subdirs := Read_Dir (Dir, Dirs_Only);
+
+      if Subdirs /= null then
+         for D in Subdirs'Range loop
+            --  Read all files in subdir
+
+            Files := Read_Dir (Subdirs (D), Files_Only);
+
+            if Files /= null then
+               for F in Files'Range loop
+                  if File_Extension  (Files (F)) = Template_File_Extension then
+                     Read_Templates_File (Files (F), Err, Templates);
+                     Append (Errors, Err);
+                  end if;
+               end loop;
+
+               Unchecked_Free (Files);
+            end if;
+         end loop;
+
+         Unchecked_Free (Subdirs);
+      end if;
+   end Read_Templates_Dir;
+
+   --------------------------
+   -- Instantiate_Template --
+   --------------------------
+
+   procedure Instantiate_Template
+     (Template    : Project_Template;
+      Target_Dir  : Virtual_File;
+      Assignments : Variable_Assignments.Map;
+      Errors      : out Unbounded_String)
+   is
+      pragma Unreferenced (Errors);
+
+      procedure Copy_Subdir
+        (Source_Dir : Virtual_File;
+         Target_Dir : Virtual_File);
+      --  Process Subdir
+
+      procedure Copy_File
+        (Source_File : Virtual_File;
+         Target_Dir  : Virtual_File);
+      --  Process Source_File
+
+      ---------------
+      -- Copy_File --
+      ---------------
+
+      procedure Copy_File
+        (Source_File : Virtual_File;
+         Target_Dir  : Virtual_File)
+      is
+         Contents_A  : GNAT.Strings.String_Access;
+         Target_Name : Unbounded_String;
+         Target_Contents : Unbounded_String;
+         Target    : Virtual_File;
+         Writable  : Writable_File;
+
+         use Variable_Assignments;
+         C : Cursor;
+      begin
+         --  Read the contents
+         Contents_A := Read_File (Source_File);
+         Target_Contents := To_Unbounded_String (Contents_A.all);
+         GNAT.Strings.Free (Contents_A);
+
+         Target_Name := To_Unbounded_String (+Source_File.Base_Name);
+
+         C := Assignments.First;
+
+         --  Replace the filename and contents
+         while Has_Element (C) loop
+            declare
+               Thing : constant String :=
+                 "@_" & To_Upper (To_String (Key (C))) & "_@";
+               Replacement : constant String :=
+                 To_String (Element (C));
+            begin
+               Replace (Target_Name, Thing, To_Lower (Replacement));
+               Replace (Target_Contents, Thing, Replacement);
+            end;
+
+            Next (C);
+         end loop;
+
+         Target := Create_From_Dir (Target_Dir, +To_String (Target_Name));
+         Writable := Write_File (Target);
+         Write (Writable, To_String (Target_Contents));
+         Close (Writable);
+      end Copy_File;
+
+      -----------------
+      -- Copy_Subdir --
+      -----------------
+
+      procedure Copy_Subdir
+        (Source_Dir : Virtual_File;
+         Target_Dir : Virtual_File)
+      is
+         Files : File_Array_Access := Read_Dir (Source_Dir, Files_Only);
+         Dirs  : File_Array_Access := Read_Dir (Source_Dir, Dirs_Only);
+      begin
+         --  Make sure the target dir exists, creating it if necessary
+
+         if not Is_Directory (Target_Dir.Full_Name) then
+            Make_Dir (Target_Dir);
+         end if;
+
+         --  First install all files
+         if Files /= null then
+            for J in Files'Range loop
+               if not File_Extension (Files (J)) = Template_File_Extension then
+                  Copy_File (Files (J), Target_Dir);
+               end if;
+            end loop;
+            Unchecked_Free (Files);
+         end if;
+
+         --  Then install all subdirs
+         if Dirs /= null then
+            for J in Dirs'Range loop
+               Copy_Subdir
+                 (Dirs (J),
+                  Create_From_Dir (Target_Dir, Dirs (J).Base_Dir_Name));
+            end loop;
+
+            Unchecked_Free (Dirs);
+         end if;
+      end Copy_Subdir;
+
+   begin
+      Copy_Subdir (Template.Source_Dir, Target_Dir);
+   end Instantiate_Template;
+
+end Project_Templates;
