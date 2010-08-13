@@ -172,24 +172,49 @@ package body Find_Utils is
          Start_Pos : Integer;
          End_Pos   : Integer) return String
       is
-         Success : aliased Boolean;
-         UTF8    : constant String := Unknown_To_UTF8 (Line, Success'Access);
+         Success, Success2, Success3 : aliased Boolean;
       begin
-         if UTF8 = ""
-           or else not Success
-         then
+         if Line = "" then
             return "";
          end if;
 
          if End_Pos < Start_Pos then
-            return Escape_Text (UTF8);
+            declare
+               UTF8 : constant String :=
+                 Unknown_To_UTF8 (Line, Success'Access);
+            begin
+               if Success then
+                  return Escape_Text (UTF8);
+               else
+                  return "";
+               end if;
+            end;
          end if;
 
-         return Escape_Text (UTF8 (UTF8'First .. Start_Pos - 1))
-           & "<span foreground=""red"">" &
-         Escape_Text (UTF8 (Start_Pos .. End_Pos - 1))
-           & "</span>" &
-         Escape_Text (UTF8 (End_Pos .. UTF8'Last));
+         declare
+            UTF8_Begin : constant String :=
+              Unknown_To_UTF8 (Line (Line'First .. Start_Pos - 1),
+                               Success'Access);
+            UTF8_Middle : constant String :=
+              Unknown_To_UTF8 (Line (Start_Pos .. End_Pos - 1),
+                               Success2'Access);
+            UTF8_End : constant String :=
+              Unknown_To_UTF8 (Line (End_Pos .. Line'Last),
+                               Success3'Access);
+         begin
+            if not Success
+              and then Success2
+              and then Success3
+            then
+               return "";
+            else
+               return Escape_Text (UTF8_Begin)
+                 & "<span foreground=""red"">" &
+               Escape_Text (UTF8_Middle)
+                 & "</span>" &
+               Escape_Text (UTF8_End);
+            end if;
+         end;
       end Pretty_Print_Line;
 
       ---------------
