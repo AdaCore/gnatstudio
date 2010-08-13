@@ -30,6 +30,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Vsearch;                   use Vsearch;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Intl;                  use GPS.Intl;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body Find_Utils is
 
@@ -169,21 +170,26 @@ package body Find_Utils is
       function Pretty_Print_Line
         (Line      : String;
          Start_Pos : Integer;
-         End_Pos   : Integer) return String is
+         End_Pos   : Integer) return String
+      is
+         Success : aliased Boolean;
+         UTF8    : constant String := Unknown_To_UTF8 (Line, Success'Access);
       begin
-         if Line = "" then
+         if UTF8 = ""
+           or else not Success
+         then
             return "";
          end if;
 
          if End_Pos < Start_Pos then
-            return Escape_Text (Line);
+            return Escape_Text (UTF8);
          end if;
 
-         return Escape_Text (Line (Line'First .. Start_Pos - 1))
+         return Escape_Text (UTF8 (UTF8'First .. Start_Pos - 1))
            & "<span foreground=""red"">" &
-         Escape_Text (Line (Start_Pos .. End_Pos - 1))
+         Escape_Text (UTF8 (Start_Pos .. End_Pos - 1))
            & "</span>" &
-         Escape_Text (Line (End_Pos .. Line'Last));
+         Escape_Text (UTF8 (End_Pos .. UTF8'Last));
       end Pretty_Print_Line;
 
       ---------------
