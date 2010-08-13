@@ -15,9 +15,15 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J811-011 Syntax highlighting for declarations (2010-08-12)
+
+  Types and blocks (subprograms, tasks, ...) are now highlighted in a
+  different color in declarations to make it easier to read and understand
+  the source code.
+
 NF-45-J806-005 Docgen to detect entity names in comments (2010-08-10)
 
-  The GPS document generator can now detect entity names in comments and
+  The documentation generator can now detect entity names in comments and
   generate the appropriate link to their definition.
 
 NF-45-J805-011 Docgen allows specifying index.html (2010-08-06)

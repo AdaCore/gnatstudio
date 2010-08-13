@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2009, AdaCore                    --
+--                    Copyright (C) 2009-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -196,6 +196,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
                case Entity is
                   when Normal_Text
                      | Identifier_Text
+                     | Block_Text
+                     | Type_Text
                      | Partial_Identifier_Text
                      | Operator_Text
                      => Highlight := True;

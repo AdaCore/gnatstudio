@@ -2072,9 +2072,7 @@ package body Docgen2 is
 
          Last_Idx := Sloc_End.Index;
 
-         if Entity /= Identifier_Text
-           and then Entity /= Partial_Identifier_Text
-         then
+         if Entity not in Identifier_Entity then
             --  For all entities that are not identifiers, print them
             --  directly
 
@@ -2621,9 +2619,7 @@ package body Docgen2 is
 
             Last_Idx := Sloc_End.Index + 1;
 
-            if Entity /= Identifier_Text
-              and then Entity /= Partial_Identifier_Text
-            then
+            if Entity not in Identifier_Entity then
                --  For all entities that are not identifiers, print them
                --  directly
                Append

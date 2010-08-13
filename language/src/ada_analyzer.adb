@@ -1409,21 +1409,25 @@ package body Ada_Analyzer is
       -----------------
 
       function End_Of_Word (P : Natural) return Natural is
-         Tmp  : Natural := P;
-         Next : Natural := Buffer_Last + 1;
+         Cur : Natural;
       begin
-         while Tmp <= Buffer_Last loop
-            Next := Next_Char (Tmp);
-            exit when Next > Buffer_Last
-              or else not Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Next .. Buffer_Last)));
-            Tmp := Next;
+         if P >= Buffer_Last then
+            return Buffer_Last;
+         end if;
+
+         Cur := Next_Char (P);
+
+         while Cur <= Buffer_Last
+           and then Is_Entity_Letter
+             (UTF8_Get_Char (Buffer (Cur .. Buffer_Last)))
+         loop
+            Cur := Next_Char (Cur);
          end loop;
 
-         if Next > Buffer_Last then
+         if Cur > Buffer_Last then
             return Buffer_Last;
          else
-            return Next - 1;
+            return Cur - 1;
          end if;
       end End_Of_Word;
 
@@ -4304,6 +4308,43 @@ package body Ada_Analyzer is
                then
                   Entity := Keyword_Text;
                   Casing := Reserved_Casing;
+
+               --  Try to differentiate type identifiers and block identifiers
+               --  from others in declarations.
+
+               elsif ((Prev_Token = Tok_In
+                       or else Prev_Token = Tok_Access
+                       or else Prev_Token = Tok_Aliased
+                       or else Prev_Token = Tok_Constant)
+                      and then (Prev_Prev_Token = Tok_Colon
+                                or else Prev_Prev_Token = Tok_Null
+                                or else Prev_Prev_Token = Tok_Is))
+                 or else (Prev_Token = Tok_All
+                          and then Prev_Prev_Token = Tok_Access)
+                 or else (Prev_Token = Tok_Is
+                          and then Prev_Prev_Token = Tok_Identifier
+                          and then Top_Token.Type_Declaration)
+                 or else (Prev_Token = Tok_Out
+                          and then (Prev_Prev_Token = Tok_Colon
+                                    or else Prev_Prev_Token = Tok_In))
+                 or else Prev_Token = Tok_Colon
+                 or else Prev_Token = Tok_Type
+                 or else Prev_Token = Tok_Subtype
+                 or else (In_Declaration = Subprogram_Decl
+                          and then Prev_Token = Tok_Return)
+               then
+                  Entity := Type_Text;
+               elsif Prev_Token = Tok_End
+                 or else Prev_Token = Tok_Procedure
+                 or else Prev_Token = Tok_Function
+                 or else Prev_Token = Tok_Task
+                 or else Prev_Token = Tok_Body
+                 or else Prev_Token = Tok_Entry
+                 or else Prev_Token = Tok_Package
+                 or else (Prev_Token = Tok_Renames
+                          and then Prev_Prev_Token = Tok_Right_Paren)
+               then
+                  Entity := Block_Text;
                end if;
 
                if Prev_Token = Tok_Apostrophe

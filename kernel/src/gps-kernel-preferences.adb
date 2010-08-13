@@ -598,6 +598,28 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
+      Block_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Block-Style",
+         Label        => -"Block",
+         Doc          => -("Style to use when displaying blocks (subprograms,"
+           & "tasks, entries, ...) in declarations."),
+         Default_Font => "Courier 10",
+         Default_Fg   => "#C998D8",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
+
+      Type_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Type-Style",
+         Label        => -"Type",
+         Doc          => -("Style to use when displaying types in "
+           & "declarations."),
+         Default_Font => "Courier 10",
+         Default_Fg   => "#21A9DE",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
+
       Keywords_Style := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Keywords-Style",

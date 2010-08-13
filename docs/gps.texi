@@ -10079,6 +10079,13 @@ window appears automatically after entering a triggering character, such as '.'
 The default font, default foreground and default background colors used
 in the source editor.
 
+@item Block
+Font and colors used to highlight blocks (subprograms, task, entries, ...)
+in declarations.
+
+@item Type
+Font and colors used to highlight types in declarations.
+
 @item Keywords
 Font and colors used to highlight keywords.
 

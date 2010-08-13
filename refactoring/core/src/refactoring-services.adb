@@ -169,7 +169,7 @@ package body Refactoring.Services is
 
          procedure Add_To_List is
          begin
-            if Entity = Identifier_Text then
+            if Entity in Identifier_Entity then
                if Self.Sloc_First_Id = Null_Universal_Location then
                   Self.Sloc_First_Id := To_Location
                     (Get_File (Loc'Access),

@@ -2288,6 +2288,7 @@ package body Src_Editor_Buffer is
          Partial_Entity : Boolean) return Boolean
       is
          Success         : Boolean;
+         Start           : Natural;
          Col, Line       : Gint;
          Offset          : Gint;
          Buffer_Line     : Buffer_Line_Type;
@@ -2360,6 +2361,17 @@ package body Src_Editor_Buffer is
 
             if Slice (Sloc_End.Index) /= ASCII.LF then
                Col := Gint (Sloc_End.Column) + Offset - 1;
+
+               --  Is_Valid_Index requires an index at the start of a character
+               --  while Sloc_End.Index points to the end of a character, so
+               --  adjust if needed.
+
+               Start := UTF8_Find_Prev_Char
+                 (Slice (1 .. Sloc_End.Index + 1), Sloc_End.Index + 1);
+
+               if Start /= Sloc_End.Index then
+                  Col := Col - Gint (Sloc_End.Index - Start);
+               end if;
 
                Is_Valid_Index
                  (Source_Buffer (Buffer), Entity_End, Success, Line, Col);
@@ -2829,18 +2841,29 @@ package body Src_Editor_Buffer is
 
       Keyword_Font           : constant Pango.Font.Pango_Font_Description :=
                                  Keywords_Style.Get_Pref_Font;
+      Block_Font             : constant Pango.Font.Pango_Font_Description :=
+                                 Block_Style.Get_Pref_Font;
+      Type_Font              : constant Pango.Font.Pango_Font_Description :=
+                                 Type_Style.Get_Pref_Font;
       Comment_Font           : constant Pango.Font.Pango_Font_Description :=
                                  Comments_Style.Get_Pref_Font;
       Annotated_Comment_Font : constant Pango.Font.Pango_Font_Description :=
                                  Annotated_Comments_Style.Get_Pref_Font;
       String_Font            : constant Pango.Font.Pango_Font_Description :=
                                  Strings_Style.Get_Pref_Font;
+
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
 
       Create_Syntax_Tags
         (B.Syntax_Tags,
+         Type_Color                  => Type_Style.Get_Pref_Fg,
+         Type_Color_Bg               => Type_Style.Get_Pref_Bg,
+         Type_Font_Desc              => Type_Font,
+         Block_Color                 => Block_Style.Get_Pref_Fg,
+         Block_Color_Bg              => Block_Style.Get_Pref_Bg,
+         Block_Font_Desc             => Block_Font,
          Keyword_Color               => Keywords_Style.Get_Pref_Fg,
          Keyword_Color_Bg            => Keywords_Style.Get_Pref_Bg,
          Keyword_Font_Desc           => Keyword_Font,
@@ -3065,9 +3088,8 @@ package body Src_Editor_Buffer is
       --  Insert the new text
 
       Buffer.Start_Inserting;
-      declare
-      begin
 
+      begin
          if Lang_Autodetect then
             Set_Language
               (Buffer, Get_Language_From_File

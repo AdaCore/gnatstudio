@@ -743,7 +743,7 @@ package body Language.Ada is
                   Has_Reference := True;
                end if;
 
-            elsif Entity = Identifier_Text then
+            elsif Entity in Identifier_Entity then
                if not Skip_Next_Identifier then
                   if Has_Reference then
                      Sloc_Start := Sloc_Start_Got;

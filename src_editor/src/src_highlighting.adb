@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -92,6 +92,12 @@ package body Src_Highlighting is
 
    procedure Create_Syntax_Tags
      (Result                      : in out Highlighting_Tags;
+      Type_Color                  : Gdk.Color.Gdk_Color;
+      Type_Color_Bg               : Gdk.Color.Gdk_Color;
+      Type_Font_Desc              : Pango.Font.Pango_Font_Description := null;
+      Block_Color                 : Gdk.Color.Gdk_Color;
+      Block_Color_Bg              : Gdk.Color.Gdk_Color;
+      Block_Font_Desc             : Pango.Font.Pango_Font_Description := null;
       Keyword_Color               : Gdk.Color.Gdk_Color;
       Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
       Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
@@ -109,6 +115,18 @@ package body Src_Highlighting is
       String_Font_Desc            : Pango.Font.Pango_Font_Description := null)
    is
    begin
+      New_Tag
+        (Result (Type_Text),
+         Type_Color_Tag_Name,
+         Fore_Color => Type_Color,
+         Back_Color => Type_Color_Bg,
+         Font_Desc  => Type_Font_Desc);
+      New_Tag
+        (Result (Block_Text),
+         Block_Color_Tag_Name,
+         Fore_Color => Block_Color,
+         Back_Color => Block_Color_Bg,
+         Font_Desc  => Block_Font_Desc);
       New_Tag
         (Result (Keyword_Text),
          Keyword_Color_Tag_Name,

@@ -70,19 +70,25 @@ package Language is
    type Language_Entity is
      (Normal_Text,
       Identifier_Text,
+      Partial_Identifier_Text,
+      Block_Text,
+      Type_Text,
       Keyword_Text,
       Annotated_Keyword_Text,
       Comment_Text,
       Annotated_Comment_Text,
       Character_Text,
       String_Text,
-      Partial_Identifier_Text,
       Operator_Text);
    pragma Convention (C, Language_Entity);
    --  The entities found in a language.
 
+   subtype Identifier_Entity is Language_Entity
+     range Identifier_Text .. Type_Text;
+   --  All the entities that represent an identifier
+
    subtype Standout_Language_Entity is Language_Entity
-     range Keyword_Text .. String_Text;
+     range Block_Text .. String_Text;
    --  All the entities that have a special meaning. Used for syntax
    --  highlighting for example.
 
@@ -833,9 +839,8 @@ package Language is
       Buffer            : Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Callback          :
-      access procedure (Token : Token_Record;
-                        Stop  : in out Boolean));
+      Callback          : access procedure (Token : Token_Record;
+                                            Stop  : in out Boolean));
    --  Parses the tokens from the Start_Offset backwards to end offset. Calls
    --  Callback on each token. If Stop is True on the callback, then the
    --  parsing is stoped.

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2009, AdaCore                --
+--                   Copyright (C) 2001-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,6 +36,8 @@ package Src_Highlighting is
    --  This array contains the tags associated to each Language Entity
    --  Kind that needs to be highlighted in the source editor.
 
+   Type_Color_Tag_Name              : constant String := "type";
+   Block_Color_Tag_Name             : constant String := "block";
    Keyword_Color_Tag_Name           : constant String := "keyword";
    Annotated_Keyword_Color_Tag_Name : constant String := "annotated-keyword";
    Comment_Color_Tag_Name           : constant String := "comment";
@@ -61,6 +63,12 @@ package Src_Highlighting is
 
    procedure Create_Syntax_Tags
      (Result                      : in out Highlighting_Tags;
+      Type_Color                  : Gdk.Color.Gdk_Color;
+      Type_Color_Bg               : Gdk.Color.Gdk_Color;
+      Type_Font_Desc              : Pango.Font.Pango_Font_Description := null;
+      Block_Color                 : Gdk.Color.Gdk_Color;
+      Block_Color_Bg              : Gdk.Color.Gdk_Color;
+      Block_Font_Desc             : Pango.Font.Pango_Font_Description := null;
       Keyword_Color               : Gdk.Color.Gdk_Color;
       Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
       Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
