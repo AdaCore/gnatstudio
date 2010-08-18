@@ -41,12 +41,26 @@ Known Problems fixed in GPS 4.5.0
               exception, and no documentation is generated
   Workaround: Define an object directory in your project file.
 
+- J701-004: Wrong indentation on continuation lines after a declaration
+  Problem:    When aligning dclarations on the colon character, continuation
+              lines starting with 'or else' or 'and then' are not indented
+              properly, for example the following properly indented:
+                Is_Unit_Decl : constant Boolean :=
+                                 not Is_Nil (Match_Unit)
+                                   and then not Is_Equal (Match_Unit, Unit);
+              would end up as:
+                Is_Unit_Decl : constant Boolean :=
+                                 not Is_Nil (Match_Unit)
+                               and then not Is_Equal (Match_Unit, Unit);
+  Workaround: Indent manually.
+
+
 - J623-007: Renaming bookmarks sometimes mixes them
   Problem:    If you rename a bookmark in the Bookmarks View, and the new
               name changes the sort order, then the location and names of
               bookmarks no longer match.
   Workaround: Directly edit the file $HOME/.gps/bookmarks.xml before starting
-              GPS
+              GPS.
 
 - J621-018: Bookmark locations not entered in locations history
   Problem:    When using the Bookmark view to visit locations, using
