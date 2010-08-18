@@ -53,6 +53,33 @@ package body Project_Templates is
       Replacement : String);
    --  Return S, with all occurrences of Pattern replaced with Replacement
 
+   function To_Mixed (S : String) return String;
+   --  Return Mixed_Casing version of S
+
+   --------------
+   -- To_Mixed --
+   --------------
+
+   function To_Mixed (S : String) return String is
+      O     : String := S;
+      Upper : Boolean := True;
+   begin
+      for J in O'Range loop
+         if Is_Letter (O (J)) then
+            if Upper then
+               O (J) := To_Upper (O (J));
+               Upper := False;
+            else
+               O (J) := To_Lower (O (J));
+            end if;
+         else
+            Upper := True;
+         end if;
+      end loop;
+
+      return O;
+   end To_Mixed;
+
    ----------
    -- CISW --
    ----------
@@ -175,20 +202,27 @@ package body Project_Templates is
             else
                Index := Find (Line, ':', Line'First + 1);
                if Index > Line'Last then
-                  Append
-                    (Errors, To_Unbounded_String
-                       (J'Img & ": invalid syntax" & ASCII.LF));
+                  --  Append to the description
+                  Current.Description := Current.Description & ASCII.LF & Line;
                else
                   Index2 := Find (Line, ':', Index + 1);
 
-                  Append
-                    (Errors, To_Unbounded_String
-                       (J'Img & ": invalid syntax" & ASCII.LF));
+                  if Index2 > Line'Last then
+                     Append
+                       (Errors, To_Unbounded_String
+                          (+File.Base_Name & J'Img
+                           & ": invalid syntax, expected "
+                           & "<name>:<default value>:<description>"
+                           & ASCII.LF));
+                  end if;
 
                   Current.Variables.Append
-                    ((To_Unbounded_String (Line (Line'First .. Index - 1)),
-                     To_Unbounded_String (Line (Index + 1 .. Index2 - 1)),
-                     To_Unbounded_String (Line (Index2 + 1 .. Line'Last))));
+                    ((To_Unbounded_String
+                     (Strip_Quotes (Line (Line'First .. Index - 1))),
+                     To_Unbounded_String
+                       (Strip_Quotes (Line (Index + 1 .. Index2 - 1))),
+                     To_Unbounded_String
+                       (Strip_Quotes (Line (Index2 + 1 .. Line'Last)))));
                end if;
             end if;
          end;
@@ -214,6 +248,12 @@ package body Project_Templates is
       Files   : File_Array_Access;
       Err     : Unbounded_String;
    begin
+      if not Dir.Is_Directory then
+         Errors := "Not a directory: " & To_Unbounded_String
+           ((+Dir.Full_Name.all));
+         return;
+      end if;
+
       Subdirs := Read_Dir (Dir, Dirs_Only);
 
       if Subdirs /= null then
@@ -288,14 +328,25 @@ package body Project_Templates is
 
          --  Replace the filename and contents
          while Has_Element (C) loop
+            --  Replace the lower by the lower, the upper by the upper, the
+            --  mixed case by the mixed case
             declare
-               Thing : constant String :=
-                 "@_" & To_Upper (To_String (Key (C))) & "_@";
-               Replacement : constant String :=
-                 To_String (Element (C));
+               K : constant String := To_String (Key (C));
+               E : constant String := To_String (Element (C));
+               Lower_Pattern : constant String := "@_" & To_Lower (K) & "_@";
+               Upper_Pattern : constant String := "@_" & To_Upper (K) & "_@";
+               Mixed_Pattern : constant String := "@_" & To_Mixed (K) & "_@";
+
+               Lower_Replacement : constant String := To_Lower (E);
+               Upper_Replacement : constant String := To_Upper (E);
+               Mixed_Replacement : constant String := To_Mixed (E);
             begin
-               Replace (Target_Name, Thing, To_Lower (Replacement));
-               Replace (Target_Contents, Thing, Replacement);
+               Replace (Target_Name, Lower_Pattern, Lower_Replacement);
+               Replace (Target_Name, Upper_Pattern, Upper_Replacement);
+               Replace (Target_Name, Mixed_Pattern, Mixed_Replacement);
+               Replace (Target_Contents, Lower_Pattern, Lower_Replacement);
+               Replace (Target_Contents, Upper_Pattern, Upper_Replacement);
+               Replace (Target_Contents, Mixed_Pattern, Mixed_Replacement);
             end;
 
             Next (C);
@@ -327,7 +378,7 @@ package body Project_Templates is
          --  First install all files
          if Files /= null then
             for J in Files'Range loop
-               if not File_Extension (Files (J)) = Template_File_Extension then
+               if File_Extension (Files (J)) /= Template_File_Extension then
                   Copy_File (Files (J), Target_Dir);
                end if;
             end loop;
@@ -349,5 +400,27 @@ package body Project_Templates is
    begin
       Copy_Subdir (Template.Source_Dir, Target_Dir);
    end Instantiate_Template;
+
+   -------------------------
+   -- Default_Assignments --
+   -------------------------
+
+   function Default_Assignments
+     (Variables : Variables_List.List) return Variable_Assignments.Map
+   is
+      Result : Variable_Assignments.Map;
+
+      use Variables_List;
+      C : Cursor;
+   begin
+      C := Variables.First;
+
+      while Has_Element (C) loop
+         Result.Insert (Element (C).Label, Element (C).Default_Value);
+         Next (C);
+      end loop;
+
+      return Result;
+   end Default_Assignments;
 
 end Project_Templates;

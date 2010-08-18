@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 --  This package handles creation of project from templates.
+--  NOTE: this should remain independent from the GPS Kernel, so that
+--  it can be reused in GNATbench or in a stand-alone executable.
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
@@ -103,5 +105,10 @@ package Project_Templates is
    --  assignments.
    --  Target_Dir is created if necessary.
    --  In case of errors, they are listed in Errors.
+
+   function Default_Assignments
+     (Variables : Variables_List.List) return Variable_Assignments.Map;
+   --  Convenience function, return the default assignment map for the given
+   --  variables list
 
 end Project_Templates;
