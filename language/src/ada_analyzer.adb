@@ -2730,7 +2730,11 @@ package body Ada_Analyzer is
 
             if Top (Indents).Level = None then
                if Continuation_Val > 0 then
-                  Continuation_Val := Continuation_Val - Indent_Continue;
+                  if Top (Tokens).Colon_Col = 0 then
+                     Continuation_Val := Continuation_Val - Indent_Continue;
+                  else
+                     Continuation_Val := Continuation_Val + Indent_Continue;
+                  end if;
                end if;
 
                Do_Indent (Prec, Num_Spaces, Continuation => True);
