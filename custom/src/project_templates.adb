@@ -46,15 +46,18 @@ package body Project_Templates is
    --  Return the index of the next occurrence of C in S, and return S'Last + 1
    --  if this was not found. If Start_Index is specified, start searching
    --  at Start_Index.
+   --  ??? This should be in a general-purpose string handling package
 
    procedure Replace
      (S           : in out Unbounded_String;
       Pattern     : String;
       Replacement : String);
    --  Return S, with all occurrences of Pattern replaced with Replacement
+   --  ??? This should be in a general-purpose string handling package
 
    function To_Mixed (S : String) return String;
    --  Return Mixed_Casing version of S
+   --  ??? This should be in a general-purpose string handling package
 
    --------------
    -- To_Mixed --
