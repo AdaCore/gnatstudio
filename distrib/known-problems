@@ -54,7 +54,6 @@ Known Problems fixed in GPS 4.5.0
                                and then not Is_Equal (Match_Unit, Unit);
   Workaround: Indent manually.
 
-
 - J623-007: Renaming bookmarks sometimes mixes them
   Problem:    If you rename a bookmark in the Bookmarks View, and the new
               name changes the sort order, then the location and names of
