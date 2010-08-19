@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -136,7 +136,8 @@ package body Entities.Commands is
          if Ref /= No_Entity_Reference then
             Parent := Get_Caller (Ref);
             if Parent /= null
-              and then Show_In_Call_Graph (Get_Kind (Ref))
+              and then Show_In_Call_Graph
+                (Ref.Entity.LI_Declaration.File.Db, Get_Kind (Ref))
               and then Is_Container (Get_Kind (Parent).Kind)
             then
                --  If we are seeing a dispatching call to an overridden
@@ -299,7 +300,8 @@ package body Entities.Commands is
                   while not At_End (Refs) loop
                      Ref := Get (Refs);
                      if Ref /= No_Entity_Reference
-                       and then Show_In_Call_Graph (Get_Kind (Ref))
+                       and then Show_In_Call_Graph
+                         (Ref.Entity.LI_Declaration.File.Db, Get_Kind (Ref))
                        and then Get_Caller (Ref) = Entity
                        and then Is_Subprogram (Get_Entity (Refs))
                        and then Get_Declaration_Of (Called_E) /=

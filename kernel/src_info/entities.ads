@@ -96,6 +96,11 @@ package Entities is
    --  consider normal references as potential subprogram calls (needed for
    --  old GNAT versions, see Advanced_Ref_In_Call_Graph_Date).
 
+   procedure Set_Normal_Ref_In_Call_Graph
+     (Db : Entities_Database; Val : Boolean);
+   --  Changes the value of Normal_Ref_In_Call_Graph in the database (see
+   --  Create declaration above for more details).
+
    procedure Destroy (Db : in out Entities_Database);
    --  Free the memory occupied by Db
 
@@ -373,7 +378,8 @@ package Entities is
    --  It is possible that none of the two return True for some special
    --  entities.
 
-   function Show_In_Call_Graph (Kind : Reference_Kind) return Boolean;
+   function Show_In_Call_Graph
+     (Db : Entities_Database; Kind : Reference_Kind) return Boolean;
    --  Whether a reference of this kind should be shown in the call graph
 
    -------------
@@ -1476,6 +1482,12 @@ private
 
       Construct_Db       : Language.Tree.Database.Construct_Database_Access;
       Construct_Db_Locks : Integer := 0;
+
+      Show_In_Call_Graph_Array : Reference_Kind_Filter :=
+        (Reference        => False,
+         Subprogram_Call  => True,
+         Dispatching_Call => True,
+         others           => False);
    end record;
    type Entities_Database is access Entities_Database_Record;
 

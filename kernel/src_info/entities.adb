@@ -197,12 +197,6 @@ package body Entities is
       Subprogram_Access_Parameter => True,
       others                      => False);
 
-   Show_In_Call_Graph_Array : Reference_Kind_Filter :=
-     (Reference        => False,
-      Subprogram_Call  => True,
-      Dispatching_Call => True,
-      others           => False);
-
    ---------
    -- Ref --
    ---------
@@ -234,9 +228,11 @@ package body Entities is
    -- Show_In_Call_Graph --
    ------------------------
 
-   function Show_In_Call_Graph (Kind : Reference_Kind) return Boolean is
+   function Show_In_Call_Graph
+     (Db : Entities_Database; Kind : Reference_Kind) return Boolean
+   is
    begin
-      return Show_In_Call_Graph_Array (Kind);
+      return Db.Show_In_Call_Graph_Array (Kind);
    end Show_In_Call_Graph;
 
    -----------------------
@@ -1038,15 +1034,25 @@ package body Entities is
    is
       Db : Entities_Database;
    begin
-      Show_In_Call_Graph_Array (Reference) := Normal_Ref_In_Call_Graph;
       Db          := new Entities_Database_Record;
       Db.Registry := Registry;
       Db.Frozen   := Create_And_Update;
       Db.FS_Optimizer := Create;
       Db.Construct_Db := Construct_Db;
+      Db.Show_In_Call_Graph_Array (Reference) := Normal_Ref_In_Call_Graph;
 
       return Db;
    end Create;
+
+   ----------------------------------
+   -- Set_Normal_Ref_In_Call_Graph --
+   ----------------------------------
+
+   procedure Set_Normal_Ref_In_Call_Graph
+     (Db : Entities_Database; Val : Boolean) is
+   begin
+      Db.Show_In_Call_Graph_Array (Reference) := Val;
+   end Set_Normal_Ref_In_Call_Graph;
 
    --------------
    -- Finalize --
