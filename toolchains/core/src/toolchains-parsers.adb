@@ -31,7 +31,7 @@ with Prj.Env; use Prj.Env;
 with Prj.PP; use Prj.PP;
 
 package body Toolchains.Parsers is
-   Me : constant Trace_Handle := Create ("TARGET_PARSER");
+   Me : constant Trace_Handle := Create ("TOOLCHAIN_PARSER");
 
    package Toolchain_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Toolchain);
