@@ -69,6 +69,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with GNAT.Strings; use GNAT.Strings;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Basic_Types; use Basic_Types;
 
 package Toolchains is
 
@@ -149,6 +150,10 @@ package Toolchains is
 
    function Get_Version (This : Ada_Library_Info) return String;
    --  Return the GNAT version associated to this library information
+
+   function Get_Date (This : Ada_Library_Info) return Date_Type;
+   --  Return the date of this library information. This is directly deduced
+   --  from the version string.
 
    function Get_Error (This : Ada_Library_Info) return String;
    --  If the library information has not been correctly computed, return

@@ -24,13 +24,18 @@ with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions; use Ada.Exceptions;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Toolchains is
 
+   Me : constant Trace_Handle := Create ("TOOLCHAINS");
+
    procedure Free (This : in out Ada_Library_Info_Access);
+   pragma Unreferenced (Free);
    --  Free the memory associated to this library info. This should only be
    --  called by the manager, as we store the result of this information during
    --  the session.
+   --  ??? Use this to free the library info when needed
 
    procedure Fire_Change_Event (This : Toolchain_Manager);
    --  Calls the Toolchain_Changed event on all listeners.
@@ -86,6 +91,46 @@ package body Toolchains is
          return "";
       end if;
    end Get_Version;
+
+   --------------
+   -- Get_Date --
+   --------------
+
+   function Get_Date (This : Ada_Library_Info) return Date_Type is
+      Version       : constant String := Get_Version (This);
+      Open_Index    : constant Natural := Index (Version, "(");
+      Close_Index   : Natural;
+   begin
+      if Open_Index = 0 then
+         return Null_Date;
+      else
+         Close_Index := Index (Version (Open_Index + 1 .. Version'Last), "-");
+
+         if Close_Index = 0 then
+            Close_Index :=
+              Index (Version (Open_Index + 1 .. Version'Last), ")");
+         end if;
+
+         if Close_Index = 0 then
+            return Null_Date;
+         else
+            return
+              (Year  => Integer'Value
+                 (Version (Open_Index + 1 .. Open_Index + 4)),
+               Month => Integer'Value
+                 (Version (Open_Index + 5 .. Open_Index + 6)),
+               Day   => Integer'Value
+                 (Version (Open_Index + 7 .. Open_Index + 8)));
+         end if;
+      end if;
+   exception
+      when E : Constraint_Error =>
+         --  There has been an error in the date recovery, return false
+
+         Trace (Me, E);
+
+         return Null_Date;
+   end Get_Date;
 
    ---------------
    -- Get_Error --
@@ -205,6 +250,7 @@ package body Toolchains is
       Unchecked_Free (This.Project_Path);
       Free (This.Version);
       Free (This.Error);
+      Free (This);
    end Free;
 
    ------------------------------
