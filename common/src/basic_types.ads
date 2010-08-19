@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNAT.Strings;
+with Ada.Calendar;
 
 package Basic_Types is
 
@@ -69,6 +70,24 @@ package Basic_Types is
       Str            : String;
       Case_Sensitive : Boolean := True) return Boolean;
    --  Return True if List contains Str
+
+   type Date_Type is record
+      Year  : Ada.Calendar.Year_Number;
+      Month : Ada.Calendar.Month_Number;
+      Day   : Ada.Calendar.Day_Number;
+   end record;
+
+   Null_Date : constant Date_Type := Date_Type'
+     (Year  => Ada.Calendar.Year_Number'First,
+      Month => Ada.Calendar.Month_Number'First,
+      Day   => Ada.Calendar.Day_Number'First);
+
+   function "<" (Left, Right : Date_Type) return Boolean;
+   --  Compares the two dates, return true if left is before right
+
+   function "<=" (Left, Right : Date_Type) return Boolean;
+   function ">" (Left, Right : Date_Type) return Boolean;
+   function ">=" (Left, Right : Date_Type) return Boolean;
 
    ------------------
    -- Column types --

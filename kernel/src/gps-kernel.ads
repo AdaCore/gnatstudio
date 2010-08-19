@@ -179,9 +179,9 @@ package GPS.Kernel is
 
    function Require_GNAT_Date
      (Handle : access Kernel_Handle_Record;
-      Date   : String) return Boolean;
+      Date   : Basic_Types.Date_Type) return Boolean;
    --  Return True if the version of GNAT associated with Handle is at
-   --  least Date. Date is of the form YYYYMMDD.
+   --  least Date.
 
    procedure Set_Destruction_Flag
      (Handle : access Kernel_Handle_Record;

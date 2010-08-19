@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,5 +97,53 @@ package body Basic_Types is
 
       return False;
    end Contains;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Date_Type) return Boolean is
+   begin
+      if Left.Year < Right.Year then
+         return True;
+      elsif Left.Year = Right.Year then
+         if Left.Month < Right.Month then
+            return True;
+         elsif Left.Month = Right.Month then
+            if Left.Day < Right.Day then
+               return True;
+            end if;
+         end if;
+      end if;
+
+      return False;
+   end "<";
+
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<=" (Left, Right : Date_Type) return Boolean is
+   begin
+      return Left < Right or else Left = Right;
+   end "<=";
+
+   ---------
+   -- ">" --
+   ---------
+
+   function ">" (Left, Right : Date_Type) return Boolean is
+   begin
+      return not (Left < Right or else Left = Right);
+   end ">";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">=" (Left, Right : Date_Type) return Boolean is
+   begin
+      return not (Left < Right);
+   end ">=";
 
 end Basic_Types;

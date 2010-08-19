@@ -257,11 +257,12 @@ package body GPS.Kernel is
 
    function Require_GNAT_Date
      (Handle : access Kernel_Handle_Record;
-      Date   : String) return Boolean
+      Date   : Date_Type) return Boolean
    is
-      Version     : constant String := GNAT_Version (Handle);
-      Open_Index  : constant Natural := Index (Version, "(");
-      Close_Index : Natural;
+      Version       : constant String := GNAT_Version (Handle);
+      Open_Index    : constant Natural := Index (Version, "(");
+      Close_Index   : Natural;
+      Compiler_Date : Date_Type;
 
    begin
       if Open_Index = 0 then
@@ -277,9 +278,24 @@ package body GPS.Kernel is
          if Close_Index = 0 then
             return False;
          else
-            return Version (Open_Index + 1 .. Close_Index - 1) >= Date;
+            Compiler_Date :=
+              (Year  => Integer'Value
+                 (Version (Open_Index + 1 .. Open_Index + 4)),
+               Month => Integer'Value
+                 (Version (Open_Index + 5 .. Open_Index + 6)),
+               Day   => Integer'Value
+                 (Version (Open_Index + 7 .. Open_Index + 8)));
+
+            return Compiler_Date >= Date;
          end if;
       end if;
+   exception
+      when E : Constraint_Error =>
+         --  There has been an error in the date recovery, return false
+
+         Trace (Me, E);
+
+         return False;
    end Require_GNAT_Date;
 
    ------------------------------
@@ -340,7 +356,8 @@ package body GPS.Kernel is
       Handle.Database := Create
         (Handle.Registry, Handle.Get_Construct_Database,
          Normal_Ref_In_Call_Graph =>
-           not Require_GNAT_Date (Handle, "20100806"));
+            not Require_GNAT_Date
+              (Handle, Entities.Advanced_Ref_In_Call_Graph_Date));
       Set_Symbols (Handle.Database, Handle.Symbols);
       Set_Symbols (Handle.Get_Construct_Database, Handle.Symbols);
       Register_Language_Handler (Handle.Database, Handler);
