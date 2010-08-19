@@ -448,7 +448,7 @@ package body Entities.Debug is
          else
             Output (Get (Get_Name (Entity)).all & ':');
          end if;
-         Dump (Entity.Declaration);
+         Dump (Entity.Live_Declaration);
 
          if Full then
             if not Entity.Is_Valid then

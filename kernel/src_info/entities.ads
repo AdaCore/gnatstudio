@@ -1154,9 +1154,14 @@ private
       --  Name of the entity. This name contains the
       --  proper casing for the entity.
 
-      Declaration           : File_Location;
       Caller_At_Declaration : Entity_Information;
-      --  The location of the declaration for this entity
+      LI_Declaration        : File_Location;
+      --  The location of the declaration as known by the LI file
+
+      Live_Declaration      : File_Location;
+      --  The location of the declaration as known live. This may be
+      --  updated if the entity is retreived after a modification in the file,
+      --  and the LI is not up to date.
 
       End_Of_Scope          : E_Reference;
       --  The location at which the declaration of this entity ends. This is

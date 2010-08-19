@@ -76,6 +76,7 @@ package body Entities.Construct_Assistant is
 
       Construct_Annotation : Construct_Annotations_Pckg.Annotation;
       New_Entity : Entity_Information;
+      Declaration : File_Location;
    begin
       Get_Annotation
         (Get_Annotation_Container
@@ -88,20 +89,23 @@ package body Entities.Construct_Assistant is
 
          Construct_Annotation := (Other_Kind, Other_Val => new LI_Annotation);
 
-         New_Entity :=
-           new Entity_Information_Record'
-             (Name                         => Get_Construct (E).Name,
-              Kind                         => Unresolved_Entity_Kind,
-              Attributes                   => (others => False),
-              Declaration                  =>
-                (Get_Or_Create
+         Declaration :=
+            (Get_Or_Create
                    (Db    => Assistant.LI_Db,
                     File  => Get_File_Path (Get_File (E))),
                  Get_Construct (E).Sloc_Entity.Line,
                  To_Visible_Column
                    (Get_File (E),
                     Get_Construct (E).Sloc_Entity.Line,
-                    String_Index_Type (Get_Construct (E).Sloc_Entity.Column))),
+                    String_Index_Type (Get_Construct (E).Sloc_Entity.Column)));
+
+         New_Entity :=
+           new Entity_Information_Record'
+             (Name                         => Get_Construct (E).Name,
+              Kind                         => Unresolved_Entity_Kind,
+              Attributes                   => (others => False),
+              LI_Declaration               => Declaration,
+              Live_Declaration             => Declaration,
               Caller_At_Declaration        => null,
               End_Of_Scope                 => No_E_Reference,
               Parent_Types                 => Null_Entity_Information_List,
@@ -186,7 +190,7 @@ package body Entities.Construct_Assistant is
                New_Entity.Kind.Kind := Unresolved_Entity;
          end case;
 
-         Ref (New_Entity.Declaration.File);
+         Ref (New_Entity.LI_Declaration.File);
 
          LI_Annotation (Construct_Annotation.Other_Val.all).LI_Entity :=
            New_Entity;
@@ -200,9 +204,10 @@ package body Entities.Construct_Assistant is
          --  Update the entity in case it has moved
 
          LI_Annotation (Construct_Annotation.Other_Val.all).
-           LI_Entity.Declaration.Line := Get_Construct (E).Sloc_Entity.Line;
+           LI_Entity.Live_Declaration.Line :=
+             Get_Construct (E).Sloc_Entity.Line;
          LI_Annotation (Construct_Annotation.Other_Val.all).
-           LI_Entity.Declaration.Column := To_Visible_Column
+           LI_Entity.Live_Declaration.Column := To_Visible_Column
              (Get_File (E),
               Get_Construct (E).Sloc_Entity.Line,
               String_Index_Type (Get_Construct (E).Sloc_Entity.Column));

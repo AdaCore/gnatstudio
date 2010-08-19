@@ -245,9 +245,9 @@ package body Entities.Queries is
          for Ent in Entity_Information_Arrays.First .. Last (EL.all) loop
             E := EL.Table (Ent);
 
-            if E.Declaration.File = File then
-               Prox := Natural (abs (E.Declaration.Column - Column)) +
-               abs (E.Declaration.Line - Line) * Num_Columns_Per_Line;
+            if E.LI_Declaration.File = File then
+               Prox := Natural (abs (E.LI_Declaration.Column - Column)) +
+               abs (E.LI_Declaration.Line - Line) * Num_Columns_Per_Line;
 
                if Prox < Distance then
                   Closest := E;
@@ -524,6 +524,8 @@ package body Entities.Queries is
       S_Entity_Name : Symbol := No_Symbol;
       H       : LI_Handler := Handler;
       Updated : Source_File;
+      New_Entity : Entity_Information;
+      New_Location : File_Location;
    begin
       if Entity_Name /= "" then
          S_Entity_Name := Db.Symbols.Find (Entity_Name);
@@ -621,9 +623,8 @@ package body Entities.Queries is
                   --  the database. If that's the case, it's better to use it
                   --  than the dummy one created from the construct.
 
-                  Entity := Get_Or_Create
-                    (Name     => Get_Construct (Result).Name,
-                     File     => Get_Or_Create
+                  New_Location :=
+                    (File     => Get_Or_Create
                        (Db    => Db,
                         File  => Get_File_Path (Get_File (Result))),
                      Line   => Get_Construct (Result).Sloc_Entity.Line,
@@ -631,13 +632,28 @@ package body Entities.Queries is
                        (Get_File (Result),
                         Get_Construct (Result).Sloc_Entity.Line,
                         String_Index_Type
-                          (Get_Construct (Result).Sloc_Entity.Column)),
+                          (Get_Construct (Result).Sloc_Entity.Column)));
+
+                  New_Entity := Get_Or_Create
+                    (Name         => Get_Construct (Result).Name,
+                     File         => New_Location.File,
+                     Line         => New_Location.Line,
+                     Column       => New_Location.Column,
                      Allow_Create => False);
 
-                  --  If we don't have any regular entity for the location
-                  --  found, then create a dummy one linked to the construct.
+                  if New_Entity /= null then
+                     --  If we found an updated ALI entity, use it.
 
-                  if Entity = null then
+                     Entity := New_Entity;
+                  elsif Entity /= null then
+                     --  Else, if we had a fuzzy entity, use it to initalize
+                     --  the LI entity from the construct database.
+
+                     Entity.Live_Declaration := New_Location;
+                  else
+                     --  If we have no entity to connect to, then create one
+                     --  from the construct database.
+
                      Entity := To_LI_Entity (Result);
                   end if;
 
@@ -692,7 +708,7 @@ package body Entities.Queries is
          if Current_Location.File /= null then
             Start_Loc := Current_Location;
          else
-            Start_Loc := Entity.Declaration;
+            Start_Loc := Entity.Live_Declaration;
          end if;
 
          if Active (Constructs_Heuristics)
@@ -829,7 +845,7 @@ package body Entities.Queries is
 
       --  First, try to get the next entity using the ali files
 
-      Update_Xref (Entity.Declaration.File);
+      Update_Xref (Entity.LI_Declaration.File);
 
       It := First (Entity.References);
 
@@ -948,12 +964,12 @@ package body Entities.Queries is
          return False;
       end if;
 
-      if Entity.Declaration.File = Loc.File then
+      if Entity.LI_Declaration.File = Loc.File then
          Start := Get_Start_Of_Scope_In_File
            (Entity, Loc.File, Force_Spec => True).Line;
          Last  := Get_End_Of_Scope_In_File
            (Entity, Loc.File, Force_Spec => True).Line;
-         if In_Range (Loc, Entity.Declaration.File, Start, Last) then
+         if In_Range (Loc, Entity.LI_Declaration.File, Start, Last) then
             return True;
          end if;
       end if;
@@ -1069,14 +1085,14 @@ package body Entities.Queries is
         or else
           (In_Scope /= null
            and then not In_Range
-             (Iter.Entity.Declaration,
+             (Iter.Entity.LI_Declaration,
               Iter.In_File, Iter.Start_Line, Iter.Last_Line));
 
       if not Iter.Decl_Returned
         and then (Iter.In_File = null
-                  or else Iter.In_File = Iter.Entity.Declaration.File)
+                  or else Iter.In_File = Iter.Entity.LI_Declaration.File)
       then
-         Update_Xref (Iter.Entity.Declaration.File);
+         Update_Xref (Iter.Entity.LI_Declaration.File);
       end if;
 
       Iter.Deps := Deps;
@@ -1119,7 +1135,7 @@ package body Entities.Queries is
 
       if Active (Me) then
          Trace (Me, "Find_All_References to " & Debug_Name (Entity)
-                & ' ' & To_String (Entity.Declaration)
+                & ' ' & To_String (Entity.Live_Declaration)
                 & " in_file=" & Boolean'Image (In_File /= null));
       end if;
 
@@ -1128,7 +1144,7 @@ package body Entities.Queries is
             Find_Next_Body (In_Scope, Loc, Location => Loc,
                             No_Location_If_First => True);
             if Loc = No_File_Location then
-               F := In_Scope.Declaration.File;
+               F := In_Scope.LI_Declaration.File;
                Start := Get_Start_Of_Scope_In_File
                  (In_Scope, F, Force_Spec => True).Line;
                Last  := Get_End_Of_Scope_In_File
@@ -1494,7 +1510,7 @@ package body Entities.Queries is
       end Move_To_Next_Entity;
 
       Lock : Construct_Heuristics_Lock :=
-        Lock_Construct_Heuristics (Iter.Entity.Declaration.File.Db);
+        Lock_Construct_Heuristics (Iter.Entity.LI_Declaration.File.Db);
    begin
       --  We always return the declaration first
 
@@ -1527,7 +1543,7 @@ package body Entities.Queries is
                  and then Element (Iter.Entity_It).Kind =
                  Body_Entity
                  and then Element (Iter.Entity_It).Location
-                 = Iter.Entity.Declaration
+                 = Iter.Entity.LI_Declaration
                then
                   Next (Iter);
                end if;
@@ -2149,8 +2165,8 @@ package body Entities.Queries is
             It := Next (It);
          end loop;
 
-         if Entity.Declaration.File = File then
-            return Entity.Declaration;
+         if Entity.LI_Declaration.File = File then
+            return Entity.LI_Declaration;
          else
             return No_File_Location;
          end if;
@@ -2207,7 +2223,7 @@ package body Entities.Queries is
                if Ref.Location.File = File and then Ref.Kind = Body_Entity then
                   Body_Seen := True;
 
-                  if Ref.Location = Entity.Declaration then
+                  if Ref.Location = Entity.LI_Declaration then
                      Ref_Is_Body := True;
                   end if;
                end if;
@@ -2669,17 +2685,19 @@ package body Entities.Queries is
            Last (For_Entities.all)
          loop
             if Add_Deps then
-               Add_Depends_On (For_Entities.Table (E).Declaration.File, File);
+               Add_Depends_On
+                 (For_Entities.Table (E).LI_Declaration.File, File);
             end if;
 
-            if For_Entities.Table (E).Declaration.File = File
-              and then For_Entities.Table (E).Declaration.Line in Info'Range
+            if For_Entities.Table (E).LI_Declaration.File = File
+              and then For_Entities.Table (E).LI_Declaration.Line
+                in Info'Range
             then
-               Caller := Info (For_Entities.Table (E).Declaration.Line);
+               Caller := Info (For_Entities.Table (E).LI_Declaration.Line);
 
                if Caller = For_Entities.Table (E) then
                   Caller := Info_For_Decl
-                    (For_Entities.Table (E).Declaration.Line);
+                    (For_Entities.Table (E).LI_Declaration.Line);
                end if;
 
                --  An entity should not be considered its own caller. Here we
@@ -2810,7 +2828,7 @@ package body Entities.Queries is
 
       else
          Find_Declaration
-           (Db        => Entity.Declaration.File.Db,
+           (Db        => Entity.LI_Declaration.File.Db,
             File_Name => Get_Filename (Get_File (Ref.Location)),
             Line      => Get_Line (Ref.Location),
             Column    => Get_Column (Ref.Location),
@@ -2836,7 +2854,7 @@ package body Entities.Queries is
       It : Entity_Reference_Cursor;
    begin
       if Force_Load_Xrefs then
-         Update_Xref (Pkg.Declaration.File);
+         Update_Xref (Pkg.LI_Declaration.File);
       end if;
 
       It := First (Pkg.References);
@@ -2875,7 +2893,7 @@ package body Entities.Queries is
          exit when E = null;
 
          Append (Result, Get (E.Name).all);
-         Compute_Callers_And_Called (E.Declaration.File);
+         Compute_Callers_And_Called (E.LI_Declaration.File);
          Last_Not_Null := E;
          E := E.Caller_At_Declaration;
 
@@ -2908,7 +2926,7 @@ package body Entities.Queries is
          return null;
 
       elsif Ref.Index.Is_Declaration then
-         Compute_Callers_And_Called (Ref.Entity.Declaration.File);
+         Compute_Callers_And_Called (Ref.Entity.LI_Declaration.File);
          return Ref.Entity.Caller_At_Declaration;
 
       else
@@ -3001,7 +3019,7 @@ package body Entities.Queries is
            (Entity, Loc, Location => Loc, No_Location_If_First => True);
 
          if Loc = No_File_Location then
-            Compute_Callers_And_Called (Entity.Declaration.File);
+            Compute_Callers_And_Called (Entity.LI_Declaration.File);
             exit;
          else
             Compute_Callers_And_Called (Loc.File);

@@ -325,9 +325,10 @@ package body Entities is
          return "<null>";
       else
          return Get (Entity.Name).all
-           & ":" & Entity.Declaration.File.Name.Display_Full_Name
-           & ":" & Image (Entity.Declaration.Line, Min_Width => 1)
-           & ":" & Image (Integer (Entity.Declaration.Column), Min_Width => 1);
+           & ":" & Entity.Live_Declaration.File.Name.Display_Full_Name
+           & ":" & Image (Entity.Live_Declaration.Line, Min_Width => 1)
+           & ":" & Image
+           (Integer (Entity.Live_Declaration.Column), Min_Width => 1);
       end if;
    end Debug_Name;
 
@@ -382,7 +383,8 @@ package body Entities is
               (Entity_Information_Arrays.First).Name,
             Case_Sensitive => not Case_Insensitive_Identifiers
               (D.List.Table
-                 (Entity_Information_Arrays.First).Declaration.File.Handler));
+                 (Entity_Information_Arrays.First).
+                  Live_Declaration.File.Handler));
       end if;
    end Get_Name;
 
@@ -449,8 +451,8 @@ package body Entities is
      (File : Source_File; Entity : Entity_Information)
    is
    begin
-      if Entity.Declaration.File /= File then
-         Add_Depends_On (File, Entity.Declaration.File);
+      if Entity.LI_Declaration.File /= File then
+         Add_Depends_On (File, Entity.LI_Declaration.File);
          Add (File.All_Entities, Entity, Check_Duplicates => True);
       end if;
    end Add_All_Entities;
@@ -851,7 +853,7 @@ package body Entities is
       Str : constant Cased_String :=
               (Str            => E.Name,
                Case_Sensitive => not Case_Insensitive_Identifiers
-                 (E.Declaration.File.Handler));
+                 (E.LI_Declaration.File.Handler));
       UEI : constant Entity_Informations := Get (D, Str);
       EL  : Entity_Information_List_Access;
    begin
@@ -950,10 +952,11 @@ package body Entities is
          if Entity.Ref_Count = 0 then
             if Active (Ref_Me) then
                Trace (Ref_Me, "Freeing " & Debug_Name (Entity)
-                      & ":"
-                      & (+Base_Name (Get_Filename (Entity.Declaration.File)))
-                      & Entity.Declaration.Line'Img
-                      & " ref_count=" & Entity.Ref_Count'Img);
+                 & ":"
+                 & (+Base_Name
+                   (Get_Filename (Entity.Live_Declaration.File)))
+                 & Entity.Live_Declaration.Line'Img
+                 & " ref_count=" & Entity.Ref_Count'Img);
             end if;
 
             Isolate (Entity, Clear_References => True);
@@ -969,14 +972,14 @@ package body Entities is
             Entity.Ref_Count := Natural'Last;
 
             if not Entity.Is_Dummy then
-               Remove (Entity.Declaration.File.Entities, Entity);
+               Remove (Entity.LI_Declaration.File.Entities, Entity);
             end if;
 
-            if Entity.Declaration.File.Handler /= null then
-               Remove (Entity.Declaration.File.Handler, Entity);
+            if Entity.LI_Declaration.File.Handler /= null then
+               Remove (Entity.LI_Declaration.File.Handler, Entity);
             end if;
 
-            Unref (Entity.Declaration.File); --  ref added in Get_Or_Create
+            Unref (Entity.LI_Declaration.File); --  ref added in Get_Or_Create
 
             Entity.Ref_Count := 0;
 
@@ -1458,9 +1461,9 @@ package body Entities is
       Loc  : File_Location) return Entity_Information is
    begin
       for L in Entity_Information_Arrays.First .. Last (List) loop
-         if List.Table (L).Declaration.File = Loc.File
-           and then List.Table (L).Declaration.Line = Loc.Line
-           and then List.Table (L).Declaration.Column = Loc.Column
+         if List.Table (L).LI_Declaration.File = Loc.File
+           and then List.Table (L).LI_Declaration.Line = Loc.Line
+           and then List.Table (L).LI_Declaration.Column = Loc.Column
          then
             return List.Table (L);
          end if;
@@ -1656,7 +1659,7 @@ package body Entities is
       Str : constant Cased_String :=
               (Str => Entity.Name,
                Case_Sensitive => not Case_Insensitive_Identifiers
-                 (Entity.Declaration.File.Handler));
+                 (Entity.LI_Declaration.File.Handler));
    begin
       UEI := Get (Entities, Str);
 
@@ -1672,7 +1675,7 @@ package body Entities is
 
       else
          if not Check_Duplicates
-           or else Find (UEI.List.all, Entity.Declaration) = null
+           or else Find (UEI.List.all, Entity.LI_Declaration) = null
          then
             Append (UEI.List.all, Entity);
             Ref (Entity, "Add");
@@ -2053,7 +2056,8 @@ package body Entities is
            (Name                         => Name,
             Kind                         => Unresolved_Entity_Kind,
             Attributes                   => (others => False),
-            Declaration                  => (File, Line, Column),
+            LI_Declaration               => (File, Line, Column),
+            Live_Declaration             => (File, Line, Column),
             Caller_At_Declaration        => null,
             End_Of_Scope                 => No_E_Reference,
             Parent_Types                 => Null_Entity_Information_List,
@@ -2286,7 +2290,7 @@ package body Entities is
    function Get_Declaration_Of
      (Entity : Entity_Information) return File_Location is
    begin
-      return Entity.Declaration;
+      return Entity.Live_Declaration;
    end Get_Declaration_Of;
 
    --------------
@@ -2397,7 +2401,7 @@ package body Entities is
       if Ref.Entity = null then
          return No_File_Location;
       elsif Ref.Index.Is_Declaration then
-         return Ref.Entity.Declaration;
+         return Ref.Entity.Live_Declaration;
       elsif Ref.Entity.References /= Entity_File_Maps.Empty_Map then
          return Ref.Index.Loc;
       else
@@ -2413,10 +2417,10 @@ package body Entities is
      (Entity : Entity_Information) return Boolean is
    begin
       return Entity /= null
-        and then Entity.Declaration.File =
+        and then Entity.LI_Declaration.File =
           Get_Predefined_File
-            (Entity.Declaration.File.Db,
-             Entity.Declaration.File.Handler);
+            (Entity.LI_Declaration.File.Db,
+             Entity.LI_Declaration.File.Handler);
    end Is_Predefined_Entity;
 
    --------------

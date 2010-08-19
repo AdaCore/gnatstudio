@@ -195,7 +195,7 @@ package body Entities.Tooltips is
          return  "<b>" & Escape_Text (Get (Entity.Name).all)
            & "</b>" & ASCII.LF
            & (-Kind_To_String (Get_Kind (Entity))
-           & ' ' & Entity.Declaration.File.Name.Display_Full_Name);
+           & ' ' & Entity.Live_Declaration.File.Name.Display_Full_Name);
       else
          return  "<b>" & Escape_Text (Get_Full_Name (Entity, "."))
            & "</b>" & ASCII.LF
