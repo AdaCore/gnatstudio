@@ -80,7 +80,7 @@ package Entities is
    --  This table is shared with the kernel, but the kernel is not visible
    --  from this package. This also simplifies integration in GNATBench
 
-   Advanced_Ref_In_Call_Graph_Date : constant Basic_Types.Date_Type :=
+   Advanced_Ref_In_Call_Graph_Date : aliased constant Basic_Types.Date_Type :=
      (Year  => 2010, Month => 08, Day => 06);
    --  This is the GNAT date of the implementation of the advanced refs in
    --  call graphs. If the GNAT date used to compile the ali files is known,
