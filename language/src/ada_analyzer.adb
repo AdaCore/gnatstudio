@@ -3728,7 +3728,7 @@ package body Ada_Analyzer is
                         end if;
 
                         Prev_Token := Tok_Operator_Symbol;
-                        Entity     := Identifier_Text;
+                        Entity     := Block_Text;
                      else
                         Prev_Token := Tok_String_Literal;
                         Entity     := String_Text;
@@ -4332,13 +4332,13 @@ package body Ada_Analyzer is
                           and then (Prev_Prev_Token = Tok_Colon
                                     or else Prev_Prev_Token = Tok_In))
                  or else Prev_Token = Tok_Colon
-                 or else Prev_Token = Tok_Type
-                 or else Prev_Token = Tok_Subtype
                  or else (In_Declaration = Subprogram_Decl
                           and then Prev_Token = Tok_Return)
                then
                   Entity := Type_Text;
-               elsif Prev_Token = Tok_End
+               elsif     Prev_Token = Tok_Type
+                 or else Prev_Token = Tok_Subtype
+                 or else Prev_Token = Tok_End
                  or else Prev_Token = Tok_Procedure
                  or else Prev_Token = Tok_Function
                  or else Prev_Token = Tok_Task
