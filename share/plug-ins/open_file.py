@@ -137,7 +137,7 @@ class OpenFileContextual (GPS.Contextual):
 
    def on_label (self, context):
       """Returns the label to use for the contextual menu"""
-      return "Goto <b>"  + basename (self.file) + "</b>"
+      return "Open <b>"  + basename (self.file) + "</b>"
 
    def __init__ (self):
       """Initializes the contextual menu"""
