@@ -3120,27 +3120,26 @@ package body Ada_Analyzer is
 
          procedure Skip_Blank_Lines is
          begin
-            if P > Buffer_Last then
+            if P > Buffer_Last
+              or else (Buffer (P) /= ASCII.LF and then Buffer (P) /= ASCII.CR)
+            then
                return;
             end if;
 
-            if Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR then
-               while P < Buffer_Last and then
-                 (Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR)
-               loop
-                  if Buffer (P) = ASCII.LF then
-                     New_Line (Line_Count);
-                     Indent_Done := False;
-                  end if;
-
-                  P := Next_Char (P);
-               end loop;
-
-               if P < Buffer_Last then
-                  Start_Of_Line := P;
-                  End_Of_Line   := Line_End (Buffer, Start_Of_Line);
+            while P < Buffer_Last and then
+              (Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR)
+            loop
+               if Buffer (P) = ASCII.LF then
+                  New_Line (Line_Count);
+                  Indent_Done := False;
                end if;
 
+               P := Next_Char (P);
+            end loop;
+
+            if P < Buffer_Last then
+               Start_Of_Line := P;
+               End_Of_Line   := Line_End (Buffer, Start_Of_Line);
             end if;
          end Skip_Blank_Lines;
 
