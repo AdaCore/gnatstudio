@@ -1157,9 +1157,6 @@ package body Ada_Analyzer is
             return 0;
          end if;
 
-         --  ??? Need to call Compute_Alignment again after blank line and
-         --  Stop_On_Blank_Line is True
-
          if Skip_First_Line then
             J := Next_Line (Buffer, P);
          else
@@ -2389,7 +2386,9 @@ package body Ada_Analyzer is
             if Align_On_Colons
               and then Top_Token.Token = Tok_Record
             then
-               Temp.Align_Colon := Compute_Alignment (Prec);
+               Temp.Align_Colon := Compute_Alignment
+                 (Prec,
+                  Stop_On_Blank_Line => Stop_On_Blank_Line);
             end if;
 
             Do_Indent (Prec, Num_Spaces);
@@ -2664,7 +2663,8 @@ package body Ada_Analyzer is
                   Num_Spaces := Num_Spaces + Indent_Level;
 
                   if Align_On_Colons then
-                     Temp.Align_Colon := Compute_Alignment (Prec);
+                     Temp.Align_Colon := Compute_Alignment
+                       (Prec, Stop_On_Blank_Line => Stop_On_Blank_Line);
                   end if;
                end if;
 
@@ -2789,6 +2789,7 @@ package body Ada_Analyzer is
          Local_Top_Token : Token_Stack.Generic_Type_Access;
          Tmp             : Boolean;
          Token_Found     : Boolean;
+         Recompute_Align : Boolean;
 
          procedure Close_Parenthesis;
          --  Current buffer contents is a closed parenthesis,
@@ -3445,8 +3446,17 @@ package body Ada_Analyzer is
          End_Reached   := False;
 
          loop
-            Skip_Blank_Lines;
-            Skip_Comments;
+            declare
+               L1, L2 : Natural;
+            begin
+               L1 := Line_Count;
+               Skip_Blank_Lines;
+               Skip_Comments;
+               L2 := Line_Count;
+               --  If we have blank lines and/or comment line we need to
+               --  recompute the alignment for the next block of code.
+               Recompute_Align := L2 > L1 + 1;
+            end;
 
             if (End_Reached and then Buffer (Buffer_Last) /= ASCII.LF)
               or else Terminated
@@ -3465,6 +3475,13 @@ package body Ada_Analyzer is
             --  can the recomputation be omitted.
 
             Local_Top_Token := Top (Tokens);
+
+            if Align_On_Colons and then Recompute_Align then
+               Local_Top_Token.Align_Colon := Compute_Alignment
+                 (P,
+                  Stop_On_Blank_Line => True,
+                  Skip_First_Line    => False);
+            end if;
 
             Prev_Prev_Token := Prev_Token;
             Token_Found := True;
