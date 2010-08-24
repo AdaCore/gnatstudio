@@ -839,18 +839,17 @@ package body Language.Ada is
    -------------------------------
 
    overriding procedure Parse_Tokens_Backwards
-     (Lang              : access Ada_Language;
-      Buffer            : Glib.UTF8_String;
-      Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0;
-      Callback          :
-      access procedure (Token : Token_Record;
-                        Stop : in out Boolean))
+     (Lang         : access Ada_Language;
+      Buffer       : Glib.UTF8_String;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type := 0;
+      Callback     : access procedure (Token : Token_Record;
+                                       Stop  : in out Boolean))
    is
       pragma Unreferenced (Lang);
-      Offset       : Natural := Natural (Start_Offset);
-      Offset_Limit : Natural;
-      Token        : Token_Record;
+      Offset               : Natural := Natural (Start_Offset);
+      Offset_Limit         : Natural;
+      Token                : Token_Record;
       Prev_Non_Blank_Token : Token_Record;
 
       procedure Skip_String
@@ -865,7 +864,7 @@ package body Language.Ada is
 
       procedure Handle_Token
         (Token : in out Token_Record; Offset : Natural; Stop : out Boolean);
-      --  Adjust the position of the token and calls the callback.
+      --  Adjust the position of the token and calls the callback
 
       -----------------
       -- Skip_String --
@@ -1055,7 +1054,7 @@ package body Language.Ada is
 
       declare
          Prev_Offset : constant Integer :=
-           UTF8_Find_Prev_Char (Buffer, Offset);
+                         UTF8_Find_Prev_Char (Buffer, Offset);
          Next_Offset : Integer;
       begin
          if Prev_Offset > Buffer'First then
@@ -1353,13 +1352,17 @@ package body Language.Ada is
 
       Expression_Depth : Integer := 0;
 
-      Prev_Non_Blank : Token_Record;
+      Prev_Non_Blank   : Token_Record;
       Ends_With_Blanks : Boolean := False;
-      Is_First : Boolean := True;
+      Is_First         : Boolean := True;
 
       procedure Callback
         (Token : Token_Record;
          Stop  : in out Boolean);
+
+      --------------
+      -- Callback --
+      --------------
 
       procedure Callback
         (Token : Token_Record;

@@ -46,7 +46,7 @@ package body Language.Tree is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Referenced_Identifiers_List_Record, Access_Referenced_List);
 
-      Ref : Referenced_Identifiers_List;
+      Ref     : Referenced_Identifiers_List;
       Garbage : Referenced_Identifiers_List;
    begin
       if Tree /= null then
@@ -1074,7 +1074,7 @@ package body Language.Tree is
          return (0, 0, "", (others => 0), (others => 0));
       end if;
 
-      --  Compute the size of the result.
+      --  Compute the size of the result
 
       loop
          Skip_Blanks (Identifier, Index_In_Id);
@@ -1128,7 +1128,7 @@ package body Language.Tree is
          Number_Of_Chars := Number_Of_Chars + 1;
       end loop;
 
-      --  Then, do the same iteration a second time with the actual result.
+      --  Then, do the same iteration a second time with the actual result
 
       declare
          Result : Composite_Identifier (Number_Of_Chars, Number_Of_Parts);
@@ -1456,7 +1456,7 @@ package body Language.Tree is
 
          return Seeked_Name = Tested_Name;
       else
-         --  Otherwise, we'll compare their contents.
+         --  Otherwise, we'll compare their contents
 
          Tested := Get (Tested_Name);
 

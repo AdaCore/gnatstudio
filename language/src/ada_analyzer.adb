@@ -1262,7 +1262,7 @@ package body Ada_Analyzer is
                     and then Non_Blank = 0;
 
                   Found_Align := False;
-                  Non_Blank  := 0;
+                  Non_Blank   := 0;
 
                when others =>
                   null;
@@ -3412,9 +3412,7 @@ package body Ada_Analyzer is
          begin
             --  Skip line
 
-            while P < Buffer'Last
-              and then Buffer (P + 1) /= ASCII.LF
-            loop
+            while P < Buffer'Last and then Buffer (P + 1) /= ASCII.LF loop
                P := P + 1;
             end loop;
 
@@ -4192,7 +4190,6 @@ package body Ada_Analyzer is
          Clear (Paren_Stack);
          Clear (Tokens);
          Clear (Indents);
-
          return;
       end if;
 
@@ -4399,7 +4396,7 @@ package body Ada_Analyzer is
             Casing := Reserved_Casing;
 
             declare
-               Temp : aliased Extended_Token;
+               Temp      : aliased Extended_Token;
                Do_Push   : Boolean;
                Do_Pop    : Integer;
                Do_Finish : Boolean;

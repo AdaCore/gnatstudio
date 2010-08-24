@@ -41,11 +41,10 @@ package body Ada_Semantic_Tree_Module is
    -- Get_Buffer --
    ----------------
 
-   overriding
-   function Get_Buffer
+   overriding function Get_Buffer
      (Provider : access GPS_Buffer_Provider;
       File     : Virtual_File) return String_Access;
-   --  Return the buffer from the editor if any, from the file otherwise.
+   --  Return the buffer from the editor if any, from the file otherwise
 
    overriding function Get_Timestamp
      (Provider : access GPS_Buffer_Provider;
