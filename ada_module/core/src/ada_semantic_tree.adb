@@ -366,6 +366,7 @@ package body Ada_Semantic_Tree is
       Expression_Token : Token_Record;
       Last_Token : Token_Record := Null_Token;
       Last_Non_Blank_Token : Token_Record := Null_Token;
+      In_Found : Boolean := False;
 
       procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
 
@@ -429,12 +430,18 @@ package body Ada_Semantic_Tree is
                      Stop := True;
                   end if;
 
+               when Tok_In =>
+                  --  In declaration, e.g. A : in B. Ignore the
+                  --  modifier keywords, but store it to see later if we're
+                  --  actually in a case like 'for A in B'.
+
+                  In_Found := True;
+
                when Tok_Aliased
                   | Tok_Access
                   | Tok_Constant
                   | Tok_Null
                   | Tok_Not
-                  | Tok_In
                   | Tok_Out =>
 
                   --  In declaration, e.g. A : constant B. Ignore the
@@ -444,6 +451,15 @@ package body Ada_Semantic_Tree is
 
                when Tok_Blank =>
                   null;
+
+               when Tok_For =>
+                  --  Check for the case of
+                  --    for <id> in [reverse] <id>
+
+                  if In_Found then
+                     Remove_Nodes
+                       (Result.Tokens, Null_Node, First (Result.Tokens));
+                  end if;
 
                when others =>
                   Stop := True;
