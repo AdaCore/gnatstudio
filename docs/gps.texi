@@ -4063,8 +4063,8 @@ This behavior is controlled by the @code{Hyper links} preference.
 @c --------------------------------------------------------------------
 
 @noindent
-One the GPS plug-ins that are loaded by default provided highlighting
-of the dispatching calls in your code.
+One the GPS plug-ins that can be loaded (@code{dispatching.py}) will
+highligh dispatching calls in your code.
 
 Based on the cross-reference information, this plugins will highlight
 (with a special color that you can configure in the preferences dialog)
