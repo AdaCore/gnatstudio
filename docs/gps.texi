@@ -147,6 +147,7 @@ Source Navigation
 * The Navigate Menu::
 * Contextual Menus for Source Navigation::
 * Navigating with hyperlinks::
+* Highlighting dispatching calls::
 
 Project Handling
 * Description of the Projects::
@@ -3559,6 +3560,7 @@ particular useful for documentation
 * The Navigate Menu::
 * Contextual Menus for Source Navigation::
 * Navigating with hyperlinks::
+* Highlighting dispatching calls::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -4053,6 +4055,29 @@ have no associated cross reference. In this case, clicking will have no
 effect, even though an hyperlink may have been displayed.
 
 This behavior is controlled by the @code{Hyper links} preference.
+
+@c --------------------------------------------------------------------
+@node Highlighting dispatching calls
+@section Highlighting dispatching calls
+@cindex dispatching
+@c --------------------------------------------------------------------
+
+@noindent
+One the GPS plug-ins that are loaded by default provided highlighting
+of the dispatching calls in your code.
+
+Based on the cross-reference information, this plugins will highlight
+(with a special color that you can configure in the preferences dialog)
+all calls that are dispatching (or calls to virtual methods in C++).
+A dispatching call, in Ada, is a subprogram call where the actual
+subprogram that is called is not known until run time, and is chosen
+based on the tag of the object (so this of course only exists when you
+are using object-oriented programming).
+
+To disable this highlighting (which might sometimes be slow if you are
+using big sources, even though the highlighting itself is done in the
+background), you should go to the @code{/Tools/Plug-ins} menu, and
+disable the @code{dispatching.py} plugin.
 
 @c --------------------------------------------------------------------
 @node Project Handling
