@@ -2722,9 +2722,10 @@ package body Ada_Analyzer is
 
          elsif Reserved = Tok_Or
            or else Reserved = Tok_And
+           or else Reserved = Tok_Xor
          then
-            --  "and then", "or else", "and" and "or" should get an extra
-            --  indentation on line start, e.g:
+            --  "and then", "or else", "and", "or" and "xor" should get an
+            --  extra indentation on line start, e.g:
             --  if ...
             --    and then ...
 
