@@ -26,7 +26,7 @@ with Generic_Stack;
 with Indent_Stack;
 with String_Utils;            use String_Utils;
 
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 package body Ada_Analyzer is
 
