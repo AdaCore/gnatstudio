@@ -1219,21 +1219,41 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Objs   : constant GNATCOLL.VFS.File_Array :=
-                Object_Path (Get_Project (Kernel), True, True);
-      Ignore : Boolean;
+      Temp_SCIL : constant Filesystem_String := "Insp_";
+      Objs      : constant GNATCOLL.VFS.File_Array :=
+                    Object_Path (Get_Project (Kernel), True, True);
+      Dirs      : File_Array_Access;
+      Ignore    : Boolean;
       pragma Unreferenced (Ignore);
 
    begin
       Console.Insert (Kernel, -"Deleting SCIL directories...");
 
-      --  Remove all <obj>/codepeer/SCIL dirs. Ignore errors on e.g. read-only
-      --  or non-existent directories.
+      --  Remove all SCIL and Insp_* directories under each <obj>/codepeer dir.
+      --  Ignore errors on e.g. read-only or non-existent directories.
 
       for J in Objs'Range loop
-         Remove_Dir (Dir       => Create_From_Dir (Objs (J), "codepeer/SCIL"),
-                     Recursive => True,
-                     Success   => Ignore);
+         Dirs := Read_Dir (Create_From_Dir (Objs (J), "codepeer"), Dirs_Only);
+
+         for K in Dirs'Range loop
+            declare
+               Base : constant Filesystem_String := Dirs (K).Base_Name;
+            begin
+               if Base = "SCIL"
+                 or else
+                   (Base'Length > Temp_SCIL'Length
+                    and then
+                      Base (Base'First .. Base'First + Temp_SCIL'Length - 1)
+                        = Temp_SCIL)
+               then
+                  Remove_Dir (Dir       => Dirs (K),
+                              Recursive => True,
+                              Success   => Ignore);
+               end if;
+            end;
+         end loop;
+
+         Unchecked_Free (Dirs);
       end loop;
 
       Code_Peer.Shell_Commands.Build_Target_Execute
