@@ -49,8 +49,7 @@ package Refactoring.Algorithms is
    --  and has been stored in Self.
 
    function Create_Extract_Subprogram
-     (Context : Factory_Context;
-     ) return Code_Refactoring_Access;
+     (Context : Factory_Context) return Code_Refactoring_Access;
    --  Returns a refactoring that extracts part of a source code into a
    --  new subprogram
 
