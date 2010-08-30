@@ -198,6 +198,7 @@ package Entities is
       Procedure_Kind,
       Ordinary_Fixed_Point,
       Private_Type,
+      Private_Object,
       Protected_Kind,
       Reference,    --  C++'s & operator
       Record_Kind,

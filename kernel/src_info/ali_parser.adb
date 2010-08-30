@@ -113,7 +113,7 @@ package body ALI_Parser is
       'z'    => Unresolved_Entity_Kind, --  ??? Formal of current subprogram
       'Z'    => Unresolved_Entity_Kind,
       '+'    => (Private_Type,           False, True,  False),
-      '*'    => (Private_Type,           False, True,  False),
+      '*'    => (Private_Object,         False, False, False),
       others => Unresolved_Entity_Kind);
 
    Char_To_Reference_Kind : constant array (Character range ' ' .. 'z')

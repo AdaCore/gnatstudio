@@ -1534,6 +1534,7 @@ package body Browsers.Entities is
             when Overloaded_Entity
               | Unresolved_Entity
               | Private_Type
+              | Private_Object
               | Label_On_Block
               | Label_On_Loop
               | Label_On_Statement

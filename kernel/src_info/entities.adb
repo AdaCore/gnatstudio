@@ -2590,8 +2590,9 @@ package body Entities is
          when Reference =>
             return "reference";  --  -"reference"
          when Private_Type =>
-            return "generic formal";
-            --  -"generic formal"
+            return "generic formal";  --  -"generic formal"
+         when Private_Object =>
+            return "private object";  --  -"private object"
          when Protected_Kind =>
             return Get_Value ("protected type", "protected object");
             --  -"protected type"   -"protected object"

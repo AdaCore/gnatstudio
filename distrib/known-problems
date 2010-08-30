@@ -12,6 +12,13 @@ Known Problems fixed in GPS 4.5.0
               - replace <shell>Hook.run %1  null %2 %3</shell>
                 with <shell>Hook.run %1 "$2" null %2 %3 "%5 [diff]"</shell>
 
+- J821-001: GPS.Entity.Category now returns "object" for private objects
+  Problem:    In a generic package, a variable of a type defined by a formal
+              generic parameter is now reported as "object", rather than "type"
+              as it was before. This is a slight change in the interpretation
+              of the information given by GNAT cross-references.
+  Workaround: None
+
 - J813-005: Crashes when searching in non-UTF8 files on disk
   Problem:    When GPS is searching for occurrences in files which are not
               being edited (for instance when looking in "Files from project"),
