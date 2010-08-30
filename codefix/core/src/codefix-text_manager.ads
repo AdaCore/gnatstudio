@@ -450,6 +450,11 @@ package Codefix.Text_Manager is
       Mark         : Mark_Abstr'Class) return File_Cursor'Class;
    --  Return the current position of the mark
 
+   procedure Clean (This : in out Text_Navigator_Abstr);
+   --  Clean the temporary memory used by this Text_Navigator, in particular
+   --  all the text interfaces. The Text_Navigator can still be used after
+   --  that.
+
    procedure Free (This : in out Text_Navigator_Abstr);
    --  Free the memory associated to a Text_Navigator
 

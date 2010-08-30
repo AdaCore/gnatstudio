@@ -255,6 +255,15 @@ package body Codefix.Text_Manager is
       end if;
    end Free;
 
+   -----------
+   -- Clean --
+   -----------
+
+   procedure Clean (This : in out Text_Navigator_Abstr) is
+   begin
+      Remove_Nodes (This.Files.all, Text_List.Null_Node);
+   end Clean;
+
    ----------
    -- Free --
    ----------
