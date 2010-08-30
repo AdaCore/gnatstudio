@@ -29,6 +29,7 @@ with Gtk.Tree_Model.Utils;
 with Gtk.Widget;
 
 with Basic_Types;
+with Commands;
 with GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;
 with String_Utils;
@@ -643,6 +644,8 @@ package body GPS.Location_View.Listener is
 
       Node : constant Node_Access := Self.Get_Node (Iter);
 
+      use Commands;
+      Action : Action_Item;
    begin
       case Column is
          when Category_Column =>
@@ -860,10 +863,11 @@ package body GPS.Location_View.Listener is
                   null;
 
                when Node_Message =>
-                  if Node.Message.Get_Action /= null then
-                     Set_Object
-                       (Value, Glib.Object.GObject
-                          (Node.Message.Get_Action.Image));
+                  Action := Node.Message.Get_Action;
+                  if Action /= null
+                    and then Action.Associated_Command /= null
+                  then
+                     Set_Object (Value, Glib.Object.GObject (Action.Image));
                   end if;
             end case;
 
