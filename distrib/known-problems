@@ -1,5 +1,17 @@
 Known Problems fixed in GPS 4.5.0
 
+- J827-024: ClearCase "diff" operations not working
+  Problem:    When using the "ClearCase Native" VCS, the operations to query
+              the differences between the local file and another revision
+              are not working:
+  Workaround: Modify the file clearcase.xml in the installation directory,
+              for the actions "clearcase_diff_head" and "clearcase_diff" with
+              the following modifications:
+              - replace <shell>dump "%1" TRUE</shell>
+                with <shell>base_name "$1"</shell><shell>dump "%2" TRUE</shell>
+              - replace <shell>Hook.run %1  null %2 %3</shell>
+                with <shell>Hook.run %1 "$2" null %2 %3 "%5 [diff]"</shell>
+
 - J813-005: Crashes when searching in non-UTF8 files on disk
   Problem:    When GPS is searching for occurrences in files which are not
               being edited (for instance when looking in "Files from project"),
