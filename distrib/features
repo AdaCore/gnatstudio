@@ -76,6 +76,11 @@ NF-45-J713-014 Case-preserving replacement (2010-07-21)
   This is controlled using the checkbox "Case Preserving Replace" in the
   Search dialog and is enabled by default.
 
+NF-45-J629-027 Faster viewer for switches (2010-08-31)
+
+  Major speed enhancement for the /Project/Edit Switches view for projects
+  with hundreds of files.
+
 NF-45-J628-026 Fail search indicates context (2010-06-29)
 
   When a search fails, the dialog now indicates in which context the search

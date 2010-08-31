@@ -766,7 +766,10 @@ package body Project_Viewers is
         (Viewer.Current_Project = Project_Filter
          and then Directory_Filter /= No_File
          and then Viewer.Current_Dir = Directory_Filter);
+      Sorted : Gint;
    begin
+      Viewer.Current_Project := Project_Filter;
+
       if Same_Dir_And_Project then
          return;
       end if;
@@ -777,11 +780,17 @@ package body Project_Viewers is
 
       Clear (Viewer.Model);
 
-      Viewer.Current_Project := Project_Filter;
+      Sorted := Freeze_Sort (Viewer.Model);
+      Ref (Viewer.Model);
+      Set_Model (Viewer.Tree, null);  --  Do not refresh while adding files
 
       for F in Files'Range loop
          Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
+
+      Thaw_Sort (Viewer.Model, Sorted);
+      Set_Model (Viewer.Tree, Gtk_Tree_Model (Viewer.Model));
+      Unref (Viewer.Model);
 
       Unchecked_Free (Files);
    end Show_Project;
