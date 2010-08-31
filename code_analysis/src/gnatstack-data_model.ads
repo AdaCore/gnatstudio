@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Hashed_Sets;
+with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
@@ -136,14 +137,33 @@ package GNATStack.Data_Model is
       Is_External  : Boolean := False;
    end record;
 
+   package Subprogram_Information_Maps is
+     new Ada.Containers.Hashed_Maps
+       (GNATStack.Data_Model.Subprogram_Identifier,
+        GNATStack.Data_Model.Subprogram_Information_Access,
+        Hash,
+        "=");
+
+   type CI_Information is record
+      File_Name   : Ada.Strings.Unbounded.Unbounded_String;
+      Subprograms : Subprogram_Information_Ordered_Sets.Set;
+   end record;
+
+   type CI_Information_Access is access all CI_Information;
+
+   package CI_Vectors is
+     new Ada.Containers.Vectors (Positive, CI_Information_Access);
+
    type Analysis_Information is record
       Accurate       : Boolean;
       Subprogram_Set : Subprogram_Information_Sets.Set;
+      Subprogram_Map : Subprogram_Information_Maps.Map;
       Unbounded_Set  : Subprogram_Information_Sets.Set;
       External_Set   : Subprogram_Information_Ordered_Sets.Set;
       Indirect_Set   : Subprogram_Information_Sets.Set;
       Cycle_Set      : Subprogram_Information_Vector_Vectors.Vector;
       Entry_Set      : Subprogram_Information_Sets.Set;
+      CIs            : CI_Vectors.Vector;
    end record;
 
    function Image (Item : Stack_Usage_Information) return String;

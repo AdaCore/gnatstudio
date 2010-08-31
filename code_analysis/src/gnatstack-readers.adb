@@ -1394,7 +1394,7 @@ package body GNATStack.Readers is
       return Subprogram_Information_Access
    is
       Position : constant Subprogram_Information_Maps.Cursor :=
-                   Self.Subprogram_Map.Find (Identifier);
+                   Self.Analysis.Subprogram_Map.Find (Identifier);
       Info     : Subprogram_Information_Access;
 
    begin
@@ -1405,7 +1405,7 @@ package body GNATStack.Readers is
          Info :=
            new Subprogram_Information'(Identifier => Identifier, others => <>);
          Self.Analysis.Subprogram_Set.Insert (Info);
-         Self.Subprogram_Map.Insert (Info.Identifier, Info);
+         Self.Analysis.Subprogram_Map.Insert (Info.Identifier, Info);
 
          return Info;
       end if;

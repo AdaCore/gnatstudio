@@ -175,7 +175,6 @@ package body GNATStack.CI_Utilities is
       procedure Write (Position : Cursor) is
          use Ada.Strings;
          use Ada.Strings.Fixed;
-         use Ada.Strings.Unbounded;
 
          Subprogram : constant Data_Model.Subprogram_Information_Access :=
                         Element (Position);

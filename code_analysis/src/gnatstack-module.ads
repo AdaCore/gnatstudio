@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 private with Default_Preferences;
+private with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;
 private with GPS.Styles.UI;
 private with GNATCOLL.VFS;
@@ -35,12 +36,15 @@ private
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with
    record
-      Data                   : GNATStack.Data_Model.Analysis_Information;
+      Data                   :
+        aliased GNATStack.Data_Model.Analysis_Information;
       Loaded                 : Boolean := False;
       File                   : GNATCOLL.VFS.Virtual_File;
       Annotations_Foreground : Default_Preferences.Color_Preference;
       Annotations_Background : Default_Preferences.Color_Preference;
       Annotations_Style      : GPS.Styles.UI.Style_Access;
+
+      CI_Editor_MDI          : GPS.Kernel.MDI.GPS_MDI_Child;
    end record;
 
    GNATStack_Editor_Annotations : constant String :=

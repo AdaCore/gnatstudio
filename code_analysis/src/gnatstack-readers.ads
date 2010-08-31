@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 private with Ada.Strings.Unbounded;
 
@@ -38,13 +37,6 @@ package GNATStack.Readers is
 private
 
    use GNATStack.Data_Model;
-
-   package Subprogram_Information_Maps is
-     new Ada.Containers.Hashed_Maps
-       (GNATStack.Data_Model.Subprogram_Identifier,
-        GNATStack.Data_Model.Subprogram_Information_Access,
-        Hash,
-        "=");
 
    type Parser_State_Kinds is
      (None_State,
@@ -173,7 +165,6 @@ private
    type Reader is new Sax.Readers.Reader with record
       State          : Parser_State;
       Stack          : Parser_State_Vectors.Vector;
-      Subprogram_Map : Subprogram_Information_Maps.Map;
       Analysis       : Analysis_Information;
       Global_Section : Boolean;
       --  This flag indicates processing of child element of 'global' element
