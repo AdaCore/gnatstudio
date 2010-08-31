@@ -16,22 +16,24 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  This package contains code of integration with source editors.
+
+--  This package contains code of integration with source editors
 
 private package Code_Peer.Module.Editors is
 
    procedure Hide_Annotations
      (Self : access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
+   --  Hide annotations for the specified file
 
    procedure Show_Annotations
      (Self : access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
-   --  Shows annotations for specified file
+   --  Show annotations for the specified file
 
    procedure Show_Annotations_In_Opened_Editors
      (Self : access Module_Id_Record'Class);
-   --  Updates annotations in opened source editors
+   --  Update annotations in opened source editors
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

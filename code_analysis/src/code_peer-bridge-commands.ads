@@ -16,6 +16,7 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 --  Generates command files for gps_codepeer_bridge commands
 
 with GNATCOLL.VFS;     use GNATCOLL.VFS;

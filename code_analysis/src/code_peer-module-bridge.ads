@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                     Copyright (C) 2009-2010, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,7 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  Executes difference gps_codepeer_bridge commands and call module's
+
+--  Executes gps_codepeer_bridge utility and call module's
 --  subprograms for handling of the output.
 
 package Code_Peer.Module.Bridge is
