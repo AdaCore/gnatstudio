@@ -1315,13 +1315,14 @@ package body Ada_Analyzer is
                                           and then Token /= Tok_Subtype)))
                     or else Token = Tok_Array
                     or else (Prev_Token = Tok_With
-                             and then Token = Tok_String_Literal)
+                             and then (Token = Tok_String_Literal
+                                       or else Token = Tok_Private
+                                       or else Top_Tok = Tok_Procedure
+                                       or else Top_Tok = Tok_Function))
                     or else Prev_Token = Tok_Colon_Equal
                     or else Prev_Token = Tok_Access
                     or else Prev_Token = Tok_Of
                     or else (Prev_Token = Tok_Exit and then Token = Tok_When)
-                    or else (Prev_Token = Tok_With
-                             and then Token = Tok_Private)
                     or else (Prev_Token = Tok_Null and then Token = Tok_Record)
                     or else (Prev_Prev_Token = Tok_And
                              and then Prev_Token = Tok_Then)
@@ -1375,6 +1376,9 @@ package body Ada_Analyzer is
                --    Package2;  --  from Indent_Use
 
                Do_Indent (Prec, Num_Spaces + Indent_Use);
+
+            elsif Num_Parens = 0 then
+               Do_Indent (Prec, Num_Spaces, Continuation => True);
 
             else
                --  Default case, simply use Num_Spaces
