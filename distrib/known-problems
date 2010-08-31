@@ -12,6 +12,13 @@ Known Problems fixed in GPS 4.5.0
               - replace <shell>Hook.run %1  null %2 %3</shell>
                 with <shell>Hook.run %1 "$2" null %2 %3 "%5 [diff]"</shell>
 
+- J826-005: dispatching.py and stale cross-references
+  Problem:    When the cross-reference information is not up-to-date and you
+              open a new file, the highlighting of dispatching calls done by
+              the optional dispatching.py plugin could end up highlighting
+              incorrect pieces of code.
+  Workaround: Recompile the file to update the highlighting.
+
 - J821-001: GPS.Entity.Category now returns "object" for private objects
   Problem:    In a generic package, a variable of a type defined by a formal
               generic parameter is now reported as "object", rather than "type"

@@ -27,6 +27,10 @@ Preference ("Plugins/dispatching/color").create (
    """Background color to use for dispatching calls""",
    "#FFDC4F")
 
+Preference ("Plugins/dispatching/context").create (
+  "Search context", "integer",
+  """When the cross-reference information is not up-to-date, GPS will search a few lines around the original location for matching entities. This preference indicates how many lines it will search -- the bigger the slower of course, and potentially less precise too""", 5, 0, 50)
+
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next
    ## matches in the background, which makes the interface more responsive
@@ -35,6 +39,7 @@ try:
 except:
    has_pygtk = 0
 
+context = 0    # Mirror of the preference
 insert_overlays_id = 0
 to_highlight=[]
 current_entities=[]
@@ -42,16 +47,35 @@ current_entity=None
 
 def highlight_entity_references (buffer, entity):
   """Highlight all dispatching calls to entity in buffer"""
+
+  global context
+
   refs = entity.references (kind_in = "dispatching call",
                             in_file = buffer.file())
+  n = entity.name().lower()
+
   if refs:
     for r in refs:
-      try:
-        loc = EditorLocation (buffer, r.line(), r.column())
-        buffer.apply_overlay (buffer.dispatch_overlay, loc, loc + len (entity.name()) - 1)
-      except:
-        # The xref location might no longer be valid, just ignore it
-        pass
+      for c in range (0, context + 1):
+        try:
+           # Search after original xref line
+           cloc = EditorLocation (buffer, r.line() + c, r.column())
+           endloc = cloc + len (n) - 1
+           if buffer.get_chars (cloc, endloc).lower() == n:
+              buffer.apply_overlay (buffer.dispatch_overlay, cloc, endloc)
+              break
+
+           # Search before original xref line
+           if c != 0:
+              cloc = EditorLocation (buffer, r.line() - c, r.column())
+              endloc = cloc + len (n) - 1
+              if buffer.get_chars (cloc, endloc).lower () == n:
+                 buffer.apply_overlay (buffer.dispatch_overlay, cloc, endloc)
+                 break
+
+        except:
+          # The xref location might no longer be valid, just ignore it
+          pass
 
 def highlight_file_idle ():
   """Process the next entity or file to highlight"""
@@ -131,6 +155,9 @@ hooks_set = 0
 
 def preferences_changed (hook):
   global hooks_set
+  global context
+  context = Preference ("Plugins/dispatching/context").get ()
+
   if Preference ("Plugins/dispatching/onopen").get():
      if not hooks_set:
         Hook ("file_edited").add (on_file_edited)
