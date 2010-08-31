@@ -17,10 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;
+with Interfaces.C;
+with System;
 with GNAT.Regpat;
 
 package body GNATStack.CI_Utilities is
@@ -76,7 +77,9 @@ package body GNATStack.CI_Utilities is
       Subprogram  : GNATStack.Data_Model.Subprogram_Information_Access;
 
       procedure GNAT_Decode
-        (Coded : String; Decoded : System.Address; Verbose : Integer := 0);
+        (Coded   : System.Address;
+         Decoded : System.Address;
+         Verbose : Integer := 0);
       pragma Import (C, GNAT_Decode, "__gnat_decode");
 
    begin
@@ -91,14 +94,20 @@ package body GNATStack.CI_Utilities is
 
          if Matches (0) /= GNAT.Regpat.No_Match then
             declare
-               Linker_Name : constant String :=
-                               Line (Matches (1).First .. Matches (1).Last);
-               Decoded_Name : String (1 .. Linker_Name'Length * 2 + 60);
+               use Interfaces.C;
+
+               Linker_Name   : constant String :=
+                                 Line (Matches (1).First .. Matches (1).Last);
+               C_Linker_Name : constant char_array := To_C (Linker_Name);
+               Decoded_Name  : char_array (0 .. Linker_Name'Length * 2 + 60);
+               --  See adadecode.c for description of safe size of the buffer
+               --  for decoded name.
 
             begin
                Identifier.Linker_Name := To_Unbounded_String (Linker_Name);
-               GNAT_Decode (Linker_Name, Decoded_Name'Address);
-               Identifier.Prefix_Name := To_Unbounded_String (Decoded_Name);
+               GNAT_Decode (C_Linker_Name'Address, Decoded_Name'Address);
+               Identifier.Prefix_Name :=
+                 To_Unbounded_String (To_Ada (Decoded_Name));
             end;
 
             Identifier.Locations :=
