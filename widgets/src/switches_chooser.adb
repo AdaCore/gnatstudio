@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2009, AdaCore             --
+--                      Copyright (C) 2007-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1029,7 +1029,6 @@ package body Switches_Chooser is
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
                                  Parameter  => Parameter,
-                                 Separator  => S.Separator,
                                  Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
@@ -1045,7 +1044,6 @@ package body Switches_Chooser is
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
                                  Parameter  => Parameter,
-                                 Separator  => S.Separator,
                                  Add_Before => S.Add_First);
                            end if;
                            Handle_Dependencies
@@ -1082,7 +1080,6 @@ package body Switches_Chooser is
                                        Switch     => To_String (S.Switch),
                                        Parameter  =>
                                          To_String (Element (Combo).Value),
-                                       Separator  => S.Separator,
                                        Add_Before => S.Add_First);
                                     Handle_Dependencies
                                       (Editor,
