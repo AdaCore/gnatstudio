@@ -242,8 +242,6 @@ package body GNATStack.CI_Utilities is
       Last        : Natural;
       Matches     : GNAT.Regpat.Match_Array (0 .. 18);
       Identifier  : GNATStack.Data_Model.Subprogram_Identifier;
-      Location    : GNATStack.Data_Model.Subprogram_Location;
-      pragma Unreferenced (Location);
       CI_Data     : constant GNATStack.Data_Model.CI_Information_Access :=
                       new GNATStack.Data_Model.CI_Information'
                         (Ada.Strings.Unbounded.To_Unbounded_String (File_Name),
@@ -277,14 +275,6 @@ package body GNATStack.CI_Utilities is
                Matches);
 
             if Matches (0) /= GNAT.Regpat.No_Match then
-               Location :=
-                 (Name   => Ada.Strings.Unbounded.Null_Unbounded_String,
-                  File   => Ada.Strings.Unbounded.Null_Unbounded_String,
-                  Line   => 1,
-                  Column => 1,
-                  Mark   => null,
-                  Lines  => 0);
-
                if Matches (2) /= GNAT.Regpat.No_Match
                  and then Matches (8) /= GNAT.Regpat.No_Match
                  and then Matches (10) /= GNAT.Regpat.No_Match
