@@ -1024,6 +1024,11 @@ package body Switches_Chooser is
 
                         when Switch_Field =>
                            if Parameter /= "" then
+
+                              --  ??? Note: Remove Separator switch once
+                              --  GNAT GPL 2011 is out, see other calls to
+                              --  Add_Switch in this package
+
                               Add_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
