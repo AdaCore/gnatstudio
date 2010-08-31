@@ -1930,12 +1930,9 @@ package body GPS.Kernel is
       case Filter.Kind is
          when Standard_Filter =>
             if Filter.Language /= null then
-               if not Has_File_Information (Context)
-                 or else GNATCOLL.VFS.No_File = File_Information (Context)
+               if Has_File_Information (Context)
+                 and then GNATCOLL.VFS.No_File /= File_Information (Context)
                then
-                  Result := False;
-
-               else
                   declare
                      Lang : constant String := Get_Language_From_File
                        (Get_Language_Handler (Kernel),
@@ -1945,6 +1942,13 @@ package body GPS.Kernel is
                         Result := False;
                      end if;
                   end;
+
+               elsif Has_Project_Information (Context) then
+                  Result := Project_Information (Context)
+                    .Has_Language (Filter.Language.all);
+
+               else
+                  Result := False;
                end if;
             end if;
 
