@@ -46,11 +46,19 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <substitutions>
+    <substitute src="%builder" dest="gprbuild"/>
+    <substitute src="%gnatmake" dest="gprbuild"/>
+  </substitutions>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
+     <arg>-cargs:Ada</arg>
      <arg>-O2</arg>
      <arg>-gnatn</arg>
+     <arg>-cargs:C</arg>
+     <arg>-O2</arg>
+     <arg>-cargs:C++</arg>
+     <arg>-O2</arg>
   </extra-args>
  </builder-mode>
 
