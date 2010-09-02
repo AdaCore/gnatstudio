@@ -15,6 +15,12 @@ of the feature.
 New features in 4.5.0
 ---------------------
 
+NF-45-J813-008 Centralized font handling in the source editor (2010-09-02)
+
+  The selection of fonts in for the source editor has been simplified. In the
+  section Editor -> Fonts & Colors of the Preferences dialog, all fonts are
+  represented as variants of the default font.
+
 NF-45-J811-011 Syntax highlighting for declarations (2010-08-12)
 
   Types and blocks (subprograms, tasks, ...) are now highlighted in a

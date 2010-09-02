@@ -600,82 +600,89 @@ package body GPS.Kernel.Preferences is
 
       Block_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Block-Style",
+         Name         => "Src-Editor-Block-Variant",
          Label        => -"Block",
          Doc          => -("Style to use when displaying blocks (subprograms,"
            & "tasks, entries, ...) in declarations."),
-         Default_Font => "Courier 10",
-         Default_Fg   => "#A600D9",
-         Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
+         Base            => Default_Style,
+         Default_Variant => None,
+         Default_Fg      => "#A600D9",
+         Default_Bg      => "white",
+         Page            => -"Editor/Fonts & Colors");
 
       Type_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Type-Style",
+         Name         => "Src-Editor-Type-Variant",
          Label        => -"Type",
          Doc          => -("Style to use when displaying types in "
            & "declarations."),
-         Default_Font => "Courier 10",
+         Base            => Default_Style,
+         Default_Variant => None,
          Default_Fg   => "#009CD9",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Keywords_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Keywords-Style",
+         Name         => "Src-Editor-Keywords-Variant",
          Label        => -"Keywords",
          Doc          => -("Style to use when displaying keywords."
            & " The background color will be that of the default if left"
            & " to white"),
-         Default_Font => "Courier Bold 10",
-         Default_Fg   => "black",
-         Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
+         Base            => Default_Style,
+         Default_Variant => Bold,
+         Default_Fg      => "black",
+         Default_Bg      => "white",
+         Page            => -"Editor/Fonts & Colors");
 
       Comments_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Comments-Style",
+         Name         => "Src-Editor-Comments-Variant",
          Label        => -"Comments",
          Doc          => -"Style to use when displaying comments."
            & " The background color will be that of the default if left"
            & " to white",
-         Default_Font => "Courier Medium Oblique 10",
+         Base            => Default_Style,
+         Default_Variant => Italic,
          Default_Fg   => "blue",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Annotated_Comments_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Annotated-Comments-Style",
+         Name         => "Src-Editor-Annotated-Comments-Variant",
          Label        => -"Annotated Comments",
          Doc          => -"Style to use when displaying annotated comments."
-           & " The background color will be that of the default if left"
-           & " to white",
-         Default_Font => "Courier Medium Oblique 10",
+         & " The background color will be that of the default if left"
+         & " to white",
+         Base            => Default_Style,
+         Default_Variant => None,
          Default_Fg   => "#21A9DE",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Strings_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Strings-Style",
+         Name         => "Src-Editor-Strings-Variant",
          Label        => -"Strings",
          Doc          => -"Style to use when displaying strings."
            & " The background color will be that of the default if left"
            & " to white",
-         Default_Font => "Courier 10",
+         Base            => Default_Style,
+         Default_Variant => None,
          Default_Fg   => "brown",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Hyper_Links_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Hyper-Links-Style",
+         Name         => "Src-Editor-Hyper-Links-Variant",
          Label        => -"Hyper links",
          Doc          => -"Style to use when displaying hyper-links."
            & " The background color will be that of the default if left"
            & " to white",
-         Default_Font => "Courier Medium Oblique 10",
+         Base            => Default_Style,
+         Default_Variant => None,
          Default_Fg   => "blue",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");

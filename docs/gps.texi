@@ -10105,27 +10105,27 @@ The default font, default foreground and default background colors used
 in the source editor.
 
 @item Block
-Font and colors used to highlight blocks (subprograms, task, entries, ...)
-in declarations.
+Font variant and colors used to highlight blocks (subprograms, task, entries,
+...) in declarations.
 
 @item Type
-Font and colors used to highlight types in declarations.
+Font variant and colors used to highlight types in declarations.
 
 @item Keywords
-Font and colors used to highlight keywords.
+Font variant and colors used to highlight keywords.
 
 @item Comments
-Font and colors used to highlight comments.
+Font variant and colors used to highlight comments.
 Setting the color to white will set a transparent color.
 
 @item Annotated  Comments
-Font and colors used to highlight annotated comments.
+Font variant and colors used to highlight annotated comments.
 Only relevant to Ada currently. Annotated comments are comments immediately
 followed by a special character, e.g. @code{#[]}.
 Setting the color to white will set a transparent color.
 
 @item Strings
-Font and colors used to highlight strings.
+Font variant and colors used to highlight strings.
 Setting the color to white will set a transparent color.
 
 @item Current line color

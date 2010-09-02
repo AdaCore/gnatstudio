@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2009, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -91,6 +91,14 @@ package Default_Preferences is
    --  change the value stored in Pref. Such connection to signals will
    --  generally be done through Preference_Handlers below
 
+   type Variant_Enum is (None, Normal, Italic, Bold, Bold_Italic);
+   --  Auxiliary type to list text variants offered in Variant_Preferences
+
+   function To_String (V : Variant_Enum) return String;
+   function From_String (S : String) return Variant_Enum;
+   --  Conversion between a Variant_Enum and a pretty string for displaying in
+   --  the dialog.
+
    procedure Free (Pref : in out Preference_Record);
    --  Free the memory associated with Pref
 
@@ -101,6 +109,7 @@ package Default_Preferences is
    type Font_Preference_Record    is new Preference_Record with private;
    type Key_Preference_Record     is new Preference_Record with private;
    type Style_Preference_Record   is new Preference_Record with private;
+   type Variant_Preference_Record is new Style_Preference_Record with private;
    type Enum_Preference_Record  is abstract new Preference_Record with private;
 
    type Integer_Preference is access all Integer_Preference_Record'Class;
@@ -110,6 +119,7 @@ package Default_Preferences is
    type Font_Preference    is access all Font_Preference_Record'Class;
    type Key_Preference     is access all Key_Preference_Record'Class;
    type Style_Preference   is access all Style_Preference_Record'Class;
+   type Variant_Preference is access all Variant_Preference_Record'Class;
    type Enum_Preference    is access all Enum_Preference_Record'Class;
 
    procedure Register
@@ -182,6 +192,14 @@ package Default_Preferences is
       Default_Fg                : String;
       Default_Bg                : String)
       return Style_Preference;
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Base                      : Style_Preference;
+      Default_Variant           : Variant_Enum;
+      Default_Fg                : String;
+      Default_Bg                : String)
+      return Variant_Preference;
    --  Create a new preference and register it in the Manager.
    --  Name is the name used when saving in the XML file, and when referencing
    --    that preference from a python file. It can contain any character.
@@ -241,9 +259,17 @@ package Default_Preferences is
      (Pref     : access Style_Preference_Record)
       return Pango.Font.Pango_Font_Description;
    function Get_Pref_Fg
-     (Pref     : access Style_Preference_Record) return Gdk.Color.Gdk_Color;
+     (Pref     : access Style_Preference_Record'Class)
+      return Gdk.Color.Gdk_Color;
    function Get_Pref_Bg
-     (Pref     : access Style_Preference_Record) return Gdk.Color.Gdk_Color;
+     (Pref     : access Style_Preference_Record'Class)
+      return Gdk.Color.Gdk_Color;
+
+   overriding function Get_Pref
+     (Pref : access Variant_Preference_Record) return String;
+   function Get_Pref_Font
+     (Pref     : access Variant_Preference_Record)
+      return Pango.Font.Pango_Font_Description;
 
    function Get_Pref (Pref : access Enum_Preference_Record) return Integer;
    --  Get the value for a preference. The default value is returned if the
@@ -277,6 +303,11 @@ package Default_Preferences is
      (Pref         : Style_Preference;
       Manager      : access Preferences_Manager_Record'Class;
       Font, Fg, Bg : String);
+   procedure Set_Pref
+     (Pref         : Variant_Preference;
+      Manager      : access Preferences_Manager_Record'Class;
+      Variant      : Variant_Enum;
+      Fg, Bg       : String);
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
 
@@ -527,6 +558,20 @@ private
       Tips               : Gtk.Tooltips.Gtk_Tooltips)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Style_Preference_Record);
+
+   type Variant_Preference_Record is new Style_Preference_Record with record
+      Base_Font     : Style_Preference;
+      Variant       : Variant_Enum;
+   end record;
+   overriding procedure Set_Pref
+     (Pref    : access Variant_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String);
+   overriding function Edit
+     (Pref               : access Variant_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget;
 
    type Enum_Preference_Record is abstract new Preference_Record with record
       Enum_Value    : Integer;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2009, AdaCore                   --
+--                Copyright (C) 2001-2010, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
@@ -36,6 +37,7 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Color_Selection;      use Gtk.Color_Selection;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
@@ -67,6 +69,7 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Color_Combo;       use Gtkada.Color_Combo;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
+with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 
 with Config;
@@ -105,6 +108,14 @@ package body Default_Preferences is
      Gtk.Object.Uninitialized_Class;
    Preferences_Editor_Signals : constant chars_ptr_array :=
                        (1 => New_String (String (Signal_Preferences_Changed)));
+
+   procedure Create_Color_Buttons
+     (Box     : Gtk_Box;
+      Pref    : access Style_Preference_Record'Class;
+      Manager : access Preferences_Manager_Record'Class;
+      Tips    : Gtk.Tooltips.Gtk_Tooltips;
+      Event   : in out Gtk_Event_Box);
+   --  Factorize code that creates the color buttons
 
    procedure Free (Pref : in out Preference);
    --  Free the memory associated with Pref
@@ -190,6 +201,10 @@ package body Default_Preferences is
    procedure Fg_Color_Changed
      (Combo : access GObject_Record'Class; Data  : Manager_Preference);
    --  Called when the foreground color of a style has changed.
+
+   procedure Variant_Changed
+     (Combo : access GObject_Record'Class; Data  : Manager_Preference);
+   --  Called when the font variant of a variant_preference has changed.
 
    procedure Select_Font
      (Ent : access GObject_Record'Class; Data : Manager_Preference);
@@ -412,6 +427,29 @@ package body Default_Preferences is
       return Result;
    end Create;
 
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Base                      : Style_Preference;
+      Default_Variant           : Variant_Enum;
+      Default_Fg                : String;
+      Default_Bg                : String)
+      return Variant_Preference
+   is
+      Result : constant Variant_Preference := new Variant_Preference_Record;
+   begin
+      Result.Variant := Default_Variant;
+      Result.Base_Font := Base;
+      Result.Style_Fg   := new String'(Default_Fg);
+      Result.Style_Bg   := new String'(Default_Bg);
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
+
    ------------------------
    -- Get_Pref_From_Name --
    ------------------------
@@ -613,6 +651,13 @@ package body Default_Preferences is
         (Pref.Style_Font.all, Pref.Style_Fg.all, Pref.Style_Bg.all);
    end Get_Pref;
 
+   overriding function Get_Pref
+     (Pref : access Variant_Preference_Record) return String is
+   begin
+      return To_String
+        (Pref.Variant'Img, Pref.Style_Fg.all, Pref.Style_Bg.all);
+   end Get_Pref;
+
    function Get_Pref_Font
      (Pref : access Style_Preference_Record) return Pango_Font_Description is
    begin
@@ -628,8 +673,40 @@ package body Default_Preferences is
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
+   overriding function Get_Pref_Font
+     (Pref     : access Variant_Preference_Record)
+      return Pango.Font.Pango_Font_Description
+   is
+   begin
+      if Pref.Font_Descr /= null then
+         Free (Pref.Font_Descr);
+      end if;
+
+      Pref.Font_Descr := Copy (Pref.Base_Font.Get_Pref_Font);
+
+      case Pref.Variant is
+         when None =>
+            null;
+         when Normal =>
+            Set_Weight (Pref.Font_Descr, Pango_Weight_Normal);
+            Set_Style (Pref.Font_Descr, Pango_Style_Normal);
+         when Bold =>
+            Set_Weight (Pref.Font_Descr, Pango_Weight_Bold);
+            Set_Style (Pref.Font_Descr, Pango_Style_Normal);
+         when Italic =>
+            Set_Weight (Pref.Font_Descr, Pango_Weight_Normal);
+            Set_Style (Pref.Font_Descr, Pango_Style_Italic);
+         when Bold_Italic =>
+            Set_Weight (Pref.Font_Descr, Pango_Weight_Bold);
+            Set_Style (Pref.Font_Descr, Pango_Style_Italic);
+      end case;
+
+      return Pref.Font_Descr;
+   end Get_Pref_Font;
+
    function Get_Pref_Fg
-     (Pref    : access Style_Preference_Record) return Gdk.Color.Gdk_Color is
+     (Pref : access Style_Preference_Record'Class)
+      return Gdk.Color.Gdk_Color is
    begin
       if Pref.Fg_Color = Gdk.Color.Null_Color then
          Pref.Fg_Color := Parse (Pref.Style_Fg.all);
@@ -643,7 +720,8 @@ package body Default_Preferences is
    end Get_Pref_Fg;
 
    function Get_Pref_Bg
-     (Pref    : access Style_Preference_Record) return Gdk.Color.Gdk_Color is
+     (Pref : access Style_Preference_Record'Class)
+      return Gdk.Color.Gdk_Color is
    begin
       if Pref.Bg_Color = Gdk.Color.Null_Color then
          Pref.Bg_Color := Parse (Pref.Style_Bg.all);
@@ -777,6 +855,17 @@ package body Default_Preferences is
                 Bg   => Style_Token (Value, 3));
    end Set_Pref;
 
+   overriding procedure Set_Pref
+     (Pref    : access Variant_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Set_Pref (Variant_Preference (Pref), Manager,
+                Variant => Variant_Enum'Value (Style_Token (Value, 1)),
+                Fg      => Style_Token (Value, 2),
+                Bg      => Style_Token (Value, 3));
+   end Set_Pref;
+
    procedure Set_Pref
      (Pref         : Style_Preference;
       Manager      : access Preferences_Manager_Record'Class;
@@ -798,6 +887,19 @@ package body Default_Preferences is
       Pref.Style_Fg   := new String'(Fg);
       Pref.Style_Bg   := new String'(Bg);
 
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
+
+   procedure Set_Pref
+     (Pref         : Variant_Preference;
+      Manager      : access Preferences_Manager_Record'Class;
+      Variant      : Variant_Enum;
+      Fg, Bg       : String) is
+   begin
+      Set_Pref
+        (Style_Preference (Pref),
+         Manager, Pref.Base_Font.Style_Font.all, Fg, Bg);
+      Pref.Variant := Variant;
       Emit_Pref_Changed (Manager);
    end Set_Pref;
 
@@ -1155,6 +1257,19 @@ package body Default_Preferences is
       Style_Preference (Data.Pref).Style_Fg := new String'(Get_Color (C));
       Style_Preference (Data.Pref).Fg_Color := Get_Color (C);
    end Fg_Color_Changed;
+
+   ---------------------
+   -- Variant_Changed --
+   ---------------------
+
+   procedure Variant_Changed
+     (Combo : access GObject_Record'Class; Data  : Manager_Preference)
+   is
+      C : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+   begin
+      Variant_Preference (Data.Pref).Variant := From_String
+        (C.Get_Active_Text);
+   end Variant_Changed;
 
    ----------------------
    -- Bg_Color_Changed --
@@ -1551,31 +1666,19 @@ package body Default_Preferences is
       return Gtk_Widget (Box);
    end Edit;
 
-   ----------
-   -- Edit --
-   ----------
+   --------------------------
+   -- Create_Color_Buttons --
+   --------------------------
 
-   overriding function Edit
-     (Pref               : access Style_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
-      return Gtk.Widget.Gtk_Widget
+   procedure Create_Color_Buttons
+     (Box     : Gtk_Box;
+      Pref    : access Style_Preference_Record'Class;
+      Manager : access Preferences_Manager_Record'Class;
+      Tips    : Gtk.Tooltips.Gtk_Tooltips;
+      Event   : in out Gtk_Event_Box)
    is
-      Event : Gtk_Event_Box;
-      Box   : Gtk_Box;
-      F     : constant Gtk_Box := Create_Box_For_Font
-        (Manager, Preference (Pref),
-         Get_Pref_Font (Style_Preference (Pref)), "...");
       Combo : Gtk_Color_Combo;
-
    begin
-      Gtk_New (Event);
-      Add (Event, F);
-      Set_Tip
-        (Tips, Event, -"Click on ... to display the font selector");
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Box, Event, Expand => True, Fill => True);
-
       Gtk_New (Event);
       Gtk_New (Combo);
       Add (Event, Combo);
@@ -1605,6 +1708,73 @@ package body Default_Preferences is
         (Manager.Pref_Editor, Signal_Preferences_Changed,
          Update_Bg'Access, Combo,
          User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+   end Create_Color_Buttons;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Style_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Event : Gtk_Event_Box;
+      Box   : Gtk_Box;
+      F     : constant Gtk_Box := Create_Box_For_Font
+        (Manager, Preference (Pref),
+         Get_Pref_Font (Style_Preference (Pref)), "...");
+
+   begin
+      Gtk_New (Event);
+      Add (Event, F);
+      Set_Tip
+        (Tips, Event, -"Click on ... to display the font selector");
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Box, Event, Expand => True, Fill => True);
+
+      Create_Color_Buttons (Box, Pref, Manager, Tips, Event);
+
+      return Gtk_Widget (Box);
+   end Edit;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Variant_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Event : Gtk_Event_Box;
+      Box   : Gtk_Box;
+      Variant_Combo : Gtk_Combo_Box;
+      Count : Gint := 0;
+
+   begin
+      Gtk_New (Event);
+      Gtk_New_Text (Variant_Combo);
+      for J in Variant_Enum loop
+         Append_Text (Variant_Combo, To_String (J));
+         if J = Pref.Variant then
+            Set_Active (Variant_Combo, Count);
+         end if;
+         Count := Count + 1;
+      end loop;
+
+      Add (Event, Variant_Combo);
+      Set_Tip (Tips, Event, -"Font variant");
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Box, Event, Expand => True, Fill => True);
+      Preference_Handlers.Connect
+        (Variant_Combo, Gtk.Combo_Box.Signal_Changed,
+         Variant_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+
+      Create_Color_Buttons (Box, Pref, Manager, Tips, Event);
 
       return Gtk_Widget (Box);
    end Edit;
@@ -2006,5 +2176,46 @@ package body Default_Preferences is
    begin
       return Manager.Pref_Editor;
    end Get_Editor;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (V : Variant_Enum) return String is
+      R : String := V'Img;
+   begin
+      if V = None then
+         return "";
+      else
+         for J in R'First + 1 .. R'Last loop
+            if R (J) = '_' then
+               R (J) := ' ';
+            else
+               R (J) := To_Lower (R (J));
+            end if;
+         end loop;
+
+         return R;
+      end if;
+   end To_String;
+
+   -----------------
+   -- From_String --
+   -----------------
+
+   function From_String (S : String) return Variant_Enum is
+      R : String := S;
+   begin
+      if S = "" then
+         return None;
+      else
+         for J in R'Range loop
+            if R (J) = ' ' then
+               R (J) := '_';
+            end if;
+         end loop;
+         return Variant_Enum'Value (R);
+      end if;
+   end From_String;
 
 end Default_Preferences;
