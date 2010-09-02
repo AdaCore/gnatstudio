@@ -685,7 +685,7 @@ package body Default_Preferences is
       Pref.Font_Descr := Copy (Pref.Base_Font.Get_Pref_Font);
 
       case Pref.Variant is
-         when None =>
+         when Default =>
             null;
          when Normal =>
             Set_Weight (Pref.Font_Descr, Pango_Weight_Normal);
@@ -2184,19 +2184,15 @@ package body Default_Preferences is
    function To_String (V : Variant_Enum) return String is
       R : String := V'Img;
    begin
-      if V = None then
-         return "";
-      else
-         for J in R'First + 1 .. R'Last loop
-            if R (J) = '_' then
-               R (J) := ' ';
-            else
-               R (J) := To_Lower (R (J));
-            end if;
-         end loop;
+      for J in R'First + 1 .. R'Last loop
+         if R (J) = '_' then
+            R (J) := ' ';
+         else
+            R (J) := To_Lower (R (J));
+         end if;
+      end loop;
 
-         return R;
-      end if;
+      return R;
    end To_String;
 
    -----------------
@@ -2206,16 +2202,12 @@ package body Default_Preferences is
    function From_String (S : String) return Variant_Enum is
       R : String := S;
    begin
-      if S = "" then
-         return None;
-      else
-         for J in R'Range loop
-            if R (J) = ' ' then
-               R (J) := '_';
-            end if;
-         end loop;
-         return Variant_Enum'Value (R);
-      end if;
+      for J in R'Range loop
+         if R (J) = ' ' then
+            R (J) := '_';
+         end if;
+      end loop;
+      return Variant_Enum'Value (R);
    end From_String;
 
 end Default_Preferences;

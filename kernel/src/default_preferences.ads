@@ -91,7 +91,7 @@ package Default_Preferences is
    --  change the value stored in Pref. Such connection to signals will
    --  generally be done through Preference_Handlers below
 
-   type Variant_Enum is (None, Normal, Italic, Bold, Bold_Italic);
+   type Variant_Enum is (Default, Normal, Italic, Bold, Bold_Italic);
    --  Auxiliary type to list text variants offered in Variant_Preferences
 
    function To_String (V : Variant_Enum) return String;

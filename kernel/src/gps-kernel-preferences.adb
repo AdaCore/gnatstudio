@@ -605,7 +605,7 @@ package body GPS.Kernel.Preferences is
          Doc          => -("Style to use when displaying blocks (subprograms,"
            & "tasks, entries, ...) in declarations."),
          Base            => Default_Style,
-         Default_Variant => None,
+         Default_Variant => Default,
          Default_Fg      => "#A600D9",
          Default_Bg      => "white",
          Page            => -"Editor/Fonts & Colors");
@@ -617,7 +617,7 @@ package body GPS.Kernel.Preferences is
          Doc          => -("Style to use when displaying types in "
            & "declarations."),
          Base            => Default_Style,
-         Default_Variant => None,
+         Default_Variant => Default,
          Default_Fg   => "#009CD9",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
@@ -656,7 +656,7 @@ package body GPS.Kernel.Preferences is
          & " The background color will be that of the default if left"
          & " to white",
          Base            => Default_Style,
-         Default_Variant => None,
+         Default_Variant => Default,
          Default_Fg   => "#21A9DE",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
@@ -669,7 +669,7 @@ package body GPS.Kernel.Preferences is
            & " The background color will be that of the default if left"
            & " to white",
          Base            => Default_Style,
-         Default_Variant => None,
+         Default_Variant => Default,
          Default_Fg   => "brown",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
@@ -682,7 +682,7 @@ package body GPS.Kernel.Preferences is
            & " The background color will be that of the default if left"
            & " to white",
          Base            => Default_Style,
-         Default_Variant => None,
+         Default_Variant => Default,
          Default_Fg   => "blue",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
