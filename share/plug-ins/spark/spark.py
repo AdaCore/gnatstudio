@@ -315,8 +315,9 @@ def sparksimp_project ():
   GPS.MDI.save_all (False)
   simplifier_sw = GPS.Project.root().get_tool_switches_as_string ("Simplifier")
   sparksimp_sw = GPS.Project.root().get_tool_switches_as_string ("SPARKSimp")
+  victor_sw = GPS.Project.root().get_tool_switches_as_string ("ViCToR")
    
-  cmd = "sparksimp "+ sparksimp_sw + " -sargs " + simplifier_sw 
+  cmd = "sparksimp "+ sparksimp_sw + victor_sw + " -sargs " + simplifier_sw
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
@@ -487,7 +488,7 @@ a = """<?xml version="1.0"?>
 
   <tool name="SPARKSimp">
     <language>Ada</language>
-    <switches columns="2" lines="5" switch_char="~">
+    <switches columns="2" lines="6" switch_char="~">
       <title line="1">Simplification order</title>
       <check line="1" label="Process all files" switch="~a" />
       <check line="1" label="Sort files, largest first" switch="~t" />
@@ -498,11 +499,13 @@ a = """<?xml version="1.0"?>
       <check line="2" label="Echo Simplifier output" switch="~e" />
       <title line="3">Simplification</title>
       <check line="3" label="No Simplification" switch="~ns" />
-      <title line="4">ZombieScope</title>
-      <check line="4" label="No ZombieScope" switch="~nz" />
-      <title line="5">Process control</title>
-      <check line="5" label="Dry run" switch="~n" />
-      <spin line="5" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
+      <title line="4">ViCToR</title>
+      <check line="4" label="Prove with Alt-Ergo" switch="~vct" />
+      <title line="5">ZombieScope</title>
+      <check line="5" label="No ZombieScope" switch="~nz" />
+      <title line="6">Process control</title>
+      <check line="6" label="Dry run" switch="~n" />
+      <spin line="6" label="Multiprocessing" switch="~p=" min="1" max="100" default="1"
             tip="Use N processes to run the Simplifier/ZombieScope. On a multiprocessor machine simplifications will occur in parallel" />
     </switches>
   </tool>
@@ -527,9 +530,18 @@ a = """<?xml version="1.0"?>
     </switches>
   </tool>
 
+  <tool name="ViCToR">
+    <language>Ada</language>
+    <switches lines="1" switch_char="~">
+      <title line="1">Limits</title>
+      <spin line="1" label="Timeout (in s)" switch="~vtimeout=" min="0" max="1000" default="0"
+            tip="Timeout for each invocation of the prover. No timeout by default." />
+    </switches>
+  </tool>
+
   <tool name="ZombieScope">
     <language>Ada</language>
-    <switches lines="3" switch_char="~">
+    <switches lines="1" switch_char="~">
       <title line="1">Output</title>
       <check line="1" label="Plain Output" switch="~plain" />
       <check line="1" label="Don't renumber hypotheses" switch="~norenum" />
