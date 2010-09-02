@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                   Copyright (C) 2005-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,5 +34,6 @@ package Doc_Utils is
    --  the disk. However, if not specified, the contents of the file will be
    --  read from the disk as appropriate. When specified,
    --  Declaration_File_Contents must be UTF8-encoded
+   --  The returned string is the UTF8-encoded text that is found in the file.
 
 end Doc_Utils;

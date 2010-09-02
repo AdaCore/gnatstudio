@@ -131,7 +131,7 @@ package body Entities.Tooltips is
       if Node = Null_Construct_Tree_Iterator then
          --  Try to get the documentation from somewhere else than the
          --  construct database.
-         return Get_Documentation (Handler, Entity);
+         return Escape_Text (Get_Documentation (Handler, Entity));
       end if;
 
       return Language.Tree.Database.Get_Documentation

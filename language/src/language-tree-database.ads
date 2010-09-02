@@ -70,6 +70,7 @@ package Language.Tree.Database is
    --  parameter, for the given language. By default, it computes a
    --  documentation from generic knowledge on the constructs.
    --  Language-specific computation may give more accurate information.
+   --  This documentation should be in Pango markup language.
 
    function Get_Profile
      (Lang     : access Tree_Language;
