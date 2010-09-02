@@ -214,10 +214,12 @@ NF-45-J208-007 Partial navigation without compilation (2010-02-19)
   from an entity body, and on simple cases when trying to retrieve the
   declaration from any reference, using e.g. goto declaration or hyperlink.
 
-NF-45-J208-006 Quick fix icons on the side of editors (2010-02-25)
+NF-45-J208-006 Builder error icons on the side of editors (2010-02-25)
 
   When compiling, icons that propose automatic code fixing appear on the side
   of the source editors, in addition to the Locations View.
+  Also, new icons appear on the side of the editors to mark the location of
+  errors, warnings and style issues.
 
 NF-45-J205-016 Preference to automatically close Locations view (2010-05-18)
 
