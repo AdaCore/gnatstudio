@@ -58,7 +58,7 @@ class LocationHighlighter:
         beg_loc = GPS.EditorLocation (self.buffer, line, 1)
         end_loc = beg_loc.end_of_line()
 
-        s = self.buffer.get_chars (beg_loc, end_loc)
+        s = self.buffer.get_chars (beg_loc, end_loc).decode("utf8")
         s_len = len(s)
 
         l = len(self.entity_name)
@@ -91,7 +91,7 @@ class LocationHighlighter:
                             tab_expanded_index+1,
                             "",
                             2)
-                        msg.set_style(self.style, len(self.entity_name))
+                        msg.set_style(self.style, l)
 
                         self.messages += [msg]
 
@@ -103,7 +103,9 @@ class LocationHighlighter:
 
             if s[index-1]=='\t':
                 # snap to the next multiple of 8
-                tab_expanded_index += 9 - (tab_expanded_index+1) % 8
+                prev=tab_expanded_index
+                tab_expanded_index += 8 - (tab_expanded_index) % 8
+
             else:
                 tab_expanded_index += 1
 
@@ -148,7 +150,7 @@ class LocationHighlighter:
 
         self.buffer = GPS.EditorBuffer.get()
         self.entity = entity  # The original entity
-        self.entity_name = entity.name()
+        self.entity_name = entity.name().decode("utf8")
         self.messages = []    # The registered messages
 
         self.timeout = None
