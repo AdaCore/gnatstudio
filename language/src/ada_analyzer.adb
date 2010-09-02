@@ -4354,7 +4354,8 @@ package body Ada_Analyzer is
                           and then Prev_Token = Tok_Return)
                then
                   Entity := Type_Text;
-               elsif     Prev_Token = Tok_Type
+               elsif    (Prev_Token = Tok_Type
+                         and then Prev_Prev_Token /= Tok_Use)
                  or else Prev_Token = Tok_Subtype
                  or else Prev_Token = Tok_End
                  or else Prev_Token = Tok_Procedure
