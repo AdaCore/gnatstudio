@@ -1174,7 +1174,7 @@ private
 
       Live_Declaration      : File_Location;
       --  The location of the declaration as known live. This may be
-      --  updated if the entity is retreived after a modification in the file,
+      --  updated if the entity is retrieved after a modification in the file,
       --  and the LI is not up to date.
 
       End_Of_Scope          : E_Reference;
@@ -1333,7 +1333,7 @@ private
    -----------------
 
    type Source_File_Record is tagged record
-      Db           : Entities_Database;
+      Db          : Entities_Database;
 
       Name        : GNATCOLL.VFS.Virtual_File;
 
