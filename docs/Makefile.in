@@ -19,9 +19,17 @@ non-ps: common clean-temp-files
 static:
 
 stamp-pdf: $(IMAGES)
-	@echo "Converting images to PDF"
+	@echo "Converting jpg images to PDF"
 	@-for img in [^g]*.jpg gps-vcs-*.jpg; do \
 	  $(CONVERT) $${img} `basename $${img} .jpg`.pdf; \
+	done
+	@echo "Copying png files from shared directory"
+	@-for pngfile in ../share/icons/16px/entities/*_x.png; do \
+	  cp $${pngfile} . ; \
+	done
+	@echo "Converting png images to PDF"
+	@-for img in [^g]*.png; do \
+	  $(CONVERT) $${img} `basename $${img} .png`.pdf; \
 	done
 	touch stamp-pdf
 
