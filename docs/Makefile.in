@@ -25,10 +25,10 @@ stamp-pdf: $(IMAGES)
 	done
 	@echo "Copying png files from shared directory"
 	@-for pngfile in ../share/icons/16px/entities/*_x.png; do \
-	  cp $${pngfile} . ; \
+	  $(CP) $${pngfile} . ; \
 	done
 	@echo "Converting png images to PDF"
-	@-for img in [^g]*.png; do \
+	@-for img in *_x.png; do \
 	  $(CONVERT) $${img} `basename $${img} .png`.pdf; \
 	done
 	touch stamp-pdf
