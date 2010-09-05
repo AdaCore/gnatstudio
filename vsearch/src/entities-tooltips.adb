@@ -197,7 +197,12 @@ package body Entities.Tooltips is
            & (-Kind_To_String (Get_Kind (Entity))
            & ' ' & Entity.Live_Declaration.File.Name.Display_Full_Name);
       else
-         return  "<b>" & Escape_Text (Get_Full_Name (Entity, "."))
+         return  "<b>"
+           & Escape_Text (Get_Full_Name
+              (Entity,
+               Scope_Separator
+                 (Entity.LI_Declaration.File.Db.Lang.Get_Language_From_File
+                    (Entity.LI_Declaration.File.Name))))
            & "</b>" & ASCII.LF
            & Attributes_To_String (Get_Attributes (Entity)) &
            ' ' & (-Kind_To_String (Get_Kind (Entity))) & ' ' &
