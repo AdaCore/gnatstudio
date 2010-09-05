@@ -173,6 +173,12 @@ package Language is
       Field : String) return String is abstract;
    --  Return the name to use for a specific field of a record.
 
+   function Scope_Separator
+     (Lang : access Language_Root) return String;
+   --  Return the scope separator for the language.
+   --  e.g. "." for Ada, "::" for C++
+   --  Default implementation return ".", so is suitable for Ada, Java.
+
    ---------------------
    -- Project support --
    ---------------------

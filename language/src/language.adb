@@ -65,6 +65,18 @@ package body Language is
       return True;
    end Can_Tooltip_On_Entity;
 
+   ---------------------
+   -- Scope_Separator --
+   ---------------------
+
+   function Scope_Separator
+     (Lang : access Language_Root) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return ".";
+   end Scope_Separator;
+
    ----------------------
    -- Explorer_Regexps --
    ----------------------

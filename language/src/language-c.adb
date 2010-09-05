@@ -176,6 +176,18 @@ package body Language.C is
       end if;
    end Record_Field_Name;
 
+   ---------------------
+   -- Scope_Separator --
+   ---------------------
+
+   overriding function Scope_Separator
+     (Lang : access C_Language) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return "::";
+   end Scope_Separator;
+
    ----------------------
    -- Explorer_Regexps --
    ----------------------

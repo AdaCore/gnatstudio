@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,6 +74,9 @@ package Language.C is
      (Lang  : access C_Language;
       Name  : String;
       Field : String) return String;
+
+   overriding function Scope_Separator
+     (Lang : access C_Language) return String;
 
    ---------------------
    -- Project support --
