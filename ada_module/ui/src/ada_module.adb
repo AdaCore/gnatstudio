@@ -155,8 +155,9 @@ package body Ada_Module is
          Doc     =>
          -("Whether the editor should use tabulations when indenting. " &
            "This preference does NOT modify the TAB key which will still " &
-           "insert TAB characters. Consider also the tab_expansion.py " &
-           "plug-in (Tools->Plug-ins menu)"),
+           "insert TAB characters. Consider also the /Edit/Insert Tab " &
+           "With Spaces key shortcut which can be mapped via the Edit->Key " &
+           "shortcuts menu"),
          Page     => -"Editor/Ada",
          Label    => -"Use tabulations");
 
