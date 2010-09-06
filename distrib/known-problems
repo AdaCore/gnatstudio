@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J906-011: Bad indentation of multiple line array declaration
+  Problem:    GPS does not indent nicely the following kind of declaration:
+              type T is
+                array (Integer)
+              of Boolean;
+  Workaround: Fix the indentation manually.
+
 - J827-024: ClearCase "diff" operations not working
   Problem:    When using the "ClearCase Native" VCS, the operations to query
               the differences between the local file and another revision
