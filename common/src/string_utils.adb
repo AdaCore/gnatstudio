@@ -1444,22 +1444,30 @@ package body String_Utils is
    -- Revert --
    ------------
 
-   function Revert (S : String) return String is
+   function Revert (S : String; Separator : String := ".") return String is
       Result : String (S'Range);
       Index  : Natural := S'First;
       Last   : Natural := S'Last;
-      Len    : Natural;
+      Len, J : Integer;
+      First  : constant Natural := S'First + Separator'Length - 1;
 
    begin
-      for J in reverse S'Range loop
-         if S (J) = '.' then
+      J := S'Last;
+
+      loop
+         exit when J < First;
+
+         if S (J - Separator'Length + 1 .. J) = Separator then
             Len := Last - J;
             Result (Index .. Index + Len - 1) := S (J + 1 .. Last);
+            J := J - Separator'Length + 1;
             Last := J - 1;
             Index := Index + Len;
-            Result (Index) := '.';
-            Index := Index + 1;
+            Result (Index .. Index + Separator'Length - 1) := Separator;
+            Index := Index + Separator'Length;
          end if;
+
+         J := J - 1;
       end loop;
 
       if Last >= S'First then

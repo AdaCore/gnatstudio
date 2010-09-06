@@ -365,8 +365,8 @@ package String_Utils is
    function Unquote (S : String) return String;
    --  Remove the leading and ending '"' if present
 
-   function Revert (S : String) return String;
-   --  Given a string S composed of dotted names
+   function Revert (S : String; Separator : String := ".") return String;
+   --  Given a string S composed of names separated with Separator
    --  (e.g. Put_Line.Text_IO.Ada), return the names reversed
    --  (e.g. Ada.Text_IO.Put_Line).
 
