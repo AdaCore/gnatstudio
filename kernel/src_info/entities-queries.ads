@@ -31,13 +31,18 @@ package Entities.Queries is
 
    type Recursive_LI_Information_Iterator
      is new Entities.LI_Information_Iterator with private;
-   --  will recursively load all xref information from projects. This is more
+   --  Will recursively load all xref information from projects. This is more
    --  efficient than iterating over source files and updating their xref info.
+
+   type Language_Filter is access function (Lang : String) return Boolean;
+   --  Callback used by Recursive_LI_Information_Iterator to choose which
+   --  language to iterate on.
 
    procedure Start
      (Iter      : out Recursive_LI_Information_Iterator;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
-      Project   : GNATCOLL.Projects.Project_Iterator);
+      Project   : GNATCOLL.Projects.Project_Iterator;
+      Filter    : Language_Filter := null);
    --  Start parsing all LI information, for all projects returned by Project.
    --  The parsing can be split into small chunks so that the interface can be
    --  refreshed during the processing.
@@ -706,8 +711,8 @@ private
       record
          Handler      : Language_Handlers.Language_Handler;
 
-         Project      : GNATCOLL.Projects.Project_Iterator;
-         --  current project
+         Project      : GNATCOLL.Projects.Project_Iterator; --  Current project
+         Filter       : Language_Filter;
 
          Current_Lang : Natural;  --  Current lang in current project
          LI           : LI_Information_Iterator_Access;

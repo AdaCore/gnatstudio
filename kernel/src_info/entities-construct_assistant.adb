@@ -125,7 +125,7 @@ package body Entities.Construct_Assistant is
               Is_Dummy                     => True);
 
          --  Make a simple association between construct categories and entity
-         --  categories. This association is know to be unaccurate, but is
+         --  categories. This association is known to be inaccurate, but is
          --  helpful when trying to categorize entities.
 
          case Get_Construct (E).Category is

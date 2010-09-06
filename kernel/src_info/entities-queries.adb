@@ -2913,7 +2913,7 @@ package body Entities.Queries is
          Append (Result, Get (E.Name).all);
       end loop;
 
-      return Revert (To_String (Result));
+      return Revert (To_String (Result), Separator);
    end Get_Full_Name;
 
    ----------------
@@ -3678,11 +3678,13 @@ package body Entities.Queries is
    procedure Start
      (Iter      : out Recursive_LI_Information_Iterator;
       Handler   : access Language_Handlers.Language_Handler_Record'Class;
-      Project   : Project_Iterator) is
+      Project   : GNATCOLL.Projects.Project_Iterator;
+      Filter    : Language_Filter := null) is
    begin
       Iter.Project := Project;
       Iter.Handler      := Language_Handler (Handler);
       Iter.Lang_Count   := LI_Handlers_Count (Iter.Handler);
+      Iter.Filter       := Filter;
       Iter.Current_Lang := 1;
       Iter.Count        := 0;
       Iter.Total        := 0;
@@ -3754,23 +3756,29 @@ package body Entities.Queries is
 
       while P /= No_Project loop
          while Iter.Current_Lang <= Iter.Lang_Count loop
-            --  Nothing to do if the language is not used for the project
-            if Has_Language
-              (P,
-               Language => Get_Nth_Language (Iter.Handler, Iter.Current_Lang))
-            then
-               LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
-               if LI /= null then
-                  Iter.LI := new LI_Information_Iterator'Class'
-                    (Parse_All_LI_Information (LI, P));
+            declare
+               Lang : constant String :=
+                        Get_Nth_Language (Iter.Handler, Iter.Current_Lang);
+            begin
+               --  Nothing to do if the language is not used for the project
+               --  or we don't want to include this language.
 
-                  if Process then
-                     return;
+               if Has_Language (P, Language => Lang)
+                 and then (Iter.Filter = null or else Iter.Filter (Lang))
+               then
+                  LI := Get_Nth_Handler (Iter.Handler, Iter.Current_Lang);
+                  if LI /= null then
+                     Iter.LI := new LI_Information_Iterator'Class'
+                       (Parse_All_LI_Information (LI, P));
+
+                     if Process then
+                        return;
+                     end if;
                   end if;
+               else
+                  Iter.Current_Lang := Iter.Current_Lang + 1;
                end if;
-            else
-               Iter.Current_Lang := Iter.Current_Lang + 1;
-            end if;
+            end;
          end loop;
 
          --  We finished all languages for this project, move to next project

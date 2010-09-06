@@ -2540,7 +2540,7 @@ package body Entities is
             return Get_Value ("class wide type", "class wide");
             --  -"class wide type"   -"class wide"
          when Class =>
-            return Get_Value ("class type", "class instance");
+            return Get_Value ("class", "class instance");
             --  -"class type"    -"class instance"
          when Decimal_Fixed_Point =>
             return Get_Value
