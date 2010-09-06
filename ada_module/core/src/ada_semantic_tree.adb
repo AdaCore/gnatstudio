@@ -379,6 +379,22 @@ package body Ada_Semantic_Tree is
          Stop := False;
 
          if Expression_Depth = 0 then
+            if In_Found and then Token.Tok_Type /= Tok_Blank then
+               --  If the 'in' keyword is found, we need to make sure that
+               --  we're on a variable declaration, e.g.:
+               --     V : in Integer;
+               --  in such cases, we need to check that the current token is
+               --  a semicolon, add it and leave.
+               --  In all other situations, dismiss the in and leave.
+
+               if Token.Tok_Type = Tok_Colon then
+                  Prepend (Result.Tokens, Token);
+               end if;
+
+               Stop := True;
+               return;
+            end if;
+
             case Token.Tok_Type is
                when Tok_With | Tok_Use | Tok_Pragma | Tok_Colon =>
                   Prepend (Result.Tokens, Token);
@@ -451,15 +467,6 @@ package body Ada_Semantic_Tree is
 
                when Tok_Blank =>
                   null;
-
-               when Tok_For =>
-                  --  Check for the case of
-                  --    for <id> in [reverse] <id>
-
-                  if In_Found then
-                     Remove_Nodes
-                       (Result.Tokens, Null_Node, First (Result.Tokens));
-                  end if;
 
                when others =>
                   Stop := True;
