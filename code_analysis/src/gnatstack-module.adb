@@ -23,12 +23,14 @@ with GNAT.Regexp;
 with GNAT.Strings;
 
 with Basic_Types;
+with Entities;
 with Input_Sources.File;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gtk.Object;
+with Gtkada.MDI;
 with GPS.Editors.Line_Information;
 with GPS.Intl;
 with GPS.Kernel.Console;
@@ -41,6 +43,7 @@ with GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Projects;
 with Traces;
 
+with GNATStack.Call_Tree_Views;
 with GNATStack.CI_Editors;
 with GNATStack.CI_Utilities;
 with GNATStack.Readers;
@@ -107,6 +110,10 @@ package body GNATStack.Module is
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Hides stack usage information in the editor for selected file.
 
+   procedure On_Open_Call_Tree
+     (Widget : access Glib.Object.GObject_Record'Class);
+   --  Opens call tree for the selected subprogram.
+
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
@@ -116,6 +123,11 @@ package body GNATStack.Module is
      (Object : access Glib.Object.GObject_Record'Class;
       Self   : GNATStack_Module_Id);
    --  Handle close of CIs editor.
+
+   procedure On_Call_Tree_View_Close
+     (Object : access Glib.Object.GObject_Record'Class;
+      Self   : GNATStack_Module_Id);
+   --  Handle close of call tree viewer.
 
    procedure Load_Data
      (Self : not null access GNATStack_Module_Id_Record'Class);
@@ -128,6 +140,12 @@ package body GNATStack.Module is
    procedure Open_CI_Editor
      (Self : not null access GNATStack_Module_Id_Record'Class);
    --  Opens CI editor for unknown subprograms.
+
+   procedure Open_Call_Tree_View
+     (Self       : not null access GNATStack_Module_Id_Record'Class;
+      Subprogram :
+        not null GNATStack.Data_Model.Subprogram_Information_Access);
+   --  Opens call tree view to display subprogram.
 
    procedure Fill_Entry_Points
      (Self : not null access GNATStack_Module_Id_Record'Class);
@@ -149,30 +167,112 @@ package body GNATStack.Module is
    is
       pragma Unreferenced (Object);
 
+      function Lookup
+        (Name   : Ada.Strings.Unbounded.Unbounded_String;
+         File   : Ada.Strings.Unbounded.Unbounded_String;
+         Line   : Positive;
+         Column : Positive)
+         return GNATStack.Data_Model.Subprogram_Information_Access;
+
+      ------------
+      -- Lookup --
+      ------------
+
+      function Lookup
+        (Name   : Ada.Strings.Unbounded.Unbounded_String;
+         File   : Ada.Strings.Unbounded.Unbounded_String;
+         Line   : Positive;
+         Column : Positive)
+         return GNATStack.Data_Model.Subprogram_Information_Access
+      is
+         pragma Unreferenced (Name, Column);
+         --  GNATStack and GPS entities uses different representation of names
+         --  and column positions, ignore them now and return first
+         --  approximation.
+
+         Subprogram_Position : Subprogram_Information_Sets.Cursor :=
+           Module.Data.Subprogram_Set.First;
+         Location_Position   : Subprogram_Location_Sets.Cursor;
+         Subprogram          : Subprogram_Information_Access;
+         Location            : Subprogram_Location;
+
+      begin
+         while Has_Element (Subprogram_Position) loop
+            Subprogram := Element (Subprogram_Position);
+            Location_Position := Subprogram.Identifier.Locations.First;
+
+            while Has_Element (Location_Position) loop
+               Location := Element (Location_Position);
+
+               if Location.Name /= ""
+                 and Location.File = File
+                 and Location.Line = Line
+               then
+                  return Subprogram;
+               end if;
+
+               Next (Location_Position);
+            end loop;
+
+            Next (Subprogram_Position);
+         end loop;
+
+         return null;
+      end Lookup;
+
+      Item          : Gtk.Menu_Item.Gtk_Menu_Item;
+      File_Location : Entities.File_Location;
+
    begin
       if not Self.Module.Loaded then
          return;
       end if;
 
       if GPS.Kernel.Contexts.Has_File_Information (Context) then
-         declare
-            Item : Gtk.Menu_Item.Gtk_Menu_Item;
+         Module.File := GPS.Kernel.Contexts.File_Information (Context);
+         Gtk.Menu_Item.Gtk_New (Item, -"Show stack usage");
+         Menu.Append (Item);
+         Object_Callbacks.Connect
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Object_Callbacks.To_Marshaller (On_Show_Stack_Usage'Access));
+         Gtk.Menu_Item.Gtk_New (Item, -"Hide stack usage");
+         Menu.Append (Item);
+         Object_Callbacks.Connect
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Object_Callbacks.To_Marshaller (On_Hide_Stack_Usage'Access));
+      end if;
 
-         begin
-            Module.File := GPS.Kernel.Contexts.File_Information (Context);
-            Gtk.Menu_Item.Gtk_New (Item, -"Show stack usage");
+      if GPS.Kernel.Contexts.Has_Entity_Name_Information (Context)
+        and GPS.Kernel.Contexts.Has_Entity_Column_Information (Context)
+      then
+         File_Location :=
+           Entities.Get_Declaration_Of
+             (GPS.Kernel.Contexts.Get_Entity (Context));
+
+         Module.Subprogram :=
+           Lookup
+             (Ada.Strings.Unbounded.To_Unbounded_String
+                (GPS.Kernel.Contexts.Entity_Name_Information (Context)),
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (String
+                   (Entities.Get_Filename (File_Location.File).Full_Name.all)),
+              File_Location.Line,
+              Positive (File_Location.Column));
+
+         if Module.Subprogram /= null then
+            Gtk.Menu_Item.Gtk_New
+              (Item,
+               (-"Call tree for ")
+               & Ada.Strings.Unbounded.To_String
+                 (Module.Subprogram.Identifier.Prefix_Name));
             Menu.Append (Item);
             Object_Callbacks.Connect
               (Item,
                Gtk.Menu_Item.Signal_Activate,
-               Object_Callbacks.To_Marshaller (On_Show_Stack_Usage'Access));
-            Gtk.Menu_Item.Gtk_New (Item, -"Hide stack usage");
-            Menu.Append (Item);
-            Object_Callbacks.Connect
-              (Item,
-               Gtk.Menu_Item.Signal_Activate,
-               Object_Callbacks.To_Marshaller (On_Hide_Stack_Usage'Access));
-         end;
+               Object_Callbacks.To_Marshaller (On_Open_Call_Tree'Access));
+         end if;
       end if;
    end Append_To_Menu;
 
@@ -408,6 +508,20 @@ package body GNATStack.Module is
          Trace (Exception_Handle, E);
    end On_Analyze_Stack_Usage;
 
+   -----------------------------
+   -- On_Call_Tree_View_Close --
+   -----------------------------
+
+   procedure On_Call_Tree_View_Close
+     (Object : access Glib.Object.GObject_Record'Class;
+      Self   : GNATStack_Module_Id)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      Self.Call_Tree_View_MDI := null;
+   end On_Call_Tree_View_Close;
+
    -------------------------
    -- On_CIs_Editor_Close --
    -------------------------
@@ -437,6 +551,15 @@ package body GNATStack.Module is
       GPS.Kernel.Messages.Get_Messages_Container
         (Module.Kernel).Remove_Category ("GNATStack");
       Editors.Hide_Stack_Usage_In_Opened_Editors (Module);
+
+      if Module.Call_Tree_View_MDI /= null then
+         Module.Call_Tree_View_MDI.Destroy;
+      end if;
+
+      if Module.CI_Editor_MDI /= null then
+         Module.CI_Editor_MDI.Destroy;
+      end if;
+
       Clear (Module.Data);
       Module.Loaded := False;
    end On_Clear_Data;
@@ -509,6 +632,19 @@ package body GNATStack.Module is
          Trace (Exception_Handle, E);
    end On_Load_Data;
 
+   -----------------------
+   -- On_Open_Call_Tree --
+   -----------------------
+
+   procedure On_Open_Call_Tree
+     (Widget : access Glib.Object.GObject_Record'Class)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Open_Call_Tree_View (Module, Module.Subprogram);
+   end On_Open_Call_Tree;
+
    ------------------------
    -- On_Open_CIs_Editor --
    ------------------------
@@ -535,6 +671,42 @@ package body GNATStack.Module is
    begin
       Editors.Show_Stack_Usage (Module, Module.File);
    end On_Show_Stack_Usage;
+
+   -------------------------
+   -- Open_Call_Tree_View --
+   -------------------------
+
+   procedure Open_Call_Tree_View
+     (Self       : not null access GNATStack_Module_Id_Record'Class;
+      Subprogram :
+        not null GNATStack.Data_Model.Subprogram_Information_Access)
+   is
+      View : GNATStack.Call_Tree_Views.Call_Tree_View;
+
+   begin
+      if not Self.Loaded then
+         null;
+
+      else
+         if Self.Call_Tree_View_MDI /= null then
+            Self.Call_Tree_View_MDI.Destroy;
+         end if;
+
+         GNATStack.Call_Tree_Views.Gtk_New (View, Subprogram);
+         GPS.Kernel.MDI.Gtk_New
+           (Self.Call_Tree_View_MDI, View, Module => Self);
+         Self.Call_Tree_View_MDI.Set_Title (-"GNATStack: Call Tree");
+         Object_Module_Callbacks.Connect
+           (Self.Call_Tree_View_MDI,
+            Gtk.Object.Signal_Destroy,
+            Object_Module_Callbacks.To_Marshaller
+              (On_Call_Tree_View_Close'Access),
+            GNATStack_Module_Id (Self));
+         GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put
+           (Self.Call_Tree_View_MDI, Gtkada.MDI.Position_Left);
+         Self.Call_Tree_View_MDI.Raise_Child;
+      end if;
+   end Open_Call_Tree_View;
 
    --------------------
    -- Open_CI_Editor --
@@ -834,6 +1006,8 @@ package body GNATStack.Module is
 
       Module := new GNATStack_Module_Id_Record (Kernel);
 
+      --  Registry contextual submenu factory
+
       Factory := new GNATStack_Submenu_Factory_Record (Module);
 
       Module.Register_Module (Kernel, "GNATStack");
@@ -842,6 +1016,9 @@ package body GNATStack.Module is
          Name    => "GNATStack",
          Label   => -"GNATStack",
          Submenu => Factory);
+
+      --  Registry main menu
+
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => Menu,

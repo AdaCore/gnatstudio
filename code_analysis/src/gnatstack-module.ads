@@ -39,12 +39,16 @@ private
       Data                   :
         aliased GNATStack.Data_Model.Analysis_Information;
       Loaded                 : Boolean := False;
-      File                   : GNATCOLL.VFS.Virtual_File;
       Annotations_Foreground : Default_Preferences.Color_Preference;
       Annotations_Background : Default_Preferences.Color_Preference;
       Annotations_Style      : GPS.Styles.UI.Style_Access;
 
+      File                   : GNATCOLL.VFS.Virtual_File;
+      Subprogram             :
+        GNATStack.Data_Model.Subprogram_Information_Access;
+
       CI_Editor_MDI          : GPS.Kernel.MDI.GPS_MDI_Child;
+      Call_Tree_View_MDI     : GPS.Kernel.MDI.GPS_MDI_Child;
    end record;
 
    GNATStack_Editor_Annotations : constant String :=
