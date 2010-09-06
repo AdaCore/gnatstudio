@@ -943,9 +943,11 @@ package body GNATStack.Readers is
          end if;
 
       elsif Self.State.Kind = Subprogram_Called_Set_State then
-         --  Insert subprogram into the set
+         --  Insert subprogram into the set when it is not in the set
 
-         Self.State.Called_Set.Insert (Info);
+         if not Self.State.Called_Set.Contains (Info) then
+            Self.State.Called_Set.Insert (Info);
+         end if;
 
       elsif Self.State.Kind = Cycle_State then
          --  Insert subprogram into the chain
