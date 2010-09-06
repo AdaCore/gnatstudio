@@ -8615,6 +8615,7 @@ children nodes this contains the log for the corresponding revision.
 
 @menu
 * The Tools Menu::
+* Coding Standard::
 * Visual Comparison::
 * Code Fixing::
 * Documentation Generation::
@@ -8702,7 +8703,8 @@ Open a view containing all currently opened files.
 @end table
 
 @item Coding Standard
-@c ??? need documentation
+@cindex Coding Standard
+@xref{Coding Standard}.
 
 @item Compare
 @cindex visual diff
@@ -8775,6 +8777,31 @@ cross-reference automated generation output is redirected to this console.
 Interrupt the last task launched (e.g. compilation, vcs query, @dots{}).
 
 @end table
+
+@node Coding Standard
+@section Coding Standard
+@cindex coding standard
+@noindent
+
+The Coding Standard menu allows you to edit your coding standard file, as can
+be understood by gnatcheck, as well as run it against your code, to verifiy its
+compliance with this coding standard.
+
+Note that you can also use the contextual menu to check the conformance of
+a particular project or source file against a Coding Standard.
+
+The Coding standard editor is triggered by the menu Tools->Coding
+Standard->Edit Rules File. The editor allows you to select an existing coding
+standard file, or create a new one. The editor adapts itself to the version of
+gnatcheck you are using on your local machine.
+
+The currently used rules are summarized in the bottom of the editor. Once all
+rules are defined, you can check the box 'Open rules file after exit' to
+manually verify the created file.
+
+Once the Coding Standard file is created, you can define it as the default
+coding standard file for a project by going to the project editor, selecting
+the 'Switches' tab, and using this file in the 'Gnatcheck' section.
 
 @node Visual Comparison
 @section Visual Comparison
