@@ -3760,8 +3760,11 @@ package body Ada_Analyzer is
                      if (Local_Top_Token.Token in Token_Class_Declk
                          and then Local_Top_Token.Ident_Len = 0)
                        or else Prev_Token = Tok_End
+                       or else Local_Top_Token.Token = Tok_With
                      then
                         --  This is an operator symbol, e.g function ">=" (...)
+                        --  Or we're parsing a GNAT Project file and this is
+                        --  a dependency declaration (with "bla.gpr")
 
                         if Prev_Token /= Tok_End then
                            Len := P - First + 1;
