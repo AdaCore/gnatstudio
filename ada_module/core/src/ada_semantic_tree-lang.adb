@@ -1232,41 +1232,51 @@ package body Ada_Semantic_Tree.Lang is
          View := Get_View (It);
 
          if Prev_Matching_View /= Null_Entity_View then
-            --  In this case, there is already a match. If they are both
-            --  subprograms, check if we can resolve the ambiguity. In all
-            --  other cases, we just exit without a result.
-
-            if Get_Construct (Get_Entity (View)).Category not in
-              Subprogram_Category
-              or else Get_Construct
-                (Get_Entity (Prev_Matching_View)).Category not in
-              Subprogram_Category
+            if Get_First_Occurence (Get_Entity (Prev_Matching_View))
+              = Get_First_Occurence (Get_Entity (View))
             then
-               Free (View);
-               Free (Prev_Matching_View);
+               --  First case, the two results are actually part of the same
+               --  entity. This can happen with e.g. partial types. We're fine
+               --  in this case.
 
-               exit;
-            end if;
+               Result := Get_First_Occurence (Get_Entity (View));
+            else
+               --  In this case, there is already a match. If they are both
+               --  subprograms, check if we can resolve the ambiguity. In all
+               --  other cases, we just exit without a result.
 
-            if Actual_Structure_Matches (Get_Entity (View)) then
-               if Actual_Structure_Matches
-                 (Get_Entity (Prev_Matching_View))
+               if Get_Construct (Get_Entity (View)).Category not in
+                 Subprogram_Category
+                 or else Get_Construct
+                   (Get_Entity (Prev_Matching_View)).Category not in
+                 Subprogram_Category
                then
-                  --  The two view match the actual structure given, we can't
-                  --  decide which one is OK, so don't offer a result.
-
                   Free (View);
                   Free (Prev_Matching_View);
-                  exit;
-               else
-                  Free (Prev_Matching_View);
-                  Prev_Matching_View := View;
-               end if;
-            else
-               --  If the first view doesn't match, we assume that the
-               --  currently matching one works
 
-               Free (View);
+                  exit;
+               end if;
+
+               if Actual_Structure_Matches (Get_Entity (View)) then
+                  if Actual_Structure_Matches
+                    (Get_Entity (Prev_Matching_View))
+                  then
+                     --  The two view match the actual structure given, we
+                     --  can't decide which one is OK, so don't offer a result.
+
+                     Free (View);
+                     Free (Prev_Matching_View);
+                     exit;
+                  else
+                     Free (Prev_Matching_View);
+                     Prev_Matching_View := View;
+                  end if;
+               else
+                  --  If the first view doesn't match, we assume that the
+                  --  currently matching one works
+
+                  Free (View);
+               end if;
             end if;
          else
             Prev_Matching_View := View;
