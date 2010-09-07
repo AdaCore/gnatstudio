@@ -351,7 +351,6 @@ gcc, gdb, gnatmake, gcov, etc@dots{}.
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
-* Icons for Source Language Entities::
 * The Project View::
 * The File View::
 * The Entity View::
@@ -585,124 +584,6 @@ The whole work space is based on a multiple document interface,
 @xref{Multiple Document Interface}.
 
 @c --------------------------------------------------------------------
-@node Icons for Source Language Entities
-@section Icons for Source Language Entities
-@cindex icons for source language entities
-@c --------------------------------------------------------------------
-
-@noindent
-Entities in the source code are presented with representative icons
-within the various GPS views (the @emph{Outline}, @emph{Project},
-and @emph{Entity} views, for example).
-These icons indicate both the language categories of the entities, such as
-packages and methods, as well as compile-time visibility.
-In addition, the icons distinguish entity
-declarations from other entities.  The same icons are used for all
-programming languages supported by the viewers, with language-specific
-interpretations for both compile-time visibility and recognizing
-declarations.
-
-There are five language categories used for all supported languages:
-@emph{package}, @emph{subprogram}, @emph{type}, @emph{variable}, and
-@emph{generic}.  The icons
-corresponding to these language categories are as follows.
-
-@itemize @bullet
-@item
-The @emph{package} category's icon is a square.
-
-@iftex
-@image{square_x}
-@end iftex
-@ifhtml
-@image{square_x}
-@end ifhtml
-
-@item
-The @emph{subprogram} category's icon is a circle.
-
-@iftex
-@image{circle_x}
-@end iftex
-@ifhtml
-@image{circle_x}
-@end ifhtml
-
-@item
-The @emph{type} category's icon is a triangle.
-
-@iftex
-@image{triangle_x}
-@end iftex
-@ifhtml
-@image{triangle_x}
-@end ifhtml
-
-@item
-The @emph{variable} category's icon is a dot.
-
-@iftex
-@image{dot_x}
-@end iftex
-@ifhtml
-@image{dot_x}
-@end ifhtml
-
-@item
-The @emph{generic} category's  icon is a diamond.
-
-@iftex
-@image{diamond_x}
-@end iftex
-@ifhtml
-@image{diamond_x}
-@end ifhtml
-@end itemize
-
-@noindent
-These basic icons are enhanced with decorators, when appropriate, to
-indicate compile-time visibility constraints and to distinguish
-declarations from completions. For example, the icons for entity
-declarations have a small ``S'' decorator added, denoting a ``spec''.
-
-With respect to compile-time visibility, icons for ``protected''
-and ``private''
-entities appear within an enclosing box indicating a visibility
-constraint. For entities with ``protected'' visibility, this enclosing box
-is colored in gray. ``Private'' entities are enclosed within a red box.
-The icons for ``public'' entities have no such enclosing box. For example,
-a variable with ``private'' visibility would be represented by an icon
-consisting of a dot enclosed within a red box.
-
-These additional decorators are combined when appropriate. For example,
-the icon corresponding to the ``private'' declaration of a ``package''
-entity would be a square, as for any package entity, with a small ``S''
-added, all enclosed within a red box.
-
-Language constructs are mapped to the categories in a language-specific
-manner.  For example, C++ namespaces and Ada packages correspond to the
-@emph{package} category.  C functions and Ada subprograms correspond to the
-@emph{method} category, and so on.  The @emph{generic} category is a
-general category representing other language entities, but note that not
-all possible language constructs are mapped to categories and icons.  (Note
-also that the @emph{generic} category does not correspond to Ada generic
-units or C++ templates.)
-
-The names of the categories should not be interpreted literally in terms
-of language constructs because the categories are rather general, in
-order to limit the number used. The @emph{variable} category includes both
-constants and variables in Ada, for example. Limiting the number of
-categories maintains a balance between presentation complexity and the
-need to support distinct programming languages.
-
-Icons for a given entity may appear more than once within a view. For
-example, an Ada private type will have both a partial view in the
-visible part of the enclosing package as well as a full view in the
-private part of the package. Two triangle icons will therefore appear
-for the two occurrences of the type name, one with the additional
-decorator indicating the ``private'' compile-time visibility.
-
-@c --------------------------------------------------------------------
 @node The Project View
 @section The Project View
 @cindex project view
@@ -921,6 +802,122 @@ is changed dynamically to reflect the new status of the
 project. Starting a new compilation at that point will use the new
 switches, and all the aspects of GPS are immediately affected
 according to the new setup.
+
+
+@subsection Icons for source language entities
+@cindex icons for source language entities
+
+@noindent
+Entities in the source code are presented with representative icons
+within the various GPS views (the @emph{Outline}, @emph{Project},
+and @emph{Entity} views, for example).
+These icons indicate both the language categories of the entities, such as
+packages and methods, as well as compile-time visibility.
+In addition, the icons distinguish entity
+declarations from other entities.  The same icons are used for all
+programming languages supported by the viewers, with language-specific
+interpretations for both compile-time visibility and recognizing
+declarations.
+
+There are five language categories used for all supported languages:
+@emph{package}, @emph{subprogram}, @emph{type}, @emph{variable}, and
+@emph{generic}.  The icons
+corresponding to these language categories are as follows.
+
+@itemize @bullet
+@item
+The @emph{package} category's icon is a square.
+
+@iftex
+@image{square_x}
+@end iftex
+@ifhtml
+@image{square_x}
+@end ifhtml
+
+@item
+The @emph{subprogram} category's icon is a circle.
+
+@iftex
+@image{circle_x}
+@end iftex
+@ifhtml
+@image{circle_x}
+@end ifhtml
+
+@item
+The @emph{type} category's icon is a triangle.
+
+@iftex
+@image{triangle_x}
+@end iftex
+@ifhtml
+@image{triangle_x}
+@end ifhtml
+
+@item
+The @emph{variable} category's icon is a dot.
+
+@iftex
+@image{dot_x}
+@end iftex
+@ifhtml
+@image{dot_x}
+@end ifhtml
+
+@item
+The @emph{generic} category's  icon is a diamond.
+
+@iftex
+@image{diamond_x}
+@end iftex
+@ifhtml
+@image{diamond_x}
+@end ifhtml
+@end itemize
+
+@noindent
+These basic icons are enhanced with decorators, when appropriate, to
+indicate compile-time visibility constraints and to distinguish
+declarations from completions. For example, the icons for entity
+declarations have a small ``S'' decorator added, denoting a ``spec''.
+
+With respect to compile-time visibility, icons for ``protected''
+and ``private''
+entities appear within an enclosing box indicating a visibility
+constraint. For entities with ``protected'' visibility, this enclosing box
+is colored in gray. ``Private'' entities are enclosed within a red box.
+The icons for ``public'' entities have no such enclosing box. For example,
+a variable with ``private'' visibility would be represented by an icon
+consisting of a dot enclosed within a red box.
+
+These additional decorators are combined when appropriate. For example,
+the icon corresponding to the ``private'' declaration of a ``package''
+entity would be a square, as for any package entity, with a small ``S''
+added, all enclosed within a red box.
+
+Language constructs are mapped to the categories in a language-specific
+manner.  For example, C++ namespaces and Ada packages correspond to the
+@emph{package} category.  C functions and Ada subprograms correspond to the
+@emph{method} category, and so on.  The @emph{generic} category is a
+general category representing other language entities, but note that not
+all possible language constructs are mapped to categories and icons.  (Note
+also that the @emph{generic} category does not correspond to Ada generic
+units or C++ templates.)
+
+The names of the categories should not be interpreted literally in terms
+of language constructs because the categories are rather general, in
+order to limit the number used. The @emph{variable} category includes both
+constants and variables in Ada, for example. Limiting the number of
+categories maintains a balance between presentation complexity and the
+need to support distinct programming languages.
+
+Icons for a given entity may appear more than once within a view. For
+example, an Ada private type will have both a partial view in the
+visible part of the enclosing package as well as a full view in the
+private part of the package. Two triangle icons will therefore appear
+for the two occurrences of the type name, one with the additional
+decorator indicating the ``private'' compile-time visibility.
 
 @c --------------------------------------------------------------------
 @node The File View
