@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.5.0
 
+- J906-016: Triple-Click in editors does not select the end of line
+  Problem:    When triple-clicking with the first mouse button in the editor,
+              the current line is selected, but not the end-of-line character.
+  Workaround: Insert a new line after pasting, or use another method for
+              selecting the current line.
+
 - J906-013: Second-button paste does not give focus to target editor
   Problem:    When using the second button to paste text in an editor (this is
               supported on UNIX/Linux platforms), GPS does not give the focus
