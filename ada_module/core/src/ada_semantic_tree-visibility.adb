@@ -247,10 +247,6 @@ package body Ada_Semantic_Tree.Visibility is
          return None;
       elsif Path_To'Length = 0 or else Path_From'Length = 0 then
          return None;
-      elsif Get_Construct (Path_To (1)).Name = No_Symbol
-        or else Get_Construct (Path_From (1)).Name = No_Symbol
-      then
-         return None;
       end if;
 
       declare
@@ -297,9 +293,7 @@ package body Ada_Semantic_Tree.Visibility is
                --  the name of the remaining ones - no composite identifier is
                --  expected pass this point.
 
-               if Get_Construct
-                 (Path_From (Index_In_From_Path)).Name = No_Symbol
-                 or else Get_Identifier (Path_To (Index_In_To_Path))
+               if Get_Identifier (Path_To (Index_In_To_Path))
                  /= Get_Identifier (Path_From (Index_In_From_Path))
                then
                   return None;
@@ -322,13 +316,11 @@ package body Ada_Semantic_Tree.Visibility is
                --  completely analyzed to. Check the next index of the
                --  composite "from" against the next path element of "to"
 
-               if Get_Construct (Path_From (Index_In_From_Path)).Name =
-                 No_Symbol
-                 or else not Equal
-                   (Get_Item (Root_To_Name, Index_In_To_Root),
-                    Get
-                     (Get_Construct (Path_From (Index_In_From_Path)).Name).all,
-                    False)
+               if not Equal
+                 (Get_Item (Root_To_Name, Index_In_To_Root),
+                  Get
+                    (Get_Construct (Path_From (Index_In_From_Path)).Name).all,
+                  False)
                then
                   return None;
                end if;
@@ -337,13 +329,11 @@ package body Ada_Semantic_Tree.Visibility is
                --  completely analyzed to. Check the next index of the
                --  composite "to" against the next path element of "from"
 
-               if Get_Construct
-                 (Path_To (Index_In_To_Path)).Name = No_Symbol
-                 or else not Equal
-                   (Get_Item (Root_From_Name, Index_In_From_Root),
-                    Get (Get_Construct
-                      (Path_To (Index_In_To_Path)).Name).all,
-                    False)
+               if not Equal
+                 (Get_Item (Root_From_Name, Index_In_From_Root),
+                  Get (Get_Construct
+                    (Path_To (Index_In_To_Path)).Name).all,
+                  False)
                then
                   return None;
                end if;
