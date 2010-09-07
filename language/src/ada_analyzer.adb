@@ -243,6 +243,12 @@ package body Ada_Analyzer is
       In_Declaration : Boolean := False;
       --  Are we inside a declarative part ?
 
+      In_Entity_Profile : Boolean := True;
+      --  Are we in a definition?
+      --  (e.g. [procedure bla] is
+      --        [type T is record] null; end record;
+      --        etc...
+
       Extra_Indent : Boolean := False;
       --  Used for various kinds of constructs, when detecting different
       --  ways of indenting code (only used internally).
@@ -1929,6 +1935,27 @@ package body Ada_Analyzer is
                   null;
             end case;
          end if;
+
+         --  Computes the end of the profile
+
+         case Top_Token.Token is
+            when Tok_Procedure
+               | Tok_Function
+               | Tok_Entry =>
+
+               if Reserved = Tok_Is then
+                  Top_Token.In_Entity_Profile := False;
+               end if;
+
+            when Tok_Type =>
+               if Reserved = Tok_Record then
+                  Top_Token.In_Entity_Profile := False;
+               end if;
+
+            when others =>
+               null;
+
+         end case;
 
          --  Note: the order of the following conditions is important
 
@@ -4377,6 +4404,7 @@ package body Ada_Analyzer is
 
                if Prev_Token = Tok_Apostrophe
                  and then To_Upper (Str (1 .. Str_Len)) = "CLASS"
+                 and then Top_Token.In_Entity_Profile
                then
                   Top_Token.Attributes (Ada_Class_Attribute) := True;
                end if;
