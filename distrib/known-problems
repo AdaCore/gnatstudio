@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.5.0
 
+- J906-013: Second-button paste does not give focus to target editor
+  Problem:    When using the second button to paste text in an editor (this is
+              supported on UNIX/Linux platforms), GPS does not give the focus
+              to the target editor.
+  Workaround: Click in the editor with the first button to give it the focus
+              before pasting text.
+
 - J906-011: Bad indentation of multiple line array declaration
   Problem:    GPS does not indent nicely the following kind of declaration:
               type T is
