@@ -790,7 +790,7 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
 
                if Context.Context_Type /= From_File then
-                  --  We do not handle parenthesis in a search in database
+                  --  We do not handle parenthesis in a search from database
 
                   return;
                end if;
@@ -800,22 +800,6 @@ package body Ada_Semantic_Tree.Declarations is
                   --  proposal.
 
                   return;
-               end if;
-
-               if Get_Construct
-                 (Get_Entity (Previous_Declaration)).Category in Type_Category
-                 and then
-                   not Get_Construct
-                     (Get_Entity (Previous_Declaration)).Attributes
-                 (Ada_Array_Attribute)
-               then
-                  --  If the previous entity is a type (and not an array), make
-                  --  sure that we're on a qualified aggregate case and not
-                  --  a conversion.
-
-                  if Data (Previous_Token).Tok_Type /= Tok_Tick then
-                     return;
-                  end if;
                end if;
 
                declare
@@ -872,18 +856,41 @@ package body Ada_Semantic_Tree.Declarations is
                         --  potential matches in a row, and then do semantics
                         --  on them.
                         if not Success then
-                           if Free_Local then
-                              Free (Local_Declaration);
-                           end if;
+                           if Get_Construct
+                             (Get_Entity (Previous_Declaration)).Category in
+                             Type_Category
+                           then
+                              --  In case of a type category, we don't need to
+                              --  check for the correct profile. Carry on the
+                              --  analysis. We're probably in the case of a
+                              --  conversion
 
-                           return;
+                              null;
+                           else
+                              --  This is a subprogram call with a non-matching
+                              --  profile. End the analysis.
+
+                              if Free_Local then
+                                 Free (Local_Declaration);
+                              end if;
+
+                              return;
+                           end if;
                         end if;
                      elsif
                        Data (Current_Token).Tok_Type = Tok_Close_Parenthesis
                      then
-                        if Is_Complete
-                          (Get_Actual_Parameters (Local_Declaration).all)
+                        if Get_Construct
+                          (Get_Entity (Previous_Declaration)).Category in
+                          Type_Category
+                          or else
+                            Is_Complete
+                              (Get_Actual_Parameters (Local_Declaration).all)
                         then
+                           --  If we're on a type (conversion or aggreate) or
+                           --  if the subprogram profile matches, then do the
+                           --  completion
+
                            if Next (Current_Token) = Token_List.Null_Node then
                               Append
                                 (Result.Contents,
@@ -928,9 +935,18 @@ package body Ada_Semantic_Tree.Declarations is
                      --
                      --  We don't add anything if there's no remaining possible
                      --  parameter.
+                     --
+                     --  Note that if we're on a type, we only provide that
+                     --  completion if we're on an aggregate, identified by the
+                     --  tick
 
                      if Any_Named_Formal_Missing
                        (Get_Actual_Parameters (Local_Declaration).all)
+                       and then
+                         (Data (Previous_Token).Tok_Type = Tok_Tick
+                          or else Get_Construct
+                            (Get_Entity (Previous_Declaration)).Category not in
+                            Type_Category)
                      then
                         Append
                           (Result.Contents,
