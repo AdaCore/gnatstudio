@@ -367,6 +367,7 @@ package body Ada_Semantic_Tree is
       Last_Token : Token_Record := Null_Token;
       Last_Non_Blank_Token : Token_Record := Null_Token;
       In_Found : Boolean := False;
+      All_Found : Boolean := False;
 
       procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
 
@@ -379,20 +380,35 @@ package body Ada_Semantic_Tree is
          Stop := False;
 
          if Expression_Depth = 0 then
-            if In_Found and then Token.Tok_Type /= Tok_Blank then
-               --  If the 'in' keyword is found, we need to make sure that
-               --  we're on a variable declaration, e.g.:
-               --     V : in Integer;
-               --  in such cases, we need to check that the current token is
-               --  a semicolon, add it and leave.
-               --  In all other situations, dismiss the in and leave.
+            if Token.Tok_Type /= Tok_Blank then
+               if In_Found then
+                  --  If the 'in' keyword is found, we need to make sure that
+                  --  we're on a variable declaration, e.g.:
+                  --     V : in Integer;
+                  --  in such cases, we need to check that the current token is
+                  --  a semicolon, add it and leave.
+                  --  In all other situations, dismiss the in and leave.
 
-               if Token.Tok_Type = Tok_Colon then
-                  Prepend (Result.Tokens, Token);
+                  if Token.Tok_Type = Tok_Colon then
+                     Prepend (Result.Tokens, Token);
+                  end if;
+
+                  Stop := True;
+                  return;
                end if;
 
-               Stop := True;
-               return;
+               if All_Found and then Token.Tok_Type /= Tok_Dot then
+                  --  The only thing that we analyse so far is the
+                  --  .all expression. In any other case, e.g. access all, we
+                  --  just dismiss the all keyword and stop the analysis.
+
+                  Remove_Nodes
+                    (Result.Tokens, Null_Node, First (Result.Tokens));
+                  Stop := True;
+                  return;
+               else
+                  All_Found := False;
+               end if;
             end if;
 
             case Token.Tok_Type is
@@ -411,11 +427,14 @@ package body Ada_Semantic_Tree is
                      Prepend (Result.Tokens, Token);
                   end if;
 
-               when Tok_All
-                  | Tok_Tick
+               when Tok_Tick
                   | Tok_Arrow
                   | Tok_Dot =>
 
+                  Prepend (Result.Tokens, Token);
+
+               when Tok_All =>
+                  All_Found := True;
                   Prepend (Result.Tokens, Token);
 
                when Tok_Close_Parenthesis =>
