@@ -17,8 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
@@ -38,7 +37,6 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -48,15 +46,12 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 
-with Language_Handlers;          use Language_Handlers;
 with Entities;                   use Entities;
 with Entities.Queries;           use Entities.Queries;
 with Build_Command_Manager;
 with Builder_Facility_Module;
 with Traces;                     use Traces;
 with Commands;                   use Commands;
-
-with Commands.Generic_Asynchronous;
 
 package body Builder_Module is
 
@@ -72,8 +67,6 @@ package body Builder_Module is
    --  Data stored with the module id
 
    Builder_Module_ID : Builder_Module_ID_Access;
-
-   type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
 
    procedure Interrupt_Xrefs_Loading
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -96,35 +89,11 @@ package body Builder_Module is
    overriding function Name
      (Command : access All_LI_Information_Command) return String;
 
-   --------------------------------
-   -- Computing cross-references --
-   --------------------------------
+   type C_LI_Information_Command is new All_LI_Information_Command
+     with null record;
 
-   type Compute_Xref_Data is record
-      Kernel : Kernel_Handle;
-      Iter   : LI_Handler_Iterator_Access_Access;
-      LI     : Natural;
-   end record;
-   type Compute_Xref_Data_Access is access Compute_Xref_Data;
-
-   procedure Deep_Free (D : in out Compute_Xref_Data_Access);
-   --  Free memory associated to D
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (LI_Handler_Iterator_Access, LI_Handler_Iterator_Access_Access);
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Compute_Xref_Data, Compute_Xref_Data_Access);
-
-   procedure Xref_Iterate
-     (Xref_Data : in out Compute_Xref_Data_Access;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type);
-   --  Query the Xref information for the next files in the project
-
-   package Xref_Commands is new Commands.Generic_Asynchronous
-     (Data_Type => Compute_Xref_Data_Access,
-      Free      => Deep_Free);
+   overriding function Name
+     (Command : access C_LI_Information_Command) return String;
 
    --------------------
    -- Menu Callbacks --
@@ -151,6 +120,13 @@ package body Builder_Module is
    procedure Load_Xref_In_Memory (Kernel : access Kernel_Handle_Record'Class);
    --  Load the Xref info in memory, in a background task
 
+   function C_Filter (Lang : String) return Boolean;
+   --  Return true if Lang is C or C++ (case insensitive)
+
+   procedure Load_C_Xref_In_Memory
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Load the C/C++ Xref info in memory, in a background task
+
    procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Interrupt menu
@@ -176,16 +152,8 @@ package body Builder_Module is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      C      : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       if Command = "compute_xref" then
-         Xref_Commands.Create
-           (C, -"Computing C/C++ xref info",
-            new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
-            Xref_Iterate'Access);
-
-         Launch_Synchronous (Command_Access (C), 0.01);
-         Unref (Command_Access (C));
          Build_Command_Manager.Launch_Target
            (Kernel,
             Builder_Facility_Module.Registry,
@@ -199,14 +167,6 @@ package body Builder_Module is
             Main        => "");
 
       elsif Command = "compute_xref_bg" then
-         Xref_Commands.Create
-           (C, -"Computing C/C++ xref info",
-            new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
-            Xref_Iterate'Access);
-
-         Launch_Background_Command
-           (Kernel, Command_Access (C), True, True, "");
-
          Build_Command_Manager.Launch_Target
            (Kernel,
             Builder_Facility_Module.Registry,
@@ -221,82 +181,6 @@ package body Builder_Module is
       end if;
    end Compile_Command;
 
-   ------------------
-   -- Xref_Iterate --
-   ------------------
-
-   procedure Xref_Iterate
-     (Xref_Data : in out Compute_Xref_Data_Access;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type)
-   is
-      pragma Warnings (Off, Xref_Data);
-      D            : Compute_Xref_Data_Access renames Xref_Data;
-      Handler      : constant Language_Handler :=
-                       Get_Language_Handler (D.Kernel);
-      Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
-      Not_Finished : Boolean;
-      LI           : LI_Handler;
-      New_Handler  : Boolean := False;
-
-      procedure Errors (Msg : String);
-      --  Print the Msg as an error in the GPS console
-
-      ------------
-      -- Errors --
-      ------------
-
-      procedure Errors (Msg : String) is
-      begin
-         Insert (D.Kernel, Msg, Mode => Console.Error);
-      end Errors;
-
-   begin
-      if D.LI /= 0 and then D.Iter.all /= null then
-         Continue (D.Iter.all.all, Errors'Unrestricted_Access, Not_Finished);
-      else
-         Not_Finished := True;
-      end if;
-
-      while Not_Finished loop
-         D.LI := D.LI + 1;
-
-         if D.LI > Num_Handlers then
-            Insert (D.Kernel, -"Finished parsing all source files");
-
-            Result := Success;
-            return;
-         end if;
-
-         Free (D.Iter.all);
-
-         LI := Get_Nth_Handler (Handler, D.LI);
-         if LI /= null then
-            New_Handler := True;
-            D.Iter.all := new LI_Handler_Iterator'Class'
-              (Generate_LI_For_Project
-                 (Handler      => LI,
-                  Lang_Handler => Get_Language_Handler (D.Kernel),
-                  Project      => Get_Project (D.Kernel),
-                  Errors       => Errors'Unrestricted_Access,
-                  Recursive    => True));
-            Continue (D.Iter.all.all,
-                      Errors'Unrestricted_Access,
-                      Not_Finished);
-         end if;
-      end loop;
-
-      if New_Handler then
-         Insert (D.Kernel, -"Parsing source files for "
-                 & Get_Name (Get_Nth_Handler (Handler, D.LI)));
-      end if;
-
-      Set_Progress (Command, (Running, D.LI, Num_Handlers));
-
-      Result := Execute_Again;
-      return;
-   end Xref_Iterate;
-
    ---------------------
    -- On_Compute_Xref --
    ---------------------
@@ -305,8 +189,6 @@ package body Builder_Module is
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Object);
-
-      C : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       Build_Command_Manager.Launch_Target
         (Kernel,
@@ -319,13 +201,6 @@ package body Builder_Module is
          Background  => False,
          Dialog      => Build_Command_Manager.Force_No_Dialog,
          Main        => "");
-      Xref_Commands.Create
-        (C, -"Computing C/C++ xref info",
-         new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
-         Xref_Iterate'Access);
-
-      Launch_Background_Command
-        (Kernel, Command_Access (C), True, True, "");
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -378,6 +253,10 @@ package body Builder_Module is
       if Builder_Module_ID.Build_Count = 0 then
          if Automatic_Xrefs_Load.Get_Pref then
             Load_Xref_In_Memory (Kernel);
+         else
+            --  We need to load all C/C++ xref info so that source navigation
+            --  works properly
+            Load_C_Xref_In_Memory (Kernel);
          end if;
       end if;
    end On_Compilation_Finished;
@@ -401,6 +280,13 @@ package body Builder_Module is
       pragma Unreferenced (Command);
    begin
       return -"load xref info";
+   end Name;
+
+   overriding function Name
+     (Command : access C_LI_Information_Command) return String is
+      pragma Unreferenced (Command);
+   begin
+      return -"load C/C++ xref info";
    end Name;
 
    --------------
@@ -435,6 +321,38 @@ package body Builder_Module is
       end if;
    end Execute;
 
+   --------------
+   -- C_Filter --
+   --------------
+
+   function C_Filter (Lang : String) return Boolean is
+      Str : constant String := To_Lower (Lang);
+   begin
+      return Str = "c" or else Str = "c++";
+   end C_Filter;
+
+   ---------------------------
+   -- Load_C_Xref_In_Memory --
+   ---------------------------
+
+   procedure Load_C_Xref_In_Memory
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      C : constant Command_Access := new C_LI_Information_Command;
+   begin
+      Start (C_LI_Information_Command (C.all).Iter,
+             Get_Language_Handler (Kernel),
+             Get_Project (Kernel).Start (Recursive => True),
+             C_Filter'Access);
+      Launch_Background_Command
+        (Kernel,
+         C,
+         Active     => True,
+         Show_Bar   => True,
+         Queue_Id   => "load C/C++ xrefs info",
+         Block_Exit => False);
+   end Load_C_Xref_In_Memory;
+
    -------------------------
    -- Load_Xref_In_Memory --
    -------------------------
@@ -443,7 +361,6 @@ package body Builder_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       C : constant Command_Access := new All_LI_Information_Command;
-
    begin
       Start (All_LI_Information_Command (C.all).Iter,
              Get_Language_Handler (Kernel),
@@ -489,6 +406,10 @@ package body Builder_Module is
    begin
       if Automatic_Xrefs_Load.Get_Pref then
          Load_Xref_In_Memory (Kernel_Handle (Kernel));
+      else
+         --  We need to load all C/C++ xref info so that source navigation
+         --  works properly
+         Load_C_Xref_In_Memory (Kernel_Handle (Kernel));
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -558,18 +479,6 @@ package body Builder_Module is
         (Kernel, "compute_xref",
          Handler => Compile_Command'Access);
    end Register_Module;
-
-   ---------------
-   -- Deep_Free --
-   ---------------
-
-   procedure Deep_Free (D : in out Compute_Xref_Data_Access) is
-   begin
-      if D /= null then
-         Unchecked_Free (D.Iter);
-         Unchecked_Free (D);
-      end if;
-   end Deep_Free;
 
    ------------------------
    -- On_Project_Changed --
