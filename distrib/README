@@ -27,6 +27,3 @@ of Mac OS X.
 Once you have X11 running, if you are launching GPS from a regular Terminal,
 you first need to call
   export DISPLAY=:0
-
-On Tiger, it is advised to run with the debugger preference "Execution window"
-disabled, for better performance while debugging.
