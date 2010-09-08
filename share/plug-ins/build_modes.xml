@@ -107,19 +107,30 @@
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <server>Tools_Server</server>
   <substitutions>
-    <substitute src="%builder" dest="%gnatmake"/>
+    <substitute src="%builder" dest="gprbuild"/>
   </substitutions>
   <extra-args>
     <arg>-margs</arg>
     <arg>--subdirs=%subdir</arg>
+    <arg>-U</arg>
     <arg>-k</arg>
     <arg>-d</arg>
-    <arg>-gnatc</arg>
-    <arg>-gnatQ</arg>
+    <arg>-ws</arg>
+    <arg>--no-object-check</arg>
+    <arg>-cargs:Ada</arg>
+    <arg>-gnatcQI</arg>
     <arg>-gnatws</arg>
     <arg>-gnatyN</arg>
     <arg>-gnatVn</arg>
-    <arg>-gnatI</arg>
+    <arg>-cargs:C</arg>
+    <arg>-w</arg>
+    <arg>-fsyntax-only</arg>
+    <arg>-fdump-xref</arg>
+    <arg>-cargs:C++</arg>
+    <arg>-w</arg>
+    <arg>-fsyntax-only</arg>
+    <arg>-fpermissive</arg>
+    <arg>-fdump-xref</arg>
   </extra-args>
  </builder-mode>
 

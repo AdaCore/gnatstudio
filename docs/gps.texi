@@ -3688,17 +3688,23 @@ particular useful for documentation
 @noindent
 GPS provides cross-reference navigation for program entities, such as
 types, procedures, functions, variables, @dots{}, defined in your
-application. The cross-reference support in GPS relies on
-language-specific tools as explained below.
+application. The cross-reference support in GPS relies on the compiler
+generated xref information, which means that you need to either compile
+your project first before being able to navigate, or use the menu
+@code{Build->Recompute Xref info}.
+Similarly when your sources have been modified, you need to rebuild and
+recompute xref information so that your changes are taken into account.
+
+Here are language specific information about source navigation:
 
 @table @b
 @item Ada
 @cindex Ada
 @cindex GNAT
 The GNAT compiler is used to generate the cross-references information
-needed by GPS. This means that you must compile your application before
-you browse through the cross-references or view various graphs in GPS.
-If sources have been modified, you should recompile the modified files.
+needed by GPS by default, unless you are using the @code{-gnatD} or
+@code{-gnatx} switches, in whcih case no cross reference information
+will be available.
 
 @cindex -gnatQ
 @cindex -k
@@ -3732,35 +3738,13 @@ all xref information".
 @item C/C++
 @cindex C
 @cindex C++
-To enable the navigation features for C and C++ source files, you need
-to first generate a database of symbol references, by going through the
-menu Build->Recompute Xref info. Messages in the console window
-will indicate the state of the processing. Due to the nature of these
-languages, in order to provide accurate cross-references, GPS needs to
-generate the database in two phases: a first pass parses all the files
-that have been modified since the previous parsing, and a second pass
-generates global cross-references by analyzing the complete database.
-It is thus expected that for large projects, this phase can take a
-significant amount of CPU to proceed.
-
-@cindex overloaded
-@cindex #ifdef
-In some cases, GPS won't be able to determine the exact function involved
-in a cross-reference. This will typically occur for overloaded functions,
-or if multiple functions with the same name, but under different
-@code{#ifdef} sections, are defined. In this case, GPS will display a
-dialog listing the possible choices to resolve the ambiguity.
-
-@cindex namespace
-@cindex macro
-In addition, the C/C++ parser has the following limitations: namespaces
-are currently ignored (no specific processing is done for namespaces);
-minimal support for templates; no attempt is made to process the macros and
-other preprocessor defines.
-Macros are considered as special entities, so it is possible to navigate
-from a macro use to its definition, but the macro content is ignored,
-which means for example that function calls made through macros
-won't be detected.
+The GCC C and C++ compilers that come with GNAT need to be used to generate
+the cross-references information needed by GPS, via the @code{-fdump-xref}
+switch. This means that you need to first add the @code{-fdump-xref}
+switch to your project's switches for C and C++ sources, and compile
+your application before you browse through the cross-references or view
+various graphs in GPS.
+If sources have been modified, you should recompile the modified files.
 
 @end table
 
@@ -3783,19 +3767,9 @@ You can select the menu @code{Build->Load xref info in memory} to force GPS to
 load all the available information immediately in memory. This will speed up
 future queries.
 
-This menu can also be used in some cases for C and C++. Since these languages
-have no notion of package, the declaration of a subprogram and its actual
-implementation can be in two different files with vastly different names.
-GPS in such case will not be able to display a @code{Goto body} contextual
-menu unless it has already parsed both files. A way to get fully accurate
-cross-reference information is thus to load all information into memory
-before attempting any navigation operation.
-
-A special case has been put in place so that both @file{file.h} and
-@file{file.cpp} are loaded together in memory. This means that in the general
-case where an entity is defined in @file{foo.h} and implemented in
-@file{foo.cpp}, nothing special needs to be done. The specific file extensions
-depend on the naming scheme specified in your project.
+Note that GPS always loads all xref information for C and C++ sources in
+order to provide accurate source navigation, so this menu is mainly relevant
+for Ada sources.
 
 A preference can be set to have GPS load the cross-information automatically
 on startup, @xref{The Preferences Dialog}.
@@ -4179,10 +4153,10 @@ This behavior is controlled by the @code{Hyper links} preference.
 @c --------------------------------------------------------------------
 
 @noindent
-One the GPS plug-ins that can be loaded (@code{dispatching.py}) will
-highligh dispatching calls in your code.
+One of the optional plug-ins that can be loaded (@code{dispatching.py}) will
+highlight dispatching calls in your code.
 
-Based on the cross-reference information, this plugins will highlight
+Based on the cross-reference information, this plug-in will highlight
 (with a special color that you can configure in the preferences dialog)
 all calls that are dispatching (or calls to virtual methods in C++).
 A dispatching call, in Ada, is a subprogram call where the actual
@@ -4192,8 +4166,8 @@ are using object-oriented programming).
 
 To disable this highlighting (which might sometimes be slow if you are
 using big sources, even though the highlighting itself is done in the
-background), you should go to the @code{/Tools/Plug-ins} menu, and
-disable the @code{dispatching.py} plugin.
+background), you can go to the @code{/Tools/Plug-ins} menu, and
+disable the @code{dispatching.py} plug-in.
 
 @c --------------------------------------------------------------------
 @node Project Handling

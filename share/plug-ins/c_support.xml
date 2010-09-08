@@ -16,8 +16,8 @@
       <switches lines="2" columns="2">
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
-        <title line="2" column="1" column-span="2" >Messages</title>
-        <title line="2" column="2" column-span="0" />
+        <title line="2" column="1" >Messages</title>
+        <title line="2" column="2" >Source Navigation</title>
 
         <combo switch="-O" noswitch="0" nodigit="1" >
            <combo-entry label="No optimization" value="0" />
@@ -53,6 +53,10 @@
                tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
         <check label="Strict ANSI" switch="-ansi" line="2"
                tip="In C mode, support all ANSI standard C programs" />
+
+        <check label="Generate xref information" switch="-fdump-xref"
+               line="2" column="2"
+               tip="Generate cross-reference information for C sources. Requires a recent C compiler" />
       </switches>
    </tool>
 
@@ -61,8 +65,8 @@
       <switches lines="2" columns="2">
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
-        <title line="2" column="1" column-span="2" >Messages</title>
-        <title line="2" column="2" column-span="0" />
+        <title line="2" column="1" >Messages</title>
+        <title line="2" column="2" >Source Navigation</title>
 
         <combo switch="-O" noswitch="0" nodigit="1" >
            <combo-entry label="No optimization" value="0" />
@@ -101,6 +105,10 @@
                tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
         <check label="Overloaded virtual" switch="-Woverloaded-virtual"
                line="2" />
+
+        <check label="Generate xref information" switch="-fdump-xref"
+               line="2" column="2"
+               tip="Generate cross-reference information for C++ sources. Requires a recent C compiler" />
       </switches>
    </tool>
 
