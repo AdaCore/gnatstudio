@@ -5,7 +5,6 @@ project Libkernel is
    for Source_Dirs use
      ("src",
       "src_info",
-      "src_info/sn_wrapper",
       "../gnat",
       "../gnat/sdefault",
       "../common/src",
