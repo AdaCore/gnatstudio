@@ -17,19 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
-with GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with ALI_Parser;                 use ALI_Parser;
-with CPP_Parser;                 use CPP_Parser;
 with Case_Handling;              use Case_Handling;
 with Default_Preferences;        use Default_Preferences;
 with Entities;                   use Entities;
 with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
@@ -44,9 +39,6 @@ with Projects;                   use Projects;
 with Traces;                     use Traces;
 
 package body Cpp_Module is
-
-   Use_GLI_Trace : constant Debug_Handle :=
-                     Create ("CPP.GLI", GNATCOLL.Traces.Off);
 
    C_Automatic_Indentation   : Indentation_Kind_Preferences.Preference;
    C_Use_Tabs                : Boolean_Preference;
@@ -66,12 +58,6 @@ package body Cpp_Module is
       Base_Name : Filesystem_String) return Filesystem_String;
    --  See doc for inherited subprograms
 
-   function Create_GLI_Handler
-     (Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry)
-      return Entities.LI_Handler;
-   --  Create a new ALI handler
-
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
@@ -80,11 +66,6 @@ package body Cpp_Module is
      (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor;
    --  Create the naming scheme editor page
-
-   procedure Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the project view has changed in the kernel.
-   --  This resets the internal data for the C/C++ handler.
 
    ----------------------------
    -- GLI_Handler primitives --
@@ -142,19 +123,19 @@ package body Cpp_Module is
    -------------------------------
 
    ------------------------
-   -- Create_GLI_Handler --
+   -- Create_CPP_Handler --
    ------------------------
 
-   function Create_GLI_Handler
+   function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
-      Registry : Projects.Project_Registry) return Entities.LI_Handler
+      Registry : Projects.Project_Registry'Class) return Entities.LI_Handler
    is
       CPP : constant GLI_Handler := new GLI_Handler_Record;
    begin
       CPP.Db            := Db;
-      CPP.Registry      := Registry;
+      CPP.Registry      := Project_Registry (Registry);
       return LI_Handler (CPP);
-   end Create_GLI_Handler;
+   end Create_CPP_Handler;
 
    ----------------------------
    -- C_Naming_Scheme_Editor --
@@ -204,22 +185,6 @@ package body Cpp_Module is
       Set_Indentation_Parameters (Cpp_Lang, Params, Style);
    end On_Preferences_Changed;
 
-   --------------------------
-   -- Project_View_Changed --
-   --------------------------
-
-   procedure Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-   begin
-      CPP_Parser.On_Project_View_Changed
-        (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Project_View_Changed;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -227,42 +192,13 @@ package body Cpp_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (LI_Handler_Record'Class, LI_Handler);
-
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-      LI      : LI_Handler;
+      LI      : constant LI_Handler :=
+                 Create_CPP_Handler
+                   (Get_Database (Kernel),
+                    Project_Registry (Get_Registry (Kernel).all));
 
    begin
-      if Active (Use_GLI_Trace) then
-         LI := Create_GLI_Handler
-                 (Get_Database (Kernel),
-                  Project_Registry (Get_Registry (Kernel).all));
-      else
-         LI := Create_CPP_Handler
-                 (Get_Database (Kernel),
-                  Project_Registry (Get_Registry (Kernel).all));
-
-         declare
-            Msg : constant String :=
-                    Set_Executables (Get_System_Dir (Kernel), LI);
-         begin
-            if Msg /= "" then
-               --  No parser will be available. However, we still want the
-               --  highlighting for C and C++ files
-
-               Insert (Kernel, Msg, Mode => Error);
-               Unchecked_Free (LI);
-            else
-               Add_Hook
-                 (Kernel, Project_View_Changed_Hook,
-                  Wrapper (Project_View_Changed'Access),
-                  Name => "cpp_module.project_view_changed");
-               On_Project_View_Changed (LI);
-            end if;
-         end;
-      end if;
-
       Register_Language (Handler, C_Lang, null, LI => LI);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => "c",
