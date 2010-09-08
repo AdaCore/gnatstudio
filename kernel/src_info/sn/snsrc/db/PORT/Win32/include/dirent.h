@@ -1,1 +1,0 @@
-#pragma message ("Dummy dirent.h included for windows.")
