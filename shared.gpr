@@ -31,11 +31,11 @@ project Shared is
       case Build is
          when "Debug" =>
             for Default_Switches ("Ada") use
-              ("-g", "-O1", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
+              ("-g", "-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
                "-gnatwaCJe", "-gnat05");
 
             for Default_Switches ("C") use
-              ("-g", "-O1") & GnatColl_Shared.Gtk_Include;
+              ("-g", "-O1", "-fdump-xref") & GnatColl_Shared.Gtk_Include;
 
          when "Production" =>
             for Default_Switches ("Ada") use

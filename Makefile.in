@@ -79,17 +79,16 @@ ifeq ($(OS),Windows_NT)
 else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 endif
-	$(MAKE) -C kernel/src_info/sn/snsrc install
 
 install-strip: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) -s gps/obj/gps.exe $(bindir)
+	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
 	$(MAKE) -C common/expect install-strip
 else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
 endif
-	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
 
 test: force
 	@cd scripts; ./testsuites

@@ -24,7 +24,6 @@ include ../Makefile.gnat
 all:
 	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
-	$(MAKE) -s -C ../kernel/src_info/sn
 	$(MAKE) -s -C ../gnatlib do_links
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -P../gnatlib/src/gnatcoll
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
@@ -44,5 +43,4 @@ clean:
 ifeq ($(OS),Windows_NT)
 	$(MAKE) -s -C ../common/expect clean
 endif
-	$(MAKE) -s -C ../kernel/src_info/sn clean
 	-gprclean -q -r -Pgps
