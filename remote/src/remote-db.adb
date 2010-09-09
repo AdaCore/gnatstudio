@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
@@ -591,9 +592,34 @@ package body Remote.Db is
       if Child /= null then
          Use_Pipes :=
            Boolean'Value (Get_Attribute (Child, "use_pipes", "false"));
-         Start_Command := new String'(Child.Value.all);
+         Start_Command := GNAT.OS_Lib.Locate_Exec_On_Path (Child.Value.all);
+
+         if Start_Command = null then
+            Trace
+              (Me, "Ignoring Access tool " & Name & " as it cannot be found");
+            --  No such tool on the system, just ignore this config
+            return;
+
+         elsif Ada.Strings.Fixed.Index (Start_Command.all, "Windows") in
+           Start_Command'Range
+         then
+            --  Microsoft tools located in the Windows folder are not supported
+            Trace
+              (Me, "Ignoring Access tool " & Name &
+               " as this version is not supported by GPS");
+            Free (Start_Command);
+
+            return;
+         end if;
+
       else
-         Start_Command := null;
+         Console.Insert
+           (Kernel,
+            -("XML Error: remote_connection_config is missing a " &
+              "start_command field for " & Name),
+            Add_LF => True, Mode => Error);
+
+         return;
       end if;
 
       if Start_Command = null then
