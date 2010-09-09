@@ -222,4 +222,11 @@ package Builder_Facility_Module is
    --  Get/Set the last main that was actually used when launching a manual
    --  build for Target
 
+   ----------------------
+   -- Background build --
+   ----------------------
+
+   procedure Interrupt_Background_Build;
+   --  Interrupt the currently running background build
+
 end Builder_Facility_Module;

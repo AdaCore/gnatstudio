@@ -865,6 +865,10 @@ package body Build_Command_Manager is
       end Launch_For_Mode;
 
    begin
+      --  If there is already a background build running, interrupt it
+      --  and clean up before launching a new build.
+      Interrupt_Background_Build;
+
       --  Get the target
 
       T := Get_Target_From_Name (Registry, Target_Name);

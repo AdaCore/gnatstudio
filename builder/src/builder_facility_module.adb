@@ -397,9 +397,6 @@ package body Builder_Facility_Module is
       Context     : Selection_Context;
       Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   procedure Interrupt_Background_Build;
-   --  Interrupt the currently running background build
-
    -------------------------------
    -- Append_To_Contextual_Menu --
    -------------------------------
@@ -1058,10 +1055,6 @@ package body Builder_Facility_Module is
          then
             return;
          end if;
-
-         --  If there is already a background build running, interrupt it
-         --  and clean up before launching a new one.
-         Interrupt_Background_Build;
       end if;
 
       --  We run this hook only when a source file has changed.
@@ -1270,8 +1263,6 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Interrupt_Background_Build;
-
       Launch_Target
         (Get_Kernel,
          Builder_Module_ID.Registry,
@@ -1294,8 +1285,6 @@ package body Builder_Facility_Module is
       Data : constant Gtkada.Combo_Tool_Button.User_Data :=
                Get_Selected_Item_Data (Widget);
    begin
-      Interrupt_Background_Build;
-
       if Data /= null then
          Launch_Target
            (Get_Kernel,
@@ -2689,6 +2678,9 @@ package body Builder_Facility_Module is
    procedure Interrupt_Background_Build is
    begin
       if Builder_Module_ID.Background_Build_Command /= null then
+         Get_Messages_Container (Builder_Module_ID.Get_Kernel).Remove_Category
+           (Current_Background_Build_Id);
+
          Interrupt_Queue
            (Get_Kernel,
             Command_Access (Builder_Module_ID.Background_Build_Command));
