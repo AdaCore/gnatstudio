@@ -2873,10 +2873,7 @@ package body Entities.Queries is
    -- Get_Full_Name --
    -------------------
 
-   function Get_Full_Name
-     (Entity    : Entity_Information;
-      Separator : String := ".") return String
-   is
+   function Get_Full_Name (Entity : Entity_Information) return String is
       Max_Level     : constant := 128;
       --  Limit number of names, to avoid e.g. infinite loop in case of
       --  incorrect/confusing xref info.
@@ -2884,6 +2881,11 @@ package body Entities.Queries is
       E             : Entity_Information := Entity;
       Last_Not_Null : Entity_Information := Entity;
       Result        : Unbounded_String;
+      Separator     : constant String :=
+                        Scope_Separator
+                          (Entity.LI_Declaration.File.Db.Lang.
+                            Get_Language_From_File
+                              (Entity.LI_Declaration.File.Name));
 
    begin
       --  For efficiency, build the name in reverse order, to avoid freeing

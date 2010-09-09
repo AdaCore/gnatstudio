@@ -476,9 +476,7 @@ package Entities.Queries is
    -- Full_Name --
    ---------------
 
-   function Get_Full_Name
-     (Entity    : Entity_Information;
-      Separator : String := ".") return String;
+   function Get_Full_Name (Entity : Entity_Information) return String;
    --  Return the fully qualified name for the entity
 
    -----------------------
