@@ -21,8 +21,8 @@ NF-45-J907-015 Completion for task entries (2010-09-09)
 
 NF-45-J813-008 Centralized font handling in the source editor (2010-09-02)
 
-  The selection of fonts in for the source editor has been simplified. In the
-  section Editor -> Fonts & Colors of the Preferences dialog, all fonts are
+  The selection of fonts in the source editor has been simplified. In the
+  section Editor->Fonts & Colors of the Preferences dialog, all fonts are
   represented as variants of the default font.
 
 NF-45-J811-011 Syntax highlighting for declarations (2010-08-12)
