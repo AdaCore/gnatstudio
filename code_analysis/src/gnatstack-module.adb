@@ -400,12 +400,12 @@ package body GNATStack.Module is
 
       Project     : constant GNATCOLL.Projects.Project_Type :=
                       GPS.Kernel.Project.Get_Project (Self.Kernel);
-      Source_Dirs : constant GNATCOLL.VFS.File_Array :=
-                      GNATCOLL.Projects.Source_Dirs (Project, True);
+      Project_Dir : constant GNATCOLL.VFS.Virtual_File :=
+                      GNATCOLL.VFS.Create
+                        (GNATCOLL.Projects.Project_Path (Project).Dir_Name);
       XML_Name    : constant GNATCOLL.VFS.Virtual_File :=
                       GNATCOLL.VFS.Create_From_Dir
-                        (GNATCOLL.Projects.Object_Dir (Project),
-                         "stack_usage.xml");
+                        (Project_Dir, "stack_usage.xml");
       CI_Pattern  : constant GNAT.Regexp.Regexp :=
                       GNAT.Regexp.Compile ("*.ci", True);
       CI_Name     : GNATCOLL.VFS.Virtual_File;
@@ -442,34 +442,29 @@ package body GNATStack.Module is
          if Switches /= null then
             for J in Switches'Range loop
                if GNAT.Regexp.Match (Switches (J).all, CI_Pattern) then
-                  for K in Source_Dirs'Range loop
-                     CI_Name :=
-                       GNATCOLL.VFS.Create_From_Dir
-                         (Source_Dirs (K),
-                          GNATCOLL.VFS.Filesystem_String (Switches (J).all));
+                  CI_Name :=
+                    GNATCOLL.VFS.Create_From_Dir
+                      (Project_Dir,
+                       GNATCOLL.VFS.Filesystem_String (Switches (J).all));
 
-                     if CI_Name.Is_Regular_File then
-                        GNATStack.CI_Utilities.Merge
-                          (Module.Data, String (CI_Name.Full_Name.all));
+                  if CI_Name.Is_Regular_File then
+                     GNATStack.CI_Utilities.Merge
+                       (Module.Data, String (CI_Name.Full_Name.all));
 
-                        exit;
-                     end if;
-
+                  else
                      --  File not found, create empty record in data for this
                      --  file.
 
-                     if J = Source_Dirs'Last then
-                        Module.Data.CIs.Append
-                          (new GNATStack.Data_Model.CI_Information'
-                             (Ada.Strings.Unbounded.To_Unbounded_String
-                                (String
-                                   (GNATCOLL.VFS.Create_From_Dir
-                                      (Source_Dirs (Source_Dirs'First),
-                                       GNATCOLL.VFS.Filesystem_String
-                                         (Switches (J).all)).Full_Name.all)),
-                              Subprograms => <>));
-                     end if;
-                  end loop;
+                     Module.Data.CIs.Append
+                       (new GNATStack.Data_Model.CI_Information'
+                          (Ada.Strings.Unbounded.To_Unbounded_String
+                             (String
+                                (GNATCOLL.VFS.Create_From_Dir
+                                   (Project_Dir,
+                                    GNATCOLL.VFS.Filesystem_String
+                                      (Switches (J).all)).Full_Name.all)),
+                           Subprograms => <>));
+                  end if;
                end if;
             end loop;
 
