@@ -4394,6 +4394,7 @@ package body Ada_Analyzer is
                  or else Prev_Token = Tok_Task
                  or else Prev_Token = Tok_Body
                  or else Prev_Token = Tok_Entry
+                 or else Prev_Token = Tok_Accept
                  or else Prev_Token = Tok_Package
                  or else (Prev_Token = Tok_Renames
                           and then Prev_Prev_Token = Tok_Right_Paren)
