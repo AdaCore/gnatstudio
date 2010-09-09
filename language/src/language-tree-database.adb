@@ -279,10 +279,13 @@ package body Language.Tree.Database is
    -----------------
 
    function Get_Profile
-     (Lang     : access Tree_Language;
-      Entity   : Entity_Access;
-      Max_Size : Natural) return String
+     (Lang       : access Tree_Language;
+      Entity     : Entity_Access;
+      Max_Size   : Integer;
+      Raw_Format : Boolean := False) return String
    is
+      pragma Unreferenced (Raw_Format);
+
       Tree                 : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
       Buffer               : constant GNAT.Strings.String_Access :=

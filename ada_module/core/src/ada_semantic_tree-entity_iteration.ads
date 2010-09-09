@@ -164,10 +164,10 @@ private
 
       Content_It : Construct_Tree_Iterator := Null_Construct_Tree_Iterator;
 
-      Package_Body      : Construct_Tree_Iterator :=
+      Body_Entity      : Construct_Tree_Iterator :=
         Null_Construct_Tree_Iterator;
-      Package_Body_File : Structured_File_Access;
-      Package_Body_Tree : Construct_Tree;
+      Body_File : Structured_File_Access;
+      Body_Tree : Construct_Tree;
       Package_Relation  : Location_Relation := Full_Spec_Hierarchy;
 
       --  for Child_Packages step

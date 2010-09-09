@@ -44,9 +44,10 @@ package Ada_Semantic_Tree.Lang is
      (Lang     : access Ada_Tree_Language;
       Entity : Entity_Access) return String;
    overriding function Get_Profile
-     (Lang     : access Ada_Tree_Language;
-      Entity   : Entity_Access;
-      Max_Size : Natural) return String;
+     (Lang       : access Ada_Tree_Language;
+      Entity     : Entity_Access;
+      Max_Size   : Integer;
+      Raw_Format : Boolean := False) return String;
    overriding procedure Diff
      (Lang               : access Ada_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;

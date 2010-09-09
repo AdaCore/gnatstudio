@@ -47,10 +47,11 @@ package body Ada_Semantic_Tree.Lang is
    type Doc_Kind is (All_Doc, Profile);
 
    function Format_Documentation
-     (Lang     : access Ada_Tree_Language;
-      Entity   : Entity_Access;
-      Max_Size : Integer;
-      Kind     : Doc_Kind) return String;
+     (Lang       : access Ada_Tree_Language;
+      Entity     : Entity_Access;
+      Max_Size   : Integer;
+      Kind       : Doc_Kind;
+      Raw_Format : Boolean := False) return String;
    --  Factorization of the documentation information. If Max_Size is -1, then
    --  all the documentation is returned, otherwise only the Max_Size first.
 
@@ -133,11 +134,13 @@ package body Ada_Semantic_Tree.Lang is
    -----------------
 
    overriding function Get_Profile
-     (Lang     : access Ada_Tree_Language;
-      Entity   : Entity_Access;
-      Max_Size : Natural) return String is
+     (Lang       : access Ada_Tree_Language;
+      Entity     : Entity_Access;
+      Max_Size   : Integer;
+      Raw_Format : Boolean := False) return String is
    begin
-      return Format_Documentation (Lang, Entity, Max_Size, Profile);
+      return Format_Documentation
+        (Lang, Entity, Max_Size, Profile, Raw_Format);
    end Get_Profile;
 
    --------------------------
@@ -145,10 +148,11 @@ package body Ada_Semantic_Tree.Lang is
    --------------------------
 
    function Format_Documentation
-     (Lang     : access Ada_Tree_Language;
-      Entity   : Entity_Access;
-      Max_Size : Integer;
-      Kind     : Doc_Kind) return String
+     (Lang       : access Ada_Tree_Language;
+      Entity     : Entity_Access;
+      Max_Size   : Integer;
+      Kind       : Doc_Kind;
+      Raw_Format : Boolean := False) return String
    is
       Tree                 : constant Construct_Tree :=
                                Get_Tree (Get_File (Entity));
@@ -526,6 +530,8 @@ package body Ada_Semantic_Tree.Lang is
                      if Kind = All_Doc then
                         Append
                           ("<span foreground=""#555555"">[");
+                     elsif not Raw_Format then
+                        Append ("[");
                      end if;
                   else
                      if Kind = All_Doc then
@@ -551,11 +557,18 @@ package body Ada_Semantic_Tree.Lang is
                   end if;
 
                   if Success then
-                     Append
-                       (" : <b>"
-                        & Attribute_Decoration
-                          (Get_Construct (Sub_Iter).all, True)
-                        & "</b>");
+                     if Raw_Format then
+                        Append
+                          (" : "
+                           & Attribute_Decoration
+                             (Get_Construct (Sub_Iter).all, False));
+                     else
+                        Append
+                          (" : <b>"
+                           & Attribute_Decoration
+                             (Get_Construct (Sub_Iter).all, True)
+                           & "</b>");
+                     end if;
 
                      if Kind = All_Doc then
                         for J in
@@ -593,12 +606,18 @@ package body Ada_Semantic_Tree.Lang is
                         Append (" ");
                      end loop;
 
-                     Append
-                       (" :="
-                        & Reduce
-                          (Escape_Text
-                             (" " & Get_Default_Value
-                                (Get_Construct (Sub_Iter).all))) & "]");
+                     if Raw_Format then
+                        Append
+                          (" :=" & Get_Default_Value
+                             (Get_Construct (Sub_Iter).all));
+                     else
+                        Append
+                          (" :="
+                           & Reduce
+                             (Escape_Text
+                                (" " & Get_Default_Value
+                                   (Get_Construct (Sub_Iter).all))) & "]");
+                     end if;
 
                      if Kind = All_Doc then
                         Append

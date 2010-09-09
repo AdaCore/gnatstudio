@@ -25,6 +25,11 @@ with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 
 package body Ada_Semantic_Tree.Entity_Iteration is
 
+   procedure Initialize_Body_Entity (It : in out Semantic_Tree_Iterator);
+   --  Initializes the body entity, and moves the cursor to the spec entity
+   --  if currently set to the body. This applies only on packages, tasks and
+   --  protected types.
+
    -------------------------------
    -- To_Semantic_Tree_Iterator --
    -------------------------------
@@ -143,6 +148,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       Ref (Result.Excluded_Entities);
 
       Push_Entity (Result.Excluded_Entities, Real_Sem_Info.Entity);
+
+      Initialize_Body_Entity (Result);
 
       case Get_Construct (Real_Sem_Info.Entity).Category is
          when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
@@ -429,7 +436,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                   Get_Construct (It.Current_Construct).Category
                 = Cat_Package
                or else Get_Construct (It.Current_Construct).Category
-                = Cat_Protected)
+                = Cat_Protected
+               or else Get_Construct (It.Current_Construct).Category
+                = Cat_Task)
               and then not Is_Enum_Type
                 (It.Current_Tree, It.Current_Construct)
             then
@@ -439,12 +448,12 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                It.Step_Has_Started := True;
             else
                if It.Step = Package_Spec_Contents
-                 and then It.Package_Body /= Null_Construct_Tree_Iterator
+                 and then It.Body_Entity /= Null_Construct_Tree_Iterator
                then
                   It.Step := Package_Body_Contents;
-                  It.Current_Construct := It.Package_Body;
-                  It.Current_File := It.Package_Body_File;
-                  It.Current_Tree := It.Package_Body_Tree;
+                  It.Current_Construct := It.Body_Entity;
+                  It.Current_File := It.Body_File;
+                  It.Current_Tree := It.Body_Tree;
                   It.Step_Has_Started := False;
                else
                   It.Step := Finished;
@@ -488,21 +497,21 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                --  look for the package body
 
                if It.Step = Package_Spec_Contents
-                 and then It.Package_Body /= Null_Construct_Tree_Iterator
+                 and then It.Body_Entity /= Null_Construct_Tree_Iterator
                  and then
                    (It.From_Visibility.File = null
                     or else Get_Location_Relation
                       (Get_Tree (It.Current_File),
-                       It.Package_Body,
+                       It.Body_Entity,
                        Get_Tree (It.From_Visibility.File),
                        It.From_Visibility.Offset) = Package_Body)
                then
                   --  If we should see the package body, then move to it.
 
                   It.Step := Package_Body_Contents;
-                  It.Current_Construct := It.Package_Body;
-                  It.Current_File := It.Package_Body_File;
-                  It.Current_Tree := It.Package_Body_Tree;
+                  It.Current_Construct := It.Body_Entity;
+                  It.Current_File := It.Body_File;
+                  It.Current_Tree := It.Body_Tree;
                   It.Step_Has_Started := False;
                else
                   --  Otherwise, move over
@@ -551,42 +560,10 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          --  and in this case, go to the spec.
 
          if It.Step = Package_Spec_Contents then
-            if not
-              Get_Construct (It.Current_Construct).Is_Declaration
-            then
-               It.Package_Body := It.Current_Construct;
-               It.Package_Body_File := It.Current_File;
-               It.Package_Body_Tree := It.Current_Tree;
+            Initialize_Body_Entity (It);
 
-               declare
-                  Spec : Entity_Access;
-               begin
-                  Spec := Get_First_Occurence
-                    (To_Entity_Access
-                       (It.Package_Body_File, It.Package_Body));
-
-                  if Get_Construct (Spec).Is_Declaration then
-                     It.Current_Construct := To_Construct_Tree_Iterator (Spec);
-                     It.Current_File := Get_File (Spec);
-                     It.Current_Tree := Get_Tree (It.Current_File);
-                  else
-                     It.Step := Package_Body_Contents;
-                  end if;
-               end;
-            else
-               declare
-                  The_Body : Entity_Access;
-               begin
-                  The_Body := Get_Second_Occurence
-                    (To_Entity_Access (It.Current_File, It.Current_Construct));
-
-                  if The_Body /= Null_Entity_Access then
-                     It.Package_Body :=
-                       To_Construct_Tree_Iterator (The_Body);
-                     It.Package_Body_File := Get_File (The_Body);
-                     It.Package_Body_Tree := Get_Tree (It.Current_File);
-                  end if;
-               end;
+            if not Get_Construct (It.Current_Construct).Is_Declaration then
+               It.Step := Package_Body_Contents;
             end if;
 
             if It.From_Visibility.File /= null then
@@ -848,5 +825,45 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          Free (It.Parents);
       end if;
    end Free;
+
+   ----------------------------
+   -- Initialize_Body_Entity --
+   ----------------------------
+
+   procedure Initialize_Body_Entity (It : in out Semantic_Tree_Iterator) is
+      The_Body : Entity_Access;
+      The_Spec : Entity_Access;
+   begin
+      if Get_Construct (It.Current_Construct).Category = Cat_Package
+        or else Get_Construct (It.Current_Construct).Category = Cat_Task
+        or else Get_Construct (It.Current_Construct).Category = Cat_Protected
+      then
+         if Get_Construct (It.Current_Construct).Is_Declaration then
+            The_Body := Get_Second_Occurence
+              (To_Entity_Access (It.Current_File, It.Current_Construct));
+
+            if The_Body /= Null_Entity_Access then
+               It.Body_Entity :=
+                 To_Construct_Tree_Iterator (The_Body);
+               It.Body_File := Get_File (The_Body);
+               It.Body_Tree := Get_Tree (It.Current_File);
+            end if;
+         else
+            It.Body_Entity := It.Current_Construct;
+            It.Body_File := It.Current_File;
+            It.Body_Tree := It.Current_Tree;
+
+            The_Spec := Get_First_Occurence
+              (To_Entity_Access
+                 (It.Body_File, It.Body_Entity));
+
+            if To_Entity_Access (It.Body_File, It.Body_Entity) /= The_Spec then
+               It.Current_Construct := To_Construct_Tree_Iterator (The_Spec);
+               It.Current_File := Get_File (The_Spec);
+               It.Current_Tree := Get_Tree (It.Current_File);
+            end if;
+         end if;
+      end if;
+   end Initialize_Body_Entity;
 
 end Ada_Semantic_Tree.Entity_Iteration;

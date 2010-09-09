@@ -1477,7 +1477,7 @@ package body Completion_Module is
             case Token_List.Data
               (Token_List.First (Exp.Tokens)).Tok_Type
             is
-               when Tok_With | Tok_Use | Tok_Pragma =>
+               when Tok_With | Tok_Use | Tok_Pragma | Tok_Accept =>
                   return True;
 
                when others =>

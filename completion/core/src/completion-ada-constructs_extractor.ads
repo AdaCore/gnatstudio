@@ -111,6 +111,8 @@ private
       Actual_Params : Actual_Parameter_Resolver_Access;
       --  ??? maybe this can be retreived directly from the view...
 
+      From_Accept_Statement : Boolean := False;
+
       View       : Entity_View;
       Is_In_Call : Boolean;
    end record;
@@ -181,9 +183,10 @@ private
 
    type Construct_Db_Wrapper is new Completion_List_Pckg.Virtual_List_Component
    with record
-      Context  : Visibility_Context;
-      Resolver : Completion_Resolver_Access;
-      List     : Entity_List;
+      Context               : Visibility_Context;
+      Resolver              : Completion_Resolver_Access;
+      List                  : Entity_List;
+      From_Accept_Statement : Boolean := False;
    end record;
 
    overriding
@@ -205,9 +208,10 @@ private
    type Construct_Iterator_Wrapper is new
      Completion_List_Pckg.Virtual_List_Component_Iterator
    with record
-      Context  : Visibility_Context;
-      Resolver : Completion_Resolver_Access;
-      Iter     : Entity_Iterator;
+      Context               : Visibility_Context;
+      From_Accept_Statement : Boolean := False;
+      Resolver              : Completion_Resolver_Access;
+      Iter                  : Entity_Iterator;
 
       Current_Decl : Entity_View := Null_Entity_View;
 

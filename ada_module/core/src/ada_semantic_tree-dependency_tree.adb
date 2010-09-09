@@ -577,20 +577,28 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                It := Next (Current_Tree, It, Jump_Into);
             elsif
               (Get_Construct (It).Category = Cat_Package
-               or else Get_Construct (It).Category = Cat_Protected)
-              and then Get_Construct (It).Is_Declaration
-              and then
-                (Is_Compilation_Unit (It)
-                 or else
-                   (Entity_At_Location /= Null_Entity_Access
-                    and then Unchecked_Is_In_Scope
-                      (Parts_Assistant, Current_Entity, Entity_At_Location)))
+               and then Get_Construct (It).Is_Declaration
+               and then
+                 (Is_Compilation_Unit (It)
+                  or else
+                    (Entity_At_Location /= Null_Entity_Access
+                     and then Unchecked_Is_In_Scope
+                       (Parts_Assistant, Current_Entity, Entity_At_Location))))
+              or else
+                ((Get_Construct (It).Category = Cat_Protected
+                  or else Get_Construct (It).Category = Cat_Task)
+                 and then
+                   Entity_At_Location /= Null_Entity_Access
+                 and then Unchecked_Is_In_Scope
+                   (Parts_Assistant, Current_Entity, Entity_At_Location))
             then
                --  We jump into in several cases:
                --    we are on the same direct scope hierarchy
                --      (tested by is_same_scope)
                --    we are on the compilation unit, that is to say probably
                --      a parent of the actual unit.
+               --    we're on the current task
+               --    we're on the current protected object
 
                It := Next (Current_Tree, It, Jump_Into);
             elsif Get_Construct (It).Category = Cat_Use

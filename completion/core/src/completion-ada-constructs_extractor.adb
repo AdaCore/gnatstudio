@@ -25,6 +25,7 @@ with GNAT.Strings;
 with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
+with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 
 package body Completion.Ada.Constructs_Extractor is
 
@@ -299,6 +300,15 @@ package body Completion.Ada.Constructs_Extractor is
          end;
 
          return "";
+      elsif Proposal.From_Accept_Statement then
+         return Get_Label (Proposal)
+           & " " & Ada_Tree_Lang.Get_Profile
+           (Get_Entity (Proposal.View), -1, True)
+           & " do"
+           & ASCII.LF
+           & "null;"
+           & ASCII.LF
+           & "end " &  Get_Label (Proposal) & ";";
       else
          return Get_Label (Proposal);
       end if;
@@ -625,7 +635,10 @@ package body Completion.Ada.Constructs_Extractor is
                From_Visibility           => Visibility,
                Expression                => Expression,
                Categories                => Null_Category_Array,
-               Is_Partial                => True)));
+               Is_Partial                => True),
+            Expression /= Null_Parsed_Expression
+            and then Token_List.Data
+              (Token_List.First (Expression.Tokens)).Tok_Type = Tok_Accept));
 
       Free (Expression);
    end Get_Completion_Root;
@@ -665,6 +678,7 @@ package body Completion.Ada.Constructs_Extractor is
       Result.Resolver := Db_Construct.Resolver;
       Result.Iter := First (Db_Construct.List);
       Result.Context := Db_Construct.Context;
+      Result.From_Accept_Statement := Db_Construct.From_Accept_Statement;
 
       if Is_Valid (Result) and then not At_End (Result) then
          Result.Current_Decl := Get_View (Result.Iter);
@@ -750,10 +764,11 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
 
       return Construct_Completion_Proposal'
-        (Resolver      => This.Resolver,
-         View          => Deep_Copy (This.Current_Decl),
-         Actual_Params => Actuals,
-         Is_In_Call    => This.Params_Array /= null);
+        (Resolver              => This.Resolver,
+         View                  => Deep_Copy (This.Current_Decl),
+         Actual_Params         => Actuals,
+         Is_In_Call            => This.Params_Array /= null,
+         From_Accept_Statement => This.From_Accept_Statement);
    end Get;
 
    ----------

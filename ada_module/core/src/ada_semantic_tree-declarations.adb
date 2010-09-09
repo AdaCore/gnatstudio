@@ -575,6 +575,13 @@ package body Ada_Semantic_Tree.Declarations is
                return Null_Category_Array;
             end if;
 
+            if Categories = (1 => Cat_Entry) then
+               --  Entries are always returned in a local manner - so they
+               --  can't be refered from a package
+
+               return Categories;
+            end if;
+
             for J in Categories'Range loop
                if Categories (J) = Cat_Package then
                   return Categories;
@@ -587,6 +594,9 @@ package body Ada_Semantic_Tree.Declarations is
          Actual_Categories  : constant Category_Array := Adjust_Categories;
 
          procedure Handle_Identifier (Id : Normalized_Symbol);
+
+         function Is_Callable_Subprogram
+           (Cat : Language_Category) return Boolean;
 
          -----------------------
          -- Handle_Identifier --
@@ -618,7 +628,8 @@ package body Ada_Semantic_Tree.Declarations is
                  and then
                    (Data (Previous_Token).Tok_Type = Tok_Use
                     or else Data (Previous_Token).Tok_Type = Tok_With
-                    or else Data (Previous_Token).Tok_Type = Tok_Colon))
+                    or else Data (Previous_Token).Tok_Type = Tok_Colon
+                    or else Data (Previous_Token).Tok_Type = Tok_Accept))
             then
                Get_Possibilities
                  (Id,
@@ -719,6 +730,30 @@ package body Ada_Semantic_Tree.Declarations is
             end if;
          end Handle_Identifier;
 
+         ----------------------------
+         -- Is_Callable_Subprogram --
+         ----------------------------
+
+         function Is_Callable_Subprogram
+           (Cat : Language_Category) return Boolean
+         is
+         begin
+            case Cat is
+               when Cat_Procedure
+                  | Cat_Function
+                  | Cat_Method
+                  | Cat_Constructor
+                  | Cat_Destructor
+                  | Cat_Entry =>
+
+                  return True;
+
+               when others =>
+
+                  return False;
+            end case;
+         end Is_Callable_Subprogram;
+
       begin
          case Data (Token).Tok_Type is
             when Tok_Dot =>
@@ -732,8 +767,8 @@ package body Ada_Semantic_Tree.Declarations is
                --  ??? We could factorize that in a "Are actuals consistent"
                --  subprogram.
 
-               if (Get_Construct (Get_Entity (Previous_Declaration)).Category
-                    in Subprogram_Category
+               if (Is_Callable_Subprogram
+                   (Get_Construct (Get_Entity (Previous_Declaration)).Category)
                   or else Get_Construct
                     (Get_Entity (Previous_Declaration)).Attributes
                       (Array_Attribute))
@@ -1073,6 +1108,36 @@ package body Ada_Semantic_Tree.Declarations is
                   (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
                    Cat_Subtype, Cat_Package),
                   Result);
+
+            when Tok_Accept =>
+               pragma Assert (Token = First_Token);
+
+               if Context.Context_Type = From_File then
+                  if Next (Token) /= Token_List.Null_Node then
+                     Analyze_Token
+                       (Token,
+                        Next (Token),
+                        Previous_Declaration,
+                        (1 => Cat_Entry),
+                        Result);
+                  else
+                     Get_Possibilities
+                       (No_Normalized_Symbol,
+                        Is_Partial,
+                        (From_File,
+                         Null_Instance_Info,
+                         Context.File,
+                         Data (Token).Token_First - 1),
+                        Actual_From_Visibility,
+                        (1 => Cat_Entry),
+                        Result);
+                  end if;
+               else
+                  --  There no database-wide search starting with an accept
+                  --  token
+
+                  return;
+               end if;
 
             when others =>
                null;

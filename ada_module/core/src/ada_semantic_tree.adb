@@ -412,7 +412,7 @@ package body Ada_Semantic_Tree is
             end if;
 
             case Token.Tok_Type is
-               when Tok_With | Tok_Use | Tok_Pragma | Tok_Colon =>
+               when Tok_With | Tok_Use | Tok_Pragma | Tok_Colon | Tok_Accept =>
                   Prepend (Result.Tokens, Token);
                   Stop := True;
 
