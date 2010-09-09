@@ -612,6 +612,8 @@ package body Ada_Semantic_Tree.Declarations is
             --  Computes if this identifier is a partial one.
 
          begin
+            Tmp.From_Visibility := Actual_From_Visibility;
+
             if Token = First_Token
               or else Data (Previous_Token).Tok_Type = Tok_Colon
             then
