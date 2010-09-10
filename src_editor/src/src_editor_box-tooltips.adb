@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
@@ -25,8 +26,10 @@ with Cairo; use Cairo;
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk, Gdk.Color;
 with Gdk.Cairo;                 use Gdk.Cairo;
+with Gdk.Drawable;              use Gdk.Drawable;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Window;                use Gdk.Window;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -46,23 +49,40 @@ with GUI_Utils;                 use GUI_Utils;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
---  with Src_Editor_Module;         use Src_Editor_Module;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors;               use GPS.Editors;
 
 package body Src_Editor_Box.Tooltips is
+
+   V_Padding : constant := 4;
+   H_Padding : constant := 5;
+   --  Padding in tooltips, in cairo units
+
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
+
+   package Pixmap_List is new Ada.Containers.Doubly_Linked_Lists
+     (Gdk.Pixmap.Gdk_Pixmap);
 
    type Editor_Tooltips is new Standard.Tooltips.Pixmap_Tooltips with record
       Box : Source_Editor_Box;
    end record;
 
+   function To_Single_Pixmap
+     (List   : Pixmap_List.List;
+      Widget : Source_View) return Gdk.Pixmap.Gdk_Pixmap;
+   --  Concatenate all pixmaps in List to create one single pixmap suitable for
+   --  displaying in a tooltip.
+   --  This frees the pixmaps allocated in List.
+
    procedure Draw_Content
-     (Content : Unbounded_String;
-      Widget : Source_View;
-      Pixmap : in out Gdk.Pixmap.Gdk_Pixmap);
+     (Content     : Unbounded_String;
+      Icon        : Gdk_Pixbuf;
+      Widget      : Source_View;
+      Draw_Border : Boolean;
+      Pixmap      : in out Gdk.Pixmap.Gdk_Pixmap);
+   --  Render a string to a pixmap
 
    overriding procedure Draw
      (Tooltip : access Editor_Tooltips;
@@ -140,31 +160,121 @@ package body Src_Editor_Box.Tooltips is
          Entity := null;
    end Get_Declaration_Info;
 
+   ----------------------
+   -- To_Single_Pixmap --
+   ----------------------
+
+   function To_Single_Pixmap
+     (List   : Pixmap_List.List;
+      Widget : Source_View) return Gdk.Pixmap.Gdk_Pixmap
+   is
+      Separator_Width             : constant := 1;
+      Pixmap, Result              : Gdk.Pixmap.Gdk_Pixmap;
+      Width, Height               : Gint := 0;
+      Pixmap_Width, Pixmap_Height : Gint;
+      Current_Y                   : Gdouble := 0.0;
+
+      use Pixmap_List;
+      Cursor : Pixmap_List.Cursor;
+
+      Cr     : Cairo_Context;
+   begin
+      --  Compute sizes
+      Cursor := List.First;
+
+      while Has_Element (Cursor) loop
+         Pixmap := Element (Cursor);
+         Get_Size (Pixmap, Pixmap_Width, Pixmap_Height);
+         Width := Gint'Max (Pixmap_Width, Width);
+         Height := Height + Pixmap_Height + Separator_Width;
+         Next (Cursor);
+      end loop;
+
+      --  Create the final pixmap
+
+      Gdk.Pixmap.Gdk_New (Result, Get_Window (Widget), Width, Height);
+      Cr := Create (Result);
+
+      --  Background
+      Set_Source_Color (Cr, Tooltip_Color.Get_Pref);
+
+      Cairo.Rectangle (Cr, 0.0, 0.0, Gdouble (Width), Gdouble (Height));
+      Cairo.Fill (Cr);
+
+      --  Render and free the pixmaps list
+      Cursor := List.First;
+
+      while Has_Element (Cursor) loop
+         Pixmap := Element (Cursor);
+         Get_Size (Pixmap, Pixmap_Width, Pixmap_Height);
+
+         Save (Cr);
+         Translate (Cr, 0.0, Current_Y);
+         Set_Source_Pixmap (Cr, Pixmap, 0.0, 0.0);
+         Paint (Cr);
+         Restore (Cr);
+
+         Current_Y := Current_Y + Gdouble (Pixmap_Height);
+
+         Next (Cursor);
+         if Has_Element (Cursor) then
+            Current_Y := Current_Y + Gdouble (Separator_Width);
+            Move_To (Cr, 0.0, Current_Y);
+            Set_Source_Rgba (Cr, 0.0, 0.0, 0.0, 0.5);
+            Rel_Line_To (Cr, Gdouble (Width), 0.0);
+            Stroke (Cr);
+         end if;
+
+         Gdk.Pixmap.Unref (Pixmap);
+      end loop;
+
+      --  Border
+      Cairo.Rectangle (Cr, 0.0, 0.0, Gdouble (Width), Gdouble (Height));
+      Set_Source_Color (Cr, Black (Get_Default_Colormap));
+      Stroke (Cr);
+
+      Destroy (Cr);
+
+      return Result;
+   end To_Single_Pixmap;
+
    ------------------
    -- Draw_Content --
    ------------------
 
    procedure Draw_Content
-     (Content : Unbounded_String;
-      Widget : Source_View;
-      Pixmap : in out Gdk.Pixmap.Gdk_Pixmap)
+     (Content     : Unbounded_String;
+      Icon        : Gdk_Pixbuf;
+      Widget      : Source_View;
+      Draw_Border : Boolean;
+      Pixmap      : in out Gdk.Pixmap.Gdk_Pixmap)
    is
       Layout : Pango_Layout;
+      Cr     : Cairo_Context;
+      Font   : constant Pango_Font_Description := Default_Font.Get_Pref_Font;
 
-      Width, Height : Gint;
-      Font          : constant Pango_Font_Description :=
-        Default_Font.Get_Pref_Font;
+      Width,
+      Height,
+      Icon_Width,
+      Icon_Height,
+      Layout_Height : Gint := 0;
 
-      Cr : Cairo_Context;
    begin
       Layout := Create_Pango_Layout (Widget, "");
       Set_Font_Description (Layout, Font);
       Set_Markup (Layout, To_String (Content));
 
-      Get_Pixel_Size (Layout, Width, Height);
+      Get_Pixel_Size (Layout, Width, Layout_Height);
 
-      Width := Width + 6;
-      Height := Height + 4;
+      if Icon = null then
+         Width := Width + H_Padding * 2;
+      else
+         Icon_Width  := Get_Width (Icon);
+         Icon_Height := Get_Height (Icon);
+         Width := Width + Icon_Width + H_Padding * 3;
+      end if;
+
+      Height := Gint'Max (Layout_Height, Icon_Height) + V_Padding * 2;
 
       Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
 
@@ -172,16 +282,33 @@ package body Src_Editor_Box.Tooltips is
       Set_Source_Color (Cr, Tooltip_Color.Get_Pref);
 
       Cairo.Rectangle
-        (Cr, 0.0, 0.0, Gdouble (Width - 1), Gdouble (Height - 1));
+        (Cr, 0.0, 0.0, Gdouble (Width), Gdouble (Height));
       Fill_Preserve (Cr);
 
-      Set_Source_Color (Cr, Black (Get_Default_Colormap));
-      Stroke (Cr);
+      if Draw_Border then
+         Set_Source_Rgb (Cr, 0.0, 0.0, 0.0);
+         Stroke (Cr);
+      end if;
 
-      Move_To (Cr, 2.0, 0.0);
+      if Icon = null then
+         Move_To (Cr, Gdouble (H_Padding), Gdouble (V_Padding));
+      else
+         Move_To (Cr, Gdouble (H_Padding * 2 + Icon_Width),
+                  Gdouble (V_Padding));
+      end if;
+
+      Set_Source_Rgb (Cr, 0.0, 0.0, 0.0);
       Show_Layout (Cr, Layout);
-
       Unref (Layout);
+
+      if Icon /= null then
+         Translate (Cr,
+                    Gdouble (H_Padding),
+                    Gdouble (V_Padding + (Layout_Height - Icon_Height) / 2));
+         Set_Source_Pixbuf (Cr, Icon, 0.0, 0.0);
+         Paint (Cr);
+      end if;
+
       Destroy (Cr);
    end Draw_Content;
 
@@ -241,6 +368,7 @@ package body Src_Editor_Box.Tooltips is
             Content       : Unbounded_String;
             Has_Info      : Boolean := False;
             Action        : GPS.Kernel.Messages.Action_Item;
+            Icon          : Gdk_Pixbuf;
 
             C : Message_List.Cursor;
          begin
@@ -257,7 +385,10 @@ package body Src_Editor_Box.Tooltips is
                   while Message_List.Has_Element (C) loop
                      Action := Message_List.Element (C).Get_Action;
 
+                     Icon := null;
                      if Action /= null then
+                        Icon := Action.Image;
+
                         if Action.Tooltip_Text /= null then
                            if Content /= Null_Unbounded_String then
                               Append (Content, ASCII.LF);
@@ -274,7 +405,7 @@ package body Src_Editor_Box.Tooltips is
             end if;
 
             if Has_Info then
-               Draw_Content (Content, Widget, Pixmap);
+               Draw_Content (Content, Icon, Widget, True, Pixmap);
             end if;
          end;
 
@@ -325,6 +456,9 @@ package body Src_Editor_Box.Tooltips is
          Entity_Ref : Entity_Reference;
          Status     : Find_Decl_Or_Body_Query_Status;
          Context    : Selection_Context := New_Context;
+
+         Pix        : Gdk.Pixmap.Gdk_Pixmap;
+         Pixmaps    : Pixmap_List.List;
       begin
          Get_Contextual_Menu
            (Context  => Context,
@@ -347,6 +481,7 @@ package body Src_Editor_Box.Tooltips is
                   C : Message_List.Cursor;
                   Message : Message_Access;
                   Text    : Unbounded_String;
+                  Icon    : Gdk_Pixbuf;
                begin
                   C := Line_Info (J).Messages.Last;
 
@@ -374,8 +509,14 @@ package body Src_Editor_Box.Tooltips is
                   end loop;
 
                   if Text /= Null_Unbounded_String then
-                     Draw_Content (Text, Widget, Pixmap);
-                     return;
+                     Icon := null;
+
+                     if Message.Get_Action /= null then
+                        Icon := Message.Get_Action.Image;
+                     end if;
+
+                     Draw_Content (Text, Icon, Widget, False, Pix);
+                     Pixmaps.Append (Pix);
                   end if;
                end;
             end loop;
@@ -400,9 +541,14 @@ package body Src_Editor_Box.Tooltips is
          --  Ref the entity, so that if Draw_Tooltip regenerates the xref info,
          --  we are sure to always have a valid entity reference.
          Ref (Entity);
-         Pixmap := Draw_Tooltip
+         Pix := Draw_Tooltip
            (Box.Kernel, Entity, Entity_Ref, Status,
-            Box.Source_Buffer.Get_Language.Get_Language_Context.Accurate_Xref);
+            Box.Source_Buffer.Get_Language.Get_Language_Context.Accurate_Xref,
+            Draw_Border => False);
+
+         Pixmaps.Prepend (Pix);
+         Pixmap := To_Single_Pixmap (Pixmaps, Widget);
+
          Unref (Entity);
       end;
 

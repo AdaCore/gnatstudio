@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,13 +36,15 @@ package Entities.Tooltips is
       Entity        : Entity_Information;
       Ref           : Entity_Reference;
       Status        : Find_Decl_Or_Body_Query_Status;
-      Accurate_Xref : Boolean) return Gdk_Pixmap;
+      Accurate_Xref : Boolean;
+      Draw_Border   : Boolean) return Gdk_Pixmap;
    --  Return a tooltip representing Entity.
 
    function Draw_Tooltip
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Access;
-      Guess  : Boolean := False) return Gdk_Pixmap;
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Access;
+      Draw_Border : Boolean;
+      Guess       : Boolean := False) return Gdk_Pixmap;
    --  Same as above, based on an entity access. If guess is true then the
    --  entity information is a guess - may not be the actual one for the
    --  tooltip.

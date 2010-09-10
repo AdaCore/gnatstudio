@@ -214,11 +214,12 @@ package body Entities.Tooltips is
    ------------------
 
    function Draw_Tooltip
-     (Kernel : access Kernel_Handle_Record'Class;
-      Header : String;
-      Doc    : String;
-      Pixbuf : Gdk_Pixbuf;
-      Guess  : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap;
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Header      : String;
+      Doc         : String;
+      Pixbuf      : Gdk_Pixbuf;
+      Draw_Border : Boolean;
+      Guess       : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap;
    --  Helper function, factorizing the tooltip widget creation
 
    function Draw_Tooltip
@@ -226,7 +227,8 @@ package body Entities.Tooltips is
       Entity        : Entity_Information;
       Ref           : Entity_Reference;
       Status        : Find_Decl_Or_Body_Query_Status;
-      Accurate_Xref : Boolean) return Gdk.Gdk_Pixmap
+      Accurate_Xref : Boolean;
+      Draw_Border   : Boolean) return Gdk.Gdk_Pixmap
    is
       Doc : constant String := Get_Instance (Ref)
         & Get_Documentation (Kernel, Entity);
@@ -237,13 +239,15 @@ package body Entities.Tooltips is
            or else (Accurate_Xref and then Status = Fuzzy_Match),
          Header => Get_Header (Entity),
          Pixbuf => Get_Pixbuf (Entity),
+         Draw_Border => Draw_Border,
          Doc    => Doc);
    end Draw_Tooltip;
 
    function Draw_Tooltip
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Access;
-      Guess  : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Access;
+      Draw_Border : Boolean;
+      Guess       : Boolean := False) return Gdk.Gdk_Pixmap
    is
       pragma Unreferenced (Guess);
 
@@ -254,6 +258,7 @@ package body Entities.Tooltips is
         (Kernel => Kernel,
          Guess  => False,
          Header => "<b>" & Get (Get_Construct (Entity).Name).all & "</b>",
+         Draw_Border => Draw_Border,
          Doc    => Get_Documentation
            (Get_Tree_Language (Get_File (Entity)),
             Entity),
@@ -263,11 +268,12 @@ package body Entities.Tooltips is
    end Draw_Tooltip;
 
    function Draw_Tooltip
-     (Kernel : access Kernel_Handle_Record'Class;
-      Header : String;
-      Doc    : String;
-      Pixbuf : Gdk_Pixbuf;
-      Guess  : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Header      : String;
+      Doc         : String;
+      Pixbuf      : Gdk_Pixbuf;
+      Draw_Border : Boolean;
+      Guess       : Boolean := False) return Gdk.Pixmap.Gdk_Pixmap
    is
       Widget : constant Gtk_Widget := Gtk_Widget (Get_Main_Window (Kernel));
       Pixmap : Gdk.Pixmap.Gdk_Pixmap;
@@ -320,10 +326,12 @@ package body Entities.Tooltips is
       Width := Gint'Min (Width, Max_Width);
 
       Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
-      Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
+      Draw_Rectangle (Pixmap, GC, True, 0, 0, Width, Height);
 
       Set_Foreground (GC, Black (Get_Default_Colormap));
-      Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
+      if Draw_Border then
+         Draw_Rectangle (Pixmap, GC, False, 0, 0, Width - 1, Height - 1);
+      end if;
 
       Render_To_Drawable (Pixbuf, Pixmap, GC, 0, 0, V_Pad, H_Pad,
                           Get_Width (Pixbuf), Get_Height (Pixbuf));

@@ -272,8 +272,9 @@ package body Outline_View is
               (Get_Tree_Language (Get_File (Entity)), Entity);
 
             Pixmap := Entities.Tooltips.Draw_Tooltip
-              (Kernel => Tooltip.Outline.Kernel,
-               Entity => Entity);
+              (Kernel      => Tooltip.Outline.Kernel,
+               Draw_Border => True,
+               Entity      => Entity);
          end if;
       end if;
    end Draw;
