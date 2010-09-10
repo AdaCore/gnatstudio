@@ -60,6 +60,10 @@ package Project_Templates is
 
       Variables : Variables_List.List;
       --  A list of variables which need to be defined for this project
+
+      Project : Unbounded_String;
+      --  The original name of the project file to load after installing
+      --  the template.
    end record;
 
    package Project_Templates_List is new Ada.Containers.Doubly_Linked_Lists
@@ -72,14 +76,15 @@ package Project_Templates is
    --  Return a list of project templates read from description file File.
    --  The format of File is as follows:
    --
-   --  [<label_1>]
-   --  category: <category_1>
-   --  description: <description_1>
+   --  name: <short name of the template>
+   --  category: <category for organizing the template>
+   --  project: <name of the project file>
    --
    --  <variable_1_label>: <default_value_1> : <description_1>
    --  <variable_2_label>: <default_value_2> : <description_2>
    --
-   --  [<label_2>]
+   --  [description]
+   --  <the multi-line description of the project template>
    --
    --  and so forth.
    --  Errors contains error messages in case of errors.
@@ -100,10 +105,12 @@ package Project_Templates is
      (Template    : Project_Template;
       Target_Dir  : Virtual_File;
       Assignments : Variable_Assignments.Map;
+      Project     : out Virtual_File;
       Errors      : out Unbounded_String);
    --  Create Template in target directory Target_Dir, with given variable
    --  assignments.
    --  Target_Dir is created if necessary.
+   --  Project is set to the project file defined in the template.
    --  In case of errors, they are listed in Errors.
 
    function Default_Assignments

@@ -283,9 +283,9 @@ package body Project_Templates.GUI is
      (Templates : Project_Templates_List.List;
       Installed : out Boolean;
       Dir       : out Virtual_File;
+      Project   : out Virtual_File;
       Errors    : out Unbounded_String)
    is
-      pragma Unreferenced (Installed);
       Assistant : Gtk_Assistant;
 
       Scroll   : Gtk_Scrolled_Window;
@@ -528,7 +528,12 @@ package body Project_Templates.GUI is
            (Template    => Page.Template,
             Target_Dir  => Dir,
             Assignments => Page.Get_Assignments,
+            Project     => Project,
             Errors      => Errors);
+
+         if Errors = Null_Unbounded_String then
+            Installed := True;
+         end if;
 
          Gtk.Main.Main_Quit;
       exception
@@ -537,6 +542,8 @@ package body Project_Templates.GUI is
       end On_Apply;
 
    begin
+      Installed := False;
+
       Gtk_New (Assistant);
 
       Gtk_New (Scroll);

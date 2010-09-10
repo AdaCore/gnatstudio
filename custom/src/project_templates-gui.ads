@@ -27,12 +27,13 @@ package Project_Templates.GUI is
      (Templates : Project_Templates_List.List;
       Installed : out Boolean;
       Dir       : out Virtual_File;
+      Project   : out Virtual_File;
       Errors    : out Unbounded_String);
    --  Read templates in Templates, offer a dialog to select a template and
    --  fill in the fields, and select a target directory.
    --  If the user validates the choice, then install the template in the
    --  selected location, and Installed is set to True, and Dir contains
-   --  the target directory.
+   --  the target directory, an dproject
    --  If any errors are encountered, they are listed in Errors.
 
 end Project_Templates.GUI;

@@ -32,7 +32,8 @@ package body Project_Templates is
       Null_Unbounded_String,
       Null_Unbounded_String,
       No_File,
-      Variables_List.Empty_List);
+      Variables_List.Empty_List,
+      Null_Unbounded_String);
 
    function CISW (S : String; Prefix : String) return Boolean;
    --  Case-Insensitive Starts_With: return true if S starts with Prefix,
@@ -167,6 +168,7 @@ package body Project_Templates is
         (Contents.all, ASCII.LF);
       Current  : Project_Template := Null_Project_Template;
       Index, Index2 : Natural;
+      In_Description : Boolean := False;
    begin
       for J in Lines'Range loop
          declare
@@ -179,20 +181,16 @@ package body Project_Templates is
                --  A comment or an empty line do nothing
                null;
 
-            elsif Starts_With (Line, "[") then
-               --  This is a new definition, add current one to the list if it
-               --  is not null...
-               if Current.Label /= Null_Unbounded_String then
-                  Templates.Append (Current);
+            elsif CISW (Line, "[description]") then
+               In_Description := True;
 
-                  --  ...and reset the current object
-                  Current := Null_Project_Template;
-               end if;
-
-               Current.Source_Dir := File.Dir;
-               Index := Find (Line, ']', Line'First + 1);
+            elsif CISW (Line, "name:") then
                Current.Label := To_Unbounded_String
-                 (Line (Line'First + 1 .. Index - 1));
+                 (Strip_Quotes (Line (Line'First + 5 .. Line'Last)));
+
+            elsif CISW (Line, "project:") then
+               Current.Project := To_Unbounded_String
+                 (Strip_Quotes (Line (Line'First + 8 .. Line'Last)));
 
             elsif CISW (Line, "description:") then
                Current.Description := To_Unbounded_String
@@ -202,11 +200,17 @@ package body Project_Templates is
                Current.Category := To_Unbounded_String
                  (Strip_Quotes (Line (Line'First + 9 .. Line'Last)));
 
+            elsif In_Description then
+               Current.Description := Current.Description & ASCII.LF & Line;
             else
                Index := Find (Line, ':', Line'First + 1);
                if Index > Line'Last then
-                  --  Append to the description
-                  Current.Description := Current.Description & ASCII.LF & Line;
+                  Append
+                    (Errors, To_Unbounded_String
+                       (+File.Base_Name & J'Img
+                        & ": invalid syntax, expected "
+                        & "<name>:<default value>:<description>"
+                        & ASCII.LF));
                else
                   Index2 := Find (Line, ':', Index + 1);
 
@@ -232,6 +236,8 @@ package body Project_Templates is
       end loop;
 
       if Current /= Null_Project_Template then
+         Current.Source_Dir := File.Dir;
+
          Templates.Append (Current);
       end if;
 
@@ -289,6 +295,7 @@ package body Project_Templates is
      (Template    : Project_Template;
       Target_Dir  : Virtual_File;
       Assignments : Variable_Assignments.Map;
+      Project     : out Virtual_File;
       Errors      : out Unbounded_String)
    is
       pragma Unreferenced (Errors);
@@ -319,6 +326,9 @@ package body Project_Templates is
 
          use Variable_Assignments;
          C : Cursor;
+
+         This_Is_The_Project : Boolean;
+
       begin
          --  Read the contents
          Contents_A := Read_File (Source_File);
@@ -326,6 +336,9 @@ package body Project_Templates is
          GNAT.Strings.Free (Contents_A);
 
          Target_Name := To_Unbounded_String (+Source_File.Base_Name);
+
+         This_Is_The_Project :=
+           +Source_File.Base_Name = To_String (Template.Project);
 
          C := Assignments.First;
 
@@ -356,6 +369,11 @@ package body Project_Templates is
          end loop;
 
          Target := Create_From_Dir (Target_Dir, +To_String (Target_Name));
+
+         if This_Is_The_Project then
+            Project := Target;
+         end if;
+
          Writable := Write_File (Target);
          Write (Writable, To_String (Target_Contents));
          Close (Writable);
