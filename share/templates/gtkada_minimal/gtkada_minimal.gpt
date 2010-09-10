@@ -1,0 +1,12 @@
+# Header
+Name: Simple window
+Category: GtkAda
+Project: @_project_name_@.gpr
+
+# Variables
+Project_Name: default: The name of the project.
+Main_Name: main: The name of the main file.
+
+# Description
+[Description]
+A simple "Hello world" program in GtkAda.
