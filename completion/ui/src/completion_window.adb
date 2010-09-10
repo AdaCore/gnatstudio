@@ -673,8 +673,8 @@ package body Completion_Window is
          Prev := Get_Iter_First (Window.Explorer.Model);
 
          if Prev = Null_Iter then
-            --  If there is no entry in the tree, hide the window
-            Hide_All (Window);
+            --  If there is no entry in the tree, destroy the window
+            Destroy (Window);
             return;
          else
             if not Visible_Is_Set (Window) then
