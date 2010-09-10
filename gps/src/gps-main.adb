@@ -116,6 +116,7 @@ with Codefix_Module;
 with Command_Window;
 with Cpp_Module;
 with Custom_Module;
+with Project_Templates.GPS;
 with Docgen2_Module;
 with External_Editor_Module;
 with GNATStack.Module;
@@ -187,6 +188,8 @@ procedure GPS.Main is
                         Create ("MODULE.ClearCase", GNATCOLL.Traces.On);
    Custom_Trace           : constant Debug_Handle :=
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
+   Project_Templates_Trace : constant Debug_Handle :=
+                       Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
    Action_Editor_Trace    : constant Debug_Handle :=
                         Create ("MODULE.Action_Editor", GNATCOLL.Traces.Off);
    Code_Analysis_Trace    : constant Debug_Handle :=
@@ -1457,6 +1460,10 @@ procedure GPS.Main is
 
       if Active (Custom_Trace) then
          Custom_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Project_Templates_Trace) then
+         Project_Templates.GPS.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Refactor_Trace) then
