@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2008, AdaCore             --
+--                      Copyright (C) 2005-2010, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,8 @@ package body GPS.Kernel.Charsets is
        Description => new String'("Greek (ISO-8859-7)")),
       (Name        => new String'("ISO-8859-8"),
        Description => new String'("Hebrew (ISO-8859-8)")),
+      (Name        => new String'("ISO-8859-9"),
+       Description => new String'("Turkish (ISO-8859-9)")),
       (Name        => new String'("KOI8-R"),
        Description => new String'("Cyrillic (KOI8-R)")),
       (Name        => new String'("SHIFT-JIS"),
