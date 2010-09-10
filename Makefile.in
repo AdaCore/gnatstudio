@@ -64,6 +64,7 @@ endif
 	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
 	(cd docgen2/resources; tar cf - *.tmpl custom/*.css support/*.css support/*.js support/images/*.png) \
 		| (cd $(sharedir)/gps/docgen2; tar xf -)
