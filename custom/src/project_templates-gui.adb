@@ -512,6 +512,7 @@ package body Project_Templates.GUI is
       exception
          when E : others =>
             Errors := Errors & ASCII.LF & Exception_Information (E);
+            Gtk.Main.Main_Quit;
       end Cancelled;
 
       --------------
@@ -542,6 +543,7 @@ package body Project_Templates.GUI is
       exception
          when E : others =>
             Errors := Errors & ASCII.LF & Exception_Information (E);
+            Gtk.Main.Main_Quit;
       end On_Apply;
 
    begin

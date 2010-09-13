@@ -295,8 +295,6 @@ package body Project_Templates is
       Project     : out Virtual_File;
       Errors      : out Unbounded_String)
    is
-      pragma Unreferenced (Errors);
-
       procedure Copy_Subdir
         (Source_Dir : Virtual_File;
          Target_Dir : Virtual_File);
@@ -371,9 +369,17 @@ package body Project_Templates is
             Project := Target;
          end if;
 
-         Writable := Write_File (Target);
-         Write (Writable, To_String (Target_Contents));
-         Close (Writable);
+         if Target.Is_Regular_File
+           and then not Target.Is_Writable
+         then
+            Append
+              (Errors, "File not writable, did not overwrite: " &
+               (+Target.Full_Name) & ASCII.LF);
+         else
+            Writable := Write_File (Target);
+            Write (Writable, To_String (Target_Contents));
+            Close (Writable);
+         end if;
       end Copy_File;
 
       -----------------
