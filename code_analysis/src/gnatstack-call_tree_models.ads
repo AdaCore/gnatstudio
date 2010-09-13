@@ -19,7 +19,7 @@
 private with Ada.Containers.Vectors;
 
 private with Glib.Values;
-private with Gtk.Tree_Model;
+with Gtk.Tree_Model;
 with Gtkada.Abstract_Tree_Model;
 
 with GNATStack.Data_Model;
@@ -41,6 +41,12 @@ package GNATStack.Call_Tree_Models is
      (Self       : not null access Call_Tree_Model_Record'Class;
       Subprogram :
         not null GNATStack.Data_Model.Subprogram_Information_Access);
+
+   function Subprogram_At
+     (Self : not null access Call_Tree_Model_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return GNATStack.Data_Model.Subprogram_Information_Access;
+   --  Returns subprogram at the specified position.
 
 private
 

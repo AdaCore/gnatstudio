@@ -43,7 +43,6 @@ with GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Projects;
 with Traces;
 
-with GNATStack.Call_Tree_Views;
 with GNATStack.CI_Editors;
 with GNATStack.CI_Utilities;
 with GNATStack.Readers;
@@ -128,6 +127,11 @@ package body GNATStack.Module is
      (Object : access Glib.Object.GObject_Record'Class;
       Self   : GNATStack_Module_Id);
    --  Handle close of call tree viewer.
+
+   procedure On_Goto_Subprogram
+     (Object : access Glib.Object.GObject_Record'Class;
+      Self   : GNATStack_Module_Id);
+   --  Handles double click in call tree view.
 
    procedure Load_Data
      (Self : not null access GNATStack_Module_Id_Record'Class);
@@ -588,6 +592,42 @@ package body GNATStack.Module is
          Trace (Exception_Handle, E);
    end On_Compilation_Finished;
 
+   ------------------------
+   -- On_Goto_Subprogram --
+   ------------------------
+
+   procedure On_Goto_Subprogram
+     (Object : access Glib.Object.GObject_Record'Class;
+      Self   : GNATStack_Module_Id)
+   is
+      pragma Unreferenced (Object);
+
+      Subprogram : constant Data_Model.Subprogram_Information_Access :=
+                     Self.Call_Tree_View.Get_Selected_Subprogram;
+
+   begin
+      if not Subprogram.Identifier.Locations.Is_Empty then
+         declare
+            Location : constant Data_Model.Subprogram_Location :=
+                         GNATStack.Data_Model.Subprogram_Location_Sets.Element
+                           (Subprogram.Identifier.Locations.First);
+            File     : constant GNATCOLL.VFS.Virtual_File :=
+                         GNATCOLL.VFS.Create
+                           (GNATCOLL.VFS.Filesystem_String
+                              (To_String (Location.File)));
+            Buffer   : constant GPS.Editors.Editor_Buffer'Class :=
+                         Module.Kernel.Get_Buffer_Factory.Get (File);
+            Position : constant GPS.Editors.Editor_Location'Class :=
+                         Buffer.New_Location
+                           (Location.Line,
+                            Basic_Types.Visible_Column_Type (Location.Column));
+
+         begin
+            Buffer.Current_View.Cursor_Goto (Position, True);
+         end;
+      end if;
+   end On_Goto_Subprogram;
+
    -------------------------
    -- On_Hide_Stack_Usage --
    -------------------------
@@ -676,8 +716,6 @@ package body GNATStack.Module is
       Subprogram :
         not null GNATStack.Data_Model.Subprogram_Information_Access)
    is
-      View : GNATStack.Call_Tree_Views.Call_Tree_View;
-
    begin
       if not Self.Loaded then
          null;
@@ -687,9 +725,14 @@ package body GNATStack.Module is
             Self.Call_Tree_View_MDI.Destroy;
          end if;
 
-         GNATStack.Call_Tree_Views.Gtk_New (View, Subprogram);
+         GNATStack.Call_Tree_Views.Gtk_New (Self.Call_Tree_View, Subprogram);
+         Object_Module_Callbacks.Connect
+           (Self.Call_Tree_View,
+            GNATStack.Call_Tree_Views.Signal_Double_Clicked,
+            Object_Module_Callbacks.To_Marshaller (On_Goto_Subprogram'Access),
+            GNATStack_Module_Id (Self));
          GPS.Kernel.MDI.Gtk_New
-           (Self.Call_Tree_View_MDI, View, Module => Self);
+           (Self.Call_Tree_View_MDI, Self.Call_Tree_View, Module => Self);
          Self.Call_Tree_View_MDI.Set_Title (-"GNATStack: Call Tree");
          Object_Module_Callbacks.Connect
            (Self.Call_Tree_View_MDI,

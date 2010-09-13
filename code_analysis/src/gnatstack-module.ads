@@ -22,6 +22,7 @@ private with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;
 private with GPS.Styles.UI;
 private with GNATCOLL.VFS;
+private with GNATStack.Call_Tree_Views;
 private with GNATStack.Data_Model;
 
 package GNATStack.Module is
@@ -48,6 +49,7 @@ private
         GNATStack.Data_Model.Subprogram_Information_Access;
 
       CI_Editor_MDI          : GPS.Kernel.MDI.GPS_MDI_Child;
+      Call_Tree_View         : GNATStack.Call_Tree_Views.Call_Tree_View;
       Call_Tree_View_MDI     : GPS.Kernel.MDI.GPS_MDI_Child;
    end record;
 

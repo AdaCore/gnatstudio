@@ -461,4 +461,16 @@ package body GNATStack.Call_Tree_Models is
       Node.Populated := True;
    end Populate;
 
+   -------------------
+   -- Subprogram_At --
+   -------------------
+
+   function Subprogram_At
+     (Self : not null access Call_Tree_Model_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return GNATStack.Data_Model.Subprogram_Information_Access is
+   begin
+      return Node_At (Self, Iter).Subprogram;
+   end Subprogram_At;
+
 end GNATStack.Call_Tree_Models;

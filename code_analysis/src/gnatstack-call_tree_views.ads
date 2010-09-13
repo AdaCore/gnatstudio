@@ -17,8 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gtk.Box;
+private with Gtk.Tree_View;
 
+private with GNATStack.Call_Tree_Models;
 with GNATStack.Data_Model;
 
 package GNATStack.Call_Tree_Views is
@@ -37,8 +40,25 @@ package GNATStack.Call_Tree_Views is
       Subprogram :
         not null GNATStack.Data_Model.Subprogram_Information_Access);
 
+   function Get_Selected_Subprogram
+     (Self : not null access Call_Tree_View_Record'Class)
+      return GNATStack.Data_Model.Subprogram_Information_Access;
+   --  Returns currently selected subprogram.
+
+   Signal_Double_Clicked : constant Glib.Signal_Name;
+   --  Emitted on double click in tree.
+
 private
 
-   type Call_Tree_View_Record is new Gtk.Box.Gtk_Hbox_Record with null record;
+   type Call_Tree_View_Record is new Gtk.Box.Gtk_Hbox_Record with record
+      View  : Gtk.Tree_View.Gtk_Tree_View;
+      Model : GNATStack.Call_Tree_Models.Call_Tree_Model;
+   end record;
+
+   procedure Double_Clicked
+     (Self : not null access Call_Tree_View_Record'Class);
+   --  Emits "double_clicked" signal.
+
+   Signal_Double_Clicked : constant Glib.Signal_Name := "double_clicked";
 
 end GNATStack.Call_Tree_Views;
