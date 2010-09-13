@@ -19,11 +19,14 @@
 
 with Glib.Object;   use Glib.Object;
 
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+
 with Traces;          use Traces;
 
 with GPS.Kernel.Console;    use GPS.Kernel.Console;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 
 with GPS.Intl;              use GPS.Intl;
 
@@ -52,14 +55,47 @@ package body Project_Templates.GPS is
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register the commands
 
+   procedure Template_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for shell commands
+
+   ------------------------------
+   -- Template_Command_Handler --
+   ------------------------------
+
+   procedure Template_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+   begin
+      if Command = "add_templates_dir" then
+         declare
+            File : constant Virtual_File := Nth_Arg (Data, 1);
+         begin
+            if File.Is_Directory then
+               Module_Id.Dirs.Append (File);
+            else
+               Set_Error_Msg (Data, -"Parameter should be a directory.");
+            end if;
+         end;
+      end if;
+   end Template_Command_Handler;
+
    -----------------------
    -- Register_Commands --
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Project_Template_Class : constant Class_Type :=
+        New_Class (Kernel, "ProjectTemplate");
    begin
-      --  ??? Add shell commands here.
-      null;
+      Register_Command
+        (Kernel,
+         "add_templates_dir",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Template_Command_Handler'Access,
+         Class         => Project_Template_Class,
+         Static_Method => True);
    end Register_Commands;
 
    --------------------------
@@ -79,6 +115,7 @@ package body Project_Templates.GPS is
       Dir       : Virtual_File;
       Installed : Boolean;
 
+      Chosen    : Project_Template;
       Templates : Project_Templates_List.List;
    begin
       --  Read all available templates
@@ -104,7 +141,7 @@ package body Project_Templates.GPS is
 
       --  Launch the GUI
 
-      Install_Template (Templates, Installed, Dir, Project, E);
+      Install_Template (Templates, Chosen, Installed, Dir, Project, E);
 
       if E /= Null_Unbounded_String then
          Insert (Kernel, To_String (E), Mode => Error);
@@ -119,7 +156,40 @@ package body Project_Templates.GPS is
 
          --  Then load the project
 
-         Load_Project (Kernel, Project);
+         if Project = No_File then
+            Insert
+              (Kernel,
+               -"Project template deployed, no project found.",
+               Mode => Info);
+
+         elsif not Project.Is_Regular_File then
+            Insert
+              (Kernel,
+               -"Template deployed, but project is not a regular file.",
+               Mode => Error);
+         else
+            Load_Project (Kernel, Project);
+         end if;
+
+         --  Execute the post-hook
+
+         if Chosen.Post_Hook /= No_File then
+            declare
+               Python : constant Scripting_Language :=
+                 Lookup_Scripting_Language (Get_Scripts (Kernel), "python");
+               Errors : Boolean;
+            begin
+               Execute_File
+                 (Python, +Chosen.Post_Hook.Full_Name, Errors => Errors);
+
+               if Errors then
+                  Insert
+                    (Kernel,
+                     -"Errors occurred when running the post-deployment hook.",
+                     Mode => Error);
+               end if;
+            end;
+         end if;
       end if;
 
    exception

@@ -27,14 +27,6 @@ with GNAT.Strings;   use GNAT.Strings;
 
 package body Project_Templates is
 
-   Null_Project_Template : constant Project_Template :=
-     (Null_Unbounded_String,
-      Null_Unbounded_String,
-      Null_Unbounded_String,
-      No_File,
-      Variables_List.Empty_List,
-      Null_Unbounded_String);
-
    function CISW (S : String; Prefix : String) return Boolean;
    --  Case-Insensitive Starts_With: return true if S starts with Prefix,
    --  using case-insensitive comparison.
@@ -191,6 +183,11 @@ package body Project_Templates is
             elsif CISW (Line, "project:") then
                Current.Project := To_Unbounded_String
                  (Strip_Quotes (Line (Line'First + 8 .. Line'Last)));
+
+            elsif CISW (Line, "post_hook:") then
+               Current.Post_Hook := Create_From_Dir
+                 (File.Dir,
+                  +Strip_Quotes (Line (Line'First + 10 .. Line'Last)));
 
             elsif CISW (Line, "description:") then
                Current.Description := To_Unbounded_String
@@ -399,7 +396,9 @@ package body Project_Templates is
          --  First install all files
          if Files /= null then
             for J in Files'Range loop
-               if File_Extension (Files (J)) /= Template_File_Extension then
+               if File_Extension (Files (J)) /= Template_File_Extension
+                 and then Files (J) /= Template.Post_Hook
+               then
                   Copy_File (Files (J), Target_Dir);
                end if;
             end loop;

@@ -25,6 +25,7 @@ package Project_Templates.GUI is
 
    procedure Install_Template
      (Templates : Project_Templates_List.List;
+      Chosen    : out Project_Template;
       Installed : out Boolean;
       Dir       : out Virtual_File;
       Project   : out Virtual_File;
@@ -32,8 +33,9 @@ package Project_Templates.GUI is
    --  Read templates in Templates, offer a dialog to select a template and
    --  fill in the fields, and select a target directory.
    --  If the user validates the choice, then install the template in the
-   --  selected location, and Installed is set to True, and Dir contains
-   --  the target directory, an dproject
+   --  selected location, and Installed is set to True, Dir contains
+   --  the target directory, Project the deployed project file, and
+   --  Chosen the chosen template.
    --  If any errors are encountered, they are listed in Errors.
 
 end Project_Templates.GUI;

@@ -281,6 +281,7 @@ package body Project_Templates.GUI is
 
    procedure Install_Template
      (Templates : Project_Templates_List.List;
+      Chosen    : out Project_Template;
       Installed : out Boolean;
       Dir       : out Virtual_File;
       Project   : out Virtual_File;
@@ -535,6 +536,8 @@ package body Project_Templates.GUI is
             Installed := True;
          end if;
 
+         Chosen := Page.Template;
+
          Gtk.Main.Main_Quit;
       exception
          when E : others =>
@@ -542,9 +545,11 @@ package body Project_Templates.GUI is
       end On_Apply;
 
    begin
+      Chosen := Null_Project_Template;
       Installed := False;
 
       Gtk_New (Assistant);
+      Assistant.Set_Title ("Create Project from Template");
 
       Gtk_New (Scroll);
       Gtk_New_Hpaned (Hpane);

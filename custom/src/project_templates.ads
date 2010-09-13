@@ -64,7 +64,19 @@ package Project_Templates is
       Project : Unbounded_String;
       --  The original name of the project file to load after installing
       --  the template.
+
+      Post_Hook : Virtual_File;
+      --  The source file containing the hook to run after deployment
    end record;
+
+   Null_Project_Template : constant Project_Template :=
+     (Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      No_File,
+      Variables_List.Empty_List,
+      Null_Unbounded_String,
+      No_File);
 
    package Project_Templates_List is new Ada.Containers.Doubly_Linked_Lists
      (Project_Template);
@@ -79,6 +91,7 @@ package Project_Templates is
    --  name: <short name of the template>
    --  category: <category for organizing the template>
    --  project: <name of the project file>
+   --  post_hook: <name of the python file>  (optional)
    --
    --  <variable_1_label>: <default_value_1> : <description_1>
    --  <variable_2_label>: <default_value_2> : <description_2>
