@@ -9,7 +9,7 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
-IMAGES = gps_title.gif *.jpg *.png
+IMAGES = gps_title.gif *.jpg *.png ../share/icons/16px/entities/*_x.png
 
 TEXI=gps.texi
 
