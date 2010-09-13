@@ -9630,6 +9630,9 @@ here. Note that you can retrieve those paths by using @code{gnat list
 (@code{adainclude} directory) needs to be mapped so that code completion and
 source navigation work properly on run-time entities.
 
+In particular, the run-time library of your remote compiler should be visible
+if you want cross-references and related features to work correctly.
+
 To add a new path, click on the @code{+} button, and enter the corresponding
 local and remote paths.
 
