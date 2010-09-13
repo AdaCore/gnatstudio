@@ -128,6 +128,7 @@ Editing Files
 * Editing Sources::
 * The File Selector::
 * Menu Items::
+* Rectangles::
 * Recording and replaying macros::
 * Contextual Menus for Editing Files::
 * Handling of case exceptions::
@@ -1888,6 +1889,7 @@ visible in other perspectives or not.
 * Editing Sources::
 * The File Selector::
 * Menu Items::
+* Rectangles::
 * Recording and replaying macros::
 * Contextual Menus for Editing Files::
 * Handling of case exceptions::
@@ -2562,6 +2564,9 @@ For more information, @xref{The Clipboard View}.
 @cindex select all
 Select the whole contents of the current source editor.
 
+@item Rectangles...
+See the section @pxref{Rectangles} for more information on rectangles.
+
 @item Insert File...
 Open a file selection dialog and insert the contents of this file in
 the current source editor, at the current cursor location.
@@ -2872,6 +2877,144 @@ keys. @xref{The Key Manager Dialog}.
 Give access to the preferences dialog. @xref{The Preferences Dialog}.
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Rectangles
+@section Rectangles
+@cindex rectangle
+@c -------------------------------------------------------------------
+
+@noindent
+Rectangle commands operate on a rectangular area of the text, that is
+all the characters between two columns in a certain range of lines.
+
+A rectangle is selected using the standard selection mechanism. You can
+therefore use either the mouse to highlight the proper region, or
+@key{shift} and the cursor keys to extend the selection, or the Emacs
+selection (with the mark and the current cursor location) if you have
+activated the @file{emacs.py} plugin.
+
+Visually, a selected rectangle is exactly the same as the standard
+selection. In particular, the characters after the last column, on each
+line, will also be highlighted. The way the selection is interpreted (either
+as a full text or as a rectangle) depends on the command you then chose to
+manipulate the selection.
+
+If you chose one of the commands from the @code{/Edit/Rectangles} menu,
+the actual rectangle will extend from the top-left corner down to the
+bottom-right corner. All characters to the right of the right-most column,
+although they are highlighted, are not part of the rectangle.
+
+Consider for instance the following initial text:
+
+@smallexample
+package A is
+   procedure P;
+
+   procedure Q;
+end A;
+@end smallexample
+
+and assume we have selected from the character "p" in "procedure P", down
+to the character "c" in "procedure Q".
+
+The following commands can then be used (either from the menu, or you
+can assign key shortcuts to them via the usual @code{/Edit/Key shortcuts}
+menu.
+
+@itemize @bullet
+
+@item @code{Cut} or @code{Delete}
+These commands will remove the selected text (and have no effect on empty
+lines within the rectangle). The former will in addition copy the rectangle
+to the clipboard, so that you can paste it later. In our example, we end up
+with
+
+@smallexample
+package A is
+   edure P;
+
+   edure Q;
+end A;
+@end smallexample
+
+@item @code{Copy}
+This command has no visual effect, but copies the contents of the rectangle
+into the clipboard.
+
+@item @code{Paste}
+Pastes the contents of the clipboard as a rectangle: each line from the
+clipboard is treated independently, and inserted on successive lines in the
+current editor. They all start in the same column (the one where the cursor
+is initially in), and existing text in the editor lines is shifted to the
+right). If for instance you now place the cursor in the second line, first
+column, and paste, we end up with:
+
+@smallexample
+package A is
+proc   edure P;
+
+proc   edure Q;
+end A;
+@end smallexample
+
+@item @code{Clear}
+Replaces the contents of the selected rectangle with spaces. If we start
+from our initial exmaple, we end up with the following. Note the difference
+with @code{Delete}.
+
+@smallexample
+package A is
+       edure P;
+
+       edure Q;
+end A;
+@end smallexample
+
+@item @code{Open}
+Replaces the contents of the selected rectangle with spaces, but shifts the
+lines to the right to do so. Note the difference with @code{Clear}.
+
+@smallexample
+package A is
+       procedure P;
+
+       procedure Q;
+end A;
+@end smallexample
+
+@item @code{Replace With Text}
+This is similar to @code{Clear}, but the rectangle is replaced with
+user-defined text. The lines will be shifted left or right if the text you
+insert is shorter (resp. longer) than the width of the rectangle. If for
+instance we replace our initial rectangle with the text TMP, we end up with
+the following. Note that the character "c" has disappeared, since TMP is
+shorter than our rectangle width (4 characters). This command will impact
+lines that are empty in the initial rectangle.
+
+@smallexample
+package A is
+   TMPedure P;
+   TMP
+   TMPedure Q;
+end A;
+@end smallexample
+
+@item @code{Insert Text}
+This inserts a text to the left of the rectangle on each line. The following
+example inserts TMP. Note the difference with @code{Replace With Text}. This
+command will also insert the text on lines that are empty in the initial
+rectangle.
+
+@smallexample
+package A is
+   TMPprocedure P;
+   TMP
+   TMPprocedure Q;
+end A;
+@end smallexample
+
+@end itemize
 
 @c --------------------------------------------------------------------
 @node Recording and replaying macros

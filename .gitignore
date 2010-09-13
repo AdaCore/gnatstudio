@@ -9,6 +9,7 @@
 */config.log
 */config.status
 */obj/*
+!gps/obj/gps-gdb.py
 .#*
 ./Makefile
 .gpsrcs
@@ -203,6 +204,7 @@ docs/gps.toc
 docs/gps.tp
 docs/gps.txt
 docs/gps.vr
+docs/*.png
 gnat/*
 gnat_src
 gnatlib/Makefile.conf

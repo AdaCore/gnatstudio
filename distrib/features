@@ -15,6 +15,10 @@ of the feature.
 New features in 5.0.0
 ---------------------
 
+NF-50-J913-020 Rectangles plugin loaded by default (2010-09-13)
+
+  The rectangles.py plugin is now loaded by default.
+
 NF-50-J907-015 Completion for task entries (2010-09-09)
 
   GPS now offers smart completion for task entries and accept statements.
