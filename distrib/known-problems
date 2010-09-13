@@ -39,6 +39,13 @@ Known Problems fixed in GPS 5.0.0
               incorrect pieces of code.
   Workaround: Recompile the file to update the highlighting.
 
+- J823-010: Remote configuration issue regarding remote access tools
+  Problem:    When configuring a server for the GPS remote mode, the dialog
+              allows you to select remote access tools that are not present
+              on your system or that are incompatible with GPS.
+  Workaround: Make sure that the remote access tool is present on your PATH
+              and that you are not using Microsoft telnet.
+
 - J821-001: GPS.Entity.Category now returns "object" for private objects
   Problem:    In a generic package, a variable of a type defined by a formal
               generic parameter is now reported as "object", rather than "type"
