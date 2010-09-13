@@ -1,3 +1,4 @@
+# for Emacs: -*- mode: python; python-indent: 3 -*-
 """This file provides support for rectangle-mode in an editor.
 
    In particular, it is possible to select a rectangular area,
@@ -44,170 +45,221 @@ from GPS import *
 import traceback
 
 def rectangle_delete (menu):
-    """Delete the selected rectangle"""
-
-    buffer = EditorBuffer.get ()
-    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(),
-                        buffer.selection_end() - 1, False, False)
+   """Delete the selected rectangle"""
+   Rectangle.from_buffer (EditorBuffer.get ()).delete ()
 
 def rectangle_cut (menu):
-    """Cut the selected rectangle into the clipboard"""
-
-    buffer = EditorBuffer.get ()
-    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(),
-                        buffer.selection_end() - 1, True, False)
+   """Cut the selected rectangle into the clipboard"""
+   Rectangle.from_buffer (EditorBuffer.get ()).cut ()
 
 def rectangle_copy (menu):
-    """Copy the selected rectangle into the clipboard"""
-
-    buffer = EditorBuffer.get ()
-    start  = buffer.selection_start().create_mark()
-    end    = buffer.selection_end().create_mark()
-    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(),
-                        buffer.selection_end() - 1, True, True)
-    buffer.select (start.location(), end.location())
+   """Copy the selected rectangle into the clipboard"""
+   Rectangle.from_buffer (EditorBuffer.get ()).copy ()
 
 def rectangle_paste (menu):
-    """Paste the last entry in the clipboard as a rectangle in the current editor"""
-
-    try:
-      buffer = EditorBuffer.get ()
-      start = buffer.current_view ().cursor ()
-      selection = Clipboard.contents () [Clipboard.current()]
-
-      buffer.start_undo_group ()
-      for line in selection.splitlines():
-         buffer.insert (start, line)
-         start = EditorLocation (buffer, start.line() + 1, start.column())
-      buffer.finish_undo_group ()
-
-    except:
-      Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
+   """Paste the last entry in the clipboard as a rectangle in the current editor"""
+   Rectangle.paste (loc = EditorBuffer.get ().current_view ().cursor ())
 
 def rectangle_open (menu):
-    """Insert blank spaces to fill the selected rectangle.
-       This pushes its text to the right"""
-
-    buffer = EditorBuffer.get ()
-    start  = buffer.selection_start ()
-    end    = buffer.selection_end ()
-    rectangle_insert (menu, " " * (end.column() - start.column()))
+   """Insert blank spaces to fill the selected rectangle.
+      This pushes its text to the right"""
+   Rectangle.from_buffer (EditorBuffer.get ()).open ()
 
 def rectangle_insert (menu, text=None):
-    """Insert TEXT at the beginning of each line of the selected rectangle.
-       If TEXT is unspecified, an interactive dialog is open"""
-    buffer = EditorBuffer.get ()
-    if not text:
-       text = MDI.input_dialog ("Text to insert before each line:", "")
-       if not text: return
-       text = text [0]
-    apply_on_rectangle (rectangle_insert_func, buffer.selection_start(),
-                        buffer.selection_end() - 1, text)
+   """Insert TEXT at the beginning of each line of the selected rectangle.
+      If TEXT is unspecified, an interactive dialog is open"""
+   if not text:
+      text = MDI.input_dialog ("Text to insert before each line:", "")
+      if not text: return
+      text = text [0]
+   Rectangle.from_buffer (EditorBuffer.get ()).insert (text)
 
 def rectangle_clear (menu):
-    """Replaces the contents of the rectangle with spaces"""
-
-    buffer = EditorBuffer.get()
-    start  = buffer.selection_start ()
-    end    = buffer.selection_end ()
-    apply_on_rectangle (rectangle_replace_func, start, end - 1,
-                        " " * abs (end.column() - start.column()))
+   """Replaces the contents of the rectangle with spaces"""
+   Rectangle.from_buffer (EditorBuffer.get ()).clear ()
 
 def rectangle_string (menu, text=None):
-    """Replaces the contents of the rectangle with TEXT on each line.
-       If TEXT is narrower or wider than the rectangle, the text is shifted
-       right or left as appropriate.
-       If TEXT is unspecified, an interactive dialog is open."""
-
-    buffer = EditorBuffer.get()
-    start  = buffer.selection_start ()
-    end    = buffer.selection_end ()
-    if not text:
-       text = MDI.input_dialog ("Text to replace each line with:", "")
-       if not text: return
-       text = text [0]
-    apply_on_rectangle (rectangle_replace_func, start, end - 1, text)
+   """Replaces the contents of the rectangle with TEXT on each line.
+      If TEXT is narrower or wider than the rectangle, the text is shifted
+      right or left as appropriate.
+      If TEXT is unspecified, an interactive dialog is open."""
+   if not text:
+      text = MDI.input_dialog ("Text to replace each line with:", "")
+      if not text: return
+      text = text [0]
+   Rectangle.from_buffer (EditorBuffer.get ()).string (text)
 
 def on_gps_started (hook_name):
-    """Create the menus associated with this module"""
+   """Create the menus associated with this module"""
 
-    Menu.create ("/Edit/Rectangle",
-                 ref        = "Redo",
-                 add_before = False)
-    Menu.create ("/Edit/Rectangle/Cut",    on_activate = rectangle_cut)
-    Menu.create ("/Edit/Rectangle/Copy",   on_activate = rectangle_copy)
-    Menu.create ("/Edit/Rectangle/Paste",  on_activate = rectangle_paste)
-    Menu.create ("/Edit/Rectangle/-")
-    Menu.create ("/Edit/Rectangle/Delete", on_activate = rectangle_delete)
-    Menu.create ("/Edit/Rectangle/Clear",  on_activate = rectangle_clear)
-    Menu.create ("/Edit/Rectangle/Open",   on_activate = rectangle_open)
-    Menu.create ("/Edit/Rectangle/Replace with Text", on_activate = rectangle_string)
-    Menu.create ("/Edit/Rectangle/Insert Text", on_activate = rectangle_insert)
+   Menu.create ("/Edit/Rectangle",
+                ref        = "Redo",
+                add_before = False)
+   Menu.create ("/Edit/Rectangle/Cut",    on_activate = rectangle_cut)
+   Menu.create ("/Edit/Rectangle/Copy",   on_activate = rectangle_copy)
+   Menu.create ("/Edit/Rectangle/Paste",  on_activate = rectangle_paste)
+   Menu.create ("/Edit/Rectangle/-")
+   Menu.create ("/Edit/Rectangle/Delete", on_activate = rectangle_delete)
+   Menu.create ("/Edit/Rectangle/Clear",  on_activate = rectangle_clear)
+   Menu.create ("/Edit/Rectangle/Open",   on_activate = rectangle_open)
+   Menu.create ("/Edit/Rectangle/Replace with Text", on_activate = rectangle_string)
+   Menu.create ("/Edit/Rectangle/Insert Text", on_activate = rectangle_insert)
 
 ##############################################################################
 ## No public function below this
 ##############################################################################
 
-def rectangle_cut_func (rect_start, rect_end, start, end, in_clipboard, copy):
-    """Removes or Copies the range START .. END, and copy it in the clipboard if
-       IN_CLIPBOARD is true"""
+class Rectangle (object):
+   @staticmethod
+   def from_buffer (buffer):
+      start = buffer.selection_start ()
+      end   = buffer.selection_end   () - 1
+      return Rectangle (buffer     = buffer,
+                        start_line = start.line (),
+                        start_col  = start.column (),
+                        end_line   = end.line (),
+                        end_col    = end.column ())
 
-    if in_clipboard:
-       if copy:
-          start.buffer().copy (start, end, append=(start != rect_start))
-       else:
-          start.buffer().cut (start, end, append=(start != rect_start))
-       if end != rect_end:
-          Clipboard.copy (text="\n", append=True)
-    else:
-       start.buffer().delete (start, end)
+   def __init__ (self, buffer, start_line, start_col, end_line, end_col):
+      """Create a new rectangle.
+         Internally, ensures that start_line <= end_line and
+         start_col <= end_col
+      """
 
-def rectangle_replace_func (rect_start, rect_end, start, end, text):
-    """Replaces the range START .. END with TEXT"""
-    start.buffer().delete (start, end)
-    start.buffer().insert (start, text)
+      self.buffer     = buffer
+      self.start_line = min (start_line, end_line)
+      self.end_line   = max (start_line, end_line)
+      self.start_col  = min (start_col, end_col)
+      self.end_col    = max (start_col, end_col)
 
-def rectangle_insert_func (rect_start, rect_end, start, end, text):
-    """Fills the range START .. END with spaces and moves the text rightward"""
-    start.buffer().insert (start, text)
+   def insert (self, text):
+      """Insert TEXT at the beginning of each line of the rectangle."""
+      self.__apply (self.__insert_func, self.__open_line_func, text)
 
-def apply_on_rectangle (func, start, end, *args):
-   """Applies FUNC for each line segment in the rectangle starting at
-      the EditorLocation position START and ending at END.
-      START and END must of course point to the same buffer.
-      FUNC is called wth four parameters of type EditorLocation for the
-      total range of the rectangle and the range that FUNC should apply on.
-      Any additional parameter specified in ARGS is passed to FUNC."""
+   def open (self):
+      """Insert blank spaces to fill the selected rectangle.
+         This pushes its text to the right"""
+      self.__apply (self.__insert_func, self.__open_line_func,
+                    " " * (self.end_col - self.start_col))
 
-   try:
-     if start.buffer() == end.buffer():
-        line    = min (start.line (), end.line ())
-        maxline = max (start.line (), end.line ())
-        mincol  = min (start.column (), end.column ())
-        maxcol  = max (start.column (), end.column ())
-        buf     = start.buffer ()
+   def copy (self):
+      """Copy the selected rectangle into the clipboard"""
+      start = EditorLocation (
+         self.buffer, self.start_line, self.start_col).create_mark ()
+      end   = EditorLocation (
+         self.buffer, self.end_line, self.end_col).create_mark()
+      self.__apply (self.__cut_func, self.__copy_empty_func, True, True)
+      self.buffer.select (start.location(), end.location())
 
-        buf.start_undo_group()
+   def delete (self):
+      """Delete the selected rectangle"""
+      self.__apply (self.__cut_func, None, False, False)
 
-        while line <= maxline:
-           ## Some lines might not include enough characters for the rectangle
-           eol = EditorLocation (buf, line, 1).end_of_line ()
-           if eol.column () > maxcol:
-              endcolumn = EditorLocation (buf, line, maxcol)
-              current   = EditorLocation (buf, line, mincol)
-           else:
-              endcolumn = eol - 1
-              if eol.column () > mincol:
-                 current   = EditorLocation (buf, line, mincol)
-              else:
-                 current   = eol - 1
+   def cut (self):
+      """Cut the selected rectangle into the clipboard"""
+      self.__apply (self.__cut_func, self.__copy_empty_func, True, False)
 
-           func (start, end, current, endcolumn, *args)
-           line = line + 1
+   def clear (self):
+      """Replaces the contents of the rectangle with spaces"""
+      self.__apply (self.__replace_func, None,
+                    " " * (self.end_col - self.start_col))
 
-        start.buffer().finish_undo_group()
-   except:
-      Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
+   def string (self,text):
+      """Replaces the contents of the rectangle with TEXT on each line.
+         If TEXT is narrower or wider than the rectangle, the text is shifted
+         right or left as appropriate."""
+      self.__apply (self.__replace_func, self.__open_and_insert_func, text)
 
+   @staticmethod
+   def paste (loc):
+      """Paste the last entry in the clipboard as a rectangle at LOC"""
+      try:
+         buffer = loc.buffer ()
+         start = loc
+         selection = Clipboard.contents () [Clipboard.current()]
+
+         buffer.start_undo_group ()
+         for line in selection.splitlines():
+            buffer.insert (start, line)
+            start = EditorLocation (buffer, start.line() + 1, start.column())
+         buffer.finish_undo_group ()
+
+      except:
+        Logger ("TESTSUITE").log (
+           "Unexpected exception: " + traceback.format_exc())
+
+
+   def __cut_func (self, start, end, in_clipboard, copy):
+      if in_clipboard:
+         append = (start.line () != self.start_line)
+         if start <= end:
+            if copy:
+               self.buffer.copy (start, end, append=append)
+            else:
+               self.buffer.cut (start, end, append=append)
+         if end.line() != self.end_line:
+            Clipboard.copy (text="\n", append=True)
+
+      else:
+         self.buffer.delete (start, end)
+
+   def __insert_func (self, start, end, text):
+      """Fills the range START..END with spaces and moves the text rightward"""
+      self.buffer.insert (start, text)
+
+   def __replace_func (self, start, end, text):
+      """Replaces the range START .. END with TEXT"""
+      self.buffer.delete (start, end)
+      self.buffer.insert (start, text)
+
+   def __open_line_func (self, func, eol, *args):
+      self.buffer.insert (eol, " " * (self.start_col - eol.column()))
+      current = EditorLocation (self.buffer, eol.line (), self.start_col)
+      func (current, current - 1, *args)
+
+   def __open_and_insert_func (self, func, eol, text):
+      self.buffer.insert (eol, " " * (self.start_col - eol.column()) + text)
+
+   def __copy_empty_func (self, func, eol, *args):
+      Clipboard.copy (text="\n", append=True)
+
+   def __apply (self, func, short_line_func, *args):
+      """Applies FUNC for each line segment in SELF.
+         FUNC is called wth two parameters of type EditorLocation for the
+         range that FUNC should apply on.
+         SHORT_LINE_FUNC is called when the current line is shorter than self.start_col.
+         It receives a single parameter (+ args), the last char in the line.
+         Any additional parameter specified in ARGS is passed to FUNC."""
+
+      try:
+         line = self.start_line
+         self.buffer.start_undo_group()
+
+         while line <= self.end_line:
+            ## Some lines might not include enough characters for the rectangle
+            eol = EditorLocation (self.buffer, line, 1).end_of_line ()
+            if eol.column () > self.end_col:
+               endcolumn = EditorLocation (self.buffer, line, self.end_col)
+               current   = EditorLocation (self.buffer, line, self.start_col)
+               func (current, endcolumn, *args)
+            else:
+               if eol.column () < self.start_col:
+                  if short_line_func:
+                     short_line_func (func, eol, *args)
+               else:
+                  current = EditorLocation (self.buffer, line, self.start_col)
+                  eol = current.end_of_line ()
+                  if eol.column() != 1:
+                     func (current, eol - 1, *args)
+                  else:
+                     func (current, eol, *args)
+
+            line += 1
+
+         self.buffer.finish_undo_group()
+
+      except:
+         Logger ("TESTSUITE").log (
+            "Unexpected exception: " + traceback.format_exc())
 
 Hook ("gps_started").add (on_gps_started)
