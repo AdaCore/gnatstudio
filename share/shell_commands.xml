@@ -6309,7 +6309,7 @@ The package gps_utils.py provides a somewhat more convenient python interface to
       ## Project Templates
       #################################################################-->
 
-  <shell_doc name="ProjectTemplate.add_templates_dir">
+  <shell_doc name="GPS.ProjectTemplate.add_templates_dir">
      <param>A GPS.File pointing to a directory.</param>
      <description>Add a directory to the path in which GPS looks for templates.
      GPS will look for project templates in immediate subdirectories of this
