@@ -234,8 +234,7 @@ Known Problems fixed in GPS 5.0.0
   Problem:    When completing a use clause, nested packages are not offered.
   Workaround: Manually complete the code.
 
-NF-50-J223-019 Removing items from data window hides all (2010-09-13)
-
+- J223-019: Removing items from data window hides all
   Problem:    If you right click on an item in the debugger data window and
               select one of "Remove selected items" or "Remove unselected
               items", GPS will correctly remove them, but also makes the
