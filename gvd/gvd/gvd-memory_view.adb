@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2009, AdaCore               --
+--                    Copyright (C) 2000-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,35 +22,228 @@ with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Text_IO;              use Ada.Text_IO;
 
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gdk.Types;                use Gdk.Types;
 with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
 with Gdk.Color;                use Gdk.Color;
 with Glib.Properties;          use Glib.Properties;
 
 with Gtk;                      use Gtk;
+with Gtk.Arguments;            use Gtk.Arguments;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Handlers;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
 
 with Pango.Font;               use Pango.Font;
 
+with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
+with GVD_Module;               use GVD_Module;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
 with GVD.Scripts;              use GVD.Scripts;
+with GVD.Views;                use GVD.Views;
 with String_Utils;             use String_Utils;
+with Traces;                   use Traces;
+
+with Gtk.Text_Tag;          use Gtk.Text_Tag;
+with Gdk.Window;            use Gdk.Window;
+with Gtk.Widget;            use Gtk.Widget;
+
+with Memory_View_Pkg;       use Memory_View_Pkg;
+with GNAT.Strings;
 
 package body GVD.Memory_View is
 
    use GNAT.Strings;
+
+   type Display_Type is (Hex, Decimal, Octal, Text);
+   --  The current display mode
+   --  Note that any change in this type needs to be coordinated in
+   --  Update_Display.
+
+   type Data_Size is (Byte, Halfword, Word);
+   --  The size of the data to display
+   --  Note that any change in this type needs to be coordinated in
+   --  Update_Display.
+
+   type GVD_Memory_View_Record is new Boxed_Views.Process_View_Record with
+      record
+         Editor : Memory_View_Access;
+
+         Display           : Display_Type := Hex;
+         --  The current display mode.
+
+         Data              : Data_Size := Byte;
+         --  The size of data to display;
+
+         Starting_Address  : Long_Long_Integer := 0;
+         --  The first address that is being explored.
+
+         Values            : GNAT.Strings.String_Access;
+         --  The values that are to be shown in the window.
+         --  This is a string of hexadecimal digits.
+
+         Flags             : GNAT.Strings.String_Access;
+         --  A string of the same size as Values used to set markers on the
+         --  values.
+
+         Number_Of_Bytes   : Integer := 256;
+         --  The size of the pages that are currently stored.
+
+         Number_Of_Columns : Integer := 16;
+         --  The number of columns that are to be displayed.
+
+         Unit_Size         : Integer := 2;
+         --  The size, in number of elements from Values, of the current
+         --  grouping unit (ie 2 for Bytes, 4 for Halfword, 8 for Word....)
+
+         Trunc             : Integer;
+         --  The size of a separate element in the view (ie 2 for a Byte
+         --  displayed in Hex, 3 for a Byte displayed in Decimal ...)
+
+         Default_Tag       : Gtk_Text_Tag;
+         --  Tag used for the default text
+
+         Modified_Tag      : Gtk_Text_Tag;
+         --  Tag used to display modified chunks
+
+         Address_Tag       : Gtk_Text_Tag;
+         --  Tag used to display addresses
+
+         Editable_Tag      : Gtk_Text_Tag;
+         --  Tag used to display some text that could be modified by the user
+      end record;
+   type GVD_Memory_View is access all GVD_Memory_View_Record'Class;
+
+   overriding procedure On_Process_Terminated
+     (View : access GVD_Memory_View_Record);
+   --  See inherited documentation
+
+   function Initialize
+     (Widget : access GVD_Memory_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+   --  Internal initialization function
+   --  Returns the focus child
+
+   function Get_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Box;
+   procedure Set_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Box);
+   --  Store or retrieve the view from the process
+
+   package Simple_Views is new Boxed_Views.Simple_Views
+     (Module_Name        => "Memory_View",
+      View_Name          => -"Memory",
+      Formal_View_Record => GVD_Memory_View_Record,
+      Get_View           => Get_View,
+      Set_View           => Set_View,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Right,
+      Initialize         => Initialize);
+
+   procedure Display_Memory
+     (View    : access GVD_Memory_View_Record'Class;
+      Address : Long_Long_Integer);
+   --  Display the contents of the memory into the text area.
+
+   procedure Display_Memory
+     (View    : access GVD_Memory_View_Record'Class;
+      Address : String);
+   --  Display the contents of the memory into the text area.
+   --  Address is a string that represents an address in hexadecimal,
+   --  it should be made of the "0x" prefix followed by hexadecimal.
+
+   procedure Apply_Changes (View : access GVD_Memory_View_Record'Class);
+   --  Write the changes into memory.
+
+   procedure Page_Down (View : access GVD_Memory_View_Record'Class);
+   procedure Page_Up (View : access GVD_Memory_View_Record'Class);
+   --  Move up or down one page in the view.
+
+   type View_Memory_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access View_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   procedure On_Examine_Memory
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Examine Memory
+
+   procedure Init_Graphics
+     (View   : access GVD_Memory_View_Record'Class;
+      Window : Gdk.Window.Gdk_Window);
+   --  Initialize fonts and graphics used for this widget.
+
+   procedure Update_Display (View : access GVD_Memory_View_Record'Class);
+   --  Refreshes the view.
+
+   type Dir is (Up, Down, Left, Right);
+   procedure Move_Cursor
+     (View  : access GVD_Memory_View_Record'Class;
+      Where : Dir);
+   --  Moves the cursor.
+
+   procedure Insert
+     (View : access GVD_Memory_View_Record'Class;
+      Char : String);
+   --  Inserts string at the current location.
+
+   procedure Watch_Cursor_Location
+     (View : access GVD_Memory_View_Record'Class);
+   --  Makes sure the cursor is within the editable area.
+
+   procedure On_Address_Entry_Activate
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Address_View_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Size_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Data_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Show_Ascii_Toggled
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Pgup_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Pgdn_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   function On_View_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : GValues) return Boolean;
+   function On_View_Button_Release_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   procedure On_Reset_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Submit_Clicked (Object : access Gtk_Widget_Record'Class);
+   function On_Button_Release
+     (Object : access Gtk_Widget_Record'Class) return Boolean;
+   --  Callbacks for the various buttons
 
    --------------------
    -- Local packages --
@@ -118,6 +311,39 @@ package body GVD.Memory_View is
 
    procedure Insert_ASCII (View : access GVD_Memory_View_Record'Class);
    --  Insert the ASCII representation of the memory shown on the current line.
+
+   --------------
+   -- Get_View --
+   --------------
+
+   function Get_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Box is
+   begin
+      return Gtk_Box (Process.Memory_View);
+   end Get_View;
+
+   --------------
+   -- Set_View --
+   --------------
+
+   procedure Set_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Box)
+   is
+      Old : constant GVD_Memory_View :=
+        GVD_Memory_View (Process.Memory_View);
+   begin
+      Process.Memory_View := Gtk_Widget (View);
+
+      --  If we are detaching, clear the old view. This can only be done after
+      --  the above, since otherwise the action on the GUI will result into
+      --  actions on the debugger.
+
+      if View = null and then Old /= null then
+         On_Process_Terminated (Old);
+      end if;
+   end Set_View;
 
    -----------------
    -- Swap_Blocks --
@@ -192,7 +418,7 @@ package body GVD.Memory_View is
       ASCII_Size : Integer := 0;
 
    begin
-      if Get_Active (View.Show_Ascii) then
+      if Get_Active (View.Editor.Show_Ascii) then
          ASCII_Size :=
            Data_ASCII_Separator'Length +
            Line_Base_Size +
@@ -241,7 +467,7 @@ package body GVD.Memory_View is
 
    procedure Watch_Cursor_Location (View : access GVD_Memory_View_Record'Class)
    is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Row    : Integer;
       Column : Integer;
       Iter   : Gtk_Text_Iter;
@@ -332,13 +558,23 @@ package body GVD.Memory_View is
    ----------------
 
    procedure Clear_View (View : access GVD_Memory_View_Record'Class) is
-      Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
       Get_Bounds (Buffer, Start_Iter, End_Iter);
       Delete (Buffer, Start_Iter, End_Iter);
    end Clear_View;
+
+   ---------------------------
+   -- On_Process_Terminated --
+   ---------------------------
+
+   overriding procedure On_Process_Terminated
+     (View : access GVD_Memory_View_Record) is
+   begin
+      Clear_View (View);
+   end On_Process_Terminated;
 
    -------------------
    -- Init_Graphics --
@@ -349,7 +585,7 @@ package body GVD.Memory_View is
       Window : Gdk_Window)
    is
       pragma Unreferenced (Window);
-      Buffer    : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer    : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Tag_Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Buffer);
       Font      : constant Pango_Font_Description :=
         Default_Style.Get_Pref_Font;
@@ -430,12 +666,13 @@ package body GVD.Memory_View is
    --------------------
 
    procedure Update_Display (View : access GVD_Memory_View_Record'Class) is
-      Buffer          : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer          : constant Gtk_Text_Buffer :=
+        Get_Buffer (View.Editor.View);
       Number_Of_Lines : constant Integer :=
-                          Integer (Get_Value_As_Int (View.Lines_Spin));
+                          Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
+      Process      : constant Visual_Debugger := Get_Process (View);
       Endianness      : constant Endian_Type :=
-                          Get_Endian_Type
-                            (Get_Current_Process (View.Window).Debugger);
+                          Get_Endian_Type (Process.Debugger);
       Old_Size        : constant Data_Size := View.Data;
       Index           : Integer;
       Tag             : Gtk_Text_Tag;
@@ -453,8 +690,8 @@ package body GVD.Memory_View is
       --  internationalization of strings properly.
 
       declare
-         Size : constant String := Get_Text (View.Size_Entry);
-         Data : constant String := Get_Text (View.Data_Entry);
+         Size : constant String := Get_Text (View.Editor.Size_Entry);
+         Data : constant String := Get_Text (View.Editor.Data_Entry);
       begin
          if Size = -"Byte" then
             View.Data := Byte;
@@ -587,7 +824,7 @@ package body GVD.Memory_View is
             Place_Cursor (Buffer, End_Iter);
          end loop;
 
-         if Get_Active (View.Show_Ascii) then
+         if Get_Active (View.Editor.Show_Ascii) then
             Insert_ASCII (View);
          end if;
 
@@ -631,10 +868,9 @@ package body GVD.Memory_View is
      (View    : access GVD_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
-      Process         : constant Visual_Debugger :=
-                          Get_Current_Process (View.Window);
+      Process         : constant Visual_Debugger := Get_Process (View);
       Number_Of_Lines : constant Integer :=
-                          Integer (Get_Value_As_Int (View.Lines_Spin));
+                          Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
    begin
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
@@ -662,7 +898,7 @@ package body GVD.Memory_View is
          View.Flags  := new String'(Values);
          View.Data   := Byte;
          Update_Display (View);
-         Set_Text (View.Address_Entry,
+         Set_Text (View.Editor.Address_Entry,
                    "0x" & To_Standard_Base (Address, 16, Address_Length));
          Set_Busy (Process, False);
          Set_Busy_Cursor (Get_Window (View), False);
@@ -679,8 +915,7 @@ package body GVD.Memory_View is
    is
       Real_Address : Long_Long_Integer;
       Index        : Integer;
-      Process      : constant Visual_Debugger :=
-                       Get_Current_Process (View.Window);
+      Process      : constant Visual_Debugger := Get_Process (View);
 
    begin
       if Address'Length > 2
@@ -715,7 +950,7 @@ package body GVD.Memory_View is
                 (New_Address'First .. New_Address'First + 1) = "0x"
             then
                Display_Memory (View, New_Address);
-               Set_Text (View.Address_Entry, Address);
+               Set_Text (View.Editor.Address_Entry, Address);
             else
                Display_Memory (View, 0);
             end if;
@@ -728,10 +963,9 @@ package body GVD.Memory_View is
    -------------------
 
    procedure Apply_Changes (View : access GVD_Memory_View_Record'Class) is
+      Process : constant Visual_Debugger := Get_Process (View);
    begin
-      if Get_Endian_Type
-        (Get_Current_Process (View.Window).Debugger) = Little_Endian
-      then
+      if Get_Endian_Type (Process.Debugger) = Little_Endian then
          Swap_Blocks (View, View.Data);
       end if;
 
@@ -740,7 +974,7 @@ package body GVD.Memory_View is
            View.Values (J * 2 - 1 .. J * 2)
          then
             Put_Memory_Byte
-              (Get_Current_Process (View.Window).Debugger,
+              (Process.Debugger,
                "0x" &
                To_Standard_Base
                  (View.Starting_Address + Long_Long_Integer (J - 1),
@@ -750,25 +984,68 @@ package body GVD.Memory_View is
       end loop;
 
       Display_Memory (View, View.Starting_Address);
-      Run_Debugger_Hook
-        (Get_Current_Process (View.Window),
-         Debugger_Process_Stopped_Hook);
+      Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
    end Apply_Changes;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (View   : out GVD_Memory_View;
-      Window : Gtk_Widget) is
+   function Initialize
+     (Widget : access GVD_Memory_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+   is
    begin
-      View := new GVD_Memory_View_Record;
-      Initialize (View);
-      Init_Graphics (View, Get_Window (Window));
-      View.Window := Window;
-      Set_Wrap_Mode (View.View, Wrap_None);
-   end Gtk_New;
+      Gtk.Box.Initialize_Hbox (Widget);
+      Gtk_New (Widget.Editor);
+      Pack_Start (Widget, Widget.Editor, True, True);
+      Init_Graphics (Widget, Get_Window (Get_Main_Window (Kernel)));
+
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Address_Entry, Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Address_Entry_Activate'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Address_View, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Address_View_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Size_Entry, Signal_Changed,
+         Widget_Callback.To_Marshaller (On_Size_Entry_Changed'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Data_Entry, Signal_Changed,
+         Widget_Callback.To_Marshaller (On_Data_Entry_Changed'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Show_Ascii, Signal_Toggled,
+         Widget_Callback.To_Marshaller (On_Show_Ascii_Toggled'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Pgup, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Pgup_Clicked'Access), Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Pgdn, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Pgdn_Clicked'Access), Widget);
+      Return_Callback.Object_Connect
+        (Widget.Editor.View, Signal_Key_Press_Event,
+         On_View_Key_Press_Event'Access, Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Submit, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Submit_Clicked'Access), Widget);
+      Return_Callback.Object_Connect
+        (Widget.Editor.View, Signal_Button_Release_Event,
+         On_View_Button_Release_Event'Access, Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Reset, Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Reset_Clicked'Access), Widget);
+      Return_Callback.Object_Connect
+        (Gtk_Entry (Widget.Editor.Lines_Spin), Signal_Button_Release_Event,
+         On_Button_Release'Access, Widget);
+
+      Show_All (Widget);
+      return Gtk_Widget (Widget);
+   end Initialize;
 
    -------------
    -- Page_Up --
@@ -779,7 +1056,8 @@ package body GVD.Memory_View is
       Display_Memory
         (View, View.Starting_Address -
            Long_Long_Integer
-             (Integer (Get_Value_As_Int (View.Lines_Spin)) * Line_Base_Size));
+             (Integer (Get_Value_As_Int (View.Editor.Lines_Spin))
+              * Line_Base_Size));
    end Page_Up;
 
    ---------------
@@ -791,7 +1069,8 @@ package body GVD.Memory_View is
       Display_Memory
         (View, View.Starting_Address +
            Long_Long_Integer
-             (Integer (Get_Value_As_Int (View.Lines_Spin)) * Line_Base_Size));
+             (Integer (Get_Value_As_Int (View.Editor.Lines_Spin))
+              * Line_Base_Size));
    end Page_Down;
 
    -----------------
@@ -802,7 +1081,7 @@ package body GVD.Memory_View is
      (View  : access GVD_Memory_View_Record'Class;
       Where : Dir)
    is
-      Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Position   : Gint;
@@ -812,7 +1091,7 @@ package body GVD.Memory_View is
       Get_Iter_At_Mark (Buffer, Start_Iter, Get_Insert (Buffer));
       Position := Get_Offset (Start_Iter);
 
-      if Get_Active (View.Show_Ascii) then
+      if Get_Active (View.Editor.Show_Ascii) then
          ASCII_Size :=
            Data_ASCII_Separator'Length +
            Line_Base_Size +
@@ -835,7 +1114,7 @@ package body GVD.Memory_View is
 
                   if Position_To_Bloc (View, Position) =
                     View.Number_Of_Columns
-                    * Integer (Get_Value_As_Int (View.Lines_Spin)) - 1
+                    * Integer (Get_Value_As_Int (View.Editor.Lines_Spin)) - 1
                   then
                      Get_Iter_At_Offset (Buffer, Start_Iter, Position - 1);
                      Place_Cursor (Buffer, Start_Iter);
@@ -903,7 +1182,7 @@ package body GVD.Memory_View is
      (View : access GVD_Memory_View_Record'Class;
       Char : String)
    is
-      Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
       Position    : Gint;
       Prefix      : String (1 .. 3);
       Success     : Boolean;
@@ -934,7 +1213,7 @@ package body GVD.Memory_View is
          Text : constant String :=
                   Get_Text (Buffer, Start_Iter, End_Iter, False);
       begin
-         if View.View = null or else Text'Length <= 0 then
+         if View.Editor.View = null or else Text'Length <= 0 then
             return;
          end if;
       end;
@@ -1029,7 +1308,7 @@ package body GVD.Memory_View is
             Column     : Integer;
             ASCII_Size : Integer := 0;
          begin
-            if Get_Active (View.Show_Ascii) then
+            if Get_Active (View.Editor.Show_Ascii) then
                ASCII_Size :=
                  Data_ASCII_Separator'Length
                  + Line_Base_Size
@@ -1077,7 +1356,7 @@ package body GVD.Memory_View is
          end;
       end if;
 
-      if Get_Active (View.Show_Ascii) then
+      if Get_Active (View.Editor.Show_Ascii) then
          --  Update the ASCII view
 
          Get_Iter_At_Offset (Buffer, End_Iter, Bloc_End);
@@ -1121,10 +1400,10 @@ package body GVD.Memory_View is
    ------------------
 
    procedure Insert_ASCII (View : access GVD_Memory_View_Record'Class) is
-      Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.View);
+      Buffer      : constant Gtk_Text_Buffer := Get_Buffer (View.Editor.View);
+      Process     : constant Visual_Debugger := Get_Process (View);
       Endianness  : constant Endian_Type :=
-                      Get_Endian_Type
-                        (Get_Current_Process (View.Window).Debugger);
+                      Get_Endian_Type (Process.Debugger);
       Start_Mark  : Gtk_Text_Mark;
       Start_Iter  : Gtk_Text_Iter;
       End_Iter    : Gtk_Text_Iter;
@@ -1185,5 +1464,351 @@ package body GVD.Memory_View is
          end;
       end loop;
    end Insert_ASCII;
+
+   -----------------------
+   -- On_Examine_Memory --
+   -----------------------
+
+   procedure On_Examine_Memory
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Process : Visual_Debugger;
+      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
+
+   begin
+      while List /= null loop
+         Process := Visual_Debugger (List.Debugger);
+
+         if Process.Debugger /= null then
+            Attach_To_Memory (Process, Create_If_Necessary => True);
+         end if;
+
+         List := List.Next;
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Examine_Memory;
+
+   --------------------
+   -- Display_Memory --
+   --------------------
+
+   procedure Display_Memory
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Address : String)
+   is
+      Process  : constant Visual_Debugger :=
+                   Get_Current_Process (Get_Main_Window (Kernel));
+      View : GVD_Memory_View;
+
+   begin
+      Attach_To_Memory (Process, Create_If_Necessary => True);
+      View := GVD_Memory_View (Get_View (Process));
+      Display_Memory (View, Address);
+   end Display_Memory;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access View_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      Display_Memory
+        (Kernel  => Get_Kernel (Context.Context),
+         Address => Get_Variable_Name (Context.Context, False));
+      return Commands.Success;
+   end Execute;
+
+   ----------------------
+   -- Attach_To_Memory --
+   ----------------------
+
+   procedure Attach_To_Memory
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean)
+     renames Simple_Views.Attach_To_View;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Debug    : constant String := '/' & (-"_Debug") & '/';
+      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+      Mitem    : Gtk_Menu_Item;
+      Command  : Interactive_Command_Access;
+   begin
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Data_Sub, Mitem);
+
+      Simple_Views.Register_Desktop_Functions (Kernel);
+      Register_Menu (Kernel, Data_Sub, -"_Examine _Memory", "",
+                     On_Examine_Memory'Access);
+
+      Command := new View_Memory_Command;
+      Register_Contextual_Menu
+        (Kernel, "Debug view memory",
+         Label  => -"Debug/View memory at address of %S",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Debugger active")
+           and Lookup_Filter (Kernel, "Debugger printable variable"));
+   end Register_Module;
+
+   -------------------------------
+   -- On_Address_Entry_Activate --
+   -------------------------------
+
+   procedure On_Address_Entry_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Display_Memory (View, Get_Text (View.Editor.Address_Entry));
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Address_Entry_Activate;
+
+   -----------------------------
+   -- On_Address_View_Clicked --
+   -----------------------------
+
+   procedure On_Address_View_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Display_Memory (View, Get_Text (View.Editor.Address_Entry));
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Address_View_Clicked;
+
+   ---------------------------
+   -- On_Size_Entry_Changed --
+   ---------------------------
+
+   procedure On_Size_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Update_Display (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Size_Entry_Changed;
+
+   ---------------------------
+   -- On_Data_Entry_Changed --
+   ---------------------------
+
+   procedure On_Data_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Update_Display (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Data_Entry_Changed;
+
+   ---------------------------
+   -- On_Show_Ascii_Toggled --
+   ---------------------------
+
+   procedure On_Show_Ascii_Toggled
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Update_Display (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Show_Ascii_Toggled;
+
+   ---------------------
+   -- On_Pgup_Clicked --
+   ---------------------
+
+   procedure On_Pgup_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Page_Up (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Pgup_Clicked;
+
+   ---------------------
+   -- On_Pgdn_Clicked --
+   ---------------------
+
+   procedure On_Pgdn_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Page_Down (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Pgdn_Clicked;
+
+   -----------------------------
+   -- On_View_Key_Press_Event --
+   -----------------------------
+
+   function On_View_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : GValues) return Boolean
+   is
+      View  : constant GVD_Memory_View := GVD_Memory_View (Object);
+      Arg1  : Gdk_Event;
+      Proxy : constant C_Proxy := Get_Proxy (Nth (Params, 1));
+
+   begin
+      if Proxy = null then
+         return False;
+      else
+         Arg1 := Gdk_Event (Proxy);
+      end if;
+
+      if Arg1 = null
+        or else Get_Event_Type (Arg1) /= Key_Press
+      then
+         return False;
+      end if;
+
+      case Get_Key_Val (Arg1) is
+         when GDK_Right =>
+            Move_Cursor (View, Right);
+         when GDK_Left =>
+            Move_Cursor (View, Left);
+         when GDK_Up =>
+            Move_Cursor (View, Up);
+         when GDK_Down =>
+            Move_Cursor (View, Down);
+         when GDK_BackSpace | GDK_Clear | GDK_Delete =>
+            Gtk.Handlers.Emit_Stop_By_Name
+              (View.Editor.View, "key_press_event");
+         when GDK_Page_Up | GDK_KP_Page_Up =>
+            Page_Up (View);
+         when GDK_Page_Down | GDK_KP_Page_Down =>
+            Page_Down (View);
+         when others =>
+            Gtk.Handlers.Emit_Stop_By_Name
+              (View.Editor.View, "key_press_event");
+
+            if Get_String (Arg1)'Length /= 0 then
+               Insert (View, Get_String (Arg1));
+            end if;
+      end case;
+
+      return False;
+
+   exception
+      --  On windows, it seems that pressing the control key generates
+      --  an event for which Get_String is invalid
+
+      when Invalid_Field =>
+         return False;
+
+      when E : others => Trace (Exception_Handle, E);
+         return False;
+   end On_View_Key_Press_Event;
+
+   ----------------------------------
+   -- On_View_Button_Release_Event --
+   ----------------------------------
+
+   function On_View_Button_Release_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      pragma Unreferenced (Params);
+
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Result     : Boolean;
+   begin
+      if View.Values = null then
+         return False;
+      end if;
+
+      Get_Selection_Bounds
+        (Get_Buffer (View.Editor.View), Start_Iter, End_Iter, Result);
+
+      if Result = False then
+         Watch_Cursor_Location (View);
+      end if;
+
+      return False;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+      return False;
+   end On_View_Button_Release_Event;
+
+   -----------------------
+   -- On_Submit_Clicked --
+   -----------------------
+
+   procedure On_Submit_Clicked (Object : access Gtk_Widget_Record'Class) is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Apply_Changes (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Submit_Clicked;
+
+   ----------------------
+   -- On_Reset_Clicked --
+   ----------------------
+
+   procedure On_Reset_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      GNAT.Strings.Free (View.Flags);
+      View.Flags := new String'(View.Values.all);
+      Update_Display (View);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Reset_Clicked;
+
+   -----------------------
+   -- On_Button_Release --
+   -----------------------
+
+   function On_Button_Release
+     (Object : access Gtk_Widget_Record'Class) return Boolean
+   is
+      View : constant GVD_Memory_View := GVD_Memory_View (Object);
+   begin
+      Update_Display (View);
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end On_Button_Release;
 
 end GVD.Memory_View;

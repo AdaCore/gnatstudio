@@ -227,6 +227,11 @@ NF-50-J208-019 Automatic highlighting of occurrences (2010-07-21)
   This is controlled by the plugin auto_highlight_occurrences.py and is
   activated by default.
 
+NF-50-J208-013 Memory view embedded in the MDI (2010-09-13)
+
+  The debugger memory view can now be embedded in the MDI, as opposed to
+  being a separate dialog. This provides a more integrated workflow
+
 NF-50-J208-007 Partial navigation without compilation (2010-02-19)
 
   GPS now provides a navigation mode working even when files are not compiled.

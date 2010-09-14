@@ -205,13 +205,6 @@ package body GVD_Module is
       Args   : String);
    --  Initialize the debugger
 
-   function Get_Variable_Name
-     (Context     : Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
-
    procedure Start_Program
      (Process : Visual_Debugger; Start_Cmd : Boolean := False);
    --  Start the execution of the main program.
@@ -262,10 +255,6 @@ package body GVD_Module is
    procedure On_Kill
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
-
-   procedure On_Examine_Memory
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Examine Memory
 
    procedure On_Display_Locals
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -425,11 +414,6 @@ package body GVD_Module is
    type Set_Value_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Value_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type View_Memory_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Show_Location_Command is new Interactive_Command with null record;
@@ -1025,32 +1009,6 @@ package body GVD_Module is
    end On_Interrupt;
 
    -----------------------
-   -- On_Examine_Memory --
-   -----------------------
-
-   procedure On_Examine_Memory
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top         : constant GPS_Window :=
-                      GPS_Window (Get_Main_Window (Kernel));
-      Process     : constant Visual_Debugger := Get_Current_Process (Top);
-      Memory_View : GVD_Memory_View;
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      Gtk_New (Memory_View, Gtk_Widget (Top));
-      Show_All (Memory_View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Examine_Memory;
-
-   -----------------------
    -- On_Display_Locals --
    -----------------------
 
@@ -1574,26 +1532,6 @@ package body GVD_Module is
       if S /= "" and then S (S'First) /= ASCII.NUL then
          Set_Variable (Process.Debugger, Variable, S);
       end if;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access View_Memory_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Memory_View : GVD_Memory_View;
-
-   begin
-      Gtk_New
-        (Memory_View,
-         Gtk_Widget (Get_Main_Window (Get_Kernel (Context.Context))));
-      Show_All (Memory_View);
-      Display_Memory (Memory_View, Get_Variable_Name (Context.Context, False));
       return Commands.Success;
    end Execute;
 
@@ -2440,6 +2378,9 @@ package body GVD_Module is
       Register_Filter (Kernel, Debugger_Filter, "Debugger active");
 
       Printable_Filter  := new Printable_Variable_Filter;
+      Register_Filter
+        (Kernel, Printable_Filter, "Debugger printable variable");
+
       Access_Filter     := new Access_Variable_Filter;
       Subprogram_Filter := new Subprogram_Variable_Filter;
 
@@ -2486,13 +2427,6 @@ package body GVD_Module is
       Register_Contextual_Menu
         (Kernel, "Debug set value",
          Label  => -"Debug/Set value of %S",
-         Action => Command,
-         Filter => Debugger_Filter and Printable_Filter);
-
-      Command := new View_Memory_Command;
-      Register_Contextual_Menu
-        (Kernel, "Debug view memory",
-         Label  => -"Debug/View memory at address of %S",
          Action => Command,
          Filter => Debugger_Filter and Printable_Filter);
 
@@ -2564,14 +2498,8 @@ package body GVD_Module is
       GVD.Dialogs.Register_Module (Kernel);
       GVD.Assembly_View.Register_Module (Kernel);
       Breakpoints_Editor.Register_Module (Kernel);
+      GVD.Memory_View.Register_Module (Kernel);
 
---      Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
-      --  ??? FLORIAN Should be remove after refactoring
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"Examine _Memory", "",
-                     On_Examine_Memory'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",

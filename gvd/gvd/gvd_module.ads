@@ -61,6 +61,13 @@ package GVD_Module is
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
    --  Terminate the debugging session, and closes all remaining debuggers
 
+   function Get_Variable_Name
+     (Context     : GPS.Kernel.Selection_Context;
+      Dereference : Boolean) return String;
+   --  If Context contains an entity, get the entity name.
+   --  Dereference the entity if Dereference is True.
+   --  Return "" if entity name could not be found in Context.
+
    procedure Set_Sensitive
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       State  : Debugger_State);

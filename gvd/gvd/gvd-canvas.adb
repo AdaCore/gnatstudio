@@ -1819,17 +1819,10 @@ package body GVD.Canvas is
       Item   : Item_Record)
    is
       pragma Unreferenced (Widget);
-
-      Top  : constant GPS_Window := Get_Process (Item.Canvas).Window;
-      View : GVD_Memory_View;
-
    begin
-      Gtk_New (View, Gtk_Widget (Top));
-      Show_All (View);
-      Display_Memory (View, Item.Component_Name);
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
+      Display_Memory
+        (Kernel => Get_Kernel (Item.Canvas),
+         Address => Item.Component_Name);
    end View_Into_Memory;
 
    ---------------------

@@ -70,6 +70,7 @@ with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Consoles;               use GVD.Consoles;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Preferences;            use GVD.Preferences;
+with GVD.Memory_View;            use GVD.Memory_View;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Source_Editor.GPS;      use GVD.Source_Editor.GPS;
 with GVD.Scripts;                use GVD.Scripts;
@@ -1109,6 +1110,7 @@ package body GVD.Process is
       Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
       Attach_To_Assembly_View (Process, Create_If_Necessary => False);
       Attach_To_Breakpoints   (Process, Create_If_Necessary => False);
+      Attach_To_Memory        (Process, Create_If_Necessary => False);
 
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it.
