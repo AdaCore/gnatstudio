@@ -908,8 +908,6 @@ package body Breakpoints_Editor is
            (Process.Debugger,
             Process.Breakpoints (Current).Num);
       end if;
-
-      Update (View);
    end On_Add_Exception_Clicked;
 
    -----------------------------
@@ -1011,8 +1009,6 @@ package body Breakpoints_Editor is
       if Remove and then Current /= -1 then
          Remove_Breakpoint (Process.Debugger, Br.Num);
       end if;
-
-      Update (View);
    end On_Add_Location_Clicked;
 
    ----------------------------------
@@ -1153,8 +1149,6 @@ package body Breakpoints_Editor is
       if Remove and Current /= -1 then
          Remove_Breakpoint (Process.Debugger, Br.Num);
       end if;
-
-      Update (View);
    end On_Add_Watchpoint_Clicked;
 
    ------------------------------------
@@ -1236,8 +1230,6 @@ package body Breakpoints_Editor is
                   N      => Gint (Selection)));
          end if;
       end if;
-
-      Update (View);
 
    exception
       when E : others =>
