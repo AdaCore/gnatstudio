@@ -15,6 +15,11 @@ of the feature.
 New features in 5.0.0
 ---------------------
 
+NF-50-J913-040 Breakpoints editor part of the MDI (2010-09-13)
+
+  The breakpoints editor can now be embedded in the MDI, instead of
+  always being a floating window.
+
 NF-50-J913-020 Rectangles plugin loaded by default (2010-09-13)
 
   The rectangles.py plugin is now loaded by default, providing extra
