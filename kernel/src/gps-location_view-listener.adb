@@ -989,23 +989,22 @@ package body GPS.Location_View.Listener is
      (Self    : not null access Locations_Listener;
       Message : not null access Abstract_Message'Class)
    is
-      Node : Node_Access;
-      Cat_Node : constant Node_Access := Find_Category_Node
-        (Self, Message.Get_Category);
+      Category_Node  : constant Node_Access :=
+                         Find_Category_Node (Self, Message.Get_Category);
+      Parent_Message : constant Message_Access := Get_Parent (Message);
+      Node           : Node_Access;
 
-      Parent : constant Message_Access := Get_Parent (Message);
    begin
-
       Node := new Node_Record (Node_Message);
 
-      if Parent = null then
-         Node.Parent := Find_File_Node (Self, Cat_Node, Message.Get_File);
+      if Parent_Message = null then
+         Node.Parent := Find_File_Node (Self, Category_Node, Message.Get_File);
          Node.Parent.Message_Count := Node.Parent.Message_Count + 1;
          Node.Parent.Parent.Message_Count :=
            Node.Parent.Parent.Message_Count + 1;
 
       else
-         Node.Parent := Find_Node (Self, Parent);
+         Node.Parent := Find_Node (Self, Parent_Message);
       end if;
 
       Node.Message := Message_Access (Message);
@@ -1047,23 +1046,18 @@ package body GPS.Location_View.Listener is
    is
       Node  : Node_Access := Find_Node (Self, Message_Access (Message));
       Path  : constant Gtk_Tree_Path := Self.Model.Create_Path (Node);
-      File  : Node_Access;
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
 
-      Index : Natural;
    begin
-      File := Node.Parent;
-
-      Index := File.Children.Find_Index (Node);
-      File.Children.Delete (Index);
+      Node.Parent.Children.Delete (Node.Parent.Children.Find_Index (Node));
 
       Self.Model.Row_Deleted (Path);
 
-      if File.Children.Is_Empty then
+      if Node.Parent.Children.Is_Empty then
          Dummy := Up (Path);
          Self.Model.Row_Has_Child_Toggled
-           (Path, Self.Model.Create_Iter (File));
+           (Path, Self.Model.Create_Iter (Node.Parent));
       end if;
 
       Recursive_Free (Node);
