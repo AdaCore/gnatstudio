@@ -498,7 +498,7 @@ package body Project_Templates.GUI is
          end if;
 
          if Next_Page_Number <= 0 then
-            Main_Label.Set_Text ("No template selected");
+            Main_Label.Set_Text ("No template selected.");
             Assistant.Set_Page_Complete (Hpane, False);
          else
             Assistant.Set_Page_Complete (Hpane, True);
