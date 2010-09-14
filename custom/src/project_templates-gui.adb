@@ -22,6 +22,10 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Glib; use Glib;
 with Glib.Object; use Glib.Object;
 
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+
 with Gtk.Assistant;            use Gtk.Assistant;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Enums;                use Gtk.Enums;
@@ -326,6 +330,11 @@ package body Project_Templates.GUI is
       procedure Cancelled (Widget : access GObject_Record'Class);
       --  Press on the "Cancel" button
 
+      function On_Key_Press
+        (Widget : access GObject_Record'Class;
+         Event  : Gdk_Event) return Boolean;
+      --  Callback on a key press
+
       procedure On_Apply (Widget : access GObject_Record'Class);
       --  Press on the "Apply" button
 
@@ -524,6 +533,27 @@ package body Project_Templates.GUI is
             Gtk.Main.Main_Quit;
       end Cancelled;
 
+      ------------------
+      -- On_Key_Press --
+      ------------------
+
+      function On_Key_Press
+        (Widget : access GObject_Record'Class;
+         Event  : Gdk_Event) return Boolean is
+
+      begin
+         if Get_Key_Val (Event) = GDK_Escape then
+            Cancelled (Widget);
+            return True;
+         end if;
+         return False;
+
+      exception
+         when E : others =>
+            Errors := Errors & ASCII.LF & Exception_Information (E);
+            return False;
+      end On_Key_Press;
+
       --------------
       -- On_Apply --
       --------------
@@ -624,6 +654,10 @@ package body Project_Templates.GUI is
 
       Object_Callback.Connect
         (Assistant, "cancel", Cancelled'Unrestricted_Access);
+
+      Object_Return_Callback.Connect
+        (Assistant, "key_press_event", Object_Return_Callback.To_Marshaller
+           (On_Key_Press'Unrestricted_Access));
 
       Object_Callback.Connect
         (Assistant, "apply", On_Apply'Unrestricted_Access);
