@@ -432,6 +432,13 @@ It isn't recommended to do any direct graphical action before this hook has been
      <see_also>@hook@ debugger_state_changed</see_also>
   </shell_doc>
 
+  <shell_doc name="@hook@ debugger_breakpoints_changed">
+     <obsolescent />
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <description>Hook called when the list of breakpoints has been refreshed. This might occur whether or not the list has changed, but is a good time to refresh any view that might depend on an up-to-date list</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ debugger_state_changed">
      <param name="hook">A string, the name of the hook</param>
      <param name="debugger">An instance of GPS.Debugger</param>
