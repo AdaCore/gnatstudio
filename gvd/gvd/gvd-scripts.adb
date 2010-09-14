@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2009, AdaCore                 --
+--                  Copyright (C) 2005-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -515,6 +515,8 @@ package body GVD.Scripts is
         (Kernel, Debugger_Context_Changed_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
         (Kernel, Debugger_Executable_Changed_Hook, Debugger_Hook_Data_Type);
+      Register_Hook_No_Return
+        (Kernel, Debugger_Breakpoints_Changed_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
         (Kernel, Debugger_State_Changed_Hook, Debugger_Hook_States_Data_Type);
       Register_Hook_No_Return

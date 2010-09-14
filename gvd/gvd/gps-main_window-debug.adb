@@ -23,7 +23,6 @@ with Gtk.Menu_Item;      use Gtk.Menu_Item;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 
-with Breakpoints_Editor;    use Breakpoints_Editor;
 with GVD_Module;            use GVD_Module;
 with GVD.Scripts;           use GVD.Scripts;
 with GVD.Process;           use GVD.Process;
@@ -113,7 +112,6 @@ package body GPS.Main_Window.Debug is
    is
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
       Widget      : Gtk_Menu_Item;
-      Bp_Editor   : Breakpoint_Editor_Access;
 
       use type Glib.Object.GObject;
 
@@ -126,13 +124,6 @@ package body GPS.Main_Window.Debug is
 
       if Process.Debugger = null then
          return;
-      end if;
-
-      Bp_Editor := Breakpoint_Editor_Access
-        (Get_Breakpoints_Editor (Window.Kernel));
-
-      if Bp_Editor /= null then
-         Set_Process (Bp_Editor, Process);
       end if;
 
       --  ??? Replace by a signal "debugger_switch" on the main window

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2010, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,6 @@ with Gtk.Separator;       use Gtk.Separator;
 with Gtk.Spin_Button;     use Gtk.Spin_Button;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
-with Gtk.Window;          use Gtk.Window;
 
 package Breakpoints_Pkg is
 
@@ -50,9 +49,7 @@ package Breakpoints_Pkg is
    Col_Exception : constant Gint := 6;
    Col_Subprogs  : constant Gint := 7;
 
-   type Breakpoints_Record is new Gtk_Window_Record with record
-      Main_Box : Gtk_Hbox;
-      Vbox1 : Gtk_Vbox;
+   type Breakpoints_Record is new Gtk_Vbox_Record with record
       Notebook1 : Gtk_Notebook;
       Hbox2 : Gtk_Hbox;
       Vbox2 : Gtk_Vbox;
@@ -123,7 +120,6 @@ package Breakpoints_Pkg is
       Remove : Gtk_Button;
       View : Gtk_Button;
       Advanced_Location : Gtk_Button;
-      Ok_Button : Gtk_Button;
    end record;
    type Breakpoints_Access is access all Breakpoints_Record'Class;
 

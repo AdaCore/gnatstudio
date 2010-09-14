@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,6 +51,11 @@ package GVD is
    --  Called when the executable associated with the debugger has changed, for
    --  instance via Debug->Debug->Open File. This is also called initially when
    --  the executable is given on the command line
+
+   Debugger_Breakpoints_Changed_Hook : constant GPS.Kernel.Hook_Name :=
+     "debugger_breakpoints_changed";
+   --  The list of breakpoints set in the debugger was reloaded. It might not
+   --  have changed since the last time
 
    Debugger_Started_Hook    : constant GPS.Kernel.Hook_Name :=
      "debugger_started";

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -58,22 +58,7 @@ package body Breakpoints_Pkg is
       Vbox9_Group            : Widget_SList.GSlist;
 
    begin
-      Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
-      Set_Title (Breakpoints, -"Breakpoints");
-      Set_Policy (Breakpoints, False, True, True);
-      Set_Position (Breakpoints, Win_Pos_Center);
-      Set_Modal (Breakpoints, False);
-      Return_Callback.Connect
-        (Breakpoints, Signal_Delete_Event, On_Breakpoints_Delete_Event'Access);
-      Return_Callback.Connect
-        (Breakpoints, Signal_Key_Press_Event,
-         On_Breakpoints_Key_Press_Event'Access);
-
-      Gtk_New_Hbox (Breakpoints.Main_Box, False, 0);
-      Add (Breakpoints, Breakpoints.Main_Box);
-
-      Gtk_New_Vbox (Breakpoints.Vbox1, False, 4);
-      Pack_Start (Breakpoints.Main_Box, Breakpoints.Vbox1, True, True, 0);
+      Gtk.Box.Initialize_Vbox (Breakpoints, False, 0);
 
       Gtk_New (Breakpoints.Notebook1);
       Set_Scrollable (Breakpoints.Notebook1, False);
@@ -82,7 +67,7 @@ package body Breakpoints_Pkg is
       Set_Tab_Hborder (Breakpoints.Notebook1, 2);
       Set_Tab_Vborder (Breakpoints.Notebook1, 2);
       Set_Tab_Pos (Breakpoints.Notebook1, Pos_Top);
-      Pack_Start (Breakpoints.Vbox1, Breakpoints.Notebook1, False, True, 0);
+      Pack_Start (Breakpoints, Breakpoints.Notebook1, False, True, 0);
 
       Gtk_New_Hbox (Breakpoints.Hbox2, False, 0);
       Add (Breakpoints.Notebook1, Breakpoints.Hbox2);
@@ -266,10 +251,6 @@ package body Breakpoints_Pkg is
 
       Gtk_New_From_Stock (Breakpoints.Add_Location, Stock_Add);
       Set_Flags (Breakpoints.Add_Location, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Add_Location, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Breakpoints);
       Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
       Gtk_New (Breakpoints.Location, -("Location"));
@@ -354,10 +335,6 @@ package body Breakpoints_Pkg is
 
       Gtk_New_From_Stock (Breakpoints.Add_Watchpoint, Stock_Add);
       Set_Flags (Breakpoints.Add_Watchpoint, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Add_Watchpoint, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access),
-         Breakpoints);
       Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
 
       Gtk_New (Breakpoints.Watchpoint, -("Variable"));
@@ -406,10 +383,6 @@ package body Breakpoints_Pkg is
       Set_Relief (Breakpoints.Load_Exception_List, Relief_Normal);
       Pack_Start (Breakpoints.Hbox14,
                   Breakpoints.Load_Exception_List, False, False, 0);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Load_Exception_List, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access),
-         Breakpoints);
 
       Gtk_New (Breakpoints.Temporary_Exception, -"Temporary breakpoint");
       Set_Active (Breakpoints.Temporary_Exception, False);
@@ -449,10 +422,6 @@ package body Breakpoints_Pkg is
 
       Gtk_New_From_Stock (Breakpoints.Add_Exception, Stock_Add);
       Set_Flags (Breakpoints.Add_Exception, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Add_Exception, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access),
-         Breakpoints);
       Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
 
       Gtk_New (Breakpoints.Except, -("Exception"));
@@ -464,7 +433,7 @@ package body Breakpoints_Pkg is
 
       Gtk_New (Breakpoints.Frame11, -"Breakpoints");
       Set_Shadow_Type (Breakpoints.Frame11, Shadow_Etched_In);
-      Pack_Start (Breakpoints.Vbox1, Breakpoints.Frame11, True, True, 0);
+      Pack_Start (Breakpoints, Breakpoints.Frame11, True, True, 0);
 
       Gtk_New_Vbox (Breakpoints.Vbox16, False, 0);
       Add (Breakpoints.Frame11, Breakpoints.Vbox16);
@@ -519,35 +488,17 @@ package body Breakpoints_Pkg is
 
       Gtk_New_From_Stock (Breakpoints.Remove, Stock_Remove);
       Set_Flags (Breakpoints.Remove, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Remove, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Remove_Clicked'Access),
-         Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Remove);
 
       Gtk_New (Breakpoints.View, -"View");
       Set_Relief (Breakpoints.View, Relief_Normal);
       Set_Flags (Breakpoints.View, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.View, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_View_Clicked'Access), Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.View);
 
       Gtk_New (Breakpoints.Advanced_Location, -"Advanced");
       Set_Relief (Breakpoints.Advanced_Location, Relief_Normal);
       Set_Flags (Breakpoints.Advanced_Location, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Advanced_Location, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access),
-         Breakpoints);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Advanced_Location);
-
-      Gtk_New_From_Stock (Breakpoints.Ok_Button, Stock_Close);
-      Set_Flags (Breakpoints.Ok_Button, Can_Default);
-      Widget_Callback.Object_Connect
-        (Breakpoints.Ok_Button, Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Ok_Bp_Clicked'Access), Breakpoints);
-      Add (Breakpoints.Hbuttonbox8, Breakpoints.Ok_Button);
    end Initialize;
 
 end Breakpoints_Pkg;

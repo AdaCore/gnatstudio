@@ -176,6 +176,7 @@ package body GVD.Generic_View is
          pragma Unreferenced (Button);
 
       begin
+         Trace (Me, "MANU Attach_To_View " & Module_Name);
          View := Formal_View_Access (Get_View (Process));
 
          if View = null then

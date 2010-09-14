@@ -183,7 +183,7 @@ package body GVD.Call_Stack is
       --  actions on the debugger.
 
       if View = null and then Old /= null then
-         Clear (Old.Model);
+         On_Process_Terminated (Old);
       end if;
    end Set_View;
 

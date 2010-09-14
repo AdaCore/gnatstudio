@@ -1108,6 +1108,7 @@ package body GVD.Process is
       Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
       Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
       Attach_To_Assembly_View (Process, Create_If_Necessary => False);
+      Attach_To_Breakpoints   (Process, Create_If_Necessary => False);
 
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it.
@@ -1614,7 +1615,6 @@ package body GVD.Process is
       Force   : Boolean)
    is
       Debugger  : constant Visual_Debugger := Visual_Debugger (Process);
-      Bp_Editor : Breakpoint_Editor_Access;
    begin
       if Debugger.Debugger = null then
          return;
@@ -1655,13 +1655,7 @@ package body GVD.Process is
          --  Update the breakpoints in the assembly view
          GVD.Assembly_View.Update_Breakpoints (Debugger);
 
-         --  Update the breakpoints dialog if necessary
-         Bp_Editor := Breakpoint_Editor_Access
-           (Get_Breakpoints_Editor (Debugger.Window.Kernel));
-
-         if Bp_Editor /= null and then Mapped_Is_Set (Bp_Editor) then
-            Update_Breakpoint_List (Bp_Editor);
-         end if;
+         Run_Debugger_Hook (Debugger, Debugger_Breakpoints_Changed_Hook);
       end if;
    end Update_Breakpoints;
 

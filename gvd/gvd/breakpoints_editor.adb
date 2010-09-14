@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2009, AdaCore             --
+--                      Copyright (C) 2000-2010, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,10 +20,14 @@
 with GNAT.Strings;     use GNAT.Strings;
 
 with Glib;             use Glib;
+with Glib.Object;      use Glib.Object;
+with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Event;        use Gdk.Event;
 with Gdk.Pixmap;       use Gdk.Pixmap;
-with Gdk.Window;       use Gdk.Window;
+with Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Window;        use Gdk.Window;
 
 with Gtk;              use Gtk;
 with Gtk.Arguments;    use Gtk.Arguments;
@@ -52,21 +56,87 @@ with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
-with Gtkada.Handlers;  use Gtkada.Handlers;
-with GPS.Intl;       use GPS.Intl;
-with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
+with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
+with Breakpoints_Pkg;         use Breakpoints_Pkg;
+with Gtkada.Handlers;    use Gtkada.Handlers;
+with Gtkada.MDI;         use Gtkada.MDI;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;     use GPS.Kernel, GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Pixmaps_IDE;      use Pixmaps_IDE;
-with GVD.Code_Editors; use GVD.Code_Editors;
+with GVD_Module;       use GVD_Module;
+with GVD.Code_Editors; use GVD, GVD.Code_Editors;
 with GVD.Process;      use GVD.Process;
+with GVD.Scripts;      use GVD.Scripts;
 with GVD.Types;        use GVD.Types;
+with GVD.Views;        use GVD.Views;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with Process_Proxies;  use Process_Proxies;
 with Traces;           use Traces;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Breakpoints_Editor is
+   type Breakpoint_Editor_Record is new Boxed_Views.Process_View_Record with
+      record
+         Editor               : Breakpoints_Access;
+         Advanced_Breakpoints : Advanced_Breakpoint_Access;
+         Enabled_Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
+         Enabled_Mask         : Gdk.Bitmap.Gdk_Bitmap;
+      end record;
+   type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
+
+   overriding procedure Update (View   : access Breakpoint_Editor_Record);
+   overriding procedure On_Process_Terminated
+     (View : access Breakpoint_Editor_Record);
+   --  See inherited documentation
+
+   function Initialize
+     (Widget : access Breakpoint_Editor_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+   --  Internal initialization function
+   --  Returns the focus child
+
+   function Get_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Box;
+   procedure Set_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Box);
+   --  Store or retrieve the view from the process
+
+   package Simple_Views is new Boxed_Views.Simple_Views
+     (Module_Name        => "Breakpoints",
+      View_Name          => -"Breakpoints",
+      Formal_View_Record => Breakpoint_Editor_Record,
+      Get_View           => Get_View,
+      Set_View           => Set_View,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Right,
+      Initialize         => Initialize);
+
+   procedure On_Edit_Breakpoints
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Breakpoints
+
+   procedure On_Breakpoints_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   --  Hook for "debugger_breakpoints_changed"
+
+   procedure Update_Breakpoint_List
+     (View   : access Breakpoint_Editor_Record'Class);
+   --  Update the list of breakpoints in the dialog.
+   --  The list is taken from the one stored in the current debugger session.
+
+   function Get_Selection_Index
+     (View : access Breakpoint_Editor_Record'Class) return Integer;
+   --  Return the index of the currently selected line in the breakpoint
+   --  editor. The index is the element in Editor.Process.Breakpoints, or
+   --  -1 if there is no selection
 
    procedure Breakpoint_Row_Selection_Change
      (Widget : access Gtk_Widget_Record'Class;
@@ -78,84 +148,485 @@ package body Breakpoints_Editor is
       Event  : Gdk_Event) return Boolean;
    --  Called when receiving a click on the breakpoint tree.
 
+   procedure On_Advanced_Location_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   --  Run the advanced breakpoints dialog
+
+   procedure On_Add_Location_Clicked (Object : access Gtk_Widget_Record'Class);
+   --  Set the breakpoint that is currently described in the location page.
+   --  If Current is not -1, then the breakpoint currently displayed at line
+   --  Current is updated (first removed if some of the information has
+   --  changed).
+
+   procedure On_Load_Exception_List_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Remove_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   procedure On_View_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   function On_Breakpoints_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  Callbacks for the various buttons
+
+   procedure On_Add_Exception_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   --  Set the breakpoint that is currently described in the exception page.
+
+   procedure On_Add_Watchpoint_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+   --  Set the watchpoint that is currently described in the variables page.
+
    procedure Fill_Advanced_Dialog
      (Advanced : Advanced_Breakpoint_Access; Br : Breakpoint_Data);
    --  Fills the contents of the Advanced dialog with the values contained in
    --  Br.
 
    procedure Set_Advanced
-     (Editor : access Breakpoint_Editor_Record'Class;
-      Br     : Breakpoint_Data);
+     (View : access Breakpoint_Editor_Record'Class;
+      Br   : Breakpoint_Data);
    --  Set the advanced options for the breakpoint Br, based on the contents
    --  of its advanced breakpoint editor.
 
-   -----------------------
-   -- Breakpoint_Editor --
-   -----------------------
+   --------------
+   -- Get_View --
+   --------------
 
-   procedure Breakpoint_Editor
-     (Editor  : in out Breakpoint_Editor_Access;
-      Process : access GVD.Process.Visual_Debugger_Record'Class)
+   function Get_View
+     (Process : access Visual_Debugger_Record'Class)
+      return Gtk_Box is
+   begin
+      return Gtk_Box (Process.Breakpoints_Editor);
+   end Get_View;
+
+   --------------
+   -- Set_View --
+   --------------
+
+   procedure Set_View
+     (Process : access Visual_Debugger_Record'Class;
+      View    : Gtk_Box)
+   is
+      Old : constant Breakpoint_Editor :=
+        Breakpoint_Editor (Process.Breakpoints_Editor);
+   begin
+      Process.Breakpoints_Editor := Gtk_Widget (View);
+
+      --  If we are detaching, clear the old view. This can only be done after
+      --  the above, since otherwise the action on the GUI will result into
+      --  actions on the debugger.
+
+      if View = null and then Old /= null then
+         On_Process_Terminated (Old);
+      end if;
+   end Set_View;
+
+   -------------------------
+   -- On_Edit_Breakpoints --
+   -------------------------
+
+   procedure On_Edit_Breakpoints
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Process : Visual_Debugger;
+      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
+
+   begin
+      while List /= null loop
+         Process := Visual_Debugger (List.Debugger);
+
+         if Process.Debugger /= null then
+            Attach_To_Breakpoints (Process, Create_If_Necessary => True);
+         end if;
+
+         List := List.Next;
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Edit_Breakpoints;
+
+   ----------------------------
+   -- Update_Breakpoint_List --
+   ----------------------------
+
+   procedure Update_Breakpoint_List
+     (View   : access Breakpoint_Editor_Record'Class)
+   is
+      Process      : constant Visual_Debugger := Get_Process (View);
+      Selection    : constant Integer := Get_Selection_Index (View);
+      Selected     : Breakpoint_Identifier := 0;
+      Br           : Breakpoint_Data;
+      Size         : Gint;
+      pragma Unreferenced (Size);
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (View.Editor.Breakpoint_List));
+      Iter          : Gtk_Tree_Iter;
+      Selected_Iter : Gtk_Tree_Iter := Null_Iter;
+
+   begin
+      Clear (Model);
+
+      if Selection /= -1 then
+         Selected := Process.Breakpoints (Selection).Num;
+      end if;
+
+      if Process.Breakpoints = null
+        or else Process.Breakpoints'Length <= 0
+      then
+         return;
+      end if;
+
+      for B in Process.Breakpoints'Range loop
+         Br := Process.Breakpoints (B);
+
+         --  Create a new line
+
+         Append (Model, Iter, Null_Iter);
+         Set (Model, Iter, Col_Num, Breakpoint_Identifier'Image (Br.Num));
+
+         if Selection /= -1 and then Br.Num = Selected then
+            Selected_Iter := Iter;
+         end if;
+
+         Set (Model, Iter, Col_Enb, Br.Enabled);
+
+         case Br.The_Type is
+            when Breakpoint =>
+               Set (Model, Iter, Col_Type, -"break");
+            when Watchpoint =>
+               Set (Model, Iter, Col_Type, -"watch");
+         end case;
+
+         Set (Model, Iter, Col_Disp, To_Lower (Br.Disposition'Img));
+
+         if Br.Expression /= null then
+            Set (Model, Iter, Col_File, Br.Expression.all);
+         end if;
+
+         if Br.File /= GNATCOLL.VFS.No_File then
+            Set (Model, Iter, Col_File, +Base_Name (Br.File));
+            Set (Model, Iter, Col_Line, Integer'Image (Br.Line));
+         end if;
+
+         if Br.Except /= null then
+            Set (Model, Iter, Col_Exception, Br.Except.all);
+         end if;
+
+         if Br.Subprogram /= null then
+            Set (Model, Iter, Col_Subprogs, Br.Subprogram.all);
+         end if;
+      end loop;
+
+      --  Reselect the same item as before
+
+      if Selected_Iter /= Null_Iter then
+         Select_Iter
+           (Get_Selection (View.Editor.Breakpoint_List), Selected_Iter);
+      end if;
+   end Update_Breakpoint_List;
+
+   ------------
+   -- Update --
+   ------------
+
+   overriding procedure Update (View   : access Breakpoint_Editor_Record) is
+      Process  : Process_Proxy_Access;
+   begin
+      if Get_Process (View) /= null then
+         Process := Get_Process (Get_Process (View).Debugger);
+      end if;
+
+      --  If the debugger was killed, no need to refresh
+
+      if Process = null then
+         return;
+      end if;
+
+      Update_Breakpoint_List (View);
+
+      --  Reinitialize the contents of the file combo boxes
+      Set_Text
+        (Get_Entry (View.Editor.File_Combo),
+         +Base_Name (Get_Current_File (Get_Process (View).Editor_Text)));
+      --  ??? What if the filesystem path is non-UTF8?
+
+      --  Clear the contents of the exceptions combo (its contents is in fact
+      --  cached in gdb, so it is fast enough to call "info exceptions" again)
+      Clear_Items (Get_List (View.Editor.Exception_Name), 0, -1);
+      Add_Unique_Combo_Entry
+        (View.Editor.Exception_Name, -"All exceptions");
+      Add_Unique_Combo_Entry
+        (View.Editor.Exception_Name, -"All assertions");
+
+      --  Reset the Exception page
+      Set_Sensitive (View.Editor.Hbox4, True);
+   end Update;
+
+   ----------------------------
+   -- On_Breakpoints_Changed --
+   ----------------------------
+
+   procedure On_Breakpoints_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Process : constant Visual_Debugger :=
+        Get_Process (Debugger_Hooks_Data_Access (Data));
+      View : constant Breakpoint_Editor :=
+        Breakpoint_Editor (Process.Breakpoints_Editor);
+   begin
+      if View /= null then
+         Update_Breakpoint_List (View);
+      end if;
+   end On_Breakpoints_Changed;
+
+   ---------------------------
+   -- On_Process_Terminated --
+   ---------------------------
+
+   overriding procedure On_Process_Terminated
+     (View : access Breakpoint_Editor_Record)
+   is
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (View.Editor.Breakpoint_List));
+   begin
+      Clear (Model);
+   end On_Process_Terminated;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   function Initialize
+     (Widget : access Breakpoint_Editor_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Style : Gtk_Style;
    begin
-      if Editor = null then
-         Editor := new Breakpoint_Editor_Record;
-         Breakpoints_Pkg.Initialize (Editor);
-         Set_Sensitive (Editor.Advanced_Location, False);
-         Set_Sensitive (Editor.Remove, False);
-         Set_Sensitive (Editor.View, False);
-         Set_Transient_For (Editor, Process.Window);
+      Gtk.Box.Initialize_Hbox (Widget);
+      Gtk_New (Widget.Editor);
+      Pack_Start (Widget, Widget.Editor, False, Padding => 4);
 
-         Realize (Editor);
-         Create_From_Xpm_D
-           (Editor.Enabled_Pixmap,
-            Get_Window (Editor),
-            Editor.Enabled_Mask,
-            White (Get_Default_Colormap),
-            break_xpm);
+      Set_Sensitive (Widget.Editor.Advanced_Location, False);
+      Set_Sensitive (Widget.Editor.Remove, False);
+      Set_Sensitive (Widget.Editor.View, False);
 
-         --  Grey background when the combo boxes are insensitive
-         Gtk_New (Style);
-         Set_Base
-           (Style, State_Insensitive,
-            Gdk_Color'
-              (Get_Background (Get_Style (Editor), State_Normal)));
-         Set_Style (Get_Entry (Editor.File_Combo), Style);
-         Set_Style (Get_Entry (Editor.Address_Combo), Style);
-         Set_Style (Get_Entry (Editor.Subprogram_Combo), Style);
-         Set_Style (Get_Entry (Editor.Regexp_Combo), Style);
+      Realize (Widget);
+      Create_From_Xpm_D
+        (Widget.Enabled_Pixmap,
+         Get_Window (Widget),
+         Widget.Enabled_Mask,
+         White (Get_Default_Colormap),
+         break_xpm);
 
-         --  Return in the combo boxes should activate them
+      --  Grey background when the combo boxes are insensitive
+      Gtk_New (Style);
+      Set_Base
+        (Style, State_Insensitive,
+         Gdk_Color'
+           (Get_Background (Get_Style (Widget), State_Normal)));
+      Set_Style (Get_Entry (Widget.Editor.File_Combo), Style);
+      Set_Style (Get_Entry (Widget.Editor.Address_Combo), Style);
+      Set_Style (Get_Entry (Widget.Editor.Subprogram_Combo), Style);
+      Set_Style (Get_Entry (Widget.Editor.Regexp_Combo), Style);
 
-         Disable_Activate (Editor.File_Combo);
-         Widget_Callback.Object_Connect
-           (Get_Entry (Editor.File_Combo), Gtk.GEntry.Signal_Activate,
-            Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-            Editor);
-         Disable_Activate (Editor.Address_Combo);
-         Widget_Callback.Object_Connect
-           (Get_Entry (Editor.Address_Combo), Gtk.GEntry.Signal_Activate,
-            Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-            Editor);
-         Disable_Activate (Editor.Subprogram_Combo);
-         Widget_Callback.Object_Connect
-           (Get_Entry (Editor.Subprogram_Combo), Gtk.GEntry.Signal_Activate,
-            Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-            Editor);
-         Disable_Activate (Editor.Regexp_Combo);
-         Widget_Callback.Object_Connect
-           (Get_Entry (Editor.Regexp_Combo), Gtk.GEntry.Signal_Activate,
-            Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-            Editor);
+      --  Return in the combo boxes should activate them
+
+      Disable_Activate (Widget.Editor.File_Combo);
+      Widget_Callback.Object_Connect
+        (Get_Entry (Widget.Editor.File_Combo), Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+      Disable_Activate (Widget.Editor.Address_Combo);
+      Widget_Callback.Object_Connect
+        (Get_Entry (Widget.Editor.Address_Combo), Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+      Disable_Activate (Widget.Editor.Subprogram_Combo);
+      Widget_Callback.Object_Connect
+        (Get_Entry (Widget.Editor.Subprogram_Combo),
+         Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+      Disable_Activate (Widget.Editor.Regexp_Combo);
+      Widget_Callback.Object_Connect
+        (Get_Entry (Widget.Editor.Regexp_Combo), Gtk.GEntry.Signal_Activate,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+
+      Widget_Callback.Object_Connect
+        (Get_Selection (Widget.Editor.Breakpoint_List),
+         Gtk.Tree_Selection.Signal_Changed,
+         Breakpoint_Row_Selection_Change'Access,
+         Slot_Object => Widget,
+         After       => True);
+
+      Return_Callback.Object_Connect
+        (Widget.Editor, Signal_Key_Press_Event,
+         On_Breakpoints_Key_Press_Event'Access, Widget);
+
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Add_Location, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Add_Watchpoint, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Add_Exception, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Advanced_Location, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Load_Exception_List, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access),
+         Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.Remove, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_Remove_Clicked'Access), Widget);
+      Widget_Callback.Object_Connect
+        (Widget.Editor.View, Gtk.Button.Signal_Clicked,
+         Widget_Callback.To_Marshaller (On_View_Clicked'Access), Widget);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Widget.Editor.Breakpoint_List,
+         Signal_Button_Press_Event,
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Breakpoint_Clicked'Access),
+         Slot_Object => Widget,
+         After       => False);
+
+      Add_Hook
+        (Kernel, Debugger_Breakpoints_Changed_Hook,
+         Wrapper (On_Breakpoints_Changed'Access),
+         Watch => GObject (Widget),
+         Name  => "breakpoints_editor.on_breakpoints_changed");
+
+      Set_Page (Widget.Editor.Notebook1, 0);
+
+      Show_All (Widget);
+      return Gtk_Widget (Widget);
+   end Initialize;
+
+   ---------------------------
+   -- Attach_To_Breakpoints --
+   ---------------------------
+
+   procedure Attach_To_Breakpoints
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+      Create_If_Necessary : Boolean)
+      renames Simple_Views.Attach_To_View;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Debug    : constant String := '/' & (-"_Debug") & '/';
+      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+   begin
+      Simple_Views.Register_Desktop_Functions (Kernel);
+      Register_Menu (Kernel, Data_Sub, -"Edit _Breakpoints", "",
+                     On_Edit_Breakpoints'Access);
+   end Register_Module;
+
+   -------------------------------------
+   -- Breakpoint_Row_Selection_Change --
+   -------------------------------------
+
+   procedure Breakpoint_Row_Selection_Change
+     (Widget : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
+   is
+      pragma Unreferenced (Args);
+
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
+      Process : constant Visual_Debugger := Get_Process (View);
+      Model   : Gtk_Tree_Model;
+      Iter    : Gtk_Tree_Iter;
+      Br      : Breakpoint_Data;
+      Br_Num  : Breakpoint_Identifier;
+
+   begin
+      Get_Selected (Get_Selection (View.Editor.Breakpoint_List), Model, Iter);
+
+      if Iter = Null_Iter then
+         Set_Sensitive (View.Editor.Advanced_Location, False);
+         Set_Sensitive (View.Editor.Remove, False);
+         Set_Sensitive (View.Editor.View, False);
+         return;
       end if;
 
-      Set_Page (Editor.Notebook1, 0);
-      Set_Process (Editor, Process);
+      Br_Num := Breakpoint_Identifier'Value
+        (Get_String (Model, Iter, Col_Num));
 
-      Gdk_Raise (Get_Window (Editor));
-      Show_All (Editor);
-   end Breakpoint_Editor;
+      for B in Process.Breakpoints'Range loop
+         if Process.Breakpoints (B).Num = Br_Num then
+            Br := Process.Breakpoints (B);
+            exit;
+         end if;
+      end loop;
+
+      --  Fill the information
+
+      if Br.Except /= null then
+         Set_Page (View.Editor.Notebook1, 2);
+         Set_Active (View.Editor.Stop_Always_Exception, True);
+
+         if Br.Except.all = "all" then
+            Set_Text
+              (Get_Entry (View.Editor.Exception_Name), -"All exceptions");
+         elsif Br.Except.all = "unhandled" then
+            Set_Text
+              (Get_Entry (View.Editor.Exception_Name), -"All exceptions");
+            Set_Active (View.Editor.Stop_Not_Handled_Exception, True);
+         else
+            Add_Unique_Combo_Entry (View.Editor.Exception_Name, Br.Except.all);
+            Set_Text (Get_Entry (View.Editor.Exception_Name), Br.Except.all);
+         end if;
+
+         Set_Active (View.Editor.Temporary_Exception, Br.Disposition /= Keep);
+
+      else
+         Set_Page (View.Editor.Notebook1, 0);
+
+         if Br.File /= GNATCOLL.VFS.No_File then
+            Set_Active (View.Editor.Location_Selected, True);
+            Add_Unique_Combo_Entry
+              (View.Editor.File_Combo, +Base_Name (Br.File));
+            --  ??? What if the filesystem path is non-UTF8?
+            Set_Text
+              (Get_Entry (View.Editor.File_Combo), +Base_Name (Br.File));
+            --  ??? What if the filesystem path is non-UTF8?
+            Set_Value (View.Editor.Line_Spin, Grange_Float (Br.Line));
+         else
+            Set_Active (View.Editor.Address_Selected, True);
+            Add_Unique_Combo_Entry
+              (View.Editor.Address_Combo, Address_To_String (Br.Address));
+            Set_Text
+              (Get_Entry (View.Editor.Address_Combo),
+               Address_To_String (Br.Address));
+         end if;
+      end if;
+
+      Set_Sensitive (View.Editor.Advanced_Location, True);
+      Set_Sensitive (View.Editor.Remove, True);
+      Set_Sensitive (View.Editor.View, True);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end Breakpoint_Row_Selection_Change;
 
    ------------------------
    -- Breakpoint_Clicked --
@@ -165,24 +636,21 @@ package body Breakpoints_Editor is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      Editor  : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Widget);
-
-      Iter    : Gtk_Tree_Iter;
-      Col     : Gtk_Tree_View_Column;
-
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (Editor.Breakpoint_List));
+      View  : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
+      Iter  : Gtk_Tree_Iter;
+      Col   : Gtk_Tree_View_Column;
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (View.Editor.Breakpoint_List));
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Press
       then
          Coordinates_For_Event
-           (Editor.Breakpoint_List,
-            Get_Model (Editor.Breakpoint_List),
+           (View.Editor.Breakpoint_List,
+            Get_Model (View.Editor.Breakpoint_List),
             Event, Iter, Col);
 
-         if Col = Get_Column (Editor.Breakpoint_List, Col_Enb) then
+         if Col = Get_Column (View.Editor.Breakpoint_List, Col_Enb) then
             --  Click in the second column => change the enable/disable state
             --  For efficiency, no need to reparse the list of breakpoints,
             --  since only the state of one of them as changed and we know all
@@ -190,7 +658,7 @@ package body Breakpoints_Editor is
 
             Set (Model, Iter, Col_Enb,
                  Toggle_Breakpoint_State
-                   (Editor.Process,
+                   (Get_Process (View),
                     Breakpoint_Num => Breakpoint_Identifier'Value
                       (Get_String (Model, Iter, Col_Num))));
 
@@ -203,7 +671,7 @@ package body Breakpoints_Editor is
       elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         On_View_Clicked (Editor);
+         On_View_Clicked (View.Editor);
       end if;
 
       return False;
@@ -213,112 +681,28 @@ package body Breakpoints_Editor is
          return False;
    end Breakpoint_Clicked;
 
-   -------------------------------------
-   -- Breakpoint_Row_Selection_Change --
-   -------------------------------------
-
-   procedure Breakpoint_Row_Selection_Change
-     (Widget : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
-   is
-      pragma Unreferenced (Args);
-
-      Editor  : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Widget);
-
-      Model   : Gtk_Tree_Model;
-      Iter    : Gtk_Tree_Iter;
-      Br      : Breakpoint_Data;
-      Br_Num  : Breakpoint_Identifier;
-
-   begin
-      Get_Selected (Get_Selection (Editor.Breakpoint_List), Model, Iter);
-
-      if Iter = Null_Iter then
-         Set_Sensitive (Editor.Advanced_Location, False);
-         Set_Sensitive (Editor.Remove, False);
-         Set_Sensitive (Editor.View, False);
-         return;
-      end if;
-
-      Br_Num := Breakpoint_Identifier'Value
-        (Get_String (Model, Iter, Col_Num));
-
-      for B in Editor.Process.Breakpoints'Range loop
-         if Editor.Process.Breakpoints (B).Num = Br_Num then
-            Br := Editor.Process.Breakpoints (B);
-            exit;
-         end if;
-      end loop;
-
-      --  Fill the information
-
-      if Br.Except /= null then
-         Set_Page (Editor.Notebook1, 2);
-         Set_Active (Editor.Stop_Always_Exception, True);
-
-         if Br.Except.all = "all" then
-            Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
-         elsif Br.Except.all = "unhandled" then
-            Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
-            Set_Active (Editor.Stop_Not_Handled_Exception, True);
-         else
-            Add_Unique_Combo_Entry (Editor.Exception_Name, Br.Except.all);
-            Set_Text (Get_Entry (Editor.Exception_Name), Br.Except.all);
-         end if;
-
-         Set_Active (Editor.Temporary_Exception, Br.Disposition /= Keep);
-
-      else
-         Set_Page (Editor.Notebook1, 0);
-
-         if Br.File /= GNATCOLL.VFS.No_File then
-            Set_Active (Editor.Location_Selected, True);
-            Add_Unique_Combo_Entry
-              (Editor.File_Combo, +Base_Name (Br.File));
-            --  ??? What if the filesystem path is non-UTF8?
-            Set_Text
-              (Get_Entry (Editor.File_Combo), +Base_Name (Br.File));
-            --  ??? What if the filesystem path is non-UTF8?
-            Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
-         else
-            Set_Active (Editor.Address_Selected, True);
-            Add_Unique_Combo_Entry
-              (Editor.Address_Combo, Address_To_String (Br.Address));
-            Set_Text
-              (Get_Entry (Editor.Address_Combo),
-               Address_To_String (Br.Address));
-         end if;
-      end if;
-
-      Set_Sensitive (Editor.Advanced_Location, True);
-      Set_Sensitive (Editor.Remove, True);
-      Set_Sensitive (Editor.View, True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Breakpoint_Row_Selection_Change;
-
    -------------------------
    -- Get_Selection_Index --
    -------------------------
 
    function Get_Selection_Index
-     (Editor : access Breakpoint_Editor_Record) return Integer
+     (View : access Breakpoint_Editor_Record'Class) return Integer
    is
       use Gint_List;
+      Process   : constant Visual_Debugger := Get_Process (View);
       Br_Num    : Breakpoint_Identifier;
       Iter      : Gtk_Tree_Iter;
       The_Model : Gtk_Tree_Model;
    begin
-      Get_Selected (Get_Selection (Editor.Breakpoint_List), The_Model, Iter);
+      Get_Selected
+        (Get_Selection (View.Editor.Breakpoint_List), The_Model, Iter);
 
       if Iter /= Null_Iter then
          Br_Num := Breakpoint_Identifier'Value
            (Get_String (The_Model, Iter, Col_Num));
 
-         for B in Editor.Process.Breakpoints'Range loop
-            if Editor.Process.Breakpoints (B).Num = Br_Num then
+         for B in Process.Breakpoints'Range loop
+            if Process.Breakpoints (B).Num = Br_Num then
                return B;
             end if;
          end loop;
@@ -390,11 +774,11 @@ package body Breakpoints_Editor is
    ------------------
 
    procedure Set_Advanced
-     (Editor : access Breakpoint_Editor_Record'Class;
-      Br     : Breakpoint_Data)
+     (View : access Breakpoint_Editor_Record'Class;
+      Br   : Breakpoint_Data)
    is
-      Adv      : constant Advanced_Breakpoint_Access :=
-        Editor.Advanced_Breakpoints;
+      Adv  : constant Advanced_Breakpoint_Access := View.Advanced_Breakpoints;
+      Process : constant Visual_Debugger := Get_Process (View);
       Modified : Boolean := False;
       Start, The_End : Gtk_Text_Iter;
 
@@ -419,7 +803,7 @@ package body Breakpoints_Editor is
               or else (Br.Condition /= null and then Br.Condition.all /= "")
             then
                Set_Breakpoint_Condition
-                 (Editor.Process.Debugger, Br.Num, S, Internal);
+                 (Process.Debugger, Br.Num, S, Internal);
                Modified := True;
             end if;
 
@@ -427,7 +811,7 @@ package body Breakpoints_Editor is
               or else Br.Ignore /= 0
             then
                Set_Breakpoint_Ignore_Count
-                 (Editor.Process.Debugger, Br.Num, C, Internal);
+                 (Process.Debugger, Br.Num, C, Internal);
                Modified := True;
             end if;
 
@@ -435,38 +819,42 @@ package body Breakpoints_Editor is
               or else (Br.Commands /= null and then Br.Commands.all /= "")
             then
                Set_Breakpoint_Command
-                 (Editor.Process.Debugger, Br.Num, T, Internal);
+                 (Process.Debugger, Br.Num, T, Internal);
                Modified := True;
             end if;
 
             if Modified then
-               Update_Breakpoints (Editor.Process, Force => True);
+               Update_Breakpoints (Process, Force => True);
             end if;
          end;
       end if;
    end Set_Advanced;
 
    ------------------------------
-   -- Set_Exception_Breakpoint --
+   -- On_Add_Exception_Clicked --
    ------------------------------
 
-   procedure Set_Exception_Breakpoint
-     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
+   procedure On_Add_Exception_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
+      View : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Current : constant Integer := -1;
+
       Temporary : Boolean;
+      Process : constant Visual_Debugger := Get_Process (View);
       Name      : constant String :=
-        Get_Text (Get_Entry (Editor.Exception_Name));
+        Get_Text (Get_Entry (View.Editor.Exception_Name));
       Unhandled : constant Boolean :=
-        Get_Active (Editor.Stop_Not_Handled_Exception);
+        Get_Active (View.Editor.Stop_Not_Handled_Exception);
       Br        : Breakpoint_Data;
       Remove    : Boolean := False;
 
    begin
       if Current /= -1 then
-         Br := Editor.Process.Breakpoints (Current);
+         Br := Process.Breakpoints (Current);
       end if;
 
-      Temporary := Get_Active (Editor.Temporary_Exception);
+      Temporary := Get_Active (View.Editor.Temporary_Exception);
 
       --  Some of the strings below deal with the GUI, and thus should be
       --  translated for internationalization. Others come from gdb, and
@@ -481,7 +869,7 @@ package body Breakpoints_Editor is
          then
             Remove := True;
             Break_Exception
-              (Editor.Process.Debugger,
+              (Process.Debugger,
                Name      => "",
                Unhandled => Unhandled,
                Temporary => Temporary,
@@ -495,7 +883,7 @@ package body Breakpoints_Editor is
          then
             Remove := True;
             Break_Subprogram
-              (Editor.Process.Debugger,
+              (Process.Debugger,
                Name      => "assert",
                Temporary => Temporary,
                Mode      => GVD.Types.Visible);
@@ -508,7 +896,7 @@ package body Breakpoints_Editor is
       then
          Remove := True;
          Break_Exception
-           (Editor.Process.Debugger,
+           (Process.Debugger,
             Name      => Name,
             Unhandled => Unhandled,
             Temporary => Temporary,
@@ -517,37 +905,42 @@ package body Breakpoints_Editor is
 
       if Remove and then Current /= -1 then
          Remove_Breakpoint
-           (Editor.Process.Debugger,
-            Editor.Process.Breakpoints (Current).Num);
+           (Process.Debugger,
+            Process.Breakpoints (Current).Num);
       end if;
-   end Set_Exception_Breakpoint;
+
+      Update (View);
+   end On_Add_Exception_Clicked;
 
    -----------------------------
-   -- Set_Location_Breakpoint --
+   -- On_Add_Location_Clicked --
    -----------------------------
 
-   procedure Set_Location_Breakpoint
-     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
+   procedure On_Add_Location_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
+      View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Current   : constant Integer := -1;
+      Process   : constant Visual_Debugger := Get_Process (View);
       Temporary : Boolean;
       Br        : Breakpoint_Data;
       Remove    : Boolean := False;
 
    begin
       if Current /= -1 then
-         Br := Editor.Process.Breakpoints (Current);
+         Br := Process.Breakpoints (Current);
       end if;
 
-      Temporary := Get_Active (Editor.Temporary_Location);
+      Temporary := Get_Active (View.Editor.Temporary_Location);
 
-      if Get_Active (Editor.Location_Selected) then
+      if Get_Active (View.Editor.Location_Selected) then
          declare
             File : constant Filesystem_String :=
-              +Get_Text (Get_Entry (Editor.File_Combo));
+              +Get_Text (Get_Entry (View.Editor.File_Combo));
             --  ??? What if the filesystem path is non-UTF8?
 
             Line : constant Integer :=
-              Integer (Get_Value_As_Int (Editor.Line_Spin));
+              Integer (Get_Value_As_Int (View.Editor.Line_Spin));
 
          begin
             --  ??? Should also check Temporary
@@ -558,7 +951,7 @@ package body Breakpoints_Editor is
             then
                Remove := True;
                Break_Source
-                 (Editor.Process.Debugger,
+                 (Process.Debugger,
                   File      => Create_From_Base (File),
                   Line      => Line,
                   Temporary => Temporary,
@@ -566,10 +959,10 @@ package body Breakpoints_Editor is
             end if;
          end;
 
-      elsif Get_Active (Editor.Subprogram_Selected) then
+      elsif Get_Active (View.Editor.Subprogram_Selected) then
          declare
             Name : constant String :=
-              Get_Text (Get_Entry (Editor.Subprogram_Combo));
+              Get_Text (Get_Entry (View.Editor.Subprogram_Combo));
 
          begin
             --  ??? Should also check Temporary
@@ -580,18 +973,18 @@ package body Breakpoints_Editor is
             then
                Remove := True;
                Break_Subprogram
-                 (Editor.Process.Debugger,
+                 (Process.Debugger,
                   Name      => Name,
                   Temporary => Temporary,
                   Mode      => GVD.Types.Visible);
             end if;
          end;
 
-      elsif Get_Active (Editor.Address_Selected) then
+      elsif Get_Active (View.Editor.Address_Selected) then
          declare
             Address : constant Address_Type :=
                         String_To_Address
-                          (Get_Text (Get_Entry (Editor.Address_Combo)));
+                          (Get_Text (Get_Entry (View.Editor.Address_Combo)));
          begin
             if Current = -1
               or else Br.Address = Invalid_Address
@@ -599,7 +992,7 @@ package body Breakpoints_Editor is
             then
                Remove := True;
                Break_Address
-                 (Editor.Process.Debugger,
+                 (Process.Debugger,
                   Address   => Address,
                   Temporary => Temporary,
                   Mode      => GVD.Types.Visible);
@@ -609,225 +1002,116 @@ package body Breakpoints_Editor is
       else
          Remove := True;
          Break_Regexp
-           (Editor.Process.Debugger,
-            Regexp    => Get_Text (Get_Entry (Editor.Regexp_Combo)),
+           (Process.Debugger,
+            Regexp    => Get_Text (Get_Entry (View.Editor.Regexp_Combo)),
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
       end if;
 
       if Remove and then Current /= -1 then
-         Remove_Breakpoint (Editor.Process.Debugger, Br.Num);
+         Remove_Breakpoint (Process.Debugger, Br.Num);
       end if;
-   end Set_Location_Breakpoint;
 
-   -----------------
-   -- Set_Process --
-   -----------------
+      Update (View);
+   end On_Add_Location_Clicked;
 
-   procedure Set_Process
-     (Editor  : access Breakpoint_Editor_Record;
-      Process : access GVD.Process.Visual_Debugger_Record'Class) is
-   begin
-      Editor.Process := GVD.Process.Visual_Debugger (Process);
-      Update_Breakpoint_List (Editor);
+   ----------------------------------
+   -- On_Advanced_Location_Clicked --
+   ----------------------------------
 
-      --  Reinitialize the contents of the file combo boxes
-      Set_Text
-        (Get_Entry (Editor.File_Combo),
-         +Base_Name (Get_Current_File (Process.Editor_Text)));
-      --  ??? What if the filesystem path is non-UTF8?
-
-      --  Clear the contents of the exceptions combo (its contents is in fact
-      --  cached in gdb, so it is fast enough to call "info exceptions" again)
-      Clear_Items (Get_List (Editor.Exception_Name), 0, -1);
-      Add_Unique_Combo_Entry
-        (Editor.Exception_Name, -"All exceptions");
-      Add_Unique_Combo_Entry
-        (Editor.Exception_Name, -"All assertions");
-
-      --  Reset the Exception page
-      Set_Sensitive (Editor.Hbox4, True);
-   end Set_Process;
-
-   -------------------------
-   -- Run_Advanced_Dialog --
-   -------------------------
-
-   procedure Run_Advanced_Dialog
-     (Editor  : access Breakpoint_Editor_Record'Class;
-      Current : Integer)
+   procedure On_Advanced_Location_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Current : constant Integer := Get_Selection_Index (View);
+
+      Process : constant Visual_Debugger := Get_Process (View);
+      Adv  : Advanced_Breakpoint_Access := View.Advanced_Breakpoints;
    begin
+      if Current = -1 then
+         return;
+      end if;
+
       --  Create all three dialogs
 
-      if Editor.Advanced_Breakpoints = null then
-         Gtk_New (Editor.Advanced_Breakpoints);
-         Set_Transient_For (Editor.Advanced_Breakpoints, Editor);
-         Set_Sensitive (Editor.Advanced_Breakpoints.Record_Button, False);
-         Set_Sensitive (Editor.Advanced_Breakpoints.End_Button, False);
+      if Adv = null then
+         Gtk_New (View.Advanced_Breakpoints);
+         Adv := View.Advanced_Breakpoints;
+         Set_Sensitive (Adv.Record_Button, False);
+         Set_Sensitive (Adv.End_Button, False);
       end if;
 
-      Fill_Advanced_Dialog
-        (Editor.Advanced_Breakpoints, Editor.Process.Breakpoints (Current));
-      Show_All (Editor.Advanced_Breakpoints);
+      Fill_Advanced_Dialog (Adv, Process.Breakpoints (Current));
+      Show_All (Adv);
 
-      if VxWorks_Version (Editor.Process.Debugger) = Vx653 then
-         Set_Show_Tabs (Editor.Advanced_Breakpoints.Main_Notebook);
+      if VxWorks_Version (Process.Debugger) = Vx653 then
+         Set_Show_Tabs (Adv.Main_Notebook);
       else
-         Hide (Editor.Advanced_Breakpoints.Scope_Box);
-         Set_Show_Tabs (Editor.Advanced_Breakpoints.Main_Notebook, False);
+         Hide (Adv.Scope_Box);
+         Set_Show_Tabs (Adv.Main_Notebook, False);
       end if;
 
-      Editor.Advanced_Breakpoints.Response_Action := Gtk_Response_None;
+      Adv.Response_Action := Gtk_Response_None;
       Gtk.Main.Main;
 
-      if Editor.Advanced_Breakpoints.Response_Action = Gtk_Response_Apply then
+      if Adv.Response_Action = Gtk_Response_Apply then
          --  If we are using AE and the user has activated the "Set as
          --  default" checkbox for the scope and action values, send the
          --  appropriate commands to the debugger
 
-         if VxWorks_Version (Editor.Process.Debugger) = Vx653 then
+         if VxWorks_Version (Process.Debugger) = Vx653 then
             declare
                Scope_Value  : Scope_Type;
                Action_Value : Action_Type;
             begin
-               if Get_Active (Editor.Advanced_Breakpoints.Scope_Task) then
+               if Get_Active (Adv.Scope_Task) then
                   Scope_Value := Current_Task;
-               elsif Get_Active (Editor.Advanced_Breakpoints.Scope_Pd) then
+               elsif Get_Active (Adv.Scope_Pd) then
                   Scope_Value := Tasks_In_PD;
-               elsif Get_Active (Editor.Advanced_Breakpoints.Scope_Any) then
+               elsif Get_Active (Adv.Scope_Any) then
                   Scope_Value := Any_Task;
                end if;
 
-               if Get_Active (Editor.Advanced_Breakpoints.Action_Task) then
+               if Get_Active (Adv.Action_Task) then
                   Action_Value := Current_Task;
-               elsif Get_Active (Editor.Advanced_Breakpoints.Action_Pd) then
+               elsif Get_Active (Adv.Action_Pd) then
                   Action_Value := Tasks_In_PD;
-               elsif Get_Active (Editor.Advanced_Breakpoints.Action_All) then
+               elsif Get_Active (Adv.Action_All) then
                   Action_Value := All_Tasks;
                end if;
 
-               if Get_Active (Editor.Advanced_Breakpoints.Set_Default) then
+               if Get_Active (Adv.Set_Default) then
                   Set_Scope_Action
-                    (Editor.Process.Debugger, Scope_Value, Action_Value);
+                    (Process.Debugger, Scope_Value, Action_Value);
                end if;
 
                Set_Scope_Action
-                 (Editor.Process.Debugger, Scope_Value,
-                  Action_Value, Editor.Process.Breakpoints (Current).Num);
+                 (Process.Debugger, Scope_Value,
+                  Action_Value, Process.Breakpoints (Current).Num);
             end;
          end if;
 
-         Set_Advanced (Editor, Editor.Process.Breakpoints (Current));
+         Set_Advanced (View, Process.Breakpoints (Current));
       end if;
-   end Run_Advanced_Dialog;
+   end On_Advanced_Location_Clicked;
 
-   ----------------------------
-   -- Update_Breakpoint_List --
-   ----------------------------
+   -------------------------------
+   -- On_Add_Watchpoint_Clicked --
+   -------------------------------
 
-   procedure Update_Breakpoint_List
-     (Editor : access Breakpoint_Editor_Record'Class)
+   procedure On_Add_Watchpoint_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
-      Selection    : constant Integer := Get_Selection_Index (Editor);
-      Selected     : Breakpoint_Identifier := 0;
-      Br           : Breakpoint_Data;
-      Size         : Gint;
-      pragma Unreferenced (Size);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (Editor.Breakpoint_List));
-      Iter          : Gtk_Tree_Iter;
-      Selected_Iter : Gtk_Tree_Iter := Null_Iter;
+      View : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Current : constant Integer := -1;
 
-   begin
-      Clear (Model);
-
-      if Selection /= -1 then
-         Selected := Editor.Process.Breakpoints (Selection).Num;
-      end if;
-
-      if Editor.Process.Breakpoints = null
-        or else Editor.Process.Breakpoints'Length <= 0
-      then
-         return;
-      end if;
-
-      for B in Editor.Process.Breakpoints'Range loop
-         Br := Editor.Process.Breakpoints (B);
-
-         --  Create a new line
-
-         Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Col_Num, Breakpoint_Identifier'Image (Br.Num));
-
-         if Selection /= -1 and then Br.Num = Selected then
-            Selected_Iter := Iter;
-         end if;
-
-         Set (Model, Iter, Col_Enb, Br.Enabled);
-
-         case Br.The_Type is
-            when Breakpoint =>
-               Set (Model, Iter, Col_Type, -"break");
-            when Watchpoint =>
-               Set (Model, Iter, Col_Type, -"watch");
-         end case;
-
-         Set (Model, Iter, Col_Disp, To_Lower (Br.Disposition'Img));
-
-         if Br.Expression /= null then
-            Set (Model, Iter, Col_File, Br.Expression.all);
-         end if;
-
-         if Br.File /= GNATCOLL.VFS.No_File then
-            Set (Model, Iter, Col_File, +Base_Name (Br.File));
-            Set (Model, Iter, Col_Line, Integer'Image (Br.Line));
-         end if;
-
-         if Br.Except /= null then
-            Set (Model, Iter, Col_Exception, Br.Except.all);
-         end if;
-
-         if Br.Subprogram /= null then
-            Set (Model, Iter, Col_Subprogs, Br.Subprogram.all);
-         end if;
-      end loop;
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (Editor.Breakpoint_List),
-         Gtk.Tree_Selection.Signal_Changed,
-         Breakpoint_Row_Selection_Change'Access,
-         Slot_Object => Editor,
-         After       => True);
-
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Editor.Breakpoint_List,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Breakpoint_Clicked'Access),
-         Slot_Object => Editor,
-         After       => False);
-
-      --  Reselect the same item as before
-
-      if Selected_Iter /= Null_Iter then
-         Select_Iter (Get_Selection (Editor.Breakpoint_List), Selected_Iter);
-      end if;
-   end Update_Breakpoint_List;
-
-   --------------------
-   -- Set_Watchpoint --
-   --------------------
-
-   procedure Set_Watchpoint
-     (Editor : access Breakpoint_Editor_Record'Class; Current : Integer := -1)
-   is
+      Process : constant Visual_Debugger := Get_Process (View);
       Watchpoint_Name : constant String :=
-        Get_Text (Editor.Watchpoint_Name);
+        Get_Text (View.Editor.Watchpoint_Name);
       Watchpoint_Type : constant String :=
-        Get_Text (Get_Entry (Editor.Watchpoint_Type));
+        Get_Text (Get_Entry (View.Editor.Watchpoint_Type));
       Watchpoint_Cond : constant String :=
-        Get_Text (Editor.Watchpoint_Cond);
+        Get_Text (View.Editor.Watchpoint_Cond);
 
       Trigger : GVD.Types.Watchpoint_Trigger;
       --  Encodes the value we get from Watchpoint_Type for the call to Watch
@@ -840,7 +1124,7 @@ package body Breakpoints_Editor is
       --  breakpoint list.
    begin
       if Current /= -1 then
-         Br := Editor.Process.Breakpoints (Current);
+         Br := Process.Breakpoints (Current);
       end if;
 
       if Watchpoint_Type = -"read" then
@@ -859,7 +1143,7 @@ package body Breakpoints_Editor is
       then
          Remove := True;
          Watch
-           (Editor.Process.Debugger,
+           (Process.Debugger,
             Name      => Watchpoint_Name,
             Trigger   => Trigger,
             Condition => Watchpoint_Cond,
@@ -867,8 +1151,145 @@ package body Breakpoints_Editor is
       end if;
 
       if Remove and Current /= -1 then
-         Remove_Breakpoint (Editor.Process.Debugger, Br.Num);
+         Remove_Breakpoint (Process.Debugger, Br.Num);
       end if;
-   end Set_Watchpoint;
+
+      Update (View);
+   end On_Add_Watchpoint_Clicked;
+
+   ------------------------------------
+   -- On_Load_Exception_List_Clicked --
+   ------------------------------------
+
+   procedure On_Load_Exception_List_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Process : constant Visual_Debugger := Get_Process (View);
+   begin
+      Set_Busy (Process, True);
+
+      declare
+         Exception_Arr : Exception_Array := List_Exceptions (Process.Debugger);
+      begin
+         if Exception_Arr'Length > 0 then
+            Set_Sensitive (View.Editor.Hbox4, True);
+            Add_Unique_Combo_Entry
+              (View.Editor.Exception_Name, -"All exceptions");
+            Add_Unique_Combo_Entry
+              (View.Editor.Exception_Name, -"All assertions");
+
+            for J in Exception_Arr'Range loop
+               Add_Unique_Combo_Entry
+                 (View.Editor.Exception_Name, Exception_Arr (J).Name.all);
+            end loop;
+         else
+            Set_Sensitive (View.Editor.Hbox4, False);
+         end if;
+
+         Free (Exception_Arr);
+      end;
+
+      Set_Busy (Process, False);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Load_Exception_List_Clicked;
+
+   -----------------------
+   -- On_Remove_Clicked --
+   -----------------------
+
+   procedure On_Remove_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Process   : constant Visual_Debugger := Get_Process (View);
+      Model     : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (View.Editor.Breakpoint_List));
+      Selection : constant Integer := Get_Selection_Index (View);
+
+   begin
+      if Selection /= -1 then
+         Remove_Breakpoint
+           (Process.Debugger,
+            Process.Breakpoints (Selection).Num,
+            Mode => GVD.Types.Visible);
+
+         --  Reselect the next line for convenience, so that the user can
+         --  press "Remove" several times in a row
+
+         if Gint (Selection) >= N_Children (Model, Null_Iter) then
+            Select_Iter
+              (Get_Selection (View.Editor.Breakpoint_List),
+               Nth_Child
+                 (Model,
+                  Parent => Null_Iter,
+                  N      => N_Children (Model, Null_Iter) - 1));
+         else
+            Select_Iter
+              (Get_Selection (View.Editor.Breakpoint_List),
+               Nth_Child
+                 (Model,
+                  Parent => Null_Iter,
+                  N      => Gint (Selection)));
+         end if;
+      end if;
+
+      Update (View);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Remove_Clicked;
+
+   ---------------------
+   -- On_View_Clicked --
+   ---------------------
+
+   procedure On_View_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      Process   : constant Visual_Debugger := Get_Process (View);
+      Selection : constant Integer := Get_Selection_Index (View);
+
+   begin
+      if Selection /= -1 then
+         Load_File
+           (Process.Editor_Text,
+            Process.Breakpoints (Selection).File);
+         Set_Line
+           (Process.Editor_Text,
+            Process.Breakpoints (Selection).Line,
+            GObject (Process));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_View_Clicked;
+
+   ------------------------------------
+   -- On_Breakpoints_Key_Press_Event --
+   ------------------------------------
+
+   function On_Breakpoints_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Event : constant Gdk_Event := To_Event (Params, 1);
+      use type Gdk.Types.Gdk_Key_Type;
+   begin
+      if Get_Key_Val (Event) = GDK_Delete then
+         On_Remove_Clicked (Object);
+      end if;
+      return False;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+         return False;
+   end On_Breakpoints_Key_Press_Event;
 
 end Breakpoints_Editor;

@@ -99,6 +99,8 @@ with GPS.Editors; use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body GVD_Module is
+   Me : constant Debug_Handle := Create ("GVD_MODULE");
+
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
@@ -155,8 +157,6 @@ package body GVD_Module is
 
       Current_Debugger               : Glib.Object.GObject;
       --  The current visual debugger
-
-      Breakpoints_Editor             : Breakpoint_Editor_Access;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -262,10 +262,6 @@ package body GVD_Module is
    procedure On_Kill
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
-
-   procedure On_Edit_Breakpoints
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Edit Breakpoints
 
    procedure On_Examine_Memory
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -453,19 +449,6 @@ package body GVD_Module is
      (Context : Selection_Context) return String;
    --  Provide expansion for "$!" in the labels for contextual menus
 
-   ----------------------------
-   -- Get_Breakpoints_Editor --
-   ----------------------------
-
-   function Get_Breakpoints_Editor
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Window.Gtk_Window
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Gtk_Window (GVD_Module_ID.Breakpoints_Editor);
-   end Get_Breakpoints_Editor;
-
    -----------------------
    -- Get_Debugger_List --
    -----------------------
@@ -515,6 +498,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Kernel);
    begin
+      Trace (Me, "Set_Current_Debugger");
       GVD_Module_ID.Current_Debugger := Current;
    end Set_Current_Debugger;
 
@@ -1039,42 +1023,6 @@ package body GVD_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Interrupt;
-
-   -------------------------
-   -- On_Edit_Breakpoints --
-   -------------------------
-
-   procedure On_Edit_Breakpoints
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-      Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Process.Debugger)) then
-         Button := Message_Dialog
-           ((-"Cannot edit breakpoints while the debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
-         return;
-      end if;
-
-      Breakpoint_Editor (GVD_Module_ID.Breakpoints_Editor, Process);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Edit_Breakpoints;
 
    -----------------------
    -- On_Examine_Memory --
@@ -1983,10 +1931,6 @@ package body GVD_Module is
 
       Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
 
-      if GVD_Module_ID.Breakpoints_Editor /= null then
-         Hide (GVD_Module_ID.Breakpoints_Editor);
-      end if;
-
       Set_Sensitive (Kernel, Debug_None);
 
       Pop_State (Kernel);
@@ -2619,14 +2563,13 @@ package body GVD_Module is
       GVD.Consoles.Register_Module (Kernel);
       GVD.Dialogs.Register_Module (Kernel);
       GVD.Assembly_View.Register_Module (Kernel);
+      Breakpoints_Editor.Register_Module (Kernel);
 
 --      Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
       --  ??? FLORIAN Should be remove after refactoring
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"Edit _Breakpoints", "",
-                     On_Edit_Breakpoints'Access);
       Register_Menu (Kernel, Data_Sub, -"Examine _Memory", "",
                      On_Examine_Memory'Access);
       Gtk_New (Mitem);

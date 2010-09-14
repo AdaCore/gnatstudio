@@ -88,6 +88,7 @@ package GVD.Process is
       PDs                     : Gtk.Widget.Gtk_Widget;
       Data                    : Gtk.Widget.Gtk_Widget;
       Assembly                : Gtk.Widget.Gtk_Widget;
+      Breakpoints_Editor      : Gtk.Widget.Gtk_Widget;
       --  The call stack, threads, task, protection domains, data and assembly
       --  views.
 

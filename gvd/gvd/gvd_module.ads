@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,6 @@ with Ada.Unchecked_Deallocation;
 
 with Glib.Object;
 with GPS.Kernel.Modules;
-with Gtk.Window;
 with GVD;  use GVD;
 
 package GVD_Module is
@@ -93,10 +92,5 @@ package GVD_Module is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Current : Glib.Object.GObject);
    --  Set the current active visual debugger
-
-   function Get_Breakpoints_Editor
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Window.Gtk_Window;
-   --  Return the breakpoint editor associated with Kernel, if any
 
 end GVD_Module;
