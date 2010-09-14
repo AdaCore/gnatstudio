@@ -385,7 +385,8 @@ package body Project_Templates.GUI is
            (Iter : Gtk_Tree_Iter;
             Name : String) return Gtk_Tree_Iter
          is
-            Child : Gtk_Tree_Iter;
+            Child        : Gtk_Tree_Iter;
+            Insert_After : Gtk_Tree_Iter := Null_Iter;
          begin
             if Iter = Null_Iter then
                Child := Model.Get_Iter_First;
@@ -394,14 +395,19 @@ package body Project_Templates.GUI is
             end if;
 
             while Child /= Null_Iter loop
+               if Get_String (Model, Child, Name_Col) < Name then
+                  Insert_After := Child;
+               end if;
+
                if Get_String (Model, Child, Name_Col) = Name then
                   return Child;
                end if;
+
                Next (Model, Child);
             end loop;
 
             --  If we reach this point, child was not found: add it
-            Model.Append (Child, Iter);
+            Model.Insert_After (Child, Iter, Insert_After);
 
             --  Populate the iter that we have just added
 
@@ -443,6 +449,7 @@ package body Project_Templates.GUI is
       procedure Add_Template (Template : Project_Template) is
          Cat      : Gtk_Tree_Iter;
          Iter     : Gtk_Tree_Iter;
+         Child    : Gtk_Tree_Iter;
          Page_Num : Gint;
          Page     : Template_Page;
       begin
@@ -480,7 +487,17 @@ package body Project_Templates.GUI is
 
          --  Add the template to the tree model
          Cat := Get_Or_Create_Category (Template.Category);
-         Model.Append (Iter, Cat);
+
+         Child := Model.Children (Cat);
+
+         while Child /= Null_Iter
+           and then Get_String (Model, Child, Name_Col)
+           < To_String (Template.Label)
+         loop
+            Model.Next (Child);
+         end loop;
+
+         Model.Insert_Before (Iter, Cat, Child);
 
          Model.Set (Iter, Name_Col, To_String (Template.Label));
          Model.Set (Iter, Desc_Col, To_String (Template.Description));
