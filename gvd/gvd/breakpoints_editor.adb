@@ -45,6 +45,7 @@ with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Spin_Button;  use Gtk.Spin_Button;
 with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
+with Gtk.Window;       use Gtk.Window;
 
 with Gtk.Text_View;    use Gtk.Text_View;
 with Gtk.Text_Buffer;  use Gtk.Text_Buffer;
@@ -415,10 +416,9 @@ package body Breakpoints_Editor is
       Set_Sensitive (Widget.Editor.Remove, False);
       Set_Sensitive (Widget.Editor.View, False);
 
-      Realize (Widget);
       Create_From_Xpm_D
         (Widget.Enabled_Pixmap,
-         Get_Window (Widget),
+         Get_Window (Get_Main_Window (Kernel)),
          Widget.Enabled_Mask,
          White (Get_Default_Colormap),
          break_xpm);
