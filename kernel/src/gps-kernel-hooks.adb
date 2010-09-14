@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1619,7 +1619,7 @@ package body GPS.Kernel.Hooks is
          Info := Get_Data (Data, 1);
          declare
             Func : constant Subprogram_Type := Nth_Arg (Data, 2);
-            Last : constant Boolean := Nth_Arg (Data, 3, False);
+            Last : constant Boolean := Nth_Arg (Data, 3, True);
          begin
             if Info = null then
                Set_Error_Msg (Data, "Unknown hook");
