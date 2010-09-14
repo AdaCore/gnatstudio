@@ -797,7 +797,7 @@ package body GPS.Location_View is
       if Iter /= Null_Iter
         and then Get_File (Model, Iter, File_Column) = D.File
         and then Integer
-          (Model.Get_Int (Iter, GPS.Kernel.Messages.Line_Column)) = D.Line
+          (Model.Get_Int (Iter, Line_Column)) = D.Line
       then
          return;
       end if;
@@ -853,8 +853,8 @@ package body GPS.Location_View is
             Message_Iter := Model.Children (File_Iter);
 
             while Message_Iter /= Null_Iter loop
-               exit when Integer (Model.Get_Int
-                 (Message_Iter, GPS.Kernel.Messages.Line_Column)) = D.Line;
+               exit when
+                 Integer (Model.Get_Int (Message_Iter, Line_Column)) = D.Line;
 
                Model.Next (Message_Iter);
             end loop;

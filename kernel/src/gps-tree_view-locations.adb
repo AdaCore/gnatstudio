@@ -30,7 +30,7 @@ with Gtk.Tooltips;
 with Gtk.Widget;
 
 with GPS.Intl;
-with GPS.Kernel.Messages;
+with GPS.Location_View.Listener;
 with String_Utils;
 with Traces;
 
@@ -52,7 +52,7 @@ package body GPS.Tree_View.Locations is
    use Gtk.Tree_View_Column;
    use Gtk.Widget;
    use GPS.Intl;
-   use GPS.Kernel.Messages;
+   use GPS.Location_View.Listener;
    use GPS.Sort_Model.Locations;
    use String_Utils;
    use Traces;

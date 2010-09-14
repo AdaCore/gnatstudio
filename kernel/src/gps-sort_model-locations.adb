@@ -19,6 +19,7 @@
 
 with GNATCOLL.VFS.GtkAda;
 with GPS.Kernel.Messages;
+with GPS.Location_View.Listener;
 
 package body GPS.Sort_Model.Locations is
 
@@ -27,6 +28,7 @@ package body GPS.Sort_Model.Locations is
    use GNATCOLL.VFS;
    use GNATCOLL.VFS.GtkAda;
    use GPS.Kernel.Messages;
+   use GPS.Location_View.Listener;
 
    type Compare_Functions is array (Positive range <>) of Compare_Function;
 
