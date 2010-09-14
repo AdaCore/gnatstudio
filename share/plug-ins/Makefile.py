@@ -277,7 +277,10 @@ parse_xml ("""
     hide_in="wizard library_wizard properties">
     <string type=""/>
   </project_attribute>""")
-Hook ("gps_started").add (on_gps_started)
+
+# This module needs to be initialized before the others
+
+Hook ("gps_started").add (on_gps_started, False)
 
 if os_utils.locate_exec_on_path ("ant"):
    try:
