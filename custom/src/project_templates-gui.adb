@@ -489,11 +489,20 @@ package body Project_Templates.GUI is
          Dummy : Gtk_Tree_Model;
       begin
          Get_Selected (Get_Selection (Tree), Dummy, Iter);
-         Main_Label.Set_Text (Model.Get_String (Iter, Desc_Col));
-         Next_Page_Number := Model.Get_Int (Iter, Num_Col);
 
-         Assistant.Set_Page_Complete
-           (Hpane, Next_Page_Number > 0);
+         if Iter = Null_Iter then
+            Next_Page_Number := 0;
+         else
+            Main_Label.Set_Text (Model.Get_String (Iter, Desc_Col));
+            Next_Page_Number := Model.Get_Int (Iter, Num_Col);
+         end if;
+
+         if Next_Page_Number <= 0 then
+            Main_Label.Set_Text ("No template selected");
+            Assistant.Set_Page_Complete (Hpane, False);
+         else
+            Assistant.Set_Page_Complete (Hpane, True);
+         end if;
       exception
          when E : others =>
             Errors := Errors & ASCII.LF & Exception_Information (E);
