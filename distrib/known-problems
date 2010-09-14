@@ -234,6 +234,17 @@ Known Problems fixed in GPS 5.0.0
   Problem:    When completing a use clause, nested packages are not offered.
   Workaround: Manually complete the code.
 
+NF-50-J223-019 Removing items from data window hides all (2010-09-13)
+
+  Problem:    If you right click on an item in the debugger data window and
+              select one of "Remove selected items" or "Remove unselected
+              items", GPS will correctly remove them, but also makes the
+              remaining items invisible.
+              Also, clicking in the "info registers" window colors it in
+              black instead of the selection color set in the preferences.
+  Workaround: Press "Next" to continue the debugger session, the window will
+              refresh automatically
+
 - J212-018: Error when editing a project with indexed attributes assignments
   Problem:    When you are editing a project, GPS first tries to normalize
               it. This normalization fails if your project contains an

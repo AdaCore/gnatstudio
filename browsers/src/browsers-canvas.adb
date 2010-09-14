@@ -880,7 +880,11 @@ package body Browsers.Canvas is
 
       if Data.Keep_Selected then
          Reset (Browser_Item (Data.Item), True, True);
-         Refresh (Browser_Item (Data.Item));
+
+         --  ??? We used to do the following call, but this results in resizing
+         --  the item to 0x0, and thus makes it invisible. Not sure why we had
+         --  it.
+         --  Refresh (Browser_Item (Data.Item));
       end if;
 
       Layout (Data.Browser);

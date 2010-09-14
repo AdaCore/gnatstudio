@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -589,7 +588,7 @@ package body Items.Simples is
       if Item.Selected then
          Draw_Rectangle
            (Pixmap,
-            Context.GC,
+            Context.Selection_GC,
             Filled => True,
             X      => X,
             Y      => Y,
