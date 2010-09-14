@@ -993,6 +993,10 @@ package body GPS.Location_View.Listener is
                          Find_Category_Node (Self, Message.Get_Category);
       Parent_Message : constant Message_Access := Get_Parent (Message);
       Node           : Node_Access;
+      Iter           : Gtk_Tree_Iter;
+      Path           : Gtk_Tree_Path;
+      Dummy          : Boolean;
+      pragma Unreferenced (Dummy);
 
    begin
       Node := new Node_Record (Node_Message);
@@ -1002,6 +1006,17 @@ package body GPS.Location_View.Listener is
          Node.Parent.Message_Count := Node.Parent.Message_Count + 1;
          Node.Parent.Parent.Message_Count :=
            Node.Parent.Parent.Message_Count + 1;
+
+         --  Notify view about changes in category and file nodes.
+
+         Iter := Self.Model.Create_Iter (Node.Parent);
+         Path := Self.Model.Create_Path (Node.Parent);
+         Self.Model.Row_Changed (Path, Iter);
+
+         Iter := Self.Model.Parent (Iter);
+         Dummy := Up (Path);
+         Self.Model.Row_Changed (Path, Iter);
+         Path_Free (Path);
 
       else
          Node.Parent := Find_Node (Self, Parent_Message);
@@ -1046,6 +1061,7 @@ package body GPS.Location_View.Listener is
    is
       Node  : Node_Access := Find_Node (Self, Message_Access (Message));
       Path  : constant Gtk_Tree_Path := Self.Model.Create_Path (Node);
+      Iter  : Gtk_Tree_Iter;
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
 
@@ -1054,10 +1070,28 @@ package body GPS.Location_View.Listener is
 
       Self.Model.Row_Deleted (Path);
 
-      if Node.Parent.Children.Is_Empty then
+      Dummy := Up (Path);
+      Iter := Self.Model.Create_Iter (Node.Parent);
+
+      if Node.Parent.Kind = Node_File then
+         Node.Parent.Message_Count := Node.Parent.Message_Count - 1;
+         Node.Parent.Parent.Message_Count :=
+           Node.Parent.Parent.Message_Count - 1;
+
+         if Node.Parent.Children.Is_Empty then
+            Self.Model.Row_Has_Child_Toggled (Path, Iter);
+         end if;
+
+         --  Notify view about changes in category and file nodes.
+
+         Self.Model.Row_Changed (Path, Iter);
+
+         Iter := Self.Model.Parent (Iter);
          Dummy := Up (Path);
-         Self.Model.Row_Has_Child_Toggled
-           (Path, Self.Model.Create_Iter (Node.Parent));
+         Self.Model.Row_Changed (Path, Iter);
+
+      elsif Node.Parent.Children.Is_Empty then
+         Self.Model.Row_Has_Child_Toggled (Path, Iter);
       end if;
 
       Recursive_Free (Node);
