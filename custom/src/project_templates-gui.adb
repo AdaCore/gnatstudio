@@ -388,20 +388,20 @@ package body Project_Templates.GUI is
             Child : Gtk_Tree_Iter;
          begin
             if Iter = Null_Iter then
-               Model.Append (Child, Null_Iter);
+               Child := Model.Get_Iter_First;
             else
                Child := Children (Model, Iter);
-
-               while Child /= Null_Iter loop
-                  if Get_String (Model, Child, Name_Col) = Name then
-                     return Child;
-                  end if;
-                  Next (Model, Child);
-               end loop;
-
-               --  If we reach this point, child was not found: add it
-               Model.Append (Child, Iter);
             end if;
+
+            while Child /= Null_Iter loop
+               if Get_String (Model, Child, Name_Col) = Name then
+                  return Child;
+               end if;
+               Next (Model, Child);
+            end loop;
+
+            --  If we reach this point, child was not found: add it
+            Model.Append (Child, Iter);
 
             --  Populate the iter that we have just added
 
