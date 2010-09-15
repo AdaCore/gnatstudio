@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Enums; use Gtk.Enums;
+
 with Glib.Object;   use Glib.Object;
 
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
@@ -98,15 +100,15 @@ package body Project_Templates.GPS is
          Static_Method => True);
    end Register_Commands;
 
-   --------------------------
-   -- On_New_From_Template --
-   --------------------------
+   -------------------
+   -- Launch_Dialog --
+   -------------------
 
-   procedure On_New_From_Template
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   procedure Launch_Dialog
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Widget    : Gtk_Widget;
+      Cancelled : out Boolean)
    is
-      pragma Unreferenced (Widget);
       use Virtual_File_List;
       C : Cursor;
       E : Unbounded_String;
@@ -118,6 +120,8 @@ package body Project_Templates.GPS is
       Chosen    : Project_Template;
       Templates : Project_Templates_List.List;
    begin
+      Cancelled := True;
+
       --  Read all available templates
       C := First (Module_Id.Dirs);
 
@@ -141,12 +145,17 @@ package body Project_Templates.GPS is
 
       --  Launch the GUI
 
-      Install_Template (Templates, Chosen, Installed, Dir, Project, E);
+      Install_Template
+        (Templates,
+         Render_Icon (Widget, "adacore-logo", Icon_Size_Large_Toolbar),
+         Chosen, Installed, Dir, Project, E);
 
       if E /= Null_Unbounded_String then
          Insert (Kernel, To_String (E), Mode => Error);
 
       elsif Installed then
+         Cancelled := False;
+
          --  There has been no error: we can proceed with the loading of the
          --  project.
 
@@ -191,7 +200,20 @@ package body Project_Templates.GPS is
             end;
          end if;
       end if;
+   end Launch_Dialog;
 
+   --------------------------
+   -- On_New_From_Template --
+   --------------------------
+
+   procedure On_New_From_Template
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Cancelled : Boolean;
+      pragma Unreferenced (Widget, Cancelled);
+   begin
+      Launch_Dialog (Kernel, Gtk_Widget (Kernel.Get_Main_Window), Cancelled);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_New_From_Template;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,6 +58,7 @@ package Welcome is
 
 private
    type Welcome_Screen_Record is new Logo_Boxes.Logo_Box_Record with record
+      Project_Templates   : Gtk.Radio_Button.Gtk_Radio_Button;
       Default_Project     : Gtk.Radio_Button.Gtk_Radio_Button;
       Default_Dir         : Gtk.GEntry.Gtk_Entry;
       Default_Browse      : Gtk.Button.Gtk_Button;

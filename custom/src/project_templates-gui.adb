@@ -284,13 +284,15 @@ package body Project_Templates.GUI is
    ----------------------
 
    procedure Install_Template
-     (Templates : Project_Templates_List.List;
-      Chosen    : out Project_Template;
-      Installed : out Boolean;
-      Dir       : out Virtual_File;
-      Project   : out Virtual_File;
-      Errors    : out Unbounded_String)
+     (Templates    : Project_Templates_List.List;
+      Header_Image : Gdk_Pixbuf;
+      Chosen       : out Project_Template;
+      Installed    : out Boolean;
+      Dir          : out Virtual_File;
+      Project      : out Virtual_File;
+      Errors       : out Unbounded_String)
    is
+      pragma Unreferenced (Header_Image);
       Assistant : Gtk_Assistant;
 
       Scroll   : Gtk_Scrolled_Window;
@@ -456,6 +458,9 @@ package body Project_Templates.GUI is
          --  Create the page
          Gtk_New (Page, Template);
 
+         --  The header image does not look great for now
+         --  Assistant.Set_Page_Header_Image (Page, Header_Image);
+
          --  Add the page to the assistant
          Page_Num := Append_Page (Assistant, Page);
          Assistant.Set_Page_Type (Page, Gtk_Assistant_Page_Confirm);
@@ -607,6 +612,8 @@ package body Project_Templates.GUI is
       Installed := False;
 
       Gtk_New (Assistant);
+      Assistant.Set_Position (Win_Pos_Center);
+
       Assistant.Set_Title ("Create Project from Template");
 
       Gtk_New (Scroll);
@@ -622,6 +629,10 @@ package body Project_Templates.GUI is
 
       Set_Position (Hpane, 200);
       Page_Num := Assistant.Append_Page (Hpane);
+
+      --  The header image does not look great for now
+      --  Assistant.Set_Page_Header_Image (Hpane, Header_Image);
+
       --  Assistant.Set_Page_Title (Hpane, "Select a template");
 
       --  Create the tree and model
@@ -684,7 +695,7 @@ package body Project_Templates.GUI is
 
       --  Launch the assistant
 
-      Set_Default_Size (Assistant, 600, 400);
+      Set_Default_Size (Assistant, 600, 350);
 
       --  Expand the tree and select the first leaf
       Expand_All (Tree);

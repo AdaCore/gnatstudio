@@ -46,6 +46,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
+with Project_Templates.GPS;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -121,10 +122,24 @@ package body Welcome is
       Pack_Start (Get_Contents (Screen), Box, Expand => True, Fill => True);
       Set_Border_Width (Box, 10);
 
+      --  Project templates
+
+      Gtk_New
+        (Screen.Project_Templates,
+         Label => -"Create a new Project from template.");
+      Pack_Start (Box, Screen.Project_Templates, Expand => False);
+      Set_Tip
+        (Get_Tooltips (Kernel), Screen.Project_Templates,
+         -"Create a new project using the Project Templates assistant.");
+
       --  Default project
+
+      Gtk_New_Hseparator (Sep);
+      Pack_Start (Box, Sep, Expand => False, Padding => 5);
 
       Gtk_New
         (Screen.Default_Project,
+         Group => Screen.Project_Templates,
          Label => -"Start with default project in directory:");
       Pack_Start (Box, Screen.Default_Project, Expand => False);
       Set_Tip
@@ -159,7 +174,7 @@ package body Welcome is
 
       Gtk_New
         (Screen.Create_Project,
-         Screen.Default_Project,
+         Screen.Project_Templates,
          -"Create new project with wizard");
       Pack_Start (Box, Screen.Create_Project, Expand => False);
       Set_Tip
@@ -178,7 +193,7 @@ package body Welcome is
 
       Gtk_New
         (Screen.Open_Project_Button,
-         Screen.Create_Project,
+         Screen.Project_Templates,
          -"Open existing project:");
       Pack_Start (Box, Screen.Open_Project_Button, Expand => False);
       Set_Tip
@@ -279,6 +294,23 @@ package body Welcome is
                   return Project_Loaded;
                end if;
 
+            elsif Get_Active (Screen.Project_Templates) then
+               --  First load the default project: this is needed as a fallback
+               --  resource in case the pre-script hook fails, for instance.
+               On_Default_Project (Screen);
+               Hide_All (Screen);
+               declare
+                  Cancelled : Boolean;
+               begin
+                  Project_Templates.GPS.Launch_Dialog
+                    (Screen.Kernel, Gtk_Widget (Screen), Cancelled);
+
+                  if Cancelled then
+                     Show_All (Screen);
+                  else
+                     return Project_Loaded;
+                  end if;
+               end;
             else
                --  A new project was loaded
                return Project_Loaded;
