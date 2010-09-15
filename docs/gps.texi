@@ -4296,8 +4296,8 @@ This behavior is controlled by the @code{Hyper links} preference.
 @c --------------------------------------------------------------------
 
 @noindent
-One of the optional plug-ins that can be loaded (@code{dispatching.py}) will
-highlight dispatching calls in your code.
+Dispatching calls in Ada and C++ source code are highlighted by default
+in GPS via the @code{dispatching.py} plug-in.
 
 Based on the cross-reference information, this plug-in will highlight
 (with a special color that you can configure in the preferences dialog)
