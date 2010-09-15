@@ -1,0 +1,3 @@
+<response>
+   <replace id="bc_value">@_COUNTER_@</replace>
+</response>

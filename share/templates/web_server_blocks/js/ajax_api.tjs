@@ -1,0 +1,111 @@
+
+@@---------------------------------------------------------------------------
+@@--
+@@MACRO(BIND_JS)@@
+@@--
+@@-- $1  action to register
+@@-- $2  the tag node ID to handle in the DOM tree
+@@-- $3  the name of the javascript routine to execute
+@@-- $18 ID index to be added to $2 (index in table for unique id for ex)
+@@--
+@@SET@@ BJS_ACTION = $1
+@@SET@@ BJS_ID = $2
+@@SET@@ BJS_ROUTINE = $3
+@@SET@@ BJS_ID_INDEX = $18
+@@--
+<script type="text/javascript">
+<!--
+   var rule_@_BJS_ID_@@_BJS_ID_INDEX_@ = {
+      @@IF@@ @_BJS_ROUTINE_@ = ""
+        '#@_BJS_ID_@@_BJS_ID_INDEX_@' : function(el) {el.@_BJS_ACTION_@ = call_@_BJS_ACTION_@_@_BJS_ID_@@_BJS_ID_INDEX_@;}
+      @@ELSE@@
+        '#@_BJS_ID_@@_BJS_ID_INDEX_@' : function(el) {el.@_BJS_ACTION_@ = @_BJS_ROUTINE_@;}
+      @@END_IF@@
+   };
+
+   Behaviour.register (rule_@_BJS_ID_@@_BJS_ID_INDEX_@);
+-->
+</script>
+@@END_MACRO@@
+
+@@---------------------------------------------------------------------------
+@@--
+@@MACRO(JS_ACTION)@@
+@@--
+@@-- $1    action name (onclick, onchange...)
+@@-- $2    the tag node ID to handle in the DOM tree
+@@-- $3    a set of parameters to pass to the URL
+@@-- $4-$8 are linked fields id to this request, all fields are passed as
+@@--       parameters to the request.
+@@-- $18   ID index to be added to $2 (index in table for unique id for ex)
+@@-- $19   URL to call instead of the generated one
+@@-- $20   the name of a function to call when this routine terminate
+@@--
+@@-- The final request is : /$1$$$2$18?$3&$4=value($4)&$5=value($5)
+@@-- or                   : $19?$3&$4=value($4)&$5=value($5)
+@@-- with value(name) being the value for the field named "name".
+@@--
+@@SET@@ JSA_ACTION = $1
+@@SET@@ JSA_ID = $2
+@@SET@@ JSA_PARAMETERS = $3
+@@SET@@ JSA_F1 = $4
+@@SET@@ JSA_F2 = $5
+@@SET@@ JSA_F3 = $6
+@@SET@@ JSA_F4 = $7
+@@SET@@ JSA_F5 = $8
+
+@@SET@@ JSA_ID_INDEX = $18
+@@SET@@ JSA_CONSTANT_URL = $19
+@@SET@@ JSA_ONCOMPLETE = $20
+
+<script type="text/javascript">
+<!--
+   function call_@_JSA_ACTION_@_@_JSA_ID_@@_JSA_ID_INDEX_@()
+   {
+@@IF@@ @_JSA_CONSTANT_URL_@ /= ""
+      var rurl="@_JSA_CONSTANT_URL_@";
+@@ELSE@@
+      var rurl="/@_JSA_ACTION_@$@_JSA_ID_@@_JSA_ID_INDEX_@";
+@@END_IF@@
+      var rpars = "";
+      var roncomplete = "";
+
+@@IF@@ @_JSA_PARAMETERS_@ /= ""
+      rpars = "@_JSA_PARAMETERS_@";
+@@END_IF@@
+@@IF@@ @_JSA_F1_@ /= ""
+      if (rpars != "")
+         rpars = rpars + "&";
+      rpars = rpars + AWS.Ajax.serialize('@_JSA_F1_@');
+@@END_IF@@
+@@IF@@ @_JSA_F2_@ /= ""
+      if (rpars != "")
+         rpars = rpars + "&";
+      rpars = rpars + AWS.Ajax.serialize('@_JSA_F2_@');
+@@END_IF@@
+@@IF@@ @_JSA_F3_@ /= ""
+      if (rpars != "")
+         rpars = rpars + "&";
+      rpars = rpars + AWS.Ajax.serialize('@_JSA_F3_@');
+@@END_IF@@
+@@IF@@ @_JSA_F4_@ /= ""
+      if (rpars != "")
+         rpars = rpars + "&";
+      rpars = rpars + AWS.Ajax.serialize('@_JSA_F4_@');
+@@END_IF@@
+@@IF@@ @_JSA_F5_@ /= ""
+      if (rpars != "")
+         rpars = rpars + "&";
+      rpars = rpars + AWS.Ajax.serialize('@_JSA_F5_@');
+@@END_IF@@
+
+@@IF@@ @_JSA_ONCOMPLETE_@ /= ""
+      roncomplete = @_JSA_ONCOMPLETE_@
+@@END_IF@@
+      AWS.Ajax.XML.request (rurl, rpars, roncomplete);
+      return (false);
+   }
+-->
+</script>
+@_BIND_JS(@_JSA_ACTION_@, @_JSA_ID_@, 18=>@_JSA_ID_INDEX_@)_@
+@@END_MACRO@@

@@ -1,0 +1,695 @@
+@@----------------------------------------------------------------------------
+@@--                              Ada Web Server
+@@--
+@@--                         Copyright (C) 2007-2009
+@@--                                 AdaCore
+@@--
+@@--  This library is free software; you can redistribute it and/or modify
+@@--  it under the terms of the GNU General Public License as published by
+@@--  the Free Software Foundation; either version 2 of the License, or (at
+@@--  your option) any later version.
+@@--
+@@--  This library is distributed in the hope that it will be useful, but
+@@--  WITHOUT ANY WARRANTY; without even the implied warranty of
+@@--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+@@--  General Public License for more details.
+@@--
+@@--  You should have received a copy of the GNU General Public License
+@@--  along with this library; if not, write to the Free Software Foundation,
+@@--  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+@@--
+@@--  As a special exception, if other files instantiate generics from this
+@@--  unit, or you link this unit with other files to produce an executable,
+@@--  this  unit  does not  by itself cause  the resulting executable to be
+@@--  covered by the GNU General Public License. This exception does not
+@@--  however invalidate any other reasons why the executable file  might be
+@@--  covered by the  GNU Public License.
+@@----------------------------------------------------------------------------
+
+@@SET@@ CTX_WB = "CTX_WB"
+@@--  The context parameter name
+
+@@SET@@ TIMEZONE_COOKIE = ""
+@@--  Set to empty string for no timezone support
+
+@@---------------------------------------------------------------- AWS
+
+var AWS = {
+   Context : null,
+   Ajax    : null,
+   Tools   : null
+}
+
+@@---------------------------------------------------------------- TOOLS
+
+AWS.Tools = new function() {
+
+   @@-----------
+   @@-- PUBLIC
+   @@-----------
+
+   @@-- --------------------------------
+   @@-- onload event to update CTX_WB
+
+   this.addLoadEvent = function (func)
+   {
+      var oldonload = window.onload;
+
+      if (typeof window.onload != 'function') {
+         window.onload = func;
+      } else {
+         window.onload = function() { oldonload(); func(); }
+      }
+   }
+
+   @@-- --------------------------------
+   @@-- Used to report javascript errors
+
+   this.report_error = function (request)
+   {
+      alert ('There was! an error on this Ajax request.');
+   }
+
+   @@-- Clear select content
+
+   this.clearSelect = function (select_id)
+   {
+      while ($(select_id).length > 0) {
+         $(select_id).remove(0);
+      }
+   }
+
+   @@-- Delete a given option from the select
+
+   this.delSelectOption = function (select_id, option)
+   {
+      var idx = 0;
+      while (idx < $(select_id).length) {
+         if ($(select_id).options[idx].value == option) {
+            $(select_id).remove(idx);
+            return;
+         }
+         idx = idx + 1;
+      }
+   }
+
+   @@-- Add option_value/option_content into the given select
+
+   this.addToSelect =
+      function (select_id, option_value, option_content, option_class)
+   {
+      // Create a new option
+      var new_option = document.createElement("option");
+      new_option.value = option_value;
+      new_option.className = option_class;
+      var content = document.createTextNode(option_content);
+      new_option.appendChild(content);
+
+      // And add it to select
+      $(select_id).appendChild(new_option);
+      return new_option;
+   }
+
+   @@-- Select the given option from the select
+
+   this.selectChangeSelected =
+      function (select_id, option, hook_func, hook_param)
+   {
+      var idx = 0;
+      while (idx < $(select_id).length) {
+         if ($(select_id).options[idx].value == option) {
+            $(select_id).selectedIndex = idx;
+            if (hook_func != null && hook_func != "") {
+               hook_func($(select_id).options[idx], hook_param);
+            }
+            return;
+         }
+         idx = idx + 1;
+      }
+   }
+
+   @@IF@@ @_TIMEZONE_COOKIE_@ /= ""
+   @@--  Use cookie to record that the timezone has been sent
+   @@INCLUDE@@ cookies.js
+
+   @@-- Handle Web Browser local timezone
+
+   this.TZ_offset = new Date().getTimezoneOffset();
+
+   this.setTimezone =
+      function ()
+   {
+      if (readCookie ("@_TIMEZONE_COOKIE_@") == null) {
+         createCookie ("@_TIMEZONE_COOKIE_@", this.TZ_offset, 1);
+      }
+   }
+   @@END_IF@@
+}
+
+@@---------------------------------------------------------------- CONTEXT
+
+AWS.Context = new function() {
+
+   @@-----------
+   @@-- PUBLIC
+   @@-----------
+
+   @@-- --------------------------------
+   @@-- Returns the context id
+
+   this.get = function ()
+   {
+      var context = document.getElementById('@_CTX_WB_@');
+
+      if (context == null)
+          return "";
+      else
+          return $(context).innerHTML;
+   }
+
+   this.set = function (value)
+   {
+      var context = document.getElementById('@_CTX_WB_@');
+
+      if (context == null)
+          return;
+      else
+          $(context).innerHTML = value;
+
+      this.update();
+   }
+
+   @@-- --------------------------------
+   @@-- Update the context tag in anchors and forms
+
+   this.update = function ()
+   {
+      var k = 0;
+
+      @@-- anchors
+
+      var anchors = document.getElementsBySelector('a');
+
+      for (k=0; k<anchors.length; k++) {
+         var href = anchors[k].getAttribute('href');
+         if (href != null) {
+            @@--  IE insists on returning the derived absolute URL,
+            @@--  make sure that the ref is on the current page if the
+            @@--  prefix is HTTP.
+            if ((href.indexOf("http:",0) != 0
+                || href.indexOf(window.location.hostname) == 7)
+                && href.indexOf("mailto:",0) != 0
+                && href.indexOf("#",0) != 0) {
+
+                anchors[k].setAttribute('href',
+                                        AWS.Context.href_add_anchor(href));
+            }
+         }
+      }
+
+      @@-- forms
+
+      var forms = document.getElementsBySelector('form');
+
+      for (k=0; k<forms.length; k++) {
+         var action = forms[k].getAttribute('action');
+         if (action != null) {
+            if (action != ""
+                && action.indexOf("http:",0) != 0
+                && action.indexOf("#", 0) != 0
+                && forms[k].getAttribute('onsubmit') == null) {
+                add_context_to_form (forms[k]);
+            }
+         }
+      }
+   }
+
+   @@-- --------------------------------
+   @@-- Add Context parameter CTX_WB for Ajax
+
+   this.add_ajax = function (pars)
+   {
+      if (pars == "")
+          pars = pars + "?";
+      else
+          pars = pars + "&";
+
+      pars = pars + "@_CTX_WB_@=" + this.get();
+
+      return pars;
+   }
+
+   @@-- --------------------------------
+   @@-- Add context parameter CTX_WB for anchors
+
+   this.add_anchor = function (a)
+   {
+      a.href = this.href_add_anchor(a.href);
+   }
+
+   this.href_add_anchor = function (href)
+   {
+      var href_last = "";       // Contains fragment
+
+      if (href.indexOf('#', 0) != -1) {
+         var splitted_href = href.split('#');
+         href = splitted_href[0];
+         href_last = splitted_href[1];
+      }
+
+      // Remove CTX_WB if exists
+
+      if (href.indexOf("@_CTX_WB_@", 0) != -1) {
+         href = href.split("@_CTX_WB_@")[0];
+         href = href.substr(0, href.length - 1); // Remove & or ?
+      }
+
+      if (href.indexOf('?',0) == -1) {
+          href = href + '?';
+      } else {
+          href = href + '&';
+      }
+
+      href = href + "@_CTX_WB_@=" + this.get();
+
+      if (href_last != "") {
+         href = href + "#" + href_last;
+      }
+      return (href);
+   }
+
+   @@------------
+   @@-- PRIVATE
+   @@------------
+
+   @@-- --------------------------------
+   @@-- Append or update context into form
+
+   function add_context_to_form (form)
+   {
+      var k = 0;
+      var items = form.elements;
+      var found_context = false;
+
+      for (k=0; k<items.length; k++) {
+         if (items[k].tagName == "INPUT"
+             && items[k].getAttribute('NAME') == '@_CTX_WB_@') {
+
+            // Update context if needed
+
+            if (items[k].getAttribute('VALUE') != AWS.Context.get()) {
+               items[k].setAttribute ('VALUE', AWS.Context.get());
+            }
+            found_context = true;
+         }
+      }
+
+      //  Insert new context field
+
+      if (!found_context) {
+         hi = document.createElement('input');
+         hi.setAttribute('type', 'hidden');
+         hi.setAttribute('name', '@_CTX_WB_@');
+         hi.setAttribute('value', AWS.Context.get());
+         form.appendChild(hi);
+      }
+   }
+}
+
+@@---------------------------------------------------------------- AJAX
+
+AWS.Ajax = new function() {
+
+   @@-----------
+   @@-- PUBLIC
+   @@-----------
+
+   this.XML = null;
+
+   @@-- --------------------------------
+   @@-- Update the behavior rules, needed when loading new section
+   @@-- containing JavaScript code. Also update the CTX_WB.
+
+   this.update_framework = function()
+   {
+      Behaviour.apply ();
+      AWS.Context.update();
+   }
+
+   @@-- --------------------------------
+   @@-- Call url?pars and put result into placeholder
+
+   this.replace = function (url, pars, placeholder, oncomplete)
+   {
+      var rplaceholder = $(placeholder);
+
+      if (rplaceholder.tagName == "TEXTAREA" ||
+          rplaceholder.tagName == "INPUT")
+         var O_ajax = new Ajax.Request
+             (url,
+              {method:     'get',
+               parameters: AWS.Context.add_ajax(pars),
+               onFailure:  AWS.Tools.report_error,
+               onComplete: function(req)
+               {rplaceholder.value = req.responseText;
+                if (oncomplete != "") oncomplete();}});
+      else
+         var O_ajax = new Ajax.Updater
+             ({success: placeholder},
+              url,
+              {method:    'get',
+              parameters: AWS.Context.add_ajax(pars),
+              onFailure:  AWS.Tools.report_error,
+              onComplete: function(req)
+              {AWS.Ajax.update_framework();
+               if (oncomplete != "") oncomplete();}});
+   }
+
+   @@-- --------------------------------
+   @@-- Serialize a tag or all fields in a form
+
+   this.serialize = function(elm, name) {
+      var param = "";
+
+      if ($(elm) == null) return "";
+
+      if ($(elm).tagName == "FORM") {
+         param = Form.serialize (elm);
+      } else if ($(elm).tagName == "UL") {
+         param = Sortable.serialize(elm);
+      } else if (name == "" || name == null) {
+         param = elm + "=" + $F(elm);
+      } else {
+         param = name + "=" + $F(elm);
+      }
+      return (param);
+   }
+
+}
+
+AWS.Ajax.XML = new function() {
+
+   @@-- --------------------------------
+   @@-- Call url?pars and execute aws_xml_handler methods then the
+   @@-- oncomplete method (to chain commands) if defined
+
+   this.request = function (url, pars, oncomplete)
+   {
+      var myAjax = new Ajax.Request
+         (url,
+          {method: 'get',
+           parameters: AWS.Context.add_ajax(pars),
+           onFailure : AWS.Tools.report_error,
+           onComplete : function(req)
+           {AWS.Ajax.XML.handler(req);
+            AWS.Ajax.update_framework();
+            if (oncomplete != "") oncomplete();}});
+   }
+
+   @@-- Handle XML responses
+
+   this.handler = function (result)
+   {
+      // get XML result
+      var xml_result = result.responseXML;
+      var response   = xml_result.getElementsByTagName('response');
+      var i = 0;
+      for (i = 0; i < response[0].childNodes.length; i++) {
+          var node = response[0].childNodes[i];
+          if (node.nodeName == 'replace') {
+             handler_replace (node);
+          } else if (node.nodeName == 'clear') {
+             handler_clear (node);
+          } else if (node.nodeName == 'select') {
+             handler_select (node);
+          } else if (node.nodeName == 'radio') {
+             handler_radio (node);
+          } else if (node.nodeName == 'check') {
+             handler_check (node);
+          } else if (node.nodeName == 'get') {
+             handler_get (node);
+          } else if (node.nodeName == 'location') {
+             handler_location (node);
+          } else if (node.nodeName == 'refresh') {
+             window.location.reload (true);
+          } else if (node.nodeName == 'create_sortable') {
+             handler_create_sortable (node);
+          } else if (node.nodeName == 'destroy_sortable') {
+             handler_destroy_sortable (node);
+          } else if (node.nodeName == 'apply_style') {
+             handler_apply_style (node);
+          } else if (node.nodeName == 'insert_after') {
+             handler_insert_after (node);
+          } else if (node.nodeName == 'ctx') {
+             handler_ctx (node);
+          }
+      }
+   }
+
+   @@-- Internal handler, replace current context in Web page
+
+   function handler_ctx (node)
+   {
+      var cid = node.getAttribute("id");
+      AWS.Context.set (cid);
+
+      AWS.Ajax.update_framework();
+   }
+
+   @@-- Replace a node content by an HTML String
+
+   function handler_replace (node)
+   {
+      var placeholder_id = node.getAttribute("id");
+      var placeholder_content;
+
+      if ($(placeholder_id) == null) return;
+
+      if (node.childNodes.length > 1) {
+         placeholder_content = node.childNodes[1].nodeValue;
+      } else {
+         placeholder_content = node.firstChild.nodeValue;
+      }
+      if ($(placeholder_id).tagName == "TEXTAREA" ||
+          $(placeholder_id).tagName == "INPUT") {
+         $(placeholder_id).value = placeholder_content;
+      } else {
+         $(placeholder_id).innerHTML = placeholder_content;
+      }
+
+      AWS.Ajax.update_framework();
+   }
+
+   @@-- Clear a node
+
+   function handler_clear (node)
+   {
+      var placeholder_id = node.getAttribute("id");
+      if ($(placeholder_id).tagName == "TEXTAREA" ||
+         $(placeholder_id).tagName == "INPUT") {
+         $(placeholder_id).value = "";
+      } else if ( $(placeholder_id).tagName == "IFRAME") {
+         window.frames[placeholder_id].document.body.innerHTML="";
+      } else {
+         $(placeholder_id).innerHTML = "";
+      }
+   }
+
+   @@-- Action on select : add, delete or select an option, or clear a select
+
+   function handler_select (node)
+   {
+      var select_action = node.getAttribute("action");
+      var select_id     = node.getAttribute("id");
+      if (select_action == "add") {
+         var option_value = node.getAttribute("option_value");
+         var option_content = node.getAttribute("option_content");
+         AWS.Tools.addToSelect (select_id, option_value, option_content);
+      } else if (select_action == "clear") {
+         AWS.Tools.clearSelect (select_id);
+      } else if (select_action == "delete") {
+         var option_value = node.getAttribute("option_value");
+         AWS.Tools.delSelectOption (select_id, option_value);
+      } else if (select_action == "select") {
+         var option_value = node.getAttribute("option_value");
+         AWS.Tools.selectChangeSelected (select_id, option_value);
+      }
+   }
+
+   @@-- Action on list : add an element
+
+   function handler_insert_after (node)
+   {
+      var id = node.getAttribute('id');
+      var placeholder_content;
+
+      if (node.childNodes.length > 1) {
+         placeholder_content = node.childNodes[1].nodeValue;
+      } else {
+         placeholder_content = node.firstChild.nodeValue;
+      }
+
+      new Insertion.After (id, placeholder_content);
+      AWS.Ajax.update_framework();
+   }
+
+   @@-- Action on radio
+
+   function handler_radio (node)
+   {
+      var action = node.getAttribute('action');
+      var id     = node.getAttribute('id');
+      if (action == 'select') {
+         $(id).checked = 1;
+      }
+   }
+
+   @@-- Action on check
+
+   function handler_check (node)
+   {
+      var action = node.getAttribute('action');
+      var id     = node.getAttribute('id');
+      if (action == 'select') {
+         $(id).checked = 1;
+      } else if (action == 'clear') {
+         $(id).checked = 0;
+      }
+   }
+
+   @@-- Action on get
+
+   function handler_get (node)
+   {
+      var url  = node.getAttribute('url');
+      var pars = '';
+      var i    = 0;
+
+      for (i = 0; i < node.childNodes.length; i++) {
+         var current_node = node.childNodes[i];
+         if (current_node.nodeName == 'parameters') {
+            if (pars != '') {
+               pars = pars + '&';
+            }
+            pars = pars + current_node.getAttribute('value');
+         } else if (current_node.nodeName == 'field') {
+            if (pars != '') {
+               pars = pars + '&';
+            }
+            var id = current_node.getAttribute('id');
+            pars = pars + AWS.Ajax.serialize (id);
+         }
+      }
+      AWS.Ajax.update_framework(); /* Update behaviour before request url */
+      AWS.Ajax.XML.request (url, pars, '');
+   }
+
+   @@-- Action on location
+
+   function handler_location (node)
+   {
+      var url = node.getAttribute('url');
+
+      if (url.indexOf('http',0) == -1
+          && url.indexOf('@_CTX_WB_@') == -1
+          && url[0] != '#')
+      {
+         @@--  pointing inside server and no context
+         if (url.indexOf("?",0) == -1)
+            url = url + '?';
+         else
+            url = url + '&';
+
+         url = url + "@_CTX_WB_@=" + AWS.Context.get();
+      }
+
+      /* Redirect to url */
+      document.location.href = url;
+   }
+
+   @@-- Action on create_sortable
+
+   function handler_create_sortable (node)
+   {
+      var lists = []; /* Get all list for containment */
+
+      var i = 0;
+
+      for (i = 0; i < node.childNodes.length; i++) {
+         var current_node = node.childNodes[i];
+         if (current_node.nodeName == 'list') {
+            lists.push (current_node.getAttribute('id'));
+         }
+      }
+
+      /* Call Sortable.create for each element */
+
+      for (i = 0; i < node.childNodes.length; i++) {
+         var current_node = node.childNodes[i];
+         if (current_node.nodeName == 'list') {
+            var id = current_node.getAttribute('id');
+
+            /* Add cursor style */
+
+            var elm = document.getElementById (id);
+            elm.style.cursor = 'move';
+
+            /* Create sortable */
+
+            Sortable.create
+               (id, { containment:lists, constraint:false, dropOnEmpty:true });
+         }
+      }
+   }
+
+   @@-- Action on destroy_sortable
+
+   function handler_destroy_sortable (node)
+   {
+      var i = 0;
+
+      /* Call Sortable.destroy for each element */
+
+      for (i = 0; i < node.childNodes.length; i++) {
+         var current_node = node.childNodes[i];
+         if (current_node.nodeName == 'list') {
+            var list_id = current_node.getAttribute('id');
+
+            /* Revert cursor style */
+
+            var elm = document.getElementById (list_id);
+            elm.style.cursor = 'default';
+
+            /* Destroy sortable */
+            Sortable.destroy (list_id);
+         }
+      }
+   }
+
+   @@-- Action on apply_style
+
+   function handler_apply_style (node)
+   {
+      var elm_id = node.getAttribute('id');
+
+      if ($(elm_id) == null) return;
+
+      var i = 0;
+      for (i = 0; i < node.childNodes.length; i++) {
+         var current_node = node.childNodes[i];
+         if (current_node.nodeName == 'attribute') {
+            var id    = current_node.getAttribute('id');
+            var value = current_node.getAttribute('value');
+            $(elm_id).style[id] = value;
+         }
+      }
+   }
+}
+
+@@-- INIT
+
+AWS.Tools.addLoadEvent (AWS.Context.update);
+
+@@IF@@ @_TIMEZONE_COOKIE_@ /= ""
+AWS.Tools.setTimezone();
+@@END_IF@@

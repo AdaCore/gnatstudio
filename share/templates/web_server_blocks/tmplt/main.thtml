@@ -1,0 +1,22 @@
+@@INCLUDE@@ ../js/ajax_api.tjs
+@@--
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <meta name="description" content="AWS Web Server"/>
+    <meta name="keywords" content="Ada, GNAT"/>
+    <title>@_Project_Name_@</title>
+    <link media="screen"
+    	  type="text/css" rel="stylesheet" href="/css/style.css"/>
+    @@INCLUDE@@ ../js/aws.tjs
+  </head>
+
+  <body>
+    <h1>Main page</h1>
+    @_LAZY_WIDGET_COUNTER_@
+    <p><img src="/img/gps_logo.png"/>Web Server built using a GPS template</p>
+  </body>
+</html>

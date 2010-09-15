@@ -1,0 +1,8 @@
+<div id="block_counter">
+
+<div id="bc_value">@_COUNTER_@</div>
+
+<p><a id="incr" href="/">Increment</a></p>
+
+@_JS_ACTION(onclick, incr)_@
+</div>

@@ -1,0 +1,7 @@
+
+@@--  This file must be included when any .tjs templates are used
+
+<script src="/js/prototype.js" type="text/javascript"></script>
+<script src="/js/behaviour.js" type="text/javascript"></script>
+<script src="/js/scriptaculous.js" type="text/javascript"></script>
+<script src="/js/aws_kernel.tjs" type="text/javascript"></script>

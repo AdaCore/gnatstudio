@@ -1,0 +1,128 @@
+@@SET@@ PACKAGE = WBlocks
+@@SET@@ ROOT_NAME = @_Project_Name_@
+
+--  DO NOT EDIT, THIS FILE HAS BEEN GENERATED
+
+package @_PACKAGE_@ is
+   pragma Style_Checks (Off);
+
+   package Lazy is
+      procedure Register;
+      --  Register lazy tags into the AWS's Web Block framework
+
+@@TABLE@@
+   @@IF@@ @_UPPER:SLICE(1..5):VARIABLE_LIST_@ = "LAZY_"
+      @_REPLACE_ALL(LAZY_/):REPLACE_ALL(__/_):VARIABLE_LIST_@ : constant String := "@_VARIABLE_LIST_@";
+   @@END_IF@@
+@@END_TABLE@@
+   end Lazy;
+
+end @_PACKAGE_@;
+
+@@TABLE@@
+--  DO NOT EDIT, THIS FILE HAS BEEN GENERATED
+
+package @_PACKAGE_@.@_CAPITALIZE:REPLACE_ALL(\./_):BASENAME_@ is
+   pragma Style_Checks (Off);
+
+   Template : constant String := "@_FILENAME_@";
+   @@TABLE@@@
+      @@IF@@ not @_IS_EMPTY:URL_@
+        @@IF@@ @_TABLE_LINE_@ = 1
+   URL      : constant String := "@_URL_@";
+        @@ELSE@@
+   URL@_TABLE_LINE_@     : constant String := "@_URL_@";
+        @@END_IF@@
+      @@END_IF@@
+   @@END_TABLE@@
+
+   @@TABLE@@
+       @@IF@@ not @_IS_EMPTY:VARIABLE_@ and @_UPPER:SLICE(1..5):VARIABLE_@ /= "LAZY_"
+   @_REPLACE_ALL(__/_):VARIABLE_@ : constant String := "@_VARIABLE_@";
+       @@END_IF@@
+   @@END_TABLE@@
+@@IF@@ @_EXIST:HTTP_@
+
+   package HTTP is
+   @@TABLE@@
+      @@IF@@ not @_IS_EMPTY:HTTP_@
+      @_REPLACE_ALL(__/_):HTTP_@ : constant String := "@_HTTP_@";
+      @@END_IF@@
+   @@END_TABLE@@
+   end HTTP;
+@@END_IF@@
+@@IF@@ @_EXIST:SET_VAR_@
+
+   package Set is
+   @@TABLE@@
+     @@IF@@ not @_IS_EMPTY:SET_VAR_@
+     @_REPLACE_ALL(SET_/):SET_VAR_@ : constant String := "@_SET_VAL_@";
+     @@END_IF@@
+   @@END_TABLE@@
+   end Set;
+@@END_IF@@
+@@IF@@ @_EXIST:AJAX_EVENT_@
+
+   package Ajax is
+   @@TABLE@@
+      @@IF@@ not @_IS_EMPTY:AJAX_EVENT_@
+      @_AJAX_EVENT_@_@_AJAX_ACTION_@ : constant String := "/@_AJAX_EVENT_@$@_AJAX_ACTION_@";
+      @@END_IF@@
+   @@END_TABLE@@
+   end Ajax;
+@@END_IF@@
+
+end @_PACKAGE_@.@_CAPITALIZE:REPLACE_ALL(\./_):BASENAME_@;
+@@END_TABLE@@
+
+--  DO NOT EDIT, THIS FILE HAS BEEN GENERATED
+
+with AWS.MIME;
+with AWS.Services.Web_Block.Registry;
+
+with @_ROOT_NAME_@.Web_Blocks;
+with @_ROOT_NAME_@.Ajax;
+
+@@TABLE@@
+with @_PACKAGE_@.@_CAPITALIZE:REPLACE_ALL(\./_):BASENAME_@;
+@@END_TABLE@@
+
+package body @_PACKAGE_@ is
+
+   use AWS;
+
+   package body Lazy is
+
+      --------------
+      -- Register --
+      --------------
+
+      procedure Register is
+         use AWS.Services;
+      begin
+         --  Register blocks
+@@TABLE@@
+   @@IF@@ @_UPPER:SLICE(1..5):VARIABLE_LIST_@ = "LAZY_"
+         Web_Block.Registry.Register
+           ("@_VARIABLE_LIST_@",
+            "tmplt/@_LOWER:REPLACE_ALL(LAZY_/):VARIABLE_LIST_@.thtml",
+            @_ROOT_NAME_@.Web_Blocks.@_CAPITALIZE:REPLACE_ALL(LAZY_/):VARIABLE_LIST_@'Access);
+   @@END_IF@@
+@@END_TABLE@@
+         --  Register Ajax
+@@TABLE@@
+   @@TABLE@@
+      @@IF@@ not @_IS_EMPTY:AJAX_EVENT_@
+         Services.Web_Block.Registry.Register
+            ("/@_AJAX_EVENT_@$@_AJAX_ACTION_@",
+             "tmplt/" & @_PACKAGE_@.R_@_CAPITALIZE:REPLACE_ALL(\./_):AJAX_FILE_@.Template,
+             @_ROOT_NAME_@.Ajax.@_CAPITALIZE:AJAX_EVENT_@_@_CAPITALIZE:AJAX_ACTION_@'Access,
+             Content_Type     => MIME.Text_XML,
+             Context_Required => True);
+      @@END_IF@@
+   @@END_TABLE@@
+@@END_TABLE@@
+      end Register;
+   end Lazy;
+
+end @_PACKAGE_@;
