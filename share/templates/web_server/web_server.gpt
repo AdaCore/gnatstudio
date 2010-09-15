@@ -1,0 +1,15 @@
+# Header
+Name: Web Server
+Category: AWS
+Project: @_project_name_@.gpr
+
+# Variables
+Project_Name: default: The name of the project.
+Host: localhost: The name of the host running the server.
+Port: 8080: The port the server is listening to.
+
+# Description
+[Description]
+A full featured AWS project structure, including a main file,
+with separate source and object directories. The Web Server is
+using template files and dispatchers for CSS and images.
