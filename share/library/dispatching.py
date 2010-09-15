@@ -5,9 +5,6 @@ dispatching calls found in the current editor. In particular, at such
 locations, the cross-references might not lead accurate result (for
 instance "go to body"), since the exact subprogram that is called is
 not known until run time.
-
-For the Ada language, this plug-in requires a version of GNAT more recent
-than 2007-09-20, since the xref information was not created before then.
 """
 
 
@@ -25,7 +22,7 @@ Preference ("Plugins/dispatching/onopen").create (
 Preference ("Plugins/dispatching/color").create (
   "Highlight color", "color",
    """Background color to use for dispatching calls""",
-   "#FFDC4F")
+   "#FFF3C2")
 
 Preference ("Plugins/dispatching/context").create (
   "Search context", "integer",
