@@ -561,13 +561,36 @@ package body Project_Templates.GUI is
 
       function On_Key_Press
         (Widget : access GObject_Record'Class;
-         Event  : Gdk_Event) return Boolean is
+         Event  : Gdk_Event) return Boolean
+      is
+         Current_Page : Gint;
 
       begin
-         if Get_Key_Val (Event) = GDK_Escape then
-            Cancelled (Widget);
-            return True;
-         end if;
+         case Get_Key_Val (Event) is
+            when GDK_Escape =>
+               Cancelled (Widget);
+               return True;
+
+            when GDK_Return | GDK_KP_Enter =>
+               Current_Page := Assistant.Get_Current_Page;
+
+               if Assistant.Get_Page_Complete
+                 (Assistant.Get_Nth_Page (Current_Page))
+               then
+                  if Current_Page <= 0 then
+                     Assistant.Set_Current_Page
+                       (Next_Page (Current_Page, False));
+                  else
+                     On_Apply (Widget);
+                  end if;
+               end if;
+
+               return True;
+
+            when others =>
+               null;
+         end case;
+
          return False;
 
       exception
@@ -594,9 +617,7 @@ package body Project_Templates.GUI is
             Project     => Project,
             Errors      => Errors);
 
-         if Errors = Null_Unbounded_String then
-            Installed := True;
-         end if;
+         Installed := True;
 
          Chosen := Page.Template;
 

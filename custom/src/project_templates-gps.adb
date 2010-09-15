@@ -150,12 +150,14 @@ package body Project_Templates.GPS is
          Render_Icon (Widget, "adacore-logo", Icon_Size_Large_Toolbar),
          Chosen, Installed, Dir, Project, E);
 
+      if Installed then
+         Cancelled := False;
+      end if;
+
       if E /= Null_Unbounded_String then
          Insert (Kernel, To_String (E), Mode => Error);
 
       elsif Installed then
-         Cancelled := False;
-
          --  There has been no error: we can proceed with the loading of the
          --  project.
 
