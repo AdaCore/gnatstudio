@@ -15,6 +15,12 @@ of the feature.
 New features in 5.0.0
 ---------------------
 
+NF-50-J915-025 Highlight of dispatching calls (2010-09-15)
+
+  The dispatching.py plug-in which highlights dispatching calls in the
+  source editor is now enabled by default, and supports both Ada and
+  C++.
+
 NF-50-J913-040 Breakpoints editor part of the MDI (2010-09-13)
 
   The breakpoints editor can now be embedded in the MDI, instead of
