@@ -15,7 +15,7 @@ package body @_Project_Name_@.Callbacks is
          return Response.Build
            (MIME.Text_HTML, "<p>Hello World!");
       else
-	 return Response.Acknowledge (Messages.S404);
+         return Response.Acknowledge (Messages.S404);
       end if;
    end Default;
 
