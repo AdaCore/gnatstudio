@@ -126,7 +126,7 @@ package body Welcome is
 
       Gtk_New
         (Screen.Project_Templates,
-         Label => -"Create new Project from template.");
+         Label => -"Create new Project from template");
       Pack_Start (Box, Screen.Project_Templates, Expand => False);
       Set_Tip
         (Get_Tooltips (Kernel), Screen.Project_Templates,
