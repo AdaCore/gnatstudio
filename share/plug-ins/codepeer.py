@@ -167,6 +167,22 @@ if codepeer != "":
       </menu>
     </submenu>
 
+    <action name="codepeer_example_backpack" category=""
+            show-command="false" output="none">
+      <shell>Project.load """ + '"' + example_root + \
+             """/backpack/backpack.gpr"</shell>
+      <shell>Editor.edit "backpack.ads"</shell>
+      <shell>Editor.edit "backpack.adb"</shell>
+      <shell>Editor.edit "README.txt"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/CodePeer/Examples</title>
+      <menu action="codepeer_example_backpack">
+        <title>Backpack</title>
+      </menu>
+    </submenu>
+
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
