@@ -73,6 +73,9 @@ SCRIPTS.REF = no
 CONTEXTS.REF = no
 CONTEXTS.MEM = no
 
+--  Enable the fallback on the construct tree for xref queries (on by default)
+ENTITIES.CONSTRUCTS = yes
+
 --  Debug handles related to scripts
 
 SHELL_SCRIPT=no
