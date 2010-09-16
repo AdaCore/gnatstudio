@@ -240,6 +240,30 @@
   </Language>
 
   <Language>
+    <Name>Java</Name>
+    <Body_Suffix>.java</Body_Suffix>
+    <Keywords>^(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictpf|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while)\b</Keywords>
+    <Context>
+      <New_Line_Comment_Start>//</New_Line_Comment_Start>
+      <Comment_Start>/*</Comment_Start>
+      <Comment_End>*/</Comment_End>
+      <String_Delimiter>&quot;</String_Delimiter>
+      <Can_Indent>True</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+
+    <Categories>
+      <Category>
+        <Name>function</Name>
+        <Pattern>^function\s+([-\w\d+_:]+)\s</Pattern>
+        <Index>1</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+    </Categories>
+  </Language>
+
+  <Language>
     <Name>GNAT Expanded Code</Name>
     <Parent>Ada</Parent>
     <Body_Suffix>.dg</Body_Suffix>
