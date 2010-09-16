@@ -10,6 +10,6 @@ Main_Name: main: The name of the main file.
 # Description
 [Description]
 An Hello project showing a Ada/Java class inheritance.
-This templates prior installation of GNAT-AJIS, 
+This templates requires prior installation of GNAT-AJIS, 
 the GNAT Ada-Java Interfacing Suite. 
 To build and run, use the "all" target of the provided Makefile.
