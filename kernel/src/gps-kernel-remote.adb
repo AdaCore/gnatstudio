@@ -577,7 +577,8 @@ package body GPS.Kernel.Remote is
 
       for J in Property.Servers'Range loop
          Property.Servers (J) :=
-           (Is_Local => Is_Local (J), Nickname => new String'(Local_Nickname));
+           (Is_Local => Is_Local (J),
+            Nickname => new String'(Get_Nickname (J)));
       end loop;
 
       Prop := new Servers_Property'(Property);

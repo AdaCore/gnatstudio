@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.0
 
+- J916-009: Setting the default remote servers for a project does not work
+  Problem:    Clicking on the 'Set default' button of the Remote view has no
+              effect: the next time the project is loaded, the servers are
+              assigned to the local server.
+  Workaround: Select again the desired servers.
+
 - J906-016: Triple-Click in editors does not select the end of line
   Problem:    When triple-clicking with the first mouse button in the editor,
               the current line is selected, but not the end-of-line character.
