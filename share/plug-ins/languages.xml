@@ -252,15 +252,6 @@
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
-
-    <Categories>
-      <Category>
-        <Name>function</Name>
-        <Pattern>^function\s+([-\w\d+_:]+)\s</Pattern>
-        <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
-      </Category>
-    </Categories>
   </Language>
 
   <Language>
