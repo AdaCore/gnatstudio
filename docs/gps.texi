@@ -225,6 +225,7 @@ Customizing and Extending GPS
 * Scripting GPS::
 * Adding support for new Version Control Systems::
 * The Server Mode::
+* Adding project templates::
 
 Customizing through XML and Python files
 * Customization files and plugins::
@@ -389,6 +390,12 @@ When starting GPS, a welcome dialog is displayed by default, giving the
 following choices:
 
 @table @b
+
+@item Create new project from template
+If you select this option and then click the @code{OK} button, GPS will
+launch an assistant to create a project using one of the predefined project
+templates.
+
 @item Start with default project in directory
 @cindex project
 If you select this option and click on the @code{OK} button, GPS will
@@ -5006,6 +5013,11 @@ project will replace the currently loaded project hierarchy.
 You will get asked what information you would like to create the project from.
 In particular, you can create a set of project files from existing Ada
 sources.
+
+@item New from template
+This menu will open the project template wizard, allowing you to create a new
+project using one of the project templates defined in GPS. @xref{Adding project
+templates}.
 
 @item Open
 This menu opens a file selection dialog, so that any existing project
@@ -9962,6 +9974,7 @@ still access it using cmd.exe (@xref{Connection settings}.)
 * Scripting GPS::
 * Adding support for new Version Control Systems::
 * The Server Mode::
+* Adding project templates::
 @end menu
 
 @noindent
@@ -18062,6 +18075,91 @@ We can then close the client:
 logout
 Connection closed by foreign host.
 @end smallexample
+
+@c --------------------------------------------------------------------
+@node Adding project templates
+@section Adding project templates
+@cindex project templates
+@c --------------------------------------------------------------------
+
+@noindent
+The Project template wizard lists a selection of templates. The default
+set is found automatically by GPS in the @code{share/gps/templates} directory
+of your GPS installation.
+
+It is possible to register new directories in which GPS will look for
+templates, by using the Shell/Python command
+@code{GPS.ProjectTemplate.add_templates_dir}.
+
+To create a new project template, first create a subdirectory in the
+@code{share/gps/templates/} directory, or in one of the directories which has
+been registered through @code{GPS.ProjectTemplate.add_templates_dir}. Then, in
+this directory, create one template description file.
+
+A template description file is a text file with the @code{.gpt} extension,
+with the following syntax:
+
+@smallexample
+Name: <name>
+Category: <category>
+Project: <project file>
+<optional_hook_line>
+
+<variable_1>: <variable_1_default_value>: <variable_1_description>
+<variable_2>: <variable_2_default_value>: <variable_3_description>
+<etc>
+
+[Description]
+<the description>
+@end smallexample
+
+Where the following should be defined:
+
+@itemize @bullet
+@item <name>
+The name of the template as it will appear in the template tree in the project
+template wizard.
+
+@item <category>
+The category in which the template will be inserted in the template tree. There
+can be multiple levels of categories, separated with @code{/}.
+
+@item <variable_1>
+A name which will be substituted in the template files when deploying the
+template, see below.
+
+@item <variable_1_default_value>
+The default value for variable 1, which will appear in the project template
+wizard.
+
+@item <variable_1_description>
+The description of variable 1.
+
+@item <optional_hook_line>
+An optional line of the form @code{post_hook: <python_file>} where
+@code{<python_file>} is the name of a Python file present in the same directory
+as the template description file. This Python file will be run by GPS once,
+right after the project template is deployed
+
+@item <description>
+A short paragraph describing the project template. This paragraph will be
+displayed in the project template wizard when the template is selected in the
+tree.
+
+@end itemize
+
+When deploying templates, GPS will copy in the destination directory chosen
+by the use all files and directories present in the directory that contains
+the template description file, except the Python file indicated as post_hook,
+and the template description file itself.
+
+As it deploys templates, GPS will replace strings of the form
+@code{@@_<variable_name>_@@} with the value of the variable.
+If @code{<variable_name>} is all lower case, the substitution will be
+transformed to lower-case. If @code{<variable_name>} is in Mixed_Case, the
+substitution will be transformed into Mixed_Case as well. If it is in upper
+case, then the substitution will contain the original value specified by the
+user.
 
 @c --------------------------------------------------------------------
 @node Environment
