@@ -661,6 +661,12 @@ package body Entities.Queries is
                end if;
             end if;
          end;
+      elsif Entity /= null then
+         --  If we found an accurate match without the construct database, it
+         --  means that the LI declaration is the accurate live declaration.
+         --  Update it accordingly, in case it has been moved previously.
+
+         Entity.Live_Declaration := Entity.LI_Declaration;
       end if;
    end Find_Declaration;
 
