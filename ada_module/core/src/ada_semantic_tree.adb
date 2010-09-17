@@ -148,6 +148,65 @@ package body Ada_Semantic_Tree is
       end if;
    end Get_Entity;
 
+   ---------------
+   -- Filter_In --
+   ---------------
+
+   function Filter_In
+     (Filter : Entity_Filter; E : Entity_Access) return Boolean
+   is
+   begin
+      case Filter.Kind is
+         when Categories_Filter =>
+            return Filter.Categories (Get_Construct (E).Category);
+
+         when Exceptions_Only =>
+            if Get_Construct (E).Category = Cat_Package then
+               return True;
+            elsif Get_Construct (E).Category = Cat_Local_Variable
+              or else Get_Construct (E).Category = Cat_Variable
+            then
+               declare
+                  List : constant Referenced_Identifiers_List :=
+                    Get_Referenced_Identifiers
+                      (To_Construct_Tree_Iterator (E));
+               begin
+                  if List /= Null_Referenced_Identifiers_List then
+                     if Get_Identifier (List) =
+                       Find_Normalized (Ada_Lang.Symbols, "exception")
+                     then
+                        return True;
+                     end if;
+                  end if;
+               end;
+            end if;
+
+            return False;
+
+         when others =>
+            return True;
+
+      end case;
+   end Filter_In;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Categories : Category_Array) return Entity_Filter
+   is
+      Result : Entity_Filter (Categories_Filter);
+   begin
+      Result.Categories := (others => False);
+
+      for J in Categories'Range loop
+         Result.Categories (Categories (J)) := True;
+      end loop;
+
+      return Result;
+   end Create;
+
    ----------
    -- Free --
    ----------
@@ -412,7 +471,13 @@ package body Ada_Semantic_Tree is
             end if;
 
             case Token.Tok_Type is
-               when Tok_With | Tok_Use | Tok_Pragma | Tok_Colon | Tok_Accept =>
+               when Tok_With
+                  | Tok_Use
+                  | Tok_Pragma
+                  | Tok_Colon
+                  | Tok_Accept
+                  | Tok_Raise =>
+
                   Prepend (Result.Tokens, Token);
                   Stop := True;
 

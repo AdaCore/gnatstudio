@@ -62,6 +62,16 @@ package Ada_Semantic_Tree.Std_Entities is
    --  Add to the entity list the list of entities coming from the standard
    --  package matching the prefix given in parameter.
 
+   procedure Get_Possible_Standard_Exceptions
+     (Db                       : Construct_Database_Access;
+      Prefix                   : String;
+      Is_Partial               : Boolean;
+      Result                   : in out Entity_List;
+      Exclude_Standard_Package : Boolean := False);
+   --  Add to the entity list the list of exceptions coming from the standard
+   --  package matching the prefix given in parameter. Adds Standard too since
+   --  it can lead to an exception name.
+
 private
 
    type Std_Description_Record is record

@@ -260,7 +260,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       Offset     : String_Index_Type;
       Name       : Normalized_Symbol;
       Visibility : not null access Visibility_Resolver;
-      Categories : Category_Array;
+      Filter     : Entity_Filter;
       Use_Wise   : Boolean := True;
       Is_Partial : Boolean := False)
       return Entity_Array
@@ -373,7 +373,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
         (Entity : Entity_Access; From_Main_Loop : Boolean)
       is
       begin
-         if not Is_In_Category (Get_Construct (Entity).all, Categories) then
+         if not Filter_In (Filter, Entity) then
             return;
          end if;
 
@@ -705,7 +705,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
             Offset,
             Get_Identifier (Entity),
             Visibility'Access,
-            Null_Category_Array,
+            Null_Filter,
             Use_Wise,
             False);
       begin

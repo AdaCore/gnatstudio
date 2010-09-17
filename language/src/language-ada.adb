@@ -726,7 +726,18 @@ package body Language.Ada is
                return True;
             end if;
 
-            if Entity = Keyword_Text then
+            if Entity in Identifier_Entity or else Word = "exception" then
+               if not Skip_Next_Identifier then
+                  if Has_Reference then
+                     Sloc_Start := Sloc_Start_Got;
+                     Sloc_End := Sloc_End_Got;
+                     Success := True;
+                  end if;
+
+                  return True;
+               end if;
+
+            elsif Entity = Keyword_Text then
                if Word = "is" then
                   Previous_Is := True;
                else
@@ -741,17 +752,6 @@ package body Language.Ada is
                           and then Construct.Category = Cat_Subtype)
                then
                   Has_Reference := True;
-               end if;
-
-            elsif Entity in Identifier_Entity then
-               if not Skip_Next_Identifier then
-                  if Has_Reference then
-                     Sloc_Start := Sloc_Start_Got;
-                     Sloc_End := Sloc_End_Got;
-                     Success := True;
-                  end if;
-
-                  return True;
                end if;
 
             elsif Entity = Operator_Text and then Word = ":" then

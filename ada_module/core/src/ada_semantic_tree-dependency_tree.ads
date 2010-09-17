@@ -71,7 +71,7 @@ package Ada_Semantic_Tree.Dependency_Tree is
       Offset     : String_Index_Type;
       Name       : Normalized_Symbol;
       Visibility : not null access Visibility_Resolver;
-      Categories : Category_Array;
+      Filter     : Entity_Filter;
       Use_Wise   : Boolean := True;
       Is_Partial : Boolean := False)
       return Entity_Array;

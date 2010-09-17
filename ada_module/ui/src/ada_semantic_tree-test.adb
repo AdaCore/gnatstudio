@@ -135,7 +135,7 @@ procedure Ada_Semantic_Tree.Test is
                   Everything,
                   Visibility),
                Expression        => Null_Parsed_Expression,
-               Categories        => Null_Category_Array,
+               Filter            => Null_Filter,
                Is_Partial        => False);
 
             It := First (List);
@@ -478,7 +478,7 @@ procedure Ada_Semantic_Tree.Test is
                    String_Index_Type (Sloc_End.Index)),
                   From_Visibility   => Null_Visibility_Context,
                   Expression        => Null_Parsed_Expression,
-                  Categories        => Null_Category_Array,
+                  Filter            => Null_Filter,
                   Is_Partial        => False);
 
                It := First (List);

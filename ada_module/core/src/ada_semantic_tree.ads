@@ -133,12 +133,28 @@ package Ada_Semantic_Tree is
    Null_Visibility_Context : constant Visibility_Context :=
      (null, 0, 0, Not_Visible);
 
+   type Filter_Kind is
+     (Pass_Through, Categories_Filter, Exceptions_Only);
+
+   type Entity_Filter (Kind : Filter_Kind := Pass_Through) is private;
+
+   function Filter_In
+     (Filter : Entity_Filter; E : Entity_Access) return Boolean;
+   --  Return true if the entity given in parameter has to be kept, false
+   --  otherwise.
+
+   function Create
+     (Categories : Category_Array) return Entity_Filter;
+   --  Creates a new Entity_Filter_By_Category object based on the category
+   --  given in parameter. Cat_Package may be added if the category can be
+   --  reached though a package.
+
    procedure Fill_Children
      (E               : access Entity_View_Record;
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List) is null;
    --  Adds to result the children of the current entity, given the constrains
    --  in parameter.
@@ -271,6 +287,17 @@ package Ada_Semantic_Tree is
    function Get_Name
      (Expression : Parsed_Expression; Token : Token_Record) return String;
 
+   ---------------------
+   -- Default filters --
+   ---------------------
+
+   Null_Filter       : constant Entity_Filter;
+   Filter_Packages   : constant Entity_Filter;
+   Filter_Types      : constant Entity_Filter;
+   Filter_Entries    : constant Entity_Filter;
+   Filter_Variables  : constant Entity_Filter;
+   Filter_Exceptions : constant Entity_Filter;
+
 private
 
    Test_Trace : constant Trace_Handle :=
@@ -333,5 +360,48 @@ private
 
    Null_Parsed_Expression : constant Parsed_Expression :=
      (null, Token_List.Null_List);
+
+   type Category_Map is array (Language_Category) of Boolean;
+   pragma Pack (Category_Map);
+
+   type Entity_Filter (Kind : Filter_Kind := Pass_Through) is record
+      case Kind is
+         when Categories_Filter =>
+            Categories : Category_Map;
+         when others =>
+            null;
+      end case;
+   end record;
+
+   Null_Filter : constant Entity_Filter := (Kind => Pass_Through);
+
+   Filter_Packages   : constant Entity_Filter :=
+     (Kind => Categories_Filter,
+      Categories => (Cat_Package => True,
+                     others      => False));
+
+   Filter_Types      : constant Entity_Filter :=
+     (Kind => Categories_Filter,
+      Categories => (Cat_Package   => True,
+                     Cat_Class     => True,
+                     Cat_Structure => True,
+                     Cat_Union     => True,
+                     Cat_Type      => True,
+                     Cat_Subtype   => True,
+                     others        => False));
+
+   Filter_Entries    : constant Entity_Filter :=
+     (Kind => Categories_Filter,
+      Categories => (Cat_Entry => True,
+                     others    => False));
+
+   Filter_Variables  : constant Entity_Filter :=
+     (Kind => Categories_Filter,
+      Categories => (Cat_Package        => True,
+                     Cat_Variable       => True,
+                     Cat_Local_Variable => True,
+                     others             => False));
+
+   Filter_Exceptions : constant Entity_Filter := (Kind => Exceptions_Only);
 
 end Ada_Semantic_Tree;

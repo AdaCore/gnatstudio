@@ -354,7 +354,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                      String_Index_Type
                        (Get_Construct (It.Current_Construct).Sloc_End.Index)),
                      Expression        => Expression,
-                     Categories        => Null_Category_Array,
+                     Filter            => Null_Filter,
                      Is_Partial        => False,
                      Excluded_Entities => It.Excluded_Entities,
                      From_Visibility   => It.From_Visibility);

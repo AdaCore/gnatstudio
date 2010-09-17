@@ -62,13 +62,13 @@ package Ada_Semantic_Tree.Declarations is
       --  The expression of the occurence. If null, an expression will be
       --  analyzed from the offset given in parameter by the context.
 
-      Categories                : Category_Array := Null_Category_Array;
-      --  A reduced set of categories lokked for. If there is any former
+      Filter                    : Entity_Filter := Null_Filter;
+      --  A filter to avoid returning certain entities. If there is any former
       --  knowledge, setting this variable might improve the search mechanism.
       --  In any case, the declarations mechanism will try to reduce the set
       --  of categories looked for. Note that this list may not be taken into
       --  account as-is in all cases, certain constructions imply certain
-      --  category filters - e.g. use claues will imply packages.
+      --  category filters - e.g. use clauses will imply packages.
 
       Is_Partial                : Boolean := False;
       --  If the expression is partial, then the last construct of the
@@ -140,7 +140,7 @@ package Ada_Semantic_Tree.Declarations is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List);
 
 private

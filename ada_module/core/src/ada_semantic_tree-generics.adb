@@ -327,13 +327,7 @@ package body Ada_Semantic_Tree.Generics is
                                 Filter                    => Everything,
                                 Min_Visibility_Confidence => Use_Visible),
                              Expression        => Actual_Expression,
-                             Categories        =>
-                               (Cat_Class,
-                                Cat_Structure,
-                                Cat_Case_Inside_Record,
-                                Cat_Union,
-                                Cat_Type,
-                                Cat_Subtype));
+                             Filter            => Filter_Types);
                      end if;
 
                      Actual_It := First (Actual_Resolution);
@@ -433,7 +427,8 @@ package body Ada_Semantic_Tree.Generics is
                Filter                    => Everything,
                Min_Visibility_Confidence => Use_Visible),
             Expression        => Expression,
-            Categories        => (1 => Get_Construct (Info).Category));
+            Filter            => Create
+              ((1 => Get_Construct (Info).Category)));
 
          It := First (Generic_Resolution);
 

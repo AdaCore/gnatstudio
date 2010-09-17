@@ -632,10 +632,10 @@ package body Completion.Ada.Constructs_Extractor is
                 Null_Instance_Info,
                 Resolver.Current_File,
                 Offset),
-               From_Visibility           => Visibility,
-               Expression                => Expression,
-               Categories                => Null_Category_Array,
-               Is_Partial                => True),
+               From_Visibility => Visibility,
+               Expression      => Expression,
+               Filter          => Null_Filter,
+               Is_Partial      => True),
             Expression /= Null_Parsed_Expression
             and then Token_List.Data
               (Token_List.First (Expression.Tokens)).Tok_Type = Tok_Accept));

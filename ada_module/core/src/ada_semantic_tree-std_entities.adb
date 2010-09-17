@@ -71,7 +71,7 @@ package body Ada_Semantic_Tree.Std_Entities is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List);
 
    procedure Get_Possible_ASCII_Entities
@@ -86,7 +86,7 @@ package body Ada_Semantic_Tree.Std_Entities is
    -----------------------------
 
    type Std_Mode_Type is
-     (Pragma_Mode, Attribute_Mode, Standard_Mode, ASCII_Mode);
+     (Pragma_Mode, Attribute_Mode, Standard_Mode, ASCII_Mode, Exceptions_Mode);
 
    type Std_List is new Entity_List_Pckg.Virtual_List_Component
    with record
@@ -108,6 +108,7 @@ package body Ada_Semantic_Tree.Std_Entities is
       Exclude_Standard_Package : Boolean;
       Is_Partial               : Boolean;
       Lowercased_Name          : String_Access;
+      Exceptions_Only          : Boolean;
    end record;
 
    overriding function First
@@ -345,7 +346,8 @@ package body Ada_Semantic_Tree.Std_Entities is
                Db => List.Db,
                Exclude_Standard_Package => List.Exclude_Standard_Package,
                Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
-               Is_Partial => List.Is_Partial);
+               Is_Partial => List.Is_Partial,
+               Exceptions_Only => False);
 
          when Attribute_Mode =>
             It := Std_Iterator'
@@ -354,7 +356,8 @@ package body Ada_Semantic_Tree.Std_Entities is
                Db => List.Db,
                Exclude_Standard_Package => List.Exclude_Standard_Package,
                Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
-               Is_Partial => List.Is_Partial);
+               Is_Partial => List.Is_Partial,
+               Exceptions_Only => False);
 
          when Standard_Mode =>
             It := Std_Iterator'
@@ -363,7 +366,8 @@ package body Ada_Semantic_Tree.Std_Entities is
                Db => List.Db,
                Exclude_Standard_Package => List.Exclude_Standard_Package,
                Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
-               Is_Partial => List.Is_Partial);
+               Is_Partial => List.Is_Partial,
+               Exceptions_Only => False);
 
          when ASCII_Mode =>
             It := Std_Iterator'
@@ -372,7 +376,18 @@ package body Ada_Semantic_Tree.Std_Entities is
                Db => List.Db,
                Exclude_Standard_Package => List.Exclude_Standard_Package,
                Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
-               Is_Partial => List.Is_Partial);
+               Is_Partial => List.Is_Partial,
+               Exceptions_Only => False);
+
+         when Exceptions_Mode =>
+            It := Std_Iterator'
+              (It => Std_Description_Tries.Start
+                 (Assistant.Standard_Trie, List.Prefix.all),
+               Db => List.Db,
+               Exclude_Standard_Package => List.Exclude_Standard_Package,
+               Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
+               Is_Partial => List.Is_Partial,
+               Exceptions_Only => True);
 
       end case;
 
@@ -433,16 +448,25 @@ package body Ada_Semantic_Tree.Std_Entities is
 
    function Is_Valid (It : Std_Iterator'Class) return Boolean is
    begin
-      return At_End (It)
-        or else
-          ((not It.Exclude_Standard_Package
-            or else Get_Index
-              (Std_Description_Tries.Get (It.It)).all /= "standard")
-           and then
-             (It.Is_Partial
-              or else Get_Index
-                (Std_Description_Tries.Get (It.It)).all
-              = It.Lowercased_Name.all));
+      if At_End (It) then
+         return True;
+      else
+         declare
+            Name : constant String :=
+              Get_Index (Std_Description_Tries.Get (It.It)).all;
+         begin
+            if Name = "standard" then
+               return not It.Exclude_Standard_Package;
+            elsif It.Exceptions_Only then
+               return Name'Length > 6
+                 and then Name (Name'Last - 5 .. Name'Last) = "_error";
+            elsif It.Is_Partial then
+               return True;
+            else
+               return Name = It.Lowercased_Name.all;
+            end if;
+         end;
+      end if;
    end Is_Valid;
 
    --------------------------
@@ -510,6 +534,29 @@ package body Ada_Semantic_Tree.Std_Entities is
       Entity_List_Pckg.Append (Result.Contents, New_List);
    end Get_Possible_Standard_Entities;
 
+   --------------------------------------
+   -- Get_Possible_Standard_Exceptions --
+   --------------------------------------
+
+   procedure Get_Possible_Standard_Exceptions
+     (Db                       : Construct_Database_Access;
+      Prefix                   : String;
+      Is_Partial               : Boolean;
+      Result                   : in out Entity_List;
+      Exclude_Standard_Package : Boolean := False)
+   is
+      New_List : Std_List;
+   begin
+      New_List.Db := Db;
+      New_List.Prefix := new String'(Prefix);
+      New_List.Context := (others => True);
+      New_List.Mode := Exceptions_Mode;
+      New_List.Exclude_Standard_Package := Exclude_Standard_Package;
+      New_List.Is_Partial := Is_Partial;
+
+      Entity_List_Pckg.Append (Result.Contents, New_List);
+   end Get_Possible_Standard_Exceptions;
+
    ---------------------------------
    -- Get_Possible_ASCII_Entities --
    ---------------------------------
@@ -573,13 +620,19 @@ package body Ada_Semantic_Tree.Std_Entities is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List)
    is
-      pragma Unreferenced (From_Visibility, Categories);
+      pragma Unreferenced (From_Visibility);
    begin
       if Get_Index (E.Desc).all = "standard" then
-         Get_Possible_Standard_Entities (E.Db, Name, Is_Partial, Result, True);
+         if Filter.Kind = Exceptions_Only then
+            Get_Possible_Standard_Exceptions
+              (E.Db, Name, Is_Partial, Result, True);
+         else
+            Get_Possible_Standard_Entities
+              (E.Db, Name, Is_Partial, Result, True);
+         end if;
       elsif Get_Index (E.Desc).all = "ascii" then
          Get_Possible_ASCII_Entities (E.Db, Name, Result);
       end if;

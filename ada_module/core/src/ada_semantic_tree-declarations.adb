@@ -52,7 +52,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       Offset          : String_Index_Type;
       From_Visibility : Visibility_Context;
-      Categories      : Category_Array_Access;
+      Filter          : Entity_Filter;
       Generic_Context : Instance_Info;
    end record;
 
@@ -68,7 +68,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       From_Visibility : Visibility_Context;
       Hidden_Entities : aliased Visibility_Resolver;
-      Categories      : Category_Array_Access;
+      Filter          : Entity_Filter;
       Generic_Context : Instance_Info;
 
       --  Data needed by the first iteration stage (current file)
@@ -125,7 +125,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List);
    --  Look for the identifier given in parameter successively from:
    --  (1) The current file
@@ -144,7 +144,7 @@ package body Ada_Semantic_Tree.Declarations is
       Name            : String_Access;
       Is_Partial      : Boolean;
       Is_All          : Boolean;
-      Categories      : Category_Array_Access;
+      Filter          : Entity_Filter;
       Generic_Context : Instance_Info;
    end record;
 
@@ -154,7 +154,7 @@ package body Ada_Semantic_Tree.Declarations is
       It         : Semantic_Tree_Iterator;
       Name       : String_Access;
       Is_Partial : Boolean;
-      Categories : Category_Array_Access;
+      Filter     : Entity_Filter;
    end record;
 
    overriding
@@ -250,7 +250,7 @@ package body Ada_Semantic_Tree.Declarations is
       Result.Is_Partial := List.Is_Partial;
       Result.From_Visibility := List.From_Visibility;
       Result.Construct_Db := List.Construct_Db;
-      Result.Categories := List.Categories;
+      Result.Filter := List.Filter;
       Result.Generic_Context := List.Generic_Context;
       Ref (Result.Generic_Context);
 
@@ -266,7 +266,7 @@ package body Ada_Semantic_Tree.Declarations is
                    Offset     => List.First_Offset,
                    Name       => List.Name,
                    Visibility => Result.Hidden_Entities'Access,
-                   Categories => List.Categories.all,
+                   Filter     => List.Filter,
                    Use_Wise   => True,
                    Is_Partial => List.Is_Partial));
 
@@ -363,9 +363,7 @@ package body Ada_Semantic_Tree.Declarations is
             return;
          end if;
 
-         if not Is_In_Category
-           (Get_Construct (Potential_Entity).all, It.Categories.all)
-         then
+         if not Filter_In (It.Filter, Potential_Entity) then
             It.Valid := False;
 
             return;
@@ -505,7 +503,6 @@ package body Ada_Semantic_Tree.Declarations is
    overriding procedure Free (List : in out Declaration_Id_List) is
    begin
       Unref (List.Generic_Context);
-      Free (List.Categories);
    end Free;
 
    ----------
@@ -529,7 +526,7 @@ package body Ada_Semantic_Tree.Declarations is
       From_Visibility           : Visibility_Context :=
         Null_Visibility_Context;
       Expression                : Parsed_Expression := Null_Parsed_Expression;
-      Categories                : Category_Array := Null_Category_Array;
+      Filter                    : Entity_Filter := Null_Filter;
       Is_Partial                : Boolean := False;
       Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack)
       return Entity_List
@@ -544,7 +541,7 @@ package body Ada_Semantic_Tree.Declarations is
         (Previous_Token       : Token_List.List_Node;
          Token                : Token_List.List_Node;
          Previous_Declaration : Entity_View;
-         Categories           : Category_Array;
+         Filter               : Entity_Filter;
          Result               : in out Entity_List);
 
       -------------------
@@ -555,44 +552,9 @@ package body Ada_Semantic_Tree.Declarations is
         (Previous_Token       : Token_List.List_Node;
          Token                : Token_List.List_Node;
          Previous_Declaration : Entity_View;
-         Categories           : Category_Array;
+         Filter               : Entity_Filter;
          Result               : in out Entity_List)
       is
-         --  Adjust the categories - we always add Cat_Package to the list of
-         --  categories we're looking for, as any category can be found
-         --  prefixed by a package name and there is no way to ensure that
-         --  the token is the last of the instruction (even if it may be the
-         --  last of the list).
-         function Adjust_Categories return Category_Array;
-
-         -----------------------
-         -- Adjust_Categories --
-         -----------------------
-
-         function Adjust_Categories return Category_Array is
-         begin
-            if Categories = Null_Category_Array then
-               return Null_Category_Array;
-            end if;
-
-            if Categories = (1 => Cat_Entry) then
-               --  Entries are always returned in a local manner - so they
-               --  can't be refered from a package
-
-               return Categories;
-            end if;
-
-            for J in Categories'Range loop
-               if Categories (J) = Cat_Package then
-                  return Categories;
-               end if;
-            end loop;
-
-            return Categories & (Cat_Package);
-         end Adjust_Categories;
-
-         Actual_Categories  : constant Category_Array := Adjust_Categories;
-
          procedure Handle_Identifier (Id : Normalized_Symbol);
 
          function Is_Callable_Subprogram
@@ -624,6 +586,16 @@ package body Ada_Semantic_Tree.Declarations is
                   Result     => Tmp);
             end if;
 
+            if Token /= First_Token
+              and then Data (Previous_Token).Tok_Type = Tok_Raise
+            then
+               Get_Possible_Standard_Exceptions
+                 (Db         => Db,
+                  Prefix     => Get (Id).all,
+                  Is_Partial => Partial_Id,
+                  Result     => Tmp);
+            end if;
+
             if Token = First_Token
               or else
                 (Previous_Token /= Token_List.Null_Node
@@ -631,14 +603,15 @@ package body Ada_Semantic_Tree.Declarations is
                    (Data (Previous_Token).Tok_Type = Tok_Use
                     or else Data (Previous_Token).Tok_Type = Tok_With
                     or else Data (Previous_Token).Tok_Type = Tok_Colon
-                    or else Data (Previous_Token).Tok_Type = Tok_Accept))
+                    or else Data (Previous_Token).Tok_Type = Tok_Accept
+                    or else Data (Previous_Token).Tok_Type = Tok_Raise))
             then
                Get_Possibilities
                  (Id,
                   Partial_Id,
                   Context,
                   Actual_From_Visibility,
-                  Actual_Categories,
+                  Filter,
                   Tmp);
 
             elsif Previous_Token /= Token_List.Null_Node
@@ -663,7 +636,7 @@ package body Ada_Semantic_Tree.Declarations is
                   Name            => Get (Id).all,
                   Is_Partial      => Partial_Id,
                   From_Visibility => Actual_From_Visibility,
-                  Categories      => Actual_Categories,
+                  Filter          => Filter,
                   Result          => Tmp);
             else
                return;
@@ -717,7 +690,7 @@ package body Ada_Semantic_Tree.Declarations is
                          (Token,
                           Next (Token),
                           View,
-                          Actual_Categories,
+                          Filter,
                           Result);
 
                         Free (View);
@@ -799,14 +772,14 @@ package body Ada_Semantic_Tree.Declarations is
                      Name            => "",
                      Is_Partial      => Is_Partial,
                      From_Visibility => Actual_From_Visibility,
-                     Categories      => Actual_Categories,
+                     Filter          => Filter,
                      Result          => Result);
                else
                   Analyze_Token
                     (Token,
                      Next (Token),
                      Previous_Declaration,
-                     Actual_Categories,
+                     Filter,
                      Result);
                end if;
 
@@ -940,7 +913,7 @@ package body Ada_Semantic_Tree.Declarations is
                                 (Current_Token,
                                  Next (Current_Token),
                                  Local_Declaration,
-                                 Actual_Categories,
+                                 Filter,
                                  Result);
                            end if;
                         end if;
@@ -1009,7 +982,7 @@ package body Ada_Semantic_Tree.Declarations is
                           (Token,
                            Next (Token),
                            Previous_Declaration,
-                           Actual_Categories,
+                           Filter,
                            Result);
                      else
                         Get_Possibilities
@@ -1020,7 +993,7 @@ package body Ada_Semantic_Tree.Declarations is
                             Context.File,
                             Data (Token).Token_First - 1),
                            Actual_From_Visibility,
-                           Actual_Categories,
+                           Filter,
                            Result);
                      end if;
                   else
@@ -1042,7 +1015,7 @@ package body Ada_Semantic_Tree.Declarations is
                        (Token,
                         Next (Token),
                         Previous_Declaration,
-                        (1 => Cat_Package),
+                        Filter_Packages,
                         Result);
                   else
                      Get_Possibilities
@@ -1053,7 +1026,7 @@ package body Ada_Semantic_Tree.Declarations is
                          Context.File,
                          Data (Token).Token_First - 1),
                         Actual_From_Visibility,
-                        (1 => Cat_Package),
+                        Filter_Packages,
                         Result);
                   end if;
                else
@@ -1070,7 +1043,7 @@ package body Ada_Semantic_Tree.Declarations is
                     (Token,
                      Next (Token),
                      Previous_Declaration,
-                     Actual_Categories,
+                     Filter,
                      Result);
                else
                   Get_Possible_Pragmas
@@ -1086,7 +1059,7 @@ package body Ada_Semantic_Tree.Declarations is
                     (Token,
                      Next (Token),
                      Previous_Declaration,
-                     Actual_Categories,
+                     Filter,
                      Result);
                else
                   Get_Possible_Attributes
@@ -1107,8 +1080,7 @@ package body Ada_Semantic_Tree.Declarations is
                  (Token,
                   Next (Token),
                   Previous_Declaration,
-                  (Cat_Class, Cat_Structure, Cat_Union, Cat_Type,
-                   Cat_Subtype, Cat_Package),
+                  Filter_Types,
                   Result);
 
             when Tok_Accept =>
@@ -1120,7 +1092,7 @@ package body Ada_Semantic_Tree.Declarations is
                        (Token,
                         Next (Token),
                         Previous_Declaration,
-                        (1 => Cat_Entry),
+                        Filter_Entries,
                         Result);
                   else
                      Get_Possibilities
@@ -1131,11 +1103,47 @@ package body Ada_Semantic_Tree.Declarations is
                          Context.File,
                          Data (Token).Token_First - 1),
                         Actual_From_Visibility,
-                        (1 => Cat_Entry),
+                        Filter_Entries,
                         Result);
                   end if;
                else
                   --  There no database-wide search starting with an accept
+                  --  token
+
+                  return;
+               end if;
+
+            when Tok_Raise =>
+               pragma Assert (Token = First_Token);
+
+               if Context.Context_Type = From_File then
+                  if Next (Token) /= Token_List.Null_Node then
+                     Analyze_Token
+                       (Token,
+                        Next (Token),
+                        Previous_Declaration,
+                        Filter_Exceptions,
+                        Result);
+                  else
+                     Get_Possibilities
+                       (No_Normalized_Symbol,
+                        Is_Partial,
+                        (From_File,
+                         Null_Instance_Info,
+                         Context.File,
+                         Data (Token).Token_First - 1),
+                        Actual_From_Visibility,
+                        Filter_Exceptions,
+                        Result);
+
+                     Get_Possible_Standard_Exceptions
+                       (Db         => Db,
+                        Prefix     => "",
+                        Is_Partial => True,
+                        Result     => Result);
+                  end if;
+               else
+                  --  There no database-wide search starting with a raise
                   --  token
 
                   return;
@@ -1218,7 +1226,7 @@ package body Ada_Semantic_Tree.Declarations is
               (Token_List.Null_Node,
                First_Token,
                Null_Entity_View,
-               Categories,
+               Filter,
                Result);
          end if;
       end;
@@ -1242,7 +1250,7 @@ package body Ada_Semantic_Tree.Declarations is
       Is_Partial      : Boolean;
       Context         : Search_Context;
       From_Visibility : Visibility_Context;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List) is
    begin
       if (From_Visibility.Filter and All_Accessible_Units) /= 0
@@ -1306,7 +1314,7 @@ package body Ada_Semantic_Tree.Declarations is
               (Name            => Identifier,
                Is_Partial      => Is_Partial,
                From_Visibility => From_Visibility,
-               Categories      => new Category_Array'(Categories),
+               Filter          => Filter,
                Generic_Context => Context.Generic_Context,
                others          => <>);
             Ref (Context.Generic_Context);
@@ -1347,7 +1355,7 @@ package body Ada_Semantic_Tree.Declarations is
            (From_File, Null_Instance_Info, File, Offset),
          From_Visibility   => From_Visibility,
          Expression        => Expression,
-         Categories        => Null_Category_Array,
+         Filter            => Null_Filter,
          Is_Partial        => False);
 
       It   : Entity_Iterator := First (Decls);
@@ -1416,7 +1424,7 @@ package body Ada_Semantic_Tree.Declarations is
             List.From_Visibility),
          Name       => List.Name,
          Is_Partial => List.Is_Partial,
-         Categories => List.Categories);
+         Filter     => List.Filter);
 
       if not Is_Valid (It) then
          Next (It);
@@ -1501,7 +1509,7 @@ package body Ada_Semantic_Tree.Declarations is
             return False;
          end if;
 
-         if not Is_In_Category (Construct.all, It.Categories.all) then
+         if not Filter_In (It.Filter, Entity) then
             return False;
          end if;
 
@@ -1539,7 +1547,6 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding procedure Free (List : in out Declaration_Composition_List) is
    begin
-      Free (List.Categories);
       Free (List.Name);
       Unref (List.Generic_Context);
    end Free;
@@ -1657,7 +1664,7 @@ package body Ada_Semantic_Tree.Declarations is
       From_Visibility : Visibility_Context;
       Name            : String;
       Is_Partial      : Boolean;
-      Categories      : Category_Array;
+      Filter          : Entity_Filter;
       Result          : in out Entity_List)
    is
    begin
@@ -1671,7 +1678,7 @@ package body Ada_Semantic_Tree.Declarations is
             Is_Partial      => Is_Partial,
             Is_All          => E.Is_All,
             From_Visibility => From_Visibility,
-            Categories      => new Category_Array'(Categories),
+            Filter          => Filter,
             Generic_Context => E.Generic_Context));
    end Fill_Children;
 
