@@ -31,6 +31,11 @@ NF-50-J913-020 Rectangles plugin loaded by default (2010-09-13)
   The rectangles.py plugin is now loaded by default, providing extra
   menu items under Edit->Rectangles to manipulate rectangle/block selections.
 
+NF-50-J910-014 Completion filters on raise statements (2010-09-17)
+
+  The completion mechanism will now only offer exception and packages entities
+  when completing a raise statement.
+
 NF-50-J907-015 Completion for task entries (2010-09-09)
 
   GPS now offers smart completion for task entries and accept statements.
