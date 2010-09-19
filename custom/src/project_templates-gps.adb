@@ -230,7 +230,6 @@ package body Project_Templates.GPS is
                      Parent_Path => -"/_Project",
                      Text        => -"New from _Template...",
                      Callback    => On_New_From_Template'Access,
-                     Stock_Image => "gps-project-closed",
                      Ref_Item    => "_New...",
                      Add_Before  => False);
    end Register_Menus;
