@@ -2155,9 +2155,18 @@ package body GVD.Process is
             Traces.Trace (Me, "   " & Langs (L).all);
          end loop;
 
-         Project.Set_Attribute
-           (Attribute          => Languages_Attribute,
-            Values             => Langs (Langs'First .. Lang_Index - 1));
+         if Lang_Index = Langs'First then
+            Project.Set_Attribute
+              (Scenario  => All_Scenarios,
+               Attribute => Languages_Attribute,
+               Values    =>
+                 (new String'("ada"), new String'("c"), new String'("c++")));
+         else
+            Project.Set_Attribute
+              (Attribute          => Languages_Attribute,
+               Values             => Langs (Langs'First .. Lang_Index - 1));
+         end if;
+
          Free (Langs);
 
          --  Object_Dir, Exec_Dir, Main
