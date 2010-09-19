@@ -2207,18 +2207,27 @@ package body GVD_Module is
             declare
                Exec : constant Filesystem_String :=
                  Prj.Executable_Name (+Mains (M).all);
+               Dir  : constant Virtual_File := Executables_Directory (Prj);
+               File : Virtual_File;
+
             begin
                Gtk_New (Mitem, +Exec);
                --  ??? What if Exec is not utf-8 ?
                Prepend (Menu, Mitem);
+
+               if Dir = No_File then
+                  File := Create_From_Base (Exec);
+               else
+                  File := Create_From_Dir (Dir, Exec);
+               end if;
+
                File_Project_Cb.Object_Connect
                  (Mitem, Gtk.Menu_Item.Signal_Activate,
                   On_Debug_Init'Access,
                   Slot_Object => Kernel,
                   User_Data   => File_Project_Record'
                     (Project => No_Project,
-                     File    => Create_From_Dir
-                       (Executables_Directory (Prj), Exec)));
+                     File    => File));
 
                --  Only set accelerators for main units of the root project
                if Prj = Loaded_Project then
