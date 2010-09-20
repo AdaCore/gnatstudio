@@ -82,7 +82,6 @@ package body Ada_Analyzer is
       Tok_All,             -- ALL          Eterm, Sterm
       Tok_Array,           -- ARRAY        Eterm, Sterm
       Tok_At,              -- AT           Eterm, Sterm
-      Tok_Some,            -- SOME         Eterm, Sterm
 
       Tok_Mod,             -- MOD          Mulop
       Tok_Rem,             -- REM          Mulop
@@ -111,6 +110,7 @@ package body Ada_Analyzer is
       Tok_Out,             -- OUT          Eterm, Sterm
       Tok_Renames,         -- RENAMES      Eterm, Sterm
       Tok_Reverse,         -- REVERSE      Eterm, Sterm
+      Tok_Some,            -- SOME         Eterm, Sterm
       Tok_Tagged,          -- TAGGED       Eterm, Sterm
 
       Tok_Case,            -- CASE         Eterm, Sterm, After_SM
