@@ -35,7 +35,7 @@ package body Codefix.SPARK_Parser is
    procedure Fix
      (This         : Unexpected_Tilde_Or_Percent;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -56,7 +56,7 @@ package body Codefix.SPARK_Parser is
    procedure Fix
      (This         : Misplaced_Tilde_Or_Percent;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -86,7 +86,7 @@ package body Codefix.SPARK_Parser is
    overriding procedure Fix
      (This         : Unexpected_Tilde_Or_Percent;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -115,7 +115,7 @@ package body Codefix.SPARK_Parser is
    overriding procedure Fix
      (This         : Misplaced_Tilde_Or_Percent;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)

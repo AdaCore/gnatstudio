@@ -89,6 +89,10 @@ package Codefix.Error_Lists is
    function Get_Message (It : Error_Message_Iterator) return Error_Message;
    --  Return the message currently pointed by this iterator.
 
+   procedure Cancel_Message (It : Error_Message_Iterator);
+   --  Cancel the message pointed by the iterator. Further iterations over the
+   --  message list will jump over this message
+
    function At_End (It : Error_Message_Iterator) return Boolean;
    --  Return true if there is no more messages to process.
 
@@ -147,8 +151,9 @@ private
    type Error_Message_List is access all Error_Message_List_Record;
 
    type Error_Message_Iterator is record
-      Map_Cur  : Error_Message_Container.Cursor;
-      List_Cur : Internal_Message_List_Pckg.Cursor;
+      Map_Cur      : Error_Message_Container.Cursor;
+      List_Cur     : Internal_Message_List_Pckg.Cursor;
+      Message_List : Internal_List_Access;
    end record;
 
 end Codefix.Error_Lists;

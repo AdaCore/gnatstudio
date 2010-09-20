@@ -66,6 +66,14 @@ package Codefix.Formal_Errors is
    function Get_Order (This : Error_Message) return Long_Long_Integer;
    --  Return the order number of this message.
 
+   procedure Cancel (This : in out Error_Message);
+   --  Cancels the error message - it will not be taken into account by the
+   --  fixes.
+
+   function Is_Cancelled (This : Error_Message) return Boolean;
+   --  Does the message needs to be taken into account, or has it been
+   --  cancelled?
+
    overriding procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
 
@@ -344,6 +352,10 @@ private
       Order : Long_Long_Integer;
       --  This has to be a long long integer, as it may be initialized with a
       --  timestamp on e.g. GNATbench.
+
+      Is_Cancelled : Boolean := False;
+      --  Messages can be canceled when already taken into account by other
+      --  fixes.
    end record;
 
    package Command_List is new Generic_List (Ptr_Command, Free);
@@ -355,7 +367,7 @@ private
    type Solution_List_Iterator is new Command_List.List_Node;
 
    Invalid_Error_Message : constant Error_Message :=
-     (Null_File_Cursor with null, False, False, 0);
+     (Null_File_Cursor with null, False, False, 0, True);
 
    Null_Solution_List : constant Solution_List := Solution_List
      (Command_List.Null_List);

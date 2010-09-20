@@ -40,7 +40,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Agregate_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -55,7 +55,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Light_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -70,7 +70,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Double_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -85,7 +85,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Goto_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -106,7 +106,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Library_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -121,7 +121,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Sth_Should_Be_Sth;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -136,7 +136,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Should_Be_Semicolon;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -151,7 +151,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : And_Meant;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -166,7 +166,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Or_Meant;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -181,7 +181,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Short_Circuit_Required;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -196,7 +196,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Bad_End_Block;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -211,7 +211,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Unqualified_Expression;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -226,7 +226,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Goes_Before;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -241,7 +241,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Sth_Expected_3;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -256,7 +256,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Sth_Expected_2;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -271,7 +271,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Sth_Expected;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -286,7 +286,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Missing_Kw;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -307,7 +307,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Missing_Sep;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -327,7 +327,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Missing_All;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -340,7 +340,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Implicit_Dereference;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -355,7 +355,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Statement_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -368,7 +368,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Useless_Assignment;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -383,7 +383,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Space_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -398,7 +398,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Two_Spaces_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -421,7 +421,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Name_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -436,7 +436,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Double_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -451,7 +451,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Extra_Paren;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -466,7 +466,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redudant_Paren;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -481,7 +481,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redundant_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -496,7 +496,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redundant_Attribute;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -511,7 +511,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redundant_Comparison;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -526,7 +526,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : No_Space_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -541,7 +541,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Unexpected_Sep;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -556,7 +556,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Unexpected_Word;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -571,7 +571,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Kw_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -586,7 +586,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Sep_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -601,7 +601,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : In_Should_Be_Omitted;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -616,7 +616,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Already_Use_Visible;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -631,7 +631,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redundant_With_In_Body;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -646,7 +646,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Use_Valid_Instead;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -661,7 +661,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Should_Be_In;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -676,7 +676,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Bad_Column;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -691,7 +691,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Main_With_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -706,7 +706,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Bad_Casing_Standard;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -721,7 +721,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Bad_Casing_Declared;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -736,7 +736,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Bad_Casing_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -751,7 +751,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Object_Not_Referenced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -766,7 +766,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Pkg_Not_Referenced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -781,7 +781,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Never_Read;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -796,7 +796,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Never_Assigned;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -811,7 +811,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Pragma_Missplaced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -826,7 +826,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Useless_Pragma_Pack;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -841,7 +841,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Constant_Expected;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -856,7 +856,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Suspicious_Renaming;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -879,7 +879,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Possible_Interpretation;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -904,7 +904,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Hidden_Declaration;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -919,7 +919,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Use_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -934,7 +934,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redundant_Conversion;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -949,7 +949,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Useless_Abs;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -964,7 +964,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Missplaced_With;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -979,7 +979,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Not_Fully_Conformant;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -994,7 +994,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Generic_Use_Unallowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1009,7 +1009,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Non_Visible_Declaration;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1024,7 +1024,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Consecutive_Underlines;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1039,7 +1039,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Multiple_Blank_Lines;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1054,7 +1054,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : EOF_Blank_Lines;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1069,7 +1069,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Suggested_Replacement;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1090,7 +1090,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Pragma_Pack;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1105,7 +1105,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Undefined_Entity;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1121,7 +1121,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Unwanted_Pragma_Unreferenced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1136,7 +1136,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Wrong_Index_Usage;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1152,7 +1152,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Wrong_Sb_Order;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1167,7 +1167,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : No_Statement_Following_Then;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -1186,7 +1186,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Agregate_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1214,7 +1214,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Light_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1242,7 +1242,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Double_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1277,7 +1277,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Goto_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1309,7 +1309,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Library_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1339,7 +1339,7 @@ package body Codefix.GNAT_Parser is
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
          Text_Ascii);
 
-      Message_It := Next (Message_It);
+      Cancel_Message (Next (Message_It));
    end Fix;
 
    -----------------------
@@ -1362,7 +1362,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Sth_Should_Be_Sth;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1392,7 +1392,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Should_Be_Semicolon;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1417,7 +1417,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : And_Meant;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1442,7 +1442,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Or_Meant;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1467,7 +1467,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Short_Circuit_Required;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1499,7 +1499,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Bad_End_Block;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1529,7 +1529,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Unqualified_Expression;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1567,7 +1567,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Goes_Before;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1596,7 +1596,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Sth_Expected_3;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1623,7 +1623,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Sth_Expected_2;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1649,7 +1649,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Sth_Expected;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1677,7 +1677,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Missing_Kw;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1723,7 +1723,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Missing_Sep;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1786,7 +1786,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Missing_All;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1836,7 +1836,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Implicit_Dereference;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1860,7 +1860,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Statement_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1886,7 +1886,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Useless_Assignment;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1908,7 +1908,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Space_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1933,7 +1933,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Two_Spaces_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -1972,7 +1972,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Name_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2018,7 +2018,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Double_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2046,7 +2046,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Extra_Paren;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2072,7 +2072,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Redudant_Paren;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2098,7 +2098,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : No_Space_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2123,7 +2123,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Redundant_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2156,7 +2156,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Redundant_Attribute;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2179,7 +2179,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Redundant_Comparison;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2202,7 +2202,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Unexpected_Sep;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2230,7 +2230,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Unexpected_Word;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2268,7 +2268,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Kw_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2303,7 +2303,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Sep_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2356,7 +2356,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : In_Should_Be_Omitted;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2384,7 +2384,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Already_Use_Visible;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2411,7 +2411,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Redundant_With_In_Body;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2438,7 +2438,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Use_Valid_Instead;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2463,7 +2463,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Should_Be_In;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2494,7 +2494,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Bad_Column;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2530,7 +2530,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Main_With_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2573,7 +2573,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Bad_Casing_Standard;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2598,7 +2598,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Bad_Casing_Declared;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2626,7 +2626,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Bad_Casing_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2656,7 +2656,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Object_Not_Referenced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2739,7 +2739,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Pkg_Not_Referenced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2770,7 +2770,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Never_Read;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2802,7 +2802,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Never_Assigned;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2832,7 +2832,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Pragma_Missplaced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2857,7 +2857,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Useless_Pragma_Pack;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2880,7 +2880,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Constant_Expected;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2910,7 +2910,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Suspicious_Renaming;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2943,7 +2943,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Possible_Interpretation;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -2954,13 +2954,13 @@ package body Codefix.GNAT_Parser is
       Matches_Prev    : Match_Array (0 .. 2);
       Preview         : Error_Message;
       Cursor_List     : Cursor_Lists.List;
-      Next_Message    : Error_Message_Iterator;
+      Next_Message    : Error_Message_Iterator := Message_It;
    begin
       loop
          declare
             Solution_Cursor : File_Cursor;
          begin
-            Next_Message := Next (Message_It);
+            Next_Message := Next (Next_Message);
 
             exit when At_End (Next_Message);
             Preview := Get_Message (Next_Message);
@@ -2997,7 +2997,7 @@ package body Codefix.GNAT_Parser is
             end if;
 
             Append (Cursor_List, Solution_Cursor);
-            Message_It := Next_Message;
+            Cancel_Message (Next_Message);
          end;
 
       end loop;
@@ -3037,7 +3037,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Hidden_Declaration;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3065,14 +3065,14 @@ package body Codefix.GNAT_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Message_It := Next_Message;
+      Cancel_Message (Next_Message);
       Free (Preview);
 
       loop
          declare
             Solution_Cursor : File_Cursor;
          begin
-            Next_Message := Next (Message_It);
+            Next_Message := Next (Next_Message);
 
             exit when At_End (Next_Message);
 
@@ -3114,7 +3114,7 @@ package body Codefix.GNAT_Parser is
 
             Append (Cursor_List, Solution_Cursor);
 
-            Message_It := Next_Message;
+            Cancel_Message (Next_Message);
          end;
       end loop;
 
@@ -3146,7 +3146,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Use_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3171,7 +3171,7 @@ package body Codefix.GNAT_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Message_It := Next_Message;
+      Cancel_Message (Next_Message);
       Free (Preview);
 
       Set_File
@@ -3209,7 +3209,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Redundant_Conversion;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3242,7 +3242,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Useless_Abs;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3273,7 +3273,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Missplaced_With;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3309,7 +3309,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Not_Fully_Conformant;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3355,7 +3355,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Generic_Use_Unallowed;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3384,7 +3384,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Non_Visible_Declaration;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3434,7 +3434,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Consecutive_Underlines;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3458,7 +3458,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Multiple_Blank_Lines;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3490,7 +3490,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : EOF_Blank_Lines;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3522,7 +3522,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Suggested_Replacement;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3562,7 +3562,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Pragma_Pack;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3607,7 +3607,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Undefined_Entity;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3721,7 +3721,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Unwanted_Pragma_Unreferenced;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3752,7 +3752,7 @@ package body Codefix.GNAT_Parser is
    procedure Fix
      (This         : Wrong_Index_Usage;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3785,7 +3785,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : Wrong_Sb_Order;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
@@ -3812,7 +3812,7 @@ package body Codefix.GNAT_Parser is
    overriding procedure Fix
      (This         : No_Statement_Following_Then;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array)

@@ -156,6 +156,24 @@ package body Codefix.Formal_Errors is
       return This.Order;
    end Get_Order;
 
+   ------------
+   -- Cancel --
+   ------------
+
+   procedure Cancel (This : in out Error_Message) is
+   begin
+      This.Is_Cancelled := True;
+   end Cancel;
+
+   ------------------
+   -- Is_Cancelled --
+   ------------------
+
+   function Is_Cancelled (This : Error_Message) return Boolean is
+   begin
+      return This.Is_Cancelled;
+   end Is_Cancelled;
+
    ----------
    -- Free --
    ----------
@@ -174,10 +192,11 @@ package body Codefix.Formal_Errors is
       New_Message : Error_Message;
    begin
       New_Message := (Clone (File_Cursor (This)) with
-                      Message    => new String'(This.Message.all),
-                      Is_Style   => This.Is_Style,
-                      Is_Warning => This.Is_Warning,
-                      Order      => This.Order);
+                      Message      => new String'(This.Message.all),
+                      Is_Style     => This.Is_Style,
+                      Is_Warning   => This.Is_Warning,
+                      Order        => This.Order,
+                      Is_Cancelled => This.Is_Cancelled);
       return New_Message;
    end Clone;
 

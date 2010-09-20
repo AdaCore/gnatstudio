@@ -193,7 +193,8 @@ package body Codefix.Error_Lists is
       It.Map_Cur := First (List.Messages);
 
       if It.Map_Cur /= Error_Message_Container.No_Element then
-         It.List_Cur := First (Element (First (List.Messages)).all);
+         It.Message_List := Element (First (List.Messages));
+         It.List_Cur := First (It.Message_List.all);
       else
          It.List_Cur := Internal_Message_List_Pckg.No_Element;
       end if;
@@ -222,16 +223,23 @@ package body Codefix.Error_Lists is
 
       if not Contains (List.Messages, Loc) then
          return
-           (Map_Cur  => Error_Message_Container.No_Element,
-            List_Cur => Internal_Message_List_Pckg.No_Element);
+           (Map_Cur      => Error_Message_Container.No_Element,
+            List_Cur     => Internal_Message_List_Pckg.No_Element,
+            Message_List => null);
       else
          It :=
-           (Map_Cur  => Error_Message_Container.No_Element,
-            List_Cur => First (Element (List.Messages, Loc).all));
+           (Map_Cur      => Error_Message_Container.No_Element,
+            List_Cur     => First (Element (List.Messages, Loc).all),
+            Message_List => Element (List.Messages, Loc));
 
-         while It.List_Cur /= Internal_Message_List_Pckg.No_Element
-           and then Element (It.List_Cur).Get_Order /= Order
-         loop
+         while It.List_Cur /= Internal_Message_List_Pckg.No_Element loop
+            declare
+               Message : constant Error_Message := Get_Message (It);
+            begin
+               exit when Message.Get_Order = Order
+                 and then not Message.Is_Cancelled;
+            end;
+
             It.List_Cur := Next (It.List_Cur);
          end loop;
 
@@ -254,11 +262,16 @@ package body Codefix.Error_Lists is
          Result.Map_Cur := Next (Result.Map_Cur);
 
          if Result.Map_Cur /= Error_Message_Container.No_Element then
-            Result.List_Cur := First (Element (Result.Map_Cur).all);
+            Result.Message_List := Element (Result.Map_Cur);
+            Result.List_Cur := First (Result.Message_List.all);
          end if;
       end if;
 
-      return Result;
+      if not At_End (Result) and then Get_Message (Result).Is_Cancelled then
+         return Next (Result);
+      else
+         return Result;
+      end if;
    end Next;
 
    -----------------
@@ -269,6 +282,18 @@ package body Codefix.Error_Lists is
    begin
       return Element (It.List_Cur);
    end Get_Message;
+
+   --------------------
+   -- Cancel_Message --
+   --------------------
+
+   procedure Cancel_Message (It : Error_Message_Iterator) is
+      Message : Error_Message := Get_Message (It);
+   begin
+      Message.Cancel;
+      Internal_Message_List_Pckg.Replace_Element
+        (It.Message_List.all, It.List_Cur, Message);
+   end Cancel_Message;
 
    ------------
    -- At_End --

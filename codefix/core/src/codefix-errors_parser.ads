@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2009, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -158,7 +158,7 @@ package Codefix.Errors_Parser is
    procedure Fix
      (This         : Error_Parser;
       Current_Text : Text_Navigator_Abstr'Class;
-      Message_It   : in out Error_Message_Iterator;
+      Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is abstract;
