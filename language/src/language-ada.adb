@@ -37,8 +37,8 @@ package body Language.Ada is
                  & "oto)|i([fs]|n(terface)?)|l(imited|oop)|mod|n(ew|ot|ull)|"
                  & "o(thers|ut|[fr]|verriding)|p(ackage|r(agma|ivate|o(cedure|"
                  & "tected)))|r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|s"
-                 & "(e(lect|parate)|ubtype|ynchronized)|t(a(gged|sk)|erminate|"
-                 & "hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor";
+                 & "(e(lect|ome|parate)|ubtype|ynchronized)|t(a(gged|sk)|"
+                 & "erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor";
 
    Keywords_List : aliased Pattern_Matcher :=
                      Compile
@@ -104,19 +104,20 @@ package body Language.Ada is
                      57 => new String'("reverse"),
                      58 => new String'("select"),
                      59 => new String'("separate"),
-                     60 => new String'("subtype"),
-                     61 => new String'("synchronized"),
-                     62 => new String'("tagged"),
-                     63 => new String'("task"),
-                     64 => new String'("terminate"),
-                     65 => new String'("then"),
-                     66 => new String'("type"),
-                     67 => new String'("until"),
-                     68 => new String'("use"),
-                     69 => new String'("when"),
-                     70 => new String'("while"),
-                     71 => new String'("with"),
-                     72 => new String'("xor"));
+                     60 => new String'("some"),
+                     61 => new String'("subtype"),
+                     62 => new String'("synchronized"),
+                     63 => new String'("tagged"),
+                     64 => new String'("task"),
+                     65 => new String'("terminate"),
+                     66 => new String'("then"),
+                     67 => new String'("type"),
+                     68 => new String'("until"),
+                     69 => new String'("use"),
+                     70 => new String'("when"),
+                     71 => new String'("while"),
+                     72 => new String'("with"),
+                     73 => new String'("xor"));
    --  List of the keywords. Indexes in this array have to correspond to values
    --  declared for token types in the specification.
 

@@ -82,6 +82,7 @@ package body Ada_Analyzer is
       Tok_All,             -- ALL          Eterm, Sterm
       Tok_Array,           -- ARRAY        Eterm, Sterm
       Tok_At,              -- AT           Eterm, Sterm
+      Tok_Some,            -- SOME         Eterm, Sterm
 
       Tok_Mod,             -- MOD          Mulop
       Tok_Rem,             -- REM          Mulop
@@ -574,6 +575,12 @@ package body Ada_Analyzer is
                return Tok_Select;
             elsif S (2 .. S'Last) = "eparate" then
                return Tok_Separate;
+            elsif S (2 .. S'Last) = "ome" then
+               if Prev_Token = Tok_For then
+                  return Tok_Some;
+               else
+                  return Tok_Identifier;
+               end if;
             elsif S (2 .. S'Last) = "ubtype" then
                return Tok_Subtype;
             elsif S (2 .. S'Last) = "ynchronized" then

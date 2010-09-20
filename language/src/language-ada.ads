@@ -237,39 +237,40 @@ package Language.Ada is
    Tok_Reverse           : constant Token_Type := 57;
    Tok_Select            : constant Token_Type := 58;
    Tok_Separate          : constant Token_Type := 59;
-   Tok_Subtype           : constant Token_Type := 60;
-   Tok_Synchronized      : constant Token_Type := 61;
-   Tok_Tagged            : constant Token_Type := 62;
-   Tok_Task              : constant Token_Type := 63;
-   Tok_Terminate         : constant Token_Type := 64;
-   Tok_Then              : constant Token_Type := 65;
-   Tok_Type              : constant Token_Type := 66;
-   Tok_Until             : constant Token_Type := 67;
-   Tok_Use               : constant Token_Type := 68;
-   Tok_When              : constant Token_Type := 69;
-   Tok_While             : constant Token_Type := 70;
-   Tok_With              : constant Token_Type := 71;
-   Tok_Xor               : constant Token_Type := 72;
+   Tok_Some              : constant Token_Type := 60;
+   Tok_Subtype           : constant Token_Type := 61;
+   Tok_Synchronized      : constant Token_Type := 62;
+   Tok_Tagged            : constant Token_Type := 63;
+   Tok_Task              : constant Token_Type := 64;
+   Tok_Terminate         : constant Token_Type := 65;
+   Tok_Then              : constant Token_Type := 66;
+   Tok_Type              : constant Token_Type := 67;
+   Tok_Until             : constant Token_Type := 68;
+   Tok_Use               : constant Token_Type := 69;
+   Tok_When              : constant Token_Type := 70;
+   Tok_While             : constant Token_Type := 71;
+   Tok_With              : constant Token_Type := 72;
+   Tok_Xor               : constant Token_Type := 73;
 
    --  Separators
-   Tok_Dot               : constant Token_Type := 73;
-   Tok_Open_Parenthesis  : constant Token_Type := 74;
-   Tok_Close_Parenthesis : constant Token_Type := 75;
-   Tok_Colon             : constant Token_Type := 76;
-   Tok_Arrow             : constant Token_Type := 77;
-   Tok_Operator          : constant Token_Type := 78;
-   Tok_Comma             : constant Token_Type := 79;
-   Tok_Semicolon         : constant Token_Type := 80;
-   Tok_Blank             : constant Token_Type := 81;
-   Tok_Tick              : constant Token_Type := 82;
-   Tok_Dot_Dot           : constant Token_Type := 83;
+   Tok_Dot               : constant Token_Type := 74;
+   Tok_Open_Parenthesis  : constant Token_Type := 75;
+   Tok_Close_Parenthesis : constant Token_Type := 76;
+   Tok_Colon             : constant Token_Type := 77;
+   Tok_Arrow             : constant Token_Type := 78;
+   Tok_Operator          : constant Token_Type := 79;
+   Tok_Comma             : constant Token_Type := 80;
+   Tok_Semicolon         : constant Token_Type := 81;
+   Tok_Blank             : constant Token_Type := 82;
+   Tok_Tick              : constant Token_Type := 83;
+   Tok_Dot_Dot           : constant Token_Type := 84;
 
    --  Words
-   Tok_Identifier        : constant Token_Type := 84;
-   Tok_String            : constant Token_Type := 85;
+   Tok_Identifier        : constant Token_Type := 85;
+   Tok_String            : constant Token_Type := 86;
 
    --  Unparsed parts
-   Tok_Expression        : constant Token_Type := 86;
+   Tok_Expression        : constant Token_Type := 87;
 
    subtype Ada_Token          is Token_Type range No_Token .. Tok_Expression;
    subtype Ada_Reserved_Token is Token_Type range Tok_Abort .. Tok_Xor;
