@@ -960,9 +960,14 @@ package body Builder_Facility_Module is
                  (Get_Registry (Kernel).Tree.Create (+Mains (J).all)).Project;
 
                if P = No_Project then
-                  Log
-                    (-"Could not find the project for """
-                     & Mains (J).all & """", Error);
+                  --  This can happen when the project can not find the source
+                  --  corresponding to the main file, for instance
+                  --  badly-written user projects, or projects that are created
+                  --  on-the-fly with the --debug= command line switch.
+                  Trace
+                    (Me,
+                     (-"Could not find the project for """
+                      & Mains (J).all & """"));
                   Free (Mains);
                   return Empty_Any_Type;
                elsif Executables_Directory (P) = GNATCOLL.VFS.No_File then
