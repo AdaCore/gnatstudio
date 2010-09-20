@@ -8,7 +8,7 @@
    Memcheck:Leak
    fun:malloc
    fun:gnatcoll__memory__alloc
-   fun:__gnat_malloc
+   fun:_gnatcoll__memory__alloc
    fun:gnatcoll__python__py_setprogramname
 }
 {
@@ -395,7 +395,7 @@
    Memcheck:Leak
    fun:malloc
    fun:gnatcoll__memory__alloc
-   fun:__gnat_malloc
+   fun:_gnatcoll__memory__alloc
    fun:osint___elabb
    fun:adainit
 }
@@ -5104,3 +5104,1088 @@
   fun:gtk_scrolled_window_set_vadjustment
 }
 
+#***************************************************
+#* The following suppressions were introduced after the port to GCC 4.5
+#* ??? They would need careful manual analysis if we ever have time
+#***************************************************
+
+{
+  1 bytes in 1 blocks are possibly lost in loss record 11 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:*
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_label_new 
+  fun:gtk_tooltips_force_window 
+  fun:g_type_create_instance 
+  fun:*
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_tooltips_new 
+  fun:gtk__tooltips__initialize 
+  fun:gtk__tooltips__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+}
+{
+  1 bytes in 1 blocks are possibly lost in loss record 12 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:*
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_settings_get_for_screen 
+  fun:gtk_settings_get_default 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_style_new 
+  fun:gtk_widget_get_default_style 
+  fun:* 
+  fun:g_type_create_instance 
+}
+{
+  1 bytes in 1 blocks are possibly lost in loss record 13 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_new_valist 
+  fun:g_object_new 
+  fun:gtk_menu_item_new_with_mnemonic 
+  fun:gtk__menu_item__initialize_with_mnemonic 
+  fun:gtk__menu_item__gtk_new_with_mnemonic 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  1 bytes in 1 blocks are possibly lost in loss record 14 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_new_valist 
+  fun:g_object_new 
+  fun:gtk_text_buffer_new 
+  fun:gtk__text_buffer__initialize 
+  fun:gtkada__terminal__initialize 
+  fun:gtkada__terminal__gtk_new 
+  fun:interactive_consoles__initialize 
+  fun:gps__kernel__console__initialize_console 
+  fun:gps__kernel__console__register_module 
+  fun:gps__main__finish_setup.7791 
+  fun:gps__kernel__timeout__process_timeout__general_cb 
+  fun:* 
+  fun:g_main_context_dispatch 
+}
+{
+  1 bytes in 1 blocks are possibly lost in loss record 15 of 15,633 (real ???)
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_entry_new 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_combo_new 
+  fun:gtk__combo__initialize 
+  fun:gtk__combo__gtk_new 
+  fun:src_contexts__gtk_new 
+  fun:src_editor_module__register_module 
+}
+{
+  1 bytes in 1 blocks are possibly lost in loss record 16 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_entry_buffer_new 
+  fun:* 
+  fun:gtk_entry_set_text 
+  fun:* 
+  fun:g_cclosure_marshal_VOID__VOID 
+  fun:g_closure_invoke 
+  fun:* 
+  fun:g_signal_emit_valist 
+  fun:gtk_signal_emit 
+  fun:g_cclosure_marshal_VOID__VOID 
+  fun:g_closure_invoke 
+}
+{
+  1 bytes in 1 blocks are possibly lost in loss record 17 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_tree_view_column_new 
+  fun:* 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new_valist 
+  fun:g_object_new 
+  fun:gtk_combo_box_new_with_model 
+  fun:gtk_combo_box_new_text 
+  fun:gtk__combo_box__initialize_text 
+  fun:gtk__combo_box__gtk_new_text 
+}
+{
+  4 bytes in 1 blocks are possibly lost in loss record 268 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_settings_get_for_screen 
+  fun:gtk_settings_get_default 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_style_new 
+  fun:gtk_widget_get_default_style 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+}
+{
+  4 bytes in 1 blocks are possibly lost in loss record 269 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:gnatcoll__memory__alloc 
+  fun:_gnatcoll__memory__alloc 
+  fun:gps__kernel__messages__view__idles__idle_addXnnn 
+  fun:gps__kernel__messages__view__do_not_goto_first_location 
+  fun:gps__kernel__messages__execute__2 
+  fun:gps__kernel__hooks__run_hook 
+  fun:gps__kernel__project__load_project 
+  fun:gps__kernel__scripts__create_project_command_handler 
+  fun:gnatcoll__scripts__python__first_level 
+  fun:PyEval_EvalFrameEx 
+  fun:PyEval_EvalCodeEx 
+  fun:ada_PyEval_EvalCodeEx 
+  fun:gnatcoll__scripts__python__execute_command__13 
+  fun:gnatcoll__scripts__python__execute_command__14 
+  fun:gnatcoll__scripts__python__execute__5 
+  fun:gps__kernel__hooks__execute__17 
+  fun:gps__kernel__hooks__run_hook 
+  fun:gps__callbacks__on_gps_started 
+  fun:gtk__main__idle_marshaller 
+}
+{
+  4 bytes in 1 blocks are possibly lost in loss record 270 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:gnatcoll__memory__alloc 
+  fun:_gnatcoll__memory__alloc 
+  fun:task_manager__task_manager_timeout__timeout_addX 
+  fun:task_manager__run 
+  fun:task_manager__add_command 
+  fun:gps__kernel__task_manager__launch_background_command__2 
+  fun:builder_module__load_c_xref_in_memory 
+  fun:builder_module__on_view_changed 
+  fun:gps__kernel__hooks__run_hook 
+  fun:gps__kernel__project__recompute_view__3 
+  fun:gps__kernel__project__recompute_view 
+  fun:gps__kernel__project__load_project 
+  fun:gps__kernel__scripts__create_project_command_handler 
+  fun:gnatcoll__scripts__python__first_level 
+  fun:PyEval_EvalFrameEx 
+  fun:PyEval_EvalCodeEx 
+  fun:ada_PyEval_EvalCodeEx 
+  fun:gnatcoll__scripts__python__execute_command__13 
+  fun:gnatcoll__scripts__python__execute_command__14 
+}
+{
+  7 bytes in 1 blocks are possibly lost in loss record 577 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_internal 
+  fun:g_param_spec_boxed 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:* 
+  fun:* 
+  fun:gdk_display_open 
+  fun:gdk_display_open_default_libgtk_only 
+  fun:gtk_init_check 
+  fun:gtk_init 
+  fun:gtk__main__init 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  7 bytes in 1 blocks are possibly lost in loss record 578 of 15,633
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_internal 
+  fun:g_param_spec_boxed 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:* 
+  fun:* 
+  fun:gdk_display_open 
+  fun:gdk_display_open_default_libgtk_only 
+  fun:gtk_init_check 
+  fun:gtk_init 
+  fun:gtk__main__init 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  7 bytes in 1 blocks are possibly lost in loss record 579 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_internal 
+  fun:g_param_spec_boxed 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:* 
+  fun:* 
+  fun:gdk_display_open 
+  fun:gdk_display_open_default_libgtk_only 
+  fun:gtk_init_check 
+  fun:gtk_init 
+  fun:gtk__main__init 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  7 bytes in 1 blocks are possibly lost in loss record 581 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:* 
+  fun:g_value_copy 
+  fun:* 
+  fun:* 
+  fun:gtk_rc_parse_string 
+  fun:gtk__rc__parse_string 
+  fun:gps__main_window__preferences_changed 
+  fun:gps__kernel__hooks__run_hook 
+  fun:gps__main__finish_setup.7791 
+  fun:gps__kernel__timeout__process_timeout__general_cb 
+  fun:* 
+  fun:g_main_context_dispatch 
+  fun:* 
+  fun:g_main_loop_run 
+  fun:gtk_main 
+  fun:gps__main__main_processing.5808 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,229 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gdk_window_impl_x11_get_type 
+  fun:* 
+  fun:* 
+  fun:gdk_display_open 
+  fun:gdk_display_open_default_libgtk_only 
+  fun:gtk_init_check 
+  fun:gtk_init 
+  fun:gtk__main__init 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,231 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:g_slist_prepend 
+  fun:g_source_add_poll 
+  fun:* 
+  fun:gdk_display_open 
+  fun:gdk_display_open_default_libgtk_only 
+  fun:gtk_init_check 
+  fun:gtk_init 
+  fun:gtk__main__init 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,277 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_icon_factory_get_type 
+  fun:gtk_icon_factory_new 
+  fun:gtk__icon_factory__initialize 
+  fun:gtk__icon_factory__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,278 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_widget_get_type 
+  fun:gtk_container_get_type 
+  fun:gtk_bin_get_type 
+  fun:gtk_window_get_type 
+  fun:gtk_window_new 
+  fun:gtk__window__initialize 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,279 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_widget_get_type 
+  fun:gtk_container_get_type 
+  fun:gtk_bin_get_type 
+  fun:gtk_window_get_type 
+  fun:gtk_window_new 
+  fun:gtk__window__initialize 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,280 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_settings_get_for_screen 
+  fun:gtk_settings_get_default 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_style_new 
+  fun:gtk_widget_get_default_style 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,281 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_settings_get_for_screen 
+  fun:gtk_settings_get_default 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_style_new 
+  fun:gtk_widget_get_default_style 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,282 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_strdup 
+  fun:g_param_spec_string 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_settings_get_for_screen 
+  fun:gtk_settings_get_default 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:gtk_style_new 
+  fun:gtk_widget_get_default_style 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,283 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:g_type_module_get_type 
+  fun:* 
+  fun:pango_module_register 
+  fun:* 
+  fun:g_type_create_instance 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new 
+  fun:pango_cairo_font_map_new 
+  fun:pango_cairo_font_map_get_default 
+  fun:gdk_pango_context_get_for_screen 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,284 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_box_get_type 
+  fun:gtk_vbox_get_type 
+  fun:gtk_font_selection_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,285 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_file_chooser_button_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,286 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_tree_view_column_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,287 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_tree_store_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,288 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_tree_store_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,289 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_tree_store_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,290 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_tree_model_sort_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,291 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:gtk_toolbar_get_type 
+  fun:glib__type_conversion_hooks__conversion_function 
+  fun:glib__object__get_user_data 
+  fun:gtk__widget__get_default_style 
+  fun:gtkada__mdi__initialize 
+  fun:gtkada__mdi__gtk_new 
+  fun:gps__kernel__mdi__gtk_new 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,292 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_memdup 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_type_class_ref 
+  fun:g_object_new_valist 
+  fun:g_object_new 
+  fun:gtk_vbox_new 
+  fun:gtk__box__initialize_vbox 
+  fun:gtk__box__gtk_new_vbox 
+  fun:gps__main_window__initialize 
+  fun:gps__main_window__gtk_new 
+  fun:gps__main__init_settings.5806 
+  fun:_ada_gps__main 
+  fun:main 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,293 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_memdup 
+  fun:* 
+  fun:g_type_class_ref 
+  fun:g_type_class_ref 
+  fun:g_type_class_ref 
+  fun:g_object_new_valist 
+  fun:g_object_new 
+  fun:gtk_hscrollbar_new 
+  fun:gtk_scrolled_window_set_hadjustment 
+  fun:* 
+  fun:g_object_newv 
+  fun:g_object_new_valist 
+  fun:g_object_new 
+  fun:gtk_scrolled_window_new 
+  fun:gtk__scrolled_window__initialize 
+  fun:interactive_consoles__initialize 
+  fun:gps__kernel__console__initialize_console 
+  fun:gps__kernel__console__register_module 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,294 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:g_slice_alloc0 
+  fun:* 
+  fun:pango_font_get_metrics 
+  fun:* 
+  fun:pango_layout_line_get_extents 
+  fun:* 
+  fun:* 
+  fun:gtk_text_layout_get_line_display 
+  fun:gtk_text_layout_get_cursor_locations 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_closure_invoke 
+  fun:* 
+  fun:g_signal_emit_valist 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,295 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:g_slist_prepend 
+  fun:* 
+  fun:pango_font_get_metrics 
+  fun:* 
+  fun:pango_layout_line_get_extents 
+  fun:* 
+  fun:* 
+  fun:gtk_text_layout_get_line_display 
+  fun:gtk_text_layout_get_cursor_locations 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_closure_invoke 
+  fun:* 
+  fun:g_signal_emit_valist 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,296 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:g_simple_async_result_get_type 
+  fun:pygio_register_classes 
+  fun:init_gio 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_Call 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,297 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:g_file_icon_get_type 
+  fun:pygio_register_classes 
+  fun:init_gio 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_Call 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,298 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:g_desktop_app_info_get_type 
+  fun:pyunix_register_classes 
+  fun:initunix 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_Call 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,299 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_hyperlink_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,300 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,301 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,302 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,303 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,304 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,305 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}
+{
+  8 bytes in 1 blocks are possibly lost in loss record 2,306 of 15,633
+  Memcheck:Leak
+  fun:malloc 
+  fun:g_malloc 
+  fun:g_slice_alloc 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:* 
+  fun:g_type_add_interface_static 
+  fun:atk_no_op_object_get_type 
+  fun:pyatk_register_classes 
+  fun:initatk 
+  fun:_PyImport_LoadDynamicModule 
+  fun:load_module 
+  fun:import_submodule 
+  fun:load_next 
+  fun:import_module_level.clone.3 
+  fun:PyImport_ImportModuleLevel 
+  fun:builtin___import__ 
+  fun:PyObject_CallFunction 
+}

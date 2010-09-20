@@ -188,6 +188,6 @@
   GNAT does not release the secondary stack
   Memcheck:Leak
   fun:malloc
-  fun:__gnat_malloc
+  fun:gnatcoll__memory__alloc
   fun:system__secondary_stack__ss_allocate
 }
