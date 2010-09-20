@@ -15,6 +15,15 @@ of the feature.
 New features in 5.0.0
 ---------------------
 
+NF-50-J917-024 Improved customizability of the toolbar (2010-09-20)
+
+  The Python/Shell interface now allows creating Toolbar buttons, rather than
+  just buttons, through the GPS.ToolButton class. In addition, these buttons
+  can be inserted in the toolbar at any location through GPS.Toolbar.insert.
+
+  The Cut/Copy/Paste buttons are now taking advantage of this: they are now
+  hidden, and can be activated through the plugin toobar_cut_copy_paste.py.
+
 NF-50-J915-025 Highlight of dispatching calls (2010-09-15)
 
   The dispatching.py plug-in which highlights dispatching calls in the
@@ -237,6 +246,12 @@ NF-50-J208-019 Automatic highlighting of occurrences (2010-07-21)
   highlight all other occurrences of this entity in the editor.
   This is controlled by the plugin auto_highlight_occurrences.py and is
   activated by default.
+
+NF-50-J208-014 Project templates (2010-09-15)
+
+  GPS is now capable of creating new projects from templates. This is done
+  either by selecting the first item "Create new project from template" in
+  the welcome dialog, or by using the menu Project->New from template...
 
 NF-50-J208-013 Memory view embedded in the MDI (2010-09-13)
 

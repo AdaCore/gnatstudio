@@ -1145,12 +1145,12 @@ package body Navigation_Module is
 
       Gtk_New (Space);
       Set_Draw (Space, True);
-      Insert (Toolbar, Space, 9);
+      Insert (Toolbar, Space, 6);
 
       Gtk_New_From_Stock (Button, "gps-navigate-back");
       Set_Tooltip (Button, Get_Tooltips (Kernel),
                    -"Goto Previous Location");
-      Insert (Toolbar, Button, 10);
+      Insert (Toolbar, Button, 7);
       Kernel_Callback.Connect
         (Button, Signal_Clicked, On_Back'Access, Kernel_Handle (Kernel));
       Navigation_Module (Navigation_Module_ID).Back_Button :=
@@ -1159,7 +1159,7 @@ package body Navigation_Module is
       Gtk_New_From_Stock (Button, "gps-navigate-forward");
       Set_Tooltip (Button, Get_Tooltips (Kernel),
                    -"Goto Next Location");
-      Insert (Toolbar, Button, 11);
+      Insert (Toolbar, Button, 8);
       Kernel_Callback.Connect
         (Button, Signal_Clicked, On_Forward'Access, Kernel_Handle (Kernel));
       Navigation_Module (Navigation_Module_ID).Forward_Button :=

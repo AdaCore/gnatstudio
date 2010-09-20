@@ -29,6 +29,7 @@ with Gtk.List_Item;      use Gtk.List_Item;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Toolbar;        use Gtk.Toolbar;
 with Gtk.Tool_Item;      use Gtk.Tool_Item;
+with Gtk.Tool_Button;    use Gtk.Tool_Button;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
@@ -55,6 +56,8 @@ package body Custom_Combos is
    On_Changed        : aliased constant String := "on_changed";
    Widget_Cst        : aliased constant String := "widget";
    Tooltip_Cst       : aliased constant String := "tooltip";
+   Stock_Id_Cst      : aliased constant String := "stock_id";
+   Pos_Cst           : aliased constant String := "pos";
 
    Add_Args             : constant Cst_Argument_List :=
                             (Choice_Cst'Access, On_Select'Access);
@@ -69,9 +72,18 @@ package body Custom_Combos is
                             (Id_Cst'Access, Label_Cst'Access,
                              On_Changed'Access);
    Append_Args          : constant Cst_Argument_List :=
-                            (1 => Widget_Cst'Access, 2 => Tooltip_Cst'Access);
+     (1 => Widget_Cst'Access,
+      2 => Tooltip_Cst'Access,
+      3 => Label_Cst'Access);
+   Insert_Args          : constant Cst_Argument_List :=
+     (1 => Widget_Cst'Access,
+      2 => Tooltip_Cst'Access,
+      3 => Label_Cst'Access,
+      4 => Pos_Cst'Access);
    Create_Button_Args   : constant Cst_Argument_List :=
-                            (Id_Cst'Access, Label_Cst'Access, On_Click'Access);
+     (Id_Cst'Access, Label_Cst'Access, On_Click'Access);
+   Create_Tool_Button_Args : constant Cst_Argument_List :=
+     (Stock_Id_Cst'Access, Label_Cst'Access, On_Click'Access);
    Set_Button_Text_Args : constant Cst_Argument_List :=
                             (1 => Label_Cst'Access);
 
@@ -117,6 +129,10 @@ package body Custom_Combos is
    procedure Button_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands dealing with Button class
+
+   procedure Tool_Button_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands dealing with Tool Button class
 
    procedure Custom_Toolbar_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -394,6 +410,39 @@ package body Custom_Combos is
       Kernel : constant Kernel_Handle := Get_Kernel (Custom_Module_ID.all);
       Widget : Gtk_Widget;
       Inst   : Class_Instance;
+
+      procedure Insert
+        (Widget  : Gtk_Widget;
+         Tooltip : String;
+         Pos     : Gint);
+      --  Factorize code between "append" and "insert" commands
+
+      ------------
+      -- Insert --
+      ------------
+
+      procedure Insert
+        (Widget  : Gtk_Widget;
+         Tooltip : String;
+         Pos     : Gint)
+      is
+         Item : Gtk_Tool_Item;
+      begin
+         if Widget.all in Gtk_Tool_Item_Record'Class then
+            Item := Gtk_Tool_Item (Widget);
+         else
+            Gtk_New (Item);
+            Add (Item, Widget);
+         end if;
+
+         Insert (Get_Toolbar (Kernel), Item, Pos);
+         Show_All (Item);
+
+         if Tooltip /= "" then
+            Set_Tooltip (Item, Get_Tooltips (Kernel), Tooltip);
+         end if;
+      end Insert;
+
    begin
       if Command = Constructor_Method then
          null;
@@ -433,16 +482,25 @@ package body Custom_Combos is
          declare
             EntInst : constant Class_Instance :=
               Nth_Arg (Data, 2, Get_GUI_Class (Kernel));
-            Tip  : constant String := Nth_Arg (Data, 3, "");
-            Item : Gtk_Tool_Item;
+            Widget : constant Gtk_Widget :=
+              Gtk_Widget (GObject'(Get_Data (EntInst)));
+            Tip    : constant String := Nth_Arg (Data, 3, "");
          begin
-            Gtk_New (Item);
-            Add (Item, Gtk_Widget (GObject'(Get_Data (EntInst))));
-            Insert (Get_Toolbar (Kernel), Item);
-            Show_All (Item);
-            if Tip /= "" then
-               Set_Tooltip (Item, Get_Tooltips (Kernel), Tip);
-            end if;
+            Insert (Widget, Tip, -1);
+         end;
+
+      elsif Command = "insert" then
+         Name_Parameters (Data, Insert_Args);
+
+         declare
+            EntInst : constant Class_Instance :=
+              Nth_Arg (Data, 2, Get_GUI_Class (Kernel));
+            Widget : constant Gtk_Widget :=
+              Gtk_Widget (GObject'(Get_Data (EntInst)));
+            Pos    : constant Integer := Nth_Arg (Data, 3, -1);
+            Tip    : constant String := Nth_Arg (Data, 4, "");
+         begin
+            Insert (Widget, Tip, Gint (Pos));
          end;
       end if;
    end Custom_Toolbar_Handler;
@@ -521,8 +579,15 @@ package body Custom_Combos is
          Set_Data (Inst, Widget => GObject (Button));
          Show_All (Button);
          Subprogram_Callback.Connect
-           (Button, Signal_Clicked, On_Button_Clicked'Access,
+           (Button, Gtk.Button.Signal_Clicked,
+            On_Button_Clicked'Access,
             User_Data => Nth_Arg (Data, 4));
+
+         if Nth_Arg (Data, 5, False) then
+            Set_Property (Gtk_Button (GObject'(Get_Data (Inst))),
+                          Gtk.Button.Use_Stock_Property,
+                          True);
+         end if;
 
       elsif Command = "set_text" then
          Name_Parameters (Data, Set_Button_Text_Args);
@@ -531,6 +596,37 @@ package body Custom_Combos is
                        Nth_Arg (Data, 2));
       end if;
    end Button_Handler;
+
+   -------------------------
+   -- Tool_Button_Handler --
+   -------------------------
+
+   procedure Tool_Button_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle  := Get_Kernel (Custom_Module_ID.all);
+      Class  : constant Class_Type     := New_Class (Kernel, "ToolButton");
+      Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Button : Gtk_Tool_Button;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Create_Tool_Button_Args);
+         Gtk_New_From_Stock (Button, Nth_Arg (Data, 2));
+         Set_Label (Button, Nth_Arg (Data, 3));
+         Set_Data (Inst, Widget => GObject (Button));
+         Show_All (Button);
+         Subprogram_Callback.Connect
+           (Button,
+            Gtk.Tool_Button.Signal_Clicked,
+            On_Button_Clicked'Access,
+            User_Data => Nth_Arg (Data, 4));
+
+      elsif Command = "set_label" then
+         Name_Parameters (Data, Set_Button_Text_Args);
+         Gtk_Tool_Button (GObject'(Get_Data (Inst))).Set_Label
+           (Nth_Arg (Data, 2));
+      end if;
+   end Tool_Button_Handler;
 
    -----------------------
    -- Register_Commands --
@@ -543,6 +639,8 @@ package body Custom_Combos is
         (Kernel, "Combo", Base => Get_GUI_Class (Kernel));
       Button_Class  : constant Class_Type := New_Class
         (Kernel, "Button", Base => Get_GUI_Class (Kernel));
+      Tool_Button_Class  : constant Class_Type := New_Class
+        (Kernel, "ToolButton", Base => Get_GUI_Class (Kernel));
    begin
       Register_Command
         (Kernel, "get",
@@ -564,6 +662,12 @@ package body Custom_Combos is
         (Kernel, "append",
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class        => Toolbar_Class,
+         Handler      => Custom_Toolbar_Handler'Access);
+      Register_Command
+        (Kernel, "insert",
+         Minimum_Args => 2,
+         Maximum_Args => 3,
          Class        => Toolbar_Class,
          Handler      => Custom_Toolbar_Handler'Access);
 
@@ -603,7 +707,7 @@ package body Custom_Combos is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 3,
-         Maximum_Args => 3,
+         Maximum_Args => 4,
          Class        => Button_Class,
          Handler      => Button_Handler'Access);
       Register_Command
@@ -612,6 +716,13 @@ package body Custom_Combos is
          Maximum_Args => 1,
          Class        => Button_Class,
          Handler      => Button_Handler'Access);
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args => 3,
+         Maximum_Args => 3,
+         Class        => Tool_Button_Class,
+         Handler      => Tool_Button_Handler'Access);
    end Register_Commands;
 
 end Custom_Combos;

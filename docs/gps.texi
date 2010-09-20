@@ -567,10 +567,7 @@ then this menu is available. See your CodePeer documentation for more details.
 @noindent
 The tool bar provides shortcuts via buttons to some typical actions:
 creating a new file, opening a file, saving the current file;
-undo/redo last editing;
-@cindex clipboard
-cut to clipboard, copy to clipboard, paste from clipboard;
-go to previous/next location;
+undo/redo last editing; go to previous/next location;
 @cindex build
 select build mode, compile file, build project, clean project;
 @cindex debugger
@@ -12870,7 +12867,8 @@ that particular value is selected.
 
 A more convenient interface exists for Python, the GPS.Toolbar class, which
 gives you the same flexibility as above, but also gives you dynamic control
-over the entry. See the python documentation.
+over the entry, and allows placement of buttons at arbitrary positions in
+the toolbar. See the python documentation.
 
 @c ---------------------------------------------------------------------
 @node Binding actions to keys

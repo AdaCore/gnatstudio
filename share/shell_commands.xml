@@ -3464,7 +3464,15 @@ If the regular expression does not contain any parenthesis, the text that matche
      <param name="self">The instance of GPS.Toolbar</param>
      <param name="widget">An instance of GPS.GUI</param>
      <param name="tooltip" default="">A string</param>
-     <description>Add a new widget in the toolbar. This should generally be an instance of GPS.Combo for proper rendering on the screen</description>
+     <description>Add a new widget in the toolbar. This can be an instance of GPS.Combo, or a GPS.Button, or a GPS.ToolButton.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Toolbar.insert">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="widget">An instance of GPS.GUI</param>
+     <param name="pos" default="-1">The position at which to insert the widget</param>
+     <param name="tooltip" default="">A string</param>
+     <description>Add a new widget in the toolbar. This can be an instance of GPS.Combo, or a GPS.Button, or a GPS.ToolButton.</description>
   </shell_doc>
 
   <!--#################################################################
@@ -3495,6 +3503,28 @@ If the regular expression does not contain any parenthesis, the text that matche
      <param name="self">An instance of GPS.Button</param>
      <param name="label">A string</param>
      <description>Change the text that appears on the button</description>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   ToolButton class
+    ###################################################################-->
+
+  <shell_doc name="GPS.ToolButton">
+     <description>This class represents a button that can be inserted in the toolbar</description>
+      <see_also name="GPS.ToolButton.__init__()"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.ToolButton.__init__">
+     <param name="self">An instance of GPS.Button</param>
+     <param name="stock_id">A string identifying the icon</param>
+     <param name="label">A string, the text that appears on the button</param>
+     <param name="on_click">A subprogram, see the GPS documentation</param>
+     <description>Initializes a new button. When the button is pressed by the user, on_click is called with the following single parameter:
+   - $1 = The instance of GPS.Button</description>
+     <example lang="python">
+         b = GPS.ToolButton ("gtk-new", "New File", lambda x : GPS.execute_action ("/File/New"))
+         GPS.Toolbar().insert (b, 0)
+     </example>
   </shell_doc>
 
   <!--#################################################################

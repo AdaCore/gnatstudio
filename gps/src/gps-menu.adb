@@ -406,8 +406,6 @@ package body GPS.Menu is
                      null, Command,
                      GDK_Delete, Shift_Mask,
                      Ref_Item => -"Preferences");
-      Register_Button
-        (Kernel, Stock_Cut, Command, -"Cut To Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -419,8 +417,6 @@ package body GPS.Menu is
                      null, Command,
                      GDK_Insert, Control_Mask,
                      Ref_Item => -"Preferences");
-      Register_Button
-        (Kernel, Stock_Copy, Command, -"Copy To Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -432,9 +428,6 @@ package body GPS.Menu is
                      null, Command,
                      GDK_Insert, Shift_Mask,
                      Ref_Item => -"Preferences");
-      Register_Button
-        (Kernel, Stock_Paste, Command,
-         -"Paste From Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
