@@ -1558,7 +1558,6 @@ package body Toolchains is
       Result := new Toolchain_Record;
       Result.Name := new String'(Name);
       Result.Manager := Toolchain_Manager (Manager);
-      Manager.Add_Toolchain (Result);
 
       --  Set c++filt
 
@@ -1631,6 +1630,10 @@ package body Toolchains is
             Set_Compiler (Result, "C", Name & "-gcc", True);
          end if;
       end if;
+
+      Compute_Gprconfig_Compilers (Result);
+      Compute_Predefined_Paths (Result);
+      Manager.Add_Toolchain (Result);
 
       return Result;
    end Create_Known_Toolchain;
