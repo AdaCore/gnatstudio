@@ -69,13 +69,6 @@ package body Language.Cpp is
             End_Index      => 0,
             Make_Entry     => null));
 
-   Cpp_Project_Fields : constant Project_Field_Array :=
-     (1 => (Attribute_Name  => new String'("compiler_command"),
-            Attribute_Index => new String'("c++"),
-            Description     => new String'("C++ compiler"),
-            Values          => null,
-            Editable        => True));
-
    ----------------------
    -- Make_Entry_Class --
    ----------------------
@@ -159,18 +152,6 @@ package body Language.Cpp is
          Callback      => Callback,
          Enable_Cpp    => True);
    end Parse_Entities;
-
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access Cpp_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return Cpp_Project_Fields;
-   end Get_Project_Fields;
 
    --------------
    -- Get_Name --

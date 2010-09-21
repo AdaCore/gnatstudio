@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2010, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -145,18 +145,6 @@ package body Debugger.VMS.Ada is
    begin
       return Record_Field_Name (Ada_Lang, Name, Field);
    end Record_Field_Name;
-
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access VMS_Ada_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return Get_Project_Fields (Ada_Lang);
-   end Get_Project_Fields;
 
    ---------------------
    -- Break Exception --

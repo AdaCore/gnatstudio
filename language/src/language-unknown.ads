@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2008, AdaCore                --
+--                   Copyright (C) 2000-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,9 +66,6 @@ package Language.Unknown is
      (Lang  : access Unknown_Language;
       Name  : String;
       Field : String) return String;
-
-   overriding function Get_Project_Fields
-     (Lang : access Unknown_Language) return Project_Field_Array;
 
 private
    type Unknown_Language is new Language_Root with null record;

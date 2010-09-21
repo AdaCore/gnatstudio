@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2010, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -177,18 +177,6 @@ package body Debugger.Gdb.Cpp is
    begin
       return Record_Field_Name (Cpp_Lang, Name, Field);
    end Record_Field_Name;
-
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access Gdb_Cpp_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return Get_Project_Fields (Cpp_Lang);
-   end Get_Project_Fields;
 
    ---------------------
    -- Break Exception --

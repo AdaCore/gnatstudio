@@ -92,13 +92,6 @@ package body Language.C is
             End_Index      => 0,
             Make_Entry     => null));
 
-   C_Project_Fields : constant Project_Field_Array :=
-     (1 => (Attribute_Name  => new String'("compiler_command"),
-            Attribute_Index => new String'("c"),
-            Description     => new String'("C compiler"),
-            Values          => null,
-            Editable        => True));
-
    --------------------
    -- Is_Simple_Type --
    --------------------
@@ -486,18 +479,6 @@ package body Language.C is
          return Line (Index_Start .. Line'Last);
       end if;
    end Comment_Line;
-
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access C_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return C_Project_Fields;
-   end Get_Project_Fields;
 
    --------------
    -- Get_Name --

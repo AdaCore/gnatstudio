@@ -78,13 +78,6 @@ package Language.C is
    overriding function Scope_Separator
      (Lang : access C_Language) return String;
 
-   ---------------------
-   -- Project support --
-   ---------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access C_Language) return Project_Field_Array;
-
    ----------------------
    -- Source Analyzing --
    ----------------------

@@ -214,47 +214,6 @@ package body Language.Ada is
                                  Make_Entry     =>
                                    Make_Entry_Protected'Access));
 
-   --  ??? Would be nice to specify the list of available cross compilers
-   --  using a configuration file
-
-   Ada_Project_Fields : constant Project_Field_Array :=
-     (1 => (Attribute_Name  => new String'("compiler_command"),
-            Attribute_Index => new String'("ada"),
-            Description     => new String'("Ada compiler"),
-            Values          => new GNAT.Strings.String_List'
-              (1  => new String'("gnatmake"),
-               2  => new String'("powerpc-wrs-vxworks-gnatmake"),
-               3  => new String'("powerpc-wrs-vxworksae-gnatmake"),
-               4  => new String'("powerpc-elf-gnatmake"),
-               5  => new String'("i386-wrs-vxworks-gnatmake"),
-               6  => new String'("m68k-wrs-vxworks-gnatmake"),
-               7  => new String'("mips-wrs-vxworks-gnatmake"),
-               8  => new String'("sparc-wrs-vxworks-gnatmake"),
-               9  => new String'("sparc64-wrs-vxworks-gnatmake"),
-               10 => new String'("xscale-wrs-vxworks-gnatmake"),
-               11 => new String'("powerpc-elf-lynxos-gnatmake"),
-               12 => new String'("powerpc-xcoff-lynxos-gnatmake"),
-               13 => new String'("gnaampmake")),
-            Editable       => True),
-      2 => (Attribute_Name  => new String'("gnatlist"),
-            Attribute_Index => null,
-            Description     => new String'("Gnatls"),
-            Values          => new GNAT.Strings.String_List'
-              (1  => new String'("gnatls"),
-               2  => new String'("powerpc-wrs-vxworks-gnatls"),
-               3  => new String'("powerpc-wrs-vxworksae-gnatls"),
-               4  => new String'("powerpc-elf-gnatls"),
-               5  => new String'("i386-wrs-vxworks-gnatls"),
-               6  => new String'("m68k-wrs-vxworks-gnatls"),
-               7  => new String'("mips-wrs-vxworks-gnatls"),
-               8  => new String'("sparc-wrs-vxworks-gnatls"),
-               9  => new String'("sparc64-wrs-vxworks-gnatls"),
-               10 => new String'("xscale-wrs-vxworks-gnatls"),
-               11 => new String'("powerpc-elf-lynxos-gnatls"),
-               12 => new String'("powerpc-xcoff-lynxos-gnatls"),
-               13 => new String'("gnaampls")),
-            Editable        => True));
-
    --------------------
    -- Is_Simple_Type --
    --------------------
@@ -650,18 +609,6 @@ package body Language.Ada is
          Case_Exceptions     => Case_Exceptions,
          Is_Optional_Keyword => Is_Optional_Keyword);
    end Format_Buffer;
-
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access Ada_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return Ada_Project_Fields;
-   end Get_Project_Fields;
 
    --------------
    -- Get_Name --

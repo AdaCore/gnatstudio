@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2009, AdaCore                --
+--                   Copyright (C) 2000-2010, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -139,18 +139,6 @@ package body Language.Unknown is
    begin
       return Unknown_Context'Access;
    end Get_Language_Context;
-
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access Unknown_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return (1 .. 0 => No_Project_Field);
-   end Get_Project_Fields;
 
    ----------------------
    -- Parse_Constructs --

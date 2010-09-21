@@ -791,34 +791,6 @@ package body Language.Custom is
       end if;
    end Get_Name;
 
-   ------------------------
-   -- Get_Project_Fields --
-   ------------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access Custom_Language) return Project_Field_Array
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return (1 .. 0 => No_Project_Field);
-
-      --  ??? Support for project fields in xml files isn't complete yet,
-      --  so the following code is currently disabled. When enabled, it
-      --  will mean that languages will by default inherit the fields from
-      --  the parent, which is probably not desirable. Consider instead
-      --  having an explicit XML tag to ask for inheritance.
-
-      --  if Lang.Project_Fields = null then
-      --     if Lang.Parent = null then
-      --        return (1 .. 0 => No_Project_Field);
-      --     else
-      --        return Get_Project_Fields (Lang.Parent);
-      --     end if;
-      --  else
-      --     return Lang.Project_Fields.all;
-      --  end if;
-   end Get_Project_Fields;
-
    -------------------
    -- New_Construct --
    -------------------

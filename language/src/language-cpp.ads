@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -45,13 +45,6 @@ package Language.Cpp is
 
    overriding function Explorer_Regexps
      (Lang : access Cpp_Language) return Explorer_Categories;
-
-   ---------------------
-   -- Project support --
-   ---------------------
-
-   overriding function Get_Project_Fields
-     (Lang : access Cpp_Language) return Project_Field_Array;
 
    ----------------------
    -- Source Analyzing --
