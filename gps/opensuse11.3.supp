@@ -52360,7 +52360,7 @@
 }
 
 # ====== valgrind/start_exit: SUCCESS
-Memory leaks version of regressions follows:
+# Memory leaks version of regressions follows:
 {
    <insert_a_suppression_name_here>
    Memcheck:Leak
