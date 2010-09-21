@@ -896,7 +896,6 @@ package body GPS.Location_View is
         (Self.View,
          Self.Filter,
          Get_Model (Locations_Listener_Access (Self.Listener)));
-
       Location_View_Callbacks.Object_Connect
         (Get_Model (Locations_Listener_Access (Self.Listener)),
          Signal_Row_Deleted,
@@ -1491,16 +1490,37 @@ package body GPS.Location_View is
       Depth   : Natural;
       Path    : Gtk_Tree_Path;
       Found   : Boolean;
+      Child   : Gtk_Tree_Iter;
 
    begin
       Path := Model.Get_Path (Iter);
       Depth := Natural (Get_Depth (Path));
       Path_Free (Path);
 
-      if Depth < 3 then
+      if Depth = 1 then
+         --  Category rows are displayed always, otherwise view doesn't
+         --  display any rows at all when model is filled from empty state.
+
          return True;
 
+      elsif Depth = 2 then
+         --  File rows are displayed only when they have visible messages.
+
+         Child := Model.Children (Iter);
+
+         while Child /= Null_Iter loop
+            if Is_Visible (Model, Child, Self) then
+               return True;
+            end if;
+
+            Model.Next (Child);
+         end loop;
+
+         return False;
+
       else
+         --  Messages rows are displayed when match filter.
+
          if Self.Regexp /= null then
             Found := GNAT.Regpat.Match (Self.Regexp.all, Message);
 
