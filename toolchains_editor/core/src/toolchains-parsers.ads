@@ -17,6 +17,52 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  Parses or dump the toolchain definition part of a Project
+--
+--  Supported patterns are:
+--
+--  package IDE is
+--    for GNAT use "name";
+--    for GNATlist use "name";
+--    for Compiler_Command ("c") use "name";
+--    for Compiler_Command ("ada") use "name";
+--  end IDE;
+--
+--  type Target_Type is ("cross-triplet", ...)
+--  Target : Target_Type := external ("TARGET", "native")
+--  package IDE is
+--    for GNAT use Target & "-gnat";
+--    for GNATlist use Target & "-gnatls";
+--    for Compiler_Command ("c") use Target & "-gnat";
+--    for Compiler_Command ("ada") use Target & "-gcc";
+--  end IDE;
+--
+--  type Target_Type is (<native | aamp | custom>, "cross-triplet", ...)
+--  Target : Target_Type := external ("TARGET", "native")
+--  package IDE is
+--    case Target is
+--       when <native | aamp | custom> =>
+--          for GNAT use "name";
+--          for GNATlist use "name";
+--          for Compiler_Command ("c") use "name";
+--          for Compiler_Command ("ada") use "name";
+--       when others =>
+--          for GNAT use Target & "-gnat";
+--          for GNATlist use Target & "-gnatls";
+--          for Compiler_Command ("c") use Target & "-gnat";
+--          for Compiler_Command ("ada") use Target & "-gcc";
+--    end case;
+--  end IDE;
+--
+--  These patterns can be read and analyzed by the parser, and are generated
+--  depending on the selected toolchains.
+--
+--  The parser is able to detect that it can't handle the toolchain description
+--  and will provide a way to get a message in such case.
+--
+--  The parser is able to follow package renaming, and will offer update
+--  capabilities on the renamed package.
+
 with Prj;      use Prj;
 with Prj.Tree; use Prj.Tree;
 with Ada.Containers.Ordered_Sets;

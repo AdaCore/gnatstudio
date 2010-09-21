@@ -19,57 +19,18 @@
 
 --  This package provides a way to analyze & modify the toolchain definition
 --  decribed in a GNAT project file.
---
---  Supported patterns are:
---
---  package IDE is
---    for GNAT use "name";
---    for GNATlist use "name";
---    for Compiler_Command ("c") use "name";
---    for Compiler_Command ("ada") use "name";
---  end IDE;
---
---  type Target_Type is ("cross-triplet", ...)
---  Target : Target_Type := external ("TARGET", "native")
---  package IDE is
---    for GNAT use Target & "-gnat";
---    for GNATlist use Target & "-gnatls";
---    for Compiler_Command ("c") use Target & "-gnat";
---    for Compiler_Command ("ada") use Target & "-gcc";
---  end IDE;
---
---  type Target_Type is (<native | aamp | custom>, "cross-triplet", ...)
---  Target : Target_Type := external ("TARGET", "native")
---  package IDE is
---    case Target is
---       when <native | aamp | custom> =>
---          for GNAT use "name";
---          for GNATlist use "name";
---          for Compiler_Command ("c") use "name";
---          for Compiler_Command ("ada") use "name";
---       when others =>
---          for GNAT use Target & "-gnat";
---          for GNATlist use Target & "-gnatls";
---          for Compiler_Command ("c") use Target & "-gnat";
---          for Compiler_Command ("ada") use Target & "-gcc";
---    end case;
---  end IDE;
---
---  These patterns can be read and analyzed by the parser, and are generated
---  depending on the selected toolchains.
---
---  The parser is able to detect that it can't handle the toolchain description
---  and will provide a way to get a message in such case.
---
---  The parser is able to follow package renaming, and will offer update
---  capabilities on the renamed package.
 
-with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Containers.Doubly_Linked_Lists;
 with GNAT.Strings; use GNAT.Strings;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with Basic_Types; use Basic_Types;
+
+private with Ada.Containers.Indefinite_Hashed_Maps;
+private with Ada.Containers.Indefinite_Hashed_Sets;
+private with Ada.Containers.Indefinite_Ordered_Maps;
+private with Ada.Containers.Doubly_Linked_Lists;
+private with Ada.Strings.Equal_Case_Insensitive;
+private with Ada.Strings.Hash_Case_Insensitive;
 
 package Toolchains is
 
@@ -85,6 +46,7 @@ package Toolchains is
    Tool_I586_WRS_VXWORKS        : aliased constant String :=
      "i586-wrs-vxworks";
    Tool_JVM                     : aliased constant String := "jvm";
+   Tool_Dotnet                  : aliased constant String := "dotnet";
    Tool_POWERPC_WRS_VXWORKS     : aliased constant String :=
      "powerpc-wrs-vxworks";
    Tool_POWERPC_WRS_VXWORKSAE   : aliased constant String :=
@@ -110,24 +72,22 @@ package Toolchains is
       --  Other cross
       new String'(Tool_AAMP),
       new String'(Tool_JVM),
+      new String'(Tool_Dotnet),
       new String'("powerpc-elf-lynxos"),
       new String'("powerpc-elf-pikeos"),
       new String'("powerpc-xcoff-lynxos"));
 
    Toolchain_Exception : exception;
 
-   type Toolchain_Manager_Record is abstract tagged private;
-   type Toolchain_Manager is access all Toolchain_Manager_Record'Class;
+   --------------
+   -- Compiler --
+   --------------
 
-   function Execute
-     (This       : Toolchain_Manager_Record;
-      Command    : String;
-      Timeout_MS : Integer) return String
-      is abstract;
-   --  Executes the command and returns the result. The implementation of this
-   --  subprogram typically differs between GNATbench and GPS. If the process
-   --  didn't return until timeout miliseconds, then the call has to be
-   --  aborted.
+   type Compiler (<>) is private;
+   No_Compiler : constant Compiler;
+
+   function Get_Exe (C : Compiler) return String;
+   function Is_Valid (C : Compiler) return Boolean;
 
    ----------------------
    -- Ada_Library_Info --
@@ -195,16 +155,15 @@ package Toolchains is
    -- Toolchain --
    ---------------
 
-   type Tool_Names is
+   type Tools is
      (Unknown,
-      C_Compiler,
-      Ada_Compiler,
       GNAT_Driver,
       GNAT_List,
       Debugger,
       CPP_Filt);
    --  This enumeration represents the various tools that can be set in a
    --  toolchain.
+   --  ??? Remove Gnatmake and Gnatlist are duplicates of the gnat driver
 
    type Toolchain is private;
    --  This type represent a toolchain. It can either be generated
@@ -214,15 +173,42 @@ package Toolchains is
 
    Null_Toolchain : aliased constant Toolchain;
 
-   procedure Compute_Predefined_Paths
-     (This : Toolchain; Manager : Toolchain_Manager);
+   procedure Compute_Predefined_Paths (This : Toolchain);
    --  Retreives the predefined path if needed.
 
-   function Get_Command (This : Toolchain; Name : Tool_Names) return String;
+   function Get_Command (This : Toolchain; Name : Tools) return String;
    --  Return the command to use in order to call the tool given in parameter.
 
-   procedure Set_Command (This : Toolchain; Name : Tool_Names; Value : String);
+   procedure Set_Command
+     (This       : Toolchain;
+      Name       : Tools;
+      Value      : String;
+      Is_Default : Boolean := False);
    --  Set the command for this tool on this toolchain
+
+   function Is_Valid (This : Toolchain; Name : Tools) return Boolean;
+   --  Tell if the tool could be found on the system
+
+   function Is_Default (This : Toolchain; Name : Tools) return Boolean;
+   --  Tell if the tool is the default one for the toolchain
+
+   function Is_Default (This : Toolchain; Lang : String) return Boolean;
+   --  Tell if the compiler for Lang is the default one for the This toolchain
+
+   procedure Reset_To_Default (This : Toolchain; Name : Tools);
+   procedure Reset_To_Default (This : Toolchain; Lang : String);
+   --  Reset the specified tool or compiler to its default value
+
+   function Get_Compiler (This : Toolchain; Lang : String) return Compiler;
+   --  Return the command to use in order to call the compiler for the language
+   --  given in parameter.
+
+   procedure Set_Compiler
+     (This    : Toolchain;
+      Lang    : String;
+      Value   : String;
+      Default : Boolean := False);
+   --  Set the command for the compiler for Lang on this toolchain
 
    function Is_Simple_Cross (This : Toolchain) return Boolean;
    --  Return true if the toolchain is a "simple" cross toolchain, that is
@@ -271,6 +257,85 @@ package Toolchains is
       Info : Ada_Library_Info_Access);
    --  Modifies the library information stored in this toolchain.
 
+   -----------------------
+   -- Toolchain_Manager --
+   -----------------------
+
+   type Toolchain_Manager_Record is abstract tagged private;
+   type Toolchain_Manager is access all Toolchain_Manager_Record'Class;
+
+   function Execute
+     (This       : Toolchain_Manager_Record;
+      Command    : String;
+      Timeout_MS : Integer) return String
+      is abstract;
+   --  Executes the command and returns the result. The implementation of this
+   --  subprogram typically differs between GNATbench and GPS. If the process
+   --  didn't return until timeout miliseconds, then the call has to be
+   --  aborted.
+
+   procedure Add_Language
+     (Manager : access Toolchain_Manager_Record;
+      Lang    : String;
+      Project : Project_Type);
+   --  Add a new supported language to the toolchain manager
+   --  If the language is already present, then nothing happens.
+
+   function Create_Empty_Toolchain
+     (Manager : access Toolchain_Manager_Record) return Toolchain;
+   --  Create an empty toolchain. The result has either to be added to the
+   --  manager or manually freed. The result is an empty toolchain that can
+   --  be modified, different from Null_Toolchain which can't.
+
+   function Get_Toolchain
+     (Manager : access Toolchain_Manager_Record;
+      Name    : String) return Toolchain;
+   --  Return a toolchain according to its name. If no such toolchain exist,
+   --  but the name is the name of a known toolchain, then it will be
+   --  automatically created. Otherwise, will return Null_Toolchain.
+
+   function Get_Toolchain
+     (Manager : access Toolchain_Manager_Record;
+      Project : Project_Type) return Toolchain;
+   --  Retreives the toolchain based on the contents of a project. This
+   --  toolchain is always stored in the Manager.
+
+   function Get_Toolchain
+     (Manager    : access Toolchain_Manager_Record;
+      Project    : Project_Type;
+      Languages : GNAT.Strings.String_List) return Toolchain;
+   --  Retreives the toolchain based on the contents of a project and a list of
+   --  languages. This toolchain is always stored in the Manager.
+
+   procedure Add_Toolchain
+     (Manager : access Toolchain_Manager_Record;
+      Tc      : Toolchain);
+   --  Add a toolchain in the toolchain manager - raise an exception if the
+   --  toolchain already exsits.
+
+   procedure Remove_Toolchain
+     (Manager : access Toolchain_Manager_Record;
+      Tc_Name : String);
+   --  Remove an existing toolchain in the toolchain manager - raise an
+   --  exception if the toolchain is not found.
+
+   type Toolchain_Array is array (Integer range <>) of aliased Toolchain;
+
+   function Get_Toolchains
+     (Manager : access Toolchain_Manager_Record) return Toolchain_Array;
+   --  Return the toolchains contained in this manager.
+
+   procedure Scan_Toolchains (Manager : access Toolchain_Manager_Record);
+   procedure Scan_Toolchains
+     (Manager : access Toolchain_Manager_Record;
+      Progress : access procedure
+        (Name    : String;
+         Current : Integer;
+         Total   : Integer));
+   --  Scans the toolchains installed on the system using gprbuild, and run
+   --  each gnat list on the whole list (scanned toolchains + already loaded
+   --  toolchains
+
    -------------------------------
    -- Toolchain_Change_Listener --
    -------------------------------
@@ -284,108 +349,14 @@ package Toolchains is
       Manager : Toolchain_Manager) is abstract;
    --  Reacts to changes made in the manager.
 
-   -----------------------
-   -- Toolchain_Manager --
-   -----------------------
-
-   function Create_Known_Toolchain (Name : String) return Toolchain;
-   --  Create a new toolchain based on a known toolchain description. Will
-   --  return Null_Toolchain if no such name is known. Note that the returned
-   --  object needs to be added to the toolchain manager manually if it has to
-   --  be stored.
-
-   function Create_Empty_Toolchain return Toolchain;
-   --  Create an empty toolchain. The result has either to be added to the
-   --  manager or manually freed. The result is an empty toolchain that can
-   --  be modified, different from Null_Toolchain which can't.
-
-   function Is_Known_Toolchain_Name (Name : String) return Boolean;
-   --  Return true if this is the name of a known toolchain.
-
-   function Get_Native_Toolchain (This : Toolchain_Manager) return Toolchain;
-   --  Returns the native toolchain associated to this manager - tries to
-   --  create one if none has already been created
-
-   function Get_Toolchain
-     (This : Toolchain_Manager; Name : String) return Toolchain;
-   --  Return a toolchain according to its name. If no such toolchain exist,
-   --  but the name is the name of a known toolchain, then it will be
-   --  automatically created. Otherwise, will return Null_Toolchain.
-
-   function Compute_Toolchain
-     (This : Toolchain_Manager; Project : Project_Type) return Toolchain;
-   --  Retreives the toolchain based on the contents of a project. This
-   --  toolchain may not be stored in the manager if the project specifies
-   --  dedicated tool commands. The caller is always responsible for freeing
-   --  the returned value.
-
-   function Compute_Toolchain_From_Tool
-     (This : Toolchain_Manager;
-      Name : String;
-      Tool : Tool_Names) return Toolchain;
-   --  Retreives the toolchain of the given project based (in order) on the
-   --  gnatlist and compiler_command attributes of the ide package. Create
-   --  one if needed. Return null if the heuristics can't determine any
-   --  reasonable toolchain.
-
-   procedure Add_Toolchain
-     (This          : Toolchain_Manager;
-      Ada_Toolchain : Toolchain);
-   --  Add a toolchain in the toolchain manager - raise an exception if the
-   --  toolchain already exsits.
-
-   procedure Modify_Toolchain
-     (This          : Toolchain_Manager;
-      Ada_Toolchain : Toolchain);
-   --  Modify an existing toolchain in the toolchain manager - raise an
-   --  exception if the toolchain is not found.
-
-   procedure Remove_Toolchain
-     (This          : Toolchain_Manager;
-      Ada_Toolchain : Toolchain);
-   --  Remove an existing toolchain in the toolchain manager - raise an
-   --  exception if the toolchain is not found.
-
-   function Create_Anonymous_Name (This : Toolchain_Manager) return String;
-   --  Return a unique anonymous name that's not already registered in the
-   --  manager
-
-   procedure Compute_If_Needed
-     (Manager : Toolchain_Manager; This : in out Ada_Library_Info);
-   --  Computes this library info using gnatls if needed.
-
-   function Get_Or_Create_Library_Information
-     (This           : Toolchain_Manager;
-      GNATls_Command : String) return Ada_Library_Info_Access;
-   --  Return the library info for this gnatls command. The resulting object
-   --  is not computed through gnatls, and the information may be inaccurate.
-   --  This is flagged in the internal state of the object, which will do
-   --  a gnatls query the first time up to date data is needed. If there's
-   --  already a library for this gnatls command, it will get returned.
-
-   type Toolchain_Array is array (Integer range <>) of aliased Toolchain;
-
-   function Get_Toolchains (This : Toolchain_Manager) return Toolchain_Array;
-   --  Return the toolchains contained in this manager.
-
-   procedure Scan_Toolchains
-     (This     : Toolchain_Manager;
-      Progress : access procedure
-        (Name    : String;
-         Current : Integer;
-         Total   : Integer));
-   --  Scans the toolchains installed on the system using gprbuild, and run
-   --  each gnat list on the whole list (scanned toolchains + already loaded
-   --  toolchains
-
    procedure Add_Listener
-     (This     : Toolchain_Manager;
+     (Manager  : access Toolchain_Manager_Record;
       Listener : Toolchain_Change_Listener);
    --  Adds a listener to the toolchain change event - does nothing if the
    --  listener is already registered.
 
    procedure Remove_Listener
-     (This     : Toolchain_Manager;
+     (Manager  : access Toolchain_Manager_Record;
       Listener : Toolchain_Change_Listener);
    --  Removes the listener from the toolchain change event - does nothing if
    --  the listener doesn't exist.
@@ -408,7 +379,23 @@ private
       --  that will need to be updated as soon as this is actually used.
    end record;
 
-   type Tool_Name_Array is array (Tool_Names) of String_Access;
+   type Tool_Name_Array is array (Tools) of String_Access;
+   type Boolean_Tool_Array is array (Tools) of Boolean;
+
+   type Compiler (Exe_Length : Natural) is
+      record
+         Exe        : String (1 .. Exe_Length);
+         Is_Valid   : Boolean;
+      end record;
+   No_Compiler : constant Compiler :=
+                   (Exe_Length => 0,
+                    Exe        => "",
+                    Is_Valid   => False);
+
+   package Compiler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Compiler,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
 
    type Toolchain_Record is record
       Name : String_Access;
@@ -428,10 +415,27 @@ private
       Tool_Commands : Tool_Name_Array;
       --  The name of the tools for this toolchain.
 
+      Default_Tools : Tool_Name_Array;
+      --  List of default tools for the target
+
+      Is_Valid_Tool : Boolean_Tool_Array := (others => False);
+      --  Wether those tools could be found.
+
+      Compiler_Commands : Compiler_Maps.Map;
+      --  The compiler commands indexed by language
+
+      Default_Compilers : Compiler_Maps.Map;
+      --  The default compiler commands indexed by language
+
+      Compilers_Scanned : Boolean := False;
+
       Is_Valid : Boolean;
       --  Is this toolchain accessible from the environment ?
 
       Library : Ada_Library_Info_Access;
+
+      Manager : Toolchain_Manager;
+      --  The manager this toolchain is attached to
    end record;
 
    type Toolchain is access all Toolchain_Record;
@@ -447,11 +451,50 @@ private
    package Listener_List is new Ada.Containers.Doubly_Linked_Lists
      (Toolchain_Change_Listener);
 
+   package Language_Sets is new Ada.Containers.Indefinite_Hashed_Sets
+     (String,
+      Hash                => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Elements => Ada.Strings.Equal_Case_Insensitive);
+
    type Toolchain_Manager_Record is abstract tagged record
       Toolchains          : Toolchain_Maps.Map;
       No_Native_Toolchain : Boolean := False;
       Computed_Libraries  : Library_Maps.Map;
       Listeners           : Listener_List.List;
+      Languages           : Language_Sets.Set;
    end record;
+
+   function Get_Native_Toolchain
+     (Manager : access Toolchain_Manager_Record) return Toolchain;
+   --  Returns the native toolchain associated to this manager - tries to
+   --  create one if none has already been created
+
+   function Create_Known_Toolchain
+     (Manager : access Toolchain_Manager_Record;
+      Name    : String) return Toolchain;
+   --  Create a toolchain from a known description
+
+   function Create_Anonymous_Name
+     (Manager : access Toolchain_Manager_Record;
+      Prefix  : String) return String;
+   --  Return a unique anonymous name from a prefix, that's not already
+   --  registered in the manager
+
+   procedure Compute_If_Needed
+     (Manager : access Toolchain_Manager_Record;
+      This    : in out Ada_Library_Info);
+   --  Computes this library info using gnatls if needed.
+
+   function Get_Or_Create_Library_Information
+     (Manager        : access Toolchain_Manager_Record;
+      GNATls_Command : String) return Ada_Library_Info_Access;
+   --  Return the library info for this gnatls command. The resulting object
+   --  is not computed through gnatls, and the information may be inaccurate.
+   --  This is flagged in the internal state of the object, which will do
+   --  a gnatls query the first time up to date data is needed. If there's
+   --  already a library for this gnatls command, it will get returned.
+
+   procedure Fire_Change_Event (This : access Toolchain_Manager_Record);
+   --  Calls the Toolchain_Changed event on all listeners.
 
 end Toolchains;
