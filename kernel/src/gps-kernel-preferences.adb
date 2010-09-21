@@ -446,6 +446,14 @@ package body GPS.Kernel.Preferences is
          Label   => -"Tooltip color",
          Page    => "");
 
+      Tip_Of_The_Day := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General/Display-Tip-Of-The-Day",
+         Default => True,
+         Doc     => -("Whether GPS should display the Tip of the Day dialog"),
+         Label   => -"Tip of the Day",
+         Page    => -"General");
+
       -- Source Editor --
 
       Strip_Blanks := Create

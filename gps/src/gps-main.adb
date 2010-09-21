@@ -1668,6 +1668,13 @@ procedure GPS.Main is
          GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
       end if;
 
+      --  Disable tip of the day pop up window is --hide is
+      --  specified.
+
+      if Hide_GPS then
+         Set_Pref (Tip_Of_The_Day, GPS_Main.Kernel, False);
+      end if;
+
       --  Load the preferences set when creating the kernel.
       --  This needs to be done after all the graphical elements have been
       --  created, to be sure they are realized and will take the preferences

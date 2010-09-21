@@ -610,10 +610,6 @@ class Tip:
 
 # Register preferences
 
-GPS.Preference ("General/Display-Tip-Of-The-Day").create (
- "Tip of the Day", "boolean",
- "Whether GPS should display the Tip of the Day dialog", True)
-
 GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").create (
   "Tip of the day #",
   "integer",
