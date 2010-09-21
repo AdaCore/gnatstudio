@@ -546,6 +546,8 @@ package body Toolchains is
       if This.Default_Compilers.Contains (Lang)
         and then This.Default_Compilers.Element (Lang).Exe = Value
       then
+         --  Set a value equal to the default compiler: Just remove the custom
+         --  value if any
          if This.Compiler_Commands.Contains (Lang) then
             This.Compiler_Commands.Delete (Lang);
          end if;
@@ -554,7 +556,15 @@ package body Toolchains is
       end if;
 
       if Default then
-         This.Default_Compilers.Insert (Lang, Comp);
+         if This.Default_Compilers.Contains (Lang) then
+            This.Default_Compilers.Replace (Lang, Comp);
+         else
+            This.Default_Compilers.Insert (Lang, Comp);
+         end if;
+
+         if This.Compiler_Commands.Contains (Lang) then
+            This.Compiler_Commands.Delete (Lang);
+         end if;
 
       elsif This.Compiler_Commands.Contains (Lang) then
          This.Compiler_Commands.Replace (Lang, Comp);
@@ -731,6 +741,30 @@ package body Toolchains is
               new String'(Result.Default_Tools (J).all);
          end if;
       end loop;
+
+      declare
+         Map  : Compiler_Maps.Map := Result.Compiler_Commands;
+         Iter : Compiler_Maps.Cursor;
+      begin
+         Result.Compiler_Commands := Compiler_Maps.Empty_Map;
+         Iter := Map.First;
+
+         while Compiler_Maps.Has_Element (Iter) loop
+            Result.Compiler_Commands.Insert
+              (Compiler_Maps.Key (Iter), Compiler_Maps.Element (Iter));
+            Compiler_Maps.Next (Iter);
+         end loop;
+
+         Map := Result.Default_Compilers;
+         Result.Default_Compilers := Compiler_Maps.Empty_Map;
+         Iter := Map.First;
+
+         while Compiler_Maps.Has_Element (Iter) loop
+            Result.Default_Compilers.Insert
+              (Compiler_Maps.Key (Iter), Compiler_Maps.Element (Iter));
+            Compiler_Maps.Next (Iter);
+         end loop;
+      end;
 
       return Result;
    end Copy;
@@ -1028,7 +1062,7 @@ package body Toolchains is
          end loop;
 
          --  No path, so it's safe to actually look at the prefix
-         for J in Attr'Range loop
+         for J in reverse Attr'Range loop
             if Attr (J) = '-' then
                return Attr (Attr'First .. J - 1);
             end if;
