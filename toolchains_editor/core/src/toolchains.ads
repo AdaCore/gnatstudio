@@ -274,12 +274,23 @@ package Toolchains is
    --  didn't return until timeout miliseconds, then the call has to be
    --  aborted.
 
+   type Language_Id is private;
+
+   Null_Language_Id : constant Language_Id;
+
    procedure Add_Language
      (Manager : access Toolchain_Manager_Record;
       Lang    : String;
       Project : Project_Type);
    --  Add a new supported language to the toolchain manager
    --  If the language is already present, then nothing happens.
+   --  ??? what is this project parameter for?
+
+   function Get_Or_Create_Language
+     (Manager : access Toolchain_Manager_Record;
+      Lang    : String) return Language_Id;
+   --  Return the language id of the given name, create one if it doesn't exist
+   --  yet.
 
    function Create_Empty_Toolchain
      (Manager : access Toolchain_Manager_Record) return Toolchain;
@@ -455,6 +466,11 @@ private
      (String,
       Hash                => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Elements => Ada.Strings.Equal_Case_Insensitive);
+
+   type Language_Id is new Language_Sets.Cursor;
+
+   Null_Language_Id : constant Language_Id :=
+     Language_Id (Language_Sets.No_Element);
 
    type Toolchain_Manager_Record is abstract tagged record
       Toolchains          : Toolchain_Maps.Map;

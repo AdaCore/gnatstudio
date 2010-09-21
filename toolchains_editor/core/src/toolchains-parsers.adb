@@ -36,11 +36,21 @@ package body Toolchains.Parsers is
    package Toolchain_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Toolchain);
 
-   type Attribute is record
+   type Attribute_Kind is (Unknown_Kind, Tool_Kind, Compiler_Kind);
+
+   type Attribute (Kind : Attribute_Kind := Tool_Kind) is record
       Use_Var_Ref       : Boolean := False;
       String_Expression : String_Access;
       Error             : String_Access;
-      Tool              : Tool_Names := Unknown;
+
+      case Kind is
+         when Tool_Kind =>
+            Tool : Tools := Unknown;
+         when Compiler_Kind =>
+            Lang : Language_Id;
+         when Unknown_Kind =>
+            null;
+      end case;
    end record;
 
    procedure Free (This : in out Attribute);
@@ -127,8 +137,13 @@ package body Toolchains.Parsers is
          Is_Attribute_Mode : Boolean;
          Unique_Toolchain  : Toolchain;
          Matching          : Boolean;
-         Is_Creating_Anonymous_Toolchain : Boolean;
          Attr              : Attribute;
+
+         Dummy_Project_Tree : Project_Tree_Access;
+         Dummy_Project      : Project_Type := GNATCOLL.Projects.No_Project;
+         --  These two variables are used to create a dummy project for the ide
+         --  package, setting attributes
+
       begin
          --  The first thing we want to be able to do here is to list all
          --  targets, and determine on which variables they depend on. It's
@@ -181,7 +196,6 @@ package body Toolchains.Parsers is
          Is_Case_Mode := False;
          Is_Attribute_Mode := False;
          Unique_Toolchain := null;
-         Is_Creating_Anonymous_Toolchain := False;
 
          while Decl_Id /= Empty_Node loop
             Item_Id := Current_Item_Node (Decl_Id, Node_Data);
@@ -220,33 +234,40 @@ package body Toolchains.Parsers is
                if Attr.Tool /= Unknown and then not Attr.Use_Var_Ref then
                   --  We found an attribute with a plain name
 
-                  if Unique_Toolchain = null then
-                     Unique_Toolchain := Compute_Toolchain_From_Tool
-                       (Manager, Attr.String_Expression.all, Attr.Tool);
-
-                     if Unique_Toolchain = null then
-                        --  If we can't compute a toolchain from the expression
-                        --  of the attribute, then we're creating an anonymous
-                        --  toolchain that doesn't correspond to predefined
-                        --  things.
-
-                        Is_Creating_Anonymous_Toolchain := True;
-
-                        Unique_Toolchain := new Toolchain_Record;
-                        Unique_Toolchain.Is_Native := False;
-                        Unique_Toolchain.Is_Custom := True;
-                        Unique_Toolchain.Name := new String'
-                          (Create_Anonymous_Name (Manager));
-                     end if;
+                  if Dummy_Project = GNATCOLL.Projects.No_Project then
+                     Dummy_Project_Tree := new Project_Tree;
+                     Dummy_Project_Tree.Load_Empty_Project;
+                     Dummy_Project := Dummy_Project_Tree.Root_Project;
                   end if;
 
-                  if Is_Creating_Anonymous_Toolchain then
-                     Unique_Toolchain.Tool_Commands (Attr.Tool) :=
-                       new String'(Attr.String_Expression.all);
+                  if Attr.Kind = Compiler_Kind then
+                     Dummy_Project.Set_Attribute
+                       (Attribute => Build ("ide", "compiler_command"),
+                        Value     => Attr.String_Expression.all,
+                        Index     => Element (Attr.Lang));
+                  elsif Attr.Kind = Tool_Kind then
+                     case Attr.Tool is
+                        when Unknown =>
+                           null;
+                        when GNAT_Driver =>
+                           Dummy_Project.Set_Attribute
+                             (Attribute => Build ("ide", "gnat"),
+                              Value     => Attr.String_Expression.all);
+                        when GNAT_List =>
+                           Dummy_Project.Set_Attribute
+                             (Attribute => Build ("ide", "gnatls"),
+                              Value     => Attr.String_Expression.all);
+                        when Debugger =>
+                           Dummy_Project.Set_Attribute
+                             (Attribute => Build ("ide", "debugger_command"),
+                              Value     => Attr.String_Expression.all);
+                        when CPP_Filt =>
+                           null;
+                     end case;
                   end if;
                end if;
 
-               if Attr.Tool /= Unknown then
+               if Attr.Kind /= Unknown_Kind then
                   This.Attributes.Insert (Item_Id);
 
                   if Attr.Error /= null then
@@ -264,16 +285,16 @@ package body Toolchains.Parsers is
             Decl_Id := Next_Declarative_Item (Decl_Id, Node_Data);
          end loop;
 
-         if Unique_Toolchain /= null then
-            --  There's only one toolchain declared in this ide package
+         if Dummy_Project /= GNATCOLL.Projects.No_Project then
+            --  We managed to create a dummy project, create the corresponding
+            --  toolchain.
+
+            Unique_Toolchain := Get_Toolchain (Manager, Dummy_Project);
 
             This.Toolchains.Insert
               (Unique_Toolchain.Name.all, Unique_Toolchain);
 
-            if Is_Creating_Anonymous_Toolchain then
-               Compute_Predefined_Paths (Unique_Toolchain, Manager);
-               Add_Toolchain (Manager, Unique_Toolchain);
-            end if;
+            Free (Dummy_Project_Tree);
          elsif This.Variable_Node /= Empty_Node then
             --  The toolchain is controlled by a scenario variable. Read all
             --  the possible values of the scenario and use it to extract
@@ -335,14 +356,13 @@ package body Toolchains.Parsers is
                   Ada_Toolchain := Get_Toolchain (Manager, Choice_Name);
 
                   if Ada_Toolchain = null then
-                     Ada_Toolchain := new Toolchain_Record'
-                       (Name          => new String'(Choice_Name),
-                        Label         => new String'(Choice_Name),
-                        Is_Native     => False,
-                        Is_Custom     => True,
-                        Tool_Commands => (others => null),
-                        Is_Valid      => False,
-                        Library       => null);
+                     Ada_Toolchain := Create_Empty_Toolchain (Manager);
+                     Ada_Toolchain.Name := new String'(Choice_Name);
+                     Ada_Toolchain.Label := new String'(Choice_Name);
+                     Ada_Toolchain.Is_Native := False;
+                     Ada_Toolchain.Is_Custom := True;
+                     Ada_Toolchain.Is_Valid := False;
+
                      Created_Toolchains.Append (Ada_Toolchain);
                   end if;
 
@@ -431,7 +451,7 @@ package body Toolchains.Parsers is
             Cur := Created_Toolchains.First;
 
             while Cur /= Toolchain_Lists.No_Element loop
-               Compute_Predefined_Paths (Element (Cur), Manager);
+               Compute_Predefined_Paths (Element (Cur));
                Add_Toolchain (Manager, Element (Cur));
 
                Cur := Next (Cur);
@@ -475,24 +495,33 @@ package body Toolchains.Parsers is
          Var_Ref := Empty_Node;
 
          if Attribute_Name = "gnatlist" then
-            Result.Tool := GNAT_List;
+            Result :=
+              (Kind => Tool_Kind, Tool => GNAT_List, others => <>);
          elsif Attribute_Name = "gnat" then
-            Result.Tool := GNAT_Driver;
+            Result :=
+              (Kind => Tool_Kind, Tool => GNAT_Driver, others => <>);
          elsif Attribute_Name = "compiler_command" then
             declare
                Attribute_Index : constant String := Get_Name_String
                  (Associative_Array_Index_Of (Attribute_Id, Node_Data));
             begin
                if Attribute_Index = "ada" then
-                  Result.Tool := Ada_Compiler;
+                  Result :=
+                    (Kind   => Compiler_Kind,
+                     Lang   => Manager.Get_Or_Create_Language ("ada"),
+                     others => <>);
                elsif Attribute_Index = "c" then
-                  Result.Tool := C_Compiler;
+                  Result :=
+                    (Kind   => Compiler_Kind,
+                     Lang   => Manager.Get_Or_Create_Language ("c"),
+                     others => <>);
 
                   --  ??? what about C++ compiler ???
                end if;
             end;
          elsif Attribute_Name = "debugger_command" then
-            Result.Tool := Debugger;
+            Result :=
+              (Kind => Tool_Kind, Tool => Debugger, others => <>);
          else
             Result.Error := Create_Error_Message
               (Attribute_Id,
@@ -959,10 +988,10 @@ package body Toolchains.Parsers is
                Get_Command (The_Toolchain, GNAT_Driver), Variable_Id);
             Create_Attribute
               (Container, "compiler_command", "ada",
-               Get_Command (The_Toolchain, Ada_Compiler), Variable_Id);
+               Get_Compiler (The_Toolchain, "ada").Exe, Variable_Id);
             Create_Attribute
               (Container, "compiler_command", "c",
-               Get_Command (The_Toolchain, C_Compiler), Variable_Id);
+               Get_Compiler (The_Toolchain, "c").Exe, Variable_Id);
             Create_Attribute
               (Container, "debugger_command", "",
                Get_Command (The_Toolchain, Debugger), Variable_Id);

@@ -835,6 +835,22 @@ package body Toolchains is
    end Add_Language;
 
    ----------------------------
+   -- Get_Or_Create_Language --
+   ----------------------------
+
+   function Get_Or_Create_Language
+     (Manager : access Toolchain_Manager_Record;
+      Lang    : String) return Language_Id
+   is
+   begin
+      if not Manager.Languages.Contains (Lang) then
+         Manager.Languages.Insert (Lang);
+      end if;
+
+      return Language_Id (Manager.Languages.Find (Lang));
+   end Get_Or_Create_Language;
+
+   ----------------------------
    -- Create_Empty_Toolchain --
    ----------------------------
 
