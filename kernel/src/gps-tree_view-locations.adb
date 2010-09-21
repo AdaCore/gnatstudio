@@ -251,7 +251,6 @@ package body GPS.Tree_View.Locations is
       Class_Initialize (Self);
       Gtk_New (Self.Sort, Model);
       Gtk_New (Self.Filter, Self.Sort);
---        Self.Sort.Unref;
       Self.Filter.Set_Modify_Func (Columns_Types (Model), On_Modify'Access);
       Self.Set_Source_Model (Gtk_Tree_Model (Self.Filter));
 
