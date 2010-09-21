@@ -77,6 +77,9 @@ package Toolchains is
       new String'("powerpc-elf-pikeos"),
       new String'("powerpc-xcoff-lynxos"));
 
+   function Is_Known_Toolchain_Name (Name : String) return Boolean;
+   --  Tell if the name is a known toolchain description
+
    Toolchain_Exception : exception;
 
    --------------
@@ -347,6 +350,16 @@ package Toolchains is
    --  each gnat list on the whole list (scanned toolchains + already loaded
    --  toolchains
 
+   function Get_Native_Toolchain
+     (Manager : access Toolchain_Manager_Record) return Toolchain;
+   --  Returns the native toolchain associated to this manager - tries to
+   --  create one if none has already been created
+
+   procedure Compute_If_Needed
+     (Manager : access Toolchain_Manager_Record;
+      This    : in out Ada_Library_Info);
+   --  Computes this library info using gnatls if needed.
+
    -------------------------------
    -- Toolchain_Change_Listener --
    -------------------------------
@@ -371,6 +384,15 @@ package Toolchains is
       Listener : Toolchain_Change_Listener);
    --  Removes the listener from the toolchain change event - does nothing if
    --  the listener doesn't exist.
+
+   function Get_Or_Create_Library_Information
+     (Manager        : access Toolchain_Manager_Record;
+      GNATls_Command : String) return Ada_Library_Info_Access;
+   --  Return the library info for this gnatls command. The resulting object
+   --  is not computed through gnatls, and the information may be inaccurate.
+   --  This is flagged in the internal state of the object, which will do
+   --  a gnatls query the first time up to date data is needed. If there's
+   --  already a library for this gnatls command, it will get returned.
 
 private
 
@@ -480,11 +502,6 @@ private
       Languages           : Language_Sets.Set;
    end record;
 
-   function Get_Native_Toolchain
-     (Manager : access Toolchain_Manager_Record) return Toolchain;
-   --  Returns the native toolchain associated to this manager - tries to
-   --  create one if none has already been created
-
    function Create_Known_Toolchain
      (Manager : access Toolchain_Manager_Record;
       Name    : String) return Toolchain;
@@ -495,20 +512,6 @@ private
       Prefix  : String) return String;
    --  Return a unique anonymous name from a prefix, that's not already
    --  registered in the manager
-
-   procedure Compute_If_Needed
-     (Manager : access Toolchain_Manager_Record;
-      This    : in out Ada_Library_Info);
-   --  Computes this library info using gnatls if needed.
-
-   function Get_Or_Create_Library_Information
-     (Manager        : access Toolchain_Manager_Record;
-      GNATls_Command : String) return Ada_Library_Info_Access;
-   --  Return the library info for this gnatls command. The resulting object
-   --  is not computed through gnatls, and the information may be inaccurate.
-   --  This is flagged in the internal state of the object, which will do
-   --  a gnatls query the first time up to date data is needed. If there's
-   --  already a library for this gnatls command, it will get returned.
 
    procedure Fire_Change_Event (This : access Toolchain_Manager_Record);
    --  Calls the Toolchain_Changed event on all listeners.

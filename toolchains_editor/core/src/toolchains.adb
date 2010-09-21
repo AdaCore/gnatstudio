@@ -40,9 +40,6 @@ package body Toolchains is
    --  the session.
    --  ??? Use this to free the library info when needed
 
-   function Is_Known_Toolchain_Name (Name    : String) return Boolean;
-   --  Tell if the name is a known toolchain description
-
    procedure Compute_Gprconfig_Compilers (Tc : Toolchain);
    --  Retrieve the default compilers for the specified toolchain, and sets the
    --  values.
