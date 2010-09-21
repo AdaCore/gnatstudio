@@ -231,7 +231,7 @@ package body Toolchains.Parsers is
 
                Attr := Handle_Attribute (Item_Id);
 
-               if Attr.Tool /= Unknown and then not Attr.Use_Var_Ref then
+               if Attr.Kind /= Unknown_Kind and then not Attr.Use_Var_Ref then
                   --  We found an attribute with a plain name
 
                   if Dummy_Project = GNATCOLL.Projects.No_Project then
