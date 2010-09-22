@@ -1323,19 +1323,15 @@ package body GVD.Canvas is
       Mitem   : Gtk_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
       Xr, Yr  : Gint;
-      Success : Boolean;
+      CItem   : Canvas_Item;
       Item    : Display_Item;
    begin
       Default_Browser_Context_Factory
         (Context, Kernel, Event_Widget, Object, Event, Menu);
 
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
-         --  Click on an item: this is a file selection
-         Get_Origin (Get_Window (Get_Canvas (Canvas)), Xr, Yr, Success);
-         Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
-         Set_Y (Event, Get_Y_Root (Event) - Gdouble (Yr));
-         Item := Display_Item
-           (Item_At_Coordinates (Get_Canvas (Canvas), Event));
+         Item_At_Coordinates (Get_Canvas (Canvas), Event, CItem, Xr, Yr);
+         Item := Display_Item (CItem);
       end if;
 
       if Item = null then
@@ -1364,8 +1360,7 @@ package body GVD.Canvas is
          declare
             Component : aliased Generic_Type_Access;
             Name      : constant String := Get_Component
-              (Item, X => Gint (Get_X (Event)), Y => Gint (Get_Y (Event)),
-               Component => Component'Access);
+              (Item, X => Xr, Y => Yr, Component => Component'Access);
          begin
             if Component /= null then
                Item_Contextual_Menu
