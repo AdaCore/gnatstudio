@@ -47,10 +47,11 @@ with Gtkada.Handlers;                  use Gtkada.Handlers;
 with Gtkada.MDI;                       use Gtkada.MDI;
 
 with Basic_Types;                      use Basic_Types;
-with Commands;                         use Commands;
+with Commands.Interactive;
 with Default_Preferences;              use Default_Preferences;
 with GPS.Editors.GtkAda;               use GPS.Editors, GPS.Editors.GtkAda;
 with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;             use GPS.Kernel.Locations;
@@ -88,12 +89,21 @@ package body GPS.Location_View is
    --  first message and the open first location if requested.
 
    procedure Set_Filter_Visibility
-     (Self : access Location_View_Record'Class;
+     (Self    : access Location_View_Record'Class;
       Visible : Boolean);
    --  Hide or show the filter panel
 
    package Message_Conversions is
      new System.Address_To_Access_Conversions (Abstract_Message'Class);
+
+   type Remove_Message_Command is
+     new Commands.Interactive.Interactive_Command with null record;
+
+   overriding function Execute
+     (Self    : access Remove_Message_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Removes selected message
 
    ---------------------
    -- Local constants --
@@ -251,6 +261,31 @@ package body GPS.Location_View is
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Remove_Message_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+
+      Child : constant MDI_Child :=
+                Find_MDI_Child_By_Tag
+                  (Get_MDI (GPS.Kernel.Get_Kernel (Context.Context)),
+                   Location_View_Record'Tag);
+
+   begin
+      if Child /= null then
+         On_Remove_Message
+           (Location_View_Record'Class (Child.Get_Widget.all)'Access);
+      end if;
+
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Expand_Category --
@@ -1013,9 +1048,11 @@ package body GPS.Location_View is
    is
       pragma Unreferenced (Path);
 
+      use type Commands.Command_Access;
+
       Value   : GValue;
       Action  : GPS.Kernel.Standard_Hooks.Action_Item;
-      Success : Command_Return_Type;
+      Success : Commands.Command_Return_Type;
       pragma Unreferenced (Success);
 
    begin
@@ -1025,7 +1062,7 @@ package body GPS.Location_View is
       if Action /= null
         and then Action.Associated_Command /= null
       then
-         Success := Execute (Action.Associated_Command);
+         Success := Action.Associated_Command.Execute;
       end if;
 
       Unset (Value);
@@ -1238,6 +1275,7 @@ package body GPS.Location_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Module_Name : constant String := "Location View";
+      Command     : Commands.Interactive.Interactive_Command_Access;
 
    begin
       Location_View_Module_Id := new Location_View_Module;
@@ -1246,6 +1284,22 @@ package body GPS.Location_View is
          Kernel      => Kernel,
          Module_Name => Module_Name);
 
+      --  Register actions
+
+      Command :=
+         new Remove_Message_Command'
+           (Commands.Interactive.Interactive_Command with null record);
+      GPS.Kernel.Actions.Register_Action
+        (Kernel,
+         -"Remove message",
+         Command,
+         -"Remove selected message",
+         null,
+         -"Locations view");
+      GPS.Kernel.Bind_Default_Key
+        (Kernel,
+         -"Remove message",
+         "alt-Delete");
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
