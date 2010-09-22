@@ -453,7 +453,9 @@ NF-50-I702-007 Support for interfaces in completion (2010-02-24)
 
 NF-50-I601-013 Key binding to remove messages in locations view (2010-09-22)
 
-  Key binding is added to remove individual messages in locations view.
+  A new key binding (alt-del by default, can be configured via the
+  Edit->Key Shortcuts menu) is available to remove individual messages
+  in the locations view.
 
 NF-50-I501-009 New shell function: GPS.version (2010-02-18)
 
