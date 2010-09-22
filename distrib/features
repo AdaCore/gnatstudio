@@ -390,8 +390,8 @@ NF-50-IB10-011 New contextual menu "Close all other editors (2009-11-17)
 
 NF-50-IB09-016 Filter improvement for locations view (2010-09-21)
 
-  When filter is applied to locations view files rows without visible messages
-  are not displayed.
+  When a filter is applied to locations view, file rows that do not have any
+  visible messages are now hidden.
 
 NF-50-IA28-022 Custom Run/Build contextual menus (2010-02-22)
 
