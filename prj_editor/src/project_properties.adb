@@ -5179,6 +5179,8 @@ package body Project_Properties is
             Tmp_Project  : Project_Type;
          begin
             while Current (Prj_Iter) /= GNATCOLL.Projects.No_Project loop
+               Tmp_Project := Current (Prj_Iter);
+
                declare
                   Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
                begin
@@ -5193,7 +5195,6 @@ package body Project_Properties is
 
                      if Editor.XML_Pages /= null then
                         for X in Editor.XML_Pages'Range loop
-                           Tmp_Project := Current (Prj_Iter);
                            Generate_Project
                              (Page               =>
                                 Project_Wizard_Page (Editor.XML_Pages (X)),
