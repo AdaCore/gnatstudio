@@ -97,7 +97,9 @@ package GPS.Location_View.Listener is
    --  purpose because it contains unmodified number of children items.
    Sort_Order_Hint_Column    : constant Glib.Gint := 14;
    --  Hint to the view how file level nodes must be sorted by default.
-   Total_Columns             : constant Glib.Gint := 15;
+   Message_Column            : constant Glib.Gint := 15;
+   --  Access to message converted to address.
+   Total_Columns             : constant Glib.Gint := 16;
    --  Total number of columns.
 
 private

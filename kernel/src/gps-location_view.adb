@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
+with System.Address_To_Access_Conversions;
 with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
@@ -90,6 +91,9 @@ package body GPS.Location_View is
      (Self : access Location_View_Record'Class;
       Visible : Boolean);
    --  Hide or show the filter panel
+
+   package Message_Conversions is
+     new System.Address_To_Access_Conversions (Abstract_Message'Class);
 
    ---------------------
    -- Local constants --
@@ -239,6 +243,9 @@ package body GPS.Location_View is
    procedure Goto_Location (Self : access Location_View_Record'Class);
    --  Goto the selected location in the Location_View
 
+   procedure On_Remove_Message (Self : access Location_View_Record'Class);
+   --  Removes selected message
+
    package Location_View_Callbacks is
      new Gtk.Handlers.Callback (Location_View_Record);
 
@@ -379,6 +386,31 @@ package body GPS.Location_View is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Goto_Location;
+
+   -----------------------
+   -- On_Remove_Message --
+   -----------------------
+
+   procedure On_Remove_Message (Self : access Location_View_Record'Class) is
+      Model   : Gtk_Tree_Model;
+      Iter    : Gtk_Tree_Iter;
+      Value   : GValue;
+      Message : Message_Access;
+
+   begin
+      Self.View.Get_Selection.Get_Selected (Model, Iter);
+
+      if Model = null or else Iter = Null_Iter then
+         return;
+      end if;
+
+      Model.Get_Value (Iter, Message_Column, Value);
+      Message :=
+        Message_Access (Message_Conversions.To_Pointer (Get_Address (Value)));
+      Glib.Values.Unset (Value);
+
+      Message.Remove;
+   end On_Remove_Message;
 
    ------------------------
    -- On_Expand_Category --
@@ -695,10 +727,14 @@ package body GPS.Location_View is
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) >= 3 then
+         Gtk_New (Mitem, -"Remove message");
+         Location_View_Callbacks.Object_Connect
+           (Mitem, Signal_Activate, On_Remove_Message'Access, Explorer);
+         Append (Menu, Mitem);
+
          Gtk_New (Mitem, -"Jump to location");
          Location_View_Callbacks.Object_Connect
            (Mitem, Signal_Activate, Goto_Location'Access, Explorer);
-
          Append (Menu, Mitem);
 
          declare

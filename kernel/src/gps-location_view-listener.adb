@@ -20,7 +20,7 @@
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with System;
+with System.Address_To_Access_Conversions;
 
 with Glib.Object;
 with Glib;
@@ -110,6 +110,10 @@ package body GPS.Location_View.Listener is
      (Self    : not null access Locations_Listener;
       Message : Message_Access) return Node_Access;
    --  Find node corresponding to Message
+
+   package Message_Conversions is
+     new System.Address_To_Access_Conversions
+       (GPS.Kernel.Messages.Abstract_Message'Class);
 
    --------------------
    -- Recursive_Free --
@@ -475,6 +479,9 @@ package body GPS.Location_View.Listener is
 
          when Sort_Order_Hint_Column =>
             return Glib.GType_Int;
+
+         when Message_Column =>
+            return Glib.GType_Pointer;
 
          when others =>
             return Glib.GType_Invalid;
@@ -901,6 +908,20 @@ package body GPS.Location_View.Listener is
                --  get_sort_order_hint
                --  Sort_Order_Hint'Pos (Category_Node.Sort_Hint));
             end;
+
+         when Message_Column =>
+            Init (Value, Glib.GType_Pointer);
+
+            case Node.Kind is
+               when Node_Category | Node_File =>
+                  Set_Address (Value, System.Null_Address);
+
+               when Node_Message =>
+                  Set_Address
+                    (Value,
+                     Message_Conversions.To_Address
+                       (Message_Conversions.Object_Pointer (Node.Message)));
+            end case;
 
          when others =>
             null;
