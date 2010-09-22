@@ -1,10 +1,16 @@
 Known Problems fixed in GPS 5.0.0
 
+- J922-011: Modifying a variable under the debugger is not reflected
+  Problem:    In the debugger data window, when modifying the value of a
+              variable, the new value is not displayed immediately.
+  Workaround: The variable is properly updateed, and will be displayed
+              at the next debugger command (e.g. step, next).
+
 - J921-018: Right-click in debugger Data Window selects wrong component
   Problem:    If you move boxes around in the Data Window, and then right
               click on a specific line within a box, it might happen that
-              the wrong line is selected
-  Workaround: Do not move the items
+              the wrong line is selected.
+  Workaround: Do not move the items.
 
 - J916-009: Setting the default remote servers for a project does not work
   Problem:    Clicking on the 'Set default' button of the Remote view has no
