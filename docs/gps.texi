@@ -1369,8 +1369,10 @@ Expand all the files in the current categories.
 @item Collapse all
 Collapse all the categories in the Locations View
 
-@item Remove category/file
-Remove the selected category or file from the Locations View.
+@item Remove category/file/message
+Remove the selected category, file or message from the Locations View.
+Selected message can be removed using @code{Locations view->Remove message}
+key binding also.
 
 @item Jump to location
 Open the location contained in the message, if any.
