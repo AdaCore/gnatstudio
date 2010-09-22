@@ -31,7 +31,8 @@ with GNAT.Strings; use GNAT.Strings;
 
 with Construct_Tries;
 with GNATCOLL.Symbols;
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Language.Tree.Database is
 
@@ -421,11 +422,19 @@ package Language.Tree.Database is
 
    function Get_Or_Create
      (Db        : Construct_Database_Access;
-      File      : Virtual_File) return Structured_File_Access;
+      File      : Virtual_File;
+      Project   : Project_Type := No_Project) return Structured_File_Access;
    --  Return the file node corresponding to the given file path, and create
    --  one if needed. The creation of the file implies the addition of all its
    --  contents. An empty file (not null) will be returned in case the input
    --  file path is not valid.
+   --  If a file is created, then it will be created with the project given
+   --  in parameter - othewise the project attribute will be ignored.
+
+   function Get_File
+     (Db   : Construct_Database_Access;
+      File : Virtual_File) return Structured_File_Access;
+   --  Return a file already stored in the construct db, null if none.
 
    procedure Remove_File
      (Db        : Construct_Database_Access;
@@ -433,6 +442,14 @@ package Language.Tree.Database is
    --  Remove the file from the database if is exist. If the file has external
    --  references, as set through the Ref primitive of Structured_File, then
    --  the removal will be aborted.
+
+   function Get_Project
+     (File : Structured_File_Access) return Project_Type;
+   --  Return the project associated to this file.
+
+   procedure Set_Project
+     (File : Structured_File_Access; Project : Project_Type);
+   --  Changes the association between the file and the project.
 
    procedure Update_Contents
      (Db : access Construct_Database; File : Virtual_File);
@@ -591,7 +608,11 @@ package Language.Tree.Database is
    type Database_Listener_Access is access all Database_Listener'Class;
 
    type Update_Kind is
-     (Minor_Change, Structural_Change, Full_Change, Removed);
+     (Minor_Change,
+      Structural_Change,
+      Full_Change,
+      Project_Change,
+      Removed);
 
    procedure File_Updated
      (Listener : access Database_Listener;
@@ -752,6 +773,8 @@ private
       Update_Locked : Boolean := False;
 
       Ref           : Natural := 0;
+
+      Project       : Project_Type := No_Project;
    end record;
 
    type Update_Lock is limited new Limited_Controlled with record

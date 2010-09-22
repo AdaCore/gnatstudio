@@ -24,6 +24,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
@@ -1267,6 +1268,7 @@ package body Completion_Module is
    procedure Update_Construct_Database
      (Kernel : access Kernel_Handle_Record'Class)
    is
+      File : Structured_File_Access;
    begin
       if Smart_Completion.Get_Pref /= Disabled then
          declare
@@ -1285,11 +1287,29 @@ package body Completion_Module is
                Added_Files   => Added_Files);
 
             for J in Removed_Files'Range loop
-               Remove_File
+               File := Get_File
                  (Get_Construct_Database (Kernel), Removed_Files (J));
+
+               if File /= null then
+                  Set_Project (File, No_Project);
+
+                  Remove_File
+                    (Get_Construct_Database (Kernel), Removed_Files (J));
+               end if;
             end loop;
 
             Unchecked_Free (Removed_Files);
+
+            for J in All_Files'Range loop
+               declare
+                  S_File : constant Structured_File_Access := Get_File
+                    (Get_Construct_Database (Kernel), All_Files (J));
+               begin
+                  if S_File /= null then
+                     Set_Project (S_File, Get_Project (Kernel));
+                  end if;
+               end;
+            end loop;
 
             Do_On_Each_File
               (Handle         => Kernel,
@@ -1311,10 +1331,20 @@ package body Completion_Module is
    procedure Load_One_File_Constructs
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
    is
-      Dummy : Structured_File_Access;
-      pragma Unreferenced (Dummy);
+      S_File : Structured_File_Access;
    begin
-      Dummy := Get_Or_Create (Get_Construct_Database (Kernel), File);
+      S_File := Get_Or_Create
+        (Get_Construct_Database (Kernel), File, Get_Project (Kernel));
+
+      if S_File /= null
+        and then Get_Project (S_File) /= Get_Project (Kernel)
+      then
+         --  Checks if the project has been properly updated. If not, this file
+         --  may have been open on No_Project before the recomputation, so
+         --  setup the proper project.
+
+         Set_Project (S_File, Get_Project (Kernel));
+      end if;
    end Load_One_File_Constructs;
 
    ---------------------

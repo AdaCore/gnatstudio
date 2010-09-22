@@ -21,6 +21,7 @@ with System;                  use System;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada_Semantic_Tree.Lang;  use Ada_Semantic_Tree.Lang;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 
 package body Ada_Semantic_Tree.Units is
 
@@ -630,7 +631,10 @@ package body Ada_Semantic_Tree.Units is
                --  If the full unit name is actually a prefix of the child,
                --  we found a child
 
-               if Is_Prefix_Of (Unit.Name.all, Child_Unit.Name.all, False) then
+               if Is_Prefix_Of (Unit.Name.all, Child_Unit.Name.all, False)
+                 and then Get_Project (Get_File (Unit.Entity))
+                 = Get_Project (Get_File (Child_Unit.Entity))
+               then
                   Unlink_Parent (Child_Unit.all);
 
                   Child_Unit.Parent := Unit.Entity;
@@ -665,6 +669,8 @@ package body Ada_Semantic_Tree.Units is
 
                if not Get_Construct (It_Entity).Is_Declaration
                  and then Equal (It_Unit.Name.all, Unit.Name.all, False)
+                 and then Get_Project (Get_File (It_Unit.Entity))
+                 = Get_Project (Get_File (Unit.Entity))
                then
                   Unlink_Parent (It_Unit.all);
 
@@ -756,6 +762,8 @@ package body Ada_Semantic_Tree.Units is
 
                if Get_Construct (It_Entity).Is_Declaration
                  and then Equal (It_Unit.Name.all, Unit.Name.all, False)
+                 and then Get_Project (Get_File (It_Unit.Entity))
+                 = Get_Project (Get_File (Unit.Entity))
                then
                   Unlink_Parent (Unit.all);
 
@@ -1291,9 +1299,13 @@ package body Ada_Semantic_Tree.Units is
       Assistant  : Database_Assistant_Access;
       List_Annot : Tree_Annotations_Pckg.Annotation;
       File       : constant Structured_File_Access := Get_File (Unit.Entity);
+
+      Other_Part : Entity_Persistent_Access;
    begin
       Assistant := Get_Assistant
         (Get_Database (Get_File (Unit.Entity)), Ada_Unit_Assistant_Id);
+
+      --  Disconnect children
 
       Child_It := First (Unit.Children_Units);
 
@@ -1323,6 +1335,31 @@ package body Ada_Semantic_Tree.Units is
       end loop;
 
       Clear (Unit.Children_Units);
+
+      --  Disconnect corresponding body / spec
+
+      if Unit.Entity = Unit.Spec_Unit then
+         Other_Part := Unit.Body_Unit;
+      else
+         Other_Part := Unit.Spec_Unit;
+      end if;
+
+      if Exists (Other_Part) then
+         declare
+            Unit_To_Disconnect : constant Unit_Access :=
+              Get_Unit_Info (Unit.Unit_Key, To_Entity_Access (Other_Part));
+         begin
+            if Unit_To_Disconnect /= Null_Unit_Access then
+               if Unit.Entity = Unit_To_Disconnect.Body_Unit then
+                  Unref (Unit_To_Disconnect.Body_Unit);
+               elsif Unit.Entity = Unit_To_Disconnect.Spec_Unit then
+                  Unref (Unit_To_Disconnect.Spec_Unit);
+               end if;
+            end if;
+         end;
+      end if;
+
+      --  Free remaining data
 
       Delete
         (Ada_Unit_Assistant (Assistant.all).Units_Db'Access, Unit.Db_Index);

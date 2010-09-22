@@ -1149,8 +1149,9 @@ package body Language.Tree.Database is
    -------------------
 
    function Get_Or_Create
-     (Db        : Construct_Database_Access;
-      File      : Virtual_File) return Structured_File_Access
+     (Db      : Construct_Database_Access;
+      File    : Virtual_File;
+      Project : Project_Type := No_Project) return Structured_File_Access
    is
       Lang      : Language_Access;
       Tree_Lang : Tree_Language_Access;
@@ -1181,6 +1182,7 @@ package body Language.Tree.Database is
             New_File.Lang := Lang;
             New_File.Tree_Lang := Tree_Lang;
             New_File.Db := Db;
+            New_File.Project := Project;
 
             Insert (Db.Files_Db, File, New_File);
             Insert (Db.Sorted_Files_Db, New_File);
@@ -1191,6 +1193,21 @@ package body Language.Tree.Database is
          end;
       end if;
    end Get_Or_Create;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File
+     (Db   : Construct_Database_Access;
+      File : Virtual_File) return Structured_File_Access is
+   begin
+      if Contains (Db.Files_Db, File) then
+         return Element (Db.Files_Db, File);
+      else
+         return null;
+      end if;
+   end Get_File;
 
    -----------------
    -- Remove_File --
@@ -1234,6 +1251,42 @@ package body Language.Tree.Database is
          Free (S_File);
       end if;
    end Remove_File;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project
+     (File : Structured_File_Access) return Project_Type
+   is
+   begin
+      return File.Project;
+   end Get_Project;
+
+   -----------------
+   -- Set_Project --
+   -----------------
+
+   procedure Set_Project
+     (File : Structured_File_Access; Project : Project_Type)
+   is
+   begin
+      if Project /= File.Project then
+         File.Project := Project;
+
+         declare
+            Cur : Database_Listeners.Cursor;
+         begin
+            Cur := First (File.Db.Listeners);
+
+            while Cur /= Database_Listeners.No_Element loop
+               File_Updated
+                 (Element (Cur), File, Null_Construct_Tree, Project_Change);
+               Cur := Next (Cur);
+            end loop;
+         end;
+      end if;
+   end Set_Project;
 
    ---------------------
    -- Update_Contents --

@@ -210,7 +210,7 @@ package body Ada_Semantic_Tree.Visibility is
          when Minor_Change | Removed =>
             null;
 
-         when Full_Change | Structural_Change =>
+         when Full_Change | Structural_Change | Project_Change =>
             Add_Scope (Null_Construct_Tree_Iterator);
 
       end case;

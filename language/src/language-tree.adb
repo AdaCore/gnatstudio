@@ -219,7 +219,9 @@ package body Language.Tree is
 
    function First (Tree : Construct_Tree) return Construct_Tree_Iterator is
    begin
-      if Tree.Contents'Length > 0 then
+      if Tree = Null_Construct_Tree then
+         return Null_Construct_Tree_Iterator;
+      elsif Tree.Contents'Length > 0 then
          return (Tree.Contents (1)'Access, 1);
       else
          return Null_Construct_Tree_Iterator;

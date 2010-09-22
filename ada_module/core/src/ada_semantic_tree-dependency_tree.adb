@@ -745,7 +745,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
          when Minor_Change | Removed =>
             null;
 
-         when Full_Change | Structural_Change =>
+         when Full_Change | Structural_Change | Project_Change =>
             --  Reset the dependency timestamp for all units.
 
             declare

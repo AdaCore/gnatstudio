@@ -556,11 +556,13 @@ package body Ada_Semantic_Tree.Parts is
       Spec_Unit := Get_Unit_Spec (Unit);
       Body_Unit := Get_Unit_Body (Unit);
 
-      if (Spec_Unit = Null_Unit_Access
-          or else Get_Parts_Up_To_Date (Spec_Unit))
+      if ((Spec_Unit /= Null_Unit_Access
+           and then Get_Parts_Up_To_Date (Spec_Unit))
+          or else Spec_Unit = Null_Unit_Access)
         and then
-          (Body_Unit = Null_Unit_Access
-           or else Get_Parts_Up_To_Date (Body_Unit))
+          ((Body_Unit /= Null_Unit_Access
+            and then Get_Parts_Up_To_Date (Body_Unit))
+           or else Body_Unit = Null_Unit_Access)
       then
          --  The unit is completely up to date - we don't have to do anything
          --  here.
