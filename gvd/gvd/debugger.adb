@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2009, AdaCore                 --
+--                  Copyright (C) 2000-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -900,7 +900,12 @@ package body Debugger is
                       Var_Name, Value);
    begin
       if S /= "" then
-         Send (Debugger, S, Mode => Visible);
+         --  We need to send the command in hidden mode (synchronously)
+         --  because right after this call, Set_Value will typically request
+         --  the new value of the variable, before we got the debugger's
+         --  prompt asynchronously.
+
+         Send (Debugger, S, Mode => Hidden);
       end if;
    end Set_Variable;
 
