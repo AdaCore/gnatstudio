@@ -391,7 +391,7 @@ package body Toolchains.Parsers is
                      else
                         Error_Found := new String'(Attr.Error.all);
                      end if;
-                  elsif Attr.Tool /= Unknown then
+                  elsif Attr.Kind /= Unknown_Kind then
                      if Error_Found /= null then
                         This.Error := Error_Found;
 
@@ -404,8 +404,16 @@ package body Toolchains.Parsers is
                      if Ada_Toolchain /= null
                        and then Ada_Toolchain.Is_Custom
                      then
-                        Ada_Toolchain.Tool_Commands (Attr.Tool) :=
-                          new String'(Attr.String_Expression.all);
+                        if Attr.Kind = Tool_Kind then
+                           Ada_Toolchain.Tool_Commands (Attr.Tool) :=
+                             new String'(Attr.String_Expression.all);
+                        elsif Attr.Kind = Compiler_Kind then
+                           Set_Compiler
+                             (Ada_Toolchain,
+                              Element (Attr.Lang),
+                              Attr.String_Expression.all,
+                              True);
+                        end if;
                      end if;
                   end if;
 
