@@ -446,6 +446,10 @@ NF-50-I702-007 Support for interfaces in completion (2010-02-24)
   primitives will now be offered by the completion, even the ones coming from
   multiple inheritance.
 
+NF-50-I601-013 Key binding to remove messages in locations view (2010-09-22)
+
+  Key binding is added to remove individual messages in locations view.
+
 NF-50-I501-009 New shell function: GPS.version (2010-02-18)
 
   A new function that can be used in plug-ins is provided to query the
