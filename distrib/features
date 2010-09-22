@@ -388,6 +388,11 @@ NF-50-IB10-011 New contextual menu "Close all other editors (2009-11-17)
   When right-clicking on a notebook tab of an editor, a new contextual
   menu entry is shown, to close all other open editors
 
+NF-50-IB09-016 Filter improvement for locations view (2010-09-21)
+
+  When filter is applied to locations view files rows without visible messages
+  are not displayed.
+
 NF-50-IA28-022 Custom Run/Build contextual menus (2010-02-22)
 
   It is now possible through the Build->Settings dialog to tell GPS
