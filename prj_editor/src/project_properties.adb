@@ -88,6 +88,7 @@ with Language_Handlers;         use Language_Handlers;
 with Project_Viewers;           use Project_Viewers;
 with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
+with Toolchains_Editor;         use Toolchains_Editor;
 with Traces;                    use Traces;
 with Namet;
 with Wizards;                   use Wizards;
@@ -549,7 +550,9 @@ package body Project_Properties is
       Errors             : Gtk_Label;
 
       Selector           : Scenario_Selector;
-      Prj_Selector : Project_Selector;
+      Prj_Selector       : Project_Selector;
+
+      Toolchains_Editor  : Toolchains_Edit;
 
       Pages              : Widget_Array_Access;
       --  The pages that have been registered
@@ -4305,7 +4308,9 @@ package body Project_Properties is
             end loop;
 
             if First <= Attr.Hide_In'Last
-              and then Attr.Hide_In (First .. Last - 1) = Context
+              and then
+                (Attr.Hide_In (First .. Last - 1) = Context
+                   or else Attr.Hide_In (First .. Last - 1) = "all")
             then
                Widget := null;
                Expandable := False;
@@ -4506,8 +4511,8 @@ package body Project_Properties is
       General_Page_Box : Gtk_Box;
       Main_Box         : Gtk_Paned;
       Event            : Gtk_Event_Box;
-      General_Size     : Gtk_Size_Group;
       Tmp              : Wizard_Pages_Array_Access;
+
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
@@ -4564,11 +4569,17 @@ package body Project_Properties is
       Gtk_New (Event);
       Gtk_New_Vbox (General_Page_Box, Homogeneous => False);
       Add (Event, General_Page_Box);
-      Gtk_New (General_Size);
       Pack_Start (General_Page_Box,
                   Create_General_Page (Editor, Project, Kernel),
                   Expand => False);
       Gtk_New (Label, -"General");
+      Show (Event);
+      Append_Page (Editor.Note, Event, Label);
+
+      Gtk_New (Event);
+      Editor.Toolchains_Editor := Create_Language_Page (Project, Kernel);
+      Add (Event, Editor.Toolchains_Editor);
+      Gtk_New (Label, -"Languages");
       Show (Event);
       Append_Page (Editor.Note, Event, Label);
 
@@ -4581,13 +4592,14 @@ package body Project_Properties is
 
          XML_Page := XML_Project_Wizard_Page_Access
            (Attribute_Editors_Page_Box
-              (Kernel           => Kernel,
-               Wiz              => null,  --  Not in a wizard
-               Project          => Project,
-               General_Page_Box => General_Page_Box,
-               Nth_Page         => P,
-               Path_Widget      => Editor.Path,
-               Context          => "properties"));
+              (Kernel            => Kernel,
+               Wiz               => null,  --  Not in a wizard
+               Project           => Project,
+               General_Page_Box  => General_Page_Box,
+               Language_Page_Box => Gtk_Box (Editor.Toolchains_Editor),
+               Nth_Page          => P,
+               Path_Widget       => Editor.Path,
+               Context           => "properties"));
 
          if XML_Page /= null
            and then XML_Page.Box /= General_Page_Box
@@ -4744,13 +4756,14 @@ package body Project_Properties is
    --------------------------------
 
    function Attribute_Editors_Page_Box
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Wiz              : Wizard;
-      Project          : Project_Type;
-      General_Page_Box : Gtk.Box.Gtk_Box := null;
-      Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page         : Integer;
-      Context          : String) return Project_Wizard_Page
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Wiz               : Wizard;
+      Project           : Project_Type;
+      General_Page_Box  : Gtk.Box.Gtk_Box := null;
+      Language_Page_Box : Gtk.Box.Gtk_Box := null;
+      Path_Widget       : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Nth_Page          : Integer;
+      Context           : String) return Project_Wizard_Page
    is
       Page         : Attribute_Page renames
         Properties_Module_ID.Pages (Nth_Page);
@@ -4787,6 +4800,10 @@ package body Project_Properties is
                     and then General_Page_Box /= null
                   then
                      Page_Box.Box := General_Page_Box;
+                  elsif Page.Name.all = -"Languages"
+                    and then Language_Page_Box /= null
+                  then
+                     Page_Box.Box := Language_Page_Box;
                   else
                      Gtk_New_Vbox (Page_Box.Box, Homogeneous => False);
                   end if;
@@ -4833,10 +4850,14 @@ package body Project_Properties is
       Attr : constant Attribute_Description_Access :=
         Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
    begin
-      return Get_Current_Value
-        (Kernel  => Editor.Kernel,
-         Project => GNATCOLL.Projects.No_Project,
-         Attr    => Attr);
+      if Editor.Toolchains_Editor /= null then
+         return Get_Languages (Editor.Toolchains_Editor);
+      else
+         return Get_Current_Value
+           (Kernel  => Editor.Kernel,
+            Project => GNATCOLL.Projects.No_Project,
+            Attr    => Attr);
+      end if;
    end Get_Languages;
 
    -----------------
@@ -4904,7 +4925,7 @@ package body Project_Properties is
       then
          --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page
-           (Ed.Kernel, Page - Pages_From_XML_Count + 1);
+           (Ed.Kernel, Page - Pages_From_XML_Count);
       end if;
 
       if P /= null then
@@ -4913,7 +4934,7 @@ package body Project_Properties is
          begin
             Refresh
               (Page      => P,
-               Widget    => Ed.Pages (Page - Pages_From_XML_Count + 1),
+               Widget    => Ed.Pages (Page - Pages_From_XML_Count),
                Project   => Ed.Project,
                Languages => Languages.all);
             Free (Languages);
@@ -5174,7 +5195,7 @@ package body Project_Properties is
       if Response = Gtk_Response_OK then
          declare
             Prj_Iter     : Scenario_Selectors.Project_Iterator :=
-              Start (Editor.Prj_Selector);
+                             Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
             Tmp_Project  : Project_Type;
          begin
@@ -5191,7 +5212,10 @@ package body Project_Properties is
                      Changed := Changed
                        or else Process_General_Page
                          (Editor, Current (Prj_Iter),
-                          Project_Renamed_Or_Moved);
+                          Project_Renamed_Or_Moved)
+                       or else Generate_Project
+                         (Editor.Toolchains_Editor, Current (Prj_Iter),
+                          Current (Scenar_Iter));
 
                      if Editor.XML_Pages /= null then
                         for X in Editor.XML_Pages'Range loop

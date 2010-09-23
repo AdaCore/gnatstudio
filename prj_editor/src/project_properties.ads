@@ -68,13 +68,14 @@ package Project_Properties is
    --  Return the name of the Nth page for editing attributes
 
    function Attribute_Editors_Page_Box
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Wiz              : Wizards.Wizard;
-      Project          : Project_Type;
-      General_Page_Box : Gtk.Box.Gtk_Box := null;
-      Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page         : Integer;
-      Context          : String) return Creation_Wizard.Project_Wizard_Page;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Wiz               : Wizards.Wizard;
+      Project           : Project_Type;
+      General_Page_Box  : Gtk.Box.Gtk_Box := null;
+      Language_Page_Box : Gtk.Box.Gtk_Box := null;
+      Path_Widget       : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Nth_Page          : Integer;
+      Context           : String) return Creation_Wizard.Project_Wizard_Page;
    --  Return the nth page for editing attributes.
    --  Return null if the  given page contains no visible attribute.
    --

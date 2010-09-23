@@ -17,8 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Equal_Case_Insensitive;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNAT.Expect;              use GNAT.Expect;
 pragma Warnings (Off);
@@ -33,6 +35,8 @@ with Gdk.Event;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
+with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
@@ -45,10 +49,12 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Remote;
@@ -83,19 +89,23 @@ package body Toolchains_Editor is
 
    type Tool_Kind is (Tool_Kind_Tool, Tool_Kind_Compiler);
 
-   type Entry_Callback_User_Object is record
+   type Tool_Callback_User_Object is record
       Kind      : Tool_Kind;
       Tool_Name : Toolchains.Tools;
       Lang      : Unbounded_String;
       Label     : Gtk_Label;
       Value     : Gtk_Entry;
       Icon      : Gtk_Image;
+      Reset_Btn : Gtk_Button;
    end record;
 
-   package Entry_Callback is new Gtk.Handlers.User_Return_Callback
+   package Tool_Callback_Return is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Toolchains_Edit_Record,
-      User_Type   => Entry_Callback_User_Object,
+      User_Type   => Tool_Callback_User_Object,
       Return_Type => Boolean);
+   package Tool_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Toolchains_Edit_Record,
+      User_Type   => Tool_Callback_User_Object);
 
    type GPS_Toolchain_Manager_Record is
      new Toolchains.Toolchain_Manager_Record with record
@@ -108,6 +118,11 @@ package body Toolchains_Editor is
       Timeout_MS : Integer) return String;
    --  Executes the command and returns the result.
 
+   procedure Set_Project
+     (Editor    : Toolchains_Edit;
+      Project   : GNATCOLL.Projects.Project_Type);
+   --  Sets the current project
+
    procedure Add_Toolchain
      (Editor         : Toolchains_Edit;
       Tc             : Toolchains.Toolchain;
@@ -118,6 +133,7 @@ package body Toolchains_Editor is
      (Label      : Gtk_Label;
       GEntry     : Gtk_Entry;
       Icon       : Gtk_Image;
+      Reset_Btn  : Gtk_Button;
       Kind       : Tool_Kind;
       Tool       : Toolchains.Tools;
       Lang       : String;
@@ -146,20 +162,31 @@ package body Toolchains_Editor is
    procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Executed when the 'Scan' button is clicked
 
+   procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Executed when the 'Add' button is clicked
+
    function On_Tool_Value_Changed
      (Widget    : access Toolchains_Edit_Record'Class;
       Params    : Glib.Values.GValues;
-      User_Data : Entry_Callback_User_Object) return Boolean;
+      User_Data : Tool_Callback_User_Object) return Boolean;
    --  Executed when a value is changed in the Details view
+
+   procedure On_Reset
+     (Widget    : access Toolchains_Edit_Record'Class;
+      Params    : Glib.Values.GValues;
+      User_Data : Tool_Callback_User_Object);
+   --  Executed when the reset button is clicked
 
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Editor : out Toolchains_Edit;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   function Create_Language_Page
+     (Project     : Project_Type;
+      Kernel      : access Kernel_Handle_Record'Class)
+      return Toolchains_Edit
    is
+      Editor          : Toolchains_Edit;
       Tc_Box          : Gtk.Box.Gtk_Hbox;
       Btn_Box         : Gtk.Box.Gtk_Vbox;
       Btn             : Gtk.Button.Gtk_Button;
@@ -173,13 +200,12 @@ package body Toolchains_Editor is
 
    begin
       Editor := new Toolchains_Edit_Record;
-      Editor.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+      Gtk.Box.Initialize_Vbox (Editor);
 
-      Editor.Mgr := new GPS_Toolchain_Manager_Record;
+      Editor.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+      Editor.Mgr    := new GPS_Toolchain_Manager_Record;
       GPS_Toolchain_Manager_Record (Editor.Mgr.all).Kernel :=
         Editor.Kernel;
-
-      Gtk.Box.Initialize_Vbox (Editor);
 
       --  Init the language selection part
 
@@ -286,15 +312,17 @@ package body Toolchains_Editor is
       Gtk.Box.Gtk_New_Vbox (Btn_Box);
       Tc_Box.Pack_Start (Btn_Box, Expand => False, Padding => 10);
 
-      Gtk.Button.Gtk_New (Btn, -"Scan");
+      Gtk.Button.Gtk_New_From_Stock (Btn, Gtk.Stock.Stock_Find);
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
         (Btn, Gtk.Button.Signal_Clicked, On_Scan_Clicked'Access,
          Slot_Object => Editor);
 
-      Gtk.Button.Gtk_New (Editor.Add_Btn, -"Add");
-      Btn_Box.Pack_Start (Editor.Add_Btn, Expand => False, Padding => 5);
-      Editor.Add_Btn.Set_Sensitive (False);
+      Gtk.Button.Gtk_New_From_Stock (Btn, Gtk.Stock.Stock_Add);
+      Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
+      Widget_Callback.Object_Connect
+        (Btn, Gtk.Button.Signal_Clicked, On_Add_Clicked'Access,
+         Slot_Object => Editor);
 
       --  Add the 'Details' part
       Gtk_New (Frame, -"Details");
@@ -312,7 +340,11 @@ package body Toolchains_Editor is
       Scroll.Add_With_Viewport (Editor.Details_View);
 
       Editor.Show_All;
-   end Gtk_New;
+
+      Set_Project (Editor, Project);
+
+      return Editor;
+   end Create_Language_Page;
 
    -----------------
    -- Set_Project --
@@ -320,9 +352,10 @@ package body Toolchains_Editor is
 
    procedure Set_Project
      (Editor    : Toolchains_Edit;
-      Project   : GNATCOLL.Projects.Project_Type;
-      Languages : GNAT.Strings.String_List)
+      Project   : GNATCOLL.Projects.Project_Type)
    is
+      Languages : constant GNAT.Strings.String_List :=
+                    GNATCOLL.Projects.Languages (Project);
       Toolchain : Toolchains.Toolchain;
       Iter      : Gtk_Tree_Iter;
 
@@ -354,24 +387,17 @@ package body Toolchains_Editor is
       Add_Toolchain (Editor, Toolchain, True);
    end Set_Project;
 
-   ----------------------
-   -- Generate_Project --
-   ----------------------
+   -------------------
+   -- Get_Languages --
+   -------------------
 
-   function Generate_Project
-     (Editor    : Toolchains_Edit;
-      Project   : Project_Type;
-      Scenarii  : Scenario_Variable_Array) return Boolean
+   function Get_Languages (Editor : Toolchains_Edit)
+                           return GNAT.Strings.String_List_Access
    is
-      Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
       Iter    : Gtk_Tree_Iter;
       N_Items : Natural := 0;
       Val     : GNAT.Strings.String_List_Access;
-
    begin
-      Trace (Me, "Generate project");
-
-      --  First save defined languages
 
       Iter := Editor.Lang_Model.Get_Iter_First;
 
@@ -395,63 +421,141 @@ package body Toolchains_Editor is
          Editor.Lang_Model.Next (Iter);
       end loop;
 
-      if Active (Me) then
-         Trace (Me, "Generate language attr for scenario variables:");
-         for J in Scenarii'Range loop
-            Trace (Me, External_Name (Scenarii (J)) & "=" &
-                   Value (Scenarii (J)));
+      return Val;
+   end Get_Languages;
+
+   ----------------------
+   -- Generate_Project --
+   ----------------------
+
+   function Generate_Project
+     (Editor    : Toolchains_Edit;
+      Project   : Project_Type;
+      Scenarii  : Scenario_Variable_Array) return Boolean
+   is
+      Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
+      Iter    : Gtk_Tree_Iter;
+      Val     : GNAT.Strings.String_List_Access;
+      Old     : constant GNAT.Strings.String_List :=
+                  GNATCOLL.Projects.Languages (Project);
+      Modified : Boolean := False;
+      Tmp_Modif : Boolean := False;
+
+      procedure Set_Attribute
+        (Attr : Attribute_Pkg_String;
+         Idx  : String;
+         Val  : String);
+      procedure Clear_Attribute
+        (Attr : Attribute_Pkg_String;
+         Idx  : String);
+
+      procedure Set_Attribute
+        (Attr : Attribute_Pkg_String;
+         Idx  : String;
+         Val  : String) is
+      begin
+         if GNATCOLL.Projects.Attribute_Value
+           (Project, Attr, Idx, "dummy-default-val") /= Val
+         then
+            GNATCOLL.Projects.Set_Attribute
+              (Project,
+               Attribute => Attr,
+               Value     => Val,
+               Scenario  => Scenarii,
+               Index     => Idx);
+            Modified := True;
+         end if;
+      end Set_Attribute;
+
+      procedure Clear_Attribute
+        (Attr : Attribute_Pkg_String;
+         Idx  : String)
+      is
+      begin
+         --  Use Attribute_Value here with a dummy value as default, as
+         --  calls to Has_Attribute seems to be incorrect when an index is
+         --  specified.
+         if GNATCOLL.Projects.Attribute_Value
+           (Project, Attr, Idx, "dummy-default-val") /= "dummy-default-val"
+         then
+            GNATCOLL.Projects.Delete_Attribute
+              (Project, Attr, Scenarii, Idx);
+            Modified := True;
+         end if;
+      end Clear_Attribute;
+
+   begin
+      Trace (Me, "Generate project");
+
+      --  First save defined languages
+
+      Val := Get_Languages (Editor);
+
+      if Val'Length = Old'Length then
+         for J in Val'Range loop
+            Tmp_Modif := True;
+            for K in Old'Range loop
+               if Ada.Strings.Equal_Case_Insensitive
+                    (Old (K).all, Val (J).all)
+               then
+                  Tmp_Modif := False;
+
+                  exit;
+               end if;
+            end loop;
+
+            exit when Tmp_Modif;
          end loop;
+      else
+         Tmp_Modif := True;
       end if;
 
-      GNATCOLL.Projects.Set_Attribute
-        (Project,
-         Attribute => GNATCOLL.Projects.Languages_Attribute,
-         Values    => Val.all,
-         Scenario  => Scenarii);
+      if Tmp_Modif then
+         GNATCOLL.Projects.Set_Attribute
+           (Project,
+            Attribute => GNATCOLL.Projects.Languages_Attribute,
+            Values    => Val.all,
+            Scenario  => Scenarii);
+      end if;
 
       GNAT.Strings.Free (Val);
 
+      Modified := Tmp_Modif;
+
       --  Now save the toolchain
 
+      Trace (Me, "Saving the GNAT driver");
       if not Toolchains.Is_Native (Tc)
         or else not Is_Default (Tc, GNAT_Driver)
       then
-         GNATCOLL.Projects.Set_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.GNAT_Attribute,
-            Value     => Get_Command (Tc, GNAT_Driver),
-            Scenario  => Scenarii);
+         Set_Attribute
+           (GNATCOLL.Projects.GNAT_Attribute, "",
+            Get_Command (Tc, GNAT_Driver));
+
       else
-         GNATCOLL.Projects.Delete_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.GNAT_Attribute,
-            Scenario  => Scenarii);
+         Clear_Attribute (GNATCOLL.Projects.GNAT_Attribute, "");
       end if;
 
-      if not Is_Default (Tc, GNAT_List) then
-         GNATCOLL.Projects.Set_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.Gnatlist_Attribute,
-            Value     => Get_Command (Tc, GNAT_List),
-            Scenario  => Scenarii);
+      Trace (Me, "Saving the GNAT ls attribute");
+      if not Toolchains.Is_Native (Tc)
+        or else not Is_Default (Tc, GNAT_List)
+      then
+         Set_Attribute
+           (GNATCOLL.Projects.Gnatlist_Attribute, "",
+            Get_Command (Tc, GNAT_List));
       else
-         GNATCOLL.Projects.Delete_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.Gnatlist_Attribute,
-            Scenario  => Scenarii);
+         Clear_Attribute (GNATCOLL.Projects.Gnatlist_Attribute, "");
       end if;
 
-      if not Is_Default (Tc, Debugger) then
-         GNATCOLL.Projects.Set_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.Debugger_Command_Attribute,
-            Value     => Get_Command (Tc, Debugger),
-            Scenario  => Scenarii);
+      Trace (Me, "Saving the Debugger attribute");
+      if not Toolchains.Is_Native (Tc)
+          or else not Is_Default (Tc, Debugger)
+      then
+         Set_Attribute
+           (GNATCOLL.Projects.Debugger_Command_Attribute, "",
+            Get_Command (Tc, Debugger));
       else
-         GNATCOLL.Projects.Delete_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.Debugger_Command_Attribute,
-            Scenario  => Scenarii);
+         Clear_Attribute (GNATCOLL.Projects.Debugger_Command_Attribute, "");
       end if;
 
       --  Now see if individual compiler drivers have been explicitely set
@@ -459,37 +563,49 @@ package body Toolchains_Editor is
       Iter := Editor.Lang_Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
-         if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
-            declare
-               Lang : constant String :=
-                        Editor.Lang_Model.Get_String (Iter, Name_Column);
-            begin
-               if not Is_Default (Tc, Lang) then
-                  GNATCOLL.Projects.Set_Attribute
-                    (Project,
-                     Attribute => GNATCOLL.Projects.Compiler_Driver_Attribute,
-                     Value     => Get_Exe (Get_Compiler (Tc, Lang)),
-                     Scenario  => Scenarii,
-                     Index     => Lang);
+         declare
+            Lang : constant String :=
+                     To_Lower
+                       (Editor.Lang_Model.Get_String (Iter, Name_Column));
+         begin
+            if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
+               if not Is_Native (Tc)
+                 or else not Is_Default (Tc, Lang)
+               then
+                  Set_Attribute
+                    (GNATCOLL.Projects.Compiler_Driver_Attribute,
+                     Lang,
+                     Get_Exe (Get_Compiler (Tc, Lang)));
                else
-                  GNATCOLL.Projects.Delete_Attribute
-                    (Project,
-                     Attribute => GNATCOLL.Projects.Compiler_Driver_Attribute,
-                     Scenario  => Scenarii,
-                     Index     => Lang);
+                  Clear_Attribute
+                    (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
                end if;
 
-               GNATCOLL.Projects.Delete_Attribute
-                 (Project,
-                  Attribute => GNATCOLL.Projects.Compiler_Command_Attribute,
-                  Scenario  => Scenarii,
-                  Index     => Lang);
-            end;
-         end if;
+               --  Remove the compiler command attribute from the IDE package
+               --  if needed
+               Clear_Attribute
+                 (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+
+            else
+               Clear_Attribute
+                 (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
+               Clear_Attribute
+                 (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+            end if;
+         end;
+
          Editor.Lang_Model.Next (Iter);
       end loop;
 
-      return True;
+--        if not Is_Native (Tc) then
+--           GNATCOLL.Projects.Set_Attribute
+--             (Project,
+--              Attribute => GNATCOLL.Projects.Compiler_Command_Attribute,
+--              Value     => Get_Exe (Get_Compiler (Tc, "Ada")),
+--              Scenario  => Scenarii,
+--              Index     => "Ada");
+--        end if;
+      return Modified;
    end Generate_Project;
 
    -------------------
@@ -549,6 +665,7 @@ package body Toolchains_Editor is
      (Label      : Gtk_Label;
       GEntry     : Gtk_Entry;
       Icon       : Gtk_Image;
+      Reset_Btn  : Gtk_Button;
       Kind       : Tool_Kind;
       Tool       : Toolchains.Tools;
       Lang       : String;
@@ -584,20 +701,10 @@ package body Toolchains_Editor is
       function Format_String return String is
       begin
          if not Is_Valid then
-            if not Is_Default then
-               return
-                 "<span color=""red"">" & Get_String &
-                 " (explicitely set)</span>";
-            else
-               return
-                 "<span color=""red"">" & Get_String & " (default)</span>";
-            end if;
-
-         elsif not Is_Default then
-            return Get_String & " (explicitely set)";
-
+            return
+              "<span color=""red"">" & Get_String & "</span>";
          else
-            return Get_String & "(default)";
+            return Get_String;
          end if;
       end Format_String;
 
@@ -635,6 +742,10 @@ package body Toolchains_Editor is
          GEntry.Set_Has_Tooltip (False);
          Icon.Set_Has_Tooltip (False);
       end if;
+
+      if Reset_Btn /= null then
+         Reset_Btn.Set_Sensitive (not Is_Default);
+      end if;
    end Set_Detail;
 
    --------------------
@@ -649,6 +760,7 @@ package body Toolchains_Editor is
       Tc     : constant Toolchain := Get_Selected_Toolchain (Editor);
       Lbl    : Gtk_Label;
       N_Rows : Guint := 0;
+      N_Cols : constant Guint := 4;
 
       procedure Add_Detail
         (Kind       : Tool_Kind;
@@ -669,10 +781,11 @@ package body Toolchains_Editor is
          Lbl : Gtk_Label;
          Ent : Gtk_Entry;
          Icn : Gtk_Image;
+         Btn : Gtk_Button := null;
 
       begin
          N_Rows := N_Rows + 1;
-         Editor.Details_View.Resize (N_Rows, 3);
+         Editor.Details_View.Resize (N_Rows, N_Cols);
 
          Gtk_New (Lbl);
          Editor.Details_View.Attach
@@ -702,20 +815,46 @@ package body Toolchains_Editor is
             Bottom_Attach => N_Rows,
             Xoptions      => 0);
 
-         Entry_Callback.Object_Connect
+         if Kind /= Tool_Kind_Tool
+           or else Tool /= GNAT_Driver
+         then
+            Gtk_New (Btn, "reset");
+            Editor.Details_View.Attach
+              (Child         => Btn,
+               Left_Attach   => 3,
+               Right_Attach  => 4,
+               Top_Attach    => N_Rows - 1,
+               Bottom_Attach => N_Rows,
+               Xoptions      => 0);
+            Tool_Callback.Object_Connect
+              (Btn, Gtk.Button.Signal_Clicked,
+               On_Reset'Access,
+               Slot_Object => Editor,
+               User_Data   => Tool_Callback_User_Object'
+                 (Kind      => Kind,
+                  Lang      => To_Unbounded_String (Lang),
+                  Tool_Name => Tool,
+                  Label     => Lbl,
+                  Value     => Ent,
+                  Icon      => Icn,
+                  Reset_Btn => Btn));
+         end if;
+
+         Tool_Callback_Return.Object_Connect
            (Ent, Gtk.Widget.Signal_Focus_Out_Event,
             On_Tool_Value_Changed'Access,
             Slot_Object => Editor,
-            User_Data   => Entry_Callback_User_Object'
+            User_Data   => Tool_Callback_User_Object'
               (Kind      => Kind,
                Lang      => To_Unbounded_String (Lang),
                Tool_Name => Tool,
                Label     => Lbl,
                Value     => Ent,
-               Icon      => Icn));
+               Icon      => Icn,
+               Reset_Btn => Btn));
 
          Set_Detail
-           (Lbl, Ent, Icn, Kind, Tool, Lang, Value, Is_Default, Is_Valid);
+           (Lbl, Ent, Icn, Btn, Kind, Tool, Lang, Value, Is_Default, Is_Valid);
       end Add_Detail;
 
    begin
@@ -737,16 +876,16 @@ package body Toolchains_Editor is
       end if;
 
       N_Rows := N_Rows + 1;
-      Editor.Details_View.Resize (N_Rows, 3);
+      Editor.Details_View.Resize (N_Rows, N_Cols);
 
       Gtk_New
-        (Lbl, "<span font_size=""large"" font_weight=""bold"">Tools:</span>");
+        (Lbl, "<span font_weight=""bold"">Tools:</span>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
       Editor.Details_View.Attach
         (Child         => Lbl,
          Left_Attach   => 0,
-         Right_Attach  => 3,
+         Right_Attach  => N_Cols,
          Top_Attach    => N_Rows - 1,
          Bottom_Attach => N_Rows,
          Xpadding      => 0,
@@ -763,17 +902,17 @@ package body Toolchains_Editor is
       end loop;
 
       N_Rows := N_Rows + 1;
-      Editor.Details_View.Resize (N_Rows, 3);
+      Editor.Details_View.Resize (N_Rows, N_Cols);
 
       Gtk_New
         (Lbl,
-         "<span font_size=""large"" font_weight=""bold"">Compilers:</span>");
+         "<span font_weight=""bold"">Compilers:</span>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
       Editor.Details_View.Attach
         (Child         => Lbl,
          Left_Attach   => 0,
-         Right_Attach  => 3,
+         Right_Attach  => N_Cols,
          Top_Attach    => N_Rows - 1,
          Bottom_Attach => N_Rows,
          Xpadding      => 0,
@@ -811,7 +950,7 @@ package body Toolchains_Editor is
    function On_Tool_Value_Changed
      (Widget    : access Toolchains_Edit_Record'Class;
       Params    : Glib.Values.GValues;
-      User_Data : Entry_Callback_User_Object) return Boolean
+      User_Data : Tool_Callback_User_Object) return Boolean
    is
       pragma Unreferenced (Params);
       Tc   : constant Toolchain := Get_Selected_Toolchain (Widget);
@@ -832,6 +971,7 @@ package body Toolchains_Editor is
                  (Label      => User_Data.Label,
                   GEntry     => User_Data.Value,
                   Icon       => User_Data.Icon,
+                  Reset_Btn  => User_Data.Reset_Btn,
                   Kind       => User_Data.Kind,
                   Tool       => User_Data.Tool_Name,
                   Lang       => Lang,
@@ -847,6 +987,7 @@ package body Toolchains_Editor is
                  (Label      => User_Data.Label,
                   GEntry     => User_Data.Value,
                   Icon       => User_Data.Icon,
+                  Reset_Btn  => User_Data.Reset_Btn,
                   Kind       => User_Data.Kind,
                   Tool       => User_Data.Tool_Name,
                   Lang       => Lang,
@@ -864,6 +1005,50 @@ package body Toolchains_Editor is
          Trace (Exception_Handle, E);
          return False;
    end On_Tool_Value_Changed;
+
+   --------------
+   -- On_Reset --
+   --------------
+
+   procedure On_Reset
+     (Widget    : access Toolchains_Edit_Record'Class;
+      Params    : Glib.Values.GValues;
+      User_Data : Tool_Callback_User_Object)
+   is
+      pragma Unreferenced (Params);
+      Tc   : constant Toolchain := Get_Selected_Toolchain (Widget);
+      Lang : constant String := To_String (User_Data.Lang);
+   begin
+      case User_Data.Kind is
+         when Tool_Kind_Tool =>
+            Toolchains.Reset_To_Default (Tc, User_Data.Tool_Name);
+            Set_Detail
+              (Label      => User_Data.Label,
+               GEntry     => User_Data.Value,
+               Icon       => User_Data.Icon,
+               Reset_Btn  => User_Data.Reset_Btn,
+               Kind       => User_Data.Kind,
+               Tool       => User_Data.Tool_Name,
+               Lang       => Lang,
+               Value      => Get_Command (Tc, User_Data.Tool_Name),
+               Is_Default => Is_Default (Tc, User_Data.Tool_Name),
+               Is_Valid   => Is_Valid (Tc, User_Data.Tool_Name));
+
+         when Tool_Kind_Compiler =>
+            Toolchains.Reset_To_Default (Tc, Lang);
+            Set_Detail
+              (Label      => User_Data.Label,
+               GEntry     => User_Data.Value,
+               Icon       => User_Data.Icon,
+               Reset_Btn  => User_Data.Reset_Btn,
+               Kind       => User_Data.Kind,
+               Tool       => User_Data.Tool_Name,
+               Lang       => Lang,
+               Value      => Get_Exe (Get_Compiler (Tc, Lang)),
+               Is_Default => Is_Default (Tc, Lang),
+               Is_Valid   => Is_Valid (Get_Compiler (Tc, Lang)));
+      end case;
+   end On_Reset;
 
    ----------------------------
    -- Get_Selected_Toolchain --
@@ -955,7 +1140,9 @@ package body Toolchains_Editor is
          TC_Array : constant Toolchain_Array := Get_Toolchains (Editor.Mgr);
       begin
          for J in TC_Array'Range loop
-            Add_Toolchain (Editor, TC_Array (J), False);
+            if not Has_Errors (Get_Library_Information (TC_Array (J)).all) then
+               Add_Toolchain (Editor, TC_Array (J), False);
+            end if;
          end loop;
       end;
 
@@ -964,6 +1151,69 @@ package body Toolchains_Editor is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Scan_Clicked;
+
+   --------------------
+   -- On_Add_Clicked --
+   --------------------
+
+   procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Editor     : constant Toolchains_Edit := Toolchains_Edit (W);
+      Dialog     : Gtk.Dialog.Gtk_Dialog;
+      Name_Entry : Gtk.Combo_Box_Entry.Gtk_Combo_Box_Entry;
+      Name_Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      Btn        : Gtk_Widget;
+      Res        : Gtk_Response_Type;
+      Iter       : Gtk_Tree_Iter := Null_Iter;
+      pragma Unreferenced (Btn);
+
+   begin
+      Gtk.Dialog.Gtk_New
+        (Dialog, -"New toolchain",
+         Gtk_Window (Editor.Get_Toplevel),
+         Modal);
+      Gtk.Tree_Store.Gtk_New (Name_Model, (0 => GType_String));
+      Gtk.Combo_Box_Entry.Gtk_New_With_Model (Name_Entry, Name_Model, 0);
+      Dialog.Get_Content_Area.Pack_Start (Name_Entry, False, False, 5);
+
+      for J in Known_Toolchains'Range loop
+         Name_Model.Append (Iter, Null_Iter);
+         Name_Model.Set (Iter, 0, Known_Toolchains (J).all);
+      end loop;
+
+      Btn := Dialog.Add_Button
+        (Gtk.Stock.Stock_Ok, Response_Id => Gtk_Response_OK);
+      Btn := Dialog.Add_Button
+        (Gtk.Stock.Stock_Cancel, Response_Id => Gtk_Response_Cancel);
+
+      Dialog.Show_All;
+      Res := Dialog.Run;
+      Dialog.Hide;
+
+      if Res = Gtk_Response_OK then
+         declare
+            Name : constant String := Name_Entry.Get_Active_Text;
+            Tc   : Toolchain;
+         begin
+            if Name = "" or else Index (Name, "native") in Name'Range then
+               Trace (Me, "Adding a native toolchain");
+               Tc := Editor.Mgr.Get_Native_Toolchain;
+
+            elsif Is_Known_Toolchain_Name (Name) then
+               Trace (Me, "Adding a known toolchain");
+               Tc := Get_Toolchain (Editor.Mgr, Name);
+
+            else
+               Trace (Me, "Adding a new toolchain");
+               Tc := Create_Empty_Toolchain (Editor.Mgr);
+               Set_Name (Tc, Name);
+               Set_Command (Tc, GNAT_Driver, Name & "-gnat");
+               Editor.Mgr.Add_Toolchain (Tc);
+            end if;
+
+            Add_Toolchain (Editor, Tc, True);
+         end;
+      end if;
+   end On_Add_Clicked;
 
    -------------
    -- Execute --
@@ -981,8 +1231,17 @@ package body Toolchains_Editor is
       Pd        : GNAT.Expect.Process_Descriptor_Access;
       Match     : Expect_Match := 0;
       Ret       : Unbounded_String;
+      Args      : constant Arg_List :=
+                    GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
 
    begin
+      --  If no such command exist, no need to try to spawn it
+      if Locate_On_Path (+Get_Command (Args), Get_Nickname (Build_Server)) =
+        No_File
+      then
+         raise GNAT.Expect.Process_Died;
+      end if;
+
       GPS.Kernel.Remote.Spawn
         (This.Kernel, GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args),
          Remote.Build_Server, Pd, Status);

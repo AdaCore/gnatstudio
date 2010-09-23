@@ -20,6 +20,7 @@
 with GNAT.Strings;
 
 with Gtk.Box;           use Gtk.Box;
+with Gtk.Button;
 with Gtk.Table;         use Gtk.Table;
 with Gtk.Tree_Store;    use Gtk.Tree_Store;
 with Gtk.Tree_View;     use Gtk.Tree_View;
@@ -28,22 +29,20 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 with GPS.Kernel;        use GPS.Kernel;
 
-private with Gtk.Button;
-private with Toolchains;
+with Toolchains;
 
 package Toolchains_Editor is
 
    type Toolchains_Edit_Record is new Gtk.Box.Gtk_Vbox_Record with private;
    type Toolchains_Edit is access all Toolchains_Edit_Record'Class;
 
-   procedure Gtk_New
-     (Editor : out Toolchains_Edit;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   function Create_Language_Page
+     (Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class)
+      return Toolchains_Edit;
 
-   procedure Set_Project
-     (Editor    : Toolchains_Edit;
-      Project   : GNATCOLL.Projects.Project_Type;
-      Languages : GNAT.Strings.String_List);
+   function Get_Languages (Editor : Toolchains_Edit)
+     return GNAT.Strings.String_List_Access;
 
    function Generate_Project
      (Editor    : Toolchains_Edit;
@@ -53,17 +52,17 @@ package Toolchains_Editor is
 private
 
    type Toolchains_Edit_Record is new Gtk.Box.Gtk_Vbox_Record with record
-      Kernel          : GPS.Kernel.Kernel_Handle;
-      Languages       : Gtk_Tree_View;
-      Lang_Model      : Gtk_Tree_Store;
-      Toolchains_Tree : Gtk_Tree_View;
-      Model           : Gtk_Tree_Store;
-      Details_View    : Gtk_Table;
-      Mgr             : Toolchains.Toolchain_Manager;
-      Toolchain       : Toolchains.Toolchain := Toolchains.Null_Toolchain;
-      Updating        : Boolean := False;
-      Add_Btn         : Gtk.Button.Gtk_Button;
-      Edited_Prj      : GNATCOLL.Projects.Project_Type;
+      Kernel           : GPS.Kernel.Kernel_Handle;
+      Languages        : Gtk_Tree_View;
+      Lang_Model       : Gtk_Tree_Store;
+      Toolchains_Tree  : Gtk_Tree_View;
+      Model            : Gtk_Tree_Store;
+      Details_View     : Gtk_Table;
+      Mgr              : Toolchains.Toolchain_Manager;
+      Toolchain        : Toolchains.Toolchain := Toolchains.Null_Toolchain;
+      Updating         : Boolean := False;
+      Add_Btn          : Gtk.Button.Gtk_Button;
+      Edited_Prj       : GNATCOLL.Projects.Project_Type;
    end record;
 
 end Toolchains_Editor;
