@@ -885,6 +885,26 @@ package body Toolchains_Editor is
       Editor.Details_View.Resize (N_Rows, N_Cols);
 
       Gtk_New
+        (Lbl,
+         -("<i>This section allows you to modify individual tools for the" &
+           " selected toolchain." & ASCII.LF &
+           "To select a full toolchain, use the 'Add' or 'Scan' buttons " &
+           "above</i>"));
+      Lbl.Set_Use_Markup (True);
+      Lbl.Set_Alignment (0.0, 0.5);
+      Editor.Details_View.Attach
+        (Child         => Lbl,
+         Left_Attach   => 0,
+         Right_Attach  => N_Cols,
+         Top_Attach    => N_Rows - 1,
+         Bottom_Attach => N_Rows,
+         Xpadding      => 0,
+         Ypadding      => 5);
+
+      N_Rows := N_Rows + 1;
+      Editor.Details_View.Resize (N_Rows, N_Cols);
+
+      Gtk_New
         (Lbl, "<b>Tools:</b>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
