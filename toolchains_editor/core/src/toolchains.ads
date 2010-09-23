@@ -319,13 +319,6 @@ package Toolchains is
    --  Retreives the toolchain based on the contents of a project. This
    --  toolchain is always stored in the Manager.
 
-   function Get_Toolchain
-     (Manager    : access Toolchain_Manager_Record;
-      Project    : Project_Type;
-      Languages : GNAT.Strings.String_List) return Toolchain;
-   --  Retreives the toolchain based on the contents of a project and a list of
-   --  languages. This toolchain is always stored in the Manager.
-
    procedure Add_Toolchain
      (Manager : access Toolchain_Manager_Record;
       Tc      : Toolchain);

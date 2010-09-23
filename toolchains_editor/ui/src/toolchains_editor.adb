@@ -409,7 +409,7 @@ package body Toolchains_Editor is
          Editor.Lang_Model.Next (Iter);
       end loop;
 
-      Toolchain := Get_Toolchain (Editor.Mgr, Project, Languages);
+      Toolchain := Get_Toolchain (Editor.Mgr, Project);
       Add_Toolchain (Editor, Toolchain, True);
    end Set_Project;
 

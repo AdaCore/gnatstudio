@@ -949,19 +949,7 @@ package body Toolchains is
 
    function Get_Toolchain
      (Manager : access Toolchain_Manager_Record;
-      Project : Project_Type) return Toolchain is
-   begin
-      return Get_Toolchain (Manager, Project, (1 .. 0 => <>));
-   end Get_Toolchain;
-
-   -------------------
-   -- Get_Toolchain --
-   -------------------
-
-   function Get_Toolchain
-     (Manager   : access Toolchain_Manager_Record;
-      Project   : Project_Type;
-      Languages : GNAT.Strings.String_List) return Toolchain
+      Project : Project_Type) return Toolchain
    is
       GNAT_List_Str    : constant String :=
         Attribute_Value (Project, Build ("ide", "gnatlist"), "");
@@ -971,6 +959,8 @@ package body Toolchains is
         Attribute_Value (Project, Build ("ide", "compiler_command"), "ada");
       Debugger_Str     : constant String :=
         Attribute_Value (Project, Build ("ide", "debugger_command"), "");
+
+      Compilers : Compiler_Maps.Map;
 
       function Toolchain_Matches
         (TC : Toolchain; Drivers : Compiler_Maps.Map) return Boolean;
@@ -983,8 +973,10 @@ package body Toolchains is
       function Get_Prefix (Attr : String) return String;
       --  Gets the toolchain prefix from an attribute
 
-      function Project_Driver (Lang : String) return String;
-      --  Gets the driver for the specified language from the project
+      procedure Set_Compilers_From_Attribute
+        (Package_Name, Attribute_Name : String);
+      --  Looks at all the indexes for the attribute describe, and assign
+      --  compilers according to the values extracted.
 
       -----------------------
       -- Toolchain_Matches --
@@ -1094,55 +1086,52 @@ package body Toolchains is
          return "";
       end Get_Prefix;
 
-      --------------------
-      -- Project_Driver --
-      --------------------
+      ----------------------------------
+      -- Set_Compilers_From_Attribute --
+      ----------------------------------
 
-      function Project_Driver (Lang : String) return String is
-         Ide_Str : constant String :=
-                     Attribute_Value
-                       (Project,
-                        Build ("ide", "compiler_command"), Lang);
-         Cmp_Str : constant String :=
-                     Attribute_Value
-                       (Project,
-                        Build ("compiler", "driver"), Lang);
-
+      procedure Set_Compilers_From_Attribute
+        (Package_Name, Attribute_Name : String)
+      is
+         Attr : constant Attribute_Pkg_String :=
+           Build (Package_Name, Attribute_Name);
+         Indexes : String_List := Attribute_Indexes (Project, Attr);
       begin
-         if Ide_Str /= "" then
-            return Ide_Str;
 
-         elsif Cmp_Str /= "" then
-            return Cmp_Str;
+         for J in Indexes'Range loop
+            declare
+               Driver : constant String := Attribute_Value
+                 (Project, Attr, Indexes (J).all);
+            begin
+               if Driver /= "" then
+                  Compilers.Insert
+                    (Indexes (J).all, New_Compiler (Driver, False));
+               end if;
+            end;
+         end loop;
 
-         else
-            return "";
-         end if;
-      end Project_Driver;
+         Free (Indexes);
+      end Set_Compilers_From_Attribute;
 
       Cursor    : Toolchain_Maps.Cursor;
       Ret       : Toolchain := null;
       Modified  : Boolean := False;
-      Compilers : Compiler_Maps.Map;
-      Iter      : Compiler_Maps.Cursor;
       --  Whether the toolchain returned has been modified from the one stored
       --  in the manager
+
+      Iter      : Compiler_Maps.Cursor;
 
    begin
       --  First of all, we need to retrieve all potential explicitely defined
       --  compilers from the project
 
-      for J in Languages'Range loop
-         declare
-            Driver : constant String := Project_Driver (Languages (J).all);
-         begin
-            if Driver /= "" then
-               Compilers.Insert
-                 (Languages (J).all,
-                  New_Compiler (Driver, False));
-            end if;
-         end;
-      end loop;
+      --  First, look at all compiler commands
+
+      Set_Compilers_From_Attribute ("ide", "compiler_Command");
+
+      --  Then, look at all drivers, possibly overriding compiler commands
+
+      Set_Compilers_From_Attribute ("compiler", "driver");
 
       --  1 step: look through the current toolchains list to verify if this
       --  toolchain already exists
