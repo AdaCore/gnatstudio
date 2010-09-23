@@ -910,7 +910,7 @@ package body Toolchains is
       --  Case 2, the toolchain is known. Create a known one
 
       elsif Is_Known_Toolchain_Name (Name) then
-         return Manager.Create_Known_Toolchain (Name);
+         return Manager.Get_Known_Toolchain (Name);
 
       --  Case 3, the toolchain contains the string "native", return the
       --  native one
@@ -1163,7 +1163,7 @@ package body Toolchains is
             if Prefix /= ""
               and then Is_Known_Toolchain_Name (Prefix)
             then
-               Ret := Manager.Create_Known_Toolchain (Prefix);
+               Ret := Manager.Get_Known_Toolchain (Prefix);
                Modified := False;
             end if;
          end;
@@ -1267,6 +1267,11 @@ package body Toolchains is
       if Manager.Toolchains.Contains (Get_Label (Tc)) then
          raise Toolchain_Exception with "Toolchain "
            & Get_Label (Tc) & " already registered";
+      end if;
+
+      if Tc.Library = null then
+         Compute_Gprconfig_Compilers (Tc);
+         Compute_Predefined_Paths (Tc);
       end if;
 
       Manager.Toolchains.Insert (Get_Label (Tc), Tc);
@@ -1403,8 +1408,6 @@ package body Toolchains is
                   Ada_Toolchain.Name := new String'(Lines (J).all);
                   Ada_Toolchain.Is_Native := Is_Native;
                   Ada_Toolchain.Manager := Toolchain_Manager (Manager);
-                  Compute_Predefined_Paths (Ada_Toolchain);
-                  Compute_Gprconfig_Compilers (Ada_Toolchain);
                   Manager.Add_Toolchain (Ada_Toolchain);
                end if;
 
@@ -1549,11 +1552,11 @@ package body Toolchains is
       return False;
    end Is_Known_Toolchain_Name;
 
-   ----------------------------
-   -- Create_Known_Toolchain --
-   ----------------------------
+   -------------------------
+   -- Get_Known_Toolchain --
+   -------------------------
 
-   function Create_Known_Toolchain
+   function Get_Known_Toolchain
      (Manager : access Toolchain_Manager_Record;
       Name    : String) return Toolchain
    is
@@ -1561,6 +1564,10 @@ package body Toolchains is
    begin
       if not Is_Known_Toolchain_Name (Name) then
          return null;
+      end if;
+
+      if Manager.Toolchains.Contains (Name) then
+         return Manager.Toolchains.Element (Name);
       end if;
 
       Trace (Me, "Creating known toolchain for target " & Name);
@@ -1641,12 +1648,10 @@ package body Toolchains is
          end if;
       end if;
 
-      Compute_Gprconfig_Compilers (Result);
-      Compute_Predefined_Paths (Result);
       Manager.Add_Toolchain (Result);
 
       return Result;
-   end Create_Known_Toolchain;
+   end Get_Known_Toolchain;
 
    ------------------------
    -- Get_Anonymous_Name --

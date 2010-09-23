@@ -325,7 +325,8 @@ package Toolchains is
      (Manager : access Toolchain_Manager_Record;
       Tc      : Toolchain);
    --  Add a toolchain in the toolchain manager - raise an exception if the
-   --  toolchain already exsits.
+   --  toolchain already exsits. If the toolchain added has no ada library
+   --  information available, it will be automatically computed.
 
    procedure Remove_Toolchain
      (Manager : access Toolchain_Manager_Record;
@@ -502,10 +503,11 @@ private
       Languages           : Language_Sets.Set;
    end record;
 
-   function Create_Known_Toolchain
+   function Get_Known_Toolchain
      (Manager : access Toolchain_Manager_Record;
       Name    : String) return Toolchain;
-   --  Create a toolchain from a known description
+   --  Gets a toolchain from a known description - creates it if it's not yet
+   --  stored in the manager.
 
    function Create_Anonymous_Name
      (Manager : access Toolchain_Manager_Record;

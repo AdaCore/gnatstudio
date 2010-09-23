@@ -459,7 +459,6 @@ package body Toolchains.Parsers is
             Cur := Created_Toolchains.First;
 
             while Cur /= Toolchain_Lists.No_Element loop
-               Compute_Predefined_Paths (Element (Cur));
                Add_Toolchain (Manager, Element (Cur));
 
                Cur := Next (Cur);
