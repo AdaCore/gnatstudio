@@ -647,7 +647,7 @@ package body Toolchains is
 
    procedure Reset_To_Default (This : Toolchain; Name : Tools) is
    begin
-      Free (This.Tool_Commands (Name));
+      Set_Command (This, Name, This.Default_Tools (Name).all);
    end Reset_To_Default;
 
    ----------------------
