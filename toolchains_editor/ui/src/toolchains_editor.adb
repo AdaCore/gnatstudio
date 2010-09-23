@@ -212,6 +212,7 @@ package body Toolchains_Editor is
       Scroll.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Frame.Add (Scroll);
+      Frame.Set_Name ("languages_frame");
 
       Gtk.Tree_Store.Gtk_New (Editor.Lang_Model, Lang_Column_Types);
       Gtk.Tree_View.Gtk_New (Editor.Languages, Editor.Lang_Model);
@@ -281,6 +282,7 @@ package body Toolchains_Editor is
 
       Gtk_New (Frame, -"Toolchains");
       Editor.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
+      Frame.Set_Name ("toolchains_frame");
 
       Gtk.Box.Gtk_New_Hbox (Tc_Box);
       Frame.Add (Tc_Box);
@@ -351,6 +353,7 @@ package body Toolchains_Editor is
       Gtk_New (Frame, -"Details");
       Editor.Pack_Start
         (Frame, Expand => True, Fill => True, Padding => 5);
+      Frame.Set_Name ("details_frame");
       Gtk_New (Scroll);
       Scroll.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
