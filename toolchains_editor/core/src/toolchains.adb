@@ -1104,6 +1104,10 @@ package body Toolchains is
                  (Project, Attr, Indexes (J).all);
             begin
                if Driver /= "" then
+                  if Compilers.Contains (Indexes (J).all) then
+                     Compilers.Delete (Indexes (J).all);
+                  end if;
+
                   Compilers.Insert
                     (Indexes (J).all, New_Compiler (Driver, False));
                end if;
