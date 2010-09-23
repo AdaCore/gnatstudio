@@ -255,7 +255,7 @@ package body Toolchains.Parsers is
                               Value     => Attr.String_Expression.all);
                         when GNAT_List =>
                            Dummy_Project.Set_Attribute
-                             (Attribute => Build ("ide", "gnatls"),
+                             (Attribute => Build ("ide", "gnatlist"),
                               Value     => Attr.String_Expression.all);
                         when Debugger =>
                            Dummy_Project.Set_Attribute
@@ -289,7 +289,9 @@ package body Toolchains.Parsers is
             --  We managed to create a dummy project, create the corresponding
             --  toolchain.
 
-            Unique_Toolchain := Get_Toolchain (Manager, Dummy_Project);
+            Dummy_Project_Tree.Recompute_View;
+            Unique_Toolchain := Get_Toolchain
+              (Manager, Dummy_Project_Tree.Root_Project);
 
             This.Toolchains.Insert
               (Unique_Toolchain.Name.all, Unique_Toolchain);
