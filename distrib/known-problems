@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.0
 
+- J923-002: Emacs mode: transpose lines transposes next line
+  Problem:    In Emacs, transposing two lines swaps the current line and
+              the previous, whereas GPS used to swap the current line and
+              the next. GPS behavior was changed to match Emacs.
+  Workaround: use ctrl-x ctrl-t while on the first line.
+
 - J922-011: Modifying a variable under the debugger is not reflected
   Problem:    In the debugger data window, when modifying the value of a
               variable, the new value is not displayed immediately.

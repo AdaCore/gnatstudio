@@ -467,7 +467,8 @@ def transpose_chars():
 
 @interactive ("Editor", "Source editor", name="Transpose lines")
 def transpose_lines (location = None):
-   """Transpose the line at LOCATION (or current line) and the following one"""
+   """Transpose the line at LOCATION (or current line) and the previous one,
+      leaving the cursor after both"""
    if not location:
       location = GPS.EditorBuffer.get().current_view ().cursor ()
    buffer = location.buffer ()
@@ -477,7 +478,8 @@ def transpose_lines (location = None):
       end   = location.end_of_line ()
       text  = buffer.get_chars (start, end)
       buffer.delete (start, end)
-      buffer.insert (start.end_of_line () + 1, text)
+      buffer.insert (start.forward_line (-1), text)
+      buffer.current_view ().goto (start.end_of_line () + 1)
       buffer.finish_undo_group ()
 
 @interactive ("Editor", "Source editor", name="open line")
