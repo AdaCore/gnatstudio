@@ -1,7 +1,7 @@
 with "../common/common";
 with "gtkada";
 with "../kernel/kernel";
-with "../toolchains_editor/toolchains_ui";
+with "../toolchains_editor/ui/toolchains_ui";
 with "../widgets/widgets";
 with "../vsearch/vsearch";
 with "../shared";

@@ -1,7 +1,7 @@
 with "gtkada";
-with "../kernel/kernel";
-with "../shared";
-with "core/toolchains_core";
+with "../../kernel/kernel";
+with "../../shared";
+with "../core/toolchains_core";
 
 project Toolchains_UI is
 
