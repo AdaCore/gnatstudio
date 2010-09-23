@@ -463,6 +463,12 @@ NF-50-I501-009 New shell function: GPS.version (2010-02-18)
   current GPS version: GPS.version(), which can be useful when e.g. writing
   plug-ins that need to support multiple versions of GPS.
 
+NF-50-I325-006 Selection of a toolchain in the project editor (2010-09-23)
+
+  The selection of a toolchain from the project editor has been greatly
+  improved, implementing automatic detection of installed toolchains and
+  easy selection of pre-defined toolchains.
+
 NF-50-I120-044 Preferences for CodePeer messages colors (2010-03-30)
 
   A set of color properties can now be used to customize the background color
