@@ -37,6 +37,7 @@ with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
 with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
@@ -99,10 +100,6 @@ package body Toolchains_Editor is
       Reset_Btn : Gtk_Button;
    end record;
 
-   package Tool_Callback_Return is new Gtk.Handlers.User_Return_Callback
-     (Widget_Type => Toolchains_Edit_Record,
-      User_Type   => Tool_Callback_User_Object,
-      Return_Type => Boolean);
    package Tool_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Toolchains_Edit_Record,
       User_Type   => Tool_Callback_User_Object);
@@ -165,10 +162,10 @@ package body Toolchains_Editor is
    procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Executed when the 'Add' button is clicked
 
-   function On_Tool_Value_Changed
+   procedure On_Tool_Value_Changed
      (Widget    : access Toolchains_Edit_Record'Class;
       Params    : Glib.Values.GValues;
-      User_Data : Tool_Callback_User_Object) return Boolean;
+      User_Data : Tool_Callback_User_Object);
    --  Executed when a value is changed in the Details view
 
    procedure On_Reset
@@ -849,8 +846,8 @@ package body Toolchains_Editor is
                   Reset_Btn => Btn));
          end if;
 
-         Tool_Callback_Return.Object_Connect
-           (Ent, Gtk.Widget.Signal_Focus_Out_Event,
+         Tool_Callback.Object_Connect
+           (Ent, Gtk.Editable.Signal_Changed,
             On_Tool_Value_Changed'Access,
             Slot_Object => Editor,
             User_Data   => Tool_Callback_User_Object'
@@ -956,10 +953,10 @@ package body Toolchains_Editor is
    -- On_Tool_Value_Changed --
    ---------------------------
 
-   function On_Tool_Value_Changed
+   procedure On_Tool_Value_Changed
      (Widget    : access Toolchains_Edit_Record'Class;
       Params    : Glib.Values.GValues;
-      User_Data : Tool_Callback_User_Object) return Boolean
+      User_Data : Tool_Callback_User_Object)
    is
       pragma Unreferenced (Params);
       Tc   : constant Toolchain := Get_Selected_Toolchain (Widget);
@@ -968,7 +965,7 @@ package body Toolchains_Editor is
 
    begin
       if Widget.Updating then
-         return False;
+         return;
       end if;
 
       Trace (Me, "Tool value lost focus, verify its state");
@@ -1007,12 +1004,9 @@ package body Toolchains_Editor is
 
       end case;
 
-      return False;
-
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         return False;
    end On_Tool_Value_Changed;
 
    --------------
