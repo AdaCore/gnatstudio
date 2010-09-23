@@ -837,6 +837,9 @@ package body Toolchains_Editor is
             Top_Attach    => N_Rows - 1,
             Bottom_Attach => N_Rows);
          Ent.Add_Events (Gdk.Event.Leave_Notify_Mask);
+         if Kind = Tool_Kind_Compiler then
+            Ent.Set_Name (To_Lower (Lang) & "_compiler");
+         end if;
 
          Gtk_New (Icn);
          Editor.Details_View.Attach
