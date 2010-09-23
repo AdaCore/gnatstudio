@@ -1427,7 +1427,7 @@ package body Completion_Module is
       Register_Menu
         (Kernel, "/_Navigate/", "Goto _Entity...",
          Ref_Item => "Goto _Line...",
-         Accel_Key => GDK_T,
+         Accel_Key => GDK_LC_t,
          Accel_Mods => Control_Mask,
          Callback => On_Entity_View_Dialog'Access);
 
