@@ -625,6 +625,15 @@ package body Toolchains_Editor is
       Toolchains.Compute_Predefined_Paths (Tc);
       Infos := Toolchains.Get_Library_Information (Tc);
 
+      if Force_Selected then
+         --  First deselect any previously selected toolchain
+         Iter := Editor.Model.Get_Iter_First;
+         while Iter /= Null_Iter loop
+            Editor.Model.Set (Iter, Active_Column, False);
+            Editor.Model.Next (Iter);
+         end loop;
+      end if;
+
       Iter := Editor.Model.Get_Iter_First;
       while Iter /= Null_Iter loop
          exit when Editor.Model.Get_String (Iter, Name_Column) = Name;
@@ -737,7 +746,7 @@ package body Toolchains_Editor is
               (Value & (-" cannot be found on the PATH"));
          end if;
       else
-         Set (Icon, Stock_Apply, Icon_Size_Button);
+         Set (Icon, "", Icon_Size_Button);
          Label.Set_Has_Tooltip (False);
          GEntry.Set_Has_Tooltip (False);
          Icon.Set_Has_Tooltip (False);
