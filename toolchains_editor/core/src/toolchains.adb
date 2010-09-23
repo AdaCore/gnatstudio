@@ -1149,38 +1149,46 @@ package body Toolchains is
         and then GNAT_Driver_Str = ""
         and then Gnatmake_Str = ""
         and then Debugger_Str = ""
-        and then Compilers.Length = 0
       then
          --  No need for further modifications, just return the native
          --  toolchain
-         return Manager.Get_Native_Toolchain;
-      end if;
+         Ret := Manager.Get_Native_Toolchain;
+         Modified := False;
 
-      --  Second case: we retrieve the toolchain from the prefix
-      declare
-         Prefix : constant String := Get_Prefix;
-      begin
-         if Prefix /= ""
-           and then Is_Known_Toolchain_Name (Prefix)
-         then
-            Ret := Manager.Create_Known_Toolchain (Prefix);
-            Modified := False;
-         end if;
-      end;
+      else
+         --  Second case: we retrieve the toolchain from the prefix
+         declare
+            Prefix : constant String := Get_Prefix;
+         begin
+            if Prefix /= ""
+              and then Is_Known_Toolchain_Name (Prefix)
+            then
+               Ret := Manager.Create_Known_Toolchain (Prefix);
+               Modified := False;
+            end if;
+         end;
+      end if;
 
       --  Third case: the toolchain is not known, we need to start a brand new
       --  one
 
       if Ret = null then
-         Ret := Manager.Create_Empty_Toolchain;
-         Modified := True;
+         if Get_Prefix = "" then
+            Ret := Manager.Get_Native_Toolchain;
+         else
+            Ret := Create_Empty_Toolchain (Manager);
+            Modified := True;
+            Set_Name (Ret, Get_Prefix);
+         end if;
       end if;
 
       --  At this stage, we have either a toolchain created from a known
       --  configuration and that we potentially need to adjust, or a new one
       --  created for the occasion for which we need to fill the values.
 
-      if GNAT_List_Str /= Get_Command (Ret, GNAT_List) then
+      if GNAT_List_Str /= Get_Command (Ret, GNAT_List)
+        and then GNAT_List_Str /= ""
+      then
          if not Modified then
             Ret := Copy (Ret);
             Modified := True;
@@ -1192,7 +1200,9 @@ package body Toolchains is
          Ret.Library := null;
       end if;
 
-      if GNAT_Driver_Str /= Get_Command (Ret, GNAT_Driver) then
+      if GNAT_Driver_Str /= Get_Command (Ret, GNAT_Driver)
+        and then GNAT_Driver_Str /= ""
+      then
          if not Modified then
             Ret := Copy (Ret);
             Modified := True;
@@ -1201,7 +1211,9 @@ package body Toolchains is
          Set_Command (Ret, GNAT_Driver, GNAT_Driver_Str);
       end if;
 
-      if Debugger_Str /= Get_Command (Ret, Debugger) then
+      if Debugger_Str /= Get_Command (Ret, Debugger)
+        and then Debugger_Str /= ""
+      then
          if not Modified then
             Ret := Copy (Ret);
             Modified := True;
@@ -1228,10 +1240,8 @@ package body Toolchains is
       --  If the toolchain has been modified, then we now need to find a new
       --  name
       if Modified then
-         Set_Name (Ret, Get_Prefix);
-
          --  Take care of duplicated names
-         if Manager.Toolchains.Contains (Ret.Name.all) then
+         if Manager.Toolchains.Contains (Get_Name (Ret)) then
             Ret.Label :=
               new String'(Manager.Create_Anonymous_Name (Get_Prefix));
          end if;
