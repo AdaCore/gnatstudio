@@ -56,7 +56,6 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
-with GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with GPS.Intl;                 use GPS.Intl;
