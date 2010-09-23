@@ -71,7 +71,7 @@ with Traces;                   use Traces;
 package body Toolchains_Editor is
 
    Me : constant Debug_Handle :=
-          Traces.Create ("Toolchains_Editor", GNATCOLL.Traces.On);
+          Traces.Create ("Toolchains_Editor");
 
    Active_Column   : constant := 0;
    Name_Column     : constant := 1;
