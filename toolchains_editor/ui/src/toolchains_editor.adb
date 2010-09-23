@@ -69,8 +69,7 @@ with Traces;                   use Traces;
 
 package body Toolchains_Editor is
 
-   Me : constant Debug_Handle :=
-          Traces.Create ("Toolchains_Editor");
+   Me : constant Debug_Handle := Traces.Create ("Toolchains_Editor");
 
    Active_Column   : constant := 0;
    Name_Column     : constant := 1;
@@ -336,7 +335,7 @@ package body Toolchains_Editor is
       Gtk.Box.Gtk_New_Vbox (Btn_Box);
       Tc_Box.Pack_Start (Btn_Box, Expand => False, Padding => 10);
 
-      Gtk.Button.Gtk_New_From_Stock (Btn, Gtk.Stock.Stock_Find);
+      Gtk.Button.Gtk_New (Btn, -"Scan");
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
         (Btn, Gtk.Button.Signal_Clicked, On_Scan_Clicked'Access,
