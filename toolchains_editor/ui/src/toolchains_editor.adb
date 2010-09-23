@@ -879,7 +879,7 @@ package body Toolchains_Editor is
       Editor.Details_View.Resize (N_Rows, N_Cols);
 
       Gtk_New
-        (Lbl, "<span font_weight=""bold"">Tools:</span>");
+        (Lbl, "<b>Tools:</b>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
       Editor.Details_View.Attach
@@ -906,7 +906,7 @@ package body Toolchains_Editor is
 
       Gtk_New
         (Lbl,
-         "<span font_weight=""bold"">Compilers:</span>");
+         "<b>Compilers:</b>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
       Editor.Details_View.Attach
