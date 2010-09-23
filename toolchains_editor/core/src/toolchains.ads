@@ -218,14 +218,19 @@ package Toolchains is
    --  to say all the tools are the for prefix-tool, false otherwise.
 
    function Get_Name (This : Toolchain) return String;
-   --  Return the name of this toolchain, as used for the properties deduction
+   --  Return the name of this toolchain, as used for the properties
+   --  deduction. This name is also the target as known by gprbuild.
 
    procedure Set_Name (This : Toolchain; Name : String);
    --  Changes the name of the toolchain given in parameter
 
    function Get_Label (This : Toolchain) return String;
    --  Return the label of the toolchain, for display purposes. Usually equals
-   --  to the name execpt in certain cases (e.g. native)
+   --  to the name execpt in certain cases (e.g. native). Each label is unique
+   --  in a toolchain manager.
+
+   procedure Set_Label (This : Toolchain; Label : String);
+   --  Modifies the label of the toolchain given in parameter.
 
    function Copy (This : Toolchain) return Toolchain;
    --  Copy all the data for the toolchain given in parameter.
@@ -303,7 +308,7 @@ package Toolchains is
 
    function Get_Toolchain
      (Manager : access Toolchain_Manager_Record;
-      Name    : String) return Toolchain;
+      Label   : String) return Toolchain;
    --  Return a toolchain according to its name. If no such toolchain exist,
    --  but the name is the name of a known toolchain, then it will be
    --  automatically created. Otherwise, will return Null_Toolchain.

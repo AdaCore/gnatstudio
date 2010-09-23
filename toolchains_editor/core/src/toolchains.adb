@@ -701,6 +701,24 @@ package body Toolchains is
       end if;
    end Get_Label;
 
+   ---------------
+   -- Set_Label --
+   ---------------
+
+   procedure Set_Label (This : Toolchain; Label : String) is
+   begin
+      if This.Label /= null
+        and then This.Manager.Toolchains.Contains (This.Label.all)
+        and then This.Manager.Toolchains.Element (This.Label.all) = This
+      then
+         This.Manager.Toolchains.Delete (This.Label.all);
+         This.Manager.Toolchains.Insert (Label, This);
+      end if;
+
+      Free (This.Label);
+      This.Label := new String'(Label);
+   end Set_Label;
+
    --------------
    -- Set_Name --
    --------------
@@ -891,7 +909,7 @@ package body Toolchains is
       Ret : constant Toolchain := new Toolchain_Record;
    begin
       Ret.Manager := Toolchain_Manager (Manager);
-      return new Toolchain_Record;
+      return Ret;
    end Create_Empty_Toolchain;
 
    -------------------
@@ -900,22 +918,22 @@ package body Toolchains is
 
    function Get_Toolchain
      (Manager : access Toolchain_Manager_Record;
-      Name    : String) return Toolchain
+      Label   : String) return Toolchain
    is
    begin
       --  Case 1: the toolchain is already computed
-      if Manager.Toolchains.Contains (Name) then
-         return Manager.Toolchains.Element (Name);
+      if Manager.Toolchains.Contains (Label) then
+         return Manager.Toolchains.Element (Label);
 
       --  Case 2, the toolchain is known. Create a known one
 
-      elsif Is_Known_Toolchain_Name (Name) then
-         return Manager.Get_Known_Toolchain (Name);
+      elsif Is_Known_Toolchain_Name (Label) then
+         return Manager.Get_Known_Toolchain (Label);
 
       --  Case 3, the toolchain contains the string "native", return the
       --  native one
 
-      elsif Index (Name, "native") in Name'Range then
+      elsif Index (Label, "native") in Label'Range then
          return Manager.Get_Native_Toolchain;
 
       end if;
