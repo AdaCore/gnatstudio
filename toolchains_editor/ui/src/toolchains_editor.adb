@@ -21,7 +21,9 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+
 with GNAT.Expect;              use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;   use GNAT.Expect.TTY.Remote;
@@ -237,17 +239,43 @@ package body Toolchains_Editor is
       Col.Add_Attribute (String_Renderer, "text", Name_Column);
 
       declare
-         Langs : GNAT.OS_Lib.Argument_List :=
+         Langs : constant GNAT.OS_Lib.Argument_List :=
                    Language_Handlers.Known_Languages
                      (Get_Language_Handler (Kernel));
+         Ordered : GNAT.OS_Lib.Argument_List := Langs;
+         Done    : Boolean := False;
+         Last    : Natural;
          Iter  : Gtk_Tree_Iter := Null_Iter;
 
       begin
-         for J in Langs'Range loop
+         --  First order the languages alphabetically, with Ada, C and C++
+         --  being forced first (those are already the 3 first items)
+         for J in Langs'First + 3 .. Langs'Last loop
+            Done := False;
+            Last := J - 1;
+
+            for K in Ordered'First + 3 .. Last loop
+               if not Ada.Strings.Less_Case_Insensitive
+                 (Ordered (K).all, Langs (J).all)
+               then
+                  Done := True;
+                  Ordered (K + 1 .. Last + 1) := Ordered (K .. Last);
+                  Ordered (K) := Langs (J);
+
+                  exit;
+               end if;
+            end loop;
+
+            if not Done then
+               Ordered (Last + 1) := Langs (J);
+            end if;
+         end loop;
+
+         for J in Ordered'Range loop
             Editor.Lang_Model.Append (Iter, Null_Iter);
             Editor.Lang_Model.Set (Iter, Active_Column, False);
-            Editor.Lang_Model.Set (Iter, Name_Column, Langs (J).all);
-            GNAT.OS_Lib.Free (Langs (J));
+            Editor.Lang_Model.Set (Iter, Name_Column, Ordered (J).all);
+            GNAT.OS_Lib.Free (Ordered (J));
          end loop;
       end;
 
