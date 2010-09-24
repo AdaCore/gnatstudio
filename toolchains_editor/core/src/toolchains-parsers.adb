@@ -839,6 +839,10 @@ package body Toolchains.Parsers is
             declare
                Toolchain_Node    : Project_Node_Id;
             begin
+               if Toolchains (J).Is_Native then
+                  Contains_Native := True;
+               end if;
+
                Toolchain_Node := Create_Literal_String
                  (Get_Name_Id (Get_Label (Toolchains (J))),
                   This.Node_Data);
