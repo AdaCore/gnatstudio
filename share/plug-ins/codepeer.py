@@ -1,5 +1,4 @@
-"""This file provides support for using the CodePeer tool
-   Note that this is a work in progress.
+"""This file provides support for using the CodePeer tool.
 
    CodePeer is a static analysis tool for Ada code.
    This tool allows the user to perform an automatic code review of
