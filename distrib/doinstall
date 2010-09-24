@@ -110,6 +110,7 @@ install_binaries() {
   rm -f $basedir/share/gps/plug-ins/spark.py
   rm -f $basedir/share/gps/library/*.py*
   rm -f $basedir/share/gps/library/*.xml
+  rm -f $basedir/share/gps/templates
 
   for f in $basedir/share/gps/plug-ins/*.xml \
            $basedir/share/gps/plug-ins/*.py; do
