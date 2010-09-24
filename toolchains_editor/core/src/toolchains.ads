@@ -176,6 +176,12 @@ package Toolchains is
 
    Null_Toolchain : aliased constant Toolchain;
 
+   procedure Ref (This : Toolchain);
+   procedure Unref (This : in out Toolchain);
+   --  Manage number of references made to a toolchain - usefull when
+   --  toolchains are stored for a long time in order to protect their data
+   --  against calls to Remove or Clear.
+
    procedure Compute_Predefined_Paths (This : Toolchain);
    --  Retreives the predefined path if needed.
 
@@ -470,6 +476,10 @@ private
 
       Manager : Toolchain_Manager;
       --  The manager this toolchain is attached to
+
+      Refs    : Integer := 0;
+      --  Number of references to that toolchain. The toolchain is never
+      --  freed before this reaches 0.
    end record;
 
    type Toolchain is access all Toolchain_Record;

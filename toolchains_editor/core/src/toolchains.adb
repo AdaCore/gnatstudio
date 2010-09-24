@@ -415,6 +415,28 @@ package body Toolchains is
       Free (This);
    end Free;
 
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (This : Toolchain) is
+   begin
+      This.Refs := This.Refs + 1;
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (This : in out Toolchain) is
+   begin
+      This.Refs := This.Refs - 1;
+
+      if This.Refs <= 0 then
+         Free (This);
+      end if;
+   end Unref;
+
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------
@@ -1286,6 +1308,7 @@ package body Toolchains is
          Compute_Predefined_Paths (Tc);
       end if;
 
+      Ref (Tc);
       Manager.Toolchains.Insert (Get_Label (Tc), Tc);
       Tc.Manager := Toolchain_Manager (Manager);
 
@@ -1310,7 +1333,7 @@ package body Toolchains is
       Existing := Manager.Toolchains.Element (Tc_Name);
 
       Manager.Toolchains.Delete (Tc_Name);
-      Free (Existing);
+      Unref (Existing);
       Fire_Change_Event (Manager);
    end Remove_Toolchain;
 
@@ -1515,7 +1538,8 @@ package body Toolchains is
          Compilers_Scanned => False,
          Is_Valid          => False,
          Library           => null,
-         Manager           => Toolchain_Manager (Manager));
+         Manager           => Toolchain_Manager (Manager),
+         Refs              => 0);
 
       Set_Command (Native_Toolchain, GNAT_Driver, "gnat", True);
       Set_Command (Native_Toolchain, GNAT_List, "gnatls", True);
@@ -1541,7 +1565,7 @@ package body Toolchains is
       else
          --  set the flag, so that we don't try to analyze the native
          --  toolchain later on
-         Free (Native_Toolchain);
+         Unref (Native_Toolchain);
          Manager.No_Native_Toolchain := True;
 
          return null;
@@ -1909,7 +1933,7 @@ package body Toolchains is
    begin
       while Cur /= Toolchain_Maps.No_Element loop
          Tmp := Element (Cur);
-         Free (Tmp);
+         Unref (Tmp);
 
          Cur := Next (Cur);
       end loop;
