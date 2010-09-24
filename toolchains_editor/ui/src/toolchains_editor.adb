@@ -613,9 +613,7 @@ package body Toolchains_Editor is
                        (Editor.Lang_Model.Get_String (Iter, Name_Column));
          begin
             if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
-               if not Is_Native (Tc)
-                 or else not Is_Default (Tc, Lang)
-               then
+               if not Is_Default (Tc, Lang) then
                   Set_Attribute
                     (GNATCOLL.Projects.Compiler_Driver_Attribute,
                      Lang,
@@ -641,14 +639,6 @@ package body Toolchains_Editor is
          Editor.Lang_Model.Next (Iter);
       end loop;
 
---        if not Is_Native (Tc) then
---           GNATCOLL.Projects.Set_Attribute
---             (Project,
---              Attribute => GNATCOLL.Projects.Compiler_Command_Attribute,
---              Value     => Get_Exe (Get_Compiler (Tc, "Ada")),
---              Scenario  => Scenarii,
---              Index     => "Ada");
---        end if;
       return Modified;
    end Generate_Project;
 
