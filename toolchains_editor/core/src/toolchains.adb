@@ -987,19 +987,35 @@ package body Toolchains is
       is
          Cursor : Compiler_Maps.Cursor;
       begin
-         if GNAT_List_Str = Get_Command (TC, GNAT_List)
-           and then GNAT_Driver_Str = Get_Command (TC, GNAT_Driver)
-           and then Debugger_Str = Get_Command (TC, Debugger)
+         if (GNAT_List_Str = ""
+           or else GNAT_List_Str = Get_Command (TC, GNAT_List))
+           and then
+             (GNAT_Driver_Str = ""
+              or else GNAT_Driver_Str = Get_Command (TC, GNAT_Driver))
+           and then
+             (Debugger_Str = ""
+              or else Debugger_Str = Get_Command (TC, Debugger))
          then
+            declare
+               use Compiler_Maps;
+               Tmp : Compiler_Maps.Cursor := First (TC.Compiler_Commands);
+            begin
+               while Tmp /= Compiler_Maps.No_Element loop
+                  Tmp := Next (Tmp);
+               end loop;
+            end;
+
             Cursor := Drivers.First;
             while Compiler_Maps.Has_Element (Cursor) loop
                declare
                   Lang : constant String := Compiler_Maps.Key (Cursor);
+                  Toolchain_Compiler : constant Compiler :=
+                    Get_Compiler (TC, Lang);
                begin
-                  if TC.Compiler_Commands.Contains (Lang)
+                  if Toolchain_Compiler /= No_Compiler
                     and then not Compilers_Match
-                                   (TC.Compiler_Commands.Element (Lang),
-                                    Drivers.Element (Lang))
+                      (Toolchain_Compiler,
+                       Compiler_Maps.Element (Cursor))
                   then
                      return False;
                   end if;
@@ -1125,13 +1141,18 @@ package body Toolchains is
 
       Iter      : Compiler_Maps.Cursor;
 
+      Is_Empty : constant Boolean := GNAT_List_Str = ""
+        and then GNAT_Driver_Str = ""
+        and then Gnatmake_Str = ""
+        and then Debugger_Str = "";
+
    begin
       --  First of all, we need to retrieve all potential explicitely defined
       --  compilers from the project
 
       --  First, look at all compiler commands
 
-      Set_Compilers_From_Attribute ("ide", "compiler_Command");
+      Set_Compilers_From_Attribute ("ide", "compiler_command");
 
       --  Then, look at all drivers, possibly overriding compiler commands
 
@@ -1140,32 +1161,31 @@ package body Toolchains is
       --  1 step: look through the current toolchains list to verify if this
       --  toolchain already exists
 
-      Cursor := Manager.Toolchains.First;
+      if not Is_Empty then
+         Cursor := Manager.Toolchains.First;
 
-      while Toolchain_Maps.Has_Element (Cursor) loop
-         Ret := Toolchain_Maps.Element (Cursor);
+         while Toolchain_Maps.Has_Element (Cursor) loop
+            Ret := Toolchain_Maps.Element (Cursor);
 
-         if Toolchain_Matches (Ret, Compilers) then
-            return Ret;
-         end if;
+            if Toolchain_Matches (Ret, Compilers) then
+               return Ret;
+            end if;
 
-         Toolchain_Maps.Next (Cursor);
-      end loop;
+            Toolchain_Maps.Next (Cursor);
+         end loop;
+
+         Ret := null;
+      end if;
 
       --  2 step: no such toolchain exists, try to retrieve it from a known
       --  configuration
 
       --  First known configuration: the native toolchain
-      if GNAT_List_Str = ""
-        and then GNAT_Driver_Str = ""
-        and then Gnatmake_Str = ""
-        and then Debugger_Str = ""
-      then
+      if Is_Empty then
          --  No need for further modifications, just return the native
          --  toolchain
          Ret := Manager.Get_Native_Toolchain;
          Modified := False;
-
       else
          --  Second case: we retrieve the toolchain from the prefix
          declare
@@ -1190,6 +1210,7 @@ package body Toolchains is
             Ret := Create_Empty_Toolchain (Manager);
             Modified := True;
             Set_Name (Ret, Get_Prefix);
+            Set_Label (Ret, Get_Prefix);
          end if;
       end if;
 
@@ -1251,8 +1272,8 @@ package body Toolchains is
       --  If the toolchain has been modified, then we now need to find a new
       --  name
       if Modified then
-         --  Take care of duplicated names
-         if Manager.Toolchains.Contains (Get_Name (Ret)) then
+         --  Take care of duplicated labels
+         if Manager.Toolchains.Contains (Get_Label (Ret)) then
             Ret.Label :=
               new String'(Manager.Create_Anonymous_Name (Get_Prefix));
          end if;
