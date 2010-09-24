@@ -38,7 +38,7 @@ package body Toolchains.Parsers is
 
    type Attribute_Kind is (Unknown_Kind, Tool_Kind, Compiler_Kind);
 
-   type Attribute (Kind : Attribute_Kind := Tool_Kind) is record
+   type Attribute (Kind : Attribute_Kind := Unknown_Kind) is record
       Use_Var_Ref       : Boolean := False;
       String_Expression : String_Access;
       Error             : String_Access;
@@ -294,7 +294,7 @@ package body Toolchains.Parsers is
               (Manager, Dummy_Project_Tree.Root_Project);
 
             This.Toolchains.Insert
-              (Unique_Toolchain.Name.all, Unique_Toolchain);
+              (Get_Label (Unique_Toolchain), Unique_Toolchain);
 
             Free (Dummy_Project_Tree);
          elsif This.Variable_Node /= Empty_Node then
@@ -310,12 +310,12 @@ package body Toolchains.Parsers is
             begin
                while String_Node /= Empty_Node loop
                   declare
-                     Name : constant String := Get_Name_String
+                     Label : constant String := Get_Name_String
                        (String_Value_Of (String_Node, Node_Data));
                   begin
-                     if not This.Toolchains.Contains (Name) then
+                     if not This.Toolchains.Contains (Label) then
                         This.Toolchains.Insert
-                          (Name, Get_Toolchain (Manager, Name));
+                          (Label, Get_Toolchain (Manager, Label));
                      end if;
 
                      String_Node := Next_Literal_String
@@ -360,7 +360,6 @@ package body Toolchains.Parsers is
                   if Ada_Toolchain = null then
                      Ada_Toolchain := Create_Empty_Toolchain (Manager);
                      Ada_Toolchain.Name := new String'(Choice_Name);
-                     Ada_Toolchain.Label := new String'(Choice_Name);
                      Ada_Toolchain.Is_Native := False;
                      Ada_Toolchain.Is_Custom := True;
                      Ada_Toolchain.Is_Valid := False;
@@ -473,7 +472,7 @@ package body Toolchains.Parsers is
                   This.Toolchains.Insert ("native", Element (Cur));
                else
                   This.Toolchains.Insert
-                    (Element (Cur).Name.all, Element (Cur));
+                    (Get_Label (Element (Cur)), Element (Cur));
                end if;
 
                Cur := Next (Cur);
@@ -769,8 +768,8 @@ package body Toolchains.Parsers is
          Prev_Node            : Project_Node_Id;
          Contains_Native   : Boolean := False;
 
-         Native_Name       : aliased String := "native";
-         Default_Toolchain : access String;
+         Native_Name : aliased String := "native";
+         Ext_Default : Project_Node_Id;
       begin
          --  Create the type declaration and the variable if needed
 
@@ -838,18 +837,10 @@ package body Toolchains.Parsers is
 
          for J in Toolchains'Range loop
             declare
-               Name              : access String;
                Toolchain_Node    : Project_Node_Id;
             begin
-               if Toolchains (J).Is_Native then
-                  Name := Native_Name'Access;
-                  Contains_Native := True;
-               else
-                  Name := Toolchains (J).Name;
-               end if;
-
                Toolchain_Node := Create_Literal_String
-                 (Get_Name_Id (Name.all),
+                 (Get_Name_Id (Get_Label (Toolchains (J))),
                   This.Node_Data);
 
                if Prev_Node = Empty_Node then
@@ -873,15 +864,17 @@ package body Toolchains.Parsers is
          --  first of the toolchains to add otherwise.
 
          if Contains_Native then
-            Default_Toolchain := Native_Name'Access;
+            Ext_Default :=
+              Create_Literal_String
+                (Get_Name_Id (Native_Name), This.Node_Data);
          else
-            Default_Toolchain := Toolchains (Toolchains'First).Name;
+            Ext_Default :=
+              Create_Literal_String
+                (Get_Name_Id (Get_Label (Toolchains (Toolchains'First))),
+                 This.Node_Data);
          end if;
 
          declare
-            Ext_Default : constant Project_Node_Id :=
-              Create_Literal_String
-                (Get_Name_Id (Default_Toolchain.all), This.Node_Data);
             Ext_Value   : constant Project_Node_Id :=
               Current_Term
                 (First_Term
@@ -1130,7 +1123,8 @@ package body Toolchains.Parsers is
                     (Get_Name_Id ("native"), This.Node_Data);
                else
                   Name_Str := Create_Literal_String
-                    (Get_Name_Id (Toolchains (J).Name.all), This.Node_Data);
+                    (Get_Name_Id
+                       (Get_Label (Toolchains (J))), This.Node_Data);
                end if;
 
                Set_First_Choice_Of (Case_Node, This.Node_Data, Name_Str);
