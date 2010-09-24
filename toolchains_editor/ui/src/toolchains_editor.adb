@@ -631,13 +631,28 @@ package body Toolchains_Editor is
             else
                Clear_Attribute
                  (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
-               Clear_Attribute
-                 (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+
+               if To_Lower (Lang) /= "ada" then
+                  Clear_Attribute
+                    (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+               end if;
             end if;
          end;
 
          Editor.Lang_Model.Next (Iter);
       end loop;
+
+      if not Is_Native (Tc) then
+         --  The IDE'Compiler_Command ("ada") attribute is used by gprconfig
+         --  to determine the default target for the given project. So in case
+         --  of
+         Set_Attribute
+           (GNATCOLL.Projects.Compiler_Command_Attribute, "ada",
+            Get_Exe (Get_Compiler (Tc, "ada")));
+      else
+         Clear_Attribute
+           (GNATCOLL.Projects.Compiler_Command_Attribute, "ada");
+      end if;
 
       return Modified;
    end Generate_Project;
@@ -759,18 +774,36 @@ package body Toolchains_Editor is
       GEntry.Set_Text (Value);
       if Kind = Tool_Kind_Tool and then Tool = GNAT_Driver then
          GEntry.Set_Sensitive (False);
+      elsif Kind = Tool_Kind_Compiler and then Is_Default then
+         GEntry.Set_Sensitive (False);
       end if;
 
       if not Is_Valid then
          Set (Icon, Stock_Dialog_Warning, Icon_Size_Button);
 
          if Value = "" then
-            Label.Set_Tooltip_Text
-              (-"Value not defined for this target");
-            GEntry.Set_Tooltip_Text
-              (-"Value not defined for this target");
-            Icon.Set_Tooltip_Text
-              (-"Value not defined for this target");
+            if Kind = Tool_Kind_Tool then
+               declare
+                  Tooltip : constant String :=
+                              -"Value not defined for this target";
+               begin
+                  Label.Set_Tooltip_Text (Tooltip);
+                  GEntry.Set_Tooltip_Text (Tooltip);
+                  Icon.Set_Tooltip_Text (Tooltip);
+               end;
+            else
+               declare
+                  Tooltip : constant String :=
+                              -("No compiler defined for this toolchain." &
+                                ASCII.LF &
+                                "Leave empty to tell GPS that this language" &
+                                " does not need compilation");
+               begin
+                  Label.Set_Tooltip_Text (Tooltip);
+                  GEntry.Set_Tooltip_Text (Tooltip);
+                  Icon.Set_Tooltip_Text (Tooltip);
+               end;
+            end if;
          else
             Label.Set_Tooltip_Text
               (Value & (-" cannot be found on the PATH"));
@@ -779,6 +812,7 @@ package body Toolchains_Editor is
             Icon.Set_Tooltip_Text
               (Value & (-" cannot be found on the PATH"));
          end if;
+
       else
          Set (Icon, "", Icon_Size_Button);
          Label.Set_Has_Tooltip (False);
@@ -861,8 +895,8 @@ package body Toolchains_Editor is
             Bottom_Attach => N_Rows,
             Xoptions      => 0);
 
-         if Kind /= Tool_Kind_Tool
-           or else Tool /= GNAT_Driver
+         if Kind = Tool_Kind_Tool
+           and then Tool /= GNAT_Driver
          then
             Gtk_New (Btn, "reset");
             Editor.Details_View.Attach

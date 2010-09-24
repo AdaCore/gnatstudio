@@ -421,11 +421,13 @@ private
       record
          Exe        : String (1 .. Exe_Length);
          Is_Valid   : Boolean;
+         Is_Default : Boolean;
       end record;
    No_Compiler : constant Compiler :=
                    (Exe_Length => 0,
                     Exe        => "",
-                    Is_Valid   => False);
+                    Is_Valid   => False,
+                    Is_Default => False);
 
    package Compiler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, Compiler,
@@ -458,9 +460,6 @@ private
 
       Compiler_Commands : Compiler_Maps.Map;
       --  The compiler commands indexed by language
-
-      Default_Compilers : Compiler_Maps.Map;
-      --  The default compiler commands indexed by language
 
       Compilers_Scanned : Boolean := False;
 

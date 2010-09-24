@@ -48,11 +48,6 @@ package body Toolchains is
      (Comp1, Comp2 : Compiler) return Boolean;
    --  Tells if 2 compilers are equal
 
-   function New_Compiler
-     (Exe        : String;
-      Is_Valid   : Boolean) return Compiler;
-   --  Simply creates a new Compiler structure
-
    ---------------------------------
    -- Compute_Gprconfig_Compilers --
    ---------------------------------
@@ -189,25 +184,18 @@ package body Toolchains is
       return Comp1.Exe = Comp2.Exe;
    end Compilers_Match;
 
-   ------------------
-   -- New_Compiler --
-   ------------------
-
-   function New_Compiler
-     (Exe        : String;
-      Is_Valid   : Boolean) return Compiler
-   is
-   begin
-      return Compiler'
-        (Exe_Length => Exe'Length,
-         Exe        => Exe,
-         Is_Valid   => Is_Valid);
-   end New_Compiler;
+   -------------
+   -- Get_Exe --
+   -------------
 
    function Get_Exe (C : Compiler) return String is
    begin
       return C.Exe;
    end Get_Exe;
+
+   --------------
+   -- Is_Valid --
+   --------------
 
    function Is_Valid (C : Compiler) return Boolean is
    begin
@@ -513,8 +501,6 @@ package body Toolchains is
    begin
       if This.Compiler_Commands.Contains (Lang) then
          return This.Compiler_Commands.Element (Lang);
-      elsif This.Default_Compilers.Contains (Lang) then
-         return This.Default_Compilers.Element (Lang);
       else
          return No_Compiler;
       end if;
@@ -533,39 +519,31 @@ package body Toolchains is
       Comp : Compiler :=
                (Exe_Length => Value'Length,
                 Exe        => Value,
-                Is_Valid   => False);
+                Is_Valid   => False,
+                Is_Default => Default);
 
    begin
       if Locate_On_Path (+Value, Get_Nickname (Build_Server)) /= No_File then
          Comp.Is_Valid := True;
       end if;
 
-      if This.Default_Compilers.Contains (Lang)
-        and then This.Default_Compilers.Element (Lang).Exe = Value
-      then
-         --  Set a value equal to the default compiler: Just remove the custom
-         --  value if any
-         if This.Compiler_Commands.Contains (Lang) then
-            This.Compiler_Commands.Delete (Lang);
-         end if;
-
-         return;
-      end if;
-
-      if Default then
-         if This.Default_Compilers.Contains (Lang) then
-            This.Default_Compilers.Replace (Lang, Comp);
-         else
-            This.Default_Compilers.Insert (Lang, Comp);
-         end if;
-
-         if This.Compiler_Commands.Contains (Lang) then
-            This.Compiler_Commands.Delete (Lang);
-         end if;
-
-      elsif This.Compiler_Commands.Contains (Lang) then
-         This.Compiler_Commands.Replace (Lang, Comp);
-
+      if This.Compiler_Commands.Contains (Lang) then
+         --  Do not override default compilers accidently
+         declare
+            Old : constant Compiler := This.Compiler_Commands.Element (Lang);
+         begin
+            if Old.Is_Default then
+               if Old.Exe = Comp.Exe then
+                  --  Same exe, so we can keep the one with the 'default' flag
+                  --  set.
+                  return;
+               else
+                  This.Compiler_Commands.Replace (Lang, Comp);
+               end if;
+            else
+               This.Compiler_Commands.Replace (Lang, Comp);
+            end if;
+         end;
       else
          This.Compiler_Commands.Insert (Lang, Comp);
       end if;
@@ -638,7 +616,8 @@ package body Toolchains is
 
    function Is_Default (This : Toolchain; Lang : String) return Boolean is
    begin
-      return not This.Compiler_Commands.Contains (Lang);
+      return This.Compiler_Commands.Contains (Lang)
+        and then This.Compiler_Commands.Element (Lang).Is_Default;
    end Is_Default;
 
    ----------------------
@@ -758,7 +737,7 @@ package body Toolchains is
       end loop;
 
       declare
-         Map  : Compiler_Maps.Map := Result.Compiler_Commands;
+         Map  : constant Compiler_Maps.Map := Result.Compiler_Commands;
          Iter : Compiler_Maps.Cursor;
       begin
          Result.Compiler_Commands := Compiler_Maps.Empty_Map;
@@ -766,16 +745,6 @@ package body Toolchains is
 
          while Compiler_Maps.Has_Element (Iter) loop
             Result.Compiler_Commands.Insert
-              (Compiler_Maps.Key (Iter), Compiler_Maps.Element (Iter));
-            Compiler_Maps.Next (Iter);
-         end loop;
-
-         Map := Result.Default_Compilers;
-         Result.Default_Compilers := Compiler_Maps.Empty_Map;
-         Iter := Map.First;
-
-         while Compiler_Maps.Has_Element (Iter) loop
-            Result.Default_Compilers.Insert
               (Compiler_Maps.Key (Iter), Compiler_Maps.Element (Iter));
             Compiler_Maps.Next (Iter);
          end loop;
@@ -1124,8 +1093,14 @@ package body Toolchains is
                      Compilers.Delete (Indexes (J).all);
                   end if;
 
+                  --  We don't care about Is_Valid and Is_Default here, since
+                  --  only the name is retrieved later on.
                   Compilers.Insert
-                    (Indexes (J).all, New_Compiler (Driver, False));
+                    (Indexes (J).all,
+                     Compiler'(Exe_Length => Driver'Length,
+                               Exe        => Driver,
+                               Is_Valid   => False,
+                               Is_Default => False));
                end if;
             end;
          end loop;
@@ -1257,14 +1232,19 @@ package body Toolchains is
       --  Init the explicitely defined compilers
       Iter := Compilers.First;
       while Compiler_Maps.Has_Element (Iter) loop
-         Set_Compiler
-           (Ret,
-            Compiler_Maps.Key (Iter),
-            Compiler_Maps.Element (Iter).Exe);
+         declare
+            Lang : constant String := Compiler_Maps.Key (Iter);
+            Comp : constant String := Compiler_Maps.Element (Iter).Exe;
+         begin
+            if Ret.Compiler_Commands.Contains (Lang)
+              and then Ret.Compiler_Commands.Element (Lang).Exe /= Comp
+            then
+               Ret := Copy (Ret);
+               Modified := True;
+            end if;
 
-         if not Is_Default (Ret, Compiler_Maps.Key (Iter)) then
-            Modified := True;
-         end if;
+            Set_Compiler (Ret, Lang, Comp);
+         end;
 
          Compiler_Maps.Next (Iter);
       end loop;
@@ -1532,7 +1512,6 @@ package body Toolchains is
          Default_Tools     => (others => null),
          Is_Valid_Tool     => (others => False),
          Compiler_Commands => <>,
-         Default_Compilers => <>,
          Compilers_Scanned => False,
          Is_Valid          => False,
          Library           => null,
