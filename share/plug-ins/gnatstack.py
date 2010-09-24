@@ -1,4 +1,17 @@
-<GPS>
+"""This file provides support for gnatstack (static stack usage).
+"""
+
+
+############################################################################
+## No user customization below this line
+############################################################################
+
+import GPS, os_utils, os.path
+
+tool = os_utils.locate_exec_on_path("gnatstack")
+
+if tool != "":
+  GPS.parse_xml ("""
   <!--  Support for running GNATStack as a build target  -->
 
   <target-model name="gnatstack" category="">
@@ -53,4 +66,4 @@
       <check line="4" column="1" switch="-k" label="keep temporary files"/>
     </switches>
   </tool>
-</GPS>
+""")
