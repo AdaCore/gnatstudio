@@ -9,4 +9,6 @@ Main_Name: main: The name of the main file.
 
 # Description
 [Description]
-A simple "Hello world" program in GtkAda.
+A simple "Hello world" window.
+
+This requires GtkAda.

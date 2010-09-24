@@ -13,5 +13,5 @@ Port: 8080: The port the server is listening to.
 [Description]
 A full featured AWS/Ajax project structure, including a main file,
 with separate source and object directories. The Web Server is
-using template files, dispatchers for CSS, images and Javascript, generator
-from template files.
+using template files, dispatchers for CSS, images and Javascript,
+generator from template files.
