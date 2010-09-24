@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;             use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Equal_Case_Insensitive;
@@ -46,6 +47,7 @@ with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.Main;                 use Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -384,6 +386,8 @@ package body Toolchains_Editor is
                     GNATCOLL.Projects.Languages (Project);
       Toolchain : Toolchains.Toolchain;
       Iter      : Gtk_Tree_Iter;
+      Diag      : Gtk_Dialog;
+      Label     : Gtk_Label;
 
    begin
       Trace (Me, "Setting editor with project and language information");
@@ -409,8 +413,22 @@ package body Toolchains_Editor is
          Editor.Lang_Model.Next (Iter);
       end loop;
 
+      Gtk.Dialog.Gtk_New
+        (Diag, -"",
+         Get_Main_Window (Editor.Kernel), 0);
+      Set_Has_Separator (Diag, False);
+      Gtk_New
+        (Label, -"Scanning host for available compilers, please wait ...");
+      Pack_Start (Get_Vbox (Diag), Label);
+      Diag.Show_All;
+      Gtk.Main.Grab_Add (Diag);
+
       Toolchain := Get_Toolchain (Editor.Mgr, Project);
       Add_Toolchain (Editor, Toolchain, True);
+
+      Gtk.Main.Grab_Remove (Diag);
+      Diag.Hide_All;
+      Diag.Destroy;
    end Set_Project;
 
    -------------------
@@ -1186,10 +1204,47 @@ package body Toolchains_Editor is
    ---------------------
 
    procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      Editor : constant Toolchains_Edit := Toolchains_Edit (W);
+      Editor         : constant Toolchains_Edit := Toolchains_Edit (W);
+      Dialog         : Gtk_Dialog;
+      Progress_Label : Gtk_Label;
+      Lbl            : Gtk_Label;
+
+      procedure Progress
+        (Name    : String;
+         Current : Integer;
+         Total   : Integer);
+      --  Reports the progress of the scan action
+
+      --------------
+      -- Progress --
+      --------------
+
+      procedure Progress
+        (Name    : String;
+         Current : Integer;
+         Total   : Integer)
+      is
+      begin
+         Progress_Label.Set_Text
+           (-"Scanning " & Name & " -" & Current'Img & " /" & Total'Img);
+      end Progress;
 
    begin
-      Scan_Toolchains (Editor.Mgr);
+      Gtk.Dialog.Gtk_New (Dialog, -"", Gtk_Window (Editor.Get_Toplevel), 0);
+      Set_Has_Separator (Dialog, False);
+      Gtk_New
+        (Lbl, -"Scanning host for available compilers, please wait ...");
+      Pack_Start (Get_Vbox (Dialog), Lbl);
+      Gtk_New (Progress_Label);
+      Pack_Start (Get_Vbox (Dialog), Progress_Label);
+      Dialog.Show_All;
+      Gtk.Main.Grab_Add (Dialog);
+
+      Scan_Toolchains (Editor.Mgr, Progress'Access);
+
+      Gtk.Main.Grab_Remove (Dialog);
+      Dialog.Hide_All;
+      Dialog.Destroy;
 
       declare
          TC_Array : constant Toolchain_Array := Get_Toolchains (Editor.Mgr);
@@ -1288,6 +1343,10 @@ package body Toolchains_Editor is
       Ret       : Unbounded_String;
       Args      : constant Arg_List :=
                     GNATCOLL.Arg_Lists.Parse_String (Command, Separate_Args);
+      Start     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Timeout   : constant Duration := Duration (Timeout_MS) / 1000.0;
+      Dead      : Boolean;
+      pragma Unreferenced (Dead);
 
    begin
       --  If no such command exist, no need to try to spawn it
@@ -1307,15 +1366,22 @@ package body Toolchains_Editor is
          declare
          begin
             loop
-               Expect (Pd.all, Match, "\n", Timeout_MS);
+               while Gtk.Main.Events_Pending loop
+                  Dead := Gtk.Main.Main_Iteration;
+               end loop;
+
+               Expect (Pd.all, Match, "\n", 100);
 
                if Match = Expect_Timeout then
-                  Status := False;
-                  Close (Pd.all);
-                  exit;
+                  if Clock - Start > Timeout then
+                     Status := False;
+                     Close (Pd.all);
+                     raise Process_Died;
+                  end if;
+               else
+                  Ada.Strings.Unbounded.Append (Ret, Expect_Out (Pd.all));
                end if;
 
-               Ada.Strings.Unbounded.Append (Ret, Expect_Out (Pd.all));
             end loop;
          exception
             when Process_Died =>
