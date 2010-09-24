@@ -359,6 +359,9 @@ package Toolchains is
       This    : in out Ada_Library_Info);
    --  Computes this library info using gnatls if needed.
 
+   procedure Clear_Toolchains (Manager : in out Toolchain_Manager_Record);
+   --  Remove and free all the toolchains contained in this manager
+
    -------------------------------
    -- Toolchain_Change_Listener --
    -------------------------------

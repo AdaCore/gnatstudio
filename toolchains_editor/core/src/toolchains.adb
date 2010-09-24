@@ -1918,6 +1918,26 @@ package body Toolchains is
          This.Error := new String'(Exception_Message (E));
    end Compute_If_Needed;
 
+   ----------------------
+   -- Clear_Toolchains --
+   ----------------------
+
+   procedure Clear_Toolchains (Manager : in out Toolchain_Manager_Record) is
+      use Toolchain_Maps;
+
+      Cur : Toolchain_Maps.Cursor := First (Manager.Toolchains);
+      Tmp : Toolchain;
+   begin
+      while Cur /= Toolchain_Maps.No_Element loop
+         Tmp := Element (Cur);
+         Free (Tmp);
+
+         Cur := Next (Cur);
+      end loop;
+
+      Manager.Toolchains.Clear;
+   end Clear_Toolchains;
+
    ---------------------------------------
    -- Get_Or_Create_Library_Information --
    ---------------------------------------
