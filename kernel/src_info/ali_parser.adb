@@ -1397,6 +1397,10 @@ package body ALI_Parser is
          Trace (Me, "Couldn't open " & ALI_Filename.Display_Full_Name);
          Result := No_ALI_Id;
 
+      elsif Buffer'Length = 0 then
+         Trace (Me, "Found empty ali file: " & ALI_Filename.Display_Full_Name);
+         Result := No_ALI_Id;
+
       else
          if Active (Assert_Me) then
             Trace (Assert_Me,
