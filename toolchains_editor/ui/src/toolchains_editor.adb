@@ -975,6 +975,8 @@ package body Toolchains_Editor is
 
          if Kind = Tool_Kind_Compiler then
             Ent.Set_Name (To_Lower (Lang) & "_compiler");
+         else
+            Ent.Set_Name (To_Lower (Tool'Img) & "_tool");
          end if;
 
          Gtk_New (Icn);
