@@ -263,7 +263,7 @@ package body Toolchains_Editor is
       Gtk_New (Col);
       Col_Number := Editor.Languages.Append_Column (Col);
       Gtk_New (Toggle_Renderer);
-      Col.Set_Title (-"Do not compile");
+      Col.Set_Title (-"No compiler");
       Col.Pack_Start (Toggle_Renderer, False);
       Col.Add_Attribute (Toggle_Renderer, "active", No_Compiler_Column);
       Tree_Model_Callback.Object_Connect
@@ -1365,6 +1365,25 @@ package body Toolchains_Editor is
       else
          Editor.Toolchain := Null_Toolchain;
       end if;
+
+      --  Update list of unused compilers in the retrieved toolchain
+      Iter := Editor.Lang_Model.Get_Iter_First;
+
+      while Iter /= Null_Iter loop
+         if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
+            Set_Use_Compiler
+              (Editor.Toolchain,
+               Editor.Lang_Model.Get_String (Iter, Name_Column),
+               False);
+         elsif Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
+            Set_Use_Compiler
+              (Editor.Toolchain,
+               Editor.Lang_Model.Get_String (Iter, Name_Column),
+               True);
+         end if;
+
+         Editor.Lang_Model.Next (Iter);
+      end loop;
 
       Trace (Me, "Toolchain clicked");
       Update_Details (Editor);
