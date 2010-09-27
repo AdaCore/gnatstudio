@@ -5195,6 +5195,15 @@ sources of this project. By default, only @code{Ada} is selected.
 New languages can be added to this list by using XML files, see the
 section on customizing GPS (@pxref{Adding support for new languages}).
 
+Additionally, this page allows you to select the toolchain used when working on
+your project. There you can select one of the pre-defined toolchains or scan
+your system for installed toolchains. You can also manually define some of the
+tools in the toolchain such as the debugger to use, the gnat driver to use or
+the gnatls tool to use.
+
+If you need to select a toolchain for a cross environment, you should have a
+look at @ref{Working in a Cross Environment} for more info on this subject.
+
 @c ------------------------------------------------------------------
 @subsection VCS Selection
 @cindex Version Control System
@@ -5529,10 +5538,6 @@ The contents of this editor are very similar to that of the project
 wizard (@pxref{The Project Wizard}). In fact, all pages but the
 @code{General} page are exactly the same, and you should therefore
 read the description for these in the project wizard chapter.
-
-The general page gives access to more attributes than the general page
-of the project wizard does. In addition, you can select the name of the
-external tools that GPS uses (such as compilers, debugger, @dots{}).
 
 See also @ref{Working in a Cross Environment} for more info on the
 @code{Cross environment} attributes.
@@ -9479,18 +9484,24 @@ see @ref{Project Handling}.
 
 When using the project editor to modify the project's properties, two
 areas are particularly relevant to cross environments:
-@code{Cross environment} part of the @code{General} page and
-@code{Tools}, part of the @code{Languages} page.
+@code{Cross environment} part of the @code{General} page, and
+@code{Toolchains} part of the @code{Languages} page.
 
-In the @code{Tools} section, you will typically need to change the name of
-the compiler(s) and the debugger, as well as gnatls' name if you are
-using Ada.
+In the @code{Toolchains} section, you will typically either scan your system
+to display found toolchains, and select the one corresponding to your cross
+environment or use the Add button and manually select the desired cross
+environment.
+
+If needed, you can also modify manually some of the tools defined in this
+toolchain in the @code{Details} part of the @code{Languages} page.
 
 For example, assuming you have an Ada project, and using a powerpc VxWorks
-configuration. You will set the @i{Ada compiler} to
-@code{powerpc-wrs-vxworks-gnatmake}; @i{Gnatls} to
+configuration. Hitting the scan button, you should see the toolchain
+@code{powerpc-wrs-vxworks} appearing in the @code{Toolchains} section.
+Selecting this toolchain will change the @code{Details} part, displaying the
+relevant tools (e.g. @i{Gnatls} to
 @code{powerpc-wrs-vxworks-gnatls} and @i{Debugger} to
-@code{powerpc-wrs-vxworks-gdb}.
+@code{powerpc-wrs-vxworks-gdb} @dots{}).
 
 If you are using an alternative run time, e.g. a @i{soft float} run time,
 you need to add the option @code{--RTS=soft-float} to the @i{Gnatls}
@@ -9500,7 +9511,7 @@ See @ref{Switches} for more details on the switch editor.
 
 To modify your project to support configurations such as multiple targets,
 or multiple hosts, you can create scenario variables, and modify the setting
-of the Tools parameters based on the value of these variables. See
+of the Toolchains parameters based on the value of these variables. See
 @ref{Scenarios and Configuration Variables} for more information on these
 variables.
 
