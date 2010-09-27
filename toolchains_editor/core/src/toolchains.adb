@@ -58,7 +58,10 @@ package body Toolchains is
       --  Returns gprconfig --target parameter
 
       function Get_Value
-        (Num : Natural; Token : String; From : String) return String;
+        (Num       : Natural;
+         Token     : String;
+         From      : String;
+         Strip_Exe : Boolean) return String;
       --  Parses From to retrieve the value of Token for compiler Num
 
       ------------------
@@ -79,7 +82,10 @@ package body Toolchains is
       ---------------
 
       function Get_Value
-        (Num : Natural; Token : String; From : String) return String
+        (Num       : Natural;
+         Token     : String;
+         From      : String;
+         Strip_Exe : Boolean) return String
       is
          Idx1, Idx2 : Natural;
          Search     : constant String := Num'Img & " " & Token & ":";
@@ -92,8 +98,16 @@ package body Toolchains is
             if Idx2 not in From'Range then
                Idx2 := Index (From (Idx1 .. From'Last), "" & ASCII.LF);
             end if;
+            Idx2 := Idx2 - 1;
 
-            return From (Idx1 .. Idx2 - 1);
+            if Strip_Exe
+              and then Idx2 - Idx1 > 3
+              and then From (Idx2 - 3 .. Idx2) = ".exe"
+            then
+               Idx2 := Idx2 - 4;
+            end if;
+
+            return From (Idx1 .. Idx2);
 
          else
             Trace (Me, "could not find '" & Search & "'");
@@ -121,11 +135,11 @@ package body Toolchains is
 
             declare
                Lang       : constant String :=
-                              Get_Value (Comp_Num, "lang", Output);
+                              Get_Value (Comp_Num, "lang", Output, False);
                Path       : constant String :=
-                              Get_Value (Comp_Num, "path", Output);
+                              Get_Value (Comp_Num, "path", Output, False);
                Exe        : constant String :=
-                              Get_Value (Comp_Num, "executable", Output);
+                              Get_Value (Comp_Num, "executable", Output, True);
                Full       : Virtual_File;
                F          : Virtual_File;
                Is_Visible : Boolean;
