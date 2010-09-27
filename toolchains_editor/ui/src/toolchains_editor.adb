@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
@@ -73,15 +74,26 @@ package body Toolchains_Editor is
 
    Me : constant Debug_Handle := Traces.Create ("Toolchains_Editor");
 
-   Active_Column   : constant := 0;
-   Name_Column     : constant := 1;
-   Label_Column    : constant := 2;
-   Location_Column : constant := 3;
-   Version_Column  : constant := 4;
+   --  common to both trees
+   Active_Column      : constant := 0;
+   Name_Column        : constant := 1;
+
+   --  toolchain selector
+   Label_Column       : constant := 2;
+   Location_Column    : constant := 3;
+   Version_Column     : constant := 4;
+
+   --  language selector
+   No_Compiler_Column : constant := 2;
+   Fg_Column          : constant := 3;
+   Fg_Set_Column      : constant := 4;
 
    Lang_Column_Types : constant GType_Array :=
-                         (Active_Column => GType_Boolean,
-                          Name_Column   => GType_String);
+                         (Active_Column      => GType_Boolean,
+                          Name_Column        => GType_String,
+                          No_Compiler_Column => GType_Boolean,
+                          Fg_Column          => GType_String,
+                          Fg_Set_Column      => GType_Boolean);
 
    Column_Types : constant GType_Array :=
                     (Active_Column   => GType_Boolean,
@@ -129,7 +141,8 @@ package body Toolchains_Editor is
    --  Adds or update a toolchain in the editor
 
    procedure Set_Detail
-     (Label      : Gtk_Label;
+     (Editor     : Toolchains_Edit;
+      Label      : Gtk_Label;
       GEntry     : Gtk_Entry;
       Icon       : Gtk_Image;
       Reset_Btn  : Gtk_Button;
@@ -147,6 +160,12 @@ package body Toolchains_Editor is
      (Editor : access Toolchains_Edit_Record'Class) return Toolchain;
 
    procedure On_Lang_Clicked
+     (W      : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint);
+   --  Executed when a toggle renderer is selected
+
+   procedure On_No_Compiler_Clicked
      (W      : access GObject_Record'Class;
       Params : Glib.Values.GValues;
       Data   : Glib.Gint);
@@ -238,6 +257,20 @@ package body Toolchains_Editor is
       Col.Set_Title (-"Language");
       Col.Pack_Start (String_Renderer, False);
       Col.Add_Attribute (String_Renderer, "text", Name_Column);
+      Col.Add_Attribute (String_Renderer, "foreground", Fg_Column);
+      Col.Add_Attribute (String_Renderer, "foreground-set", Fg_Set_Column);
+
+      Gtk_New (Col);
+      Col_Number := Editor.Languages.Append_Column (Col);
+      Gtk_New (Toggle_Renderer);
+      Col.Set_Title (-"Do not compile");
+      Col.Pack_Start (Toggle_Renderer, False);
+      Col.Add_Attribute (Toggle_Renderer, "active", No_Compiler_Column);
+      Tree_Model_Callback.Object_Connect
+        (Toggle_Renderer, Signal_Toggled,
+         On_No_Compiler_Clicked'Access,
+         Slot_Object => Editor,
+         User_Data   => No_Compiler_Column);
 
       declare
          Langs : constant GNAT.OS_Lib.Argument_List :=
@@ -276,6 +309,8 @@ package body Toolchains_Editor is
             Editor.Lang_Model.Append (Iter, Null_Iter);
             Editor.Lang_Model.Set (Iter, Active_Column, False);
             Editor.Lang_Model.Set (Iter, Name_Column, Ordered (J).all);
+            Editor.Lang_Model.Set (Iter, Fg_Column, System.Null_Address);
+            Editor.Lang_Model.Set (Iter, Fg_Set_Column, False);
             GNAT.OS_Lib.Free (Ordered (J));
          end loop;
       end;
@@ -392,6 +427,29 @@ package body Toolchains_Editor is
    begin
       Trace (Me, "Setting editor with project and language information");
 
+      --  Retrieving a toolchain is potentially a long operation, as we need
+      --  to call gprconfig: we display a popup dialog to inform the user that
+      --  he needs to wait a bit for the operation to finish
+      Gtk.Dialog.Gtk_New
+        (Diag, -"",
+         Get_Main_Window (Editor.Kernel), 0);
+      Set_Has_Separator (Diag, False);
+      Gtk_New
+        (Label, -"Scanning host for available compilers, please wait ...");
+      Pack_Start (Get_Vbox (Diag), Label);
+      Diag.Show_All;
+      Diag.Ref;
+      Gtk.Main.Grab_Add (Diag);
+
+      --  Getting toolchain from project.
+      Toolchain := Get_Toolchain (Editor.Mgr, Project);
+
+      --  Hide and destroy the dialog
+      Gtk.Main.Grab_Remove (Diag);
+      Diag.Hide_All;
+      Diag.Unref;
+
+      --  Now displaying the languages
       Editor.Edited_Prj := Project;
 
       Iter := Editor.Lang_Model.Get_Iter_First;
@@ -406,6 +464,15 @@ package body Toolchains_Editor is
             then
                Editor.Lang_Model.Set (Iter, Active_Column, True);
                Editor.Mgr.Add_Language (Languages (J).all, Project);
+
+               if not Is_Used
+                 (Get_Compiler (Toolchain, Languages (J).all))
+               then
+                  Editor.Lang_Model.Set (Iter, No_Compiler_Column, True);
+               else
+                  Editor.Lang_Model.Set (Iter, No_Compiler_Column, False);
+               end if;
+
                exit;
             end if;
          end loop;
@@ -413,22 +480,8 @@ package body Toolchains_Editor is
          Editor.Lang_Model.Next (Iter);
       end loop;
 
-      Gtk.Dialog.Gtk_New
-        (Diag, -"",
-         Get_Main_Window (Editor.Kernel), 0);
-      Set_Has_Separator (Diag, False);
-      Gtk_New
-        (Label, -"Scanning host for available compilers, please wait ...");
-      Pack_Start (Get_Vbox (Diag), Label);
-      Diag.Show_All;
-      Gtk.Main.Grab_Add (Diag);
-
-      Toolchain := Get_Toolchain (Editor.Mgr, Project);
+      --  And finally display the toolchain
       Add_Toolchain (Editor, Toolchain, True);
-
-      Gtk.Main.Grab_Remove (Diag);
-      Diag.Hide_All;
-      Diag.Destroy;
    end Set_Project;
 
    -------------------
@@ -613,25 +666,28 @@ package body Toolchains_Editor is
                        (Editor.Lang_Model.Get_String (Iter, Name_Column));
          begin
             if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
-               if not Is_Default (Tc, Lang) then
+               if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
                   Set_Attribute
                     (GNATCOLL.Projects.Compiler_Driver_Attribute,
-                     Lang,
-                     Get_Exe (Get_Compiler (Tc, Lang)));
+                     Lang, "");
                else
                   Clear_Attribute
                     (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
                end if;
 
                --  Remove the compiler command attribute from the IDE package
-               --  if needed
-               Clear_Attribute
-                 (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+               --  if needed. We keep the "ada" one as this is used by
+               --  gprbuild to determine the default target.
+               if To_Lower (Lang) /= "ada" then
+                  Clear_Attribute
+                    (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+               end if;
 
             else
                Clear_Attribute
                  (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
 
+               --  See above for the "ada" Compiler_Command case
                if To_Lower (Lang) /= "ada" then
                   Clear_Attribute
                     (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
@@ -720,7 +776,8 @@ package body Toolchains_Editor is
    ----------------
 
    procedure Set_Detail
-     (Label      : Gtk_Label;
+     (Editor     : Toolchains_Edit;
+      Label      : Gtk_Label;
       GEntry     : Gtk_Entry;
       Icon       : Gtk_Image;
       Reset_Btn  : Gtk_Button;
@@ -771,10 +828,15 @@ package body Toolchains_Editor is
       Label.Set_Use_Markup (True);
       Label.Set_Alignment (0.0, 0.0);
 
+      Trace (Me, "Setting text of GEntry to '" & Value & "'");
       GEntry.Set_Text (Value);
-      if Kind = Tool_Kind_Tool and then Tool = GNAT_Driver then
-         GEntry.Set_Sensitive (False);
-      elsif Kind = Tool_Kind_Compiler and then Is_Default then
+
+      --  Compilers are not editable as this is always wrong to do so: either
+      --  we need to use a gprbuild one or we need to update/create the cgpr
+      --  file for compiling
+      if (Kind = Tool_Kind_Tool and then Tool = GNAT_Driver)
+        or else Kind = Tool_Kind_Compiler
+      then
          GEntry.Set_Sensitive (False);
       end if;
 
@@ -791,13 +853,16 @@ package body Toolchains_Editor is
                   GEntry.Set_Tooltip_Text (Tooltip);
                   Icon.Set_Tooltip_Text (Tooltip);
                end;
+
             else
                declare
                   Tooltip : constant String :=
                               -("No compiler defined for this toolchain." &
                                 ASCII.LF &
-                                "Leave empty to tell GPS that this language" &
-                                " does not need compilation");
+                                "Either check the 'No compiler' box next " &
+                                "to the corresponding language, or update " &
+                                "the gprconfig database to include your " &
+                                "own compiler (see gprconfig user's guide).");
                begin
                   Label.Set_Tooltip_Text (Tooltip);
                   GEntry.Set_Tooltip_Text (Tooltip);
@@ -822,6 +887,31 @@ package body Toolchains_Editor is
 
       if Reset_Btn /= null then
          Reset_Btn.Set_Sensitive (not Is_Default);
+      end if;
+
+      if Kind = Tool_Kind_Compiler then
+         declare
+            Iter : Gtk_Tree_Iter;
+         begin
+            Iter := Editor.Lang_Model.Get_Iter_First;
+
+            while Iter /= Null_Iter loop
+               if Editor.Lang_Model.Get_String (Iter, Name_Column) = Lang then
+                  if Is_Valid then
+                     Editor.Lang_Model.Set
+                       (Iter, Fg_Column, System.Null_Address);
+                     Editor.Lang_Model.Set (Iter, Fg_Set_Column, False);
+                  else
+                     Editor.Lang_Model.Set (Iter, Fg_Column, "Red");
+                     Editor.Lang_Model.Set (Iter, Fg_Set_Column, True);
+                  end if;
+
+                  exit;
+               end if;
+
+               Editor.Lang_Model.Next (Iter);
+            end loop;
+         end;
       end if;
    end Set_Detail;
 
@@ -882,6 +972,7 @@ package body Toolchains_Editor is
             Top_Attach    => N_Rows - 1,
             Bottom_Attach => N_Rows);
          Ent.Add_Events (Gdk.Event.Leave_Notify_Mask);
+
          if Kind = Tool_Kind_Compiler then
             Ent.Set_Name (To_Lower (Lang) & "_compiler");
          end if;
@@ -920,21 +1011,26 @@ package body Toolchains_Editor is
                   Reset_Btn => Btn));
          end if;
 
-         Tool_Callback.Object_Connect
-           (Ent, Gtk.Editable.Signal_Changed,
-            On_Tool_Value_Changed'Access,
-            Slot_Object => Editor,
-            User_Data   => Tool_Callback_User_Object'
-              (Kind      => Kind,
-               Lang      => To_Unbounded_String (Lang),
-               Tool_Name => Tool,
-               Label     => Lbl,
-               Value     => Ent,
-               Icon      => Icn,
-               Reset_Btn => Btn));
+         if Kind = Tool_Kind_Tool then
+            Tool_Callback.Object_Connect
+              (Ent, Gtk.Editable.Signal_Changed,
+               On_Tool_Value_Changed'Access,
+               Slot_Object => Editor,
+               User_Data   => Tool_Callback_User_Object'
+                 (Kind      => Kind,
+                  Lang      => To_Unbounded_String (Lang),
+                  Tool_Name => Tool,
+                  Label     => Lbl,
+                  Value     => Ent,
+                  Icon      => Icn,
+                  Reset_Btn => Btn));
+         end if;
 
          Set_Detail
-           (Lbl, Ent, Icn, Btn, Kind, Tool, Lang, Value, Is_Default, Is_Valid);
+           (Editor,
+            Lbl, Ent, Icn, Btn,
+            Kind, Tool, Lang, Value,
+            Is_Default, Is_Valid);
       end Add_Detail;
 
    begin
@@ -1023,18 +1119,33 @@ package body Toolchains_Editor is
       while Iter /= Null_Iter loop
          if Get_Boolean (Editor.Lang_Model, Iter, Active_Column) then
             declare
-               Lang : constant String :=
-                        Get_String (Editor.Lang_Model, Iter, Name_Column);
-               C    : constant Compiler := Get_Compiler (Tc, Lang);
+               Lang        : constant String :=
+                               Get_String
+                                 (Editor.Lang_Model, Iter, Name_Column);
+               C           : constant Compiler := Get_Compiler (Tc, Lang);
+
             begin
-               Add_Detail
-                 (Tool_Kind_Compiler,
-                  Tool       => Unknown,
-                  Lang       => Lang,
-                  Value      => Get_Exe (C),
-                  Is_Default => Is_Default (Tc, Lang),
-                  Is_Valid   => Is_Valid (C));
+               if not Is_Used (C) then
+                  Add_Detail
+                    (Tool_Kind_Compiler,
+                     Tool       => Unknown,
+                     Lang       => Lang,
+                     Value      => "not compiled ...",
+                     Is_Default => True,
+                     Is_Valid   => True);
+               else
+                  Add_Detail
+                    (Tool_Kind_Compiler,
+                     Tool       => Unknown,
+                     Lang       => Lang,
+                     Value      => Get_Exe (C),
+                     Is_Default => Is_Default (Tc, Lang),
+                     Is_Valid   => Is_Valid (C));
+               end if;
             end;
+         else
+            Editor.Lang_Model.Set (Iter, Fg_Column, System.Null_Address);
+            Editor.Lang_Model.Set (Iter, Fg_Set_Column, False);
          end if;
 
          Editor.Lang_Model.Next (Iter);
@@ -1068,7 +1179,8 @@ package body Toolchains_Editor is
             if Toolchains.Get_Command (Tc, User_Data.Tool_Name) /= Val then
                Toolchains.Set_Command (Tc, User_Data.Tool_Name, Val);
                Set_Detail
-                 (Label      => User_Data.Label,
+                 (Toolchains_Edit (Widget),
+                  Label      => User_Data.Label,
                   GEntry     => User_Data.Value,
                   Icon       => User_Data.Icon,
                   Reset_Btn  => User_Data.Reset_Btn,
@@ -1084,7 +1196,8 @@ package body Toolchains_Editor is
             if Get_Exe (Get_Compiler (Tc, Lang)) /= Val then
                Set_Compiler (Tc, Lang, Val);
                Set_Detail
-                 (Label      => User_Data.Label,
+                 (Toolchains_Edit (Widget),
+                  Label      => User_Data.Label,
                   GEntry     => User_Data.Value,
                   Icon       => User_Data.Icon,
                   Reset_Btn  => User_Data.Reset_Btn,
@@ -1120,7 +1233,8 @@ package body Toolchains_Editor is
          when Tool_Kind_Tool =>
             Toolchains.Reset_To_Default (Tc, User_Data.Tool_Name);
             Set_Detail
-              (Label      => User_Data.Label,
+              (Toolchains_Edit (Widget),
+               Label      => User_Data.Label,
                GEntry     => User_Data.Value,
                Icon       => User_Data.Icon,
                Reset_Btn  => User_Data.Reset_Btn,
@@ -1134,7 +1248,8 @@ package body Toolchains_Editor is
          when Tool_Kind_Compiler =>
             Toolchains.Reset_To_Default (Tc, Lang);
             Set_Detail
-              (Label      => User_Data.Label,
+              (Toolchains_Edit (Widget),
+               Label      => User_Data.Label,
                GEntry     => User_Data.Value,
                Icon       => User_Data.Icon,
                Reset_Btn  => User_Data.Reset_Btn,
@@ -1159,7 +1274,7 @@ package body Toolchains_Editor is
    end Get_Selected_Toolchain;
 
    ---------------------
-   -- Toggle_Callback --
+   -- On_Lang_Clicked --
    ---------------------
 
    procedure On_Lang_Clicked
@@ -1193,6 +1308,38 @@ package body Toolchains_Editor is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Lang_Clicked;
+
+   ----------------------------
+   -- On_No_Compiler_Clicked --
+   ----------------------------
+
+   procedure On_No_Compiler_Clicked
+     (W      : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint)
+   is
+      Editor      : constant Toolchains_Edit := Toolchains_Edit (W);
+      Iter        : Gtk_Tree_Iter;
+      Path_String : constant String := Get_String (Nth (Params, 1));
+
+   begin
+      Iter := Get_Iter_From_String (Editor.Lang_Model, Path_String);
+
+      if Iter /= Null_Iter then
+         Set (Editor.Lang_Model, Iter, Data,
+              not Get_Boolean (Editor.Lang_Model, Iter, Data));
+
+         Toolchains.Set_Use_Compiler
+           (Editor.Toolchain,
+            Editor.Lang_Model.Get_String (Iter, Name_Column),
+            not Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column));
+      end if;
+
+      Update_Details (Editor);
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_No_Compiler_Clicked;
 
    --------------------------
    -- On_Toolchain_Clicked --

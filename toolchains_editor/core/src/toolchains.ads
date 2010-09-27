@@ -91,6 +91,7 @@ package Toolchains is
 
    function Get_Exe (C : Compiler) return String;
    function Is_Valid (C : Compiler) return Boolean;
+   function Is_Used (C : Compiler) return Boolean;
 
    ----------------------
    -- Ada_Library_Info --
@@ -218,6 +219,12 @@ package Toolchains is
       Value   : String;
       Default : Boolean := False);
    --  Set the command for the compiler for Lang on this toolchain
+
+   procedure Set_Use_Compiler
+     (This    : Toolchain;
+      Lang    : String;
+      Value   : Boolean);
+   --  Set wether a compiler should be used for Lang
 
    function Is_Simple_Cross (This : Toolchain) return Boolean;
    --  Return true if the toolchain is a "simple" cross toolchain, that is
@@ -432,12 +439,14 @@ private
          Exe        : String (1 .. Exe_Length);
          Is_Valid   : Boolean;
          Is_Default : Boolean;
+         Unused     : Boolean;
       end record;
    No_Compiler : constant Compiler :=
                    (Exe_Length => 0,
                     Exe        => "",
                     Is_Valid   => False,
-                    Is_Default => False);
+                    Is_Default => False,
+                    Unused     => False);
 
    package Compiler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, Compiler,
