@@ -202,6 +202,15 @@ package body Toolchains is
       return C.Is_Valid;
    end Is_Valid;
 
+   -------------
+   -- Is_Used --
+   -------------
+
+   function Is_Used (C : Compiler) return Boolean is
+   begin
+      return not C.Unused;
+   end Is_Used;
+
    ---------------------
    -- Get_Source_Path --
    ---------------------
@@ -542,7 +551,8 @@ package body Toolchains is
                (Exe_Length => Value'Length,
                 Exe        => Value,
                 Is_Valid   => False,
-                Is_Default => Default);
+                Is_Default => Default,
+                Unused     => False);
 
    begin
       if Locate_On_Path (+Value, Get_Nickname (Build_Server)) /= No_File then
@@ -570,6 +580,34 @@ package body Toolchains is
          This.Compiler_Commands.Insert (Lang, Comp);
       end if;
    end Set_Compiler;
+
+   ----------------------
+   -- Set_Use_Compiler --
+   ----------------------
+
+   procedure Set_Use_Compiler
+     (This    : Toolchain;
+      Lang    : String;
+      Value   : Boolean)
+   is
+   begin
+      if not This.Compiler_Commands.Contains (Lang) then
+         declare
+            C : Compiler := No_Compiler;
+         begin
+            C.Unused := not Value;
+            This.Compiler_Commands.Insert (Lang, C);
+         end;
+
+      else
+         declare
+            C : Compiler := This.Compiler_Commands.Element (Lang);
+         begin
+            C.Unused := not Value;
+            This.Compiler_Commands.Replace (Lang, C);
+         end;
+      end if;
+   end Set_Use_Compiler;
 
    -----------------
    -- Set_Command --
@@ -1108,9 +1146,10 @@ package body Toolchains is
          for J in Indexes'Range loop
             declare
                Driver : constant String := Attribute_Value
-                 (Project, Attr, Indexes (J).all);
+                 (Project, Attr, Indexes (J).all,
+                  Default => "gps-dummy-default");
             begin
-               if Driver /= "" then
+               if Driver /= "gps-dummy-default" then
                   if Compilers.Contains (Indexes (J).all) then
                      Compilers.Delete (Indexes (J).all);
                   end if;
@@ -1122,7 +1161,8 @@ package body Toolchains is
                      Compiler'(Exe_Length => Driver'Length,
                                Exe        => Driver,
                                Is_Valid   => False,
-                               Is_Default => False));
+                               Is_Default => False,
+                               Unused     => Driver = ""));
                end if;
             end;
          end loop;
@@ -1266,6 +1306,8 @@ package body Toolchains is
             end if;
 
             Set_Compiler (Ret, Lang, Comp);
+            Set_Use_Compiler
+              (Ret, Lang, not Compiler_Maps.Element (Iter).Unused);
          end;
 
          Compiler_Maps.Next (Iter);
@@ -1696,6 +1738,9 @@ package body Toolchains is
       end if;
 
       Result := new Toolchain_Record;
+      --  Make sure that the manager part is initialized before initializing
+      --  the toolchain.
+      Result.Manager := Toolchain_Manager (Manager);
       Initialize_Known_Toolchain (Result, Name);
 
       Manager.Add_Toolchain (Result);
