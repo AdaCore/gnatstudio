@@ -1399,6 +1399,7 @@ package body ALI_Parser is
 
       elsif Buffer'Length = 0 then
          Trace (Me, "Found empty ali file: " & ALI_Filename.Display_Full_Name);
+         Free (Buffer);
          Result := No_ALI_Id;
 
       else
