@@ -1601,6 +1601,9 @@ package body Toolchains is
 
       Set_Name (This, Name);
 
+      This.Compilers_Scanned := False;
+      This.Compiler_Commands.Clear;
+
       --  Set c++filt
 
       if Name = Tool_AAMP then
