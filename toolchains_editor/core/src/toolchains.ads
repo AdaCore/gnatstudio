@@ -271,6 +271,10 @@ package Toolchains is
       Info : Ada_Library_Info_Access);
    --  Modifies the library information stored in this toolchain.
 
+   procedure Initialize_Known_Toolchain (This : Toolchain; Name : String);
+   --  Sets the toolchain values according to the known toolchain name
+   --  given in parameter. This doesn't add the toolchain in the manager.
+
    -----------------------
    -- Toolchain_Manager --
    -----------------------

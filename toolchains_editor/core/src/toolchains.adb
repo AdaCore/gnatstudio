@@ -1587,6 +1587,93 @@ package body Toolchains is
       return False;
    end Is_Known_Toolchain_Name;
 
+   --------------------------------
+   -- Initialize_Known_Toolchain --
+   --------------------------------
+
+   procedure Initialize_Known_Toolchain (This : Toolchain; Name : String) is
+   begin
+      if not Is_Known_Toolchain_Name (Name) then
+         return;
+      end if;
+
+      Trace (Me, "Creating known toolchain for target " & Name);
+
+      Set_Name (This, Name);
+
+      --  Set c++filt
+
+      if Name = Tool_AAMP then
+         Set_Command (This, CPP_Filt, "");
+      elsif Name = Tool_E500V2_WRS_VXWORKS
+        or else Name = Tool_POWERPC_WRS_VXWORKS
+        or else Name = Tool_POWERPC_WRS_VXWORKSAE
+        or else Name = Tool_POWERPC_WRS_VXWORKSMILS
+      then
+         Set_Command (This, CPP_Filt, "c++filtppc", True);
+      elsif Name = Tool_I586_WRS_VXWORKS then
+         Set_Command (This, CPP_Filt, "c++filtpentium", True);
+      else
+         Set_Command (This, CPP_Filt, Name & "-c++filt", True);
+      end if;
+
+      --  Set other tools
+
+      if Name = Tool_AAMP
+        or else Name = Tool_Dotnet
+        or else Name = Tool_JVM
+      then
+         Set_Command (This, Debugger, "", True);
+      elsif Name = Tool_POWERPC_WRS_VXWORKSAE then
+         Set_Command
+           (This, Debugger, "powerpc-wrs-vxworksae-gdb_wtx4", True);
+      elsif Name = Tool_POWERPC_WRS_VXWORKSMILS then
+         Set_Command
+           (This, Debugger, "powerpc-elf-gdb", True);
+      else
+         Set_Command (This, Debugger, Name & "-gdb", True);
+      end if;
+
+      if Name = Tool_AAMP then
+         Set_Command (This, GNAT_List, "gnaampls", True);
+         Set_Command (This, GNAT_Driver, "gnaampcmd", True);
+      else
+         Set_Command (This, GNAT_List, Name & "-gnatls", True);
+         Set_Command (This, GNAT_Driver, Name & "-gnat", True);
+      end if;
+
+      Compute_Gprconfig_Compilers (This);
+
+      --  Force compilers if needed
+
+      if not This.Compiler_Commands.Contains ("Ada") then
+         Trace (Me, "Create_Known_Toolchain: Force ada compiler command");
+         if Name = Tool_AAMP then
+            Set_Compiler (This, "Ada", "gnaampmake", True);
+         else
+            Set_Compiler (This, "Ada", Name & "-gnatmake", True);
+         end if;
+      end if;
+
+      if not This.Compiler_Commands.Contains ("C") then
+         Trace (Me, "Create_Known_Toolchain: Force C compiler command");
+         if Name = Tool_E500V2_WRS_VXWORKS
+           or else Name = Tool_POWERPC_WRS_VXWORKS
+           or else Name = Tool_POWERPC_WRS_VXWORKSAE
+           or else Name = Tool_POWERPC_WRS_VXWORKSMILS
+         then
+            Set_Compiler (This, "C", "ccppc", True);
+         elsif Name = Tool_I586_WRS_VXWORKS then
+            Set_Compiler (This, "C", "ccpentium", True);
+         elsif Name /= Tool_AAMP
+           and then Name /= Tool_Dotnet
+           and then Name /= Tool_JVM
+         then
+            Set_Compiler (This, "C", Name & "-gcc", True);
+         end if;
+      end if;
+   end Initialize_Known_Toolchain;
+
    -------------------------
    -- Get_Known_Toolchain --
    -------------------------
@@ -1605,83 +1692,8 @@ package body Toolchains is
          return Manager.Toolchains.Element (Name);
       end if;
 
-      Trace (Me, "Creating known toolchain for target " & Name);
-
       Result := new Toolchain_Record;
-      Result.Name := new String'(Name);
-      Result.Manager := Toolchain_Manager (Manager);
-
-      --  Set c++filt
-
-      if Name = Tool_AAMP then
-         Set_Command (Result, CPP_Filt, "");
-      elsif Name = Tool_E500V2_WRS_VXWORKS
-        or else Name = Tool_POWERPC_WRS_VXWORKS
-        or else Name = Tool_POWERPC_WRS_VXWORKSAE
-        or else Name = Tool_POWERPC_WRS_VXWORKSMILS
-      then
-         Set_Command (Result, CPP_Filt, "c++filtppc", True);
-      elsif Name = Tool_I586_WRS_VXWORKS then
-         Set_Command (Result, CPP_Filt, "c++filtpentium", True);
-      else
-         Set_Command (Result, CPP_Filt, Name & "-c++filt", True);
-      end if;
-
-      --  Set other tools
-
-      if Name = Tool_AAMP
-        or else Name = Tool_Dotnet
-        or else Name = Tool_JVM
-      then
-         Set_Command (Result, Debugger, "", True);
-      elsif Name = Tool_POWERPC_WRS_VXWORKSAE then
-         Set_Command
-           (Result, Debugger, "powerpc-wrs-vxworksae-gdb_wtx4", True);
-      elsif Name = Tool_POWERPC_WRS_VXWORKSMILS then
-         Set_Command
-           (Result, Debugger, "powerpc-elf-gdb", True);
-      else
-         Set_Command (Result, Debugger, Name & "-gdb", True);
-      end if;
-
-      if Name = Tool_AAMP then
-         Set_Command (Result, GNAT_List, "gnaampls", True);
-         Set_Command (Result, GNAT_Driver, "gnaampcmd", True);
-      else
-         Set_Command (Result, GNAT_List, Name & "-gnatls", True);
-         Set_Command (Result, GNAT_Driver, Name & "-gnat", True);
-      end if;
-
-      Compute_Gprconfig_Compilers (Result);
-
-      --  Force compilers if needed
-
-      if not Result.Compiler_Commands.Contains ("Ada") then
-         Trace (Me, "Create_Known_Toolchain: Force ada compiler command");
-         if Name = Tool_AAMP then
-            Set_Compiler (Result, "Ada", "gnaampmake", True);
-         else
-            Set_Compiler (Result, "Ada", Name & "-gnatmake", True);
-         end if;
-      end if;
-
-      if not Result.Compiler_Commands.Contains ("C") then
-         Trace (Me, "Create_Known_Toolchain: Force C compiler command");
-         if Name = Tool_E500V2_WRS_VXWORKS
-           or else Name = Tool_POWERPC_WRS_VXWORKS
-           or else Name = Tool_POWERPC_WRS_VXWORKSAE
-           or else Name = Tool_POWERPC_WRS_VXWORKSMILS
-         then
-            Set_Compiler (Result, "C", "ccppc", True);
-         elsif Name = Tool_I586_WRS_VXWORKS then
-            Set_Compiler (Result, "C", "ccpentium", True);
-         elsif Name /= Tool_AAMP
-           and then Name /= Tool_Dotnet
-           and then Name /= Tool_JVM
-         then
-            Set_Compiler (Result, "C", Name & "-gcc", True);
-         end if;
-      end if;
+      Initialize_Known_Toolchain (Result, Name);
 
       Manager.Add_Toolchain (Result);
 
