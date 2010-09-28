@@ -29,6 +29,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Prj.Part; use Prj.Part;
 with Prj.Env; use Prj.Env;
 with Prj.PP; use Prj.PP;
+with Toolchains.Known; use Toolchains.Known;
 
 package body Toolchains.Parsers is
    Me : constant Trace_Handle := Create ("TOOLCHAIN_PARSER");
@@ -722,6 +723,10 @@ package body Toolchains.Parsers is
       procedure Create_Case_Toolchain;
       --  Create the "case" block for toolchain selection.
 
+      function Is_Simple_Cross (Tc : Toolchain) return Boolean;
+      --  Return true if the toolchain given in parameter is a simple cross
+      --  (that is to say, not tool exception, no native and no custom).
+
       -------------------------------
       -- Remove_Previous_Toolchain --
       -------------------------------
@@ -1148,6 +1153,17 @@ package body Toolchains.Parsers is
             Create_Attributes (Case_Node_Others, This.Variable_Node, null);
          end if;
       end Create_Case_Toolchain;
+
+      ---------------------
+      -- Is_Simple_Cross --
+      ---------------------
+
+      function Is_Simple_Cross (Tc : Toolchain) return Boolean is
+      begin
+         return not Tc.Is_Native
+           and then not Tc.Is_Custom
+           and then not Has_Naming_Exception (Get_Name (Tc));
+      end Is_Simple_Cross;
 
       Need_Case_Statement : Boolean := False;
    begin
