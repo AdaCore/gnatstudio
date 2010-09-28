@@ -53,8 +53,8 @@ package body Toolchains is
    -- Compute_Gprconfig_Compilers --
    ---------------------------------
 
-   procedure Compute_Gprconfig_Compilers (Tc : Toolchain)
-   is
+   procedure Compute_Gprconfig_Compilers (Tc : Toolchain) is
+
       function Target_Param return String;
       --  Returns gprconfig --target parameter
 
@@ -133,11 +133,10 @@ package body Toolchains is
       end if;
 
       declare
-         Output     : constant String :=
-                        Tc.Manager.Execute
-                          ("gprconfig --mi-show-compilers " &
-                           Target_Param,
-                           5_000);
+         Output : constant String :=
+                    Tc.Manager.Execute
+                      ("gprconfig --mi-show-compilers " & Target_Param,
+                       5_000);
       begin
          loop
             exit when Ada.Strings.Fixed.Index (Output, Comp_Num'Img & " ")
@@ -292,9 +291,9 @@ package body Toolchains is
    --------------
 
    function Get_Date (This : Ada_Library_Info) return Date_Type is
-      Version       : constant String := Get_Version (This);
-      Open_Index    : constant Natural := Index (Version, "(");
-      Close_Index   : Natural;
+      Version     : constant String := Get_Version (This);
+      Open_Index  : constant Natural := Index (Version, "(");
+      Close_Index : Natural;
    begin
       if Open_Index = 0 then
          return Null_Date;
@@ -474,8 +473,7 @@ package body Toolchains is
    -- Compute_Predefined_Paths --
    ------------------------------
 
-   procedure Compute_Predefined_Paths (This : Toolchain)
-   is
+   procedure Compute_Predefined_Paths (This : Toolchain) is
    begin
       if This.Library /= null and then This.Library.Is_Computed then
          return;
@@ -503,6 +501,10 @@ package body Toolchains is
    is
       function Base_Tool_Name return String;
 
+      --------------------
+      -- Base_Tool_Name --
+      --------------------
+
       function Base_Tool_Name return String is
       begin
          case Name is
@@ -528,7 +530,6 @@ package body Toolchains is
       if This.Tool_Commands (Name) = null
         and then This.Default_Tools (Name) = null
       then
-
          if Name = Unknown then
             return "";
          end if;
@@ -610,9 +611,9 @@ package body Toolchains is
    ----------------------
 
    procedure Set_Use_Compiler
-     (This    : Toolchain;
-      Lang    : String;
-      Value   : Boolean)
+     (This  : Toolchain;
+      Lang  : String;
+      Value : Boolean)
    is
    begin
       if not This.Compiler_Commands.Contains (Lang) then
@@ -990,14 +991,19 @@ package body Toolchains is
      (Manager : access Toolchain_Manager_Record;
       Project : Project_Type) return Toolchain
    is
-      GNAT_List_Str    : constant String :=
-        Attribute_Value (Project, Build ("ide", "gnatlist"), "");
-      GNAT_Driver_Str  : constant String :=
-        Attribute_Value (Project, Build ("ide", "gnat"), "");
-      Gnatmake_Str : constant String :=
-        Attribute_Value (Project, Build ("ide", "compiler_command"), "ada");
-      Debugger_Str     : constant String :=
-        Attribute_Value (Project, Build ("ide", "debugger_command"), "");
+      GNAT_List_Str   : constant String :=
+                          Attribute_Value
+                            (Project, Build ("ide", "gnatlist"), "");
+      GNAT_Driver_Str : constant String :=
+                          Attribute_Value
+                            (Project, Build ("ide", "gnat"), "");
+      Gnatmake_Str    : constant String :=
+                          Attribute_Value
+                            (Project,
+                             Build ("ide", "compiler_command"), "ada");
+      Debugger_Str    : constant String :=
+                          Attribute_Value
+                            (Project, Build ("ide", "debugger_command"), "");
 
       Compilers : Compiler_Maps.Map;
 
@@ -1117,6 +1123,7 @@ package body Toolchains is
       function Get_Prefix (Attr : String) return String is
       begin
          --  Remove the path if indicated in the attribute
+
          for J in reverse Attr'Range loop
             if Attr (J) = '/' or else Attr (J) = '\' then
                return Get_Prefix (Attr (J + 1 .. Attr'Last));
@@ -1124,6 +1131,7 @@ package body Toolchains is
          end loop;
 
          --  No path, so it's safe to actually look at the prefix
+
          for J in reverse Attr'Range loop
             if Attr (J) = '-' then
                return Attr (Attr'First .. J - 1);
@@ -1131,7 +1139,8 @@ package body Toolchains is
          end loop;
 
          --  Special case for gnaamp compiler that have special names for its
-         --  tools
+         --  tools.
+
          if Attr'Length > 6
            and then Attr (Attr'First .. Attr'First + 5) = "gnaamp"
          then
@@ -1148,8 +1157,8 @@ package body Toolchains is
       procedure Set_Compilers_From_Attribute
         (Package_Name, Attribute_Name : String)
       is
-         Attr : constant Attribute_Pkg_String :=
-           Build (Package_Name, Attribute_Name);
+         Attr    : constant Attribute_Pkg_String :=
+                     Build (Package_Name, Attribute_Name);
          Indexes : String_List := Attribute_Indexes (Project, Attr);
       begin
 
@@ -1188,10 +1197,11 @@ package body Toolchains is
 
       Iter      : Compiler_Maps.Cursor;
 
-      Is_Empty : constant Boolean := GNAT_List_Str = ""
-        and then GNAT_Driver_Str = ""
-        and then Gnatmake_Str = ""
-        and then Debugger_Str = "";
+      Is_Empty  : constant Boolean :=
+                    GNAT_List_Str = ""
+                        and then GNAT_Driver_Str = ""
+                        and then Gnatmake_Str = ""
+                        and then Debugger_Str = "";
 
    begin
       --  First of all, we need to retrieve all potential explicitely defined
@@ -1206,7 +1216,7 @@ package body Toolchains is
       Set_Compilers_From_Attribute ("compiler", "driver");
 
       --  1 step: look through the current toolchains list to verify if this
-      --  toolchain already exists
+      --  toolchain already exists.
 
       if not Is_Empty then
          Cursor := Manager.Toolchains.First;
@@ -1225,16 +1235,19 @@ package body Toolchains is
       end if;
 
       --  2 step: no such toolchain exists, try to retrieve it from a known
-      --  configuration
+      --  configuration.
 
       --  First known configuration: the native toolchain
+
       if Is_Empty then
          --  No need for further modifications, just return the native
-         --  toolchain
+         --  toolchain.
          Ret := Manager.Get_Native_Toolchain;
          Modified := False;
+
       else
          --  Second case: we retrieve the toolchain from the prefix
+
          declare
             Prefix : constant String := Get_Prefix;
          begin
@@ -1248,7 +1261,7 @@ package body Toolchains is
       end if;
 
       --  Third case: the toolchain is not known, we need to start a brand new
-      --  one
+      --  one.
 
       if Ret = null then
          if Get_Prefix = "" then
@@ -1324,7 +1337,8 @@ package body Toolchains is
       end loop;
 
       --  If the toolchain has been modified, then we now need to find a new
-      --  name
+      --  name.
+
       if Modified then
          --  Take care of duplicated labels
          if Manager.Toolchains.Contains (Get_Label (Ret)) then
@@ -1425,16 +1439,17 @@ package body Toolchains is
    ---------------------
 
    procedure Scan_Toolchains
-     (Manager : access Toolchain_Manager_Record;
+     (Manager  : access Toolchain_Manager_Record;
       Progress : access procedure
         (Name    : String;
          Current : Integer;
          Total   : Integer))
    is
-      Output : constant String := Toolchain_Manager (Manager).Execute
-        ("gprconfig --show-targets", 50_000);
-      Lines  : String_List_Access := Split (Output, ASCII.LF);
-      Garbage         : String_Access;
+      Output            : constant String :=
+                            Toolchain_Manager (Manager).Execute
+                            ("gprconfig --show-targets", 50_000);
+      Lines             : String_List_Access := Split (Output, ASCII.LF);
+      Garbage           : String_Access;
       Toolchain_Matcher : constant Pattern_Matcher :=
                             Compile ("([^ ]+).*[^:]$");
       Toolchain_Matches : Match_Array (0 .. 1);
@@ -1559,7 +1574,7 @@ package body Toolchains is
    is
       use Toolchain_Maps;
 
-      Cur : Toolchain_Maps.Cursor;
+      Cur              : Toolchain_Maps.Cursor;
       Native_Toolchain : Toolchain;
    begin
       if Manager.No_Native_Toolchain then
@@ -1576,7 +1591,7 @@ package body Toolchains is
          Cur := Next (Cur);
       end loop;
 
-      --  If no native toolchain has been found, then create one.
+      --  If no native toolchain has been found, then create one
 
       Native_Toolchain := new Toolchain_Record'
         (Name              => new String'("native"),
@@ -1755,9 +1770,9 @@ package body Toolchains is
       function To_Path_Array
         (List : String_Lists.List) return File_Array_Access
       is
-         Result : constant File_Array_Access := new File_Array
-           (1 .. Integer (List.Length));
-         Cur : String_Lists.Cursor;
+         Result : constant File_Array_Access :=
+                    new File_Array (1 .. Integer (List.Length));
+         Cur    : String_Lists.Cursor;
       begin
          Cur := List.First;
 
@@ -1777,11 +1792,12 @@ package body Toolchains is
       end if;
 
       declare
-         Output : constant String := Toolchain_Manager (Manager).Execute
-           (This.GNATls_Command.all & " -v", 5_000);
-         Lines           : String_List_Access := Split (Output, ASCII.LF);
-         Garbage         : String_Access;
-         Current_Line    : Integer;
+         Output       : constant String :=
+                          Toolchain_Manager (Manager).Execute
+                            (This.GNATls_Command.all & " -v", 5_000);
+         Lines        : String_List_Access := Split (Output, ASCII.LF);
+         Garbage      : String_Access;
+         Current_Line : Integer;
       begin
          for J in Lines'Range loop
             for K in Lines (J)'Range loop
@@ -1802,7 +1818,7 @@ package body Toolchains is
 
          declare
             Version_Matcher : constant Pattern_Matcher :=
-              Compile ("^GNATLS (.*)$");
+                                Compile ("^GNATLS (.*)$");
             Version_Matches : Match_Array (0 .. 1);
          begin
             while Current_Line <= Lines'Last loop
@@ -1928,7 +1944,7 @@ package body Toolchains is
       end;
    exception
       when E : others =>
-         --  This happens typically if the GNATLS process didn't go through.
+         --  This happens typically if the GNATLS process didn't go through
 
          This.Error := new String'(Exception_Message (E));
    end Compute_If_Needed;

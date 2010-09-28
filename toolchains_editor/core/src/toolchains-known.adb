@@ -17,8 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;               use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed.Hash;
 with Ada.Unchecked_Deallocation;
 
@@ -93,8 +93,9 @@ package body Toolchains.Known is
             Child := Node.Child;
             while Child /= null loop
                if Child.Tag.all = "compiler" then
-                  Map.Insert ("compiler_" & Get_Attribute (Child, "lang"),
-                              Child.Value.all);
+                  Map.Insert
+                    ("compiler_" & Get_Attribute (Child, "lang"),
+                     Child.Value.all);
                else
                   Map.Insert (Child.Tag.all, Child.Value.all);
                end if;
@@ -121,8 +122,8 @@ package body Toolchains.Known is
    -------------------------------
 
    function Get_Known_Toolchain_Names return String_List_Access is
-      Ret : constant String_List_Access :=
-              new String_List (1 .. Natural (The_Map.Length));
+      Ret  : constant String_List_Access :=
+               new String_List (1 .. Natural (The_Map.Length));
       Iter : Toolchain_Map.Cursor := The_Map.First;
       Idx  : Natural := 0;
 
@@ -238,8 +239,7 @@ package body Toolchains.Known is
    -- Langs --
    -----------
 
-   function Langs (Tc : String) return String_List_Access
-   is
+   function Langs (Tc : String) return String_List_Access is
       Names       : Name_Map.Map;
       Iter        : Name_Map.Cursor;
       N_Languages : Natural := 0;
@@ -249,6 +249,10 @@ package body Toolchains.Known is
         (String_List, String_List_Access);
 
       procedure Append_Lang (Lang : String);
+
+      -----------------
+      -- Append_Lang --
+      -----------------
 
       procedure Append_Lang (Lang : String) is
       begin

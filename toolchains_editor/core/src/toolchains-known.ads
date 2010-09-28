@@ -38,7 +38,7 @@ package Toolchains.Known is
 
    function Has_Naming_Exception (Name : String) return Boolean;
    --  Tell if the Name toolchain has tools with naming exceptions (e.g.
-   --  not of the form Name-tool)
+   --  not of the form Name-tool).
 
    function Tool_Command (Tc : String; Name : Valid_Tools) return String;
 
