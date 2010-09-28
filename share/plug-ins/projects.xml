@@ -18,7 +18,7 @@
        description="List of languages for the source files of this project"
        hide_in="all"
        list="true">
-       <shell default="Ada">supported_languages</shell>
+       <string />
    </project_attribute>
 
    <project_attribute
@@ -32,36 +32,6 @@
        <index attribute="Languages">
           <string />
        </index>
-       <specialized_index value="Ada">
-          <choice default="true" >gnatmake</choice>
-          <choice>powerpc-wrs-vxworks-gnatmake</choice>
-          <choice>powerpc-wrs-vxworksae-gnatmake</choice>
-          <choice>powerpc-wrs-vxworksmils-gnatmake</choice>
-          <choice>powerpc-elf-pikeos-gnatmake</choice>
-          <choice>powerpc-elf-gnatmake</choice>
-          <choice>powerpc-eabispe-gnatmake</choice>
-          <choice>i586-wrs-vxworks-gnatmake</choice>
-          <choice>e500v2-wrs-vxworks-gnatmake</choice>
-          <choice>powerpc-elf-lynxos-gnatmake</choice>
-          <choice>powerpc-xcoff-lynxos-gnatmake</choice>
-          <choice>erc32-elf-gnatmake</choice>
-          <choice>leon-elf-gnatmake</choice>
-          <choice>arm-mentor-nucleus-gnatmake</choice>
-          <choice>avr-gnatmake</choice>
-          <choice>dotnet-gnatmake</choice>
-          <choice>gnaampmake</choice>
-          <choice>jvm-gnatmake</choice>
-          <string />
-      </specialized_index>
-      <specialized_index value="C">
-          <choice default="true" >gcc</choice>
-          <string />
-      </specialized_index>
-      <specialized_index value="Gnatdist">
-          <choice default="true" >gnatdist</choice>
-          <choice>po_gnatdist</choice>
-          <string />
-      </specialized_index>
    </project_attribute>
 
    <project_attribute
@@ -72,24 +42,6 @@
        description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)"
        hide_in="all"
        label="Gnatls">
-       <choice default="true" >gnatls</choice>
-       <choice>powerpc-wrs-vxworks-gnatls</choice>
-       <choice>powerpc-wrs-vxworksae-gnatls</choice>
-       <choice>powerpc-wrs-vxworksmils-gnatls</choice>
-       <choice>powerpc-elf-pikeos-gnatls</choice>
-       <choice>powerpc-elf-gnatls</choice>
-       <choice>powerpc-eabispe-gnatls</choice>
-       <choice>i586-wrs-vxworks-gnatls</choice>
-       <choice>e500v2-wrs-vxworks-gnatls</choice>
-       <choice>powerpc-elf-lynxos-gnatls</choice>
-       <choice>powerpc-xcoff-lynxos-gnatls</choice>
-       <choice>erc32-elf-gnatls</choice>
-       <choice>leon-elf-gnatls</choice>
-       <choice>arm-mentor-nucleus-gnatls</choice>
-       <choice>avr-gnatls</choice>
-       <choice>dotnet-gnatls</choice>
-       <choice>gnaampls</choice>
-       <choice>jvm-gnatls</choice>
        <string />
    </project_attribute>
 
@@ -101,24 +53,6 @@
        description="The gnat driver used to run the various commands associated with the GNAT toolchain"
        hide_in="all"
        label="Gnat">
-       <choice default="true" >gnat</choice>
-       <choice>powerpc-wrs-vxworks-gnat</choice>
-       <choice>powerpc-wrs-vxworksae-gnat</choice>
-       <choice>powerpc-wrs-vxworksmils-gnat</choice>
-       <choice>powerpc-elf-pikeos-gnat</choice>
-       <choice>powerpc-elf-gnat</choice>
-       <choice>powerpc-eabispe-gnat</choice>
-       <choice>i586-wrs-vxworks-gnat</choice>
-       <choice>e500v2-wrs-vxworks-gnat</choice>
-       <choice>powerpc-elf-lynxos-gnat</choice>
-       <choice>powerpc-xcoff-lynxos-gnat</choice>
-       <choice>erc32-elf-gnat</choice>
-       <choice>leon-elf-gnat</choice>
-       <choice>arm-mentor-nucleus-gnat</choice>
-       <choice>avr-gnat</choice>
-       <choice>dotnet-gnat</choice>
-       <choice>gnaampcmd</choice>
-       <choice>jvm-gnat</choice>
        <string />
    </project_attribute>
 
@@ -130,22 +64,6 @@
        description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported"
        hide_in="all"
        label="Debugger">
-       <choice default="true" >gdb</choice>
-       <choice>powerpc-wrs-vxworks-gdb</choice>
-       <choice>powerpc-wrs-vxworksae-gdb</choice>
-       <choice>powerpc-wrs-vxworksae_wtx4-gdb</choice>
-       <choice>powerpc-wrs-vxworks6-gdb</choice>
-       <choice>powerpc-elf-pikeos-gdb</choice>
-       <choice>powerpc-elf-gdb</choice>
-       <choice>powerpc-eabispe-gdb</choice>
-       <choice>i586-wrs-vxworks-gdb</choice>
-       <choice>i586-wrs-vxworks6-gdb</choice>
-       <choice>e500v2-wrs-vxworks6-gdb</choice>
-       <choice>powerpc-elf-lynxos-gdb</choice>
-       <choice>powerpc-xcoff-lynxos-gdb</choice>
-       <choice>erc32-elf-gdb</choice>
-       <choice>leon-elf-gdb</choice>
-       <choice>arm-mentor-nucleus-gdb</choice>
        <string />
    </project_attribute>
 
