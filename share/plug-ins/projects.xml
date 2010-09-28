@@ -18,6 +18,7 @@
        description="List of languages for the source files of this project"
        hide_in="all"
        list="true">
+       <shell default="Ada">supported_languages</shell>
        <string />
    </project_attribute>
 
@@ -32,6 +33,9 @@
        <index attribute="Languages">
           <string />
        </index>
+       <specialized_index value="Ada">
+          <choice default="true" >gnatmake</choice>
+       </specialized_index>
    </project_attribute>
 
    <project_attribute
@@ -42,6 +46,7 @@
        description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)"
        hide_in="all"
        label="Gnatls">
+       <choice default="true" >gnatls</choice>
        <string />
    </project_attribute>
 
@@ -53,6 +58,7 @@
        description="The gnat driver used to run the various commands associated with the GNAT toolchain"
        hide_in="all"
        label="Gnat">
+       <choice default="true" >gnat</choice>
        <string />
    </project_attribute>
 
@@ -64,6 +70,7 @@
        description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported"
        hide_in="all"
        label="Debugger">
+       <choice default="true" >gdb</choice>
        <string />
    </project_attribute>
 
