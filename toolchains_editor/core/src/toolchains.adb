@@ -59,11 +59,13 @@ package body Toolchains is
       --  Returns gprconfig --target parameter
 
       function Get_Value
-        (Num       : Natural;
-         Token     : String;
-         From      : String;
-         Strip_Exe : Boolean) return String;
+        (Num   : Natural;
+         Token : String;
+         From  : String) return String;
       --  Parses From to retrieve the value of Token for compiler Num
+
+      function Strip_Exe (Name : String) return String;
+      --  Strips the .exe extension if needed
 
       ------------------
       -- Target_Param --
@@ -83,10 +85,9 @@ package body Toolchains is
       ---------------
 
       function Get_Value
-        (Num       : Natural;
-         Token     : String;
-         From      : String;
-         Strip_Exe : Boolean) return String
+        (Num   : Natural;
+         Token : String;
+         From  : String) return String
       is
          Idx1, Idx2 : Natural;
          Search     : constant String := Num'Img & " " & Token & ":";
@@ -101,13 +102,6 @@ package body Toolchains is
             end if;
             Idx2 := Idx2 - 1;
 
-            if Strip_Exe
-              and then Idx2 - Idx1 > 3
-              and then From (Idx2 - 3 .. Idx2) = ".exe"
-            then
-               Idx2 := Idx2 - 4;
-            end if;
-
             return From (Idx1 .. Idx2);
 
          else
@@ -115,6 +109,21 @@ package body Toolchains is
             return "";
          end if;
       end Get_Value;
+
+      ---------------
+      -- Strip_Exe --
+      ---------------
+
+      function Strip_Exe (Name : String) return String is
+      begin
+         if Name'Length > 4
+           and then Name (Name'Last - 3 .. Name'Last) = ".exe"
+         then
+            return Name (Name'First .. Name'Last - 4);
+         end if;
+
+         return Name;
+      end Strip_Exe;
 
       Comp_Num   : Natural := 1;
 
@@ -136,11 +145,11 @@ package body Toolchains is
 
             declare
                Lang       : constant String :=
-                              Get_Value (Comp_Num, "lang", Output, False);
+                              Get_Value (Comp_Num, "lang", Output);
                Path       : constant String :=
-                              Get_Value (Comp_Num, "path", Output, False);
+                              Get_Value (Comp_Num, "path", Output);
                Exe        : constant String :=
-                              Get_Value (Comp_Num, "executable", Output, True);
+                              Get_Value (Comp_Num, "executable", Output);
                Full       : Virtual_File;
                F          : Virtual_File;
                Is_Visible : Boolean;
@@ -164,9 +173,9 @@ package body Toolchains is
 
                if not Tc.Compiler_Commands.Contains (Lang) then
                   if Is_Visible then
-                     Set_Compiler (Tc, Lang, Exe, True);
+                     Set_Compiler (Tc, Lang, Strip_Exe (Exe), True);
                   else
-                     Set_Compiler (Tc, Lang, Path & Exe, True);
+                     Set_Compiler (Tc, Lang, Path & Strip_Exe (Exe), True);
                   end if;
                end if;
 
