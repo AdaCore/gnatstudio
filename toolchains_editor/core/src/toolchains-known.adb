@@ -88,6 +88,20 @@ package body Toolchains.Known is
       return Known_Toolchains;
    end Get_Known_Toolchain_Names;
 
+   --------------------------
+   -- Has_Naming_Exception --
+   --------------------------
+
+   function Has_Naming_Exception (Name : String) return Boolean is
+   begin
+      return Name /= Tool_AAMP
+        and then Name /= Tool_E500V2_WRS_VXWORKS
+        and then Name /= Tool_POWERPC_WRS_VXWORKS
+        and then Name /= Tool_POWERPC_WRS_VXWORKSAE
+        and then Name /= Tool_POWERPC_WRS_VXWORKSMILS
+        and then Name /= Tool_I586_WRS_VXWORKS;
+   end Has_Naming_Exception;
+
    ------------------
    -- Tool_Command --
    ------------------

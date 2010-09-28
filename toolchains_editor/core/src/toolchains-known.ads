@@ -26,6 +26,10 @@ package Toolchains.Known is
    --  Get the list of known toolchains.
    --  The result must not be freed by the caller.
 
+   function Has_Naming_Exception (Name : String) return Boolean;
+   --  Tell if the Name toolchain has tools with naming exceptions (e.g.
+   --  not of the form Name-tool)
+
    function Tool_Command (Tc : String; Name : Valid_Tools) return String;
 
    function Is_Compiler_Defined (Tc : String; Lang : String) return Boolean;
