@@ -1654,19 +1654,21 @@ package body Toolchains is
 
       --  Force compilers if needed
 
-      if not This.Compiler_Commands.Contains ("Ada") then
-         Trace (Me, "Create_Known_Toolchain: Force ada compiler command");
-         if Is_Compiler_Defined (Name, "Ada") then
-            Set_Compiler (This, "Ada", Compiler_Command (Name, "Ada"), True);
-         end if;
-      end if;
+      declare
+         Langs : String_List_Access :=
+                   Toolchains.Known.Langs (Name);
+      begin
+         for J in Langs'Range loop
+            if not This.Compiler_Commands.Contains (Langs (J).all) then
+               Set_Compiler
+                 (This, Langs (J).all,
+                  Compiler_Command (Name, Langs (J).all),
+                  True);
+            end if;
+         end loop;
 
-      if not This.Compiler_Commands.Contains ("C") then
-         Trace (Me, "Create_Known_Toolchain: Force C compiler command");
-         if Is_Compiler_Defined (Name, "C") then
-            Set_Compiler (This, "C", Compiler_Command (Name, "C"), True);
-         end if;
-      end if;
+         Free (Langs);
+      end;
    end Initialize_Known_Toolchain;
 
    -------------------------

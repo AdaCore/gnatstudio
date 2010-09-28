@@ -144,6 +144,7 @@ with Src_Editor_Module;
 with Startup_Module;
 with Switches_Chooser.Scripts;
 with Theme_Manager_Module;
+with Toolchains_Editor;
 with VCS.ClearCase;
 with VCS_Module;
 with VFS_Module;
@@ -228,6 +229,8 @@ procedure GPS.Main is
                       Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
    Toolchains_Trace       : constant Debug_Handle :=
                       Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
+   Toolchains_Editor_Trace  : constant Debug_Handle :=
+                      Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -1420,6 +1423,10 @@ procedure GPS.Main is
 
       if Active (Toolchains_Trace) then
          Toolchains_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Toolchains_Editor_Trace) then
+         Toolchains_Editor.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (GVD_Trace) then

@@ -62,6 +62,7 @@ with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;
 
 with GUI_Utils;                use GUI_Utils;
@@ -70,10 +71,22 @@ with Remote;                   use Remote;
 with Toolchains;               use Toolchains;
 with Toolchains.Known;         use Toolchains.Known;
 with Traces;                   use Traces;
+with XML_Utils;                use XML_Utils;
 
 package body Toolchains_Editor is
 
    Me : constant Debug_Handle := Traces.Create ("Toolchains_Editor");
+
+   type Toolchains_Module_Record is new Module_ID_Record with null record;
+   Toolchains_Module_ID   : Module_ID;
+   Toolchains_Module_Name : constant String := "Toolchains_Editor";
+
+   overriding procedure Customize
+     (Module : access Toolchains_Module_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : Customization_Level);
+   --  See doc for inherited subprogram
 
    --  common to both trees
    Active_Column      : constant := 0;
@@ -1467,7 +1480,7 @@ package body Toolchains_Editor is
       Btn        : Gtk_Widget;
       Res        : Gtk_Response_Type;
       Iter       : Gtk_Tree_Iter := Null_Iter;
-      Known_Tc   : constant GNAT.Strings.String_List :=
+      Known_Tc   : GNAT.Strings.String_List_Access :=
                      Toolchains.Known.Get_Known_Toolchain_Names;
       pragma Unreferenced (Btn);
 
@@ -1484,6 +1497,8 @@ package body Toolchains_Editor is
          Name_Model.Append (Iter, Null_Iter);
          Name_Model.Set (Iter, 0, Known_Tc (J).all);
       end loop;
+
+      GNAT.Strings.Free (Known_Tc);
 
       Btn := Dialog.Add_Button
         (Gtk.Stock.Stock_Ok, Response_Id => Gtk_Response_OK);
@@ -1586,5 +1601,35 @@ package body Toolchains_Editor is
          return To_String (Ret);
       end if;
    end Execute;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Toolchains_Module_ID := new Toolchains_Module_Record;
+      Register_Module
+        (Module                  => Toolchains_Module_ID,
+         Kernel                  => Kernel,
+         Module_Name             => Toolchains_Module_Name,
+         Priority                => Default_Priority);
+   end Register_Module;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   overriding procedure Customize
+     (Module : access Toolchains_Module_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Module, File, Level);
+   begin
+      Toolchains.Known.Read_From_XML (Node);
+   end Customize;
 
 end Toolchains_Editor;

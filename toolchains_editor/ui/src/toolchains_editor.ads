@@ -49,6 +49,9 @@ package Toolchains_Editor is
       Project   : Project_Type;
       Scenarii  : Scenario_Variable_Array) return Boolean;
 
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+
 private
 
    type Toolchains_Edit_Record is new Gtk.Box.Gtk_Vbox_Record with record
