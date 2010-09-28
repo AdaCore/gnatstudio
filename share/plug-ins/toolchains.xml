@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!--  Defines the standard toolchains.
 
-      YOU MUST LOAD THIS SCRIPT.
+      THIS SCRIPT MUST BE LOADED.
 
       This script defines the standard toolchains used by the GPS project
       editor.
