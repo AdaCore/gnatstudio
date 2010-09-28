@@ -21,6 +21,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Toolchains.Known is
 
+   --  ??? Move all this hard coded knowledge in XML files
+
    Tool_AAMP                    : aliased constant String := "aamp";
    Tool_E500V2_WRS_VXWORKS      : aliased constant String :=
      "e500v2-wrs-vxworks";
@@ -92,6 +94,7 @@ package body Toolchains.Known is
 
    function Tool_Command (Tc : String; Name : Valid_Tools) return String is
    begin
+      --  ??? Remove this hard coded knowledge and use xml atrributes instead
       case Name is
          when CPP_Filt =>
             if Tc = Tool_AAMP
@@ -158,6 +161,7 @@ package body Toolchains.Known is
    function Is_Compiler_Defined (Tc : String; Lang : String) return Boolean is
       L : constant String := To_Lower (Lang);
    begin
+      --  ??? Remove this hard coded knowledge and use XML attributes instead
       if L = "ada" then
          return True;
       elsif L = "c" then
@@ -176,6 +180,8 @@ package body Toolchains.Known is
    function Compiler_Command (Tc : String; Lang : String) return String is
       L : constant String := To_Lower (Lang);
    begin
+      --  ??? Remove this hard coded knowledge and use XML attributes instead
+
       if not Is_Compiler_Defined (Tc, L) then
          return "";
       else
