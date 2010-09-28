@@ -34,52 +34,6 @@ private with Ada.Strings.Hash_Case_Insensitive;
 
 package Toolchains is
 
-   --  ??? Should get rid of all these hard coded values and replace them
-   --  by an XML file.
-   --  Also, missing some toolchains, e.g. dotnet
-
-   Tool_AAMP                    : aliased constant String := "aamp";
-   Tool_E500V2_WRS_VXWORKS      : aliased constant String :=
-     "e500v2-wrs-vxworks";
-   Tool_E500V2_WRS_VXWORKSMILS  : aliased constant String :=
-     "e500v2-wrs-vxworksmils";
-   Tool_I586_WRS_VXWORKS        : aliased constant String :=
-     "i586-wrs-vxworks";
-   Tool_JVM                     : aliased constant String := "jvm";
-   Tool_Dotnet                  : aliased constant String := "dotnet";
-   Tool_POWERPC_WRS_VXWORKS     : aliased constant String :=
-     "powerpc-wrs-vxworks";
-   Tool_POWERPC_WRS_VXWORKSAE   : aliased constant String :=
-     "powerpc-wrs-vxworksae";
-   Tool_POWERPC_WRS_VXWORKSMILS : aliased constant String :=
-     "powerpc-wrs-vxworksmils";
-
-   Known_Toolchains : aliased constant String_List :=
-     ( --  Bareboards
-      new String'("erc32-elf"),
-      new String'("leon-elf"),
-      new String'("powerpc-eabispe"),
-      new String'("powerpc-elf"),
-
-      --  VxWorks platforms
-      new String'(Tool_E500V2_WRS_VXWORKS),
-      new String'(Tool_E500V2_WRS_VXWORKSMILS),
-      new String'(Tool_I586_WRS_VXWORKS),
-      new String'(Tool_POWERPC_WRS_VXWORKS),
-      new String'(Tool_POWERPC_WRS_VXWORKSAE),
-      new String'(Tool_POWERPC_WRS_VXWORKSMILS),
-
-      --  Other cross
-      new String'(Tool_AAMP),
-      new String'(Tool_JVM),
-      new String'(Tool_Dotnet),
-      new String'("powerpc-elf-lynxos"),
-      new String'("powerpc-elf-pikeos"),
-      new String'("powerpc-xcoff-lynxos"));
-
-   function Is_Known_Toolchain_Name (Name : String) return Boolean;
-   --  Tell if the name is a known toolchain description
-
    Toolchain_Exception : exception;
 
    --------------
@@ -167,7 +121,8 @@ package Toolchains is
       CPP_Filt);
    --  This enumeration represents the various tools that can be set in a
    --  toolchain.
-   --  ??? Remove Gnatmake and Gnatlist are duplicates of the gnat driver
+
+   subtype Valid_Tools is Tools range GNAT_Driver .. CPP_Filt;
 
    type Toolchain is private;
    --  This type represent a toolchain. It can either be generated
@@ -225,10 +180,6 @@ package Toolchains is
       Lang    : String;
       Value   : Boolean);
    --  Set wether a compiler should be used for Lang
-
-   function Is_Simple_Cross (This : Toolchain) return Boolean;
-   --  Return true if the toolchain is a "simple" cross toolchain, that is
-   --  to say all the tools are the for prefix-tool, false otherwise.
 
    function Get_Name (This : Toolchain) return String;
    --  Return the name of this toolchain, as used for the properties

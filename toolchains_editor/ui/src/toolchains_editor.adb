@@ -68,6 +68,7 @@ with GUI_Utils;                use GUI_Utils;
 with Language_Handlers;        use Language_Handlers;
 with Remote;                   use Remote;
 with Toolchains;               use Toolchains;
+with Toolchains.Known;         use Toolchains.Known;
 with Traces;                   use Traces;
 
 package body Toolchains_Editor is
@@ -1466,6 +1467,8 @@ package body Toolchains_Editor is
       Btn        : Gtk_Widget;
       Res        : Gtk_Response_Type;
       Iter       : Gtk_Tree_Iter := Null_Iter;
+      Known_Tc   : constant GNAT.Strings.String_List :=
+                     Toolchains.Known.Get_Known_Toolchain_Names;
       pragma Unreferenced (Btn);
 
    begin
@@ -1477,9 +1480,9 @@ package body Toolchains_Editor is
       Gtk.Combo_Box_Entry.Gtk_New_With_Model (Name_Entry, Name_Model, 0);
       Dialog.Get_Content_Area.Pack_Start (Name_Entry, False, False, 5);
 
-      for J in Known_Toolchains'Range loop
+      for J in Known_Tc'Range loop
          Name_Model.Append (Iter, Null_Iter);
-         Name_Model.Set (Iter, 0, Known_Toolchains (J).all);
+         Name_Model.Set (Iter, 0, Known_Tc (J).all);
       end loop;
 
       Btn := Dialog.Add_Button

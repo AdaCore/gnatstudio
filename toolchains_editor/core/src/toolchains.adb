@@ -28,6 +28,7 @@ with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with Remote;                use Remote;
+with Toolchains.Known;      use Toolchains.Known;
 
 package body Toolchains is
 
@@ -713,20 +714,6 @@ package body Toolchains is
          This.Compiler_Commands.Delete (Lang);
       end if;
    end Reset_To_Default;
-
-   ---------------------
-   -- Is_Simple_Cross --
-   ---------------------
-
-   function Is_Simple_Cross (This : Toolchain) return Boolean is
-   begin
-      return not
-        (This.Is_Native
-         or else This.Is_Custom
-         or else This.Name.all = Tool_AAMP
-         or else This.Name.all = Tool_POWERPC_WRS_VXWORKSAE
-         or else This.Name.all = Tool_POWERPC_WRS_VXWORKSMILS);
-   end Is_Simple_Cross;
 
    --------------
    -- Get_Name --
@@ -1628,21 +1615,6 @@ package body Toolchains is
       end if;
    end Get_Native_Toolchain;
 
-   -----------------------------
-   -- Is_Known_Toolchain_Name --
-   -----------------------------
-
-   function Is_Known_Toolchain_Name (Name    : String) return Boolean is
-   begin
-      for J in Known_Toolchains'Range loop
-         if Known_Toolchains (J).all = Name then
-            return True;
-         end if;
-      end loop;
-
-      return False;
-   end Is_Known_Toolchain_Name;
-
    --------------------------------
    -- Initialize_Known_Toolchain --
    --------------------------------
@@ -1660,46 +1632,14 @@ package body Toolchains is
       This.Compilers_Scanned := False;
       This.Compiler_Commands.Clear;
 
-      --  Set c++filt
+      --  Set tools
 
-      if Name = Tool_AAMP then
-         Set_Command (This, CPP_Filt, "");
-      elsif Name = Tool_E500V2_WRS_VXWORKS
-        or else Name = Tool_POWERPC_WRS_VXWORKS
-        or else Name = Tool_POWERPC_WRS_VXWORKSAE
-        or else Name = Tool_POWERPC_WRS_VXWORKSMILS
-      then
-         Set_Command (This, CPP_Filt, "c++filtppc", True);
-      elsif Name = Tool_I586_WRS_VXWORKS then
-         Set_Command (This, CPP_Filt, "c++filtpentium", True);
-      else
-         Set_Command (This, CPP_Filt, Name & "-c++filt", True);
-      end if;
-
-      --  Set other tools
-
-      if Name = Tool_AAMP
-        or else Name = Tool_Dotnet
-        or else Name = Tool_JVM
-      then
-         Set_Command (This, Debugger, "", True);
-      elsif Name = Tool_POWERPC_WRS_VXWORKSAE then
+      for T in Valid_Tools'Range loop
          Set_Command
-           (This, Debugger, "powerpc-wrs-vxworksae-gdb_wtx4", True);
-      elsif Name = Tool_POWERPC_WRS_VXWORKSMILS then
-         Set_Command
-           (This, Debugger, "powerpc-elf-gdb", True);
-      else
-         Set_Command (This, Debugger, Name & "-gdb", True);
-      end if;
-
-      if Name = Tool_AAMP then
-         Set_Command (This, GNAT_List, "gnaampls", True);
-         Set_Command (This, GNAT_Driver, "gnaampcmd", True);
-      else
-         Set_Command (This, GNAT_List, Name & "-gnatls", True);
-         Set_Command (This, GNAT_Driver, Name & "-gnat", True);
-      end if;
+           (This, T,
+            Toolchains.Known.Tool_Command (Name, T),
+            True);
+      end loop;
 
       Compute_Gprconfig_Compilers (This);
 
@@ -1707,28 +1647,15 @@ package body Toolchains is
 
       if not This.Compiler_Commands.Contains ("Ada") then
          Trace (Me, "Create_Known_Toolchain: Force ada compiler command");
-         if Name = Tool_AAMP then
-            Set_Compiler (This, "Ada", "gnaampmake", True);
-         else
-            Set_Compiler (This, "Ada", Name & "-gnatmake", True);
+         if Is_Compiler_Defined (Name, "Ada") then
+            Set_Compiler (This, "Ada", Compiler_Command (Name, "Ada"), True);
          end if;
       end if;
 
       if not This.Compiler_Commands.Contains ("C") then
          Trace (Me, "Create_Known_Toolchain: Force C compiler command");
-         if Name = Tool_E500V2_WRS_VXWORKS
-           or else Name = Tool_POWERPC_WRS_VXWORKS
-           or else Name = Tool_POWERPC_WRS_VXWORKSAE
-           or else Name = Tool_POWERPC_WRS_VXWORKSMILS
-         then
-            Set_Compiler (This, "C", "ccppc", True);
-         elsif Name = Tool_I586_WRS_VXWORKS then
-            Set_Compiler (This, "C", "ccpentium", True);
-         elsif Name /= Tool_AAMP
-           and then Name /= Tool_Dotnet
-           and then Name /= Tool_JVM
-         then
-            Set_Compiler (This, "C", Name & "-gcc", True);
+         if Is_Compiler_Defined (Name, "C") then
+            Set_Compiler (This, "C", Compiler_Command (Name, "C"), True);
          end if;
       end if;
    end Initialize_Known_Toolchain;
