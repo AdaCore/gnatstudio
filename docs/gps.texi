@@ -9503,6 +9503,11 @@ relevant tools (e.g. @i{Gnatls} to
 @code{powerpc-wrs-vxworks-gnatls} and @i{Debugger} to
 @code{powerpc-wrs-vxworks-gdb} @dots{}).
 
+The list of toolchains and their default values that can be selected when using
+the Add button can be modified via a custom xml file. See
+@ref{Customizing and Extending GPS} and in particular
+@ref{Toolchains customization} for further information.
+
 If you are using an alternative run time, e.g. a @i{soft float} run time,
 you need to add the option @code{--RTS=soft-float} to the @i{Gnatls}
 property, e.g: @code{powerpc-wrs-vxworks-gnatls --RTS=soft-float}, and
@@ -11477,6 +11482,7 @@ now. This will properly save all your files.
 @c * Defining a documentation format::
 * Remote programming customization::
 * Customizing build Targets and Models::
+* Toolchains customization::
 @end menu
 
 @c -----------------------------------------------------------------------
@@ -15157,6 +15163,44 @@ following sub-nodes:
  </builder-mode>
 </my_mode>
 @end smallexample
+
+@c --------------------------------------------------------------------------
+@node Toolchains customization
+@subsection Toolchains customization
+@c --------------------------------------------------------------------------
+
+@noindent
+The list of toolchains and their values presented in the project editor
+(@pxref{The Project Wizard}) can be customized through XML. The GPS default
+list is contained in @code{toolchains.xml}. You can add your own toolchain
+by providing an xml description following the below described structure:
+
+@table @code
+@item <toolchain_default>
+  Contains the default names for the different tools used by all toolchains.
+  The final name used will be @code{toolchain_name-default_name}.
+@item <toolchain name="name">
+  Defines a toolchain using name "name". This toolchain can override the
+  default values defined in the toolchain_default above.
+@end table
+
+Each of the above tags can have the following chilren
+
+@table @code
+@item <gnat_driver>
+  Defines the gnat driver to use.
+@item <gnat_list>
+  Defines the gnat list tool to use.
+@item <debugger>
+  Defines the debugger to use.
+@item <cpp_filt>
+  Not used by GPS.
+@item <compiler lang="lang">
+  Defines the compiler to use to compile language "lang"
+@end table
+
+The toolchain_default values can either be overriden or nullified by just
+providing the same tab with an empty value in a toolchain definition.
 
 @c --------------------------------------------------------------------------
 @node Adding support for new tools
