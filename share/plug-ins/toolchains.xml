@@ -28,16 +28,22 @@
 
   <toolchain name="powerpc-wrs-vxworks">
     <cpp_filt>c++filtppc</cpp_filt>
+    <compiler lang="c">ccppc</compiler>
+    <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
   <toolchain name="powerpc-wrs-vxworksae">
     <debugger>powerpc-wrs-vxworksae-gdb_wtx4</debugger>
     <cpp_filt>c++filtppc</cpp_filt>
+    <compiler lang="c">ccppc</compiler>
+    <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
   <toolchain name="powerpc-wrs-vxworksmils">
     <debugger>powerpc-elf-gdb</debugger>
     <cpp_filt>c++filtppc</cpp_filt>
+    <compiler lang="c">ccppc</compiler>
+    <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
   <toolchain name="powerpc-elf-pikeos"/>
@@ -48,10 +54,20 @@
 
   <toolchain name="i586-wrs-vxworks">
     <cpp_filt>c++filtpentium</cpp_filt>
+    <compiler lang="c">ccpentium</compiler>
+    <compiler lang="c++">c++pentium</compiler>
   </toolchain>
 
   <toolchain name="e500v2-wrs-vxworks">
     <cpp_filt>c++filtppc</cpp_filt>
+    <compiler lang="c">ccppc</compiler>
+    <compiler lang="c++">c++ppc</compiler>
+  </toolchain>
+
+  <toolchain name="e500v2-wrs-vxworksmils">
+    <cpp_filt>c++filtppc</cpp_filt>
+    <compiler lang="c">ccppc</compiler>
+    <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
   <toolchain name="powerpc-elf-lynxos"/>
