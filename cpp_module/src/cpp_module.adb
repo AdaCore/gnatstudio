@@ -43,6 +43,7 @@ package body Cpp_Module is
    C_Automatic_Indentation   : Indentation_Kind_Preferences.Preference;
    C_Use_Tabs                : Boolean_Preference;
    C_Indentation_Level       : Integer_Preference;
+   C_Indent_Comments         : Boolean_Preference;
 
    type GLI_Handler_Record is new ALI_Handler_Record with null record;
    type GLI_Handler is access all GLI_Handler_Record'Class;
@@ -177,7 +178,7 @@ package body Cpp_Module is
                   Align_On_Colons     => False,
                   Align_On_Arrows     => False,
                   Align_Decl_On_Colon => False,
-                  Indent_Comments     => True,
+                  Indent_Comments     => C_Indent_Comments.Get_Pref,
                   Stick_Comments      => False);
 
    begin
@@ -237,6 +238,14 @@ package body Cpp_Module is
          Page    => -"Editor/C & C++",
          Doc     => -"The number of spaces for the default indentation",
          Label   => -"Default indentation");
+
+      C_Indent_Comments := Create
+        (Get_Preferences (Kernel),
+         Name    => "C-Indent-Comments",
+         Default => True,
+         Page    => -"Editor/C & C++",
+         Doc     => -"Whether to indent lines with comments only",
+         Label   => -"Indent comments");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

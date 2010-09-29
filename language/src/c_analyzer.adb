@@ -512,6 +512,7 @@ package body C_Analyzer is
 
       Indent_Level      : Natural renames Indent_Params.Indent_Level;
       Indent_Continue   : Natural renames Indent_Params.Indent_Level;
+      Indent_Comments   : Boolean renames Indent_Params.Indent_Comments;
       Use_Tabs          : Boolean renames Indent_Params.Use_Tabs;
       Tab_Width         : Natural renames Indent_Params.Tab_Width;
 
@@ -872,7 +873,34 @@ package body C_Analyzer is
       ------------------
 
       function Skip_Comment return Boolean is
-         Start_Line : Natural;
+         Start_Line    : Natural;  --  Line starting the comment
+         Ref_Column    : Natural;  --  First column with non blank char
+         Indent_Normal : Integer := 0;    --  Number of spaces to use when
+                                          --  indenting comments
+         Indent_Star   : Integer := 0;    --  Ditto, when the first non blank
+                                          --  char is a '*'
+         Line_Reset    : Boolean;         --  Whether we have a newline that
+                                          --  needs indentation.
+         Column        : Natural;         --  Current column, taking into
+                                          --  account TAB characters.
+         Last_Blank    : Natural;         --  Last blank column on the first
+                                          --  comment line.
+         All_Stars     : Boolean;
+         Tmp           : Natural;
+
+         procedure Add_Tab (Value : in out Natural);
+         --  Increment Value by a TAB character (up to 8 chars).
+         pragma Inline (Add_Tab);
+
+         -------------
+         -- Add_Tab --
+         -------------
+
+         procedure Add_Tab (Value : in out Natural) is
+         begin
+            Value := 8 * (Value / 8 + 1);
+         end Add_Tab;
+
       begin
          First := Index;
 
@@ -890,6 +918,10 @@ package body C_Analyzer is
                Char_In_Line := Char_In_Line + 1;
             end loop;
 
+            if Indent_Comments then
+               Do_Indent (Index, Indent);
+            end if;
+
             if Callback = null then
                return False;
             else
@@ -899,33 +931,129 @@ package body C_Analyzer is
             end if;
 
          elsif Buffer (Index + 1) = '*' then
-            --  Skip comment
+            --  Skip and indent C-style multi-line comment
 
             Start_Char := Char_In_Line;
             Start_Line := Line;
+            Column     := Char_In_Line;
+
+            if Indent_Comments then
+               Do_Indent (Index, Indent);
+               Tmp := Line_Start (Buffer, Index);
+               Last_Blank := 0;
+
+               loop
+                  case Buffer (Tmp) is
+                     when ' ' =>
+                        Last_Blank := Last_Blank + 1;
+                     when ASCII.HT =>
+                        Add_Tab (Last_Blank);
+                     when others =>
+                        exit;
+                  end case;
+
+                  Tmp := Tmp + 1;
+               end loop;
+
+               Column := Last_Blank;
+
+               while Tmp <= Index loop
+                  if Buffer (Tmp) = ASCII.HT then
+                     Add_Tab (Column);
+                  else
+                     Column := Column + 1;
+                  end if;
+
+                  Tmp := Tmp + 1;
+               end loop;
+
+               Indent_Star := Column + Indentation - Last_Blank;
+            end if;
 
             Index := Index + 2;
             Char_In_Line := Char_In_Line + 2;
+            Column := Column + 2;
 
             if Buffer (Index) = ASCII.LF then
+               Line_Reset := True;
+               Ref_Column := Column + 1;
+               Indent_Normal := Indent_Star + 2;
                New_Line;
+               Index := Index + 1;
+               Char_In_Line := 1;
+               Column := 1;
+
+            else
+               while Index < Buffer'Last loop
+                  case Buffer (Index) is
+                     when ' ' =>
+                        Column := Column + 1;
+                     when ASCII.HT =>
+                        Add_Tab (Column);
+                     when others =>
+                        exit;
+                  end case;
+
+                  Char_In_Line := Char_In_Line + 1;
+                  Index := Index + 1;
+               end loop;
+
+               Ref_Column := Column;
+               Indent_Normal := Ref_Column + Indentation - Last_Blank - 1;
+               Line_Reset := False;
+
+               if Char_In_Line = Start_Char + 2 then
+                  --  Skip the first character, so that the following test that
+                  --  a '*' doesn't see the one after the opening of the
+                  --  comment
+
+                  Index := Index + 1;
+                  Char_In_Line := Char_In_Line + 1;
+                  Column := Column + 1;
+               end if;
             end if;
 
-            --  Skip the first character, so that the following test that
-            --  a '*' doesn't see the one after the opening of the
-            --  comment
-
-            Index := Index + 1;
-            Char_In_Line := Char_In_Line + 1;
+            All_Stars := True;
 
             while Index < Buffer'Last
               and then (Buffer (Index - 1) /= '*'
                         or else Buffer (Index) /= '/')
             loop
-               if Buffer (Index) = ASCII.LF then
-                  New_Line;
+               if Buffer (Index) /= ' '
+                 and then Buffer (Index) /= ASCII.HT
+               then
+                  if Buffer (Index) = ASCII.LF then
+                     New_Line;
+                     Line_Reset := True;
+                     Column := 0;
+
+                  elsif Line_Reset and Indent_Comments then
+                     --  Keep all '*' chars aligned
+
+                     if Buffer (Index) = '*'
+                       and then (All_Stars or else Buffer (Index + 1) = '/')
+                     then
+                        Do_Indent (Index, Indent_Star);
+                     else
+                        All_Stars := False;
+
+                        if Column > Ref_Column then
+                           Do_Indent
+                             (Index, Indent_Normal + Column - Ref_Column);
+                        else
+                           Do_Indent (Index, Indent_Normal);
+                        end if;
+                     end if;
+
+                     Line_Reset := False;
+                  end if;
                end if;
 
+               if Buffer (Index) = ASCII.HT then
+                  Add_Tab (Column);
+               end if;
+
+               Column := Column + 1;
                Index := UTF8_Next_Char (Buffer, Index);
                Char_In_Line := Char_In_Line + 1;
             end loop;

@@ -15,6 +15,11 @@ of the feature.
 New features in 5.0.0
 ---------------------
 
+NF-50-J928-023 Automatic indentation of C and C++ comments (2010-09-29)
+
+  The GPS editor is now able to indent C and C++ comments and automatically
+  takes into account various styles of multiple line comments.
+
 NF-50-J918-004 Support for Ada 2012 (2010-09-20)
 
   GPS now supports Ada 2012 syntax and keywords when highlighting Ada

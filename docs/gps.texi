@@ -10685,6 +10685,10 @@ character.
 @cindex indentation
 The number of spaces for the default indentation.
 
+@item Indent comments
+Whether to indent lines containing only comments and blanks, or to keep
+these lines unchanged.
+
 @end table
 
 @end table
