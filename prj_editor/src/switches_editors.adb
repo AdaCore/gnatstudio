@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -407,33 +408,14 @@ package body Switches_Editors is
                end if;
             end if;
 
-            if To_Remove then
-               if File_Name /= GNATCOLL.VFS.No_File then
-                  Trace (Me, "Removing file-specific switches for "
-                         & (+Base_Name (File_Name)));
-                  Project.Delete_Attribute
-                    (Scenario  => Scenario_Variables,
-                     Attribute => Attribute_Pkg_List'(Build
-                       (Tool.Project_Package.all, "switches")),
-                     Index     => +Base_Name (File_Name));
-                  Changed := True;
-               end if;
+            if Tool.Project_Attribute.all = "default_switches" then
+               --  Tool's attribute is not defined in tool's descriptor,
+               --  default handling of switches using "default_switches" and
+               --  "switches" is used.
 
-            elsif not Is_Default_Value then
-               if File_Name /= GNATCOLL.VFS.No_File then
-                  if Args'Length /= 0 then
-                     Trace (Me, "Changing switches for "
-                            & (+Base_Name (File_Name)));
-                     Project.Set_Attribute
-                       (Scenario  => Scenario_Variables,
-                        Attribute => Attribute_Pkg_List'(Build
-                          (Tool.Project_Package.all, "switches")),
-                        Values    => Args.all,
-                        Index     => +Base_Name (File_Name),
-                        Prepend   => False);
-                     Changed := True;
-                  else
-                     Trace (Me, "Removing switches for "
+               if To_Remove then
+                  if File_Name /= GNATCOLL.VFS.No_File then
+                     Trace (Me, "Removing file-specific switches for "
                             & (+Base_Name (File_Name)));
                      Project.Delete_Attribute
                        (Scenario  => Scenario_Variables,
@@ -443,27 +425,80 @@ package body Switches_Editors is
                      Changed := True;
                   end if;
 
-               elsif Args'Length /= 0 then
-                  Trace (Me, "Changing default switches for "
-                         & Tool.Project_Package.all
-                         & " " & Tool.Project_Index.all);
+               elsif not Is_Default_Value then
+                  if File_Name /= GNATCOLL.VFS.No_File then
+                     if Args'Length /= 0 then
+                        Trace (Me, "Changing switches for "
+                               & (+Base_Name (File_Name)));
+                        Project.Set_Attribute
+                          (Scenario  => Scenario_Variables,
+                           Attribute => Attribute_Pkg_List'(Build
+                             (Tool.Project_Package.all, "switches")),
+                           Values    => Args.all,
+                           Index     => +Base_Name (File_Name),
+                           Prepend   => False);
+                        Changed := True;
+                     else
+                        Trace (Me, "Removing switches for "
+                               & (+Base_Name (File_Name)));
+                        Project.Delete_Attribute
+                          (Scenario  => Scenario_Variables,
+                           Attribute => Attribute_Pkg_List'(Build
+                             (Tool.Project_Package.all, "switches")),
+                           Index     => +Base_Name (File_Name));
+                        Changed := True;
+                     end if;
+
+                  elsif Args'Length /= 0 then
+                     Trace (Me, "Changing default switches for "
+                            & Tool.Project_Package.all
+                            & " " & Tool.Project_Index.all);
+                     Project.Set_Attribute
+                       (Scenario  => Scenario_Variables,
+                        Attribute => Attribute_Pkg_List'(Build
+                          (Tool.Project_Package.all, "default_switches")),
+                        Values    => Args.all,
+                        Index     => Tool.Project_Index.all,
+                        Prepend   => False);
+                     Changed := True;
+
+                  else
+                     Trace (Me, "Removing default switches for "
+                            & Tool.Project_Package.all & " "
+                            & Tool.Project_Index.all);
+                     Project.Delete_Attribute
+                       (Scenario  => Scenario_Variables,
+                        Attribute => Attribute_Pkg_List'(Build
+                          (Tool.Project_Package.all, "default_switches")),
+                        Index     => Tool.Project_Index.all);
+                     Changed := True;
+                  end if;
+               end if;
+
+            else
+               --  Tool's attribute is defined in tool's descriptor.
+
+               if Args'Length /= 0 then
                   Project.Set_Attribute
                     (Scenario  => Scenario_Variables,
-                     Attribute => Attribute_Pkg_List'(Build
-                       (Tool.Project_Package.all, "default_switches")),
+                     Attribute =>
+                       Attribute_Pkg_List'
+                         (Build
+                              (Tool.Project_Package.all,
+                               Tool.Project_Attribute.all)),
                      Values    => Args.all,
                      Index     => Tool.Project_Index.all,
                      Prepend   => False);
                   Changed := True;
 
                else
-                  Trace (Me, "Removing default switches for "
-                         & Tool.Project_Package.all & " "
-                         & Tool.Project_Index.all);
                   Project.Delete_Attribute
                     (Scenario  => Scenario_Variables,
-                     Attribute => Attribute_Pkg_List'(Build
-                       (Tool.Project_Package.all, "default_switches")),
+                     Attribute =>
+                       Attribute_Pkg_List'
+                         (Build
+                              (Tool.Project_Package.all,
+                               Tool.Project_Attribute.all)),
                      Index     => Tool.Project_Index.all);
                   Changed := True;
                end if;
@@ -561,15 +596,46 @@ package body Switches_Editors is
       Files             : File_Array;
       Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List is
    begin
-      if Files'Length = 0 then
-         return Get_Switches
-           (Switches.Project, Tool, GNATCOLL.VFS.No_File,
-            Use_Initial_Value => Use_Initial_Value);
+      if Tool.Project_Attribute.all = "default_switches" then
+         --  Tool's attribute is not defined in tool's descriptor, default
+         --  handling of switches using "default_switches" and "switches" is
+         --  used.
+
+         if Files'Length = 0 then
+            return Get_Switches
+              (Switches.Project, Tool, GNATCOLL.VFS.No_File,
+               Use_Initial_Value => Use_Initial_Value);
+
+         else
+            --  ??? Should we merge all the switches ?
+            return Get_Switches
+              (Switches.Project, Tool, Files (Files'First),
+               Use_Initial_Value => Use_Initial_Value);
+         end if;
+
       else
-         --  ??? Should we merge all the switches ?
-         return Get_Switches
-           (Switches.Project, Tool, Files (Files'First),
-            Use_Initial_Value => Use_Initial_Value);
+         --  Tool's attribute is defined in tool's descriptor, request value
+         --  of the tool specific attribute and index.
+
+         declare
+            procedure Free is
+              new Ada.Unchecked_Deallocation
+                (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
+
+            Value : String_List_Access
+              := Switches.Project.Attribute_Value
+                (Attribute =>
+                   Attribute_Pkg_List'
+                   (Build
+                      (Tool.Project_Package.all, Tool.Project_Attribute.all)),
+                 Index     => Tool.Project_Index.all);
+            Result : constant GNAT.Strings.String_List := Value.all;
+
+         begin
+            Free (Value);
+
+            return Result;
+         end;
       end if;
    end Get_Switches;
 
