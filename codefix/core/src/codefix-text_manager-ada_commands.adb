@@ -337,7 +337,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word         : Word_Cursor;
       Position     : Relative_Position := Specified;
       Destination  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Category     : Dependency_Category := Cat_With)
+      Category     : Dependency_Category := Cat_With;
+      Look_For_Use : Boolean := True)
    is
    begin
       This.Word := new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Word));
@@ -345,6 +346,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       This.Position := Position;
       This.Destination := Destination;
       This.Category := Category;
+      This.Look_For_Use := Look_For_Use;
    end Initialize;
 
    -------------
@@ -436,7 +438,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  If the category is not already a use clause, see if there are use
       --  clauses for that unit and remove them as well.
 
-      if This.Category /= Cat_Use then
+      if This.Look_For_Use and then This.Category /= Cat_Use then
          Clauses_List := Get_Use_Clauses
            (Word.String_Match.all,
             Get_File (Word),

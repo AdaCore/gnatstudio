@@ -109,12 +109,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Word         : Word_Cursor;
       Position     : Relative_Position := Specified;
       Destination  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Category     : Dependency_Category := Cat_With);
+      Category     : Dependency_Category := Cat_With;
+      Look_For_Use : Boolean := True);
    --  Set all the marks that will be needed to remove package clauses.
    --  If Destination is different from "", then the procedure Execute will add
    --  the removed Pkg clauses at the beginning of the destination file. If
    --  Word.String_Match is null, then the first with after the position
-   --  specified by the cursor will be taken.
+   --  specified by the cursor will be taken. If Look_For_Use is true, then
+   --  use clauses will be removed if the category if on a with.
 
    overriding
    procedure Execute
@@ -536,6 +538,7 @@ private
       Position     : Relative_Position;
       Destination  : GNATCOLL.VFS.Virtual_File;
       Category     : Dependency_Category;
+      Look_For_Use : Boolean;
    end record;
 
    type Remove_Entity_Cmd is new Text_Command (Complex) with record

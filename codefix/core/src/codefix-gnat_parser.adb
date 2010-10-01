@@ -2421,7 +2421,7 @@ package body Codefix.GNAT_Parser is
       Message : constant Error_Message := Get_Message (Message_It);
    begin
       Solutions := Remove_Dependency_Clause
-        (Current_Text, Message, Cat_With, Before);
+        (Current_Text, Message, Cat_With, Before, Look_For_Use => False);
    end Fix;
 
    -----------------------
