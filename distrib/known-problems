@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.0
 
+- J928-005: Auto-fix doesn't work when missing space in constant
+  Problem:    When making constant a variable with no space between the : and
+              the declaration name, the auto-fix doesn't automatically add
+              a space after the constant keyword, resulting in a 
+              non-compilable code.
+  Workaround: Add manually the space.
+
 - J923-002: Emacs mode: transpose lines transposes next line
   Problem:    In Emacs, transposing two lines swaps the current line and
               the previous, whereas GPS used to swap the current line and
