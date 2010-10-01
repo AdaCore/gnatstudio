@@ -29,8 +29,10 @@ private with Ada.Containers.Indefinite_Hashed_Maps;
 private with Ada.Containers.Indefinite_Hashed_Sets;
 private with Ada.Containers.Indefinite_Ordered_Maps;
 private with Ada.Containers.Doubly_Linked_Lists;
+private with Ada.Containers.Vectors;
 private with Ada.Strings.Equal_Case_Insensitive;
 private with Ada.Strings.Hash_Case_Insensitive;
+private with Ada.Strings.Unbounded;
 
 package Toolchains is
 
@@ -40,12 +42,23 @@ package Toolchains is
    -- Compiler --
    --------------
 
-   type Compiler (<>) is private;
+   type Compiler_Origin is
+     (From_Default,
+      From_Gprconfig,
+      From_Project,
+      From_Project_Driver,
+      From_User);
+
+   subtype Default_Compiler_Origin is Compiler_Origin
+     range From_Default .. From_Gprconfig;
+
+   type Compiler is private;
+   type Compiler_Array is array (Natural range <>) of Compiler;
    No_Compiler : constant Compiler;
 
    function Get_Exe (C : Compiler) return String;
    function Is_Valid (C : Compiler) return Boolean;
-   function Is_Used (C : Compiler) return Boolean;
+   function Get_Origin (C : Compiler) return Compiler_Origin;
 
    ----------------------
    -- Ada_Library_Info --
@@ -164,22 +177,39 @@ package Toolchains is
    procedure Reset_To_Default (This : Toolchain; Lang : String);
    --  Reset the specified tool or compiler to its default value
 
+   procedure Add_Compiler
+     (This   : Toolchain;
+      Lang   : String;
+      Value  : String;
+      Origin : Compiler_Origin);
+   --  Add command for the compiler for Lang on this toolchain
+
+   procedure Set_Compiler
+     (This  : Toolchain;
+      Lang  : String;
+      Value : String);
+   --  Sets the compiler command to use for this toolchain. If such a compiler
+   --  has already been defined using Add_Compiler above, then this compiler
+   --  is selected as the compiler to use. Else, a compiler is created using
+   --  'From_User' as Origin. Only one compiler 'From_User' can exist for a
+   --  given tuple Toolchain/Lang, so it will be overwritten if one is already
+   --  present.
+
    function Get_Compiler (This : Toolchain; Lang : String) return Compiler;
    --  Return the command to use in order to call the compiler for the language
    --  given in parameter.
 
-   procedure Set_Compiler
-     (This    : Toolchain;
-      Lang    : String;
-      Value   : String;
-      Default : Boolean := False);
-   --  Set the command for the compiler for Lang on this toolchain
+   function Get_Compilers
+     (This : Toolchain; Lang : String) return Compiler_Array;
+   --  Get all compilers defined in this toolchain for Lang.
 
-   procedure Set_Use_Compiler
-     (This    : Toolchain;
-      Lang    : String;
-      Value   : Boolean);
-   --  Set wether a compiler should be used for Lang
+   function Get_Compiler_Is_Used
+     (This : Toolchain; Lang : String) return Boolean;
+   --  Tell wether Lang requires a compiler
+
+   procedure Set_Compiler_Is_Used
+     (This : Toolchain; Lang : String; Value : Boolean);
+   --  Set whether Lang needs to be compiled
 
    function Get_Name (This : Toolchain) return String;
    --  Return the name of this toolchain, as used for the properties
@@ -306,16 +336,9 @@ package Toolchains is
      (Manager : access Toolchain_Manager_Record) return Toolchain_Array;
    --  Return the toolchains contained in this manager.
 
-   procedure Scan_Toolchains (Manager : access Toolchain_Manager_Record);
-   procedure Scan_Toolchains
-     (Manager : access Toolchain_Manager_Record;
-      Progress : access procedure
-        (Name    : String;
-         Current : Integer;
-         Total   : Integer));
-   --  Scans the toolchains installed on the system using gprbuild, and run
-   --  each gnat list on the whole list (scanned toolchains + already loaded
-   --  toolchains
+   procedure Compute_Gprconfig_Compilers
+     (Mgr : access Toolchain_Manager_Record);
+   --  Retrieve all compilers found on the host
 
    function Get_Native_Toolchain
      (Manager : access Toolchain_Manager_Record) return Toolchain;
@@ -385,22 +408,24 @@ private
    type Tool_Name_Array is array (Tools) of String_Access;
    type Boolean_Tool_Array is array (Tools) of Boolean;
 
-   type Compiler (Exe_Length : Natural) is
+   type Compiler is
       record
-         Exe        : String (1 .. Exe_Length);
+         Exe        : Ada.Strings.Unbounded.Unbounded_String;
          Is_Valid   : Boolean;
-         Is_Default : Boolean;
-         Unused     : Boolean;
+         Origin     : Compiler_Origin;
+         Toolchain  : Ada.Strings.Unbounded.Unbounded_String;
+         Lang       : Ada.Strings.Unbounded.Unbounded_String;
       end record;
    No_Compiler : constant Compiler :=
-                   (Exe_Length => 0,
-                    Exe        => "",
+                   (Exe        => Ada.Strings.Unbounded.Null_Unbounded_String,
                     Is_Valid   => False,
-                    Is_Default => False,
-                    Unused     => False);
+                    Origin     => From_Default,
+                    Toolchain  => Ada.Strings.Unbounded.Null_Unbounded_String,
+                    Lang       => Ada.Strings.Unbounded.Null_Unbounded_String);
 
-   package Compiler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Compiler,
+   package Compiler_Vector is new Ada.Containers.Vectors (Positive, Compiler);
+   package Compiler_Ref_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Natural,
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
 
@@ -428,8 +453,11 @@ private
       Is_Valid_Tool : Boolean_Tool_Array := (others => False);
       --  Wether those tools could be found.
 
-      Compiler_Commands : Compiler_Maps.Map;
-      --  The compiler commands indexed by language
+      Full_Compiler_List : Compiler_Vector.Vector;
+      --  All compilers defined for this toolchain.
+
+      Used_Compiler_List : Compiler_Ref_Maps.Map;
+      --  The compilers currently in use, indexed by language.
 
       Compilers_Scanned : Boolean := False;
 
@@ -475,6 +503,8 @@ private
       Computed_Libraries  : Library_Maps.Map;
       Listeners           : Listener_List.List;
       Languages           : Language_Sets.Set;
+      Gprconfig_Compilers : Compiler_Vector.Vector;
+      Compilers_Scanned   : Boolean := False;
    end record;
 
    function Get_Known_Toolchain

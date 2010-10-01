@@ -20,7 +20,6 @@
 with GNAT.Strings;
 
 with Gtk.Box;           use Gtk.Box;
-with Gtk.Button;
 with Gtk.Table;         use Gtk.Table;
 with Gtk.Tree_Store;    use Gtk.Tree_Store;
 with Gtk.Tree_View;     use Gtk.Tree_View;
@@ -64,7 +63,6 @@ private
       Mgr              : Toolchains.Toolchain_Manager;
       Toolchain        : Toolchains.Toolchain := Toolchains.Null_Toolchain;
       Updating         : Boolean := False;
-      Add_Btn          : Gtk.Button.Gtk_Button;
       Edited_Prj       : GNATCOLL.Projects.Project_Type;
    end record;
 

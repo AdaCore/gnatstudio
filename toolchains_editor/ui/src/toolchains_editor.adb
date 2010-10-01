@@ -155,17 +155,18 @@ package body Toolchains_Editor is
    --  Adds or update a toolchain in the editor
 
    procedure Set_Detail
-     (Editor     : Toolchains_Edit;
-      Label      : Gtk_Label;
-      GEntry     : Gtk_Entry;
-      Icon       : Gtk_Image;
-      Reset_Btn  : Gtk_Button;
-      Kind       : Tool_Kind;
-      Tool       : Toolchains.Tools;
-      Lang       : String;
-      Value      : String;
-      Is_Default : Boolean;
-      Is_Valid   : Boolean);
+     (Editor      : Toolchains_Edit;
+      Label       : Gtk_Label;
+      GEntry      : Gtk_Entry;
+      Icon        : Gtk_Image;
+      Reset_Btn   : Gtk_Button;
+      Kind        : Tool_Kind;
+      Tool        : Toolchains.Tools;
+      Lang        : String;
+      Value       : String;
+      Is_Default  : Boolean;
+      Is_Valid    : Boolean;
+      Is_Editable : Boolean);
 
    procedure Update_Details
      (Editor : Toolchains_Edit);
@@ -190,9 +191,6 @@ package body Toolchains_Editor is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint);
    --  Executed when a toolchain is selected
-
-   procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Executed when the 'Scan' button is clicked
 
    procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Executed when the 'Add' button is clicked
@@ -388,12 +386,6 @@ package body Toolchains_Editor is
       Gtk.Box.Gtk_New_Vbox (Btn_Box);
       Tc_Box.Pack_Start (Btn_Box, Expand => False, Padding => 10);
 
-      Gtk.Button.Gtk_New (Btn, -"Scan");
-      Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
-      Widget_Callback.Object_Connect
-        (Btn, Gtk.Button.Signal_Clicked, On_Scan_Clicked'Access,
-         Slot_Object => Editor);
-
       Gtk.Button.Gtk_New_From_Stock (Btn, Gtk.Stock.Stock_Add);
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
@@ -456,7 +448,7 @@ package body Toolchains_Editor is
       Gtk.Main.Grab_Add (Diag);
 
       --  Getting toolchain from project.
-      Toolchain := Get_Toolchain (Editor.Mgr, Project);
+      Editor.Mgr.Compute_Gprconfig_Compilers;
 
       --  Hide and destroy the dialog
       Gtk.Main.Grab_Remove (Diag);
@@ -464,6 +456,7 @@ package body Toolchains_Editor is
       Diag.Unref;
 
       --  Now displaying the languages
+      Toolchain := Get_Toolchain (Editor.Mgr, Project);
       Editor.Edited_Prj := Project;
 
       Iter := Editor.Lang_Model.Get_Iter_First;
@@ -479,9 +472,7 @@ package body Toolchains_Editor is
                Editor.Lang_Model.Set (Iter, Active_Column, True);
                Editor.Mgr.Add_Language (Languages (J).all, Project);
 
-               if not Is_Used
-                 (Get_Compiler (Toolchain, Languages (J).all))
-               then
+               if not Get_Compiler_Is_Used (Toolchain, Languages (J).all) then
                   Editor.Lang_Model.Set (Iter, No_Compiler_Column, True);
                else
                   Editor.Lang_Model.Set (Iter, No_Compiler_Column, False);
@@ -494,8 +485,16 @@ package body Toolchains_Editor is
          Editor.Lang_Model.Next (Iter);
       end loop;
 
-      --  And finally display the toolchain
-      Add_Toolchain (Editor, Toolchain, True);
+      --  And finally display the toolchains
+      declare
+         Arr : constant Toolchain_Array := Editor.Mgr.Get_Toolchains;
+      begin
+         for J in Arr'Range loop
+            if not Has_Errors (Get_Library_Information (Arr (J)).all) then
+               Add_Toolchain (Editor, Arr (J), Arr (J) = Toolchain);
+            end if;
+         end loop;
+      end;
    end Set_Project;
 
    -------------------
@@ -678,6 +677,7 @@ package body Toolchains_Editor is
             Lang : constant String :=
                      To_Lower
                        (Editor.Lang_Model.Get_String (Iter, Name_Column));
+            Comp : Compiler;
          begin
             if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
                if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
@@ -685,44 +685,31 @@ package body Toolchains_Editor is
                     (GNATCOLL.Projects.Compiler_Driver_Attribute,
                      Lang, "");
                else
-                  Clear_Attribute
-                    (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
-               end if;
+                  Comp := Get_Compiler (Tc, Lang);
 
-               --  Remove the compiler command attribute from the IDE package
-               --  if needed. We keep the "ada" one as this is used by
-               --  gprbuild to determine the default target.
-               if To_Lower (Lang) /= "ada" then
-                  Clear_Attribute
-                    (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+                  if Get_Origin (Comp) /= From_Project_Driver then
+                     Clear_Attribute
+                       (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
+
+                     if not Is_Default (Tc, Lang) then
+                        Set_Attribute
+                          (GNATCOLL.Projects.Compiler_Command_Attribute,
+                           Lang, Get_Exe (Comp));
+                     else
+                        Clear_Attribute
+                          (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+                     end if;
+                  end if;
                end if;
 
             else
                Clear_Attribute
                  (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
-
-               --  See above for the "ada" Compiler_Command case
-               if To_Lower (Lang) /= "ada" then
-                  Clear_Attribute
-                    (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
-               end if;
             end if;
          end;
 
          Editor.Lang_Model.Next (Iter);
       end loop;
-
-      if not Is_Native (Tc) then
-         --  The IDE'Compiler_Command ("ada") attribute is used by gprconfig
-         --  to determine the default target for the given project. So in case
-         --  of
-         Set_Attribute
-           (GNATCOLL.Projects.Compiler_Command_Attribute, "ada",
-            Get_Exe (Get_Compiler (Tc, "ada")));
-      else
-         Clear_Attribute
-           (GNATCOLL.Projects.Compiler_Command_Attribute, "ada");
-      end if;
 
       return Modified;
    end Generate_Project;
@@ -790,17 +777,18 @@ package body Toolchains_Editor is
    ----------------
 
    procedure Set_Detail
-     (Editor     : Toolchains_Edit;
-      Label      : Gtk_Label;
-      GEntry     : Gtk_Entry;
-      Icon       : Gtk_Image;
-      Reset_Btn  : Gtk_Button;
-      Kind       : Tool_Kind;
-      Tool       : Toolchains.Tools;
-      Lang       : String;
-      Value      : String;
-      Is_Default : Boolean;
-      Is_Valid   : Boolean)
+     (Editor      : Toolchains_Edit;
+      Label       : Gtk_Label;
+      GEntry      : Gtk_Entry;
+      Icon        : Gtk_Image;
+      Reset_Btn   : Gtk_Button;
+      Kind        : Tool_Kind;
+      Tool        : Toolchains.Tools;
+      Lang        : String;
+      Value       : String;
+      Is_Default  : Boolean;
+      Is_Valid    : Boolean;
+      Is_Editable : Boolean)
    is
       function Get_String return String;
 
@@ -844,15 +832,7 @@ package body Toolchains_Editor is
 
       Trace (Me, "Setting text of GEntry to '" & Value & "'");
       GEntry.Set_Text (Value);
-
-      --  Compilers are not editable as this is always wrong to do so: either
-      --  we need to use a gprbuild one or we need to update/create the cgpr
-      --  file for compiling
-      if (Kind = Tool_Kind_Tool and then Tool = GNAT_Driver)
-        or else Kind = Tool_Kind_Compiler
-      then
-         GEntry.Set_Sensitive (False);
-      end if;
+      GEntry.Set_Sensitive (Is_Editable);
 
       if not Is_Valid then
          Set (Icon, Stock_Dialog_Warning, Icon_Size_Button);
@@ -944,20 +924,22 @@ package body Toolchains_Editor is
       N_Cols : constant Guint := 4;
 
       procedure Add_Detail
-        (Kind       : Tool_Kind;
-         Tool       : Toolchains.Tools;
-         Lang       : String;
-         Value      : String;
-         Is_Default : Boolean;
-         Is_Valid   : Boolean);
+        (Kind        : Tool_Kind;
+         Tool        : Toolchains.Tools;
+         Lang        : String;
+         Value       : String;
+         Is_Default  : Boolean;
+         Is_Valid    : Boolean;
+         Is_Editable : Boolean);
 
       procedure Add_Detail
-        (Kind       : Tool_Kind;
-         Tool       : Toolchains.Tools;
-         Lang       : String;
-         Value      : String;
-         Is_Default : Boolean;
-         Is_Valid   : Boolean)
+        (Kind        : Tool_Kind;
+         Tool        : Toolchains.Tools;
+         Lang        : String;
+         Value       : String;
+         Is_Default  : Boolean;
+         Is_Valid    : Boolean;
+         Is_Editable : Boolean)
       is
          Lbl : Gtk_Label;
          Ent : Gtk_Entry;
@@ -1002,9 +984,7 @@ package body Toolchains_Editor is
             Bottom_Attach => N_Rows,
             Xoptions      => 0);
 
-         if Kind = Tool_Kind_Tool
-           and then Tool /= GNAT_Driver
-         then
+         if Is_Editable then
             Gtk_New (Btn, "reset");
             Editor.Details_View.Attach
               (Child         => Btn,
@@ -1025,9 +1005,6 @@ package body Toolchains_Editor is
                   Value     => Ent,
                   Icon      => Icn,
                   Reset_Btn => Btn));
-         end if;
-
-         if Kind = Tool_Kind_Tool then
             Tool_Callback.Object_Connect
               (Ent, Gtk.Editable.Signal_Changed,
                On_Tool_Value_Changed'Access,
@@ -1046,7 +1023,7 @@ package body Toolchains_Editor is
            (Editor,
             Lbl, Ent, Icn, Btn,
             Kind, Tool, Lang, Value,
-            Is_Default, Is_Valid);
+            Is_Default, Is_Valid, Is_Editable);
       end Add_Detail;
 
    begin
@@ -1074,7 +1051,7 @@ package body Toolchains_Editor is
         (Lbl,
          -("<i>This section allows you to modify individual tools for the" &
            " selected toolchain." & ASCII.LF &
-           "To select a full toolchain, use the 'Add' or 'Scan' buttons " &
+           "To select an alternative toolchain, use the 'Add' button " &
            "above</i>"));
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
@@ -1106,11 +1083,12 @@ package body Toolchains_Editor is
       for J in Tools range GNAT_Driver .. Debugger loop
          Add_Detail
            (Tool_Kind_Tool,
-            Tool       => J,
-            Lang       => "",
-            Value      => Get_Command (Tc, J),
-            Is_Default => Is_Default (Tc, J),
-            Is_Valid   => Is_Valid (Tc, J));
+            Tool        => J,
+            Lang        => "",
+            Value       => Get_Command (Tc, J),
+            Is_Default  => Is_Default (Tc, J),
+            Is_Valid    => Is_Valid (Tc, J),
+            Is_Editable => J /= GNAT_Driver);
       end loop;
 
       N_Rows := N_Rows + 1;
@@ -1141,22 +1119,24 @@ package body Toolchains_Editor is
                C           : constant Compiler := Get_Compiler (Tc, Lang);
 
             begin
-               if not Is_Used (C) then
+               if not Get_Compiler_Is_Used (Tc, Lang) then
                   Add_Detail
                     (Tool_Kind_Compiler,
-                     Tool       => Unknown,
-                     Lang       => Lang,
-                     Value      => "not compiled ...",
-                     Is_Default => True,
-                     Is_Valid   => True);
+                     Tool        => Unknown,
+                     Lang        => Lang,
+                     Value       => "not compiled ...",
+                     Is_Default  => True,
+                     Is_Valid    => True,
+                     Is_Editable => False);
                else
                   Add_Detail
                     (Tool_Kind_Compiler,
-                     Tool       => Unknown,
-                     Lang       => Lang,
-                     Value      => Get_Exe (C),
-                     Is_Default => Is_Default (Tc, Lang),
-                     Is_Valid   => Is_Valid (C));
+                     Tool        => Unknown,
+                     Lang        => Lang,
+                     Value       => Get_Exe (C),
+                     Is_Default  => Is_Default (Tc, Lang),
+                     Is_Valid    => Is_Valid (C),
+                     Is_Editable => True);
                end if;
             end;
          else
@@ -1196,16 +1176,17 @@ package body Toolchains_Editor is
                Toolchains.Set_Command (Tc, User_Data.Tool_Name, Val);
                Set_Detail
                  (Toolchains_Edit (Widget),
-                  Label      => User_Data.Label,
-                  GEntry     => User_Data.Value,
-                  Icon       => User_Data.Icon,
-                  Reset_Btn  => User_Data.Reset_Btn,
-                  Kind       => User_Data.Kind,
-                  Tool       => User_Data.Tool_Name,
-                  Lang       => Lang,
-                  Value      => Val,
-                  Is_Default => Is_Default (Tc, User_Data.Tool_Name),
-                  Is_Valid   => Is_Valid (Tc, User_Data.Tool_Name));
+                  Label       => User_Data.Label,
+                  GEntry      => User_Data.Value,
+                  Icon        => User_Data.Icon,
+                  Reset_Btn   => User_Data.Reset_Btn,
+                  Kind        => User_Data.Kind,
+                  Tool        => User_Data.Tool_Name,
+                  Lang        => Lang,
+                  Value       => Val,
+                  Is_Default  => Is_Default (Tc, User_Data.Tool_Name),
+                  Is_Valid    => Is_Valid (Tc, User_Data.Tool_Name),
+                  Is_Editable => True);
             end if;
 
          when Tool_Kind_Compiler =>
@@ -1213,16 +1194,17 @@ package body Toolchains_Editor is
                Set_Compiler (Tc, Lang, Val);
                Set_Detail
                  (Toolchains_Edit (Widget),
-                  Label      => User_Data.Label,
-                  GEntry     => User_Data.Value,
-                  Icon       => User_Data.Icon,
-                  Reset_Btn  => User_Data.Reset_Btn,
-                  Kind       => User_Data.Kind,
-                  Tool       => User_Data.Tool_Name,
-                  Lang       => Lang,
-                  Value      => Val,
-                  Is_Default => Is_Default (Tc, Lang),
-                  Is_Valid   => Is_Valid (Get_Compiler (Tc, Lang)));
+                  Label       => User_Data.Label,
+                  GEntry      => User_Data.Value,
+                  Icon        => User_Data.Icon,
+                  Reset_Btn   => User_Data.Reset_Btn,
+                  Kind        => User_Data.Kind,
+                  Tool        => User_Data.Tool_Name,
+                  Lang        => Lang,
+                  Value       => Val,
+                  Is_Default  => Is_Default (Tc, Lang),
+                  Is_Valid    => Is_Valid (Get_Compiler (Tc, Lang)),
+                  Is_Editable => True);
             end if;
 
       end case;
@@ -1250,31 +1232,33 @@ package body Toolchains_Editor is
             Toolchains.Reset_To_Default (Tc, User_Data.Tool_Name);
             Set_Detail
               (Toolchains_Edit (Widget),
-               Label      => User_Data.Label,
-               GEntry     => User_Data.Value,
-               Icon       => User_Data.Icon,
-               Reset_Btn  => User_Data.Reset_Btn,
-               Kind       => User_Data.Kind,
-               Tool       => User_Data.Tool_Name,
-               Lang       => Lang,
-               Value      => Get_Command (Tc, User_Data.Tool_Name),
-               Is_Default => Is_Default (Tc, User_Data.Tool_Name),
-               Is_Valid   => Is_Valid (Tc, User_Data.Tool_Name));
+               Label       => User_Data.Label,
+               GEntry      => User_Data.Value,
+               Icon        => User_Data.Icon,
+               Reset_Btn   => User_Data.Reset_Btn,
+               Kind        => User_Data.Kind,
+               Tool        => User_Data.Tool_Name,
+               Lang        => Lang,
+               Value       => Get_Command (Tc, User_Data.Tool_Name),
+               Is_Default  => Is_Default (Tc, User_Data.Tool_Name),
+               Is_Valid    => Is_Valid (Tc, User_Data.Tool_Name),
+               Is_Editable => True);
 
          when Tool_Kind_Compiler =>
             Toolchains.Reset_To_Default (Tc, Lang);
             Set_Detail
               (Toolchains_Edit (Widget),
-               Label      => User_Data.Label,
-               GEntry     => User_Data.Value,
-               Icon       => User_Data.Icon,
-               Reset_Btn  => User_Data.Reset_Btn,
-               Kind       => User_Data.Kind,
-               Tool       => User_Data.Tool_Name,
-               Lang       => Lang,
-               Value      => Get_Exe (Get_Compiler (Tc, Lang)),
-               Is_Default => Is_Default (Tc, Lang),
-               Is_Valid   => Is_Valid (Get_Compiler (Tc, Lang)));
+               Label       => User_Data.Label,
+               GEntry      => User_Data.Value,
+               Icon        => User_Data.Icon,
+               Reset_Btn   => User_Data.Reset_Btn,
+               Kind        => User_Data.Kind,
+               Tool        => User_Data.Tool_Name,
+               Lang        => Lang,
+               Value       => Get_Exe (Get_Compiler (Tc, Lang)),
+               Is_Default  => Is_Default (Tc, Lang),
+               Is_Valid    => Is_Valid (Get_Compiler (Tc, Lang)),
+               Is_Editable => True);
       end case;
    end On_Reset;
 
@@ -1345,7 +1329,7 @@ package body Toolchains_Editor is
          Set (Editor.Lang_Model, Iter, Data,
               not Get_Boolean (Editor.Lang_Model, Iter, Data));
 
-         Toolchains.Set_Use_Compiler
+         Toolchains.Set_Compiler_Is_Used
            (Editor.Toolchain,
             Editor.Lang_Model.Get_String (Iter, Name_Column),
             not Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column));
@@ -1387,12 +1371,12 @@ package body Toolchains_Editor is
 
       while Iter /= Null_Iter loop
          if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
-            Set_Use_Compiler
+            Set_Compiler_Is_Used
               (Editor.Toolchain,
                Editor.Lang_Model.Get_String (Iter, Name_Column),
                False);
          elsif Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
-            Set_Use_Compiler
+            Set_Compiler_Is_Used
               (Editor.Toolchain,
                Editor.Lang_Model.Get_String (Iter, Name_Column),
                True);
@@ -1404,69 +1388,6 @@ package body Toolchains_Editor is
       Trace (Me, "Toolchain clicked");
       Update_Details (Editor);
    end On_Toolchain_Clicked;
-
-   ---------------------
-   -- On_Scan_Clicked --
-   ---------------------
-
-   procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      Editor         : constant Toolchains_Edit := Toolchains_Edit (W);
-      Dialog         : Gtk_Dialog;
-      Progress_Label : Gtk_Label;
-      Lbl            : Gtk_Label;
-
-      procedure Progress
-        (Name    : String;
-         Current : Integer;
-         Total   : Integer);
-      --  Reports the progress of the scan action
-
-      --------------
-      -- Progress --
-      --------------
-
-      procedure Progress
-        (Name    : String;
-         Current : Integer;
-         Total   : Integer)
-      is
-      begin
-         Progress_Label.Set_Text
-           (-"Scanning " & Name & " -" & Current'Img & " /" & Total'Img);
-      end Progress;
-
-   begin
-      Gtk.Dialog.Gtk_New (Dialog, -"", Gtk_Window (Editor.Get_Toplevel), 0);
-      Set_Has_Separator (Dialog, False);
-      Gtk_New
-        (Lbl, -"Scanning host for available compilers, please wait ...");
-      Pack_Start (Get_Vbox (Dialog), Lbl);
-      Gtk_New (Progress_Label);
-      Pack_Start (Get_Vbox (Dialog), Progress_Label);
-      Dialog.Show_All;
-      Gtk.Main.Grab_Add (Dialog);
-
-      Scan_Toolchains (Editor.Mgr, Progress'Access);
-
-      Gtk.Main.Grab_Remove (Dialog);
-      Dialog.Hide_All;
-      Dialog.Destroy;
-
-      declare
-         TC_Array : constant Toolchain_Array := Get_Toolchains (Editor.Mgr);
-      begin
-         for J in TC_Array'Range loop
-            if not Has_Errors (Get_Library_Information (TC_Array (J)).all) then
-               Add_Toolchain (Editor, TC_Array (J), False);
-            end if;
-         end loop;
-      end;
-
-      Update_Details (Editor);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Scan_Clicked;
 
    --------------------
    -- On_Add_Clicked --
