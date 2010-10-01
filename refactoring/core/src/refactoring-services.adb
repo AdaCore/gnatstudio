@@ -210,6 +210,8 @@ package body Refactoring.Services is
                Self.Kind := Type_Kind;
             elsif Name = "when" then
                Self.Kind := When_Kind;
+            elsif Entity = Identifier_Text then
+               Self.Kind := Variable_Kind;
             end if;
          elsif Self.Kind = Use_Kind then
             if Name = "type" then
@@ -237,7 +239,7 @@ package body Refactoring.Services is
                when Clause_Kind =>
                   Add_To_List;
 
-               when Unknown_Kind | When_Kind =>
+               when Unknown_Kind | Variable_Kind | When_Kind =>
                   --  we're on a declaration, like a, b : Integer;
 
                   if Self.Sloc_Column = Null_Universal_Location then

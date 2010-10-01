@@ -79,7 +79,8 @@ package Refactoring.Services is
       Use_Kind,
       Use_Type_Kind,
       Type_Kind,
-      When_Kind);
+      When_Kind,
+      Variable_Kind);
 
    subtype Clause_Kind is Statement_Kind range With_Kind .. Use_Type_Kind;
 
