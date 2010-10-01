@@ -887,9 +887,12 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       if Number_Of_Declarations (Work_Extract) = 1 then
          Current_Text.Replace
-           (Current_Text.Search_Token (Cursor, Semicolon_Tok),
-            1,
-            ": constant");
+           (Position      => File_Cursor'Class
+              (Current_Text.Search_Token (Cursor, Semicolon_Tok)),
+            Len           => 1,
+            New_Text      => ": constant",
+            Blanks_Before => Keep,
+            Blanks_After  => One);
       else
          Extract_Element
            (Work_Extract,
@@ -901,10 +904,17 @@ package body Codefix.Text_Manager.Ada_Commands is
          Col_Decl := New_Instr'First;
          Skip_To_Char (New_Instr.all, Col_Decl, ':');
 
-         Assign
-           (New_Instr,
-            New_Instr (New_Instr'First .. Col_Decl) & " constant"
-            & New_Instr (Col_Decl + 1 .. New_Instr'Last));
+         if New_Instr (Col_Decl + 1) /= ' ' then
+            Assign
+              (New_Instr,
+               New_Instr (New_Instr'First .. Col_Decl) & " constant" & " "
+               & New_Instr (Col_Decl + 1 .. New_Instr'Last));
+         else
+            Assign
+              (New_Instr,
+               New_Instr (New_Instr'First .. Col_Decl) & " constant"
+               & New_Instr (Col_Decl + 1 .. New_Instr'Last));
+         end if;
 
          End_Decl := Get_End (Work_Extract);
          Current_Text.Add_Line
