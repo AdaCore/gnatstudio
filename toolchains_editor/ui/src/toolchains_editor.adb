@@ -486,11 +486,15 @@ package body Toolchains_Editor is
       end loop;
 
       --  And finally display the toolchains
+      --  First the project's toolchain
+      Add_Toolchain (Editor, Toolchain, True);
       declare
          Arr : constant Toolchain_Array := Editor.Mgr.Get_Toolchains;
       begin
          for J in Arr'Range loop
-            if not Has_Errors (Get_Library_Information (Arr (J)).all) then
+            if not Has_Errors (Get_Library_Information (Arr (J)).all)
+              and then Arr (J) /= Toolchain
+            then
                Add_Toolchain (Editor, Arr (J), Arr (J) = Toolchain);
             end if;
          end loop;
