@@ -7,6 +7,12 @@ Known Problems fixed in GPS 5.0.0
               non-compilable code.
   Workaround: Add manually the space.
 
+- J923-004: Auto fix removes use clauses when removing redundant with
+  Problem:    When removing redundant with detected by the compiler, the auto
+              fix removes the use clauses as well, which should not be 
+              considered.
+  Workaround: Manually fix the code.
+
 - J923-002: Emacs mode: transpose lines transposes next line
   Problem:    In Emacs, transposing two lines swaps the current line and
               the previous, whereas GPS used to swap the current line and
