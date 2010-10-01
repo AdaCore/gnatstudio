@@ -1236,7 +1236,8 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Dependency_Category;
-      Position     : Relative_Position) return Solution_List
+      Position     : Relative_Position;
+      Look_For_Use : Boolean := False) return Solution_List
    is
       Result          : Solution_List;
       New_Command_Ptr : constant Ptr_Command := new Remove_Pkg_Clauses_Cmd;
@@ -1253,7 +1254,8 @@ package body Codefix.Formal_Errors is
          Current_Text,
          Word,
          Position,
-         Category => Category);
+         Category => Category,
+         Look_For_Use => Look_For_Use);
 
       if Category = Cat_With then
          Set_Caption (New_Command, "Remove with clause");

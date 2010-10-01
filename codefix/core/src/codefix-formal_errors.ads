@@ -238,10 +238,12 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Dependency_Category;
-      Position     : Relative_Position) return Solution_List;
+      Position     : Relative_Position;
+      Look_For_Use : Boolean := False) return Solution_List;
    --  Remove a with/use clause at the position defined by the cursor. The
    --  position parameter specify where the actual begin of the unit is
-   --  relatively to the cursor position.
+   --  relatively to the cursor position. If Look_For_Use is true, then use
+   --  clauses will be removed along with with ones.
 
    function Resolve_Unvisible_Declaration
      (Current_Text  : Text_Navigator_Abstr'Class;
