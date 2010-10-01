@@ -413,8 +413,7 @@ package body Toolchains.Parsers is
                            Set_Compiler
                              (Ada_Toolchain,
                               Element (Attr.Lang),
-                              Attr.String_Expression.all,
-                              True);
+                              Attr.String_Expression.all);
                         end if;
                      end if;
                   end if;
@@ -773,7 +772,7 @@ package body Toolchains.Parsers is
          Prev_Node            : Project_Node_Id;
          Contains_Native   : Boolean := False;
 
-         Native_Name : aliased String := "native";
+         Native_Name : aliased constant String := "native";
          Ext_Default : Project_Node_Id;
       begin
          --  Create the type declaration and the variable if needed
@@ -999,10 +998,10 @@ package body Toolchains.Parsers is
                Get_Command (The_Toolchain, GNAT_Driver), Variable_Id);
             Create_Attribute
               (Container, "compiler_command", "ada",
-               Get_Compiler (The_Toolchain, "ada").Exe, Variable_Id);
+               Get_Exe (Get_Compiler (The_Toolchain, "ada")), Variable_Id);
             Create_Attribute
               (Container, "compiler_command", "c",
-               Get_Compiler (The_Toolchain, "c").Exe, Variable_Id);
+               Get_Exe (Get_Compiler (The_Toolchain, "c")), Variable_Id);
             Create_Attribute
               (Container, "debugger_command", "",
                Get_Command (The_Toolchain, Debugger), Variable_Id);
