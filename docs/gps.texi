@@ -337,7 +337,7 @@ scripts (via xml and python scripting). See @ref{Customizing and Extending GPS}
 for more details.
 
 GPS also interacts with most versions of command-line tools such as
-gcc, gdb, gnatmake, gcov, etc@dots{}.
+gcc, gdb, gnatmake, gprbuild, gcov, etc@dots{}
 
 @image{main-gps, 9.7cm}
 
@@ -1930,7 +1930,7 @@ The integrated source editor provides all the usual capabilities found in
 integrated environments, including:
 
 @table @b
-@item A title bar
+@item Title bar
 Showing the full name of the file including path information.
 
 @item Line number information
@@ -1939,18 +1939,18 @@ from the preferences. @xref{The Preferences Dialog}.
 Note that this area can also display additional information, such as
 the current line of execution when debugging, or cvs annotations.
 
-@item A scrollbar
+@item Scrollbar
 Located on the right of the editor, it allows you to scroll through the source
 file.
 
-@item A Speed Column
+@item Speed column
 This column, when visible, is located on the left of the editor. It allows you
 to view all the highlighted lines in a file, at a glance. For example, all the
 lines containing compilation errors are displayed in the Speed Column.
 See @ref{The Preferences Dialog} for information on how to customize the
 behavior of the Speed Column.
 
-@item A status bar
+@item Status bar
 Giving information about the file. It is divided in two sections, one
 on the left and one on the right of the window.
 
@@ -2004,7 +2004,7 @@ The fifth box displays the position of the cursor in the file by a line and
 a column number.
 @end table
 
-@item A contextual menu
+@item Contextual menu
 Displayed when you right-click on any area of the source editor.
 See in particular @ref{Contextual Menus for Source Navigation}
 for more details.
@@ -2164,7 +2164,7 @@ In addition to the standard keys used to navigate in the editor (up, down,
 right, left, page up, page down), the integrated editor provides a number of
 key bindings allowing easy navigation in the file.
 
-In addition, there are several ways to define new key bindings, see
+There are also several ways to define new key bindings, see
 @ref{Defining text aliases} and @ref{Binding actions to keys}.
 
 @table @key
@@ -3070,10 +3070,10 @@ you can execute the following to create a very simple macro that deletes the
 current line, wherever your cursor initially is on that line:
 
 @smallexample
-@key{control-x (}     # start recording
-@key{control-a}       # go to beginning of line
-@key{control-k}       # delete line
-@key{control-x )}     # stop recording
+@key{control-x (}     start recording
+@key{control-a}      go to beginning of line
+@key{control-k}      delete line
+@key{control-x )}     stop recording
 @end smallexample
 
 @end itemize
@@ -3852,7 +3852,7 @@ Here are language specific information about source navigation:
 @cindex GNAT
 The GNAT compiler is used to generate the cross-references information
 needed by GPS by default, unless you are using the @code{-gnatD} or
-@code{-gnatx} switches, in whcih case no cross reference information
+@code{-gnatx} switches, in which case no cross reference information
 will be available.
 
 @cindex -gnatQ
