@@ -353,6 +353,18 @@ package Toolchains is
    procedure Clear_Toolchains (Manager : in out Toolchain_Manager_Record);
    --  Remove and free all the toolchains contained in this manager
 
+   procedure Do_Snapshot (Manager : in out Toolchain_Manager_Record);
+   --  Saves the current Manager state.
+
+   procedure Do_Commit (Manager : in out Toolchain_Manager_Record);
+   --  Commits the changes done to the Manager since last Snapshot
+
+   procedure Do_Rollback (Manager : in out Toolchain_Manager_Record);
+   --  Rollback changes done to the manager since last snapshot
+
+   procedure Free (Manager : in out Toolchain_Manager);
+   --  Free memory associated with the manager
+
    -------------------------------
    -- Toolchain_Change_Listener --
    -------------------------------
@@ -499,6 +511,7 @@ private
 
    type Toolchain_Manager_Record is abstract tagged record
       Toolchains          : Toolchain_Maps.Map;
+      Saved_Toolchains    : Toolchain_Maps.Map;
       No_Native_Toolchain : Boolean := False;
       Computed_Libraries  : Library_Maps.Map;
       Listeners           : Listener_List.List;
