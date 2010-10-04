@@ -16,7 +16,7 @@
        editor_section="Languages"
        label=""
        description="List of languages for the source files of this project"
-       hide_in="all"
+       hide_in="properties"
        list="true">
        <shell default="Ada">supported_languages</shell>
        <string />
