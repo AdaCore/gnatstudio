@@ -37,7 +37,6 @@ package body Toolchains is
    Me : constant Trace_Handle := Create ("TOOLCHAINS");
 
    procedure Free (This : in out Ada_Library_Info_Access);
-   pragma Unreferenced (Free);
    --  Free the memory associated to this library info. This should only be
    --  called by the manager, as we store the result of this information during
    --  the session.
@@ -735,8 +734,14 @@ package body Toolchains is
          This.Used_Compiler_List.Replace (Lang, User_Def);
       else
          This.Full_Compiler_List.Append (New_Comp);
-         This.Used_Compiler_List.Replace
-           (Lang, This.Full_Compiler_List.Last_Index);
+
+         if This.Used_Compiler_List.Contains (Lang) then
+            This.Used_Compiler_List.Replace
+              (Lang, This.Full_Compiler_List.Last_Index);
+         else
+            This.Used_Compiler_List.Insert
+              (Lang, This.Full_Compiler_List.Last_Index);
+         end if;
       end if;
    end Set_Compiler;
 
@@ -2126,18 +2131,106 @@ package body Toolchains is
    procedure Clear_Toolchains (Manager : in out Toolchain_Manager_Record) is
       use Toolchain_Maps;
 
-      Cur : Toolchain_Maps.Cursor := First (Manager.Toolchains);
       Tmp : Toolchain;
    begin
-      while Cur /= Toolchain_Maps.No_Element loop
-         Tmp := Element (Cur);
+      while not Manager.Toolchains.Is_Empty loop
+         Tmp := Manager.Toolchains.First_Element;
          Unref (Tmp);
 
-         Cur := Next (Cur);
+         Manager.Toolchains.Delete_First;
       end loop;
 
-      Manager.Toolchains.Clear;
+      while not Manager.Saved_Toolchains.Is_Empty loop
+         Tmp := Manager.Saved_Toolchains.First_Element;
+         Unref (Tmp);
+
+         Manager.Saved_Toolchains.Delete_First;
+      end loop;
    end Clear_Toolchains;
+
+   -----------------
+   -- Do_Snapshot --
+   -----------------
+
+   procedure Do_Snapshot (Manager : in out Toolchain_Manager_Record) is
+      use Toolchain_Maps;
+
+      Cur : Toolchain_Maps.Cursor;
+      Tc : Toolchain;
+
+   begin
+      while not Manager.Saved_Toolchains.Is_Empty loop
+         Tc := Manager.Saved_Toolchains.First_Element;
+         Free (Tc);
+         Manager.Saved_Toolchains.Delete_First;
+      end loop;
+
+      Cur := First (Manager.Toolchains);
+      while Has_Element (Cur) loop
+         Manager.Saved_Toolchains.Insert (Key (Cur), Copy (Element (Cur)));
+         Next (Cur);
+      end loop;
+   end Do_Snapshot;
+
+   ---------------
+   -- Do_Commit --
+   ---------------
+
+   procedure Do_Commit (Manager : in out Toolchain_Manager_Record) is
+      Tc : Toolchain;
+   begin
+      while not Manager.Saved_Toolchains.Is_Empty loop
+         Tc := Manager.Saved_Toolchains.First_Element;
+         Free (Tc);
+         Manager.Saved_Toolchains.Delete_First;
+      end loop;
+   end Do_Commit;
+
+   -----------------
+   -- Do_Rollback --
+   -----------------
+
+   procedure Do_Rollback (Manager : in out Toolchain_Manager_Record) is
+      Tc : Toolchain;
+   begin
+      if Manager.Saved_Toolchains.Is_Empty then
+         return;
+      end if;
+
+      while not Manager.Toolchains.Is_Empty loop
+         Tc := Manager.Toolchains.First_Element;
+         Free (Tc);
+         Manager.Toolchains.Delete_First;
+      end loop;
+
+      while not Manager.Saved_Toolchains.Is_Empty loop
+         Manager.Toolchains.Insert
+           (Manager.Saved_Toolchains.First_Key,
+            Manager.Saved_Toolchains.First_Element);
+         Manager.Saved_Toolchains.Delete_First;
+      end loop;
+   end Do_Rollback;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Manager : in out Toolchain_Manager) is
+      Lib : Ada_Library_Info_Access;
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
+        (Toolchain_Manager_Record'Class, Toolchain_Manager);
+   begin
+      Manager.Clear_Toolchains;
+      while not Manager.Computed_Libraries.Is_Empty loop
+         Lib := Manager.Computed_Libraries.First_Element;
+         Free (Lib);
+         Manager.Computed_Libraries.Delete_First;
+      end loop;
+      Manager.Listeners.Clear;
+      Manager.Languages.Clear;
+      Manager.Gprconfig_Compilers.Clear;
+      Internal_Free (Manager);
+   end Free;
 
    ---------------------------------------
    -- Get_Or_Create_Library_Information --

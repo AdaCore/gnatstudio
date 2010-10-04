@@ -62,8 +62,9 @@ with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;
+with GPS.Kernel.Remote;        use GPS.Kernel.Remote;
 
 with GUI_Utils;                use GUI_Utils;
 with Language_Handlers;        use Language_Handlers;
@@ -77,8 +78,12 @@ package body Toolchains_Editor is
 
    Me : constant Debug_Handle := Traces.Create ("Toolchains_Editor");
 
-   type Toolchains_Module_Record is new Module_ID_Record with null record;
-   Toolchains_Module_ID   : Module_ID;
+   type Toolchains_Module_Record is new Module_ID_Record with record
+      Mgr : Toolchains.Toolchain_Manager;
+   end record;
+   type Toolchains_Module is access all Toolchains_Module_Record'Class;
+
+   Toolchains_Module_ID   : Toolchains_Module;
    Toolchains_Module_Name : constant String := "Toolchains_Editor";
 
    overriding procedure Customize
@@ -207,6 +212,11 @@ package body Toolchains_Editor is
       User_Data : Tool_Callback_User_Object);
    --  Executed when the reset button is clicked
 
+   procedure On_Server_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file has been modified
+
    -------------
    -- Gtk_New --
    -------------
@@ -233,7 +243,14 @@ package body Toolchains_Editor is
       Gtk.Box.Initialize_Vbox (Editor);
 
       Editor.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
-      Editor.Mgr    := new GPS_Toolchain_Manager_Record;
+
+      if Toolchains_Module_ID.Mgr = null then
+         Editor.Mgr    := new GPS_Toolchain_Manager_Record;
+         Toolchains_Module_ID.Mgr := Editor.Mgr;
+      else
+         Editor.Mgr := Toolchains_Module_ID.Mgr;
+      end if;
+
       GPS_Toolchain_Manager_Record (Editor.Mgr.all).Kernel :=
         Editor.Kernel;
 
@@ -448,7 +465,9 @@ package body Toolchains_Editor is
       Gtk.Main.Grab_Add (Diag);
 
       --  Getting toolchain from project.
+      Editor.Mgr.Do_Rollback;
       Editor.Mgr.Compute_Gprconfig_Compilers;
+      Editor.Mgr.Do_Snapshot;
 
       --  Hide and destroy the dialog
       Gtk.Main.Grab_Remove (Diag);
@@ -600,6 +619,8 @@ package body Toolchains_Editor is
 
    begin
       Trace (Me, "Generate project");
+
+      Editor.Mgr.Do_Commit;
 
       --  First save defined languages
 
@@ -1527,6 +1548,27 @@ package body Toolchains_Editor is
       end if;
    end Execute;
 
+   -----------------------
+   -- On_Server_Changed --
+   -----------------------
+
+   procedure On_Server_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Hook_Data : constant Server_Config_Changed_Hooks_Args :=
+                    Server_Config_Changed_Hooks_Args (Data.all);
+
+   begin
+      if Hook_Data.Server = Build_Server
+        and then Toolchains_Module_ID.Mgr /= null
+      then
+         Toolchains_Module_ID.Mgr.Clear_Toolchains;
+         Free (Toolchains_Module_ID.Mgr);
+      end if;
+   end On_Server_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1540,6 +1582,11 @@ package body Toolchains_Editor is
          Kernel                  => Kernel,
          Module_Name             => Toolchains_Module_Name,
          Priority                => Default_Priority);
+
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
+         Wrapper (On_Server_Changed'Access),
+         Name  => "toolchains_editor.on_server_changed");
    end Register_Module;
 
    ---------------
