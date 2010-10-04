@@ -1,4 +1,4 @@
-"""This plug-in adds a menu File->Messages->Export Locations to editor
+"""This plug-in adds a menu File->Messages->Export Locations to Editor
    which opens an editor with the contents of the Locations view.
 """
 
@@ -90,12 +90,11 @@ def export_locations_to_editor (menu):
 
     # Open an editor
 
-    GPS.execute_action ("/File/new")
+    GPS.execute_action ("/File/New")
     buf = GPS.EditorBuffer.get()
 
     # Write the contents
     buf.insert (GPS.EditorLocation (buf, 1, 1), text)
 
-
-GPS.Menu.create ("/File/Messages/Export Locations to editor", export_locations_to_editor)
+GPS.Menu.create ("/File/Messages/_Export Locations to Editor", export_locations_to_editor)
 
