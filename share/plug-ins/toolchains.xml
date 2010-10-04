@@ -1,10 +1,7 @@
 <?xml version="1.0" ?>
-<!--  Defines the standard toolchains.
+<!--  Defines the standard toolchains used by the GPS project editor.
 
-      THIS SCRIPT MUST BE LOADED.
-
-      This script defines the standard toolchains used by the GPS project
-      editor.
+      THIS PLUG-IN MUST BE LOADED.
 -->
 
 <GPS>
@@ -12,7 +9,7 @@
        prefixed using their name (e.g. gnatmake will be transformed to
        name-gnatmake).
 
-       Those can be explicitely overriden in the toolchain definition, or
+       Those can be explicitly overriden in the toolchain definition, or
        nullified by using an empty value in the corresponding tag
   -->
   <toolchain_default>
