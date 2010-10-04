@@ -46,7 +46,7 @@
     <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
-  <toolchain name="powerpc-elf-pikeos"/>
+  <toolchain name="powerpc-sysgo-pikeos"/>
 
   <toolchain name="powerpc-elf"/>
 
