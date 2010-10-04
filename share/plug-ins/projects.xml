@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <!--  Defines the standard project attributes.
 
-      THIS SCRIPT MUST BE LOADED.
+      THIS PLUG-IN MUST BE LOADED.
 
-      This script defines the standard project attributes, and how they should
+      This plug-in defines the standard project attributes, and how they should
       be edited graphically in the project properties editor. If you do not
       load this script, GPS will display a number of warnings in its Messages
       window when a project is loaded
