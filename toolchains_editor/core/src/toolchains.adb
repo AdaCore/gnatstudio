@@ -734,8 +734,14 @@ package body Toolchains is
          This.Used_Compiler_List.Replace (Lang, User_Def);
       else
          This.Full_Compiler_List.Append (New_Comp);
-         This.Used_Compiler_List.Replace
-           (Lang, This.Full_Compiler_List.Last_Index);
+
+         if This.Used_Compiler_List.Contains (Lang) then
+            This.Used_Compiler_List.Replace
+              (Lang, This.Full_Compiler_List.Last_Index);
+         else
+            This.Used_Compiler_List.Insert
+              (Lang, This.Full_Compiler_List.Last_Index);
+         end if;
       end if;
    end Set_Compiler;
 
