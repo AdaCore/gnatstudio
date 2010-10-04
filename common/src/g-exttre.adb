@@ -83,6 +83,12 @@ package body GNAT.Expect.TTY.Remote is
    procedure Log (Where : String; What : String);
    --  Log a debug comment
 
+   procedure Get_Status
+     (Descriptor : in out Remote_Process_Descriptor);
+   pragma Precondition (Descriptor.Terminated and not Descriptor.Session_Died);
+   --  Retrieve the status code of a terminated descriptor, and set the
+   --  underlying session state to READY.
+
    ---------
    -- Log --
    ---------
@@ -1238,6 +1244,7 @@ package body GNAT.Expect.TTY.Remote is
             Desc.Buffer := Tmp_Buf;
             Desc.Busy := False;
             Desc.Terminated := True;
+            Get_Status (Desc.all);
          end if;
       end if;
 
@@ -1264,6 +1271,122 @@ package body GNAT.Expect.TTY.Remote is
       end if;
    end Filter_Out;
 
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   procedure Get_Status
+     (Descriptor : in out Remote_Process_Descriptor)
+   is
+      TTY_Data  : constant TTY_Data_Access :=
+                    TTY_Data_Access (Get_Data (Descriptor.Machine.all));
+      Matched   : GNAT.Regpat.Match_Array (0 .. 1);
+      Res       : Expect_Match;
+      NL_Regexp : constant Pattern_Matcher :=
+                    Compile ("^[^\n\r]*(\n|\r)", Single_Line);
+      Desc      : TTY_Process_Descriptor renames
+                    TTY_Data.Sessions (Descriptor.Session_Nb).Pd;
+      State     : Shell_State_Type renames
+                    TTY_Data.Sessions (Descriptor.Session_Nb).State;
+   begin
+      if Descriptor.Machine.Shell_Get_Status_Cmd = "" then
+         Descriptor.Status := 0;
+      else
+         --  Try to retrieve the terminated program's status
+
+         if Descriptor.Use_Cr_Lf = CRLF then
+            Send
+              (Desc,
+               Descriptor.Machine.Shell_Get_Status_Cmd & ASCII.CR);
+         else
+            Send (Desc, Descriptor.Machine.Shell_Get_Status_Cmd);
+         end if;
+
+         if Active (Me) then
+            Log ("SND", Descriptor.Machine.Shell_Get_Status_Cmd);
+         end if;
+
+         if Descriptor.Machine.Use_Dbg then
+            Descriptor.Machine.Dbg
+              (Descriptor.Machine.Shell_Get_Status_Cmd, Input);
+         end if;
+
+         --  Skip echo if needed
+
+         if TTY_Data.Echoing then
+            Expect (Desc,
+                    Res,
+                    NL_Regexp,
+                    Matched,
+                    Descriptor.Machine.Timeout);
+            Trace
+              (Me, "skipped " & Expect_Out (Desc));
+         end if;
+
+         --  Get status
+         Expect (Desc,
+                 Res,
+                 Descriptor.Machine.Shell_Get_Status_Pattern.all,
+                 Matched,
+                 Descriptor.Machine.Timeout);
+
+         if Descriptor.Machine.Use_Dbg then
+            Descriptor.Machine.Dbg (Expect_Out (Desc), Output);
+         end if;
+
+         if Matched (0) /= No_Match then
+            declare
+               Out_Str : constant String :=
+                           Expect_Out (Desc)
+                           (Matched (1).First .. Matched (1).Last);
+            begin
+               Descriptor.Status := Integer'Value (Out_Str);
+
+               if Active (Me) then
+                  Trace (Me, "status is " & Descriptor.Status'Img);
+               end if;
+
+            exception
+               when Constraint_Error =>
+                  Trace (Me, "could not evaluate status from '" &
+                         Out_Str & "'");
+                  Descriptor.Status := 1;
+            end;
+
+         else
+
+            if Active (Me) then
+               Trace (Me, "status does not match status pattern");
+               Trace (Me, Desc.Buffer.all);
+            end if;
+
+            Descriptor.Status := 1;
+         end if;
+
+         --  Get prompt
+
+         Expect (Desc, Res,
+                 Descriptor.Machine.Shell_Configured_Prompt.all,
+                 Matched,
+                 Descriptor.Machine.Timeout);
+
+         if Res = Expect_Timeout then
+            --  Shell does not respond to command. Kill it
+
+            raise Process_Died;
+
+         elsif Descriptor.Machine.Use_Dbg then
+            Descriptor.Machine.Dbg (Expect_Out (Desc), Output);
+         end if;
+
+         if Active (Me) then
+            Log ("RCV", Expect_Out (Desc));
+         end if;
+      end if;
+
+      TTY_Data.Sessions (Descriptor.Session_Nb).State := READY;
+   end Get_Status;
+
    -----------
    -- Close --
    -----------
@@ -1274,10 +1397,6 @@ package body GNAT.Expect.TTY.Remote is
    is
       TTY_Data  : constant TTY_Data_Access :=
                     TTY_Data_Access (Get_Data (Descriptor.Machine.all));
-      Matched   : GNAT.Regpat.Match_Array (0 .. 1);
-      Res       : Expect_Match;
-      NL_Regexp : constant Pattern_Matcher :=
-                    Compile ("^[^\n\r]*(\n|\r)", Single_Line);
 
    begin
       if Descriptor.Session_Nb = 0 then
@@ -1311,100 +1430,8 @@ package body GNAT.Expect.TTY.Remote is
                Descriptor.Session_Died := True;
 
             elsif not Descriptor.Session_Died then
-               if Descriptor.Machine.Shell_Get_Status_Cmd /= "" then
-                  --  Try to retrieve the terminated program's status
-
-                  if Descriptor.Use_Cr_Lf = CRLF then
-                     Send
-                       (Desc,
-                        Descriptor.Machine.Shell_Get_Status_Cmd & ASCII.CR);
-                  else
-                     Send (Desc, Descriptor.Machine.Shell_Get_Status_Cmd);
-                  end if;
-
-                  if Active (Me) then
-                     Log ("SND", Descriptor.Machine.Shell_Get_Status_Cmd);
-                  end if;
-
-                  if Descriptor.Machine.Use_Dbg then
-                     Descriptor.Machine.Dbg
-                       (Descriptor.Machine.Shell_Get_Status_Cmd, Input);
-                  end if;
-
-                  --  Skip echo if needed
-
-                  if TTY_Data.Echoing then
-                     Expect (Desc,
-                             Res,
-                             NL_Regexp,
-                             Matched,
-                             Descriptor.Machine.Timeout);
-                     Trace
-                       (Me, "skipped " & Expect_Out (Desc));
-                  end if;
-
-                  --  Get status
-                  Expect (Desc,
-                          Res,
-                          Descriptor.Machine.Shell_Get_Status_Pattern.all,
-                          Matched,
-                          Descriptor.Machine.Timeout);
-
-                  if Descriptor.Machine.Use_Dbg then
-                     Descriptor.Machine.Dbg (Expect_Out (Desc), Output);
-                  end if;
-
-                  if Matched (0) /= No_Match then
-                     declare
-                        Out_Str : constant String :=
-                                    Expect_Out (Desc)
-                                    (Matched (1).First .. Matched (1).Last);
-                     begin
-                        Status := Integer'Value (Out_Str);
-
-                        if Active (Me) then
-                           Trace (Me, "status is " & Integer'Image (Status));
-                        end if;
-
-                     exception
-                        when Constraint_Error =>
-                           Trace (Me, "could not evaluate status from '" &
-                                  Out_Str & "'");
-                           Status := 1;
-                     end;
-
-                  else
-
-                     if Active (Me) then
-                        Trace (Me, "status does not match status pattern");
-                        Trace (Me, Desc.Buffer.all);
-                     end if;
-
-                     Status := 0;
-                  end if;
-
-                  --  Get prompt
-
-                  Expect (Desc, Res,
-                          Descriptor.Machine.Shell_Configured_Prompt.all,
-                          Matched,
-                          Descriptor.Machine.Timeout);
-
-                  if Res = Expect_Timeout then
-                     --  Shell does not respond to command. Kill it
-
-                     raise Process_Died;
-
-                  elsif Descriptor.Machine.Use_Dbg then
-                     Descriptor.Machine.Dbg (Expect_Out (Desc), Output);
-                  end if;
-
-                  if Active (Me) then
-                     Log ("RCV", Expect_Out (Desc));
-                  end if;
-               end if;
-
-               State := READY;
+               Get_Status (Descriptor);
+               Status := Descriptor.Status;
             end if;
 
             Descriptor.Input_Fd   := GNAT.OS_Lib.Invalid_FD;
