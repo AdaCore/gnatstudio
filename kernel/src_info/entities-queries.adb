@@ -693,14 +693,21 @@ package body Entities.Queries is
       function Extract_Next_By_Heuristics return File_Location;
       --  Return the next location using the construct heuristics
 
+      function Get_Entity_At_Location
+        (Loc : File_Location) return Entity_Access;
+      --  Return the construct entity found at the location given in parameter.
+
       --------------------------------
       -- Extract_Next_By_Heuristics --
       --------------------------------
 
       function Extract_Next_By_Heuristics return File_Location is
-         Start_Loc : File_Location;
-
          Result : File_Location;
+
+         C_Entity, New_Entity : Entity_Access := Null_Entity_Access;
+         Db : constant Entities_Database :=
+           Entity.Live_Declaration.File.Db;
+
       begin
          --  In order to locate the reference to look from, we check if there
          --  is a file associated to the input location. In certain cases, this
@@ -709,46 +716,29 @@ package body Entities.Queries is
          --  (there's nothing we can do at the completion level without a
          --  file). If there's no file, then the context has been partially
          --  provided (or not at all) so we start from the declaration of the
-         --  entity.
-
-         if Current_Location.File /= null then
-            Start_Loc := Current_Location;
-         else
-            Start_Loc := Entity.Live_Declaration;
-         end if;
+         --  Entity.
 
          if Active (Constructs_Heuristics)
-           and then Start_Loc.File.Db.Construct_Db_Locks = 0
+           and then Db.Construct_Db_Locks = 0
          then
-            declare
-               Db : constant Entities_Database  := Start_Loc.File.Db;
+            if Current_Location.File /= null then
+               C_Entity := Get_Entity_At_Location (Current_Location);
+            end if;
 
-               Tree_Lang : constant Tree_Language_Access :=
-                 Get_Tree_Language_From_File
-                   (Language_Handler (Db.Lang), Start_Loc.File.Name);
-               S_File : constant Structured_File_Access :=
-                 Get_Or_Create
-                   (Db   => Db.Construct_Db,
-                    File => Start_Loc.File.Name);
-               Construct : Construct_Tree_Iterator;
-               Entity, New_Entity : Entity_Access;
-            begin
-               Update_Contents (S_File);
+            if C_Entity = Null_Entity_Access then
+               C_Entity := Get_Entity_At_Location (Entity.Live_Declaration);
+            end if;
 
-               Construct :=
-                 Get_Iterator_At
-                   (Tree      => Get_Tree (S_File),
-                    Location  => To_Location
-                      (Start_Loc.Line,
-                       To_Line_String_Index
-                         (S_File,
-                          Start_Loc.Line,
-                          Start_Loc.Column)),
-                    From_Type => Start_Name);
+            if C_Entity /= Null_Entity_Access then
+               declare
+                  S_File : constant Structured_File_Access :=
+                    Get_File (C_Entity);
 
-               if Construct /= Null_Construct_Tree_Iterator then
-                  Entity := To_Entity_Access (S_File, Construct);
-                  New_Entity := Tree_Lang.Find_Next_Part (Entity);
+                  Tree_Lang : constant Tree_Language_Access :=
+                    Get_Tree_Language_From_File
+                      (Language_Handler (Db.Lang), Get_File_Path (S_File));
+               begin
+                  New_Entity := Tree_Lang.Find_Next_Part (C_Entity);
 
                   --  If we're initializing a loop, e.g. the current location
                   --  is no location, then return the result. Otherwise, don't
@@ -757,14 +747,12 @@ package body Entities.Queries is
 
                   if Current_Location /= No_File_Location
                     and then No_Location_If_First
-                    and then Entity = Tree_Lang.Find_First_Part (Entity)
+                    and then C_Entity = Tree_Lang.Find_First_Part (C_Entity)
                   then
                      return No_File_Location;
                   end if;
 
-                  if Entity /= Null_Entity_Access
-                    and then New_Entity /= Entity
-                  then
+                  if New_Entity /= C_Entity then
                      Result.File :=
                        Get_Or_Create
                          (Db           => Db,
@@ -781,8 +769,8 @@ package body Entities.Queries is
 
                      return Result;
                   end if;
-               end if;
-            end;
+               end;
+            end if;
          end if;
 
          return No_File_Location;
@@ -795,43 +783,59 @@ package body Entities.Queries is
       function Is_Expected_Construct
         (Location : File_Location) return Boolean
       is
+         C_Entity : Entity_Access;
+         Db       : constant Entities_Database  := Location.File.Db;
       begin
          if Active (Constructs_Heuristics)
            and then Location.File.Db.Construct_Db_Locks = 0
          then
-            declare
-               Db : constant Entities_Database  := Location.File.Db;
+            C_Entity := Get_Entity_At_Location (Location);
 
-               S_File : constant Structured_File_Access :=
-                 Get_Or_Create
-                   (Db   => Db.Construct_Db,
-                    File => Location.File.Name);
-               Construct : Construct_Tree_Iterator;
-            begin
-               Update_Contents (S_File);
+            --  Return true if we found a construct here and if it's of the
+            --  appropriate name.
 
-               Construct :=
-                 Get_Iterator_At
-                   (Tree      => Get_Tree (S_File),
-                    Location  => To_Location
-                      (Location.Line,
-                       To_Line_String_Index
-                         (S_File,
-                          Location.Line,
-                          Location.Column)),
-                    From_Type => Start_Name);
-
-               --  Return true if we found a construct here and if it's of the
-               --  appropriate name.
-
-               return Construct /= Null_Construct_Tree_Iterator
-                 and then Get_Identifier (Construct) = Find_Normalized
-                 (Get_Symbols (Db), Get (Entity.Name).all);
-            end;
+            return C_Entity /= Null_Entity_Access
+              and then Get_Identifier (C_Entity) = Find_Normalized
+              (Get_Symbols (Db), Get (Entity.Name).all);
          end if;
 
          return True;
       end Is_Expected_Construct;
+
+      ----------------------------
+      -- Get_Entity_At_Location --
+      ----------------------------
+
+      function Get_Entity_At_Location
+        (Loc : File_Location)
+            return Entity_Access
+      is
+         Db : constant Entities_Database := Loc.File.Db;
+         S_File : constant Structured_File_Access :=
+           Get_Or_Create
+             (Db   => Db.Construct_Db,
+              File => Loc.File.Name);
+         Construct : Construct_Tree_Iterator;
+      begin
+         Update_Contents (S_File);
+
+         Construct :=
+           Get_Iterator_At
+             (Tree      => Get_Tree (S_File),
+              Location  => To_Location
+                (Loc.Line,
+                 To_Line_String_Index
+                   (S_File,
+                    Loc.Line,
+                    Loc.Column)),
+              From_Type => Start_Name);
+
+         if Construct /= Null_Construct_Tree_Iterator then
+            return To_Entity_Access (S_File, Construct);
+         else
+            return Null_Entity_Access;
+         end if;
+      end Get_Entity_At_Location;
 
       Ref          : E_Reference;
       First_Entity : Entity_Reference_Cursor :=
