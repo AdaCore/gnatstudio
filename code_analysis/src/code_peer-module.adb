@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;
+with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
 with Input_Sources.File;
@@ -37,6 +38,7 @@ with GPS.Kernel.Console;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -1866,6 +1868,36 @@ package body Code_Peer.Module is
                         new Commands.Code_Peer.Review_Message_Command'
                           (Commands.Root_Command with
                            Code_Peer_Module_Id (Self), Message)));
+
+                  if Message.From_File /= No_File then
+                     declare
+                        Text : constant String :=
+                          "(see also "
+                          & String (Message.From_File.Full_Name.all)
+                          & ":"
+                          & Ada.Strings.Fixed.Trim
+                          (Positive'Image (Message.From_Line),
+                           Ada.Strings.Both)
+                          & ":"
+                          & Ada.Strings.Fixed.Trim
+                          (Positive'Image (Message.From_Column),
+                           Ada.Strings.Both)
+                          & ")";
+
+                     begin
+                        GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
+                          (GPS.Kernel.Messages.Message_Access (Primary),
+                           Message.From_File,
+                           Message.From_Line,
+                           Basic_Types.Visible_Column_Type
+                             (Message.From_Column),
+                           Text,
+                           Text'First + 10,
+                           Text'Last - 1,
+                           (Editor_Side => False,
+                            Locations   => True));
+                     end;
+                  end if;
                end;
             end if;
          end Process_Message;
