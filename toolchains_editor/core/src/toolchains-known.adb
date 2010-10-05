@@ -22,7 +22,8 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Fixed.Hash;
 with Ada.Unchecked_Deallocation;
 
-with XML_Utils; use XML_Utils;
+with XML_Utils;   use XML_Utils;
+with XML_Parsers; use XML_Parsers;
 
 package body Toolchains.Known is
 
@@ -48,13 +49,20 @@ package body Toolchains.Known is
    procedure Read_From_XML_File (File : GNATCOLL.VFS.Virtual_File) is
       Root : Node_Ptr;
       Node : Node_Ptr;
-      Buff : String_Access := File.Read_File;
+      Buff : String_Access;
+
    begin
-      if Buff = null then
-         raise Invalid_File with File.Display_Full_Name & " cannot be read";
+      XML_Parsers.Parse (File, Root, Buff);
+
+      if Buff /= null then
+         declare
+            Cnt : constant String := Buff.all;
+         begin
+            Free (Buff);
+            raise Invalid_File with Cnt;
+         end;
       end if;
 
-      Root := XML_Utils.Parse_Buffer (Buff.all);
       Node := Root.Child;
       while Node /= null loop
          Read_From_XML (Node);
