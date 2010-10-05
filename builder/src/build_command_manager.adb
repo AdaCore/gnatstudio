@@ -196,6 +196,9 @@ package body Build_Command_Manager is
       function Get_Attr_Value (Arg : String; Skip : Natural) return String;
       --  return the name of the attribute contained in Arg
 
+      function Get_Gnatmake_Attribute return String;
+      --  return the gnatmake command from attributes of the project
+
       function Get_Index (A, B : Natural) return Natural;
       --  Return A if A /= 0, B otherwise
 
@@ -265,6 +268,24 @@ package body Build_Command_Manager is
            (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
       end Get_Attr_Value;
 
+      ----------------------------
+      -- Get_Gnatmake_Attribute --
+      ----------------------------
+
+      function Get_Gnatmake_Attribute return String is
+         Prj : constant Project_Type := Get_Project (Get_Kernel (Context));
+         Comp_Cmd : constant String :=
+                      Prj.Attribute_Value (Compiler_Command_Attribute, "Ada");
+         Gnat_Cmd : constant String :=
+                      Prj.Attribute_Value (GNAT_Attribute, Default => "gnat");
+      begin
+         if Comp_Cmd /= "" then
+            return Comp_Cmd;
+         else
+            return Gnat_Cmd & "make";
+         end if;
+      end Get_Gnatmake_Attribute;
+
    begin
       --  ??? Special case for "%X"
       --  We are implementing a special case here since GPS.Kernel.Macros
@@ -325,11 +346,7 @@ package body Build_Command_Manager is
             Builder  : constant Boolean := Arg /= "%gprclean";
             Prj      : constant Project_Type :=
                          Get_Project (Get_Kernel (Context));
-            Gnatmake : constant String :=
-                         Prj.Attribute_Value
-                           (Compiler_Command_Attribute,
-                            Default => "gnatmake",
-                            Index   => "ada");
+            Gnatmake : constant String := Get_Gnatmake_Attribute;
             First    : Natural := Gnatmake'First;
             Langs    : Argument_List := Prj.Languages (Recursive => True);
 
