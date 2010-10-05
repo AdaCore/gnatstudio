@@ -858,7 +858,7 @@ package body Toolchains is
    begin
       if Default = 0 then
          --  no compiler exist for this language, so no compiler is the default
-         return False;
+         return True;
 
       else
          return Default = This.Used_Compiler_List.Element (Lang);
