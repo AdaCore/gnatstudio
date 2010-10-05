@@ -206,7 +206,19 @@ package body Code_Peer.Bridge.Inspection_Readers is
                  (Attrs.Get_Value ("probability")),
                new String'(Attrs.Get_Value ("text")),
                False,
-               Code_Peer.Audit_Vectors.Empty_Vector));
+               Code_Peer.Audit_Vectors.Empty_Vector,
+               GNATCOLL.VFS.No_File,
+               1,
+               1));
+
+         if Attrs.Get_Index ("from_file") /= -1 then
+            Self.Subprogram_Data.Messages.Last_Element.From_File :=
+              GPS.Kernel.Create (+Attrs.Get_Value ("from_file"), Self.Kernel);
+            Self.Subprogram_Data.Messages.Last_Element.From_Line :=
+              Positive'Value (Attrs.Get_Value ("from_line"));
+            Self.Subprogram_Data.Messages.Last_Element.From_Column :=
+              Positive'Value (Attrs.Get_Value ("from_column"));
+         end if;
 
       elsif Qname = Annotation_Tag then
          Annotation_Category :=

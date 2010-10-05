@@ -23,6 +23,7 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with GNAT.Strings;
 
+with GNATCOLL.VFS;
 with GPS.Editors;
 with Code_Analysis;
 
@@ -74,6 +75,9 @@ package Code_Peer is
       Text             : GNAT.Strings.String_Access;
       Audit_Loaded     : Boolean;
       Audit            : Audit_Vectors.Vector;
+      From_File        : GNATCOLL.VFS.Virtual_File;
+      From_Line        : Positive;
+      From_Column      : Positive;
    end record;
 
    type Message_Access is access all Message;
