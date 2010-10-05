@@ -42,11 +42,6 @@ package body Toolchains is
    --  the session.
    --  ??? Use this to free the library info when needed
 
-   procedure Compute_Gprconfig_Compilers (Tc : Toolchain);
-   --  Retrieve the default compilers for the specified toolchain, and sets the
-   --  values.
-   pragma Precondition (Tc.Manager /= null);
-
    function Compilers_Match
      (Comp1, Comp2 : Compiler) return Boolean;
    --  Tells if 2 compilers are equal
@@ -217,17 +212,8 @@ package body Toolchains is
                   Set_Name (Tc, Target);
                   Tc.Is_Native := Index (Target, "native") in Target'Range;
 
-                  for J in Glob_List.First_Index .. Glob_List.Last_Index loop
-                     if To_String (Glob_List.Element (J).Toolchain) =
-                       Target
-                     then
-                        Add_Compiler
-                          (Tc,
-                           To_String (Glob_List.Element (J).Lang),
-                           To_String (Glob_List.Element (J).Exe),
-                           Origin => From_Gprconfig);
-                     end if;
-                  end loop;
+                  --  not in the known toolchains database: let's use the
+                  --  default gnat scheme for commands.
 
                   if not Tc.Is_Native then
                      --  Use general scheme for gnat toolchains
@@ -251,10 +237,21 @@ package body Toolchains is
                   end if;
 
                   Mgr.Add_Toolchain (Tc);
-
-               else
-                  Set_Name (Tc, Target);
                end if;
+
+               for J in Glob_List.First_Index .. Glob_List.Last_Index loop
+                  if To_String (Glob_List.Element (J).Toolchain) =
+                    Target
+                  then
+                     Add_Compiler
+                       (Tc,
+                        To_String (Glob_List.Element (J).Lang),
+                        To_String (Glob_List.Element (J).Exe),
+                        Origin => From_Gprconfig);
+                  end if;
+               end loop;
+
+               Set_Label (Tc, Target);
             end;
          end loop;
 
@@ -263,44 +260,6 @@ package body Toolchains is
             Trace (Me, "Exception when executing gprconfig. Let's skip.");
             Mgr.Compilers_Scanned := True;
       end;
-   end Compute_Gprconfig_Compilers;
-
-   ---------------------------------
-   -- Compute_Gprconfig_Compilers --
-   ---------------------------------
-
-   procedure Compute_Gprconfig_Compilers (Tc : Toolchain)
-   is
-      Glob_List  : Compiler_Vector.Vector;
-
-   begin
-      if Tc.Compilers_Scanned then
-         return;
-      end if;
-
-      --  We first build a global gprconfig compilers list, containing all
-      --  compilers for all targets
-      Compute_Gprconfig_Compilers (Tc.Manager);
-
-      --  At this point, the global gprconfig compilers list is initialized.
-      Glob_List := Tc.Manager.Gprconfig_Compilers;
-
-      for J in Glob_List.First_Index .. Glob_List.Last_Index loop
-         if To_String (Glob_List.Element (J).Toolchain) = Tc.Name.all then
-            Add_Compiler
-              (Tc,
-               To_String (Glob_List.Element (J).Lang),
-               To_String (Glob_List.Element (J).Exe),
-               Origin => From_Gprconfig);
-         end if;
-      end loop;
-
-      Tc.Compilers_Scanned := True;
-
-   exception
-      when others =>
-         Trace (Me, "Exception when executing gprconfig. Let's skip.");
-         Tc.Compilers_Scanned := True;
    end Compute_Gprconfig_Compilers;
 
    ---------------------
@@ -675,6 +634,28 @@ package body Toolchains is
    begin
       if Locate_On_Path (+Value, Get_Nickname (Build_Server)) /= No_File then
          New_Comp.Is_Valid := True;
+      end if;
+
+      --  If a compiler exists for the same language and comes from default
+      --  (e.g. xml definition file), the we replace it if we have more
+      --  accurate information (coming from gprconfig)
+      if Origin = From_Gprconfig then
+         for J in This.Full_Compiler_List.First_Index ..
+           This.Full_Compiler_List.Last_Index
+         loop
+            declare
+               Comp : constant Compiler := This.Full_Compiler_List.Element (J);
+
+            begin
+               if Comp.Lang = New_Comp.Lang
+                 and then Comp.Origin = From_Default
+               then
+                  This.Full_Compiler_List.Replace_Element (J, New_Comp);
+
+                  return;
+               end if;
+            end;
+         end loop;
       end if;
 
       This.Full_Compiler_List.Append (New_Comp);
@@ -1636,7 +1617,6 @@ package body Toolchains is
       end if;
 
       if Tc.Library = null then
-         Compute_Gprconfig_Compilers (Tc);
          Compute_Predefined_Paths (Tc);
       end if;
 
@@ -1783,7 +1763,6 @@ package body Toolchains is
       Set_Command (Native_Toolchain, Debugger, "gdb", True);
       Set_Command (Native_Toolchain, CPP_Filt, "c++filt", True);
 
-      Compute_Gprconfig_Compilers (Native_Toolchain);
       Compute_Predefined_Paths (Native_Toolchain);
 
       if Get_Compiler (Native_Toolchain, "Ada") = No_Compiler then
@@ -1839,8 +1818,6 @@ package body Toolchains is
             Toolchains.Known.Tool_Command (Name, T),
             True);
       end loop;
-
-      Compute_Gprconfig_Compilers (This);
 
       --  Force compilers if needed
 
