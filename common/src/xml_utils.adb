@@ -150,7 +150,8 @@ package body XML_Utils is
         and then not
           (Tag (Index) = ' '  or else Tag (Index) = ASCII.LF
            or else Tag (Index) = ASCII.HT
-           or else Tag (Index) = ASCII.CR)
+           or else Tag (Index) = ASCII.CR
+           or else Tag (Index) = '/')
       loop
          Index := Index + 1;
       end loop;

@@ -703,7 +703,6 @@ package body Toolchains.Parsers is
 
       procedure Create_Attributes
         (Container     : Project_Node_Id;
-         Variable_Id   : Project_Node_Id;
          The_Toolchain : Toolchain);
       --  Create all the attributes for the toolchain given in parameter.
       --  If then toolchain is null, then the variable given in parameter will
@@ -714,17 +713,12 @@ package body Toolchains.Parsers is
         (Container      : Project_Node_Id;
          Attribute_Name : String;
          Index_Name     : String;
-         Command        : String;
-         Var_Id         : Project_Node_Id);
+         Command        : String);
       --  Create the attribute in the container. If variableId is not null,
       --  then it will be prefixed to the command.
 
       procedure Create_Case_Toolchain;
       --  Create the "case" block for toolchain selection.
-
-      function Is_Simple_Cross (Tc : Toolchain) return Boolean;
-      --  Return true if the toolchain given in parameter is a simple cross
-      --  (that is to say, not tool exception, no native and no custom).
 
       -------------------------------
       -- Remove_Previous_Toolchain --
@@ -974,37 +968,43 @@ package body Toolchains.Parsers is
 
       procedure Create_Attributes
         (Container     : Project_Node_Id;
-         Variable_Id   : Project_Node_Id;
          The_Toolchain : Toolchain)
       is
       begin
-         if The_Toolchain = null then
-            Create_Attribute
-              (Container, "gnatlist",         "",    "-gnatls", Variable_Id);
-            Create_Attribute
-              (Container, "gnat",             "",    "-gnat", Variable_Id);
-            Create_Attribute
-              (Container, "compiler_command", "ada", "-gnatmake", Variable_Id);
-            Create_Attribute
-              (Container, "compiler_command", "c",   "-gcc", Variable_Id);
-            Create_Attribute
-              (Container, "debugger_command", "",    "-gdb", Variable_Id);
-         else
-            Create_Attribute
-              (Container, "gnatlist",         "",
-               Get_Command (The_Toolchain, GNAT_List), Variable_Id);
+         if not The_Toolchain.Is_Native
+           or else not Is_Default (The_Toolchain, GNAT_Driver)
+         then
             Create_Attribute
               (Container, "gnat",             "",
-               Get_Command (The_Toolchain, GNAT_Driver), Variable_Id);
+               Get_Command (The_Toolchain, GNAT_Driver));
+         end if;
+
+         if not The_Toolchain.Is_Native
+           or else not Is_Default (The_Toolchain, GNAT_List)
+         then
             Create_Attribute
-              (Container, "compiler_command", "ada",
-               Get_Exe (Get_Compiler (The_Toolchain, "ada")), Variable_Id);
-            Create_Attribute
-              (Container, "compiler_command", "c",
-               Get_Exe (Get_Compiler (The_Toolchain, "c")), Variable_Id);
+              (Container, "gnatlist",         "",
+               Get_Command (The_Toolchain, GNAT_List));
+         end if;
+
+         if not The_Toolchain.Is_Native
+           or else not Is_Default (The_Toolchain, Debugger)
+         then
             Create_Attribute
               (Container, "debugger_command", "",
-               Get_Command (The_Toolchain, Debugger), Variable_Id);
+               Get_Command (The_Toolchain, Debugger));
+         end if;
+
+         if not Is_Default (The_Toolchain, "ada") then
+            Create_Attribute
+              (Container, "compiler_command", "ada",
+               Get_Exe (Get_Compiler (The_Toolchain, "ada")));
+         end if;
+
+         if not Is_Default (The_Toolchain, "c") then
+            Create_Attribute
+              (Container, "compiler_command", "c",
+               Get_Exe (Get_Compiler (The_Toolchain, "c")));
          end if;
       end Create_Attributes;
 
@@ -1016,14 +1016,11 @@ package body Toolchains.Parsers is
         (Container      : Project_Node_Id;
          Attribute_Name : String;
          Index_Name     : String;
-         Command        : String;
-         Var_Id         : Project_Node_Id)
+         Command        : String)
       is
          Index_Id : Name_Id;
          Str_Val  : Project_Node_Id;
          Exp      : Project_Node_Id;
-         Ref      : Project_Node_Id;
-         Str_Exp  : Project_Node_Id;
       begin
          if Index_Name = "" then
             Index_Id := No_Name;
@@ -1034,24 +1031,7 @@ package body Toolchains.Parsers is
          Str_Val := Create_Literal_String
            (Get_Name_Id (Command), This.Node_Data);
 
-         if Var_Id = Empty_Node then
-            Exp := Str_Val;
-         else
-            Ref := Default_Project_Node
-              (This.Node_Data, N_Variable_Reference, Undefined);
-            Set_Name_Of
-              (Ref, This.Node_Data, Name_Of (Var_Id, This.Node_Data));
-            Exp := Enclose_In_Expression (Ref, This.Node_Data);
-
-            --  It's probably possible to avoid using a temporary expression
-            --  here...
-
-            Str_Exp := Enclose_In_Expression (Str_Val, This.Node_Data);
-            Set_Next_Term
-              (First_Term (Exp, This.Node_Data),
-               This.Node_Data,
-               First_Term (Str_Exp, This.Node_Data));
-         end if;
+         Exp := Str_Val;
 
          declare
             Dummy : Project_Node_Id :=
@@ -1080,7 +1060,6 @@ package body Toolchains.Parsers is
          Prev_Case_Node      : Project_Node_Id;
          Case_Node           : Project_Node_Id;
          Name_Str            : Project_Node_Id;
-         Case_Node_Others    : Project_Node_Id;
       begin
          Prev_Case_Node := Empty_Node;
 
@@ -1110,61 +1089,35 @@ package body Toolchains.Parsers is
          --  Handle "non standard" toolchains, aamp, native, custom...
 
          for J in Toolchains'Range loop
-            if not Is_Simple_Cross (Toolchains (J)) then
-               Case_Node := Default_Project_Node
-                 (This.Node_Data,
-                  N_Case_Item,
-                  Undefined);
+            Case_Node := Default_Project_Node
+              (This.Node_Data,
+               N_Case_Item,
+               Undefined);
 
-               if Prev_Case_Node = Empty_Node then
-                  Set_First_Case_Item_Of
-                    (Case_Construct_Node, This.Node_Data, Case_Node);
-               else
-                  Set_Next_Case_Item
-                    (Prev_Case_Node, This.Node_Data, Case_Node);
-               end if;
-
-               Prev_Case_Node := Case_Node;
-
-               if Toolchains (J).Is_Native then
-                  Name_Str := Create_Literal_String
-                    (Get_Name_Id ("native"), This.Node_Data);
-               else
-                  Name_Str := Create_Literal_String
-                    (Get_Name_Id
-                       (Get_Label (Toolchains (J))), This.Node_Data);
-               end if;
-
-               Set_First_Choice_Of (Case_Node, This.Node_Data, Name_Str);
-               Create_Attributes (Case_Node, Empty_Node, Toolchains (J));
+            if Prev_Case_Node = Empty_Node then
+               Set_First_Case_Item_Of
+                 (Case_Construct_Node, This.Node_Data, Case_Node);
             else
-               Regular_Cross := True;
+               Set_Next_Case_Item
+                 (Prev_Case_Node, This.Node_Data, Case_Node);
             end if;
+
+            Prev_Case_Node := Case_Node;
+
+            if Toolchains (J).Is_Native then
+               Name_Str := Create_Literal_String
+                 (Get_Name_Id ("native"), This.Node_Data);
+            else
+               Name_Str := Create_Literal_String
+                 (Get_Name_Id
+                    (Get_Label (Toolchains (J))), This.Node_Data);
+            end if;
+
+            Set_First_Choice_Of (Case_Node, This.Node_Data, Name_Str);
+            Create_Attributes (Case_Node, Toolchains (J));
          end loop;
-
-         --  If there are regular cross toolchains, then use the "other" part
-
-         if Regular_Cross then
-            Case_Node_Others :=
-              Default_Project_Node (This.Node_Data, N_Case_Item, Undefined);
-            Set_Next_Case_Item
-              (Prev_Case_Node, This.Node_Data, Case_Node_Others);
-            Create_Attributes (Case_Node_Others, This.Variable_Node, null);
-         end if;
       end Create_Case_Toolchain;
 
-      ---------------------
-      -- Is_Simple_Cross --
-      ---------------------
-
-      function Is_Simple_Cross (Tc : Toolchain) return Boolean is
-      begin
-         return not Tc.Is_Native
-           and then not Tc.Is_Custom
-           and then not Has_Naming_Exception (Get_Name (Tc));
-      end Is_Simple_Cross;
-
-      Need_Case_Statement : Boolean := False;
    begin
       --  First, Create the IDE package if there's none
 
@@ -1184,21 +1137,6 @@ package body Toolchains.Parsers is
 
       --  Finally, create the ide package
 
-      --  First, see if we need a case statement
-      --  That is to say, > 1 toolchain, and at least a native / aamp or
-      --  custom toolchain
-
-      Need_Case_Statement := False;
-
-      if Toolchains'Length > 1 then
-         for J in Toolchains'Range loop
-            if not Is_Simple_Cross (Toolchains (J)) then
-               Need_Case_Statement := True;
-               exit;
-            end if;
-         end loop;
-      end if;
-
       if Toolchains'Length = 0 then
          --  There's no toolchain indication, don't do anything, just
          --  leave an empty ide package
@@ -1208,16 +1146,7 @@ package body Toolchains.Parsers is
          --  generate a block of string values.
 
          Create_Attributes
-           (This.IDE_Package, Empty_Node, Toolchains (Toolchains'First));
-      elsif not Need_Case_Statement then
-         --  If there's multiple toolchains, but no need for a case
-         --  statement, only generate a block of values and update the
-         --  scenario variable
-
-         Create_Attributes
-           (This.IDE_Package,
-            This.Variable_Node,
-            null);
+           (This.IDE_Package, Toolchains (Toolchains'First));
       else
          --  If we've got multiple targets handling with custom names,
          --  then we need to use a case statement.
