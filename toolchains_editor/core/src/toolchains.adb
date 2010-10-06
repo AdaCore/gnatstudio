@@ -194,9 +194,7 @@ package body Toolchains is
                      Lang      => To_Unbounded_String (Lang),
                      Base_Name => False);
 
-                  if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada")
-                    and then not Is_Visible
-                  then
+                  if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada") then
                      Full_Path := To_Unbounded_String (Path);
                   end if;
                end if;
@@ -327,6 +325,11 @@ package body Toolchains is
                      Free (Tc);
                      Tc := Prev_Tc;
                   else
+                     if Mgr.Get_Toolchain (Get_Name (Tc)) /= null then
+                        Set_Label
+                          (Tc, Mgr.Create_Anonymous_Name (Get_Name (Tc)));
+                     end if;
+
                      Mgr.Add_Toolchain (Tc);
                   end if;
                end;
