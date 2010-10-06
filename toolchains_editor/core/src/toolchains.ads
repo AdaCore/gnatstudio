@@ -154,15 +154,18 @@ package Toolchains is
    procedure Compute_Predefined_Paths (This : Toolchain);
    --  Retreives the predefined path if needed.
 
-   function Get_Command (This : Toolchain; Name : Tools) return String;
+   function Get_Command (This : Toolchain; Name : Valid_Tools) return String;
    --  Return the command to use in order to call the tool given in parameter.
 
    procedure Set_Command
-     (This       : Toolchain;
-      Name       : Tools;
-      Value      : String;
-      Is_Default : Boolean := False);
+     (This         : Toolchain;
+      Name         : Valid_Tools;
+      Value        : String;
+      Origin       : Compiler_Origin;
+      Is_Base_Name : Boolean);
    --  Set the command for this tool on this toolchain
+   --  Origin is the origin of the command that we are setting,
+   --  Is_Base_Name tells wether the command is a base name or a full path
 
    function Is_Valid (This : Toolchain; Name : Tools) return Boolean;
    --  Tell if the tool could be found on the system
@@ -170,8 +173,18 @@ package Toolchains is
    function Is_Default (This : Toolchain; Name : Tools) return Boolean;
    --  Tell if the tool is the default one for the toolchain
 
+   function Is_Defined (This : Toolchain; Lang : String) return Boolean;
+   --  Tell if a compiler is defined for this toolchain
+
    function Is_Default (This : Toolchain; Lang : String) return Boolean;
    --  Tell if the compiler for Lang is the default one for the This toolchain
+
+   function Is_Base_Name (This : Toolchain; Name : Tools) return Boolean;
+   --  Tell if the tool is the system default (e.g. is the one discovered in
+   --  the path when typing its base name from a console)
+
+   function Is_Base_Name (This : Toolchain; Lang : String) return Boolean;
+   --  Same as above for a compiler
 
    procedure Reset_To_Default (This : Toolchain; Name : Tools);
    procedure Reset_To_Default (This : Toolchain; Lang : String);
@@ -417,23 +430,55 @@ private
       --  that will need to be updated as soon as this is actually used.
    end record;
 
-   type Tool_Name_Array is array (Tools) of String_Access;
-   type Boolean_Tool_Array is array (Tools) of Boolean;
+   type Tool_Record is record
+      Command   : Ada.Strings.Unbounded.Unbounded_String;
+      --  The actual command used to launch the tool
 
-   type Compiler is
-      record
-         Exe        : Ada.Strings.Unbounded.Unbounded_String;
-         Is_Valid   : Boolean;
-         Origin     : Compiler_Origin;
-         Toolchain  : Ada.Strings.Unbounded.Unbounded_String;
-         Lang       : Ada.Strings.Unbounded.Unbounded_String;
-      end record;
+      Is_Valid  : Boolean;
+      --  Wether the command was found
+
+      Origin    : Compiler_Origin;
+      --  Where the tool definition comes from
+
+      Base_Name : Boolean;
+      --  Tells if this tool's command is a base name or a full path name
+   end record;
+
+   No_Tool : constant Tool_Record :=
+               (Command     => Ada.Strings.Unbounded.Null_Unbounded_String,
+                Is_Valid    => False,
+                Origin      => From_Default,
+                Base_Name => False);
+
+   type Tool_Array is array (Tools) of Tool_Record;
+
+   type Compiler is record
+      Exe         : Ada.Strings.Unbounded.Unbounded_String;
+      --  The base or full name of the compiler
+
+      Is_Valid    : Boolean;
+      --  Wether the Exe command could be resolved to an actual file
+
+      Origin      : Compiler_Origin;
+      --  Where this compiler description comes from
+
+      Toolchain   : Ada.Strings.Unbounded.Unbounded_String;
+      --  The toolchain the compiler belongs to
+
+      Lang        : Ada.Strings.Unbounded.Unbounded_String;
+      --  The language compiled by this compiler
+
+      Base_Name : Boolean;
+      --  Tells if this Exe field is a base name or a full path
+   end record;
+
    No_Compiler : constant Compiler :=
-                   (Exe        => Ada.Strings.Unbounded.Null_Unbounded_String,
-                    Is_Valid   => False,
-                    Origin     => From_Default,
-                    Toolchain  => Ada.Strings.Unbounded.Null_Unbounded_String,
-                    Lang       => Ada.Strings.Unbounded.Null_Unbounded_String);
+                   (Exe         => Ada.Strings.Unbounded.Null_Unbounded_String,
+                    Is_Valid    => False,
+                    Origin      => From_Default,
+                    Toolchain   => Ada.Strings.Unbounded.Null_Unbounded_String,
+                    Lang        => Ada.Strings.Unbounded.Null_Unbounded_String,
+                    Base_Name => False);
 
    package Compiler_Vector is new Ada.Containers.Vectors (Positive, Compiler);
    package Compiler_Ref_Maps is new Ada.Containers.Indefinite_Hashed_Maps
@@ -456,14 +501,12 @@ private
       --  Are the contents of this toolchain coming from standard description,
       --  or are fields been manually set by the user?
 
-      Tool_Commands : Tool_Name_Array;
-      --  The name of the tools for this toolchain.
+      Tools         : Tool_Array := (others => No_Tool);
+      --  The tools for this toolchain.
 
-      Default_Tools : Tool_Name_Array;
-      --  List of default tools for the target
-
-      Is_Valid_Tool : Boolean_Tool_Array := (others => False);
-      --  Wether those tools could be found.
+      Default_Tools : Tool_Array := (others => No_Tool);
+      --  The default tools for this toolchain, as defined in the known
+      --  toolchains database
 
       Full_Compiler_List : Compiler_Vector.Vector;
       --  All compilers defined for this toolchain.
