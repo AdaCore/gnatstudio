@@ -32,6 +32,13 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with Remote;                use Remote;
 with Toolchains.Known;      use Toolchains.Known;
 
+pragma Warnings (Off);
+with Toolchains.Parsers;
+--  This unit is only used by GNATbench. We add a dummy reference here so that
+--  we make sure that it's compiled with GPS and that compilations failures are
+--  detected as early as possible.
+pragma Warnings (On);
+
 package body Toolchains is
 
    Me : constant Trace_Handle := Create ("TOOLCHAINS");

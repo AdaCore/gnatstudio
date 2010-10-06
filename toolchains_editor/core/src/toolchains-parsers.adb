@@ -29,7 +29,6 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Prj.Part; use Prj.Part;
 with Prj.Env; use Prj.Env;
 with Prj.PP; use Prj.PP;
-with Toolchains.Known; use Toolchains.Known;
 
 package body Toolchains.Parsers is
    Me : constant Trace_Handle := Create ("TOOLCHAIN_PARSER");
@@ -407,8 +406,9 @@ package body Toolchains.Parsers is
                        and then Ada_Toolchain.Is_Custom
                      then
                         if Attr.Kind = Tool_Kind then
-                           Ada_Toolchain.Tool_Commands (Attr.Tool) :=
-                             new String'(Attr.String_Expression.all);
+                           Set_Command
+                             (Ada_Toolchain, Attr.Tool,
+                              Attr.String_Expression.all, From_Project, False);
                         elsif Attr.Kind = Compiler_Kind then
                            Set_Compiler
                              (Ada_Toolchain,
@@ -1054,7 +1054,6 @@ package body Toolchains.Parsers is
       ---------------------------
 
       procedure Create_Case_Toolchain is
-         Regular_Cross       : Boolean := False;
          Case_Construct_Node : Project_Node_Id;
          Ref                 : Project_Node_Id;
          Prev_Case_Node      : Project_Node_Id;
