@@ -39,10 +39,10 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
-with OS_Utils;                    use OS_Utils;
 with Projects;                    use Projects;
 with Remote;                      use Remote;
 with Extending_Environments;      use Extending_Environments;
+with Toolchains;                  use Toolchains;
 with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
@@ -196,9 +196,6 @@ package body Build_Command_Manager is
       function Get_Attr_Value (Arg : String; Skip : Natural) return String;
       --  return the name of the attribute contained in Arg
 
-      function Get_Gnatmake_Attribute return String;
-      --  return the gnatmake command from attributes of the project
-
       function Get_Index (A, B : Natural) return Natural;
       --  Return A if A /= 0, B otherwise
 
@@ -268,24 +265,6 @@ package body Build_Command_Manager is
            (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
       end Get_Attr_Value;
 
-      ----------------------------
-      -- Get_Gnatmake_Attribute --
-      ----------------------------
-
-      function Get_Gnatmake_Attribute return String is
-         Prj : constant Project_Type := Get_Project (Get_Kernel (Context));
-         Comp_Cmd : constant String :=
-                      Prj.Attribute_Value (Compiler_Command_Attribute, "Ada");
-         Gnat_Cmd : constant String :=
-                      Prj.Attribute_Value (GNAT_Attribute, Default => "gnat");
-      begin
-         if Comp_Cmd /= "" then
-            return Comp_Cmd;
-         else
-            return Gnat_Cmd & "make";
-         end if;
-      end Get_Gnatmake_Attribute;
-
    begin
       --  ??? Special case for "%X"
       --  We are implementing a special case here since GPS.Kernel.Macros
@@ -346,8 +325,9 @@ package body Build_Command_Manager is
             Builder  : constant Boolean := Arg /= "%gprclean";
             Prj      : constant Project_Type :=
                          Get_Project (Get_Kernel (Context));
-            Gnatmake : constant String := Get_Gnatmake_Attribute;
-            First    : Natural := Gnatmake'First;
+            Tc       : constant Toolchains.Toolchain :=
+                         Get_Toolchain
+                           (Get_Kernel (Context).Get_Toolchains_Manager, Prj);
             Langs    : Argument_List := Prj.Languages (Recursive => True);
 
             Multi_Language_Build : Boolean := True;
@@ -370,29 +350,19 @@ package body Build_Command_Manager is
             if Multi_Language_Build
               and then Multi_Language_Builder.Get_Pref = Gprbuild
             then
-               if Gnatmake'Length > 9
-                 and then Gnatmake
-                   (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
-               then
-                  for J in reverse Gnatmake'First .. Gnatmake'Last - 9 loop
-                     if Is_Directory_Separator (Gnatmake (J)) then
-                        First := J + 1;
-                        exit;
-                     end if;
-                  end loop;
-
+               if not Is_Native (Tc) then
                   if Builder then
                      Res.Args := Create ("gprbuild");
                      Append_Argument
                        (Res.Args,
-                        "--target=" & Gnatmake (First .. Gnatmake'Last - 9),
+                        "--target=" & Get_Name (Tc),
                         One_Arg);
                      return Res;
                   else
                      Res.Args := Create ("gprclean");
                      Append_Argument
                        (Res.Args,
-                        "--target=" & Gnatmake (First .. Gnatmake'Last - 9),
+                        "--target=" & Get_Name (Tc),
                         One_Arg);
                      return Res;
                   end if;
@@ -410,7 +380,7 @@ package body Build_Command_Manager is
                   Res.Args := Create ("gprmake");
                   return Res;
                else
-                  Res.Args := Create (Gnatmake);
+                  Res.Args := Create (Get_Exe (Get_Compiler (Tc, "Ada")));
                   return Res;
                end if;
             else
