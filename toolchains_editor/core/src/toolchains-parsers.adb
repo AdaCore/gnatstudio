@@ -408,7 +408,7 @@ package body Toolchains.Parsers is
                         if Attr.Kind = Tool_Kind then
                            Set_Command
                              (Ada_Toolchain, Attr.Tool,
-                              Attr.String_Expression.all, From_Project, False);
+                              Attr.String_Expression.all, False);
                         elsif Attr.Kind = Compiler_Kind then
                            Set_Compiler
                              (Ada_Toolchain,
