@@ -143,7 +143,6 @@ package body Toolchains is
                Stripped   : constant String := Strip_Exe (Exe);
                Tc_Name    : Unbounded_String;
                Full       : Virtual_File;
-               F          : Virtual_File;
                Is_Visible : Boolean;
                New_Comp   : Compiler;
 
@@ -166,15 +165,10 @@ package body Toolchains is
 
                if Full = No_File then
                   Is_Visible := False;
+               elsif Full.Base_Name (Full.File_Extension) = +Exe then
+                  Is_Visible := True;
                else
-                  F := GNATCOLL.VFS.Create
-                    (+(Path & Exe), Remote.Get_Nickname (Build_Server));
-
-                  if F = Full then
-                     Is_Visible := True;
-                  else
-                     Is_Visible := False;
-                  end if;
+                  Is_Visible := False;
                end if;
 
                if Is_Visible then
