@@ -188,7 +188,9 @@ package body Toolchains is
                      Lang      => To_Unbounded_String (Lang),
                      Base_Name => False);
 
-                  if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada") then
+                  if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada")
+                    and then not Is_Visible
+                  then
                      Full_Path := To_Unbounded_String (Path);
                   end if;
                end if;
