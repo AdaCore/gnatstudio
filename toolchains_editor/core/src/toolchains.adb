@@ -129,6 +129,7 @@ package body Toolchains is
          package TC_Set is new Ada.Containers.Indefinite_Vectors
            (Positive, String);
          Toolchains : TC_Set.Vector;
+         First      : Boolean;
 
       begin
          loop
@@ -202,7 +203,24 @@ package body Toolchains is
                      Base_Name => False);
 
                   if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada") then
-                     Full_Path := To_Unbounded_String (Path);
+                     --  If it's the first one for this target, then we have
+                     --  the default ada compiler not in the path
+                     for J in Glob_List.First_Index ..
+                       Glob_List.Last_Index
+                     loop
+                        First := True;
+
+                        if Glob_List.Element (J).Toolchain = New_Comp.Toolchain
+                          and then Glob_List.Element (J).Lang = New_Comp.Lang
+                        then
+                           First := False;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if First then
+                        Full_Path := To_Unbounded_String (Path);
+                     end if;
                   end if;
                end if;
 
