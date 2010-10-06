@@ -103,8 +103,9 @@ package body Toolchains is
          return Name;
       end Strip_Exe;
 
-      Comp_Num   : Natural := 1;
-      Glob_List  : Compiler_Vector.Vector;
+      Comp_Num  : Natural := 1;
+      Glob_List : Compiler_Vector.Vector;
+      Full_Path : Unbounded_String;
 
    begin
       if Mgr.Compilers_Scanned then
@@ -178,18 +179,24 @@ package body Toolchains is
 
                if Is_Visible then
                   New_Comp :=
-                    (Exe        => To_Unbounded_String (Stripped),
-                     Is_Valid   => True,
-                     Origin     => From_Gprconfig,
-                     Toolchain  => Tc_Name,
-                     Lang       => To_Unbounded_String (Lang));
+                    (Exe       => To_Unbounded_String (Stripped),
+                     Is_Valid  => True,
+                     Origin    => From_Gprconfig,
+                     Toolchain => Tc_Name,
+                     Lang      => To_Unbounded_String (Lang),
+                     Base_Name => True);
                else
                   New_Comp :=
-                    (Exe        => To_Unbounded_String (Path & Stripped),
-                     Is_Valid   => True,
-                     Origin     => From_Gprconfig,
-                     Toolchain  => Tc_Name,
-                     Lang       => To_Unbounded_String (Lang));
+                    (Exe       => To_Unbounded_String (Path & Stripped),
+                     Is_Valid  => True,
+                     Origin    => From_Gprconfig,
+                     Toolchain => Tc_Name,
+                     Lang      => To_Unbounded_String (Lang),
+                     Base_Name => False);
+
+                  if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada") then
+                     Full_Path := To_Unbounded_String (Path);
+                  end if;
                end if;
 
                if not Glob_List.Contains (New_Comp) then
@@ -205,40 +212,124 @@ package body Toolchains is
          for J in Toolchains.First_Index .. Toolchains.Last_Index loop
             declare
                Target : constant String := Toolchains.Element (J);
-               Tc     : Toolchain := Mgr.Get_Toolchain (Target);
+               Tc     : Toolchain;
+               Is_Default_Path : constant Boolean :=
+                                   Full_Path = Null_Unbounded_String;
             begin
-               if Tc = null then
-                  Tc := Create_Empty_Toolchain (Mgr);
-                  Set_Name (Tc, Target);
-                  Tc.Is_Native := Index (Target, "native") in Target'Range;
+               Tc := Create_Empty_Toolchain (Mgr);
+               Set_Name (Tc, Target);
+               Tc.Is_Native := Index (Target, "native") in Target'Range;
 
-                  --  not in the known toolchains database: let's use the
-                  --  default gnat scheme for commands.
+               --  not in the known toolchains database: let's use the
+               --  default gnat scheme for commands.
 
-                  if not Tc.Is_Native then
-                     --  Use general scheme for gnat toolchains
-                     Set_Command
-                       (Tc, GNAT_Driver, Target & "-gnat", True);
-                     Set_Command
-                       (Tc, GNAT_List, Target & "-gnatls", True);
-                     Set_Command
-                       (Tc, Debugger, Target & "-gdb", True);
-                     Set_Command
-                       (Tc, CPP_Filt, Target & "-c++filt", True);
-                  else
-                     Set_Command
-                       (Tc, GNAT_Driver, "gnat", True);
-                     Set_Command
-                       (Tc, GNAT_List, "gnatls", True);
-                     Set_Command
-                       (Tc, Debugger, "gdb", True);
-                     Set_Command
-                       (Tc, CPP_Filt, "c++filt", True);
-                  end if;
+               if Is_Known_Toolchain_Name (Target) then
+                  Set_Command
+                    (Tc, GNAT_Driver,
+                     To_String (Full_Path)
+                     & Tool_Command (Target, GNAT_Driver),
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, GNAT_List,
+                     To_String (Full_Path) & Tool_Command (Target, GNAT_List),
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, Debugger,
+                     To_String (Full_Path) & Tool_Command (Target, Debugger),
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, CPP_Filt,
+                     To_String (Full_Path) & Tool_Command (Target, CPP_Filt),
+                     From_Default,
+                     Is_Default_Path);
 
-                  Mgr.Add_Toolchain (Tc);
+               elsif not Tc.Is_Native then
+                  --  Use general scheme for gnat toolchains
+                  Set_Command
+                    (Tc, GNAT_Driver,
+                     To_String (Full_Path) & Target & "-gnat",
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, GNAT_List,
+                     To_String (Full_Path) & Target & "-gnatls",
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, Debugger,
+                     To_String (Full_Path) & Target & "-gdb",
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, CPP_Filt,
+                     To_String (Full_Path) & Target & "-c++filt",
+                     From_Default,
+                     Is_Default_Path);
+
+               else
+                  Set_Command
+                    (Tc, GNAT_Driver,
+                     To_String (Full_Path) & "gnat",
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, GNAT_List,
+                     To_String (Full_Path) & "gnatls",
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, Debugger,
+                     To_String (Full_Path) & "gdb",
+                     From_Default,
+                     Is_Default_Path);
+                  Set_Command
+                    (Tc, CPP_Filt,
+                     To_String (Full_Path) & "c++filt",
+                     From_Default,
+                     Is_Default_Path);
                end if;
 
+               declare
+                  Prev_Tc : Toolchain := null;
+                  Iter    : Toolchain_Maps.Cursor;
+                  use Toolchain_Maps;
+               begin
+                  --  If a previous toolchain with the same GNAT driver is
+                  --  found, then we use it instead of the just created one
+
+                  --  The check on the GNAT driver is to allow two toolchains
+                  --  for the same toolchain. In this case, one of those will
+                  --  have an absolute path as GNAT driver.
+
+                  --  Let's first try to find it
+                  Iter := Mgr.Toolchains.First;
+
+                  while Has_Element (Iter) loop
+                     Prev_Tc := Element (Iter);
+
+                     exit when
+                       ((Prev_Tc.Is_Native and then Tc.Is_Native)
+                        or else Get_Name (Prev_Tc) = Target)
+                       and then Get_Command (Prev_Tc, GNAT_Driver) =
+                         Get_Command (Tc, GNAT_Driver);
+
+                     Prev_Tc := null;
+                     Next (Iter);
+                  end loop;
+
+                  if Prev_Tc /= null then
+                     --  Let's use this one instead of our newly created one
+                     Free (Tc);
+                     Tc := Prev_Tc;
+                  else
+                     Mgr.Add_Toolchain (Tc);
+                  end if;
+               end;
+
+               --  Now set (or modify) the list of compilers
                for J in Glob_List.First_Index .. Glob_List.Last_Index loop
                   if To_String (Glob_List.Element (J).Toolchain) =
                     Target
@@ -562,7 +653,7 @@ package body Toolchains is
    -----------------
 
    function Get_Command
-     (This : Toolchain; Name : Tools) return String
+     (This : Toolchain; Name : Valid_Tools) return String
    is
       function Base_Tool_Name return String;
 
@@ -584,34 +675,30 @@ package body Toolchains is
 
             when CPP_Filt =>
                return "c++filt";
-
-            when Unknown =>
-               return "";
          end case;
 
       end Base_Tool_Name;
 
    begin
-      if This.Tool_Commands (Name) = null
-        and then This.Default_Tools (Name) = null
-      then
-         if Name = Unknown then
-            return "";
-         end if;
+      if This.Tools (Name) = No_Tool then
+         if This.Default_Tools (Name) /= No_Tool then
+            This.Tools (Name) := This.Default_Tools (Name);
 
-         if This.Is_Native then
-            Set_Command (This, Name, Base_Tool_Name, True);
+         elsif This.Is_Native then
+            Set_Command
+              (This, Name, Base_Tool_Name,
+               From_Default,
+               True);
+
          else
             Set_Command
-              (This, Name, This.Name.all & "-" & Base_Tool_Name, True);
+              (This, Name, This.Name.all & "-" & Base_Tool_Name,
+               From_Default,
+               True);
          end if;
       end if;
 
-      if This.Tool_Commands (Name) /= null then
-         return This.Tool_Commands (Name).all;
-      else
-         return This.Default_Tools (Name).all;
-      end if;
+      return To_String (This.Tools (Name).Command);
    end Get_Command;
 
    ------------------
@@ -629,37 +716,60 @@ package body Toolchains is
                     Is_Valid  => False,
                     Origin    => Origin,
                     Toolchain => To_Unbounded_String (Get_Name (This)),
-                    Lang      => To_Unbounded_String (Lang));
+                    Lang      => To_Unbounded_String (Lang),
+                    Base_Name => False);
+      File     : Virtual_File;
 
    begin
-      if Locate_On_Path (+Value, Get_Nickname (Build_Server)) /= No_File then
+      File := Locate_On_Path (+Value, Get_Nickname (Build_Server));
+      if File /= No_File then
          New_Comp.Is_Valid := True;
+
+         if +File.Base_Name (File.File_Extension) = Value then
+            New_Comp.Base_Name := True;
+         end if;
       end if;
 
-      --  If a compiler exists for the same language and comes from default
-      --  (e.g. xml definition file), the we replace it if we have more
-      --  accurate information (coming from gprconfig)
-      if Origin = From_Gprconfig then
-         for J in This.Full_Compiler_List.First_Index ..
-           This.Full_Compiler_List.Last_Index
-         loop
-            declare
-               Comp : constant Compiler := This.Full_Compiler_List.Element (J);
+      for J in This.Full_Compiler_List.First_Index ..
+        This.Full_Compiler_List.Last_Index
+      loop
+         declare
+            Comp : constant Compiler := This.Full_Compiler_List.Element (J);
 
-            begin
-               if Comp.Lang = New_Comp.Lang
-                 and then Comp.Origin = From_Default
+         begin
+            if Ada.Strings.Equal_Case_Insensitive
+              (To_String (Comp.Lang), Lang)
+            then
+               --  If a compiler exists for the same language and comes from
+               --  default (e.g. xml definition file), the we replace it if we
+               --  have more accurate information (e.g. new one is coming from
+               --  a gprconfig query)
+               if Comp.Origin = From_Default
+                 and then Origin = From_Gprconfig
                then
                   This.Full_Compiler_List.Replace_Element (J, New_Comp);
 
                   return;
+
+               --  If we are inserting a user-defined compiler, then we replace
+               --  a previously existing user-defined compiler for the same
+               --  language
+               elsif Comp.Origin = From_User
+                 and then Origin = From_User
+               then
+                  This.Full_Compiler_List.Replace_Element (J, New_Comp);
+
+                  return;
+
                end if;
-            end;
-         end loop;
-      end if;
+            end if;
+         end;
+      end loop;
 
       This.Full_Compiler_List.Append (New_Comp);
 
+      --  If no previous compiler existed, then let's set the in-use compiler
+      --  for the language
       if not This.Used_Compiler_List.Contains (Lang) then
          This.Used_Compiler_List.Insert
            (Lang, Natural (This.Full_Compiler_List.Last_Index));
@@ -676,54 +786,27 @@ package body Toolchains is
       Value : String)
    is
       Full     : Compiler_Vector.Vector renames This.Full_Compiler_List;
-      User_Def : Natural := 0;
-      New_Comp : Compiler;
 
    begin
       for J in Full.First_Index .. Full.Last_Index loop
          if Ada.Strings.Equal_Case_Insensitive
               (To_String (Full.Element (J).Lang), Lang)
          then
+            --  The compiler already exists. Let's just modify the in-use
+            --  compiler list to point to this existing compiler.
             if Get_Exe (Full.Element (J)) = Value then
                This.Used_Compiler_List.Replace (Lang, J);
 
                return;
             end if;
-
-            --  Save position of the user-defined compiler
-            if Full.Element (J).Origin = From_User then
-               User_Def := J;
-            end if;
          end if;
       end loop;
 
       --  No reuseable compiler found, let's insert one
-      New_Comp :=
-        (Exe       => To_Unbounded_String (Value),
-         Is_Valid  => False,
-         Origin    => From_User,
-         Toolchain => To_Unbounded_String (Get_Name (This)),
-         Lang      => To_Unbounded_String (Lang));
+      Add_Compiler (This, Lang, Value, From_User);
 
-      if Locate_On_Path (+Value, Get_Nickname (Build_Server)) /= No_File then
-         New_Comp.Is_Valid := True;
-      end if;
-
-      if User_Def /= 0 then
-         --  Replace the previously user-defined compiler
-         This.Full_Compiler_List.Replace_Element (User_Def, New_Comp);
-         This.Used_Compiler_List.Replace (Lang, User_Def);
-      else
-         This.Full_Compiler_List.Append (New_Comp);
-
-         if This.Used_Compiler_List.Contains (Lang) then
-            This.Used_Compiler_List.Replace
-              (Lang, This.Full_Compiler_List.Last_Index);
-         else
-            This.Used_Compiler_List.Insert
-              (Lang, This.Full_Compiler_List.Last_Index);
-         end if;
-      end if;
+      --  And retry ...
+      Set_Compiler (This, Lang, Value);
    end Set_Compiler;
 
    ------------------
@@ -849,6 +932,15 @@ package body Toolchains is
    end Get_Default_Compiler_Index;
 
    ----------------
+   -- Is_Defined --
+   ----------------
+
+   function Is_Defined (This : Toolchain; Lang : String) return Boolean is
+   begin
+      return Get_Default_Compiler_Index (This, Lang) /= 0;
+   end Is_Defined;
+
+   ----------------
    -- Is_Default --
    ----------------
 
@@ -857,13 +949,24 @@ package body Toolchains is
                   Get_Default_Compiler_Index (This, Lang);
    begin
       if Default = 0 then
-         --  no compiler exist for this language, so no compiler is the default
-         return True;
+         --  no compiler exist for this language ... so no default
+         return False;
 
       else
          return Default = This.Used_Compiler_List.Element (Lang);
       end if;
    end Is_Default;
+
+   ------------------
+   -- Is_Base_Name --
+   ------------------
+
+   function Is_Base_Name (This : Toolchain; Lang : String) return Boolean
+   is
+      Comp : constant Compiler := Get_Compiler (This, Lang);
+   begin
+      return Comp.Base_Name;
+   end Is_Base_Name;
 
    ----------------------
    -- Reset_To_Default --
@@ -895,40 +998,25 @@ package body Toolchains is
    -----------------
 
    procedure Set_Command
-     (This       : Toolchain;
-      Name       : Tools;
-      Value      : String;
-      Is_Default : Boolean := False)
+     (This         : Toolchain;
+      Name         : Valid_Tools;
+      Value        : String;
+      Origin       : Compiler_Origin;
+      Is_Base_Name : Boolean)
    is
+      Tool : Tool_Record :=
+               (Command   => To_Unbounded_String (Value),
+                Is_Valid  =>
+                  Locate_On_Path
+                    (+Value, Remote.Get_Nickname (Build_Server)) /= No_File,
+                Origin    => Origin,
+                Base_Name => Is_Base_Name);
+
    begin
-      if This.Default_Tools (Name) /= null
-        and then This.Default_Tools (Name).all = Value
-      then
-         --  Resetting the default tool, free the custom value
-         Free (This.Tool_Commands (Name));
-
+      if Origin = From_Default then
+         This.Default_Tools (Name) := Tool;
       else
-         if Active (Me) then
-            Trace (Me, Name'Img & " default state set to " &
-                   Is_Default'Img);
-         end if;
-
-         if Is_Default then
-            Free (This.Default_Tools (Name));
-            This.Default_Tools (Name) := new String'(Value);
-         else
-            Free (This.Tool_Commands (Name));
-            This.Tool_Commands (Name) := new String'(Value);
-         end if;
-      end if;
-
-      if Value /= ""
-        and then
-         Locate_On_Path (+Value, Remote.Get_Nickname (Build_Server)) /= No_File
-      then
-         This.Is_Valid_Tool (Name) := True;
-      else
-         This.Is_Valid_Tool (Name) := False;
+         This.Tools (Name) := Tool;
       end if;
    end Set_Command;
 
@@ -938,7 +1026,7 @@ package body Toolchains is
 
    function Is_Valid (This : Toolchain; Name : Tools) return Boolean is
    begin
-      return This.Is_Valid_Tool (Name);
+      return This.Tools (Name).Is_Valid;
    end Is_Valid;
 
    ----------------
@@ -947,9 +1035,18 @@ package body Toolchains is
 
    function Is_Default (This : Toolchain; Name : Tools) return Boolean is
    begin
-      return This.Tool_Commands (Name) = null
-        and then This.Default_Tools (Name) /= null;
+      return This.Tools (Name).Command = This.Default_Tools (Name).Command;
    end Is_Default;
+
+   ------------------
+   -- Is_Base_Name --
+   ------------------
+
+   function Is_Base_Name (This : Toolchain; Name : Tools) return Boolean
+   is
+   begin
+      return This.Tools (Name).Base_Name;
+   end Is_Base_Name;
 
    ----------------------
    -- Reset_To_Default --
@@ -957,7 +1054,7 @@ package body Toolchains is
 
    procedure Reset_To_Default (This : Toolchain; Name : Tools) is
    begin
-      Set_Command (This, Name, This.Default_Tools (Name).all);
+      This.Tools (Name) := This.Default_Tools (Name);
    end Reset_To_Default;
 
    --------------
@@ -1030,17 +1127,6 @@ package body Toolchains is
       if Result.Label /= null then
          Result.Label := new String'(Result.Label.all);
       end if;
-
-      for J in Result.Tool_Commands'Range loop
-         if Result.Tool_Commands (J) /= null then
-            Result.Tool_Commands (J) :=
-              new String'(Result.Tool_Commands (J).all);
-         end if;
-         if Result.Default_Tools (J) /= null then
-            Result.Default_Tools (J) :=
-              new String'(Result.Default_Tools (J).all);
-         end if;
-      end loop;
 
       --  Deep copy of the containers
 
@@ -1117,10 +1203,8 @@ package body Toolchains is
       Free (This.Label);
       Free (This.Name);
 
-      for J in This.Tool_Commands'Range loop
-         Free (This.Tool_Commands (J));
-         Free (This.Default_Tools (J));
-      end loop;
+      This.Full_Compiler_List.Clear;
+      This.Used_Compiler_List.Clear;
 
       Free (This);
    end Free;
@@ -1237,24 +1321,18 @@ package body Toolchains is
      (Manager : access Toolchain_Manager_Record;
       Project : Project_Type) return Toolchain
    is
-      GNAT_List_Str   : constant String :=
-                          Attribute_Value
-                            (Project, Build ("ide", "gnatlist"), "");
-      GNAT_Driver_Str : constant String :=
-                          Attribute_Value
-                            (Project, Build ("ide", "gnat"), "");
-      Gnatmake_Str    : constant String :=
-                          Attribute_Value
-                            (Project,
-                             Build ("ide", "compiler_command"), "ada");
-      Debugger_Str    : constant String :=
-                          Attribute_Value
-                            (Project, Build ("ide", "debugger_command"), "");
+      GNAT_List_Str : constant String :=
+                        Attribute_Value (Project, Gnatlist_Attribute);
+      GNAT_Str      : constant String :=
+                        Attribute_Value (Project, GNAT_Attribute);
+      Debugger_Str  : constant String :=
+                        Attribute_Value (Project, Debugger_Command_Attribute);
+      Gnatmake_Str  : constant String :=
+                        Attribute_Value
+                          (Project, Compiler_Command_Attribute, "ada");
+      New_Toolchain : Toolchain := Create_Empty_Toolchain (Manager);
 
-      Compilers : Compiler_Vector.Vector;
-
-      function Toolchain_Matches
-        (TC : Toolchain; Drivers : Compiler_Vector.Vector) return Boolean;
+      function Toolchain_Matches (TC : Toolchain) return Boolean;
       --  Compares the toolchain values against the above attributes, and
       --  return true if the values match.
 
@@ -1273,39 +1351,37 @@ package body Toolchains is
       -----------------------
 
       function Toolchain_Matches
-        (TC : Toolchain; Drivers : Compiler_Vector.Vector) return Boolean
+        (TC : Toolchain) return Boolean
       is
          Cursor : Compiler_Vector.Cursor;
+         use Compiler_Vector;
+
       begin
          if (GNAT_List_Str = ""
            or else GNAT_List_Str = Get_Command (TC, GNAT_List))
            and then
-             (GNAT_Driver_Str = ""
-              or else GNAT_Driver_Str = Get_Command (TC, GNAT_Driver))
+             (GNAT_Str = ""
+              or else GNAT_Str = Get_Command (TC, GNAT_Driver))
            and then
              (Debugger_Str = ""
               or else Debugger_Str = Get_Command (TC, Debugger))
          then
-            Cursor := Drivers.First;
+            Cursor := New_Toolchain.Full_Compiler_List.First;
 
-            while Compiler_Vector.Has_Element (Cursor) loop
+            while Has_Element (Cursor) loop
                declare
-                  Lang        : constant String :=
-                                  To_String
-                                    (Compiler_Vector.Element (Cursor).Lang);
-                  Tc_Compiler : constant Compiler :=
-                                  Get_Compiler (TC, Lang);
+                  Comp : constant Compiler :=
+                           Get_Compiler
+                             (TC, To_String (Element (Cursor).Lang));
                begin
-                  if Tc_Compiler /= No_Compiler
-                    and then not Compilers_Match
-                      (Tc_Compiler,
-                       Compiler_Vector.Element (Cursor))
+                  if Comp /= No_Compiler
+                    and then not Compilers_Match (Comp, Element (Cursor))
                   then
                      return False;
                   end if;
                end;
 
-               Compiler_Vector.Next (Cursor);
+               Next (Cursor);
             end loop;
 
             return True;
@@ -1321,7 +1397,7 @@ package body Toolchains is
       function Get_Prefix return String is
       begin
          declare
-            S : constant String := Get_Prefix (Gnatmake_Str);
+            S : constant String := Get_Prefix (GNAT_Str);
          begin
             if S /= "" then
                return S;
@@ -1337,7 +1413,7 @@ package body Toolchains is
          end;
 
          declare
-            S : constant String := Get_Prefix (GNAT_Driver_Str);
+            S : constant String := Get_Prefix (Debugger_Str);
          begin
             if S /= "" then
                return S;
@@ -1345,7 +1421,7 @@ package body Toolchains is
          end;
 
          declare
-            S : constant String := Get_Prefix (Debugger_Str);
+            S : constant String := Get_Prefix (Gnatmake_Str);
          begin
             if S /= "" then
                return S;
@@ -1413,15 +1489,11 @@ package body Toolchains is
                              Default => "gps-dummy-default");
             begin
                if Driver /= "gps-dummy-default" then
-                  --  We don't care about Is_Valid and Toolchain, not used
-                  --  later on.
-                  Compilers.Append
-                    (Compiler'
-                       (Exe       => To_Unbounded_String (Driver),
-                        Is_Valid  => False,
-                        Origin    => Origin,
-                        Toolchain => Null_Unbounded_String,
-                        Lang      => To_Unbounded_String (Indexes (J).all)));
+                  Add_Compiler
+                    (New_Toolchain,
+                     Lang   => Indexes (J).all,
+                     Value  => Driver,
+                     Origin => Origin);
                end if;
             end;
          end loop;
@@ -1437,9 +1509,9 @@ package body Toolchains is
 
       Is_Empty  : constant Boolean :=
                     GNAT_List_Str = ""
-                        and then GNAT_Driver_Str = ""
+                        and then GNAT_Str = ""
                         and then Gnatmake_Str = ""
-                        and then Debugger_Str = "";
+                                and then Debugger_Str = "";
 
    begin
       --  We read the compilers defined directly in the project first.
@@ -1455,7 +1527,7 @@ package body Toolchains is
          while Toolchain_Maps.Has_Element (Cursor) loop
             Ret := Toolchain_Maps.Element (Cursor);
 
-            if Toolchain_Matches (Ret, Compilers) then
+            if Toolchain_Matches (Ret) then
                --  Exact match, we can return this toolchain
                return Ret;
             end if;
@@ -1518,21 +1590,21 @@ package body Toolchains is
             Modified := True;
          end if;
 
-         Set_Command (Ret, GNAT_List, GNAT_List_Str);
+         Set_Command (Ret, GNAT_List, GNAT_List_Str, From_Project, False);
 
          --  Reset the library as gnatls changed
          Ret.Library := null;
       end if;
 
-      if GNAT_Driver_Str /= Get_Command (Ret, GNAT_Driver)
-        and then GNAT_Driver_Str /= ""
+      if GNAT_Str /= Get_Command (Ret, GNAT_Driver)
+        and then GNAT_Str /= ""
       then
          if not Modified then
             Ret := Copy (Ret);
             Modified := True;
          end if;
 
-         Set_Command (Ret, GNAT_Driver, GNAT_Driver_Str);
+         Set_Command (Ret, GNAT_Driver, GNAT_Str, From_Project, False);
       end if;
 
       if Debugger_Str /= Get_Command (Ret, Debugger)
@@ -1543,15 +1615,17 @@ package body Toolchains is
             Modified := True;
          end if;
 
-         Set_Command (Ret, Debugger, Debugger_Str);
+         Set_Command (Ret, Debugger, Debugger_Str, From_Project, False);
       end if;
 
       --  Init the explicitely defined compilers
-      for J in Compilers.First_Index .. Compilers.Last_Index loop
+      while not New_Toolchain.Full_Compiler_List.Is_Empty loop
          declare
-            Lang : constant String := To_String (Compilers.Element (J).Lang);
-            Comp : constant String := To_String (Compilers.Element (J).Exe);
-            Orig : constant Compiler_Origin := Compilers.Element (J).Origin;
+            C    : constant Compiler :=
+                     New_Toolchain.Full_Compiler_List.First_Element;
+            Lang : constant String := To_String (C.Lang);
+            Comp : constant String := To_String (C.Exe);
+            Orig : constant Compiler_Origin := C.Origin;
             Arr  : constant Compiler_Array := Get_Compilers (Ret, Lang);
             Found : Boolean;
 
@@ -1581,7 +1655,11 @@ package body Toolchains is
                end if;
             end if;
          end;
+
+         New_Toolchain.Full_Compiler_List.Delete_First;
       end loop;
+
+      Free (New_Toolchain);
 
       --  If the toolchain has been modified, then we now need to find a new
       --  name.
@@ -1747,9 +1825,8 @@ package body Toolchains is
          Label              => null,
          Is_Native          => True,
          Is_Custom          => False,
-         Tool_Commands      => (others => null),
-         Default_Tools      => (others => null),
-         Is_Valid_Tool      => (others => False),
+         Tools              => (others => No_Tool),
+         Default_Tools      => (others => No_Tool),
          Full_Compiler_List => Compiler_Vector.Empty_Vector,
          Used_Compiler_List => Compiler_Ref_Maps.Empty_Map,
          Compilers_Scanned  => False,
@@ -1758,10 +1835,10 @@ package body Toolchains is
          Manager            => Toolchain_Manager (Manager),
          Refs               => 0);
 
-      Set_Command (Native_Toolchain, GNAT_Driver, "gnat", True);
-      Set_Command (Native_Toolchain, GNAT_List, "gnatls", True);
-      Set_Command (Native_Toolchain, Debugger, "gdb", True);
-      Set_Command (Native_Toolchain, CPP_Filt, "c++filt", True);
+      Set_Command (Native_Toolchain, GNAT_Driver, "gnat", From_Default, True);
+      Set_Command (Native_Toolchain, GNAT_List, "gnatls", From_Default, True);
+      Set_Command (Native_Toolchain, Debugger, "gdb", From_Default, True);
+      Set_Command (Native_Toolchain, CPP_Filt, "c++filt", From_Default, True);
 
       Compute_Predefined_Paths (Native_Toolchain);
 
@@ -1816,6 +1893,7 @@ package body Toolchains is
          Set_Command
            (This, T,
             Toolchains.Known.Tool_Command (Name, T),
+            From_Default,
             True);
       end loop;
 

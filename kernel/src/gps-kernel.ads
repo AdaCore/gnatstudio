@@ -51,6 +51,7 @@ with Refactoring;
 with Switches_Chooser;
 with String_List_Utils;
 with Task_Manager;
+with Toolchains;
 with XML_Utils;
 
 with GPS.Editors;
@@ -587,6 +588,18 @@ package GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record;
       Factory : GPS.Editors.Editor_Buffer_Factory_Access);
 
+   -------------------------
+   --  Toolchains Manager --
+   -------------------------
+
+   function Get_Toolchains_Manager
+     (Kernel : access Kernel_Handle_Record)
+      return Toolchains.Toolchain_Manager;
+
+   procedure Set_Toolchains_Manager
+     (Kernel  : access Kernel_Handle_Record;
+      Manager : Toolchains.Toolchain_Manager);
+
    -----------------
    -- Refactoring --
    -----------------
@@ -1070,6 +1083,8 @@ private
       Hidden_File_Matcher : Pattern_Matcher_Access;
 
       Editor_Factory               : GPS.Editors.Editor_Buffer_Factory_Access;
+
+      Toolchains_Manager           : Toolchains.Toolchain_Manager;
 
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode

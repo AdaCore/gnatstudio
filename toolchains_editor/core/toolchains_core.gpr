@@ -1,5 +1,4 @@
 with "../../common/common";
-with "../../kernel/kernel";
 with "../../shared";
 
 project Toolchains_Core is

@@ -78,9 +78,7 @@ package body Toolchains_Editor is
 
    Me : constant Debug_Handle := Traces.Create ("Toolchains_Editor");
 
-   type Toolchains_Module_Record is new Module_ID_Record with record
-      Mgr : Toolchains.Toolchain_Manager;
-   end record;
+   type Toolchains_Module_Record is new Module_ID_Record with null record;
    type Toolchains_Module is access all Toolchains_Module_Record'Class;
 
    Toolchains_Module_ID   : Toolchains_Module;
@@ -244,11 +242,11 @@ package body Toolchains_Editor is
 
       Editor.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
 
-      if Toolchains_Module_ID.Mgr = null then
+      if Kernel.Get_Toolchains_Manager = null then
          Editor.Mgr    := new GPS_Toolchain_Manager_Record;
-         Toolchains_Module_ID.Mgr := Editor.Mgr;
+         Kernel.Set_Toolchains_Manager (Editor.Mgr);
       else
-         Editor.Mgr := Toolchains_Module_ID.Mgr;
+         Editor.Mgr := Kernel.Get_Toolchains_Manager;
       end if;
 
       GPS_Toolchain_Manager_Record (Editor.Mgr.all).Kernel :=
@@ -581,6 +579,12 @@ package body Toolchains_Editor is
       procedure Clear_Attribute
         (Attr : Attribute_Pkg_String;
          Idx  : String);
+      function Get_Tool_Attribute
+        (Tool : Valid_Tools) return Attribute_Pkg_String;
+
+      -------------------
+      -- Set_Attribute --
+      -------------------
 
       procedure Set_Attribute
         (Attr : Attribute_Pkg_String;
@@ -600,6 +604,10 @@ package body Toolchains_Editor is
          end if;
       end Set_Attribute;
 
+      ---------------------
+      -- Clear_Attribute --
+      ---------------------
+
       procedure Clear_Attribute
         (Attr : Attribute_Pkg_String;
          Idx  : String)
@@ -616,6 +624,27 @@ package body Toolchains_Editor is
             Modified := True;
          end if;
       end Clear_Attribute;
+
+      No_Attribute : constant Attribute_Pkg_String := Build ("", "");
+
+      ------------------------
+      -- Get_Tool_Attribute --
+      ------------------------
+
+      function Get_Tool_Attribute
+        (Tool : Valid_Tools) return Attribute_Pkg_String is
+      begin
+         case Tool is
+            when GNAT_Driver =>
+               return GNAT_Attribute;
+            when GNAT_List =>
+               return Gnatlist_Attribute;
+            when Debugger =>
+               return Debugger_Command_Attribute;
+            when CPP_Filt =>
+               return No_Attribute;
+         end case;
+      end Get_Tool_Attribute;
 
    begin
       Trace (Me, "Generate project");
@@ -659,39 +688,24 @@ package body Toolchains_Editor is
 
       --  Now save the toolchain
 
-      Trace (Me, "Saving the GNAT driver");
-      if not Toolchains.Is_Native (Tc)
-        or else not Is_Default (Tc, GNAT_Driver)
-      then
-         Set_Attribute
-           (GNATCOLL.Projects.GNAT_Attribute, "",
-            Get_Command (Tc, GNAT_Driver));
+      for Tool in Valid_Tools'Range loop
+         declare
+            Attr : constant Attribute_Pkg_String := Get_Tool_Attribute (Tool);
+         begin
+            if Attr /= No_Attribute then
+               if not Toolchains.Is_Native (Tc)
+                 or else not Is_Default (Tc, Tool)
+                 or else not Is_Base_Name (Tc, Tool)
+               then
 
-      else
-         Clear_Attribute (GNATCOLL.Projects.GNAT_Attribute, "");
-      end if;
-
-      Trace (Me, "Saving the GNAT ls attribute");
-      if not Toolchains.Is_Native (Tc)
-        or else not Is_Default (Tc, GNAT_List)
-      then
-         Set_Attribute
-           (GNATCOLL.Projects.Gnatlist_Attribute, "",
-            Get_Command (Tc, GNAT_List));
-      else
-         Clear_Attribute (GNATCOLL.Projects.Gnatlist_Attribute, "");
-      end if;
-
-      Trace (Me, "Saving the Debugger attribute");
-      if not Toolchains.Is_Native (Tc)
-          or else not Is_Default (Tc, Debugger)
-      then
-         Set_Attribute
-           (GNATCOLL.Projects.Debugger_Command_Attribute, "",
-            Get_Command (Tc, Debugger));
-      else
-         Clear_Attribute (GNATCOLL.Projects.Debugger_Command_Attribute, "");
-      end if;
+                  Set_Attribute
+                    (Attr, "", Get_Command (Tc, Tool));
+               else
+                  Clear_Attribute (Attr, "");
+               end if;
+            end if;
+         end;
+      end loop;
 
       --  Now see if individual compiler drivers have been explicitely set
 
@@ -716,7 +730,10 @@ package body Toolchains_Editor is
                      Clear_Attribute
                        (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
 
-                     if not Is_Default (Tc, Lang) then
+                     if Is_Defined (Tc, Lang)
+                       and then (not Is_Default (Tc, Lang)
+                                 or else not Is_Base_Name (Tc, Lang))
+                     then
                         Set_Attribute
                           (GNATCOLL.Projects.Compiler_Command_Attribute,
                            Lang, Get_Exe (Comp));
@@ -1198,7 +1215,8 @@ package body Toolchains_Editor is
       case User_Data.Kind is
          when Tool_Kind_Tool =>
             if Toolchains.Get_Command (Tc, User_Data.Tool_Name) /= Val then
-               Toolchains.Set_Command (Tc, User_Data.Tool_Name, Val);
+               Toolchains.Set_Command
+                 (Tc, User_Data.Tool_Name, Val, From_User, False);
                Set_Detail
                  (Toolchains_Edit (Widget),
                   Label       => User_Data.Label,
@@ -1472,7 +1490,7 @@ package body Toolchains_Editor is
                Trace (Me, "Adding a new toolchain");
                Tc := Create_Empty_Toolchain (Editor.Mgr);
                Set_Name (Tc, Name);
-               Set_Command (Tc, GNAT_Driver, Name & "-gnat");
+               Set_Command (Tc, GNAT_Driver, Name & "-gnat", From_User, True);
                Editor.Mgr.Add_Toolchain (Tc);
             end if;
 
@@ -1556,16 +1574,16 @@ package body Toolchains_Editor is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
-      Hook_Data : constant Server_Config_Changed_Hooks_Args :=
-                    Server_Config_Changed_Hooks_Args (Data.all);
+      Hook_Data  : constant Server_Config_Changed_Hooks_Args :=
+                     Server_Config_Changed_Hooks_Args (Data.all);
+      Kernel_Mgr : Toolchain_Manager := Kernel.Get_Toolchains_Manager;
 
    begin
-      if Hook_Data.Server = Build_Server
-        and then Toolchains_Module_ID.Mgr /= null
-      then
-         Toolchains_Module_ID.Mgr.Clear_Toolchains;
-         Free (Toolchains_Module_ID.Mgr);
+      if Hook_Data.Server = Build_Server and then Kernel_Mgr /= null then
+         Kernel_Mgr.Clear_Toolchains;
+         Free (Kernel_Mgr);
+         Kernel_Mgr := new GPS_Toolchain_Manager_Record;
+         Kernel.Set_Toolchains_Manager (Kernel_Mgr);
       end if;
    end On_Server_Changed;
 
@@ -1582,6 +1600,8 @@ package body Toolchains_Editor is
          Kernel                  => Kernel,
          Module_Name             => Toolchains_Module_Name,
          Priority                => Default_Priority);
+
+      Kernel.Set_Toolchains_Manager (new GPS_Toolchain_Manager_Record);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
