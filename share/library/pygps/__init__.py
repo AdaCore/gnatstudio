@@ -214,7 +214,7 @@ try:
   # The following subprograms are provided to access GPS menus and wait
   # until they have open a dialog
 
-  def open_menu (menu, on_open, widgets, args, kwargs, timeout=0, dialogname=""):
+  def open_menu (menu, on_open, widgets, args, kwargs, timeout=0):
     """Generic function to open a menu, wait for the dialog to appear,
        and then call a user callback with several arguments: one for the
        newly created dialog, one for each widget whose name is specified
@@ -223,7 +223,7 @@ try:
        your application needs.
        Do not use this directly in general, but rather
        open_project_properties, open_project_wizard,..."""
-    def internal_on_open (on_open, widgets, windows, dialogname, args, kwargs):
+    def internal_on_open (on_open, widgets, windows, args, kwargs):
        dialog = [w for w in gtk.window_list_toplevels() \
                  if not w in windows and w.flags () & gtk.MAPPED]
        if not dialog:
@@ -241,7 +241,7 @@ try:
     windows = gtk.window_list_toplevels()
     if timeout == 0:
       gobject.idle_add \
-        (lambda: internal_on_open (on_open, widgets, windows, dialogname, args, kwargs))
+        (lambda: internal_on_open (on_open, widgets, windows, args, kwargs))
     else:
       gobject.timeout_add \
         (timeout, lambda: internal_on_open (on_open, widgets, windows, args, kwargs))
