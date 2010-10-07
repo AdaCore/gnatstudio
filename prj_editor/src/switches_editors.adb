@@ -594,7 +594,14 @@ package body Switches_Editors is
      (Switches          : access Switches_Edit_Record'Class;
       Tool              : Tool_Properties_Record;
       Files             : File_Array;
-      Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List is
+      Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List
+   is
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
+
+      Value : String_List_Access;
+
    begin
       if Tool.Project_Attribute.all = "default_switches" then
          --  Tool's attribute is not defined in tool's descriptor, default
@@ -617,25 +624,23 @@ package body Switches_Editors is
          --  Tool's attribute is defined in tool's descriptor, request value
          --  of the tool specific attribute and index.
 
-         declare
-            procedure Free is
-              new Ada.Unchecked_Deallocation
-                (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
+         Value := Switches.Project.Attribute_Value
+           (Attribute =>
+              Attribute_Pkg_List'
+              (Build
+                 (Tool.Project_Package.all, Tool.Project_Attribute.all)),
+            Index     => Tool.Project_Index.all);
 
-            Value : String_List_Access
-              := Switches.Project.Attribute_Value
-                (Attribute =>
-                   Attribute_Pkg_List'
-                   (Build
-                      (Tool.Project_Package.all, Tool.Project_Attribute.all)),
-                 Index     => Tool.Project_Index.all);
-            Result : constant GNAT.Strings.String_List := Value.all;
-
-         begin
-            Free (Value);
-
-            return Result;
-         end;
+         if Value = null then
+            return (1 .. 0 => null);
+         else
+            declare
+               Result : constant GNAT.Strings.String_List := Value.all;
+            begin
+               Free (Value);
+               return Result;
+            end;
+         end if;
       end if;
    end Get_Switches;
 
