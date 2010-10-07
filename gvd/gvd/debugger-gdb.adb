@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
@@ -173,6 +174,10 @@ package body Debugger.Gdb is
    GNAT_Binder_File_Pattern  : constant Pattern_Matcher := Compile
      ("(b(~|_).+\.(adb|c))");
 
+   Version_Pattern : constant Pattern_Matcher := Compile
+     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+) .*");
+   --  To detect the version of GDB
+
    No_Definition_Of          : constant String := "No definition of";
    --  String used to detect undefined commands
 
@@ -265,6 +270,41 @@ package body Debugger.Gdb is
    --  Flag should be set to -1 initially, and will be set to either 0 or 1
    --  depending on whether the command is supported or not. Further calls to
    --  this subprogram will do nothing.
+
+   function Get_GDB_Version
+     (Debugger : access Gdb_Debugger) return Version_Number;
+   --  Return the GDB version number.
+
+   ---------------------
+   -- Get_GDB_Version --
+   ---------------------
+
+   function Get_GDB_Version
+     (Debugger : access Gdb_Debugger) return Version_Number
+   is
+   begin
+      if Debugger.GDB_Version /= Unknown_Version then
+         return Debugger.GDB_Version;
+      end if;
+
+      declare
+         S       : constant String :=
+           Send (Debugger, "show version", Mode => Internal);
+         Matched : Match_Array (0 .. 3);
+      begin
+         Match (Version_Pattern, S, Matched);
+
+         if Matched (0) = No_Match then
+            Debugger.GDB_Version := (0, 1);
+         else
+            Debugger.GDB_Version :=
+              (Natural'Value (S (Matched (2).First .. Matched (2).Last)),
+               Natural'Value (S (Matched (3).First .. Matched (3).Last)));
+         end if;
+      end;
+
+      return Debugger.GDB_Version;
+   end Get_GDB_Version;
 
    --------------------------
    -- Detect_Debugger_Mode --
@@ -3756,13 +3796,59 @@ package body Debugger.Gdb is
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is
-      Disassembled : constant String :=
-                       Send
-                         (Debugger,
-                          "disassemble " &
-                          Address_To_String (Start_Address) & " " &
-                          Address_To_String (End_Address),
-                          Mode => Internal);
+      function Get_Disassembled return String;
+      --  Return the output of the appropriate "disassemble" command
+
+      ----------------------
+      -- Get_Disassembled --
+      ----------------------
+
+      function Get_Disassembled return String is
+         Version : constant Version_Number := Get_GDB_Version (Debugger);
+
+      begin
+         if Version.Major > 7
+           or else
+             (Version.Major = 7
+              and then Version.Minor >= 1)
+         then
+            declare
+               S : constant String := Send
+                 (Debugger,
+                  "disassemble " &
+                  Address_To_String (Start_Address) & ", " &
+                  Address_To_String (End_Address),
+                  Mode => Internal);
+               A : constant Unbounded_String_Array := Split (S, ASCII.LF);
+               R : Unbounded_String;
+            begin
+               --  Process the output to strip the blanks or the "=>" leading
+               --  to the addresses
+               R := A (A'First) & ASCII.LF;
+               for J in A'First + 1 .. A'Last - 1 loop
+                  declare
+                     T : constant String := To_String (A (J));
+                     N : Natural := T'First;
+                  begin
+                     Skip_To_String (T, N, "0x");
+                     R := R & T (N .. T'Last) & ASCII.LF;
+                  end;
+               end loop;
+               R := R & A (A'Last);
+               return To_String (R);
+            end;
+
+         else
+            return Send
+              (Debugger,
+               "disassemble " &
+               Address_To_String (Start_Address) & " " &
+               Address_To_String (End_Address),
+               Mode => Internal);
+         end if;
+      end Get_Disassembled;
+
+      Disassembled : constant String := Get_Disassembled;
       Tmp,
       Start_Index,
       End_Index    : Integer;
@@ -3879,7 +3965,7 @@ package body Debugger.Gdb is
       Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
       Error_String : constant String := "Cannot access memory at";
       Image        : constant String := Integer'Image (Size / 8);
-      S            : String_Access := new String'(Send
+      S            : GNAT.OS_Lib.String_Access := new String'(Send
         (Debugger,
          "x/" & Image (Image'First + 1 .. Image'Last)
          & "gx " & Address, Mode => Internal));
