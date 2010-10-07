@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2000-2009, AdaCore               --
+--                    Copyright (C) 2000-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -432,12 +432,24 @@ private
    --  * Note: "target" is only launched if the debugger is not already
    --    connected to a target.
 
+   ----------------------
+   -- Version handling --
+   ----------------------
+
+   type Version_Number is record
+      Major : Natural;
+      Minor : Natural;
+   end record;
+
+   Unknown_Version : constant Version_Number := (Major => 0, Minor => 0);
+
    type Gdb_Debugger is new Debugger.Debugger_Root with record
       Executable       : GNATCOLL.VFS.Virtual_File;
       Executable_Args  : GNAT.Strings.String_Access;
       Stored_Language  : GNAT.Strings.String_Access;
       WTX_List         : GNAT.Strings.String_Access;
       WTX_Index        : Natural;
+      GDB_Version      : Version_Number := Unknown_Version;
       VxWorks_Version  : GVD.Types.VxWorks_Version_Type := GVD.Types.Vx_None;
       Endian           : Endian_Type := Unknown_Endian;
       Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
