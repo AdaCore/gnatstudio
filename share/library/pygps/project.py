@@ -24,9 +24,9 @@ try:
            open_project_properties (on_pp)
     """
 
-    pygps.open_menu ("/Project/Edit Project Properties", on_open,
+    pygps.open_menu ("/Project/Edit Project Properties",on_open,
                ["Project Properties Notebook"],
-               args, kwargs, 5000)
+               args, kwargs, 2000)
 
 except ImportError:
   pass
