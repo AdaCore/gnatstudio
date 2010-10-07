@@ -145,26 +145,28 @@ package body Toolchains is
                               Get_Value (Comp_Num, "executable", Output);
                Target     : constant String :=
                               Get_Value (Comp_Num, "target", Output);
+               N_Target   : constant String :=
+                              Get_Value (Comp_Num, "normalized_target",
+                                         Output);
                Is_Native  : constant Boolean :=
                               Boolean'Value
                                 (Get_Value (Comp_Num, "native", Output));
                Stripped   : constant String := Strip_Exe (Exe);
                Tc_Name    : Unbounded_String;
                Full       : Virtual_File;
-               F          : Virtual_File;
                Is_Visible : Boolean;
                New_Comp   : Compiler;
 
             begin
                if Is_Native then
-                  Tc_Name := To_Unbounded_String (Target & " (native)");
+                  Tc_Name := To_Unbounded_String (N_Target & " (native)");
                else
                   Tc_Name := To_Unbounded_String (Target);
                end if;
 
                if not Toolchains.Contains (To_String (Tc_Name)) then
                   Trace
-                    (Me, "Append target " & Target &
+                    (Me, "Append target " & To_String (Tc_Name) &
                      " to the list of scanned toolchains");
                   Toolchains.Append (To_String (Tc_Name));
                end if;
@@ -172,17 +174,14 @@ package body Toolchains is
                Full :=
                  Locate_On_Path (+Exe, Remote.Get_Nickname (Build_Server));
 
-               if Full = No_File then
-                  Is_Visible := False;
+               --  Is_Visible is set if Exe could be located on path, and Exe
+               --  is a base name.
+               if Full /= No_File
+                 and then Full.Base_Name = +Exe
+               then
+                  Is_Visible := True;
                else
-                  F := GNATCOLL.VFS.Create
-                    (+(Path & Exe), Remote.Get_Nickname (Build_Server));
-
-                  if F = Full then
-                     Is_Visible := True;
-                  else
-                     Is_Visible := False;
-                  end if;
+                  Is_Visible := False;
                end if;
 
                if Is_Visible then
@@ -205,10 +204,11 @@ package body Toolchains is
                   if Ada.Strings.Equal_Case_Insensitive (Lang, "Ada") then
                      --  If it's the first one for this target, then we have
                      --  the default ada compiler not in the path
+                     First := True;
+
                      for J in Glob_List.First_Index ..
                        Glob_List.Last_Index
                      loop
-                        First := True;
 
                         if Glob_List.Element (J).Toolchain = New_Comp.Toolchain
                           and then Glob_List.Element (J).Lang = New_Comp.Lang
@@ -347,15 +347,28 @@ package body Toolchains is
 
                   if Prev_Tc /= null then
                      --  Let's use this one instead of our newly created one
-                     Free (Tc);
-                     Tc := Prev_Tc;
-                  else
-                     if Mgr.Get_Toolchain (Get_Name (Tc)) /= null then
-                        Set_Label
-                          (Tc, Mgr.Create_Anonymous_Name (Get_Name (Tc)));
+                     if Get_Label (Prev_Tc) /= Get_Label (Tc) then
+                        Set_Label (Prev_Tc, Get_Label (Tc));
                      end if;
 
-                     Mgr.Add_Toolchain (Tc);
+                     Free (Tc);
+                     Tc := Prev_Tc;
+
+                  else
+                     --  Try to retrieve the toolchain from the target name
+                     Prev_Tc := Mgr.Get_Toolchain (Get_Name (Tc));
+
+                     if Prev_Tc /= null then
+                        if Get_Label (Prev_Tc) /= Get_Label (Tc) then
+                           Set_Label (Prev_Tc, Get_Label (Tc));
+                        end if;
+
+                        Free (Tc);
+                        Tc := Prev_Tc;
+
+                     else
+                        Mgr.Add_Toolchain (Tc);
+                     end if;
                   end if;
                end;
 
@@ -371,8 +384,6 @@ package body Toolchains is
                         Origin => From_Gprconfig);
                   end if;
                end loop;
-
-               Set_Label (Tc, Target);
             end;
          end loop;
 
