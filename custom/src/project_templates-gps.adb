@@ -152,14 +152,6 @@ package body Project_Templates.GPS is
 
       if Installed then
          Cancelled := False;
-      end if;
-
-      if E /= Null_Unbounded_String then
-         Insert (Kernel, To_String (E), Mode => Error);
-
-      elsif Installed then
-         --  There has been no error: we can proceed with the loading of the
-         --  project.
 
          --  First change directory
 
@@ -201,6 +193,13 @@ package body Project_Templates.GPS is
                end if;
             end;
          end if;
+      end if;
+
+      if E /= Null_Unbounded_String then
+         Insert
+           (Kernel,
+            -"The following occurred when deploying the Project from template:"
+            & ASCII.LF & To_String (E), Mode => Error);
       end if;
    end Launch_Dialog;
 
