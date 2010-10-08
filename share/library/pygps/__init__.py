@@ -229,11 +229,12 @@ try:
        if not dialog:
           # Will try again after same timeout or idle
           return True
+       dialog = dialog[0]
+
        for name in widgets:
-          if get_widget_by_name == None:
+          if not get_widget_by_name (name, dialog):
              # Wrong dialog
              return True
-       dialog = dialog[0]
 
        params = tuple \
          ([dialog] + [get_widget_by_name (name, dialog) for name in widgets])
