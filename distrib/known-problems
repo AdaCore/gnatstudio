@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.0
 
+- JA05-015: Crash after resizing or lots of drawing under Windows
+  Problem:    GPS may crash without any warning notice when resizing windows
+              or after lots of drawing, or after resuming a locked sessions,
+              due to a leak in the handling of graphical objects.
+  Workaround: Remove the file <gps-root>/etc/gtk-2.0/gtkrc to disable the
+              Windows theme.
+
 - J928-005: Auto-fix doesn't work when missing space in constant
   Problem:    When making constant a variable with no space between the : and
               the declaration name, the auto-fix doesn't automatically add
