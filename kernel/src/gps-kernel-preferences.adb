@@ -274,8 +274,8 @@ package body GPS.Kernel.Preferences is
 
       View_Fixed_Font := Create
         (Manager => Kernel.Preferences,
-         Name    => "General-Fixed-View-Font",
-         Default => "Courier 10",
+         Name    => "General-Fixed-Font",
+         Default => Config.Default_Fixed_Font,
          Doc     => -("Fixed pitch (monospace) font used in the various views "
                       & "(Outline View, Clipboard View, Messages, ...)"),
          Label    => -"Fixed view font",
@@ -596,12 +596,12 @@ package body GPS.Kernel.Preferences is
 
       Default_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Default-Style",
+         Name         => "Src-Editor-Reference-Style",
          Label        => -"Default",
          Doc          => -("Default style used in the source editors."
            & " The background color defined here also defines the background"
            & " color of all editors."),
-         Default_Font => "Courier 10",
+         Default_Font => Config.Default_Fixed_Font,
          Default_Fg   => "black",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
