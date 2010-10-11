@@ -85,6 +85,7 @@ case "${host}" in
 
   ## Suns
   *-sun-solaris* | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5*)
+    DEFAULT_FIXED_FONT="Courier 9"
     TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lXrender")' ;;
 
   # IA64 processors
