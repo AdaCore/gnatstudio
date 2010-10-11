@@ -141,9 +141,10 @@ package body Toolchains_Editor is
    end record;
 
    overriding function Execute
-     (This       : GPS_Toolchain_Manager_Record;
-      Command    : String;
-      Timeout_MS : Integer) return String;
+     (This              : GPS_Toolchain_Manager_Record;
+      Command           : String;
+      Timeout_MS        : Integer;
+      Handle_GUI_Events : Boolean := False) return String;
    --  Executes the command and returns the result.
 
    procedure Set_Project
@@ -1504,9 +1505,10 @@ package body Toolchains_Editor is
    -------------
 
    overriding function Execute
-     (This       : GPS_Toolchain_Manager_Record;
-      Command    : String;
-      Timeout_MS : Integer) return String
+     (This              : GPS_Toolchain_Manager_Record;
+      Command           : String;
+      Timeout_MS        : Integer;
+      Handle_GUI_Events : Boolean := False) return String
    is
       procedure Free is new Ada.Unchecked_Deallocation
         (GNAT.Expect.Process_Descriptor'Class,
@@ -1540,9 +1542,11 @@ package body Toolchains_Editor is
          declare
          begin
             loop
-               while Gtk.Main.Events_Pending loop
-                  Dead := Gtk.Main.Main_Iteration;
-               end loop;
+               if Handle_GUI_Events then
+                  while Gtk.Main.Events_Pending loop
+                     Dead := Gtk.Main.Main_Iteration;
+                  end loop;
+               end if;
 
                Expect (Pd.all, Match, "\n", 100);
 
