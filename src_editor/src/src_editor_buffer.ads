@@ -1310,6 +1310,9 @@ private
       Saved_Position  : Integer := 0;
       --  The saved position in the command queue
 
+      Restored_From_Autosave : Boolean := False;
+      --  Set to True when the file was recovered from auto-save.
+
       Current_Command : Command_Access := null;
       --  The current editor command. Belongs to Queue, defined above
 
