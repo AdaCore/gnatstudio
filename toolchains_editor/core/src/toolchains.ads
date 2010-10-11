@@ -284,14 +284,17 @@ package Toolchains is
    type Toolchain_Manager is access all Toolchain_Manager_Record'Class;
 
    function Execute
-     (This       : Toolchain_Manager_Record;
-      Command    : String;
-      Timeout_MS : Integer) return String
+     (This              : Toolchain_Manager_Record;
+      Command           : String;
+      Timeout_MS        : Integer;
+      Handle_GUI_Events : Boolean := False) return String
       is abstract;
    --  Executes the command and returns the result. The implementation of this
    --  subprogram typically differs between GNATbench and GPS. If the process
    --  didn't return until timeout miliseconds, then the call has to be
    --  aborted.
+   --  Handle_GUI_Events is used to manually handle GUI events if needed (
+   --  so that GUI is responsive while Execute is called)
 
    type Language_Id is private;
 
