@@ -3154,6 +3154,7 @@ package body Src_Editor_Buffer is
 
          if Recovering then
             Buffer.Saved_Position := -1;
+            Buffer.Restored_From_Autosave := True;
          else
             Buffer.Saved_Position := 0;
          end if;
@@ -5043,7 +5044,11 @@ package body Src_Editor_Buffer is
          return Modified;
 
       else
-         return Unsaved;
+         if Buffer.Restored_From_Autosave then
+            return Modified;
+         else
+            return Unsaved;
+         end if;
       end if;
    end Get_Status;
 
