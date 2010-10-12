@@ -1668,13 +1668,6 @@ procedure GPS.Main is
          end loop;
       end if;
 
-      if Program_Args /= null then
-         --  Initialize the debugger after having executed scripts if any,
-         --  so that it is possible to set up the environment before starting
-         --  a debug session.
-         GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
-      end if;
-
       --  Disable tip of the day pop up window is --hide is
       --  specified.
 
@@ -1691,6 +1684,16 @@ procedure GPS.Main is
 
       if not Hide_GPS then
          Show (GPS_Main);
+      end if;
+
+      if Program_Args /= null then
+         --  Initialize the debugger after having executed scripts if any,
+         --  so that it is possible to set up the environment before starting
+         --  a debug session.
+         --  Needs to be done after the call to Show, so that the GPS window
+         --  already has a proper size, otherwise we might end up with windows
+         --  with height=0 or width=0
+         GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
       end if;
 
       --  Execute the startup scripts now, even though it is recommended that
