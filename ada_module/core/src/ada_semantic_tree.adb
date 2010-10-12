@@ -614,8 +614,12 @@ package body Ada_Semantic_Tree is
       return Parsed_Expression
    is
    begin
-      return Parse_Expression_Backward
-        (Buffer, String_Index_Type (Buffer'Last), 0);
+      if Buffer /= null then
+         return Parse_Expression_Backward
+           (Buffer, String_Index_Type (Buffer'Last), 0);
+      else
+         return Null_Parsed_Expression;
+      end if;
    end Parse_Expression_Backward;
 
    --------------
