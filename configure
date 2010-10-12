@@ -1378,7 +1378,7 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS='()'
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
-DEFAULT_FIXED_FONT="monospace 9"
+DEFAULT_FIXED_FONT="Courier 10"
 PATH_STYLE=UNIX
 SSH_ESCAPE='~'
 
@@ -4092,7 +4092,6 @@ case "${host}" in
 
   ## Suns
   *-sun-solaris* | i[3456]86-*-solaris2* | i345686-*-sunos5*)
-    DEFAULT_FIXED_FONT="Courier 9"
     TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lXrender")' ;;
 
   # IA64 processors
