@@ -1,2 +1,8 @@
 Known Problems fixed in GPS 5.1.0
 
+- JA07-011 Location view and floating editors
+  Problem:    When clicking in a location, the corresponding floating editor
+              is not raised (no problem when the editor is not floating)
+  Workaround: Select the editor in the /Window menu to raise it, or simply
+              click on the window to raise it.
+
