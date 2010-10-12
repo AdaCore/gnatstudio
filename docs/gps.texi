@@ -203,6 +203,7 @@ Tools
 * Documentation Generation::
 * Metrics::
 * Code Coverage::
+* Stack Analysis::
 
 Working in a Cross Environment
 * Customizing your Projects::
@@ -8751,6 +8752,7 @@ children nodes this contains the log for the corresponding revision.
 * Documentation Generation::
 * Metrics::
 * Code Coverage::
+* Stack Analysis::
 @end menu
 
 @node The Tools Menu
@@ -8889,6 +8891,10 @@ cross-reference automated generation output is redirected to this console.
 @item Documentation
 @cindex documentation
 @xref{Documentation Generation}.
+
+@item Stack Analysis
+@cindex stack analysis
+@xref{Stack Analysis}.
 
 @item Macro
 @cindex macros
@@ -9452,6 +9458,115 @@ subprogram coverage details are not available for every supported languages.
 To finish, note that if you change the current main project in GPS, using the
 @command{Project->Open} menu for instance, you will also drop every loaded
 coverage information as they are related to the working project.
+
+@c --------------------------------------------------------------------
+@node Stack Analysis
+@section Stack Analysis
+@cindex Stack Analysis
+@noindent
+@c --------------------------------------------------------------------
+
+GPS provides an interface with GNAT stack analysis tool @code{gnatstack}.
+
+Stack usage information can be computed from, loaded and visualized in GPS for
+entire project hierarchy currently used in GPS. Stack usage information for
+unknown and unbounded calls can be edited in GPS.
+
+Once computed and loaded, the stack usage information is summarized in report,
+and used to decorate source code through stack usage annotations. The largest
+stack usage path is filled into the @ref{The Locations View}.
+
+Stack usage information for undefined subprograms can be specified by adding
+file to the set of GNATStack switches in @code{Switches} attribute of
+@code{Stack} package of root project:
+
+@smallexample
+project P is
+   package Stack is
+      for Switches use ("my.ci");
+   end Stack;
+end P;
+@end smallexample
+
+Stack usage information file for undefined subprograms can be specified on
+@code{GNATStack} page of @code{Switches} page of @ref{The Project Properties
+Editor}. Several files can be specified.
+
+@ref{The Stack Usage Editor} can be used to edit stack usage information for
+undefined subprograms.
+
+All stack analysis related operations are reachable via the @code{Tools->Stack
+Analysis} menu. Several analysis data representation options are reachable via
+the contextual menu.
+
+@table @b
+@item @ref{The Tools Menu}
+
+@table @command
+
+@item Stack Analysis->Analyze stack usage
+Generates stack usage information for root project.
+
+@item Stack Analysis->Open undefined subprograms editor
+Opens undefined subprograms editor
+
+@c \hline
+
+@item Stack Analysis->Load last stack usage
+Loads or re-loads last stack usage information for root project.
+
+@item Stack Analysis->Clear stack usage data
+Drops stack analysis data loaded in GPS.
+
+@end table
+
+@item The Contextual Menu
+
+When clicking on a project, file or subprogram entity (including the entities
+listed in the coverage report), you have access to a @command{Stack Analysis}
+submenu.
+
+These submenus contain the following entries, adapted to the context related
+element:
+
+@table @command
+@item Stack Analysis->Show stack usage
+Shows stack usage information for every subprogram of currently selected file.
+
+@item Stack Analysis->Hide stack usage
+Hides stack usage information for every subprogram of currently selected file.
+
+@item Stack Analysis->Call tree for xxx
+Opens Call Tree view for crrently selected subprogram.
+
+@end table
+
+@item The Stack Usage Report
+@anchor{Stack Usage Report}
+
+When stack usage information are loaded into GPS, a summary report are
+displayed.
+
+@item The Stack Usage Editor
+@anchor{The Stack Usage Editor}
+
+The Stack Usage Editor allows to specify stack usage for undefined subprograms
+and use these values to correct results of future analysis.
+
+The Stack Usage Editor consists from two main areas. Notebook in the top area
+allows to select file to be edited, it display contents of file and allows to
+change value for subprograms. Table in the bottom area displays all subprograms
+which stack usage information is not specified and allows to specify value.
+
+Stack usage information for subprogram can be specified or changed by click in
+stack usage column opposite subprogram's name and entering corresponding value.
+When value is specified in the bottom area table, subprogram is moved to the
+table of currently opened file. When negative value is specified, subprogram
+is moved to the bottom table.
+
+All changes are saved when The Stack Usage Editor window is closed.
+
+@end table
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
