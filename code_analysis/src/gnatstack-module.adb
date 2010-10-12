@@ -64,6 +64,8 @@ package body GNATStack.Module is
    use Traces;
    use type GPS.Kernel.MDI.GPS_MDI_Child;
 
+   Stack_Analysis_Name : constant String := "Stack Analysis";
+
    type GNATStack_Submenu_Factory_Record
      (Module : access GNATStack_Module_Id_Record'Class) is
      new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
@@ -353,7 +355,7 @@ package body GNATStack.Module is
             Entry_Message :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel),
-                 "GNATStack",
+                 Stack_Analysis_Name,
                  GNATCOLL.VFS.No_File,
                  0,
                  0,
@@ -366,7 +368,7 @@ package body GNATStack.Module is
             Entry_Message :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel),
-                 "GNATStack",
+                 Stack_Analysis_Name,
                  GNATCOLL.VFS.Create
                    (GNATCOLL.VFS.Filesystem_String
                       (To_String
@@ -388,7 +390,7 @@ package body GNATStack.Module is
 
    begin
       GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel).Remove_Category
-        ("GNATStack");
+        (Stack_Analysis_Name);
 
       Self.Data.Entry_Set.Iterate (Process_Entry_Point'Access);
    end Fill_Entry_Points;
@@ -427,7 +429,7 @@ package body GNATStack.Module is
          end if;
 
          GPS.Kernel.Messages.Get_Messages_Container
-           (Self.Kernel).Remove_Category ("GNATStack");
+           (Self.Kernel).Remove_Category (Stack_Analysis_Name);
          Editors.Hide_Stack_Usage_In_Opened_Editors (Self);
          Clear (Self.Data);
          Self.Loaded := False;
@@ -548,7 +550,7 @@ package body GNATStack.Module is
 
    begin
       GPS.Kernel.Messages.Get_Messages_Container
-        (Module.Kernel).Remove_Category ("GNATStack");
+        (Module.Kernel).Remove_Category (Stack_Analysis_Name);
       Editors.Hide_Stack_Usage_In_Opened_Editors (Module);
 
       if Module.Call_Tree_View_MDI /= null then
@@ -1028,7 +1030,7 @@ package body GNATStack.Module is
    is
       use GNATCOLL.VFS;
 
-      Menu           : constant String := -"/Tools/GNATStac_k";
+      Menu           : constant String := -"/Tools/Stac_k Analysis";
       GNATStack_Path : constant GNATCOLL.VFS.Virtual_File :=
                          GNATCOLL.VFS.Locate_On_Path ("gnatstack");
       Factory        : GPS.Kernel.Modules.UI.Submenu_Factory;
@@ -1048,11 +1050,11 @@ package body GNATStack.Module is
 
       Factory := new GNATStack_Submenu_Factory_Record (Module);
 
-      Module.Register_Module (Kernel, "GNATStack");
+      Module.Register_Module (Kernel, Stack_Analysis_Name);
       Register_Contextual_Submenu
         (Kernel  => Kernel,
-         Name    => "GNATStack",
-         Label   => -"GNATStack",
+         Name    => Stack_Analysis_Name,
+         Label   => -Stack_Analysis_Name,
          Submenu => Factory);
 
       --  Registry main menu
