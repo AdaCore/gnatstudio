@@ -84,11 +84,14 @@ with Projects;                   use Projects;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
 with Toolchains_Old;             use Toolchains_Old;
+with GNATCOLL.Traces;
 with Traces;                     use Traces;
 with XML_Utils;                  use XML_Utils;
 
 package body GVD.Process is
-   Me : constant Debug_Handle := Create ("GVD.Process");
+   Me      : constant Debug_Handle := Create ("GVD.Process");
+   Verbose : constant Debug_Handle :=
+               Create ("GVD.Process.Verbose", GNATCOLL.Traces.Off);
 
    type GPS_Proxy is new Process_Proxy with record
       Process : Visual_Debugger;
@@ -2130,9 +2133,9 @@ package body GVD.Process is
             end;
          end loop;
 
-         Traces.Trace (Me, "Setting Source_Dirs:");
+         Traces.Trace (Verbose, "Setting Source_Dirs:");
          for D in Dirs'First .. Dirs_Index - 1 loop
-            Traces.Trace (Me, "   " & Dirs (D).all);
+            Traces.Trace (Verbose, "   " & Dirs (D).all);
          end loop;
 
          Project.Set_Attribute
@@ -2140,9 +2143,9 @@ package body GVD.Process is
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
 
-         Traces.Trace (Me, "Setting Source_Files:");
+         Traces.Trace (Verbose, "Setting Source_Files:");
          for B in Bases'First .. Bases_Index - 1 loop
-            Traces.Trace (Me, "   " & Bases (B).all);
+            Traces.Trace (Verbose, "   " & Bases (B).all);
          end loop;
 
          Project.Set_Attribute
@@ -2150,9 +2153,9 @@ package body GVD.Process is
             Values             => Bases (Bases'First .. Bases_Index - 1));
          Free (Bases);
 
-         Traces.Trace (Me, "Setting Languages:");
+         Traces.Trace (Verbose, "Setting Languages:");
          for L in Langs'First .. Lang_Index - 1 loop
-            Traces.Trace (Me, "   " & Langs (L).all);
+            Traces.Trace (Verbose, "   " & Langs (L).all);
          end loop;
 
          if Lang_Index = Langs'First then
