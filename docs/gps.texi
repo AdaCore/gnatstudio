@@ -4,9 +4,9 @@
 @c For uniformity, screenshots are generated using the following setup:
 @c   - Under Windows XP, using the default XP theme
 @c   - Using the standard Windows screen or window capture
-@c     (using e.g Ctrl-PrntScrn)
+@c     (using e.g Ctrl-PrntScrn or Alt-PrntScrn)
 @c
-@c   - Save the resultat image (if needed, truncated to show only relevant
+@c   - Save the resulting image (if needed, truncated to show only relevant
 @c     items) in jpeg format, quality 95%
 
 @c %**start of header
