@@ -100,7 +100,7 @@ package body Memory_View_Pkg is
       Set_Justify (Label96, Justify_Center);
       Set_Line_Wrap (Label96, False);
       Set_Sensitive (Label96, False);
-      Attach (Table, Label95, 0, 1, 1, 2, Xoptions => 0);
+      Attach (Table, Label96, 0, 1, 1, 2, Xoptions => 0);
 
       Gtk_New (Memory_View.Search_Entry);
       Set_Editable (Memory_View.Search_Entry, True);
