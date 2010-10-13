@@ -234,7 +234,7 @@ NF-50-J224-017 Completion for case inside record (2010-02-24)
 
 NF-50-J219-002 GNATStack integration (2010-10-12)
 
-  GPS is now integrated with GNAT stack usage analysis tool.
+  GPS now provides support for GNATstack, the GNAT stack usage analysis tool.
 
 NF-50-J211-009 Add "Goto Entity" dialog (2010-02-11)
 
