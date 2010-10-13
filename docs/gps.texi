@@ -9494,15 +9494,13 @@ You can also specify this information by using the
 @code{GNATStack} page of the @code{Switches} section in the
 @ref{The Project Properties Editor}. Several files can be specified.
 
-@ref{The Stack Usage Editor} can be used to edit stack usage information for
+@ref{Stack Usage Editor} can be used to edit stack usage information for
 undefined subprograms.
 
-All stack analysis related operations are reachable via the @code{Tools->Stack
-Analysis} menu. Several analysis data representation options are reachable via
-the contextual menu.
+@subsection Stack Analysis Menu
 
-@table @b
-@item @ref{The Tools Menu}
+All stack analysis related operations are reachable via the @code{Tools->Stack
+Analysis} menu:
 
 @table @command
 
@@ -9523,7 +9521,7 @@ as annotations in source editors.
 
 @end table
 
-@item The Contextual Menu
+@subsection The Contextual Menu
 
 When clicking on a project, file or subprogram entity (including the entities
 listed in the coverage report), you have access to a @command{Stack Analysis}
@@ -9543,14 +9541,17 @@ Opens Call Tree view for currently selected subprogram.
 
 @end table
 
-@item The Stack Usage Report
+@subsection Stack Usage Report
 @anchor{Stack Usage Report}
 
 When the stack usage information is loaded, a report is displayed containing
 a summary of the stack analysis.
 
-@item The Stack Usage Editor
-@anchor{The Stack Usage Editor}
+@subsection Stack Usage Editor
+@anchor{Stack Usage Editor}
+
+The Stack Usage Editor allows to specify stack usage for undefined subprograms
+and use these values to refine results of future analysis.
 
 @iftex
 @cindex screen shot
@@ -9561,9 +9562,6 @@ a summary of the stack analysis.
 @cindex screen shot
 @image{stack-usage-editor}
 @end ifhtml
-
-The Stack Usage Editor allows to specify stack usage for undefined subprograms
-and use these values to refine results of future analysis.
 
 The Stack Usage Editor consists of two main areas. The notebook in the top area
 allows to select the file to edit. It displays the contents of the file and
@@ -9578,8 +9576,6 @@ to the top table of the currently selected file. When a negative value is
 specified, the subprogram is moved to the bottom table.
 
 All changes are saved when the stack usage editor window is closed.
-
-@end table
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
