@@ -9497,7 +9497,7 @@ You can also specify this information by using the
 @ref{Stack Usage Editor} can be used to edit stack usage information for
 undefined subprograms.
 
-@subsection Stack Analysis Menu
+@subsection The Stack Analysis Menu
 
 All stack analysis related operations are reachable via the @code{Tools->Stack
 Analysis} menu:
@@ -9555,7 +9555,7 @@ and use these values to refine results of future analysis.
 
 @iftex
 @cindex screen shot
-@image{stack-usage-editor, 10.7cm}
+@image{stack-usage-editor, 11.5cm}
 @end iftex
 
 @ifhtml
