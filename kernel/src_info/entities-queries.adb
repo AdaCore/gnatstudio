@@ -843,6 +843,11 @@ package body Entities.Queries is
       H_Loc : File_Location;
 
    begin
+      if Entity = null then
+         Location := No_File_Location;
+         return;
+      end if;
+
       if Active (Me) then
          Trace (Me, "Find_Next_Body for "
                 & Debug_Name (Entity)
