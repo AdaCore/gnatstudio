@@ -410,7 +410,7 @@ package body Breakpoints_Editor is
    begin
       Gtk.Box.Initialize_Hbox (Widget);
       Gtk_New (Widget.Editor);
-      Pack_Start (Widget, Widget.Editor, False, Padding => 4);
+      Pack_Start (Widget, Widget.Editor, True, Padding => 4);
 
       Set_Sensitive (Widget.Editor.Advanced_Location, False);
       Set_Sensitive (Widget.Editor.Remove, False);

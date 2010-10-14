@@ -67,7 +67,7 @@ package body Breakpoints_Pkg is
       Set_Tab_Hborder (Breakpoints.Notebook1, 2);
       Set_Tab_Vborder (Breakpoints.Notebook1, 2);
       Set_Tab_Pos (Breakpoints.Notebook1, Pos_Top);
-      Pack_Start (Breakpoints, Breakpoints.Notebook1, False, True, 0);
+      Pack_Start (Breakpoints, Breakpoints.Notebook1, True, True, 0);
 
       Gtk_New_Hbox (Breakpoints.Hbox2, False, 0);
       Add (Breakpoints.Notebook1, Breakpoints.Hbox2);
