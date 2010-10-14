@@ -142,7 +142,7 @@ package body Toolchains is
          Output  : constant String :=
                         Toolchain_Manager (Mgr).Execute
                           ("gprconfig --mi-show-compilers --target=all",
-                           5_000, True);
+                           50_000, True);
          package TC_Set is new Ada.Containers.Indefinite_Vectors
            (Positive, String);
          Toolchains : TC_Set.Vector;
