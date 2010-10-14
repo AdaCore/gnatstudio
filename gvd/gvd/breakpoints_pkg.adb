@@ -448,7 +448,7 @@ package body Breakpoints_Pkg is
 
       Gtk_New (Breakpoints.Scrolledwindow2);
       Set_Policy
-        (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
+        (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Automatic);
       Pack_Start
         (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
 

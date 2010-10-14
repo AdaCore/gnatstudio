@@ -57,7 +57,6 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
@@ -163,8 +162,8 @@ package body GVD.Memory_View is
       Formal_View_Record => GVD_Memory_View_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
+      Group              => Group_Default,
+      Position           => Position_Automatic,
       Initialize         => Initialize);
 
    procedure Display_Memory
@@ -1786,7 +1785,11 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       GNAT.Strings.Free (View.Flags);
-      View.Flags := new String'(View.Values.all);
+
+      if View.Values /= null then
+         View.Flags := new String'(View.Values.all);
+      end if;
+
       Update_Display (View);
 
    exception
