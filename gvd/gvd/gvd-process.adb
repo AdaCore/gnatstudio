@@ -1267,6 +1267,12 @@ package body GVD.Process is
          end if;
       end if;
 
+      --  Load the default perspective before closing the debugger. This is
+      --  necessary because the position of views is memorized at this time:
+      --  if views are closed before the perspective change, their position
+      --  is lost.
+      Load_Perspective (Kernel, "Default");
+
       --  Let all views know that they should close
 
       Run_Debugger_States_Hook
@@ -1320,8 +1326,6 @@ package body GVD.Process is
       if Get_Debugger_List (Kernel) = null then
          Debug_Terminate (Kernel);
       end if;
-
-      Load_Perspective (Kernel, "Default");
 
       Pop_State (Kernel);
    end Close_Debugger;

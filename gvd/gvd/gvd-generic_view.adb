@@ -147,6 +147,7 @@ package body GVD.Generic_View is
             then
                Set_View (Get_Process (V), null);
                Unset_Process (V);
+               Destroy (V);
             else
                Set_View (Get_Process (V), null);
                Unset_Process (V);
