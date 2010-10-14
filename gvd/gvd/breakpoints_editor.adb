@@ -62,8 +62,7 @@ with Breakpoints_Pkg;         use Breakpoints_Pkg;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;     use GPS.Kernel, GPS.Kernel.MDI;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 with GVD_Module;       use GVD_Module;
@@ -115,8 +114,8 @@ package body Breakpoints_Editor is
       Formal_View_Record => Breakpoint_Editor_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
-      Group              => Group_Debugger_Stack,
-      Position           => Position_Right,
+      Group              => Group_Default,
+      Position           => Position_Automatic,
       Initialize         => Initialize);
 
    procedure On_Edit_Breakpoints
@@ -406,6 +405,8 @@ package body Breakpoints_Editor is
      (Widget : access Breakpoint_Editor_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
+      use Gdk;
+
       Style : Gtk_Style;
    begin
       Gtk.Box.Initialize_Hbox (Widget);
@@ -416,12 +417,14 @@ package body Breakpoints_Editor is
       Set_Sensitive (Widget.Editor.Remove, False);
       Set_Sensitive (Widget.Editor.View, False);
 
-      Create_From_Xpm_D
-        (Widget.Enabled_Pixmap,
-         Get_Window (Get_Main_Window (Kernel)),
-         Widget.Enabled_Mask,
-         White (Get_Default_Colormap),
-         break_xpm);
+      if Get_Window (Get_Main_Window (Kernel)) /= null then
+         Create_From_Xpm_D
+           (Widget.Enabled_Pixmap,
+            Get_Window (Get_Main_Window (Kernel)),
+            Widget.Enabled_Mask,
+            White (Get_Default_Colormap),
+            break_xpm);
+      end if;
 
       --  Grey background when the combo boxes are insensitive
       Gtk_New (Style);
