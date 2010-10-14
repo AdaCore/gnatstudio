@@ -386,12 +386,12 @@ package body Toolchains is
                end loop;
             end;
          end loop;
-
-      exception
-         when others =>
-            Trace (Me, "Exception when executing gprconfig. Let's skip.");
-            Mgr.Compilers_Scanned := True;
       end;
+
+   exception
+      when others =>
+         Trace (Me, "Exception when executing gprconfig. Let's skip.");
+         Mgr.Compilers_Scanned := True;
    end Compute_Gprconfig_Compilers;
 
    ---------------------
