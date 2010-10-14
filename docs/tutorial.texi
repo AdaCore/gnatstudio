@@ -172,7 +172,7 @@ color.
 
 @noindent
 
-Select the icon @code{Build Main: sdc.adb} on the toolbar (third icon
+Select the icon @code{Build Main: sdc.adb} on the toolbar (fourth icon
 from the right): this will launch
 a complete build of the @i{sdc} application. Note also that you can use a
 key binding directly instead of this tool bar button (@key{F4}), or use the
@@ -350,10 +350,15 @@ in order to rebuild the application.
 @noindent
 It is now time to run the application: select the menu
 @code{Build->Run->sdc}, which will open a dialog window.
-Type @code{input.txt} in the text entry: this is the name of a text
+In the text input field (selected by default), press the right arrow key and
+then insert @code{input.txt}: this is the name of a text
 file that will be passed as argument to the @i{sdc} program.
 
-Now click on @code{OK}: a new window titled @code{Run: sdc input.txt}
+The text input should now read: @code{%E input.txt} and the full command
+that will be executed is displayed underneath:
+@code{.../gps/tutorial/obj/sdc input.txt}
+
+Now click on @code{OK}: a new window titled @code{Run: sdc}
 is created at the bottom of the main window where the sdc application
 runs and displays an unexpected internal error: this is a good opportunity
 to use the integrated debugger.
@@ -374,20 +379,22 @@ click on the @code{Debugger} item on the left; set the button
 breakpoint every time an exception is raised. Click on @code{OK} to confirm your
 change.
 
-Now select the menu @code{Debug->Initialize->sdc}: a new window is
-created: this is the debugger console.
+Now select the menu @code{Debug->Initialize->sdc}: GPS automatically switches
+to the @i{Debug} perspective as shown in the menu @code{Window->Perspectives},
+and new windows have appeared: the debugger data window on top, the call stack
+window on the right, and the debugger console at the bottom.
+
 You can also look at the various debug menu item and tool bar buttons which are
 now activated.
 
-Use the menu @code{Debug->Data->Call Stack}: this opens a new window on the
-right of the source editors. If you select the contextual menu in the call
-stack, various pieces of information can be displayed or
+On the call stack window (you can use the menu @code{Debug->Data->Call Stack}
+to open it if you do not have it displayed), select the contextual menu:
+various pieces of information can be displayed or
 removed in the call stack. From this contextual menu, add the
 @code{Frame Number} info by clicking on it.
 
-Now select the menu @code{Debug->Run...}. Notice that @code{input.txt} has
-been filled automatically for you since the two menus @code{Build->Run...} and
-@code{Debug->Run...} are synchronized. Click on @code{OK}: the debugger should
+Now select the menu @code{Debug->Run...} and type @code{input.txt} in the
+text input field. Click on @code{OK}: the debugger should
 stop on an exception (@code{Constraint_Error} in the file @file{stack.adb}, at
 line 49).
 
@@ -417,8 +424,8 @@ Use the @code{up} and @code{down} arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the
 red color for modified values;
-click on @code{Undo Changes} to cancel the modifications;
-click on @code{Close} to close the memory window.
+click on @code{Undo Changes} to cancel the modifications; then close
+the memory window.
 
 In the call stack, go back to @code{stack.push} frame (num 4 or 5).
 Move the mouse over @code{Last} and let the debugger display its value: 0.
@@ -433,7 +440,7 @@ Fix the line to @code{Last := Last + 1;}
 Save the file (@key{Ctrl-S});
 End the debug session: menu @code{Debug->Terminate};
 Rebuild (press @key{F4} key);
-Rerun (menu @code{Build->Run->sdc}, click on @code{OK}): the program now
+Rerun (menu @code{Build->Run->sdc}, click on @code{Execute}): the program now
 completes as expected. Close the execution window.
 
 @c --------------------------------------------------------------------
@@ -663,8 +670,9 @@ number of different values.
 The @code{Build} variable demonstrates a typical @code{Debug/Production}
 configuration where we've set different switches for the two modes.
 
-Click on the button at the left (@code{Edit variable properties}): this
-is the variable editor, where values can be added or renamed.
+Right click on the @code{Build} label and select
+@code{Edit properties of Build...}: this opens the
+variable editor, where values can be added or renamed.
 Close the variable editor by clicking on the @code{Cancel} button.
 
 Now, let's take a look at the switches set in the project.
