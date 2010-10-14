@@ -53,8 +53,25 @@ package body Toolchains is
      (Comp1, Comp2 : Compiler) return Boolean;
    --  Tells if 2 compilers are equal
 
+   ---------------------------------
+   -- Compute_Gprconfig_Compilers --
+   ---------------------------------
+
    procedure Compute_Gprconfig_Compilers
-     (Mgr : access Toolchain_Manager_Record)
+     (Mgr : access Toolchain_Manager_Record) is
+      procedure Dummy (Tc : String; Num, Total : Natural) is null;
+   begin
+      Compute_Gprconfig_Compilers (Mgr, Dummy'Access);
+   end Compute_Gprconfig_Compilers;
+
+   ---------------------------------
+   -- Compute_Gprconfig_Compilers --
+   ---------------------------------
+
+   procedure Compute_Gprconfig_Compilers
+     (Mgr : access Toolchain_Manager_Record;
+      Callback : access procedure
+         (Toolchain : String; Num, Total : Natural))
    is
       function Get_Value
         (Num   : Natural;
@@ -241,6 +258,9 @@ package body Toolchains is
                Is_Default_Path : constant Boolean :=
                                    Full_Path = Null_Unbounded_String;
             begin
+               --  Calls the callback for each added toolchain
+               Callback (Target, J, Toolchains.Last_Index);
+
                Tc := Create_Empty_Toolchain (Mgr);
                Set_Name (Tc, Target);
                Tc.Is_Native := Index (Target, "native") in Target'Range;

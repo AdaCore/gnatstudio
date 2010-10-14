@@ -356,6 +356,12 @@ package Toolchains is
      (Mgr : access Toolchain_Manager_Record);
    --  Retrieve all compilers found on the host
 
+   procedure Compute_Gprconfig_Compilers
+     (Mgr : access Toolchain_Manager_Record;
+      Callback : access procedure
+         (Toolchain : String; Num, Total : Natural));
+   --  Same as above, with callback called when analyzing toolchains
+
    function Get_Native_Toolchain
      (Manager : access Toolchain_Manager_Record) return Toolchain;
    --  Returns the native toolchain associated to this manager - tries to
