@@ -7,6 +7,8 @@ endif
 GPRBUILD=gprbuild
 GPRBUILD_FLAGS=
 
+Build?=Debug
+
 ifeq ($(Build),Production)
   GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XGnatcoll_Build=Production
 else
@@ -22,10 +24,11 @@ include ../Makefile.gnat
 # NOTE: we need to build gnatcoll separately, since we cannot use
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all:
-	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
+	$(MAKE) -s Build=${Build} LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
-	$(MAKE) -s -C ../gnatlib do_links
-	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -P../gnatlib/src/gnatcoll
+	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
+	$(GPRBUILD) $(GPRBUILD_FLAGS) ${GPRBUILD_BUILD_TYPE_FLAGS} \
+		-m -p -ws -P../gnatlib/src/gnatcoll
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 
