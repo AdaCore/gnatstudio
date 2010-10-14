@@ -1506,6 +1506,14 @@ package body Toolchains is
             end if;
          end loop;
 
+         --  Remove the parameter given to the attribute if any
+
+         for J in Attr'Range loop
+            if Attr (J) = ' ' then
+               return Get_Prefix (Attr (Attr'First .. J - 1));
+            end if;
+         end loop;
+
          --  No path, so it's safe to actually look at the prefix
 
          for J in reverse Attr'Range loop
