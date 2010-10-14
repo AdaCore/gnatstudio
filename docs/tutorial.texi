@@ -419,13 +419,15 @@ dereferenced by a double-click (double click on @code{T.val}); red for fields
 that have been modified since last step.
 
 From the T box, right-click to display the contextual menu and
-select @code{View memory at address of T}: a memory view is opened.
+select @code{View memory at address of T}: a memory view is opened on top of
+the source editors.
 Use the @code{up} and @code{down} arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the
 red color for modified values;
 click on @code{Undo Changes} to cancel the modifications; then close
-the memory window.
+the memory window by e.g. clicking on the @code{x} icon or pressing
+@key{Ctrl-W}.
 
 In the call stack, go back to @code{stack.push} frame (num 4 or 5).
 Move the mouse over @code{Last} and let the debugger display its value: 0.
