@@ -125,7 +125,6 @@ package body GVD.Generic_View is
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
          Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
       is
-         pragma Unreferenced (Kernel);
          P : constant Visual_Debugger := Get_Process (Data);
          V : constant Formal_View_Access := Formal_View_Access (Get_View (P));
       begin
@@ -147,6 +146,13 @@ package body GVD.Generic_View is
             then
                Set_View (Get_Process (V), null);
                Unset_Process (V);
+
+               declare
+                  Child : constant MDI_Child :=
+                    Find_MDI_Child (Get_MDI (Kernel), V);
+               begin
+                  Child.Close_Child (Force => True);
+               end;
             else
                Set_View (Get_Process (V), null);
                Unset_Process (V);

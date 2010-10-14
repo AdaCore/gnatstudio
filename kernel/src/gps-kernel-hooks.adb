@@ -1174,6 +1174,7 @@ package body GPS.Kernel.Hooks is
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
       N    : List_Node := Null_Node;
       F    : Hook_Function_Description;
+      Counter : Natural;
    begin
       if Info = null then
          Insert (Kernel, -"No such hook: " & String (Hook));
@@ -1184,26 +1185,40 @@ package body GPS.Kernel.Hooks is
          end if;
 
          Trace (Me, "Run_Hook: " & String (Hook));
+
+         --  Unroll Info.Funcs into an array, so that it is safe for
+         --  implementations of F.Func to remove themselves from the list.
+         --  This happens when destroying debugger views cause them to
+         --  remove the listener from the list.
+         Counter := 0;
          N := First (Info.Funcs);
          while N /= Null_Node loop
-            F := Hooks_List.Data (N);
-
-            --  Move to next element first, in case the callback removes the
-            --  current hook from the list (for instance because we are
-            --  destroying a widget which automatically results in
-            --  disconnecting from the hook).
-            --  ??? This would still fail if we remove the next callback
-            --  ??? instead of the current, but I don't think that's done
-            --  ??? currently. Otherwise we don't have a real solution apart
-            --  ??? from reference counting
-
+            Counter := Counter + 1;
             N := Next (N);
-
-            Assert (Me, F.Func.all in Function_With_Args'Class,
-                    "Hook expects arguments: " & String (Hook)
-                    & " for function: " & String (F.Name.all));
-            Execute (Function_With_Args_Access (F.Func).all, Kernel, Data);
          end loop;
+
+         declare
+            type Func_Array is array (1 .. Counter)
+              of Hook_Function_Description;
+            Arr : Func_Array;
+         begin
+            Counter := 1;
+            N := First (Info.Funcs);
+            while N /= Null_Node loop
+               Arr (Counter) := Hooks_List.Data (N);
+               Counter := Counter + 1;
+               N := Next (N);
+            end loop;
+
+            for J in Arr'Range loop
+               F := Arr (J);
+
+               Assert (Me, F.Func.all in Function_With_Args'Class,
+                       "Hook expects arguments: " & String (Hook)
+                       & " for function: " & String (F.Name.all));
+               Execute (Function_With_Args_Access (F.Func).all, Kernel, Data);
+            end loop;
+         end;
 
          Free (Data.Data);
 
