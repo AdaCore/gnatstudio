@@ -9210,10 +9210,8 @@ Its documentation will be:
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
 
-The documentation generator can be invoked from two places inside GPS:
-
-@table @b
-@item @ref{The Tools Menu}
+The documentation generator can be invoked from the @code{Tools->Documentation}
+menu:
 
 @table @command
 @item Generate project
@@ -9232,10 +9230,8 @@ documentation will be generated for the file you select.
 
 @end table
 
-@item The Contextual Menu
-
-When relevant (depending on the context), right-clicking with your mouse
-will show a @code{Documentation} contextual menu.
+In addition, when relevant (depending on the context), right-clicking with
+your mouse will show a @code{Documentation} contextual menu.
 
 From a source file contextual menu, you have one option called
 @command{Generate for <filename>}, that will generate documentation
@@ -9259,13 +9255,12 @@ or may not apply:
 @item Parameters and objects of private generic types may be considered as
 types.
 @end itemize
-@end table
 
 @node Metrics
 @section Metrics
 @cindex Metrics
-@noindent
 
+@noindent
 GPS provides an interface with the GNAT software metrics generation tool
 @code{gnatmetric}.
 
@@ -9273,10 +9268,10 @@ The metrics can be computed for the entire project, one source file belonging to
 the project, or (when applicable) a specific entity in the source file, e.g. a
 subprogram.
 
-The metrics generator can be invoked either from the @code{Tools} menu,
-or from the contextual menu.
+The metrics generator can be invoked either from the @code{Tools->Metrics}
+menu or from the contextual menu.
 
-@subsection Metrics Menu
+@subsection The Metrics Menu
 The @code{Metrics} submenu is available from the @code{Tools} global menu and
 contains:
 
@@ -9313,9 +9308,9 @@ metrics computation will be displayed in the Locations Window.
 @node Code Coverage
 @section Code Coverage
 @cindex Code Coverage
-@noindent
 @c --------------------------------------------------------------------
 
+@noindent
 GPS provides a tight integration with Gcov, the GNU code coverage utility.
 
 Code coverage information can be computed from, loaded and visualized in GPS.
@@ -9329,14 +9324,14 @@ and used to decorate source code through mechanisms such as line highlighting or
 coverage annotations.
 
 All the coverage related operations are reachable via the
-@command{Tools->Coverage} menu.
+@code{Tools->Coverage} menu.
 
 In order to be loaded in GPS, the coverage information need to be computed
-before, using the @command{Tools->Coverage->Gcov->Compute coverage files} menu
+before, using the @code{Tools->Coverage->Gcov->Compute coverage files} menu
 for instance.
 
 At each attempt, GPS automatically tries to load the needed information and
-reports errors for missing or corrupted @command{.gcov} files.
+reports errors for missing or corrupted @file{.gcov} files.
 
 To be able to produce coverage information from Gcov, your project must have
 been compiled with the @command{-fprofile-arcs} and @command{-ftest-coverage}"
@@ -9344,7 +9339,7 @@ switches, respectively "Instrument arcs" and "Code coverage" entries in
 @ref{The Project Properties Editor}, and run once.
 
 @subsection Coverage Menu
-The @command{Tools->Coverage} menu has a number of entries, depending on the
+The @code{Tools->Coverage} menu has a number of entries, depending on the
 context:
 
 @table @command
@@ -9456,9 +9451,9 @@ coverage information as they are related to the working project.
 @node Stack Analysis
 @section Stack Analysis
 @cindex Stack Analysis
-@noindent
 @c --------------------------------------------------------------------
 
+@noindent
 GPS provides an interface to @code{GNATstack}, the static stack analysis tool.
 This interface is enabled only if you have the @command{gnatstack} executable
 installed on your system and available on the path.
