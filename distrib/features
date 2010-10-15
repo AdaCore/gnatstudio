@@ -232,7 +232,7 @@ NF-50-J224-017 Completion for case inside record (2010-02-24)
   Fields declared in a case statement inside a record are now offered in the
   list of completions.
 
-NF-50-J219-002 GNATStack integration (2010-10-12)
+NF-50-J219-002 GNATstack integration (2010-10-12)
 
   GPS now provides support for GNATstack, the GNAT stack usage analysis tool.
 
