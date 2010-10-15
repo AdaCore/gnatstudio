@@ -393,7 +393,6 @@ procedure GPS.Main is
       Dir_Created : Boolean := False;
       File        : File_Type;
       Charset     : String_Access;
-      Make_Root   : String_Access;
       Tmp, Tmp2   : String_Access;
 
       Ignored     : Log_Handler_Id;
