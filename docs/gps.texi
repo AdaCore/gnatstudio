@@ -9482,7 +9482,7 @@ You can also specify this information by using the
 @code{GNATStack} page of the @code{Switches} section in the
 @ref{The Project Properties Editor}. Several files can be specified.
 
-@ref{Stack Usage Editor} can be used to edit stack usage information for
+@ref{The Stack Usage Editor} can be used to edit stack usage information for
 undefined subprograms.
 
 @subsection The Stack Analysis Menu
@@ -9529,14 +9529,14 @@ Opens Call Tree view for currently selected subprogram.
 
 @end table
 
-@subsection Stack Usage Report
-@anchor{Stack Usage Report}
+@subsection The Stack Usage Report
+@anchor{The Stack Usage Report}
 
 When the stack usage information is loaded, a report is displayed containing
 a summary of the stack analysis.
 
-@subsection Stack Usage Editor
-@anchor{Stack Usage Editor}
+@subsection The Stack Usage Editor
+@anchor{The Stack Usage Editor}
 
 The Stack Usage Editor allows to specify stack usage for undefined subprograms
 and use these values to refine results of future analysis.
