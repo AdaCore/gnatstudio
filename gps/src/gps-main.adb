@@ -496,16 +496,6 @@ procedure GPS.Main is
 
       Gtk.Main.Init;
 
-      --  Define MAKE_ROOT if needed, so that the generated makefiles can find
-      --  Makefile.prolog and Makefile.generic
-
-      Make_Root := Getenv ("MAKE_ROOT");
-
-      if Make_Root.all = "" then
-         Setenv ("MAKE_ROOT", +Prefix_Dir.Full_Name);
-         Free (Make_Root);
-      end if;
-
       Python_Home := Getenv ("PYTHONHOME");
       if Python_Home.all = "" then
          Setenv ("PYTHONHOME", +Prefix_Dir.Full_Name);
