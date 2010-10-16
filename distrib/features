@@ -15,3 +15,7 @@ of the feature.
 New features in 5.1.0
 ---------------------
 
+NF-51-J119-018 Use all available space to display routine names (2010-10-16)
+
+  The GPS editor does not cut the routine name at 20 characters but uses
+  all available spaces in the editor's status line.
