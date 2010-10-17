@@ -833,21 +833,13 @@ package body Project_Explorers is
       ------------------
 
       function Alphabetical return Gint is
-         A_Name : constant String := Get_String (Model, A, Column);
-         B_Name : constant String := Get_String (Model, B, Column);
+         A_Name : constant String := To_Lower (Get_String (Model, A, Column));
+         B_Name : constant String := To_Lower (Get_String (Model, B, Column));
       begin
-         if Is_Case_Sensitive (Get_Nickname (Build_Server)) then
-            if A_Name < B_Name then
-               return A_Before_B;
-            else
-               return B_Before_A;
-            end if;
+         if A_Name < B_Name then
+            return A_Before_B;
          else
-            if To_Lower (A_Name) < To_Lower (B_Name) then
-               return A_Before_B;
-            else
-               return B_Before_A;
-            end if;
+            return B_Before_A;
          end if;
       end Alphabetical;
 
