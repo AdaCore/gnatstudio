@@ -358,7 +358,7 @@ The text input should now read: @code{%E input.txt} and the full command
 that will be executed is displayed underneath:
 @code{.../gps/tutorial/obj/sdc input.txt}
 
-Now click on @code{OK}: a new window titled @code{Run: sdc}
+Now click on @code{Execute}: a new window titled @code{Run: sdc}
 is created at the bottom of the main window where the sdc application
 runs and displays an unexpected internal error: this is a good opportunity
 to use the integrated debugger.
