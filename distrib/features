@@ -15,6 +15,10 @@ of the feature.
 New features in 5.1.0
 ---------------------
 
+NF-51-J805-009 Do not auto-case based literals (2010-10-17)
+
+  GPS now avoids casing based literals.
+
 NF-51-J119-018 Use all available space to display routine names (2010-10-16)
 
   The GPS editor does not cut the routine name at 20 characters but uses

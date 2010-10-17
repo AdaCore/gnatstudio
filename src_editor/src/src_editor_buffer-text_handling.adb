@@ -305,6 +305,8 @@ package body Src_Editor_Buffer.Text_Handling is
       --  right place in On_The_Fly mode while inserting a character inside a
       --  word. This is needed as the mark of the cursor will be replaced.
 
+      Char_Set          : Character_Set;
+
       ------------------
       -- Replace_Text --
       ------------------
@@ -424,15 +426,18 @@ package body Src_Editor_Buffer.Text_Handling is
       Prev  := ' ';
       PPrev := ' ';
 
+      Char_Set := Word_Character_Set (Lang) or To_Set ('#');
+      --  Include any # sign to get based literals. This is needed as we want
+      --  the Ada parser to dectect such case and disable any casing on this
+      --  literal.
+
       Look_For_Start_Of_Word : loop
          Backward_Char (W_Start, Result);
          PPrev := Prev;
          Prev := Char;
          Char := Get_Char (W_Start);
 
-         if not Is_In (Char, Word_Character_Set (Lang))
-           and then Prev = ' '
-         then
+         if not Is_In (Char, Char_Set) and then Prev = ' ' then
             --  Nothing to do in this case as we do not have a word
             return;
          end if;
@@ -446,8 +451,7 @@ package body Src_Editor_Buffer.Text_Handling is
          end if;
 
          exit Look_For_Start_Of_Word when not Result
-           or else (Char /= '''
-                    and then not Is_In (Char, Word_Character_Set (Lang)));
+           or else (Char /= ''' and then not Is_In (Char, Char_Set));
          First := First - 1;
          exit Look_For_Start_Of_Word when Is_Start (W_Start);
       end loop Look_For_Start_Of_Word;

@@ -4511,7 +4511,11 @@ package body Ada_Analyzer is
             end;
          end if;
 
-         if Indent_Params.Casing_Policy /= Disabled then
+         if Indent_Params.Casing_Policy /= Disabled
+           and then Prev_Token /= Tok_Pound
+         --  Disable casing for based literal (so if a word is preceded by
+         --  a pound sign).
+         then
             case Casing is
                when Unchanged =>
                   null;
