@@ -15,9 +15,10 @@ of the feature.
 New features in 5.1.0
 ---------------------
 
-NF-51-J805-009 Do not auto-case based literals (2010-10-17)
+NF-51-J805-009 Based literals not auto cased (2010-10-17)
 
-  GPS now avoids casing based literals.
+  GPS now keeps based literals with their original casing rather than
+  applying automatic casing as done for e.g. identifiers.
 
 NF-51-J119-018 Use all available space to display routine names (2010-10-16)
 
