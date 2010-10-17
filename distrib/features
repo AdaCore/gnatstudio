@@ -25,8 +25,8 @@ NF-51-J119-018 Use all available space to display routine names (2010-10-16)
   The GPS editor does not cut the routine name at 20 characters but uses
   all available spaces in the editor's status line.
 
-NF-51-GA03-018 Project Explorer uses a non case-sensitive sort (2010-10-17)
+NF-51-GA03-018 Project View uses a case-insensitive sort (2010-10-17)
 
   Entries (project, package, subprogram, types names) in the Project
-  Explorer are now sorted using a non case-sensitive sort. This is more
-  user friendly.
+  View are now sorted ignoring the casing, which is in general more user
+  friendly.
