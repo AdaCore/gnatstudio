@@ -343,9 +343,10 @@ package body Code_Analysis_Module is
    --  Call Destroy_All_Analyzes.
    --  Then create a new analysis.
 
-   procedure On_Project_Loaded_Hook
+   procedure On_Project_View_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when a project is loaded. Allows to fill the view with new datas.
+   --  Called when a project view is changed. Allows to fill the view with new
+   --  datas.
 
    procedure Destroy_All_Analyzes
      (Kernel     : Kernel_Handle;
@@ -1263,7 +1264,7 @@ package body Code_Analysis_Module is
    -- On_Project_Loaded_Hook --
    ----------------------------
 
-   procedure On_Project_Loaded_Hook
+   procedure On_Project_View_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Node     : Node_Ptr;
@@ -1298,7 +1299,7 @@ package body Code_Analysis_Module is
             Node);
          Refresh_Analysis_Report (Kernel_Handle (Kernel), Analysis);
       end if;
-   end On_Project_Loaded_Hook;
+   end On_Project_View_Changed_Hook;
 
    --------------------------
    -- Destroy_All_Analyzes --
@@ -2187,9 +2188,9 @@ package body Code_Analysis_Module is
          Name    => "code_analysis.project_changing");
       Add_Hook
         (Kernel  => Kernel,
-         Hook    => Project_Changed_Hook,
-         Func    => Wrapper (On_Project_Loaded_Hook'Access),
-         Name    => "code_analysis.project_changed");
+         Hook    => Project_View_Changed_Hook,
+         Func    => Wrapper (On_Project_View_Changed_Hook'Access),
+         Name    => "code_analysis.project_view_changed");
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       --  Shell commands registration
