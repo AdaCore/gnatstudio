@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 5.0.1
+
+- JA15-018: Default naming schemes not set in the project wizard
+  Problem:    If you add new languages to your project through the project
+              editor or while creating a new project in the project wizard,
+              the default naming scheme is empty.
+  Workaround: Manually set the file extensions for your language
+
 Known Problems fixed in GPS 5.0.0
 
 - JA05-015: Crash after resizing or lots of drawing under Windows
