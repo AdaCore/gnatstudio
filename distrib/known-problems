@@ -167,6 +167,11 @@ Known Problems fixed in GPS 5.0.0
                                and then not Is_Equal (Match_Unit, Unit);
   Workaround: Indent manually.
 
+- J624-011: GPS starts with blank screen
+  Problem:    When Coverage Report is open on GPS exit, next GPS session starts
+              with blank screen (no windows are opened).
+  Workaround: Close Coverage Report windows before leave GPS.
+
 - J623-007: Renaming bookmarks sometimes mixes them
   Problem:    If you rename a bookmark in the Bookmarks View, and the new
               name changes the sort order, then the location and names of
