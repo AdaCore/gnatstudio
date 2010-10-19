@@ -1657,7 +1657,7 @@ package body Project_Viewers is
    ---------------------------------
 
    function Get_Nth_Project_Editor_Page
-     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+     (Kernel : access Kernel_Handle_Record'Class; Num : Positive)
       return Project_Editor_Page
    is
       pragma Unreferenced (Kernel);
