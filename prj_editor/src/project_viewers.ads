@@ -159,7 +159,7 @@ package Project_Viewers is
    --  Return the number of registered project editor pages
 
    function Get_Nth_Project_Editor_Page
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Natural)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Positive)
       return Project_Editor_Page;
    --  Return the Num-th registered project editor page.
    --  First page is number 1.

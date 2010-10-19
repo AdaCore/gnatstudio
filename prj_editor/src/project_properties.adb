@@ -4925,7 +4925,7 @@ package body Project_Properties is
       then
          --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page
-           (Ed.Kernel, Page - Pages_From_XML_Count);
+           (Ed.Kernel, Page - Pages_From_XML_Count + 1);
       end if;
 
       if P /= null then
@@ -4934,7 +4934,7 @@ package body Project_Properties is
          begin
             Refresh
               (Page      => P,
-               Widget    => Ed.Pages (Page - Pages_From_XML_Count),
+               Widget    => Ed.Pages (Page - Pages_From_XML_Count + 1),
                Project   => Ed.Project,
                Languages => Languages.all);
             Free (Languages);
