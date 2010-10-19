@@ -128,7 +128,7 @@ package body Creation_Wizard.Full is
       P          : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
       Count      : constant Natural :=
-        Project_Editor_Pages_Count (Get_Kernel (Wiz));
+                     Project_Editor_Pages_Count (Get_Kernel (Wiz));
       Page       : Project_Wizard_Page;
 
    begin

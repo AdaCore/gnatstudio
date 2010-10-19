@@ -1469,7 +1469,7 @@ package body Project_Properties is
       --  As_List indicates the format of the returned value
 
       procedure Set_Return_Attribute (List : Argument_List; As_List : Boolean);
-      --  Sets the contents of List into the return value.
+      --  Sets the contents of List into the return value
 
       procedure Set_Return_Attribute
         (Value : String; As_List : Boolean);
@@ -4913,9 +4913,9 @@ package body Project_Properties is
    is
       Note                 : constant Gtk_Notebook := Gtk_Notebook (Notebook);
       Ed                   : constant Properties_Editor :=
-        Properties_Editor (Editor);
+                               Properties_Editor (Editor);
       Page                 : constant Integer :=
-        Integer (Get_Current_Page (Note));
+                               Integer (Get_Current_Page (Note));
       Pages_From_XML_Count : constant Integer := Ed.XML_Pages'Length;
       P                    : Project_Editor_Page;
       Flags                : Selector_Flags;
@@ -5194,10 +5194,10 @@ package body Project_Properties is
 
       if Response = Gtk_Response_OK then
          declare
-            Prj_Iter     : Scenario_Selectors.Project_Iterator :=
-                             Start (Editor.Prj_Selector);
-            Ed           : Project_Editor_Page;
-            Tmp_Project  : Project_Type;
+            Prj_Iter    : Scenario_Selectors.Project_Iterator :=
+                            Start (Editor.Prj_Selector);
+            Ed          : Project_Editor_Page;
+            Tmp_Project : Project_Type;
          begin
             while Current (Prj_Iter) /= GNATCOLL.Projects.No_Project loop
                Tmp_Project := Current (Prj_Iter);

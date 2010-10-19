@@ -161,7 +161,7 @@ package body Project_Viewers is
       --  takes place.
 
       Current_Dir : Virtual_File := No_File;
-      --  The directory currently being shown.
+      --  The directory currently being shown
    end record;
    type Project_Viewer is access all Project_Viewer_Record'Class;
 
