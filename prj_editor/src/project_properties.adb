@@ -4951,6 +4951,10 @@ package body Project_Properties is
          Set_Sensitive (Ed.Prj_Selector, True);
          Set_Sensitive (Ed.Selector, True);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Switch_Page;
 
    -------------------------
