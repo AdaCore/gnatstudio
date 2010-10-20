@@ -1,24 +1,10 @@
-Known Problems fixed in GPS 5.0.1
-
-- JA19-001: occurrences.py has no effect
-  Problem:    Selecting the Mark Occurrences In File menu has no effect when
-              this plugin is activated
-  Workaround: GPS now by default highlights the current entity everywhere in
-              the buffer, so this plugin is less useful when it was. You can
-              also do an explicit Find for the text you want to highlight.
+Known Problems fixed in GPS 5.0.0
 
 - JA15-018: Default naming schemes not set in the project wizard
   Problem:    If you add new languages to your project through the project
               editor or while creating a new project in the project wizard,
               the default naming scheme is empty.
   Workaround: Manually set the file extensions for your language
-
-- J624-011: GPS starts with blank screen
-  Problem:    When the Coverage Report is displayed on GPS exit, the next GPS
-              session starts with a blank screen (no windows are opened).
-  Workaround: Close the Coverage Report window before quitting GPS.
-
-Known Problems fixed in GPS 5.0.0
 
 - JA05-015: Crash after resizing or lots of drawing under Windows
   Problem:    GPS may crash without any warning notice when resizing windows
@@ -178,6 +164,11 @@ Known Problems fixed in GPS 5.0.0
                                  not Is_Nil (Match_Unit)
                                and then not Is_Equal (Match_Unit, Unit);
   Workaround: Indent manually.
+
+- J624-011: GPS starts with blank screen
+  Problem:    When the Coverage Report is displayed on GPS exit, the next GPS
+              session starts with a blank screen (no windows are opened).
+  Workaround: Close the Coverage Report window before quitting GPS.
 
 - J623-007: Renaming bookmarks sometimes mixes them
   Problem:    If you rename a bookmark in the Bookmarks View, and the new
