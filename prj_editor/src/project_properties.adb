@@ -558,6 +558,9 @@ package body Project_Properties is
       --  The pages that have been registered
 
       XML_Pages          : Wizard_Pages_Array_Access;
+      --  The pages in the order visible in the notebook.
+      --  Some elements might be null in this array (in particular, the second
+      --  page corresponding to the languages at index 2).
 
       Project            : Project_Type;
       Kernel             : Kernel_Handle;
@@ -4566,6 +4569,11 @@ package body Project_Properties is
          return;
       end if;
 
+      Editor.XML_Pages := new Wizard_Pages_Array (1 .. 2);
+      --  Index 1 will be for the "General" Page
+      --  Index 2 will be for the "Languages" page
+      --  These two pages have a fixed order, which we force
+
       Gtk_New (Event);
       Gtk_New_Vbox (General_Page_Box, Homogeneous => False);
       Add (Event, General_Page_Box);
@@ -4574,6 +4582,7 @@ package body Project_Properties is
                   Expand => False);
       Gtk_New (Label, -"General");
       Show (Event);
+      Trace (Me, "Initialize, Adding General page first in notebook");
       Append_Page (Editor.Note, Event, Label);
 
       Gtk_New (Event);
@@ -4581,6 +4590,7 @@ package body Project_Properties is
       Add (Event, Editor.Toolchains_Editor);
       Gtk_New (Label, -"Languages");
       Show (Event);
+      Trace (Me, "Initialize, Adding Languages page second in notebook");
       Append_Page (Editor.Note, Event, Label);
 
       for P in Properties_Module_ID.Pages'Range loop
@@ -4589,6 +4599,9 @@ package body Project_Properties is
          --  sent to the parent of the notebook. In case of nested notebooks,
          --  this means the event is sent to the parent's of the enclosing
          --  notebook, and thus is improperly handled by the nested notebooks.
+         --
+         --  This loop never initializes the Languages page, which is handled
+         --  by the toolchain editor
 
          XML_Page := XML_Project_Wizard_Page_Access
            (Attribute_Editors_Page_Box
@@ -4601,30 +4614,32 @@ package body Project_Properties is
                Path_Widget       => Editor.Path,
                Context           => "properties"));
 
-         if XML_Page /= null
-           and then XML_Page.Box /= General_Page_Box
-         then
-            Gtk_New (Event);
-            Add (Event, XML_Page.Box);
-
-            if Attribute_Editors_Page_Name (P) /= "General" then
-               Gtk_New (Label, Attribute_Editors_Page_Name (P));
-               Append_Page (Editor.Note, Event, Label);
-            end if;
-         end if;
-
          if XML_Page /= null then
-            Tmp := Editor.XML_Pages;
-            if Tmp = null then
-               Editor.XML_Pages := new Wizard_Pages_Array (1 .. 1);
+            if XML_Page.Box = General_Page_Box then
+               Editor.XML_Pages (1) := Wizard_Page (XML_Page);
             else
+               Gtk_New (Event);
+               Add (Event, XML_Page.Box);
+
+               if Attribute_Editors_Page_Name (P) /= "General" then
+                  Gtk_New (Label, Attribute_Editors_Page_Name (P));
+                  Trace (Me, "Initialize, adding page "
+                         & Attribute_Editors_Page_Name (P));
+                  Append_Page (Editor.Note, Event, Label);
+               end if;
+
+               Tmp := Editor.XML_Pages;
                Editor.XML_Pages :=
                  new Wizard_Pages_Array (1 .. Tmp'Length + 1);
                Editor.XML_Pages (Tmp'Range) := Tmp.all;
                Unchecked_Free (Tmp);
-            end if;
 
-            Editor.XML_Pages (Editor.XML_Pages'Last) := Wizard_Page (XML_Page);
+               Editor.XML_Pages (Editor.XML_Pages'Last) :=
+                 Wizard_Page (XML_Page);
+               Trace (Me, "Initialize, Editor.XML_Pages ("
+                      & Editor.XML_Pages'Last'Img & ")="
+                      & Attribute_Editors_Page_Name (P));
+            end if;
          end if;
       end loop;
 
@@ -4654,6 +4669,8 @@ package body Project_Properties is
             Add (Event, Editor.Pages (E));
             Show (Event);
             Append_Page (Editor.Note, Event, Label);
+            Trace (Me, "Initialize, Adding page from Editor.Pages"
+                   & Get_Label (Page));
          end if;
       end loop;
 
@@ -4868,9 +4885,10 @@ package body Project_Properties is
       Page : constant Integer := Integer (Get_Current_Page (Editor.Note));
    begin
       for P in Editor.XML_Pages'Range loop
-         if Get_Parent
-           (XML_Project_Wizard_Page_Access (Editor.XML_Pages (P)).Box)
-           = Get_Nth_Page (Editor.Note, Gint (Page))
+         if Editor.XML_Pages (P) /= null
+           and then Get_Parent
+             (XML_Project_Wizard_Page_Access (Editor.XML_Pages (P)).Box) =
+              Get_Nth_Page (Editor.Note, Gint (Page))
          then
             declare
                Msg : constant String := Is_Complete (Editor.XML_Pages (P));
@@ -4934,7 +4952,8 @@ package body Project_Properties is
          begin
             Refresh
               (Page      => P,
-               Widget    => Ed.Pages (Page - Pages_From_XML_Count + 1),
+               Widget    =>
+                 Ed.Pages (Ed.Pages'First + Page - Pages_From_XML_Count),
                Project   => Ed.Project,
                Languages => Languages.all);
             Free (Languages);
@@ -5223,17 +5242,19 @@ package body Project_Properties is
 
                      if Editor.XML_Pages /= null then
                         for X in Editor.XML_Pages'Range loop
-                           Generate_Project
-                             (Page               =>
-                                Project_Wizard_Page (Editor.XML_Pages (X)),
-                              Kernel             => Kernel,
-                              Scenario_Variables => Current (Scenar_Iter),
-                              Project            => Tmp_Project,
-                              Changed            => Changed);
+                           if Editor.XML_Pages (X) /= null then
+                              Generate_Project
+                                (Page               =>
+                                   Project_Wizard_Page (Editor.XML_Pages (X)),
+                                 Kernel             => Kernel,
+                                 Scenario_Variables => Current (Scenar_Iter),
+                                 Project            => Tmp_Project,
+                                 Changed            => Changed);
 
-                           if Tmp_Project = GNATCOLL.Projects.No_Project then
-                              Report_Error ("Project not modified");
-                              return; --  Give up on modifications
+                              if Tmp_Project = No_Project then
+                                 Report_Error ("Project not modified");
+                                 return; --  Give up on modifications
+                              end if;
                            end if;
                         end loop;
                      end if;
@@ -5311,8 +5332,10 @@ package body Project_Properties is
 
       if Editor.XML_Pages /= null then
          for X in Editor.XML_Pages'Range loop
-            On_Destroy (Editor.XML_Pages (X));
-            Unchecked_Free (Editor.XML_Pages (X));
+            if Editor.XML_Pages (X) /= null then
+               On_Destroy (Editor.XML_Pages (X));
+               Unchecked_Free (Editor.XML_Pages (X));
+            end if;
          end loop;
 
          Unchecked_Free (Editor.XML_Pages);
