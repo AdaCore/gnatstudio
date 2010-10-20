@@ -60,3 +60,4 @@ listed above, with a few additional steps:
   e.g.  the svn://gcc.gnu.org/svn/gcc/trunk/gcc/ada repository.
 
 - You need to use the SVN version of GtkAda matching GPS sources (same date/tag)
+
