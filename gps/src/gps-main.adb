@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Environment_Variables;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
 with ALI;
@@ -253,7 +252,6 @@ procedure GPS.Main is
    Startup_Dir            : String_Access;
    About_Contents         : String_Access;
 
-   Python_Home : String_Access;
    Python_Path : String_Access;
 
    Splash                 : Gtk_Window;
@@ -495,11 +493,6 @@ procedure GPS.Main is
         (+Create_From_Dir (GPS_Home_Dir, "gtkrc").Full_Name);
 
       Gtk.Main.Init;
-
-      Python_Home := Getenv ("PYTHONHOME");
-      if Python_Home.all = "" then
-         Setenv ("PYTHONHOME", +Prefix_Dir.Full_Name);
-      end if;
 
       --  Python startup path
 
@@ -1711,13 +1704,6 @@ procedure GPS.Main is
 
       Idle_Id := Idle_Add (On_GPS_Started'Access);
 
-      if Python_Home.all = "" then
-         Ada.Environment_Variables.Clear ("PYTHONHOME");
-      else
-         Setenv ("PYTHONHOME", Python_Home.all);
-      end if;
-
-      Free (Python_Home);
       Setenv ("PYTHONPATH", Python_Path.all);
       Free (Python_Path);
 
