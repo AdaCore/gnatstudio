@@ -2142,29 +2142,29 @@ package body Project_Properties is
       A      : Attribute_Description_Access)
    is
       Descr                : constant String :=
-        Get_Attribute (N, "description");
+                               Get_Attribute (N, "description");
       Label                : constant String :=
-        Get_Attribute (N, "label", A.Name.all);
+                               Get_Attribute (N, "label", A.Name.all);
       Is_List              : constant String :=
-        Get_Attribute (N, "list", "false");
+                               Get_Attribute (N, "list", "false");
       Ordered              : constant String :=
-        Get_Attribute (N, "ordered", "false");
+                               Get_Attribute (N, "ordered", "false");
       Case_Sensitive_Index : constant String :=
-        Get_Attribute
-          (N, "case_sensitive_index", "false");
+                               Get_Attribute
+                                 (N, "case_sensitive_index", "false");
       Omit                 : constant String :=
-        Get_Attribute (N, "omit_if_default", "true");
+                               Get_Attribute (N, "omit_if_default", "true");
       Base                 : constant String :=
-        Get_Attribute (N, "base_name_only", "false");
+                               Get_Attribute (N, "base_name_only", "false");
       Indexed              : constant Boolean :=
-        N.Child /= null
-        and then (N.Child.Tag.all = "index"
-                  or else N.Child.Tag.all =
-                    "specialized_index");
+                               N.Child /= null
+                                   and then (N.Child.Tag.all = "index"
+                                             or else N.Child.Tag.all =
+                                               "specialized_index");
       Hide_In              : constant String := Get_Attribute (N, "hide_in");
       Disable_If_Not_Set   : constant String :=
-        Get_Attribute
-          (N, "disable_if_not_set", "false");
+                               Get_Attribute
+                                 (N, "disable_if_not_set", "false");
       Disable              : constant String := Get_Attribute (N, "disable");
       Child                : Node_Ptr;
 
@@ -2283,10 +2283,15 @@ package body Project_Properties is
    begin
       if Node.Tag.all = "project_attribute" then
          declare
-            Editor_Page    : constant Natural := Find_Editor_Page_By_Name
-              (Get_Attribute (Node, "editor_page", Default => "General"));
-            Editor_Section : constant Natural := Find_Editor_Section_By_Name
-              (Editor_Page, Get_Attribute (Node, "editor_section"));
+            Editor_Page    : constant Natural :=
+                               Find_Editor_Page_By_Name
+                                 (Get_Attribute
+                                    (Node, "editor_page",
+                                     Default => "General"));
+            Editor_Section : constant Natural :=
+                               Find_Editor_Section_By_Name
+                                 (Editor_Page,
+                                  Get_Attribute (Node, "editor_section"));
             Name           : String := Get_Attribute (Node, "name");
             Pkg            : String := Get_Attribute (Node, "package");
             Indexed        : constant Boolean := Node.Child /= null
@@ -2358,8 +2363,7 @@ package body Project_Properties is
    function Create_General_Page
      (Editor  : access Properties_Editor_Record'Class;
       Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class)
-      return Gtk.Widget.Gtk_Widget
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       Button2         : Gtk_Button;
       Label           : Gtk_Label;
@@ -2526,10 +2530,10 @@ package body Project_Properties is
       Params  : Glib.Values.GValues)
    is
       Ed       : constant List_Attribute_Editor :=
-        List_Attribute_Editor (Editor);
+                   List_Attribute_Editor (Editor);
       Path     : constant String := Get_String (Nth (Params, 1));
       Iter     : constant Gtk_Tree_Iter :=
-        Get_Iter_From_String (Ed.Model, Path);
+                   Get_Iter_From_String (Ed.Model, Path);
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
       Set (Ed.Model, Iter, 1, Selected);
@@ -2925,15 +2929,16 @@ package body Project_Properties is
      (Editor : access Gtk_Widget_Record'Class)
    is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Files : constant GNATCOLL.VFS.File_Array := Select_Files_Or_Directories
-        (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
-         Project        => Ed.Project,
-         Default        => +Get_Text (Ed.Ent),
-         Project_Path   => +Get_Text (Ed.Path_Widget),
-         --  ??? What if the filesystem path is non-UTF8?
-         As_Directory   => Ed.As_Directory,
-         Filter         => Ed.Filter,
-         Allow_Multiple => False);
+      Files : constant GNATCOLL.VFS.File_Array :=
+                Select_Files_Or_Directories
+                  (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
+                   Project        => Ed.Project,
+                   Default        => +Get_Text (Ed.Ent),
+                   Project_Path   => +Get_Text (Ed.Path_Widget),
+                   --  ??? What if the filesystem path is non-UTF8?
+                   As_Directory   => Ed.As_Directory,
+                   Filter         => Ed.Filter,
+                   Allow_Multiple => False);
    begin
       for F in Files'Range loop
          Set_Text (Ed.Ent, Display_Full_Name (Files (F)));
@@ -2948,13 +2953,13 @@ package body Project_Properties is
    procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
       Value : GNAT.Strings.String_List :=
-        Create_Attribute_Dialog
-          (Ed.Kernel,
-           Gtk_Window (Get_Toplevel (Editor)),
-           Ed.Project,
-           Ed.Attribute,
-           Attribute_Index => "",
-           Project_Path    => +Get_Text (Ed.Path_Widget));
+                Create_Attribute_Dialog
+                  (Ed.Kernel,
+                   Gtk_Window (Get_Toplevel (Editor)),
+                   Ed.Project,
+                   Ed.Attribute,
+                   Attribute_Index => "",
+                   Project_Path    => +Get_Text (Ed.Path_Widget));
       --  ??? What if the filesystem path is non-UTF8?
       Iter  : Gtk_Tree_Iter;
    begin
@@ -3034,7 +3039,7 @@ package body Project_Properties is
 
    procedure Move_String_Up (Editor : access Gtk_Widget_Record'Class) is
       Ed          : constant File_Attribute_Editor :=
-        File_Attribute_Editor (Editor);
+                      File_Attribute_Editor (Editor);
       M           : Gtk_Tree_Model;
       Iter, Iter2 : Gtk_Tree_Iter;
       Path        : Gtk_Tree_Path;
@@ -3071,7 +3076,7 @@ package body Project_Properties is
 
    procedure Move_String_Down (Editor : access Gtk_Widget_Record'Class) is
       Ed          : constant File_Attribute_Editor :=
-        File_Attribute_Editor (Editor);
+                      File_Attribute_Editor (Editor);
       M           : Gtk_Tree_Model;
       Iter, Iter2 : Gtk_Tree_Iter;
    begin
@@ -3108,10 +3113,10 @@ package body Project_Properties is
       Params  : Glib.Values.GValues)
    is
       Ed       : constant File_Attribute_Editor :=
-        File_Attribute_Editor (Editor);
+                   File_Attribute_Editor (Editor);
       Path     : constant String := Get_String (Nth (Params, 1));
       Iter     : constant Gtk_Tree_Iter :=
-        Get_Iter_From_String (Ed.Model, Path);
+                   Get_Iter_From_String (Ed.Model, Path);
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
       Set (Ed.Model, Iter, 1, Selected);
@@ -3125,7 +3130,7 @@ package body Project_Properties is
      (Editor : access Gtk_Widget_Record'Class)
    is
       Ed        : constant File_Attribute_Editor :=
-        File_Attribute_Editor (Editor);
+                    File_Attribute_Editor (Editor);
       Iter      : Gtk_Tree_Iter;
       Directory : constant String := Get_Text (Ed.Path_Widget);
    begin
@@ -3166,8 +3171,8 @@ package body Project_Properties is
       pragma Unreferenced (Col_Number);
 
       Attr       : constant Attribute_Type :=
-        Get_Attribute_Type_From_Description
-          (Description, Attribute_Index);
+                     Get_Attribute_Type_From_Description
+                       (Description, Attribute_Index);
    begin
       Editor := new File_Attribute_Editor_Record;
       Initialize_Hbox (Editor, Homogeneous => False);
@@ -3366,8 +3371,8 @@ package body Project_Properties is
       Project_Path    : Filesystem_String) return GNAT.Strings.String_List
    is
       Attr   : constant Attribute_Type :=
-        Get_Attribute_Type_From_Description
-          (Description, Attribute_Index);
+                 Get_Attribute_Type_From_Description
+                   (Description, Attribute_Index);
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Ent    : Gtk_Entry;
@@ -3472,8 +3477,9 @@ package body Project_Properties is
       Path_Widget     : Gtk_Entry;
       Is_List         : Boolean) return Attribute_Editor
    is
-      Attr : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Description, Attribute_Index);
+      Attr : constant Attribute_Type :=
+               Get_Attribute_Type_From_Description
+                 (Description, Attribute_Index);
    begin
       case Attr.Typ is
          when Attribute_As_String
@@ -3567,7 +3573,7 @@ package body Project_Properties is
       Index : String) return Boolean
    is
       Typ : constant Attribute_Type :=
-        Get_Attribute_Type_From_Description (Attr, Index);
+              Get_Attribute_Type_From_Description (Attr, Index);
    begin
       case Typ.Typ is
          when Attribute_As_String    => return True;
@@ -3734,11 +3740,11 @@ package body Project_Properties is
       Ignore_Editor : Boolean := False) return String
    is
       Typ                   : constant Attribute_Type :=
-        Get_Attribute_Type_From_Description
-          (Attr, Index);
+                                Get_Attribute_Type_From_Description
+                                  (Attr, Index);
       Empty_String          : aliased String := "";
       Default_Value         : GNAT.Strings.String_Access :=
-        Empty_String'Unchecked_Access;
+                                Empty_String'Unchecked_Access;
       Lower_Attribute_Index : String := Index;
    begin
       if not Attr.Case_Sensitive_Index then
@@ -3801,7 +3807,7 @@ package body Project_Properties is
       Index  : String := "") return GNAT.Strings.String_List_Access
    is
       Attr : constant Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name (Pkg, Name);
+               Get_Attribute_Type_From_Name (Pkg, Name);
    begin
       return Get_Current_Value
         (Kernel  => Kernel,
@@ -3952,7 +3958,7 @@ package body Project_Properties is
       Event  : Gdk.Event.Gdk_Event) return Boolean
    is
       Ed             : constant Indexed_Attribute_Editor :=
-        Indexed_Attribute_Editor (Editor);
+                         Indexed_Attribute_Editor (Editor);
       Path           : Gtk_Tree_Path;
       Column         : Gtk_Tree_View_Column;
       Cell_X, Cell_Y : Gint;
@@ -4101,9 +4107,9 @@ package body Project_Properties is
       Col_Number    : Gint;
       pragma Unreferenced (Col_Number);
       Index         : constant Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name
-          (Pkg  => Attr.Index_Package.all,
-           Name => Attr.Index_Attribute.all);
+                        Get_Attribute_Type_From_Name
+                          (Pkg  => Attr.Index_Package.all,
+                           Name => Attr.Index_Attribute.all);
       Current_Index : String_List_Access;
 
       procedure Value_Cb (Value : String; Selected : Boolean);
@@ -4433,8 +4439,8 @@ package body Project_Properties is
       Attr  : Attribute_Description_Access)
    is
       Active                                : constant Boolean :=
-        Get_Active
-          (Gtk_Check_Button (Check));
+                                                Get_Active
+                                                  (Gtk_Check_Button (Check));
       Attr2                                 : Attribute_Description_Access;
       Page                                  : Attribute_Page;
       Pkg_Start, Pkg_End, Name_Start, Index : Natural;
@@ -4783,7 +4789,7 @@ package body Project_Properties is
       Context           : String) return Project_Wizard_Page
    is
       Page         : Attribute_Page renames
-        Properties_Module_ID.Pages (Nth_Page);
+                       Properties_Module_ID.Pages (Nth_Page);
       Page_Box     : XML_Project_Wizard_Page_Access;
       Box          : Gtk_Box;
       Frame        : Gtk_Frame;
@@ -4865,7 +4871,7 @@ package body Project_Properties is
      (Editor : Properties_Editor) return String_List_Access
    is
       Attr : constant Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
+               Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
    begin
       if Editor.Toolchains_Editor /= null then
          return Get_Languages (Editor.Toolchains_Editor);
@@ -5298,9 +5304,9 @@ package body Project_Properties is
 
          declare
             New_Name : constant String :=
-              Get_Text (Editor.Name);
+                         Get_Text (Editor.Name);
             New_Path : constant Virtual_File :=
-              Create_From_UTF8 (Get_Text (Editor.Path));
+                         Create_From_UTF8 (Get_Text (Editor.Path));
             --  ??? Should we specify the build server's name as host ?
          begin
             if New_Name /= Project.Name

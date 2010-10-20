@@ -635,8 +635,8 @@ package body Project_Viewers is
    -------------
 
    procedure Gtk_New
-     (Viewer   : out Project_Viewer;
-      Kernel   : access Kernel_Handle_Record'Class) is
+     (Viewer : out Project_Viewer;
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
       Viewer := new Project_Viewer_Record;
       Project_Viewers.Initialize (Viewer, Kernel);
@@ -760,12 +760,14 @@ package body Project_Viewers is
       Project_Filter   : Project_Type;
       Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Files : File_Array_Access :=
-        Project_Filter.Source_Files (Recursive => False);
+      Files                : File_Array_Access :=
+                               Project_Filter.Source_Files
+                                 (Recursive => False);
       Same_Dir_And_Project : constant Boolean :=
-        (Viewer.Current_Project = Project_Filter
-         and then Directory_Filter /= No_File
-         and then Viewer.Current_Dir = Directory_Filter);
+                               (Viewer.Current_Project = Project_Filter
+                                and then Directory_Filter /= No_File
+                                and then
+                                  Viewer.Current_Dir = Directory_Filter);
       Sorted : Gint;
    begin
       Viewer.Current_Project := Project_Filter;
@@ -1180,8 +1182,6 @@ package body Project_Viewers is
    procedure Project_Static_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
-
       function Remove_Redundant_Directories
         (Old_Path, New_Path : File_Array) return File_Array;
       --  Return New_Path after having removed the directories that have been
@@ -1216,6 +1216,8 @@ package body Project_Viewers is
 
          return Returned_Path (1 .. Returned_Path_Length);
       end Remove_Redundant_Directories;
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
 
    begin
       if Command = "add_predefined_paths" then
@@ -1254,8 +1256,6 @@ package body Project_Viewers is
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
-      Project : constant Project_Type := Get_Data (Data, 1);
 
       procedure Set_Error_Tmp (Str : String);
       --  Set an error
@@ -1268,6 +1268,9 @@ package body Project_Viewers is
       begin
          Set_Error_Msg (Data, Str);
       end Set_Error_Tmp;
+
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Project : constant Project_Type := Get_Data (Data, 1);
 
    begin
       if Command = "add_main_unit" then
