@@ -102,6 +102,20 @@ def get_selection_or_buffer (buffer=None):
    else:
       return (buffer, start, end)
 
+def get_selection_or_word (buffer=None):
+   """If a selection exists, returns its beginning and end. Otherwise
+      return the beginning and end of the current word..
+      The buffer is returned as the first field of the tuple"""
+   if not buffer:
+      buffer = GPS.EditorBuffer.get ()
+   start = buffer.selection_start ()
+   end   = buffer.selection_end ()
+   if start == end:
+      loc = buffer.current_view().cursor ()
+      return (buffer, goto_word_start (loc), goto_word_end (loc))
+   else:
+      return (buffer, start, end)
+
 def get_selection_or_line (buffer, location):
    """If a selection exists, returns its beginning and end. Otherwise
       return the beginning and end of line.

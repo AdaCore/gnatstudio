@@ -10,7 +10,9 @@ This is similar to an Eclipse feature called "Dynamically marking occurrences
 in file"
 
 You can bind any shortcut you want to the action defined in this package.
-This is done through the /Edit/Key Shortcuts menu.
+This is done through the /Edit/Key Shortcuts menu. The two actions are
+called /Editor/Mark Occurrences and /Editor/Remove Marked Occurrences. A new
+menu is also provided in /Navigate/Mark Occurrences In File.
 
 The resulting highlights can be removed either through the "Remove Marked
 Occurrences" action, or simply by deleting the corresponding category in the
@@ -24,6 +26,7 @@ Locations window.
 
 import GPS
 from gps_utils import *
+from text_utils import *
 
 GPS.Preference ("Plugins/occurrences/color").create (
   "Highlight Color", "color",
@@ -35,20 +38,13 @@ def on_gps_started (hook_name):
   GPS.Editor.register_highlighting \
     ("dynamic occurrences", GPS.Preference ("Plugins/occurrences/color").get(), True)
 
-@interactive ("Editor", filter="Source editor", name="mark occurrences",
+@interactive ("Editor", filter="Source editor",name="mark occurrences",
               menu="/Navigate/Mark Occurrences In File")
 def mark_selected ():
    """Mark all the occurrences of the selected element in the current editor.
       Does nothing if multiple lines are selected"""
-   buffer = GPS.EditorBuffer.get()
-   if buffer.selection_start().line != buffer.selection_end().line:
-      return
-
-   selection = buffer.get_chars (buffer.selection_start(), buffer.selection_end() - 1)
-   context=GPS.current_context()
-
-   if selection=="" and context.__class__ == GPS.EntityContext:
-      selection=context.entity().name()
+   (buffer, start, end) = get_selection_or_word ()
+   selection = buffer.get_chars (start, end)
 
    if selection != "":
       for m in buffer.file().search (selection, regexp=False):

@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.1
 
+- JA19-001: occurrences.py has no effect
+  Problem:    Selecting the Mark Occurrences In File menu has no effect when
+              this plugin is activated
+  Workaround: GPS now by default highlights the current entity everywhere in
+              the buffer, so this plugin is less useful when it was. You can
+              also do an explicit Find for the text you want to highlight.
+
 - JA15-018: Default naming schemes not set in the project wizard
   Problem:    If you add new languages to your project through the project
               editor or while creating a new project in the project wizard,
