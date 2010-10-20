@@ -353,13 +353,16 @@ package Toolchains is
    --  Return the toolchains contained in this manager.
 
    procedure Compute_Gprconfig_Compilers
-     (Mgr : access Toolchain_Manager_Record);
-   --  Retrieve all compilers found on the host
+     (Mgr     : access Toolchain_Manager_Record;
+      Success : out Boolean);
+   --  Retrieve all compilers found on the host.
+   --  Status is set to false if gprconfig could not be found or is too olds
 
    procedure Compute_Gprconfig_Compilers
-     (Mgr : access Toolchain_Manager_Record;
+     (Mgr      : access Toolchain_Manager_Record;
       Callback : access procedure
-         (Toolchain : String; Num, Total : Natural));
+        (Toolchain : String; Num, Total : Natural);
+      Success  : out Boolean);
    --  Same as above, with callback called when analyzing toolchains
 
    function Get_Native_Toolchain
@@ -570,6 +573,7 @@ private
       Languages           : Language_Sets.Set;
       Gprconfig_Compilers : Compiler_Vector.Vector;
       Compilers_Scanned   : Boolean := False;
+      Gprconfig_Success   : Boolean := True;
    end record;
 
    function Get_Known_Toolchain

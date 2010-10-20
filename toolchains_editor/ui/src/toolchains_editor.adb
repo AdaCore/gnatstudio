@@ -445,6 +445,8 @@ package body Toolchains_Editor is
       Iter      : Gtk_Tree_Iter;
       Diag      : Gtk_Dialog;
       Label     : Gtk_Label;
+      Success   : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       Trace (Me, "Setting editor with project and language information");
@@ -465,7 +467,10 @@ package body Toolchains_Editor is
 
       --  Getting toolchain from project.
       Editor.Mgr.Do_Rollback;
-      Editor.Mgr.Compute_Gprconfig_Compilers;
+      --  ??? At some point we should handle the 'Success' status and display
+      --  an appropriate warning in the widget stating that we could not
+      --  retrieve the installed toolchain because gprbuild 1.5.0 is not there
+      Editor.Mgr.Compute_Gprconfig_Compilers (Success);
       Editor.Mgr.Do_Snapshot;
 
       --  Hide and destroy the dialog

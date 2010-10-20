@@ -58,10 +58,11 @@ package body Toolchains is
    ---------------------------------
 
    procedure Compute_Gprconfig_Compilers
-     (Mgr : access Toolchain_Manager_Record) is
+     (Mgr     : access Toolchain_Manager_Record;
+      Success : out Boolean) is
       procedure Dummy (Tc : String; Num, Total : Natural) is null;
    begin
-      Compute_Gprconfig_Compilers (Mgr, Dummy'Access);
+      Compute_Gprconfig_Compilers (Mgr, Dummy'Access, Success);
    end Compute_Gprconfig_Compilers;
 
    ---------------------------------
@@ -69,9 +70,10 @@ package body Toolchains is
    ---------------------------------
 
    procedure Compute_Gprconfig_Compilers
-     (Mgr : access Toolchain_Manager_Record;
+     (Mgr      : access Toolchain_Manager_Record;
       Callback : access procedure
-         (Toolchain : String; Num, Total : Natural))
+        (Toolchain : String; Num, Total : Natural);
+      Success  : out Boolean)
    is
       function Get_Value
         (Num   : Natural;
@@ -133,10 +135,13 @@ package body Toolchains is
 
    begin
       if Mgr.Compilers_Scanned then
+         Success := Mgr.Gprconfig_Success;
          return;
       end if;
 
       Mgr.Compilers_Scanned := True;
+      Mgr.Gprconfig_Success := True;
+      Success := True;
 
       declare
          Output  : constant String :=
@@ -412,6 +417,8 @@ package body Toolchains is
       when others =>
          Trace (Me, "Exception when executing gprconfig. Let's skip.");
          Mgr.Compilers_Scanned := True;
+         Mgr.Gprconfig_Success := False;
+         Success := False;
    end Compute_Gprconfig_Compilers;
 
    ---------------------
