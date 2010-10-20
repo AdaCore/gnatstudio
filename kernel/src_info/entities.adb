@@ -19,6 +19,8 @@
 
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Strings;                use Ada.Strings;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
@@ -735,6 +737,15 @@ package body Entities is
       --  Clean up various other fields
 
       File.Scope_Tree_Computed := False;
+
+      if File.LI /= null then
+         --  The LI may need to be reloaded afterwards if the same file is
+         --  integrated again in the project sources (through e.g. a scenario
+         --  variable). Reseting the timestamp ensure that the references of
+         --  this file will be extracted again.
+
+         File.LI.Timestamp := No_Time;
+      end if;
 
       --  Fields which have not been cleaned (see comments above):
       --     - Depended_On (cleaned "magically" when the other files are Reset)
@@ -2325,6 +2336,21 @@ package body Entities is
    begin
       return Loc.Column;
    end Get_Column;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Loc : File_Location) return String is
+   begin
+      if Loc = No_File_Location then
+         return "null";
+      else
+         return String (Loc.File.Name.Full_Name.all)
+           & ":" & Trim (Loc.Line'Img, Both)
+           & ":" & Trim (Loc.Column'Img, Both);
+      end if;
+   end To_String;
 
    -------------------------
    -- Check_LI_And_Source --

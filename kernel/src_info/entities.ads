@@ -553,6 +553,9 @@ package Entities is
    --  Whether Loc1 comes before Loc2. If the two locations are not in the same
    --  file, then the order is the one given by comparing the file names.
 
+   function To_String (Loc : File_Location) return String;
+   --  Return a string representation of the location, for debug purpose.
+
    ----------------------------
    -- Generic instantiations --
    ----------------------------
