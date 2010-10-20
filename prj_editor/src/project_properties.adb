@@ -680,7 +680,7 @@ package body Project_Properties is
       Attribute_Index    : String := "");
    --  Remove the declaration for Attr in Project
 
-   function Find_Editor_Page_By_Name (Name : String) return Natural;
+   function Find_Editor_Page_By_Name (Name : String) return Positive;
    --  Find the index in Properties_Module_ID.Pages of the page Name.
    --  If this page doesn't exist yet, it is created as appropriate
 
@@ -1876,7 +1876,7 @@ package body Project_Properties is
    -- Find_Editor_Page_By_Name --
    ------------------------------
 
-   function Find_Editor_Page_By_Name (Name : String) return Natural is
+   function Find_Editor_Page_By_Name (Name : String) return Positive is
       Tmp : Attribute_Page_List;
    begin
       if Properties_Module_ID.Pages /= null then
