@@ -298,6 +298,13 @@ package body Welcome is
                --  First load the default project: this is needed as a fallback
                --  resource in case the pre-script hook fails, for instance.
                On_Default_Project (Screen);
+
+               --  Inform the registry that the fallback project is being
+               --  created "from default" so that the MDI for this fallback
+               --  project does not get saved automatically, even if ther is
+               --  a "default.gpr" found while loading the default project.
+               Get_Registry (Screen.Kernel).Tree.Set_Status (Default);
+
                Hide_All (Screen);
                declare
                   Cancelled : Boolean;
