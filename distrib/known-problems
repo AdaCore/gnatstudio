@@ -1,12 +1,5 @@
 Known Problems fixed in GPS 5.0.1
 
-- J930-025: PYTHONHOME being passed to processes launched by GPS
-  Problem:    When launching external processes, GPS may pass a modified
-              PYTHONHOME environment variable to these processes. This
-              can be a problem when launching Python programs.
-  Workaround: Launch the processes in a wrapper that unsets the
-              PYTHONHOME variable.
-
 Known Problems fixed in GPS 5.0.0
 
 - JA15-018: Default naming schemes not set in the project wizard
@@ -21,6 +14,13 @@ Known Problems fixed in GPS 5.0.0
               due to a leak in the handling of graphical objects.
   Workaround: Remove the file <gps-root>/etc/gtk-2.0/gtkrc to disable the
               Windows theme.
+
+- J930-025: PYTHONHOME being passed to processes launched by GPS
+  Problem:    When launching external processes, GPS may pass a modified
+              PYTHONHOME environment variable to these processes. This
+              can be a problem when launching Python programs.
+  Workaround: Launch the processes in a wrapper that unsets the
+              PYTHONHOME variable.
 
 - J928-005: Auto-fix doesn't work when missing space in constant
   Problem:    When making constant a variable with no space between the : and
