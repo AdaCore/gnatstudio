@@ -738,6 +738,15 @@ package body Entities is
 
       File.Scope_Tree_Computed := False;
 
+      if File.LI /= null then
+         --  The LI may need to be reloaded afterwards if the same file is
+         --  integrated again in the project sources (through e.g. a scenario
+         --  variable). Reseting the timestamp ensure that the references of
+         --  this file will be extracted again.
+
+         File.LI.Timestamp := No_Time;
+      end if;
+
       --  Fields which have not been cleaned (see comments above):
       --     - Depended_On (cleaned "magically" when the other files are Reset)
    end Reset;

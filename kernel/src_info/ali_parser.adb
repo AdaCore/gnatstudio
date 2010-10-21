@@ -1486,8 +1486,8 @@ package body ALI_Parser is
                    & Display_Full_Name (Get_LI_Filename (LI)));
          end if;
 
-         Set_Time_Stamp (LI, New_Timestamp);
          Reset (LI);
+         Set_Time_Stamp (LI, New_Timestamp);
 
          Load_And_Scan_ALI
            (ALI_Filename   => Get_LI_Filename (LI),
