@@ -441,10 +441,9 @@ private
    --  which is publicly visible as base for concrete types for messages.
 
    type Node_Record (Kind : Node_Kinds) is tagged limited record
-      Parent        : Node_Access;
-      Children      : Node_Vectors.Vector;
-      Message_Count : Natural;
-      Flags         : Message_Flags;
+      Parent   : Node_Access;
+      Children : Node_Vectors.Vector;
+      Flags    : Message_Flags;
 
       case Kind is
          when Node_Category =>
