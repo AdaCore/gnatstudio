@@ -20,9 +20,7 @@
 with Ada.Command_Line;              use Ada.Command_Line;
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Text_IO;                   use Ada.Text_IO;
-with Ada.Calendar;                  use Ada.Calendar;
 
-with GNAT.OS_Lib;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Symbols;              use GNATCOLL.Symbols;
 
@@ -53,18 +51,6 @@ procedure Completion.Test is
 
    Symbols : constant Symbol_Table_Access := Allocate;
 
-   Max_Accepted_Time_For_Creation : Duration := 0.1;
-   --  Maximum time for the resolution, in seconds
-
-   Max_Accepted_Time_For_Iteration : Duration := 0.1;
-   --  Maximum time for the iteration, in seconds
-
-   Max_Accepted_Time_For_Initialization : Duration := 0.3;
-   --  Maximum time for the initialization, in seconds
-
-   procedure Set_Max_Time;
-   --  Set the maximum time allowed for each type of operation
-
    procedure Next_Complete_Tag
      (Buffer      : String;
       Index       : in out Natural;
@@ -89,21 +75,6 @@ procedure Completion.Test is
    procedure Extract_Entities (File : Virtual_File; Project : String);
    procedure Full_Test
      (File : Virtual_File; Project : String; History : Boolean);
-
-   ------------------
-   -- Set_Max_Time --
-   ------------------
-
-   procedure Set_Max_Time is
-      Env : String_Access := GNAT.OS_Lib.Getenv ("GPS_COMPLETION_MAX_TIME");
-   begin
-      if Env /= null and then Env.all /= "" then
-         Max_Accepted_Time_For_Creation := Duration'Value (Env.all);
-         Max_Accepted_Time_For_Iteration := Duration'Value (Env.all);
-         Max_Accepted_Time_For_Initialization := Duration'Value (Env.all);
-      end if;
-      Free (Env);
-   end Set_Max_Time;
 
    -----------------------
    -- Next_Complete_Tag --
@@ -187,38 +158,8 @@ procedure Completion.Test is
 
    procedure Display (List : Completion_List; Name : String) is
       Iter : Completion_Iterator;
-
-      Start_Date  : Time;
-      Time_Passed : Duration;
    begin
       Put_Line (" *** " & Name & " *** ");
-
-      Start_Date := Clock;
-
-      Iter := First (List);
-
-      --  This first dummy loop checks that we can iterate over the elements of
-      --  the list in a reasonable time.
-
-      while not At_End (Iter) loop
-         declare
-            Proposal : constant Completion_Proposal'Class :=
-              Get_Proposal (Iter);
-         begin
-            if Get_Completion (Proposal) = "***" then
-               Put_Line ("Dummy test");
-            end if;
-         end;
-
-         Next (Iter);
-      end loop;
-
-      Time_Passed := Clock - Start_Date;
-
-      if Time_Passed > Max_Accepted_Time_For_Iteration then
-         Put_Line ("Iteration on completion is too long: " &
-                   Duration'Image (Time_Passed));
-      end if;
 
       Iter := First (List);
 
@@ -382,9 +323,6 @@ procedure Completion.Test is
       Resolver : constant Completion_Resolver_Access :=
         Get_New_Construct_Extractor (File, "");
 
-      Start_Date  : Time;
-      Time_Passed : Duration;
-
       Buffer : constant String_Access := Read_File (File);
 
    begin
@@ -398,8 +336,6 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
-         Start_Date := Clock;
-
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context =>
@@ -409,15 +345,6 @@ procedure Completion.Test is
                  Buffer,
                  Ada_Lang,
                  String_Index_Type (End_Word)));
-
-         Time_Passed := Clock - Start_Date;
-
-         if Time_Passed > Max_Accepted_Time_For_Creation then
-            Text_IO.Put_Line
-              ("Completion is too long: "
-               & Duration'Image (Time_Passed)
-               & " seconds.");
-         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
 
@@ -441,8 +368,6 @@ procedure Completion.Test is
       Resolver : constant Completion_Resolver_Access :=
         Get_New_Construct_Extractor (File, "");
 
-      Start_Date  : Time;
-      Time_Passed : Duration;
       Buffer      : constant String_Access := Read_File (File);
 
    begin
@@ -456,21 +381,10 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
-         Start_Date := Clock;
-
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context => Create_Context
               (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)));
-
-         Time_Passed := Clock - Start_Date;
-
-         if Time_Passed > Max_Accepted_Time_For_Creation then
-            Text_IO.Put_Line
-              ("Completion is too long: "
-               & Duration'Image (Time_Passed)
-               & " seconds.");
-         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
       end loop;
@@ -491,8 +405,6 @@ procedure Completion.Test is
       Resolver : constant Completion_Resolver_Access :=
         Get_New_Construct_Extractor (File, Project);
 
-      Start_Date  : Time;
-      Time_Passed : Duration;
       Buffer      : constant String_Access := Read_File (File);
 
    begin
@@ -506,23 +418,12 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
-         Start_Date := Clock;
-
          Get_Completion_Root
            (Resolver => Resolver,
             Offset   => String_Index_Type (End_Word),
             Context  => Create_Context
               (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)),
             Result   => Result);
-
-         Time_Passed := Clock - Start_Date;
-
-         if Time_Passed > Max_Accepted_Time_For_Creation then
-            Text_IO.Put_Line
-              ("Completion is too long: "
-               & Duration'Image (Time_Passed)
-               & " seconds.");
-         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
 
@@ -546,9 +447,6 @@ procedure Completion.Test is
         new Ada_Completion_Manager;
       Resolver : Completion_Resolver_Access;
 
-      Start_Date  : Time;
-      Time_Passed : Duration;
-
       Buffer  : constant String_Access := Read_File (File);
 
       History_Resolver : Completion_History_Access;
@@ -556,18 +454,7 @@ procedure Completion.Test is
       Apply_Number : Integer := -1;
 
    begin
-      Start_Date := Clock;
-
       Resolver := Get_New_Construct_Extractor (File, Project);
-
-      Time_Passed := Clock - Start_Date;
-
-      if Time_Passed > Max_Accepted_Time_For_Initialization then
-         Text_IO.Put_Line
-           ("Initialization is too long: "
-            & Duration'Image (Time_Passed)
-            & " seconds.");
-      end if;
 
       Tag_Index := 1;
 
@@ -585,21 +472,10 @@ procedure Completion.Test is
 
          exit when Tag_Index = 0;
 
-         Start_Date := Clock;
-
          Result := Get_Initial_Completion_List
            (Manager => Manager,
             Context => Create_Context
               (Manager, File, Buffer, Ada_Lang, String_Index_Type (End_Word)));
-
-         Time_Passed := Clock - Start_Date;
-
-         if Time_Passed > Max_Accepted_Time_For_Creation then
-            Text_IO.Put_Line
-              ("Completion is too long: "
-               & Duration'Image (Time_Passed)
-               & " seconds.");
-         end if;
 
          Display (Result, Buffer (Start_Word .. End_Word));
 
@@ -631,7 +507,6 @@ begin
 
    Set_Symbols (Construct_Db, Symbols);
    Set_Symbols (Ada_Lang, Symbols);
-   Set_Max_Time;
 
    Given_File := Create_From_Base (+Argument (1));
 
