@@ -91,6 +91,11 @@ package body Browsers.Call_Graph is
    References_Command_Class_Name : constant String := "ReferencesCommand";
    --  Name of the class for shell commands associated with this package
 
+   Call_Graph_Message_Flags : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => True);
+   --  Visibility of call graph's messages in the system at whole
+
    type Callgraph_Module_Record is new Module_ID_Record with null record;
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
@@ -1157,7 +1162,7 @@ package body Browsers.Call_Graph is
               & Kind_To_String (Get_Kind (Ref)) & "] in: "
               & Get_Full_Name (Get_Caller (Ref)),
               0,
-              (Editor_Side => True, Locations => True));
+              Call_Graph_Message_Flags);
 
       else
          Message :=
@@ -1169,7 +1174,7 @@ package body Browsers.Call_Graph is
               Col,
               "<b>" & Name & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
               0,
-              (Editor_Side => True, Locations => True));
+              Call_Graph_Message_Flags);
       end if;
 
       Message.Set_Highlighting
@@ -1265,7 +1270,8 @@ package body Browsers.Call_Graph is
    begin
       if Info /= null then
          begin
-            Get_Messages_Container (Kernel).Remove_Category (Category_Title);
+            Get_Messages_Container (Kernel).Remove_Category
+              (Category_Title, Call_Graph_Message_Flags);
 
             Ref (Info);
             Data := (Kernel             => Kernel_Handle (Kernel),
@@ -1982,7 +1988,8 @@ package body Browsers.Call_Graph is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       if All_From_Same_File then
-         Get_Messages_Container (Kernel).Remove_Category (Title);
+         Get_Messages_Container (Kernel).Remove_Category
+           (Title, Call_Graph_Message_Flags);
 
          Find_All_Entities_In_File (Iter => Iter2, File => Local);
          while not At_End (Iter2) loop
@@ -2024,8 +2031,7 @@ package body Browsers.Call_Graph is
                        Get_Column (Get_Declaration_Of (Entity2)),
                        Get (Get_Name (Entity2)).all,
                        0,
-                       (Editor_Side => True,
-                        Locations   => True));
+                       Call_Graph_Message_Flags);
                   Message.Set_Highlighting
                     (Get_Or_Create_Style_Copy
                        (Kernel_Handle (Kernel),
@@ -2042,7 +2048,9 @@ package body Browsers.Call_Graph is
          --  Print the declaration of the entity, but only if it is in the
          --  current file, as expected by users.
 
-         Get_Messages_Container (Kernel).Remove_Category (Title);
+         Get_Messages_Container (Kernel).Remove_Category
+           (Title, Call_Graph_Message_Flags);
+
          Find_All_References
            (Iter          => Iter,
             Entity        => Entity,

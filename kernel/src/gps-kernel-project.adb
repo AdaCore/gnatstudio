@@ -57,6 +57,9 @@ package body GPS.Kernel.Project is
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the
    --  project file
+   Location_Message_Flags : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => True);
 
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class;
@@ -806,7 +809,8 @@ package body GPS.Kernel.Project is
          Compute_Predefined_Paths
            (Kernel, Use_Cache => not Is_Local (Build_Server));
 
-         Get_Messages_Container (Kernel).Remove_Category (Location_Category);
+         Get_Messages_Container (Kernel).Remove_Category
+           (Location_Category, Location_Message_Flags);
 
          begin
             New_Project_Loaded := True;

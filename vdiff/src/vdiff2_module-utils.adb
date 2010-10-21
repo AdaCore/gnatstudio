@@ -365,7 +365,9 @@ package body Vdiff2_Module.Utils is
             Unhighlight_Range (Kernel, Item.Files (J), Fine_Change_Style);
 
             Get_Messages_Container (Kernel).Remove_File
-              (-"Visual differences", Item.Files (J));
+              (-"Visual differences", Item.Files (J),
+               (Editor_Side => True,
+                Locations   => True));
          end if;
       end loop;
    end Hide_Differences;

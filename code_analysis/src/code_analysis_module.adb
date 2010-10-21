@@ -1345,9 +1345,10 @@ package body Code_Analysis_Module is
          end if;
       end if;
 
-      Get_Messages_Container (Kernel).Remove_Category (Uncovered_Category);
       Get_Messages_Container (Kernel).Remove_Category
-        (Partially_Covered_Category);
+        (Uncovered_Category, Coverage_Message_Flags);
+      Get_Messages_Container (Kernel).Remove_Category
+        (Partially_Covered_Category, Coverage_Message_Flags);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 

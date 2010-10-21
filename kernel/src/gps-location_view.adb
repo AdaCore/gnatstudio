@@ -73,6 +73,10 @@ package body GPS.Location_View is
 
    use Ada.Strings.Unbounded;
 
+   Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => False,
+      GPS.Kernel.Messages.Locations   => True);
+
    type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
 
@@ -512,7 +516,8 @@ package body GPS.Location_View is
    begin
       Self.View.Get_Selection.Get_Selected (Model, Iter);
       Get_Messages_Container (Self.Kernel).Remove_Category
-        (Model.Get_String (Iter, Category_Column));
+        (Model.Get_String (Iter, Category_Column),
+         Locations_Message_Flags);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -532,7 +537,8 @@ package body GPS.Location_View is
       Self.View.Get_Selection.Get_Selected (Model, Iter);
       Get_Messages_Container (Self.Kernel).Remove_File
         (Model.Get_String (Iter, Category_Column),
-         Get_File (Model, Iter, File_Column));
+         Get_File (Model, Iter, File_Column),
+         Locations_Message_Flags);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1391,7 +1397,7 @@ package body GPS.Location_View is
       elsif Command = "remove_category" then
          Name_Parameters (Data, Remove_Category_Parameters);
          Get_Messages_Container (Get_Kernel (Data)).Remove_Category
-            (Nth_Arg (Data, 1));
+            (Nth_Arg (Data, 1), Locations_Message_Flags);
 
       elsif Command = "list_categories" then
          declare

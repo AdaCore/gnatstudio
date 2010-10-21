@@ -114,7 +114,8 @@ package body GPS.Kernel.Messages is
      (Self              : not null access Messages_Container'Class;
       Category_Position : in out Category_Maps.Cursor;
       Category_Index    : Positive;
-      Category_Node     : in out Node_Access);
+      Category_Node     : in out Node_Access;
+      Flags             : Message_Flags);
    --  Removes specified category and all underling entities
 
    procedure Remove_File
@@ -122,6 +123,7 @@ package body GPS.Kernel.Messages is
       File_Position : in out File_Maps.Cursor;
       File_Index    : Positive;
       File_Node     : in out Node_Access;
+      Flags         : Message_Flags;
       Recursive     : Boolean);
    --  Removes specified file and all underling entities. Removes category
    --  when it doesn't have items and resursive destruction is allowed.
@@ -129,6 +131,7 @@ package body GPS.Kernel.Messages is
    procedure Remove_Message
      (Self      : not null access Messages_Container'Class;
       Message   : in out Message_Access;
+      Flags     : Message_Flags;
       Recursive : Boolean);
    --  Removes specified message, all secondary messages. Removes enclosing
    --  file and category when they don't have other items and recursive
@@ -203,7 +206,7 @@ package body GPS.Kernel.Messages is
       --  Save messages for previous project
 
       Container.Save;
-      Container.Remove_All_Messages;
+      Container.Remove_All_Messages (Empty_Message_Flags);
 
       --  Load messages for opened project
 
@@ -267,7 +270,7 @@ package body GPS.Kernel.Messages is
       Container : Messages_Container_Access := Get_Messages_Container (Kernel);
 
    begin
-      Container.Remove_All_Messages;
+      Container.Remove_All_Messages (Empty_Message_Flags);
 
       Free (Container);
    end Free_Messages_Container;
@@ -1246,7 +1249,7 @@ package body GPS.Kernel.Messages is
       Message : Message_Access := Message_Access (Self);
 
    begin
-      Self.Get_Container.Remove_Message (Message, True);
+      Self.Get_Container.Remove_Message (Message, Message.Flags, True);
    end Remove;
 
    -------------------------
@@ -1254,7 +1257,8 @@ package body GPS.Kernel.Messages is
    -------------------------
 
    procedure Remove_All_Messages
-     (Self : not null access Messages_Container'Class)
+     (Self  : not null access Messages_Container'Class;
+      Flags : Message_Flags)
    is
       Category_Position : Category_Maps.Cursor;
       Category_Node     : Node_Access;
@@ -1267,98 +1271,8 @@ package body GPS.Kernel.Messages is
          Self.Remove_Category
            (Category_Position,
             Self.Categories.Last_Index,
-            Category_Node);
-      end loop;
-   end Remove_All_Messages;
-
-   -------------------------
-   -- Remove_All_Messages --
-   -------------------------
-
-   procedure Remove_All_Messages
-     (Self  : not null access Messages_Container'Class;
-      Flags : Message_Flags)
-   is
-      Cat_Node     : Node_Access;
-      File_Cursor  : File_Maps.Cursor;
-      Cat_Cursor   : Category_Maps.Cursor;
-      File_Node    : Node_Access;
-      Msg_Node     : Node_Access;
-
-      One_Msg_Left  : Boolean;
-      One_File_Left : Boolean;
-
-      Categories_To_Remove : Unbounded_String_Array
-        (1 .. Integer (Self.Categories.Length));
-      Free_Index_In_Categories : Natural := 1;
-   begin
-      Cat_Cursor := Self.Category_Map.First;
-
-      while Category_Maps.Has_Element (Cat_Cursor) loop
-         Cat_Node := Category_Maps.Element (Cat_Cursor);
-
-         File_Cursor := Cat_Node.File_Map.First;
-
-         declare
-            Files_To_Remove     : File_Array
-              (1 .. Integer (Cat_Node.Children.Length));
-            Free_Index_In_Files : Natural := 1;
-         begin
-            One_File_Left := False;
-            while File_Maps.Has_Element (File_Cursor) loop
-               File_Node := File_Maps.Element (File_Cursor);
-
-               One_Msg_Left := False;
-               for M in reverse File_Node.Children.First_Index
-                 .. File_Node.Children.Last_Index
-               loop
-                  Msg_Node := File_Node.Children.Element (M);
-
-                  if Match (Msg_Node.Flags, Flags) then
-                     Remove_Message (Self, Message_Access (Msg_Node), False);
-                  else
-                     One_Msg_Left := True;
-                  end if;
-               end loop;
-
-               if not One_Msg_Left then
-                  Files_To_Remove (Free_Index_In_Files) := File_Node.File;
-                  Free_Index_In_Files := Free_Index_In_Files + 1;
-               else
-                  One_File_Left := True;
-               end if;
-
-               File_Maps.Next (File_Cursor);
-            end loop;
-
-            --  Remove all files that need removing in this category
-
-            for F in 1 .. Free_Index_In_Files - 1 loop
-               File_Cursor := Cat_Node.File_Map.Find (Files_To_Remove (F));
-               File_Node := Element (File_Cursor);
-               Remove_File (Self,
-                            File_Cursor,
-                            Cat_Node.Children.Find_Index (File_Node),
-                            File_Node,
-                            False);
-            end loop;
-         end;
-
-         if not One_File_Left then
-            Categories_To_Remove (Free_Index_In_Categories) := Cat_Node.Name;
-            Free_Index_In_Categories := Free_Index_In_Categories + 1;
-         end if;
-
-         Next (Cat_Cursor);
-      end loop;
-
-      for C in 1 .. Free_Index_In_Categories - 1 loop
-         Cat_Cursor := Self.Category_Map.Find (Categories_To_Remove (C));
-         Cat_Node   := Element (Cat_Cursor);
-         Remove_Category (Self,
-                          Cat_Cursor,
-                          Self.Categories.Find_Index (Cat_Node),
-                          Cat_Node);
+            Category_Node,
+            Flags);
       end loop;
    end Remove_All_Messages;
 
@@ -1370,7 +1284,8 @@ package body GPS.Kernel.Messages is
      (Self              : not null access Messages_Container'Class;
       Category_Position : in out Category_Maps.Cursor;
       Category_Index    : Positive;
-      Category_Node     : in out Node_Access)
+      Category_Node     : in out Node_Access;
+      Flags             : Message_Flags)
    is
       pragma Assert (Has_Element (Category_Position));
       pragma Assert (Category_Node /= null);
@@ -1378,9 +1293,9 @@ package body GPS.Kernel.Messages is
    begin
       --  Remove files
 
-      while not Category_Node.Children.Is_Empty loop
+      for J in reverse 1 .. Category_Node.Children.Last_Index loop
          declare
-            File_Node     : Node_Access := Category_Node.Children.Last_Element;
+            File_Node     : Node_Access := Category_Node.Children.Element (J);
             File_Position : File_Maps.Cursor :=
                               Category_Node.File_Map.Find (File_Node.File);
 
@@ -1389,6 +1304,7 @@ package body GPS.Kernel.Messages is
               (File_Position,
                Category_Node.Children.Last_Index,
                File_Node,
+               Flags,
                False);
          end;
       end loop;
@@ -1405,7 +1321,8 @@ package body GPS.Kernel.Messages is
 
    procedure Remove_Category
      (Self     : not null access Messages_Container'Class;
-      Category : String)
+      Category : String;
+      Flags    : Message_Flags)
    is
       Category_Position : Category_Maps.Cursor :=
                             Self.Category_Map.Find
@@ -1419,7 +1336,7 @@ package body GPS.Kernel.Messages is
          Category_Index := Self.Categories.Find_Index (Category_Node);
 
          Self.Remove_Category
-           (Category_Position, Category_Index, Category_Node);
+           (Category_Position, Category_Index, Category_Node, Flags);
       end if;
    end Remove_Category;
 
@@ -1432,6 +1349,7 @@ package body GPS.Kernel.Messages is
       File_Position : in out File_Maps.Cursor;
       File_Index    : Positive;
       File_Node     : in out Node_Access;
+      Flags         : Message_Flags;
       Recursive     : Boolean)
    is
       Category_Node : Node_Access := File_Node.Parent;
@@ -1439,42 +1357,44 @@ package body GPS.Kernel.Messages is
    begin
       --  Remove messages
 
-      while not File_Node.Children.Is_Empty loop
+      for J in reverse 1 .. File_Node.Children.Last_Index loop
          declare
             Message : Message_Access :=
-              Message_Access (File_Node.Children.Last_Element);
+              Message_Access (File_Node.Children.Element (J));
 
          begin
-            Self.Remove_Message (Message, False);
+            Self.Remove_Message (Message, Flags, False);
          end;
       end loop;
 
-      --  Notify listeners
+      if File_Node.Children.Is_Empty then
+         --  Notify listeners
 
-      Notifiers.Notify_Listeners_About_File_Removed
-        (Self, Category_Node.Name, File_Node.File, File_Node.Flags);
+         Notifiers.Notify_Listeners_About_File_Removed
+           (Self, Category_Node.Name, File_Node.File, File_Node.Flags);
 
-      --  Delete file's node
+         --  Delete file's node
 
-      Category_Node.File_Map.Delete (File_Position);
-      Category_Node.Children.Delete (File_Index);
-      Free (File_Node);
+         Category_Node.File_Map.Delete (File_Position);
+         Category_Node.Children.Delete (File_Index);
+         Free (File_Node);
 
-      --  Remove category when there are no files for it
+         --  Remove category when there are no files for it
 
-      if Recursive
-        and then Category_Node.Children.Is_Empty
-      then
-         declare
-            Category_Position : Category_Maps.Cursor :=
-              Self.Category_Map.Find (Category_Node.Name);
-            Category_Index    : constant Positive :=
-              Self.Categories.Find_Index (Category_Node);
+         if Recursive
+           and then Category_Node.Children.Is_Empty
+         then
+            declare
+               Category_Position : Category_Maps.Cursor :=
+                 Self.Category_Map.Find (Category_Node.Name);
+               Category_Index    : constant Positive :=
+                 Self.Categories.Find_Index (Category_Node);
 
-         begin
-            Self.Remove_Category
-              (Category_Position, Category_Index, Category_Node);
-         end;
+            begin
+               Self.Remove_Category
+                 (Category_Position, Category_Index, Category_Node, Flags);
+            end;
+         end if;
       end if;
    end Remove_File;
 
@@ -1485,7 +1405,8 @@ package body GPS.Kernel.Messages is
    procedure Remove_File
      (Self     : not null access Messages_Container'Class;
       Category : String;
-      File     : GNATCOLL.VFS.Virtual_File)
+      File     : GNATCOLL.VFS.Virtual_File;
+      Flags    : Message_Flags)
    is
       Category_Position : constant Category_Maps.Cursor :=
                             Self.Category_Map.Find
@@ -1504,7 +1425,8 @@ package body GPS.Kernel.Messages is
          if Has_Element (File_Position) then
             File_Node := Element (File_Position);
             File_Index := Category_Node.Children.Find_Index (File_Node);
-            Self.Remove_File (File_Position, File_Index, File_Node, True);
+            Self.Remove_File
+              (File_Position, File_Index, File_Node, Flags, True);
          end if;
       end if;
    end Remove_File;
@@ -1516,6 +1438,7 @@ package body GPS.Kernel.Messages is
    procedure Remove_Message
      (Self      : not null access Messages_Container'Class;
       Message   : in out Message_Access;
+      Flags     : Message_Flags;
       Recursive : Boolean)
    is
 
@@ -1527,39 +1450,42 @@ package body GPS.Kernel.Messages is
         Parent.Children.Find_Index (Node_Access (Message));
 
    begin
-      while not Message.Children.Is_Empty loop
-         declare
-            Secondary : Message_Access :=
-              Message_Access (Message.Children.Last_Element);
+      if Flags = Empty_Message_Flags or else Match (Message.Flags, Flags) then
+         for J in reverse 1 .. Message.Children.Last_Index loop
+            declare
+               Secondary : Message_Access :=
+                 Message_Access (Message.Children.Element (J));
 
-         begin
-            Self.Remove_Message (Secondary, False);
-         end;
-      end loop;
+            begin
+               Self.Remove_Message (Secondary, Empty_Message_Flags, False);
+            end;
+         end loop;
 
-      Notifiers.Notify_Listeners_About_Message_Removed (Self, Message);
-      Parent.Children.Delete (Index);
+         Notifiers.Notify_Listeners_About_Message_Removed (Self, Message);
+         Parent.Children.Delete (Index);
 
-      Message.Finalize;
-      Free (Message);
+         Message.Finalize;
+         Free (Message);
 
-      --  Remove file node when there are no messages for the file and
-      --  recursive destruction is enabled.
+         --  Remove file node when there are no messages for the file and
+         --  recursive destruction is enabled.
 
-      if Recursive
-        and then Parent.Kind = Node_File
-        and then Parent.Children.Is_Empty
-      then
-         declare
-            Category_Node : constant Node_Access := Parent.Parent;
-            File_Position : File_Maps.Cursor :=
-              Category_Node.File_Map.Find (Parent.File);
-            File_Index    : constant Positive :=
-              Category_Node.Children.Find_Index (Parent);
+         if Recursive
+           and then Parent.Kind = Node_File
+           and then Parent.Children.Is_Empty
+         then
+            declare
+               Category_Node : constant Node_Access := Parent.Parent;
+               File_Position : File_Maps.Cursor :=
+                 Category_Node.File_Map.Find (Parent.File);
+               File_Index    : constant Positive :=
+                 Category_Node.Children.Find_Index (Parent);
 
-         begin
-            Self.Remove_File (File_Position, File_Index, Parent, True);
-         end;
+            begin
+               Self.Remove_File
+                 (File_Position, File_Index, Parent, Flags, True);
+            end;
+         end if;
       end if;
    end Remove_Message;
 

@@ -27,6 +27,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Remote;       use Remote;
 with Interactive_Consoles; use Interactive_Consoles;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GPS.Kernel.Messages;
 with GPS.Kernel.Timeout;   use GPS.Kernel.Timeout;
 
 with Extending_Environments; use Extending_Environments;
@@ -41,6 +42,10 @@ package Commands.Builder is
    --  -"Style errors"
    Shadow_Category  : constant String := "Syntax check";
    --  -"Syntax check"
+
+   Builder_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => True,
+      GPS.Kernel.Messages.Locations   => True);
 
    type Build_Callback_Data is new Callback_Data_Record with record
       Target_Name   : Unbounded_String;

@@ -756,7 +756,8 @@ package body Find_Utils is
    is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (-"Search for: " & Context_Look_For (Context));
+        (-"Search for: " & Context_Look_For (Context),
+         (Editor_Side => True, Locations => True));
    end Reset;
 
    ---------------------

@@ -65,6 +65,9 @@ package body GNATStack.Module is
    use type GPS.Kernel.MDI.GPS_MDI_Child;
 
    Stack_Analysis_Name : constant String := "Stack Analysis";
+   Stack_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => False,
+      GPS.Kernel.Messages.Locations   => True);
 
    type GNATStack_Submenu_Factory_Record
      (Module : access GNATStack_Module_Id_Record'Class) is
@@ -330,7 +333,7 @@ package body GNATStack.Module is
                   0,
                   To_String (Subprogram.Identifier.Prefix_Name)
                     & " : " & Image (Subprogram.Local_Usage),
-                  (GPS.Kernel.Messages.Locations => True, others => False));
+                  Stack_Message_Flags);
 
             else
                GPS.Kernel.Messages.Simple.Create_Simple_Message
@@ -346,7 +349,7 @@ package body GNATStack.Module is
                        (Subprogram.Identifier.Locations.First).Column),
                   To_String (Subprogram.Identifier.Prefix_Name)
                     & " : " & Image (Subprogram.Local_Usage),
-                  (GPS.Kernel.Messages.Locations => True, others => False));
+                  Stack_Message_Flags);
             end if;
          end Process_Subprogram;
 
@@ -362,7 +365,7 @@ package body GNATStack.Module is
                  To_String (Entry_Subprogram.Identifier.Prefix_Name)
                    & " : total " & Image (Entry_Subprogram.Entry_Usage),
                  0,
-                 (GPS.Kernel.Messages.Locations => True, others => False));
+                 Stack_Message_Flags);
 
          else
             Entry_Message :=
@@ -382,7 +385,7 @@ package body GNATStack.Module is
                  To_String (Entry_Subprogram.Identifier.Prefix_Name)
                    & " : total " & Image (Entry_Subprogram.Entry_Usage),
                  0,
-                 (GPS.Kernel.Messages.Locations => True, others => False));
+                 Stack_Message_Flags);
          end if;
 
          Entry_Subprogram.Chain.Iterate (Process_Subprogram'Access);
@@ -390,7 +393,7 @@ package body GNATStack.Module is
 
    begin
       GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel).Remove_Category
-        (Stack_Analysis_Name);
+        (Stack_Analysis_Name, Stack_Message_Flags);
 
       Self.Data.Entry_Set.Iterate (Process_Entry_Point'Access);
    end Fill_Entry_Points;
@@ -429,7 +432,8 @@ package body GNATStack.Module is
          end if;
 
          GPS.Kernel.Messages.Get_Messages_Container
-           (Self.Kernel).Remove_Category (Stack_Analysis_Name);
+           (Self.Kernel).Remove_Category
+           (Stack_Analysis_Name, Stack_Message_Flags);
          Editors.Hide_Stack_Usage_In_Opened_Editors (Self);
          Clear (Self.Data);
          Self.Loaded := False;
@@ -550,7 +554,8 @@ package body GNATStack.Module is
 
    begin
       GPS.Kernel.Messages.Get_Messages_Container
-        (Module.Kernel).Remove_Category (Stack_Analysis_Name);
+        (Module.Kernel).Remove_Category
+        (Stack_Analysis_Name, Stack_Message_Flags);
       Editors.Hide_Stack_Usage_In_Opened_Editors (Module);
 
       if Module.Call_Tree_View_MDI /= null then

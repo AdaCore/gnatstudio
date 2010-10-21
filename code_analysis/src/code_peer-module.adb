@@ -220,6 +220,9 @@ package body Code_Peer.Module is
    --  should be set to False in this case.
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
+   Code_Peer_Message_Flags : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => True);
 
    procedure Create_Library_File
      (Kernel    : Kernel_Handle;
@@ -1442,7 +1445,7 @@ package body Code_Peer.Module is
       --  Cleanup location view
 
       Get_Messages_Container (Context.Module.Kernel).Remove_Category
-        (Code_Peer_Category_Name);
+        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
 
       --  Cleanup filter criteria
 
@@ -1926,7 +1929,7 @@ package body Code_Peer.Module is
    begin
       Do_Not_Goto_First_Location (Self.Kernel);
       Get_Messages_Container (Self.Kernel).Remove_Category
-        (Code_Peer_Category_Name);
+        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
       Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
         (Code_Peer_Category_Name, Alphabetical);
 

@@ -412,7 +412,7 @@ package body Build_Command_Manager is
             --  remove reference to File from the Locations View.
             --  See F830-003.
             Get_Messages_Container (Kernel).Remove_File
-              (Error_Category, Force_File);
+              (Error_Category, Force_File, Builder_Message_Flags);
             Result.Args := Create (+Base_Name (Force_File));
             return Result;
          end if;
@@ -471,7 +471,7 @@ package body Build_Command_Manager is
                   --  See F830-003.
                   if not Simulate then
                      Get_Messages_Container (Kernel).Remove_File
-                       (Error_Category, File);
+                       (Error_Category, File, Builder_Message_Flags);
                   end if;
 
                   Result.Args := Create (+Base_Name (File));

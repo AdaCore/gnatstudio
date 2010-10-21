@@ -849,7 +849,10 @@ package body Log_Utils is
       --  Check_Handler as we want to keep the output of multiple check
       --  commands.
 
-      Get_Messages_Container (Kernel).Remove_Category (-"Style/Log Check");
+      Get_Messages_Container (Kernel).Remove_Category
+        (-"Style/Log Check",
+         (Editor_Side => True,
+          Locations   => True));
 
       for J in Files'Range loop
          exit when Cancel_All;

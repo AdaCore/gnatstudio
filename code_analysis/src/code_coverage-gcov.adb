@@ -186,7 +186,7 @@ package body Code_Coverage.Gcov is
               1,
               Line_Text.all,
               0,
-              (Editor_Side => True, Locations => True));
+              Coverage_Message_Flags);
          Message.Set_Highlighting
            (Get_Or_Create_Style_Copy
               (Kernel,

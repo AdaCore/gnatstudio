@@ -24,6 +24,7 @@
 
 with Glib;
 with GPS.Kernel;      use GPS.Kernel;
+with GPS.Kernel.Messages;
 with GPS.Intl;        use GPS.Intl;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;
@@ -50,6 +51,9 @@ package Coverage_GUI is
      -"Uncovered lines";
    Partially_Covered_Category : constant Glib.UTF8_String :=
      -"Partially covered lines";
+   Coverage_Message_Flags     : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => True,
+      GPS.Kernel.Messages.Locations   => True);
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                           Create ("BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);

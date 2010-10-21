@@ -100,6 +100,13 @@ package body Builder_Facility_Module is
    Mode_Property : constant String := "Build-Mode";
    --  History to store which mode is selected
 
+   Builder_Message_Flags    : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => True);
+   Background_Message_Flags : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => False);
+
    package Projects_Stack is new Generic_Stack (Project_Type);
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
@@ -814,7 +821,8 @@ package body Builder_Facility_Module is
       if Clear_Locations
         and then not Background
       then
-         Get_Messages_Container (Kernel).Remove_Category (Error_Category);
+         Get_Messages_Container (Kernel).Remove_Category
+           (Error_Category, Builder_Message_Flags);
       end if;
 
       if Shadow then
@@ -2684,7 +2692,7 @@ package body Builder_Facility_Module is
    begin
       if Builder_Module_ID.Background_Build_Command /= null then
          Get_Messages_Container (Builder_Module_ID.Get_Kernel).Remove_Category
-           (Current_Background_Build_Id);
+           (Current_Background_Build_Id, Background_Message_Flags);
 
          Interrupt_Queue
            (Get_Kernel,

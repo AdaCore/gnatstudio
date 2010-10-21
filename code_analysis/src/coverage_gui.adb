@@ -197,9 +197,13 @@ package body Coverage_GUI is
       File_Node : Code_Analysis.File_Access) is
    begin
       Get_Messages_Container (Kernel).Remove_File
-        (Coverage_GUI.Uncovered_Category, File_Node.Name);
+        (Coverage_GUI.Uncovered_Category,
+         File_Node.Name,
+         Coverage_Message_Flags);
       Get_Messages_Container (Kernel).Remove_File
-        (Coverage_GUI.Partially_Covered_Category, File_Node.Name);
+        (Coverage_GUI.Partially_Covered_Category,
+         File_Node.Name,
+         Coverage_Message_Flags);
    end Clear_File_Locations;
 
    --------------------------------

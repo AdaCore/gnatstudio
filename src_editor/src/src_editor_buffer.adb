@@ -122,6 +122,10 @@ package body Src_Editor_Buffer is
    --  The timeout between the last time the cursor moves and the time it is
    --  considered as having stopped.
 
+   Src_Editor_Message_Flags : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => True);
+
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
    function Strlen
@@ -3321,7 +3325,7 @@ package body Src_Editor_Buffer is
                            1,
                            Get_Message (Error.all),
                            0,
-                          (Editor_Side => True, Locations => True));
+                           Src_Editor_Message_Flags);
 
                         Error_Free (Error.all);
                         Error.all := null;
@@ -3615,7 +3619,8 @@ package body Src_Editor_Buffer is
 
          Get_Messages_Container (Buffer.Kernel).Remove_File
            (Conversion_Error_Message (Buffer.Charset.all),
-            Buffer.Filename);
+            Buffer.Filename,
+            Src_Editor_Message_Flags);
 
          GNAT.Strings.Free (Buffer.Charset);
          Buffer.Charset := new String'(Charset);

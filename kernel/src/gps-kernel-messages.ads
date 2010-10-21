@@ -292,24 +292,22 @@ package GPS.Kernel.Messages is
    --  category. Returns empty list when there is no file or category.
 
    procedure Remove_All_Messages
-     (Self : not null access Messages_Container'Class);
-   --  Removes all messages.
-
-   procedure Remove_All_Messages
      (Self  : not null access Messages_Container'Class;
       Flags : Message_Flags);
    --  Removes all messages that match Flags
 
    procedure Remove_Category
      (Self     : not null access Messages_Container'Class;
-      Category : String);
+      Category : String;
+      Flags    : Message_Flags);
    --  Removes all messages in the specified category. Do nothing when there
    --  is no such category.
 
    procedure Remove_File
      (Self     : not null access Messages_Container'Class;
       Category : String;
-      File     : GNATCOLL.VFS.Virtual_File);
+      File     : GNATCOLL.VFS.Virtual_File;
+      Flags    : Message_Flags);
    --  Removes all messages for specified file in the specified category.
    --  Do nothing when there is no such category or file.
 

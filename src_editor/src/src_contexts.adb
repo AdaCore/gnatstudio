@@ -2265,7 +2265,9 @@ package body Src_Contexts is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (Locations_Category_Name (Context_Look_For (Context)));
+        (Locations_Category_Name (Context_Look_For (Context)),
+         (Editor_Side => True,
+          Locations   => True));
    end Reset;
 
    ------------
