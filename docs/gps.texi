@@ -18445,6 +18445,10 @@ thus slowing things down a bit, that makes it possible to check where the
 biggest amount of memory is allocated, through the
 @code{GPS.debug_memory_usage} python command.
 
+   @item GPS_PYTHONHOME
+@cindex GPS_PYTHONHOME
+If set, the Python interpreter will look for libraries in the subdirectory
+lib/python<version> of the directory contained in @code{GPS_PYTHONHOME}.
 @end table
 
 @c --------------------------------------------------------------------

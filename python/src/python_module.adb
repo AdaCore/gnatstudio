@@ -20,6 +20,8 @@
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
@@ -29,6 +31,7 @@ with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 
 with Basic_Types;
+with OS_Utils;     use OS_Utils;
 
 with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
@@ -194,8 +197,21 @@ package body Python_Module is
       Tmp     : Boolean;
       pragma Unreferenced (Ignored, Tmp);
       Script  : Scripting_Language;
+
+      Python_Home : String_Access := Getenv ("GPS_PYTHONHOME");
    begin
-      Register_Python_Scripting (Get_Scripts (Kernel), Module => "GPS");
+      if Python_Home.all = "" then
+         Free (Python_Home);
+         Python_Home := new String'(Executable_Location);
+      end if;
+
+      Register_Python_Scripting
+        (Get_Scripts (Kernel),
+         Module      => "GPS",
+         Python_Home => Python_Home.all);
+
+      Free (Python_Home);
+
       Script := Lookup_Scripting_Language (Get_Scripts (Kernel), Python_Name);
       if Script = null then
          Trace (Me, "Python not supported");
