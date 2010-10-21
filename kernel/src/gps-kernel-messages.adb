@@ -1032,7 +1032,9 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               if Match (Element (Listener_Position).Flags, Flags) then
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match (Element (Listener_Position).Flags, Flags)
+               then
                   Element (Listener_Position).Category_Added (Category);
                end if;
 
@@ -1060,7 +1062,9 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               if Match (Element (Listener_Position).Flags, Flags) then
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match (Element (Listener_Position).Flags, Flags)
+               then
                   Element (Listener_Position).File_Added (Category, File);
                end if;
 
@@ -1088,7 +1092,9 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               if Match (Element (Listener_Position).Flags, Flags) then
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match (Element (Listener_Position).Flags, Flags)
+               then
                   Element (Listener_Position).File_Removed (Category, File);
                end if;
 
@@ -1114,7 +1120,10 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               if Match (Element (Listener_Position).Flags, Message.Flags) then
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match
+                   (Element (Listener_Position).Flags, Message.Flags)
+               then
                   Element (Listener_Position).Message_Added (Message);
                end if;
 
@@ -1141,7 +1150,10 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               if Match (Element (Listener_Position).Flags, Message.Flags) then
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match
+                   (Element (Listener_Position).Flags, Message.Flags)
+               then
                   Element (Listener_Position).Message_Property_Changed
                     (Message, Property);
                end if;
@@ -1168,7 +1180,10 @@ package body GPS.Kernel.Messages is
       begin
          while Has_Element (Listener_Position) loop
             begin
-               if Match (Element (Listener_Position).Flags, Message.Flags) then
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match
+                   (Element (Listener_Position).Flags, Message.Flags)
+               then
                   Element (Listener_Position).Message_Removed (Message);
                end if;
 

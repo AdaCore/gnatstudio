@@ -55,6 +55,7 @@ package GPS.Kernel.Messages is
      );
 
    type Message_Flags is array (Message_Visibility_Kind) of Boolean;
+   Empty_Message_Flags : constant Message_Flags := (others => False);
    --  A list of potential locations where a message should be shown.
 
    function To_Int (Flags : Message_Flags) return Integer;
@@ -330,7 +331,8 @@ package GPS.Kernel.Messages is
       Flags    : Message_Flags);
    --  Register listener. It do nothing when listener is already registered.
    --  This listener will only receive messages the flags of which have one
-   --  "True" field in common with Flags.
+   --  "True" field in common with Flags. When all flags are set to "False",
+   --  listener will always receive all notifications.
 
    procedure Unregister_Listener
      (Self     : not null access Messages_Container;
