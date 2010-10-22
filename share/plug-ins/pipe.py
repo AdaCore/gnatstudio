@@ -32,7 +32,7 @@ from gps_utils import *
 Preference ("Plugins/pipe/bgcolor").create (
   "Background color", "color", """Background color for the command window where you enter the command to execute""", "yellow")
 
-def pipe (command, buffer=None):
+def sel_pipe (command, buffer=None):
    """Process the current selection in BUFFER through COMMAND,
       and replace that selection with the output of the command"""
    if not buffer:
@@ -76,7 +76,7 @@ def fmt_selection ():
      loc = loc + 1
 
   prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""'
-  pipe ("fmt " + prefix + " -w " + `width`, buffer)
+  sel_pipe ("fmt " + prefix + " -w " + `width`, buffer)
 
 class ShellProcess (CommandWindow):
    """Send the current selection to an external process,
@@ -89,7 +89,7 @@ class ShellProcess (CommandWindow):
       self.set_background (Preference ("Plugins/pipe/bgcolor").get())
 
    def on_activate (self, shell_command):
-      pipe (shell_command)
+      sel_pipe (shell_command)
 
 @interactive (filter="Source editor", menu="/Edit/Selection/Pipe in external program...")
 def pipe ():
