@@ -1,17 +1,17 @@
-Known Problems fixed in GPS 5.0.1
-
 Known Problems fixed in GPS 5.0.0
 
-- JA22-015: Edit -> Selection -> "Refill with fmt" plugin not working
+- JA22-015: 'Edit->Selection->Refill with fmt' menu not working
   Problem:    The action does not refill the selection and raises
-              an error message into the GPS Message window.
-  Workaround: Manually refill the selection or use the simple Refill
+              an error message into the Messages window.
+  Workaround: Manually refill the selection or use the simple Refill.
+
+Known Problems fixed in GPS 5.0.1
 
 - JA15-018: Default naming schemes not set in the project wizard
   Problem:    If you add new languages to your project through the project
               editor or while creating a new project in the project wizard,
               the default naming scheme is empty.
-  Workaround: Manually set the file extensions for your language
+  Workaround: Manually set the file extensions for your language.
 
 - JA05-015: Crash after resizing or lots of drawing under Windows
   Problem:    GPS may crash without any warning notice when resizing windows
