@@ -20,11 +20,6 @@ NF-51-J805-009 Based literals not auto cased (2010-10-17)
   GPS now keeps based literals with their original casing rather than
   applying automatic casing as done for e.g. identifiers.
 
-NF-51-J119-018 Use all available space to display routine names (2010-10-16)
-
-  The GPS editor does not cut the routine name at 20 characters but uses
-  all available spaces in the editor's status line.
-
 NF-51-GA03-018 Project View uses a case-insensitive sort (2010-10-17)
 
   Entries (project, package, subprogram, types names) in the Project
