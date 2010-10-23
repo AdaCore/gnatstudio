@@ -180,7 +180,7 @@ package body C_Analyzer is
    type Token_Set is array (Token_Type) of Boolean;
    pragma Pack (Token_Set);
 
-   Indent_Separate_Line : constant Token_Set :=
+   Indent_Separate_Line : Token_Set :=
      (Tok_Struct | Tok_Class | Tok_Union | Tok_Namespace => False,
       others                                             => True);
    --  True when a token construct uses extra indentation level when '{'
@@ -513,6 +513,7 @@ package body C_Analyzer is
       Indent_Level      : Natural renames Indent_Params.Indent_Level;
       Indent_Continue   : Natural renames Indent_Params.Indent_Level;
       Indent_Comments   : Boolean renames Indent_Params.Indent_Comments;
+      Indent_Extra      : Boolean renames Indent_Params.Align_On_Colons;
       Use_Tabs          : Boolean renames Indent_Params.Use_Tabs;
       Tab_Width         : Natural renames Indent_Params.Tab_Width;
 
@@ -1483,6 +1484,11 @@ package body C_Analyzer is
       end Pop_Constructs_And_Indent;
 
    begin  -- Analyze_C_Source
+      Indent_Separate_Line (Tok_If)    := Indent_Extra;
+      Indent_Separate_Line (Tok_Else)  := Indent_Extra;
+      Indent_Separate_Line (Tok_For)   := Indent_Extra;
+      Indent_Separate_Line (Tok_While) := Indent_Extra;
+
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
 

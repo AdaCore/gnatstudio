@@ -10797,6 +10797,29 @@ character.
 @cindex indentation
 The number of spaces for the default indentation.
 
+@item Extra indentation
+@cindex indentation
+Whether to indent if/for/while blocks an extra level.
+if this preference is enabled, the following layout will be chosen:
+
+@cindex example
+@smallexample
+if (condition)
+  @{
+    int x;
+  @}
+@end smallexample
+
+If disabled, the same code will be indented as:
+
+@cindex example
+@smallexample
+if (condition)
+@{
+  int x;
+@}
+@end smallexample
+
 @item Indent comments
 Whether to indent lines containing only comments and blanks, or to keep
 these lines unchanged.
