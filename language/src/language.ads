@@ -375,7 +375,9 @@ package Language is
    --  Format_Operators    whether operators should be reformatted (e.g. spaces
    --                      added around "<")
    --  Use_Tabs            whether tabs should be used instead of spaces.
-   --  Align_On_Colons     perform alignment on colons in declarations
+   --  Align_On_Colons     perform alignment on colons in declarations (Ada)
+   --                      whether to indent if/for/while constructs an extra
+   --                      level after '{'  (C/C++/Java)
    --  Align_On_Arrows     perform alignment on arrows in associations
    --  Align_Decl_On_Colon align variable declarations based on the ':' of the
    --                      variable decl.

@@ -71,7 +71,7 @@ begin
         (Buffer.all, Symbols,
          Indent_Params =>
            (2, 2, 2, 0, 2, 8, Automatic, End_Of_Line, Unchanged, Unchanged,
-            False, True, False, False, False, True, False),
+            False, True, True, True, False, True, False),
          Replace => Replace_Cb'Unrestricted_Access);
 
    else

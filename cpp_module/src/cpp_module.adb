@@ -43,6 +43,7 @@ package body Cpp_Module is
    C_Automatic_Indentation   : Indentation_Kind_Preferences.Preference;
    C_Use_Tabs                : Boolean_Preference;
    C_Indentation_Level       : Integer_Preference;
+   C_Indent_Extra            : Boolean_Preference;
    C_Indent_Comments         : Boolean_Preference;
 
    type GLI_Handler_Record is new ALI_Handler_Record with null record;
@@ -175,7 +176,7 @@ package body Cpp_Module is
                   Ident_Casing        => Case_Handling.Unchanged,
                   Format_Operators    => False,
                   Use_Tabs            => C_Use_Tabs.Get_Pref,
-                  Align_On_Colons     => False,
+                  Align_On_Colons     => C_Indent_Extra.Get_Pref,
                   Align_On_Arrows     => False,
                   Align_Decl_On_Colon => False,
                   Indent_Comments     => C_Indent_Comments.Get_Pref,
@@ -238,6 +239,15 @@ package body Cpp_Module is
          Page    => -"Editor/C & C++",
          Doc     => -"The number of spaces for the default indentation",
          Label   => -"Default indentation");
+
+      C_Indent_Extra := Create
+        (Get_Preferences (Kernel),
+         Name    => "C-Indent-Extra",
+         Default => True,
+         Page    => -"Editor/C & C++",
+         Doc     => -("Whether to indent if/for/while constructs an extra"
+                      & " level after '{'"),
+         Label   => -"Extra indentation");
 
       C_Indent_Comments := Create
         (Get_Preferences (Kernel),
