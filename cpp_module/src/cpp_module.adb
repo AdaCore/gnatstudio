@@ -245,7 +245,7 @@ package body Cpp_Module is
          Name    => "C-Indent-Extra",
          Default => True,
          Page    => -"Editor/C & C++",
-         Doc     => -("Whether to indent if/for/while constructs an extra"
+         Doc     => -("Whether to indent if/loop/switch constructs an extra"
                       & " level after '{'"),
          Label   => -"Extra indentation");
 

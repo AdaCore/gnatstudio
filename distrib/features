@@ -18,7 +18,7 @@ New features in 5.0.1
 NF-50-JA22-036 New preference for C/C++ indentation after braces (2010-10-23)
 
   A new preference is available to decide whether to indent with an extra
-  level if/while/for blocks.
+  level loops, if and switch statements.
 
 New features in 5.0.0
 ---------------------
