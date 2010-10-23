@@ -969,8 +969,10 @@ package body Src_Editor_Box is
       --  Function location area
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
-      Pack_Start (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
       Gtk_New (Box.Function_Label);
+      Set_Ellipsize (Box.Function_Label, Ellipsize_End);
+      Set_Alignment (Box.Function_Label, 0.0, 0.5);
 
       --  Using an Event_Box to avoid some overlaps when resizing the editor
       --  window. See also ??? comment above.
@@ -2894,10 +2896,9 @@ package body Src_Editor_Box is
    -------------------------
 
    function Get_Subprogram_Name
-     (Editor     : access Source_Editor_Box_Record;
-      Line       : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last;
-      Max_Length : Positive := Positive'Last) return String
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last) return String
    is
       Normalized_Line : Editable_Line_Type := Line;
       Block           : Block_Record;
@@ -2909,7 +2910,7 @@ package body Src_Editor_Box is
       Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
 
       if Block.Name /= No_Symbol then
-         return Reduce (Get (Block.Name).all, Max_Length);
+         return Get (Block.Name).all;
       else
          return "";
       end if;

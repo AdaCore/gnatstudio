@@ -20,6 +20,11 @@ NF-50-JA22-036 New preference for C/C++ indentation after braces (2010-10-23)
   A new preference is available to decide whether to indent with an extra
   level loops, if and switch statements.
 
+NF-50-J119-018 Use all available space to display routine names (2010-10-23)
+
+  The source editor no longer cuts the subprogram name at 20 characters but
+  uses all the available space in the status line.
+
 New features in 5.0.0
 ---------------------
 
