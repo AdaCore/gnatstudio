@@ -1484,10 +1484,12 @@ package body C_Analyzer is
       end Pop_Constructs_And_Indent;
 
    begin  -- Analyze_C_Source
-      Indent_Separate_Line (Tok_If)    := Indent_Extra;
-      Indent_Separate_Line (Tok_Else)  := Indent_Extra;
-      Indent_Separate_Line (Tok_For)   := Indent_Extra;
-      Indent_Separate_Line (Tok_While) := Indent_Extra;
+      Indent_Separate_Line (Tok_If)     := Indent_Extra;
+      Indent_Separate_Line (Tok_Else)   := Indent_Extra;
+      Indent_Separate_Line (Tok_For)    := Indent_Extra;
+      Indent_Separate_Line (Tok_While)  := Indent_Extra;
+      Indent_Separate_Line (Tok_Do)     := Indent_Extra;
+      Indent_Separate_Line (Tok_Switch) := Indent_Extra;
 
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
