@@ -487,7 +487,7 @@
          <local_revision_index>3</local_revision_index>
 
          <status_matcher label="Up to date">(  .....[^\*][^\*])</status_matcher>
-         <status_matcher label="Locally modified">(M....... )</status_matcher>
+         <status_matcher label="Locally modified">(M......  )</status_matcher>
          <status_matcher label="Property modified">( M.......)</status_matcher>
          <status_matcher label="Needs update">([^M]......)(\*.|.\*)</status_matcher>
          <status_matcher label="Added">A........</status_matcher>
@@ -504,12 +504,12 @@
          <local_revision_index>3</local_revision_index>
 
          <status_matcher label="Up to date">(  .....[^\*][^\*])</status_matcher>
-         <status_matcher label="Locally modified">(M....... )</status_matcher>
+         <status_matcher label="Locally modified">(M......  )</status_matcher>
          <status_matcher label="Property modified">( M.......)</status_matcher>
          <status_matcher label="Needs update">([^M]......)(\*.|.\*)</status_matcher>
          <status_matcher label="Added">A........</status_matcher>
          <status_matcher label="Removed">D........</status_matcher>
-         <status_matcher label="Needs merge">(M.......\*)</status_matcher>
+         <status_matcher label="Needs merge">(M......)(\*.|.\*)</status_matcher>
          <status_matcher label="Contains merge conflicts">C........</status_matcher>
       </local_status_parser>
 
