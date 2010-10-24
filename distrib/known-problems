@@ -1,11 +1,11 @@
-Known Problems fixed in GPS 5.0.0
+Known Problems fixed in GPS 5.0.1
 
 - JA22-015: 'Edit->Selection->Refill with fmt' menu not working
   Problem:    The action does not refill the selection and raises
               an error message into the Messages window.
   Workaround: Manually refill the selection or use the simple Refill.
 
-Known Problems fixed in GPS 5.0.1
+Known Problems fixed in GPS 5.0.0
 
 - JA15-018: Default naming schemes not set in the project wizard
   Problem:    If you add new languages to your project through the project
