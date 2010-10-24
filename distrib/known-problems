@@ -5,6 +5,12 @@ Known Problems fixed in GPS 5.0.1
               an error message into the Messages window.
   Workaround: Manually refill the selection or use the simple Refill.
 
+- JA17-009: Cannot query status with svn 1.6
+  Problem:    The 'Needs merge' and 'Needs status' subversion statuses are
+              not properly reported by the VCS Explorer when using svn 1.6
+              or above.
+  Workaround: Manually query the status from the command line.
+
 Known Problems fixed in GPS 5.0.0
 
 - JA15-018: Default naming schemes not set in the project wizard
