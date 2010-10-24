@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2009, AdaCore                  --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,8 @@ with Ada.Unchecked_Deallocation;
 
 with String_Hash;
 
-with VCS;          use VCS;
+with VCS;             use VCS;
+with VCS.Unknown_VCS; use VCS.Unknown_VCS;
 
 package VCS_View.Explorer is
 
@@ -92,7 +93,7 @@ private
    use File_Hash.String_Hash_Table;
 
    type VCS_Explorer_View_Record is new VCS_View_Record with record
-      VCS    : VCS_Access;
+      VCS    : VCS_Access := Unknown_VCS_Reference;
       --  Current VCS handled
 
       Status : Status_Hash.String_Hash_Table.Instance;
