@@ -497,7 +497,7 @@ a = """<?xml version="1.0"?>
       <title line="3">Simplification</title>
       <check line="3" label="No Simplification" switch="~ns" />
       <title line="4">ViCToR</title>
-      <check line="4" label="Prove with Alt-Ergo" switch="~vct" />
+      <check line="4" label="Prove with Alt-Ergo" switch="~victor" />
       <title line="5">ZombieScope</title>
       <check line="5" label="No ZombieScope" switch="~nz" />
       <title line="6">Process control</title>
