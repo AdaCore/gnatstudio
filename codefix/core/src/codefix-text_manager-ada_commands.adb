@@ -573,7 +573,10 @@ package body Codefix.Text_Manager.Ada_Commands is
    overriding
    function Is_Writable (This : Remove_Pkg_Clauses_Cmd) return Boolean is
    begin
-      return This.Destination.Is_Writable;
+      return This.Word.Get_File.Is_Writable
+        and then
+          (This.Destination = No_File
+           or else This.Destination.Is_Writable);
    end Is_Writable;
 
    --  Remove_Entity_Cmd
