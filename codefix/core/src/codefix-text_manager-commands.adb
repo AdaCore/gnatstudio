@@ -63,7 +63,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Remove_Word_Cmd) return Boolean is
    begin
-      return not This.Word.Mark_Id.Get_File.Is_Writable;
+      return This.Word.Mark_Id.Get_File.Is_Writable;
    end Is_Writable;
 
    ---------------------
@@ -195,7 +195,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Insert_Word_Cmd) return Boolean is
    begin
-      return not This.Word.Mark_Id.Get_File.Is_Writable;
+      return This.Word.Mark_Id.Get_File.Is_Writable;
    end Is_Writable;
 
    -------------------
@@ -237,7 +237,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Move_Word_Cmd) return Boolean is
    begin
-      return not This.Step_Remove.Is_Writable
+      return This.Step_Remove.Is_Writable
         and then This.Step_Insert.Is_Writable;
    end Is_Writable;
 
@@ -311,7 +311,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Replace_Word_Cmd) return Boolean is
    begin
-      return not This.Mark.Mark_Id.Get_File.Is_Writable;
+      return This.Mark.Mark_Id.Get_File.Is_Writable;
    end Is_Writable;
 
    ---------------------
@@ -380,7 +380,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Invert_Words_Cmd) return Boolean is
    begin
-      return not This.Location.Get_File.Is_Writable;
+      return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
    -------------------
@@ -427,7 +427,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Add_Line_Cmd) return Boolean is
    begin
-      return not This.Position.Get_File.Is_Writable;
+      return This.Position.Get_File.Is_Writable;
    end Is_Writable;
 
    ----------------------
@@ -473,7 +473,7 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Replace_Slice_Cmd) return Boolean is
    begin
-      return not This.Start_Mark.Get_File.Is_Writable;
+      return This.Start_Mark.Get_File.Is_Writable;
    end Is_Writable;
 
    ----------------------------
