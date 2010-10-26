@@ -28,5 +28,5 @@ NF-51-GA03-018 Project View uses a case-insensitive sort (2010-10-17)
 
 NF-51-G823-005 Leave codefix wrench for readonly files (2010-10-26)
 
-  When a auto fix is applied on a readonly file, the fix wrench is left and
-  an error message is added in the message window.
+  When an auto fix is applied on a readonly file, the wrench icon does not
+  disappear and an error message is added in the Messages window.
