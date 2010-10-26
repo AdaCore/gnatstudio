@@ -25,3 +25,8 @@ NF-51-GA03-018 Project View uses a case-insensitive sort (2010-10-17)
   Entries (project, package, subprogram, types names) in the Project
   View are now sorted ignoring the casing, which is in general more user
   friendly.
+
+NF-51-G823-005 Leave codefix wrench for readonly files (2010-10-26)
+
+  When a auto fix is applied on a readonly file, the fix wrench is left and
+  an error message is added in the message window.
