@@ -1709,9 +1709,7 @@ package body Toolchains is
             Found := False;
 
             for K in Arr'Range loop
-               if Arr (K).Exe = Comp
-                 and then Arr (K).Origin = Orig
-               then
+               if Arr (K).Exe = Comp then
                   Found := True;
                   exit;
                end if;
