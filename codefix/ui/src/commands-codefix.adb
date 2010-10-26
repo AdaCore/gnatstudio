@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2009, AdaCore              --
+--                     Copyright (C) 2001-2010, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,14 +17,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Gtk.Menu;              use Gtk.Menu;
 
-with Codefix.Formal_Errors; use Codefix.Formal_Errors;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
-with Codefix_Module;        use Codefix_Module;
 with GPS.Intl;              use GPS.Intl;
-with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GPS.Kernel.Console;    use GPS.Kernel.Console;
+
+with Codefix.Formal_Errors; use Codefix.Formal_Errors;
+with Codefix_Module;        use Codefix_Module;
+with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
 package body Commands.Codefix is
 
@@ -37,7 +40,8 @@ package body Commands.Codefix is
    overriding function Execute
      (Command : access Codefix_Command) return Command_Return_Type
    is
-      Menu : Gtk_Menu;
+      Menu        : Gtk_Menu;
+      Sub_Command : Ptr_Command;
    begin
       if Command.Session_Timestamp /= Command.Session.Timestamp then
          return Success;
@@ -56,16 +60,25 @@ package body Commands.Codefix is
          return Success;
       end if;
 
-      Validate_And_Commit
-        (Command.Session.Corrector.all,
-         Command.Session.Current_Text.all,
-         Command.Error,
-         Get_Command (First (Get_Solutions (Command.Error))).all);
+      Sub_Command := Get_Command (First (Get_Solutions (Command.Error)));
 
-      Remove_Pixmap
-        (Command.Kernel,
-         Command.Session,
-         Command.Error);
+      if Sub_Command.Is_Writable then
+         Validate_And_Commit
+           (Command.Session.Corrector.all,
+            Command.Session.Current_Text.all,
+            Command.Error,
+            Sub_Command.all);
+
+         Remove_Pixmap
+           (Command.Kernel,
+            Command.Session,
+            Command.Error);
+      else
+         GPS.Kernel.Console.Insert
+           (Command.Kernel,
+            -"cannot fix readonly file",
+            Mode => Error);
+      end if;
 
       return Success;
    end Execute;

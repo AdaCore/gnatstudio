@@ -41,6 +41,10 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word removed
 
+   overriding
+   function Is_Writable (This : Remove_Word_Cmd) return Boolean;
+   --  See inherited documentation
+
    ---------------------
    -- Insert_Word_Cmd --
    ---------------------
@@ -69,6 +73,10 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word inserted
 
+   overriding
+   function Is_Writable (This : Insert_Word_Cmd) return Boolean;
+   --  See inherited documentation
+
    --------------------
    -- Move_Word_Cmd  --
    --------------------
@@ -94,6 +102,10 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word moved
 
+   overriding
+   function Is_Writable (This : Move_Word_Cmd) return Boolean;
+   --  See inherited documentation
+
    ----------------------
    -- Replace_Word_Cmd --
    ----------------------
@@ -117,6 +129,10 @@ package Codefix.Text_Manager.Commands is
      (This         : Replace_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word replaced
+
+   overriding
+   function Is_Writable (This : Replace_Word_Cmd) return Boolean;
+   --  See inherited documentation
 
    ----------------------
    -- Invert_Words_Cmd --
@@ -142,6 +158,10 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion of the two word
 
+   overriding
+   function Is_Writable (This : Invert_Words_Cmd) return Boolean;
+   --  See inherited documentation
+
    ------------------
    -- Add_Line_Cmd --
    ------------------
@@ -166,6 +186,10 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion add of the line
 
+   overriding
+   function Is_Writable (This : Add_Line_Cmd) return Boolean;
+   --  See inherited documentation
+
    -----------------------
    -- Replace_Slice_Cmd --
    -----------------------
@@ -188,6 +212,10 @@ package Codefix.Text_Manager.Commands is
      (This         : Replace_Slice_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the slice removed
+
+   overriding
+   function Is_Writable (This : Replace_Slice_Cmd) return Boolean;
+   --  See inherited documentation
 
    ----------------------------
    -- Remove_Blank_Lines_Cmd --
@@ -216,6 +244,10 @@ package Codefix.Text_Manager.Commands is
       Cursor       : File_Cursor'Class);
    --  Remove all consecutive blank lines starting at the location given
    --  in parameter. This helper function may be used directly in commands.
+
+   overriding
+   function Is_Writable (This : Remove_Blank_Lines_Cmd) return Boolean;
+   --  See inherited documentation
 
 private
 

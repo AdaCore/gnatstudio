@@ -121,6 +121,9 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Ptr_Mark);
    --  Free the memory associated to a Ptr_Mark
 
+   function Get_File (This : Mark_Abstr'Class) return Virtual_File;
+   --  return the file where this mark is placed.
+
    type Word_Cursor is new File_Cursor with private;
    --  Word_cursor is an object that describes a specific word in the text. In
    --  case where it is used to match a word in the text, the mode can be
@@ -676,6 +679,10 @@ package Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class) is null;
    --  New version of Execute. Reset success to True if the command is in the
    --  new kind, false if the old execute has still to be called.
+
+   function Is_Writable (This : Text_Command) return Boolean is abstract;
+   --  This primitive returns true if the text command passed in parameter
+   --  will can write on all the needed files, false otherwise.
 
    type Execute_Corrupted_Record is abstract tagged null record;
 

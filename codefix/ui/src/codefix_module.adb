@@ -269,18 +269,24 @@ package body Codefix_Module is
    is
       Err : constant Error_Message := Get_Error_Message (Error);
    begin
-      Validate_And_Commit
-        (Session.Corrector.all, Session.Current_Text.all, Error, Command);
+      if Command.Is_Writable then
+         Validate_And_Commit
+           (Session.Corrector.all, Session.Current_Text.all, Error, Command);
 
-      GPS.Kernel.Messages.Legacy.Set_Action_Item
-        (Kernel,
-         Session.Category.all,
-         Get_File (Err),
-         Get_Line (Err),
-         Natural (Get_Column (Err)),
-         Get_Message (Err),
-         null);
-
+         GPS.Kernel.Messages.Legacy.Set_Action_Item
+           (Kernel,
+            Session.Category.all,
+            Get_File (Err),
+            Get_Line (Err),
+            Natural (Get_Column (Err)),
+            Get_Message (Err),
+            null);
+      else
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            -"cannot fix readonly file",
+            Mode => GPS.Kernel.Console.Error);
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Fix;

@@ -195,6 +195,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Recase_Word_Cmd) return Boolean is
+   begin
+      return This.Cursor.Get_File.Is_Writable;
+   end Is_Writable;
+
    --  Remove_Instruction_Cmd
 
    ----------------
@@ -243,6 +253,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Begin_Mark);
       Free (Text_Command (This));
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Remove_Instruction_Cmd) return Boolean is
+   begin
+      return This.Begin_Mark.File_Name.Is_Writable;
+   end Is_Writable;
 
    --  Remove_Elements_Cmd
 
@@ -324,6 +344,25 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Remove_List);
       Free (Text_Command (This));
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Remove_Elements_Cmd) return Boolean is
+      Cur : Mark_List.List_Node := First (This.Remove_List);
+   begin
+      while Cur /= Mark_List.Null_Node loop
+         if not Mark_List.Data (Cur).Mark_Id.Get_File.Is_Writable then
+            return False;
+         end if;
+
+         Cur := Next (Cur);
+      end loop;
+
+      return True;
+   end Is_Writable;
 
    --  Remove_Pkg_Clauses_Cmd
 
@@ -527,6 +566,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Remove_Pkg_Clauses_Cmd) return Boolean is
+   begin
+      return This.Destination.Is_Writable;
+   end Is_Writable;
+
    --  Remove_Entity_Cmd
 
    ----------------
@@ -626,6 +675,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Start_Entity.all);
       Free (Text_Command (This));
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Remove_Entity_Cmd) return Boolean is
+   begin
+      return This.Start_Entity.File_Name.Is_Writable;
+   end Is_Writable;
 
    --  Add_Pragma_Cmd
 
@@ -844,6 +903,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Add_Pragma_Cmd) return Boolean is
+   begin
+      return This.Position.Get_File.Is_Writable;
+   end Is_Writable;
+
    --  Make_Constant_Cmd
 
    ----------------
@@ -944,6 +1013,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Make_Constant_Cmd) return Boolean is
+   begin
+      return This.Position.Get_File.Is_Writable;
+   end Is_Writable;
+
    --  Remove_Parenthesis_Cmd
 
    ----------------
@@ -997,6 +1076,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Cursor);
       Free (Text_Command (This));
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Remove_Conversion_Cmd) return Boolean is
+   begin
+      return This.Cursor.Get_File.Is_Writable;
+   end Is_Writable;
 
    --  Paste_Profile_Cmd
 
@@ -1292,6 +1381,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Destination_Mark);
    end Free;
 
+   -----------------------
+   -- Paste_Profile_Cmd --
+   -----------------------
+
+   overriding
+   function Is_Writable (This : Paste_Profile_Cmd) return Boolean is
+   begin
+      return This.Destination_Mark.Get_File.Is_Writable;
+   end Is_Writable;
+
    ------------------------------
    -- Get_Package_To_Be_Withed --
    ------------------------------
@@ -1415,6 +1514,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Get_Visible_Declaration_Cmd) return Boolean is
+   begin
+      return This.File_Destination.Is_Writable;
+   end Is_Writable;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1482,6 +1591,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Line);
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Indent_Code_Cmd) return Boolean is
+   begin
+      return This.Line.Get_File.Is_Writable;
+   end Is_Writable;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1538,6 +1657,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Missing_Clause);
       Free (Text_Command (This));
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Add_Clauses_Cmd) return Boolean is
+   begin
+      return This.File.Is_Writable;
+   end Is_Writable;
 
    ----------------
    -- Initialize --
@@ -1691,6 +1820,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Location);
    end Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Change_To_Tick_Valid_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1772,6 +1911,16 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Location);
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Remove_Extra_Underlines_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
 
    -------------------------------
    -- Remove_Pragma_Element_Cmd --
@@ -1864,6 +2013,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Pragma_Name);
    end Free;
 
+   overriding
+   function Is_Writable (This : Remove_Pragma_Element_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
    ----------------------------
    -- Remove_Parenthesis_Cmd --
    ----------------------------
@@ -1898,6 +2053,12 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Location);
    end Free;
+
+   overriding
+   function Is_Writable (This : Remove_Parenthesis_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
 
    --------------------------
    -- Fix_Index_Number_Cmd --
@@ -1969,6 +2130,12 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Location);
    end Free;
+
+   overriding
+   function Is_Writable (This : Fix_Index_Number_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
 
    ----------------------------
    -- Reorder_Subprogram_Cmd --
@@ -2101,6 +2268,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Location);
    end Free;
 
+   overriding
+   function Is_Writable (This : Reorder_Subprogram_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
    --------------------------
    -- Remove_Attribute_Cmd --
    --------------------------
@@ -2140,6 +2313,12 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Location);
    end Free;
+
+   overriding
+   function Is_Writable (This : Remove_Attribute_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
 
    -------------------------
    -- Renames_To_Constant --
@@ -2182,6 +2361,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Location);
    end Free;
 
+   overriding
+   function Is_Writable (This : Renames_To_Constant_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
    ---------------------------
    -- Remove_Comparison_Cmd --
    ---------------------------
@@ -2218,5 +2403,11 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Location);
    end Free;
+
+   overriding
+   function Is_Writable (This : Remove_Comparison_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
 
 end Codefix.Text_Manager.Ada_Commands;

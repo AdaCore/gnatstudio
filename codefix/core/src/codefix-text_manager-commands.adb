@@ -60,6 +60,12 @@ package body Codefix.Text_Manager.Commands is
       Free (Word);
    end Execute;
 
+   overriding
+   function Is_Writable (This : Remove_Word_Cmd) return Boolean is
+   begin
+      return not This.Word.Mark_Id.Get_File.Is_Writable;
+   end Is_Writable;
+
    ---------------------
    -- Insert_Word_Cmd --
    ---------------------
@@ -186,6 +192,12 @@ package body Codefix.Text_Manager.Commands is
       Free (Word);
    end Execute;
 
+   overriding
+   function Is_Writable (This : Insert_Word_Cmd) return Boolean is
+   begin
+      return not This.Word.Mark_Id.Get_File.Is_Writable;
+   end Is_Writable;
+
    -------------------
    -- Move_Word_Cmd --
    -------------------
@@ -221,6 +233,13 @@ package body Codefix.Text_Manager.Commands is
       This.Step_Insert.Execute (Current_Text);
       This.Step_Remove.Execute (Current_Text);
    end Execute;
+
+   overriding
+   function Is_Writable (This : Move_Word_Cmd) return Boolean is
+   begin
+      return not This.Step_Remove.Is_Writable
+        and then This.Step_Insert.Is_Writable;
+   end Is_Writable;
 
    ----------------------
    -- Replace_Word_Cmd --
@@ -289,6 +308,12 @@ package body Codefix.Text_Manager.Commands is
       end;
    end Execute;
 
+   overriding
+   function Is_Writable (This : Replace_Word_Cmd) return Boolean is
+   begin
+      return not This.Mark.Mark_Id.Get_File.Is_Writable;
+   end Is_Writable;
+
    ---------------------
    -- Invert_Word_Cmd --
    ---------------------
@@ -352,6 +377,12 @@ package body Codefix.Text_Manager.Commands is
         (Second_Cursor, This.Second_Word'Length, This.First_Word.all);
    end Execute;
 
+   overriding
+   function Is_Writable (This : Invert_Words_Cmd) return Boolean is
+   begin
+      return not This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
    -------------------
    --  Add_Line_Cmd --
    -------------------
@@ -393,6 +424,12 @@ package body Codefix.Text_Manager.Commands is
          Cursor, End_Of_Line & This.Line.all, This.Indent);
    end Execute;
 
+   overriding
+   function Is_Writable (This : Add_Line_Cmd) return Boolean is
+   begin
+      return not This.Position.Get_File.Is_Writable;
+   end Is_Writable;
+
    ----------------------
    -- Replace_Slice_Cmd --
    ----------------------
@@ -432,6 +469,12 @@ package body Codefix.Text_Manager.Commands is
 
       Modified_Text.Replace (Start_Cursor, End_Cursor, This.New_Text.all);
    end Execute;
+
+   overriding
+   function Is_Writable (This : Replace_Slice_Cmd) return Boolean is
+   begin
+      return not This.Start_Mark.Get_File.Is_Writable;
+   end Is_Writable;
 
    ----------------------------
    -- Remove_Blank_Lines_Cmd --
@@ -479,5 +522,11 @@ package body Codefix.Text_Manager.Commands is
 
       Free (Line_Cursor);
    end Remove_Blank_Lines;
+
+   overriding
+   function Is_Writable (This : Remove_Blank_Lines_Cmd) return Boolean is
+   begin
+      return This.Start_Mark.Get_File.Is_Writable;
+   end Is_Writable;
 
 end Codefix.Text_Manager.Commands;

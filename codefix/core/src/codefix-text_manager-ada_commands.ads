@@ -46,6 +46,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Recase_Word_Cmd);
    --  Free the memory associated to a Recase_Word_Cmd.
 
+   overriding
+   function Is_Writable (This : Recase_Word_Cmd) return Boolean;
+   --  See inherited documentation
+
    ----------------------------
    -- Remove_Instruction_Cmd --
    ----------------------------
@@ -67,6 +71,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Instruction_Cmd);
    --  Free the memory associated to a Remove_Instruction_Cmd.
+
+   overriding
+   function Is_Writable (This : Remove_Instruction_Cmd) return Boolean;
+   --  See inherited documentation
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -96,6 +104,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Elements_Cmd);
    --  Free the memory associated to a Remove_Elements_Cmd.
+
+   overriding
+   function Is_Writable (This : Remove_Elements_Cmd) return Boolean;
+   --  See inherited documentation
 
    ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
@@ -128,6 +140,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd);
    --  Free the memory associated to a Remove_Pkg_Cmd.
 
+   overriding
+   function Is_Writable (This : Remove_Pkg_Clauses_Cmd) return Boolean;
+   --  See inherited documentation
+
    -----------------------
    -- Remove_Entity_Cmd --
    -----------------------
@@ -150,6 +166,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Entity_Cmd);
    --  Free the memory associated to a Remove_Entity_Cmd.
+
+   overriding
+   function Is_Writable (This : Remove_Entity_Cmd) return Boolean;
+   --  See inherited documentation
 
    --------------------
    -- Add_Pragma_Cmd --
@@ -175,6 +195,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Add_Pragma_Cmd);
    --  Free the memory associated to an Add_Pragma_Cmd.
 
+   overriding
+   function Is_Writable (This : Add_Pragma_Cmd) return Boolean;
+   --  See inherited documentation
+
    -----------------------
    -- Make_Constant_Cmd --
    -----------------------
@@ -198,6 +222,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Make_Constant_Cmd);
    --  Free the memory associated to a Make_Constant_Cmd.
 
+   overriding
+   function Is_Writable (This : Make_Constant_Cmd) return Boolean;
+   --  See inherited documentation
+
    ----------------------------
    -- Remove_Parenthesis_Cmd --
    ----------------------------
@@ -219,6 +247,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Conversion_Cmd);
    --  Free the memory associated to a Remove_Parenthesis_Cmd.
+
+   overriding
+   function Is_Writable (This : Remove_Conversion_Cmd) return Boolean;
+   --  See inherited documentation
 
    -----------------------
    -- Paste_Profile_Cmd --
@@ -245,6 +277,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Paste_Profile_Cmd);
    --  Free the memory associated to a Paste_Profile_Cmd.
+
+   overriding
+   function Is_Writable (This : Paste_Profile_Cmd) return Boolean;
+   --  See inherited documentation
 
    ---------------------------------
    -- Get_Visible_Declaration_Cmd --
@@ -284,6 +320,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Get_Visible_Declaration_Cmd);
    --  Free the memory associated to a Get_Visible_Declaration.
 
+   overriding
+   function Is_Writable (This : Get_Visible_Declaration_Cmd) return Boolean;
+   --  See inherited documentation
+
    ---------------------
    -- Indent_Code_Cmd --
    ---------------------
@@ -305,6 +345,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding
    procedure Free (This : in out Indent_Code_Cmd);
+
+   overriding
+   function Is_Writable (This : Indent_Code_Cmd) return Boolean;
+   --  See inherited documentation
 
    ---------------------
    -- Add_Clauses_Cmd --
@@ -329,6 +373,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Add_Clauses_Cmd);
 
+   overriding
+   function Is_Writable (This : Add_Clauses_Cmd) return Boolean;
+   --  See inherited documentation
+
    ------------------------------
    -- Change_To_Tick_Valid_Cmd --
    ------------------------------
@@ -349,6 +397,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Change_To_Tick_Valid_Cmd);
 
+   overriding
+   function Is_Writable (This : Change_To_Tick_Valid_Cmd) return Boolean;
+   --  See inherited documentation
+
    -----------------------------
    -- Remove_Extra_Underlines --
    -----------------------------
@@ -368,6 +420,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding
    procedure Free (This : in out Remove_Extra_Underlines_Cmd);
+
+   overriding
+   function Is_Writable (This : Remove_Extra_Underlines_Cmd) return Boolean;
+   --  See inherited documentation
 
    ---------------------------
    -- Remove_Pragma_Element --
@@ -390,6 +446,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Remove_Pragma_Element_Cmd);
 
+   overriding
+   function Is_Writable (This : Remove_Pragma_Element_Cmd) return Boolean;
+   --  See inherited documentation
+
    ----------------------------
    -- Remove_Parenthesis_Cmd --
    ----------------------------
@@ -409,6 +469,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding
    procedure Free (This : in out Remove_Parenthesis_Cmd);
+
+   overriding
+   function Is_Writable (This : Remove_Parenthesis_Cmd) return Boolean;
+   --  See inherited documentation
 
    --------------------------
    -- Fix_Index_Number_Cmd --
@@ -432,6 +496,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Fix_Index_Number_Cmd);
 
+   overriding
+   function Is_Writable (This : Fix_Index_Number_Cmd) return Boolean;
+   --  See inherited documentation
+
    ----------------------------
    -- Reorder_Subprogram_Cmd --
    ----------------------------
@@ -453,6 +521,10 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Reorder_Subprogram_Cmd);
 
+   overriding
+   function Is_Writable (This : Reorder_Subprogram_Cmd) return Boolean;
+   --  See inherited documentation
+
    --------------------------
    -- Remove_Attribute_Cmd --
    --------------------------
@@ -472,6 +544,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Attribute_Cmd);
 
+   overriding
+   function Is_Writable (This : Remove_Attribute_Cmd) return Boolean;
+   --  See inherited documentation
+
    --------------------------
    -- Remove_Attribute_Cmd --
    --------------------------
@@ -490,6 +566,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Renames_To_Constant_Cmd);
 
+   overriding
+   function Is_Writable (This : Renames_To_Constant_Cmd) return Boolean;
+   --  See inherited documentation
+
    ---------------------------
    -- Remove_Comparison_Cmd --
    ---------------------------
@@ -507,6 +587,10 @@ package Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
 
    overriding procedure Free (This : in out Remove_Comparison_Cmd);
+
+   overriding
+   function Is_Writable (This : Remove_Comparison_Cmd) return Boolean;
+   --  See inherited documentation
 
 private
 
@@ -575,12 +659,6 @@ private
       Object_Position : Ptr_Mark;
       With_Could_Miss : Boolean := False;
       Pkg_Name            : String_Access;
-   end record;
-
-   type Replace_Code_By_Cmd is new Text_Command with record
-      Start_Cursor : Ptr_Mark;
-      Replaced_Exp : GNAT.Strings.String_Access;
-      New_String   : GNAT.Strings.String_Access;
    end record;
 
    type Indent_Code_Cmd is new Text_Command (Simple) with record

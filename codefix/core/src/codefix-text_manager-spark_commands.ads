@@ -41,6 +41,10 @@ package Codefix.Text_Manager.Spark_Commands is
    procedure Free (This : in out Move_Tilde_Or_Percent_Cmd);
    --  Free the memory associated to a Move_Tilde_Or_Percent_Cmd
 
+   overriding
+   function Is_Writable (This : Move_Tilde_Or_Percent_Cmd) return Boolean;
+   --  See inherited documentation
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);

@@ -241,6 +241,15 @@ package body Codefix.Text_Manager is
       Free_Pool (This);
    end Free;
 
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (This : Mark_Abstr'Class) return Virtual_File is
+   begin
+      return This.File_Name;
+   end Get_File;
+
    ----------
    -- Free --
    ----------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009, AdaCore                   --
+--                   Copyright (C) 2009-2010, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -91,5 +91,15 @@ package body Codefix.Text_Manager.Spark_Commands is
    begin
       Free (This.Cursor);
    end Free;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   overriding
+   function Is_Writable (This : Move_Tilde_Or_Percent_Cmd) return Boolean is
+   begin
+      return This.Cursor.Get_File.Is_Writable;
+   end Is_Writable;
 
 end Codefix.Text_Manager.Spark_Commands;
