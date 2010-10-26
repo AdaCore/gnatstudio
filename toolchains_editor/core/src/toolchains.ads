@@ -235,6 +235,7 @@ package Toolchains is
    --  Return the label of the toolchain, for display purposes. Usually equals
    --  to the name execpt in certain cases (e.g. native). Each label is unique
    --  in a toolchain manager.
+   --  ??? Label should probably be renamed Id
 
    procedure Set_Label (This : Toolchain; Label : String);
    --  Modifies the label of the toolchain given in parameter.
