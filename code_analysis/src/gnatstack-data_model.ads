@@ -46,6 +46,14 @@ package GNATStack.Data_Model is
    function Hash
      (Item : Subprogram_Location) return Ada.Containers.Hash_Type;
 
+   function "<"
+     (Left  : Subprogram_Location;
+      Right : Subprogram_Location) return Boolean;
+
+   overriding function "="
+     (Left  : Subprogram_Location;
+      Right : Subprogram_Location) return Boolean;
+
    package Subprogram_Location_Sets is
      new Ada.Containers.Hashed_Sets (Subprogram_Location, Hash, "=");
 
@@ -62,6 +70,10 @@ package GNATStack.Data_Model is
       Right : Subprogram_Identifier) return Boolean;
    --  Encoded_Name is optional information and must be ignored by relationship
    --  operations.
+
+   function "<"
+     (Left  : Subprogram_Identifier;
+      Right : Subprogram_Identifier) return Boolean;
 
    function Hash
      (Item : Subprogram_Identifier)

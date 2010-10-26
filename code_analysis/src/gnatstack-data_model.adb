@@ -26,6 +26,93 @@ package body GNATStack.Data_Model is
    use Ada.Strings.Unbounded;
    use Subprogram_Location_Sets;
 
+   function "<"
+     (Left  : Subprogram_Location_Sets.Set;
+      Right : Subprogram_Location_Sets.Set) return Boolean;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<"
+     (Left  : Subprogram_Identifier;
+      Right : Subprogram_Identifier) return Boolean is
+   begin
+      if Left.Prefix_Name /= Right.Prefix_Name then
+         return Left.Prefix_Name < Right.Prefix_Name;
+      end if;
+
+      if Left.Locations /= Right.Locations then
+         return Left.Locations < Right.Locations;
+      end if;
+
+      return False;
+   end "<";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<"
+     (Left  : Subprogram_Location;
+      Right : Subprogram_Location) return Boolean is
+   begin
+      if Left.Name /= Right.Name then
+         return Left.Name < Right.Name;
+      end if;
+
+      if Left.File /= Right.File then
+         return Left.File < Right.File;
+      end if;
+
+      if Left.Line /= Right.Line then
+         return Left.Line < Right.Line;
+      end if;
+
+      if Left.Column /= Right.Column then
+         return Left.Column < Right.Column;
+      end if;
+
+      return False;
+   end "<";
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<"
+     (Left  : Subprogram_Location_Sets.Set;
+      Right : Subprogram_Location_Sets.Set) return Boolean
+   is
+      Left_Position  : Subprogram_Location_Sets.Cursor := Left.First;
+      Right_Position : Subprogram_Location_Sets.Cursor := Right.First;
+      Left_Element   : Subprogram_Location;
+      Right_Element  : Subprogram_Location;
+
+   begin
+      loop
+         if Has_Element (Left_Position) and Has_Element (Right_Position) then
+            Left_Element := Element (Left_Position);
+            Right_Element := Element (Right_Position);
+
+            if Left_Element /= Right_Element then
+               return Left_Element < Right_Element;
+            end if;
+
+         elsif Has_Element (Left_Position)
+           xor Has_Element (Right_Position)
+         then
+            return Has_Element (Right_Position);
+
+         else
+            return False;
+         end if;
+
+         Next (Left_Position);
+         Next (Right_Position);
+      end loop;
+   end "<";
+
    ---------
    -- "=" --
    ---------
@@ -37,6 +124,21 @@ package body GNATStack.Data_Model is
       return
         Left.Prefix_Name = Right.Prefix_Name
           and Left.Locations = Right.Locations;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (Left  : Subprogram_Location;
+      Right : Subprogram_Location) return Boolean is
+   begin
+      return
+        Left.Name = Right.Name
+        and Left.File = Right.File
+        and Left.Line = Right.Line
+        and Left.Column = Right.Column;
    end "=";
 
    -----------
@@ -108,7 +210,7 @@ package body GNATStack.Data_Model is
      (Left  : Subprogram_Information_Access;
       Right : Subprogram_Information_Access) return Boolean is
    begin
-      return Left.Identifier.Prefix_Name < Right.Identifier.Prefix_Name;
+      return Left.Identifier < Right.Identifier;
    end Element_Is_Less;
 
    -------------------------
