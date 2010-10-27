@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
-private with Ada.Strings.Unbounded;
+private with Ada.Strings.Unbounded.Hash;
 
 private with Sax.Attributes;
 with Sax.Readers;
@@ -101,6 +102,7 @@ private
             Object : Object_Information;
 
          when Entry_State =>
+            C_Id          : Ada.Strings.Unbounded.Unbounded_String;
             C_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
             C_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             C_Locations   : Subprogram_Location_Sets.Set;
@@ -108,17 +110,20 @@ private
             Chain         : Subprogram_Information_Vectors.Vector;
 
          when External_State =>
+            E_Id          : Ada.Strings.Unbounded.Unbounded_String;
             E_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
             E_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             E_Locations   : Subprogram_Location_Sets.Set;
 
          when Indirect_State =>
+            I_Id          : Ada.Strings.Unbounded.Unbounded_String;
             I_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
             I_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             I_Locations   : Subprogram_Location_Sets.Set;
             I_Subprogram  : Subprogram_Information_Access;
 
          when Subprogram_State =>
+            S_Id          : Ada.Strings.Unbounded.Unbounded_String;
             S_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
             S_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             S_Locations   : Subprogram_Location_Sets.Set;
@@ -162,10 +167,18 @@ private
    package Parser_State_Vectors is
      new Ada.Containers.Vectors (Positive, Parser_State);
 
+   package Unbounded_To_Subprogram_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Strings.Unbounded.Unbounded_String,
+        GNATStack.Data_Model.Subprogram_Information_Access,
+        Ada.Strings.Unbounded.Hash,
+        Ada.Strings.Unbounded."=");
+
    type Reader is new Sax.Readers.Reader with record
       State          : Parser_State;
       Stack          : Parser_State_Vectors.Vector;
       Analysis       : Analysis_Information;
+      Subprograms    : Unbounded_To_Subprogram_Maps.Map;
       Global_Section : Boolean;
       --  This flag indicates processing of child element of 'global' element
       --  because 'unboundedobjectset' elements must not be processed as
@@ -174,6 +187,7 @@ private
 
    function Resolve_Or_Create
      (Self       : not null access Reader;
+      Id         : Ada.Strings.Unbounded.Unbounded_String;
       Identifier : Subprogram_Identifier)
       return Subprogram_Information_Access;
    --  Resolves subprogram information record or creates new one.

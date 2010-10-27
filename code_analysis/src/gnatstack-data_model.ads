@@ -131,6 +131,7 @@ package GNATStack.Data_Model is
        (Subprogram_Information_Access, Element_Is_Less, Equivalent_Elements);
 
    type Subprogram_Information is record
+      Id           : Ada.Strings.Unbounded.Unbounded_String;
       Identifier   : Subprogram_Identifier;
       Global_Usage : Stack_Usage_Information;
       Local_Usage  : Stack_Usage_Information;

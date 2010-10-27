@@ -187,7 +187,8 @@ package body GNATStack.Readers is
 
       Subprogram : constant Subprogram_Information_Access :=
                      Self.Resolve_Or_Create
-                       ((Self.State.C_Prefix_Name,
+                       (Self.State.C_Id,
+                        (Self.State.C_Prefix_Name,
                          Self.State.C_Linker_Name,
                          Self.State.C_Locations));
       Value      : constant Subprogram_Information_Vectors.Vector :=
@@ -211,14 +212,15 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert (Self.State.Kind = Entry_Set_State);
       pragma Assert (Self.Stack.Is_Empty);
 
    begin
       Self.Push;
-      Self.State := (Kind => Entry_State, others => <>);
+      Self.State :=
+        (Kind   => Entry_State,
+         C_Id   => To_Unbounded_String (Attributes.Get_Value ("id")),
+         others => <>);
    end Analyze_entry_Start_Tag;
 
    ------------------------------
@@ -260,7 +262,8 @@ package body GNATStack.Readers is
 
       Subprogram : constant Subprogram_Information_Access :=
                      Self.Resolve_Or_Create
-                       ((Self.State.E_Prefix_Name,
+                       (Self.State.E_Id,
+                        (Self.State.E_Prefix_Name,
                          Self.State.E_Linker_Name,
                          Self.State.E_Locations));
 
@@ -278,13 +281,14 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert (Self.State.Kind = External_Set_State);
 
    begin
       Self.Push;
-      Self.State := (Kind => External_State, others => <>);
+      Self.State :=
+        (Kind   => External_State,
+         E_Id   => To_Unbounded_String (Attributes.Get_Value ("id")),
+         others => <>);
    end Analyze_external_Start_Tag;
 
    ---------------------------------
@@ -443,13 +447,14 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert (Self.State.Kind = Indirect_Set_State);
 
    begin
       Self.Push;
-      Self.State := (Kind => Indirect_State, others => <>);
+      Self.State :=
+        (Kind   => Indirect_State,
+         I_Id   => To_Unbounded_String (Attributes.Get_Value ("id")),
+         others => <>);
    end Analyze_indirect_Start_Tag;
 
    ----------------------------------
@@ -509,7 +514,8 @@ package body GNATStack.Readers is
    begin
       Self.State.I_Subprogram :=
         Self.Resolve_Or_Create
-          ((Self.State.I_Prefix_Name,
+          (Self.State.I_Id,
+           (Self.State.I_Prefix_Name,
             Self.State.I_Linker_Name,
             Self.State.I_Locations));
    end Analyze_indirectcallset_Start_Tag;
@@ -923,7 +929,8 @@ package body GNATStack.Readers is
       Self.Pop;
       Info :=
         Self.Resolve_Or_Create
-          ((Value.S_Prefix_Name, Value.S_Linker_Name, Value.S_Locations));
+          (Value.S_Id,
+           (Value.S_Prefix_Name, Value.S_Linker_Name, Value.S_Locations));
 
       if Self.State.Kind = Entry_State then
          --  Insert subprogram into the chain
@@ -964,8 +971,6 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert
         (Self.State.Kind = Entry_State
            or else Self.State.Kind = Cycle_State
@@ -979,6 +984,7 @@ package body GNATStack.Readers is
       Self.Push;
       Self.State :=
         (Kind         => Subprogram_State,
+         S_Id         => To_Unbounded_String (Attributes.Get_Value ("id")),
          Is_Reference => Is_Reference,
          others       => <>);
    end Analyze_subprogram_Start_Tag;
@@ -1392,11 +1398,14 @@ package body GNATStack.Readers is
 
    function Resolve_Or_Create
      (Self       : not null access Reader;
+      Id         : Ada.Strings.Unbounded.Unbounded_String;
       Identifier : Subprogram_Identifier)
       return Subprogram_Information_Access
    is
-      Position : constant Subprogram_Information_Maps.Cursor :=
-                   Self.Analysis.Subprogram_Map.Find (Identifier);
+      use Unbounded_To_Subprogram_Maps;
+
+      Position : constant Unbounded_To_Subprogram_Maps.Cursor :=
+                   Self.Subprograms.Find (Id);
       Info     : Subprogram_Information_Access;
 
    begin
@@ -1405,9 +1414,13 @@ package body GNATStack.Readers is
 
       else
          Info :=
-           new Subprogram_Information'(Identifier => Identifier, others => <>);
+           new Subprogram_Information'
+             (Id         => Id,
+              Identifier => Identifier,
+              others     => <>);
          Self.Analysis.Subprogram_Set.Insert (Info);
          Self.Analysis.Subprogram_Map.Insert (Info.Identifier, Info);
+         Self.Subprograms.Insert (Id, Info);
 
          return Info;
       end if;
