@@ -57,7 +57,6 @@ private
       Indirect_State,
       Indirect_Call_State,
       Subprogram_State,
-      Stack_Usage_State,
       Boolean_Value_State,
       Integer_Value_State,
       String_Value_State);
@@ -137,9 +136,6 @@ private
 
          when Unbounded_State =>
             null;
-
-         when Stack_Usage_State =>
-            Stack_Usage : Stack_Usage_Information;
 
          when Value_Kinds =>
             Value_Tag : Boolean := False;
@@ -378,22 +374,6 @@ private
 
    procedure Analyze_prefixname_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "prefixname" element
-
-   procedure Analyze_qualifier_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "qualifier" element
-
-   procedure Analyze_qualifier_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "qualifier" element
-
-   procedure Analyze_size_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "size" element
-
-   procedure Analyze_size_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "size" element
 
    procedure Analyze_subprogram_Start_Tag
      (Self       : in out Reader;

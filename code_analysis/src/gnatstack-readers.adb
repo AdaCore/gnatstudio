@@ -388,13 +388,8 @@ package body GNATStack.Readers is
    --------------------------------------
 
    procedure Analyze_globalstackusage_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = Stack_Usage_State);
-
-      Value : constant Stack_Usage_Information := Self.State.Stack_Usage;
-
    begin
-      Self.Pop;
-      Self.State.Global_Usage := Value;
+      null;
    end Analyze_globalstackusage_End_Tag;
 
    ----------------------------------------
@@ -405,14 +400,16 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert (Self.State.Kind = Subprogram_State);
       pragma Assert (not Self.State.Is_Reference);
 
+      Value : Stack_Usage_Information;
+
    begin
-      Self.Push;
-      Self.State := (Kind => Stack_Usage_State, others => <>);
+      Value.Size := Integer'Value (Attributes.Get_Value ("size"));
+      Value.Qualifier :=
+        To_Unbounded_String (Attributes.Get_Value ("qualifier"));
+      Self.State.Global_Usage := Value;
    end Analyze_globalstackusage_Start_Tag;
 
    ------------------------------
@@ -636,19 +633,8 @@ package body GNATStack.Readers is
    -------------------------------------
 
    procedure Analyze_localstackusage_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = Stack_Usage_State);
-
-      Value : constant Stack_Usage_Information := Self.State.Stack_Usage;
-
    begin
-      Self.Pop;
-
-      if Self.State.Kind = Entry_State then
-         Self.State.Entry_Usage := Value;
-
-      elsif Self.State.Kind = Subprogram_State then
-         Self.State.Local_Usage := Value;
-      end if;
+      null;
    end Analyze_localstackusage_End_Tag;
 
    ---------------------------------------
@@ -659,8 +645,6 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert
         (Self.State.Kind = Entry_State
            or else Self.State.Kind = Subprogram_State);
@@ -668,9 +652,19 @@ package body GNATStack.Readers is
         (Self.State.Kind /= Subprogram_State
            or else not Self.State.Is_Reference);
 
+      Value : Stack_Usage_Information;
+
    begin
-      Self.Push;
-      Self.State := (Kind => Stack_Usage_State, others => <>);
+      Value.Size := Integer'Value (Attributes.Get_Value ("size"));
+      Value.Qualifier :=
+        To_Unbounded_String (Attributes.Get_Value ("qualifier"));
+
+      if Self.State.Kind = Entry_State then
+         Self.State.Entry_Usage := Value;
+
+      elsif Self.State.Kind = Subprogram_State then
+         Self.State.Local_Usage := Value;
+      end if;
    end Analyze_localstackusage_Start_Tag;
 
    ------------------------------
@@ -844,68 +838,6 @@ package body GNATStack.Readers is
       Self.Push;
       Self.State := (Kind => String_Value_State, others => <>);
    end Analyze_prefixname_Start_Tag;
-
-   -------------------------------
-   -- Analyze_qualifier_End_Tag --
-   -------------------------------
-
-   procedure Analyze_qualifier_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = String_Value_State);
-
-      Value : constant Unbounded_String := Self.State.String_Value;
-
-   begin
-      Self.Pop;
-      Self.State.Stack_Usage.Qualifier := Value;
-   end Analyze_qualifier_End_Tag;
-
-   ---------------------------------
-   -- Analyze_qualifier_Start_Tag --
-   ---------------------------------
-
-   procedure Analyze_qualifier_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class)
-   is
-      pragma Unreferenced (Attributes);
-
-      pragma Assert (Self.State.Kind = Stack_Usage_State);
-      --  There is no "type" for "qualifier" in XML file specified
-
-   begin
-      Self.Push;
-      Self.State := (Kind => String_Value_State, others => <>);
-   end Analyze_qualifier_Start_Tag;
-
-   --------------------------
-   -- Analyze_size_End_Tag --
-   --------------------------
-
-   procedure Analyze_size_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = Integer_Value_State);
-
-      Value : constant Integer := Self.State.Integer_Value;
-
-   begin
-      Self.Pop;
-      Self.State.Stack_Usage.Size := Value;
-   end Analyze_size_End_Tag;
-
-   ----------------------------
-   -- Analyze_size_Start_Tag --
-   ----------------------------
-
-   procedure Analyze_size_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class)
-   is
-      pragma Assert (Self.State.Kind = Stack_Usage_State);
-      pragma Assert (Attributes.Get_Value ("type") = "integers");
-
-   begin
-      Self.Push;
-      Self.State := (Kind => Integer_Value_State, others => <>);
-   end Analyze_size_Start_Tag;
 
    --------------------------------
    -- Analyze_subprogram_End_Tag --
@@ -1287,12 +1219,6 @@ package body GNATStack.Readers is
       elsif Local_Name = "prefixname" then
          Self.Analyze_prefixname_End_Tag;
 
-      elsif Local_Name = "qualifier" then
-         Self.Analyze_qualifier_End_Tag;
-
-      elsif Local_Name = "size" then
-         Self.Analyze_size_End_Tag;
-
       elsif Local_Name = "subprogram" then
          Self.Analyze_subprogram_End_Tag;
 
@@ -1470,12 +1396,6 @@ package body GNATStack.Readers is
 
       elsif Local_Name = "prefixname" then
          Self.Analyze_prefixname_Start_Tag (Atts);
-
-      elsif Local_Name = "qualifier" then
-         Self.Analyze_qualifier_Start_Tag (Atts);
-
-      elsif Local_Name = "size" then
-         Self.Analyze_size_Start_Tag (Atts);
 
       elsif Local_Name = "subprogram" then
          Self.Analyze_subprogram_Start_Tag (Atts);
