@@ -839,6 +839,11 @@ package body GNATStack.Readers is
          S_Id         => To_Unbounded_String (Attributes.Get_Value ("id")),
          Is_Reference => Is_Reference,
          others       => <>);
+
+      if Attributes.Get_Index ("prefixname") /= -1 then
+         Self.State.S_Prefix_Name :=
+           To_Unbounded_String (Attributes.Get_Value ("prefixname"));
+      end if;
    end Analyze_subprogram_Start_Tag;
 
    -----------------------------------------
