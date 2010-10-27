@@ -50,7 +50,6 @@ private
       Cycle_State,
       Unbounded_Set_State,
       Unbounded_State,
-      Unbounded_Object_State,
       External_Set_State,
       External_State,
       Indirect_Set_State,
@@ -95,9 +94,6 @@ private
 
          when Location_Set_State =>
             Location_Set : Subprogram_Location_Sets.Set;
-
-         when Unbounded_Object_State =>
-            Object : Object_Information;
 
          when Entry_State =>
             C_Id          : Ada.Strings.Unbounded.Unbounded_String;
@@ -206,14 +202,6 @@ private
 
    procedure Analyze_callchain_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "callchain" element
-
-   procedure Analyze_column_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "column" element
-
-   procedure Analyze_column_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "column" element
 
    procedure Analyze_cycle_Start_Tag
      (Self       : in out Reader;
@@ -358,14 +346,6 @@ private
 
    procedure Analyze_locationset_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "locationset" element
-
-   procedure Analyze_object_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "object" element
-
-   procedure Analyze_object_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "object" element
 
    procedure Analyze_prefixname_Start_Tag
      (Self       : in out Reader;
