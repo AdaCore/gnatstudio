@@ -90,10 +90,7 @@ package body GNATStack.Readers is
    begin
       Self.Pop;
 
-      if Self.State.Kind = Location_State then
-         Self.State.Location.Column := Value;
-
-      elsif Self.State.Kind = Unbounded_Object_State then
+      if Self.State.Kind = Unbounded_Object_State then
          Self.State.Object.Column := Value;
       end if;
    end Analyze_column_End_Tag;
@@ -106,9 +103,7 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Assert
-        (Self.State.Kind = Location_State
-           or else Self.State.Kind = Unbounded_Object_State);
+      pragma Assert (Self.State.Kind = Unbounded_Object_State);
       pragma Assert (Attributes.Get_Value ("type") = "integers");
 
    begin
@@ -336,9 +331,6 @@ package body GNATStack.Readers is
       if Self.State.Kind = Indirect_Call_State then
          Self.State.Indirect.File := Value;
 
-      elsif Self.State.Kind = Location_State then
-         Self.State.Location.File := Value;
-
       elsif Self.State.Kind = Unbounded_Object_State then
          Self.State.Object.File := Value;
       end if;
@@ -354,7 +346,6 @@ package body GNATStack.Readers is
    is
       pragma Assert
         (Self.State.Kind = Indirect_Call_State
-           or Self.State.Kind = Location_State
            or Self.State.Kind = Unbounded_Object_State);
       pragma Assert (Attributes.Get_Value ("type") = "strings");
 
@@ -565,9 +556,6 @@ package body GNATStack.Readers is
       if Self.State.Kind = Indirect_Call_State then
          Self.State.Indirect.Line := Value;
 
-      elsif Self.State.Kind = Location_State then
-         Self.State.Location.Line := Value;
-
       elsif Self.State.Kind = Unbounded_Object_State then
          Self.State.Object.Line := Value;
       end if;
@@ -583,7 +571,6 @@ package body GNATStack.Readers is
    is
       pragma Assert
         (Self.State.Kind = Indirect_Call_State
-           or else Self.State.Kind = Location_State
            or else Self.State.Kind = Unbounded_Object_State);
       pragma Assert (Attributes.Get_Value ("type") = "integers");
 
@@ -691,13 +678,8 @@ package body GNATStack.Readers is
    ------------------------------
 
    procedure Analyze_location_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = Location_State);
-
-      Value : constant Subprogram_Location := Self.State.Location;
-
    begin
-      Self.Pop;
-      Self.State.Location_Set.Insert (Value);
+      null;
    end Analyze_location_End_Tag;
 
    --------------------------------
@@ -708,13 +690,23 @@ package body GNATStack.Readers is
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Attributes);
-
       pragma Assert (Self.State.Kind = Location_Set_State);
 
+      Location : Subprogram_Location;
+
    begin
-      Self.Push;
-      Self.State := (Kind => Location_State, others => <>);
+      if Attributes.Get_Index ("subprogramname") /= -1 then
+         Location.Name :=
+           To_Unbounded_String (Attributes.Get_Value ("subprogramname"));
+      end if;
+
+      if Attributes.Get_Index ("file") /= -1 then
+         Location.File := To_Unbounded_String (Attributes.Get_Value ("file"));
+         Location.Line := Integer'Value (Attributes.Get_Value ("line"));
+         Location.Column := Integer'Value (Attributes.Get_Value ("column"));
+      end if;
+
+      Self.State.Location_Set.Insert (Location);
    end Analyze_location_Start_Tag;
 
    ---------------------------------
@@ -1020,36 +1012,6 @@ package body GNATStack.Readers is
       Self.State := (Kind => Subprogram_Called_Set_State, others => <>);
    end Analyze_subprogramcalledset_Start_Tag;
 
-   ------------------------------------
-   -- Analyze_subprogramname_End_Tag --
-   ------------------------------------
-
-   procedure Analyze_subprogramname_End_Tag (Self : in out Reader) is
-      pragma Assert (Self.State.Kind = String_Value_State);
-
-      Value : constant Unbounded_String := Self.State.String_Value;
-
-   begin
-      Self.Pop;
-      Self.State.Location.Name := Value;
-   end Analyze_subprogramname_End_Tag;
-
-   --------------------------------------
-   -- Analyze_subprogramname_Start_Tag --
-   --------------------------------------
-
-   procedure Analyze_subprogramname_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class)
-   is
-      pragma Assert (Self.State.Kind = Location_State);
-      pragma Assert (Attributes.Get_Value ("type") = "strings");
-
-   begin
-      Self.Push;
-      Self.State := (Kind => String_Value_State, others => <>);
-   end Analyze_subprogramname_Start_Tag;
-
    -----------------------------------
    -- Analyze_subprogramset_End_Tag --
    -----------------------------------
@@ -1337,9 +1299,6 @@ package body GNATStack.Readers is
       elsif Local_Name = "subprogramcalledset" then
          Self.Analyze_subprogramcalledset_End_Tag;
 
-      elsif Local_Name = "subprogramname" then
-         Self.Analyze_subprogramname_End_Tag;
-
       elsif Local_Name = "subprogramset" then
          Self.Analyze_subprogramset_End_Tag;
 
@@ -1523,9 +1482,6 @@ package body GNATStack.Readers is
 
       elsif Local_Name = "subprogramcalledset" then
          Self.Analyze_subprogramcalledset_Start_Tag (Atts);
-
-      elsif Local_Name = "subprogramname" then
-         Self.Analyze_subprogramname_Start_Tag (Atts);
 
       elsif Local_Name = "subprogramset" then
          Self.Analyze_subprogramset_Start_Tag (Atts);

@@ -44,7 +44,6 @@ private
       Subprogram_Set_State,
       Subprogram_Called_Set_State,
       Location_Set_State,
-      Location_State,
       Entry_Set_State,
       Entry_State,
       Cycle_Set_State,
@@ -132,9 +131,6 @@ private
             Local_Usage   : Stack_Usage_Information;
             Calls         : Subprogram_Information_Sets.Set;
             Unbounded     : Object_Information_Vectors.Vector;
-
-         when Location_State =>
-            Location : Subprogram_Location;
 
          when Cycle_State =>
             Cycle : Subprogram_Information_Vectors.Vector;
@@ -414,14 +410,6 @@ private
 
    procedure Analyze_subprogramcalledset_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "subprogramcalledset" element
-
-   procedure Analyze_subprogramname_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "subprogramname" element
-
-   procedure Analyze_subprogramname_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "subprogramname" element
 
    procedure Analyze_subprogramset_Start_Tag
      (Self       : in out Reader;
