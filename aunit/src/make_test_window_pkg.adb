@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2009, AdaCore                 --
+--                  Copyright (C) 2001-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,6 @@ with Gtk.Stock;           use Gtk.Stock;
 
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
 with GPS.Intl;            use GPS.Intl;
-with Histories;           use Histories;
 
 with Aunit_Utils;         use Aunit_Utils;
 
@@ -146,16 +145,6 @@ package body Make_Test_Window_Pkg is
       Gtk_New (Make_Test_Window.Override_Set_Up, -"Override Set_up");
       Set_Active (Make_Test_Window.Override_Set_Up, False);
       Pack_Start (Vbox2, Make_Test_Window.Override_Set_Up, False, False, 3);
-
-      Gtk_New (Make_Test_Window.Aunit1_Button, -"Create AUnit1.x test case");
-      Create_New_Boolean_Key_If_Necessary
-        (GPS.Kernel.Get_History (Handle).all,
-         "aunit-aunit1-compatibility", False);
-      Associate
-        (GPS.Kernel.Get_History (Handle).all,
-         "aunit-aunit1-compatibility",
-         Make_Test_Window.Aunit1_Button);
-      Pack_Start (Vbox2, Make_Test_Window.Aunit1_Button);
 
       Gtk_New (Make_Test_Window.Label);
       Set_Alignment (Make_Test_Window.Label, 0.0, 0.5);

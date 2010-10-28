@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2009, AdaCore                 --
+--                  Copyright (C) 2002-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -118,12 +118,6 @@ package body Make_Test_Window_Pkg.Callbacks is
         (Translation,
          Assoc
            ("OVERRIDE_TEAR_DOWN", Get_Active (Window.Override_Tear_Down)));
-
-      if Get_Active (Window.Aunit1_Button) then
-         Insert
-           (Translation,
-            Assoc ("AUNIT", "AUNIT1.X"));
-      end if;
 
       Create_Files
         (Window.Kernel,

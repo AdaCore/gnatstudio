@@ -1,4 +1,5 @@
-with AUnit;
+with AUnit.Run;
+with AUnit.Reporter.Text;
 with @_HARNESS_TEST_SUITE_PACKAGE_@;
 
 ---@_REPLACE_ALL(./-):HARNESS_NAME_@---
@@ -7,8 +8,10 @@ with @_HARNESS_TEST_SUITE_PACKAGE_@;
 
 procedure @_HARNESS_NAME_@ is
 
-   procedure Run is new AUnit.Test_Runner (@_HARNESS_TEST_SUITE_PACKAGE_@.@_HARNESS_TEST_SUITE_@);
+   procedure Run is new AUnit.Run.Test_Runner
+     (@_HARNESS_TEST_SUITE_PACKAGE_@.@_HARNESS_TEST_SUITE_@);
+   Reporter : AUnit.Reporter.Text.Text_Reporter;
 
 begin
-   Run;
+   Run (Reporter);
 end @_HARNESS_NAME_@;

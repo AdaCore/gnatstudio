@@ -1,13 +1,9 @@
-@@IF@@ @_AUNIT_@ = "AUNIT1.X"
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with AUnit.Test_Cases;      use AUnit.Test_Cases;
-@@ELSE@@
-with AUnit; use AUnit, AUnit.Test_Cases, AUnit.Test_Results;
-@@END_IF@@
+with AUnit.Test_Cases; use AUnit;
 
 package @_TEST_CASE_PACKAGE_@ is
 
-   type @_TEST_CASE_TYPE_@ is new AUnit.Test_Cases.Test_Case with null record;
+   type @_TEST_CASE_TYPE_@ is new
+     AUnit.Test_Cases.Test_Case with null record;
 
    @@IF@@ @_OVERRIDE_SET_UP_@
    procedure Set_Up (T : in out @_TEST_CASE_TYPE_@);
@@ -23,11 +19,7 @@ package @_TEST_CASE_PACKAGE_@ is
    --  Register routines to be run
 
    function Name (T : @_TEST_CASE_TYPE_@)
-   @@IF@@ @_AUNIT_@ = "AUNIT1.X"
-                  return String_Access;
-   @@ELSE@@
                   return Test_String;
-   @@END_IF@@
    --  Returns name identifying the test case
 
 end @_TEST_CASE_PACKAGE_@;

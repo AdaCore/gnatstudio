@@ -70,10 +70,15 @@ package body Aunit_Filters is
 
       --  Find the name of the suite or test case
 
-      while not Found
+      while not (Found and then Package_Name /= No_Symbol)
         and then Current_Construct /= null
       loop
-         if Current_Construct.Category = Cat_Class
+         if Current_Construct.Category = Cat_Package
+           and then Package_Name = No_Symbol
+         then
+            Package_Name := Current_Construct.Name;
+
+         elsif Current_Construct.Category = Cat_Class
            and then Current_Construct.Name /= No_Symbol
          then
             Index := Current_Construct.Sloc_Start.Index;
@@ -97,9 +102,8 @@ package body Aunit_Filters is
                F_Type := Test_Case;
                Suite_Name := Current_Construct.Name;
             end if;
-         end if;
 
-         if Current_Construct.Category = Cat_Function
+         elsif Current_Construct.Category = Cat_Function
            and then Current_Construct.Name /= No_Symbol
          then
             Index := Current_Construct.Sloc_Start.Index;
@@ -121,6 +125,10 @@ package body Aunit_Filters is
          Current_Construct := Current_Construct.Next;
       end loop;
 
+      if not Found then
+         Package_Name := No_Symbol;
+      end if;
+
       Free (Constructs);
       Free (File_Buffer);
    end Get_Suite_Name;
@@ -140,10 +148,17 @@ package body Aunit_Filters is
       pragma Unreferenced (Win);
       Suite_Name   : Symbol;
       Package_Name : Symbol;
-      F_Type       : Test_Type;
+      F_Type       : Test_Type := Unknown;
+      Info         : constant File_Info :=
+                       Get_Registry (Filter.Kernel).Tree.Info (File);
 
    begin
-      Get_Suite_Name (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
+      if Info.Language = "ada"
+        and then Info.Unit_Part = Unit_Spec
+      then
+         Get_Suite_Name
+           (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
+      end if;
 
       if F_Type = Test_Suite then
          State  := Normal;
@@ -172,10 +187,17 @@ package body Aunit_Filters is
       pragma Unreferenced (Win);
       Suite_Name   : Symbol;
       Package_Name : Symbol;
-      F_Type       : Test_Type;
+      F_Type       : Test_Type := Unknown;
+      Info         : constant File_Info :=
+                       Get_Registry (Filter.Kernel).Tree.Info (File);
 
    begin
-      Get_Suite_Name (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
+      if Info.Language = "ada"
+        and then Info.Unit_Part = Unit_Spec
+      then
+         Get_Suite_Name
+           (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
+      end if;
 
       if F_Type = Test_Suite or else F_Type = Test_Case then
          State  := Normal;
@@ -203,7 +225,7 @@ package body Aunit_Filters is
    is
       pragma Unreferenced (Win);
       Info : constant File_Info :=
-        Get_Registry (Filter.Kernel).Tree.Info (File);
+               Get_Registry (Filter.Kernel).Tree.Info (File);
    begin
       if Info.Language = "ada" then
          State := Normal;
