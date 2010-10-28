@@ -982,6 +982,14 @@ package body Completion_Window is
       Iter : Gtk_Tree_Iter;
       J    : Natural;
    begin
+      if not At_End (Window.Explorer.Iter.all) then
+         --  In this case, we haven't finished to iterate through all the
+         --  possible completions. It's not possible to know the common prefix
+         --  since they may be other hidden entries with different prefix.
+
+         return False;
+      end if;
+
       --  Compute the common prefix
       Iter := Get_Iter_First (Window.Explorer.Model);
 
