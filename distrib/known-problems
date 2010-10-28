@@ -6,6 +6,12 @@ Known Problems fixed in GPS 5.1.0
   Workaround: Select the editor in the /Window menu to raise it, or simply
               click on the window to raise it.
 
+- GB21-006 Profile completion errors with formal parameters
+  Problem:    Auto completion with formal parameters of subprogram calls may
+              not insert the correct formal parameters if there are already
+              unordered parameters given.
+  Workaround: Manually complete the code.
+
 - F622-029 Completion prefix error when the list is too large
   Problem:    When querying a smart completion, if the list is too large,
               the common prefix used to complete the current identifier may
