@@ -96,24 +96,15 @@ private
             Location_Set : Subprogram_Location_Sets.Set;
 
          when Entry_State =>
-            C_Id          : Ada.Strings.Unbounded.Unbounded_String;
-            C_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            C_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
-            C_Locations   : Subprogram_Location_Sets.Set;
-            Entry_Usage   : Stack_Usage_Information;
-            Chain         : Subprogram_Information_Vectors.Vector;
+            C_Id        : Ada.Strings.Unbounded.Unbounded_String;
+            Entry_Usage : Stack_Usage_Information;
+            Chain       : Subprogram_Information_Vectors.Vector;
 
          when External_State =>
-            E_Id          : Ada.Strings.Unbounded.Unbounded_String;
-            E_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            E_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
-            E_Locations   : Subprogram_Location_Sets.Set;
+            E_Id : Ada.Strings.Unbounded.Unbounded_String;
 
          when Indirect_State =>
             I_Id          : Ada.Strings.Unbounded.Unbounded_String;
-            I_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            I_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
-            I_Locations   : Subprogram_Location_Sets.Set;
             I_Subprogram  : Subprogram_Information_Access;
 
          when Subprogram_State =>
@@ -174,9 +165,8 @@ private
    end record;
 
    function Resolve_Or_Create
-     (Self       : not null access Reader;
-      Id         : Ada.Strings.Unbounded.Unbounded_String;
-      Identifier : Subprogram_Identifier)
+     (Self : not null access Reader;
+      Id   : Ada.Strings.Unbounded.Unbounded_String)
       return Subprogram_Information_Access;
    --  Resolves subprogram information record or creates new one.
 
@@ -315,14 +305,6 @@ private
    procedure Analyze_line_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "line" element
 
-   procedure Analyze_linkername_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "linkername" element
-
-   procedure Analyze_linkername_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "linkername" element
-
    procedure Analyze_localstackusage_Start_Tag
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class);
@@ -346,14 +328,6 @@ private
 
    procedure Analyze_locationset_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "locationset" element
-
-   procedure Analyze_prefixname_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "prefixname" element
-
-   procedure Analyze_prefixname_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "prefixname" element
 
    procedure Analyze_subprogram_Start_Tag
      (Self       : in out Reader;
@@ -429,5 +403,7 @@ private
    overriding procedure Characters
      (Self : in out Reader;
       Text : Unicode.CES.Byte_Sequence);
+
+   overriding procedure End_Document (Self : in out Reader);
 
 end GNATStack.Readers;
