@@ -20,9 +20,9 @@ If no tag is specified, the entry is relevant to all IDEs.
               unordered parameters given.
   Workaround: Manually complete the code.
 
-- F622-029 Completion prefix error when the list is too large
-  Problem:    When querying a smart completion, if the list is too large,
-              the common prefix used to complete the current identifier may
-              be wrong.
+- F622-029 GPS: Completion prefix error when the list is too large
+  Problem:    In GPS, when querying a smart completion, if the list is too 
+              large, the common prefix used to complete the current identifier
+              may be wrong.
   Workaround: Manually complete the code.
 

@@ -23,9 +23,9 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
-NF-51-J805-009 GPS: Based literals not auto cased (2010-10-17)
+NF-51-J805-009 Based literals not auto cased (2010-10-17)
 
-  GPS now keeps based literals with their original casing rather than
+  Auto-casing now keeps based literals with their original casing rather than
   applying automatic casing as done for e.g. identifiers.
 
 NF-51-GA03-018 GPS: Project View uses a case-insensitive sort (2010-10-17)
