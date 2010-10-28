@@ -1,32 +1,40 @@
-=========================
-GPS 5.1 NEW FEATURES LIST
-=========================
+===========================================
+GPS 5.1 and GNATbench 2.6 NEW FEATURES LIST
+===========================================
 
 Copyright (C) 2010, AdaCore
 
-This file contains a list of new features introduced in GPS.
-A full description of all GPS features can be found in the GPS
+This file contains a list of new features introduced in GPS and GNATbench IDEs.
+A full description of all features can be found in the GPS or GNATbench
 documentation.
 
 An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
-New features in 5.1.0
----------------------
+The following leading tags are used on the feature entries to indicate:
+GPS: this entry is specific to GPS
+GB:  this entry is specific to GNATbench
+WB:  this entry is specific to GNATbench for WorkBench
+ECL: this entry is specific to GNATbench for Eclipse
 
-NF-51-J805-009 Based literals not auto cased (2010-10-17)
+If no tag is specified, the entry is relevant to all IDEs.
+
+New features in GPS 5.1.0 / GNATbench 2.6.0
+-------------------------------------------
+
+NF-51-J805-009 GPS: Based literals not auto cased (2010-10-17)
 
   GPS now keeps based literals with their original casing rather than
   applying automatic casing as done for e.g. identifiers.
 
-NF-51-GA03-018 Project View uses a case-insensitive sort (2010-10-17)
+NF-51-GA03-018 GPS: Project View uses a case-insensitive sort (2010-10-17)
 
   Entries (project, package, subprogram, types names) in the Project
   View are now sorted ignoring the casing, which is in general more user
   friendly.
 
-NF-51-G823-005 Leave codefix wrench for readonly files (2010-10-26)
+NF-51-G823-005 GPS: Leave codefix wrench for readonly files (2010-10-26)
 
   When an auto fix is applied on a readonly file, the wrench icon does not
   disappear and an error message is added in the Messages window.

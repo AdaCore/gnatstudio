@@ -1,6 +1,14 @@
-Known Problems fixed in GPS 5.1.0
+Known Problems fixed in GPS 5.1.0 / GNATbench 2.6.0
 
-- JA07-011 Location view and floating editors
+The following leading tags are used on the following entries to indicate:
+GPS: this entry is specific to GPS
+GB:  this entry is specific to GNATbench
+WB:  this entry is specific to GNATbench for WorkBench
+ECL: this entry is specific to GNATbench for Eclipse
+
+If no tag is specified, the entry is relevant to all IDEs.
+
+- JA07-011 GPS: Location view and floating editors
   Problem:    When clicking in a location, the corresponding floating editor
               is not raised (no problem when the editor is not floating)
   Workaround: Select the editor in the /Window menu to raise it, or simply
@@ -16,6 +24,5 @@ Known Problems fixed in GPS 5.1.0
   Problem:    When querying a smart completion, if the list is too large,
               the common prefix used to complete the current identifier may
               be wrong.
-
   Workaround: Manually complete the code.
 
