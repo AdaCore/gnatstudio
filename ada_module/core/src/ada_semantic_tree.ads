@@ -250,7 +250,8 @@ package Ada_Semantic_Tree is
    function Parse_Expression_Backward
      (Buffer            : access constant Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0)
+      End_Offset        : String_Index_Type := 0;
+      Multiple_Operands : Boolean := False)
       return Parsed_Expression;
    --  This function looks backwards from the offset given in parameter and
    --  parses the relevant completion expression.
@@ -267,13 +268,9 @@ package Ada_Semantic_Tree is
    --  Note that Start_Offset must point on the d, or the last identifier
    --  returned will only contain a part of the name.
    --
-   --  This parser may be able to retrieve complex expression, e.g. A + B,
-   --  or A => B in ada. If the flat Simple_Expression is true, then it will
-   --  avoid returning this kind of complex result involving more that one
-   --  top-level object.
-   --
-   --  The default implementation for any language is to return the current
-   --  identifier, ie stop at the first non-alphanumeric character.
+   --  In its normal mode, the parser will only consider one operand, e.g. in
+   --  "A + B", only B will be returned. The operands sequence can be returned
+   --  if the flag Multiple_Operands is true.
    --
    --  The return value must be freed by the user
 

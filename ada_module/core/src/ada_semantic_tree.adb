@@ -415,7 +415,8 @@ package body Ada_Semantic_Tree is
    function Parse_Expression_Backward
      (Buffer            : access constant Glib.UTF8_String;
       Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0)
+      End_Offset        : String_Index_Type := 0;
+      Multiple_Operands : Boolean := False)
       return Parsed_Expression
    is
       use Token_List;
@@ -450,10 +451,14 @@ package body Ada_Semantic_Tree is
 
                   if Token.Tok_Type = Tok_Colon then
                      Prepend (Result.Tokens, Token);
+                     Stop := True;
+                  else
+                     Stop := not Multiple_Operands;
                   end if;
 
-                  Stop := True;
-                  return;
+                  if Stop then
+                     return;
+                  end if;
                end if;
 
                if All_Found and then Token.Tok_Type /= Tok_Dot then
@@ -464,6 +469,7 @@ package body Ada_Semantic_Tree is
                   Remove_Nodes
                     (Result.Tokens, Null_Node, First (Result.Tokens));
                   Stop := True;
+
                   return;
                else
                   All_Found := False;
@@ -483,11 +489,11 @@ package body Ada_Semantic_Tree is
 
                when Tok_Identifier =>
                   if Last_Non_Blank_Token.Tok_Type = Tok_Identifier then
-                     Stop := True;
+                     Stop := not Multiple_Operands;
                   elsif Length (Result.Tokens) = 0
                     and then Last_Token.Tok_Type = Tok_Blank
                   then
-                     Stop := True;
+                     Stop := not Multiple_Operands;
                   else
                      Prepend (Result.Tokens, Token);
                   end if;
@@ -506,9 +512,11 @@ package body Ada_Semantic_Tree is
                   if Last_Non_Blank_Token.Tok_Type = Tok_In then
                      --  We're on e.g. for X in A, don't get more things
 
-                     Stop := True;
+                     if not Multiple_Operands then
+                        Stop := True;
 
-                     return;
+                        return;
+                     end if;
                   end if;
 
                   Prepend (Result.Tokens, Token);
@@ -551,6 +559,25 @@ package body Ada_Semantic_Tree is
 
                when Tok_Blank =>
                   null;
+
+               when Tok_Operator
+                  | Tok_And
+                  | Tok_Mod
+                  | Tok_Or
+                  | Tok_Rem
+                  | Tok_Xor =>
+
+                  Stop := not Multiple_Operands;
+
+               when Tok_Then
+                  | Tok_Else =>
+
+                  --  ??? We should probably be smarter here, and work the
+                  --  "or else" and "and then" things, but doesn't seems to
+                  --  be too much of a problem so far given the way things are
+                  --  used.
+
+                  Stop := not Multiple_Operands;
 
                when others =>
                   Stop := True;
