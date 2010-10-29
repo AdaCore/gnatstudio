@@ -22,10 +22,10 @@ with Ada.Exceptions;                    use Ada.Exceptions;
 with GNAT.Regpat;                       use GNAT.Regpat;
 
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
-with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
+with Codefix.Text_Manager.Commands;     use Codefix.Text_Manager.Commands;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Text_Manager.Spark_Commands;
-                                       use Codefix.Text_Manager.Spark_Commands;
+use Codefix.Text_Manager.Spark_Commands;
 
 with Language.Tree.Database;            use Language.Tree.Database;
 with Projects;                          use Projects;
@@ -636,13 +636,17 @@ package body Codefix.Formal_Errors is
             Start_Name,
             After,
             (Cat_Variable, Cat_Local_Variable));
-      elsif Category = Cat_Type or else Category = Cat_Subtype then
+      elsif Category = Cat_Type
+        or else Category = Cat_Subtype
+        or else Category = Cat_Class
+        or else Category = Cat_Structure
+      then
          It := Get_Iterator_At
            (Tree,
             It_Location,
             Start_Name,
             After,
-            (Cat_Type, Cat_Subtype));
+            (Cat_Type, Cat_Subtype, Cat_Class, Cat_Structure));
       else
          It := Get_Iterator_At
            (Tree, It_Location, Start_Name, After, (1 => Category));
@@ -796,7 +800,7 @@ package body Codefix.Formal_Errors is
                end;
             end if;
 
-         when Cat_Type | Cat_Subtype =>
+         when Cat_Type | Cat_Subtype | Cat_Class | Cat_Structure =>
             if Entity_Found then
                if Is_Set (Operations, Remove_Entity) then
                   declare
