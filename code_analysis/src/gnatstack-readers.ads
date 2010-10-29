@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
-private with Ada.Strings.Unbounded;
+private with Ada.Strings.Unbounded.Hash;
 
 private with Sax.Attributes;
 with Sax.Readers;
@@ -43,21 +44,18 @@ private
       Subprogram_Set_State,
       Subprogram_Called_Set_State,
       Location_Set_State,
-      Location_State,
       Entry_Set_State,
       Entry_State,
       Cycle_Set_State,
       Cycle_State,
       Unbounded_Set_State,
       Unbounded_State,
-      Unbounded_Object_State,
       External_Set_State,
       External_State,
       Indirect_Set_State,
       Indirect_State,
       Indirect_Call_State,
       Subprogram_State,
-      Stack_Usage_State,
       Boolean_Value_State,
       Integer_Value_State,
       String_Value_State);
@@ -97,28 +95,20 @@ private
          when Location_Set_State =>
             Location_Set : Subprogram_Location_Sets.Set;
 
-         when Unbounded_Object_State =>
-            Object : Object_Information;
-
          when Entry_State =>
-            C_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            C_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
-            C_Locations   : Subprogram_Location_Sets.Set;
-            Entry_Usage   : Stack_Usage_Information;
-            Chain         : Subprogram_Information_Vectors.Vector;
+            C_Id        : Ada.Strings.Unbounded.Unbounded_String;
+            Entry_Usage : Stack_Usage_Information;
+            Chain       : Subprogram_Information_Vectors.Vector;
 
          when External_State =>
-            E_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            E_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
-            E_Locations   : Subprogram_Location_Sets.Set;
+            E_Id : Ada.Strings.Unbounded.Unbounded_String;
 
          when Indirect_State =>
-            I_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
-            I_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
-            I_Locations   : Subprogram_Location_Sets.Set;
+            I_Id          : Ada.Strings.Unbounded.Unbounded_String;
             I_Subprogram  : Subprogram_Information_Access;
 
          when Subprogram_State =>
+            S_Id          : Ada.Strings.Unbounded.Unbounded_String;
             S_Prefix_Name : Ada.Strings.Unbounded.Unbounded_String;
             S_Linker_Name : Ada.Strings.Unbounded.Unbounded_String;
             S_Locations   : Subprogram_Location_Sets.Set;
@@ -128,17 +118,11 @@ private
             Calls         : Subprogram_Information_Sets.Set;
             Unbounded     : Object_Information_Vectors.Vector;
 
-         when Location_State =>
-            Location : Subprogram_Location;
-
          when Cycle_State =>
             Cycle : Subprogram_Information_Vectors.Vector;
 
          when Unbounded_State =>
             null;
-
-         when Stack_Usage_State =>
-            Stack_Usage : Stack_Usage_Information;
 
          when Value_Kinds =>
             Value_Tag : Boolean := False;
@@ -162,10 +146,18 @@ private
    package Parser_State_Vectors is
      new Ada.Containers.Vectors (Positive, Parser_State);
 
+   package Unbounded_To_Subprogram_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Ada.Strings.Unbounded.Unbounded_String,
+        GNATStack.Data_Model.Subprogram_Information_Access,
+        Ada.Strings.Unbounded.Hash,
+        Ada.Strings.Unbounded."=");
+
    type Reader is new Sax.Readers.Reader with record
       State          : Parser_State;
       Stack          : Parser_State_Vectors.Vector;
       Analysis       : Analysis_Information;
+      Subprograms    : Unbounded_To_Subprogram_Maps.Map;
       Global_Section : Boolean;
       --  This flag indicates processing of child element of 'global' element
       --  because 'unboundedobjectset' elements must not be processed as
@@ -173,8 +165,8 @@ private
    end record;
 
    function Resolve_Or_Create
-     (Self       : not null access Reader;
-      Identifier : Subprogram_Identifier)
+     (Self : not null access Reader;
+      Id   : Ada.Strings.Unbounded.Unbounded_String)
       return Subprogram_Information_Access;
    --  Resolves subprogram information record or creates new one.
 
@@ -200,14 +192,6 @@ private
 
    procedure Analyze_callchain_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "callchain" element
-
-   procedure Analyze_column_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "column" element
-
-   procedure Analyze_column_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "column" element
 
    procedure Analyze_cycle_Start_Tag
      (Self       : in out Reader;
@@ -321,14 +305,6 @@ private
    procedure Analyze_line_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "line" element
 
-   procedure Analyze_linkername_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "linkername" element
-
-   procedure Analyze_linkername_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "linkername" element
-
    procedure Analyze_localstackusage_Start_Tag
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class);
@@ -353,38 +329,6 @@ private
    procedure Analyze_locationset_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "locationset" element
 
-   procedure Analyze_object_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "object" element
-
-   procedure Analyze_object_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "object" element
-
-   procedure Analyze_prefixname_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "prefixname" element
-
-   procedure Analyze_prefixname_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "prefixname" element
-
-   procedure Analyze_qualifier_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "qualifier" element
-
-   procedure Analyze_qualifier_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "qualifier" element
-
-   procedure Analyze_size_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "size" element
-
-   procedure Analyze_size_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "size" element
-
    procedure Analyze_subprogram_Start_Tag
      (Self       : in out Reader;
       Attributes : Sax.Attributes.Attributes'Class);
@@ -400,14 +344,6 @@ private
 
    procedure Analyze_subprogramcalledset_End_Tag (Self : in out Reader);
    --  Analyzes end tag of "subprogramcalledset" element
-
-   procedure Analyze_subprogramname_Start_Tag
-     (Self       : in out Reader;
-      Attributes : Sax.Attributes.Attributes'Class);
-   --  Analyzes start tag of "subprogramname" element
-
-   procedure Analyze_subprogramname_End_Tag (Self : in out Reader);
-   --  Analyzes end tag of "subprogramname" element
 
    procedure Analyze_subprogramset_Start_Tag
      (Self       : in out Reader;
@@ -467,5 +403,7 @@ private
    overriding procedure Characters
      (Self : in out Reader;
       Text : Unicode.CES.Byte_Sequence);
+
+   overriding procedure End_Document (Self : in out Reader);
 
 end GNATStack.Readers;

@@ -221,7 +221,7 @@ package body GNATStack.Data_Model is
      (Left  : Subprogram_Information_Access;
       Right : Subprogram_Information_Access) return Boolean is
    begin
-      return Left.Identifier = Right.Identifier;
+      return Left.Id = Right.Id;
    end Equivalent_Elements;
 
    ----------
@@ -274,7 +274,7 @@ package body GNATStack.Data_Model is
    function Hash
      (Item : Subprogram_Information_Access) return Ada.Containers.Hash_Type is
    begin
-      return Hash (Item.Identifier);
+      return Hash (Item.Id);
    end Hash;
 
    -----------
