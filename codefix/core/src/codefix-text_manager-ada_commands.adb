@@ -1304,19 +1304,28 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Current_Text.Get_Structured_File (Source_Cursor.Get_File));
       Lock_Destination : Update_Lock := Lock_Updates
         (Current_Text.Get_Structured_File (Destination_Cursor.Get_File));
+
+      Profile_Categories : constant Category_Array :=
+        (Cat_Procedure,
+         Cat_Function,
+         Cat_Entry,
+         Cat_Accept_Statement,
+         Cat_Type,
+         Cat_Structure,
+         Cat_Class,
+         Cat_Subtype);
+
    begin
       Source_It := Get_Iterator_At
         (Current_Text,
          Source_Cursor,
-         Position => This.Look_For_Source,
-         Categories_Seeked =>
-           (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
+         Position          => This.Look_For_Source,
+         Categories_Seeked => Profile_Categories);
       Destination_It := Get_Iterator_At
         (Current_Text,
          Destination_Cursor,
-         Position => This.Look_For_Destination,
-         Categories_Seeked =>
-           (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
+         Position          => This.Look_For_Destination,
+         Categories_Seeked => Profile_Categories);
 
       Initialize_Profile
         (Source_It,
