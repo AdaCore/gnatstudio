@@ -14,6 +14,12 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Select the editor in the /Window menu to raise it, or simply
               click on the window to raise it.
 
+- J302-007 No quick fixes for unreferenced type definitions
+  Problem:    When an unreferenced type definition is detected by the compiler,
+              no quick fix is offered to removed the type or add a pragma
+              unreferenced.
+  Workaround: Manually fix the code.
+
 - GB21-006 Profile completion errors with formal parameters
   Problem:    Auto completion with formal parameters of subprogram calls may
               not insert the correct formal parameters if there are already
