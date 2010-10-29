@@ -19,13 +19,17 @@ If no tag is specified, the entry is relevant to all IDEs.
               full declaration of a type, with regards to the discriminants, 
               the auto fix mechanism does't work and remove random characters.
   Workaround: Manually fix the code.
-              
 
 - JA07-011 GPS: Location view and floating editors
   Problem:    When clicking in a location, the corresponding floating editor
               is not raised (no problem when the editor is not floating)
   Workaround: Select the editor in the /Window menu to raise it, or simply
               click on the window to raise it.
+
+- J902-019 Navigation without compilation doesn't work with UTF8
+  Problem:    Navigation without compilation may not be available when there is
+              UTF8 characters on the line.
+  Workaround: Compile the file and then navigate.
 
 - J302-007 No quick fixes for unreferenced type definitions
   Problem:    When an unreferenced type definition is detected by the compiler,
