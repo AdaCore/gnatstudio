@@ -21,10 +21,6 @@ with String_Utils;   use String_Utils;
 
 package body Codefix is
 
-   Tab_Width : constant Natural := 8;
-   --  Width of a tab in GNAT.
-   --  ??? This should be based on the preference Tab_Width
-
    -------------------
    -- To_Char_Index --
    -------------------
@@ -50,21 +46,11 @@ package body Codefix is
       Current_Index : String_Index_Type := String_Index_Type (Str'First);
       Current_Col   : Visible_Column_Type := 1;
    begin
-      --  ??? This should be using Skip_To_Index instead ???
-      loop
-         exit when Current_Index >= Index;
-
-         if Natural (Current_Index) <= Str'Last
-           and then Str (Natural (Current_Index)) = ASCII.HT
-         then
-            Current_Col := Current_Col + Visible_Column_Type (Tab_Width) -
-              ((Current_Col - 1) mod Visible_Column_Type (Tab_Width));
-         else
-            Current_Col := Current_Col + 1;
-         end if;
-
-         Current_Index := Current_Index + 1;
-      end loop;
+      Skip_To_Index
+        (Buffer        => Str,
+         Columns       => Current_Col,
+         Index_In_Line => Index,
+         Index         => Current_Index);
 
       return Current_Col;
    end To_Column_Index;
@@ -140,44 +126,5 @@ package body Codefix is
    begin
       Free (This.Error);
    end Free;
-
-   ---------------------
-   -- Set_Error_State --
-   ---------------------
-
-   procedure Set_Error_State
-     (List : in out State_List; Error : String; State : Error_State)
-   is
-      Node : State_Lists.List_Node := First (List);
-   begin
-      while Node /= State_Lists.Null_Node loop
-         if Data (Node).Error.all = Error then
-            Set_Data (Node, (new String'(Error), State));
-            return;
-         end if;
-         Node := Next (Node);
-      end loop;
-
-      Append (List, (new String'(Error), State));
-   end Set_Error_State;
-
-   ---------------------
-   -- Get_Error_State --
-   ---------------------
-
-   function Get_Error_State
-     (List : State_List; Error : String) return Error_State
-   is
-      Node : State_Lists.List_Node := First (List);
-   begin
-      while Node /= State_Lists.Null_Node loop
-         if Data (Node).Error.all = Error then
-            return Data (Node).State;
-         end if;
-         Node := Next (Node);
-      end loop;
-
-      return Unknown;
-   end Get_Error_State;
 
 end Codefix;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2009, AdaCore               --
+--                    Copyright (C) 2002-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -99,23 +99,6 @@ package Codefix is
    end record;
    --  This record hold various options used to configure the fix.
 
-   ----------------------------------------------------------------------------
-   --  type Error_State
-   ----------------------------------------------------------------------------
-
-   type Error_State is (Enabled, Disabled, Unknown);
-   --  The two states possible for an error.
-
-   type State_List is private;
-
-   procedure Set_Error_State
-     (List : in out State_List; Error : String; State : Error_State);
-   --  Modify the current error state.
-
-   function Get_Error_State
-     (List : State_List; Error : String) return Error_State;
-   --  Return the current error state.
-
 private
 
    Nothing                 : constant Useless_Entity_Operations := 0;
@@ -125,7 +108,6 @@ private
 
    type State_Node is record
       Error : GNAT.Strings.String_Access;
-      State : Error_State := Unknown;
    end record;
 
    procedure Free (This : in out State_Node);

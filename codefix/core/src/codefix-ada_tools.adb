@@ -355,12 +355,13 @@ package body Codefix.Ada_Tools is
       end loop;
 
       if Last_Info /= Null_Construct_Tree_Iterator then
+         Set_Line (Current_Cursor, Get_Construct (Last_Info).Sloc_End.Line);
+
          declare
             Line : constant String := Get_Line (Current_Text, Current_Cursor);
          begin
-            Set_Location
+            Set_Column
               (Current_Cursor,
-               Get_Construct (Last_Info).Sloc_End.Line,
                To_Column_Index
                  (String_Index_Type
                     (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
