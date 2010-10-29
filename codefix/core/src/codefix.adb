@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2010, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,12 +32,12 @@ package body Codefix is
    function To_Char_Index
      (Index : Visible_Column_Type; Str : String) return String_Index_Type
    is
-      Current_Index : Integer := Str'First;
+      Current_Index : String_Index_Type := String_Index_Type (Str'First);
    begin
       Skip_To_Column (Buffer  => Str,
-                      Columns => Integer (Index),
+                      Columns => Index,
                       Index   => Current_Index);
-      return String_Index_Type (Current_Index);
+      return Current_Index;
    end To_Char_Index;
 
    ---------------------
@@ -50,6 +50,7 @@ package body Codefix is
       Current_Index : String_Index_Type := String_Index_Type (Str'First);
       Current_Col   : Visible_Column_Type := 1;
    begin
+      --  ??? This should be using Skip_To_Index instead ???
       loop
          exit when Current_Index >= Index;
 

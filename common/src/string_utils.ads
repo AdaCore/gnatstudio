@@ -23,6 +23,7 @@
 with GNAT.Strings;
 with Interfaces.C.Strings;
 with Glib;
+with Basic_Types; use Basic_Types;
 
 package String_Utils is
 
@@ -55,19 +56,19 @@ package String_Utils is
 
    procedure Skip_To_Column
      (Buffer    : String;
-      Columns   : Natural := 0;
-      Index     : in out Natural;
-      Tab_Width : Integer := 8);
+      Columns   : Visible_Column_Type := 0;
+      Index     : in out String_Index_Type;
+      Tab_Width : String_Index_Type := 8);
    --  Assuming Index points to the begining of a line (as is the case after
    --  Skip_Lines for instance), jump to the specific column on that line.
    --  This procedure handles tabulations.
 
    procedure Skip_To_Index
      (Buffer        : String;
-      Columns       : out Natural;
-      Index_In_Line : Natural;
-      Index         : in out Natural;
-      Tab_Width     : Integer := 8);
+      Columns       : out Visible_Column_Type;
+      Index_In_Line : String_Index_Type;
+      Index         : in out String_Index_Type;
+      Tab_Width     : String_Index_Type := 8);
    --  Assuming Index points to the begining of a line, move the index by
    --  "Index_In_Line" characters, and give the new column value.
 

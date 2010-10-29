@@ -96,6 +96,7 @@ package Basic_Types is
    type Visible_Column_Type is new Integer;
    --  Visible_Column_Type correspond to user perception of the columns, ie,
    --  after TAB expansion. The first character in the line has a value of 1.
+   --  Columns are counted in terms of UT8 characters.
 
    type Character_Offset_Type is new Integer;
    --  Character_Offset_Type indicates the number of characters between the

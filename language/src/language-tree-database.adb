@@ -697,13 +697,13 @@ package body Language.Tree.Database is
       Line        : Integer;
       Line_Offset : String_Index_Type) return Visible_Column_Type
    is
-      Current_Col   : Visible_Column_Type;
-      Index : Integer := Integer (Get_Offset_Of_Line (File, Line));
+      Current_Col : Visible_Column_Type;
+      Index : String_Index_Type := Get_Offset_Of_Line (File, Line);
    begin
       Skip_To_Index
         (Buffer        => Get_Buffer (File).all,
-         Columns       => Integer (Current_Col),
-         Index_In_Line => Integer (Line_Offset),
+         Columns       => Current_Col,
+         Index_In_Line => Line_Offset,
          Index         => Index);
 
       return Current_Col;
@@ -721,8 +721,8 @@ package body Language.Tree.Database is
       Current_Index : String_Index_Type := Get_Offset_Of_Line (File, Line);
    begin
       Skip_To_Column (Buffer  => Get_Buffer (File).all,
-                      Columns => Integer (Column),
-                      Index   => Natural (Current_Index));
+                      Columns => Column,
+                      Index   => Current_Index);
 
       return String_Index_Type
         (Current_Index - Get_Offset_Of_Line (File, Line)) + 1;

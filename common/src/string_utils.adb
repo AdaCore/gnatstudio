@@ -220,26 +220,28 @@ package body String_Utils is
 
    procedure Skip_To_Column
      (Buffer        : String;
-      Columns       : Natural := 0;
-      Index         : in out Natural;
-      Tab_Width     : Integer := 8)
+      Columns       : Visible_Column_Type := 0;
+      Index         : in out String_Index_Type;
+      Tab_Width     : String_Index_Type := 8)
    is
-      Current_Col   : Natural := 1;
+      Current_Col   : Visible_Column_Type := 1;
    begin
       while Current_Col < Columns
-        and then Index <= Buffer'Last
-        and then Buffer (Index) /= ASCII.LF
+        and then Natural (Index) <= Buffer'Last
+        and then Buffer (Natural (Index)) /= ASCII.LF
       loop
-         if Index < Buffer'Last
-           and then Buffer (Index) = ASCII.HT
+         if Natural (Index) < Buffer'Last
+           and then Buffer (Natural (Index)) = ASCII.HT
          then
             Current_Col := Current_Col
-              + Tab_Width - ((Current_Col - 1) mod Tab_Width);
+              + Visible_Column_Type
+              (Tab_Width -
+                 ((String_Index_Type (Current_Col) - 1) mod Tab_Width));
          else
             Current_Col := Current_Col + 1;
          end if;
 
-         Index := Index + 1;
+         Index := String_Index_Type (UTF8_Next_Char (Buffer, Natural (Index)));
       end loop;
    end Skip_To_Column;
 
@@ -249,27 +251,30 @@ package body String_Utils is
 
    procedure Skip_To_Index
      (Buffer        : String;
-      Columns       : out Natural;
-      Index_In_Line : Natural;
-      Index         : in out Natural;
-      Tab_Width     : Integer := 8)
+      Columns       : out Visible_Column_Type;
+      Index_In_Line : String_Index_Type;
+      Index         : in out String_Index_Type;
+      Tab_Width     : String_Index_Type := 8)
    is
-      Start_Of_Line : constant Integer := Index;
+      Start_Of_Line : constant String_Index_Type := Index;
    begin
       Columns := 1;
 
       loop
          exit when Index - Start_Of_Line + 1 >= Index_In_Line;
 
-         if Index <= Buffer'Last
-           and then Buffer (Index) = ASCII.HT
+         if Natural (Index) <= Buffer'Last
+           and then Buffer (Natural (Index)) = ASCII.HT
          then
-            Columns := Columns + Tab_Width - ((Columns - 1) mod Tab_Width);
+            Columns := Columns +
+              Visible_Column_Type
+                (Tab_Width -
+                     ((String_Index_Type (Columns) - 1) mod Tab_Width));
          else
             Columns := Columns + 1;
          end if;
 
-         Index := Index + 1;
+         Index := String_Index_Type (UTF8_Next_Char (Buffer, Natural (Index)));
       end loop;
    end Skip_To_Index;
 
