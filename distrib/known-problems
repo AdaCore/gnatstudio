@@ -8,6 +8,13 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- JA12-020 Error when auto fixing type discriminants
+  Problem:    When the compiler detects a mismatch between the partial and the
+              full declaration of a type, with regards to the discriminants, 
+              the auto fix mechanism does't work and remove random characters.
+  Workaround: Manually fix the code.
+              
+
 - JA07-011 GPS: Location view and floating editors
   Problem:    When clicking in a location, the corresponding floating editor
               is not raised (no problem when the editor is not floating)
