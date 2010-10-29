@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 5.0.1
 
+- JA26-011: GPS can't load GNATStack analysis data
+  Problem:    GPS can't load GNATStack analysis data when package
+              Ada.Finalization is in application closure.
+
 - JA22-015: 'Edit->Selection->Refill with fmt' menu not working
   Problem:    The action does not refill the selection and raises
               an error message into the Messages window.
