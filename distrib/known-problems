@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.1
 
+- JA27-020: GPS produces invalid AUnit test cases/suites/harness
+  Problem:    When using the 'Edit->Unit testing' menu for creating AUnit test
+              cases, suites or harness, then the generated files do not compile
+              with AUnit 3.
+  Workaround: Correct the generated files manually.
+
 - JA26-011: GPS can't load GNATStack analysis data
   Problem:    GPS can't load GNATStack analysis data when package
               Ada.Finalization is in application closure.
@@ -40,13 +46,13 @@ Known Problems fixed in GPS 5.0.0
 - J928-005: Auto-fix doesn't work when missing space in constant
   Problem:    When making constant a variable with no space between the : and
               the declaration name, the auto-fix doesn't automatically add
-              a space after the constant keyword, resulting in a 
+              a space after the constant keyword, resulting in a
               non-compilable code.
   Workaround: Add manually the space.
 
 - J923-004: Auto fix removes use clauses when removing redundant with
   Problem:    When removing redundant with detected by the compiler, the auto
-              fix removes the use clauses as well, which should not be 
+              fix removes the use clauses as well, which should not be
               considered.
   Workaround: Manually fix the code.
 
