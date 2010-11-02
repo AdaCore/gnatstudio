@@ -1,7 +1,3 @@
-@@IF@@ @_AUNIT_@ = "AUNIT1.X"
-with Aunit.Test_Cases.Registration; use AUnit.Test_Cases.Registration;
-with AUnit.Assertions;              use AUnit.Assertions;
-@@END_IF@@
 package body @_TEST_CASE_PACKAGE_@ is
 
    @@IF@@ @_OVERRIDE_SET_UP_@
@@ -33,17 +29,9 @@ package body @_TEST_CASE_PACKAGE_@ is
    ----------
 
    function Name (T : @_TEST_CASE_TYPE_@)
-   @@IF@@ @_AUNIT_@ = "AUNIT1.X"
-                  return String_Access is
-   @@ELSE@@
                   return Test_String is
-   @@END_IF@@
    begin
-   @@IF@@ @_AUNIT_@ = "AUNIT1.X"
-      return new String'("@_TEST_CASE_DESCRIPTION_@");
-   @@ELSE@@
       return Format ("@_TEST_CASE_DESCRIPTION_@");
-   @@END_IF@@
    end Name;
 
    --------------------

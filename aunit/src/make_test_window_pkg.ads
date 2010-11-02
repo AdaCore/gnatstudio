@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2001-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +34,6 @@ package Make_Test_Window_Pkg is
       Description_Entry  : Gtk_Entry;
       Override_Tear_Down : Gtk_Check_Button;
       Override_Set_Up    : Gtk_Check_Button;
-      Aunit1_Button      : Gtk_Check_Button;
       Browse_Directory   : Gtk_Button;
       Label              : Gtk_Label;
    end record;
