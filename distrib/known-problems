@@ -26,6 +26,13 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Select the editor in the /Window menu to raise it, or simply
               click on the window to raise it.
 
+- J914-003 Navigation errors when switching scenario variables
+  Problem:    When switching back and forth scenario variables involving a 
+              change in the set of sources, the navigation may be confused
+              and lead to files that are not in the current scenario.
+  Workaround: Restart GPS / GNATbench and set the scenario on which navigation
+              is expected.
+
 - J902-019 Navigation without compilation doesn't work with UTF8
   Problem:    Navigation without compilation may not be available when there is
               UTF8 characters on the line.
