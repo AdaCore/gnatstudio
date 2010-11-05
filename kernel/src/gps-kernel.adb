@@ -837,58 +837,48 @@ package body GPS.Kernel is
          Free (Data.Instances);
       end Free;
 
-      Garbage : Selection_Context_Data;
       Tmp     : Instance_List_Access;
+      Data    : Selection_Context_Data := Context.Data;
 
    begin
-      if Context.Data /= null then
+      Context.Data := null;  --  Make Finalize idempotent
+      if Data /= null then
          if Active (Ref_Me) then
             Trace (Ref_Me, "Before decref context: ("
-                   & System.Address_Image (To_Address (Context.Data))
-                   & " " & Context.Data.Ref_Count'Img & ")");
+                   & System.Address_Image (To_Address (Data))
+                   & " " & Data.Ref_Count'Img & ")");
          end if;
 
          --  Some references to the selection are hold by the instance list
          --  stored in the selection, so we need to break the cycle here
 
-         if Context.Data.Ref_Count = Length (Context.Data.Instances) + 1 then
-            Tmp := Context.Data.Instances;
-            Context.Data.Instances := null;
+         if Data.Ref_Count = Length (Data.Instances) + 1 then
+            Tmp := Data.Instances;
+            Data.Instances := null;
             Free (Tmp);
          end if;
 
-         Context.Data.Ref_Count := Context.Data.Ref_Count - 1;
+         Data.Ref_Count := Data.Ref_Count - 1;
 
-         if Context.Data.Ref_Count = 0 then
+         if Data.Ref_Count = 0 then
             if Active (Create_Me) then
                GNATCOLL.Traces.Increase_Indent
                  (Create_Me, "Destroy selection context ("
-                  & System.Address_Image (To_Address (Context.Data)) & ")");
+                  & System.Address_Image (To_Address (Data)) & ")");
             end if;
-
-            Garbage := Context.Data;
-            Context.Data := null;
 
             --  Do not access Context any more below, since the call to Free
             --  will free instances and their user data, and the current call
             --  to Finalize might come from such a user data.
 
-            Free (Garbage.all);
-            Unchecked_Free (Garbage);
+            Free (Data.all);
+            Unchecked_Free (Data);
 
             if Active (Create_Me) then
                GNATCOLL.Traces.Decrease_Indent
                  (Create_Me, "Done destroying selection context");
             end if;
-
-         else
-            --  In any case, Context is no longer used, so we reset Data to
-            --  null. Not sure why, but Finalize seems to be called multiple
-            --  time when GNAT finalizes the controlled objects.
-
-            Context.Data := null;
          end if;
-
       end if;
    exception
       when E : others =>
