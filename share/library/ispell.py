@@ -269,19 +269,16 @@ def find_current_word (context):
       that means we won't have to recompute the info if the user selects
       the menu"""
 
-   view = GPS.EditorBuffer.get().current_view()
+   buffer = GPS.EditorBuffer.get ()
+   view = buffer.current_view()
    cursor = view.cursor()
 
-   start = cursor
-   while not start.starts_word():
-      start = start.forward_char(-1)
-
-   while not cursor.ends_word():
-      cursor = cursor.forward_char(1)
+   start  = goto_word_start (cursor, underscore_is_word=False)
+   cursor = goto_word_end (cursor, underscore_is_word=False)
 
    context.ispell_module_start = start
    context.ispell_module_end   = cursor
-   context.ispell_module_word  = view.buffer().get_chars(start, cursor)
+   context.ispell_module_word  = buffer.get_chars(start, cursor)
 
 ###################################
 ### Static contextual menu

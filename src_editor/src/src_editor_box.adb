@@ -1285,6 +1285,7 @@ package body Src_Editor_Box is
              (L < L_End or else (L = L_End and then C <= C_End));
       end In_Selection;
 
+      Cursor_Location : Gtk_Text_Iter;
    begin
       if Location = Location_Event
         and then
@@ -1372,6 +1373,7 @@ package body Src_Editor_Box is
       else
          Get_Iter_At_Line_Offset
            (Editor.Source_Buffer, Entity_Start, Line, Column);
+         Copy (Source => Entity_Start, Dest => Cursor_Location);
 
          Click_In_Selection :=
            Has_Selection
@@ -1501,7 +1503,7 @@ package body Src_Editor_Box is
                   --  which does the scrolling to Saved_Cursor_Mark.
 
                   Acquire_Focus (Editor.Source_View);
-                  Place_Cursor (Editor.Source_Buffer, Entity_Start);
+                  Place_Cursor (Editor.Source_Buffer, Cursor_Location);
                end if;
             end if;
          end;

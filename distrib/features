@@ -28,6 +28,12 @@ NF-51-JB05-015 GB: Add some jdt-equivalent key shortcuts (2010-11-05)
   Some shortcuts defined in JDT or CDT for toggling comments have been added
   to gnatbench (Ctrl+Shift+C and Ctrl+7).
 
+NF-51-JA25-016 GPS: ispell module stops at underscores (2010-11-05)
+
+  When looking for the word to spell check, the ispell.py module will now
+  stop at '_' characters, thus allowing you to fix mispelling in words like
+  'lookng_for'
+
 NF-51-J805-009 Based literals not auto cased (2010-10-17)
 
   Auto-casing now keeps based literals with their original casing rather than
