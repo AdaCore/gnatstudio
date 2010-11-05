@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-JB05-015 GB: Add some jdt-equivalent key shortcuts (2010-11-05)
+
+  Some shortcuts defined in JDT or CDT for toggling comments have been added
+  to gnatbench (Ctrl+Shift+C and Ctrl+7).
+
 NF-51-J805-009 Based literals not auto cased (2010-10-17)
 
   Auto-casing now keeps based literals with their original casing rather than
