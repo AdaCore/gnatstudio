@@ -292,4 +292,11 @@ package Src_Editor_Buffer.Line_Information is
      (Data : Line_Info_Width) return Line_Information_Record;
    --  Convenience function to get the relevant action in Data at column Column
 
+   function Has_Special_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Line_Start : Buffer_Line_Type;
+      Line_End   : Buffer_Line_Type) return Boolean;
+   --  Return True if there are special lines between line_start and line_end,
+   --  included
+
 end Src_Editor_Buffer.Line_Information;

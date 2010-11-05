@@ -1143,11 +1143,9 @@ package body Src_Editor_Buffer.Line_Information is
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Iter        : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      Success     : Boolean;
-      Mark        : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number      : Positive := 1;
+      Iter   : Gtk_Text_Iter;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Positive := 1;
    begin
       if Line = 0 then
          return null;
@@ -1170,13 +1168,6 @@ package body Src_Editor_Buffer.Line_Information is
       Insert (Buffer, Iter, Text & ASCII.LF);
       Buffer.End_Inserting;
       Buffer.Modifying_Editable_Lines := True;
-
-      Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
-      Backward_Char (Iter, Success);
-      Get_Iter_At_Line (Buffer, End_Iter,
-                        Gint (Line - 1) + Gint (Number));
-
-      Apply_Tag (Buffer, Buffer.Non_Editable_Tag, Iter, End_Iter);
 
       --  Shift down editable lines
 
@@ -2798,5 +2789,45 @@ package body Src_Editor_Buffer.Line_Information is
          Message.Remove_Note (Line_Info_Note_Record'Tag);
       end if;
    end Free_Note;
+
+   -----------------------
+   -- Has_Special_Lines --
+   -----------------------
+
+   function Has_Special_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Line_Start : Buffer_Line_Type;
+      Line_End   : Buffer_Line_Type)
+      return Boolean
+   is
+      Editable_Line_Start : Editable_Line_Type;
+      Editable_Line_End   : Editable_Line_Type;
+   begin
+      --  Trivial case indicating the absence of special lines
+      if Lines_Are_Real (Buffer) then
+         return False;
+      end if;
+
+      Editable_Line_Start :=  Get_Editable_Line (Buffer, Line_Start);
+      Editable_Line_End   := Get_Editable_Line (Buffer, Line_End);
+
+      --  Trivial cases indicating the presence of special lines
+      if Editable_Line_Start = 0
+        or else Editable_Line_End = 0
+        or else Editable_Line_End - Editable_Line_Start
+          /= Editable_Line_Type (Line_End - Line_Start)
+      then
+         return True;
+      end if;
+
+      --  Look in all lines
+      for J in Line_Start + 1 .. Line_End - 1 loop
+         if Get_Editable_Line (Buffer, J) = 0 then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Has_Special_Lines;
 
 end Src_Editor_Buffer.Line_Information;

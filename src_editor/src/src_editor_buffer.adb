@@ -1639,6 +1639,16 @@ package body Src_Editor_Buffer is
       Line        : Editable_Line_Type;
       User_Action : Action_Type;
    begin
+      Get_Text_Iter (Nth (Params, 1), Pos);
+      Line := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
+
+      if Line = 0 then
+         --  In a special line: we simply stop propagation.
+         Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
+         return;
+      end if;
+
       if Buffer.Prevent_CR_Insertion then
          Buffer.Prevent_CR_Insertion := False;
 
@@ -1690,10 +1700,6 @@ package body Src_Editor_Buffer is
       --  If the block is folded and the user inserts a line break in line 1,
       --  there is no longer a reason that there should be folded data
       --  below this line.
-
-      Get_Text_Iter (Nth (Params, 1), Pos);
-      Line := Get_Editable_Line
-        (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
 
       if not Lines_Are_Real (Buffer) then
          declare
@@ -1878,40 +1884,79 @@ package body Src_Editor_Buffer is
       Editable_Line_End :=
         Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
 
-      --  If we are removing lines in a non-editable block, stop propagation
-      --  of the handler.
+      --  If there are non-editable lines in the range, intercept the deletion.
 
-      if not Lines_Are_Real (Buffer) and then not Buffer.Inserting then
-         if Editable_Line_Start = 0 or else Editable_Line_End = 0 then
-            Insert
-              (Buffer.Kernel,
-               -"Trying to delete a blank line",
-               Mode => GPS.Kernel.Console.Error);
-            Emit_Stop_By_Name (Buffer, "delete_range");
+      if not Buffer.Inserting
+        and then Has_Special_Lines
+          (Buffer,
+           Buffer_Line_Type (Line_Start + 1),
+           Buffer_Line_Type (Line_End + 1))
+      then
+         --  Intercept default propagation, we want to flatten the area
+         --  before continuing.
+         Emit_Stop_By_Name (Buffer, "delete_range");
+
+         --  If we are just deleting in one special line, ignore
+
+         if Editable_Line_Start = 0 and then Editable_Line_End = 0 then
             return;
          end if;
+
+         while Editable_Line_Start = 0 loop
+            Line_Start := Line_Start - 1;
+            Editable_Line_Start :=
+              Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1));
+
+            exit when Line_Start = 0;
+            --  ??? Need to make sure we are correct when the first buffer
+            --  line is special
+         end loop;
+
+         while Editable_Line_End = 0 loop
+            Line_End := Line_End + 1;
+            Editable_Line_End :=
+              Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
+            --   ??? What if there are special lines
+         end loop;
+
+         declare
+            Expanded : Boolean;
+            M_Start, M_End : Gtk_Text_Mark;
+            I_Start, I_End : Gtk_Text_Iter;
+            Ignored  : Boolean;
+            pragma Unreferenced (Ignored);
+         begin
+            M_Start := Buffer.Create_Mark (Where => Start_Iter);
+            M_End   := Buffer.Create_Mark (Where => End_Iter);
+
+            Expanded := Flatten_Area
+              (Buffer            => Buffer,
+               Start_Line        => Editable_Line_Start,
+               End_Line          => Editable_Line_End,
+               Start_Buffer_Line => Buffer_Line_Type (Line_Start + 1));
+
+            Buffer.Get_Iter_At_Mark (I_Start, M_Start);
+            Buffer.Get_Iter_At_Mark (I_End, M_End);
+
+            Delete_Mark (Buffer, M_Start);
+            Delete_Mark (Buffer, M_End);
+
+            --  Re-launch the deletion unless we are expanding a folded line,
+            --  in which case do nothing.
+            if not Expanded then
+               Delete_Interactive (Buffer           => Buffer,
+                                   Start_Iter       => I_Start,
+                                   End_Iter         => I_End,
+                                   Default_Editable => True,
+                                   Result           => Ignored);
+            end if;
+            return;
+         end;
       end if;
 
       --  Remove the lines in the side information column
 
       if Line_Start /= Line_End then
-         --  Unfold all lines, remove blank lines before deleting multiple
-         --  lines.
-         if not Lines_Are_Real (Buffer)
-           and then not Buffer.Inserting
-         then
-            if Flatten_Area
-              (Buffer, Editable_Line_Start, Editable_Line_End,
-               Buffer_Line_Type (Line_Start + 1))
-            then
-               --  We have modified the area. Stop propagation of this signal
-
-               Emit_Stop_By_Name (Buffer, "delete_range");
-
-               return;
-            end if;
-         end if;
-
          Lines_Remove_Hook_Before
            (Buffer,
             Buffer_Line_Type (Line_Start + 1),
