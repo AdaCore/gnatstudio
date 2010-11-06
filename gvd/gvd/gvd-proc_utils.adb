@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2002-2009, AdaCore             --
+--                      Copyright (C) 2002-2010, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,15 +19,15 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Expect; use GNAT.Expect;
+with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY; use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
+with GPS.Kernel.Remote;      S GPS.Kernel.Remote;
 with Remote;                 use Remote;
 with String_Utils;           use String_Utils;
 
@@ -71,7 +71,7 @@ package body GVD.Proc_Utils is
       if Match = 1 then
          declare
             S     : constant String :=
-              Strip_CR (Expect_Out (Handle.Descriptor.all));
+                      Strip_CR (Expect_Out (Handle.Descriptor.all));
             Index : Integer := S'First;
          begin
             Skip_Blanks (S, Index);
@@ -104,12 +104,13 @@ package body GVD.Proc_Utils is
    -- Open_Processes --
    --------------------
 
-   procedure Open_Processes (Handle : out Process_Handle;
-                             Kernel : Kernel_Handle)
+   procedure Open_Processes
+     (Handle : out Process_Handle;
+      Kernel : Kernel_Handle)
    is
-      CL            : Arg_List;
-      Match         : Expect_Match := 0;
-      Success       : Boolean;
+      CL      : Arg_List;
+      Match   : Expect_Match := 0;
+      Success : Boolean;
    begin
       Handle := new Process_Record;
 
