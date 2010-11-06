@@ -27,7 +27,7 @@ pragma Warnings (On);
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Remote;      S GPS.Kernel.Remote;
+with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
 with Remote;                 use Remote;
 with String_Utils;           use String_Utils;
 
