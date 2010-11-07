@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -708,10 +708,10 @@ package body KeyManager_Module is
             end if;
 
             Binding2 := new Key_Description'
-              (Action         => new String'(Action),
-               Changed        => Save_In_Keys_XML,
-               Keymap         => null,
-               Next           => Tmp);
+              (Action  => new String'(Action),
+               Changed => Save_In_Keys_XML,
+               Keymap  => null,
+               Next    => Tmp);
             Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
          else
             Remove (Table, Key_Binding'(Default_Key, Default_Mod));
@@ -723,9 +723,9 @@ package body KeyManager_Module is
       ----------------------
 
       procedure Remove_In_Keymap (Table : in out Key_Htable.Instance) is
-         Iter : Key_Htable.Cursor;
+         Iter                : Key_Htable.Cursor;
          List, Previous, Tmp : Key_Description_List;
-         Move_To_Next : Boolean;
+         Move_To_Next        : Boolean;
       begin
          Get_First (Table, Iter);
          while Get_Element (Iter) /= null loop
@@ -740,8 +740,8 @@ package body KeyManager_Module is
                   List := List.Next;
 
                elsif List.Action /= null
-                 and then Equal (List.Action.all, Action,
-                                 Case_Sensitive => False)
+                 and then Equal
+                   (List.Action.all, Action, Case_Sensitive => False)
                then
                   if Previous = null then
                      if List.Next /= null then
