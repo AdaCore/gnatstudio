@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                     Copyright (C) 2008-2010, AdaCore              --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -241,6 +241,21 @@ package Code_Analysis.Tree_Models is
       Child : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter;
 
+   function Project
+     (Self : access Filterable_Tree_Model_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Project_Item_Access;
+   --  ???
+
+   function File
+     (Self : access Filterable_Tree_Model_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return File_Item_Access;
+   --  ???
+
+   function Subprogram
+     (Self : access Filterable_Tree_Model_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Subprogram_Item_Access;
+   --  ???
+
 private
 
    type Simple_Tree_Model_Record is abstract
@@ -273,18 +288,6 @@ private
       Tree     : Code_Analysis.Code_Analysis_Tree;
       Projects : Project_Vectors.Vector;
    end record;
-
-   function Project
-     (Self : access Filterable_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Project_Item_Access;
-
-   function File
-     (Self : access Filterable_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return File_Item_Access;
-
-   function Subprogram
-     (Self : access Filterable_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Subprogram_Item_Access;
 
    procedure Row_Inserted
      (Self       : access Filterable_Tree_Model_Record'Class;
