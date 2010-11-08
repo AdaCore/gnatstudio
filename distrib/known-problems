@@ -15,6 +15,11 @@ Known Problems fixed in GPS 5.0.1
               an error message into the Messages window.
   Workaround: Manually refill the selection or use the simple Refill.
 
+- JA21-008: GPS: unable to load GNATStack report
+  Problem:    GPS unable to load huge GNATStack report files. Format of report
+              file was changed to generate more compact files and improve load
+              time.
+
 - JA17-009: Cannot query status with svn 1.6
   Problem:    The 'Needs merge' and 'Needs status' subversion statuses are
               not properly reported by the VCS Explorer when using svn 1.6
