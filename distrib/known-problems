@@ -6,19 +6,21 @@ Known Problems fixed in GPS 5.0.1
               with AUnit 3.
   Workaround: Correct the generated files manually.
 
-- JA26-011: GPS can't load GNATStack analysis data
+- JA26-011: GPS cannot load GNATStack analysis data
   Problem:    GPS can't load GNATStack analysis data when package
               Ada.Finalization is in application closure.
+  Workaround: None.
 
 - JA22-015: 'Edit->Selection->Refill with fmt' menu not working
   Problem:    The action does not refill the selection and raises
               an error message into the Messages window.
   Workaround: Manually refill the selection or use the simple Refill.
 
-- JA21-008: GPS: unable to load GNATStack report
-  Problem:    GPS unable to load huge GNATStack report files. Format of report
-              file was changed to generate more compact files and improve load
-              time.
+- JA21-008: GPS cannot load large GNATStack reports
+  Problem:    GPS is unable to load large GNATStack report files. The format of
+              the report file was changed to generate more compact files and
+              the load time in GPS was also improved.
+  Workaround: None.
 
 - JA17-009: Cannot query status with svn 1.6
   Problem:    The 'Needs merge' and 'Needs status' subversion statuses are
