@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.1
 
+- JB01-014: GPS consuming CPU when processing build output
+  Problems:   When the build process launched by GPS produces a big amount of
+              output, GPS might freeze temporarily and/or consume a lot of 
+              CPU when processing this output.
+  Workaround: Modify the build process to strip it of the unnecessary output,
+              for instance by removing '-v' switches.
+
 - JA27-020: GPS produces invalid AUnit test cases/suites/harness
   Problem:    When using the 'Edit->Unit testing' menu for creating AUnit test
               cases, suites or harness, then the generated files do not compile
