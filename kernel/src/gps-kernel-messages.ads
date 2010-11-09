@@ -185,6 +185,11 @@ package GPS.Kernel.Messages is
       return GPS.Editors.Editor_Mark'Class;
    --  Returns editor's mark of the current location of the message.
 
+   procedure Set_Flags
+     (Self  : not null access Abstract_Message'Class;
+      Flags : Message_Flags);
+   --  Sets flags of the message.
+
    procedure Remove (Self : not null access Abstract_Message'Class);
    --  Removes message and deallocate it.
 

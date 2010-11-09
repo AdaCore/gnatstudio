@@ -94,8 +94,10 @@ package body GPS.Kernel.Messages is
 
       procedure Notify_Listeners_About_Message_Added
         (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class);
-      --  Calls listeners to notify about add of message
+         Message : not null access Abstract_Message'Class;
+         Flags   : Message_Flags);
+      --  Calls listeners to notify about add of message. Flags specify subset
+      --  of listeners to be notified.
 
       procedure Notify_Listeners_About_Message_Property_Changed
         (Self     : not null access constant Messages_Container'Class;
@@ -105,8 +107,10 @@ package body GPS.Kernel.Messages is
 
       procedure Notify_Listeners_About_Message_Removed
         (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class);
-      --  Calls listeners to notify about remove of message
+         Message : not null access Abstract_Message'Class;
+         Flags   : Message_Flags);
+      --  Calls listeners to notify about remove of message. Flags specify
+      --  subset of listeners to be notified.
 
    end Notifiers;
 
@@ -731,7 +735,8 @@ package body GPS.Kernel.Messages is
 
       --  Notify listeners
 
-      Notifiers.Notify_Listeners_About_Message_Added (Container, Self);
+      Notifiers.Notify_Listeners_About_Message_Added
+        (Container, Self, Self.Flags);
    end Initialize;
 
    ----------------
@@ -766,7 +771,7 @@ package body GPS.Kernel.Messages is
       --  Notify listeners
 
       Notifiers.Notify_Listeners_About_Message_Added
-        (Parent.Get_Container, Self);
+        (Parent.Get_Container, Self, Self.Flags);
    end Initialize;
 
    ----------
@@ -1116,7 +1121,8 @@ package body GPS.Kernel.Messages is
 
       procedure Notify_Listeners_About_Message_Added
         (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class)
+         Message : not null access Abstract_Message'Class;
+         Flags   : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
@@ -1124,8 +1130,7 @@ package body GPS.Kernel.Messages is
          while Has_Element (Listener_Position) loop
             begin
                if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match
-                   (Element (Listener_Position).Flags, Message.Flags)
+                 or else Match (Element (Listener_Position).Flags, Flags)
                then
                   Element (Listener_Position).Message_Added (Message);
                end if;
@@ -1176,7 +1181,8 @@ package body GPS.Kernel.Messages is
 
       procedure Notify_Listeners_About_Message_Removed
         (Self    : not null access constant Messages_Container'Class;
-         Message : not null access Abstract_Message'Class)
+         Message : not null access Abstract_Message'Class;
+         Flags   : Message_Flags)
       is
          Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
 
@@ -1184,8 +1190,7 @@ package body GPS.Kernel.Messages is
          while Has_Element (Listener_Position) loop
             begin
                if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match
-                   (Element (Listener_Position).Flags, Message.Flags)
+                 or else Match (Element (Listener_Position).Flags, Flags)
                then
                   Element (Listener_Position).Message_Removed (Message);
                end if;
@@ -1198,6 +1203,7 @@ package body GPS.Kernel.Messages is
             Next (Listener_Position);
          end loop;
       end Notify_Listeners_About_Message_Removed;
+
    end Notifiers;
 
    -----------------------
@@ -1264,8 +1270,8 @@ package body GPS.Kernel.Messages is
       Category_Node     : Node_Access;
 
    begin
-      while not Self.Categories.Is_Empty loop
-         Category_Node := Self.Categories.Last_Element;
+      for J in reverse 1 .. Self.Categories.Last_Index loop
+         Category_Node := Self.Categories.Element (J);
          Category_Position := Self.Category_Map.Find (Category_Node.Name);
 
          Self.Remove_Category
@@ -1309,10 +1315,12 @@ package body GPS.Kernel.Messages is
          end;
       end loop;
 
-      Self.Category_Map.Delete (Category_Position);
-      Self.Categories.Delete (Category_Index);
+      if Category_Node.Children.Is_Empty then
+         Self.Category_Map.Delete (Category_Position);
+         Self.Categories.Delete (Category_Index);
 
-      Free (Category_Node);
+         Free (Category_Node);
+      end if;
    end Remove_Category;
 
    ---------------------
@@ -1445,8 +1453,8 @@ package body GPS.Kernel.Messages is
       procedure Free is
         new Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
 
-      Parent    : Node_Access := Message.Parent;
-      Index     : constant Positive :=
+      Parent : Node_Access := Message.Parent;
+      Index  : constant Positive :=
         Parent.Children.Find_Index (Node_Access (Message));
 
    begin
@@ -1461,9 +1469,10 @@ package body GPS.Kernel.Messages is
             end;
          end loop;
 
-         Notifiers.Notify_Listeners_About_Message_Removed (Self, Message);
-         Parent.Children.Delete (Index);
+         Notifiers.Notify_Listeners_About_Message_Removed
+           (Self, Message, Message.Flags);
 
+         Parent.Children.Delete (Index);
          Message.Finalize;
          Free (Message);
 
@@ -1746,6 +1755,27 @@ package body GPS.Kernel.Messages is
       Notifiers.Notify_Listeners_About_Message_Property_Changed
         (Container, Self, "action");
    end Set_Action;
+
+   ---------------
+   -- Set_Flags --
+   ---------------
+
+   procedure Set_Flags
+     (Self  : not null access Abstract_Message'Class;
+      Flags : Message_Flags)
+   is
+      Container : constant Messages_Container_Access := Self.Get_Container;
+      Changed   : constant Message_Flags := Self.Flags xor Flags;
+      Removed   : constant Message_Flags := Self.Flags and Changed;
+      Added     : constant Message_Flags := Flags and Changed;
+
+   begin
+      Notifiers.Notify_Listeners_About_Message_Removed
+        (Container, Self, Removed);
+      Self.Flags := Flags;
+      Notifiers.Notify_Listeners_About_Message_Added
+        (Container, Self, Added);
+   end Set_Flags;
 
    ----------------------
    -- Set_Highlighting --
