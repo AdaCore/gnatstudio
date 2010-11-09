@@ -35,6 +35,13 @@ Known Problems fixed in GPS 5.0.1
               or above.
   Workaround: Manually query the status from the command line.
 
+- J422-022: Unable to delete completely the lines between two "special" lines
+  Problem:    When there are "special" lines in the editor, for instance
+              CodePeer annotations, it is not possible to completely remove
+              the lines between two "special" lines.
+  Workaround: First remove the "special" lines, for instance by removing
+              the CodePeer annotations.
+
 Known Problems fixed in GPS 5.0.0
 
 - JA15-018: Default naming schemes not set in the project wizard
