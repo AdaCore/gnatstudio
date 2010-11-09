@@ -1854,8 +1854,11 @@ package body Src_Editor_Buffer is
       Column_Start        : Gint;
       Line_End            : Gint;
       Column_End          : Gint;
+      Line_Count          : Gint;
       Editable_Line_Start : Editable_Line_Type;
       Editable_Line_End   : Editable_Line_Type;
+      First_Buffer_Line_To_Remove : Buffer_Line_Type;
+      Last_Buffer_Line_To_Remove  : Buffer_Line_Type;
 
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -1904,20 +1907,31 @@ package body Src_Editor_Buffer is
 
          while Editable_Line_Start = 0 loop
             Line_Start := Line_Start - 1;
+            exit when Line_Start <= 0;
+
             Editable_Line_Start :=
               Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1));
-
-            exit when Line_Start = 0;
-            --  ??? Need to make sure we are correct when the first buffer
-            --  line is special
          end loop;
+
+         if Editable_Line_Start = 0 then
+            First_Buffer_Line_To_Remove := 1;
+            Editable_Line_Start := 1;
+         else
+            First_Buffer_Line_To_Remove := Buffer_Line_Type (Line_Start + 1);
+         end if;
+
+         Line_Count := Buffer.Get_Line_Count;
 
          while Editable_Line_End = 0 loop
             Line_End := Line_End + 1;
+
             Editable_Line_End :=
               Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
-            --   ??? What if there are special lines
+
+            exit when Line_End = Line_Count;
          end loop;
+
+         Last_Buffer_Line_To_Remove := Buffer_Line_Type (Line_End + 1);
 
          declare
             Expanded : Boolean;
@@ -1933,7 +1947,8 @@ package body Src_Editor_Buffer is
               (Buffer            => Buffer,
                Start_Line        => Editable_Line_Start,
                End_Line          => Editable_Line_End,
-               Start_Buffer_Line => Buffer_Line_Type (Line_Start + 1));
+               Start_Buffer_Line => First_Buffer_Line_To_Remove,
+               End_Buffer_Line   => Last_Buffer_Line_To_Remove);
 
             Buffer.Get_Iter_At_Mark (I_Start, M_Start);
             Buffer.Get_Iter_At_Mark (I_End, M_End);

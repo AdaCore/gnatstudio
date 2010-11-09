@@ -2734,11 +2734,11 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer            : access Source_Buffer_Record'Class;
       Start_Line        : Editable_Line_Type;
       End_Line          : Editable_Line_Type;
-      Start_Buffer_Line : Buffer_Line_Type) return Boolean
+      Start_Buffer_Line : Buffer_Line_Type;
+      End_Buffer_Line   : Buffer_Line_Type) return Boolean
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-      Buffer_Line    : Buffer_Line_Type;
       Returned       : Command_Return_Type;
       Result         : Boolean := False;
       pragma Unreferenced (Returned);
@@ -2761,14 +2761,10 @@ package body Src_Editor_Buffer.Line_Information is
       --  Remove all blank lines
 
       if Buffer.Blank_Lines /= 0 then
-         Buffer_Line := Start_Buffer_Line;
-
-         while Buffer_Line < Get_Buffer_Line (Buffer, End_Line) loop
-            if Get_Editable_Line (Buffer, Buffer_Line) = 0 then
-               Remove_Blank_Lines (Buffer, Buffer_Line, 0);
+         for BL in reverse Start_Buffer_Line .. End_Buffer_Line loop
+            if Get_Editable_Line (Buffer, BL) = 0 then
+               Remove_Blank_Lines (Buffer, BL, 0);
             end if;
-
-            Buffer_Line := Buffer_Line + 1;
          end loop;
       end if;
 
