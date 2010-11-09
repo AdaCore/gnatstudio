@@ -1857,12 +1857,13 @@ package body Src_Editor_Module.Editors is
       To   : Editor_Location'Class := Nil_Editor_Location)
    is
       Iter, Iter2 : Gtk_Text_Iter;
+      Res         : Boolean;
    begin
       if This.Contents.Buffer /= null then
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
          if Get_Writable (This.Contents.Buffer) then
-            Delete (This.Contents.Buffer, Iter, Iter2);
+            Delete_Interactive (This.Contents.Buffer, Iter, Iter2, True, Res);
             End_Action (This.Contents.Buffer);
          else
             raise Editor_Exception with -"Buffer is not writable";

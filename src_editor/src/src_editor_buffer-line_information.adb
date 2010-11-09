@@ -1143,11 +1143,9 @@ package body Src_Editor_Buffer.Line_Information is
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Iter        : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      Success     : Boolean;
-      Mark        : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number      : Positive := 1;
+      Iter   : Gtk_Text_Iter;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Positive := 1;
    begin
       if Line = 0 then
          return null;
@@ -1170,13 +1168,6 @@ package body Src_Editor_Buffer.Line_Information is
       Insert (Buffer, Iter, Text & ASCII.LF);
       Buffer.End_Inserting;
       Buffer.Modifying_Editable_Lines := True;
-
-      Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
-      Backward_Char (Iter, Success);
-      Get_Iter_At_Line (Buffer, End_Iter,
-                        Gint (Line - 1) + Gint (Number));
-
-      Apply_Tag (Buffer, Buffer.Non_Editable_Tag, Iter, End_Iter);
 
       --  Shift down editable lines
 
@@ -2743,11 +2734,11 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer            : access Source_Buffer_Record'Class;
       Start_Line        : Editable_Line_Type;
       End_Line          : Editable_Line_Type;
-      Start_Buffer_Line : Buffer_Line_Type) return Boolean
+      Start_Buffer_Line : Buffer_Line_Type;
+      End_Buffer_Line   : Buffer_Line_Type) return Boolean
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-      Buffer_Line    : Buffer_Line_Type;
       Returned       : Command_Return_Type;
       Result         : Boolean := False;
       pragma Unreferenced (Returned);
@@ -2770,14 +2761,10 @@ package body Src_Editor_Buffer.Line_Information is
       --  Remove all blank lines
 
       if Buffer.Blank_Lines /= 0 then
-         Buffer_Line := Start_Buffer_Line;
-
-         while Buffer_Line < Get_Buffer_Line (Buffer, End_Line) loop
-            if Get_Editable_Line (Buffer, Buffer_Line) = 0 then
-               Remove_Blank_Lines (Buffer, Buffer_Line, 0);
+         for BL in reverse Start_Buffer_Line .. End_Buffer_Line loop
+            if Get_Editable_Line (Buffer, BL) = 0 then
+               Remove_Blank_Lines (Buffer, BL, 0);
             end if;
-
-            Buffer_Line := Buffer_Line + 1;
          end loop;
       end if;
 
@@ -2798,5 +2785,45 @@ package body Src_Editor_Buffer.Line_Information is
          Message.Remove_Note (Line_Info_Note_Record'Tag);
       end if;
    end Free_Note;
+
+   -----------------------
+   -- Has_Special_Lines --
+   -----------------------
+
+   function Has_Special_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Line_Start : Buffer_Line_Type;
+      Line_End   : Buffer_Line_Type)
+      return Boolean
+   is
+      Editable_Line_Start : Editable_Line_Type;
+      Editable_Line_End   : Editable_Line_Type;
+   begin
+      --  Trivial case indicating the absence of special lines
+      if Lines_Are_Real (Buffer) then
+         return False;
+      end if;
+
+      Editable_Line_Start :=  Get_Editable_Line (Buffer, Line_Start);
+      Editable_Line_End   := Get_Editable_Line (Buffer, Line_End);
+
+      --  Trivial cases indicating the presence of special lines
+      if Editable_Line_Start = 0
+        or else Editable_Line_End = 0
+        or else Editable_Line_End - Editable_Line_Start
+          /= Editable_Line_Type (Line_End - Line_Start)
+      then
+         return True;
+      end if;
+
+      --  Look in all lines
+      for J in Line_Start + 1 .. Line_End - 1 loop
+         if Get_Editable_Line (Buffer, J) = 0 then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Has_Special_Lines;
 
 end Src_Editor_Buffer.Line_Information;

@@ -265,13 +265,13 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer            : access Source_Buffer_Record'Class;
       Start_Line        : Editable_Line_Type;
       End_Line          : Editable_Line_Type;
-      Start_Buffer_Line : Buffer_Line_Type) return Boolean;
+      Start_Buffer_Line : Buffer_Line_Type;
+      End_Buffer_Line   : Buffer_Line_Type) return Boolean;
    --  Remove all blank lines between Start_Line and End_Line. Unfold all
    --  lines between those locations.
    --  If the area was already flat before calling this function, return
    --  False. Otherwise, return True.
-   --  Start_Buffer_Line indicates the buffer line where the area to be
-   --  flattended starts.
+   --  Remove all special lines between Start_Buffer_Line and End_Buffer_Line.
 
    procedure Recalculate_Side_Column_Width
      (Buffer : access Source_Buffer_Record'Class);
@@ -291,5 +291,12 @@ package Src_Editor_Buffer.Line_Information is
    function Get_Relevant_Action
      (Data : Line_Info_Width) return Line_Information_Record;
    --  Convenience function to get the relevant action in Data at column Column
+
+   function Has_Special_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Line_Start : Buffer_Line_Type;
+      Line_End   : Buffer_Line_Type) return Boolean;
+   --  Return True if there are special lines between line_start and line_end,
+   --  included
 
 end Src_Editor_Buffer.Line_Information;
