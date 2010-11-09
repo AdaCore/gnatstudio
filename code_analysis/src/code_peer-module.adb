@@ -202,6 +202,11 @@ package body Code_Peer.Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
+   procedure On_Project_View_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when project view is changed. Cleanup obsolete messages in
+   --  messages container.
+
    procedure Review
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
       Force       : Boolean;
@@ -219,7 +224,6 @@ package body Code_Peer.Module is
    --  If File is set, run CodePeer on the specified file only. Recursive
    --  should be set to False in this case.
 
-   Code_Peer_Category_Name : constant String := "CodePeer messages";
    Code_Peer_Message_Flags : constant Message_Flags :=
      (Editor_Side => True,
       Locations   => True);
@@ -1438,6 +1442,10 @@ package body Code_Peer.Module is
       end Process_Project;
 
    begin
+      --  Switch listener to cleanup mode to allow to destroy messages
+
+      Module.Listener.Set_Cleanup_Mode (True);
+
       --  Hide all annotations
 
       Context.Module.Tree.Iterate (Process_Project'Access);
@@ -1460,6 +1468,10 @@ package body Code_Peer.Module is
       --  Cleanup project tree
 
       Code_Analysis.Free_Code_Analysis (Context.Module.Tree);
+
+      --  Switch listener back to normal mode
+
+      Module.Listener.Set_Cleanup_Mode (False);
 
    exception
       when E : others =>
@@ -1547,6 +1559,19 @@ package body Code_Peer.Module is
       Module.Message_Styles (Code_Peer.Suppressed).Set_Background
         (Module.Message_Colors (Code_Peer.Suppressed).Get_Pref);
    end On_Preferences_Changed;
+
+   ----------------------------------
+   -- On_Project_View_Changed_Hook --
+   ----------------------------------
+
+   procedure On_Project_View_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Module.Listener.Set_Cleanup_Mode (True);
+      Get_Messages_Container (Kernel).Remove_Category
+        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
+      Module.Listener.Set_Cleanup_Mode (False);
+   end On_Project_View_Changed_Hook;
 
    --------------------------
    -- On_Remove_XML_Review --
@@ -1729,6 +1754,108 @@ package body Code_Peer.Module is
               (Message : Code_Peer.Message_Access) return String;
             --  Returns complete text of the Message
 
+            function Flags return GPS.Kernel.Messages.Message_Flags;
+            --  Returns set of flags depending from lifeage of the
+            --  message. "Removed" messages are displayed only in
+            --  locations view, others displayed in both locations view
+            --  end editor.
+
+            procedure Create_GPS_Message;
+            --  Creates GPS message.
+
+            ------------------------
+            -- Create_GPS_Message --
+            ------------------------
+
+            procedure Create_GPS_Message is
+               Primary : constant Simple_Message_Access :=
+                 Create_Simple_Message
+                   (Get_Messages_Container (Self.Kernel),
+                    Code_Peer_Category_Name,
+                    File.Name,
+                    Message.Line,
+                    Basic_Types.Visible_Column_Type (Message.Column),
+                    Image (Message),
+                    Message_Ranking_Level'Pos (Message.Current_Ranking),
+                    Flags);
+               Style   : constant Style_Access :=
+                 Module.Message_Styles (Message.Current_Ranking);
+
+            begin
+               Message.Message := GPS.Kernel.Messages.Message_Access (Primary);
+
+               --  "Removed" messages are not highlighted in the source
+               --  editor.
+
+               if Style /= null
+                 and then Message.Lifeage /= Removed
+               then
+                  Primary.Set_Highlighting
+                    (Get_Or_Create_Style_Copy
+                       (Kernel_Handle (Self.Kernel),
+                        Get_Name (Style) & '/' & Code_Peer_Category_Name,
+                        Style));
+               end if;
+
+               Primary.Set_Action
+                 (new GPS.Editors.Line_Information.Line_Information_Record'
+                    (Text               => null,
+                     Tooltip_Text       => new String'("Review message"),
+                     Image              =>
+                       Gtk.Widget.Gtk_Widget
+                         (Self.Kernel.Get_Main_Window).Render_Icon
+                         (Code_Analysis_GUI.Post_Analysis_Cst,
+                          Gtk.Enums.Icon_Size_Menu),
+                     Associated_Command =>
+                     new Commands.Code_Peer.Review_Message_Command'
+                       (Commands.Root_Command with
+                          Code_Peer_Module_Id (Self), Message)));
+
+               if Message.From_File /= No_File then
+                  declare
+                     Text : constant String :=
+                       "(see also "
+                         & String (Message.From_File.Full_Name.all)
+                       & ":"
+                       & Ada.Strings.Fixed.Trim
+                       (Positive'Image (Message.From_Line),
+                        Ada.Strings.Both)
+                       & ":"
+                       & Ada.Strings.Fixed.Trim
+                       (Positive'Image (Message.From_Column),
+                        Ada.Strings.Both)
+                       & ")";
+
+                  begin
+                     GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
+                       (GPS.Kernel.Messages.Message_Access (Primary),
+                        Message.From_File,
+                        Message.From_Line,
+                        Basic_Types.Visible_Column_Type
+                          (Message.From_Column),
+                        Text,
+                        Text'First + 10,
+                        Text'Last - 1,
+                        (Editor_Side => False,
+                         Locations   => True));
+                  end;
+               end if;
+            end Create_GPS_Message;
+
+            -----------
+            -- Flags --
+            -----------
+
+            function Flags return GPS.Kernel.Messages.Message_Flags is
+            begin
+               if Message.Lifeage = Removed then
+                  return (Editor_Side => False, Locations => True);
+
+               else
+                  return (Editor_Side => True, Locations => True);
+               end if;
+            end Flags;
+
             -----------
             -- Image --
             -----------
@@ -1809,99 +1936,17 @@ package body Code_Peer.Module is
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
-               declare
+               if Message.Message = null then
+                  Create_GPS_Message;
 
-                  function Flags return GPS.Kernel.Messages.Message_Flags;
-                  --  Returns set of flags depending from lifeage of the
-                  --  message. "Removed" messages are displayed only in
-                  --  locations view, others displayed in both locations view
-                  --  end editor.
+               else
+                  Message.Message.Set_Flags (Flags);
+               end if;
 
-                  -----------
-                  -- Flags --
-                  -----------
-
-                  function Flags return GPS.Kernel.Messages.Message_Flags is
-                  begin
-                     if Message.Lifeage = Removed then
-                        return (Editor_Side => False, Locations => True);
-
-                     else
-                        return (Editor_Side => True, Locations => True);
-                     end if;
-                  end Flags;
-
-                  Primary : constant Simple_Message_Access :=
-                    Create_Simple_Message
-                      (Get_Messages_Container (Self.Kernel),
-                       Code_Peer_Category_Name,
-                       File.Name,
-                       Message.Line,
-                       Basic_Types.Visible_Column_Type (Message.Column),
-                       Image (Message),
-                       Message_Ranking_Level'Pos (Message.Current_Ranking),
-                       Flags);
-                  Style   : constant Style_Access :=
-                    Module.Message_Styles (Message.Current_Ranking);
-
-               begin
-                  --  "Removed" messages are not highlighted in the source
-                  --  editor.
-
-                  if Style /= null
-                    and then Message.Lifeage /= Removed
-                  then
-                     Primary.Set_Highlighting
-                       (Get_Or_Create_Style_Copy
-                          (Kernel_Handle (Self.Kernel),
-                           Get_Name (Style) & '/' & Code_Peer_Category_Name,
-                           Style));
-                  end if;
-
-                  Primary.Set_Action
-                    (new GPS.Editors.Line_Information.Line_Information_Record'
-                       (Text               => null,
-                        Tooltip_Text       => new String'("Review message"),
-                        Image              =>
-                          Gtk.Widget.Gtk_Widget
-                            (Self.Kernel.Get_Main_Window).Render_Icon
-                            (Code_Analysis_GUI.Post_Analysis_Cst,
-                             Gtk.Enums.Icon_Size_Menu),
-                        Associated_Command =>
-                        new Commands.Code_Peer.Review_Message_Command'
-                          (Commands.Root_Command with
-                           Code_Peer_Module_Id (Self), Message)));
-
-                  if Message.From_File /= No_File then
-                     declare
-                        Text : constant String :=
-                          "(see also "
-                          & String (Message.From_File.Full_Name.all)
-                          & ":"
-                          & Ada.Strings.Fixed.Trim
-                          (Positive'Image (Message.From_Line),
-                           Ada.Strings.Both)
-                          & ":"
-                          & Ada.Strings.Fixed.Trim
-                          (Positive'Image (Message.From_Column),
-                           Ada.Strings.Both)
-                          & ")";
-
-                     begin
-                        GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
-                          (GPS.Kernel.Messages.Message_Access (Primary),
-                           Message.From_File,
-                           Message.From_Line,
-                           Basic_Types.Visible_Column_Type
-                             (Message.From_Column),
-                           Text,
-                           Text'First + 10,
-                           Text'Last - 1,
-                           (Editor_Side => False,
-                            Locations   => True));
-                     end;
-                  end if;
-               end;
+            else
+               if Message.Message /= null then
+                  Message.Message.Set_Flags ((others => False));
+               end if;
             end if;
          end Process_Message;
 
@@ -1928,8 +1973,6 @@ package body Code_Peer.Module is
 
    begin
       Do_Not_Goto_First_Location (Self.Kernel);
-      Get_Messages_Container (Self.Kernel).Remove_Category
-        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
       Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
         (Code_Peer_Category_Name, Alphabetical);
 
@@ -2186,6 +2229,17 @@ package body Code_Peer.Module is
         (Kernel, GPS.Kernel.Preferences_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Preferences_Changed'Access),
          "codepeer.preferences_changed");
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel,
+         GPS.Kernel.Project_View_Changed_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Project_View_Changed_Hook'Access),
+         "codepeer.project_view_changed");
+
+      Module.Listener := new Code_Peer.Listeners.Listener;
+      GPS.Kernel.Messages.Register_Listener
+        (GPS.Kernel.Messages.Get_Messages_Container (Kernel),
+         GPS.Kernel.Messages.Listener_Access (Module.Listener),
+         GPS.Kernel.Messages.Empty_Message_Flags);
 
       Editors.Register_Module (Kernel);
    end Register_Module;

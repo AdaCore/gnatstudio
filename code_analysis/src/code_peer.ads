@@ -25,6 +25,7 @@ with GNAT.Strings;
 
 with GNATCOLL.VFS;
 with GPS.Editors;
+with GPS.Kernel.Messages;
 with Code_Analysis;
 
 package Code_Peer is
@@ -78,6 +79,7 @@ package Code_Peer is
       From_File        : GNATCOLL.VFS.Virtual_File;
       From_Line        : Positive;
       From_Column      : Positive;
+      Message          : GPS.Kernel.Messages.Message_Access;
    end record;
 
    type Message_Access is access all Message;

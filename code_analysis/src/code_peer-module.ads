@@ -35,6 +35,7 @@ with GPS.Styles.UI;
 with GPS.Kernel.MDI;
 with Code_Analysis;
 
+private with Code_Peer.Listeners;
 private with Code_Peer.Summary_Reports;
 
 package Code_Peer.Module is
@@ -78,6 +79,8 @@ package Code_Peer.Module is
    function Get_Color
      (Ranking : Code_Peer.Message_Ranking_Level) return Gdk.Color.Gdk_Color;
 
+   Code_Peer_Category_Name : constant String := "CodePeer messages";
+
 private
 
    type Message_Ranking_Color_Preference_Array is
@@ -111,6 +114,7 @@ private
       Annotation_Color : Default_Preferences.Color_Preference;
       Message_Colors   : Message_Ranking_Color_Preference_Array;
       Message_Styles   : Message_Ranking_Style_Array;
+      Listener         : Code_Peer.Listeners.Listener_Access;
 
       --  Global messages filter
 

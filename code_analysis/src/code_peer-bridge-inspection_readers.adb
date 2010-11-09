@@ -209,7 +209,8 @@ package body Code_Peer.Bridge.Inspection_Readers is
                Code_Peer.Audit_Vectors.Empty_Vector,
                GNATCOLL.VFS.No_File,
                1,
-               1));
+               1,
+               null));
 
          if Attrs.Get_Index ("from_file") /= -1 then
             Self.Subprogram_Data.Messages.Last_Element.From_File :=
