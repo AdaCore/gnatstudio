@@ -112,6 +112,11 @@ package body GPS.Kernel.Messages is
       --  Calls listeners to notify about remove of message. Flags specify
       --  subset of listeners to be notified.
 
+      function Ask_About_Message_Destroy
+        (Self    : not null access constant Messages_Container'Class;
+         Message : not null access Abstract_Message'Class) return Boolean;
+      --  Calls listeners to ask aboud destruction of the message.
+
    end Notifiers;
 
    procedure Remove_Category
@@ -1004,6 +1009,20 @@ package body GPS.Kernel.Messages is
       return False;
    end Match;
 
+   ------------------------------
+   -- Message_Can_Be_Destroyed --
+   ------------------------------
+
+   function Message_Can_Be_Destroyed
+     (Self    : not null access Abstract_Listener;
+      Message : not null access Abstract_Message'Class) return Boolean
+   is
+      pragma Unreferenced (Self, Message);
+
+   begin
+      return True;
+   end Message_Can_Be_Destroyed;
+
    ----------------------------
    -- New_Messages_Container --
    ----------------------------
@@ -1025,6 +1044,41 @@ package body GPS.Kernel.Messages is
    ---------------
 
    package body Notifiers is
+
+      -------------------------------
+      -- Ask_About_Message_Destroy --
+      -------------------------------
+
+      function Ask_About_Message_Destroy
+        (Self    : not null access constant Messages_Container'Class;
+         Message : not null access Abstract_Message'Class) return Boolean
+      is
+         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Result            : Boolean := True;
+
+      begin
+         while Has_Element (Listener_Position) loop
+            begin
+               if Element (Listener_Position).Flags = Empty_Message_Flags
+                 or else Match
+                           (Element (Listener_Position).Flags, Message.Flags)
+               then
+                  Result :=
+                    Result
+                      and Element (Listener_Position).Message_Can_Be_Destroyed
+                            (Message);
+               end if;
+
+            exception
+               when E : others =>
+                  Trace (Exception_Handle, E);
+            end;
+
+            Next (Listener_Position);
+         end loop;
+
+         return Result;
+      end Ask_About_Message_Destroy;
 
       -------------------------------------------
       -- Notify_Listeners_About_Category_Added --
@@ -1453,9 +1507,11 @@ package body GPS.Kernel.Messages is
       procedure Free is
         new Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
 
-      Parent : Node_Access := Message.Parent;
-      Index  : constant Positive :=
+      Parent  : Node_Access := Message.Parent;
+      Index   : constant Positive :=
         Parent.Children.Find_Index (Node_Access (Message));
+      Destroy : constant Boolean :=
+        Notifiers.Ask_About_Message_Destroy (Self, Message);
 
    begin
       if Flags = Empty_Message_Flags or else Match (Message.Flags, Flags) then
@@ -1472,9 +1528,14 @@ package body GPS.Kernel.Messages is
          Notifiers.Notify_Listeners_About_Message_Removed
            (Self, Message, Message.Flags);
 
-         Parent.Children.Delete (Index);
-         Message.Finalize;
-         Free (Message);
+         if Destroy then
+            Parent.Children.Delete (Index);
+            Message.Finalize;
+            Free (Message);
+
+         else
+            Message.Flags := (others => False);
+         end if;
 
          --  Remove file node when there are no messages for the file and
          --  recursive destruction is enabled.

@@ -375,6 +375,12 @@ package GPS.Kernel.Messages is
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) is null;
 
+   function Message_Can_Be_Destroyed
+     (Self    : not null access Abstract_Listener;
+      Message : not null access Abstract_Message'Class) return Boolean;
+   --  Ask listener about destroy of the message. When one of listeners return
+   --  False message is not destroyed but is made invisible.
+
    --------------------------
    -- For private use only --
    --------------------------
