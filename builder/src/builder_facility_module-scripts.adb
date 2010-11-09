@@ -53,6 +53,7 @@ package body Builder_Facility_Module.Scripts is
    Synchronous_Cst   : aliased constant String := "synchronous";
    Shadow_Cst        : aliased constant String := "shadow";
    Background_Cst    : aliased constant String := "background";
+   As_String_Cst     : aliased constant String := "as_string";
 
    Target_Class_Name : constant String := "BuildTarget";
 
@@ -248,9 +249,8 @@ package body Builder_Facility_Module.Scripts is
            (Data,
             (1 => Target_Name_Cst'Access,
              2 => Shadow_Cst'Access,
-             3 => Background_Cst'Access));
-
-         Set_Return_Value_As_List (Data);
+             3 => Background_Cst'Access,
+             4 => As_String_Cst'Access));
 
          declare
             S : constant String := To_String
@@ -260,12 +260,22 @@ package body Builder_Facility_Module.Scripts is
                   Background => Nth_Arg (Data, 3, False)));
             Prev : Integer := S'First;
          begin
-            for J in S'Range loop
-               if S (J) = ASCII.LF then
-                  Set_Return_Value (Data, S (Prev .. J - 1));
-                  Prev := J + 1;
-               end if;
-            end loop;
+            if not Nth_Arg (Data, 4, False) then
+               --  Returning output as a list
+
+               Set_Return_Value_As_List (Data);
+
+               for J in S'Range loop
+                  if S (J) = ASCII.LF then
+                     Set_Return_Value (Data, S (Prev .. J - 1));
+                     Prev := J + 1;
+                  end if;
+               end loop;
+            else
+               --  Returning output as a string
+
+               Set_Return_Value (Data, S);
+            end if;
          end;
 
       elsif Command = "compile" then
@@ -378,7 +388,7 @@ package body Builder_Facility_Module.Scripts is
         (Kernel, "get_build_output",
          Handler => Shell_Handler'Access,
          Minimum_Args => 0,
-         Maximum_Args => 3);
+         Maximum_Args => 4);
 
       --  File commands
 

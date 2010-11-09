@@ -2266,10 +2266,25 @@ package body Builder_Facility_Module is
                Inserted  => Inserted);
          else
             declare
-               N : Unbounded_String;
+               procedure Local_Append (Key : Unbounded_String;
+                                       E   : in out Unbounded_String);
+               --  Auxiliary subprogram to append to an unbounded string
+               --  in place in the container.
+
+               ------------------
+               -- Local_Append --
+               ------------------
+
+               procedure Local_Append (Key : Unbounded_String;
+                                       E   : in out Unbounded_String)
+               is
+                  pragma Unreferenced (Key);
+               begin
+                  Append (E, Line & ASCII.LF);
+               end Local_Append;
             begin
-               N := Element (C) & Line & ASCII.LF;
-               Builder_Module_ID.Outputs (T).Replace_Element (C, N);
+               Builder_Module_ID.Outputs (T).Update_Element
+                 (C, Local_Append'Access);
             end;
          end if;
       end if;
