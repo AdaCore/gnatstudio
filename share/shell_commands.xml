@@ -912,7 +912,8 @@ GPS.parse_xml ("""
       <param name="target_name">(optional) a string</param>
       <param name="shadow">(optional) a Boolean, indicating whether we want the output of shadow builds</param>
       <param name="background">(optional) a Boolean, indicating whether we want the output of background builds</param>
-      <return>A string, the output of the latest build for the corresponding target.</return>
+      <param name="as_string">(optional) a Boolean, indicating whether the output should be returned as a single string. By default the output is returned as a list in script languages that support it.</param>
+      <return>A string or list, the output of the latest build for the corresponding target.</return>
       <description>Return the result of the last compilation command</description>
       <see_also name="GPS.File.make()"/>
       <see_also name="GPS.File.compile()"/>

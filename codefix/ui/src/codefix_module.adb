@@ -540,6 +540,7 @@ package body Codefix_Module is
       Append_Argument (Cmd, Compilation_Data.Target_Name, One_Arg);
       Append_Argument (Cmd, Compilation_Data.Shadow'Img, One_Arg);
       Append_Argument (Cmd, Compilation_Data.Background'Img, One_Arg);
+      Append_Argument (Cmd, "True", One_Arg);  --  Get the output "as_string"
 
       if Compilation_Data.Background then
          Activate_Codefix
