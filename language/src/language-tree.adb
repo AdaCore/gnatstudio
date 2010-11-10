@@ -565,7 +565,7 @@ package body Language.Tree is
         Null_Construct_Tree_Iterator;
 
    begin
-      if Tree.Contents'Length = 0 then
+      if Tree = null or else Tree.Contents'Length = 0 then
          return Null_Construct_Tree_Iterator;
       end if;
 
