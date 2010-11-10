@@ -202,7 +202,7 @@ package body Code_Peer.Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   procedure On_Project_View_Changed_Hook
+   procedure On_Project_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when project view is changed. Cleanup obsolete messages in
    --  messages container.
@@ -624,6 +624,13 @@ package body Code_Peer.Module is
 
          Self.Report_Subwindow.Destroy;
       end if;
+
+      --  Remove messages from the messages container
+
+      Module.Listener.Set_Cleanup_Mode (True);
+      Get_Messages_Container (Module.Kernel).Remove_Category
+        (Code_Peer_Category_Name, Code_Peer_Message_Flags);
+      Module.Listener.Set_Cleanup_Mode (False);
 
       --  Load code review information
 
@@ -1560,18 +1567,18 @@ package body Code_Peer.Module is
         (Module.Message_Colors (Code_Peer.Suppressed).Get_Pref);
    end On_Preferences_Changed;
 
-   ----------------------------------
-   -- On_Project_View_Changed_Hook --
-   ----------------------------------
+   -----------------------------
+   -- On_Project_Changed_Hook --
+   -----------------------------
 
-   procedure On_Project_View_Changed_Hook
+   procedure On_Project_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Module.Listener.Set_Cleanup_Mode (True);
       Get_Messages_Container (Kernel).Remove_Category
         (Code_Peer_Category_Name, Code_Peer_Message_Flags);
       Module.Listener.Set_Cleanup_Mode (False);
-   end On_Project_View_Changed_Hook;
+   end On_Project_Changed_Hook;
 
    --------------------------
    -- On_Remove_XML_Review --
@@ -2231,9 +2238,9 @@ package body Code_Peer.Module is
          "codepeer.preferences_changed");
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
-         GPS.Kernel.Project_View_Changed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Project_View_Changed_Hook'Access),
-         "codepeer.project_view_changed");
+         GPS.Kernel.Project_Changed_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Project_Changed_Hook'Access),
+         "codepeer.project_changed");
 
       Module.Listener := new Code_Peer.Listeners.Listener;
       GPS.Kernel.Messages.Register_Listener
