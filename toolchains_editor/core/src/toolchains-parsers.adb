@@ -59,11 +59,11 @@ package body Toolchains.Parsers is
      (This      : in out Toolchain_Parser_Record;
       Node_Data : Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id);
-   --  Parse the toolchain contained in the IDE node given in parameter.
+   --  Parse the toolchain contained in the IDE node given in parameter
 
    function Get_Toolchains
      (This : Toolchain_Parser_Record) return Toolchain_Array;
-   --  Return the toolchains red from the project file.
+   --  Return the toolchains red from the project file
 
    procedure Set_Toolchains
      (This       : in out Toolchain_Parser_Record;
@@ -77,7 +77,7 @@ package body Toolchains.Parsers is
    function Get_Parsed_Project
      (This : Toolchain_Parser_Record)
       return Parsed_Project;
-   --  Return the parsed project from where this toolchain has been extracted.
+   --  Return the parsed project from where this toolchain has been extracted
 
    function Get_Error_Message (This : Toolchain_Parser_Record) return String;
    --  Return the error message associated to the parsing of this toolchain,
@@ -674,7 +674,7 @@ package body Toolchains.Parsers is
       end if;
 
       if This.Toolchains.Length = 0 then
-         --  If no toolchain has been found, then we're on the native case.
+         --  If no toolchain has been found, then we're on the native case
 
          This.Toolchains.Insert ("native", Get_Native_Toolchain (Manager));
       end if;
@@ -718,7 +718,7 @@ package body Toolchains.Parsers is
       --  then it will be prefixed to the command.
 
       procedure Create_Case_Toolchain;
-      --  Create the "case" block for toolchain selection.
+      --  Create the "case" block for toolchain selection
 
       -------------------------------
       -- Remove_Previous_Toolchain --
