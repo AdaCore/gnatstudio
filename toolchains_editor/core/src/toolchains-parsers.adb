@@ -1258,6 +1258,7 @@ package body Toolchains.Parsers is
              Store_Comments         => True,
              Current_Directory      => String (Path.Dir_Name),
              Is_Config_File         => False,
+             Target_Name            => "",
              Flags                  => Create_Flags
                (Report_Error               => null,
                 When_No_Sources            => Silent,
