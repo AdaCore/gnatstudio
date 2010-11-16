@@ -153,14 +153,13 @@ class DocGenerator:
            prefix=""
            for base in parents[:-1]:
              output += "  <li>" + prefix
-             output += "<img src='childtree.png' alt='_'/>"
+             output += "&#x21B3;"
              output += self.full_name (base) + "</li>\n"
-             prefix += "<img src='childtree2.png' alt='  '/>"
+             prefix += "<span class='spacer'></span>"
 
-           output += "  <li>" + prefix + "<img src='childtree.png' alt='_'/>" \
+           output += "  <li>" + prefix + "&#x21B3;" \
              + "<b>" + self.full_name (object) + "</b></li>\n"
-           prefix += "<img src='childtree2.png' alt='  '/>" + \
-             "<img src='childtree.png' alt='_'/>"
+           prefix += "<span class='spacer'></span>&#x21B3;"
 
            for c in sorted (children):
             output += "  <li>" + prefix + self.full_name (c) + "</li>\n"
@@ -270,6 +269,7 @@ table.description .default { font-family:   "Courier New", "Courier"; }
 table.description td.seeAlso { font-family: "Courier New", "Courier"; }
 table.description .obsolescent { color: red }
 .example                       { white-space: pre }
+span.spacer {display:inline-block; width:12px; height:12px}
 """
 
    def html_footer (self):
@@ -577,30 +577,7 @@ def generate_doc (entity):
      The documentation is generated in the object directory of the root
      project"""
   GPS.set_busy()
-
-  ## Generate the documentation for our own module
   name = docgen.html_documentation (entity)
-
-  shutil.copy (GPS.get_system_dir() + "share/gps/plug-ins/childtree.png",
-               GPS.get_home_dir() + "generated_doc")
-  shutil.copy (GPS.get_system_dir() + "share/gps/plug-ins/childtree2.png",
-               GPS.get_home_dir() + "generated_doc")
-
-  ## If the files are read-only in the system dir, we would only be able to
-  ## generate the doc once
-
-  os.chmod(GPS.get_home_dir() + "generated_doc/childtree.png", stat.S_IREAD + stat.S_IWRITE)
-  os.chmod(GPS.get_home_dir() + "generated_doc/childtree2.png", stat.S_IREAD + stat.S_IWRITE)
-
-  ## These comment lines are for use through pydoc
-  #home_dir = GPS.get_home_dir()
-  #name = home_dir + os.sep + entity.__name__ + ".html"
-  #if not os.path.isfile (name) or os.stat (name).st_mtime < os.stat (GPS.Help().file()).st_mtime:
-  #   cwd = os.getcwd()
-  #   os.chdir (home_dir)
-  #   pydoc.writedoc (entity)
-  #   os.chdir (cwd)
-
   GPS.unset_busy()
   return name
 
