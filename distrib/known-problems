@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 5.0.1
 
+- JB17-009: Shell command GPS.Clipboard.copy does not publish clipboard content
+  Problem:    When using the command GPS.Clipboard.copy to set text in the
+              clipboard, this clipboard is not available to applications
+              outside of GPS.
+  Workaround: Use the Python/Gtk integration, ie from a Python script:
+      import gtk
+      gtk.Clipboard().set_text("text to copy to other applications")
+
 - JB01-014: GPS consuming CPU when processing build output
   Problems:   When the build process launched by GPS produces a big amount of
               output, GPS might freeze temporarily and/or consume a lot of 
