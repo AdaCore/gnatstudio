@@ -236,15 +236,17 @@ package body Python_Module is
          Text        => -"_Python",
          Callback    => Open_Python_Console'Access);
 
-      Add_PyWidget_Method (Script, Class => Get_GUI_Class (Kernel));
+      Add_PyWidget_Method
+        (Get_Scripts (Kernel), Class => Get_GUI_Class (Kernel));
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command       => "add",
          Handler       => Python_GUI_Command_Handler'Access,
          Class         => New_Class (Get_Scripts (Kernel), "MDI"),
          Minimum_Args  => 1,
          Maximum_Args  => 3,
-         Class_Method  => True);
+         Static_Method => True,
+         Language      => Python_Name);
 
       --  Change the screen representation of the various classes. This way,
       --  commands can return classes, but still displayed user-readable
@@ -252,96 +254,112 @@ package body Python_Module is
       --  Also make sure these can be used as keys in dictionaries.
 
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__str__",
          Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel));
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__repr__",
          Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel));
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__hash__",
          Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel));
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel));
+         Class        => Get_File_Class (Kernel),
+         Language     => Python_Name);
 
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__str__",
          Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel));
+         Class        => Get_Project_Class (Kernel),
+         Language      => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__repr__",
          Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel));
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__hash__",
          Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel));
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel));
+         Class        => Get_Project_Class (Kernel),
+         Language     => Python_Name);
 
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__str__",
          Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel));
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__repr__",
          Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel));
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__hash__",
          Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel));
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel));
+         Class        => Get_Entity_Class (Kernel),
+         Language     => Python_Name);
 
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__str__",
          Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel));
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__repr__",
          Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel));
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__hash__",
          Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel));
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
       Register_Command
-        (Script,
+        (Get_Scripts (Kernel),
          Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel));
+         Class        => Get_File_Location_Class (Kernel),
+         Language     => Python_Name);
    end Register_Module;
 
    --------------

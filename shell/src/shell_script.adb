@@ -249,10 +249,11 @@ package body Shell_Script is
 
       --  The following commands are specific to the GPS shell script.
       Register_Command
-        (Script, "help",
+        (Get_Scripts (Kernel), "help",
          Minimum_Args => 0,
          Maximum_Args => 1,
-         Handler      => Module_Command_Handler'Access);
+         Handler      => Module_Command_Handler'Access,
+         Language     => Shell_Name);
    end Register_Module;
 
    ----------------------------
