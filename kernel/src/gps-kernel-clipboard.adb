@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2009, AdaCore                 --
+--                  Copyright (C) 2005-2010, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -339,7 +339,6 @@ package body GPS.Kernel.Clipboard is
    begin
       Set_Text (Gtk.Clipboard.Get, Text);
       Append_To_Clipboard (Clipboard);
-      Clear (Gtk.Clipboard.Get);
    end Copy_Text_In_Clipboard;
 
    ---------------------
