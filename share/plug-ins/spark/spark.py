@@ -1,6 +1,4 @@
 """This file provides SPARK support in GPS.
-Recent versions of the SPARK toolset typically come with a more up-to-date
-plug-in.
 
 Copyright (c) 2004-2010 Altran Praxis Limited
 Copyright (c) 2005-2010 AdaCore
@@ -475,6 +473,7 @@ a = """<?xml version="1.0"?>
         <combo-entry label="Sequential" value="sequential" />
         <combo-entry label="Ravenscar" value="ravenscar" />
       </combo>
+      <check column="1" line="2" label="Use SPARK Library" switch="~sparklib" />
 
       <title column="2" line="2">Analysis</title>
       <radio column="2" line="2">
@@ -1147,10 +1146,10 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
-     <name>SPARK_IO.htm</name>
-     <descr>SPARK_IO</descr>
+     <name>SPARK_Library_UM.htm</name>
+     <descr>SPARK Library</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Reference/SPARK__IO</menu>
+     <menu before="About">/Help/SPARK/Reference/SPARK Library</menu>
   </documentation_file>
 
   <documentation_file>
