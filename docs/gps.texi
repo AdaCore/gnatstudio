@@ -809,7 +809,6 @@ project. Starting a new compilation at that point will use the new
 switches, and all the aspects of GPS are immediately affected
 according to the new setup.
 
-
 @subsection Icons for source language entities
 @cindex icons for source language entities
 
