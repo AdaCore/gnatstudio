@@ -18471,6 +18471,15 @@ biggest amount of memory is allocated, through the
 @cindex GPS_PYTHONHOME
 If set, the Python interpreter will look for libraries in the subdirectory
 lib/python<version> of the directory contained in @code{GPS_PYTHONHOME}.
+
+   @item GNAT_CODE_PAGE
+@cindex GNAT_CODE_PAGE
+This variable can be set to @code{CP_ACP} or @code{CP_UTF8} and is used to
+control the code page used on Windows platform. The default is @code{CP_UTF8}
+to support more languages. If file or directory names are using accents for
+example it may be necessary to set this variable to @code{CP_ACP} which is the
+default Windows ANSI code page.
+
 @end table
 
 @c --------------------------------------------------------------------
