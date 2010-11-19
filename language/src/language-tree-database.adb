@@ -1618,7 +1618,7 @@ package body Language.Tree.Database is
    -- "=" --
    ---------
 
-   function "=" (Left, Right : Entity_Access) return Boolean is
+   overriding function "=" (Left, Right : Entity_Access) return Boolean is
    begin
       --  Since file comparison is very expensive, it has to be tried first
 
