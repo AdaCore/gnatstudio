@@ -121,7 +121,7 @@ package body VCS is
    -- "=" --
    ---------
 
-   function "=" (S1, S2 : File_Status) return Boolean is
+   overriding function "=" (S1, S2 : File_Status) return Boolean is
       use type GNAT.Strings.String_Access;
    begin
       return (S1.Label = null and then S2.Label = null
