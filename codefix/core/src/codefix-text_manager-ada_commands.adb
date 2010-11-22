@@ -1196,7 +1196,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
                if Begin_Cursor = Null_File_Cursor then
                   End_Cursor.Col := End_Cursor.Col + 1;
-                  Begin_Cursor := Clone (File_Cursor (End_Cursor));
+                  Begin_Cursor := Clone (End_Cursor);
                end if;
             end End_Of_Profile;
 
