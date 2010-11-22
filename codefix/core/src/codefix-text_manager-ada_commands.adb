@@ -1196,7 +1196,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
                if Begin_Cursor = Null_File_Cursor then
                   End_Cursor.Col := End_Cursor.Col + 1;
-                  Begin_Cursor := Clone (End_Cursor);
+                  Begin_Cursor := Clone (File_Cursor (End_Cursor));
                end if;
             end End_Of_Profile;
 
@@ -2109,7 +2109,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          end;
       else
          declare
-            End_Word : File_Cursor'Class := Clone (Cursor);
+            End_Word : File_Cursor'Class := Clone (File_Cursor (Cursor));
             Word     : Word_Cursor;
          begin
             Current_Text.Next_Word (End_Word, Word);
@@ -2305,7 +2305,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Cursor : File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Location.all);
-      Start  : File_Cursor'Class := Clone (Cursor);
+      Start  : File_Cursor'Class := Clone (File_Cursor (Cursor));
       Word   : Word_Cursor;
    begin
       Current_Text.Next_Word (Cursor, Word);
