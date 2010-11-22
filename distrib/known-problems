@@ -8,6 +8,11 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- JB19-027 GB: Makefile target descriptions not shown in dialog
+  Problem:    When applying the "Invoke Makefile Target" menu entry, the
+              resulting dialog shows the target name in the description field.
+  Workaround: Look in the makefile itself for the description.
+
 - JA26-031 Error when auto fixing a missing with when there is a pragma
   Problem:    When a file starts with a pragma, e.g. Pragma Ada_2012, and there
               is a missing with clause, the auto fix moves the fix before the
