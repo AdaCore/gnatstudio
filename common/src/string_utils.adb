@@ -226,6 +226,10 @@ package body String_Utils is
    is
       Current_Col   : Visible_Column_Type := 1;
    begin
+      if Buffer = "" then
+         return;
+      end if;
+
       while Current_Col < Columns
         and then Natural (Index) <= Buffer'Last
         and then Buffer (Natural (Index)) /= ASCII.LF
