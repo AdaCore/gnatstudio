@@ -2780,7 +2780,7 @@ package body Src_Editor_Module is
         (Kernel, "Goto file spec<->body",
          Action     => Command,
          Label      => -"Goto file spec<->body",
-         Filter     => Filter);
+         Filter     => Filter and Src_Action_Context);
 
       Command := new Edit_File_Command;
       Register_Contextual_Menu
