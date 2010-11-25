@@ -2154,37 +2154,17 @@ package body ALI_Parser is
       Project   : Project_Type) return LI_Information_Iterator'Class
    is
       Iter     : ALI_Information_Iterator;
-      Tmp      : File_Array_Access;
-      Objects  : constant File_Array :=
-        Object_Path (Project, False, True, True);
    begin
       Freeze (Handler.Db, Mode => Create_Only);
 
       Trace (Me, "Parse_All_LI_Information in project "
              & Project.Name);
 
-      --  Find all the files to parse immediately. This provides an accurate
-      --  count of the total number of files to process, which is useful for
-      --  display purposes, and does not require more system calls
-
-      for Dir in Objects'Range loop
-         begin
-            --  Get the whole content, including subdirs (to avoid system calls
-            --  to stat()). Since we will be checking extensions anyway, this
-            --  is fine
-            --  ??? An issue might exist if we have a subdir with extension
-            --  ".ali", but that's unlikely and not worth paying an extra cost
-            --  systematically
-
-            Tmp := Read_Dir (Objects (Dir));
-            Append (Iter.Files, Tmp.all);
-            Unchecked_Free (Tmp);
-         exception
-            when VFS_Directory_Error =>
-               Trace (Me, "Couldn't open the directory " &
-                      Objects (Dir).Display_Full_Name);
-         end;
-      end loop;
+      Iter.Files := Project.Library_Files
+        (Recursive           => False,
+         Including_Libraries => True,
+         Xrefs_Dirs          => True,
+         ALI_Ext             => Get_ALI_Ext (Handler));
 
       if Iter.Files /= null then
          Iter.Current := Iter.Files'First;
@@ -2231,29 +2211,25 @@ package body ALI_Parser is
       while Iter.Current <= Iter.Files'Last
         and then Steps_Done <= Steps
       loop
-         if Iter.Files
-           (Iter.Current).Has_Suffix (Get_ALI_Ext (Iter.Handler))
+         LI := Get_Or_Create
+           (Db      => Iter.Handler.Db,
+            File    => Iter.Files (Iter.Current),
+            Project => Iter.Project);
+
+         --  We force the update of this ALI if the database is in
+         --  'Create_Only' mode. In this mode, this will not force the
+         --  update of dependent ALIs (which will be parsed later anyway).
+
+         if not Update_ALI
+           (Iter.Handler, LI,
+            Reset_ALI => True,
+            Force_Update => Frozen (Iter.Handler.Db) = Create_Only)
          then
-            LI := Get_Or_Create
-              (Db      => Iter.Handler.Db,
-               File    => Iter.Files (Iter.Current),
-               Project => Iter.Project);
-
-            --  We force the update of this ALI if the database is in
-            --  'Create_Only' mode. In this mode, this will not force the
-            --  update of dependent ALIs (which will be parsed later anyway).
-
-            if not Update_ALI
-              (Iter.Handler, LI,
-               Reset_ALI => True,
-               Force_Update => Frozen (Iter.Handler.Db) = Create_Only)
-            then
-               if Active (Me) then
-                  Trace
-                    (Me,
-                     "Couldn't parse " &
-                     Iter.Files (Iter.Current).Display_Full_Name);
-               end if;
+            if Active (Me) then
+               Trace
+                 (Me,
+                  "Couldn't parse " &
+                  Iter.Files (Iter.Current).Display_Full_Name);
             end if;
          end if;
 
