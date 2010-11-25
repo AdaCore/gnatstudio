@@ -425,8 +425,14 @@ package body GNATStack.Module.Editors is
       end Process_Subprogram;
 
    begin
+      --  Check whether file exists needed for two reasons:
+      --   - it is not user frendly to display annotations in empty file;
+      --   - source editor raises exception when line is outside of range of
+      --     lines (see JB25-013).
+
       if Buffer /= GPS.Editors.Nil_Editor_Buffer
         and then Buffer in GPS_Editor_Buffer'Class
+        and then File.Is_Regular_File
       then
          Module.Data.Subprogram_Set.Iterate (Process_Subprogram'Access);
       end if;
