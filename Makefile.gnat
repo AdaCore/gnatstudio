@@ -1,7 +1,5 @@
 GNAT_SOURCES= \
   gnat_ugn.texi \
-  krunch.ads \
-  krunch.adb \
   prj-pars.ads \
   prj-pars.adb \
   impunit.adb \
