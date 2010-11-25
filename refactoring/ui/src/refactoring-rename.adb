@@ -184,7 +184,7 @@ package body Refactoring.Rename is
       Gtk_New (Dialog.Make_Writable, -"Make files writable");
       Set_Tip
         (Get_Tooltips (Kernel),
-         Dialog.Rename_Primitives,
+         Dialog.Make_Writable,
          -("If a read-only file contains references to the entity, this"
            & " switch will make the file writable so that changes can be made."
            & " If the switch is off, then the file will not be edited, but the"
