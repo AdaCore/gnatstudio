@@ -21,7 +21,7 @@ with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
 
 with GPS.Editors;
 
@@ -74,10 +74,6 @@ package GNATStack.Data_Model is
    function "<"
      (Left  : Subprogram_Identifier;
       Right : Subprogram_Identifier) return Boolean;
-
-   function Hash
-     (Item : Subprogram_Identifier)
-      return Ada.Containers.Hash_Type;
 
    type Object_Information is record
       Name   : Ada.Strings.Unbounded.Unbounded_String;
@@ -152,10 +148,10 @@ package GNATStack.Data_Model is
 
    package Subprogram_Information_Maps is
      new Ada.Containers.Hashed_Maps
-       (GNATStack.Data_Model.Subprogram_Identifier,
+       (Ada.Strings.Unbounded.Unbounded_String,
         GNATStack.Data_Model.Subprogram_Information_Access,
-        Hash,
-        "=");
+        Ada.Strings.Unbounded.Hash,
+        Ada.Strings.Unbounded."=");
 
    type CI_Information is record
       File_Name   : Ada.Strings.Unbounded.Unbounded_String;
@@ -171,6 +167,9 @@ package GNATStack.Data_Model is
       Accurate       : Boolean;
       Subprogram_Set : Subprogram_Information_Sets.Set;
       Subprogram_Map : Subprogram_Information_Maps.Map;
+      --  This map is used to resolve subprogram by its 'linker name' when
+      --  CI file is loaded.
+
       Unbounded_Set  : Subprogram_Information_Sets.Set;
       External_Set   : Subprogram_Information_Ordered_Sets.Set;
       Indirect_Set   : Subprogram_Information_Sets.Set;

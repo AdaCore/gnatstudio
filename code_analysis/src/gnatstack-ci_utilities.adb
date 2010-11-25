@@ -75,6 +75,7 @@ package body GNATStack.CI_Utilities is
                         (Ada.Strings.Unbounded.To_Unbounded_String (File_Name),
                          others => <>);
       Subprogram  : GNATStack.Data_Model.Subprogram_Information_Access;
+      Position    : GNATStack.Data_Model.Subprogram_Information_Maps.Cursor;
 
       procedure GNAT_Decode
         (Coded   : System.Address;
@@ -141,8 +142,20 @@ package body GNATStack.CI_Utilities is
                       Lines => 0));
                end if;
 
-               if Data.Subprogram_Map.Contains (Identifier) then
-                  Subprogram := Data.Subprogram_Map.Element (Identifier);
+               --  Resolve linker name to known subprogram
+               --
+               --  ??? It would be nice to create new subprogram for unknown
+               --  subprograms, to be able to preserve contents of CI file and
+               --  allow to have CI files shared between projects.
+
+               Position := Data.Subprogram_Map.Find (Identifier.Linker_Name);
+
+               if GNATStack.Data_Model.Subprogram_Information_Maps.Has_Element
+                 (Position)
+               then
+                  Subprogram :=
+                    GNATStack.Data_Model.Subprogram_Information_Maps.Element
+                      (Position);
 
                   Subprogram.Local_Usage.Size :=
                     Integer'Value

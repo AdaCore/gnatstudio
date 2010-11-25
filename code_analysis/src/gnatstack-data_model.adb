@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
 
 package body GNATStack.Data_Model is
@@ -223,34 +222,6 @@ package body GNATStack.Data_Model is
    begin
       return Left.Id = Right.Id;
    end Equivalent_Elements;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash
-     (Item : Subprogram_Identifier) return Ada.Containers.Hash_Type
-   is
-      Position : Subprogram_Location_Sets.Cursor := Item.Locations.First;
-      Aux      : Unbounded_String                := Item.Prefix_Name;
-
-   begin
-      while Has_Element (Position) loop
-         declare
-            Location : constant Subprogram_Location := Element (Position);
-
-         begin
-            Append (Aux, Location.Name);
-            Append (Aux, Location.File);
-            Append (Aux, Integer'Image (Location.Line));
-            Append (Aux, Integer'Image (Location.Column));
-
-            Next (Position);
-         end;
-      end loop;
-
-      return Ada.Strings.Unbounded.Hash (Aux);
-   end Hash;
 
    ----------
    -- Hash --

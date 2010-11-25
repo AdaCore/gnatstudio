@@ -158,7 +158,6 @@ package body GNATStack.Readers is
    begin
       Self.Pop;
       Self.Analysis.Entry_Set.Insert (Subprogram);
-      Subprogram.Is_External := True;
       Subprogram.Chain := Value;
       Subprogram.Entry_Usage := Usage;
    end Analyze_entry_End_Tag;
@@ -969,12 +968,16 @@ package body GNATStack.Readers is
             Self.Analysis.External_Set.Insert (Subprogram);
          end if;
 
-         Self.Analysis.Subprogram_Map.Insert
-           (Subprogram.Identifier, Subprogram);
-         --  ??? Adding of subprogram can fail for some unknown reasons, need
-         --  to be investiagtes. There are three reasons to be investigated
-         --  first: indirect calls, dispatching calls, and calls inside
-         --  generic instantication.
+         if Subprogram.Identifier.Linker_Name /= "" then
+            Self.Analysis.Subprogram_Map.Insert
+              (Subprogram.Identifier.Linker_Name, Subprogram);
+            --  ??? Adding of subprogram can fail for some unknown reasons,
+            --  need to be investiagtes. There are three reasons to be
+            --  investigated first: indirect calls, dispatching calls, and
+            --  calls inside generic instantication.
+            --
+            --  After changes for JB22-004 this situation should disapper.
+         end if;
 
       exception
          when X : Constraint_Error =>
