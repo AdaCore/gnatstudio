@@ -157,14 +157,40 @@ package body GNATStack.CI_Utilities is
                     GNATStack.Data_Model.Subprogram_Information_Maps.Element
                       (Position);
 
-                  Subprogram.Local_Usage.Size :=
-                    Integer'Value
-                      (Line (Matches (16).First .. Matches (16).Last));
+                  begin
+                     Subprogram.Local_Usage.Size :=
+                       Integer'Value
+                         (Line (Matches (16).First .. Matches (16).Last));
 
-                  CI_Data.Subprograms.Insert (Subprogram);
+                  exception
+                     when Constraint_Error =>
+                        --  When specified by user value can't be converted
+                        --  into integer number resets local stack usage to
+                        --  unknown state.
+                        --
+                        --  ??? It can be reasonable to output error on console
 
-                  if Data.External_Set.Contains (Subprogram) then
-                     Data.External_Set.Delete (Subprogram);
+                        Subprogram.Local_Usage.Size := -2;
+                        Subprogram.Local_Usage.Qualifier :=
+                          To_Unbounded_String ("UNKNOWN");
+                  end;
+
+                  if Subprogram.Local_Usage.Size < 0 then
+                     --  Subprogram stack usage is not known
+
+                     if not Data.External_Set.Contains (Subprogram) then
+                        Data.External_Set.Insert (Subprogram);
+                     end if;
+
+                  else
+                     --  Subprogram stack usage specified in CI file, use this
+                     --  value.
+
+                     CI_Data.Subprograms.Insert (Subprogram);
+
+                     if Data.External_Set.Contains (Subprogram) then
+                        Data.External_Set.Delete (Subprogram);
+                     end if;
                   end if;
                end if;
             end if;
