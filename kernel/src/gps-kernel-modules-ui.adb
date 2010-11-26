@@ -1687,10 +1687,12 @@ package body GPS.Kernel.Modules.UI is
       Add_Before  : Boolean := True;
       Group       : Integer := Default_Contextual_Group)
    is
-      T    : Contextual_Label_Param;
-      Pix  : GNAT.Strings.String_Access;
-      Menu : Contextual_Menu_Access;
+      T      : Contextual_Label_Param;
+      Pix    : GNAT.Strings.String_Access;
+      Menu   : Contextual_Menu_Access;
+      Filter : Action_Filter;
 
+      Is_Separator : Boolean := False;
    begin
       if Label /= "" then
          T        := new Contextual_Label_Parameters;
@@ -1704,10 +1706,30 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       if Action = null then
+         Is_Separator := True;
+      else
+         --  Look at the label to determine if this is a separator
+         for J in reverse Name'Range loop
+            if Name (J) = '/' then
+               if J < Name'Last
+                 and then Name (J + 1) = '-'
+               then
+                  Is_Separator := True;
+               end if;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      if Is_Separator then
+         if Action /= null then
+            Filter := Action.Filter;
+         end if;
+
          Menu := new Contextual_Menu_Record'
            (Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
-            Separator_Filter      => null,
+            Separator_Filter      => Filter,
             Pix                   => Pix,
             Next                  => null,
             Ref_Item              => null,

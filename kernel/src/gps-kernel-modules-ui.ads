@@ -185,10 +185,12 @@ package GPS.Kernel.Modules.UI is
    --  other entries had the same requirement.
    --
    --  Separators:
-   --  If Action is null, then a separator will be added to the contextual
-   --  menu instead. It is added in a submenu if Label is not the empty string.
-   --  It is good policy to specify a Ref_Item for a separator, since the
-   --  separator will automatically be hidden if the Ref_Item itself is hidden
+   --  If Action is null or the name of the menu item starts with '-' (for
+   --  instance if Name = "/submenu/-my item") then a separator will be added
+   --  to the contextual menu instead. It is added in a submenu if Label is not
+   --  the empty string. It is good policy to specify a Ref_Item for a
+   --  separator, since the separator will automatically be hidden if the
+   --  Ref_Item itself is hidden
    --
    --  Groups:
    --  Group indicates the group of the entry. If Ref_Item is specified, this
