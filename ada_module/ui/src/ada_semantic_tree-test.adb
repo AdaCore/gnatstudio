@@ -848,7 +848,9 @@ begin
       --  Then, execute the tests
 
       if Argument_Count > 1 then
-         Analyze_File (Tree.Create (+Argument (2)));
+         for J in 2 .. Argument_Count loop
+            Analyze_File (Tree.Create (+Argument (J)));
+         end loop;
       else
          for J in Files.all'Range loop
             Analyze_File (Files.all (J));
