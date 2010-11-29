@@ -813,7 +813,7 @@ procedure Ada_Semantic_Tree.Test is
 
    procedure Project_Error (Msg : String) is
    begin
-      Put_Line ("Error loading project: " & Msg);
+      Put ("ada_semantic_tree: Error loading project: " & Msg);
    end Project_Error;
 
    Db : constant Entities_Database := Create (New_Registry, Construct_Db);

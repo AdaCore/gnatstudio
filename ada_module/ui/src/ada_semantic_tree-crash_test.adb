@@ -35,8 +35,10 @@ with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
 with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
+with Cpp_Module;                     use Cpp_Module;
 with Entities;                       use Entities;
 with Entities.Queries;               use Entities.Queries;
+with Language.C;                     use Language.C;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
 with Language;                       use Language;
@@ -391,7 +393,7 @@ procedure Ada_Semantic_Tree.Crash_Test is
 
    procedure Project_Error (Msg : String) is
    begin
-      Put_Line ("Error loading project: " & Msg);
+      Put ("ada_semantic_tree: Error loading project: " & Msg);
    end Project_Error;
 
    Max_Files : Integer := -1;
@@ -472,6 +474,17 @@ begin
    Entities_Db := Create (New_Registry, Construct_Db);
    Set_Symbols (Entities_Db, Symbols);
 
+   declare
+      CPP_LI : LI_Handler;
+   begin
+      Language_Handlers.Create_Handler (Handler, Symbols);
+      Register_Language_Handler (Entities_Db, Handler);
+      CPP_LI := Create_CPP_Handler (Entities_Db, New_Registry.all);
+      Register_Language (Handler, C_Lang, null, CPP_LI);
+      New_Registry.Environment.Register_Default_Language_Extension
+         ("c", ".h", ".c");
+   end;
+
    Compute_Predefined_Paths;
    New_Registry.Tree.Load
      (Root_Project_Path  =>
@@ -482,11 +495,7 @@ begin
 
    New_Registry.Tree.Recompute_View (Project_Error'Unrestricted_Access);
 
-   Language_Handlers.Create_Handler (Handler, Symbols);
-
    Set_Registry (Handler, New_Registry);
-
-   Register_Language_Handler (Entities_Db, Handler);
 
    Initialize
      (Construct_Db,
