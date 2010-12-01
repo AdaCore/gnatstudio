@@ -26,6 +26,11 @@ GPS.Preference ("Plugins/emacs/transient_mark").create (
    "Transient Mark", "boolean",
    """If unset, the selected region is never unselected when the clipboard is modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs mode with the same name""", False)
 
+GPS.Preference("Plugins/emacs/bgcolor").create(
+    "Background color", "color",
+    """Background color for popup windows (zap-to-char,...)""",
+    "yellow")
+
 def replace (frm, to, text):
    """Replace a part of the buffer by the given text"""
    frm.buffer ().delete (frm, to)
@@ -65,6 +70,39 @@ def get_local_vars (subprogram):
                 result.append (e)
 
    return result
+
+def delete_until_char(char, buffer=None):
+    """Delete all characters forward from the current cursor position,
+       until CHAR is seen. CHAR itself is also deleted.
+       If the current character is CHAR, it is skipped and the next
+       occurrences of CHAR is searched.
+    """
+    if not buffer:
+        buffer = GPS.EditorBuffer.get()
+
+    start = buffer.current_view().cursor()
+    end = start + 1
+    while end.get_char() != char:
+        end = end + 1
+    buffer.delete (start, end)
+
+@interactive("Editor", name="zap to char")
+class Zap_To_Char(CommandWindow):
+    """Deletes all characters from the cursor position up to and including
+       the next occurrence of a character. The character is queried
+       interactively
+    """
+    def __init__(self):
+        CommandWindow.__init__(
+            self,
+            prompt="Zap to char:",
+            on_changed=self.on_changed)
+        self.set_background(GPS.Preference("Plugins/emacs/bgcolor").get())
+
+    @with_save_excursion
+    def on_changed(self, input, cursor_pos):
+        delete_until_char(char=input)
+        self.destroy()
 
 @interactive ("Editor", in_ada_file, name="subprogram box")
 @with_save_excursion
@@ -460,11 +498,9 @@ def goto_word_end (iter, underscore_is_word=True):
             return iter.buffer().end_of_buffer ()
       return iter
 
-@interactive ("Editor", "Source editor", name="delete horizontal space")
-def delete_horizontal_space(backward=1, forward=1):
-   """Delete all spaces and tabs around the cursor in the current editor.
-The two parameters can be used to control in what directions white spaces are
-searched for"""
+@with_save_excursion
+def delete_spaces(backward=True, forward=True, leave_one=False):
+   """Delete all spaces around cursor, possibly leaving one"""
    buffer = GPS.EditorBuffer.get()
    start = buffer.current_view().cursor()
    end = start
@@ -480,7 +516,24 @@ searched for"""
         start = start - 1
       start = start + 1
    if start <= end:
-      buffer.delete (start, end)
+      buffer.delete(start, end)
+
+   if leave_one:
+       buffer.insert(start, " ")
+
+@interactive ("Editor", "Source editor", name="delete horizontal space")
+def delete_horizontal_space(backward=1, forward=1):
+   """Delete all spaces and tabs around the cursor in the current editor.
+The two parameters can be used to control in what directions white spaces are
+searched for"""
+   delete_spaces(leave_one=False)
+
+@interactive("Editor", "Source editor", name="just one space")
+def just_one_space():
+    """Delete all spaces and tabs around the cursor, leaving one space.
+       If there are no spaces around, a new space is inserted
+    """
+    delete_spaces(leave_one=True)
 
 @interactive ("Editor", "Source editor", name="transpose chars")
 def transpose_chars():

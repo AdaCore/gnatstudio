@@ -2,6 +2,7 @@
 ## exported by GPS to make it easier to write plugins
 
 from GPS import *
+import types
 
 def save_dir (fn):
    """Saves the current directory before executing the instrumented
@@ -94,12 +95,25 @@ def make_interactive (callback, category="General", filter="", menu="", key="",
       the action is automatically taken from the documentation of the
       python function. Likewise the name of the action is taken from the
       name of the python function, unless specified with _name_.
+
       _callback_ is a python function that requires no argument, although it
       can have optional arguments (none will be set when this is called from
-      the menu or the key shortcut).
+      the menu or the key shortcut). Alternatively, _callback_ can also be
+      a class: when the user executes the action, a new instance of the class
+      is created, so it is expected that the work is done in the __init__ of
+      the class. This is in particular useful for classes that derive from
+      CommandWindow.
+
       _menu_ is the name of a menu to associate with the action. It will be
       placed within its parent just before the item referenced as _before_,
       or after the item referenced as _after_"""
+
+   if isinstance(callback, types.TypeType):  # Do we have a class ?
+       cb = callback
+       def do():
+           cb()   # Create new instance
+       do.__doc__ = callback.__doc__
+       callback = do
 
    a = Action (name or callback.__name__)
    a. create (callback, filter=filter, category=category,

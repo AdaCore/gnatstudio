@@ -59,6 +59,8 @@
   <key action="Lower case word">alt-l</key>
   <key action="Capitalize word">alt-c</key>
   <key action="/Navigate/Goto Line...">alt-g</key>
+  <key action='zap to char'>alt-z</key>
+  <key action='just one space'>alt-space</key>
 
   <key action="set mark command">control-space</key>
   <key action="Cancel mark command">control-g</key>
