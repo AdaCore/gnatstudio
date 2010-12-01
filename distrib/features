@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-JB30-015 GPS: new zap-to-char and just-one-space actions (2010-12-01)
+
+  These actions complete the Emacs emulation in GPS, and have the same
+  behavior as in Emacs. See the Key Shortcuts menu for more information.
+
 NF-51-JB05-015 GB: Add some jdt-equivalent key shortcuts (2010-11-05)
 
   Some shortcuts defined in JDT or CDT for toggling comments have been added
