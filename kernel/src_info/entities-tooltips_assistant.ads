@@ -23,13 +23,13 @@ with Language.Tree.Database; use Language.Tree.Database;
 
 package Entities.Tooltips_Assistant is
 
-   type ToolTip_Information is record
-      Is_Spec : Boolean;
+   type Tooltip_Information is record
+      Is_Spec    : Boolean;
       Visibility : Construct_Visibility;
-      Category : Language_Category;
+      Category   : Language_Category;
    end record;
 
-   function Get_ToolTip_Documentation
+   function Get_Tooltip_Documentation
      (Handler    : Language_Handler;
       Database   : Construct_Database_Access;
       Entity : Entity_Information) return String;
@@ -38,13 +38,13 @@ package Entities.Tooltips_Assistant is
    --  Return empty string if documentation cannot be found in the construct
    --  database
 
-   function Get_ToolTip_Header
+   function Get_Tooltip_Header
       (Entity : Entity_Information) return String;
    --  Return a string in pango markup format to represent the header of a
    --  tooltip.
 
-   function Get_ToolTip_Information
-      (Entity : Entity_Information) return ToolTip_Information;
+   function Get_Tooltip_Information
+      (Entity : Entity_Information) return Tooltip_Information;
    --  Return information to be able to display the right icon
    --  depending on category and visibility
 

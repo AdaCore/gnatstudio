@@ -29,6 +29,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
+with Entities.Tooltips_Assistant; use Entities.Tooltips_Assistant;
 with Doc_Utils;                 use Doc_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -39,10 +40,8 @@ with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Gdk.Display; use Gdk.Display;
-with Gdk.Screen;  use Gdk.Screen;
-
-with Entities.ToolTips_Assistant;
+with Gdk.Display;               use Gdk.Display;
+with Gdk.Screen;                use Gdk.Screen;
 
 package body Entities.Tooltips is
 
@@ -57,9 +56,9 @@ package body Entities.Tooltips is
    ----------------
 
    function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf is
-      Info : constant ToolTip_Information := Get_ToolTip_Information (Entity);
+      Info : constant Tooltip_Information := Get_Tooltip_Information (Entity);
    begin
-      return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Cat);
+      return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Category);
    end Get_Pixbuf;
 
    -----------------------
@@ -73,19 +72,18 @@ package body Entities.Tooltips is
       Handler    : constant Language_Handler := Get_Language_Handler (Kernel);
       Database   : constant Construct_Database_Access :=
                      Get_Construct_Database (Kernel);
-      Documentation : String;
-
-   begin
-      Documentation := Get_ToolTip_Documentation
+      Documentation : constant String := Get_Tooltip_Documentation
          (Handler  => Handler,
           Database => Database,
           Entity => Entity);
-      if Documentation'Length = 0 then
+   begin
+      if Documentation = "" then
          --  Try to get the documentation from somewhere else than the
          --  construct database.
-         Documentation := Escape_Text (Get_Documentation (Handler, Entity));
+         return Escape_Text (Get_Documentation (Handler, Entity));
+      else
+         return Documentation;
       end if;
-      return Documentation;
    end Get_Documentation;
 
    ------------------
@@ -162,7 +160,7 @@ package body Entities.Tooltips is
         (Kernel => Kernel,
          Guess  => Status = Overloaded_Entity_Found
            or else (Accurate_Xref and then Status = Fuzzy_Match),
-         Header => Get_ToolTip_Header (Entity),
+         Header => Get_Tooltip_Header (Entity),
          Pixbuf => Get_Pixbuf (Entity),
          Draw_Border => Draw_Border,
          Doc    => Doc);
