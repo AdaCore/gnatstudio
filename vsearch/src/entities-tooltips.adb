@@ -42,14 +42,12 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Gdk.Display; use Gdk.Display;
 with Gdk.Screen;  use Gdk.Screen;
 
+with Entities.ToolTips_Assistant;
+
 package body Entities.Tooltips is
 
    function Get_Instance (Entity_Ref : Entity_Reference) return String;
    --  Return the text describing from what instance the entity is
-
-   function Get_Header (Entity : Entity_Information) return String;
-   --  Return a string in pango markup format to represent the header of a
-   --  tooltip.
 
    function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf;
    --  Return the image associated to an entity.
@@ -59,31 +57,9 @@ package body Entities.Tooltips is
    ----------------
 
    function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf is
-      Cat        : Language_Category := Cat_Variable;
-      Is_Spec    : constant Boolean := False;
-      Visibility : Construct_Visibility := Visibility_Public;
-      Attributes : Entity_Attributes;
-
-      Kind : constant E_Kind := Get_Kind (Entity);
-
+      Info : constant ToolTip_Information := Get_ToolTip_Information (Entity);
    begin
-      if Kind.Kind = Package_Kind then
-         Cat := Cat_Package;
-      elsif Is_Subprogram (Entity) then
-         Cat := Cat_Function;
-      elsif Kind.Is_Type then
-         Cat := Cat_Type;
-      end if;
-
-      Attributes := Get_Attributes (Entity);
-
-      if Attributes (Private_Field) then
-         Visibility := Visibility_Private;
-      elsif Attributes (Protected_Field) then
-         Visibility := Visibility_Protected;
-      end if;
-
-      return Entity_Icons (Is_Spec, Visibility) (Cat);
+      return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Cat);
    end Get_Pixbuf;
 
    -----------------------
@@ -94,49 +70,22 @@ package body Entities.Tooltips is
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information) return String
    is
-      Loc        : constant File_Location := Get_Declaration_Of (Entity);
-      Decl_File  : constant Virtual_File := Get_Filename (Loc.File);
       Handler    : constant Language_Handler := Get_Language_Handler (Kernel);
       Database   : constant Construct_Database_Access :=
                      Get_Construct_Database (Kernel);
-      Tree_Lang  : constant Tree_Language_Access :=
-                     Get_Tree_Language_From_File (Handler, Decl_File, False);
-
-      Data_File  : Structured_File_Access;
-      Node       : Construct_Tree_Iterator;
-      Tree       : Construct_Tree;
+      Documentation : String;
 
    begin
-      Data_File := Language.Tree.Database.Get_Or_Create
-        (Db   => Database,
-         File => Decl_File);
-
-      if Data_File = null then
-         --  This probably means that this is not a Ada file. Try to get the
-         --  documentation from somewhere else than the construct database.
-         return Get_Documentation (Handler, Entity);
-      end if;
-
-      Tree := Get_Tree (Data_File);
-
-      Node := Get_Iterator_At
-        (Tree        => Tree,
-         Location    =>
-           (Absolute_Offset => False,
-            Line            => Loc.Line,
-            Line_Offset     =>
-              To_Line_String_Index (Data_File, Loc.Line, Loc.Column)),
-         From_Type   => Start_Name);
-
-      if Node = Null_Construct_Tree_Iterator then
+      Documentation := Get_ToolTip_Documentation
+         (Handler  => Handler,
+          Database => Database,
+          Entity => Entity);
+      if Documentation'Length = 0 then
          --  Try to get the documentation from somewhere else than the
          --  construct database.
-         return Escape_Text (Get_Documentation (Handler, Entity));
+         Documentation := Escape_Text (Get_Documentation (Handler, Entity));
       end if;
-
-      return Language.Tree.Database.Get_Documentation
-        (Lang     => Tree_Lang,
-         Entity   => To_Entity_Access (Data_File, Node));
+      return Documentation;
    end Get_Documentation;
 
    ------------------
@@ -185,30 +134,6 @@ package body Entities.Tooltips is
       return To_String (Result);
    end Get_Instance;
 
-   ----------------
-   -- Get_Header --
-   ----------------
-
-   function Get_Header (Entity : Entity_Information) return String is
-   begin
-      if Get_Kind (Entity).Kind = Include_File then
-         return  "<b>" & Escape_Text (Get (Entity.Name).all)
-           & "</b>" & ASCII.LF
-           & (-Kind_To_String (Get_Kind (Entity))
-           & ' ' & Entity.Live_Declaration.File.Name.Display_Full_Name);
-      else
-         return  "<b>"
-           & Escape_Text (Get_Full_Name (Entity))
-           & "</b>" & ASCII.LF
-           & Attributes_To_String (Get_Attributes (Entity)) &
-           ' ' & (-Kind_To_String (Get_Kind (Entity))) & ' ' &
-           (-"declared at ") &
-           Display_Base_Name (Get_Filename
-                            (Get_File (Get_Declaration_Of (Entity)))) &
-           ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
-      end if;
-   end Get_Header;
-
    ------------------
    -- Draw_Tooltip --
    ------------------
@@ -237,7 +162,7 @@ package body Entities.Tooltips is
         (Kernel => Kernel,
          Guess  => Status = Overloaded_Entity_Found
            or else (Accurate_Xref and then Status = Fuzzy_Match),
-         Header => Get_Header (Entity),
+         Header => Get_ToolTip_Header (Entity),
          Pixbuf => Get_Pixbuf (Entity),
          Draw_Border => Draw_Border,
          Doc    => Doc);
