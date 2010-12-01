@@ -296,22 +296,24 @@ package body Code_Peer.Module is
          else
             Info := Get_Registry (Kernel).Tree.Info (File);
             Prj := Info.Project;
+
             Ada.Text_IO.Put_Line
               (F, "Source (Directory => """
                   & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
-            Ada.Text_IO.Put
-              (F, "        Files     => (""");
-            Ada.Text_IO.Put (F, Info.Unit_Name);
+            Ada.Text_IO.Put (F, "        Files     => (""");
+            Ada.Text_IO.Put_Line (F, Info.Unit_Name & ".scil""),");
+            Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
 
             if Info.Unit_Part = Unit_Body then
-               Ada.Text_IO.Put (F, "__body");
+               Ada.Text_IO.Put_Line
+                 (F, "Source (Directory => """
+                     & String (Prj.Object_Dir.Full_Name.all) & "SCIL"",");
+               Ada.Text_IO.Put (F, "        Files     => (""");
+               Ada.Text_IO.Put_Line (F, Info.Unit_Name);
+                  Ada.Text_IO.Put (F, "__body.scil""),");
+               Ada.Text_IO.Put_Line (F, "        Language  => SCIL);");
             end if;
-
-            Ada.Text_IO.Put_Line (F, ".scil""),");
          end if;
-
-         Ada.Text_IO.Put_Line
-           (F, "        Language  => SCIL);");
       end if;
 
       Ada.Text_IO.Close (F);
