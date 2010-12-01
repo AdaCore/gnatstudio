@@ -498,7 +498,6 @@ def goto_word_end (iter, underscore_is_word=True):
             return iter.buffer().end_of_buffer ()
       return iter
 
-@with_save_excursion
 def delete_spaces(backward=True, forward=True, leave_one=False):
    """Delete all spaces around cursor, possibly leaving one"""
    buffer = GPS.EditorBuffer.get()
@@ -522,6 +521,7 @@ def delete_spaces(backward=True, forward=True, leave_one=False):
        buffer.insert(start, " ")
 
 @interactive ("Editor", "Source editor", name="delete horizontal space")
+@with_save_excursion
 def delete_horizontal_space(backward=1, forward=1):
    """Delete all spaces and tabs around the cursor in the current editor.
 The two parameters can be used to control in what directions white spaces are
@@ -529,6 +529,7 @@ searched for"""
    delete_spaces(leave_one=False)
 
 @interactive("Editor", "Source editor", name="just one space")
+@with_save_excursion
 def just_one_space():
     """Delete all spaces and tabs around the cursor, leaving one space.
        If there are no spaces around, a new space is inserted
@@ -581,7 +582,7 @@ def join_line ():
    buffer.start_undo_group ()
    buffer.current_view().goto (eol)
    buffer.delete (eol, eol)  ## Newline character
-   delete_horizontal_space (backward=0, forward=1)
+   delete_spaces(backward=False, forward=True, leave_one=False)
    if not is_space (eol.forward_char (-1).get_char ()):
       buffer.insert (eol, " ")
    buffer.finish_undo_group ()
