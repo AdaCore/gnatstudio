@@ -60,15 +60,14 @@ package body GPS.Kernel.Messages is
 
    Messages_File_Name : constant Filesystem_String := "messages.xml";
 
-   type Project_Changed_Hook_Record is new Function_No_Args with null record;
+   procedure On_Project_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Loads data for opened project.
 
-   type Project_Changed_Hook_Access is
-     access all Project_Changed_Hook_Record'Class;
-
-   overriding procedure Execute
-     (Self   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
-   --  Clears messages container and load data for opened project.
+   procedure On_Project_Changing_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Save messages and clears messages container.
 
    package Notifiers is
 
@@ -177,7 +176,6 @@ package body GPS.Kernel.Messages is
    is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
-      Hook   : Project_Changed_Hook_Access;
 
    begin
       --  Register simple message load/save procedures
@@ -186,43 +184,21 @@ package body GPS.Kernel.Messages is
       GPS.Kernel.Messages.Hyperlink.Register (Result);
       GPS.Kernel.Messages.Markup.Register (Result);
 
-      --  Setup "project_changed" hook
+      --  Setup "project_changing" and "project_changed" hook
 
-      Hook := new Project_Changed_Hook_Record;
+      Add_Hook
+        (Kernel,
+         Project_Changing_Hook,
+         Wrapper (On_Project_Changing_Hook'Access),
+         "messages_container.project_changing");
       Add_Hook
         (Kernel,
          Project_Changed_Hook,
-         Hook,
+         Wrapper (On_Project_Changed_Hook'Access),
          "messages_container.project_changed");
 
       return To_Address (Result);
    end Create_Messages_Container;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Self);
-
-      Container : constant Messages_Container_Access :=
-                    Get_Messages_Container (Kernel);
-
-   begin
-      --  Save messages for previous project
-
-      Container.Save;
-      Container.Remove_All_Messages (Empty_Message_Flags);
-
-      --  Load messages for opened project
-
-      GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
-      Container.Project_File := Get_Project (Kernel).Project_Path;
-      Container.Load;
-   end Execute;
 
    --------------
    -- Finalize --
@@ -1259,6 +1235,45 @@ package body GPS.Kernel.Messages is
       end Notify_Listeners_About_Message_Removed;
 
    end Notifiers;
+
+   -----------------------------
+   -- On_Project_Changed_Hook --
+   -----------------------------
+
+   procedure On_Project_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Container : constant Messages_Container_Access :=
+                    Get_Messages_Container (Kernel);
+
+   begin
+      --  Load messages for opened project
+
+      GPS.Kernel.Messages.View.Do_Not_Goto_First_Location (Kernel);
+      Container.Project_File := Get_Project (Kernel).Project_Path;
+      Container.Load;
+   end On_Project_Changed_Hook;
+
+   ------------------------------
+   -- On_Project_Changing_Hook --
+   ------------------------------
+
+   procedure On_Project_Changing_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Data);
+
+      Container : constant Messages_Container_Access :=
+                    Get_Messages_Container (Kernel);
+
+   begin
+      --  Save messages for previous project
+
+      Container.Save;
+      Container.Remove_All_Messages (Empty_Message_Flags);
+
+   end On_Project_Changing_Hook;
 
    -----------------------
    -- Register_Listener --
