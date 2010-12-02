@@ -8,6 +8,14 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- JB30-029 The project editor takes too much time to open
+  Problem:    When opening the project editor, a dialog "Scanning your computer
+              for abailable compilers" appears and the project editor might
+              be quite long to actually appear.
+  Workaround: Verify your PATH environment variable, and in particular try to
+              lower the number of network directories present in it. You can
+              also manually edit the project file.
+
 - JB24-033 References found in external files when sharing obj dir
   Problem:    If you have multiple projects sharing a common object
               directory, GPS will load the xref information from all the ALI
@@ -29,7 +37,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 - JA12-020 Error when auto fixing type discriminants
   Problem:    When the compiler detects a mismatch between the partial and the
-              full declaration of a type, with regards to the discriminants, 
+              full declaration of a type, with regards to the discriminants,
               the auto fix mechanism does't work and remove random characters.
   Workaround: Manually fix the code.
 
@@ -40,7 +48,7 @@ If no tag is specified, the entry is relevant to all IDEs.
               click on the window to raise it.
 
 - J914-003 Navigation errors when switching scenario variables
-  Problem:    When switching back and forth scenario variables involving a 
+  Problem:    When switching back and forth scenario variables involving a
               change in the set of sources, the navigation may be confused
               and lead to files that are not in the current scenario.
   Workaround: Restart GPS / GNATbench and set the scenario on which navigation
@@ -64,7 +72,7 @@ If no tag is specified, the entry is relevant to all IDEs.
   Workaround: Manually complete the code.
 
 - F622-029 GPS: Completion prefix error when the list is too large
-  Problem:    In GPS, when querying a smart completion, if the list is too 
+  Problem:    In GPS, when querying a smart completion, if the list is too
               large, the common prefix used to complete the current identifier
               may be wrong.
   Workaround: Manually complete the code.
