@@ -10,7 +10,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 - JB30-029 The project editor takes too much time to open
   Problem:    When opening the project editor, a dialog "Scanning your computer
-              for abailable compilers" appears and the project editor might
+              for available compilers" appears and the project editor might
               be quite long to actually appear.
   Workaround: Verify your PATH environment variable, and in particular try to
               lower the number of network directories present in it. You can
