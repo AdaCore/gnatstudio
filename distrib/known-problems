@@ -8,7 +8,7 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- JB30-029 The project editor takes too much time to open
+- JB30-029 GPS: Project editor takes a long time to open
   Problem:    When opening the project editor, a dialog "Scanning your computer
               for available compilers" appears and the project editor might
               be quite long to actually appear.
