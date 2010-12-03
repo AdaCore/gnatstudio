@@ -1,9 +1,10 @@
 Known Problems fixed in GPS 5.0.1
 
-- JB22-004: External subprograms editor is empty
-  Problem:    When user defined CI file contents stub for stack size of
-              'node' item, external subprograms editor in GPS is empty.
-  Workaround: Specify stack size of all 'node' items in user defined CI file.
+- JB22-004: GNATstack external subprograms editor empty
+  Problem:    The GNATstack external subprograms editor will be empty if
+              you have defined a custom CI file with no stack size specified.
+  Workaround: Specify the stack size of all 'node' items in the user defined
+              CI file.
 
 - JB17-009: Shell command GPS.Clipboard.copy does not publish clipboard content
   Problem:    When using the command GPS.Clipboard.copy to set text in the
