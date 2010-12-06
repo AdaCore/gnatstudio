@@ -43,6 +43,12 @@ Known Problems fixed in GPS 5.0.1
               the load time in GPS was also improved.
   Workaround: None.
 
+- JA12-020 Error when auto fixing type discriminants
+  Problem:    When the compiler detects a mismatch between the partial and the
+              full declaration of a type, with regards to the discriminants, 
+              the auto fix mechanism does't work and remove random characters.
+  Workaround: Manually fix the code.
+
 - JA17-009: Cannot query status with svn 1.6
   Problem:    The 'Needs merge' and 'Needs status' subversion statuses are
               not properly reported by the VCS Explorer when using svn 1.6
