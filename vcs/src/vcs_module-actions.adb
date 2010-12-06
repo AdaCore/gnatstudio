@@ -1,0 +1,695 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                 Copyright (C) 2001-2010, AdaCore                  --
+--                                                                   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with GNAT.Strings;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Glib.Object;               use Glib.Object;
+with Glib;                      use Glib;
+
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Widget;                use Gtk.Widget;
+
+with Commands.VCS;              use Commands.VCS;
+
+with Log_Utils;                 use Log_Utils;
+
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+
+with VCS.Generic_VCS;           use VCS.Generic_VCS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
+with VCS_View_API;              use VCS_View_API;
+
+------------------------
+-- VCS_Module.Actions --
+------------------------
+
+package body VCS_Module.Actions is
+
+   type Has_VCS_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_VCS_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True when the current context is associated with a known VCS
+
+   type No_File_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_File_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True if the filter does not contain a valid file
+
+   type VCS_Explorer_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access VCS_Explorer_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True if we are on the VCS explorer
+
+   type Has_Revision_Log_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Revision_Log_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True if Context contains a file which has a revision log
+
+   type Is_Revision_Log_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Revision_Log_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True if Context contains a file which is a revision log
+
+   type Has_Project_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Project_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True if the context has a project
+
+   type Has_Revision_Information is new Action_Filter_Record with
+     null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Revision_Information;
+      Context : Selection_Context) return Boolean;
+   --  Return True if the context contains revision information
+
+   type Has_Other_Revision_Information is new Action_Filter_Record with
+     null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Other_Revision_Information;
+      Context : Selection_Context) return Boolean;
+   --  Return True if the context contains the information for the other
+   --  revision
+
+   type Has_Tag_Information is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Tag_Information;
+      Context : Selection_Context) return Boolean;
+   --  Return True if the context contains tag information
+
+   type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
+   overriding procedure Append_To_Menu
+     (Factory : access VCS_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Fill Menu with the contextual menu for the VCS module,
+   --  if Context is appropriate.
+
+   function Is_A_Log (File : Virtual_File) return Boolean;
+   --  Return True if File is a log.
+
+   ----------------------
+   -- Register_Actions --
+   ----------------------
+
+   procedure Register_Actions (Kernel : access Kernel_Handle_Record'Class) is
+
+      procedure Register_Action_Menu
+        (Action_Label  : String;
+         Description   : String;
+         Filter        : Action_Filter;
+         Callback      : Context_Callback.Marshallers.Void_Marshaller.Handler);
+      --  Registers an action.
+      --  If In_Contextual_Menu, also register a contextual menu for this
+      --  action.
+
+      VCS_Menu    : constant String := "/_" & (-"VCS");
+      Has_Revision_Log : constant Action_Filter :=
+        new Has_Revision_Log_Filter;
+      Is_Revision_Log : constant Action_Filter :=
+        new Is_Revision_Log_Filter;
+
+      File_Filter : constant Action_Filter :=
+        Lookup_Filter (Kernel, "File") and not Is_Revision_Log;
+
+      Dir_Filter  : constant Action_Filter :=
+        Lookup_Filter (Kernel, "Directory") and not Is_Revision_Log;
+
+      Prj_Filter  : constant Action_Filter :=
+        new Has_Project_Filter;
+
+      Directory_No_File_Filter : constant Action_Filter :=
+        new No_File_Filter;
+
+      Has_Revision_Filter : constant Action_Filter :=
+        new Has_Revision_Information;
+
+      Has_Other_Revision_Filter : constant Action_Filter :=
+        new Has_Other_Revision_Information;
+
+      Has_Tag_Filter : constant Action_Filter :=
+        new Has_Tag_Information;
+
+      --------------------------
+      -- Register_Action_Menu --
+      --------------------------
+
+      procedure Register_Action_Menu
+        (Action_Label  : String;
+         Description   : String;
+         Filter        : Action_Filter;
+         Callback      : Context_Callback.Marshallers.Void_Marshaller.Handler)
+      is
+         Parent_String : GNAT.Strings.String_Access;
+         Command       : Generic_Kernel_Command_Access;
+         The_Filter : Action_Filter;
+
+      begin
+         Create (Command, Kernel, Callback);
+         The_Filter := Filter;
+
+         Register_Action
+           (Kernel, Action_Label, Command, Description,
+            The_Filter,
+            Category => "VCS");
+
+         if Filter = Dir_Filter then
+            Parent_String := new String'("/" & (-"Directory"));
+         elsif Filter = Prj_Filter then
+            Parent_String := new String'("/" & (-"Project"));
+         else
+            Parent_String := new String'("");
+         end if;
+         Free (Parent_String);
+      end Register_Action_Menu;
+
+      Filter               : Action_Filter;
+
+   begin
+      Register_Menu
+        (Kernel, VCS_Menu, -"Update all _projects", "",
+         Update_All'Access);
+
+      Register_Menu
+        (Kernel, VCS_Menu, -"_Query status for all projects", "",
+         Query_Status_For_Project'Access);
+
+      Register_Action_Menu
+        ("Status",
+         -"Query the status of the current selection",
+         File_Filter,
+         On_Menu_Get_Status'Access);
+
+      Register_Action_Menu
+        ("Update",
+         -"Update to the current repository revision",
+         File_Filter,
+         On_Menu_Update'Access);
+
+      Register_Action_Menu
+        ("Commit",
+         -"Commit current file, or file corresponding to the current log",
+         Has_Revision_Log or Is_Revision_Log,
+         On_Menu_Commit'Access);
+
+      Register_Action_Menu
+        ("Commit (from revision log)",
+         -"Commit current file, or file corresponding to the current log",
+         Is_Revision_Log,
+         On_Menu_Commit'Access);
+
+      Register_Action_Menu
+        ("Commit (via revision log)",
+         -"Commit current file, or file corresponding to the current log",
+         File_Filter and not Has_Revision_Log,
+         On_Menu_Commit'Access);
+
+      Register_Action_Menu
+        ("Open",
+         -"Open the current file for editing",
+         File_Filter,
+         On_Menu_Open'Access);
+
+      Register_Action_Menu
+        ("History (as text)",
+         -"View the revision history for the current file as text",
+         File_Filter,
+         On_Menu_View_Log'Access);
+
+      Register_Action_Menu
+        ("History",
+         -"View the revision history for the current file",
+         File_Filter,
+         On_Menu_View_Log'Access);
+
+      Register_Action_Menu
+        ("History for revision",
+         -"View the revision history for one revision of the current file",
+         File_Filter,
+         On_Menu_View_Log_Rev'Access);
+
+      Register_Action_Menu
+        ("Diff against head",
+         -"Compare current file with the most recent revision",
+         File_Filter,
+         On_Menu_Diff'Access);
+
+      Register_Action_Menu
+        ("Diff against revision",
+         -"Compare current file against a specified revision",
+         File_Filter,
+         On_Menu_Diff_Specific'Access);
+
+      Register_Action_Menu
+        ("Diff between two revisions",
+         -"Compare two specified revisions of current file",
+         File_Filter,
+         On_Menu_Diff2'Access);
+
+      Register_Action_Menu
+        ("Diff base against head",
+         -"Compare base and head revisions of current file",
+         File_Filter,
+         On_Menu_Diff_Base_Head'Access);
+
+      --  ??? To do
+
+      Register_Action_Menu
+        ("Diff against tag",
+         -"Compare base and head revisions of current file",
+         Has_Tag_Filter,
+         On_Menu_Diff_Tag'Access);
+
+      Register_Action_Menu
+        ("Diff against selected revision",
+         -"Compare against selected revision",
+         Has_Revision_Filter and Has_Other_Revision_Filter,
+         On_Menu_Diff_Other_Revision'Access);
+
+      Register_Action_Menu
+        ("Annotate",
+         -"Annotate the current file",
+         File_Filter,
+         On_Menu_Annotate'Access);
+
+      Register_Action_Menu
+        ("Remove Annotate",
+         -"Remove the annotations from current file",
+         File_Filter,
+         On_Menu_Remove_Annotate'Access);
+
+      --  Add the log handling actions only if at least one VCS supports log
+
+      Register_Action_Menu
+        ("Edit revision log",
+         -"Edit the revision log for the current file",
+         File_Filter,
+         On_Menu_Edit_Log'Access);
+
+      Register_Action_Menu
+        ("Edit global ChangeLog",
+         -"Edit the global ChangeLog for the current selection",
+         File_Filter,
+         On_Menu_Edit_ChangeLog'Access);
+
+      Register_Action_Menu
+        ("Remove revision log",
+         -"Remove the revision log corresponding to the current file",
+         Has_Revision_Log,
+         On_Menu_Remove_Log'Access);
+
+      Register_Action_Menu
+        ("Add",
+         -"Add the current file to repository",
+         Has_Revision_Log,
+         On_Menu_Add'Access);
+
+      Register_Action_Menu
+        ("Add (via revision log)",
+         -"Add the current file to repository",
+         File_Filter and not Has_Revision_Log,
+         On_Menu_Add'Access);
+
+      Register_Action_Menu
+        ("Add no commit",
+         -"Add the current file to repository, do not commit",
+         File_Filter,
+         On_Menu_Add_No_Commit'Access);
+
+      Register_Action_Menu
+        ("Remove",
+         -"Remove the current file from repository",
+         Has_Revision_Log,
+         On_Menu_Remove'Access);
+
+      Register_Action_Menu
+        ("Remove (via revision log)",
+         -"Remove the current file from repository",
+         File_Filter and not Has_Revision_Log,
+         On_Menu_Remove'Access);
+
+      Register_Action_Menu
+        ("Remove no commit",
+         -"Remove the current file from repository, do not commit",
+         File_Filter,
+         On_Menu_Remove_No_Commit'Access);
+
+      Register_Action_Menu
+        ("Revert",
+         -"Revert the current file to repository revision",
+         File_Filter,
+         On_Menu_Revert'Access);
+
+      Register_Action_Menu
+        ("Resolved",
+         -"Mark file conflicts resolved",
+         File_Filter,
+         On_Menu_Resolved'Access);
+
+      Register_Action_Menu
+        ("Create tag",
+         -"Create a tag or branch tag",
+         File_Filter,
+         On_Menu_Create_Tag'Access);
+
+      Register_Action_Menu
+        ("Switch tag",
+         -"Switch to a specific tag or branch",
+         File_Filter,
+         On_Menu_Switch_Tag'Access);
+
+      Register_Action_Menu
+        ("Merge",
+         -"Merge into tag",
+         Has_Tag_Filter,
+         On_Menu_Merge'Access);
+
+      Register_Action_Menu
+        ("View revision",
+         -"View a specific revision of current file",
+         Has_Revision_Filter,
+         On_Menu_View_File_Revision'Access);
+
+      Register_Action_Menu
+        ("Add directory, no commit",
+         -"Add the current directory",
+         Directory_No_File_Filter,
+         On_Menu_Add_Directory_No_Commit'Access);
+
+      Register_Action_Menu
+        ("Remove directory, no commit",
+         -"Remove the current directory",
+         Directory_No_File_Filter,
+         On_Menu_Remove_Directory_No_Commit'Access);
+
+      Register_Action_Menu
+        ("Commit directory",
+         -"Commit the current directory",
+         Directory_No_File_Filter,
+         On_Menu_Commit'Access);
+
+      Register_Action_Menu
+        ("Status dir",
+         -"Query the status of the current directory",
+         Dir_Filter,
+         On_Menu_Get_Status_Dir'Access);
+
+      Register_Action_Menu
+        ("Update dir",
+         -"Update the current directory",
+         Dir_Filter,
+         On_Menu_Update_Dir'Access);
+
+      Register_Action_Menu
+        ("Status dir (recursively)",
+         -"Query the status of the current directory recursively",
+         Dir_Filter,
+         On_Menu_Get_Status_Dir_Recursive'Access);
+
+      Register_Action_Menu
+        ("Update dir (recursively)",
+         -"Update the current directory (recursively)",
+         Dir_Filter,
+         On_Menu_Update_Dir_Recursive'Access);
+
+      Register_Action_Menu
+        ("List project",
+         -"List all the files in project",
+         Prj_Filter,
+         On_Menu_List_Project_Files'Access);
+
+      Register_Action_Menu
+        ("Status project",
+         -"Query the status of the current project",
+         Prj_Filter,
+         On_Menu_Get_Status_Project'Access);
+
+      Register_Action_Menu
+        ("Update project",
+         -"Update the current project",
+         Prj_Filter,
+         On_Menu_Update_Project'Access);
+
+      Register_Action_Menu
+        ("List project (recursively)",
+         -"List all the files in project and subprojects",
+         Prj_Filter,
+         On_Menu_List_Project_Files_Recursive'Access);
+
+      Register_Action_Menu
+        ("Status project (recursively)",
+         -"Query the status of the current project recursively",
+         Prj_Filter,
+         On_Menu_Get_Status_Project_Recursive'Access);
+
+      Register_Action_Menu
+        ("Update project (recursively)",
+         -"Update the current project (recursively)",
+         Prj_Filter,
+         On_Menu_Update_Project_Recursive'Access);
+
+      Filter := new Has_VCS_Filter;
+      Register_Filter (Kernel, Filter, "VCS");
+
+      Register_Contextual_Submenu
+        (Kernel  => Kernel,
+         Name    => -"Version Control",
+         Filter  => Filter,
+         Ref_Item => "VCS Reference",
+         Add_Before => False,
+         Submenu => new VCS_Contextual_Menu);
+
+      Register_Contextual_Menu
+        (Kernel      => Kernel,
+         Name        => "Version Control/VCS Reference",
+         Action      => Action_Record_Access'(null));
+
+      Filter := new VCS_Explorer_Filter;
+
+      Register_Contextual_Menu
+        (Kernel      => Kernel,
+         Name        => "VCS Reference",
+         Filter      => Filter);
+   end Register_Actions;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_VCS_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return (Has_File_Information (Context)
+              or else Has_Project_Information (Context)
+              or else Has_Directory_Information (Context))
+        and then Get_Current_Ref (Context) /= Unknown_VCS_Reference
+        and then (not Has_Entity_Name_Information (Context)
+                  or else Get_Name (Module_ID (Get_Creator (Context))) =
+                    "Source_Editor");
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_File_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      File : Virtual_File;
+   begin
+      --  No directory: no match.
+      if not Has_Directory_Information (Context) then
+         return False;
+      end if;
+
+      --  A diretory but no file information: match.
+      if not Has_File_Information (Context) then
+         return True;
+      end if;
+
+      --  If we reach this point, it is possible that File_Information is
+      --  set to the directory, in which case we also match.
+      File := File_Information (Context);
+
+      if File.Is_Directory then
+         return True;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access VCS_Explorer_Filter;
+      Context : Selection_Context) return Boolean is
+      pragma Unreferenced (Filter);
+   begin
+      return Get_Creator (Context) = Abstract_Module_ID
+        (VCS_Explorer_Module_Id);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Revision_Log_Filter;
+      Context : Selection_Context) return Boolean is
+      pragma Unreferenced (Filter);
+   begin
+      if not Has_File_Information (Context) then
+         return False;
+      end if;
+
+      if Get_Log_From_File
+        (Get_Kernel (Context),
+         File_Information (Context),
+         False) /= No_File
+      then
+         return not Is_A_Log (File_Information (Context));
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   --------------
+   -- Is_A_Log --
+   --------------
+
+   function Is_A_Log (File : Virtual_File) return Boolean is
+      Full : constant Cst_Filesystem_String_Access := File.Full_Name;
+   begin
+      if Full'Length > 4
+        and then Full (Full'Last - 3 .. Full'Last) = "$log"
+      then
+         return True;
+      end if;
+
+      return False;
+   end Is_A_Log;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Revision_Log_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if not Has_File_Information (Context) then
+         return False;
+      end if;
+
+      return Is_A_Log (File_Information (Context));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Project_Filter;
+      Context : Selection_Context) return Boolean is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_Project_Information (Context);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Revision_Information;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return GPS.Kernel.Contexts.Has_Revision_Information (Context);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Other_Revision_Information;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return GPS.Kernel.Contexts.Has_Other_Revision_Information (Context);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Tag_Information;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return GPS.Kernel.Contexts.Has_Tag_Information (Context);
+   end Filter_Matches_Primitive;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   overriding procedure Append_To_Menu
+     (Factory : access VCS_Contextual_Menu;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Factory, Object);
+      Creator : constant Abstract_Module_ID := Get_Creator (Context);
+   begin
+      if (Creator /= Abstract_Module_ID (VCS_Module_ID)
+          and then Creator /= Abstract_Module_ID (VCS_Explorer_Module_Id))
+        or else Has_Activity_Information (Context)
+      then
+         VCS_View_API.VCS_Contextual_Menu
+           (Get_Kernel (Context), Context, Menu, False);
+      end if;
+   end Append_To_Menu;
+
+end VCS_Module.Actions;
