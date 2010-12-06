@@ -1288,6 +1288,23 @@ package body GPS.Kernel.Scripts is
             Set_Error_Msg (Data, -"No file information stored in the context");
          end if;
 
+      elsif Command = "files" then
+         Context := Get_Data (Data, 1);
+         if Has_File_Information (Context) then
+            Set_Return_Value_As_List (Data);
+
+            declare
+               Files : constant File_Array := File_Information (Context);
+            begin
+               for J in Files'Range loop
+                  Set_Return_Value
+                    (Data, Create_File (Get_Script (Data), Files (J)));
+               end loop;
+            end;
+         else
+            Set_Error_Msg (Data, -"No file information stored in the context");
+         end if;
+
       elsif Command = "location" then
          Context := Get_Data (Data, 1);
          if Has_Line_Information (Context) then
@@ -1393,6 +1410,10 @@ package body GPS.Kernel.Scripts is
          else
             Set_Return_Value (Data, Inst);
          end if;
+
+      elsif Command = "module_name" then
+         Context := Get_Data (Data, 1);
+         Set_Return_Value (Data, Get_Name (Module_ID (Get_Creator (Context))));
 
       elsif Command = "contextual_menu" then
          Context := Get_Data (Data, 1);
@@ -2179,11 +2200,20 @@ package body GPS.Kernel.Scripts is
       end if;
 
       Register_Command
+        (Kernel, "module_name",
+         Class        => Get_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+
+      Register_Command
         (Kernel, Constructor_Method,
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
         (Kernel, "file",
+         Class        => Get_File_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel, "files",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
