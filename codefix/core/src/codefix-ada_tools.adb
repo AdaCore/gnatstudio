@@ -343,8 +343,11 @@ package body Codefix.Ada_Tools is
       Current_Info := Get_Iterator_At
         (Current_Text, Current_Cursor, Position => After);
 
+      --  Skip the with, use clauses and pragmas.
+
       while Get_Construct (Current_Info).Category = Cat_With
-         or else Get_Construct (Current_Info).Category = Cat_Use
+        or else Get_Construct (Current_Info).Category = Cat_Use
+        or else Get_Construct (Current_Info).Category = Cat_Pragma
       loop
          Last_Info := Current_Info;
 
