@@ -98,6 +98,16 @@ package VCS_Module is
 
    VCS_Module_ID : VCS_Module_ID_Access;
 
+   type VCS_Explorer_Module_ID_Record is new Module_ID_Record with null record;
+   type VCS_Explorer_Module_ID_Access is access
+     all VCS_Explorer_Module_ID_Record;
+   VCS_Explorer_Module_Id : VCS_Explorer_Module_ID_Access;
+
+   overriding procedure Default_Context_Factory
+     (Module  : access VCS_Explorer_Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Glib.Object.GObject);
+
    overriding procedure Destroy (Module : in out VCS_Module_ID_Record);
    overriding procedure Default_Context_Factory
      (Module  : access VCS_Module_ID_Record;

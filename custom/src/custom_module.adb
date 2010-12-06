@@ -89,6 +89,7 @@ package body Custom_Module is
    Description_Cst   : aliased constant String := "description";
    Category_Cst      : aliased constant String := "category";
    Key_Cst           : aliased constant String := "key";
+   Action_Cst        : aliased constant String := "action";
 
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
@@ -109,7 +110,8 @@ package body Custom_Module is
       4 => Ref_Cst'Access,
       5 => Add_Before_Cst'Access,
       6 => Group_Cst'Access,
-      7 => Visibility_Filter_Cst'Access);
+      7 => Visibility_Filter_Cst'Access,
+      8 => Action_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
      (1 => Factory_Cst'Access,
       2 => On_Activate_Cst'Access,
@@ -1552,9 +1554,15 @@ package body Custom_Module is
       Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       Contextual_Class : constant Class_Type :=
                            New_Class (Kernel, "Contextual");
+      Action_Class : constant Class_Type := New_Class
+        (Kernel, "Action", Base => Get_GUI_Class (Kernel));
+
+      Action           : Action_Record_Access;
+      Action_Inst      : Class_Instance;
       Inst             : Class_Instance;
       Cmd              : Subprogram_Command;
       Filter           : Subprogram_Filter;
+      The_Filter       : Action_Filter;
       Label            : Subprogram_Label;
       Subp             : Subprogram_Type;
    begin
@@ -1585,6 +1593,16 @@ package body Custom_Module is
          Name_Parameters (Data, Contextual_Create_Params);
          Inst := Nth_Arg (Data, 1, Contextual_Class);
 
+         Action_Inst := Nth_Arg (Data, 9, Action_Class, True);
+         if Action_Inst /= No_Class_Instance then
+            Action  := Lookup_Action
+              (Kernel, String'(Get_Data (Action_Inst, Action_Class)));
+
+            if Action /= null then
+               The_Filter := Action.Filter;
+            end if;
+         end if;
+
          declare
             Tmp : Subprogram_Type;
          begin
@@ -1600,16 +1618,25 @@ package body Custom_Module is
          if Subp /= null then
             Filter := new Subprogram_Filter_Record'
               (Action_Filter_Record with Filter => Subp);
+
+            if The_Filter = null then
+               The_Filter := Action_Filter (Filter);
+            else
+               The_Filter := The_Filter and Action_Filter (Filter);
+            end if;
          end if;
 
          Subp := Nth_Arg (Data, 3, null);
          if Subp /= null then
             Label := new Subprogram_Label_Record'(Label => Subp);
+         end if;
+
+         if Label /= null then
             Register_Contextual_Menu
               (Kernel,
                Name              => Get_Data (Inst, Contextual_Class),
                Action            => Interactive_Command_Access (Cmd),
-               Filter            => Action_Filter (Filter),
+               Filter            => The_Filter,
                Visibility_Filter => Nth_Arg (Data, 8, True),
                Label             => Label,
                Ref_Item          => Nth_Arg (Data, 5, ""),
@@ -1621,7 +1648,7 @@ package body Custom_Module is
               (Kernel,
                Name              => Get_Data (Inst, Contextual_Class),
                Action            => Interactive_Command_Access (Cmd),
-               Filter            => Action_Filter (Filter),
+               Filter            => The_Filter,
                Visibility_Filter => Nth_Arg (Data, 8, True),
                Ref_Item          => Nth_Arg (Data, 5, ""),
                Add_Before        => Nth_Arg (Data, 6, True),
@@ -1730,6 +1757,9 @@ package body Custom_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Action_Class : constant Class_Type := New_Class
         (Kernel, "Action", Base => Get_GUI_Class (Kernel));
+      Menu_Class : constant Class_Type := New_Class
+        (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
+
       Inst : Class_Instance;
    begin
       if Command = Constructor_Method then
@@ -1779,14 +1809,16 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
+            Item   : Gtk_Menu_Item;
             Path   : constant String  := Nth_Arg (Data, 2);
             Ref    : constant String  := Nth_Arg (Data, 3, "");
             Before : constant Boolean := Nth_Arg (Data, 4, True);
             Action : constant Action_Record_Access :=
               Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
+
          begin
             if Action /= null then
-               Register_Menu
+               Item := Register_Menu
                  (Kernel,
                   Parent_Path => Dir_Name (Path),
                   Text        => Base_Name (Path),
@@ -1794,6 +1826,10 @@ package body Custom_Module is
                   Add_Before  => Before,
                   Callback    => null,
                   Action      => Action);
+
+               Inst := New_Instance (Get_Script (Data), Menu_Class);
+               Set_Data (Inst, Widget => GObject (Item));
+               Set_Return_Value (Data, Inst);
             end if;
          end;
 
@@ -1927,7 +1963,7 @@ package body Custom_Module is
       Register_Command
         (Kernel, "create",
          Minimum_Args => 1,
-         Maximum_Args => 7,
+         Maximum_Args => 8,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Register_Command

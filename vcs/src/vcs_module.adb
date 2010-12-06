@@ -21,30 +21,27 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNAT.Strings;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 with Glib;                      use Glib;
 
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Commands.VCS;              use Commands.VCS;
+with Log_Utils;                 use Log_Utils;
+
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Log_Utils;
+
 with Traces;                    use Traces;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -54,13 +51,9 @@ with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View_API;              use VCS_View_API;
 
-package body VCS_Module is
+with VCS_Module.Actions;        use VCS_Module.Actions;
 
-   type Has_VCS_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_VCS_Filter;
-      Context : Selection_Context) return Boolean;
-   --  True when the current context is associated with a known VCS
+package body VCS_Module is
 
    type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
@@ -151,10 +144,6 @@ package body VCS_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when project has been changed and is fully loaded
 
-   procedure On_GPS_Started
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when GPS is starting
-
    ---------------
    -- Equiv_VCS --
    ---------------
@@ -201,431 +190,6 @@ package body VCS_Module is
       end if;
    end Get_VCS_From_Id;
 
-   --------------------
-   -- On_GPS_Started --
-   --------------------
-
-   procedure On_GPS_Started (Kernel : access Kernel_Handle_Record'Class) is
-
-      No_Action : constant VCS_Actions := (2 .. 1 => None);
-
-      procedure Register_Action_Menu
-        (Action_Label : String;
-         Description  : String;
-         Menu_Label   : String;
-         Filter       : Action_Filter;
-         Callback     : Context_Callback.Marshallers.Void_Marshaller.Handler;
-         Actions      : VCS_Actions := No_Action);
-      --  Registers an action and a menu only if Action is at least defined in
-      --  a loaded VCS.
-
-      procedure Create_Separator;
-      --  Create a separator if needed (items inserted since last separator)
-
-      function One_Action_Defined (Actions : VCS_Actions) return Boolean;
-      --  Returns true if at least one action in Actions is defined
-
-      function Log_Required_In_VCS return Boolean;
-      --  Returns true if at least one VCS requires log content
-
-      VCS_Menu    : constant String := "/_" & (-"VCS");
-      Dir_Filter  : constant Action_Filter :=
-                      Lookup_Filter (Kernel, "Directory");
-      Prj_Filter  : constant Action_Filter :=
-                      Lookup_Filter (Kernel, "Project");
-      File_Filter : constant Action_Filter :=
-                      Lookup_Filter (Kernel, "File");
-
-      Mitem       : Gtk_Menu_Item;
-      Items       : Boolean := True;
-
-      ------------------------
-      -- One_Action_Defined --
-      ------------------------
-
-      function One_Action_Defined (Actions : VCS_Actions) return Boolean is
-
-         function Action_Defined (Action : VCS_Action) return Boolean;
-         --  Return True if Action is at least defined in one VCS
-
-         --------------------
-         -- Action_Defined --
-         --------------------
-
-         function Action_Defined (Action : VCS_Action) return Boolean is
-
-            procedure Check_Action (VCS : VCS_Access);
-            --  Check Action presence in VCS
-
-            Result : Boolean := False;
-
-            ------------------
-            -- Check_Action --
-            ------------------
-
-            procedure Check_Action (VCS : VCS_Access) is
-            begin
-               Result := Result or Is_Action_Defined (VCS, Action);
-            end Check_Action;
-
-         begin
-            For_Every_VCS (Check_Action'Access);
-            return Result;
-         end Action_Defined;
-
-      begin
-         for K in Actions'Range loop
-            if Action_Defined (Actions (K)) then
-               return True;
-            end if;
-         end loop;
-         return False;
-      end One_Action_Defined;
-
-      -------------------------
-      -- Log_Required_In_VCS --
-      -------------------------
-
-      function Log_Required_In_VCS return Boolean is
-
-         procedure Check_Log (VCS : VCS_Access);
-         --  Check that log requires VCS
-
-         Result : Boolean := False;
-
-         ---------------
-         -- Check_Log --
-         ---------------
-
-         procedure Check_Log (VCS : VCS_Access) is
-         begin
-            Result := Result or VCS.Require_Log;
-         end Check_Log;
-
-      begin
-         For_Every_VCS (Check_Log'Access);
-         return Result;
-      end Log_Required_In_VCS;
-
-      ----------------------
-      -- Create_Separator --
-      ----------------------
-
-      procedure Create_Separator is
-      begin
-         if Items then
-            Gtk_New (Mitem);
-            Register_Menu (Kernel, VCS_Menu, Mitem);
-            Items := False;
-         end if;
-      end Create_Separator;
-
-      --------------------------
-      -- Register_Action_Menu --
-      --------------------------
-
-      procedure Register_Action_Menu
-        (Action_Label : String;
-         Description  : String;
-         Menu_Label   : String;
-         Filter       : Action_Filter;
-         Callback     : Context_Callback.Marshallers.Void_Marshaller.Handler;
-         Actions      : VCS_Actions := No_Action)
-      is
-         Parent_String : GNAT.Strings.String_Access;
-         Command       : Generic_Kernel_Command_Access;
-      begin
-         if Actions = No_Action or else One_Action_Defined (Actions) then
-            Items := True;
-            Create (Command, Kernel, Callback);
-            Register_Action
-              (Kernel, Action_Label, Command, Description, Filter,
-               Category => "VCS");
-
-            if Filter = Dir_Filter then
-               Parent_String := new String'("/" & (-"Directory"));
-            elsif Filter = Prj_Filter then
-               Parent_String := new String'("/" & (-"Project"));
-            else
-               Parent_String := new String'("");
-            end if;
-
-            Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => VCS_Menu & Parent_String.all,
-               Text        => Menu_Label,
-               Callback    => null,
-               Action      => Lookup_Action (Kernel, Action_Label));
-
-            Free (Parent_String);
-         end if;
-      end Register_Action_Menu;
-
-   begin
-      if One_Action_Defined ((1 => Update)) then
-         Register_Menu
-           (Kernel, VCS_Menu, -"Update all _projects", "",
-            Update_All'Access);
-      end if;
-
-      if One_Action_Defined ((Status_Files, Status_Dir)) then
-         Register_Menu
-           (Kernel, VCS_Menu, -"_Query status for all projects", "",
-            Query_Status_For_Project'Access);
-      end if;
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Status",
-         -"Query the status of the current selection",
-         -"Query _status",
-         File_Filter,
-         On_Menu_Get_Status'Access, (1 => Status_Files));
-
-      Register_Action_Menu
-        ("Update",
-         -"Update to the current repository revision",
-         -"_Update",
-         File_Filter,
-         On_Menu_Update'Access, (1 => Update));
-
-      Register_Action_Menu
-        ("Commit",
-         -"Commit current file, or file corresponding to the current log",
-         -"_Commit",
-         File_Filter,
-         On_Menu_Commit'Access, (1 => Commit));
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Open",
-         -"Open the current file for editing",
-         -"_Open",
-         File_Filter,
-         On_Menu_Open'Access, (1 => Open));
-
-      Register_Action_Menu
-        ("History",
-         -"View the revision history for the current file",
-         -"View _entire revision history",
-         File_Filter,
-         On_Menu_View_Log'Access, (1 => History));
-
-      Register_Action_Menu
-        ("History for revision...",
-         -"View the revision history for one revision of the current file",
-         -"View specific revision _history",
-         File_Filter,
-         On_Menu_View_Log_Rev'Access, (1 => History_Revision));
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Diff against head",
-         -"Compare current file with the most recent revision",
-         -"Compare against head revision",
-         File_Filter,
-         On_Menu_Diff'Access, (1 => Diff_Head));
-
-      Register_Action_Menu
-        ("Diff against revision...",
-         -"Compare current file against a specified revision",
-         -"Compare against specific revision",
-         File_Filter,
-         On_Menu_Diff_Specific'Access, (1 => Diff));
-
-      Register_Action_Menu
-        ("Diff between two revisions",
-         -"Compare two specified revisions of current file",
-         -"Compare two revisions",
-         File_Filter,
-         On_Menu_Diff2'Access, (1 => Diff2));
-
-      Register_Action_Menu
-        ("Diff base against head",
-         -"Compare base and head revisions of current file",
-         -"Compare base against head",
-         File_Filter,
-         On_Menu_Diff_Base_Head'Access, (1 => Diff_Base_Head));
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Annotate",
-         -"Annotate the current file",
-         -"Add annotations",
-         File_Filter,
-         On_Menu_Annotate'Access, (1 => Annotate));
-
-      Register_Action_Menu
-        ("Remove Annotate",
-         -"Remove the annotations from current file",
-         -"Remove annotations",
-         File_Filter,
-         On_Menu_Remove_Annotate'Access, (1 => Annotate));
-
-      --  Add the log handling actions only if at least one VCS supports log
-
-      if Log_Required_In_VCS then
-         Register_Action_Menu
-           ("Edit revision log",
-            -"Edit the revision log for the current file",
-            -"Edit revision log",
-            File_Filter,
-            On_Menu_Edit_Log'Access, (Add, Commit));
-
-         Register_Action_Menu
-           ("Edit global ChangeLog",
-            -"Edit the global ChangeLog for the current selection",
-            -"Edit global ChangeLog",
-            File_Filter,
-            On_Menu_Edit_ChangeLog'Access, (Add, Remove, Commit));
-
-         Register_Action_Menu
-           ("Remove revision log",
-            -"Remove the revision log corresponding to the current file",
-            -"Remove revision log",
-            File_Filter,
-            On_Menu_Remove_Log'Access, (Add, Remove, Commit));
-      end if;
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Add",
-         -"Add the current file to repository",
-         -"_Add",
-         File_Filter,
-         On_Menu_Add'Access, (1 => Add));
-
-      Register_Action_Menu
-        ("Add no commit",
-         -"Add the current file to repository, do not commit",
-         -"Add/_No commit",
-         File_Filter,
-         On_Menu_Add_No_Commit'Access, (1 => Add_No_Commit));
-
-      Register_Action_Menu
-        ("Remove",
-         -"Remove the current file from repository",
-         -"_Remove",
-         File_Filter,
-         On_Menu_Remove'Access, (1 => Remove));
-
-      Register_Action_Menu
-        ("Remove no commit",
-         -"Remove the current file from repository, do not commit",
-         -"Remove/N_o commit",
-         File_Filter,
-         On_Menu_Remove_No_Commit'Access, (1 => Remove_No_Commit));
-
-      Register_Action_Menu
-        ("Revert",
-         -"Revert the current file to repository revision",
-         -"Re_vert",
-         File_Filter,
-         On_Menu_Revert'Access, (1 => Revert));
-
-      Register_Action_Menu
-        ("Resolved",
-         -"Mark file conflicts resolved",
-         -"Reso_lved",
-         File_Filter,
-         On_Menu_Resolved'Access, (1 => Resolved));
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Create tag",
-         -"Create a tag or branch tag",
-         -"Create _tag...",
-         File_Filter,
-         On_Menu_Create_Tag'Access, (1 => Create_Tag));
-
-      Register_Action_Menu
-        ("Switch tag",
-         -"Switch to a specific tag or branch",
-         -"S_witch tag...",
-         File_Filter,
-         On_Menu_Switch_Tag'Access, (1 => Switch));
-
-      Create_Separator;
-
-      Register_Action_Menu
-        ("Status dir",
-         -"Query the status of the current directory",
-         -"_Query status for directory",
-         Dir_Filter,
-         On_Menu_Get_Status_Dir'Access, (1 => Status_Dir));
-
-      Register_Action_Menu
-        ("Update dir",
-         -"Update the current directory",
-         -"_Update directory",
-         Dir_Filter,
-         On_Menu_Update_Dir'Access, (1 => Update));
-
-      Register_Action_Menu
-        ("Status dir (recursively)",
-         -"Query the status of the current directory recursively",
-         -"Query _status for directory (recursively)",
-         Dir_Filter,
-         On_Menu_Get_Status_Dir_Recursive'Access, (1 => Status_Dir_Recursive));
-
-      Register_Action_Menu
-        ("Update dir (recursively)",
-         -"Update the current directory (recursively)",
-         -"Update _directory (recursively)",
-         Dir_Filter,
-         On_Menu_Update_Dir_Recursive'Access, (1 => Update));
-
-      Register_Action_Menu
-        ("List project",
-         -"List all the files in project",
-         -"_List all files in project",
-         Prj_Filter,
-         On_Menu_List_Project_Files'Access);
-
-      Register_Action_Menu
-        ("Status project",
-         -"Query the status of the current project",
-         -"_Query status",
-         Prj_Filter,
-         On_Menu_Get_Status_Project'Access,
-         (Status_Files, Status_Dir));
-
-      Register_Action_Menu
-        ("Update project",
-         -"Update the current project",
-         -"_Update project",
-         Prj_Filter,
-         On_Menu_Update_Project'Access, (1 => Update));
-
-      Register_Action_Menu
-        ("List project (recursively)",
-         -"List all the files in project and subprojects",
-         -"List _all files in project (recursively)",
-         Prj_Filter,
-         On_Menu_List_Project_Files_Recursive'Access);
-
-      Register_Action_Menu
-        ("Status project (recursively)",
-         -"Query the status of the current project recursively",
-         -"Query _status (recursively)",
-         Prj_Filter,
-         On_Menu_Get_Status_Project_Recursive'Access,
-         (Status_Files, Status_Dir));
-
-      Register_Action_Menu
-        ("Update project (recursively)",
-         -"Update the current project (recursively)",
-         -"Update _project (recursively)",
-         Prj_Filter,
-         On_Menu_Update_Project_Recursive'Access, (1 => Update));
-   end On_GPS_Started;
-
    -----------------------
    -- On_Open_Interface --
    -----------------------
@@ -658,25 +222,6 @@ package body VCS_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Open_Activities_Interface;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_VCS_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return (Has_File_Information (Context)
-              or else Has_Project_Information (Context)
-              or else Has_Directory_Information (Context))
-        and then Get_Current_Ref (Context) /= Unknown_VCS_Reference
-        and then (not Has_Entity_Name_Information (Context)
-                  or else Get_Name (Module_ID (Get_Creator (Context))) =
-                    "Source_Editor");
-   end Filter_Matches_Primitive;
-
    --------------------
    -- Append_To_Menu --
    --------------------
@@ -688,8 +233,10 @@ package body VCS_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
+      Creator : constant Abstract_Module_ID := Get_Creator (Context);
    begin
-      if Get_Creator (Context) /= Abstract_Module_ID (VCS_Module_ID)
+      if (Creator /= Abstract_Module_ID (VCS_Module_ID)
+          and then Creator /= Abstract_Module_ID (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)
       then
          VCS_View_API.VCS_Contextual_Menu
@@ -737,6 +284,21 @@ package body VCS_Module is
          Set_Return_Value_As_List (Data);
          Set_Return_Value (Data, String'("Auto"));
          VCS_Module_ID.Registered_VCS.Iterate (Add_VCS'Access);
+
+      elsif Command = "get_current_vcs" then
+         declare
+            Kernel : constant Kernel_Handle := Get_Kernel (Data);
+            Ref    : constant VCS_Access :=
+              Get_Current_Ref (Kernel, Get_Project (Kernel));
+         begin
+            if Ref /= null
+              and then Ref /= Unknown_VCS_Reference
+            then
+               Set_Return_Value (Data, Name (Ref));
+            else
+               Set_Return_Value (Data, Default_VCS.Get_Pref);
+            end if;
+         end;
       end if;
    end VCS_Command_Handler_No_Param;
 
@@ -841,6 +403,19 @@ package body VCS_Module is
       end if;
    end Default_Context_Factory;
 
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
+
+   overriding procedure Default_Context_Factory
+     (Module  : access VCS_Explorer_Module_ID_Record;
+      Context : in out Selection_Context;
+      Child   : Glib.Object.GObject) is
+   begin
+      Context := VCS_View_API.Context_Factory
+        (Module.Get_Kernel, Gtk_Widget (Child));
+   end Default_Context_Factory;
+
    ------------------------------------------
    -- VCS_Activities_Class_Command_Handler --
    ------------------------------------------
@@ -943,10 +518,9 @@ package body VCS_Module is
 
       VCS_Action_Context   : constant Action_Filter := GPS.Kernel.Create;
 
-      Filter               : Action_Filter;
-
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
+      VCS_Explorer_Module_Id := new VCS_Explorer_Module_ID_Record;
 
       Register_Module
         (Module      => Module_ID (VCS_Module_ID),
@@ -954,18 +528,15 @@ package body VCS_Module is
          Module_Name => VCS_Module_Name,
          Priority    => Default_Priority);
 
+      Register_Module
+        (Module      => VCS_Explorer_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => "VCS_Explorer",
+         Priority    => Default_Priority);
+
       Load_Activities (Kernel);
 
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
-      Filter := new Has_VCS_Filter;
-      Register_Filter (Kernel, Filter, "VCS");
-
-      Register_Contextual_Submenu
-        (Kernel  => Kernel,
-         Name    => -"Version Control",
-         Filter  => Filter,
-         Submenu => new VCS_Contextual_Menu);
 
       Log_Utils.Initialize (Kernel);
 
@@ -1008,6 +579,12 @@ package body VCS_Module is
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler_No_Param'Access);
+      Register_Command
+        (Kernel, "get_current_vcs",
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler_No_Param'Access);
+
       Register_Command
         (Kernel, "get_status",
          Minimum_Args  => 1,
@@ -1082,6 +659,14 @@ package body VCS_Module is
         (Kernel, "set_reference",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "get_log_file",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
@@ -1232,13 +817,10 @@ package body VCS_Module is
         (Kernel, Tools_Menu, -"_VCS Explorer", "",
          On_Open_Interface'Access);
 
-      --  The creation of VCS menu is defferred after GPS is fully started.
-      --  This is needed as we want to display in this menu only the items that
-      --  are at least supported by a loaded VCS.
+      --  Register contextual menus
 
-      Add_Hook (Kernel, GPS_Started_Hook,
-                Wrapper (On_GPS_Started'Access),
-                Name  => "vcs_module.gps_started");
+      Register_Actions (Kernel);
+
    end Register_Module;
 
    --------------------------
@@ -1566,7 +1148,7 @@ package body VCS_Module is
                   Default_Width  => Gint (Default_Widget_Width.Get_Pref),
                   Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_VCS_Explorer,
-                  Module         => VCS_Module_ID);
+                  Module         => VCS_Explorer_Module_Id);
          M.Explorer_Child := MDI_Child (Child);
          Set_Title (M.Explorer_Child, -"VCS Explorer");
          Put (Get_MDI (Kernel), M.Explorer_Child);
@@ -1687,6 +1269,8 @@ package body VCS_Module is
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      VCS_Module_ID.VCS_Project_Cache.Clear;
+
       if Activities_Explorer_Is_Open then
          --  The VCS Activities window is opened, refresh it
          Open_Activities_Explorer (Kernel, No_Context);
@@ -1703,6 +1287,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Data, Kernel);
    begin
+      --  ??? This could be removed.
       VCS_Module_ID.VCS_Project_Cache.Clear;
    end On_Project_Changing;
 

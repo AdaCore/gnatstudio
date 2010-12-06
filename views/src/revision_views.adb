@@ -137,6 +137,12 @@ package body Revision_Views is
       Link : Boolean;
    end record;
 
+   overriding procedure Default_Context_Factory
+     (Module  : access Revision_View_Module;
+      Context : in out Selection_Context;
+      Child   : Glib.Object.GObject);
+   --  See inherited documentation
+
    procedure View_Context_Factory
      (Context      : in out Selection_Context;
       Kernel       : access Kernel_Handle_Record'Class;
@@ -468,6 +474,24 @@ package body Revision_Views is
       when E : others => Trace (Exception_Handle, E);
    end Clear_View_Command_Handler;
 
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
+
+   overriding procedure Default_Context_Factory
+     (Module  : access Revision_View_Module;
+      Context : in out Selection_Context;
+      Child   : Glib.Object.GObject)
+   is
+   begin
+      View_Context_Factory (Context      => Context,
+                            Kernel       => Module.Get_Kernel,
+                            Event_Widget => null,
+                            Object       => Child,
+                            Event        => null,
+                            Menu         => null);
+   end Default_Context_Factory;
+
    --------------------------
    -- View_Context_Factory --
    --------------------------
@@ -510,8 +534,15 @@ package body Revision_Views is
       O_Rev : Unbounded_String;
       Tag   : Unbounded_String;
 
+      Dummy_Model : Gtk_Tree_Model;
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      if Event /= null then
+         Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      else
+         Get_Selected (Selection => Get_Selection (V.Tree),
+                       Model     => Dummy_Model,
+                       Iter      => Iter);
+      end if;
 
       if Iter = Null_Iter then
          return;

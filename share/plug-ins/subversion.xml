@@ -18,7 +18,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -32,7 +33,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -46,7 +48,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" "$1" FALSE "%3"</shell>
    </action>
@@ -61,7 +64,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
    </action>
 
@@ -74,7 +78,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
    </action>
 
@@ -87,7 +92,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
    </action>
 
@@ -99,7 +105,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell output="none">VCS.annotations_parse "Subversion" "$1" "%1"</shell>
    </action>
@@ -112,7 +119,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>VCS.status_parse "Subversion" "%1" FALSE TRUE "%2"</shell>
    </action>
@@ -126,7 +134,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
       <shell>Hook "file_changed_on_disk"</shell>
@@ -141,14 +150,15 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">svn commit -F "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -161,7 +171,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
    </action>
 
@@ -173,14 +184,16 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>dump "$1" TRUE</shell>
       <external check-password="true">svn commit -F "%1" $2-</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -193,7 +206,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
    </action>
 
@@ -205,7 +219,7 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>VCS.revision_parse "Subversion" "$1" "%1"</shell>
       <shell>VCS.log_parse "Subversion" "$1" "%2"</shell>
@@ -217,7 +231,7 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$1"</shell>
       <shell>dump "%2" TRUE</shell>
@@ -234,7 +248,7 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>VCS.revision_parse "Subversion" "$2" "%1"</shell>
       <shell>VCS.log_parse "Subversion" "$2" "%2"</shell>
@@ -248,7 +262,7 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -264,7 +278,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -277,7 +292,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
    </action>
 
@@ -295,7 +311,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$1"</shell>
       <shell>dump "%2" TRUE</shell>
@@ -312,7 +329,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$2"</shell>
       <shell>dump "%2" TRUE</shell>
@@ -329,7 +347,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$3"</shell>
       <shell>dump_file "%2" "%1.[r$2]" FALSE</shell>
@@ -342,7 +361,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -358,7 +378,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$1"</shell>
       <shell>dump_file "%2" "%1.[rHEAD]" FALSE</shell>
@@ -370,7 +391,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
@@ -390,7 +412,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$2"</shell>
       <shell>dump "%2" TRUE</shell>
@@ -408,7 +431,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
@@ -422,7 +446,8 @@
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
-         <shell output="">Locations.parse "%3" "SVN errors"</shell>
+         <shell lang="python" output="">[m.remove() for m in GPS.Message.list(category="SVN errors")]</shell>
+         <shell output="">Locations.parse "%4" "SVN errors"</shell>
       </on-failure>
       <shell>base_name "$2"</shell>
       <shell>dump "%2"</shell>
@@ -458,9 +483,9 @@
       <history_revision   action="generic_svn_history_rev"      label="View specific revision history"/>
       <annotate           action="generic_svn_annotate"         label="Annotations"/>
       <add                action="generic_svn_add"              label="Add"/>
-      <add_no_commit      action="generic_svn_add_no_commit"    label="Add/No commit"/>
+      <add_no_commit      action="generic_svn_add_no_commit"    label="Add, no commit"/>
       <remove             action="generic_svn_remove"           label="Remove"/>
-      <remove_no_commit   action="generic_svn_remove_no_commit" label="Remove/No commit"/>
+      <remove_no_commit   action="generic_svn_remove_no_commit" label="Remove, no commit"/>
       <revert             action="generic_svn_revert"           label="Revert"/>
       <revision           action="generic_svn_revision"         label="View revision"/>
       <diff_patch         action="generic_svn_diff_patch"       label="Compare against head revision for building a patch file"/>

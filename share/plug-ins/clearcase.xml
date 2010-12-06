@@ -203,9 +203,9 @@
       <history_revision action="clearcase_history_rev"      label="View specific revision history"/>
       <annotate         action="clearcase_annotate"         label="Annotations"/>
       <add              action="clearcase_add"              label="Add"/>
-      <add_no_commit    action="clearcase_add_no_commit"    label="Add/No commit"/>
+      <add_no_commit    action="clearcase_add_no_commit"    label="Add, no commit"/>
       <remove           action="clearcase_remove"           label="Remove"/>
-      <remove_no_commit action="clearcase_remove_no_commit" label="Remove/No commit"/>
+      <remove_no_commit action="clearcase_remove_no_commit" label="Remove, no commit"/>
       <revert           action="clearcase_uncheckout"       label="Cancel checkout"/>
       <diff_patch       action="clearcase_diff_patch"       label="Compare against head revision for building a patch file"/>
       <diff_head        action="clearcase_diff_head"        label="Compare against latest"/>

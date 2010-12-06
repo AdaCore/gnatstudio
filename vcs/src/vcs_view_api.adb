@@ -29,7 +29,6 @@ with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Values;               use Glib.Values;
-with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -76,8 +75,6 @@ with UTF8_Utils;                use UTF8_Utils;
 
 package body VCS_View_API is
    use type GNAT.Strings.String_Access;
-
-   VCS_Menu_Prefix : constant String := "<gps>/VCS/";
 
    -----------------------
    -- Local subprograms --
@@ -805,57 +802,12 @@ package body VCS_View_API is
       Project_Section : Boolean;
       Section_Active  : Boolean;
       Items_Inserted  : Boolean := False;
-      F_Context       : Selection_Context;
-
-      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
-
-      procedure Add_Action
-        (Action   : VCS_Action;
-         Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
-         Via_Log  : Boolean := False);
-      --  Add a menu item corresponding to Action.
-      --  If Via_Log is True, ???
 
       procedure Add_Separator;
       --  Add a separator in the menu if needed
 
       function Create_Activity_Menu (Menu : Gtk_Menu) return Boolean;
       --  Return True if some activities have been added into Menu
-
-      ----------------
-      -- Add_Action --
-      ----------------
-
-      procedure Add_Action
-        (Action   : VCS_Action;
-         Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
-         Via_Log  : Boolean := False) is
-      begin
-         if Actions (Action) /= null then
-            if Via_Log and Ref.Require_Log then
-               Gtk_New (Item, Actions (Action).all & (-" (via revision log)"));
-            else
-               Gtk_New (Item, Actions (Action).all);
-            end if;
-
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Context_Callback.To_Marshaller (Callback),
-               F_Context);
-
-            if not Section_Active then
-               Set_Sensitive (Item, False);
-            end if;
-
-            if Show_Everything then
-               Set_Accel_Path
-                 (Item, VCS_Menu_Prefix & Actions (Action).all, Group);
-            end if;
-
-            Items_Inserted := True;
-         end if;
-      end Add_Action;
 
       -------------------
       -- Add_Separator --
@@ -914,7 +866,6 @@ package body VCS_View_API is
 
       Log_File   : Boolean := False;
       Log_Action : VCS_Action;
-      Log_Exists : Boolean;
 
    begin
       if Context = No_Context then
@@ -974,7 +925,9 @@ package body VCS_View_API is
          end;
       end if;
 
-      if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
+      if Get_Creator (Context) =
+        Abstract_Module_ID (VCS_Explorer_Module_Id)
+      then
          Items_Inserted := True;
          Gtk_New (Item, Label => -"Expand all");
          Append (Menu, Item);
@@ -1005,8 +958,6 @@ package body VCS_View_API is
       end if;
 
       --  Fill the section relative to files
-      --  ??? This should be done when building the context, not when filling
-      --  the contextual menu...
 
       Section_Active := File_Section;
       Items_Inserted := False;
@@ -1068,172 +1019,7 @@ package body VCS_View_API is
                   end case;
                end if;
             end;
-
-         else
-            --  Create the new context for the VCS actions based on the
-            --  original file.
-
-            declare
-               Files   : File_Array := File_Information (Context);
-               Changed : Boolean := False;
-            begin
-               for K in Files'Range loop
-                  if Get_Reference (Files (K)) /= No_File then
-                     Files (K) := Get_Reference (Files (K));
-                     Changed := True;
-                  end if;
-               end loop;
-
-               if Changed then
-                  F_Context := New_Context;
-                  Set_Context_Information
-                    (F_Context, Kernel, Get_Creator (Context));
-
-                  Set_File_Information (F_Context, Files => Files);
-               else
-                  F_Context := Context;
-               end if;
-            end;
-
-            Log_Exists := Has_File_Information (Context)
-              and then Get_Log_From_File
-                (Kernel, File_Information (Context), False) /= No_File;
-
-            Add_Action (Status_Files, On_Menu_Get_Status'Access);
-            Add_Action (Update, On_Menu_Update'Access);
-
-            --  Removed for files belonging to activities as we only want
-            --  group commit here.
-
-            if not Has_Activity_Information (Context) then
-               Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
-            end if;
-
-            Add_Separator;
-
-            Add_Action (Open, On_Menu_Open'Access);
-            Add_Action (History_Text, On_Menu_View_Log_Text'Access);
-            Add_Action (History, On_Menu_View_Log'Access);
-            Add_Action (History_Revision, On_Menu_View_Log_Rev'Access);
-
-            Add_Separator;
-
-            Add_Action (Diff_Head, On_Menu_Diff'Access);
-            Add_Action (Diff_Working, On_Menu_Diff_Working'Access);
-            Add_Action (Diff, On_Menu_Diff_Specific'Access);
-            Add_Action (Diff2, On_Menu_Diff2'Access);
-            Add_Action (Diff_Base_Head, On_Menu_Diff_Base_Head'Access);
-
-            if Has_Tag_Information (Context) then
-               Add_Action (Diff_Tag, On_Menu_Diff_Tag'Access);
-            end if;
-
-            if Has_Revision_Information (Context)
-              and then Has_Other_Revision_Information (Context)
-            then
-               Gtk_New
-                 (Item,
-                  Label => -"Compare against previous revision ("
-                              & Other_Revision_Information (Context) & ')');
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Diff_Other_Revision'Access, Context);
-               Set_Sensitive (Item, Section_Active);
-            end if;
-
-            Add_Separator;
-
-            if Actions (Annotate) /= null then
-               Gtk_New (Item, Label => -"Add " & Actions (Annotate).all);
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Annotate'Access, F_Context);
-               Set_Sensitive (Item, Section_Active);
-
-               Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Remove_Annotate'Access, F_Context);
-
-               Set_Sensitive (Item, Section_Active);
-
-               Items_Inserted := True;
-            end if;
-
-            if Ref.Require_Log then
-               Gtk_New (Item, Label => -"Edit revision log");
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Edit_Log'Access, F_Context);
-               Set_Sensitive (Item, Section_Active);
-
-               Gtk_New (Item, Label => -"Edit global ChangeLog");
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Edit_ChangeLog'Access, F_Context);
-               Set_Sensitive (Item, Section_Active);
-
-               Gtk_New (Item, Label => -"Remove revision log");
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Remove_Log'Access, F_Context);
-               Set_Sensitive (Item, Section_Active);
-
-               Items_Inserted := True;
-            end if;
-
-            Add_Separator;
-
-            --  Removed for files inside activities. See previous comments
-
-            if not Has_Activity_Information (Context) then
-               Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
-            end if;
-
-            Add_Action
-              (Add_No_Commit, On_Menu_Add_No_Commit'Access, False);
-
-            --  Removed for files inside activities. See previous comments
-
-            if not Has_Activity_Information (Context) then
-               Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
-            end if;
-
-            Add_Action
-              (Remove_No_Commit, On_Menu_Remove_No_Commit'Access, False);
-            Add_Action (Revert, On_Menu_Revert'Access);
-            Add_Action (Resolved, On_Menu_Resolved'Access);
          end if;
-      end if;
-
-      if Show_Everything
-        or else (File_Section and then (Project_Section or else Dir_Section))
-      then
-         Add_Separator;
-      end if;
-
-      if File_Section then
-         Items_Inserted := False;
-
-         if Show_Everything or else Has_Tag_Information (Context) then
-            Add_Action (Switch, On_Menu_Switch_Tag'Access);
-         end if;
-
-         if Show_Everything or else Has_Tag_Information (Context) then
-            Add_Action (Merge, On_Menu_Merge'Access);
-         end if;
-
-         if Show_Everything or else Has_Revision_Information (Context) then
-            Add_Action (Revision, On_Menu_View_File_Revision'Access);
-         end if;
-
-         Add_Separator;
       end if;
 
       --  Fill the section for the activity
@@ -1268,7 +1054,7 @@ package body VCS_View_API is
                Append (Menu, Menu_Item);
                Context_Callback.Connect
                  (Menu_Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Commit_As_Activity'Access, F_Context);
+                  On_Menu_Commit_As_Activity'Access, Context);
                Set_Sensitive (Menu_Item, Section_Active);
             end if;
 
@@ -1319,223 +1105,11 @@ package body VCS_View_API is
                   Append (Menu, Menu_Item);
                   Context_Callback.Connect
                     (Menu_Item, Gtk.Menu_Item.Signal_Activate,
-                     On_Menu_Remove_From_Activity'Access, F_Context);
+                     On_Menu_Remove_From_Activity'Access, Context);
                   Set_Sensitive (Menu_Item, Section_Active);
                end if;
             end if;
          end Check_Activity;
-      end if;
-      --  Fill the section relative to directory
-
-      Section_Active := Dir_Section;
-
-      if Show_Everything or else Dir_Section then
-         if Show_Everything
-           or else Project_Section
-           or else File_Section
-         then
-            Gtk_New (Menu_Item, Label => -"Directory");
-            Append (Menu, Menu_Item);
-            Gtk_New (Submenu);
-            Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
-            Set_Sensitive (Menu_Item, Section_Active);
-         else
-            Submenu := Gtk_Menu (Menu);
-         end if;
-
-         if not File_Section then
-            --  Add or remove a directory
-
-            Gtk_New (Item, -"Add/No commit");
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Add_Directory_No_Commit'Access, Context);
-
-            Gtk_New (Item, -"Remove/No commit");
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Remove_Directory_No_Commit'Access, Context);
-
-            if not Has_Activity_Information (Context) then
-               if Commit_Directory (Ref) then
-                  --  Add Commit and Add to Activity menu entry only if
-                  --  directories are handled by the underlying VCS.
-
-                  Gtk_New (Item, -"Commit");
-                  Append (Submenu, Item);
-                  Context_Callback.Connect
-                    (Item, Gtk.Menu_Item.Signal_Activate,
-                     On_Menu_Commit'Access, Context);
-
-                  declare
-                     A_Menu    : Gtk_Menu;
-                     Menu_Item : Gtk_Menu_Item;
-                  begin
-                     Gtk_New (Menu_Item, Label => -"Add to Activity");
-                     Append (Submenu, Menu_Item);
-                     Gtk_New (A_Menu);
-                     Set_Submenu (Menu_Item, Gtk_Widget (A_Menu));
-
-                     declare
-                        Found : Boolean := False;
-                     begin
-                        Found := Create_Activity_Menu (A_Menu);
-                        Set_Sensitive (Menu_Item, Found);
-                     end;
-                  end;
-               end if;
-            end if;
-
-            Items_Inserted := True;
-            Gtk_New (Item);
-            Append (Submenu, Item);
-         end if;
-
-         if Actions (Status_Files) /= null then
-            Gtk_New
-              (Item,
-               Label => Actions (Status_Files).all & (-" for directory"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Get_Status_Dir'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-
-            Items_Inserted := True;
-         end if;
-
-         if Actions (Update) /= null then
-            Gtk_New
-              (Item, Label => Actions (Update).all & (-" directory"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate, On_Menu_Update_Dir'Access,
-               Context);
-            Set_Sensitive (Item, Section_Active);
-
-            Items_Inserted := True;
-         end if;
-
-         if Actions (Status_Files) /= null then
-            Gtk_New
-              (Item, Label => Actions (Status_Files).all
-               & (-" for directory recursively"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Get_Status_Dir_Recursive'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-
-            Items_Inserted := True;
-         end if;
-
-         if Actions (Update) /= null then
-            Gtk_New
-              (Item, Label => Actions (Update).all
-               & (-" directory recursively"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Update_Dir_Recursive'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-
-            Items_Inserted := True;
-         end if;
-
-         if Show_Everything
-           or else Project_Section
-           or else File_Section
-         then
-            Set_Sensitive (Menu_Item, Section_Active and then Items_Inserted);
-         end if;
-      end if;
-
-      if Show_Everything
-        or else ((File_Section or else Dir_Section) and then Project_Section)
-      then
-         Add_Separator;
-      end if;
-
-      --  Fill the section relative to project
-
-      Section_Active := Project_Section;
-
-      if Show_Everything or else Project_Section then
-         if Show_Everything
-           or else Dir_Section
-           or else File_Section
-         then
-            Gtk_New (Menu_Item, Label => -"Project");
-            Append (Menu, Menu_Item);
-            Gtk_New (Submenu);
-            Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
-         else
-            Submenu := Gtk_Menu (Menu);
-         end if;
-
-         Items_Inserted := True;
-
-         Gtk_New (Item, Label => -"List all files in project");
-         Append (Submenu, Item);
-         Context_Callback.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            On_Menu_List_Project_Files'Access, Context);
-
-         if Actions (Status_Files) /= null then
-            Gtk_New
-              (Item, Label => Actions (Status_Files).all & (-" for project"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Get_Status_Project'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-         end if;
-
-         if Actions (Update) /= null then
-            Gtk_New (Item, Label => Actions (Update).all & (-" project"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Update_Project'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-         end if;
-
-         Gtk_New (Item, Label => -"List all files in project and subprojects");
-         Append (Submenu, Item);
-         Context_Callback.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            On_Menu_List_Project_Files_Recursive'Access, Context);
-
-         if Actions (Status_Files) /= null then
-            Gtk_New
-              (Item, Label => Actions (Status_Files).all &
-                 (-" for project and subprojects"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Get_Status_Project_Recursive'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-         end if;
-
-         if Actions (Update) /= null then
-            Gtk_New
-              (Item, Label => Actions (Update).all
-               & (-" project and subprojects"));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Update_Project_Recursive'Access, Context);
-            Set_Sensitive (Item, Section_Active);
-         end if;
-
-         if Show_Everything
-           or else Dir_Section
-           or else File_Section
-         then
-            Set_Sensitive (Menu_Item, Section_Active);
-         end if;
       end if;
 
       if (File_Section
@@ -3743,6 +3317,12 @@ package body VCS_View_API is
       elsif Command = "set_reference" then
          Set_Reference
            (Create (Nth_Arg (Data, 1)), Create (Nth_Arg (Data, 2)));
+
+      elsif Command = "get_log_file" then
+         Set_Return_Value
+           (Data,
+            Create_File (Get_Script (Data),
+              Get_Log_From_File (Kernel, Full, False)));
       end if;
    end VCS_Command_Handler;
 

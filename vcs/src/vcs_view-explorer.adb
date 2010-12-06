@@ -906,7 +906,7 @@ package body VCS_View.Explorer is
       end if;
 
       Set_Context_Information
-        (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
+        (Context, Kernel, Abstract_Module_ID (VCS_Explorer_Module_Id));
       Set_Current_Context (Explorer, Context);
 
       if Root_Node then
@@ -960,11 +960,6 @@ package body VCS_View.Explorer is
          end loop;
       end;
 
-      if Has_File_Information (Context) then
-         Gtk_New (Mitem);
-         Append (Menu, Mitem);
-      end if;
-
    exception
       when E : others => Trace (Exception_Handle, E);
    end Context_Func;
@@ -1017,7 +1012,7 @@ package body VCS_View.Explorer is
         (Explorer.Kernel,
          Explorer.Tree,
          Explorer,
-         Module_ID (VCS_Module_ID),
+         Module_ID (VCS_Explorer_Module_Id),
          Context_Func'Access);
 
       Set_Column_Types (Explorer);

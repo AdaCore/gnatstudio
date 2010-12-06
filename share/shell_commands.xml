@@ -2520,6 +2520,11 @@ If the line and column are not specified, then the current selection is returned
       <description>Show the list of supported VCS systems</description>
   </shell_doc>
 
+  <shell_doc name="GPS.VCS.get_current_vcs">
+      <return>A string</return>
+      <description>Return the system supported for the current project</description>
+  </shell_doc>
+
   <shell_doc name="GPS.VCS.set_reference">
       <param name="file">A string</param>
       <param name="reference">A string</param>
@@ -2618,6 +2623,11 @@ If the line and column are not specified, then the current selection is returned
       <param name="file">A string</param>
       <param name="tag_name" default="">A string</param>
       <description>Returns the trunk repository path for file or if tag_name is specified the repository path on the given tag or branch path.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.VCS.get_log_from_file">
+      <param name="file">A string</param>
+      <description>Returns the GPS File corresponding to the log file for given file.</description>
   </shell_doc>
 
   <!--#################################################################
@@ -2802,6 +2812,10 @@ If the line and column are not specified, then the current selection is returned
       <description>returns a list containing the contextual menu labels of the currently focussed window. The output have the form "depth - label"</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Context.module_name">
+      <description>returns the name of the GPS module which created the context.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   FileContext class
     ###################################################################-->
@@ -2820,6 +2834,12 @@ If the line and column are not specified, then the current selection is returned
       <param name="self">The instance of GPS.FileContext</param>
       <return>An instance of GPS.File</return>
       <description>Return the name of the file in the context</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.FileContext.files">
+      <param name="self">The instance of GPS.FileContext</param>
+      <return>A list of GPS.File</return>
+      <description>Return the list of selected files in the context</description>
   </shell_doc>
 
   <shell_doc name="GPS.FileContext.project">
