@@ -2625,7 +2625,7 @@ If the line and column are not specified, then the current selection is returned
       <description>Returns the trunk repository path for file or if tag_name is specified the repository path on the given tag or branch path.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.VCS.get_log_from_file">
+  <shell_doc name="GPS.VCS.get_log_file">
       <param name="file">A string</param>
       <description>Returns the GPS File corresponding to the log file for given file.</description>
   </shell_doc>
