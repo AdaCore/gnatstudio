@@ -162,6 +162,10 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all context-related commands
 
+   procedure Context_Getters
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Getter for the "module_name" property
+
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all entity_context-related commands
@@ -1201,6 +1205,21 @@ package body GPS.Kernel.Scripts is
       end if;
    end Entity_Context_Command_Handler;
 
+   ---------------------
+   -- Context_Getters --
+   ---------------------
+
+   procedure Context_Getters
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Context : Selection_Context;
+   begin
+      Context := Get_Data (Data, 1);
+      if Command = "module_name" then
+         Set_Return_Value (Data, Get_Name (Module_ID (Get_Creator (Context))));
+      end if;
+   end Context_Getters;
+
    -----------------------------
    -- Context_Command_Handler --
    -----------------------------
@@ -1410,10 +1429,6 @@ package body GPS.Kernel.Scripts is
          else
             Set_Return_Value (Data, Inst);
          end if;
-
-      elsif Command = "module_name" then
-         Context := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Name (Module_ID (Get_Creator (Context))));
 
       elsif Command = "contextual_menu" then
          Context := Get_Data (Data, 1);
@@ -2199,10 +2214,11 @@ package body GPS.Kernel.Scripts is
             Handler      => Context_Command_Handler'Access);
       end if;
 
-      Register_Command
-        (Kernel, "module_name",
-         Class        => Get_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
+      Register_Property (Repo   => Kernel.Scripts,
+                         Name   => "module_name",
+                         Class  => Get_Context_Class (Kernel),
+                         Setter => null,
+                         Getter => Context_Getters'Access);
 
       Register_Command
         (Kernel, Constructor_Method,

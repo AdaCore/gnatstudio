@@ -25,7 +25,7 @@ class Labeller(object):
         self.label = label
 
         def labeller (context):
-            if context.module_name().startswith("VCS"):
+            if context.module_name.startswith("VCS"):
                 return "%s" % self.label.replace("_", "")
             else:
                 return "Version Control/%s" % self.label.replace("_", "")
@@ -62,7 +62,7 @@ def only_in_submenu (context):
     except:
         return False
 
-    return not context.module_name().startswith("VCS_Explorer")
+    return not context.module_name.startswith("VCS_Explorer")
 
 def only_in_explorer(context):
     """ Return True if the context is a VCS explorer. """
@@ -70,7 +70,7 @@ def only_in_explorer(context):
     if type (context) not in [GPS.FileContext, GPS.EntityContext]:
         return False
 
-    return context.module_name().startswith("VCS_Explorer")
+    return context.module_name.startswith("VCS_Explorer")
 
 def not_in_explorer(context):
     """ Return True if the context is not VCS explorer. """

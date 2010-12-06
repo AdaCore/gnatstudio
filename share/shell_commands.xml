@@ -2805,15 +2805,14 @@ If the line and column are not specified, then the current selection is returned
     ###################################################################-->
 
   <shell_doc name="GPS.Context">
-      <description>Represents a context in GPS. Depending on the currently selected window, an instance of one of the derived classes will be used</description>
+      <description>Represents a context in GPS. Depending on the currently selected window, an instance of one of the derived classes will be used.
+         Properties:
+            - module_name (a string): the name of the GPS module which created the context.
+      </description>
   </shell_doc>
 
   <shell_doc name="GPS.Context.contextual_menu">
       <description>returns a list containing the contextual menu labels of the currently focussed window. The output have the form "depth - label"</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.Context.module_name">
-      <description>returns the name of the GPS module which created the context.</description>
   </shell_doc>
 
   <!--#################################################################
