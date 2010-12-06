@@ -29,12 +29,6 @@ If no tag is specified, the entry is relevant to all IDEs.
               resulting dialog shows the target name in the description field.
   Workaround: Look in the makefile itself for the description.
 
-- JA26-031 Error when auto fixing a missing with when there is a pragma
-  Problem:    When a file starts with a pragma, e.g. Pragma Ada_2012, and there
-              is a missing with clause, the auto fix moves the fix before the
-              pragma, resulting in an incompatible file.
-  Workaround: Manually fix the file.
-
 - JA07-011 GPS: Location view and floating editors
   Problem:    When clicking in a location, the corresponding floating editor
               is not raised (no problem when the editor is not floating)
