@@ -9617,7 +9617,7 @@ the Add button can be modified via a custom xml file. See
 If you are using an alternative run time, e.g. a @i{soft float} run time,
 you need to add the option @code{--RTS=soft-float} to the @i{Gnatls}
 property, e.g: @code{powerpc-wrs-vxworks-gnatls --RTS=soft-float}, and
-add this same option to the @i{Make} switches in the switch editor.
+add this same option to the @i{Gnatmake} switches in the switch editor.
 See @ref{Switches} for more details on the switch editor.
 
 To modify your project to support configurations such as multiple targets,
