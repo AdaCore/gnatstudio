@@ -164,7 +164,7 @@ package body Builder_Module is
             Synchronous => True,
             Dialog      => Build_Command_Manager.Force_No_Dialog,
             Background  => False,
-            Main        => "");
+            Main        => GNATCOLL.VFS.No_File);
 
       elsif Command = "compute_xref_bg" then
          Build_Command_Manager.Launch_Target
@@ -177,7 +177,7 @@ package body Builder_Module is
             Synchronous => False,
             Background  => False,
             Dialog      => Build_Command_Manager.Force_No_Dialog,
-            Main        => "");
+            Main        => GNATCOLL.VFS.No_File);
       end if;
    end Compile_Command;
 
@@ -200,7 +200,7 @@ package body Builder_Module is
          Synchronous => False,
          Background  => False,
          Dialog      => Build_Command_Manager.Force_No_Dialog,
-         Main        => "");
+         Main        => GNATCOLL.VFS.No_File);
 
    exception
       when E : others => Trace (Exception_Handle, E);

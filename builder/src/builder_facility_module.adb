@@ -112,7 +112,7 @@ package body Builder_Facility_Module is
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
       Target : Unbounded_String;
-      Main   : Unbounded_String;
+      Main   : Virtual_File;
    end record;
 
    package String_Callback is new Gtk.Handlers.User_Callback
@@ -157,6 +157,9 @@ package body Builder_Facility_Module is
 
    type Target_Output_Array is array (Target_Output_Type) of
      Target_Outputs.Map;
+
+   package Files is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Virtual_File, Ada.Strings.Unbounded.Hash, "=");
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
@@ -210,7 +213,7 @@ package body Builder_Facility_Module is
       --  Used to prevent cases where a compilation is triggered "on file save"
       --  and the "file save" is caused by another compilation
 
-      Last_Mains : Target_Outputs.Map;
+      Last_Mains : Files.Map;
       --  The last launched main
    end record;
 
@@ -381,9 +384,6 @@ package body Builder_Facility_Module is
    function Action_Name (T : Target_Access) return String;
    --  Return the name of the Kernel Action to build T
 
-   procedure Free (Ar : in out Argument_List);
-   --  Free memory associated to Ar
-
    procedure Parse_Mode_Node (XML : Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
    --  XML format.
@@ -453,7 +453,7 @@ package body Builder_Facility_Module is
                        (Mitem, Signal_Activate,
                         On_Button_Or_Menu_Click'Access,
                         (To_Unbounded_String (Get_Name (T)),
-                         To_Unbounded_String (Mains.List (J).Tuple (2).Str)));
+                         Create (+Mains.List (J).Tuple (2).Str)));
                   end if;
                end loop;
                Destroy (Data);
@@ -468,7 +468,7 @@ package body Builder_Facility_Module is
               (Mitem, Signal_Activate,
                On_Button_Or_Menu_Click'Access,
                (To_Unbounded_String (Get_Name (T)),
-                Null_Unbounded_String));
+                No_File));
          end if;
 
       end Add_Contextual;
@@ -544,11 +544,12 @@ package body Builder_Facility_Module is
    -- Get_Mains --
    ---------------
 
-   function Get_Mains (Kernel : Kernel_Handle) return Argument_List is
+   function Get_Mains (Kernel : Kernel_Handle) return GNATCOLL.VFS.File_Array
+   is
       Registry     : constant Project_Registry_Access := Get_Registry (Kernel);
       Root_Project : constant Project_Type := Registry.Tree.Root_Project;
 
-      Result       : Argument_List (1 .. Max_Number_Of_Mains);
+      Result       : File_Array (1 .. Max_Number_Of_Mains);
       Index        : Natural := Result'First;
       Projects     : Projects_Stack.Simple_Stack;
       The_Project  : Project_Type;
@@ -556,10 +557,10 @@ package body Builder_Facility_Module is
                        Root_Project.Start (Include_Extended => True);
       Mains        : String_List_Access;
 
-      function To_Full_Path (Basename : String) return String;
+      function To_Full_Path (Basename : String) return Virtual_File;
       --  Return the full path of file Basename in project Project
 
-      function Is_Already_In_Mains (S : String) return Boolean;
+      function Is_Already_In_Mains (F : Virtual_File) return Boolean;
       --  Return True if S is in Result (for instance a project could use its
       --  extended project's Main attribute, in which case we would end up
       --  with duplicates).
@@ -568,10 +569,10 @@ package body Builder_Facility_Module is
       -- Is_Already_In_Mains --
       -------------------------
 
-      function Is_Already_In_Mains (S : String) return Boolean is
+      function Is_Already_In_Mains (F : Virtual_File) return Boolean is
       begin
          for J in Result'First .. Index - 1 loop
-            if Result (J).all = S then
+            if Result (J) = F then
                return True;
             end if;
          end loop;
@@ -582,7 +583,7 @@ package body Builder_Facility_Module is
       -- To_Full_Path --
       ------------------
 
-      function To_Full_Path (Basename : String) return String is
+      function To_Full_Path (Basename : String) return Virtual_File is
          File : Virtual_File;
       begin
          if GNAT.Directory_Operations.File_Extension (Basename) = "" then
@@ -600,10 +601,10 @@ package body Builder_Facility_Module is
          end if;
 
          if File = No_File then
-            return Basename;
+            return Create_From_Base (+Basename);
          end if;
 
-         return +File.Full_Name.all;
+         return File;
       end To_Full_Path;
 
    begin
@@ -625,13 +626,13 @@ package body Builder_Facility_Module is
          if Mains /= null then
             for J in Mains'Range loop
                if Mains (J)'Length > 0 then
-                  Result (Index) := new String'(To_Full_Path (Mains (J).all));
+                  Result (Index) := To_Full_Path (Mains (J).all);
 
-                  if not Is_Already_In_Mains (Result (Index).all) then
+                  if not Is_Already_In_Mains (Result (Index)) then
                      Index := Index + 1;
                      exit when Index > Result'Last;
                   else
-                     Free (Result (Index));
+                     Result (Index) := No_File;
                   end if;
                end if;
             end loop;
@@ -651,6 +652,7 @@ package body Builder_Facility_Module is
 
    function Action_Name (T : Target_Access) return String is
    begin
+
       return Get_Name (T);
    end Action_Name;
 
@@ -686,7 +688,8 @@ package body Builder_Facility_Module is
          end loop;
       else
          Create
-           (C, Get_Kernel, Builder_Module_ID.Registry, N, "", False, Default);
+           (C, Get_Kernel,
+            Builder_Module_ID.Registry, N, No_File, False, Default);
 
          Register_Action (Kernel      => Get_Kernel,
                           Name        => Name,
@@ -930,18 +933,22 @@ package body Builder_Facility_Module is
    begin
       if Kind = "main" then
          declare
-            Mains  : Argument_List := Get_Mains (Kernel_Handle (Kernel));
+            Mains  : constant File_Array := Get_Mains (Kernel_Handle (Kernel));
 
             Result : Any_Type (List_Type, Mains'Length);
          begin
             for J in Mains'Range loop
                declare
-                  Base : constant String := GNAT.Directory_Operations.Base_Name
-                    (Mains (J).all);
+                  Base         : constant String :=
+                                   Mains (J).Display_Base_Name;
+                  Full         : constant String := +Mains (J).Full_Name;
                   Display_Name : constant Any_Type :=
-                    (String_Type, Base'Length, Base);
+                                   (String_Type,
+                                    Base'Length,
+                                    Base);
                   Full_Name    : constant Any_Type :=
-                    (String_Type, Mains (J).all'Length, Mains (J).all);
+                                   (String_Type, Full'Length, Full);
+
                begin
                   Result.List (1 + J - Mains'First) := new Any_Type'
                     ((Tuple_Type, 2,
@@ -950,13 +957,12 @@ package body Builder_Facility_Module is
                end;
             end loop;
 
-            Free (Mains);
             return Result;
          end;
 
       elsif Kind = "executable" then
          declare
-            Mains  : Argument_List := Get_Mains (Kernel_Handle (Kernel));
+            Mains  : constant File_Array := Get_Mains (Kernel_Handle (Kernel));
             Result : Any_Type (List_Type, Mains'Length);
             P      : Project_Type;
          begin
@@ -965,7 +971,8 @@ package body Builder_Facility_Module is
                --  to get the list of mains, and now for each of those main we
                --  are looking for the project.
                P := Get_Registry (Kernel).Tree.Info
-                 (Get_Registry (Kernel).Tree.Create (+Mains (J).all)).Project;
+                 (Get_Registry (Kernel).Tree.Create
+                  (Mains (J).Full_Name)).Project;
 
                if P = No_Project then
                   --  This can happen when the project can not find the source
@@ -975,19 +982,17 @@ package body Builder_Facility_Module is
                   Trace
                     (Me,
                      (-"Could not find the project for """
-                      & Mains (J).all & """"));
-                  Free (Mains);
+                      & Mains (J).Display_Full_Name & """"));
                   return Empty_Any_Type;
                elsif Executables_Directory (P) = GNATCOLL.VFS.No_File then
                   Log (-"Project """ & P.Name & """ has no exec_dir", Error);
-                  Free (Mains);
                   return Empty_Any_Type;
                else
                   declare
                      Exec : constant Virtual_File :=
                        Create_From_Dir
                          (Executables_Directory (P),
-                          P.Executable_Name (+Mains (J).all));
+                          P.Executable_Name (Mains (J).Full_Name));
                      Base : constant String := String (Exec.Base_Name);
                      Full : constant String := String (Exec.Full_Name.all);
                      Display_Name : constant Any_Type :=
@@ -1004,13 +1009,10 @@ package body Builder_Facility_Module is
                end if;
             end loop;
 
-            Free (Mains);
-
             return Result;
 
          exception
             when GNATCOLL.VFS.VFS_Invalid_File_Error =>
-               Free (Mains);
                Log
                  (-"Could not determine executable names for the mains",
                   Error);
@@ -1105,7 +1107,7 @@ package body Builder_Facility_Module is
                            Synchronous  => False,
                            Background   => Background,
                            Dialog       => Default,
-                           Main         => "");
+                           Main         => No_File);
             --  ??? Should we attempt to compute which is the "relevant" main
             --  in On_File_Save mode?
          end if;
@@ -1282,7 +1284,7 @@ package body Builder_Facility_Module is
          To_String (Data.Target),
          "",
          No_File,
-         null, False, False, Default, To_String (Data.Main), False);
+         null, False, False, Default, Data.Main, False);
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -1306,7 +1308,7 @@ package body Builder_Facility_Module is
             "",
             No_File,
             null, False, False, Default,
-            To_String (Target_And_Main (Data.all).Main), False);
+            Target_And_Main (Data.all).Main, False);
       end if;
 
    exception
@@ -1375,17 +1377,6 @@ package body Builder_Facility_Module is
       end if;
    end On_Mode_Changed;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ar : in out Argument_List) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
-
    -------------------------------
    -- Install_Button_For_Target --
    -------------------------------
@@ -1408,16 +1399,16 @@ package body Builder_Facility_Module is
          if Mains.Length <= 1 then
             declare
                Widget : Gtk.Tool_Button.Gtk_Tool_Button;
-               Main   : Unbounded_String;
+               Main   : Virtual_File;
             begin
                Gtk_New_From_Stock (Widget, Get_Icon (Target));
                Set_Label (Widget, Name);
 
                if Mains.Length = 0 then
-                  Main := Null_Unbounded_String;
+                  Main := No_File;
                   Set_Tooltip (Widget, Get_Tooltips (Get_Kernel), Name);
                else
-                  Main := To_Unbounded_String (Mains.List (1).Tuple (2).Str);
+                  Main := Create (+Mains.List (1).Tuple (2).Str);
                   Set_Tooltip (Widget, Get_Tooltips (Get_Kernel),
                                Name & ": " & Mains.List (1).Tuple (1).Str);
                end if;
@@ -1446,7 +1437,7 @@ package body Builder_Facility_Module is
                     (Mains.List (J).Tuple (2).Str, Get_Icon (Target),
                      new Target_And_Main'
                        (To_Unbounded_String (Name),
-                        To_Unbounded_String (Mains.List (J).Tuple (2).Str)));
+                        Create (+Mains.List (J).Tuple (2).Str)));
                end loop;
 
                Combo_Callback.Connect
@@ -1514,7 +1505,7 @@ package body Builder_Facility_Module is
       procedure Menu_For_Action
         (Parent_Path : String;
          Name        : String;
-         Main        : String;
+         Main        : Virtual_File;
          Menu_Name   : String);
       --  Add a menu at Parent_Path for target named Name, with menu name
       --  Menu_Name
@@ -1522,7 +1513,7 @@ package body Builder_Facility_Module is
       procedure Menu_For_Action
         (Parent_Path : String;
          Name        : String;
-         Main        : String;
+         Main        : Virtual_File;
          Menu_Name   : String)
       is
          C : Build_Command_Access;
@@ -1545,7 +1536,7 @@ package body Builder_Facility_Module is
                         Ref_Item    => -"Run",
                         --  Do not use mnemonics if we are registering a
                         --  main, as this is a file name in this case.
-                        Mnemonics   => Main = "");
+                        Mnemonics   => Main = No_File);
 
          if Toplevel_Menu then
             Builder_Module_ID.Menus.Prepend
@@ -1603,7 +1594,7 @@ package body Builder_Facility_Module is
                      Menu_For_Action
                        (Parent_Path => To_String (Cat_Path),
                         Name        => Get_Name (Target),
-                        Main        => Mains.List (J).Tuple (2).Str,
+                        Main        => Create (+Mains.List (J).Tuple (2).Str),
                         Menu_Name   => Mains.List (J).Tuple (1).Str);
                   end if;
                end loop;
@@ -1615,7 +1606,7 @@ package body Builder_Facility_Module is
       else
          Menu_For_Action (Parent_Path => To_String (Cat_Path),
                           Name        => Get_Name (Target),
-                          Main        => "",
+                          Main        => No_File,
                           Menu_Name   => Get_Menu_Name (Target));
       end if;
    end Add_Menu_For_Target;
@@ -2720,27 +2711,27 @@ package body Builder_Facility_Module is
    -- Set_Last_Main --
    -------------------
 
-   procedure Set_Last_Main (Target : String; Main : String) is
+   procedure Set_Last_Main (Target : String; Main : Virtual_File) is
       Key : constant Unbounded_String := To_Unbounded_String (Target);
    begin
       Builder_Module_ID.Last_Mains.Exclude (Key);
-      Builder_Module_ID.Last_Mains.Insert (Key, To_Unbounded_String (Main));
+      Builder_Module_ID.Last_Mains.Insert (Key, Main);
    end Set_Last_Main;
 
    -------------------
    -- Get_Last_Main --
    -------------------
 
-   function Get_Last_Main (Target : String) return String is
+   function Get_Last_Main (Target : String) return Virtual_File is
       Key : constant Unbounded_String := To_Unbounded_String (Target);
-      Cur : Target_Outputs.Cursor;
-      use Target_Outputs;
+      Cur : Files.Cursor;
+      use Files;
    begin
       Cur := Builder_Module_ID.Last_Mains.Find (Key);
-      if Cur /= Target_Outputs.No_Element then
-         return To_String (Element (Cur));
+      if Cur /= Files.No_Element then
+         return Element (Cur);
       else
-         return "";
+         return No_File;
       end if;
    end Get_Last_Main;
 

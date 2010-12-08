@@ -238,7 +238,7 @@ package body Builder_Facility_Module.Scripts is
                            Quiet        => False,
                            Synchronous  => Synchronous,
                            Dialog       => Mode,
-                           Main         => Main,
+                           Main         => Create (+Main),
                            Background   => False,
                            Directory    => Dir);
             Free (Extra_Args);
@@ -293,7 +293,7 @@ package body Builder_Facility_Module.Scripts is
                         Synchronous  => True,
                         Dialog       => Default,
                         Background   => False,
-                        Main         => "");
+                        Main         => No_File);
 
          Free (Extra_Args);
 
@@ -312,7 +312,7 @@ package body Builder_Facility_Module.Scripts is
                         Synchronous  => True,
                         Dialog       => Default,
                         Background   => False,
-                        Main         => "");
+                        Main         => No_File);
 
          Free (Extra_Args);
 
@@ -328,7 +328,7 @@ package body Builder_Facility_Module.Scripts is
                         Synchronous  => True,
                         Dialog       => Default,
                         Background   => False,
-                        Main         => "");
+                        Main         => No_File);
 
       elsif Command = "check_semantic" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
@@ -342,7 +342,7 @@ package body Builder_Facility_Module.Scripts is
                         Synchronous  => True,
                         Dialog       => Default,
                         Background   => False,
-                        Main         => "");
+                        Main         => No_File);
 
       elsif Command = "get_build_mode" then
          Set_Return_Value (Data, Get_Mode);
