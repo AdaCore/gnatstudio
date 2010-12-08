@@ -1296,7 +1296,7 @@ package body GPS.Kernel.Preferences is
            & "GPS, in bytes."),
          Minimum => 1_000,
          Maximum => Integer'Last,
-         Default => 1_000_000,
+         Default => 10_000_000,
          Page    => "");
    end Register_Global_Preferences;
 
