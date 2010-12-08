@@ -6,6 +6,10 @@ Known Problems fixed in GPS 5.0.1
               makes GPS display an error that gnatls could not be found.
   Workaround: This is only a visual warning that has no impact on GPS behavior.
 
+- JC07-007: Remote connections not closed when GPS exits
+  Problem:    When GPS exits, the remote connections are not closed.
+  Workaround: Kill the ssh/rlogin/etc. manually after exiting GPS
+
 - JB22-004: GNATstack external subprograms editor empty
   Problem:    The GNATstack external subprograms editor will be empty if
               you have defined a custom CI file with no stack size specified.

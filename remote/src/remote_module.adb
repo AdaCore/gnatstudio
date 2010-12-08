@@ -18,6 +18,9 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 
 with Glib.Object;
 with Gtk.Widget;
@@ -194,6 +197,7 @@ package body Remote_Module is
 
    overriding procedure Destroy (Module : in out Remote_Module_Record) is
    begin
+      GNAT.Expect.TTY.Remote.Close_All;
       Remote.Db.Free (Module.Database);
       Remote_Module_Id := null;
    end Destroy;
