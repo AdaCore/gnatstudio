@@ -54,7 +54,7 @@ package body Build_Command_Manager is
 
    function Get_Last_Main_For_Background_Target
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Target : Target_Access) return String;
+      Target : Target_Access) return Virtual_File;
    --  Return the Main to use for building Target as a background build.
    --  This is either the last main that was used, if it exists, or the first
    --  main defined for this target, if it exists.
@@ -81,7 +81,7 @@ package body Build_Command_Manager is
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
-      Main       : String;
+      Main       : Virtual_File;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean;
@@ -98,7 +98,7 @@ package body Build_Command_Manager is
       Arg        : String;
       Server     : Server_Type;
       Force_File : Virtual_File;
-      Main       : String;
+      Main       : Virtual_File;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean;
@@ -130,11 +130,11 @@ package body Build_Command_Manager is
 
    function Get_Last_Main_For_Background_Target
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Target : Target_Access) return String
+      Target : Target_Access) return Virtual_File
    is
-      Last : constant String := Get_Last_Main (Get_Name (Target));
+      Last : constant Virtual_File := Get_Last_Main (Get_Name (Target));
    begin
-      if Last = "" then
+      if Last = No_File then
          --  There is no last-launched main: compute the list of
          --  mains for this target
 
@@ -153,12 +153,12 @@ package body Build_Command_Manager is
 
          begin
             if Mains.Length = 0 then
-               return "";
+               return No_File;
             end if;
 
             declare
-               The_Main : constant String :=
-                 Mains.List (1).Tuple (2).Str;
+               The_Main : constant Virtual_File :=
+                 Create (+Mains.List (1).Tuple (2).Str);
             begin
                Set_Last_Main (Get_Name (Target), The_Main);
 
@@ -181,7 +181,7 @@ package body Build_Command_Manager is
       Arg        : String;
       Server     : Server_Type;
       Force_File : Virtual_File;
-      Main       : String;
+      Main       : Virtual_File;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean;
@@ -480,15 +480,17 @@ package body Build_Command_Manager is
          end;
 
       elsif Starts_With (Arg, "%TT") then
-         if Main /= "" then
-            Result.Args := Create (Main & Arg (Arg'First + 3 .. Arg'Last));
+         if Main /= No_File then
+            Result.Args := Create
+              (+Main.To_Remote (Get_Nickname (Server)).Full_Name &
+               Arg (Arg'First + 3 .. Arg'Last));
          else
             if Background then
                declare
-                  M : constant String :=
-                    Get_Last_Main_For_Background_Target (Kernel, Target);
+                  M : constant Virtual_File :=
+                        Get_Last_Main_For_Background_Target (Kernel, Target);
                begin
-                  if M = "" then
+                  if M = No_File then
                      Console.Insert
                        (Kernel,
                         (-"Could not launch background build: no main(s)"
@@ -497,7 +499,8 @@ package body Build_Command_Manager is
                      raise Invalid_Argument;
                   else
                      Result.Args := Create
-                       (M & Arg (Arg'First + 3 .. Arg'Last));
+                       (+M.To_Remote (Get_Nickname (Server)).Full_Name &
+                        Arg (Arg'First + 3 .. Arg'Last));
                   end if;
                end;
             else
@@ -509,17 +512,17 @@ package body Build_Command_Manager is
          end if;
 
       elsif Starts_With (Arg, "%T") then
-         if Main /= "" then
+         if Main /= No_File then
             Result.Args := Create
-              (GNAT.Directory_Operations.Base_Name (Main)
+              (+Main.Base_Name
                & Arg (Arg'First + 2 .. Arg'Last));
          else
             if Background then
                declare
-                  M : constant String :=
+                  M : constant Virtual_File :=
                     Get_Last_Main_For_Background_Target (Kernel, Target);
                begin
-                  if M = "" then
+                  if M = No_File then
                      Console.Insert
                        (Kernel,
                         (-"Could not launch background build: no main(s)"
@@ -528,7 +531,7 @@ package body Build_Command_Manager is
                      raise Invalid_Argument;
                   else
                      Result.Args := Create
-                       (GNAT.Directory_Operations.Base_Name (M) &
+                       (+M.Base_Name &
                         Arg (Arg'First + 3 .. Arg'Last));
                   end if;
                end;
@@ -541,8 +544,9 @@ package body Build_Command_Manager is
          end if;
 
       elsif Starts_With (Arg, "%E") then
-         if Main /= "" then
-            Result.Args := Create (Main);
+         if Main /= No_File then
+            Result.Args := Create
+              (+Main.To_Remote (Get_Nickname (Server)).Full_Name);
          else
             Console.Insert
               (Kernel, -"Could not determine the executable name for main.",
@@ -571,7 +575,7 @@ package body Build_Command_Manager is
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
-      Main       : String;
+      Main       : Virtual_File;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean;
@@ -626,7 +630,7 @@ package body Build_Command_Manager is
       Quiet       : Boolean;
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
-      Main        : String;
+      Main        : Virtual_File;
       Background  : Boolean;
       Directory   : Virtual_File := No_File)
    is
@@ -672,14 +676,14 @@ package body Build_Command_Manager is
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
             Res       : constant Expansion_Result :=
-              Expand_Command_Line
-                (Kernel,
-                 Mode_Args.all & All_Extra_Args.all,
-                 T,
-                 Server,
-                 Force_File, Main, Subdir, Shadow,
-                 Simulate => True,
-                 Background_Env => Background_Env);
+                          Expand_Command_Line
+                            (Kernel,
+                             Mode_Args.all & All_Extra_Args.all,
+                             T,
+                             Server,
+                             Force_File, Main, Subdir, Shadow,
+                             Simulate       => True,
+                             Background_Env => Background_Env);
 
          begin
             Free (CL_Args);
@@ -819,7 +823,7 @@ package body Build_Command_Manager is
          else
             Data.Category_Name := To_Unbounded_String (Error_Category);
 
-            if Main /= "" then
+            if Main /= No_File then
                Set_Last_Main (Target_Name, Main);
             end if;
          end if;
@@ -840,7 +844,7 @@ package body Build_Command_Manager is
                Launch_Build_Command
                  (Kernel, Full.Args, Data, Server,
                   Synchronous, Uses_Shell (T),
-                  "Run: " & GNAT.Directory_Operations.Base_Name (Main), Dir);
+                  "Run: " & Main.Display_Base_Name, Dir);
             else
                Launch_Build_Command
                  (Kernel, Full.Args, Data, Server,
@@ -909,7 +913,7 @@ package body Build_Command_Manager is
          Dialog       => Command.Dialog,
          Synchronous  => False,
          Background   => False,
-         Main         => To_String (Command.Main));
+         Main         => Command.Main);
       return Success;
    end Execute;
 
@@ -922,7 +926,7 @@ package body Build_Command_Manager is
       Kernel      : GPS.Kernel.Kernel_Handle;
       Registry    : Build_Config_Registry_Access;
       Target_Name : String;
-      Main        : String;
+      Main        : Virtual_File;
       Quiet       : Boolean;
       Dialog      : Dialog_Mode) is
    begin
@@ -930,7 +934,7 @@ package body Build_Command_Manager is
       Item.Kernel := Kernel;
       Item.Registry := Registry;
       Item.Target_Name := To_Unbounded_String (Target_Name);
-      Item.Main := To_Unbounded_String (Main);
+      Item.Main := Main;
       Item.Dialog := Dialog;
       Item.Quiet := Quiet;
    end Create;
@@ -989,7 +993,7 @@ package body Build_Command_Manager is
          Dialog      => Command.Dialog,
          Synchronous => False,
          Background  => False,
-         Main        => Mains.List (Command.Main).Tuple (2).Str);
+         Main        => Create (+Mains.List (Command.Main).Tuple (2).Str));
 
       Free (Mains);
       return Success;

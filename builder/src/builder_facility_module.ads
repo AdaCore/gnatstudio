@@ -136,7 +136,7 @@ package Builder_Facility_Module is
    --  If Target is null, get all output in the category.
 
    function Get_Mains
-     (Kernel : GPS.Kernel.Kernel_Handle) return GNAT.OS_Lib.Argument_List;
+     (Kernel : GPS.Kernel.Kernel_Handle) return File_Array;
    --  Return the list of mains corresponding to the currently loaded project
    --  tree.
    --  Caller must free the result.
@@ -217,8 +217,8 @@ package Builder_Facility_Module is
    --  Storing the latest Main on which a target was launched is useful
    --  for launching background commands working on mains
 
-   procedure Set_Last_Main (Target : String; Main : String);
-   function Get_Last_Main (Target : String) return String;
+   procedure Set_Last_Main (Target : String; Main : Virtual_File);
+   function Get_Last_Main (Target : String) return Virtual_File;
    --  Get/Set the last main that was actually used when launching a manual
    --  build for Target
 

@@ -56,7 +56,7 @@ package Build_Command_Manager is
       Quiet       : Boolean;
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
-      Main        : String;
+      Main        : Virtual_File;
       Background  : Boolean;
       Directory   : Virtual_File := No_File);
    --  Launch a build of target named Target_Name
@@ -85,7 +85,7 @@ package Build_Command_Manager is
 
    type Build_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
-      Main         : Unbounded_String;
+      Main         : Virtual_File;
       Registry     : Build_Config_Registry_Access;
       Kernel       : GPS.Kernel.Kernel_Handle;
       Dialog       : Dialog_Mode;
@@ -104,7 +104,7 @@ package Build_Command_Manager is
       Kernel      : GPS.Kernel.Kernel_Handle;
       Registry    : Build_Config_Registry_Access;
       Target_Name : String;
-      Main        : String;
+      Main        : Virtual_File;
       Quiet       : Boolean;
       Dialog      : Dialog_Mode);
    --  Create a build command

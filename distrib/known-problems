@@ -6,6 +6,13 @@ Known Problems fixed in GPS 5.0.1
               makes GPS display an error that gnatls could not be found.
   Workaround: This is only a visual warning that has no impact on GPS behavior.
 
+- JC08-008: Remote execution issues with absolute paths
+  Problem:    Using Build->Run->Main in remote mode, the %E argument is
+              incorrectly expanded to the local full path, which may make it
+              incorrect when run on the remote server.
+  Workaround: Replace the default %E by the actual path to use on the remote
+              server
+
 - JC07-007: Remote connections not closed when GPS exits
   Problem:    When GPS exits, the remote connections are not closed.
   Workaround: Kill the ssh/rlogin/etc. manually after exiting GPS
