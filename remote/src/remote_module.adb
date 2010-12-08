@@ -25,6 +25,9 @@ with Gtkada.MDI;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -194,6 +197,7 @@ package body Remote_Module is
 
    overriding procedure Destroy (Module : in out Remote_Module_Record) is
    begin
+      GNAT.Expect.TTY.Remote.Close_All;
       Remote.Db.Free (Module.Database);
       Remote_Module_Id := null;
    end Destroy;
