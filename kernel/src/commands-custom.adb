@@ -428,7 +428,9 @@ package body Commands.Custom is
                     (Command.Execution.Cmd_Index) := False;
                else
                   Previous := S;
-                  S        := new String'(Previous.all & Value);
+                  S        := new String (1 .. Previous'Length + Value'Length);
+                  S (1 .. Previous'Length) := Previous.all;
+                  S (Previous'Length + 1 .. S'Last) := Value;
                   Free (Previous);
                end if;
             end if;
