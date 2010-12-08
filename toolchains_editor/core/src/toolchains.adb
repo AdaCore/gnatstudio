@@ -1072,11 +1072,25 @@ package body Toolchains is
       Origin       : Compiler_Origin;
       Is_Base_Name : Boolean)
    is
+      function Locate_Tool (Path : String) return Boolean;
+
+      function Locate_Tool (Path : String) return Boolean is
+      begin
+         for J in Path'Range loop
+            if Path (J) = ' ' then
+               return Locate_On_Path
+                 (+Path (Path'First .. J - 1),
+                  Remote.Get_Nickname (Build_Server)) /= No_File;
+            end if;
+         end loop;
+
+         return Locate_On_Path
+           (+Path, Remote.Get_Nickname (Build_Server)) /= No_File;
+      end Locate_Tool;
+
       Tool : Tool_Record :=
                (Command   => To_Unbounded_String (Value),
-                Is_Valid  =>
-                  Locate_On_Path
-                    (+Value, Remote.Get_Nickname (Build_Server)) /= No_File,
+                Is_Valid  => Locate_Tool (Value),
                 Origin    => Origin,
                 Base_Name => Is_Base_Name);
 

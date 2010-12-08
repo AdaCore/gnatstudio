@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.1
 
+- JC08-010: In the project editor, specifying arguments to tools lead to wrong
+            visual clues
+  Problem:    Specifying --RTS= to the gnatls command in the project editor
+              makes GPS display an error that gnatls could not be found.
+  Workaround: This is only a visual warning that has no impact on GPS behavior.
+
 - JB22-004: GNATstack external subprograms editor empty
   Problem:    The GNATstack external subprograms editor will be empty if
               you have defined a custom CI file with no stack size specified.
@@ -16,7 +22,7 @@ Known Problems fixed in GPS 5.0.1
 
 - JB01-014: GPS consuming CPU when processing build output
   Problems:   When the build process launched by GPS produces a big amount of
-              output, GPS might freeze temporarily and/or consume a lot of 
+              output, GPS might freeze temporarily and/or consume a lot of
               CPU when processing this output.
   Workaround: Modify the build process to strip it of the unnecessary output,
               for instance by removing '-v' switches.
@@ -51,7 +57,7 @@ Known Problems fixed in GPS 5.0.1
 
 - JA12-020 Error when auto fixing type discriminants
   Problem:    When the compiler detects a mismatch between the partial and the
-              full declaration of a type, with regards to the discriminants, 
+              full declaration of a type, with regards to the discriminants,
               the auto fix mechanism does't work and remove random characters.
   Workaround: Manually fix the code.
 
