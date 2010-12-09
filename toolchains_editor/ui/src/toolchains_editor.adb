@@ -452,34 +452,13 @@ package body Toolchains_Editor is
                     GNATCOLL.Projects.Languages (Project);
       Toolchain : Toolchains.Toolchain;
       Iter      : Gtk_Tree_Iter;
-      Diag      : Gtk_Dialog;
-      Label     : Gtk_Label;
       Success   : Boolean;
       pragma Unreferenced (Success);
 
    begin
       Trace (Me, "Setting editor with project and language information");
 
-      --  Retrieving a toolchain is potentially a long operation, as we need
-      --  to call gprconfig: we display a popup dialog to inform the user that
-      --  he needs to wait a bit for the operation to finish
-      Gtk.Dialog.Gtk_New
-        (Diag, -"",
-         Get_Main_Window (Editor.Kernel), 0);
-      Set_Has_Separator (Diag, False);
-      Gtk_New
-        (Label, -"Scanning host for available compilers, please wait ...");
-      Pack_Start (Get_Vbox (Diag), Label);
-      Diag.Show_All;
-      Diag.Ref;
-      Gtk.Main.Grab_Add (Diag);
-
-      --  Hide and destroy the dialog
-      Gtk.Main.Grab_Remove (Diag);
-      Diag.Hide_All;
-      Diag.Unref;
-
-      --  Now displaying the languages
+      --  Displaying the languages
       Toolchain := Get_Toolchain (Editor.Mgr, Project);
       Editor.Edited_Prj := Project;
 
@@ -1515,14 +1494,34 @@ package body Toolchains_Editor is
       Editor  : constant Toolchains_Edit := Toolchains_Edit (W);
       Success : Boolean;
       Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
+      Dialog  : Gtk_Dialog;
+      Label   : Gtk_Label;
 
    begin
+      --  Retrieving a toolchain is potentially a long operation, as we need
+      --  to call gprconfig: we display a popup dialog to inform the user that
+      --  he needs to wait a bit for the operation to finish
+      Gtk.Dialog.Gtk_New
+        (Dialog, -"", Gtk_Window (W.Get_Ancestor (Gtk.Window.Get_Type)), 0);
+      Set_Has_Separator (Dialog, False);
+      Gtk_New
+        (Label, -"Scanning host for available compilers, please wait ...");
+      Pack_Start (Get_Vbox (Dialog), Label);
+      Dialog.Show_All;
+      Dialog.Ref;
+      Gtk.Main.Grab_Add (Dialog);
+
       --  ??? At some point we should handle the 'Success' status and display
       --  an appropriate warning in the widget stating that we could not
       --  retrieve the installed toolchain because gprbuild 1.5.0 is not there
       Editor.Mgr.Do_Rollback;
-      Editor.Mgr.Compute_Gprconfig_Compilers (Success);
+      Editor.Mgr.Compute_Gprconfig_Compilers (Success => Success);
       Editor.Mgr.Do_Snapshot;
+
+      --  Hide and destroy the dialog
+      Gtk.Main.Grab_Remove (Dialog);
+      Dialog.Hide_All;
+      Dialog.Unref;
 
       --  And finally display the toolchains
       --  Clear previously set toolchains
