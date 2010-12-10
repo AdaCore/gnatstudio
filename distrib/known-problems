@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- JC10-010 GPS: Unwanted scrolling in the Files view
+  Problem:    When the Files view is floating, in window managers where the
+              focus follows the mouse, the Files view might scroll to display
+              the currently selected row.
+  Workaround: This can be safely ignored.
+
 - JB30-029 GPS: Project editor takes a long time to open
   Problem:    When opening the project editor, a dialog "Scanning your computer
               for available compilers" appears and the project editor might

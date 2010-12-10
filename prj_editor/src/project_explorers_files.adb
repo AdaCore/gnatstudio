@@ -757,9 +757,16 @@ package body Project_Explorers_Files is
       Check     : Gtk_Check_Menu_Item;
    begin
       if Iter /= Null_Iter then
-         Path := Get_Path (T.File_Model, Iter);
-         Set_Cursor (T.File_Tree, Path, null, False);
-         Path_Free (Path);
+         --  If Menu is null, this means that this function is being called
+         --  through Default_Context_Factory and is not filling a contextual
+         --  menu. In this case we do not want to do the call to Set_Cursor
+         --  which would cause scrolling of the currently selected cell if it
+         --  is not visible.
+         if Menu /= null then
+            Path := Get_Path (T.File_Model, Iter);
+            Set_Cursor (T.File_Tree, Path, null, False);
+            Path_Free (Path);
+         end if;
 
          Node_Type := Node_Types'Val
            (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
