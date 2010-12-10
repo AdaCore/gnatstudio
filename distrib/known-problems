@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.1
 
+- JC10-010 GPS: Unwanted scrolling in the Files view
+  Problem:    When the Files view is floating, in window managers where the
+              focus follows the mouse, the Files view might scroll to display
+              the currently selected row.
+  Workaround: This can be safely ignored.
+
 - JC08-010: In the project editor, specifying arguments to tools lead to wrong
             visual clues
   Problem:    Specifying --RTS= to the gnatls command in the project editor
