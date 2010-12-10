@@ -194,6 +194,10 @@ def remove_old_menus(system_name):
 
 registered_vcs_actions = {}
 def register_vcs_actions (system_name, actions):
+    """ Associate actions to the given VCS system.
+          actions is a list of dictionaries of the form
+            { ACTION: <name of the VCS action>, LABEL: <menu label> }
+    """
     global registered_vcs_actions
     registered_vcs_actions[system_name] = actions
 
