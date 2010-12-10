@@ -51,7 +51,7 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 
 ######### checking for gtk
 AM_PATH_GTK
-AM_PATH_GTKADA(2.18.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTKADA(2.22.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 ######## GNU regex checking
 AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
