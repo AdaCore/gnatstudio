@@ -798,6 +798,7 @@ package body Ada_Analyzer is
 
       procedure Next_Word
         (P           : in out Natural;
+         L           : in out Natural;
          Terminated  : out Boolean;
          End_Reached : out Boolean);
       --  Starting at Buffer (P), find the location of the next word
@@ -839,6 +840,7 @@ package body Ada_Analyzer is
 
       procedure Do_Indent
         (Prec         : Natural;
+         Line_Count   : Natural;
          Num_Spaces   : Integer;
          Continuation : Boolean := False);
       --  Perform indentation by inserting spaces in the buffer.
@@ -851,6 +853,7 @@ package body Ada_Analyzer is
         (Token      : Token_Type;
          Prev_Token : Token_Type;
          Prec       : Natural;
+         Line_Count : Natural;
          Num_Spaces : Integer);
       --  Compute proper indentation, taking into account various cases
       --  of simple/continuation/declaration/... lines.
@@ -886,6 +889,7 @@ package body Ada_Analyzer is
       procedure Replace_Text
         (First : Natural;
          Last  : Natural;
+         Line  : Natural;
          Str   : String);
       --  Wrapper for Replace.all, taking (From, To) into account
 
@@ -924,6 +928,7 @@ package body Ada_Analyzer is
 
       procedure Do_Indent
         (Prec         : Natural;
+         Line_Count   : Natural;
          Num_Spaces   : Integer;
          Continuation : Boolean := False)
       is
@@ -982,7 +987,7 @@ package body Ada_Analyzer is
          end if;
 
          Replace_Text
-           (Start, Index,
+           (Start, Index, Line_Count,
             Blank_Slice (Indentation, Use_Tabs, Tab_Width));
          Indent_Done := True;
       end Do_Indent;
@@ -1003,10 +1008,11 @@ package body Ada_Analyzer is
          --     return B;
 
          if Top_Token.Profile_Start = 0 then
-            Do_Indent (Prec, Num_Spaces + Indent_Continue);
+            Do_Indent (Prec, Line_Count, Num_Spaces + Indent_Continue);
          else
             Do_Indent
               (Prec,
+               Line_Count,
                Top_Token.Profile_Start -
                  Line_Start (Buffer, Top_Token.Profile_Start) + 1);
          end if;
@@ -1292,6 +1298,7 @@ package body Ada_Analyzer is
         (Token      : Token_Type;
          Prev_Token : Token_Type;
          Prec       : Natural;
+         Line_Count : Natural;
          Num_Spaces : Integer)
       is
          Top_Tok : constant Token_Type := Top (Tokens).Token;
@@ -1361,7 +1368,8 @@ package body Ada_Analyzer is
             --     when A |
             --          B =>  --  from Indent_When
 
-            Do_Indent (Prec, Num_Spaces - Indent_Level + Indent_When);
+            Do_Indent
+              (Prec, Line_Count, Num_Spaces - Indent_Level + Indent_When);
 
          elsif Prev_Token = Tok_Comma then
             if Top_Tok = Tok_Declare
@@ -1375,29 +1383,29 @@ package body Ada_Analyzer is
                --     A,
                --         B : Integer;  --  from Indent_Decl
 
-               Do_Indent (Prec, Num_Spaces + Indent_Decl);
+               Do_Indent (Prec, Line_Count, Num_Spaces + Indent_Decl);
 
             elsif Top_Tok = Tok_With then
                --  Indent continuation lines in with clauses:
                --  with Package1,
                --     Package2;  --  from Indent_With
 
-               Do_Indent (Prec, Num_Spaces + Indent_With);
+               Do_Indent (Prec, Line_Count, Num_Spaces + Indent_With);
 
             elsif Top_Tok = Tok_Use then
                --  Ditto for use clauses:
                --  use Package1,
                --    Package2;  --  from Indent_Use
 
-               Do_Indent (Prec, Num_Spaces + Indent_Use);
+               Do_Indent (Prec, Line_Count, Num_Spaces + Indent_Use);
 
             elsif Num_Parens = 0 then
-               Do_Indent (Prec, Num_Spaces, Continuation => True);
+               Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
 
             else
                --  Default case, simply use Num_Spaces
 
-               Do_Indent (Prec, Num_Spaces);
+               Do_Indent (Prec, Line_Count, Num_Spaces);
             end if;
 
          elsif (Prev_Token = Tok_Colon_Equal or else Prev_Token = Tok_Renames)
@@ -1405,17 +1413,17 @@ package body Ada_Analyzer is
            and then Continuation_Val = 0
          then
             Continuation_Val := Top (Tokens).Colon_Col + 4 - Indent_Continue;
-            Do_Indent (Prec, Num_Spaces, Continuation => True);
+            Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
 
          elsif Is_Continuation_Line then
-            Do_Indent (Prec, Num_Spaces, Continuation => True);
+            Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
 
             if Is_Operator (Token) then
                Continuation_Val := 0;
             end if;
 
          else
-            Do_Indent (Prec, Num_Spaces);
+            Do_Indent (Prec, Line_Count, Num_Spaces);
          end if;
       end Compute_Indentation;
 
@@ -1488,7 +1496,8 @@ package body Ada_Analyzer is
                Tmp := Tmp + 1;
 
                if Buffer (Tmp) = ASCII.LF then
-                  Compute_Indentation (Token, Prev_Token, Tmp - 1, Num_Spaces);
+                  Compute_Indentation
+                    (Token, Prev_Token, Tmp - 1, Line_Count, Num_Spaces);
                   New_Lines := New_Lines + 1;
                end if;
 
@@ -2430,7 +2439,7 @@ package body Ada_Analyzer is
                   Stop_On_Blank_Line => Stop_On_Blank_Line);
             end if;
 
-            Do_Indent (Prec, Num_Spaces);
+            Do_Indent (Prec, Line_Count, Num_Spaces);
 
             if Indent_Case_Extra = RM_Style then
                Temp.Extra_Indent := True;
@@ -2448,7 +2457,10 @@ package body Ada_Analyzer is
                --     Bar;
 
                Do_Indent
-                 (Prec, Num_Spaces - Indent_Level, Continuation => True);
+                 (Prec,
+                  Line_Count,
+                  Num_Spaces - Indent_Level,
+                  Continuation => True);
             end if;
 
          elsif Reserved = Tok_Renames then
@@ -2571,7 +2583,8 @@ package body Ada_Analyzer is
                      --  If the "record" keyword was on its own line
 
                      if Top_Token.Extra_Indent then
-                        Do_Indent (Prec, Num_Spaces - Indent_Level);
+                        Do_Indent
+                          (Prec, Line_Count, Num_Spaces - Indent_Level);
                         Num_Spaces := Num_Spaces - Indent_Record;
                      end if;
 
@@ -2695,7 +2708,7 @@ package body Ada_Analyzer is
                if not Indent_Done then
                   Temp.Extra_Indent := True;
                   Num_Spaces := Num_Spaces + Indent_Record;
-                  Do_Indent (Prec, Num_Spaces);
+                  Do_Indent (Prec, Line_Count, Num_Spaces);
                end if;
 
                if Top_Token.Token = Tok_Type then
@@ -2755,7 +2768,7 @@ package body Ada_Analyzer is
                --  'is abstract|separate' will be indented when handling
                --  'abstract|separate' for functions
             then
-               Do_Indent (Prec, Num_Spaces);
+               Do_Indent (Prec, Line_Count, Num_Spaces);
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
@@ -2777,9 +2790,9 @@ package body Ada_Analyzer is
                   end if;
                end if;
 
-               Do_Indent (Prec, Num_Spaces, Continuation => True);
+               Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
             else
-               Do_Indent (Prec, Num_Spaces);
+               Do_Indent (Prec, Line_Count, Num_Spaces);
             end if;
 
          elsif Reserved = Tok_Generic then
@@ -2788,13 +2801,13 @@ package body Ada_Analyzer is
             --  generic
             --     type ...;
 
-            Do_Indent (Prec, Num_Spaces);
+            Do_Indent (Prec, Line_Count, Num_Spaces);
             Num_Spaces := Num_Spaces + Indent_Level;
 
          elsif Reserved = Tok_Exception then
             if Top_Token.Token /= Tok_Colon then
                Num_Spaces := Num_Spaces - Indent_Level;
-               Do_Indent (Prec, Num_Spaces);
+               Do_Indent (Prec, Line_Count, Num_Spaces);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
             end if;
          end if;
@@ -2810,6 +2823,7 @@ package body Ada_Analyzer is
 
       procedure Next_Word
         (P           : in out Natural;
+         L           : in out Natural;
          Terminated  : out Boolean;
          End_Reached : out Boolean)
       is
@@ -2883,7 +2897,7 @@ package body Ada_Analyzer is
                   --    );  <-
 
                   Top (Indents).Level := Top (Indents).Level - 1;
-                  Do_Indent (P, Num_Spaces);
+                  Do_Indent (P, L, Num_Spaces);
                end if;
 
                Pop (Indents);
@@ -3039,7 +3053,7 @@ package body Ada_Analyzer is
             end if;
 
             Replace_Text
-              (First, Last,
+              (First, Last, L,
                (1 .. Offset_Align => ' ')
                 & Spaces (Offs .. Offs + Long - 1));
             Insert_Spaces := False;
@@ -3057,7 +3071,7 @@ package body Ada_Analyzer is
             First_Paren  : Natural;
 
          begin
-            Do_Indent (P, Num_Spaces);
+            Do_Indent (P, L, Num_Spaces);
             Prev_Token := Tok_Arrow;
 
             if Local_Top_Token.Token = Tok_When
@@ -3119,7 +3133,7 @@ package body Ada_Analyzer is
             Offset_Align := Integer'Max (0, Align_Arrow - (P - Non_Blank + 1));
 
             Replace_Text
-              (First, Last,
+              (First, Last, L,
                (1 .. Offset_Align => ' ')
                 & Spaces (Offs .. Offs + Long - 1));
             Insert_Spaces := False;
@@ -3171,7 +3185,7 @@ package body Ada_Analyzer is
               (Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR)
             loop
                if Buffer (P) = ASCII.LF then
-                  New_Line (Line_Count);
+                  New_Line (L);
                   Indent_Done := False;
                end if;
 
@@ -3212,7 +3226,7 @@ package body Ada_Analyzer is
               and then Buffer (P + 1) = '-'
             loop
                Prev_Start_Line := Start_Of_Line;
-               Prev_Line := Line_Count;
+               Prev_Line := L;
                First := P;
                Comments_Skipped := True;
 
@@ -3224,7 +3238,7 @@ package body Ada_Analyzer is
                --     --  comment
 
                if Indent_Comments then
-                  Do_Indent (P, Ref_Indent);
+                  Do_Indent (P, L, Ref_Indent);
                end if;
 
                --  Keep track of the indentation of the first comment line,
@@ -3234,7 +3248,7 @@ package body Ada_Analyzer is
 
                if Ref_Indent = Num_Spaces
                  and then To /= 0
-                 and then Line_Count not in From .. To
+                 and then L not in From .. To
                then
                   Ref_Indent := P - Start_Of_Line - Indent_Offset;
                end if;
@@ -3243,7 +3257,7 @@ package body Ada_Analyzer is
                Last := P;
 
                if Success then
-                  New_Line (Line_Count);
+                  New_Line (L);
                   Last := Prev_Char (Last);
                   Indent_Done := False;
                end if;
@@ -3255,7 +3269,7 @@ package body Ada_Analyzer is
 
                   while P < Buffer_Last and then Buffer (P) = ASCII.LF loop
                      Ref_Indent := Num_Spaces;
-                     New_Line (Line_Count);
+                     New_Line (L);
                      P := P + 1;
                   end loop;
 
@@ -3282,7 +3296,7 @@ package body Ada_Analyzer is
                   --  the cursor at the right location
 
                   pragma Assert (P = Buffer_Last);
-                  Do_Indent (P, Ref_Indent);
+                  Do_Indent (P, L, Ref_Indent);
                end if;
 
                if Callback /= null then
@@ -3489,10 +3503,10 @@ package body Ada_Analyzer is
             declare
                L1, L2 : Natural;
             begin
-               L1 := Line_Count;
+               L1 := L;
                Skip_Blank_Lines;
                Skip_Comments;
-               L2 := Line_Count;
+               L2 := L;
                --  If we have blank lines and/or comment line we need to
                --  recompute the alignment for the next block of code.
                Recompute_Align := L2 > L1 + 1;
@@ -3595,7 +3609,7 @@ package body Ada_Analyzer is
                        and then not Is_Extended_Operator (Prev_Prev_Token)
                      then
                         Spaces (2) := Buffer (P);
-                        Replace_Text (P, P + 1, Spaces (1 .. 2));
+                        Replace_Text (P, P + 1, L, Spaces (1 .. 2));
                      end if;
 
                   else
@@ -3611,7 +3625,7 @@ package body Ada_Analyzer is
                      if Prev_Prev_Token = Tok_Comma
                        or else Prev_Prev_Token = Tok_Ampersand
                      then
-                        Do_Indent (P, Num_Spaces);
+                        Do_Indent (P, L, Num_Spaces);
                      else
                         if Prev_Prev_Token = Tok_Colon_Equal
                           and then Local_Top_Token.Colon_Col /= 0
@@ -3624,7 +3638,7 @@ package body Ada_Analyzer is
                         Adjust := Adjust + Continuation_Val;
                         Tmp := Paren_In_Middle;
                         Do_Indent
-                          (P, Num_Spaces,
+                          (P, L, Num_Spaces,
                            Continuation =>
                              Prev_Prev_Token = Tok_Apostrophe
                              or else Prev_Prev_Token = Tok_Arrow
@@ -3689,7 +3703,7 @@ package body Ada_Analyzer is
                         if Top (Indents).Level = None then
                            Level := Num_Spaces + Adjust;
                         elsif Prev_Prev_Token = Tok_Left_Paren
-                          or else Top (Indents).Line = Line_Count
+                          or else Top (Indents).Line = L
                         then
                            Level := Top (Indents).Level;
                         else
@@ -3697,7 +3711,7 @@ package body Ada_Analyzer is
                         end if;
                      end if;
 
-                     Push (Indents, (Level, Align, Line_Count));
+                     Push (Indents, (Level, Align, L));
                   end;
 
                   if Continuation_Val > 0 then
@@ -3778,7 +3792,7 @@ package body Ada_Analyzer is
                            Local_Top_Token.Identifier (1 .. Len) :=
                              Buffer (First .. P);
                            Local_Top_Token.Ident_Len := Len;
-                           Local_Top_Token.Sloc_Name.Line := Line_Count;
+                           Local_Top_Token.Sloc_Name.Line := L;
                            Local_Top_Token.Sloc_Name.Column :=
                              First - Start_Of_Line + 1;
                            Local_Top_Token.Sloc_Name.Index := First;
@@ -3792,14 +3806,14 @@ package body Ada_Analyzer is
                      end if;
 
                      Compute_Indentation
-                       (Prev_Token, Prev_Prev_Token, P, Num_Spaces);
+                       (Prev_Token, Prev_Prev_Token, P, L, Num_Spaces);
 
                      if Callback /= null then
                         if Callback
                           (Entity,
-                           (Line_Count, First - Start_Of_Line + 1,
+                           (L, First - Start_Of_Line + 1,
                             First),
-                           (Line_Count, P - Start_Of_Line + 1, P),
+                           (L, P - Start_Of_Line + 1, P),
                            False)
                         then
                            Terminated := True;
@@ -4013,14 +4027,14 @@ package body Ada_Analyzer is
                      --  continuation lines are already handled separately.
 
                      Compute_Indentation
-                       (Prev_Token, Prev_Prev_Token, P, Num_Spaces);
+                       (Prev_Token, Prev_Prev_Token, P, L, Num_Spaces);
                   else
-                     Do_Indent (P, Num_Spaces);
+                     Do_Indent (P, L, Num_Spaces);
                   end if;
 
                   if Format_Operators and then Insert_Spaces then
                      Replace_Text
-                       (First, Last, Spaces (Offs .. Offs + Long - 1));
+                       (First, Last, L, Spaces (Offs .. Offs + Long - 1));
                   end if;
 
                when ',' | ';' =>
@@ -4092,7 +4106,7 @@ package body Ada_Analyzer is
 
                            Val.Token := Local_Top_Token.Token;
                            Pop_And_Set_Local (Tokens);
-                           Val.Sloc.Line   := Line_Count;
+                           Val.Sloc.Line   := L;
                            Val.Sloc.Column :=
                              Prec - Line_Start (Buffer, Prec) + 2;
                            Val.Sloc.Index  := Prec + 1;
@@ -4106,9 +4120,9 @@ package body Ada_Analyzer is
                      Char := Buffer (P + 1);
 
                      if Char /= ' ' then
-                        Do_Indent (P, Num_Spaces);
+                        Do_Indent (P, L, Num_Spaces);
                         Comma (1) := Buffer (P);
-                        Replace_Text (P, P + 1, Comma (1 .. 2));
+                        Replace_Text (P, P + 1, L, Comma (1 .. 2));
                      end if;
                   end if;
 
@@ -4148,8 +4162,8 @@ package body Ada_Analyzer is
                      if Callback /= null then
                         if Callback
                           (Character_Text,
-                           (Line_Count, First - Start_Of_Line + 1, First),
-                           (Line_Count, P - Start_Of_Line + 1, P),
+                           (L, First - Start_Of_Line + 1, First),
+                           (L, P - Start_Of_Line + 1, P),
                            False)
                         then
                            Terminated := True;
@@ -4174,8 +4188,8 @@ package body Ada_Analyzer is
                if Callback /= null then
                   if Callback
                     (Operator_Text,
-                     (Line_Count, First - Start_Of_Line + 1, First),
-                     (Line_Count, P - Start_Of_Line + 1, P),
+                     (L, First - Start_Of_Line + 1, First),
+                     (L, P - Start_Of_Line + 1, P),
                      False)
                   then
                      Terminated := True;
@@ -4199,21 +4213,22 @@ package body Ada_Analyzer is
       procedure Replace_Text
         (First : Natural;
          Last  : Natural;
+         Line  : Natural;
          Str   : String)
       is
          Start : Natural;
       begin
          if Replace /= null
-           and then (To = 0 or else Line_Count in From .. To)
+           and then (To = 0 or else Line in From .. To)
          then
-            if Last_Replace_Line /= Line_Count then
-               Last_Replace_Line := Line_Count;
+            if Last_Replace_Line /= Line then
+               Last_Replace_Line := Line;
                Padding := 0;
             end if;
 
             Start := Line_Start (Buffer, First);
             Replace
-              (Line_Count,
+              (Line,
                Padding + First - Start + 1,
                Padding + Last - Start + 1, Str);
 
@@ -4234,7 +4249,7 @@ package body Ada_Analyzer is
 
       Push (Indents, (None, 0, 0));
 
-      Next_Word (Prec, Terminated, End_Reached);
+      Next_Word (Prec, Line_Count, Terminated, End_Reached);
 
       --  If there is only one character in the buffer and the end of the
       --  buffer has been reached, enter the main loop anyway. Otherwise,
@@ -4522,14 +4537,16 @@ package body Ada_Analyzer is
 
                when Upper | Lower | Mixed | Smart_Mixed  =>
                   Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
-                  Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
+                  Replace_Text
+                    (Prec, Current + 1, Line_Count, Str (1 .. Str_Len));
             end case;
          end if;
 
          --  'is' is handled specially, so nothing is needed here
 
          if Token /= Tok_Is then
-            Compute_Indentation (Token, Prev_Token, Prec, Num_Spaces);
+            Compute_Indentation
+              (Token, Prev_Token, Prec, Line_Count, Num_Spaces);
          end if;
 
          Prec            := Current + 1;
@@ -4538,7 +4555,7 @@ package body Ada_Analyzer is
 
          exit Main_Loop when Prec > Buffer_Last;
 
-         Next_Word (Prec, Terminated, End_Reached);
+         Next_Word (Prec, Line_Count, Terminated, End_Reached);
 
          exit Main_Loop when
            (End_Reached and then Buffer (Buffer_Last) /= ASCII.LF)
