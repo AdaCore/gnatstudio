@@ -34,6 +34,12 @@ NF-51-JB23-022 GB: Add tooltips in ada editor (2010-12-08)
   profile and documentation. They can be disabled from the menu Window =>
   Preferences => Ada => Editor.
 
+NF-51-JB18-031 GPS: New API to retrieve multiple files in contexts (2010-12-10)
+
+  A new Python/Shell API (FileContext.files) allows retrieving as a list all
+  files stored in a context. This is useful in particular when working with
+  the VCS Explorer.
+
 NF-51-JB16-016 GPS: New facility for handling VCS menus (2010-12-10)
 
   GPS provides a facility for handling all VCS menus in a centralized place,
