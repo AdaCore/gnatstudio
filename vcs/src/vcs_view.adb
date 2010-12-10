@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2009, AdaCore                  --
+--                 Copyright (C) 2005-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,6 +52,9 @@ package body VCS_View is
      (Context : Selection_Context) return Selection_Context;
    --  Copy the information in Context that are relevant to the explorer,
    --  and create a new context containing them.
+
+   procedure Selection_Changed (View  : access Gtk_Widget_Record'Class);
+   --  Called when the selection has changed on the explorer
 
    --------------
    -- File_Key --
@@ -153,6 +156,14 @@ package body VCS_View is
          Explorer,
          After => False);
 
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Explorer.Tree.Get_Selection,
+         Gtk.Tree_Selection.Signal_Changed,
+         Gtkada.Handlers.Widget_Callback.To_Marshaller
+           (Selection_Changed'Access),
+         Explorer,
+         After => False);
+
       Tooltip := new VCS_Tooltips;
       Tooltip.Explorer := VCS_View.VCS_View_Access (Explorer);
       Set_Tooltip (Tooltip, Explorer.Tree);
@@ -184,6 +195,20 @@ package body VCS_View is
    begin
       Gtk_New (Explorer.Model, Columns_Types (Explorer));
    end Create_Model;
+
+   -----------------------
+   -- Selection_Changed --
+   -----------------------
+
+   procedure Selection_Changed (View  : access Gtk_Widget_Record'Class) is
+      Explorer : constant VCS_View_Access := VCS_View_Access (View);
+   begin
+      --  Reset the context
+      Set_Current_Context (Explorer, No_Context);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end Selection_Changed;
 
    ------------------
    -- Button_Press --
