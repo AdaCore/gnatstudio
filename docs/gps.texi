@@ -17633,6 +17633,7 @@ Hook ("my_custom_hook").run (1)    ## Prints 1 100
 * Custom VCS interfaces::
 * Describing a VCS::
 * Implementing VCS actions::
+* Implementing VCS menus::
 @end menu
 
 @node Custom VCS interfaces
@@ -17643,22 +17644,23 @@ The Version Control interface in GPS can be customized, either to
 refine the behavior of the existing system and adapt it to specific
 needs, or to add support for other Version Control systems.
 
-Custom VCS interfaces are defined entirely through XML files. Those
-files are read in the same location as all the other XML
+Custom VCS interfaces are defined through XML files and Python plugins.
+Those files are read in the same location as all the other XML and Python
 customizations that GPS offers. See @ref{Customizing through XML and Python files} for a
 complete description.
 
-There are two steps to follow when creating a custom VCS
-interface. The first step is to describe the VCS itself, and the
+There are three steps to follow when creating a custom VCS
+interface. The first step is to describe the VCS itself, the
 second step is to implement actions corresponding to all the
-operations that this VCS can perform. The following two sections
-(@ref{Describing a VCS} and @ref{Implementing VCS actions}) describe
-those steps.
+operations that this VCS can perform, and the third step is to
+define the layout of the menus. The following three sections
+(@ref{Describing a VCS}, @ref{Implementing VCS actions}, and
+@ref{Implementing VCS menus}) describe those steps.
 
-GPS is distributed with XML files describing the interfaces to
-ClearCase, CVS and Subversion. These XML files are located in the directory
-@code{share/gps/plug-ins} in the GPS installation, and can be used as a
-reference for implementing new custom VCS interfaces.
+GPS is distributed with XML/Python files describing the interfaces to
+ClearCase, CVS, Subversion and Git. These XML/Python files are located in the
+directory @code{share/gps/plug-ins} in the GPS installation, and can be used
+as a reference for implementing new custom VCS interfaces.
 
 @node Describing a VCS
 @subsection Describing a VCS
@@ -18172,6 +18174,41 @@ parameters:
   as opposed to @i{context} or @i{unified} ones.
 
 @end table
+
+@node Implementing VCS menus
+@subsection Implementing VCS menus
+
+GPS defines a standard set of Actions to interact with Version Control Systems.
+All these actions can be viewed, for instance, in the "VCS" of the Key
+Shortcuts dialog (see @ref{The Key Manager Dialog}).
+
+A Python facility exists in plugin @code{vcs.py} to associate menu items to
+VCS actions. This facility defines in one place the VCS menus that are to be
+displayed in the global VCS menu, in the contextual menus on contexts that
+contain files, and on the menus in the VCS explorer.
+
+To use this facility, you must first define a list of associations in Python,
+and then register this list through a call to @code{vcs.register_vcs_actions}.
+
+This function takes as parameter:
+
+@table @b
+@item the name of the version control system
+as defined in the @code{name} attribute of the @code{vcs} node in the XML
+definition.
+
+@item a list of dictionaries
+of the form @code{ACTION : <name of the vcs action>, LABEL: <menu label>}.
+The predefined @code{SEPARATOR} dictionary can be used to indicate a
+separator which will be displayed in the contextual menus on file and on the
+VCS Explorer.
+@end table
+
+If you have defined a custom VCS in a previous version of GPS, you will need
+to define your menus through this facility. The easiest is to simply copy one
+of the existing plugins (for instance @code{subversion.py} or
+@code{clearcase.py}) and simply change the first parameter in the call to
+@code{register_vcs_actions}.
 
 @c --------------------------------------------------------------------
 @node The Server Mode
