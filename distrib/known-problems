@@ -17,6 +17,11 @@ Known Problems fixed in GPS 5.0.1
   Problem:    When GPS exits, the remote connections are not closed.
   Workaround: Kill the ssh/rlogin/etc. manually after exiting GPS
 
+- JC07-004: Menus under Edit->Text size are not working
+  Problem:    The menus Edit->Text size->Increase/Decrease Text Size and 
+              the associated key shortcuts have no effect.
+  Workaround: Use the Preferences dialog to control the size of the fonts.
+
 - JB22-004: GNATstack external subprograms editor empty
   Problem:    The GNATstack external subprograms editor will be empty if
               you have defined a custom CI file with no stack size specified.
