@@ -14,6 +14,12 @@ If no tag is specified, the entry is relevant to all IDEs.
               the currently selected row.
   Workaround: This can be safely ignored.
 
+- JC10-004 Errors when automatically fixing unused packages
+  Problem:    When automatically removing an unused package through automatic
+              code fixing, in certain situations, the chunk of removed code is
+              larger than the package.
+  Workaround: Manually delete the code.
+
 - JB30-029 GPS: Project editor takes a long time to open
   Problem:    When opening the project editor, a dialog "Scanning your computer
               for available compilers" appears and the project editor might
@@ -24,7 +30,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 - JB24-033 References found in external files when sharing obj dir
   Problem:    If you have multiple projects sharing a common object
-              directory, GPS will load the xref information from all the ALI
+              directory, xref information will be loaded from all the ALI
               files in that directory, even if the corresponding project is
               not loaded.
   Workaround: It is better not to share object directories among unrelated
