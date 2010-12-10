@@ -8,12 +8,6 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-- JC10-010 GPS: Unwanted scrolling in the Files view
-  Problem:    When the Files view is floating, in window managers where the
-              focus follows the mouse, the Files view might scroll to display
-              the currently selected row.
-  Workaround: This can be safely ignored.
-
 - JC10-004 Errors when automatically fixing unused packages
   Problem:    When automatically removing an unused package through automatic
               code fixing, in certain situations, the chunk of removed code is
