@@ -24,12 +24,7 @@ def zoom_pref(pref, factor, save=True):
    p.set (descr.to_string() + "@" + fg + "@" + bg, save)
 
 def zoom (factor):
-   zoom_pref ("Src-Editor-Keywords-Style", factor, False)
-   zoom_pref ("Src-Editor-Strings-Style",  factor, False)
-   zoom_pref ("Src-Editor-Default-Style",  factor, False)
-   zoom_pref ("Src-Editor-Hyper-Links-Style", factor, False)
-   zoom_pref ("Src-Editor-Annotated-Comments-Style", factor, False)
-   zoom_pref ("Src-Editor-Comments-Style", factor, True)
+   zoom_pref ("Src-Editor-Reference-Style", factor, True)
 
 Menu.create ("/Edit/Text Size/Increase Text Size", lambda x: zoom(1.2),
              ref="Preferences", add_before=True)
