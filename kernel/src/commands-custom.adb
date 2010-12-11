@@ -1260,11 +1260,11 @@ package body Commands.Custom is
          function Execute_Shell
            (Component : Custom_Component_Record'Class) return Boolean
          is
-            Errors         : aliased Boolean;
-            Old_Dir        : Virtual_File;
+            Errors    : aliased Boolean;
+            Old_Dir   : Virtual_File;
             --  has to be determined here so that Current_Server is
             --  correctly set:
-            Treatment      : GNATCOLL.Arg_Lists.Command_Line_Mode;
+            Treatment : GNATCOLL.Arg_Lists.Command_Line_Mode;
          begin
             if Command_Line_Treatment (Component.Script) = Raw_String then
                Treatment := Raw_String;

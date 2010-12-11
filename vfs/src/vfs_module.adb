@@ -385,7 +385,7 @@ package body VFS_Module is
          end if;
 
       else
-         --  Assign for further use.
+         --  Assign for further use
          File := Dir;
 
          Res := Gtkada.Dialogs.Message_Dialog

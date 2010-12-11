@@ -104,8 +104,7 @@ package body Outline_View is
    --  Called when the context has changed
 
    function Open_Outline
-     (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child;
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Open the outline view, or return a handle to it if it already exists
 
    procedure On_Open_Outline
@@ -117,11 +116,11 @@ package body Outline_View is
    type Outline_Db_Listener_Access is access all Outline_Db_Listener'Class;
 
    type Outline_View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Kernel    : Kernel_Handle;
-      Tree      : Gtk_Tree_View;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Icon      : Gdk_Pixbuf;
-      File_Icon : Gdk_Pixbuf;
+      Kernel      : Kernel_Handle;
+      Tree        : Gtk_Tree_View;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Icon        : Gdk_Pixbuf;
+      File_Icon   : Gdk_Pixbuf;
       Db_Listener : Outline_Db_Listener_Access;
    end record;
    type Outline_View_Access is access all Outline_View_Record'Class;
@@ -159,7 +158,7 @@ package body Outline_View is
    --  If the constructs are up-to-date, do nothing.
 
    procedure Force_Refresh (View : access Gtk_Widget_Record'Class);
-   --  Same as above, but force a full refresh.
+   --  Same as above, but force a full refresh
 
    function Button_Press
      (Outline : access Gtk_Widget_Record'Class;
@@ -180,9 +179,8 @@ package body Outline_View is
    --  React to changes in the preferences
 
    function Get_Filter_Record
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Tree_Filter;
-   --  Return the filters properties extracted from the kernel.
+     (Kernel : access Kernel_Handle_Record'Class) return Tree_Filter;
+   --  Return the filters properties extracted from the kernel
 
    procedure Outline_Context_Factory
      (Context      : in out Selection_Context;
@@ -287,12 +285,13 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Child       : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
-      Outline     : Outline_View_Access;
-      Model       : Outline_Model;
-      Path        : Gtk_Tree_Path;
-      Loc         : File_Location_Hooks_Args_Access;
+      Child   : constant MDI_Child :=
+                  Find_MDI_Child_By_Tag
+                    (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Outline : Outline_View_Access;
+      Model   : Outline_Model;
+      Path    : Gtk_Tree_Path;
+      Loc     : File_Location_Hooks_Args_Access;
    begin
       if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
         and then Child /= null
@@ -464,9 +463,7 @@ package body Outline_View is
    -----------------------
 
    function Get_Filter_Record
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Tree_Filter
-   is
+     (Kernel : access Kernel_Handle_Record'Class) return Tree_Filter is
    begin
       return
         (Hide_Types        => not Get_History
@@ -524,14 +521,15 @@ package body Outline_View is
      (Outline : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean
    is
-      View  : constant Outline_View_Access := Outline_View_Access (Outline);
-      Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
-      Entity : Entity_Persistent_Access;
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-      Line, End_Line : Integer;
+      View                : constant Outline_View_Access :=
+                              Outline_View_Access (Outline);
+      Model               : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Entity              : Entity_Persistent_Access;
+      Iter                : Gtk_Tree_Iter;
+      Path                : Gtk_Tree_Path;
+      Line, End_Line      : Integer;
       Column, End_Column  : Visible_Column_Type;
-      Construct : access Simple_Construct_Information;
+      Construct           : access Simple_Construct_Information;
    begin
       if Get_Button (Event) = 1 then
          if View.File = No_File then
@@ -743,7 +741,7 @@ package body Outline_View is
    procedure On_Destroy
      (Outline : access Gtk_Widget_Record'Class)
    is
-      O : constant Outline_View_Access := Outline_View_Access (Outline);
+      O     : constant Outline_View_Access := Outline_View_Access (Outline);
       Model : constant Outline_Model := Get_Outline_Model (O);
    begin
       Remove_Database_Listener
@@ -769,8 +767,10 @@ package body Outline_View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Child   : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Get_Kernel (Context.Context)), Outline_View_Record'Tag);
+      Child   : constant MDI_Child :=
+                  Find_MDI_Child_By_Tag
+                    (Get_MDI (Get_Kernel (Context.Context)),
+                     Outline_View_Record'Tag);
       Outline : Outline_View_Access;
    begin
       if Child /= null then
@@ -1062,8 +1062,8 @@ package body Outline_View is
      (Outline : access Outline_View_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File)
    is
-      Model          : Outline_Model;
-      Struct_File    : Structured_File_Access;
+      Model       : Outline_Model;
+      Struct_File : Structured_File_Access;
    begin
       Outline.File := File;
 
@@ -1144,10 +1144,10 @@ package body Outline_View is
    ------------------------
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Child   : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Outline_View_Record'Tag);
-
-      Outline : Outline_View_Access;
+      Child      : constant MDI_Child :=
+                     Find_MDI_Child_By_Tag
+                       (Get_MDI (Kernel), Outline_View_Record'Tag);
+      Outline    : Outline_View_Access;
       Dummy_File : Structured_File_Access;
       pragma Unreferenced (Dummy_File);
    begin
