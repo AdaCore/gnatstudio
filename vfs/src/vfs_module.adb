@@ -17,12 +17,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+pragma Warnings (Off);
+with Ada.Strings.Unbounded.Aux;
+pragma Warnings (On);
+
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
+with Glib.Convert;              use Glib.Convert;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with GUI_Utils;                 use GUI_Utils;
@@ -41,7 +49,6 @@ with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with OS_Utils;
-with UTF8_Utils;                use UTF8_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body VFS_Module is
@@ -111,6 +118,12 @@ package body VFS_Module is
       --  Pattern may contain directory information and
       --  regular expressions.
 
+      procedure Write
+        (File : in out Writable_File; N : Positive; LF : Boolean);
+      --  Write content of argument 1 into File. This procedure avoid as much
+      --  as possible using the stack to write the content which could be
+      --  large.
+
       ----------------
       -- List_Files --
       ----------------
@@ -177,6 +190,48 @@ package body VFS_Module is
             raise;
       end List_Files;
 
+      -----------
+      -- Write --
+      -----------
+
+      procedure Write
+        (File : in out Writable_File; N : Positive; LF : Boolean)
+      is
+         Local     : GNAT.OS_Lib.String_Access;
+         Res       : chars_ptr;
+         B_Read    : aliased Natural;
+         B_Written : aliased Natural;
+      begin
+         declare
+            Content : Unbounded_String := Nth_Arg (Data, N);
+            USA     : Aux.Big_String_Access;
+            Last    : Natural;
+         begin
+            if LF then
+               Append (Content, ASCII.LF);
+            end if;
+
+            Aux.Get_String (Content, USA, Last);
+
+            --  We copy the string on the heap again as Last can be less than
+            --  the actual size taken by the underlying string access as we use
+            --  a cache. This is also needed as we do not want to take a slice
+            --  which will copy the string on the stack, so we want to avoid
+            --  USA (1 .. Last).
+
+            Local := new String (1 .. Last);
+            Local.all := USA (1 .. Last);
+         end;
+
+         Res := Locale_From_UTF8 (Local.all, B_Read'Access, B_Written'Access);
+
+         GNAT.OS_Lib.Free (Local);
+
+         Write (File, Res);
+
+         Free (Res);
+      end Write;
+
    begin
       if Command = "pwd" then
          Set_Return_Value (Data, Filesystem_String'(Get_Current_Dir));
@@ -238,11 +293,8 @@ package body VFS_Module is
          begin
             Writable := Write_File (Temp_File);
 
-            if Nth_Arg (Data, 2, Default => False) then
-               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)) & ASCII.LF);
-            else
-               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)));
-            end if;
+            Write
+              (Writable, N => 1, LF => Nth_Arg (Data, 2, Default => False));
 
             Close (Writable);
             Set_Return_Value (Data, Temp_File.Full_Name);
@@ -264,11 +316,8 @@ package body VFS_Module is
 
             Writable := Write_File (File, Append => True);
 
-            if Nth_Arg (Data, 3, Default => False) then
-               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)) & ASCII.LF);
-            else
-               Write (Writable, UTF8_To_Locale (Nth_Arg (Data, 1)));
-            end if;
+            Write
+              (Writable, N => 1, LF => Nth_Arg (Data, 3, Default => False));
 
             Close (Writable);
             Set_Return_Value (Data, Full_Name (File));
