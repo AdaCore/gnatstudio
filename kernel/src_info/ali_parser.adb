@@ -2164,7 +2164,7 @@ package body ALI_Parser is
         (Recursive           => False,
          Including_Libraries => True,
          Xrefs_Dirs          => True,
-         ALI_Ext             => Get_ALI_Ext (Handler));
+         ALI_Ext             => Get_ALI_Ext (ALI_Handler (Handler)));
 
       if Iter.Files /= null then
          Iter.Current := Iter.Files'First;
