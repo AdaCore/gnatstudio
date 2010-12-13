@@ -22,14 +22,6 @@ If no tag is specified, the entry is relevant to all IDEs.
               lower the number of network directories present in it. You can
               also manually edit the project file.
 
-- JB24-033 References found in external files when sharing obj dir
-  Problem:    If you have multiple projects sharing a common object
-              directory, xref information will be loaded from all the ALI
-              files in that directory, even if the corresponding project is
-              not loaded.
-  Workaround: It is better not to share object directories among unrelated
-              projects.
-
 - JB19-027 GB: Makefile target descriptions not shown in dialog
   Problem:    When applying the "Invoke Makefile Target" menu entry, the
               resulting dialog shows the target name in the description field.
