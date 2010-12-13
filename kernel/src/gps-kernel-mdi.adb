@@ -281,9 +281,10 @@ package body GPS.Kernel.MDI is
          Name    => "MDI-Float-Short-Title",
          Default => False,
          Doc     =>
-           -("If enabled, all floating windows will have a short title. In"
+         -("If enabled, a shorter title will be used for both floating windows"
+           & " and the title bar of docked windows. In"
            & " particular, base file names will be used for editors."),
-         Label   => -"Short titles for floats",
+         Label   => -"Short titles",
          Page    => -"Windows");
 
       MDI_Editors_Floating := Create

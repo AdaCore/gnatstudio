@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-JC10-012 GPS: "short titles" pref applies to docked windows (2010-12-13)
+
+  This preference used to only have an effect on floating windows, but will
+  now also force docked windows to use short titles (in particular base names
+  for file editors).
+
 NF-51-JB30-015 GPS: new zap-to-char and just-one-space actions (2010-12-01)
 
   These actions complete the Emacs emulation in GPS, and have the same
