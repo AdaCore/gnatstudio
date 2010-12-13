@@ -489,3 +489,9 @@ Known Problems fixed in GPS 5.0.0
               identifiers containing complex UTF-8 characters.
   Workaround: Manually fix the code.
 
+- JA07-011 Location view and floating editors
+  Problem:    When clicking in a location, the corresponding floating editor
+              is not raised (no problem when the editor is not floating)
+  Workaround: Select the editor in the /Window menu to raise it, or simply
+              click on the window to raise it.
+
