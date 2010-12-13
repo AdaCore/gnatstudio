@@ -27,12 +27,6 @@ If no tag is specified, the entry is relevant to all IDEs.
               resulting dialog shows the target name in the description field.
   Workaround: Look in the makefile itself for the description.
 
-- JA07-011 GPS: Location view and floating editors
-  Problem:    When clicking in a location, the corresponding floating editor
-              is not raised (no problem when the editor is not floating)
-  Workaround: Select the editor in the /Window menu to raise it, or simply
-              click on the window to raise it.
-
 - J914-003 Navigation errors when switching scenario variables
   Problem:    When switching back and forth scenario variables involving a
               change in the set of sources, the navigation may be confused
