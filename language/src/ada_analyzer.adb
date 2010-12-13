@@ -758,7 +758,7 @@ package body Ada_Analyzer is
       Paren_Stack         : Construct_Stack.Simple_Stack;
       Indents             : Indent_Stack.Stack.Simple_Stack;
       Top_Token           : Token_Stack.Generic_Type_Access;
-      Casing              : Casing_Type;
+      Casing              : Casing_Type := Unchanged;
       Terminated          : Boolean := False;
       End_Reached         : Boolean := False;
       Last_Replace_Line   : Natural := 0;
