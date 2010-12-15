@@ -28,6 +28,7 @@ with Gdk;                        use Gdk;
 with Gdk.Cairo;                  use Gdk.Cairo;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
+with Gdk.Property;               use Gdk.Property;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk.Pixmap;                 use Gdk.Pixmap;
@@ -40,6 +41,7 @@ with Glib.Values;                use Glib.Values;
 
 with Gtk;                        use Gtk;
 with Gtk.Adjustment;             use Gtk.Adjustment;
+with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Main;                   use Gtk.Main;
@@ -68,7 +70,6 @@ with GPS.Intl;                   use GPS.Intl;
 
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
-with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -154,11 +155,6 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Callback for the "button_release_event" signal
-
-   function Button_Release_Event_After_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
-   --  Callback for the "button_release_event" signal, after Gtk+ callbacks
 
    function Speed_Bar_Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
@@ -1343,11 +1339,6 @@ package body Src_Editor_View is
            (Button_Release_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
-        (View, Signal_Button_Release_Event,
-         Marsh => Return_Callback.To_Marshaller
-           (Button_Release_Event_After_Cb'Access),
-         After => True);
-      Return_Callback.Connect
         (View, Signal_Key_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
@@ -1903,65 +1894,11 @@ package body Src_Editor_View is
          return False;
    end Button_Release_Event_Cb;
 
-   -----------------------------------
-   -- Button_Release_Event_After_Cb --
-   -----------------------------------
-
-   function Button_Release_Event_After_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
-   is
-      View        : constant Source_View := Source_View (Widget);
-      Left_Window : constant Gdk.Window.Gdk_Window :=
-                      Get_Window (View, Text_Window_Left);
-
-   begin
-      if Get_Event_Type (Event) = Button_Release
-        and then Get_Button (Event) = 1
-        and then Get_Window (Event) /= Left_Window
-      then
-         if View.Triple_Click then
-            View.Triple_Click := False;
-
-            declare
-               Iter   : Gtk_Text_Iter;
-               Iter2  : Gtk_Text_Iter;
-               L, C   : Gint;
-               Result : Boolean;
-            begin
-               Window_To_Buffer_Coords
-                 (View, Text_Window_Text,
-                  Gint (Get_X (Event)), Gint (Get_Y (Event)), L, C);
-               Get_Iter_At_Location (View, Iter, L, C);
-               Copy (Iter, Iter2);
-               Forward_To_Line_End (Iter, Result);
-
-               if Result then
-                  Forward_Char (Iter, Result);
-
-                  if not Result then
-                     Copy (Iter2, Iter);
-                     Forward_To_Line_End (Iter, Result);
-                  end if;
-               end if;
-
-               Set_Line_Offset (Iter2, 0);
-               View.Get_Buffer.Select_Range (Iter, Iter2);
-            end;
-         end if;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
-   end Button_Release_Event_After_Cb;
-
    ---------------------------
    -- Button_Press_Event_Cb --
    ---------------------------
+
+   X_Clipboard : Gdk_Atom := Gdk_None;
 
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
@@ -2041,13 +1978,15 @@ package body Src_Editor_View is
                   --  On UNIX we intercept this to use our own paste function,
                   --  because the default one pastes the tags, which we do not
                   --  want.
-                  Copy_Clipboard
-                    (Get_Clipboard (View.Kernel),
-                     Get_Current_Focus_Widget (View.Kernel));
+--                    Copy_Clipboard
+--                      (Get_Clipboard (View.Kernel),
+--                       Get_Current_Focus_Widget (View.Kernel));
 
                   declare
                      L, C    : Gint;
                      Iter    : Gtk_Text_Iter;
+                     Ignored : Boolean;
+                     pragma Unreferenced (Ignored);
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
@@ -2055,7 +1994,16 @@ package body Src_Editor_View is
                      Get_Iter_At_Location (View, Iter, L, C);
                      Grab_Focus (View);
                      Place_Cursor (Get_Buffer (View), Iter);
-                     Paste_Clipboard (Get_Clipboard (View.Kernel), View);
+
+                     if X_Clipboard = Gdk_None then
+                        X_Clipboard := Atom_Intern ("PRIMARY");
+                     end if;
+
+                     Ignored := Insert_Interactive_At_Cursor
+                       (Buffer => View.Get_Buffer,
+                        Text   => Wait_For_Text
+                          (Clipboard => Get (X_Clipboard)),
+                        Default_Editable => True);
                   end;
 
                   return True;
@@ -2074,14 +2022,6 @@ package body Src_Editor_View is
                --  redefine the "is_word_break" behaviour of the underscore.
             end if;
 
-         when Gdk_3button_Press =>
-            --  Intercept triple-click and select the entire line, including
-            --  the EOL, which Gtk+ does not include.
-
-            View.Double_Click := False;
-            View.Triple_Click := True;
-
-            return True;
          when others =>
             null;
       end case;
@@ -2136,6 +2076,8 @@ package body Src_Editor_View is
          end if;
          return False;
       end if;
+
+      --  Special case for cancelling selection
 
       case Key is
          when GDK_Return =>
