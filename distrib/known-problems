@@ -22,6 +22,15 @@ If no tag is specified, the entry is relevant to all IDEs.
               lower the number of network directories present in it. You can
               also manually edit the project file.
 
+- JB30-010  GB: Opening a file with extension ".rules" throws exception
+  Problem:    When clicking on a file with the ".rules" extension, GNATbench
+              attempts to open the file with the GNATCheck rules editor. This
+              will raise an exception when the project containing the file is
+              not a GNATbench project.
+  Workaround: In this case the file is likely not a GNATCheck rules file (but
+              could be a makefile file, for example) so use "Open With" to
+              select a different editor to open the file.
+
 - JB19-027 GB: Makefile target descriptions not shown in dialog
   Problem:    When applying the "Invoke Makefile Target" menu entry, the
               resulting dialog shows the target name in the description field.
