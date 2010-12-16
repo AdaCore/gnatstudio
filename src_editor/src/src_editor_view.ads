@@ -253,9 +253,6 @@ private
       Double_Click         : Boolean := False;
       --  Whether a double-click on button 1 was performed
 
-      Triple_Click         : Boolean := False;
-      --  Whether a triple-click on button 1 was performed
-
       As_Is_Mode           : As_Is_Status := Disabled;
       --  Set to True when the as-is-key has been pressed, in this case the
       --  indentation and casing are disabled for the next key.
