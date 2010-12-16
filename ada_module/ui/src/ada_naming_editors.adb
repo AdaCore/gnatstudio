@@ -319,7 +319,7 @@ package body Ada_Naming_Editors is
             Data := Get (Cache, Indexes (Index).all);
 
             if Data /= null then
-               if Attr = Specification_Attribute then
+               if Attr = Spec_Attribute then
                   Val := Data.Spec_Name;
                   Data.Spec_Name := null;  --  modify in place in htable
                else
@@ -367,7 +367,7 @@ package body Ada_Naming_Editors is
             Data := Get_Element (Cache_Iter);
             exit when Data = null;
 
-            if Attr = Specification_Attribute then
+            if Attr = Spec_Attribute then
                Val := Data.Spec_Name;
             else
                Val := Data.Body_Name;
@@ -454,8 +454,8 @@ package body Ada_Naming_Editors is
       --  hash table has been created. Much faster than updating the attributes
       --  for nothing.
 
-      Update_Exceptions (Specification_Attribute);
-      Update_Exceptions (Implementation_Attribute);
+      Update_Exceptions (Spec_Attribute);
+      Update_Exceptions (Body_Attribute);
 
       Reset (Cache);
 
@@ -518,9 +518,9 @@ package body Ada_Naming_Editors is
       if Display_Exceptions then
          declare
             Specs  : GNAT.Strings.String_List :=
-              Project.Attribute_Indexes (Specification_Attribute);
+              Project.Attribute_Indexes (Spec_Attribute);
             Bodies  : GNAT.Strings.String_List :=
-              Project.Attribute_Indexes (Implementation_Attribute);
+              Project.Attribute_Indexes (Body_Attribute);
 
             Iter   : Gtk_Tree_Iter;
          begin
@@ -532,7 +532,7 @@ package body Ada_Naming_Editors is
                   Unit  => Specs (S).all & ASCII.NUL,
                   Col2  => 1,
                   Spec  => Project.Attribute_Value
-                    (Specification_Attribute,
+                    (Spec_Attribute,
                      Index => Specs (S).all) & ASCII.NUL);
             end loop;
 
@@ -560,14 +560,14 @@ package body Ada_Naming_Editors is
                      Unit  => Bodies (B).all & ASCII.NUL,
                      Col2  => 2,
                      Spec  => Project.Attribute_Value
-                       (Implementation_Attribute, Index => Bodies (B).all)
+                       (Body_Attribute, Index => Bodies (B).all)
                        & ASCII.NUL);
 
                else
                   Set (Editor.GUI.Exception_List_Model, Iter,
                        Column => 2,
                        Value  => Project.Attribute_Value
-                         (Implementation_Attribute, Index => Bodies (B).all)
+                         (Body_Attribute, Index => Bodies (B).all)
                          & ASCII.NUL);
                end if;
             end loop;
