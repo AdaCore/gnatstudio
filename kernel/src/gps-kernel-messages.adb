@@ -1245,8 +1245,7 @@ package body GPS.Kernel.Messages is
       --  Save messages for previous project
 
       Container.Save;
-      Container.Remove_All_Messages (Empty_Message_Flags);
-
+      Container.Remove_All_Messages;
    end On_Project_Changing_Hook;
 
    -----------------------
