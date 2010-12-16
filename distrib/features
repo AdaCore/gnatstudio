@@ -36,10 +36,10 @@ NF-51-JB30-015 GPS: new zap-to-char and just-one-space actions (2010-12-01)
 
 NF-51-JB26-007 GB: Improve spell checking feature in ada editor (2010-12-16)
 
-  Only comments & string literals are spell checked.
-  String literals spell checking can be disabled using the check box "Ignore
-  string literals when spell checking" accessible from menu Window =>
-  Preferences => Ada => Editor
+  Under Eclipse, the spell checking now only considers comments and string
+  literals. String literals spell checking can be disabled using the check box
+  "Ignore string literals when spell checking" accessible from menu Window =>
+  Preferences => Ada => Editor.
 
 NF-51-JB23-022 GB: Add tooltips in ada editor (2010-12-08)
 
