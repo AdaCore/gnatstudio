@@ -1272,7 +1272,6 @@ package body GPS.Kernel.Messages is
 
       Container.Save;
       Container.Remove_All_Messages (Empty_Message_Flags);
-
    end On_Project_Changing_Hook;
 
    -----------------------
