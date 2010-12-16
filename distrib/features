@@ -34,6 +34,13 @@ NF-51-JB30-015 GPS: new zap-to-char and just-one-space actions (2010-12-01)
   These actions complete the Emacs emulation in GPS, and have the same
   behavior as in Emacs. See the Key Shortcuts menu for more information.
 
+NF-51-JB26-007 GB: Improve spell checking feature in ada editor (2010-12-16)
+
+  Only comments & string literals are spell checked.
+  String literals spell checking can be disabled using the check box "Ignore
+  string literals when spell checking" accessible from menu Window =>
+  Preferences => Ada => Editor
+
 NF-51-JB23-022 GB: Add tooltips in ada editor (2010-12-08)
 
   GNATbench now displays tooltips for entities in the editor, showing their
