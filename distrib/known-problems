@@ -6,6 +6,12 @@ Known Problems fixed in GPS 5.0.1
               (and lost when the project is next saved).
   Workaround: Edit the project as a source file if you have such exceptions.
 
+- JC14-025 Project editor and absolute path for recursive source dirs
+  Problem:    If you ask for absolute paths in your project and are also
+              using recursive source dirs, the generated path in the project
+              is incorrect.
+  Workaround: Manually add a "/" before "**" in the generated source dirs.
+
 - JC10-010 Unwanted scrolling in the Files view
   Problem:    When the Files view is floating, in window managers where the
               focus follows the mouse, the Files view might scroll to display

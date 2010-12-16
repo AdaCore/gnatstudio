@@ -1242,7 +1242,8 @@ package body Project_Properties is
                        (+Name_As_Directory (Relative_Path (File, Path))
                         & "**");
                   else
-                     Values (N) := new String'(+Full_Name (File) & "**");
+                     Values (N) := new String'
+                       (+Name_As_Directory (Full_Name (File)) & "**");
                   end if;
 
                elsif Editor.Attribute.Base_Name_Only then
@@ -5091,6 +5092,7 @@ package body Project_Properties is
             else
                Set_Paths_Type (Project, Absolute);
             end if;
+            return True;
          end if;
 
          return False;
