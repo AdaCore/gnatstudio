@@ -28,7 +28,6 @@ with Gdk;                        use Gdk;
 with Gdk.Cairo;                  use Gdk.Cairo;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.Property;               use Gdk.Property;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk.Pixmap;                 use Gdk.Pixmap;
@@ -41,7 +40,6 @@ with Glib.Values;                use Glib.Values;
 
 with Gtk;                        use Gtk;
 with Gtk.Adjustment;             use Gtk.Adjustment;
-with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Main;                   use Gtk.Main;
@@ -70,6 +68,7 @@ with GPS.Intl;                   use GPS.Intl;
 
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -1898,8 +1897,6 @@ package body Src_Editor_View is
    -- Button_Press_Event_Cb --
    ---------------------------
 
-   X_Clipboard : Gdk_Atom := Gdk_None;
-
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
@@ -1978,32 +1975,20 @@ package body Src_Editor_View is
                   --  On UNIX we intercept this to use our own paste function,
                   --  because the default one pastes the tags, which we do not
                   --  want.
---                    Copy_Clipboard
---                      (Get_Clipboard (View.Kernel),
---                       Get_Current_Focus_Widget (View.Kernel));
+                  Copy_Clipboard
+                    (Get_Clipboard (View.Kernel),
+                     Get_Current_Focus_Widget (View.Kernel));
 
                   declare
                      L, C    : Gint;
                      Iter    : Gtk_Text_Iter;
-                     Ignored : Boolean;
-                     pragma Unreferenced (Ignored);
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Get_X (Event)), Gint (Get_Y (Event)), L, C);
                      Get_Iter_At_Location (View, Iter, L, C);
                      Grab_Focus (View);
-                     Place_Cursor (Get_Buffer (View), Iter);
-
-                     if X_Clipboard = Gdk_None then
-                        X_Clipboard := Atom_Intern ("PRIMARY");
-                     end if;
-
-                     Ignored := Insert_Interactive_At_Cursor
-                       (Buffer => View.Get_Buffer,
-                        Text   => Wait_For_Text
-                          (Clipboard => Get (X_Clipboard)),
-                        Default_Editable => True);
+                     Paste_Clipboard (Get_Clipboard (View.Kernel), View);
                   end;
 
                   return True;
