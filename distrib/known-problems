@@ -40,6 +40,11 @@ Known Problems fixed in GPS 5.0.1
               the associated key shortcuts have no effect.
   Workaround: Use the Preferences dialog to control the size of the fonts.
 
+- JC03-013: Click on locations view not working
+  Problem:    GPS doesn't navigate to message's location on click on locations
+              view. This is IA-64 specific problem.
+  Workaround: None.
+
 - JB24-033 References found in external files when sharing obj dir
   Problem:    If you have multiple projects sharing a common object
               directory, xref information will be loaded from all the ALI
