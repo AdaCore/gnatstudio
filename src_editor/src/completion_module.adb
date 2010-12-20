@@ -1333,6 +1333,10 @@ package body Completion_Module is
    is
       S_File : Structured_File_Access;
    begin
+      if Active (Me_Adv) then
+         Trace (Me_Adv, "loading " & File.Display_Base_Name);
+      end if;
+
       S_File := Get_Or_Create
         (Get_Construct_Database (Kernel), File, Get_Project (Kernel));
 
