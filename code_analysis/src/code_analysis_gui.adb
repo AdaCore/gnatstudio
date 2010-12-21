@@ -102,7 +102,7 @@ package body Code_Analysis_GUI is
       Set_Name (View.Error_Board, Name.all & "_Error_Board"); --  testsuite
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
-      Gtk_New_From_Icon_Name
+      Gtk_New
         (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
       Gtk_New
         (Board_Label,
@@ -129,7 +129,7 @@ package body Code_Analysis_GUI is
       Gtk_New_Hbox (View.Empty_Board, False, 7);
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
-      Gtk_New_From_Icon_Name
+      Gtk_New
         (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
       Gtk_New
         (Board_Label,
