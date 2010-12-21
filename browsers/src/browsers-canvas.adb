@@ -2535,6 +2535,7 @@ package body Browsers.Canvas is
       Src                 : Gdk_Window;
       Pixbuf              : Gdk_Pixbuf;
       Zoom_Level          : Guint;
+      Hadj, Vadj          : Gtk_Adjustment;
 
    begin
       Src := Get_Window (Canvas);
@@ -2553,14 +2554,15 @@ package body Browsers.Canvas is
 
       --  Temporarily reset scroll values
 
-      X_Value := Get_Value (Get_Hadj (Canvas));
-      Y_Value := Get_Value (Get_Vadj (Canvas));
-      Set_Value (Get_Hadj (Canvas), 0.0);
-      Set_Value (Get_Vadj (Canvas), 0.0);
+      Hadj := Get_Hadj (Canvas);
+      Vadj := Get_Vadj (Canvas);
+      X_Value := Get_Value (Hadj);
+      Y_Value := Get_Value (Vadj);
+      Set_Value (Hadj, Get_Lower (Hadj));
+      Set_Value (Vadj, Get_Lower (Vadj));
 
       --  Force a complete redraw on Canvas.Pixmap, so that we can
       --  copy the whole contents of Canvas to a pixbuf.
-      --  ??? Does not work properly when X < 0 or Y < 0
 
       Draw_Area (Canvas, (0, 0, Width, Height));
       Pixbuf := Get_From_Drawable
@@ -2573,8 +2575,8 @@ package body Browsers.Canvas is
          Dest_Y => 0,
          Width  => -1,
          Height => -1);
-      Set_Value (Get_Hadj (Canvas), X_Value);
-      Set_Value (Get_Vadj (Canvas), Y_Value);
+      Set_Value (Hadj, X_Value);
+      Set_Value (Vadj, Y_Value);
       Gdk.Pixmap.Unref (Canvas.Pixmap);
       Canvas.Pixmap := null;
       Zoom (Canvas, Zoom_Level);
