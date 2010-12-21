@@ -2571,8 +2571,8 @@ package body Browsers.Canvas is
          Src_Y  => 0,
          Dest_X => 0,
          Dest_Y => 0,
-         Width  => Width,
-         Height => Height);
+         Width  => -1,
+         Height => -1);
       Set_Value (Get_Hadj (Canvas), X_Value);
       Set_Value (Get_Vadj (Canvas), Y_Value);
       Gdk.Pixmap.Unref (Canvas.Pixmap);
