@@ -4,8 +4,8 @@ Known Problems fixed in GPS 5.0.1
   Problem:    When exporting the contents of a browser (e.g. call graph) to
               PNG, the image may be truncated if the browser is scrolled on
               the screen.
-  Workaround: Manually scroll to the top left of the browser before exporting
-              contents, or use the contextual menu 'Refresh layout'.
+  Workaround: Use the contextual menu 'Refresh layout' before exporting the
+              contents.
 
 - JC15-024 Naming exception lost for separate procedures
   Problem:    When editing the project properties, the naming exceptions
