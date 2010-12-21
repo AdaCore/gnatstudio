@@ -1261,6 +1261,8 @@ package body C_Analyzer is
                      exit when  Buffer (Index - 1) = ASCII.LF
                        and then Buffer (Index + 1) = ' '
                        and then Buffer (Index + 2) in '1' .. '9';
+
+                     Index := Index + 1;
                   end loop;
                end loop;
             end if;
