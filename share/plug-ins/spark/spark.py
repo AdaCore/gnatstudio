@@ -331,10 +331,14 @@ def sparksimp_project ():
   zombiescope_sw = GPS.Project.root().get_tool_switches_as_string ("ZombieScope")
   victor_sw = GPS.Project.root().get_tool_switches_as_string ("ViCToR")
 
-  cmd = ("sparksimp " + sparksimp_sw +
-         " -sargs " + simplifier_sw +
-         " -zargs " + zombiescope_sw +
-         " -vargs " + victor_sw)
+  cmd = ("sparksimp " + sparksimp_sw)
+  if len(simplifier_sw.strip()) > 0:
+    cmd = (cmd + " -sargs " + simplifier_sw)
+  if len(zombiescope_sw.strip()) > 0:
+    cmd = (cmd + " -zargs " + zombiescope_sw)
+  if len(victor_sw.strip()) > 0:
+    cmd = (cmd + " -vargs " + victor_sw)
+
   GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
@@ -570,7 +574,7 @@ a = """<?xml version="1.0"?>
       <title line="2">Limits</title>
       <spin line="2" label="Timeout (in s)" switch="~t=" min="0" max="1000" default="5"
             tip="Timeout for each invocation of the prover. 5s timeout by default." />
-      <spin line="2" label="Memory Limit (in mega-bytes)" switch="~m=" min="0" max="10000" default="0"
+      <spin line="2" label="Memory Limit (in megabytes)" switch="~m=" min="0" max="10000" default="0"
             tip="Memory limit for each invocation of the prover. No limit by default." />
     </switches>
   </tool>
@@ -933,6 +937,13 @@ b = """<?xml version="1.0"?>
      <descr>ZombieScope User Manual</descr>
      <category>Spark</category>
      <menu before="About">/Help/SPARK/Tools/ZombieScope User Manual</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>VictorWrapper_UM.htm</name>
+     <descr>Victor Wrapper User Manual</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Tools/Victor Wrapper User Manual</menu>
   </documentation_file>
 
   <documentation_file>
