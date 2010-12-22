@@ -1988,6 +1988,7 @@ package body Src_Editor_View is
                         Gint (Get_X (Event)), Gint (Get_Y (Event)), L, C);
                      Get_Iter_At_Location (View, Iter, L, C);
                      Grab_Focus (View);
+                     Place_Cursor (Get_Buffer (View), Iter);
                      Paste_Clipboard (Get_Clipboard (View.Kernel), View);
                   end;
 
