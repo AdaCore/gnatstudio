@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 5.0.1
 
+- JC21-017 Cannot display string parameter in debugger
+  Problem:    In some cases, GPS is unable to display string parameters
+              graphically while debugging.
+  Workaround: Use 'Print' instead of 'Display' to print the value of the
+              parameter in the debugger console.
+
 - JC20-012 Truncated export of browsers to PNG 
   Problem:    When exporting the contents of a browser (e.g. call graph) to
               PNG, the image may be truncated if the browser is scrolled on
