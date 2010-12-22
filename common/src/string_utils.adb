@@ -477,7 +477,7 @@ package body String_Utils is
 
    exception
       when Constraint_Error =>
-         Result := Long_Integer'Last;
+         Result := -1;
    end Parse_Num;
 
    ----------------
@@ -568,11 +568,13 @@ package body String_Utils is
       S_Index   : Natural := Str'First;
       Char      : Character;
       Num       : Long_Integer;
-      Last      : Natural := Str'Last;
+      Last      : Natural;
 
    begin  --  Parse_Cst_String
       if Str'Length = 0 then
          Last := Natural'Last;
+      else
+         Last := Str'Last;
       end if;
 
       In_String := Type_Str (Index) = '"';
