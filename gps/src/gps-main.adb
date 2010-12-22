@@ -33,6 +33,7 @@ with GNAT.Strings;
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;
+with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
@@ -478,7 +479,16 @@ procedure GPS.Main is
          Free (Prefix);
          Prefix := new String'(Executable_Location);
 
-         if Prefix.all = "" then
+         --  Check whether we are running the installed gps, or locally from
+         --  the development environment.
+
+         if Prefix'Length > 4
+            and then Prefix (Prefix'Last - 3 .. Prefix'Last - 1) = "obj"
+         then
+            Free (Prefix);
+         end if;
+
+         if Prefix = null or else Prefix.all = "" then
             Free (Prefix);
             Prefix := new String'(Config.Prefix);
          end if;

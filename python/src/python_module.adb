@@ -31,7 +31,6 @@ with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 
 with Basic_Types;
-with OS_Utils;     use OS_Utils;
 
 with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;

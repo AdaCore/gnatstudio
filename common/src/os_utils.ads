@@ -25,19 +25,6 @@ with GNATCOLL.VFS;
 
 package OS_Utils is
 
-   function Executable_Location return String;
-   --  Return the name of the parent directory where the executable is stored.
-   --  The executable must be located in a directory called "bin". Thus, if
-   --  the executable is stored in directory "/foo/bar/bin", this routine
-   --  returns "/foo/bar/". If the executable is not stored in a directory
-   --  "bin" (casing is unimportant) then a null string is returned.
-
-   function Is_Directory_Separator (C : Character) return Boolean;
-   --  Returns True if C is a directory separator
-
-   procedure Set_OpenVMS_Host (Setting : Boolean := True);
-   --  Set whether the host is an OpenVMS host
-
    function Max_Path_Len return Natural;
    --  Return the maximum length of a pathname for the current host
 
