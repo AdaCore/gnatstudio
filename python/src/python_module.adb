@@ -372,8 +372,12 @@ package body Python_Module is
       function To_Load (File : Virtual_File) return Boolean;
       --  Whether File should be loaded
 
+      -------------
+      -- To_Load --
+      -------------
+
       function To_Load (File : Virtual_File) return Boolean is
-         Command    : Custom_Command_Access;
+         Command : Custom_Command_Access;
       begin
          if Load_File_At_Startup
            (Kernel, File, Default => Default_Autoload)
@@ -388,14 +392,15 @@ package body Python_Module is
                   Block_Exit => False);
             end if;
             return True;
+
          else
             return False;
          end if;
       end To_Load;
 
-      Script     : constant Scripting_Language :=
-                     Lookup_Scripting_Language
-                       (Get_Scripts (Kernel), Python_Name);
+      Script : constant Scripting_Language :=
+                 Lookup_Scripting_Language
+                   (Get_Scripts (Kernel), Python_Name);
 
    begin
       if Script /= null then
@@ -497,8 +502,8 @@ package body Python_Module is
    procedure Python_GUI_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Widget   : Glib.Object.GObject;
-      Child    : GPS_MDI_Child;
+      Widget : Glib.Object.GObject;
+      Child  : GPS_MDI_Child;
    begin
       if Command = "add" then
          Widget := From_PyGtk (Data, 1);
@@ -678,10 +683,10 @@ package body Python_Module is
          declare
             use Basic_Types;
 
-            Info2 : constant File_Location_Info := Get_Data (Data, 2);
+            Info2     : constant File_Location_Info := Get_Data (Data, 2);
             Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
             Line1, Line2 : Integer;
-            Col1,  Col2  : Visible_Column_Type;
+            Col1, Col2   : Visible_Column_Type;
          begin
             if Fileinfo < Fileinfo2 then
                Set_Return_Value (Data, -1);
