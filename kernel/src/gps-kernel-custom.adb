@@ -649,7 +649,11 @@ package body GPS.Kernel.Custom is
                   Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
                        K => +Base_Name (File));
    begin
-      if Startup /= null then
+      --  The base name would be "" for python module (ie subdirectories).
+
+      if Base_Name (File) /= ""
+         and then Startup /= null
+      then
          if Startup.File /= GNATCOLL.VFS.No_File then
             Insert (Kernel,
                     -"There are several startup scripts with the same name: "
