@@ -22,7 +22,6 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
@@ -370,69 +369,43 @@ package body Python_Module is
       Dir              : Virtual_File;
       Default_Autoload : Boolean)
    is
-      Files      : File_Array_Access;
-      Command    : Custom_Command_Access;
-      Errors     : Boolean;
+      function To_Load (File : Virtual_File) return Boolean;
+      --  Whether File should be loaded
+
+      function To_Load (File : Virtual_File) return Boolean is
+         Command    : Custom_Command_Access;
+      begin
+         if Load_File_At_Startup
+           (Kernel, File, Default => Default_Autoload)
+         then
+            Command := Initialization_Command (Kernel, File);
+            if Command /= null then
+               Launch_Background_Command
+                 (Kernel,
+                  Command    => Command,
+                  Active     => True,
+                  Show_Bar   => False,
+                  Block_Exit => False);
+            end if;
+            return True;
+         else
+            return False;
+         end if;
+      end To_Load;
+
       Script     : constant Scripting_Language :=
                      Lookup_Scripting_Language
                        (Get_Scripts (Kernel), Python_Name);
 
    begin
-      if not Is_Directory (Dir) or else Script = null then
-         return;
-      end if;
+      if Script /= null then
+         --  Make sure the error messages will not be lost
 
-      Trace (Me, "Load python files from " & Dir.Display_Full_Name);
-
-      --  Make sure the error messages will not be lost
-
-      Set_Default_Console
-        (Script,
-         Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
-
-      declare
-         Path : constant String := +Dir.Full_Name (True);
-      begin
-         --  Python requires no trailing dir separator (at least on Windows)
-
-         Execute_Command
+         Set_Default_Console
            (Script,
-            Create ("sys.path=[r'" & Path (Path'First .. Path'Last - 1) &
-              "']+sys.path"),
-            Show_Command => False,
-            Hide_Output  => True,
-            Errors       => Errors);
-      end;
-
-      Files := Dir.Read_Dir (Files_Only);
-
-      for J in Files'Range loop
-         if Equal (Files (J).File_Extension, ".py") then
-            if Load_File_At_Startup
-              (Kernel, Files (J), Default => Default_Autoload)
-            then
-               Trace (Me, "Loading " & Files (J).Display_Full_Name);
-               Execute_Command
-                 (Script,
-                  Create ("import " & (+Base_Name (Files (J), ".py"))),
-                  Show_Command => False,
-                  Hide_Output  => True,
-                  Errors       => Errors);
-
-               Command := Initialization_Command (Kernel, Files (J));
-               if Command /= null then
-                  Launch_Background_Command
-                    (Kernel,
-                     Command    => Command,
-                     Active     => True,
-                     Show_Bar   => False,
-                     Block_Exit => False);
-               end if;
-            end if;
-         end if;
-      end loop;
-
-      Unchecked_Free (Files);
+            Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
+         Load_Directory (Script, Dir, To_Load'Unrestricted_Access);
+      end if;
    end Load_Dir;
 
    --------------------------------------
