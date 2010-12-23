@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2010, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -653,7 +653,7 @@ package body GPS.Kernel.Custom is
          if Startup.File /= GNATCOLL.VFS.No_File then
             Insert (Kernel,
                     -"There are several startup scripts with the same name: "
-                    & Display_Base_Name (File)
+                    & Display_Full_Name (Startup.File)
                     & ASCII.LF
                     & (-"Not loading: ") & Display_Full_Name (File),
                     Mode => Error);
