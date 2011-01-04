@@ -135,6 +135,12 @@ Known Problems fixed in GPS 5.0.1
               or above.
   Workaround: Manually query the status from the command line.
 
+- J928-006: Double-clicking or triple-clicking after end of line
+  Problem:    When double-clicking or triple-clicking after the end of line
+              in a source editor, parts of the next line are selected.
+  Workaround: Select the word or line by dragging the selection rather than
+              by double- or triple-clicking.
+
 - J422-022: Unable to delete completely the lines between two "special" lines
   Problem:    When there are "special" lines in the editor, for instance
               CodePeer annotations, it is not possible to completely remove
