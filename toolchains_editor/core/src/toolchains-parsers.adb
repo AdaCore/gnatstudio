@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                  Copyright (C) 2010-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -842,7 +842,7 @@ package body Toolchains.Parsers is
                end if;
 
                Toolchain_Node := Create_Literal_String
-                 (Get_Name_Id (Get_Label (Toolchains (J))),
+                 (Get_Name_Id (Get_Name (Toolchains (J))),
                   This.Node_Data);
 
                if Prev_Node = Empty_Node then
