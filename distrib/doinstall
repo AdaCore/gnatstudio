@@ -126,14 +126,6 @@ install_binaries() {
 
   (cd $current_dir; tar cf - bin etc lib share) | tar xf -
 
-  if [ -d lib/gps-xorg ]; then
-    if [ "`type Xorg 2>/dev/null | cut -d' ' -f3`" != "" ]; then
-      ln -s gps-xorg lib/gps
-    else
-      ln -s gps-xfree lib/gps
-    fi
-  fi
-
   for d in etc/pango etc/gtk-2.0; do
     if [ -d $d ]; then
       for f in $d/*; do
