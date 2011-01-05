@@ -6,7 +6,7 @@ Known Problems fixed in GPS 5.0.1
   Workaround: Use 'Print' instead of 'Display' to print the value of the
               parameter in the debugger console.
 
-- JC20-012 Truncated export of browsers to PNG 
+- JC20-012 Truncated export of browsers to PNG
   Problem:    When exporting the contents of a browser (e.g. call graph) to
               PNG, the image may be truncated if the browser is scrolled on
               the screen.
@@ -57,7 +57,7 @@ Known Problems fixed in GPS 5.0.1
   Workaround: Kill the ssh/rlogin/etc. manually after exiting GPS
 
 - JC07-004: Menus under Edit->Text size are not working
-  Problem:    The menus Edit->Text size->Increase/Decrease Text Size and 
+  Problem:    The menus Edit->Text size->Increase/Decrease Text Size and
               the associated key shortcuts have no effect.
   Workaround: Use the Preferences dialog to control the size of the fonts.
 
@@ -65,6 +65,14 @@ Known Problems fixed in GPS 5.0.1
   Problem:    On ia64-linux platforms, clicking on the locations view has no
               effect.
   Workaround: Use the menu Navigate->Next/Previous Tag.
+
+- JB30-029 The project editor takes too much time to open
+  Problem:    When opening the project editor, a dialog "Scanning your computer
+              for abailable compilers" appears and the project editor might
+              be quite long to actually appear.
+  Workaround: Verify your PATH environment variable, and in particular try to
+              lower the number of network directories present in it. You can
+              also manually edit the project file.
 
 - JB24-033 References found in external files when sharing obj dir
   Problem:    If you have multiple projects sharing a common object
