@@ -14,14 +14,6 @@ If no tag is specified, the entry is relevant to all IDEs.
               larger than the package.
   Workaround: Manually delete the code.
 
-- JB30-029 GPS: Project editor takes a long time to open
-  Problem:    When opening the project editor, a dialog "Scanning your computer
-              for available compilers" appears and the project editor might
-              be quite long to actually appear.
-  Workaround: Verify your PATH environment variable, and in particular try to
-              lower the number of network directories present in it. You can
-              also manually edit the project file.
-
 - JB30-010  GB: Opening a file with extension ".rules" throws exception
   Problem:    When clicking on a file with the ".rules" extension, GNATbench
               attempts to open the file with the GNATCheck rules editor. This
