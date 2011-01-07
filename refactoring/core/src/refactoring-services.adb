@@ -1331,7 +1331,7 @@ package body Refactoring.Services is
          begin
             exit when Loc2 = Loc;  --  Beginning of buffer
 
-            Skip_Blanks_Backward (C, Index);
+            Skip_Blanks (C, Index);
 
             if Index > C'Last then
                null;   --  blank line
