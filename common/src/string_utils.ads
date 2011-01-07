@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,15 +30,6 @@ package String_Utils is
    function Hex_Value (Hex : String) return Natural;
    --  Return the value for the hexadecimal number Hex. Raises
    --  Constraint_Error is Hex is not an hexadecimal number.
-
-   procedure Skip_Blanks
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1);
-   --  Skip all the blank characters (' ', HT, LF, CR) starting from Index.
-   --  Index is modified to point to the first non-blank character.
-   --  Step should be either 1 or -1, depending on whether you want to search
-   --  forward or backward.
 
    procedure Skip_To_Blank
      (Type_Str : String;
@@ -405,7 +396,6 @@ package String_Utils is
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
-   pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
    pragma Inline (Copy_String);
    pragma Inline (Replace);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -774,7 +774,7 @@ package body Refactoring.Services is
          Last := Decl'Last;
       end if;
 
-      Skip_Blanks (Decl, Last, Step => -1);
+      Skip_Blanks_Backward (Decl, Last);
 
       Append (Result, Decl (Index .. Last));
 
@@ -1331,7 +1331,7 @@ package body Refactoring.Services is
          begin
             exit when Loc2 = Loc;  --  Beginning of buffer
 
-            Skip_Blanks (C, Index, Step => 1);
+            Skip_Blanks_Backward (C, Index);
 
             if Index > C'Last then
                null;   --  blank line

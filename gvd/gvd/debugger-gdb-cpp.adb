@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2000-2010, AdaCore               --
+--                    Copyright (C) 2000-2011, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@
 
 with Language.Debugger; use Language.Debugger;
 with Language.Cpp;      use Language.Cpp;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 with String_Utils;   use String_Utils;
 with Items;          use Items;

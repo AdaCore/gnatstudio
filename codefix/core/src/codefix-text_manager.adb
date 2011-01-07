@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2010, AdaCore                 --
+--                  Copyright (C) 2003-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1505,8 +1505,8 @@ package body Codefix.Text_Manager is
 
          end case;
 
-         Skip_Blanks (Line, Integer (End_Text), 1);
-         Skip_Blanks (Line, Integer (Begin_Text), -1);
+         Skip_Blanks (Line, Integer (End_Text));
+         Skip_Blanks_Backward (Line, Integer (Begin_Text));
 
          if Begin_Text = 0 then
             Tmp_Cursor.Col := 1;

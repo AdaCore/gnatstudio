@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2010, AdaCore                  --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 with GNAT.Regpat;       use GNAT.Regpat;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 with String_Utils;      use String_Utils;
 with C_Analyzer;        use C_Analyzer;

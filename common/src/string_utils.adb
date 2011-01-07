@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2010, AdaCore                  --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,25 +97,6 @@ package body String_Utils is
          Replace (S, Value.all);
       end if;
    end Replace;
-
-   -----------------
-   -- Skip_Blanks --
-   -----------------
-
-   procedure Skip_Blanks
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1) is
-   begin
-      while (Index <= Type_Str'Last and then Index >= Type_Str'First)
-        and then (Type_Str (Index) = ' '
-                  or else Type_Str (Index) = ASCII.HT
-                  or else Type_Str (Index) = ASCII.LF
-                  or else Type_Str (Index) = ASCII.CR)
-      loop
-         Index := Index + Step;
-      end loop;
-   end Skip_Blanks;
 
    -------------------
    -- Skip_To_Blank --

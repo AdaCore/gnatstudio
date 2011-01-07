@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,7 @@ with String_Utils; use String_Utils;
 with Glib.Unicode; use Glib.Unicode;
 with Indent_Stack;
 with Generic_Stack;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package body C_Analyzer is
 

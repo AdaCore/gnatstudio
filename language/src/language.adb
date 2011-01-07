@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2010, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with Glib.Unicode;                use Glib, Glib.Unicode;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with String_Utils;                use String_Utils;
 
 package body Language is
@@ -944,7 +945,7 @@ package body Language is
       is
          Tmp : Natural := Index - 1;
       begin
-         Skip_Blanks (Buffer, Tmp, -1);
+         Skip_Blanks_Backward (Buffer, Tmp);
          return Buffer'First = Tmp + 1;
       end Only_Blanks_Before;
 

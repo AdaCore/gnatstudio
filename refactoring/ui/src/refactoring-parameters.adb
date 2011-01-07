@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2010, AdaCore              --
+--                     Copyright (C) 2005-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,6 +29,7 @@ with Commands.Interactive;  use Commands, Commands.Interactive;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;

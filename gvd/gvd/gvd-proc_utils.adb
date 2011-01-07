@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2002-2010, AdaCore             --
+--                      Copyright (C) 2002-2011, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Remote;      use GPS.Kernel.Remote;

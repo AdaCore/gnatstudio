@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                 Copyright (C) 2000-2010, AdaCore                  --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings;           use Ada.Strings;
 with GNATCOLL.Tribooleans;  use GNATCOLL.Tribooleans;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with Items.Arrays;          use Items.Arrays;
 with Items.Classes;         use Items.Classes;
 with Items.Records;         use Items.Records;
@@ -576,7 +577,7 @@ package body Debugger.Gdb.Ada is
       --  from Entity rather than from the result of ptype.
 
       Tmp_Index := Entity'Last;
-      Skip_Blanks (Entity, Tmp_Index, Step => -1);
+      Skip_Blanks_Backward (Entity, Tmp_Index);
 
       if Tmp_Index >= Entity'First and then Entity (Tmp_Index) = ')' then
          Tmp_Index := Tmp_Index - 1;

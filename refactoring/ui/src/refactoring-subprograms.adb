@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2010, AdaCore              --
+--                     Copyright (C) 2005-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,6 +48,7 @@ with Refactoring.Services;   use Refactoring.Services;
 with Refactoring.Performers; use Refactoring.Performers;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 package body Refactoring.Subprograms is
@@ -226,11 +227,11 @@ package body Refactoring.Subprograms is
       end loop;
 
       if Comment_End > Comment_Start then
-         Skip_Blanks (Code, Comment_End, Step => -1);
+         Skip_Blanks_Backward (Code, Comment_End);
       end if;
 
       Code_End := Code'Last;
-      Skip_Blanks (Code, Code_End, Step => -1);
+      Skip_Blanks_Backward (Code, Code_End);
    end Prepare_Code;
 
    ----------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2009-2010, AdaCore              --
+--                     Copyright (C) 2009-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Strings;               use GNAT.Strings;
 
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
@@ -1445,7 +1446,7 @@ package body Remote.Config_Dialog is
 
          begin
             Skip_Blanks (Str, Idx);
-            Skip_Blanks (Str, Idx_End, -1);
+            Skip_Blanks_Backward (Str, Idx_End);
 
             if Idx_End < Idx then
                N_Lines := 0;
