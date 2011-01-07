@@ -1506,9 +1506,12 @@ package body Codefix.Text_Manager is
          end case;
 
          Skip_Blanks (Line, Integer (End_Text));
-         Skip_Blanks_Backward (Line, Integer (Begin_Text));
 
-         if Begin_Text = 0 then
+         if Integer (Begin_Text) <= Line'Last then
+            Skip_Blanks_Backward (Line, Integer (Begin_Text));
+         end if;
+
+         if Integer (Begin_Text) < Line'First then
             Tmp_Cursor.Col := 1;
          else
             Tmp_Cursor.Col := To_Column_Index (Begin_Text, Line) + 1;
