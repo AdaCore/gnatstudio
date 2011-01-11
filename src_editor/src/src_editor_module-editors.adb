@@ -1269,17 +1269,19 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finalize (This : in out Src_Editor_View) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (View_Reference, View_Reference_Access);
+      Contents : View_Reference_Access := This.Contents;
    begin
-      if This.Contents /= null then
-         This.Contents.Ref_Count := This.Contents.Ref_Count - 1;
-         if This.Contents.Ref_Count = 0 then
-            if This.Contents.Box /= null then
+      This.Contents := null;  --  Make Finalize idempotent
+      if Contents /= null then
+         Contents.Ref_Count := Contents.Ref_Count - 1;
+         if Contents.Ref_Count = 0 then
+            if Contents.Box /= null then
                Weak_Unref
-                 (This.Contents.Box, On_View_Destroyed'Access,
-                  Convert (This.Contents));
+                 (Contents.Box, On_View_Destroyed'Access,
+                  Convert (Contents));
             end if;
 
-            Unchecked_Free (This.Contents);
+            Unchecked_Free (Contents);
          end if;
       end if;
    end Finalize;
@@ -1302,17 +1304,19 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finalize (This : in out Src_Editor_Buffer) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Buffer_Reference, Buffer_Reference_Access);
+      Contents : Buffer_Reference_Access := This.Contents;
    begin
-      if This.Contents /= null then
-         This.Contents.Ref_Count := This.Contents.Ref_Count - 1;
+      This.Contents := null;  --  Make Finalize idempotent
+      if Contents /= null then
+         Contents.Ref_Count := Contents.Ref_Count - 1;
 
-         if This.Contents.Ref_Count = 0 then
-            if This.Contents.Buffer /= null then
+         if Contents.Ref_Count = 0 then
+            if Contents.Buffer /= null then
                Weak_Unref
-                 (This.Contents.Buffer, On_Buffer_Destroyed'Access,
-                  Convert (This.Contents));
+                 (Contents.Buffer, On_Buffer_Destroyed'Access,
+                  Convert (Contents));
             end if;
-            Unchecked_Free (This.Contents);
+            Unchecked_Free (Contents);
          end if;
       end if;
    end Finalize;
@@ -1337,27 +1341,29 @@ package body Src_Editor_Module.Editors is
         (File_Marker_Record'Class, File_Marker);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Mark_Reference, Mark_Reference_Access);
+      Mark : Mark_Reference_Access := This.Mark;
    begin
-      if This.Mark /= null then
-         This.Mark.Refs := This.Mark.Refs - 1;
+      This.Mark := null;  --  Make Finalize idempotent
+      if Mark /= null then
+         Mark.Refs := Mark.Refs - 1;
 
-         if This.Mark.Refs = 0 then
-            if This.Mark.Mark /= null then
-               if (Get_Mark (This.Mark.Mark) /= null
-                   and then not Get_Deleted (Get_Mark (This.Mark.Mark))
-                   and then Get_Name (Get_Mark (This.Mark.Mark)) = "")
-                 or else Get_Mark (This.Mark.Mark) = null
+         if Mark.Refs = 0 then
+            if Mark.Mark /= null then
+               if (Get_Mark (Mark.Mark) /= null
+                   and then not Get_Deleted (Get_Mark (Mark.Mark))
+                   and then Get_Name (Get_Mark (Mark.Mark)) = "")
+                 or else Get_Mark (Mark.Mark) = null
                then
                   --  Do not delete named marks, since we can still access them
                   --  through get_mark() anyway
 
                   Trace (Me, "Deleting unnamed mark");
-                  Destroy (This.Mark.Mark.all);
-                  Unchecked_Free (This.Mark.Mark);
+                  Destroy (Mark.Mark.all);
+                  Unchecked_Free (Mark.Mark);
                end if;
             end if;
 
-            Unchecked_Free (This.Mark);
+            Unchecked_Free (Mark);
          end if;
       end if;
    end Finalize;
