@@ -18,8 +18,8 @@ Known Problems fixed in GPS 5.0.1
               C preprocessor (e.g. gcc -E).
   Workaround: Avoid loading these files in GPS. If the file is parsed
               automatically as part of the 'load entity db' GPS activity,
-              you can disable set the editor preference 'Smart completion'
-              to 'Disabled'.
+              you can set the editor preference 'Smart completion' to
+              'Disabled'.
 
 - JC15-024 Naming exception lost for separate procedures
   Problem:    When editing the project properties, the naming exceptions
