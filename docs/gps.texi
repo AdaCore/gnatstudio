@@ -3020,6 +3020,29 @@ package A is
 end A;
 @end smallexample
 
+@item @code{Sort}
+This sorts the selected lines according to the key which starts and ends on
+the corresponding rectangle's columns.
+
+@smallexample
+aaa 15 aa
+bbb 02 bb
+ccc 09 cc
+@end smallexample
+
+With a selection starting from the 1 on the first line and ending on the 9 on
+the last one, sorting will result with the following content:
+
+@smallexample
+bbb 02 bb
+ccc 09 cc
+aaa 15 aa
+@end smallexample
+
+@item @code{Sort reverse}
+
+As above but in the reverse order.
+
 @end itemize
 
 @c --------------------------------------------------------------------
