@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 5.0.1
 
+- K112-004 Crash when editing new project with same scenario variables
+  Problem:    During a GPS session, load another project that has common
+              scenario variables with the initial project, but their set
+              of valid values is different. GPS will crash when you edit
+              that new project through the project properties editor.
+  Workaround: Exit GPS and load the new project from the command or by
+              double-clicking on it in the Windows explorer
+
 - JC21-017 Cannot display string parameter in debugger
   Problem:    In some cases, GPS is unable to display string parameters
               graphically while debugging.
