@@ -43,6 +43,7 @@
 
 from GPS import *
 import traceback
+import string
 
 def rectangle_delete (menu):
    """Delete the selected rectangle"""
@@ -74,6 +75,14 @@ def rectangle_insert (menu, text=None):
       text = text [0]
    Rectangle.from_buffer (EditorBuffer.get ()).insert (text)
 
+def rectangle_sort (menu):
+   """"""
+   Rectangle.from_buffer (EditorBuffer.get ()).sort ()
+
+def rectangle_sort_reverse (menu):
+   """"""
+   Rectangle.from_buffer (EditorBuffer.get ()).sort (revert=True)
+
 def rectangle_clear (menu):
    """Replaces the contents of the rectangle with spaces"""
    Rectangle.from_buffer (EditorBuffer.get ()).clear ()
@@ -104,6 +113,9 @@ def on_gps_started (hook_name):
    Menu.create ("/Edit/Rectangle/Open",   on_activate = rectangle_open)
    Menu.create ("/Edit/Rectangle/Replace with Text", on_activate = rectangle_string)
    Menu.create ("/Edit/Rectangle/Insert Text", on_activate = rectangle_insert)
+   Menu.create ("/Edit/Rectangle/-")
+   Menu.create ("/Edit/Rectangle/Sort", on_activate = rectangle_sort)
+   Menu.create ("/Edit/Rectangle/Sort reverse", on_activate = rectangle_sort_reverse)
 
 ##############################################################################
 ## No public function below this
@@ -151,6 +163,10 @@ class Rectangle (object):
       self.__apply (self.__cut_func, self.__copy_empty_func, True, True)
       self.buffer.select (start.location(), end.location())
 
+   def sort (self, revert=False):
+      """Sort the selected lines using the rectangle columns as the key"""
+      self.__do_sort (revert)
+
    def delete (self):
       """Delete the selected rectangle"""
       self.__apply (self.__cut_func, None, False, False)
@@ -187,7 +203,6 @@ class Rectangle (object):
       except:
         Logger ("TESTSUITE").log (
            "Unexpected exception: " + traceback.format_exc())
-
 
    def __cut_func (self, start, end, in_clipboard, copy):
       if in_clipboard:
@@ -261,5 +276,50 @@ class Rectangle (object):
       except:
          Logger ("TESTSUITE").log (
             "Unexpected exception: " + traceback.format_exc())
+
+   def __sort_func (self, s1, s2):
+      """Internal routine comparing s1 and s2 values for the column of the
+         rectangle selection."""
+      l = self.end_col - self.start_col + 1
+
+      ls1 = ''
+      if len(s1) >= self.end_col:
+         ls1 = s1[self.start_col-1:self.end_col]
+      elif len(s1) > self.start_col:
+         ls1 = s1[self.start_col-1:]
+      ls1 = ls1 + ' ' * (l - len(ls1))
+
+      ls2 = ''
+      if len(s2) >= self.end_col:
+         ls2 = s2[self.start_col-1:self.end_col]
+      elif len(s2) > self.start_col:
+         ls2 = s2[self.start_col-1:]
+      ls2 = ls2 + ' ' * (l - len(ls2))
+
+      if ls1 < ls2:
+         return -1
+      elif ls1 == ls2:
+         return 0
+      else:
+         return 1
+
+   def __do_sort (self, revert=False):
+      start = self.buffer.selection_start().beginning_of_line()
+      to    = self.buffer.selection_end().end_of_line()
+
+      # get all the lines
+      selection = self.buffer.get_chars (start, to)
+
+      lines = string.split (selection,"\n")
+      # strip off extraneous trailing "" line
+      lines = lines[:-1]
+      lines.sort (self.__sort_func)
+
+      if revert:
+         lines.reverse ()
+      self.buffer.start_undo_group()
+      self.buffer.delete (start, to)
+      self.buffer.insert (start, "\n".join (lines) + "\n")
+      self.buffer.finish_undo_group()
 
 Hook ("gps_started").add (on_gps_started)

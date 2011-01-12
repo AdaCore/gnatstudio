@@ -75,6 +75,13 @@ NF-51-J805-009 Based literals not auto cased (2010-10-17)
   Auto-casing now keeps based literals with their original casing rather than
   applying automatic casing as done for e.g. identifiers.
 
+NF-51-J725-004 Add support for sorting on rectangle selections (2011-01-12)
+
+  It is now possible to sort on rectangular selections. The column range
+  on the rectangular selection is used to get the key on each line on which
+  lines are sorted. Sorting in both ascending and descending order are
+  supported.
+
 NF-51-GA03-018 GPS: Project View uses a case-insensitive sort (2010-10-17)
 
   Entries (project, package, subprogram, types names) in the Project
