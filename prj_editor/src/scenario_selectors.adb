@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2010, AdaCore             --
+--                      Copyright (C) 2002-2011, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,7 +43,6 @@ with Ada.Unchecked_Deallocation;
 with Histories;                use Histories;
 
 package body Scenario_Selectors is
-
    Selected_Column      : constant := 0;
    Project_Name_Column  : constant := 1;
    Project_Column_Types : constant GType_Array :=
@@ -847,10 +846,14 @@ package body Scenario_Selectors is
         (Iter.Selector.Kernel).Tree.Scenario_Variables;
    begin
       for R in Vars'Range loop
-         Set_Value
-           (Vars (R),
-            Get_String
-              (Iter.Selector.Model, Iter.Current (R), Var_Name_Column));
+         if Iter.Current (R) /= Null_Iter then
+            Set_Value
+              (Vars (R),
+               Get_String
+                 (Iter.Selector.Model, Iter.Current (R), Var_Name_Column));
+         else
+            Set_Value (Vars (R), "");
+         end if;
       end loop;
       return Vars;
    end Current;
