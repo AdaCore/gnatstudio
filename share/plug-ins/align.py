@@ -115,6 +115,9 @@ def range_align_on (top, bottom, sep, replace_with=None):
    sep_re = re.compile (sep)
    pos = 0
    replace_len = 0
+   fin = False  # whether formal in are found
+   fout = False # whether formal out are found
+
    line = top.beginning_of_line ()
 
    while line <= bottom:
@@ -127,13 +130,18 @@ def range_align_on (top, bottom, sep, replace_with=None):
          except:
             sub = matched.group()
          if sub == " : out ":
-            replace_len = max (replace_len, len (sub) + 3)
-         else:
-            replace_len = max (replace_len, len (sub))
+            fout = True
+         elif sub == " : in " or sub == " : in out ":
+            fin = True
+         replace_len = max (replace_len, len (sub))
       prev = line
       line = line.forward_line ()
       if prev == line:
          break
+
+   # special case when in and out are used
+   if fin == True and fout == True:
+      replace_len = 10
 
    if pos != 0:
      line = top.beginning_of_line ()
@@ -148,8 +156,9 @@ def range_align_on (top, bottom, sep, replace_with=None):
               sub = matched.group()
            width2 = replace_len - len (sub)
 
-           # special case for out parameters, spaces before
-           if sub == " : out ":
+           # special case for out parameters, spaces before only if there is
+           # also some in parameters.
+           if sub == " : out " and fin == True:
               sub = " :    out "
               width2 = width2 - 3
 
