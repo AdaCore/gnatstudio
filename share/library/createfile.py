@@ -21,12 +21,12 @@ class Create_File_Contextual (Contextual):
          filter      = self.filter)
 
    def label (self, context):
-      return "File operations/New File"
+      return "File operations/New File..."
 
    def on_activate (self, context):
       dir = context.directory ()
       name, = MDI.input_dialog (
-         "Enter file name (in directory\n%s)" % dir, "name")
+         "Enter file name (in directory \n%s)" % dir, "Name")
       if name:
          name = os.path.join (dir, name)
          if not os.path.isfile (name):
@@ -34,6 +34,7 @@ class Create_File_Contextual (Contextual):
             f.write ("")
             f.close ()
          EditorBuffer.get (File (name))
+         Project.recompute ()
 
    def filter (self, context):
       try:
