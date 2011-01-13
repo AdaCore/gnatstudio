@@ -33,8 +33,8 @@ class Create_File_Contextual (Contextual):
             f = file (name, "w")
             f.write ("")
             f.close ()
+            Project.recompute ()
          EditorBuffer.get (File (name))
-         Project.recompute ()
 
    def filter (self, context):
       try:
