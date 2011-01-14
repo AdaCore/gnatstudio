@@ -1371,7 +1371,7 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-GPS_VERSION=5.0.1
+GPS_VERSION=5.0.2
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
