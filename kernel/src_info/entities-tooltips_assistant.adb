@@ -17,14 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
-with GPS.Intl; use GPS.Intl;
-with Language.Tree;             use Language.Tree;
-with String_Utils;              use String_Utils;
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Traces; use Traces;
+with GNATCOLL.Symbols;    use GNATCOLL.Symbols;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+
+with Glib;                use Glib;
+with Glib.Convert;        use Glib.Convert;
+
+with GPS.Intl;            use GPS.Intl;
+with Language.Tree;       use Language.Tree;
+with String_Utils;        use String_Utils;
+with Traces;              use Traces;
 
 package body Entities.Tooltips_Assistant is
 
@@ -59,18 +61,18 @@ package body Entities.Tooltips_Assistant is
    -------------------------------
 
    function Get_Tooltip_Documentation
-     (Handler    : Language_Handler;
-      Database   : Construct_Database_Access;
-      Entity : Entity_Information) return String
+     (Handler  : Language_Handler;
+      Database : Construct_Database_Access;
+      Entity   : Entity_Information) return String
    is
-      Loc        : constant File_Location := Get_Declaration_Of (Entity);
-      Decl_File  : constant Virtual_File := Get_Filename (Loc.File);
-      Tree_Lang  : constant Tree_Language_Access :=
-                     Get_Tree_Language_From_File (Handler, Decl_File, False);
+      Loc       : constant File_Location := Get_Declaration_Of (Entity);
+      Decl_File : constant Virtual_File := Get_Filename (Loc.File);
+      Tree_Lang : constant Tree_Language_Access :=
+                    Get_Tree_Language_From_File (Handler, Decl_File, False);
 
-      Data_File  : Structured_File_Access;
-      Node       : Construct_Tree_Iterator;
-      Tree       : Construct_Tree;
+      Data_File : Structured_File_Access;
+      Node      : Construct_Tree_Iterator;
+      Tree      : Construct_Tree;
 
    begin
       Data_File := Language.Tree.Database.Get_Or_Create
@@ -163,7 +165,7 @@ package body Entities.Tooltips_Assistant is
    is
    begin
       return Status = Overloaded_Entity_Found
-           or else (Accurate_Xref and then Status = Fuzzy_Match);
+        or else (Accurate_Xref and then Status = Fuzzy_Match);
    end Is_Tooltip_Guess;
 
 end Entities.Tooltips_Assistant;

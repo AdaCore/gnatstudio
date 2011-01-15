@@ -33,19 +33,19 @@ package Entities.Tooltips_Assistant is
    function Is_Tooltip_Guess
      (Status        : Find_Decl_Or_Body_Query_Status;
       Accurate_Xref : Boolean) return Boolean;
-   --  return if the tooltip is a guess.
+   --  return if the tooltip is a guess
 
    function Get_Tooltip_Guess_Message return String;
    --  return the message to add on top of the tooltip when guess is true
 
    function Get_Tooltip_Documentation
-     (Handler    : Language_Handler;
-      Database   : Construct_Database_Access;
-      Entity : Entity_Information) return String;
+     (Handler  : Language_Handler;
+      Database : Construct_Database_Access;
+      Entity   : Entity_Information) return String;
    --  Return the documentation for the entity (prefixed by a LF char if not
    --  null)
    --  Return empty string if documentation cannot be found in the construct
-   --  database
+   --  database.
 
    function Get_Tooltip_Header
       (Entity : Entity_Information) return String;
@@ -55,6 +55,6 @@ package Entities.Tooltips_Assistant is
    function Get_Tooltip_Information
       (Entity : Entity_Information) return Tooltip_Information;
    --  Return information to be able to display the right icon
-   --  depending on category and visibility
+   --  depending on category and visibility.
 
 end Entities.Tooltips_Assistant;

@@ -19,12 +19,17 @@
 
 with Ada.Strings.Unbounded;
 
-with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with Gdk.Color;                 use Gdk, Gdk.Color;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.GC;                    use Gdk.GC;
+with Gdk.Display;               use Gdk.Display;
 with Gdk.Drawable;              use Gdk.Drawable;
+with Gdk.GC;                    use Gdk.GC;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Screen;                use Gdk.Screen;
+with Glib.Convert;              use Glib.Convert;
+with Glib;                      use Glib;
 with Gtk.Widget;                use Gtk.Widget;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
@@ -38,10 +43,6 @@ with Language.Icons;            use Language.Icons;
 with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Gdk.Display;               use Gdk.Display;
-with Gdk.Screen;                use Gdk.Screen;
 
 package body Entities.Tooltips is
 
@@ -49,7 +50,7 @@ package body Entities.Tooltips is
    --  Return the text describing from what instance the entity is
 
    function Get_Pixbuf (Entity : Entity_Information) return Gdk_Pixbuf;
-   --  Return the image associated to an entity.
+   --  Return the image associated to an entity
 
    ----------------
    -- Get_Pixbuf --
@@ -153,20 +154,20 @@ package body Entities.Tooltips is
       Accurate_Xref : Boolean;
       Draw_Border   : Boolean) return Gdk.Gdk_Pixmap
    is
-      Doc : constant String := Get_Instance (Ref)
-        & Get_Documentation (Kernel, Entity);
+      Doc : constant String :=
+              Get_Instance (Ref) & Get_Documentation (Kernel, Entity);
    begin
       return Draw_Tooltip
-        (Kernel => Kernel,
-         Guess  => Is_Tooltip_Guess (Status, Accurate_Xref),
-         Header => Get_Tooltip_Header (Entity),
-         Pixbuf => Get_Pixbuf (Entity),
+        (Kernel      => Kernel,
+         Guess       => Is_Tooltip_Guess (Status, Accurate_Xref),
+         Header      => Get_Tooltip_Header (Entity),
+         Pixbuf      => Get_Pixbuf (Entity),
          Draw_Border => Draw_Border,
-         Doc    => Doc);
+         Doc         => Doc);
    end Draw_Tooltip;
 
    function Draw_Tooltip
-     (Kernel       : access Kernel_Handle_Record'Class;
+     (Kernel      : access Kernel_Handle_Record'Class;
       Entity      : Entity_Access;
       Draw_Border : Boolean;
       Guess       : Boolean := False) return Gdk.Gdk_Pixmap
@@ -215,8 +216,9 @@ package body Entities.Tooltips is
       Header_Layout := Create_Pango_Layout (Widget, "");
 
       if Guess then
-         Set_Markup (Header_Layout, "<span foreground =""#555555"">" &
-                   Get_Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
+         Set_Markup
+           (Header_Layout, "<span foreground =""#555555"">" &
+              Get_Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
       else
          Set_Markup (Header_Layout, Header);
       end if;
