@@ -20,6 +20,7 @@
 with Language; use Language;
 with Language_Handlers; use Language_Handlers;
 with Language.Tree.Database; use Language.Tree.Database;
+with Entities.Queries; use Entities.Queries;
 
 package Entities.Tooltips_Assistant is
 
@@ -28,6 +29,14 @@ package Entities.Tooltips_Assistant is
       Visibility : Construct_Visibility;
       Category   : Language_Category;
    end record;
+
+   function Is_Tooltip_Guess
+     (Status        : Find_Decl_Or_Body_Query_Status;
+      Accurate_Xref : Boolean) return Boolean;
+   --  return if the tooltip is a guess.
+
+   function Get_Tooltip_Guess_Message return String;
+   --  return the message to add on top of the tooltip when guess is true
 
    function Get_Tooltip_Documentation
      (Handler    : Language_Handler;

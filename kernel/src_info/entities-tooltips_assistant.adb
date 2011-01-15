@@ -24,7 +24,6 @@ with Language.Tree;             use Language.Tree;
 with String_Utils;              use String_Utils;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Entities.Queries;          use Entities.Queries;
 with Traces; use Traces;
 
 package body Entities.Tooltips_Assistant is
@@ -143,5 +142,28 @@ package body Entities.Tooltips_Assistant is
 
       return Tooltip_Info;
    end Get_Tooltip_Information;
+
+   -------------------------------
+   -- Get_Tooltip_Guess_Message --
+   -------------------------------
+
+   function Get_Tooltip_Guess_Message return String is
+   begin
+      return "<i>" &
+       (-("(Cross-references info not up-to-date, this is a guess)")) & "</i>";
+   end Get_Tooltip_Guess_Message;
+
+   ----------------------
+   -- Is_Tooltip_Guess --
+   ----------------------
+
+   function Is_Tooltip_Guess
+     (Status        : Find_Decl_Or_Body_Query_Status;
+      Accurate_Xref : Boolean) return Boolean
+   is
+   begin
+      return Status = Overloaded_Entity_Found
+           or else (Accurate_Xref and then Status = Fuzzy_Match);
+   end Is_Tooltip_Guess;
 
 end Entities.Tooltips_Assistant;

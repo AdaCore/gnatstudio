@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -158,8 +158,7 @@ package body Entities.Tooltips is
    begin
       return Draw_Tooltip
         (Kernel => Kernel,
-         Guess  => Status = Overloaded_Entity_Found
-           or else (Accurate_Xref and then Status = Fuzzy_Match),
+         Guess  => Is_Tooltip_Guess (Status, Accurate_Xref),
          Header => Get_Tooltip_Header (Entity),
          Pixbuf => Get_Pixbuf (Entity),
          Draw_Border => Draw_Border,
@@ -216,11 +215,8 @@ package body Entities.Tooltips is
       Header_Layout := Create_Pango_Layout (Widget, "");
 
       if Guess then
-         Set_Markup (Header_Layout,
-           -("<span foreground =""#555555""><i>" &
-             "(Cross-references info not up-to-date, this is a guess)"
-             & "</i></span>")
-           & ASCII.LF & Header);
+         Set_Markup (Header_Layout, "<span foreground =""#555555"">" &
+                   Get_Tooltip_Guess_Message & "</span>" & ASCII.LF & Header);
       else
          Set_Markup (Header_Layout, Header);
       end if;
