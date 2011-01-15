@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2010, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2109,7 +2109,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          end;
       else
          declare
-            End_Word : File_Cursor'Class := Clone (File_Cursor (Cursor));
+            End_Word : File_Cursor'Class := Clone (Cursor);
             Word     : Word_Cursor;
          begin
             Current_Text.Next_Word (End_Word, Word);
@@ -2305,7 +2305,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Cursor : File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Location.all);
-      Start  : File_Cursor'Class := Clone (File_Cursor (Cursor));
+      Start  : File_Cursor'Class := Clone (Cursor);
       Word   : Word_Cursor;
    begin
       Current_Text.Next_Word (Cursor, Word);
