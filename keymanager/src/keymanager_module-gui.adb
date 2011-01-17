@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Maps;        use Ada.Strings.Maps;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with System;                  use System;
 
 with GNAT.Strings;            use GNAT.Strings;
@@ -737,14 +739,21 @@ package body KeyManager_Module.GUI is
             Show (Ed.Grab_Label);
 
             declare
-               Key        : constant String :=
-                              Grab_Multiple_Key
-                                (Ed.Kernel, Ed, Allow_Multiple => True);
-               Old_Action : constant String :=
-                              Lookup_Action_From_Key (Key, Ed.Bindings);
-               New_Action : constant String :=
-                              Get_String (Ed.Model, Iter, Action_Column);
-               Do_Nothing : Boolean := False;
+               Key          : constant String :=
+                                Grab_Multiple_Key
+                                  (Ed.Kernel, Ed, Allow_Multiple => True);
+               Old_Action   : constant String :=
+                                Lookup_Action_From_Key (Key, Ed.Bindings);
+               Old_Prefix   : constant String :=
+                                Actions_With_Key_Prefix (Key, Ed.Bindings);
+               User_Changed : aliased Boolean := False;
+               Count_Prefix : constant Natural :=
+                                Count
+                                  (Old_Prefix,
+                                   To_Set (String'(1 => ASCII.LF)));
+               New_Action   : constant String :=
+                                Get_String (Ed.Model, Iter, Action_Column);
+               Do_Nothing   : Boolean := False;
             begin
                if Key /= "" and then Key /= "Escape" then
                   --  Do we already have an action with such a binding ?
@@ -752,10 +761,25 @@ package body KeyManager_Module.GUI is
                   if Old_Action /= ""
                     and then
                       Equal (Old_Action, New_Action, Case_Sensitive => False)
+                    --  And there is a single action for this key
+                    and then Count_Prefix = 1
+                    --  We also check for the key binding, this is the tricky
+                    --  case where the action is mapped to ctrl-x for example
+                    --  and we want to map it to ctrl-x+b. So we do nothing
+                    --  only if the if keys are fully equivelent.
+                    and then Key = Lookup_Key_From_Action
+                      (Ed.Bindings,
+                       Old_Action,
+                       Is_User_Changed => User_Changed'Access)
                   then
+                     --  key already bound to Old_Action and no clash for the
+                     --  prefix, nothing to do.
                      Do_Nothing := True;
 
-                  elsif Old_Action /= "" then
+                  elsif Count_Prefix > 1
+                    or else (Count_Prefix = 1
+                             and then Index (Old_Prefix, New_Action) = 0)
+                  then
                      if Active (Testsuite_Handle) then
                         --  When running the testsuite, we cannot display the
                         --  dialog, since there is apparently no way to control
@@ -771,11 +795,12 @@ package body KeyManager_Module.GUI is
                      elsif Message_Dialog
                        (Msg =>
                           Key
-                        & (-" already executes """) & Old_Action & """"
-                        & ASCII.LF
+                        & (-" (or prefix) is already used for: ")
+                        & ASCII.LF & ASCII.LF
+                        & Old_Prefix & ASCII.LF
                         & (-"Do you want to assign ") & Key & (-" to """)
                         & New_Action
-                        & (-""" instead ?"),
+                        & (-""" and disable all actions above ?"),
                         Dialog_Type => Confirmation,
                         Buttons => Button_OK or Button_Cancel,
                         Title   => -"Key shortcut already exists",

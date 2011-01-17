@@ -150,6 +150,14 @@ private
    --  Return the name of the action currently bound to Key (possibly a multi-
    --  key binding). The empty string is returned if the key is not bound yet.
 
+   function Actions_With_Key_Prefix
+     (Key       : String;
+      Bindings  : HTable_Access;
+      Separator : Character := ASCII.LF) return String;
+   --  Returns all actions (and associated key shortcut) that are associated
+   --  with key or are having key as a shortcut prefix. The list of actions are
+   --  separated by the given character.
+
    procedure Bind_Default_Key_Internal
      (Kernel                    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Table                                : in out Key_Htable.Instance;

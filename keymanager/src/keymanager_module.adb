@@ -922,15 +922,25 @@ package body KeyManager_Module is
 
                while B /= null loop
                   if B.Action /= null then
-                     Error_Message
-                       (Kernel,
-                        (-"Cannot use key shortcut <") & Key
-                        & (-"' for action """) & Action & """:" & ASCII.LF
-                        & (-"prefixing key shortcut <")
-                        & Key (Key'First .. Last - 1)
-                        & (-"> is already bound to action """)
-                        & B.Action.all & """.");
-                     return;
+                     if Remove_Existing_Actions_For_Shortcut then
+                        --  This prefix is already used but we asked for
+                        --  removing existing actions.
+
+                        Free (B.Action);
+
+                     else
+                        --  Cannot associate action as key shortcut already
+                        --  used.
+                        Error_Message
+                          (Kernel,
+                           (-"Cannot use key shortcut <") & Key
+                           & (-"' for action """) & Action & """:" & ASCII.LF
+                           & (-"prefixing key shortcut <")
+                           & Key (Key'First .. Last - 1)
+                           & (-"> is already bound to action """)
+                           & B.Action.all & """.");
+                        return;
+                     end if;
                   end if;
 
                   B := B.Next;
@@ -2028,5 +2038,104 @@ package body KeyManager_Module is
 
       return "";
    end Lookup_Action_From_Key;
+
+   -----------------------------
+   -- Actions_With_Key_Prefix --
+   -----------------------------
+
+   function Actions_With_Key_Prefix
+     (Key       : String;
+      Bindings  : HTable_Access;
+      Separator : Character := ASCII.LF) return String
+   is
+      use Ada.Strings.Unbounded;
+      Partial_Key : Gdk_Key_Type;
+      Modif       : Gdk_Modifier_Type;
+      First, Last : Integer;
+      Keymap      : Keymap_Access;
+      List        : Key_Description_List;
+      Result      : Unbounded_String;
+
+      procedure Dump_Actions (Bindings : Key_Htable.Instance; Prefix : String);
+      --  Dump all actions whose table is designated by Bindings
+
+      ------------------
+      -- Dump_Actions --
+      ------------------
+
+      procedure Dump_Actions
+        (Bindings : Key_Htable.Instance; Prefix : String)
+      is
+         List : Key_Description_List;
+         Pos  : Cursor;
+         Key  : Key_Binding;
+      begin
+         Get_First (Bindings, Pos);
+         List := Get_Element (Pos);
+
+         while List /= null loop
+            Key  := Get_Key (Pos);
+            while List /= null loop
+               if List.Action /= null then
+                  Append
+                    (Result,
+                     List.Action.all
+                     & " (" & Prefix & ' '
+                     & Image (Key.Key, Key.Modifier) & ')' & Separator);
+                  if List.Keymap /= null then
+                     Dump_Actions
+                       (List.Keymap.Table,
+                        Prefix & ' ' & Image (Key.Key, Key.Modifier));
+                  end if;
+               end if;
+               List := List.Next;
+            end loop;
+
+            Get_Next (Bindings, Pos);
+            List := Get_Element (Pos);
+         end loop;
+      end Dump_Actions;
+
+   begin
+      First := Key'First;
+      while First <= Key'Last loop
+         Last := First + 1;
+         while Last <= Key'Last and then Key (Last) /= ' ' loop
+            Last := Last + 1;
+         end loop;
+
+         Value (Key (First .. Last - 1), Partial_Key, Modif);
+
+         if Keymap = null then
+            List := Get (Bindings.all, Key_Binding'(Partial_Key, Modif));
+            Get_Secondary_Keymap (Bindings.all, Partial_Key, Modif, Keymap);
+         else
+            List := Get (Keymap.Table, Key_Binding'(Partial_Key, Modif));
+            Get_Secondary_Keymap (Keymap.Table, Partial_Key, Modif, Keymap);
+         end if;
+
+            while List /= null loop
+               if List.Action /= null then
+                  Append
+                    (Result,
+                     List.Action.all
+                     & " (" & Key (Key'First .. Last - 1) & ")" & Separator);
+               end if;
+
+               List := List.Next;
+            end loop;
+
+         if Last = Key'Last + 1 then
+            if Keymap /= null then
+               Dump_Actions (Keymap.Table, Key (First .. Last - 1));
+               exit;
+            end if;
+         end if;
+
+         First := Last + 1;
+      end loop;
+
+      return To_String (Result);
+   end Actions_With_Key_Prefix;
 
 end KeyManager_Module;
