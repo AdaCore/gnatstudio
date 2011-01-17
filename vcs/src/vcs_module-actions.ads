@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,6 @@ package VCS_Module.Actions is
 
    procedure Register_Actions
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Register the VCS actions.
+   --  Register the VCS actions
 
 end VCS_Module.Actions;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,40 +17,43 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel;             use GPS.Kernel;
-with Gdk.Color;              use Gdk.Color;
-with Gdk.Event;              use Gdk.Event;
-with Gdk.Main;               use Gdk.Main;
-with Gdk.Types;              use Gdk.Types;
-with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
-with Gdk.Window;             use Gdk.Window;
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Gtkada;    use GNATCOLL.Scripts.Gtkada;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.MDI;             use Gtkada.MDI;
-with Gtk.Accel_Group;        use Gtk.Accel_Group;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Frame;              use Gtk.Frame;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Object;             use Gtk.Object;
-with Gtk.Style;              use Gtk.Style;
-with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
-with Gtk.Text_Iter;          use Gtk.Text_Iter;
-with Gtk.Text_View;          use Gtk.Text_View;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtk.Window;             use Gtk.Window;
-with GUI_Utils;              use GUI_Utils;
-with KeyManager_Module;      use KeyManager_Module;
-with Traces;                 use Traces;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+
+with Gdk.Color;               use Gdk.Color;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.Main;                use Gdk.Main;
+with Gdk.Types;               use Gdk.Types;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Window;              use Gdk.Window;
+with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.MDI;              use Gtkada.MDI;
+with Gtk.Accel_Group;         use Gtk.Accel_Group;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Frame;               use Gtk.Frame;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.Object;              use Gtk.Object;
+with Gtk.Style;               use Gtk.Style;
+with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
+with Gtk.Text_Iter;           use Gtk.Text_Iter;
+with Gtk.Text_View;           use Gtk.Text_View;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
+
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GUI_Utils;               use GUI_Utils;
+with KeyManager_Module;       use KeyManager_Module;
+with Traces;                  use Traces;
 
 package body Command_Window is
+
    type Command_Window_Record is new Gtk_Window_Record with record
       Kernel            : Kernel_Handle;
       Box               : Gtk_Box;

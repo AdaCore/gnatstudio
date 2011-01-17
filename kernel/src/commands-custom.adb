@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Maps;          use Ada.Strings.Maps;
+with Ada.Strings.Maps;          use Ada; use Ada.Strings.Maps;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
@@ -28,7 +28,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regpat;               use GNAT.Regpat;
 
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -447,8 +447,7 @@ package body Commands.Custom is
          declare
             Matched : Match_Array (0 .. 2);
             Force   : Boolean;
-            Idx     : Integer :=
-                        Ada.Strings.Fixed.Index (Output, "" & ASCII.LF);
+            Idx     : Integer := Strings.Fixed.Index (Output, "" & ASCII.LF);
          begin
             --  Only the first received line is taken into account for custom
             --  commands.
@@ -1343,7 +1342,7 @@ package body Commands.Custom is
               (Trim
                  (Component.Command.all,
                   Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
-                  Right => Ada.Strings.Maps.Null_Set),
+                  Right => Strings.Maps.Null_Set),
                Separate_Args);
 
             --  Implement $-substitution

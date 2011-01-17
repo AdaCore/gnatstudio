@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2009, AdaCore              --
+--                     Copyright (C) 2003-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,12 +38,12 @@ package KeyManager_Module is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Load the customized key bindings. This needs to be done after all
    --  XML files and themes have been loaded, so that the user's choice
-   --  overrides everything
+   --  overrides everything.
 
    procedure Block_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Block all handling of key shortcuts defined in GPS. gtk+'s own key
-   --  handling, though, will be performed as usual
+   --  handling, though, will be performed as usual.
 
    procedure Unblock_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -206,6 +206,6 @@ private
    --  Save the current custom keys
 
    procedure Set_GUI_Running (Running : Boolean);
-   --  Inform the module whether the GUI is currently running.
+   --  Inform the module whether the GUI is currently running
 
 end KeyManager_Module;

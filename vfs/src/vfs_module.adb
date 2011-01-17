@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2010, AdaCore               --
+--                  Copyright (C) 2002-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -348,11 +348,11 @@ package body VFS_Module is
    ---------------
 
    function Check_Prj
-     (Tree     : access Project_Tree'Class;
-      File_In  : GNATCOLL.VFS.Virtual_File) return Project_Type
+     (Tree    : access Project_Tree'Class;
+      File_In : GNATCOLL.VFS.Virtual_File) return Project_Type
    is
-      Iter  : Project_Iterator;
-      Prj   : Project_Type;
+      Iter : Project_Iterator;
+      Prj  : Project_Type;
 
    begin
       if Is_Directory (File_In) then
@@ -498,11 +498,11 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Dir      : constant Virtual_File :=
-                   Directory_Information (Context.Context);
-      Success  : Boolean;
-      Button   : Gtkada.Dialogs.Message_Dialog_Buttons;
-      Is_Dir   : Boolean;
+      Dir     : constant Virtual_File :=
+                  Directory_Information (Context.Context);
+      Success : Boolean;
+      Button  : Gtkada.Dialogs.Message_Dialog_Buttons;
+      Is_Dir  : Boolean;
 
       procedure Actual_Rename
         (File_In     : GNATCOLL.VFS.Virtual_File;
@@ -562,12 +562,12 @@ package body VFS_Module is
          if Is_Directory (File_In) then
             declare
                Res : constant String :=
-                 GUI_Utils.Query_User
-                   (Get_Kernel (Context.Context).Get_Main_Window,
-                    (-"Please enter the directory's new name:"),
-                    Password_Mode => False,
-                    Urgent        => False,
-                    Default       => +File_In.Base_Dir_Name);
+                       GUI_Utils.Query_User
+                         (Get_Kernel (Context.Context).Get_Main_Window,
+                          (-"Please enter the directory's new name:"),
+                          Password_Mode => False,
+                          Urgent        => False,
+                          Default       => +File_In.Base_Dir_Name);
             begin
                if Res /= "" then
                   Renamed := Create_From_Dir (Get_Parent (File_In), +Res);
@@ -577,12 +577,12 @@ package body VFS_Module is
          else
             declare
                Res : constant String :=
-                 GUI_Utils.Query_User
-                   (Get_Kernel (Context.Context).Get_Main_Window,
-                    (-"Please enter the file's new name:"),
-                    Password_Mode => False,
-                    Urgent        => False,
-                    Default       => +File_In.Base_Name);
+                       GUI_Utils.Query_User
+                         (Get_Kernel (Context.Context).Get_Main_Window,
+                          (-"Please enter the file's new name:"),
+                          Password_Mode => False,
+                          Urgent        => False,
+                          Default       => +File_In.Base_Name);
             begin
                if Res /= "" then
                   Renamed := Create_From_Dir (File_In.Dir, +Res);
@@ -607,7 +607,6 @@ package body VFS_Module is
                (-" into ") &
                Display_Full_Name (Renamed),
                Mode => Error);
-
             return;
          end if;
 

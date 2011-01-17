@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -789,6 +789,7 @@ package body KeyManager_Module is
       Keymap                : Keymap_Access;
       Success               : Boolean;
       pragma Unreferenced (Success);
+
    begin
       --  Are we trying to cancel all bindings to Action ?
       if Remove_Existing_Shortcuts_For_Action
@@ -965,16 +966,15 @@ package body KeyManager_Module is
 
       else
          Binding2 := Binding;
-         while Binding2 /= null
-           and then Binding2.Keymap = null
-         loop
+
+         while Binding2 /= null and then Binding2.Keymap = null loop
             Binding  := Binding2;  --  Last value where Next /= null
             Binding2 := Binding2.Next;
          end loop;
 
          --  If there is no secondary keymap yet, create one
          if Binding2 = null then
-            Keymap   := new Keymap_Record;
+            Keymap := new Keymap_Record;
             Binding.Next := new Key_Description'
               (Action  => null,
                Changed => False,
@@ -994,23 +994,23 @@ package body KeyManager_Module is
      (Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
-      Key     : Gdk_Key_Type;
-      Modif   : Gdk_Modifier_Type;
-      Binding : Key_Description_List;
-      Command : Action_Record_Access;
-      Has_Secondary : constant Boolean :=
-        Keymanager_Module.Secondary_Keymap /= null;
-      Context : Selection_Context;
+      Key              : Gdk_Key_Type;
+      Modif            : Gdk_Modifier_Type;
+      Binding          : Key_Description_List;
+      Command          : Action_Record_Access;
+      Has_Secondary    : constant Boolean :=
+                           Keymanager_Module.Secondary_Keymap /= null;
+      Context          : Selection_Context;
       Context_Computed : Boolean := False;
-      Found_Action : Boolean := False;
-      Child    : GPS_MDI_Child;
+      Found_Action     : Boolean := False;
+      Child            : GPS_MDI_Child;
 
       procedure Compute_Context;
       --  Compute the current context if not done already
 
       procedure Compute_Child;
       --  Compute the child that currently has the focus. If no such child, or
-      --  this isn't a GPS_MDI_Child, null is set
+      --  this isn't a GPS_MDI_Child, null is set.
 
       procedure Undo_Group (Start : Boolean);
       --  Start or end an undo group
@@ -1285,9 +1285,7 @@ package body KeyManager_Module is
 
          --  If we are releasing CTRL, enter Hyper Mode
 
-         if Key = GDK_Control_L
-           or Key = GDK_Control_R
-         then
+         if Key = GDK_Control_L or else Key = GDK_Control_R then
             Leave_Hyper_Mode (Kernel);
          end if;
 
@@ -1480,10 +1478,10 @@ package body KeyManager_Module is
                Bind : Key_Description_List;
             begin
                Bind := new Key_Description'
-                 (Action         => new String'(Action),
-                  Changed        => False,
-                  Keymap         => null,
-                  Next           => null);
+                 (Action  => new String'(Action),
+                  Changed => False,
+                  Keymap  => null,
+                  Next    => null);
 
                Set
                  (Table.all,
@@ -1518,9 +1516,7 @@ package body KeyManager_Module is
             Action : constant String := Get_Attribute (Node, "action");
          begin
             if Action = "" then
-               if Node.Value /= null
-                 and then Node.Value.all /= ""
-               then
+               if Node.Value /= null and then Node.Value.all /= "" then
                   Bind_Default_Key_Internal
                     (Kernel => Get_Kernel (Module.all),
                      Table  => Keymanager_Module.Table.all,
@@ -1705,8 +1701,7 @@ package body KeyManager_Module is
    procedure Read_Action_Argument
      (Validator : Argument_Key_Validator;
       Callback  : Argument_Read_Callback;
-      Command   : access Interactive_Command'Class)
-   is
+      Command   : access Interactive_Command'Class) is
    begin
       Free (Keymanager_Module.Argument_Current);
       Keymanager_Module.Argument_Current   := new String'("");
@@ -1818,14 +1813,14 @@ package body KeyManager_Module is
       if Accel_Key = 0 then
          declare
             User_Changed : aliased Boolean;
-            Old : constant String := Lookup_Key_From_Action
-              (Table   => Keymanager_Module.Table,
-               Action  => Accel_Path (First .. Accel_Path'Last),
-               Default => "",
-               Use_Markup => False,
+            Old          : constant String := Lookup_Key_From_Action
+              (Table           => Keymanager_Module.Table,
+               Action          => Accel_Path (First .. Accel_Path'Last),
+               Default         => "",
+               Use_Markup      => False,
                Is_User_Changed => User_Changed'Unchecked_Access,
                Return_Multiple => False,
-               Default_On_Gtk => False);
+               Default_On_Gtk  => False);
          begin
             if Old /= "" then
                --  Prevent recursive call to On_Accel_Map_Changed, since we
@@ -1848,10 +1843,10 @@ package body KeyManager_Module is
          --  Remove any other keybinding associated with that action, as well
          --  as any action associated with that key.
          Bind_Default_Key_Internal
-           (Table  => Keymanager_Module.Table.all,
-            Kernel => Kernel,
-            Action => Accel_Path (First .. Accel_Path'Last),
-            Key    => Image (Accel_Key, Accel_Mods),
+           (Table             => Keymanager_Module.Table.all,
+            Kernel            => Kernel,
+            Action            => Accel_Path (First .. Accel_Path'Last),
+            Key               => Image (Accel_Key, Accel_Mods),
             Save_In_Keys_XML  =>
               (Keymanager_Module.Custom_Keys_Loaded
                and then Keymanager_Module.Menus_Created),

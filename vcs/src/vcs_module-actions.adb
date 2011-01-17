@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -94,7 +94,7 @@ package body VCS_Module.Actions is
      (Filter  : access Has_Other_Revision_Information;
       Context : Selection_Context) return Boolean;
    --  Return True if the context contains the information for the other
-   --  revision
+   --  revision.
 
    type Has_Tag_Information is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -112,7 +112,7 @@ package body VCS_Module.Actions is
    --  if Context is appropriate.
 
    function Is_A_Log (File : Virtual_File) return Boolean;
-   --  Return True if File is a log.
+   --  Return True if File is a log
 
    ----------------------
    -- Register_Actions --
@@ -129,32 +129,33 @@ package body VCS_Module.Actions is
       --  If In_Contextual_Menu, also register a contextual menu for this
       --  action.
 
-      VCS_Menu    : constant String := "/_" & (-"VCS");
+      VCS_Menu         : constant String := "/_" & (-"VCS");
       Has_Revision_Log : constant Action_Filter :=
-        new Has_Revision_Log_Filter;
-      Is_Revision_Log : constant Action_Filter :=
-        new Is_Revision_Log_Filter;
+                           new Has_Revision_Log_Filter;
+      Is_Revision_Log  : constant Action_Filter :=
+                           new Is_Revision_Log_Filter;
 
       File_Filter : constant Action_Filter :=
-        Lookup_Filter (Kernel, "File") and not Is_Revision_Log;
+                      Lookup_Filter (Kernel, "File") and not Is_Revision_Log;
 
       Dir_Filter  : constant Action_Filter :=
-        Lookup_Filter (Kernel, "Directory") and not Is_Revision_Log;
+                      Lookup_Filter (Kernel, "Directory")
+                        and not Is_Revision_Log;
 
       Prj_Filter  : constant Action_Filter :=
-        new Has_Project_Filter;
+                      new Has_Project_Filter;
 
       Directory_No_File_Filter : constant Action_Filter :=
-        new No_File_Filter;
+                                   new No_File_Filter;
 
       Has_Revision_Filter : constant Action_Filter :=
-        new Has_Revision_Information;
+                              new Has_Revision_Information;
 
       Has_Other_Revision_Filter : constant Action_Filter :=
-        new Has_Other_Revision_Information;
+                                    new Has_Other_Revision_Information;
 
       Has_Tag_Filter : constant Action_Filter :=
-        new Has_Tag_Information;
+                         new Has_Tag_Information;
 
       --------------------------
       -- Register_Action_Menu --
@@ -168,7 +169,7 @@ package body VCS_Module.Actions is
       is
          Parent_String : GNAT.Strings.String_Access;
          Command       : Generic_Kernel_Command_Access;
-         The_Filter : Action_Filter;
+         The_Filter    : Action_Filter;
 
       begin
          Create (Command, Kernel, Callback);
@@ -189,7 +190,7 @@ package body VCS_Module.Actions is
          Free (Parent_String);
       end Register_Action_Menu;
 
-      Filter               : Action_Filter;
+      Filter : Action_Filter;
 
    begin
       Register_Menu
@@ -478,24 +479,24 @@ package body VCS_Module.Actions is
       Register_Filter (Kernel, Filter, "VCS");
 
       Register_Contextual_Submenu
-        (Kernel  => Kernel,
-         Name    => -"Version Control",
-         Filter  => Filter,
-         Ref_Item => "VCS Reference",
+        (Kernel     => Kernel,
+         Name       => -"Version Control",
+         Filter     => Filter,
+         Ref_Item   => "VCS Reference",
          Add_Before => False,
-         Submenu => new VCS_Contextual_Menu);
+         Submenu    => new VCS_Contextual_Menu);
 
       Register_Contextual_Menu
-        (Kernel      => Kernel,
-         Name        => "Version Control/VCS Reference",
-         Action      => Action_Record_Access'(null));
+        (Kernel => Kernel,
+         Name   => "Version Control/VCS Reference",
+         Action => Action_Record_Access'(null));
 
       Filter := new VCS_Explorer_Filter;
 
       Register_Contextual_Menu
-        (Kernel      => Kernel,
-         Name        => "VCS Reference",
-         Filter      => Filter);
+        (Kernel => Kernel,
+         Name   => "VCS Reference",
+         Filter => Filter);
    end Register_Actions;
 
    ------------------------------
@@ -528,12 +529,12 @@ package body VCS_Module.Actions is
       pragma Unreferenced (Filter);
       File : Virtual_File;
    begin
-      --  No directory: no match.
+      --  No directory: no match
       if not Has_Directory_Information (Context) then
          return False;
       end if;
 
-      --  A diretory but no file information: match.
+      --  A diretory but no file information: match
       if not Has_File_Information (Context) then
          return True;
       end if;
@@ -555,7 +556,8 @@ package body VCS_Module.Actions is
 
    overriding function Filter_Matches_Primitive
      (Filter  : access VCS_Explorer_Filter;
-      Context : Selection_Context) return Boolean is
+      Context : Selection_Context) return Boolean
+   is
       pragma Unreferenced (Filter);
    begin
       return Get_Creator (Context) = Abstract_Module_ID
@@ -568,7 +570,8 @@ package body VCS_Module.Actions is
 
    overriding function Filter_Matches_Primitive
      (Filter  : access Has_Revision_Log_Filter;
-      Context : Selection_Context) return Boolean is
+      Context : Selection_Context) return Boolean
+   is
       pragma Unreferenced (Filter);
    begin
       if not Has_File_Information (Context) then
@@ -625,7 +628,8 @@ package body VCS_Module.Actions is
 
    overriding function Filter_Matches_Primitive
      (Filter  : access Has_Project_Filter;
-      Context : Selection_Context) return Boolean is
+      Context : Selection_Context) return Boolean
+   is
       pragma Unreferenced (Filter);
    begin
       return Has_Project_Information (Context);

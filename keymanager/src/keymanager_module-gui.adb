@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2003-2010, AdaCore                   --
+--                Copyright (C) 2003-2011, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,19 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Case_Handling;           use Case_Handling;
-with Commands.Interactive;    use Commands.Interactive;
+with System;                  use System;
+
+with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Glib.Object;             use Glib, Glib.Object;
-with GNAT.Strings;            use GNAT.Strings;
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
-with GPS.Intl;                use GPS.Intl;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Box;                 use Gtk.Box;
@@ -62,11 +58,18 @@ with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 with Gtkada.Handlers;         use Gtkada.Handlers;
-with GUI_Utils;               use GUI_Utils;
 with Pango.Enums;             use Pango.Enums;
-with System;                  use System;
+
+with Case_Handling;           use Case_Handling;
+with Commands.Interactive;    use Commands.Interactive;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Intl;                use GPS.Intl;
+with GUI_Utils;               use GUI_Utils;
 with Traces;                  use Traces;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body KeyManager_Module.GUI is
    use Key_Htable;
@@ -222,7 +225,7 @@ package body KeyManager_Module.GUI is
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
-      --  Called for each known accel path.
+      --  Called for each known accel path
 
       --------------------------
       -- Process_Menu_Binding --
@@ -335,13 +338,14 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class) is
+
       procedure Process_Menu_Binding
         (Data       : System.Address;
          Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
-      --  Called for each known accel path.
+      --  Called for each known accel path
 
       --------------------------
       -- Process_Menu_Binding --
@@ -733,12 +737,13 @@ package body KeyManager_Module.GUI is
             Show (Ed.Grab_Label);
 
             declare
-               Key     : constant String := Grab_Multiple_Key
-                 (Ed.Kernel, Ed, Allow_Multiple => True);
+               Key        : constant String :=
+                              Grab_Multiple_Key
+                                (Ed.Kernel, Ed, Allow_Multiple => True);
                Old_Action : constant String :=
-                 Lookup_Action_From_Key (Key, Ed.Bindings);
+                              Lookup_Action_From_Key (Key, Ed.Bindings);
                New_Action : constant String :=
-                 Get_String (Ed.Model, Iter, Action_Column);
+                              Get_String (Ed.Model, Iter, Action_Column);
                Do_Nothing : Boolean := False;
             begin
                if Key /= "" and then Key /= "Escape" then
@@ -938,7 +943,7 @@ package body KeyManager_Module.GUI is
       Keys_Editor_Visible_Funcs.Set_Visible_Func
         (Editor.Filter, Action_Is_Visible'Access, Editor);
 
-      --  A sort model on top of the filter, so that rows can be sorted.
+      --  A sort model on top of the filter, so that rows can be sorted
       Gtk_New_With_Model (Editor.Sort, Editor.Filter);
 
       Gtk_New (Editor.View, Editor.Sort);

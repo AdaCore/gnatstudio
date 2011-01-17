@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -67,14 +67,14 @@ package Commands.Interactive is
    --  automatically for you.
 
    Null_Context : constant Interactive_Command_Context :=
-     (Event       => null,
-      Context     => GPS.Kernel.No_Context,
-      Synchronous => False,
-      Dir         => No_File,
-      Args        => null,
-      Label       => null,
-      Repeat_Count     => 1,
-      Remaining_Repeat => 0);
+                    (Event            => null,
+                     Context          => GPS.Kernel.No_Context,
+                     Synchronous      => False,
+                     Dir              => No_File,
+                     Args             => null,
+                     Label            => null,
+                     Repeat_Count     => 1,
+                     Remaining_Repeat => 0);
 
    procedure Free (X : in out Interactive_Command_Context);
    --  Free memory associated to X
