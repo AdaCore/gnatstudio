@@ -236,7 +236,7 @@ Known Problems fixed in GPS 5.0.0
   Workaround: Click in the editor with the first button to give it the focus
               before pasting text.
 
-- J906-012: rectangle insertion misbehaves on empty lines
+- J906-012: Rectangle insertion misbehaves on empty lines
   Problem:    If you have activated the rectangles.py plugin, and then try
               to use "Rectangle/Insert Text" on a rectangle that contains
               empty line, the text will be inserted at the end of the previous
