@@ -35,6 +35,14 @@ If no tag is specified, the entry is relevant to all IDEs.
               resulting dialog shows the target name in the description field.
   Workaround: Look in the makefile itself for the description.
 
+- JB07-002 GPS: Key manager recording was too restrictive
+  Problem:    The key manager was not properly handling the case where we
+              define a new mapping for ctrl-x when some other actions are
+              mapped to key using ctrl-x as prefix (e.g. ctrl-x+b).
+              Another limitation was that it refuses to define a binding
+              for ctrl-x+b if some actions were using ctrl-x as prefix.
+  Workaround: Edit .gps/keys.xml manually.
+
 - J914-003 Navigation errors when switching scenario variables
   Problem:    When switching back and forth scenario variables involving a
               change in the set of sources, the navigation may be confused
@@ -64,4 +72,3 @@ If no tag is specified, the entry is relevant to all IDEs.
               large, the common prefix used to complete the current identifier
               may be wrong.
   Workaround: Manually complete the code.
-
