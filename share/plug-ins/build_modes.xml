@@ -28,14 +28,26 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <substitutions>
+    <substitute src="%builder" dest="gprbuild"/>
+    <substitute src="%gnatmake" dest="gprbuild"/>
+  </substitutions>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
+     <arg>-cargs:Ada</arg>
      <arg>-g</arg>
      <arg>-O0</arg>
      <arg>-gnato</arg>
      <arg>-fstack-check</arg>
      <arg>-gnatVa</arg>
+     <arg>-cargs:C</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+     <arg>-fstack-check</arg>
+     <arg>-cargs:C++</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+     <arg>-fstack-check</arg>
   </extra-args>
  </builder-mode>
 
