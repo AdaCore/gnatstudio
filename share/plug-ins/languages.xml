@@ -159,7 +159,6 @@
 
   <Language>
     <Name>Makefile</Name>
-    <Body_Suffix>Makefile</Body_Suffix>
     <Keywords>^((s?include|if(n?(eq|def))?|e(lse|ndif))\b|\n[^#]+:)</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>

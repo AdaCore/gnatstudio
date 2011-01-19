@@ -8,6 +8,14 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K108-001 GPS: Adding Makefile as a language results in errors
+  Problem:    Edit the project properties to add Makefile as a language.
+              GPS will raise an error when it parses the resulting project,
+              complaining about the Body_Suffix attribute.
+  Workaround: GPS no longer outputs a Body_Suffix to define the naming scheme.
+              As a result, Makefiles are not automatically detected. Instead,
+              you should add a naming exception for the makefile.
+
 - JC10-004 Errors when automatically fixing unused packages
   Problem:    When automatically removing an unused package through automatic
               code fixing, in certain situations, the chunk of removed code is
