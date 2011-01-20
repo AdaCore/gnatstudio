@@ -2776,6 +2776,17 @@ package body Entities is
       Parse_File_Constructs (Lang, File_Name, Result);
    end Parse_File_Constructs;
 
+   --------------------
+   -- Get_Name_Index --
+   --------------------
+
+   function Get_Name_Index
+     (LI : access LI_Handler_Record)
+      return access Entities_Search_Tries.Vector_Trie is
+   begin
+      return LI.Name_Index'Access;
+   end Get_Name_Index;
+
    ---------
    -- "<" --
    ---------
