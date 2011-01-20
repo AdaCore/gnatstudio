@@ -914,6 +914,12 @@ package Entities is
    Null_LI_Entities_Iterator : LI_Entities_Iterator renames
      Entities_Search_Tries.Null_Vector_Trie_Iterator;
 
+   function Get_Name_Index
+     (LI : access LI_Handler_Record)
+      return access Entities_Search_Tries.Vector_Trie;
+   --  Return the trie tree where LI entities are stored by name, for
+   --  database-wide search.
+
 private
 
    ----------------
@@ -1107,14 +1113,6 @@ private
    end record;
    No_Entity_Reference : aliased constant Entity_Reference :=
      (null, Null_Entity_Reference_Index);
-
-   type Entity_List is record
-      null;
-   end record;
-
-   type Entity_Iterator is record
-      null;
-   end record;
 
    --------------------------
    -- LI_Entities_Iterator --
