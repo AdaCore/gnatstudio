@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2010, AdaCore               --
+--                    Copyright (C) 2007-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,8 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.Symbols;
-with GNATCOLL.Utils;
 with Language.Tree; use Language.Tree;
-with Lazy_Vectors;
-with Tries;
+with Vector_Tries;
 
 generic
    type Additional_Data_Type is private;
@@ -31,44 +29,42 @@ generic
    Null_Additional_Data_Type : Additional_Data_Type;
 package Construct_Tries is
 
-   type Construct_Trie is private;
+   type Construct_Node_Wrapper is record
+      Node  : Construct_Tree_Iterator;
+      Data  : Additional_Data_Type;
+   end record;
+
+   Null_Construct_Node_Wrapper : constant Construct_Node_Wrapper :=
+     (Null_Construct_Tree_Iterator, Null_Additional_Data_Type);
+
+   package Construct_Trie_Trees is new Vector_Tries
+     (Construct_Node_Wrapper, Null_Construct_Node_Wrapper);
+
+   subtype Construct_Trie is Construct_Trie_Trees.Vector_Trie;
    --  A construct trie holds construct iterators into a trie, based on their
    --  name. Several constructs can be stored under the same name.
 
-   Empty_Construct_Trie : constant Construct_Trie;
+   --  waiting for K120-007 resolution
+   --  subtype Construct_Trie is
+   --       new Construct_Trie_Trees.Vector_Trie (Case_Sensitive => True);
 
-   type Construct_Trie_Iterator is private;
+   Empty_Construct_Trie : Construct_Trie renames
+     Construct_Trie_Trees.Empty_Vector_Trie;
+
+   subtype Construct_Trie_Iterator is
+     Construct_Trie_Trees.Vector_Trie_Iterator;
    --  This type gives a way of iterating over the contents of a construct
    --  trie.
 
-   Null_Construct_Trie_Iterator : constant Construct_Trie_Iterator;
+   Null_Construct_Trie_Iterator : Construct_Trie_Iterator renames
+     Construct_Trie_Trees.Null_Vector_Trie_Iterator;
 
-   type Construct_Trie_Index is private;
+   subtype Construct_Trie_Index is Construct_Trie_Trees.Vector_Trie_Index;
    --  This index can be used to store a position in a trie, in a persistent
    --  fashion. User is responsible to know if the object still exist or not.
 
-   Null_Construct_Trie_Index : constant Construct_Trie_Index;
-
-   procedure Clear (Trie : access Construct_Trie);
-   --  Remove all the entities from the construct trie.
-
-   function Start
-     (Trie : access Construct_Trie; Prefix : String; Is_Partial : Boolean)
-      return Construct_Trie_Iterator;
-   --  Start an iteration on the given prefix. If Is_Partial is true, then only
-   --  names having the exact match will be returned. Note that this search is
-   --  case sentitive.
-
-   procedure Next (It : in out Construct_Trie_Iterator);
-   --  Move the iterator to the next element.
-
-   function At_End (It : Construct_Trie_Iterator) return Boolean;
-   --  Return True if the iterator is after the last element to be iterated.
-
-   function Is_Valid (It : Construct_Trie_Iterator) return Boolean;
-   --  Return True if the iterator is in a valid state, either At_End or
-   --  contains a valid value. This should be the case if the iteration is
-   --  done in a single task, without modifications of the trie tree.
+   Null_Construct_Trie_Index : Construct_Trie_Index renames
+     Construct_Trie_Trees.Null_Vector_Trie_Index;
 
    function Get_Construct_It
      (It : Construct_Trie_Iterator) return Construct_Tree_Iterator;
@@ -79,14 +75,6 @@ package Construct_Tries is
      (It : Construct_Trie_Iterator) return Additional_Data_Type;
    --  Return the additional data contained in the cell pointed by the
    --  iterator.
-
-   function Get_Index (It : Construct_Trie_Iterator) return String;
-   --  Return the index associated to this iterator, that is to say the index
-   --  used in the trie tree.
-
-   procedure Free (It : in out Construct_Trie_Iterator);
-   --  Free the iterator. This has to be called on each iterator declared, in
-   --  order to preven memory leaks.
 
    procedure Insert
      (Trie         : access Construct_Trie;
@@ -110,86 +98,11 @@ package Construct_Tries is
    --  Same as above, but insert the object with a particular name instead
    --  of using the construct tree name.
 
-   procedure Delete
-     (Trie : access Construct_Trie; Index : Construct_Trie_Index);
-   --  Delete the object stored at the index given in parameter.
-
    procedure Replace
      (Trie             : access Construct_Trie;
       Index            : Construct_Trie_Index;
       New_Construct_It : Construct_Tree_Iterator;
       New_Data         : Additional_Data_Type);
    --  Replace the object pointed by the iterator.
-
-   function Get_Name_Index
-     (Trie    : access Construct_Trie;
-      Symbols : not null access GNATCOLL.Symbols.Symbol_Table_Record'Class;
-      Name    : String)
-      return GNATCOLL.Symbols.Symbol;
-   --  Return the unique string access corresponding to the name given in
-   --  parameter. If none, will create one.
-
-private
-
-   type Construct_Node_Wrapper is record
-      Node  : Construct_Tree_Iterator;
-      Data  : Additional_Data_Type;
-   end record;
-
-   Null_Construct_Node_Wrapper : constant Construct_Node_Wrapper :=
-     (Null_Construct_Tree_Iterator, Null_Additional_Data_Type);
-
-   package Construct_Vector is new Lazy_Vectors
-     (Construct_Node_Wrapper, Null_Construct_Node_Wrapper);
-
-   use Construct_Vector;
-
-   type Construct_Node_List is record
-      Constructs : Construct_Vector.Lazy_Vector;
-      Name       : GNATCOLL.Symbols.Symbol;
-   end record;
-
-   type Construct_Node_List_Access is access all Construct_Node_List;
-
-   Null_Construct_Node_List : constant Construct_Node_List :=
-     (Construct_Vector.Null_Lazy_Vector, GNATCOLL.Symbols.No_Symbol);
-
-   function Get_Name
-     (Node : Construct_Node_List_Access)
-      return GNATCOLL.Utils.Cst_String_Access;
-   --  (instantiation of Tries)
-
-   procedure Free (Node : in out Construct_Node_List_Access);
-   --  Free the data associated to the node.
-
-   package Construct_Trie_Trees is new Tries
-     (Construct_Node_List_Access, null, Get_Name, Free);
-
-   use Construct_Trie_Trees;
-
-   type Construct_Trie is
-     new Construct_Trie_Trees.Trie_Tree (Case_Sensitive => True);
-
-   Empty_Construct_Trie : constant Construct_Trie :=
-     Construct_Trie (Construct_Trie_Trees.Empty_Case_Sensitive_Trie_Tree);
-
-   type Construct_Trie_Iterator is record
-      Is_Partial : Boolean;
-      It_Vector  : Construct_Vector.Iterator;
-      It_Db      : Construct_Trie_Trees.Iterator;
-   end record;
-
-   Null_Construct_Trie_Iterator : constant Construct_Trie_Iterator :=
-     (False,
-      Construct_Vector.Null_Iterator,
-      Construct_Trie_Trees.Null_Iterator);
-
-   type Construct_Trie_Index is record
-      It   : Construct_Vector.Iterator;
-      Name : GNATCOLL.Symbols.Symbol;
-   end record;
-
-   Null_Construct_Trie_Index : constant Construct_Trie_Index :=
-     (Construct_Vector.Null_Iterator, GNATCOLL.Symbols.No_Symbol);
 
 end Construct_Tries;

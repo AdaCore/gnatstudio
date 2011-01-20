@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2010, AdaCore                  --
+--                 Copyright (C) 2003-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -982,8 +982,12 @@ package body Entities is
                Remove (Entity.LI_Declaration.File.Entities, Entity);
             end if;
 
-            if Entity.LI_Declaration.File.Handler /= null then
-               Remove (Entity.LI_Declaration.File.Handler, Entity);
+            if Entity.Trie_Tree_Index /=
+              Entities_Search_Tries.Null_Vector_Trie_Index
+            then
+               Entities_Search_Tries.Delete
+                 (Entity.LI_Declaration.File.Handler.Name_Index,
+                  Entity.Trie_Tree_Index);
             end if;
 
             Unref (Entity.LI_Declaration.File); --  ref added in Get_Or_Create
@@ -2090,7 +2094,8 @@ package body Entities is
             File_Timestamp_In_References => 0,
             Is_Valid                     => True,
             Ref_Count                    => 1,
-            Trie_Tree_Index              => 0,
+            Trie_Tree_Index              =>
+              Entities_Search_Tries.Null_Vector_Trie_Index,
             Is_Dummy                     => False);
 
          Ref (File);  --  Used in declaration
@@ -2098,6 +2103,17 @@ package body Entities is
 
          if Must_Add_To_File then
             Entities_Hash.Set (File.Entities, UEI);
+         end if;
+
+         if File.Db.Lang.Get_Language_From_File
+           (File.Name).Entities_Indexed
+         then
+            Entities_Search_Tries.Insert
+              (File.Handler.Name_Index'Access,
+               File.Db.Symbols,
+               E,
+               Get (Name).all,
+               E.Trie_Tree_Index);
          end if;
 
       elsif E /= null then
@@ -2189,14 +2205,8 @@ package body Entities is
    -------------
 
    procedure Destroy (Handler : in out LI_Handler_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Entities_Search_Tries.Trie_Tree,
-         Entities_Search_Tries.Trie_Tree_Access);
    begin
-      if Handler.Name_Index /= null then
-         Clear (Handler.Name_Index.all);
-         Unchecked_Free (Handler.Name_Index);
-      end if;
+      Clear (Handler.Name_Index);
    end Destroy;
 
    -------------
@@ -2922,188 +2932,6 @@ package body Entities is
    begin
       return Get (Get_Name (Entities (Entities'First)));
    end Get_Name;
-
-   ------------
-   -- Insert --
-   ------------
-
-   procedure Insert
-     (Handler : access LI_Handler_Record'Class;
-      Entity  : Entity_Information)
-   is
-      Node : Entity_Array_Access;
-   begin
-      if Handler.Name_Index = null then
-         Handler.Name_Index := new Entities_Search_Tries.Trie_Tree
-           (Case_Sensitive => not Case_Insensitive_Identifiers (Handler));
-      end if;
-
-      Node := Get (Handler.Name_Index, Get (Get_Name (Entity)).all);
-
-      --  If there were no such node, create it
-
-      if Node = null then
-         Node := new Entity_Information_Array'(1 => Entity);
-         Insert (Handler.Name_Index.all, Node);
-         Entity.Trie_Tree_Index := 1;
-
-         return;
-      end if;
-
-      --  Search an empty slot in the entities array
-
-      for J in Node'Range loop
-         if Node (J) = null then
-            Node (J) := Entity;
-            Entity.Trie_Tree_Index := J;
-
-            return;
-         end if;
-      end loop;
-
-      --  If we did not find any empty slot, create a new and bigger array
-
-      declare
-         Old_Array : constant Entity_Array_Access := Node;
-      begin
-         Node := new Entity_Information_Array (1 .. Old_Array'Length * 2);
-         Node (1 .. Old_Array'Length) := Old_Array.all;
-
-         Node (Old_Array'Length + 1) := Entity;
-         Entity.Trie_Tree_Index := Old_Array'Length + 1;
-
-         --  This operation will free Old_Array and Old_Name
-         Insert (Handler.Name_Index.all, Node);
-      end;
-   end Insert;
-
-   ------------
-   -- Remove --
-   ------------
-
-   procedure Remove
-     (Handler : access LI_Handler_Record'Class;
-      Entity  : Entity_Information)
-   is
-      Node : Entity_Array_Access;
-   begin
-      if Handler.Name_Index /= null then
-         Node := Get (Handler.Name_Index, Get (Get_Name (Entity)).all);
-         if Node /= null then
-            Node (Entity.Trie_Tree_Index) := null;
-         end if;
-      end if;
-   end Remove;
-
-   -----------
-   -- Start --
-   -----------
-
-   function Start (LI : access LI_Handler_Record; Prefix : String)
-      return LI_Entities_Iterator
-   is
-      It : LI_Entities_Iterator;
-   begin
-      if LI.Name_Index = null then
-         return Null_LI_Entities_Iterator;
-      end if;
-
-      It := (It => Start (LI.Name_Index, Prefix), Index => 1);
-
-      if not Is_Valid (It) then
-         Next (It);
-      end if;
-
-      return It;
-   end Start;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (It : LI_Entities_Iterator) return Entity_Information is
-      Entities : constant Entity_Array_Access := Get (It.It);
-   begin
-      if Entities = null then
-         --  This may happen if some xrefs where loaded before the last
-         --  operation
-
-         return null;
-      else
-         return Entities.all (It.Index);
-      end if;
-   end Get;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (It : in out LI_Entities_Iterator) is
-   begin
-      It.Index := It.Index + 1;
-
-      if Is_Valid (It) then
-         return;
-      end if;
-
-      if Get (It.It) = null then
-         Next (It.It);
-      end if;
-
-      while not At_End (It) loop
-         while not At_End (It)
-           and then It.Index > Get (It.It)'Last
-         loop
-            Next (It.It);
-
-            if not At_End (It) then
-               It.Index := Get (It.It)'First;
-            end if;
-         end loop;
-
-         exit when At_End (It)
-           or else Get (It.It) (It.Index) /= null;
-
-         It.Index := It.Index + 1;
-      end loop;
-   end Next;
-
-   ------------
-   -- At_End --
-   ------------
-
-   function At_End (It : LI_Entities_Iterator) return Boolean is
-   begin
-      return At_End (It.It);
-   end At_End;
-
-   --------------
-   -- Is_Valid --
-   --------------
-
-   function Is_Valid (It : LI_Entities_Iterator) return Boolean is
-      Entities : Entity_Array_Access;
-   begin
-      if At_End (It) then
-         return True;
-      end if;
-
-      Entities := Get (It.It);
-
-      return Entities /= null
-        and then
-          (It.Index <= Entities.all'Last
-           and then Entities.all (It.Index) /= null);
-   end Is_Valid;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (It : in out LI_Entities_Iterator) is
-   begin
-      Free (It.It);
-   end Free;
 
    ----------
    -- Sort --

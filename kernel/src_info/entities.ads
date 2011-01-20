@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2010, AdaCore              --
+--                     Copyright (C) 2003-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,7 @@ with Language.Tree;
 with Language.Tree.Database;
 with Basic_Types;
 with Generic_Stack;
-with Tries;
+with Vector_Tries;
 with Virtual_File_Indexes;
 
 --  This package contains the list of all files and entities used in the
@@ -905,27 +905,14 @@ package Entities is
    --  This name is used to print messages in the console when computing the
    --  xref database
 
-   type LI_Entities_Iterator is private;
+   package Entities_Search_Tries is new Vector_Tries
+     (Data_Type => Entity_Information,
+      No_Data   => null);
 
-   function Start (LI : access LI_Handler_Record; Prefix : String)
-      return LI_Entities_Iterator;
-   --  Return a LI_Entities_Iterator pointing at the first entity of the given
-   --  prefix.
+   subtype LI_Entities_Iterator is Entities_Search_Tries.Vector_Trie_Iterator;
 
-   function Get (It : LI_Entities_Iterator) return Entity_Information;
-   --  Return the Entity_Information pointed by the given iterator
-
-   procedure Next (It : in out LI_Entities_Iterator);
-   --  Move the iterator to the next element
-
-   function At_End (It : LI_Entities_Iterator) return Boolean;
-   --  Return true if the iterator is at the end of the analyzed elements, wich
-   --  means after the last one.
-
-   procedure Free (It : in out LI_Entities_Iterator);
-   --  Free the memory associated to the iterator
-
-   Null_LI_Entities_Iterator : constant LI_Entities_Iterator;
+   Null_LI_Entities_Iterator : LI_Entities_Iterator renames
+     Entities_Search_Tries.Null_Vector_Trie_Iterator;
 
 private
 
@@ -1121,6 +1108,14 @@ private
    No_Entity_Reference : aliased constant Entity_Reference :=
      (null, Null_Entity_Reference_Index);
 
+   type Entity_List is record
+      null;
+   end record;
+
+   type Entity_Iterator is record
+      null;
+   end record;
+
    --------------------------
    -- LI_Entities_Iterator --
    --------------------------
@@ -1133,34 +1128,6 @@ private
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Entity_Information_Array, Entity_Array_Access);
-
-   package Entities_Search_Tries is new Tries
-     (Data_Type => Entity_Array_Access,
-      No_Data   => null,
-      Get_Index => Get_Name,
-      Free      => Free);
-
-   type LI_Entities_Iterator is record
-      It    : Entities_Search_Tries.Iterator;
-      Index : Natural;
-   end record;
-
-   function Is_Valid (It : LI_Entities_Iterator) return Boolean;
-   --  Return true if the iterator points on a valid element, or is at end,
-   --  false if it shouldn't be used by the user.
-
-   procedure Insert
-     (Handler : access LI_Handler_Record'Class;
-      Entity  : Entity_Information);
-   --  Insert an entity in an entity trie tree
-
-   procedure Remove
-     (Handler : access LI_Handler_Record'Class;
-      Entity  : Entity_Information);
-   --  Removes an entity from an entity trie tree
-
-   Null_LI_Entities_Iterator : constant LI_Entities_Iterator :=
-     (Entities_Search_Tries.Null_Iterator, 0);
 
    ------------------------
    -- Entity_Information --
@@ -1249,7 +1216,8 @@ private
       --  to keep using the same Entity_Information for entities that haven't
       --  changed.
 
-      Trie_Tree_Index : Natural := 0;
+      Trie_Tree_Index : Entities_Search_Tries.Vector_Trie_Index :=
+        Entities_Search_Tries.Null_Vector_Trie_Index;
       --  This is the index of the entity among the entities of the same name,
       --  in LI_Handler.Name_Index
 
@@ -1502,7 +1470,7 @@ private
    end record;
 
    type LI_Handler_Record is abstract tagged limited record
-      Name_Index : Entities_Search_Tries.Trie_Tree_Access := null;
+      Name_Index : aliased Entities_Search_Tries.Vector_Trie;
    end record;
 
    Real_References_Filter : aliased constant Reference_Kind_Filter :=

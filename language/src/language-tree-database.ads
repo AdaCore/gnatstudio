@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -737,6 +737,7 @@ private
      (Trie_Additional_Data, Null_Trie_Additional_Data);
 
    use Construct_Db_Trie;
+   use Construct_Db_Trie.Construct_Trie_Trees;
 
    type Construct_Db_Data_Array is array
      (Natural range <>) of Construct_Db_Trie.Construct_Trie_Index;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2010, AdaCore                 --
+--                  Copyright (C) 2007-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -204,6 +204,7 @@ private
      Construct_Tries (Unit_Access, Null_Unit_Access);
 
    use Construct_Unit_Tries;
+   use Construct_Unit_Tries.Construct_Trie_Trees;
 
    package Unit_Set_Pckg is new
      Ada.Containers.Ordered_Sets (Unit_Access);
@@ -216,6 +217,7 @@ private
    package Local_Construct_Trie is new Construct_Tries (Integer, 0);
 
    use Local_Construct_Trie;
+   use Local_Construct_Trie.Construct_Trie_Trees;
 
    type Unit_Access_Record is new
      Construct_Annotations_Pckg.General_Annotation_Record

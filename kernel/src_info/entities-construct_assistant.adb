@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2010, AdaCore                    --
+--                 Copyright (C) 2010-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -121,7 +121,8 @@ package body Entities.Construct_Assistant is
               File_Timestamp_In_References => 0,
               Is_Valid                     => False,
               Ref_Count                    => 1,
-              Trie_Tree_Index              => 0,
+              Trie_Tree_Index              =>
+                Entities_Search_Tries.Null_Vector_Trie_Index,
               Is_Dummy                     => True);
 
          --  Make a simple association between construct categories and entity

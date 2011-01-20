@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2010, AdaCore               --
+--                    Copyright (C) 2007-2011, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -81,8 +81,8 @@ package body Ada_Semantic_Tree.Units is
 
    overriding procedure Free (Assistant : in out Ada_Unit_Assistant) is
    begin
-      Clear (Assistant.Units_Db'Access);
-      Clear (Assistant.Waiting_For_Parent'Access);
+      Clear (Assistant.Units_Db);
+      Clear (Assistant.Waiting_For_Parent);
    end Free;
 
    -------------------
@@ -644,7 +644,7 @@ package body Ada_Semantic_Tree.Units is
                   Ref (Child_Unit.Parent);
 
                   Delete
-                    (Assistant.Waiting_For_Parent'Access,
+                    (Assistant.Waiting_For_Parent,
                      Child_Unit.Waiting_For_Parent_Index);
 
                   Child_Unit.Waiting_For_Parent_Index :=
@@ -1184,7 +1184,7 @@ package body Ada_Semantic_Tree.Units is
          return;
       end if;
 
-      Clear (Unit.Local_Constructs'Access);
+      Clear (Unit.Local_Constructs);
 
       while It /= End_It loop
          Construct := Get_Construct (It);
@@ -1362,7 +1362,7 @@ package body Ada_Semantic_Tree.Units is
       --  Free remaining data
 
       Delete
-        (Ada_Unit_Assistant (Assistant.all).Units_Db'Access, Unit.Db_Index);
+        (Ada_Unit_Assistant (Assistant.all).Units_Db, Unit.Db_Index);
 
       Tree_Annotations_Pckg.Get_Annotation
         (Get_Annotation_Container (Get_Tree (File)).all,
@@ -1377,7 +1377,7 @@ package body Ada_Semantic_Tree.Units is
         /= Construct_Unit_Tries.Null_Construct_Trie_Index
       then
          Delete
-           (Ada_Unit_Assistant (Assistant.all).Waiting_For_Parent'Access,
+           (Ada_Unit_Assistant (Assistant.all).Waiting_For_Parent,
             Unit.Waiting_For_Parent_Index);
 
          Unit.Waiting_For_Parent_Index :=

@@ -1320,4 +1320,14 @@ package body Language is
       return Self.Symbols;
    end Symbols;
 
+   ----------------------
+   -- Entities_Indexed --
+   ----------------------
+
+   function Entities_Indexed (Self : Language_Root) return Boolean is
+      pragma Unreferenced (Self);
+   begin
+      return False;
+   end Entities_Indexed;
+
 end Language;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2010, AdaCore                 --
+--                  Copyright (C) 2000-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,6 +49,12 @@ package Language is
    --  Get the symbol table.
    --  The symbol table is set automatically when the language is registered in
    --  the language_handler.
+
+   function Entities_Indexed (Self : Language_Root) return Boolean;
+   --  Should the entities of this languages be indexed in the entities
+   --  database? This concerns only the ALI or LI information, used for the
+   --- purpose of e.g. completion for languages others than Ada. False by
+   --  default.
 
    ------------------------
    -- Types manipulation --

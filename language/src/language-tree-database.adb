@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -872,7 +872,7 @@ package body Language.Tree.Database is
                Current_Update_Kind := Structural_Change;
 
                Delete
-                 (File.Db.Entities_Db'Access,
+                 (File.Db.Entities_Db,
                   File.Db_Data_Tree (Old_Obj.Index));
 
                Construct_Annotations_Pckg.Free
@@ -1326,7 +1326,7 @@ package body Language.Tree.Database is
          C := Next (C);
       end loop;
 
-      Clear (Db.Entities_Db'Access);
+      Clear (Db.Entities_Db);
       Clear (Db.Files_Db);
       Clear (Db.Sorted_Files_Db);
    end Clear;
@@ -1373,7 +1373,7 @@ package body Language.Tree.Database is
    is
    begin
       for J in This'Range loop
-         Delete (Db.Entities_Db'Access, This (J));
+         Delete (Db.Entities_Db, This (J));
       end loop;
 
       Unchecked_Free (This);
