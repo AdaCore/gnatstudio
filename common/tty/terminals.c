@@ -339,7 +339,6 @@ child_setup_tty (int fd)
  *  0 if success, -1 otherwise
  */
 int gvd_setup_communication (pty_desc** desc) {
-  int status;
   return allocate_pty_desc (desc);
 }
 
@@ -1461,8 +1460,6 @@ gvd_terminate_process (struct GVD_Process* p)
 int
 gvd_waitpid (struct GVD_Process* p)
 {
-  int status = 0;
-
   DWORD exitcode;
   DWORD res;
   HANDLE proc_hand = p->procinfo.hProcess;
