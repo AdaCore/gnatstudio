@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 5.0.2
+
+- K119-013 GPS does not start when --host switch is used with an unknown server
+  Problem:    If the --host switch is used with an incorrect server
+              configuration name, then GPS does not start and exits with an
+              exception message.
+  Workaround: Use a known server configuration name.
+
 Known Problems fixed in GPS 5.0.1
 
 - K112-004 Crash when editing new project with same scenario variables
