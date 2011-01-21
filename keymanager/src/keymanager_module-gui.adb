@@ -125,7 +125,7 @@ package body KeyManager_Module.GUI is
    procedure Refresh_Editor (Editor : access Keys_Editor_Record'Class);
    --  Refresh the list of key bindings in editor. Better use this one than
    --  Fill_Editor when possible, since this will preserve expanded/closed
-   --  nodes
+   --  nodes.
 
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class);
    --  Save the contents of the editor
@@ -156,10 +156,10 @@ package body KeyManager_Module.GUI is
    --  Create the parent node if needed
 
    function Set
-     (Model      : Gtk_Tree_Store;
-      Parent     : Gtk_Tree_Iter;
-      Descr      : String;
-      Key        : String := "") return Gtk_Tree_Iter;
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter;
+      Descr  : String;
+      Key    : String := "") return Gtk_Tree_Iter;
    --  Add a new line into the model
 
    ---------
@@ -167,10 +167,10 @@ package body KeyManager_Module.GUI is
    ---------
 
    function Set
-     (Model      : Gtk_Tree_Store;
-      Parent     : Gtk_Tree_Iter;
-      Descr      : String;
-      Key        : String := "") return Gtk_Tree_Iter
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter;
+      Descr  : String;
+      Key    : String := "") return Gtk_Tree_Iter
    is
       procedure Set
         (Tree, Iter : System.Address;
@@ -218,6 +218,7 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
+
       Menu_Iter : Gtk_Tree_Iter := Null_Iter;
       Flat_List : constant Boolean := Get_Active (Editor.Flat_List);
 
@@ -240,9 +241,9 @@ package body KeyManager_Module.GUI is
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean)
       is
-         Iter : Gtk_Tree_Iter;
+         Iter         : Gtk_Tree_Iter;
          pragma Unreferenced (Data, Changed, Iter, Accel_Key, Accel_Mods);
-         First : Natural := Accel_Path'First + 1;
+         First        : Natural := Accel_Path'First + 1;
          User_Changed : aliased Boolean;
       begin
          while First <= Accel_Path'Last
@@ -270,9 +271,9 @@ package body KeyManager_Module.GUI is
          end if;
       end Process_Menu_Binding;
 
-      Parent      : Gtk_Tree_Iter;
-      Action      : Action_Record_Access;
-      Action_Iter : Action_Iterator := Start (Editor.Kernel);
+      Parent       : Gtk_Tree_Iter;
+      Action       : Action_Record_Access;
+      Action_Iter  : Action_Iterator := Start (Editor.Kernel);
       User_Changed : aliased Boolean;
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
@@ -445,7 +446,7 @@ package body KeyManager_Module.GUI is
    ---------------------------
 
    procedure Add_Selection_Changed (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Keys_Editor := Keys_Editor (Editor);
+      Ed        : constant Keys_Editor := Keys_Editor (Editor);
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
@@ -604,11 +605,16 @@ package body KeyManager_Module.GUI is
    --------------------
 
    procedure Refresh_Editor (Editor : access Keys_Editor_Record'Class) is
+
       procedure Refresh_Iter (Iter : Gtk_Tree_Iter);
       --  Refresh for Iter and its sibling
 
+      ------------------
+      -- Refresh_Iter --
+      ------------------
+
       procedure Refresh_Iter (Iter : Gtk_Tree_Iter) is
-         It : Gtk_Tree_Iter;
+         It           : Gtk_Tree_Iter;
          User_Changed : aliased Boolean;
       begin
          Iter_Copy (Source => Iter, Dest => It);
@@ -655,15 +661,14 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    function Grab_Multiple_Key
-     (Kernel : access Kernel_Handle_Record'Class;
-      Widget : access Gtk_Widget_Record'Class;
-      Allow_Multiple : Boolean)
-      return String
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Widget         : access Gtk_Widget_Record'Class;
+      Allow_Multiple : Boolean) return String
    is
       Grabbed, Tmp : String_Access;
-      Key   : Gdk_Key_Type;
-      Modif : Gdk_Modifier_Type;
-      Id    : Timeout_Handler_Id;
+      Key          : Gdk_Key_Type;
+      Modif        : Gdk_Modifier_Type;
+      Id           : Timeout_Handler_Id;
 
    begin
       Block_Key_Shortcuts (Kernel);
@@ -717,8 +722,8 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class) is
-      Ed        : constant Keys_Editor := Keys_Editor (Editor);
-      Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
+      Ed         : constant Keys_Editor := Keys_Editor (Editor);
+      Selection  : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Sort_Model : Gtk_Tree_Model;
       Sort_Iter, Filter_Iter, Iter : Gtk_Tree_Iter;
    begin
@@ -817,10 +822,10 @@ package body KeyManager_Module.GUI is
                   end if;
 
                   Bind_Default_Key_Internal
-                    (Kernel      => Ed.Kernel,
-                     Table       => Ed.Bindings.all,
-                     Action      => New_Action,
-                     Key         => Key,
+                    (Kernel           => Ed.Kernel,
+                     Table            => Ed.Bindings.all,
+                     Action           => New_Action,
+                     Key              => Key,
                      Save_In_Keys_XML => True,
                      Remove_Existing_Actions_For_Shortcut => True,
                      Remove_Existing_Shortcuts_For_Action => True,
@@ -844,9 +849,9 @@ package body KeyManager_Module.GUI is
    -------------------
 
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class) is
-      Ed        : constant Keys_Editor := Keys_Editor (Editor);
-      Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
-      Sort_Model     : Gtk_Tree_Model;
+      Ed         : constant Keys_Editor := Keys_Editor (Editor);
+      Selection  : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
+      Sort_Model : Gtk_Tree_Model;
       Iter, Filter_Iter, Sort_Iter  : Gtk_Tree_Iter;
    begin
       Get_Selected (Selection, Sort_Model, Sort_Iter);
