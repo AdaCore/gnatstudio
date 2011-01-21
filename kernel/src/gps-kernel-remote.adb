@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2010, AdaCore                  --
+--                 Copyright (C) 2006-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -612,6 +612,15 @@ package body GPS.Kernel.Remote is
       if Get_Nickname (Server) = Nickname
         or else Get_Printable_Nickname (Server) = Nickname
       then
+         return;
+      end if;
+
+      if not Is_Configured (Nickname) then
+         Insert
+           (Kernel,
+            -"Error: The Server " & Nickname & (-" is not configured, and " &
+              "cannot be used as remote server for ") & Server'Img,
+            Mode => Error);
          return;
       end if;
 
