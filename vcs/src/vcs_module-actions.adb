@@ -241,7 +241,7 @@ package body VCS_Module.Actions is
         ("History (as text)",
          -"View the revision history for the current file as text",
          File_Filter,
-         On_Menu_View_Log'Access);
+         On_Menu_View_Log_Text'Access);
 
       Register_Action_Menu
         ("History",
