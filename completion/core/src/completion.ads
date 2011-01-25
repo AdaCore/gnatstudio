@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -237,6 +237,11 @@ package Completion is
    function Get_Location (Proposal : Completion_Proposal) return File_Location;
    --  Return the location of the object pointed by the given proposal, null
    --  if none. By default, return Null_Location.
+
+   function Get_Location_File (Proposal : Completion_Proposal)
+                                                           return Virtual_File;
+   --  Return the file of the Location
+   --  By default, return Null_Location.
 
    function Get_Category
      (Proposal : Completion_Proposal) return Language_Category is abstract;

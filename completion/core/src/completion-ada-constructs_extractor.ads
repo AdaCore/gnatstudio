@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -156,6 +156,11 @@ private
    overriding
    function Get_Location
      (Proposal : Construct_Completion_Proposal) return File_Location;
+   --  See inherited documentation
+
+   overriding
+   function Get_Location_File
+      (Proposal : Construct_Completion_Proposal) return Virtual_File;
    --  See inherited documentation
 
    overriding

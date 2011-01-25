@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2010, AdaCore                 --
+--                  Copyright (C) 2006-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -325,6 +325,17 @@ package body Completion is
    begin
       return Null_File_Location;
    end Get_Location;
+
+   -----------------------
+   -- Get_Location_File --
+   -----------------------
+
+   function Get_Location_File (Proposal : Completion_Proposal)
+                                                           return Virtual_File
+   is
+   begin
+      return Get_Location (Proposal).File_Path;
+   end Get_Location_File;
 
    --------------
    -- Is_Valid --
