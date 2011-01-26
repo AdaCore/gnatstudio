@@ -1253,7 +1253,6 @@ package body Toolchains.Parsers is
       Parse (In_Tree                => This.Node_Data,
              Project                => This.Enclosing_Project_Node,
              Project_File_Name      => String (Path.Base_Name),
-             Always_Errout_Finalize => True,
              Packages_To_Check      => All_Packages,
              Store_Comments         => True,
              Current_Directory      => String (Path.Dir_Name),
