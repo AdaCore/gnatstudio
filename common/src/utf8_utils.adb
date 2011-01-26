@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2009, AdaCore                  --
+--                 Copyright (C) 2007-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -115,12 +115,8 @@ package body UTF8_Utils is
       end if;
    end Unknown_To_UTF8;
 
-   ---------------------
-   -- Unknown_To_UTF8 --
-   ---------------------
-
    function Unknown_To_UTF8
-     (Input   : String) return Glib.UTF8_String
+     (Input : String) return Glib.UTF8_String
    is
       Success : aliased Boolean;
       S       : constant String := Unknown_To_UTF8 (Input, Success'Access);
