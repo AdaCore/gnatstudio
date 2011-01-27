@@ -182,6 +182,28 @@ if codepeer != "":
       </menu>
     </submenu>
 
+    <project_attribute
+      package="CodePeer"
+      name="Output_Directory"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Output directory"
+      hide_in="library_wizard"
+      description="CodePeer output directory to use for this project">
+      <string type="directory"/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Database_Directory"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Database directory"
+      hide_in="library_wizard"
+      description="CodePeer database directory to use for this project">
+      <string type="directory"/>
+    </project_attribute>
+
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>

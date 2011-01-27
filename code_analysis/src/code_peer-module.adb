@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -236,6 +236,13 @@ package body Code_Peer.Module is
    --  Create CodePeer library file. Recursive is True if all project files
    --  should be included.
    --  File if set represents the (only) file to analyze.
+
+   Output_Directory_Attribute   :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+     GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
+   Database_Directory_Attribute :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+     GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
 
    -------------------------
    -- Use_CodePeer_Subdir --
@@ -523,10 +530,19 @@ package body Code_Peer.Module is
         Project_Path (Project).File_Extension;
 
    begin
-      return
-        Create_From_Dir
-          (Project.Object_Dir,
-           Name (Name'First .. Name'Last - Extension'Length) & ".db");
+      if Project.Has_Attribute (Database_Directory_Attribute) then
+         return
+           Create_From_Dir
+             (Project.Project_Path.Dir,
+              Filesystem_String
+                (Project.Attribute_Value (Database_Directory_Attribute)));
+
+      else
+         return
+           Create_From_Dir
+             (Project.Object_Dir,
+              Name (Name'First .. Name'Last - Extension'Length) & ".db");
+      end if;
    end Codepeer_Database_Directory;
 
    --------------------------------
@@ -568,10 +584,19 @@ package body Code_Peer.Module is
         Project_Path (Project).File_Extension;
 
    begin
-      return
-        GNATCOLL.VFS.Create_From_Dir
-          (Project.Object_Dir,
-           Name (Name'First .. Name'Last - Extension'Length) & ".output");
+      if Project.Has_Attribute (Output_Directory_Attribute) then
+         return
+           GNATCOLL.VFS.Create_From_Dir
+             (Project.Project_Path.Dir,
+              Filesystem_String
+                (Project.Attribute_Value (Output_Directory_Attribute)));
+
+      else
+         return
+           GNATCOLL.VFS.Create_From_Dir
+             (Project.Object_Dir,
+              Name (Name'First .. Name'Last - Extension'Length) & ".output");
+      end if;
    end Codepeer_Output_Directory;
 
    ----------
