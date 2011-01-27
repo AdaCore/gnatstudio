@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,6 +47,7 @@ with Traces;                      use Traces;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;          use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
+with GNAT.Strings;
 
 package body Build_Command_Manager is
 
@@ -311,10 +312,21 @@ package body Build_Command_Manager is
 
       --  ??? Ditto for %switches
       elsif Starts_With (Arg, "%switches(") and then Arg (Arg'Last) = ')' then
-         Result.Args := Create
-            (Get_Project (Get_Kernel (Context)).Attribute_Value
-              (Build ("IDE", "Default_Switches"), Default => "",
-               Index => Arg (Arg'First + 10 .. Arg'Last - 1)));
+         declare
+            List : GNAT.Strings.String_List_Access :=
+                    Get_Project (Get_Kernel (Context)).Attribute_Value
+                      (Build ("IDE", "Default_Switches"),
+                       Index => Arg (Arg'First + 10 .. Arg'Last - 1));
+         begin
+            if List /= null and then List'Length /= 0 then
+               Result.Args := Create (List (List'First).all);
+               for J in List'First + 1 .. List'Last loop
+                  Append_Argument (Result.Args, List (J).all, One_Arg);
+               end loop;
+            end if;
+
+            Free (List);
+         end;
 
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
