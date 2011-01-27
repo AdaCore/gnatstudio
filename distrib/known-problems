@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 5.0.2
 
+- K127-016 %switches macro not working
+  Problem:    The %switches(<tool>) macro in build targets always returns a
+              null string in GPS 5.0.x.
+  Workaround: Enter the switches manually in the input dialog.
+
 - K119-013 GPS does not start when --host switch is used with an unknown server
   Problem:    If the --host switch is used with an incorrect server
               configuration name, then GPS does not start and exits with an
