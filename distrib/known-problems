@@ -16,6 +16,15 @@ If no tag is specified, the entry is relevant to all IDEs.
               As a result, Makefiles are not automatically detected. Instead,
               you should add a naming exception for the makefile.
 
+- JC15-033 Standard installation gpr files not found
+  Problem:    On MILS and perhaps other Workbench environments such as 653,
+              the gpr files installed automatically, such as "environment.gpr"
+			  and "apex.gpr", are not found with GNATbench and GPS.  Setting
+			  GPR_PROJECT_PATH and ADA_PROJECT_PATH does not help.
+  Workaround: Explicitly specify the path to the required gpr file within the
+              referencing gpr file, rather than specifying the simple base
+			  file name.
+
 - JC10-004 Errors when automatically fixing unused packages
   Problem:    When automatically removing an unused package through automatic
               code fixing, in certain situations, the chunk of removed code is
