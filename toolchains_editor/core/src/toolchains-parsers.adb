@@ -1233,6 +1233,7 @@ package body Toolchains.Parsers is
       Item_Id : Project_Node_Id;
       Name    : Name_Id;
       Toolchain_Found : Boolean := False;
+      Env     : Prj.Tree.Environment;
    begin
       if not Path.Is_Regular_File then
          raise Toolchain_Exception
@@ -1247,8 +1248,18 @@ package body Toolchains.Parsers is
       This.Node_Data := new Project_Node_Tree_Data;
       Initialize (This.Node_Data);
 
-      Add_Directories
-        (This.Node_Data.Project_Path, String (To_Path (Project_Path)));
+      Initialize
+         (Env, Create_Flags
+            (Report_Error               => null,
+             When_No_Sources            => Silent,
+             Require_Sources_Other_Lang => False,
+             Allow_Duplicate_Basenames  => True,
+             Compiler_Driver_Mandatory  => False,
+             Error_On_Unknown_Language  => False,
+             Require_Obj_Dirs           => Silent,
+             Allow_Invalid_External     => Silent,
+             Missing_Source_Files       => Silent));
+      Add_Directories (Env.Project_Path, String (To_Path (Project_Path)));
 
       Parse (In_Tree                => This.Node_Data,
              Project                => This.Enclosing_Project_Node,
@@ -1258,16 +1269,8 @@ package body Toolchains.Parsers is
              Current_Directory      => String (Path.Dir_Name),
              Is_Config_File         => False,
              Target_Name            => "",
-             Flags                  => Create_Flags
-               (Report_Error               => null,
-                When_No_Sources            => Silent,
-                Require_Sources_Other_Lang => False,
-                Allow_Duplicate_Basenames  => True,
-                Compiler_Driver_Mandatory  => False,
-                Error_On_Unknown_Language  => False,
-                Require_Obj_Dirs           => Silent,
-                Allow_Invalid_External     => Silent,
-                Missing_Source_Files       => Silent));
+             Env                    => Env);
+      Free (Env);
 
       This.Root_Project := new Parsed_Project_Record;
       Initialize

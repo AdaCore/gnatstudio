@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2010, AdaCore                --
+--                   Copyright (C) 2002-2011, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,8 +23,6 @@ with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 package Projects is
-
-   type GPS_Project_Environment is new Project_Environment with null record;
 
    type GPS_Project_Data is new GNATCOLL.Projects.Project_Data with private;
 
@@ -104,10 +102,5 @@ private
       --  paths.
    end record;
    type GPS_Project_Data_Access is access all GPS_Project_Data'Class;
-
-   overriding procedure Set_Object_Subdir
-     (Self   : in out GPS_Project_Environment;
-      Subdir : GNATCOLL.VFS.Filesystem_String);
-   --  See inherited documentation
 
 end Projects;

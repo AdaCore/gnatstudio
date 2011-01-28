@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2010, AdaCore                 --
+--                  Copyright (C) 2002-2011, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -188,22 +188,6 @@ package body Projects is
       GNATCOLL.Projects.Finalize;
    end Destroy;
 
-   -----------------------
-   -- Set_Object_Subdir --
-   -----------------------
-
-   overriding procedure Set_Object_Subdir
-     (Self   : in out GPS_Project_Environment;
-      Subdir : GNATCOLL.VFS.Filesystem_String)
-   is
-   begin
-      --  ??? Do we need to clean up the subdirs, or is this always followed
-      --  by call to Recompute_View in any case ?
-      --  Do_Subdirs_Cleanup ();
-
-      Set_Object_Subdir (Project_Environment (Self), Subdir);
-   end Set_Object_Subdir;
-
    ------------
    -- Create --
    ------------
@@ -215,7 +199,7 @@ package body Projects is
       Reg : constant Project_Registry_Access := new Project_Registry;
    begin
       Reg.Tree := Project_Tree_Access (Tree);
-      Reg.Env  := new GPS_Project_Environment;
+      Initialize (Reg.Env);
       return Reg;
    end Create;
 

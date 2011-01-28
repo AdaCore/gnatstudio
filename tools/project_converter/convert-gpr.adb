@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2009, AdaCore                  --
+--                 Copyright (C) 2002-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -191,18 +191,18 @@ package body Convert.Gpr is
       Project_View : Project_Id;
       Ide_Package : constant String := "ide";
       Tree      : constant Project_Node_Tree_Ref := new Project_Node_Tree_Data;
+      Env       : Prj.Tree.Environment;
       View_Tree : constant Project_Tree_Ref := new Project_Tree_Data;
    begin
       Namet.Initialize;
       Csets.Initialize;
       Snames.Initialize;
       Prj.Initialize (View_Tree);
+      Prj.Tree.Initialize (Env, Gnatmake_Flags);
       Prj.Tree.Initialize (Tree);
 
       Change_Dir (Dir_Name (Gpr_Filename));
-      Prj.Pars.Parse
-        (View_Tree, Project_View, Gpr_Filename,
-         Flags => Gnatmake_Flags);
+      Prj.Pars.Parse (View_Tree, Project_View, Gpr_Filename, Env => Env);
 
       if Project_View /= No_Project then
          declare
