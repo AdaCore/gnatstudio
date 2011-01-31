@@ -573,7 +573,14 @@ package body VCS_Module.Actions is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
+      Ref : constant VCS_Access := Get_Current_Ref (Context);
    begin
+      if Ref /= null
+        and then not Ref.Require_Log
+      then
+         return True;
+      end if;
+
       if not Has_File_Information (Context) then
          return False;
       end if;
