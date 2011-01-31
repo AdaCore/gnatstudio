@@ -575,6 +575,8 @@ package body VCS_Module.Actions is
       pragma Unreferenced (Filter);
       Ref : constant VCS_Access := Get_Current_Ref (Context);
    begin
+      --  If the VCS does not require a log, this filter should never be
+      --  effective
       if Ref /= null
         and then not Ref.Require_Log
       then
