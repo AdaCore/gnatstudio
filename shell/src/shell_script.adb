@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2010, AdaCore              --
+--                     Copyright (C) 2003-2011, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,7 +74,8 @@ package body Shell_Script is
 
    overriding function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
-      Args       : Callback_Data'Class) return String;
+      Args       : Callback_Data'Class;
+      Error      : access Boolean) return String;
    overriding function Get_Name
      (Subprogram : access Shell_GPS_Subprogram_Record) return String;
    --  See doc from inherited subprograms
@@ -323,7 +324,8 @@ package body Shell_Script is
 
    overriding function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
-      Args       : Callback_Data'Class) return String
+      Args       : Callback_Data'Class;
+      Error      : access Boolean) return String
    is
       D    : constant Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
@@ -353,6 +355,7 @@ package body Shell_Script is
       --  ??? In fact, this is no longer true if we use Active set to False
       --  above, since we now know how to execute external actions
       --  synchronously
+      Error.all := False;
       return "";
    end Execute;
 
