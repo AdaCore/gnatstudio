@@ -8,6 +8,12 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K128-015 GPS: hangs on locate in project tree
+  Problem:    GPS hangs sometimes on searching for file in project view when
+	      tree of projects has cycles introduced by limited with clause in
+              project files.
+  Workaround: No known workaround.
+
 - K108-001 GPS: Adding Makefile as a language results in errors
   Problem:    Edit the project properties to add Makefile as a language.
               GPS will raise an error when it parses the resulting project,
