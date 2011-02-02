@@ -30,6 +30,14 @@ If no tag is specified, the entry is relevant to all IDEs.
               code fixing, in certain situations, the chunk of removed code is
               larger than the package.
   Workaround: Manually delete the code.
+  
+- JC07-005 GNATbench: project property GUI not showing scenario vars
+  Problem:    When launched from GNATbench, the GPS property editor dialog does
+              not show the scenario variables declared within the GNAT-defined
+              project files located in <gnatpro installation>/lib/gnat, even
+              though those gpr files are specified in with-clauses by the
+              application project file. 
+  Workaround: Use the gpr textual editor to change the project file.
 
 - JB10-036 Too many spaces for "out" formal parameters
   Problem:    When a routine has only explicit "out" formal parameters
