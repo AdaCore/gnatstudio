@@ -75,7 +75,7 @@ package body Shell_Script is
    overriding function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
       Args       : Callback_Data'Class;
-      Error      : access Boolean) return String;
+      Error      : not null access Boolean) return String;
    overriding function Get_Name
      (Subprogram : access Shell_GPS_Subprogram_Record) return String;
    --  See doc from inherited subprograms
@@ -325,7 +325,7 @@ package body Shell_Script is
    overriding function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
       Args       : Callback_Data'Class;
-      Error      : access Boolean) return String
+      Error      : not null access Boolean) return String
    is
       D    : constant Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
