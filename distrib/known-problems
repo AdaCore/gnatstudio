@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 5.0.2
 
+- K128-015 GPS: hangs on locate in project tree
+  Problem:    GPS hangs sometimes on searching for file in project view when
+              tree of projects has cycles introduced by limited with clause in
+              project files.
+  Workaround: Avoid using limited with clauses or use File->Open From Project
+              menu to find files.
+
 - K127-016 %switches macro not working
   Problem:    The %switches(<tool>) macro in build targets always returns a
               null string in GPS 5.0.x.
