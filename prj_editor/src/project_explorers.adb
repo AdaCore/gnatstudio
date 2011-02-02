@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2010, AdaCore                  --
+--                 Copyright (C) 2001-2011, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Strings.Hash;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -2531,10 +2532,16 @@ package body Project_Explorers is
       Continue        : out Boolean)
    is
       pragma Unreferenced (Search_Backward, Give_Focus, Continue);
+
+      package Project_Sets is
+        new Ada.Containers.Indefinite_Hashed_Sets
+             (String, Ada.Strings.Hash, "=");
+
       C        : constant Explorer_Search_Context_Access :=
                    Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
                    Get_Or_Create_Project_View (Kernel, Raise_Window => True);
+      Projects : Project_Sets.Set;
 
       procedure Initialize_Parser;
       --  Compute all the matching files and mark them in the htable
@@ -2543,16 +2550,20 @@ package body Project_Explorers is
       --  Return the next matching node
 
       procedure Next_Or_Child
-        (Name        : String;
-         Start       : Gtk_Tree_Iter;
-         Check_Match : Boolean;
-         Result      : out Gtk_Tree_Iter;
-         Finish      : out Boolean);
+        (Name           : String;
+         Start          : Gtk_Tree_Iter;
+         Check_Match    : Boolean;
+         Check_Projects : Boolean;
+         Result         : out Gtk_Tree_Iter;
+         Finish         : out Boolean);
       pragma Inline (Next_Or_Child);
       --  Move to the next node, starting from a project or directory node by
       --  name Name.
       --  If Check_Match is false, then this subprogram doesn't test if the
       --  node matches context.
+      --  If Check_Projects is true, then this subprogram maintain set of
+      --  projects and process children nodes only for first occurrence of the
+      --  project.
 
       procedure Next_File_Node
         (Start  : Gtk_Tree_Iter;
@@ -2584,11 +2595,12 @@ package body Project_Explorers is
       -------------------
 
       procedure Next_Or_Child
-        (Name        : String;
-         Start       : Gtk_Tree_Iter;
-         Check_Match : Boolean;
-         Result      : out Gtk_Tree_Iter;
-         Finish      : out Boolean) is
+        (Name           : String;
+         Start          : Gtk_Tree_Iter;
+         Check_Match    : Boolean;
+         Check_Projects : Boolean;
+         Result         : out Gtk_Tree_Iter;
+         Finish         : out Boolean) is
       begin
          if Check_Match
            and then Start /= C.Current and then Match (C, Name) /= -1
@@ -2597,9 +2609,30 @@ package body Project_Explorers is
             Finish := True;
 
          elsif Get (C.Matches, Name) /= No_Match then
-            Compute_Children (Explorer, Start);
-            Result := Children (Explorer.Tree.Model, Start);
-            Finish := False;
+            if Check_Projects then
+               declare
+                  Project_Name : constant String :=
+                    Explorer.Tree.Model.Get_String (Start, Project_Column);
+
+               begin
+                  if Projects.Contains (Project_Name) then
+                     Result := Start;
+                     Explorer.Tree.Model.Next (Result);
+
+                  else
+                     Projects.Insert (Project_Name);
+
+                     Compute_Children (Explorer, Start);
+                     Result := Children (Explorer.Tree.Model, Start);
+                     Finish := False;
+                  end if;
+               end;
+
+            else
+               Compute_Children (Explorer, Start);
+               Result := Children (Explorer.Tree.Model, Start);
+               Finish := False;
+            end if;
 
          else
             Result := Start;
@@ -2714,7 +2747,7 @@ package body Project_Explorers is
                           (Explorer.Tree.Model,
                            Kernel, Start_Node, False).Name,
                         Start_Node,
-                        Context.Include_Projects, Tmp, Finish);
+                        Context.Include_Projects, True, Tmp, Finish);
 
                      if Finish then
                         return Tmp;
@@ -2725,7 +2758,7 @@ package body Project_Explorers is
                        (Get_Directory_From_Node
                           (Explorer.Tree.Model, Start_Node).Display_Full_Name,
                         Start_Node,
-                        Context.Include_Directories, Tmp, Finish);
+                        Context.Include_Directories, False, Tmp, Finish);
                      if Finish and then Context.Include_Directories then
                         return Tmp;
                      end if;
