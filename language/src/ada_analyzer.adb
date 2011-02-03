@@ -3567,6 +3567,19 @@ package body Ada_Analyzer is
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
+                     elsif Prev_Prev_Token = Tok_Is
+                       and then Local_Top_Token.Token = Tok_Function
+                     then
+                        --  This is an expression function so we won't have
+                        --  and 'end function', unindent accordingly.
+
+                        Num_Spaces := Num_Spaces - Indent_Level;
+
+                        --  ??? The code below is not quite right: ideally we
+                        --  want to register the end of the expression function
+                        --  at the semicolon.
+
+                        Pop_And_Set_Local (Tokens);
                      end if;
                   end if;
 
