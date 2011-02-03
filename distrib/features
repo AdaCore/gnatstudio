@@ -2,7 +2,7 @@
 GPS 5.1 and GNATbench 2.6 NEW FEATURES LIST
 ===========================================
 
-Copyright (C) 2010, AdaCore
+Copyright (C) 2010-2011, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -22,6 +22,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
+
+NF-51-K202-008 Improved indentation of Ada 2012 constructs (2011-02-03)
+
+  Ada 2012 Expression functions and aspects are now better recognized and
+  indented by the internal Ada parser.
 
 NF-51-K113-012 GPS: improvements in createfile.py plug-in (2011-01-13)
 
