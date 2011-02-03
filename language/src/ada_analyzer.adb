@@ -1401,8 +1401,16 @@ package body Ada_Analyzer is
                Do_Indent (Prec, Line_Count, Num_Spaces + Indent_Use);
 
             elsif Num_Parens = 0 then
-               Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
+               if In_Declaration = Subprogram_Decl then
+                  --  May happen with aspects:
+                  --  procedure G with
+                  --    Pre => F,
+                  --    Post => F;
 
+                  Continuation_Val := Continuation_Val - Indent_Continue;
+               end if;
+
+               Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
             else
                --  Default case, simply use Num_Spaces
 
