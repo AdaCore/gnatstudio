@@ -97,19 +97,19 @@ package body Convert.Gpr is
          Pkg_Id := Value_Of
            (Name_Find,
             In_Packages => Project_View.Decl.Packages,
-            In_Tree     => Tree);
+            Shared      => Tree.Shared);
       end if;
 
       if Pkg_Id = No_Package then
          Decl := Project_View.Decl.Attributes;
       else
-         Decl := Tree.Packages.Table (Pkg_Id).Decl.Attributes;
+         Decl := Tree.Shared.Packages.Table (Pkg_Id).Decl.Attributes;
       end if;
 
       Value := Prj.Util.Value_Of
         (Variable_Name => Attr_Id,
          In_Variables  => Decl,
-         In_Tree       => Tree);
+         Shared        => Tree.Shared);
 
       if Value.Kind = Single then
          Get_Name_String (Value.Value);
@@ -117,7 +117,7 @@ package body Convert.Gpr is
 
       elsif Value.Kind = List then
          Str := Value.Values;
-         Get_Name_String (Tree.String_Elements.Table (Str).Value);
+         Get_Name_String (Tree.Shared.String_Elements.Table (Str).Value);
          return Name_Buffer (1 .. Name_Len);
       end if;
 
@@ -156,22 +156,22 @@ package body Convert.Gpr is
          Pkg_Id := Value_Of
            (Name_Find,
             In_Packages => Project_View.Decl.Packages,
-            In_Tree     => Tree);
+            Shared      => Tree.Shared);
       end if;
 
       if Pkg_Id = No_Package then
          Decl := Project_View.Decl.Arrays;
       else
-         Decl := Tree.Packages.Table (Pkg_Id).Decl.Arrays;
+         Decl := Tree.Shared.Packages.Table (Pkg_Id).Decl.Arrays;
       end if;
 
-      Elemt := Value_Of (Attr_Id, In_Arrays => Decl, In_Tree => Tree);
+      Elemt := Value_Of (Attr_Id, In_Arrays => Decl, Shared => Tree.Shared);
 
       Name_Len := Index'Length;
       Name_Buffer (1 .. Name_Len) := Index;
       Idx := Name_Find;
 
-      Idx := Value_Of (Idx, In_Array => Elemt, In_Tree => Tree);
+      Idx := Value_Of (Idx, In_Array => Elemt, Shared => Tree.Shared);
       if Idx = No_Name then
          return Default;
       else
@@ -217,7 +217,8 @@ package body Convert.Gpr is
          begin
             Output_Path
               (Ada_Include_Path (Project_View, View_Tree, True), "src_dir=");
-            Output_Path (Ada_Objects_Path (Project_View).all, "obj_dir=");
+            Output_Path (Ada_Objects_Path (Project_View, View_Tree).all,
+                         "obj_dir=");
             Put_Line
               ("build_dir=" &
                Get_Name_String (Project_View.Exec_Directory.Name));
