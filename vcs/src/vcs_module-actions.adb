@@ -135,6 +135,9 @@ package body VCS_Module.Actions is
       Is_Revision_Log  : constant Action_Filter :=
                            new Is_Revision_Log_Filter;
 
+      Is_File_Filter : constant Action_Filter :=
+        Lookup_Filter (Kernel, "File");
+
       File_Filter : constant Action_Filter :=
                       Lookup_Filter (Kernel, "File") and not Is_Revision_Log;
 
@@ -216,7 +219,7 @@ package body VCS_Module.Actions is
       Register_Action_Menu
         ("Commit",
          -"Commit current file, or file corresponding to the current log",
-         Has_Revision_Log or Is_Revision_Log,
+         Is_File_Filter and (Has_Revision_Log or Is_Revision_Log),
          On_Menu_Commit'Access);
 
       Register_Action_Menu
@@ -322,13 +325,13 @@ package body VCS_Module.Actions is
       Register_Action_Menu
         ("Remove revision log",
          -"Remove the revision log corresponding to the current file",
-         Has_Revision_Log,
+         Is_File_Filter and Has_Revision_Log,
          On_Menu_Remove_Log'Access);
 
       Register_Action_Menu
         ("Add",
          -"Add the current file to repository",
-         Has_Revision_Log,
+         Is_File_Filter and Has_Revision_Log,
          On_Menu_Add'Access);
 
       Register_Action_Menu
@@ -346,7 +349,7 @@ package body VCS_Module.Actions is
       Register_Action_Menu
         ("Remove",
          -"Remove the current file from repository",
-         Has_Revision_Log,
+         Is_File_Filter and Has_Revision_Log,
          On_Menu_Remove'Access);
 
       Register_Action_Menu
