@@ -8,6 +8,16 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+- K119-043 WB: e500v2 toolchain not always pre-selected by wizard
+  Problem:    Not all Wind River build specs were recognized as corresponding
+              to the e500v2 compiler during GNATbench project conversion wizard
+              execution. In such cases the PPC compiler would be pre-selected
+              by the wizard. If the user did not change this selection in the
+              wizard page, that standard PPC compiler would be invoked during
+              builds.
+  Workaround: Ensure the propoer toolchain is selected when using the conversion
+              wizard.
+
 - K108-001 GPS: Adding Makefile as a language results in errors
   Problem:    Edit the project properties to add Makefile as a language.
               GPS will raise an error when it parses the resulting project,
@@ -31,7 +41,7 @@ If no tag is specified, the entry is relevant to all IDEs.
               larger than the package.
   Workaround: Manually delete the code.
   
-- JC07-005 GNATbench: project property GUI not showing scenario vars
+- JC07-005 GB: project property GUI not showing scenario vars
   Problem:    When launched from GNATbench, the GPS property editor dialog does
               not show the scenario variables declared within the GNAT-defined
               project files located in <gnatpro installation>/lib/gnat, even
