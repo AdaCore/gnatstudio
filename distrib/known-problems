@@ -15,7 +15,7 @@ If no tag is specified, the entry is relevant to all IDEs.
               by the wizard. If the user did not change this selection in the
               wizard page, that standard PPC compiler would be invoked during
               builds.
-  Workaround: Ensure the propoer toolchain is selected when using the conversion
+  Workaround: Ensure the proper toolchain is selected when using the conversion
               wizard.
 
 - K108-001 GPS: Adding Makefile as a language results in errors
