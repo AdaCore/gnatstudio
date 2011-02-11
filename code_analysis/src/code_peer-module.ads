@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -127,8 +127,6 @@ private
       File             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  If Action is Run_File, indicates which file should be analyzed
    end record;
-
-   procedure Update_Location_View (Self : access Module_Id_Record'Class);
 
    function Codepeer_Output_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;

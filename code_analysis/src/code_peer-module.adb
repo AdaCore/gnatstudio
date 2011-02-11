@@ -207,6 +207,24 @@ package body Code_Peer.Module is
    --  Called when project view is changed. Cleanup obsolete messages in
    --  messages container.
 
+   procedure Update_Location_View (Self : access Module_Id_Record'Class);
+   --  Update locations view using current messages filter. Note, Hide_Messages
+   --  and Show_Messages subprograms must be used to show and hide files,
+   --  instead of direct manipulation with filter's criteria and call to
+   --  this subprogram.
+
+   procedure Hide_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access);
+   --  Hides file and its messages in the location view.
+
+   procedure Show_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access);
+   --  Shows file and its messages in the location view. Current messages
+   --  fileter is applied. Messages container's messages are created when
+   --  necessary.
+
    procedure Review
      (Module      : Code_Peer.Module.Code_Peer_Module_Id;
       Force       : Boolean;
@@ -487,29 +505,32 @@ package body Code_Peer.Module is
                   end if;
                end if;
 
-               Gtk.Menu_Item.Gtk_New (Item, -"Show messages");
-               Menu.Append (Item);
-               Context_CB.Connect
-                 (Item,
-                  Gtk.Menu_Item.Signal_Activate,
-                  Context_CB.To_Marshaller (On_Show_Messages'Access),
-                  Module_Context'
-                    (Code_Peer_Module_Id (Factory.Module),
-                     Project_Node,
-                     File_Node,
-                     null));
+               if Module.Filter_Criteria.Files.Contains (File_Node) then
+                  Gtk.Menu_Item.Gtk_New (Item, -"Hide messages");
+                  Menu.Append (Item);
+                  Context_CB.Connect
+                    (Item,
+                     Gtk.Menu_Item.Signal_Activate,
+                     Context_CB.To_Marshaller (On_Hide_Messages'Access),
+                     Module_Context'
+                       (Code_Peer_Module_Id (Factory.Module),
+                        Project_Node,
+                        File_Node,
+                        null));
 
-               Gtk.Menu_Item.Gtk_New (Item, -"Hide messages");
-               Menu.Append (Item);
-               Context_CB.Connect
-                 (Item,
-                  Gtk.Menu_Item.Signal_Activate,
-                  Context_CB.To_Marshaller (On_Hide_Messages'Access),
-                  Module_Context'
-                    (Code_Peer_Module_Id (Factory.Module),
+               else
+                  Gtk.Menu_Item.Gtk_New (Item, -"Show messages");
+                  Menu.Append (Item);
+                  Context_CB.Connect
+                    (Item,
+                     Gtk.Menu_Item.Signal_Activate,
+                     Context_CB.To_Marshaller (On_Show_Messages'Access),
+                     Module_Context'
+                       (Code_Peer_Module_Id (Factory.Module),
                      Project_Node,
-                     File_Node,
-                     null));
+                        File_Node,
+                        null));
+               end if;
             end if;
          end;
       end if;
@@ -598,6 +619,58 @@ package body Code_Peer.Module is
               Name (Name'First .. Name'Last - Extension'Length) & ".output");
       end if;
    end Codepeer_Output_Directory;
+
+   -------------------
+   -- Hide_Messages --
+   -------------------
+
+   procedure Hide_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access)
+   is
+      procedure Process_Subprogram
+        (Position : Code_Analysis.Subprogram_Maps.Cursor);
+
+      procedure Process_Message
+        (Position : Code_Peer.Message_Vectors.Cursor);
+
+      ---------------------
+      -- Process_Message --
+      ---------------------
+
+      procedure Process_Message
+        (Position : Code_Peer.Message_Vectors.Cursor)
+      is
+         Message : constant Code_Peer.Message_Access :=
+           Code_Peer.Message_Vectors.Element (Position);
+
+      begin
+         if Message.Message /= null then
+            Message.Message.Set_Flags ((others => False));
+         end if;
+      end Process_Message;
+
+      ------------------------
+      -- Process_Subprogram --
+      ------------------------
+
+      procedure Process_Subprogram
+        (Position : Code_Analysis.Subprogram_Maps.Cursor)
+      is
+         Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
+           Code_Analysis.Subprogram_Maps.Element (Position);
+         Data            : Code_Peer.Subprogram_Data'Class
+         renames Code_Peer.Subprogram_Data'Class
+           (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
+
+      begin
+         Data.Messages.Iterate (Process_Message'Access);
+      end Process_Subprogram;
+
+   begin
+      Self.Filter_Criteria.Files.Delete (File);
+      File.Subprograms.Iterate (Process_Subprogram'Access);
+   end Hide_Messages;
 
    ----------
    -- Load --
@@ -1541,8 +1614,7 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Filter_Criteria.Files.Delete (Context.File);
-      Context.Module.Update_Location_View;
+      Context.Module.Hide_Messages (Context.File);
 
    exception
       when E : others =>
@@ -1672,8 +1744,7 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Filter_Criteria.Files.Insert (Context.File);
-      Context.Module.Update_Location_View;
+      Context.Module.Show_Messages (Context.File);
 
    exception
       when E : others =>
@@ -2277,5 +2348,17 @@ package body Code_Peer.Module is
 
       Editors.Register_Module (Kernel);
    end Register_Module;
+
+   ------------------
+   -- Show_Message --
+   ------------------
+
+   procedure Show_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access) is
+   begin
+      Self.Filter_Criteria.Files.Insert (File);
+      Self.Update_Location_View;
+   end Show_Messages;
 
 end Code_Peer.Module;

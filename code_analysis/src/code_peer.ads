@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2008-2010, AdaCore                 --
+--                  Copyright (C) 2008-2011, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -167,6 +167,7 @@ package Code_Peer is
 
    type Message_Filter_Criteria is record
       Files      : File_Sets.Set;
+      --  Set of shown files.
       Categories : Message_Category_Sets.Set;
       Rankings   : Message_Ranking_Level_Flags;
       Lineages   : Lifeage_Kinds_Flags;
