@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.1.0 / GNATbench 2.6.0
 -------------------------------------------
 
+NF-51-K209-048 New plugin to prevent project edition (2011-02-15)
+
+  A new plugin "prevent_project_edition.py", inactive by default,
+  prevents graphical edition of projects from GPS. This is useful in
+  contexts where the project files are hand-written and their formatting
+  should be preserved.
+
 NF-51-K202-008 Improved indentation of Ada 2012 constructs (2011-02-03)
 
   Ada 2012 Expression functions and aspects are now better recognized and
