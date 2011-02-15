@@ -11,7 +11,7 @@ so as to preserve the formatting.
 ## No user customization below this line
 #############################################################################
 
-from GPS import *
+import GPS
 
 def on_gps_started(hook):
     # Remove the contextual menus that may cause modifications in the
