@@ -212,8 +212,8 @@ package body Completion.Ada.Constructs_Extractor is
             Resolver_ID,
             Id (1 .. Id'Length  - 1), --  -1 to Remove the last dot
             Get_File_Path (Get_File (Entity)),
-            Construct.Sloc_Start.Line,
-            Construct.Sloc_Start.Column);
+            Construct.Sloc_Entity.Line,
+            Construct.Sloc_Entity.Column);
       end;
    end To_Completion_Id;
 
@@ -451,9 +451,9 @@ package body Completion.Ada.Constructs_Extractor is
    begin
       if Entity /= Null_Entity_Access then
          return (Get_File_Path (Get_File (Entity)),
-                 Construct.Sloc_Start.Line,
+                 Construct.Sloc_Entity.Line,
                  Basic_Types.Visible_Column_Type
-                   (Construct.Sloc_Start.Column));
+                   (Construct.Sloc_Entity.Column));
       else
          return (No_File, 0, 0);
       end if;
