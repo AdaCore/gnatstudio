@@ -459,17 +459,6 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
    end Get_Location;
 
-   -----------------------
-   -- Get_Location_File --
-   -----------------------
-
-   overriding function Get_Location_File
-      (Proposal : Construct_Completion_Proposal) return Virtual_File
-   is
-   begin
-      return Get_Location (Proposal).File_Path;
-   end Get_Location_File;
-
    -----------
    -- Match --
    -----------

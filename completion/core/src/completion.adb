@@ -326,17 +326,6 @@ package body Completion is
       return Null_File_Location;
    end Get_Location;
 
-   -----------------------
-   -- Get_Location_File --
-   -----------------------
-
-   function Get_Location_File (Proposal : Completion_Proposal)
-                                                           return Virtual_File
-   is
-   begin
-      return Get_Location (Proposal).File_Path;
-   end Get_Location_File;
-
    --------------
    -- Is_Valid --
    --------------

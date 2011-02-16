@@ -197,7 +197,7 @@ package Completion is
    end record;
 
    type File_Location is record
-      File_Path : Virtual_File;
+      File_Path : aliased Virtual_File;
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
    end record;
@@ -237,11 +237,6 @@ package Completion is
    function Get_Location (Proposal : Completion_Proposal) return File_Location;
    --  Return the location of the object pointed by the given proposal, null
    --  if none. By default, return Null_Location.
-
-   function Get_Location_File (Proposal : Completion_Proposal)
-                                                           return Virtual_File;
-   --  Return the file of the Location
-   --  By default, return Null_Location.
 
    function Get_Category
      (Proposal : Completion_Proposal) return Language_Category is abstract;

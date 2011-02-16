@@ -159,11 +159,6 @@ private
    --  See inherited documentation
 
    overriding
-   function Get_Location_File
-      (Proposal : Construct_Completion_Proposal) return Virtual_File;
-   --  See inherited documentation
-
-   overriding
    function Match
      (Proposal : Construct_Completion_Proposal;
       Context  : Completion_Context;
