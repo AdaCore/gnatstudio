@@ -125,7 +125,7 @@ package body List_Select_Pkg is
         (List_Select.Scrolledwindow, Policy_Automatic, Policy_Automatic);
       Pack_Start
         (List_Select.Hbox, List_Select.Scrolledwindow, True, True, 15);
-      Set_USize (List_Select.Scrolledwindow, -1, 250);
+      Set_Size_Request (List_Select.Scrolledwindow, 500, 250);
 
       Gtk_New (List_Select.List, 2);
       Set_Selection_Mode (List_Select.List, Selection_Single);
