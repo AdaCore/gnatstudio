@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-
 with Gtk;                       use Gtk;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
@@ -192,6 +190,15 @@ package body List_Select_Pkg is
       else
          Set_Column_Title (List_Select.List, 0, Item_Label);
          Set_Column_Title (List_Select.List, 1, Comment_Label);
+
+         --  Set default sorting, done only if columns are visible
+
+         List_Select.Sort_Column := 0;
+         List_Select.Sort_Type := Ascending;
+
+         Widget_Callback.Connect
+           (List_Select.List, Signal_Click_Column,
+            Callbacks.On_Column_Clicked'Access);
       end if;
 
       Return_Callback.Connect

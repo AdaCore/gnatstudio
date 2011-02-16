@@ -19,6 +19,7 @@
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
+with Glib;                use Glib;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -91,6 +92,8 @@ private
       Ok             : Gtk_Button;
       Cancel         : Gtk_Button;
       Help           : Gtk_Button;
+      Sort_Column    : Glib.Gint;
+      Sort_Type      : Gtk_Sort_Type;
    end record;
 
 end List_Select_Pkg;

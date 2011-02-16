@@ -726,7 +726,11 @@ package body GVD_Module is
          return;
       end if;
 
-      Gtk_New (Process_List, Title => -"Process Selection");
+      Gtk_New
+        (Process_List,
+         Title         => -"Process Selection",
+         Item_Label    => -"Pid",
+         Comment_Label => -"Command");
 
       Open_Processes (Process.Debugger);
 

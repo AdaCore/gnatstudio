@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                 Copyright (C) 2000-2011, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;              use Glib;
 with Gtk.Main;          use Gtk.Main;
 with Gtkada.Dialogs;    use Gtkada.Dialogs;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
@@ -62,6 +60,37 @@ package body List_Select_Pkg.Callbacks is
 
       return False;
    end On_Clist_Button_Press;
+
+   -----------------------
+   -- On_Column_Clicked --
+   -----------------------
+
+   procedure On_Column_Clicked
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      List        : constant Gtk_Clist := Gtk_Clist (Object);
+      List_Select : constant List_Select_Access :=
+                      List_Select_Access (Get_Toplevel (List));
+      Column      : constant Gint := To_Gint (Params, 1);
+   begin
+      if List_Select.Sort_Column = Column then
+         if List_Select.Sort_Type = Ascending then
+            List_Select.Sort_Type := Descending;
+         else
+            List_Select.Sort_Type := Ascending;
+         end if;
+
+      else
+         List_Select.Sort_Type := Ascending;
+      end if;
+
+      List_Select.Sort_Column := Column;
+
+      Set_Sort_Column (List_Select.List, List_Select.Sort_Column);
+      Set_Sort_Type (List_Select.List, List_Select.Sort_Type);
+      Sort (List_Select.List);
+   end On_Column_Clicked;
 
    ---------------------------
    -- On_The_Entry_Activate --
